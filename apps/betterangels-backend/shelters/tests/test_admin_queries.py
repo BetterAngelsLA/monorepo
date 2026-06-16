@@ -92,13 +92,11 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
-    def test_admin_shelters_multi_org_user_sees_all_member_orgs(self) -> None:
-        """A user belonging to multiple orgs sees shelters from all of them."""
-        # org_1_case_manager_1 belongs only to org_1; add them to org_2 as well
+    def test_admin_shelters_multi_org_user_sees_org_1_shelters(self) -> None:
+        """A user belonging to multiple orgs sees shelters from the org in the header."""
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
-        org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.ADMIN_SHELTERS_QUERY,
@@ -110,12 +108,35 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
             returned_ids,
-            {
-                str(self.shelter.id),
-                str(shelter_2.id),
-                str(org_2_shelter.id),
-            },
+            {str(self.shelter.id), str(shelter_2.id)},
         )
+
+    def test_admin_shelters_multi_org_user_sees_org_2_shelters(self) -> None:
+        """When the header changes, the same user sees the other org's shelters."""
+        from accounts.role_manager import OrgRoleManager
+        from notes.groups import CASEWORKER
+
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+
+        # Grant view_shelter permission in org_2 too
+        app_label, codename = Shelter.perms.VIEW.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        pg2 = self.org_2.permission_groups.get(template__name=CASEWORKER.name)
+        pg2.group.permissions.add(perm)
+
+        self._set_active_org(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+
+        response = self.execute_graphql(
+            self.ADMIN_SHELTERS_QUERY,
+            variables={"offset": 0, "limit": 10},
+        )
+
+        payload = response["data"]["adminShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
 
     def test_admin_shelters_unauthenticated(self) -> None:
         """Unauthenticated requests are rejected."""

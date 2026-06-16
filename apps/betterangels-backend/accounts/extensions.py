@@ -41,8 +41,10 @@ class HasOrgPerm(HasPerm):
     and checks that the authenticated user holds the requested
     permission(s) within that organization via a single query.
 
-    If no organization header is present, ``PermissionDenied`` is
-    raised — there is no fallback to global permission checks.
+    Defaults ``fail_silently=False`` so that permission denials raise
+    rather than silently returning empty results.  If no organization
+    header is present, ``PermissionDenied`` is raised — there is no
+    fallback to global permission checks.
 
     Extends ``HasPerm`` so the schema directive includes the same
     permission metadata (e.g. ``@hasOrgPerm(permissions: [{app: "shelters",
@@ -58,6 +60,13 @@ class HasOrgPerm(HasPerm):
         "organization set via X-Organization-ID header."
     )
 
+    message = "You do not have permission to perform this action in this organization."
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("fail_silently", False)
+        kwargs.setdefault("message", self.message)
+        super().__init__(*args, **kwargs)
+
     def resolve_for_user(
         self,
         resolver: Callable,
@@ -66,6 +75,9 @@ class HasOrgPerm(HasPerm):
         info: Info,
         source: Any,
     ) -> Any:
+        if not user or not user.is_authenticated:
+            raise DjangoNoPermission("Authentication required.")
+
         request = info.context.request
         org_id: str | None = getattr(request, "organization_id", None)
 
@@ -74,9 +86,6 @@ class HasOrgPerm(HasPerm):
                 "Organization ID is required for this operation. "
                 "Set the X-Organization-ID header."
             )
-
-        if not user or not user.is_authenticated:
-            raise DjangoNoPermission("Authentication required.")
 
         if not self.perms:
             raise DjangoNoPermission("No permissions specified for this operation.")

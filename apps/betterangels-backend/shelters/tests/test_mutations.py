@@ -462,7 +462,7 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         )
 
     def test_create_bed_wrong_org_rejected(self) -> None:
-        """Creating a bed for a shelter the user's org doesn't own is rejected."""
+        """Creating a bed for a shelter in a different org is rejected at the permission level."""
         other_org_shelter = Shelter.objects.create(
             name="Other Org Shelter",
             description="Belongs to org 2",
@@ -495,16 +495,14 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["createBed"]["messages"]
-        self.assertEqual(len(messages), 1)
+        self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
-            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
-            messages[0]["message"],
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
         )
 
     def test_create_room_wrong_org_rejected(self) -> None:
-        """Creating a room for a shelter the user's org doesn't own is rejected."""
+        """Creating a room for a shelter in a different org is rejected at the permission level."""
         other_org_shelter = Shelter.objects.create(
             name="Other Org Shelter",
             description="Belongs to org 2",
@@ -537,12 +535,10 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["createRoom"]["messages"]
-        self.assertEqual(len(messages), 1)
+        self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
-            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
-            messages[0]["message"],
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
         )
 
 

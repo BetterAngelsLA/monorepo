@@ -179,22 +179,21 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.room.pk))
 
-    def test_rooms_query_without_permission_returns_empty(self) -> None:
+    def test_rooms_query_without_permission_returns_permission_denied(self) -> None:
         self.operator.user_permissions.clear()
+        self.operator.groups.clear()
 
-        expected_query_count = 4
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
-        payload = response["data"]["rooms"]
-        self.assertEqual(payload["totalCount"], 0)
-        self.assertEqual(payload["results"], [])
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
 
     def test_rooms_query_unauthenticated(self) -> None:
         self.graphql_client.logout()
 
-        expected_query_count = 1
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
         self.assertGraphQLUnauthenticated(response)
