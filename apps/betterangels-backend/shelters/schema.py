@@ -194,3 +194,10 @@ class Mutation:
         )
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
+        user = cast(User, get_current_user(info))
+        ids = [int(id) for id in data.ids]
+        deleted_ids = shelter_photo.delete_shelter_photos(user=user, ids=ids)
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

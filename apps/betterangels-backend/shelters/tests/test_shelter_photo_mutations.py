@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
+from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe
@@ -428,3 +429,93 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
             kind="ERROR",
         )
         self.assertEqual(ShelterPhoto.objects.count(), 0)
+
+
+class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
+    MUTATION = """
+        mutation DeleteShelterPhotos($data: BulkDeleteInput!) {
+            deleteShelterPhotos(data: $data) {
+                ... on BulkDeleteResult {
+                    ids
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+        self.graphql_client.force_login(self.operator)
+
+    def test_requires_authentication(self) -> None:
+        self.graphql_client.logout()
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        expected_query_count = 0
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo.pk)]}})
+
+        self.assertGraphQLUnauthenticated(response)
+        self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_deletes_single_photo(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+        other = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = response["data"]["deleteShelterPhotos"]["ids"]
+        self.assertEqual(deleted_ids, [str(photo.pk)])
+        self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+        self.assertTrue(ShelterPhoto.objects.filter(pk=other.pk).exists())
+
+    def test_deletes_multiple_photos(self) -> None:
+        photo1 = baker.make(ShelterPhoto, shelter=self.shelter)
+        photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
+        other = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo1.pk), str(photo2.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        deleted_ids = response["data"]["deleteShelterPhotos"]["ids"]
+        self.assertCountEqual(deleted_ids, [str(photo1.pk), str(photo2.pk)])
+        self.assertFalse(ShelterPhoto.objects.filter(pk__in=[photo1.pk, photo2.pk]).exists())
+        self.assertTrue(ShelterPhoto.objects.filter(pk=other.pk).exists())
+
+    def test_returns_operation_info_for_unauthorized_photo(self) -> None:
+        authorized = baker.make(ShelterPhoto, shelter=self.shelter)
+        other_shelter: Any = shelter_recipe.make()
+        unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
+
+        expected_query_count = 7
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(
+                self.MUTATION, {"data": {"ids": [str(authorized.pk), str(unauthorized.pk)]}}
+            )
+
+        self.assertGraphQLOperationInfo(response, "deleteShelterPhotos", str(unauthorized.pk), kind="ERROR")
+        # Atomic — nothing deleted
+        self.assertTrue(ShelterPhoto.objects.filter(pk=authorized.pk).exists())
+        self.assertTrue(ShelterPhoto.objects.filter(pk=unauthorized.pk).exists())
+
+    def test_returns_operation_info_for_nonexistent_id(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        expected_query_count = 7
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo.pk), "999999"]}})
+
+        self.assertGraphQLOperationInfo(response, "deleteShelterPhotos", "999999", kind="ERROR")
+        # Atomic — nothing deleted
+        self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())

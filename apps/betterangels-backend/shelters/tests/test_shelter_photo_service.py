@@ -13,6 +13,7 @@ from shelters.services.shelter_photo import (
     UPLOAD_PATH,
     _validate_content_type,
     create_presigned_uploads,
+    delete_shelter_photos,
     resolve_uploads,
 )
 from shelters.tests.baker_recipes import shelter_recipe
@@ -319,5 +320,75 @@ class ResolveUploadsTest(TestCase):
                 shelter_id=self.shelter.pk,
                 photos=[self.photo_input, photo2],
             )
+
+        self.assertEqual(ShelterPhoto.objects.count(), initial_count)
+
+
+# ---------------------------------------------------------------------------
+# delete_shelter_photos
+# ---------------------------------------------------------------------------
+
+
+class DeleteShelterPhotosTest(TestCase):
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.org: Any = organization_recipe.make()
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+        self.org.users.add(self.user)
+
+    def test_deletes_single_photo(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+        other = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        result = delete_shelter_photos(user=self.user, ids=[photo.pk])
+
+        self.assertEqual(result, [photo.pk])
+        self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+        self.assertTrue(ShelterPhoto.objects.filter(pk=other.pk).exists())
+
+    def test_deletes_multiple_photos(self) -> None:
+        photo1 = baker.make(ShelterPhoto, shelter=self.shelter)
+        photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
+        other = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        result = delete_shelter_photos(user=self.user, ids=[photo1.pk, photo2.pk])
+
+        self.assertCountEqual(result, [photo1.pk, photo2.pk])
+        self.assertFalse(ShelterPhoto.objects.filter(pk__in=[photo1.pk, photo2.pk]).exists())
+        self.assertTrue(ShelterPhoto.objects.filter(pk=other.pk).exists())
+
+    def test_raises_for_nonexistent_id(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+
+        with self.assertRaisesRegex(Exception, "999999"):
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
+
+    def test_raises_for_unauthorized_photo(self) -> None:
+        other_org: Any = organization_recipe.make()
+        other_shelter: Any = shelter_recipe.make(organization=other_org)
+        authorized = baker.make(ShelterPhoto, shelter=self.shelter)
+        unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
+
+        with self.assertRaisesRegex(Exception, str(unauthorized.pk)):
+            delete_shelter_photos(user=self.user, ids=[authorized.pk, unauthorized.pk])
+
+    def test_is_atomic_no_deletes_when_one_id_missing(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+        initial_count = ShelterPhoto.objects.count()
+
+        with self.assertRaises(Exception):
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
+
+        self.assertEqual(ShelterPhoto.objects.count(), initial_count)
+
+    def test_is_atomic_no_deletes_when_one_id_unauthorized(self) -> None:
+        other_org: Any = organization_recipe.make()
+        other_shelter: Any = shelter_recipe.make(organization=other_org)
+        authorized = baker.make(ShelterPhoto, shelter=self.shelter)
+        unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
+        initial_count = ShelterPhoto.objects.count()
+
+        with self.assertRaises(Exception):
+            delete_shelter_photos(user=self.user, ids=[authorized.pk, unauthorized.pk])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)

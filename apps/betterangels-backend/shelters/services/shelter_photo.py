@@ -14,7 +14,7 @@ from common.services.upload_token import create_upload_token, validate_upload_to
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Shelter, ShelterPhoto
-from shelters.selectors import shelter_get
+from shelters.selectors import admin_shelter_list, shelter_get
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput
 
 UPLOAD_PATH = "shelters"
@@ -122,3 +122,19 @@ def resolve_uploads(
             created.append(shelter_photo)
 
     return created
+
+
+@transaction.atomic
+def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
+    photos = ShelterPhoto.objects.filter(
+        shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
+        pk__in=ids,
+    )
+    deleted_ids = list(photos.values_list("pk", flat=True))
+
+    missing = set(ids) - set(deleted_ids)
+    if missing:
+        raise ObjectDoesNotExist(f"ShelterPhoto IDs not found or not accessible: {sorted(missing)}")
+
+    photos.delete()
+    return deleted_ids
