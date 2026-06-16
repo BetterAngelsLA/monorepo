@@ -11,7 +11,7 @@ from django.utils import timezone
 from django_choices_field import TextChoicesField
 from shelters.enums import ReservationStatusChoices
 
-from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room, Shelter
+from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room
 
 
 @pghistory.track(
@@ -20,7 +20,6 @@ from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room, Shelter
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
 )
 class Reservation(BaseModel):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="reservations")
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     bed = models.ForeignKey(Bed, on_delete=models.SET_NULL, blank=True, null=True, related_name="reservations")
     status = TextChoicesField(choices_enum=ReservationStatusChoices, default=ReservationStatusChoices.CONFIRMED)
@@ -38,7 +37,7 @@ class Reservation(BaseModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=["shelter", "status"]),
+            models.Index(fields=["status"]),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -140,7 +139,9 @@ class Reservation(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"Reservation #{self.pk} at {self.shelter} ({self.status})"
+        shelter = self.bed.shelter if self.bed else self.room.shelter if self.room else "No Shelter"
+
+        return f"Reservation #{self.pk} at {shelter} ({self.status})"
 
 
 class ReservationClient(BaseModel):

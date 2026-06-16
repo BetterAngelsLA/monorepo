@@ -1450,9 +1450,9 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "name", "maintenance_flag", "type", "created_at", "updated_at")
-    list_filter = ("maintenance_flag", "type")
-    search_fields = ("shelter__name", "name")
+    list_display = ("id", "shelter", "name", "display_status", "type", "created_at", "updated_at")
+    list_filter = ("type", "maintenance_flag")
+    search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
     fieldsets = (
         (
@@ -1486,12 +1486,14 @@ class BedAdmin(admin.ModelAdmin):
                 "fields": (
                     "maintenance_flag",
                     "last_cleaned_inspected",
-                    "last_cleaned",
                     "fees",
                 )
             },
         ),
     )
+
+    def display_status(self, obj: Bed) -> str:
+        return obj.computed_status
 
 
 @admin.register(Room)
@@ -1501,6 +1503,7 @@ class RoomAdmin(admin.ModelAdmin):
         "shelter",
         "name",
         "type",
+        "display_status",
         "medical_respite",
         "last_cleaned_inspected",
     )
@@ -1532,6 +1535,9 @@ class RoomAdmin(admin.ModelAdmin):
         ),
     )
 
+    def display_status(self, obj: Room) -> str:
+        return obj.computed_status
+
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
@@ -1551,17 +1557,17 @@ class ReservationClientInline(admin.TabularInline):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_display = ("id", "display_shelter", "status", "start_date", "duration", "created_by", "created_at")
     list_filter = ("status",)
     search_fields = ("shelter__name",)
-    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    autocomplete_fields = ["room", "bed", "created_by"]
     inlines = [ReservationClientInline]
     fieldsets = (
         (
             "Reservation Details",
             {
                 "fields": (
-                    "shelter",
+                    "display_shelter",
                     "room",
                     "bed",
                     "status",
@@ -1585,6 +1591,14 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+    def display_shelter(self, obj: Reservation) -> Optional[str]:
+        shelter = obj.bed.shelter if obj.bed else (obj.room.shelter if obj.room else None)
+
+        if shelter:
+            return f"{shelter.name} ({shelter.pk})"
+
+        return None
 
 
 @admin.register(ShelterAvailability)
