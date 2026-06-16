@@ -1,4 +1,4 @@
-import type * as Types from '../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type DeleteShelterPhotoMutationVariables = Types.Exact<{

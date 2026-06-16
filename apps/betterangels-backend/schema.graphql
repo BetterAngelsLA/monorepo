@@ -2868,6 +2868,7 @@ input UpdateShelterInput {
   email: String
   website: String
   isPrivate: Boolean
+  heroImageId: ID
   cityId: ID
   spaId: ID
   citiesServedIds: [ID!]

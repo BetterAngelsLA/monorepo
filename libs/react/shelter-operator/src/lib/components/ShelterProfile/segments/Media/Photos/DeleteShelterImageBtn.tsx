@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { ConfirmationModal } from '../../../../base-ui/modal/ConfirmationModal';
 import { useDeleteShelterPhoto } from '../../../../../hooks/useDeleteShelterPhoto';
+import { ConfirmationModal } from '../../../../base-ui/modal/ConfirmationModal';
 
 type TProps = {
   photoId: string;
