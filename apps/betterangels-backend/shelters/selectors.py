@@ -10,7 +10,7 @@ import bisect
 import datetime
 from collections import Counter, defaultdict
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -335,7 +335,9 @@ def _client_state_matches(
     return True
 
 
-def _build_client_demographic_matcher(client_filters: dict) -> Callable[[int | None, datetime.datetime], bool]:
+def _build_client_demographic_matcher(
+    client_filters: dict, *, occupant_ids: Iterable[int] | None = None
+) -> Callable[[int | None, datetime.datetime], bool]:
     """Build a ``matches(occupant_id, at_time)`` predicate over client history.
 
     Demographic state is reconstructed from the pghistory ``ClientProfileEvent``
@@ -343,22 +345,42 @@ def _build_client_demographic_matcher(client_filters: dict) -> Callable[[int | N
     time.  This reflects the client's attributes *as of* that moment and still
     resolves for clients later deleted (their events persist).  Clients with no
     events at or before the moment (e.g. created before tracking began) never
-    match.  Per-occupant timelines are cached for the life of the matcher.
+    match.
+
+    Per-occupant timelines are cached for the life of the matcher.  Passing the
+    full set of ``occupant_ids`` up front loads every timeline in a single query
+    (instead of one query per occupant on first lookup); ids not preloaded fall
+    back to a lazy per-occupant fetch.
     """
     client_event_model = apps.get_model("clients", "ClientProfileEvent")
     # occupant_id -> (sorted event times, sorted event states)
     timelines: dict[int, tuple[list[datetime.datetime], list[tuple]]] = {}
 
+    def _load(ids: list[int]) -> None:
+        # Pre-seed every requested id so occupants with no events resolve to an
+        # empty (cached) timeline rather than re-querying on each lookup.
+        for occupant_id in ids:
+            timelines.setdefault(occupant_id, ([], []))
+        rows = (
+            client_event_model.objects.filter(pgh_obj_id__in=ids)
+            .order_by("pgh_obj_id", "pgh_created_at", "pgh_id")
+            .values_list("pgh_obj_id", "pgh_created_at", "gender", "race", "veteran_status", "date_of_birth")
+        )
+        for occupant_id, created_at, *state in rows:
+            times, states = timelines[occupant_id]
+            times.append(created_at)
+            states.append(tuple(state))
+
+    if occupant_ids:
+        unique_ids = {occupant_id for occupant_id in occupant_ids if occupant_id is not None}
+        if unique_ids:
+            _load(list(unique_ids))
+
     def _timeline(occupant_id: int) -> tuple[list[datetime.datetime], list[tuple]]:
         cached = timelines.get(occupant_id)
         if cached is None:
-            rows = list(
-                client_event_model.objects.filter(pgh_obj_id=occupant_id)
-                .order_by("pgh_created_at", "pgh_id")
-                .values_list("pgh_created_at", "gender", "race", "veteran_status", "date_of_birth")
-            )
-            cached = ([row[0] for row in rows], [row[1:] for row in rows])
-            timelines[occupant_id] = cached
+            _load([occupant_id])  # fallback for ids not prefetched up front
+            cached = timelines[occupant_id]
         return cached
 
     def matches(occupant_id: int | None, at_time: datetime.datetime) -> bool:
@@ -477,7 +499,17 @@ def daily_occupancy(
         end_date=end_date,
         bed_filters=bed_filters,
     )
-    client_matcher = _build_client_demographic_matcher(client_filters) if client_filters else None
+    client_matcher = None
+    if client_filters:
+        # Prefetch every occupant's history in one query rather than one per
+        # occupant on first match.  Only OCCUPIED beds are ever matched.
+        occupant_ids = {
+            occupant_id
+            for beds in snapshots.values()
+            for status, occupant_id in beds.values()
+            if status == BedStatusChoices.OCCUPIED and occupant_id is not None
+        }
+        client_matcher = _build_client_demographic_matcher(client_filters, occupant_ids=occupant_ids)
 
     results = []
     for day in _iter_days(start_date, end_date):

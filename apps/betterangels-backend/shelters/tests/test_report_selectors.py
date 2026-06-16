@@ -14,6 +14,8 @@ import pytest
 from clients.enums import GenderEnum
 from clients.models import ClientProfile
 from django.apps import apps
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 from shelters.enums import BedStatusChoices, BedTypeChoices, DemographicChoices
 from shelters.models import Bed, Demographic, Shelter
@@ -352,3 +354,31 @@ def test_timezone_late_night_change_attributed_to_local_day(shelter: Shelter) ->
     # the bed would still read occupied on day0.
     assert result[0]["occupied_count"] == 0
     assert result[0]["total_beds"] == 1
+
+
+@pytest.mark.django_db
+def test_client_filters_use_constant_query_count(shelter: Shelter, occupancy_dates: list[datetime.date]) -> None:
+    """Occupant history is prefetched in one query regardless of occupant count.
+
+    Guards against an N+1 where each distinct occupant triggered its own
+    ClientProfileEvent lookup.  The work is two queries total: one to read the
+    bed events and one to bulk-load the occupants' demographic history.
+    """
+    day0, _, _, day3 = occupancy_dates
+    before_window = datetime.datetime(2025, 1, 1, tzinfo=UTC)
+    _clear_events()
+    for _ in range(5):
+        client: ClientProfile = baker.make("clients.ClientProfile", gender=GenderEnum.FEMALE)
+        _backdate_client_events(client.id, before_window)
+        bed = Bed.objects.create(shelter=shelter)
+        _bed_event(bed, label="bed.add", status=BedStatusChoices.OCCUPIED, when=_at(day0, 1), occupant=client)
+
+    with CaptureQueriesContext(connection) as ctx:
+        daily_occupancy(
+            shelter_id=shelter.id,
+            start_date=day0,
+            end_date=day3,
+            client_filters={"gender": GenderEnum.FEMALE},
+        )
+
+    assert len(ctx.captured_queries) == 2
