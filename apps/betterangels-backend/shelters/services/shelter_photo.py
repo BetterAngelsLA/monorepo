@@ -29,6 +29,7 @@ def _validate_content_type(content_type: str, filename: str) -> None:
 def create_presigned_uploads(
     *,
     user: User,
+    shelter_id: str,
     uploads: Iterable[ShelterPhotoUploadItemInput],
 ) -> AuthorizedPresignedUploadBatch:
     mapped_uploads: list[PresignedS3UploadInput] = []
@@ -41,7 +42,7 @@ def create_presigned_uploads(
                 "ref_id": upload.ref_id,
                 "filename": upload.filename,
                 "content_type": upload.content_type,
-                "upload_path": UPLOAD_PATH,
+                "upload_path": f"{UPLOAD_PATH}/{shelter_id}",
             }
         )
 

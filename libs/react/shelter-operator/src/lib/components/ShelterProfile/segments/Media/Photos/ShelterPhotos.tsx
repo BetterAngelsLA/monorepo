@@ -8,6 +8,10 @@ import { SectionHeader } from '../shared/SectionHeader';
 import { ShelterImagesUpload } from './ShelterImagesUpload';
 import { ThumbImg } from './ThumbImg';
 
+function getLastPathSegment(path: string): string {
+  return (path.split('/').at(-1) ?? path).toLowerCase();
+}
+
 const columns: TableColumn<ShelterProfilePhotoType>[] = [
   {
     key: 'preview',
@@ -24,8 +28,7 @@ const columns: TableColumn<ShelterProfilePhotoType>[] = [
   {
     key: 'name',
     label: 'File Name',
-    render: (photo) =>
-      photo.file.name.replace(/^shelters?\//, '').toLowerCase(),
+    render: (photo) => getLastPathSegment(photo.file.name),
   },
   {
     key: 'type',

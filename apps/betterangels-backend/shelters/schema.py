@@ -164,7 +164,9 @@ class Mutation:
 
         Shelter.objects.filter(pk=data.shelter_id).get()
 
-        presigned_uploads = shelter_photo.create_presigned_uploads(user=user, uploads=data.uploads)
+        presigned_uploads = shelter_photo.create_presigned_uploads(
+            user=user, shelter_id=str(data.shelter_id), uploads=data.uploads
+        )
 
         return AuthorizedPresignedS3UploadsType(
             uploads=[
