@@ -3,10 +3,10 @@ import datetime
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import IntegrityError
 from django.test import TestCase
+from model_bakery import baker
 from shelters.enums import ReservationStatusChoices
-from shelters.models import Bed, Reservation, Room, Shelter
+from shelters.models import Bed, Reservation, Room
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -19,10 +19,10 @@ class ReservationServiceTestCase(TestCase):
         self.user = User.objects.create_user(username="reservation-service-user", password="pw")
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
-        self.room = Room.objects.create(shelter=self.shelter, name="Room-101")
-        self.room2 = Room.objects.create(shelter=self.shelter, name="Room-202")
-        self.bed = Bed.objects.create(shelter=self.shelter, room=self.room, name="Bed-1")
-        self.bed2 = Bed.objects.create(shelter=self.shelter, room=self.room2, name="Bed-2")
+        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
+        self.room2 = baker.make(Room, shelter=self.shelter, name="Room-202")
+        self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
+        self.bed2 = baker.make(Bed, shelter=self.shelter, room=self.room2, name="Bed-2")
 
 
 class ReservationCreateTestCase(ReservationServiceTestCase):
@@ -83,7 +83,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
     def test_bed_in_turnaround_rejected(self) -> None:
         now = datetime.datetime.now(datetime.timezone.utc)
         # Create a completed reservation with a checkout time after last_cleaned
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.COMPLETED,
@@ -116,7 +117,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 
     def test_room_in_turnaround_rejected(self) -> None:
         now = datetime.datetime.now(datetime.timezone.utc)
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             room=self.room2,
             bed=None,
@@ -135,7 +137,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         self.assertIn("room", ctx.exception.message_dict)
 
     def test_duplicate_bed_rejected(self) -> None:
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
@@ -151,7 +154,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
             )
 
     def test_duplicate_room_rejected(self) -> None:
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             room=self.room2,
             bed=None,
@@ -174,7 +178,7 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 
     def test_user_without_org_access_raises(self) -> None:
         other_shelter = shelter_recipe.make(organization=self.other_org)
-        other_bed = Bed.objects.create(shelter=other_shelter, name="Other-Bed")
+        other_bed = baker.make(Bed, shelter=other_shelter, name="Other-Bed")
 
         with self.assertRaises(ObjectDoesNotExist):
             reservation_create(user=self.user, data={"shelter_id": other_shelter.pk, "bed_id": other_bed.pk})
@@ -183,7 +187,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 class ReservationUpdateTestCase(ReservationServiceTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.reservation = Reservation.objects.create(
+        self.reservation = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
@@ -260,12 +265,10 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
 class ReservationDeleteTestCase(ReservationServiceTestCase):
     def test_deletes_single_reservation(self) -> None:
-        to_delete = Reservation.objects.create(
-            shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
+        to_delete = baker.make(
+            Reservation, shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
         )
-        other = Reservation.objects.create(
-            shelter=self.shelter, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED
-        )
+        other = baker.make(Reservation, shelter=self.shelter, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED)
 
         deleted = reservation_delete(user=self.user, ids=[to_delete.pk])
 
@@ -275,14 +278,14 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         self.assertTrue(Reservation.objects.filter(pk=other.pk).exists())
 
     def test_deletes_multiple_reservations(self) -> None:
-        to_delete_1 = Reservation.objects.create(
-            shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
+        to_delete_1 = baker.make(
+            Reservation, shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
         )
-        to_delete_2 = Reservation.objects.create(
-            shelter=self.shelter, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED
+        to_delete_2 = baker.make(
+            Reservation, shelter=self.shelter, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED
         )
-        other = Reservation.objects.create(
-            shelter=self.shelter, room=self.room2, bed=None, status=ReservationStatusChoices.CONFIRMED
+        other = baker.make(
+            Reservation, shelter=self.shelter, room=self.room2, bed=None, status=ReservationStatusChoices.CONFIRMED
         )
 
         deleted = reservation_delete(user=self.user, ids=[to_delete_1.pk, to_delete_2.pk])

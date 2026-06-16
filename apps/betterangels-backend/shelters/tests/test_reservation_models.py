@@ -11,11 +11,11 @@ from shelters.models import Bed, Reservation, Room, Shelter
 
 class ReservationModelTestCase(TestCase):
     def setUp(self) -> None:
-        self.shelter = Shelter.objects.create(name="Test Shelter")
-        self.room = Room.objects.create(shelter=self.shelter, name="Room-101")
-        self.room2 = Room.objects.create(shelter=self.shelter, name="Room-202")
-        self.bed = Bed.objects.create(shelter=self.shelter, room=self.room, name="Bed-1")
-        self.bed2 = Bed.objects.create(shelter=self.shelter, room=self.room2, name="Bed-2")
+        self.shelter = baker.make(Shelter, name="Test Shelter")
+        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
+        self.room2 = baker.make(Room, shelter=self.shelter, name="Room-202")
+        self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
+        self.bed2 = baker.make(Bed, shelter=self.shelter, room=self.room2, name="Bed-2")
 
     # --- creation ---
 
@@ -41,17 +41,17 @@ class ReservationModelTestCase(TestCase):
     # --- double-booking prevention: bed ---
 
     def test_cannot_create_reservation_for_bed_with_confirmed_reservation(self) -> None:
-        Reservation.objects.create(shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
+        baker.make(Reservation, shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
         with self.assertRaises(IntegrityError):
             baker.make(Reservation, bed=self.bed)
 
     def test_cannot_create_reservation_for_bed_with_checked_in_reservation(self) -> None:
-        Reservation.objects.create(shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CHECKED_IN)
+        baker.make(Reservation, shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CHECKED_IN)
         with self.assertRaises(IntegrityError):
             baker.make(Reservation, bed=self.bed)
 
     def test_cannot_create_reservation_for_bed_with_overdue_reservation(self) -> None:
-        Reservation.objects.create(shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CHECK_IN_OVERDUE)
+        baker.make(Reservation, shelter=self.shelter, bed=self.bed, status=ReservationStatusChoices.CHECK_IN_OVERDUE)
         with self.assertRaises(IntegrityError):
             baker.make(Reservation, bed=self.bed)
 
@@ -59,26 +59,27 @@ class ReservationModelTestCase(TestCase):
 
     def test_cannot_create_second_room_only_reservation(self) -> None:
         """Room-only (bed=null) is unique per room for active reservations."""
-        Reservation.objects.create(
-            shelter=self.shelter, room=self.room2, bed=None, status=ReservationStatusChoices.CONFIRMED
+        baker.make(
+            Reservation, shelter=self.shelter, room=self.room2, bed=None, status=ReservationStatusChoices.CONFIRMED
         )
         with self.assertRaises(IntegrityError):
             baker.make(Reservation, room=self.room2, bed=None)
 
     def test_multiple_bed_reservations_allowed_for_same_room(self) -> None:
         """When both room and bed are set, the room constraint does not apply."""
-        Reservation.objects.create(
-            shelter=self.shelter, room=self.room, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
+        baker.make(
+            Reservation, shelter=self.shelter, room=self.room, bed=self.bed, status=ReservationStatusChoices.CONFIRMED
         )
-        Reservation.objects.create(
-            shelter=self.shelter, room=self.room, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED
+        baker.make(
+            Reservation, shelter=self.shelter, room=self.room, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED
         )
         self.assertEqual(Reservation.objects.filter(room=self.room).count(), 2)
 
     # --- completing a reservation sets checked_out_at ---
 
     def test_completing_reservation_sets_checked_out_at(self) -> None:
-        reservation = Reservation.objects.create(
+        reservation = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CHECKED_IN,
@@ -103,14 +104,15 @@ class BedComputedStatusTestCase(TestCase):
     """
 
     def setUp(self) -> None:
-        self.shelter = Shelter.objects.create(name="Test Shelter")
-        self.room = Room.objects.create(shelter=self.shelter, name="Room-101")
+        self.shelter = baker.make(Shelter, name="Test Shelter")
+        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
 
     def _make_bed(self, **kwargs: object) -> Bed:
-        return Bed.objects.create(shelter=self.shelter, room=self.room, name="Bed-1", **kwargs)
+        return baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1", **kwargs)
 
     def _make_completed_reservation(self, bed: Bed, checked_out_at: datetime.datetime) -> Reservation:
-        return Reservation.objects.create(
+        return baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=bed,
             status=ReservationStatusChoices.COMPLETED,
@@ -159,13 +161,14 @@ class RoomComputedStatusTestCase(TestCase):
     """
 
     def setUp(self) -> None:
-        self.shelter = Shelter.objects.create(name="Test Shelter")
+        self.shelter = baker.make(Shelter, name="Test Shelter")
 
     def _make_room(self, **kwargs: object) -> Room:
-        return Room.objects.create(shelter=self.shelter, name="Room-Test", **kwargs)
+        return baker.make(Room, shelter=self.shelter, name="Room-Test", **kwargs)
 
     def _make_completed_reservation(self, room: Room, checked_out_at: datetime.datetime) -> Reservation:
-        return Reservation.objects.create(
+        return baker.make(
+            Reservation,
             shelter=self.shelter,
             room=room,
             bed=None,

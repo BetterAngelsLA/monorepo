@@ -1,13 +1,11 @@
 import datetime
 from typing import Any
 
-from common.tests.utils import GraphQLBaseTestCase
-from django.db.models import Count
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
 from shelters.enums import ReservationStatusChoices
-from shelters.models import Reservation, Room
+from shelters.models import Bed, Reservation, Room
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
@@ -17,10 +15,10 @@ class ReservationMutationTestCase(ShelterTestCase, TestCase):
         super().setUp()
         self.graphql_client.force_login(self.operator)
         self.shelter = shelter_recipe.make(organization=self.org)
-        self.room = Room.objects.create(shelter=self.shelter, name="Room-101")
-        self.room2 = Room.objects.create(shelter=self.shelter, name="Room-202")
-        self.bed = baker.make("shelters.Bed", shelter=self.shelter, room=self.room, name="Bed-1")
-        self.bed2 = baker.make("shelters.Bed", shelter=self.shelter, room=self.room2, name="Bed-2")
+        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
+        self.room2 = baker.make(Room, shelter=self.shelter, name="Room-202")
+        self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
+        self.bed2 = baker.make(Bed, shelter=self.shelter, room=self.room2, name="Bed-2")
 
         self.reservation_fields = """
             id
@@ -127,7 +125,8 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
     def test_create_reservation_bed_in_turnaround(self) -> None:
         now = timezone.now()
         # Create a completed reservation with checkout after last_cleaned
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.COMPLETED,
@@ -168,7 +167,8 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIn("room", messages[0]["message"].lower())
 
     def test_create_reservation_duplicate_bed(self) -> None:
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
@@ -189,7 +189,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
 
     def test_create_reservation_wrong_org_rejected(self) -> None:
         other_org_shelter = shelter_recipe.make()
-        other_bed = baker.make("shelters.Bed", shelter=other_org_shelter)
+        other_bed = baker.make(Bed, shelter=other_org_shelter)
 
         variables: dict[str, Any] = {
             "data": {
@@ -209,7 +209,8 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
 class UpdateReservationMutationTestCase(ReservationMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.reservation = Reservation.objects.create(
+        self.reservation = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
@@ -310,12 +311,14 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
 
 class DeleteReservationMutationTestCase(ReservationMutationTestCase):
     def test_delete_reservations(self) -> None:
-        to_delete = Reservation.objects.create(
+        to_delete = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
-        other = Reservation.objects.create(
+        other = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed2,
             status=ReservationStatusChoices.CONFIRMED,
@@ -346,7 +349,8 @@ class DeleteReservationMutationTestCase(ReservationMutationTestCase):
 
 class ReservationQueryTestCase(ReservationMutationTestCase):
     def test_query_reservation(self) -> None:
-        reservation = Reservation.objects.create(
+        reservation = baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
@@ -371,12 +375,14 @@ class ReservationQueryTestCase(ReservationMutationTestCase):
         self.assertEqual(data["bed"]["id"], str(self.bed.pk))
 
     def test_query_reservations_list(self) -> None:
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
-        Reservation.objects.create(
+        baker.make(
+            Reservation,
             shelter=self.shelter,
             bed=self.bed2,
             status=ReservationStatusChoices.CHECKED_IN,

@@ -4,6 +4,7 @@ from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
+from model_bakery import baker
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
@@ -46,7 +47,7 @@ class BedCreateTestCase(BedServiceTestCase):
         self.assertTrue(Bed.objects.filter(pk=bed.pk).exists())
 
     def test_creates_bed_with_room(self) -> None:
-        room = Room.objects.create(shelter=self.shelter, name="Room-A1")
+        room = baker.make(Room, shelter=self.shelter, name="Room-A1")
 
         bed = bed_create(
             user=self.user,
@@ -95,7 +96,7 @@ class BedCreateTestCase(BedServiceTestCase):
             bed_create(user=self.user, data={"shelter_id": other_shelter.pk, "name": "Bed 1"})
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
-        shelter = Shelter.objects.create(organization=self.org)
+        shelter = baker.make(Shelter, organization=self.org)
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         shelter.demographics.add(demographic)
 
@@ -113,7 +114,8 @@ class BedCreateTestCase(BedServiceTestCase):
 class BedUpdateTestCase(BedServiceTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.bed = Bed.objects.create(
+        self.bed = baker.make(
+            Bed,
             shelter=self.shelter,
             name="Bed 1",
             type=BedTypeChoices.TWIN,
@@ -188,8 +190,8 @@ class BedUpdateTestCase(BedServiceTestCase):
 
 class BedDeleteTestCase(BedServiceTestCase):
     def test_deletes_single_bed(self) -> None:
-        bed_to_delete = Bed.objects.create(shelter=self.shelter, name="Bed 1")
-        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 2")
+        bed_to_delete = baker.make(Bed, shelter=self.shelter, name="Bed 1")
+        other_bed = baker.make(Bed, shelter=self.shelter, name="Bed 2")
 
         deleted = bed_delete(user=self.user, ids=[bed_to_delete.pk])
 
@@ -199,9 +201,9 @@ class BedDeleteTestCase(BedServiceTestCase):
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_beds(self) -> None:
-        bed_to_delete_1 = Bed.objects.create(shelter=self.shelter, name="Bed 1")
-        bed_to_delete_2 = Bed.objects.create(shelter=self.shelter, name="Bed 2")
-        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 3")
+        bed_to_delete_1 = baker.make(Bed, shelter=self.shelter, name="Bed 1")
+        bed_to_delete_2 = baker.make(Bed, shelter=self.shelter, name="Bed 2")
+        other_bed = baker.make(Bed, shelter=self.shelter, name="Bed 3")
 
         deleted = bed_delete(user=self.user, ids=[bed_to_delete_1.pk, bed_to_delete_2.pk])
 
@@ -226,8 +228,9 @@ class BedCloneTestCase(BedServiceTestCase):
         self.shelter.accessibility.add(accessibility)
         self.shelter.pets.add(pet)
 
-        room = Room.objects.create(shelter=self.shelter, name="Room-A1")
-        source = Bed.objects.create(
+        room = baker.make(Room, shelter=self.shelter, name="Room-A1")
+        source = baker.make(
+            Bed,
             shelter=self.shelter,
             room=room,
             b7=True,

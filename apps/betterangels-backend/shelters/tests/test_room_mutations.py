@@ -98,7 +98,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
         self.assertTrue(Room.objects.filter(pk=room["id"]).exists())
 
     def test_create_room_clone_identifier(self) -> None:
-        Room.objects.create(shelter=self.shelter, name="Room-101")
+        baker.make(Room, shelter=self.shelter, name="Room-101")
 
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101"}}
 
@@ -316,8 +316,8 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
         source.funders.add(funder)
         source.accessibility.add(accessibility)
         source.pets.add(pet)
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1")
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2")
+        baker.make(Bed, shelter=self.shelter, room=source, name="Bed 1")
+        baker.make(Bed, shelter=self.shelter, room=source, name="Bed 2")
 
         variables = {"id": str(source.pk)}
 

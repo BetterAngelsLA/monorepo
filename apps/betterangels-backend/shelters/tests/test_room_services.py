@@ -101,13 +101,13 @@ class RoomCreateTestCase(RoomServiceTestCase):
             room_create(user=self.user, data={"shelter_id": other_shelter.pk, "name": "Room-101"})
 
     def test_duplicate_name_raises_validation_error(self) -> None:
-        Room.objects.create(shelter=self.shelter, name="Room-101")
+        baker.make(Room, shelter=self.shelter, name="Room-101")
 
         with self.assertRaises(ValidationError):
             room_create(user=self.user, data={"shelter_id": self.shelter.pk, "name": "Room-101"})
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
-        shelter = Shelter.objects.create(organization=self.org)
+        shelter = baker.make(Shelter, organization=self.org)
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         shelter.demographics.add(demographic)
 
@@ -126,7 +126,8 @@ class RoomCreateTestCase(RoomServiceTestCase):
 class RoomUpdateTestCase(RoomServiceTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.room = Room.objects.create(
+        self.room = baker.make(
+            Room,
             shelter=self.shelter,
             name="Room-101",
             medical_respite=False,
@@ -197,10 +198,10 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
 class RoomDeleteTestCase(RoomServiceTestCase):
     def test_deletes_single_room(self) -> None:
-        room_to_delete = Room.objects.create(shelter=self.shelter, name="Room-101")
-        other_room = Room.objects.create(shelter=self.shelter, name="Room-102")
-        bed_in_room = Bed.objects.create(shelter=self.shelter, room=room_to_delete, name="Bed 1")
-        other_bed = Bed.objects.create(shelter=self.shelter, room=other_room, name="Bed 2")
+        room_to_delete = baker.make(Room, shelter=self.shelter, name="Room-101")
+        other_room = baker.make(Room, shelter=self.shelter, name="Room-102")
+        bed_in_room = baker.make(Bed, shelter=self.shelter, room=room_to_delete, name="Bed 1")
+        other_bed = baker.make(Bed, shelter=self.shelter, room=other_room, name="Bed 2")
 
         deleted = room_delete(user=self.user, ids=[room_to_delete.pk])
 
@@ -213,10 +214,10 @@ class RoomDeleteTestCase(RoomServiceTestCase):
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_rooms(self) -> None:
-        room_to_delete_1 = Room.objects.create(shelter=self.shelter, name="Room-101")
-        room_to_delete_2 = Room.objects.create(shelter=self.shelter, name="Room-102")
-        other_room = Room.objects.create(shelter=self.shelter, name="Room-103")
-        other_bed = Bed.objects.create(shelter=self.shelter, room=other_room, name="Bed 1")
+        room_to_delete_1 = baker.make(Room, shelter=self.shelter, name="Room-101")
+        room_to_delete_2 = baker.make(Room, shelter=self.shelter, name="Room-102")
+        other_room = baker.make(Room, shelter=self.shelter, name="Room-103")
+        other_bed = baker.make(Bed, shelter=self.shelter, room=other_room, name="Bed 1")
 
         deleted = room_delete(user=self.user, ids=[room_to_delete_1.pk, room_to_delete_2.pk])
 
@@ -241,7 +242,8 @@ class RoomCloneTestCase(RoomServiceTestCase):
         self.shelter.funders.add(funder)
         self.shelter.accessibility.add(accessibility)
         self.shelter.pets.add(pet)
-        source = Room.objects.create(
+        source = baker.make(
+            Room,
             amenities="WiFi, AC",
             maintenance_flag=True,
             medical_respite=True,
@@ -256,8 +258,8 @@ class RoomCloneTestCase(RoomServiceTestCase):
         source.funders.add(funder)
         source.accessibility.add(accessibility)
         source.pets.add(pet)
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1")
-        Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2")
+        baker.make(Bed, shelter=self.shelter, room=source, name="Bed 1")
+        baker.make(Bed, shelter=self.shelter, room=source, name="Bed 2")
 
         clone = room_clone(user=self.user, room_id=str(source.pk))
 
@@ -291,7 +293,7 @@ class RoomCloneTestCase(RoomServiceTestCase):
         )
 
     def test_clone_same_room_twice_uses_incremented_name(self) -> None:
-        source = Room.objects.create(shelter=self.shelter, name="Room-101")
+        source = baker.make(Room, shelter=self.shelter, name="Room-101")
 
         first = room_clone(user=self.user, room_id=str(source.pk))
         second = room_clone(user=self.user, room_id=str(source.pk))

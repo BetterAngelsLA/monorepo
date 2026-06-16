@@ -16,7 +16,8 @@ class RoomQueriesTestCase(ShelterTestCase, TestCase):
             status=StatusChoices.APPROVED,
             is_private=False,
         )
-        self.room = Room.objects.create(
+        self.room = baker.make(
+            Room,
             shelter=self.shelter,
             name="Room-101",
             type=RoomStyleChoices.SINGLE_ROOM,
@@ -113,7 +114,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
 
     def test_rooms_query_filters_by_shelter_id(self) -> None:
         other_shelter = shelter_recipe.make(organization=self.org)
-        other_room = Room.objects.create(shelter=other_shelter, name="Room-201")
+        other_room = baker.make(Room, shelter=other_shelter, name="Room-201")
 
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -132,7 +133,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         self.assertNotIn(str(other_room.pk), [room["id"] for room in payload["results"]])
 
     def test_rooms_query_filters_by_status(self) -> None:
-        reserved_room = Room.objects.create(shelter=self.shelter, name="Room-102")
+        reserved_room = baker.make(Room, shelter=self.shelter, name="Room-102")
         baker.make(Reservation, room=reserved_room, status=ReservationStatusChoices.CONFIRMED)
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -150,9 +151,9 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         self.assertEqual(payload["results"][0]["id"], str(reserved_room.pk))
 
     def test_rooms_query_filters_by_number_of_beds(self) -> None:
-        room_with_beds = Room.objects.create(shelter=self.shelter, name="Room-103")
-        Bed.objects.create(shelter=self.shelter, room=room_with_beds, name="Bed-1")
-        Bed.objects.create(shelter=self.shelter, room=room_with_beds, name="Bed-2")
+        room_with_beds = baker.make(Room, shelter=self.shelter, name="Room-103")
+        baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-1")
+        baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-2")
 
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -172,7 +173,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_excludes_other_org_rooms(self) -> None:
         other_org = organization_recipe.make()
         other_shelter = shelter_recipe.make(organization=other_org)
-        Room.objects.create(shelter=other_shelter, name="Other-Room")
+        baker.make(Room, shelter=other_shelter, name="Other-Room")
 
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
