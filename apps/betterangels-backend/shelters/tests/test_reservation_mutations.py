@@ -58,12 +58,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
     def test_create_reservation_with_bed(self) -> None:
         initial_count = Reservation.objects.count()
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "bedId": str(self.bed.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"bedId": str(self.bed.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -75,12 +70,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertEqual(Reservation.objects.count(), initial_count + 1)
 
     def test_create_room_only_reservation(self) -> None:
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "roomId": str(self.room2.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"roomId": str(self.room2.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -91,11 +81,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIsNone(data["bed"])
 
     def test_create_reservation_requires_bed_or_room(self) -> None:
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -108,12 +94,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.bed.maintenance_flag = True
         self.bed.save()
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "bedId": str(self.bed.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"bedId": str(self.bed.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -127,18 +108,12 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         # Create a completed reservation with checkout after last_cleaned
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.COMPLETED,
             checked_out_at=now + datetime.timedelta(hours=1),
         )
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "bedId": str(self.bed.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"bedId": str(self.bed.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -151,12 +126,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.room2.maintenance_flag = True
         self.room2.save()
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "roomId": str(self.room2.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"roomId": str(self.room2.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -169,17 +139,11 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
     def test_create_reservation_duplicate_bed(self) -> None:
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(self.shelter.pk),
-                "bedId": str(self.bed.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"bedId": str(self.bed.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -191,12 +155,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         other_org_shelter = shelter_recipe.make()
         other_bed = baker.make(Bed, shelter=other_org_shelter)
 
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(other_org_shelter.pk),
-                "bedId": str(other_bed.pk),
-            }
-        }
+        variables: dict[str, Any] = {"data": {"bedId": str(other_bed.pk)}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -211,7 +170,6 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
         super().setUp()
         self.reservation = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -258,10 +216,7 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
     def test_update_reservation_to_completed(self) -> None:
         self.assertIsNone(self.reservation.checked_out_at)
 
-        variables: dict[str, Any] = {
-            "id": str(self.reservation.pk),
-            "data": {"status": "COMPLETED"},
-        }
+        variables: dict[str, Any] = {"id": str(self.reservation.pk), "data": {"status": "COMPLETED"}}
 
         response = self.execute_graphql(self.mutation, variables)
 
