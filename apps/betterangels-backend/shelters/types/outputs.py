@@ -582,7 +582,7 @@ class ReservationType:
     duration: Optional[int]
     notes: Optional[str]
     room: Optional["RoomType"]
-    shelter: "ShelterType"
+    shelter: "AdminShelterType"
     start_date: Optional[date]
     status: ReservationStatusChoices
 

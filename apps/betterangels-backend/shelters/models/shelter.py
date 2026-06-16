@@ -269,7 +269,7 @@ class Bed(CloneMixin, BaseModel):
         if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
             return BedStatusChoices.IN_TURNAROUND
 
-        if hasattr(self, "_active_reservations"):
+        if hasattr(self, "_active_reservations") and self._active_reservations is not None:
             active = self._active_reservations
         else:
             active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
@@ -289,17 +289,19 @@ class Bed(CloneMixin, BaseModel):
         (set by the GraphQL ``BedType.status`` resolver via ``Prefetch``).
         Falls back to a DB query only when the attribute is not present.
         """
-        if hasattr(self, "_completed_reservations"):
-            reservations: list = getattr(self, "_completed_reservations")  # noqa: B009
-            if reservations:
-                return max(r.checked_out_at for r in reservations if r.checked_out_at)
+        if hasattr(self, "_completed_reservations") and self._completed_reservations is not None:
+            if reservations := self._completed_reservations:
+                return max(r.checked_out_at for r in reservations if r.checked_out_at)  # type: ignore[no-any-return]
+
             return None
 
-        from shelters.models.reservation import Reservation
+        completed = (
+            self.reservations.filter(status=ReservationStatusChoices.COMPLETED)
+            .order_by("-checked_out_at")
+            .only("checked_out_at")
+            .first()
+        )
 
-        completed = self.reservations.filter(
-            status=ReservationStatusChoices.COMPLETED,
-        ).order_by("-checked_out_at").only("checked_out_at").first()
         return completed.checked_out_at if completed else None
 
 
@@ -355,7 +357,7 @@ class Room(CloneMixin, BaseModel):
         if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
             return RoomStatusChoices.IN_TURNAROUND
 
-        if hasattr(self, "_active_reservations"):
+        if hasattr(self, "_active_reservations") and self._active_reservations is not None:
             active = self._active_reservations
         else:
             active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
@@ -375,17 +377,19 @@ class Room(CloneMixin, BaseModel):
         (set by the GraphQL ``RoomType.status`` resolver via ``Prefetch``).
         Falls back to a DB query only when the attribute is not present.
         """
-        if hasattr(self, "_completed_reservations"):
-            reservations: list = getattr(self, "_completed_reservations")  # noqa: B009
-            if reservations:
-                return max(r.checked_out_at for r in reservations if r.checked_out_at)
+        if hasattr(self, "_completed_reservations") and self._completed_reservations is not None:
+            if reservations := self._completed_reservations:
+                return max(r.checked_out_at for r in reservations if r.checked_out_at)  # type: ignore[no-any-return]
             return None
 
-        from shelters.models.reservation import Reservation
-
-        completed = self.reservations.filter(
-            status=ReservationStatusChoices.COMPLETED,
-        ).order_by("-checked_out_at").only("checked_out_at").first()
+        completed = (
+            self.reservations.filter(
+                status=ReservationStatusChoices.COMPLETED,
+            )
+            .order_by("-checked_out_at")
+            .only("checked_out_at")
+            .first()
+        )
         return completed.checked_out_at if completed else None
 
 

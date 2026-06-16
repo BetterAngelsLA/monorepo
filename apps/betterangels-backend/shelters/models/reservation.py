@@ -63,7 +63,7 @@ class Reservation(BaseModel):
 
         # If bed is assigned, validate bed
         if self.bed and not errors:
-            if self.bed.out_of_service:
+            if self.bed.maintenance_flag:
                 errors["bed"] = "The selected bed is out of service."
             elif self._is_bed_in_turnaround():
                 errors["bed"] = "The selected bed is currently in turnaround."
@@ -122,10 +122,16 @@ class Reservation(BaseModel):
             try:
                 previous = Reservation.objects.get(pk=self.pk)
 
-                if self.status == ReservationStatusChoices.COMPLETED and previous.status != ReservationStatusChoices.COMPLETED:
+                if (
+                    self.status == ReservationStatusChoices.COMPLETED
+                    and previous.status != ReservationStatusChoices.COMPLETED
+                ):
                     self.checked_out_at = timezone.now()
 
-                if self.status == ReservationStatusChoices.CHECKED_IN and previous.status != ReservationStatusChoices.CHECKED_IN:
+                if (
+                    self.status == ReservationStatusChoices.CHECKED_IN
+                    and previous.status != ReservationStatusChoices.CHECKED_IN
+                ):
                     self.checked_in_at = timezone.now()
 
             except Reservation.DoesNotExist:

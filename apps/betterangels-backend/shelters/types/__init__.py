@@ -78,7 +78,6 @@ __all__ = [
     # filters
     "BedFilter",
     "BedOrder",
-    "ReservationFilter",
     "GeolocationInput",
     "MapBoundsInput",
     "ReservationFilter",
