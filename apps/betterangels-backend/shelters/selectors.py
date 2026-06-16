@@ -117,14 +117,18 @@ def admin_shelter_list(
 ) -> "QuerySet[Shelter]":
     """Filter to shelters whose organization the *user* belongs to.
 
-    If *organization_id* is provided, scopes to that org.  Otherwise
-    returns all orgs the user belongs to.
+    If *organization_id* is provided, only returns shelters in that org
+    if *user* is a member.  Otherwise returns shelters across all orgs
+    *user* belongs to.
     """
     if organization_id:
-        return queryset.filter(organization_id=organization_id)
+        return queryset.filter(
+            organization_id=organization_id,
+            organization__in=Organization.objects.filter(pk=organization_id, users=user),
+        )
 
-    user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-    return queryset.filter(Exists(user_orgs))
+    user_orgs = Organization.objects.filter(users=user)
+    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), pk__in=user_orgs)))
 
 
 def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
