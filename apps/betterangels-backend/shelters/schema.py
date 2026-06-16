@@ -35,6 +35,7 @@ from shelters.types import (
     UpdateBedInput,
     UpdateRoomInput,
     UpdateShelterInput,
+    UpdateShelterPhotoInput,
 )
 from strawberry import ID
 from strawberry.scalars import JSON
@@ -194,6 +195,11 @@ class Mutation:
         )
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def update_shelter_photo(self, info: Info, data: UpdateShelterPhotoInput) -> ShelterPhotoType:
+        user = cast(User, get_current_user(info))
+        return cast(ShelterPhotoType, shelter_photo.update_shelter_photo(user=user, data=data))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
     def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:

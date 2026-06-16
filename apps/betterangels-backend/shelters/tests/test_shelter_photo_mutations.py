@@ -519,3 +519,72 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
         self.assertGraphQLOperationInfo(response, "deleteShelterPhotos", "999999", kind="ERROR")
         # Atomic — nothing deleted
         self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+
+
+class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
+    MUTATION = """
+        mutation UpdateShelterPhoto($data: UpdateShelterPhotoInput!) {
+            updateShelterPhoto(data: $data) {
+                ... on ShelterPhotoType {
+                    id
+                    type
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+        self.graphql_client.force_login(self.operator)
+
+    def test_requires_authentication(self) -> None:
+        self.graphql_client.logout()
+        photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        expected_query_count = 0
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
+
+        self.assertGraphQLUnauthenticated(response)
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
+
+    def test_updates_photo_type(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelterPhoto"]
+        self.assertEqual(result["id"], str(photo.pk))
+        self.assertEqual(result["type"], "EXTERIOR")
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.EXTERIOR)
+
+    def test_returns_operation_info_for_nonexistent_photo(self) -> None:
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"id": "999999", "photoType": "EXTERIOR"}})
+
+        self.assertGraphQLOperationInfo(response, "updateShelterPhoto", "999999", kind="ERROR")
+
+    def test_returns_operation_info_for_unauthorized_photo(self) -> None:
+        other_shelter: Any = shelter_recipe.make()
+        photo = baker.make(ShelterPhoto, shelter=other_shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
+
+        self.assertGraphQLOperationInfo(response, "updateShelterPhoto", str(photo.pk), kind="ERROR")
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)

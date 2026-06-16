@@ -287,3 +287,9 @@ class ShelterPhotoFromUploadInput:
 class ResolveShelterPhotoUploadsInput:
     shelter_id: ID
     photos: list[ShelterPhotoFromUploadInput]
+
+
+@strawberry.input
+class UpdateShelterPhotoInput:
+    id: ID
+    photo_type: ShelterPhotoTypeChoices

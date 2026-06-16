@@ -23,6 +23,7 @@ from shelters.types.inputs import (
     UpdateBedInput,
     UpdateRoomInput,
     UpdateShelterInput,
+    UpdateShelterPhotoInput,
 )
 from shelters.types.lookups import (
     AccessibilityType,
@@ -88,6 +89,7 @@ __all__ = [
     "CreateShelterInput",
     "GenerateShelterPhotoUploadsInput",
     "ResolveShelterPhotoUploadsInput",
+    "UpdateShelterPhotoInput",
     "UpdateBedInput",
     "UpdateRoomInput",
     "UpdateShelterInput",

@@ -15,7 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Shelter, ShelterPhoto
 from shelters.selectors import admin_shelter_list, shelter_get
-from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput
+from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
 SERVICE_NAME = "shelter_photo"
@@ -137,4 +137,30 @@ def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
         raise ObjectDoesNotExist(f"ShelterPhoto IDs not found or not accessible: {sorted(missing)}")
 
     photos.delete()
+
     return deleted_ids
+
+
+def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> ShelterPhoto:
+    """Update a shelter photo's type.
+
+    Validates org access via the photo's shelter.
+
+    Raises:
+        ``ObjectDoesNotExist`` when the photo is not found or the user does not
+        belong to its shelter's organization.
+    """
+    photo_id = data.id
+
+    try:
+        photo = ShelterPhoto.objects.get(
+            shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
+            pk=photo_id,
+        )
+    except ShelterPhoto.DoesNotExist:
+        raise ObjectDoesNotExist(f"ShelterPhoto matching ID {photo_id} could not be found.")
+
+    photo.type = data.photo_type
+    photo.save(update_fields=["type", "updated_at"])
+
+    return photo

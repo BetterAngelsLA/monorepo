@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from accounts.tests.baker_recipes import organization_recipe
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
@@ -15,8 +16,11 @@ from shelters.services.shelter_photo import (
     create_presigned_uploads,
     delete_shelter_photos,
     resolve_uploads,
+    update_shelter_photo,
 )
 from shelters.tests.baker_recipes import shelter_recipe
+from shelters.types.inputs import UpdateShelterPhotoInput
+from strawberry import ID
 
 # ---------------------------------------------------------------------------
 # _validate_content_type
@@ -376,7 +380,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         initial_count = ShelterPhoto.objects.count()
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ObjectDoesNotExist, "999999"):
             delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
@@ -388,7 +392,47 @@ class DeleteShelterPhotosTest(TestCase):
         unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
         initial_count = ShelterPhoto.objects.count()
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ObjectDoesNotExist, str(unauthorized.pk)):
             delete_shelter_photos(user=self.user, ids=[authorized.pk, unauthorized.pk])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
+
+
+# ---------------------------------------------------------------------------
+# update_shelter_photo
+# ---------------------------------------------------------------------------
+
+
+class UpdateShelterPhotoTest(TestCase):
+    def setUp(self) -> None:
+        self.org: Any = organization_recipe.make()
+        self.user: Any = baker.make("accounts.User")
+        self.user.organizations_organization.add(self.org)
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+
+    def _input(self, photo_id: int, photo_type: ShelterPhotoTypeChoices) -> UpdateShelterPhotoInput:
+        return UpdateShelterPhotoInput(id=ID(str(photo_id)), photo_type=photo_type)
+
+    def test_updates_photo_type(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        result = update_shelter_photo(user=self.user, data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
+
+        self.assertEqual(result.pk, photo.pk)
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.EXTERIOR)
+
+    def test_raises_for_nonexistent_photo(self) -> None:
+        with self.assertRaisesRegex(Exception, "999999"):
+            update_shelter_photo(user=self.user, data=self._input(999999, ShelterPhotoTypeChoices.EXTERIOR))
+
+    def test_raises_for_unauthorized_photo(self) -> None:
+        other_org: Any = organization_recipe.make()
+        other_shelter: Any = shelter_recipe.make(organization=other_org)
+        photo = baker.make(ShelterPhoto, shelter=other_shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+
+        with self.assertRaisesRegex(Exception, str(photo.pk)):
+            update_shelter_photo(user=self.user, data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
+
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
