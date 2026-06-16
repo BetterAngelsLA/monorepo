@@ -24,3 +24,4 @@ The backend follows the [HackSoftware Django-Styleguide](https://github.com/Hack
 - The backend uses Django with GraphQL. The frontend uses React Native (Expo) and React (Vite).
 - Always run backend tests with `yarn nx test betterangels-backend` and frontend tests with `yarn nx test betterangels` or `yarn nx test shelter-web`.
 - Use the dev container for all development work. Backend services (Django, PostgreSQL, MinIO, etc.) run inside Docker Compose.
+- **CRITICAL: You are running INSIDE the dev container.** Do NOT attempt to use `docker compose` or `docker` commands. All services (Django, PostgreSQL, MinIO, etc.) are already running and accessible. Run tests directly with `yarn nx test` or `python manage.py test` inside the container — NOT via docker compose exec.

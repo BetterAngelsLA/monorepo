@@ -8,6 +8,7 @@ from django.contrib.auth.models import Group
 from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
+from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -179,6 +180,24 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
+
+
+def get_current_organization(info: Info) -> str:
+    """Return the organization ID from the current request context.
+
+    Reads ``request.organization_id``, which is set by
+    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header.
+
+    Companion to ``get_current_user(info)`` — use it anywhere a schema
+    method needs the active organization for selector/service calls.
+
+    Raises:
+        ``AttributeError`` if the request does not have ``organization_id``
+        set.  This only happens when a field/mutation uses ``@HasOrgPerm``
+        without the middleware being installed — which is a configuration
+        error.
+    """
+    return str(info.context.request.organization_id)
 
 
 def assign_object_permissions(

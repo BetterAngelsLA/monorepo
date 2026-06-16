@@ -23,6 +23,9 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
         self.org_1.add_user(self.org_member)
         self.org_2.add_user(self.org_member)
 
+        # Default header — tests that need org_2 scope override it below
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.id)
+
     @parametrize(
         "user, expected_error",
         [
@@ -75,6 +78,11 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
         expected_members: list[str],
     ) -> None:
         self.graphql_client.force_login(getattr(self, f"{user}"))
+        # Tests that target org_2 need the header to match
+        if org == "org_2":
+            self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_2.id)
+        else:
+            self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.id)
 
         query = """
             query ($organizationId: String!) {
@@ -123,6 +131,7 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
 
         self.org_1.add_user(self.org_member)
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.id)
 
     @parametrize(
         "user, expected_error",
@@ -190,6 +199,7 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
 
         self.org_1.add_user(self.org_member)
         self.org_1.add_user(self.removable_member)
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(self.org_1.id)
 
     @parametrize(
         "user, expected_error",

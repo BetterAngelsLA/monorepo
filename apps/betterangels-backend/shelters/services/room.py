@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @transaction.atomic
-def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
+def room_create(*, user: "User", data: Dict[str, Any], organization_id: str) -> Room:
     """Create a new Room associated with an existing Shelter.
 
     Validates that *user* belongs to the shelter's organization via
@@ -26,7 +26,7 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     data = dict(data)
     shelter_id = data.pop("shelter_id")
     try:
-        shelter = shelter_get(user=user, shelter_id=shelter_id)
+        shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
 
@@ -51,7 +51,7 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 
 
 @transaction.atomic
-def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Room:
+def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any], organization_id: str) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
     Validates org access via the room's shelter. Only keys present in *data*
@@ -63,7 +63,7 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     """
     data = dict(data)
     try:
-        room = room_get(user=user, room_id=room_id)
+        room = room_get(user=user, room_id=room_id, organization_id=organization_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
@@ -114,20 +114,20 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, user: "User", ids: list[int]) -> list[int]:
+def room_delete(*, user: "User", ids: list[int], organization_id: str) -> list[int]:
     """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
         ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
     """
-    rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
+    rooms = admin_room_list(Room.objects.all(), user=user, organization_id=organization_id).filter(pk__in=ids)
     deleted_ids = list(rooms.values_list("pk", flat=True))
     rooms.delete()
     return deleted_ids
 
 
 @transaction.atomic
-def room_clone(*, user: "User", room_id: str) -> Room:
+def room_clone(*, user: "User", room_id: str, organization_id: str) -> Room:
     """Clone an existing room on *shelter_id*, including all M2M relationships.
 
     Validates org access via ``room_get``. The source room must belong to
@@ -141,6 +141,7 @@ def room_clone(*, user: "User", room_id: str) -> Room:
         source = admin_room_list(
             Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
             user=user,
+            organization_id=organization_id,
         ).get(pk=room_id)
     except Room.DoesNotExist:
         raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")

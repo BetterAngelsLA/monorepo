@@ -31,9 +31,15 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
+        # HasOrgPerm checks org-scoped permissions, not global Django perms.
+        # Add view_shelter to the CASEWORKER permission group so the user's
+        # org membership grants the permission.
+        from notes.groups import CASEWORKER
+
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1_case_manager_1.user_permissions.add(perm)
+        pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
+        pg.group.permissions.add(perm)
 
     def test_admin_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
@@ -316,9 +322,15 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
     def setUp(self) -> None:
         super().setUp()
+
+        # HasOrgPerm checks org-scoped permissions, not global Django perms.
+        from notes.groups import CASEWORKER
+
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1_case_manager_1.user_permissions.add(perm)
+        pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
+        pg.group.permissions.add(perm)
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         # Shelters A & B: SINGLE_MEN, VETERANS, BUILDING, SPA ONE

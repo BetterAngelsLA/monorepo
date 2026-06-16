@@ -40,13 +40,13 @@ class ShelterManager(models.Manager["Shelter"]):
 
 
 class AdminShelterQuerySet(ShelterQuerySet):
-    def for_user(self, user: "User") -> "AdminShelterQuerySet":
-        return admin_shelter_list(self, user=user)  # type: ignore[return-value]
+    def for_user(self, user: "User", organization_id: str) -> "AdminShelterQuerySet":
+        return admin_shelter_list(self, user=user, organization_id=organization_id)  # type: ignore[return-value]
 
 
 class AdminShelterManager(models.Manager["Shelter"]):
     def get_queryset(self) -> AdminShelterQuerySet:
         return AdminShelterQuerySet(self.model, using=self._db)
 
-    def for_user(self, user: "User") -> AdminShelterQuerySet:
-        return self.get_queryset().for_user(user)
+    def for_user(self, user: "User", organization_id: str) -> AdminShelterQuerySet:
+        return self.get_queryset().for_user(user, organization_id=organization_id)

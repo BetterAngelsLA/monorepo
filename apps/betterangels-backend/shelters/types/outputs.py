@@ -10,6 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.imgproxy import build_imgproxy_url
+from common.permissions.utils import get_current_organization
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
@@ -264,8 +265,7 @@ class AdminShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        organization_id: str | None = getattr(info.context.request, "organization_id", None)
-        return admin_shelter_list(queryset, user=user, organization_id=organization_id)
+        return admin_shelter_list(queryset, user=user, organization_id=get_current_organization(info))
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -282,7 +282,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return admin_bed_list(queryset, user=user)
+        return admin_bed_list(queryset, user=user, organization_id=get_current_organization(info))
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -309,7 +309,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return admin_room_list(queryset, user=user)
+        return admin_room_list(queryset, user=user, organization_id=get_current_organization(info))
 
     id: ID
     accessibility: List[AccessibilityType]

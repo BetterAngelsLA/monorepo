@@ -113,12 +113,14 @@ def admin_shelter_list(
     queryset: "QuerySet[Shelter]",
     *,
     user: "User",
-    organization_id: str | None = None,
+    organization_id: str,
 ) -> "QuerySet[Shelter]":
     """Filter to shelters in *organization_id* that *user* belongs to.
 
-    ``organization_id`` is required — the ``HasOrgPerm`` extension on
-    the query ensures a header org is always present.
+    Single query: ``organization_id`` is required.  Callers must pass the
+    org ID from the ``X-Organization-ID`` header (set by the ``HasOrgPerm``
+    extension on queries) or from ``request.organization_id`` (for mutations
+    that use ``HasOrgPerm``).
     """
     return queryset.filter(
         organization_id=organization_id,
@@ -126,7 +128,7 @@ def admin_shelter_list(
     )
 
 
-def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
+def shelter_get(*, user: "User", shelter_id: int | str, organization_id: str) -> "Shelter":
     """Return the shelter if it exists and the user belongs to its organization.
 
     Uses ``admin_shelter_list`` as the base queryset so the org-membership
@@ -138,31 +140,31 @@ def shelter_get(*, user: "User", shelter_id: int | str) -> "Shelter":
     """
     from shelters.models import Shelter
 
-    return admin_shelter_list(Shelter.objects.all(), user=user).get(pk=shelter_id)
+    return admin_shelter_list(Shelter.objects.all(), user=user, organization_id=organization_id).get(pk=shelter_id)
 
 
-def admin_room_list(queryset: "QuerySet[Room]", *, user: "User") -> "QuerySet[Room]":
+def admin_room_list(queryset: "QuerySet[Room]", *, user: "User", organization_id: str) -> "QuerySet[Room]":
     from shelters.models import Shelter
 
-    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
+    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user, organization_id=organization_id))
 
 
-def room_get(*, user: "User", room_id: int | str) -> "Room":
+def room_get(*, user: "User", room_id: int | str, organization_id: str) -> "Room":
     from shelters.models import Room
 
-    return admin_room_list(Room.objects.select_related("shelter"), user=user).get(pk=room_id)
+    return admin_room_list(Room.objects.select_related("shelter"), user=user, organization_id=organization_id).get(pk=room_id)
 
 
-def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User") -> "QuerySet[Bed]":
+def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User", organization_id: str) -> "QuerySet[Bed]":
     from shelters.models import Shelter
 
-    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user))
+    return queryset.filter(shelter__in=admin_shelter_list(Shelter.objects.all(), user=user, organization_id=organization_id))
 
 
-def bed_get(*, user: "User", bed_id: int | str) -> "Bed":
+def bed_get(*, user: "User", bed_id: int | str, organization_id: str) -> "Bed":
     from shelters.models import Bed
 
-    return admin_bed_list(Bed.objects.select_related("shelter"), user=user).get(pk=bed_id)
+    return admin_bed_list(Bed.objects.select_related("shelter"), user=user, organization_id=organization_id).get(pk=bed_id)
 
 
 def shelters_open_at(

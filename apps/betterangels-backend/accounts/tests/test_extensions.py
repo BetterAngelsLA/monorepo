@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 from accounts.extensions import HasOrgPerm
 from accounts.models import PermissionGroup, User
 from django.contrib.auth.models import Group, Permission
-from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
+from strawberry_django.permissions import DjangoNoPermission
 from model_bakery import baker
 from organizations.models import Organization
 from shelters.models import Shelter
@@ -61,30 +61,45 @@ class HasOrgPermTestCase(TestCase):
         info = self._make_info(org_id=str(self.org.id))
 
         try:
-            extension.resolve_for_user(self.user, info)
-        except PermissionDenied:
-            self.fail("HasOrgPerm raised PermissionDenied unexpectedly")
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=self.user,
+                info=info,
+                source=None,
+            )
+        except DjangoNoPermission:
+            self.fail("HasOrgPerm raised DjangoNoPermission unexpectedly")
 
     # ── Missing header ─────────────────────────────────────────────────
 
     def test_no_org_header_raises(self) -> None:
-        """Missing X-Organization-ID header raises PermissionDenied."""
+        """Missing X-Organization-ID header raises DjangoNoPermission."""
         extension = self._make_extension()
         info = self._make_info(org_id=None)
 
-        with self.assertRaises(PermissionDenied):
-            extension.resolve_for_user(self.user, info)
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=self.user,
+                info=info,
+                source=None,
+            )
 
     # ── Wrong org ──────────────────────────────────────────────────────
 
     def test_user_not_member_of_org_raises(self) -> None:
-        """Non-member org raises PermissionDenied even if header is present."""
+        """Non-member org raises DjangoNoPermission even if header is present."""
         other_org: Organization = Organization.objects.create(name="Other Org")  # user is NOT a member
         extension = self._make_extension()
         info = self._make_info(org_id=str(other_org.id))
 
-        with self.assertRaises(PermissionDenied):
-            extension.resolve_for_user(self.user, info)
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=self.user,
+                info=info,
+                source=None,
+            )
 
     # ── Missing permission ─────────────────────────────────────────────
 
@@ -95,8 +110,13 @@ class HasOrgPermTestCase(TestCase):
         extension = self._make_extension()
         info = self._make_info(org_id=str(self.org.id))
 
-        with self.assertRaises(PermissionDenied):
-            extension.resolve_for_user(self.user, info)
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=self.user,
+                info=info,
+                source=None,
+            )
 
     # ── Anonymous ──────────────────────────────────────────────────────
 
@@ -105,8 +125,13 @@ class HasOrgPermTestCase(TestCase):
         extension = self._make_extension()
         info = self._make_info(org_id=str(self.org.id), authenticated=False)
 
-        with self.assertRaises(PermissionDenied):
-            extension.resolve_for_user(None, info)  # type: ignore[arg-type]
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=None,  # type: ignore[arg-type]
+                info=info,
+                source=None,
+            )
 
     # ── No header always denied ────────────────────────────────────────
 
@@ -115,5 +140,10 @@ class HasOrgPermTestCase(TestCase):
         extension = HasOrgPerm(Shelter.perms.VIEW, fail_silently=True)
         info = self._make_info(org_id=None)
 
-        with self.assertRaises(PermissionDenied):
-            extension.resolve_for_user(self.user, info)
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(
+                resolver=lambda: None,
+                user=self.user,
+                info=info,
+                source=None,
+            )

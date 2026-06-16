@@ -20,15 +20,17 @@ Or with django-codename strings::
     HasOrgPerm("shelters.view_shelter")
 """
 
+from collections.abc import Callable
 from typing import Any
 
-from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from strawberry.types import Info
 from strawberry_django.permissions import (
+    DjangoNoPermission,
     HasPerm,
     PermTarget,
 )
+from strawberry_django.utils.typing import UserType
 
 
 class HasOrgPerm(HasPerm):
@@ -56,21 +58,28 @@ class HasOrgPerm(HasPerm):
         "organization set via X-Organization-ID header."
     )
 
-    def resolve_for_user(self, user: Any, info: Info) -> None:
+    def resolve_for_user(
+        self,
+        resolver: Callable,
+        user: UserType | None,
+        *,
+        info: Info,
+        source: Any,
+    ) -> Any:
         request = info.context.request
         org_id: str | None = getattr(request, "organization_id", None)
 
         if not org_id:
-            raise PermissionDenied(
+            raise DjangoNoPermission(
                 "Organization ID is required for this operation. "
                 "Set the X-Organization-ID header."
             )
 
         if not user or not user.is_authenticated:
-            raise PermissionDenied("Authentication required.")
+            raise DjangoNoPermission("Authentication required.")
 
         if not self.perms:
-            raise PermissionDenied("No permissions specified for this operation.")
+            raise DjangoNoPermission("No permissions specified for this operation.")
 
         from accounts.models import Organization
 
@@ -97,7 +106,9 @@ class HasOrgPerm(HasPerm):
             org = org_filter.first()
 
         if org is None:
-            raise PermissionDenied(
+            raise DjangoNoPermission(
                 "You do not have permission to perform this action "
                 "in this organization."
             )
+
+        return resolver()
