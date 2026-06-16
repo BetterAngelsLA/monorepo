@@ -920,6 +920,8 @@ export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
+export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
+
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
@@ -1586,6 +1588,7 @@ export type Mutation = {
   deleteReferral: DeleteReferralPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
@@ -1618,6 +1621,7 @@ export type Mutation = {
   updateReferral: UpdateReferralPayload;
   updateRoom: UpdateRoomPayload;
   updateShelter: UpdateShelterPayload;
+  updateShelterPhoto: UpdateShelterPhotoPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
@@ -1790,6 +1794,11 @@ export type MutationDeleteServiceRequestArgs = {
 };
 
 
+export type MutationDeleteShelterPhotosArgs = {
+  data: BulkDeleteInput;
+};
+
+
 export type MutationDeleteSocialMediaProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
@@ -1945,6 +1954,11 @@ export type MutationUpdateRoomArgs = {
 
 export type MutationUpdateShelterArgs = {
   data: UpdateShelterInput;
+};
+
+
+export type MutationUpdateShelterPhotoArgs = {
+  data: UpdateShelterPhotoInput;
 };
 
 
@@ -3029,6 +3043,8 @@ export enum ShelterPermissions {
 }
 
 export type ShelterPhotoFromUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
   photoType: ShelterPhotoTypeChoices;
   presignedKey: Scalars['String']['input'];
   uploadToken: Scalars['String']['input'];
@@ -3561,6 +3577,13 @@ export type UpdateShelterInput = {
 };
 
 export type UpdateShelterPayload = OperationInfo | ShelterType;
+
+export type UpdateShelterPhotoInput = {
+  id: Scalars['ID']['input'];
+  photoType: ShelterPhotoTypeChoices;
+};
+
+export type UpdateShelterPhotoPayload = OperationInfo | ShelterPhotoType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 

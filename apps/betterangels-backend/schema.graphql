@@ -904,6 +904,8 @@ union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
+union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
+
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
@@ -1591,6 +1593,8 @@ type Mutation {
   deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
   generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -2381,6 +2385,8 @@ enum ShelterPermissions {
 input ShelterPhotoFromUploadInput {
   presignedKey: String!
   uploadToken: String!
+  filename: String!
+  contentType: String!
   photoType: ShelterPhotoTypeChoices!
 }
 
@@ -2903,6 +2909,13 @@ input UpdateShelterInput {
 }
 
 union UpdateShelterPayload = ShelterType | OperationInfo
+
+input UpdateShelterPhotoInput {
+  id: ID!
+  photoType: ShelterPhotoTypeChoices!
+}
+
+union UpdateShelterPhotoPayload = ShelterPhotoType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
