@@ -61,9 +61,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
 
     @patch("common.graphql.types.build_img_url")
     def test_shelter_query(self, mock_build_img_url: Mock) -> None:
-        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
         shelter_organization = organization_recipe.make()
         service_category, _ = ServiceCategory.objects.get_or_create(
@@ -327,9 +325,7 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
 
     @patch("shelters.types.outputs.build_img_url")
     def test_shelters_query(self, mock_build_img_url: Mock) -> None:
-        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
 
         shelter_count = 2
         shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
