@@ -3,6 +3,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
+from strawberry_django.permissions import HasPerm
 from accounts.models import User
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
