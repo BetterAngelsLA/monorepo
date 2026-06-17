@@ -1,43 +1,21 @@
-import { useMutation } from '@apollo/client/react';
-import { gql } from '@apollo/client';
 import { operatorPath, useUser } from '@monorepo/react/shelter';
-import { Input, toError } from '@monorepo/react/shared';
+import { Input } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons';
+import { useCreateOrganization } from '../../hooks/useCreateOrganization';
 
 export function CreateOrganizationPage() {
   const { refetchUser } = useUser();
   const navigate = useNavigate();
   const [orgName, setOrgName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [createOrganization] = useMutation(
-    gql`
-      mutation CreateOrganization($data: CreateOrganizationInput!) {
-        createOrganization(data: $data) {
-          user { id email firstName lastName }
-          organization { id name }
-        }
-      }
-    `
-  );
+  const { createOrganization, submitting, error } = useCreateOrganization();
 
   const handleCreateOrg = async () => {
-    if (!orgName.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      await createOrganization({
-        variables: { data: { organizationName: orgName.trim() } },
-      });
+    const ok = await createOrganization(orgName);
+    if (ok) {
       await refetchUser();
       navigate(operatorPath);
-    } catch (err) {
-      setError(toError(err).message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -65,9 +43,7 @@ export function CreateOrganizationPage() {
           />
         </div>
 
-        {error && (
-          <p className="text-alert-60 text-sm mb-4">{error}</p>
-        )}
+        {error && <p className="text-alert-60 text-sm mb-4">{error}</p>}
 
         <Button
           variant="floating"

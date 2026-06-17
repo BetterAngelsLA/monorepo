@@ -56,7 +56,7 @@ export function Dashboard() {
 
   // User has no organizations — redirect to create-org page (full-screen, no layout chrome)
   if (organizations.length === 0) {
-    return <Navigate to="/operator/create-organization" replace />;
+    return <Navigate to={paths.createOrganization} replace />;
   }
 
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
