@@ -68,89 +68,6 @@ export type AddressType = {
   zipCode?: Maybe<Scalars['String']['output']>;
 };
 
-export type AdminShelterType = {
-  __typename?: 'AdminShelterType';
-  HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
-  accessibility: Array<AccessibilityType>;
-  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
-  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
-  availability?: Maybe<ShelterAvailabilityType>;
-  bedFees?: Maybe<Scalars['String']['output']>;
-  bedsByStatus: BedsByStatusType;
-  citiesServed: Array<CityType>;
-  city?: Maybe<CityType>;
-  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
-  curfew?: Maybe<Scalars['Time']['output']>;
-  demographics: Array<DemographicType>;
-  demographicsOther?: Maybe<Scalars['String']['output']>;
-  description: Scalars['String']['output'];
-  distanceInMiles?: Maybe<Scalars['Float']['output']>;
-  email?: Maybe<Scalars['String']['output']>;
-  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
-  entryInfo?: Maybe<Scalars['String']['output']>;
-  entryRequirements: Array<EntryRequirementType>;
-  exitPolicy: Array<ExitPolicyType>;
-  exitPolicyOther?: Maybe<Scalars['String']['output']>;
-  funders: Array<FunderType>;
-  fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<ShelterHeroImageType>;
-  id: Scalars['ID']['output'];
-  instagram?: Maybe<Scalars['String']['output']>;
-  isPrivate: Scalars['Boolean']['output'];
-  location?: Maybe<ShelterLocationType>;
-  maxStay?: Maybe<Scalars['Int']['output']>;
-  mediaLinks: Array<MediaLinkType>;
-  name: Scalars['String']['output'];
-  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
-  organization?: Maybe<OrganizationType>;
-  otherRules?: Maybe<Scalars['String']['output']>;
-  otherServices?: Maybe<Scalars['String']['output']>;
-  overallRating?: Maybe<Scalars['Int']['output']>;
-  parking: Array<ParkingType>;
-  pets: Array<PetType>;
-  phone?: Maybe<Scalars['PhoneNumber']['output']>;
-  photos: Array<ShelterPhotoType>;
-  programFees?: Maybe<Scalars['String']['output']>;
-  referralRequirement: Array<ReferralRequirementType>;
-  roomStyles: Array<RoomStyleType>;
-  roomStylesOther?: Maybe<Scalars['String']['output']>;
-  roomsByStatus: RoomsByStatusType;
-  schedules: Array<ScheduleType>;
-  services: Array<ServiceType>;
-  shelterPrograms: Array<ShelterProgramType>;
-  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
-  shelterTypes: Array<ShelterTypeType>;
-  shelterTypesOther?: Maybe<Scalars['String']['output']>;
-  spa?: Maybe<SpaType>;
-  spasServed: Array<SpaType>;
-  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
-  status: StatusChoices;
-  storage: Array<StorageType>;
-  subjectiveReview?: Maybe<Scalars['String']['output']>;
-  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
-  totalBeds?: Maybe<Scalars['Int']['output']>;
-  updatedAt: Scalars['DateTime']['output'];
-  vaccinationRequirement: Array<VaccinationRequirementType>;
-  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
-  website?: Maybe<Scalars['String']['output']>;
-};
-
-
-export type AdminShelterTypeHeroImageArgs = {
-  preset?: InputMaybe<ImagePresetEnum>;
-  processingOptions?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AdminShelterTypeOffsetPaginated = {
-  __typename?: 'AdminShelterTypeOffsetPaginated';
-  pageInfo: OffsetPaginationInfo;
-  /** List of paginated results. */
-  results: Array<AdminShelterType>;
-  /** Total count of existing results. */
-  totalCount: Scalars['Int']['output'];
-};
-
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
   createdAt: Scalars['DateTime']['output'];
@@ -2104,6 +2021,89 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export type OperatorShelterType = {
+  __typename?: 'OperatorShelterType';
+  HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
+  accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
+  additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
+  bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
+  citiesServed: Array<CityType>;
+  city?: Maybe<CityType>;
+  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
+  curfew?: Maybe<Scalars['Time']['output']>;
+  demographics: Array<DemographicType>;
+  demographicsOther?: Maybe<Scalars['String']['output']>;
+  description: Scalars['String']['output'];
+  distanceInMiles?: Maybe<Scalars['Float']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
+  entryInfo?: Maybe<Scalars['String']['output']>;
+  entryRequirements: Array<EntryRequirementType>;
+  exitPolicy: Array<ExitPolicyType>;
+  exitPolicyOther?: Maybe<Scalars['String']['output']>;
+  funders: Array<FunderType>;
+  fundersOther?: Maybe<Scalars['String']['output']>;
+  heroImage?: Maybe<ShelterHeroImageType>;
+  id: Scalars['ID']['output'];
+  instagram?: Maybe<Scalars['String']['output']>;
+  isPrivate: Scalars['Boolean']['output'];
+  location?: Maybe<ShelterLocationType>;
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
+  name: Scalars['String']['output'];
+  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  organization?: Maybe<OrganizationType>;
+  otherRules?: Maybe<Scalars['String']['output']>;
+  otherServices?: Maybe<Scalars['String']['output']>;
+  overallRating?: Maybe<Scalars['Int']['output']>;
+  parking: Array<ParkingType>;
+  pets: Array<PetType>;
+  phone?: Maybe<Scalars['PhoneNumber']['output']>;
+  photos: Array<ShelterPhotoType>;
+  programFees?: Maybe<Scalars['String']['output']>;
+  referralRequirement: Array<ReferralRequirementType>;
+  roomStyles: Array<RoomStyleType>;
+  roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
+  schedules: Array<ScheduleType>;
+  services: Array<ServiceType>;
+  shelterPrograms: Array<ShelterProgramType>;
+  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
+  shelterTypes: Array<ShelterTypeType>;
+  shelterTypesOther?: Maybe<Scalars['String']['output']>;
+  spa?: Maybe<SpaType>;
+  spasServed: Array<SpaType>;
+  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
+  status: StatusChoices;
+  storage: Array<StorageType>;
+  subjectiveReview?: Maybe<Scalars['String']['output']>;
+  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  vaccinationRequirement: Array<VaccinationRequirementType>;
+  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type OperatorShelterTypeHeroImageArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OperatorShelterTypeOffsetPaginated = {
+  __typename?: 'OperatorShelterTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OperatorShelterType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export enum Ordering {
   Asc = 'ASC',
   AscNullsFirst = 'ASC_NULLS_FIRST',
@@ -2333,8 +2333,6 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
-  adminShelter: AdminShelterType;
-  adminShelters: AdminShelterTypeOffsetPaginated;
   bed: BedType;
   beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
@@ -2359,6 +2357,8 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  operatorShelter: OperatorShelterType;
+  operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   referral: ReferralType;
@@ -2378,18 +2378,6 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
-};
-
-
-export type QueryAdminShelterArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryAdminSheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
-  ordering?: Array<ShelterOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2515,6 +2503,18 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryOperatorShelterArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryOperatorSheltersArgs = {
+  filters?: InputMaybe<ShelterFilter>;
+  ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
