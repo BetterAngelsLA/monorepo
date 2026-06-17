@@ -9,5 +9,6 @@ from shelters.selectors.operator import (  # noqa: F401
     shelter_get,
     shelter_list,
     shelter_queryset,
+    user_shelter_list,
 )
 from shelters.selectors.reports import report_bed_status_counts, reservation_status_change_counts  # noqa: F401

@@ -37,6 +37,21 @@ def shelter_list(
     return queryset.filter(is_private=False)
 
 
+def user_shelter_list(
+    queryset: "QuerySet[Shelter]",
+    *,
+    user: "User",
+) -> "QuerySet[Shelter]":
+    """Filter to shelters belonging to organizations that *user* is a member of.
+
+    Does NOT require a specific organization — used by global permission
+    checks (e.g., photo mutations using ``HasPerm``).
+    """
+    return queryset.filter(
+        Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user))
+    )
+
+
 def operator_shelter_list(
     queryset: "QuerySet[Shelter]",
     *,

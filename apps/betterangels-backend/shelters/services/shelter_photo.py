@@ -14,7 +14,7 @@ from common.services.upload_token import create_upload_token, validate_upload_to
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Shelter, ShelterPhoto
-from shelters.selectors import admin_shelter_list, shelter_get
+from shelters.selectors import user_shelter_list
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
@@ -30,7 +30,7 @@ def _validate_content_type(content_type: str, filename: str) -> None:
 
 def _get_shelter(*, user: User, shelter_id: int | str) -> Shelter:
     try:
-        return shelter_get(user=user, shelter_id=shelter_id)
+        return user_shelter_list(Shelter.objects.all(), user=user).get(pk=shelter_id)
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
 
@@ -127,7 +127,7 @@ def resolve_uploads(
 @transaction.atomic
 def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
     photos = ShelterPhoto.objects.filter(
-        shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
+        shelter__in=user_shelter_list(Shelter.objects.all(), user=user),
         pk__in=ids,
     )
     deleted_ids = list(photos.values_list("pk", flat=True))
@@ -154,7 +154,7 @@ def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> Shel
 
     try:
         photo = ShelterPhoto.objects.get(
-            shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
+            shelter__in=user_shelter_list(Shelter.objects.all(), user=user),
             pk=photo_id,
         )
     except ShelterPhoto.DoesNotExist:
