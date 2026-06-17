@@ -70,6 +70,8 @@ query GetAdminShelterProfile($id: ID!) {
       file {
         name
         url
+        urlThumb: url(processingOptions: "rs:fit:400:400/q:85")
+        urlLg: url(processingOptions: "rs:fit:2400:2000/q:85")
       }
     }
     vaccinationRequirement {

@@ -24,7 +24,8 @@ function buildColumns(
       width: '140px',
       render: (photo) => (
         <ThumbImg
-          src={photo.file.url}
+          src={photo.file.urlThumb}
+          srcLg={photo.file.urlLg}
           alt={`${photo.type.toLowerCase()} shelter photo`}
           className="w-28 h-16"
         />

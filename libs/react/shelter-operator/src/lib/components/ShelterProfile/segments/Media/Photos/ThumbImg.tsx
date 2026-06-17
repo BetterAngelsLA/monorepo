@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Modal } from '../../../../base-ui/modal';
 
 type TProps = {
-  src?: string | null;
+  src: string | null;
+  srcLg: string | null;
   alt?: string;
   className?: string;
 };
@@ -32,13 +33,16 @@ function Placeholder() {
 }
 
 export function ThumbImg(props: TProps) {
-  const { src, alt = '', className } = props;
+  const { src, srcLg, alt = '', className } = props;
+
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <Wrapper
       className={mergeCss([src ? 'cursor-pointer' : undefined, className])}
     >
+      {!src && <Placeholder />}
+
       {src && (
         <>
           <img
@@ -48,24 +52,24 @@ export function ThumbImg(props: TProps) {
             onClick={() => setLightboxOpen(true)}
           />
 
-          <Modal
-            isOpen={lightboxOpen}
-            onClose={() => setLightboxOpen(false)}
-            size="full"
-            showCloseButton
-          >
-            <div className="relative w-full h-full flex items-center justify-center p-6 bg-black/80">
-              <img
-                src={src}
-                alt={alt}
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
-          </Modal>
+          {srcLg && (
+            <Modal
+              isOpen={lightboxOpen}
+              onClose={() => setLightboxOpen(false)}
+              size="full"
+              showCloseButton
+            >
+              <div className="relative w-full h-full flex items-center justify-center p-6 bg-black/80">
+                <img
+                  src={srcLg}
+                  alt={alt}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            </Modal>
+          )}
         </>
       )}
-
-      {!src && <Placeholder />}
     </Wrapper>
   );
 }

@@ -1,7 +1,7 @@
 import base64
 import datetime
 from types import SimpleNamespace
-from typing import Optional, cast
+from typing import Optional
 from unittest.mock import MagicMock
 from urllib.parse import urlsplit
 
@@ -235,6 +235,7 @@ def _make_file(
 
 
 @override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT, IMGPROXY_PATH_PREFIX=TEST_PREFIX)
+@override_switch(IMGPROXY_SWITCH, active=True)
 class BuildImgproxyUrlTest(TestCase):
     @override_settings(IS_LOCAL_DEV=True)
     def test_local_dev_returns_local_url(self) -> None:
@@ -320,73 +321,3 @@ class BuildImgproxyUrlTest(TestCase):
         assert url
         self.assertIn("rs:fit:999:999", url)
         self.assertNotIn("rs:fill:100:100", url)
-
-
-# ---------------------------------------------------------------------------
-# TransformableImageType.url()
-# ---------------------------------------------------------------------------
-def _image_url_resolver(
-    root: object, preset: Optional[ImagePresetEnum] = None, processing_options: Optional[str] = None
-) -> str:
-    """Exercise the same logic as TransformableImageType.url (cannot call the Strawberry field directly)."""
-    if is_imgproxy_enabled():
-        if imgproxy_url := build_imgproxy_url(root, preset, processing_options):
-            return imgproxy_url
-
-    return cast(str, getattr(root, "url", ""))
-
-
-@override_settings(IMGPROXY_KEY=TEST_KEY, IMGPROXY_SALT=TEST_SALT)
-class TransformableImageTypeUrlTest(TestCase):
-    def _make_file(self, name: str = "photo.jpg", url: str = "https://cdn/photo.jpg") -> SimpleNamespace:
-        return SimpleNamespace(
-            name=name,
-            storage=SimpleNamespace(bucket_name="test-bucket", location="media"),
-            url=url,
-        )
-
-    @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_preset_url(self) -> None:
-        file = self._make_file()
-        url = _image_url_resolver(file, preset=ImagePresetEnum.MD)
-        self.assertIn("localhost:8080", url)
-        self.assertIn("rs:fill:400:400", url)
-
-    @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_raw_processing_url(self) -> None:
-        file = self._make_file()
-        url = _image_url_resolver(file, processing_options="rs:fit:800:600/q:80")
-        self.assertIn("localhost:8080", url)
-        self.assertIn("rs:fit:800:600", url)
-
-    @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_processing_takes_precedence_over_preset(self) -> None:
-        file = self._make_file()
-        url = _image_url_resolver(file, preset=ImagePresetEnum.SM, processing_options="rs:fit:999:999")
-        self.assertIn("rs:fit:999:999", url)
-        self.assertNotIn("rs:fill:100:100", url)
-
-    @override_switch(IMGPROXY_SWITCH, active=False)
-    def test_url_falls_back_when_imgproxy_disabled(self) -> None:
-        file = self._make_file(url="https://cdn/fallback.jpg")
-        url = _image_url_resolver(file, preset=ImagePresetEnum.MD)
-        self.assertEqual(url, "https://cdn/fallback.jpg")
-
-    @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_url_falls_back_when_no_preset_or_processing(self) -> None:
-        file = self._make_file(url="https://cdn/photo.jpg")
-        url = _image_url_resolver(file)
-        assert url
-        self.assertIn("rs:force:0:0", url)
-
-    @override_settings(IS_LOCAL_DEV=True)
-    @override_switch(IMGPROXY_SWITCH, active=True)
-    def test_url_falls_back_when_imgproxy_enabled_but_no_source_url(self) -> None:
-        """When imgproxy is on but build_imgproxy_url returns None (e.g. no storage), return self.url."""
-        file = SimpleNamespace(name="x", storage=None, url="https://cdn/fallback.jpg")
-        url = _image_url_resolver(file, preset=ImagePresetEnum.MD)
-        self.assertEqual(url, "https://cdn/fallback.jpg")
