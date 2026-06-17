@@ -1,4 +1,4 @@
-query GetOperatorShelterProfile($id: ID!) {
+query GetShelterOperatorProfile($id: ID!) {
   operatorShelter(pk: $id) {
     bedFees
     cityCouncilDistrict

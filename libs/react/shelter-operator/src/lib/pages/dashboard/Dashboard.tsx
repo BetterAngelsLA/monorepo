@@ -120,10 +120,10 @@ export function Dashboard() {
 
   const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
-      ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
+      ViewSheltersByOrganizationQuery['operatorShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results
+      activeData?.operatorShelters?.results
         ?.filter((s): s is ShelterResult => s != null)
         .map((s) => ({
           id: String(s.id),
@@ -135,9 +135,9 @@ export function Dashboard() {
           status: s.status,
         })) ?? []
     );
-  }, [activeData?.adminShelters?.results]);
+  }, [activeData?.operatorShelters?.results]);
 
-  const totalCount = activeData?.adminShelters?.totalCount ?? 0;
+  const totalCount = activeData?.operatorShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const handleRowClick = useCallback(

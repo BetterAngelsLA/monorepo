@@ -1,4 +1,4 @@
-query GetOperatorShelterOverview($shelterId: ID!) {
+query GetShelterOperatorOverview($shelterId: ID!) {
   operatorShelter(pk: $shelterId) {
     id
     name

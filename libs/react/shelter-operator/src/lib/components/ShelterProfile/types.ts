@@ -1,3 +1,3 @@
-import { UseAdminShelterProfileResultType } from '../../hooks/useAdminShelterProfile';
+import { UseShelterOperatorProfileResultType } from '../../hooks/useShelterOperatorProfile';
 
-export type ShelterProfileType = UseAdminShelterProfileResultType;
+export type ShelterProfileType = UseShelterOperatorProfileResultType;
