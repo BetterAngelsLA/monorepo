@@ -2,11 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { MimeTypes } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ShelterPhotoTypeChoices } from '../../../../../../apollo/graphql/__generated__/types';
-import { Dropdown, type DropdownOption } from '../../../../../base-ui/dropdown';
-import { FileUploadInput } from '../../../../../base-ui/fileUpload';
-import { useToast } from '../../../../../base-ui/toast';
-import { Form } from '../../../../../form/Form';
+import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
+import {
+  Dropdown,
+  type DropdownOption,
+} from '../../../../../../base-ui/dropdown';
+import { FileUploadInput } from '../../../../../../base-ui/fileUpload';
+import { useToast } from '../../../../../../base-ui/toast';
+import { Form } from '../../../../../../form/Form';
 import {
   defaultFormValues,
   formSchema,

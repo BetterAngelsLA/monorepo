@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
-import { Modal } from '../../../../base-ui/modal';
+import { Modal } from '../../../../../base-ui/modal';
 
 type TProps = {
   src: string | null;

@@ -4,10 +4,10 @@ import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
 import { Form } from '../../../../form/Form';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
-import { DeleteShelterImageBtn } from './DeleteShelterImageBtn';
-import { ShelterImagesUpload } from './ShelterImagesUpload';
-import { ThumbImg } from './ThumbImg';
-import { ToggleHeroShelterImageBtn } from './ToggleHeroShelterImageBtn';
+import { DeleteShelterImageBtn } from './components/DeleteShelterImageBtn';
+import { ShelterImagesUpload } from './components/ShelterImagesUpload';
+import { ThumbImg } from './components/ThumbImg';
+import { ToggleHeroShelterImageBtn } from './components/ToggleHeroShelterImageBtn';
 
 function getLastPathSegment(path: string): string {
   return (path.split('/').at(-1) ?? path).toLowerCase();

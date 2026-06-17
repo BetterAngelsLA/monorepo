@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { uploadFileToS3WithPresignedPost } from '@monorepo/react/shared';
-import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '../../../../../../../../apollo/graphql/__generated__/types';
 import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,

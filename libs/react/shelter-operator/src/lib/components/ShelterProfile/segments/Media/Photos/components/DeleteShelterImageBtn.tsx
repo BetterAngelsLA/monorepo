@@ -1,8 +1,8 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useDeleteShelterPhotos } from '../../../../../hooks/useDeleteShelterPhotos';
-import { ConfirmationModal } from '../../../../base-ui/modal/ConfirmationModal';
+import { useDeleteShelterPhotos } from '../../../../../../hooks/useDeleteShelterPhotos';
+import { ConfirmationModal } from '../../../../../base-ui/modal/ConfirmationModal';
 
 type TProps = {
   photoId: string;
