@@ -1,6 +1,8 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import waffle
+from common.imgproxy import IMGPROXY_SWITCH
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
@@ -248,8 +250,11 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     ) -> None:
         initial_count = ShelterPhoto.objects.count()
 
-        max_query_count = 9
-        with self.assertMaxNumQueriesWithoutCache(max_query_count):
+        # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
+        waffle.switch_is_active(IMGPROXY_SWITCH)
+
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
                 {
