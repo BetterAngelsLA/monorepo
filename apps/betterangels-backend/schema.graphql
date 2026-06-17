@@ -183,7 +183,7 @@ type AuthorizedPresignedS3UploadsType {
 
 input BedFilter {
   id: ID
-  outOfService: Boolean
+  maintenanceFlag: Boolean
   shelterId: ID
   AND: BedFilter
   OR: BedFilter
@@ -217,7 +217,6 @@ type BedType {
   funders: [FunderType!]!
   lastCleanedInspected: DateTime
   lastCleaned: DateTime
-  lastCheckout: DateTime
   maintenanceFlag: Boolean!
   medicalNeeds: [MedicalNeedType!]!
   name: String
@@ -565,7 +564,6 @@ input CreateBedInput {
   maintenanceFlag: Boolean = null
   medicalNeeds: [MedicalNeedChoices!] = null
   name: String = null
-  outOfService: Boolean = null
   pets: [PetChoices!] = null
   statusNotes: String = null
   storage: Boolean = null
@@ -756,7 +754,6 @@ input CreateReferralInput {
 union CreateReferralPayload = ReferralType | OperationInfo
 
 input CreateReservationInput {
-  shelterId: ID!
   roomId: ID = null
   bedId: ID = null
   checkedInAt: DateTime = null
@@ -781,7 +778,6 @@ input CreateRoomInput {
   medicalRespite: Boolean = false
   name: String!
   notes: String = null
-  outOfService: Boolean = null
   pets: [PetChoices!] = null
   storage: Boolean = null
   type: RoomStyleChoices = null
@@ -1989,7 +1985,7 @@ type Query {
   bed(pk: ID!): BedType! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
   beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
   reservation(pk: ID!): ReservationType! @hasPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
-  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter): ReservationTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
+  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
   room(pk: ID!): RoomType! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated! @hasPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
@@ -2127,7 +2123,6 @@ input ReservationClientInput {
 
 input ReservationFilter {
   id: ID
-  shelterId: ID
   roomId: ID
   bedId: ID
   AND: ReservationFilter
@@ -2135,6 +2130,15 @@ input ReservationFilter {
   NOT: ReservationFilter
   DISTINCT: Boolean
   status: [ReservationStatusChoices!]
+  shelterId: ID
+}
+
+input ReservationOrder {
+  startDate: Ordering
+  checkedInAt: Ordering
+  checkedOutAt: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
 }
 
 enum ReservationStatusChoices {
@@ -2153,9 +2157,9 @@ type ReservationType {
   duration: Int
   notes: String
   room: RoomType
-  shelter: ShelterType!
   startDate: Date
   status: ReservationStatusChoices!
+  shelter: AdminShelterType!
   createdById: ID
   clients: [ReservationClientAssignmentType!]!
 }
@@ -2244,7 +2248,6 @@ type RoomType {
   demographics: [DemographicType!]!
   funders: [FunderType!]!
   lastCleaned: DateTime
-  lastCheckout: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
@@ -2256,7 +2259,6 @@ type RoomType {
   type: RoomStyleChoices
   typeOther: String
   status: RoomStatusChoices!
-  occupantIds: [ID!]!
 }
 
 type RoomTypeOffsetPaginated {
@@ -2745,7 +2747,6 @@ input UpdateBedInput {
   maintenanceFlag: Boolean
   medicalNeeds: [MedicalNeedChoices!]
   name: String
-  outOfService: Boolean
   pets: [PetChoices!]
   statusNotes: String
   storage: Boolean
@@ -2933,7 +2934,6 @@ input UpdateRoomInput {
   medicalRespite: Boolean
   name: String
   notes: String
-  outOfService: Boolean
   pets: [PetChoices!]
   storage: Boolean
   type: RoomStyleChoices

@@ -164,16 +164,14 @@ def admin_reservation_list(queryset: "QuerySet[Reservation]", *, user: "User") -
     from shelters.models import Shelter
 
     admin_shelters = admin_shelter_list(Shelter.objects.all(), user=user)
-    return queryset.filter(
-        Q(bed__shelter__in=admin_shelters) | Q(room__shelter__in=admin_shelters)
-    )
+    return queryset.filter(Q(bed__shelter__in=admin_shelters) | Q(room__shelter__in=admin_shelters))
 
 
 def reservation_get(*, user: "User", reservation_id: int | str) -> "Reservation":
     from shelters.models import Reservation
 
     return admin_reservation_list(
-        Reservation.objects.select_related("room", "bed", "created_by"),
+        Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
         user=user,
     ).get(pk=reservation_id)
 
@@ -248,9 +246,7 @@ def reservation_status_change_counts(
     from shelters.models import Reservation
 
     events = pghistory.models.Events.objects.filter(
-        pgh_obj_id__in=Reservation.objects.filter(
-            Q(bed__shelter_id=shelter_id) | Q(room__shelter_id=shelter_id)
-        )
+        pgh_obj_id__in=Reservation.objects.filter(Q(bed__shelter_id=shelter_id) | Q(room__shelter_id=shelter_id))
         .annotate(pk_text=Cast("pk", TextField()))
         .values("pk_text"),
         pgh_label="reservation.status_change",

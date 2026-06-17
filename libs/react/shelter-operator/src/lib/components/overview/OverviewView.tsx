@@ -85,8 +85,8 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
           <SummaryRow label="Available" value={roomsByStatus?.available ?? 0} />
           <SummaryRow label="Reserved" value={roomsByStatus?.reserved ?? 0} />
           <SummaryRow
-            label="Needs Maintenance"
-            value={roomsByStatus?.needsMaintenance ?? 0}
+            label="Out of Service"
+            value={roomsByStatus?.outOfService ?? 0}
           />
         </div>
       </section>

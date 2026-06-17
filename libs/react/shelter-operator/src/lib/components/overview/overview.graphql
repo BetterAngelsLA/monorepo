@@ -11,14 +11,17 @@ query GetAdminShelterOverview($shelterId: ID!) {
     }
     bedsByStatus {
       available
+      inTurnaround
       occupied
-      reserved
       outOfService
+      reserved
     }
     roomsByStatus {
       available
+      inTurnaround
+      occupied
+      outOfService
       reserved
-      needsMaintenance
     }
   }
 }
