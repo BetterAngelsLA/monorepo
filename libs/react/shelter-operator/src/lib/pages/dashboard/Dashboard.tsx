@@ -54,11 +54,7 @@ export function Dashboard() {
   const { activeOrg, organizations } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
-  // User has no organizations — redirect to create-org page (full-screen, no layout chrome)
-  if (organizations.length === 0) {
-    return <Navigate to={paths.createOrganization} replace />;
-  }
-
+  // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 
   const [searchInput, setSearchInput] = useState('');
@@ -150,6 +146,12 @@ export function Dashboard() {
     },
     [navigate]
   );
+  // ── End hooks ──────────────────────────────────────────────────────────────
+
+  // User has no organizations — redirect to create-org page (full-screen, no layout chrome)
+  if (organizations.length === 0) {
+    return <Navigate to={paths.createOrganization} replace />;
+  }
 
   return (
     <>
