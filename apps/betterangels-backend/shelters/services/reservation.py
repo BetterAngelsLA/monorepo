@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from shelters.models import Reservation, ReservationClient, Shelter
 from shelters.selectors import admin_reservation_list, bed_get, reservation_get, room_get, shelter_get
@@ -39,6 +39,10 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
     bed_id = data.get("bed_id")
     room_id = data.get("room_id")
 
+    clients_data = data.pop("clients", None)
+    if not clients_data:
+        raise ValidationError("At least one client must be associated with a reservation.")
+
     if bed_id:
         shelter_id = bed_get(user=user, bed_id=bed_id).shelter_id
     elif room_id:
@@ -51,7 +55,6 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
     except Shelter.DoesNotExist:
         raise ObjectDoesNotExist("You do not have permission to create a Reservation for this Shelter.")
 
-    clients_data = data.pop("clients", None)
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
     reservation = Reservation(created_by=user, **scalar_data)

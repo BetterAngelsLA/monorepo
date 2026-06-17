@@ -758,7 +758,7 @@ input CreateReservationInput {
   bedId: ID = null
   checkedInAt: DateTime = null
   checkedOutAt: DateTime = null
-  clients: [ReservationClientInput!] = null
+  clients: [ReservationClientInput!]!
   duration: Int = null
   notes: String = null
   startDate: Date = null

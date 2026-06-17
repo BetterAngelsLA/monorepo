@@ -769,7 +769,7 @@ export type CreateReservationInput = {
   bedId?: InputMaybe<Scalars['ID']['input']>;
   checkedInAt?: InputMaybe<Scalars['DateTime']['input']>;
   checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
-  clients?: InputMaybe<Array<ReservationClientInput>>;
+  clients: Array<ReservationClientInput>;
   duration?: InputMaybe<Scalars['Int']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   roomId?: InputMaybe<Scalars['ID']['input']>;

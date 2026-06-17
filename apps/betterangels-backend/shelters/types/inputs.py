@@ -268,7 +268,7 @@ class CreateReservationInput:
     bed_id: Optional[ID] = None
     checked_in_at: Optional[datetime] = None
     checked_out_at: Optional[datetime] = None
-    clients: Optional[List[ReservationClientInput]] = None
+    clients: List[ReservationClientInput]
     duration: Optional[int] = None
     notes: Optional[str] = None
     start_date: Optional[date] = None
