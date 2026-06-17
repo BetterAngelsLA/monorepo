@@ -26,6 +26,7 @@ from shelters.enums import (
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
@@ -139,6 +140,7 @@ class UpdateShelterInput:
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
+    hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET
     spa_id: Maybe[ID | None] = UNSET
     cities_served_ids: Maybe[Optional[List[ID]]] = UNSET
@@ -286,3 +288,37 @@ class UpdateReservationInput:
     notes: Maybe[str | None]
     start_date: Maybe[date | None]
     status: Maybe[ReservationStatusChoices | None]
+
+
+@strawberry.input
+class ShelterPhotoUploadItemInput:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateShelterPhotoUploadsInput:
+    shelter_id: ID
+    uploads: list[ShelterPhotoUploadItemInput]
+
+
+@strawberry.input
+class ShelterPhotoFromUploadInput:
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    photo_type: ShelterPhotoTypeChoices
+
+
+@strawberry.input
+class ResolveShelterPhotoUploadsInput:
+    shelter_id: ID
+    photos: list[ShelterPhotoFromUploadInput]
+
+
+@strawberry.input
+class UpdateShelterPhotoInput:
+    id: ID
+    photo_type: ShelterPhotoTypeChoices

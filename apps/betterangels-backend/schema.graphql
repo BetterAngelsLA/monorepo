@@ -928,6 +928,8 @@ union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
+union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
+
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
@@ -1062,6 +1064,13 @@ input GenerateClientProfilePhotoUploadInput {
 }
 
 union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
+
+input GenerateShelterPhotoUploadsInput {
+  shelterId: ID!
+  uploads: [ShelterPhotoUploadItemInput!]!
+}
+
+union GenerateShelterPhotoUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
 
 input GeolocationInput {
   latitude: Float!
@@ -1609,6 +1618,10 @@ type Mutation {
   createReservation(data: CreateReservationInput!): CreateReservationPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_reservation"}], any: true)
   updateReservation(id: ID!, data: UpdateReservationInput!): UpdateReservationPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
   deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload! @hasPerm(permissions: [{app: "shelters", permission: "delete_reservation"}], any: true)
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -2189,6 +2202,13 @@ input ResolveClientProfilePhotoUploadInput {
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
 
+input ResolveShelterPhotoUploadsInput {
+  shelterId: ID!
+  photos: [ShelterPhotoFromUploadInput!]!
+}
+
+union ResolveShelterPhotoUploadsPayload = ShelterPhotoUploadsType | OperationInfo
+
 input RevertNoteInput {
   id: ID!
   revertBeforeTimestamp: DateTime!
@@ -2470,6 +2490,14 @@ enum ShelterPermissions {
   VIEW
 }
 
+input ShelterPhotoFromUploadInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+  photoType: ShelterPhotoTypeChoices!
+}
+
 type ShelterPhotoType {
   id: ID!
   type: ShelterPhotoTypeChoices!
@@ -2480,6 +2508,16 @@ type ShelterPhotoType {
 enum ShelterPhotoTypeChoices {
   INTERIOR
   EXTERIOR
+}
+
+input ShelterPhotoUploadItemInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type ShelterPhotoUploadsType {
+  photos: [ShelterPhotoType!]!
 }
 
 enum ShelterProgramChoices {
@@ -2950,6 +2988,7 @@ input UpdateShelterInput {
   email: String
   website: String
   isPrivate: Boolean
+  heroImageId: ID
   cityId: ID
   spaId: ID
   citiesServedIds: [ID!]
@@ -2991,6 +3030,13 @@ input UpdateShelterInput {
 }
 
 union UpdateShelterPayload = ShelterType | OperationInfo
+
+input UpdateShelterPhotoInput {
+  id: ID!
+  photoType: ShelterPhotoTypeChoices!
+}
+
+union UpdateShelterPhotoPayload = ShelterPhotoType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
