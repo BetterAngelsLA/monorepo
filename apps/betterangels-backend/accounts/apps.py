@@ -9,7 +9,6 @@ class AccountsConfig(AppConfig):
         from post_office.settings import get_celery_enabled
         from post_office.signals import email_queued
 
-        from . import forms  # noqa: F401  # applies login-code auto-create patch
         from . import signals  # noqa: F401
         from .tasks import queued_mail_handler
 

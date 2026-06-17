@@ -6,6 +6,7 @@ from accounts.extensions import HasOrgPerm
 from accounts.models import User
 from common.graphql.types import BulkDeleteInput, BulkDeleteResult
 from common.permissions.utils import IsAuthenticated, get_current_organization
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
@@ -105,7 +106,7 @@ class Mutation:
         try:
             shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=org_id)
         except Shelter.DoesNotExist:
-            raise Exception(f"Shelter matching ID {shelter_id} could not be found.")
+            raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
         return cast(RoomType, room_create(shelter=shelter, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.CHANGE)])
@@ -116,7 +117,7 @@ class Mutation:
         try:
             room = room_get(user=user, room_id=id, organization_id=org_id)
         except Room.DoesNotExist:
-            raise Exception(f"Room matching ID {id} could not be found.")
+            raise ObjectDoesNotExist(f"Room matching ID {id} could not be found.")
         return cast(RoomType, room_update(room=room, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
@@ -150,7 +151,7 @@ class Mutation:
         try:
             shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=org_id)
         except Shelter.DoesNotExist:
-            raise Exception(f"Shelter matching ID {shelter_id} could not be found.")
+            raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
         return cast(BedType, bed_create(shelter=shelter, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.CHANGE)])
@@ -161,7 +162,7 @@ class Mutation:
         try:
             bed = bed_get(user=user, bed_id=id, organization_id=org_id)
         except Bed.DoesNotExist:
-            raise Exception(f"Bed matching ID {id} could not be found.")
+            raise ObjectDoesNotExist(f"Bed matching ID {id} could not be found.")
         return cast(BedType, bed_update(bed=bed, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])

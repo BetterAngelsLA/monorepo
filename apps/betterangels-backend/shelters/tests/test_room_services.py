@@ -34,7 +34,6 @@ class RoomServiceTestCase(TestCase):
         self.user = baker.make(User)
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
-        self.org_id = str(self.org.id)
 
 
 class RoomCreateTestCase(RoomServiceTestCase):
@@ -89,16 +88,6 @@ class RoomCreateTestCase(RoomServiceTestCase):
         self.assertEqual(room.funders.count(), 1)
         self.assertEqual(room.accessibility.count(), 1)
         self.assertEqual(room.pets.count(), 1)
-
-    def test_shelter_not_found_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_create(shelter=self.shelter, data={"name": "Room-101"})
-        self.assertIn("Shelter matching ID 999999 could not be found.", str(ctx.exception))
-
-    def test_user_without_org_access_raises_object_does_not_exist(self) -> None:
-
-        with self.assertRaises(ObjectDoesNotExist):
-            room_create(shelter=self.shelter, data={"name": "Room-101"})
 
     def test_duplicate_name_raises_validation_error(self) -> None:
         Room.objects.create(shelter=self.shelter, name="Room-101")
@@ -179,15 +168,6 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
         self.room.refresh_from_db()
         self.assertEqual(self.room.demographics.count(), 0)
-
-    def test_room_not_found_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_update(room=self.room, data={"name": "Missing"})
-        self.assertIn("Room matching ID 999999 could not be found.", str(ctx.exception))
-
-    def test_user_without_org_access_raises_does_not_exist(self) -> None:
-        # Org scoping is now validated by schema's shelter_get, not the service.
-        pass
 
 
 class RoomDeleteTestCase(RoomServiceTestCase):

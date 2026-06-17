@@ -298,6 +298,7 @@ class RemoveOrganizationMemberInput:
 @strawberry.input
 class CreateOrganizationInput:
     organization_name: NonEmptyString
+    org_type: NonEmptyString
 
 
 @strawberry.type

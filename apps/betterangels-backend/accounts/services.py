@@ -213,15 +213,16 @@ def create_default_org_permission_groups(organization: Organization) -> None:
 
 
 @transaction.atomic
-def shelter_operator_signup_service(
+def create_organization_service(
     *,
     user: UserModel,
     organization_name: str,
+    org_type_name: str,
 ) -> tuple[UserModel, Organization]:
-    """Create a shelter organization for an existing authenticated user.
+    """Create an organization and link *user* as the owner.
 
-    Links *user* as the organization owner and assigns the Shelter
-    Operator role.
+    *org_type_name* must match a registered :class:`OrgTypeConfig` with
+    ``allow_public_signup=True`` (e.g. ``"shelter"``).
 
     Returns ``(user, organization)``.
 
@@ -229,17 +230,15 @@ def shelter_operator_signup_service(
     responsible for triggering email delivery after the transaction
     commits successfully.
     """
-    org_config = REGISTRY.org_type("shelter")
+    org_config = REGISTRY.org_type(org_type_name)
     if not org_config or not org_config.allow_public_signup:
-        raise ValidationError("This org type does not support self-signup.")
-
-    member_template = org_config.member_template
+        raise ValidationError(f"Org type '{org_type_name}' does not support self-signup.")
 
     organization = create_organization_with_presets(
         name=organization_name,
-        preset_names=["shelter"],
+        preset_names=[org_type_name],
         owner=user,
-        owner_roles=(member_template,),
+        owner_roles=(org_config.member_template,),
     )
 
     return user, organization

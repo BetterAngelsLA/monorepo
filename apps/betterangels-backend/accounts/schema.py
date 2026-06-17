@@ -27,9 +27,9 @@ from strawberry_django.permissions import HasPerm
 
 from .models import Organization, PermissionGroup, User
 from .services import (
+    create_organization_service,
     member_add,
     organization_remove_member,
-    shelter_operator_signup_service,
 )
 from .types import (
     AuthResponse,
@@ -254,16 +254,17 @@ class Mutation:
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     def create_organization(self, info: Info, data: CreateOrganizationInput) -> CreateOrganizationResponse:
-        """Create a shelter organization for the authenticated user.
+        """Create an organization for the authenticated user.
 
-        Creates a new Organization with the ``shelter`` preset, links the
-        current user as owner, assigns the Shelter Operator role, and
-        sends a welcome email.
+        Creates a new Organization with the requested org type, links the
+        current user as owner, assigns the member-level role, and sends a
+        welcome email.
         """
         current_user = cast(User, get_current_user(info))
-        user, organization = shelter_operator_signup_service(
+        user, organization = create_organization_service(
             user=current_user,
             organization_name=data.organization_name,
+            org_type_name=data.org_type,
         )
 
         templates = [t for t in REGISTRY.templates_for(organization) if t.welcome_html]

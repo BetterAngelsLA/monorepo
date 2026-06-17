@@ -80,15 +80,6 @@ class BedCreateTestCase(BedServiceTestCase):
         self.assertEqual(demographic_result.name, DemographicChoices.SINGLE_MEN)
         self.assertEqual(funder_result.name, FunderChoices.CITY_OF_LOS_ANGELES)
 
-    def test_shelter_not_found_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_create(shelter=self.shelter, data={"name": "Bed 1"})
-        self.assertIn("Shelter matching ID 999999 could not be found.", str(ctx.exception))
-
-    def test_user_without_org_access_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist):
-            bed_create(shelter=self.shelter, data={"name": "Bed 1"})
-
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
         shelter = Shelter.objects.create(organization=self.org)
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
@@ -166,18 +157,6 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.demographics.count(), 0)
 
-    def test_bed_not_found_raises_object_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_update(bed=self.bed, data={"name": "Missing"})
-        self.assertIn("Bed matching ID 999999 could not be found.", str(ctx.exception))
-
-    def test_user_without_org_access_raises_does_not_exist(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist):
-            # Org scoping is validated by schema's shelter_get / bed_get, not the service.
-            # Service now receives pre-resolved objects; this test verifies the service
-            # itself does not do org-level validation.
-            pass
-
 
 class BedDeleteTestCase(BedServiceTestCase):
     def test_deletes_single_bed(self) -> None:
@@ -202,7 +181,7 @@ class BedDeleteTestCase(BedServiceTestCase):
         self.assertFalse(Bed.objects.filter(pk__in=[bed_to_delete_1.pk, bed_to_delete_2.pk]).exists())
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
-    def test_empty_list_returns_empty(self) -> None:
+    def test_empty_list_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             bed_delete(queryset=Bed.objects.none())
 

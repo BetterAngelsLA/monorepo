@@ -1,10 +1,8 @@
 from typing import Any, cast
 
-from allauth.account.forms import RequestLoginCodeForm as BaseRequestLoginCodeForm
 from common.org_types import REGISTRY
 from django import forms
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -120,27 +118,3 @@ class OrganizationUserForm(forms.ModelForm):
         self.instance.user.save()
 
         return cast(User, super().save(*args, **kwargs))
-
-
-# ----- Auto-create users via login-by-code -----------------------------------
-# The headless API subclasses RequestLoginCodeForm directly (bypassing
-# ACCOUNT_FORMS).  We patch clean_email at import time so that every
-# code request — including headless — auto-creates the user when the
-# email is unknown.  This preserves ACCOUNT_PREVENT_ENUMERATION=True
-# while still allowing brand-new operators to sign in with a code.
-_original_clean_email = BaseRequestLoginCodeForm.clean_email
-
-
-def _patched_clean_email(self: BaseRequestLoginCodeForm) -> str:
-    email: str = _original_clean_email(self)
-    if email and not getattr(self, "_user", None):
-        UserModel = get_user_model()
-        user = UserModel.objects.create_user(
-            email=email,
-            username=email,
-        )
-        self._user = user
-    return email
-
-
-BaseRequestLoginCodeForm.clean_email = _patched_clean_email
