@@ -18,7 +18,6 @@ def bed_create(*, shelter: "Shelter", data: Dict[str, Any]) -> Bed:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    data.pop("shelter_id", None)
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
