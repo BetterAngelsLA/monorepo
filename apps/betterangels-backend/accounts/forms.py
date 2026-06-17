@@ -70,8 +70,8 @@ class OrganizationUserForm(forms.ModelForm):
 
         if self.instance.pk is None:
             # ── New member ────────────────────────────────────────────
-            templates = tuple(REGISTRY.invitable_templates_for(organization))
-            if not templates:
+            invitable_templates = tuple(REGISTRY.invitable_templates_for(organization))
+            if not invitable_templates:
                 raise ValidationError(
                     f"Organization '{organization.name}' has no invitable "
                     f"permission templates.  Ensure the org has a profile "
@@ -84,11 +84,15 @@ class OrganizationUserForm(forms.ModelForm):
                 last_name="",
                 middle_name=None,
                 organization=organization,
-                permission_templates=templates,
+                permission_templates=invitable_templates,
             )
 
-            # First selected template drives the invite email.
-            role_template = templates[0]
+            # The member template drives the invite email.
+            org_type_name = organization.profile.org_types[0].value
+            org_config = REGISTRY.org_type(org_type_name)
+            if not org_config:
+                raise ValidationError(f"No org type config for '{org_type_name}'.")
+            role_template = org_config.member_template
 
             site = Site.objects.get(pk=settings.SITE_ID)
             invitation_backend().create_organization_invite(

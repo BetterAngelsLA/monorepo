@@ -233,9 +233,7 @@ def shelter_operator_signup_service(
     if not org_config or not org_config.allow_public_signup:
         raise ValidationError("This org type does not support self-signup.")
 
-    # The first template of the configured org type is the member-level
-    # role (Shelter Operator for shelters, Caseworker for outreach).
-    member_template = org_config.templates[0]
+    member_template = org_config.member_template
 
     organization = create_organization_with_presets(
         name=organization_name,

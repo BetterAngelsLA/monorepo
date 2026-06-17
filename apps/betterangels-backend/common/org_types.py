@@ -33,6 +33,13 @@ class OrgTypeConfig:
     name: str  # "outreach"
     label: str  # "Outreach"
     templates: tuple[TemplateConfig, ...]  # (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER)
+    member_template: TemplateConfig
+    """The member-level role template (e.g. Caseworker, Shelter Operator).
+
+    This is the default role assigned to new members and the role used
+    for self-signup flows.  It must be one of the entries in *templates*
+    and must be invitable (``is_invitable=True``).
+    """
     allow_public_signup: bool = False
     """Whether this org type supports public self-signup (e.g., shelter operator onboarding)."""
 
@@ -153,11 +160,13 @@ REGISTRY = Registry(
         name="outreach",
         label="Outreach",
         templates=(CASEWORKER, ORG_ADMIN, ORG_SUPERUSER),
+        member_template=CASEWORKER,
     ),
     shelter=OrgTypeConfig(
         name="shelter",
         label="Shelter",
         templates=(SHELTER_OPERATOR, ORG_ADMIN, ORG_SUPERUSER),
+        member_template=SHELTER_OPERATOR,
         allow_public_signup=True,
     ),
 )
