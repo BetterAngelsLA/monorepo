@@ -25,6 +25,7 @@ import {
   ShelterServicesPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
+import { CreateOrganizationPage } from './pages/createOrganization';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
   manageSegments,
@@ -42,6 +43,10 @@ export function OperatorApp() {
       <OperatorAuthProvider>
         <Routes>
           <Route path={routePath(paths.signIn)} element={<SignIn />} />
+          <Route
+            path={routePath(paths.createOrganization)}
+            element={<CreateOrganizationPage />}
+          />
           <Route element={<OperatorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path={routePath(paths.users)} element={<UsersPage />} />

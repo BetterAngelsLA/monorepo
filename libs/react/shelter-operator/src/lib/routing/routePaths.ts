@@ -14,6 +14,7 @@ export function routePath(fullPath: string): string {
 
 export const paths = {
   signIn: '/operator/sign-in',
+  createOrganization: '/operator/create-organization',
   users: '/operator/users',
   dashboardCreate: '/operator/dashboard/create',
   shelter: '/operator/shelter/:shelterId',
