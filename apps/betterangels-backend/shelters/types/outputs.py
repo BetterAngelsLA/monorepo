@@ -20,7 +20,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import operator_bed_list, operator_room_list, operator_shelter_list, shelter_list
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -261,11 +261,12 @@ class ShelterType(ShelterTypeMixin):
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class AdminShelterType(ShelterTypeMixin):
+class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return operator_shelter_list(queryset, user=user, organization_id=get_current_organization(info))
+        org_id = get_current_organization(info)
+        return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -282,7 +283,8 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return operator_bed_list(queryset, user=user, organization_id=get_current_organization(info))
+        org_id = get_current_organization(info)
+        return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -309,7 +311,8 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return operator_room_list(queryset, user=user, organization_id=get_current_organization(info))
+        org_id = get_current_organization(info)
+        return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]

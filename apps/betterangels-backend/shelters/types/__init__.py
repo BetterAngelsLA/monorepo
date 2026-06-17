@@ -40,8 +40,8 @@ from shelters.types.lookups import (
     StorageType,
 )
 from shelters.types.outputs import (
-    AdminShelterType,
     BedType,
+    OperatorShelterType,
     RoomType,
     ShelterAvailabilityType,
     ShelterLocationType,
@@ -88,8 +88,8 @@ __all__ = [
     "ScheduleInput",
     "ShelterLocationInput",
     # outputs
-    "AdminShelterType",
     "BedType",
+    "OperatorShelterType",
     "RoomType",
     "ShelterAvailabilityType",
     "ShelterLocationType",

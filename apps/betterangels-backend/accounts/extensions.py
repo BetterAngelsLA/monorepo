@@ -24,8 +24,7 @@ from collections.abc import Callable
 from typing import Any
 
 from accounts.models import Organization
-from common.permissions.utils import _perm_q
-from django.db.models import Q
+from common.permissions.utils import get_current_organization, permissioned_queryset
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
@@ -42,14 +41,11 @@ class HasOrgPerm(HasPerm):
     and checks that the authenticated user holds the requested
     permission(s) within that organization via a single query.
 
-    Defaults ``fail_silently=False`` so that permission denials raise
-    rather than silently returning empty results.  If no organization
-    header is present, ``PermissionDenied`` is raised — there is no
-    fallback to global permission checks.
+    Delegates to ``permissioned_queryset`` so the permission-checking
+    SQL is shared with ``get_queryset`` hooks and selectors.
 
-    Extends ``HasPerm`` so the schema directive includes the same
-    permission metadata (e.g. ``@hasOrgPerm(permissions: [{app: "shelters",
-    permission: "view_shelter"}])``).
+    Defaults ``fail_silently=False`` so that permission denials raise
+    rather than silently returning empty results.
 
     Honors the parent ``any_perm`` flag:
     - ``any_perm=True`` (default): user must hold at least one of the given perms.
@@ -76,34 +72,20 @@ class HasOrgPerm(HasPerm):
         if not user or not user.is_authenticated:
             raise DjangoNoPermission("Authentication required.")
 
-        request = info.context.request
-        org_id: str | None = getattr(request, "organization_id", None)
-
-        if not org_id:
-            raise DjangoNoPermission(
-                "Organization ID is required for this operation. " "Set the X-Organization-ID header."
-            )
+        org_id = get_current_organization(info)
 
         if not self.perms:
             raise DjangoNoPermission("No permissions specified for this operation.")
 
-        # Build a single query that checks all requested permissions.
-        org_filter = Organization.objects.filter(
-            pk=org_id,
-            permission_groups__group__user=user,
-        )
-
-        if self.any_perm:
-            q = Q()
-            for perm_def in self.perms:
-                q |= _perm_q(perm_def.app or "", str(perm_def.permission))
-            has_perm = org_filter.filter(q).exists()
-        else:
-            for perm_def in self.perms:
-                org_filter = org_filter.filter(_perm_q(perm_def.app or "", str(perm_def.permission)))
-            has_perm = org_filter.exists()
+        has_perm = permissioned_queryset(
+            Organization.objects.all(),
+            user=user,
+            organization_id=org_id,
+            perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
+            any_perm=self.any_perm,
+        ).exists()
 
         if not has_perm:
-            raise DjangoNoPermission("You do not have permission to perform this action " "in this organization.")
+            raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
 
         return resolver()

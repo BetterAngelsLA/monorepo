@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.db.models import QuerySet
 from shelters.enums import ScheduleTypeChoices
-from shelters.selectors import operator_shelter_list, shelter_list, shelters_open_at
+from shelters.open_at import shelters_open_at
+from shelters.selectors import operator_shelter_list, shelter_list
 
 if TYPE_CHECKING:
     from accounts.models import User

@@ -9,17 +9,16 @@ from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
-from shelters.selectors import bed_get, operator_bed_list, operator_room_list, room_get, shelter_get
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
-    AdminShelterType,
     BedType,
     CityType,
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    OperatorShelterType,
     RoomType,
     ServiceCategoryType,
     ShelterType,
@@ -36,11 +35,11 @@ from strawberry_django.pagination import OffsetPaginated
 
 @strawberry.type
 class Query:
-    admin_shelter: AdminShelterType = strawberry_django.field(
+    operator_shelter: OperatorShelterType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
         extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
-    admin_shelters: OffsetPaginated[AdminShelterType] = strawberry_django.offset_paginated(
+    operator_shelters: OffsetPaginated[OperatorShelterType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
@@ -84,6 +83,8 @@ class Query:
 
 @strawberry.type
 class Mutation:
+    # ── Shelter ────────────────────────────────────────────────────────────
+
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.ADD)])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
@@ -93,95 +94,66 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_update(user=user, data=clean))
+        return cast(ShelterType, shelter_update(user=user, organization_id=org_id, data=clean))
+
+    # ── Room ───────────────────────────────────────────────────────────────
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        shelter_id = cast(int, clean.pop("shelter_id", None))
-        try:
-            shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=org_id)
-        except Shelter.DoesNotExist:
-            raise Exception(f"Shelter matching ID {shelter_id} could not be found.")
-        return cast(RoomType, room_create(shelter=shelter, data=clean))
+        return cast(RoomType, room_create(user=user, organization_id=org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.CHANGE)])
     def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        try:
-            room = room_get(user=user, room_id=id, organization_id=org_id)
-        except Room.DoesNotExist:
-            raise Exception(f"Room matching ID {id} could not be found.")
-        return cast(RoomType, room_update(room=room, data=clean))
+        return cast(RoomType, room_update(user=user, organization_id=org_id, room_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
     def clone_room(self, info: Info, id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        from shelters.services.room import _ROOM_M2M_FIELDS
-
-        qs = operator_room_list(
-            Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
-            user=user,
-            organization_id=org_id,
-        )
-        return cast(RoomType, room_clone(queryset=qs, room_id=str(id)))
+        return cast(RoomType, room_clone(user=user, organization_id=org_id, room_id=str(id)))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.DELETE)])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        qs = operator_room_list(Room.objects.all(), user=user, organization_id=org_id).filter(pk__in=ids)
-        deleted_ids = room_delete(queryset=qs)
+        deleted_ids = room_delete(user=user, organization_id=org_id, room_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
+
+    # ── Bed ────────────────────────────────────────────────────────────────
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        shelter_id = cast(int, clean.pop("shelter_id", None))
-        try:
-            shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=org_id)
-        except Shelter.DoesNotExist:
-            raise Exception(f"Shelter matching ID {shelter_id} could not be found.")
-        return cast(BedType, bed_create(shelter=shelter, data=clean))
+        return cast(BedType, bed_create(user=user, organization_id=org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.CHANGE)])
     def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        try:
-            bed = bed_get(user=user, bed_id=id, organization_id=org_id)
-        except Bed.DoesNotExist:
-            raise Exception(f"Bed matching ID {id} could not be found.")
-        return cast(BedType, bed_update(bed=bed, data=clean))
+        return cast(BedType, bed_update(user=user, organization_id=org_id, bed_id=id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
     def clone_bed(self, info: Info, id: ID) -> BedType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        from shelters.services.bed import _BED_M2M_FIELDS
-
-        qs = operator_bed_list(
-            Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
-            user=user,
-            organization_id=org_id,
-        )
-        return cast(BedType, bed_clone(queryset=qs, bed_id=str(id)))
+        return cast(BedType, bed_clone(user=user, organization_id=org_id, bed_id=str(id)))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.DELETE)])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        qs = operator_bed_list(Bed.objects.all(), user=user, organization_id=org_id).filter(pk__in=ids)
-        deleted_ids = bed_delete(queryset=qs)
+        deleted_ids = bed_delete(user=user, organization_id=org_id, bed_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

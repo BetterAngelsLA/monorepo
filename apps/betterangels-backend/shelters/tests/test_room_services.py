@@ -1,6 +1,7 @@
 import datetime
 
 from accounts.models import OrganizationProfile, OrgTypeChoices
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -15,16 +16,16 @@ from shelters.enums import (
     RoomStatusChoices,
     RoomStyleChoices,
 )
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
 from shelters.services.room import room_clone, room_create, room_delete, room_update
-from shelters.services.utils import _ROOM_M2M_FIELDS
 from shelters.tests.baker_recipes import shelter_recipe
 
 
 class RoomServiceTestCase(TestCase):
     def setUp(self) -> None:
         User = get_user_model()
-        self.org, self.other_org = organization_recipe.make(_quantity=2)
+        self.org, self.other_org = organization_recipe.make(_quantity=2, preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         OrganizationProfile.objects.update_or_create(
             organization=self.org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
         )
@@ -34,6 +35,8 @@ class RoomServiceTestCase(TestCase):
         self.user = baker.make(User)
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
+        self.org_id = str(self.org.pk)
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
 
 class RoomCreateTestCase(RoomServiceTestCase):
@@ -41,8 +44,10 @@ class RoomCreateTestCase(RoomServiceTestCase):
         last_cleaned = datetime.datetime(2025, 1, 15, 10, 30, tzinfo=datetime.timezone.utc)
 
         room = room_create(
-            shelter=self.shelter,
+            user=self.user,
+            organization_id=self.org_id,
             data={
+                "shelter_id": self.shelter.pk,
                 "amenities": "WiFi, AC",
                 "last_cleaned_inspected": last_cleaned,
                 "medical_respite": True,
@@ -74,8 +79,10 @@ class RoomCreateTestCase(RoomServiceTestCase):
         self.shelter.pets.add(pet)
 
         room = room_create(
-            shelter=self.shelter,
+            user=self.user,
+            organization_id=self.org_id,
             data={
+                "shelter_id": self.shelter.pk,
                 "name": "Room-102",
                 "demographics": [DemographicChoices.SINGLE_MEN],
                 "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
@@ -93,7 +100,11 @@ class RoomCreateTestCase(RoomServiceTestCase):
         Room.objects.create(shelter=self.shelter, name="Room-101")
 
         with self.assertRaises(ValidationError):
-            room_create(shelter=self.shelter, data={"name": "Room-101"})
+            room_create(
+                user=self.user,
+                organization_id=self.org_id,
+                data={"shelter_id": self.shelter.pk, "name": "Room-101"},
+            )
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
         shelter = Shelter.objects.create(organization=self.org)
@@ -102,8 +113,10 @@ class RoomCreateTestCase(RoomServiceTestCase):
 
         with self.assertRaises(ValidationError) as ctx:
             room_create(
-                shelter=shelter,
+                user=self.user,
+                organization_id=self.org_id,
                 data={
+                    "shelter_id": shelter.pk,
                     "name": "Room-103",
                     "demographics": [DemographicChoices.FAMILIES],
                 },
@@ -123,7 +136,9 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
     def test_updates_scalar_fields(self) -> None:
         updated = room_update(
-            room=self.room,
+            user=self.user,
+            organization_id=self.org_id,
+            room_id=self.room.pk,
             data={
                 "name": "Room-101 Updated",
                 "status": RoomStatusChoices.RESERVED,
@@ -141,7 +156,12 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.assertEqual(self.room.name, "Room-101 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        room_update(room=self.room, data={"name": "Renamed", "status": None})
+        room_update(
+            user=self.user,
+            organization_id=self.org_id,
+            room_id=self.room.pk,
+            data={"name": "Renamed", "status": None},
+        )
 
         self.room.refresh_from_db()
         self.assertEqual(self.room.name, "Renamed")
@@ -152,7 +172,9 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.shelter.demographics.add(demographic)
 
         room_update(
-            room=self.room,
+            user=self.user,
+            organization_id=self.org_id,
+            room_id=self.room.pk,
             data={"demographics": [DemographicChoices.SINGLE_MEN]},
         )
 
@@ -164,7 +186,12 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.shelter.demographics.add(demographic)
         self.room.demographics.add(demographic)
 
-        room_update(room=self.room, data={"demographics": []})
+        room_update(
+            user=self.user,
+            organization_id=self.org_id,
+            room_id=self.room.pk,
+            data={"demographics": []},
+        )
 
         self.room.refresh_from_db()
         self.assertEqual(self.room.demographics.count(), 0)
@@ -181,7 +208,7 @@ class RoomDeleteTestCase(RoomServiceTestCase):
             shelter=self.shelter, room=other_room, name="Bed 2", status=BedStatusChoices.AVAILABLE
         )
 
-        deleted = room_delete(queryset=Room.objects.filter(pk=room_to_delete.pk))
+        deleted = room_delete(user=self.user, organization_id=self.org_id, room_ids=[room_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], room_to_delete.pk)
@@ -199,7 +226,11 @@ class RoomDeleteTestCase(RoomServiceTestCase):
             shelter=self.shelter, room=other_room, name="Bed 1", status=BedStatusChoices.AVAILABLE
         )
 
-        deleted = room_delete(queryset=Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]))
+        deleted = room_delete(
+            user=self.user,
+            organization_id=self.org_id,
+            room_ids=[room_to_delete_1.pk, room_to_delete_2.pk],
+        )
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]).exists())
@@ -208,7 +239,7 @@ class RoomDeleteTestCase(RoomServiceTestCase):
 
     def test_empty_list_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
-            room_delete(queryset=Room.objects.none())
+            room_delete(user=self.user, organization_id=self.org_id, room_ids=[])
 
 
 class RoomCloneTestCase(RoomServiceTestCase):
@@ -240,9 +271,7 @@ class RoomCloneTestCase(RoomServiceTestCase):
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         Bed.objects.create(shelter=self.shelter, room=source, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        clone = room_clone(
-            queryset=Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS), room_id=str(source.pk)
-        )
+        clone = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
 
         self.assertNotEqual(clone.pk, source.pk)
         self.assertEqual(clone.name, "Room-101 (Copy)")
@@ -276,21 +305,15 @@ class RoomCloneTestCase(RoomServiceTestCase):
     def test_clone_same_room_twice_uses_incremented_name(self) -> None:
         source = Room.objects.create(shelter=self.shelter, name="Room-101")
 
-        first = room_clone(
-            queryset=Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS), room_id=str(source.pk)
-        )
-        second = room_clone(
-            queryset=Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS), room_id=str(source.pk)
-        )
+        first = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
+        second = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
 
         self.assertEqual(first.name, "Room-101 (Copy)")
         self.assertEqual(second.name, "Room-101 (Copy 2)")
 
     def test_room_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_clone(
-                queryset=Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS), room_id="999999"
-            )
+            room_clone(user=self.user, organization_id=self.org_id, room_id="999999")
         self.assertIn(
             "Room matching ID 999999 could not be found.",
             str(ctx.exception),

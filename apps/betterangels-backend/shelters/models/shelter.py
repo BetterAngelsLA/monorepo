@@ -28,7 +28,7 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.selectors import shelters_open_at
+from shelters.open_at import shelters_open_at
 
 from .lookups import (
     SPA,
