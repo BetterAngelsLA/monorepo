@@ -79,23 +79,21 @@ const TableBase = <TItem, TRowObject = TItem>({
     >
       <div
         role="row"
-        className={[
+        className={mergeCss([
           'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
           headerClassName,
           headerInsetClassName,
-        ].join(' ')}
+        ])}
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
         {columns.map((column) => (
           <div
             role="columnheader"
             key={column.key}
-            className={[
+            className={mergeCss([
               'text-left justify-self-start',
-              column.headerClassName ?? '',
-            ]
-              .join(' ')
-              .trim()}
+              column.headerClassName,
+            ])}
           >
             {column.label}
           </div>

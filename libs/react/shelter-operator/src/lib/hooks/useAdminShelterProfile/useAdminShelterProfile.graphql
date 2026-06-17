@@ -66,6 +66,7 @@ query GetAdminShelterProfile($id: ID!) {
     photos {
       id
       type
+      createdAt
       file {
         name
         url
