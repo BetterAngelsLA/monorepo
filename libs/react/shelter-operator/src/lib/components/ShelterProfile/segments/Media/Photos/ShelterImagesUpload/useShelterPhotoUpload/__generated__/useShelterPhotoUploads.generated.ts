@@ -1,0 +1,26 @@
+import type * as Types from '../../../../../../../../apollo/graphql/__generated__/types';
+
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type GenerateShelterPhotoUploadsMutationVariables = Types.Exact<{
+  data: Types.GenerateShelterPhotoUploadsInput;
+}>;
+
+
+export type GenerateShelterPhotoUploadsMutation = { __typename?: 'Mutation', generateShelterPhotoUploads:
+    | { __typename: 'AuthorizedPresignedS3UploadsType', uploads: Array<{ __typename?: 'AuthorizedPresignedS3UploadType', refId: string, url: string, fields: any, presignedKey: string, uploadToken: string }> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', message: string }> }
+   };
+
+export type ResolveShelterPhotoUploadsMutationVariables = Types.Exact<{
+  data: Types.ResolveShelterPhotoUploadsInput;
+}>;
+
+
+export type ResolveShelterPhotoUploadsMutation = { __typename?: 'Mutation', resolveShelterPhotoUploads:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', message: string }> }
+    | { __typename: 'ShelterPhotoUploadsType', photos: Array<{ __typename?: 'ShelterPhotoType', id: string, type: Types.ShelterPhotoTypeChoices, createdAt: any, file: { __typename?: 'DjangoImageType', name: string, url: string } }> }
+   };
+
+
+export const GenerateShelterPhotoUploadsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateShelterPhotoUploads"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"GenerateShelterPhotoUploadsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateShelterPhotoUploads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AuthorizedPresignedS3UploadsType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"refId"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"fields"}},{"kind":"Field","name":{"kind":"Name","value":"presignedKey"}},{"kind":"Field","name":{"kind":"Name","value":"uploadToken"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GenerateShelterPhotoUploadsMutation, GenerateShelterPhotoUploadsMutationVariables>;
+export const ResolveShelterPhotoUploadsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResolveShelterPhotoUploads"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ResolveShelterPhotoUploadsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resolveShelterPhotoUploads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ShelterPhotoUploadsType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"photos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<ResolveShelterPhotoUploadsMutation, ResolveShelterPhotoUploadsMutationVariables>;
