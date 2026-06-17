@@ -20,7 +20,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import admin_bed_list, admin_room_list, admin_shelter_list, shelter_list
+from shelters.selectors import operator_bed_list, operator_room_list, operator_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -265,7 +265,7 @@ class AdminShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return admin_shelter_list(queryset, user=user, organization_id=get_current_organization(info))
+        return operator_shelter_list(queryset, user=user, organization_id=get_current_organization(info))
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -282,7 +282,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return admin_bed_list(queryset, user=user, organization_id=get_current_organization(info))
+        return operator_bed_list(queryset, user=user, organization_id=get_current_organization(info))
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -309,7 +309,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return admin_room_list(queryset, user=user, organization_id=get_current_organization(info))
+        return operator_room_list(queryset, user=user, organization_id=get_current_organization(info))
 
     id: ID
     accessibility: List[AccessibilityType]

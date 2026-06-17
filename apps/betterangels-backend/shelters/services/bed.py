@@ -1,35 +1,24 @@
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
 from shelters.models import Bed, Shelter
-from shelters.selectors import admin_bed_list, bed_get, shelter_get
 from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
-
-if TYPE_CHECKING:
-    from accounts.models import User
 
 
 @transaction.atomic
-def bed_create(*, user: "User", data: Dict[str, Any], organization_id: str) -> Bed:
-    """Create a new Bed associated with an existing Shelter.
+def bed_create(*, shelter: "Shelter", data: Dict[str, Any]) -> Bed:
+    """Create a new Bed associated with *shelter*.
 
-    Validates that *user* belongs to the shelter's organization via
-    ``shelter_get`` before creating the bed.
+    The caller is responsible for resolving *shelter* (e.g. via
+    :func:`~shelters.selectors.shelter_get`).
 
     Raises:
-        ``ObjectDoesNotExist`` when the shelter is not found or the user
-        does not belong to its organization.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    shelter_id = data.pop("shelter_id")
-    try:
-        shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
-
+    data.pop("shelter_id", None)
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
@@ -48,21 +37,20 @@ def bed_create(*, user: "User", data: Dict[str, Any], organization_id: str) -> B
 
 
 @transaction.atomic
-def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any], organization_id: str) -> Bed:
-    """Update an existing bed, including M2M relationships when provided.
+def bed_update(*, bed: Bed, data: Dict[str, Any]) -> Bed:
+    """Update *bed*, including M2M relationships when provided.
 
-    Validates org access via the bed's shelter. Only keys present in *data*
-    are applied; ``None`` scalar values are skipped.
+    Only keys present in *data* are applied; ``None`` scalar values are
+    skipped.
+
+    The caller is responsible for resolving *bed* (e.g. via
+    :func:`~shelters.selectors.bed_get`).
 
     Raises:
-        ``ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    try:
-        bed = bed_get(user=user, bed_id=bed_id, organization_id=organization_id)
-    except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
+    data.pop("id", None)
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
@@ -88,7 +76,7 @@ def bed_delete(*, queryset: "QuerySet[Bed]") -> list[int]:
     """Delete beds in *queryset* and return the deleted IDs.
 
     The caller is responsible for scoping *queryset* appropriately
-    (e.g. via :func:`~shelters.selectors.admin_bed_list`).
+    (e.g. via :func:`~shelters.selectors.operator_bed_list`).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when *queryset* is empty.
@@ -101,21 +89,18 @@ def bed_delete(*, queryset: "QuerySet[Bed]") -> list[int]:
 
 
 @transaction.atomic
-def bed_clone(*, user: "User", bed_id: str, organization_id: str) -> Bed:
+def bed_clone(*, queryset: "QuerySet[Bed]", bed_id: str) -> Bed:
     """Clone an existing bed, including all M2M relationships.
 
-    Validates org access via ``bed_get``.
+    The caller is responsible for scoping *queryset* and prefetching M2M
+    fields (e.g. via ``operator_bed_list(...).prefetch_related(...)``).
 
     Raises:
         ``ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     try:
-        source = admin_bed_list(
-            Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
-            user=user,
-            organization_id=organization_id,
-        ).get(pk=bed_id)
+        source = queryset.get(pk=bed_id)
     except Bed.DoesNotExist:
         raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
 

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.db.models import QuerySet
 from shelters.enums import ScheduleTypeChoices
-from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
+from shelters.selectors import operator_shelter_list, shelter_list, shelters_open_at
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -41,7 +41,7 @@ class ShelterManager(models.Manager["Shelter"]):
 
 class AdminShelterQuerySet(ShelterQuerySet):
     def for_user(self, user: "User", organization_id: str) -> "AdminShelterQuerySet":
-        return admin_shelter_list(self, user=user, organization_id=organization_id)  # type: ignore[return-value]
+        return operator_shelter_list(self, user=user, organization_id=organization_id)  # type: ignore[return-value]
 
 
 class AdminShelterManager(models.Manager["Shelter"]):

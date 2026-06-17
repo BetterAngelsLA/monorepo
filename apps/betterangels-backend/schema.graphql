@@ -1596,8 +1596,8 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
-  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
   updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
   cloneRoom(id: ID!): CloneRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)

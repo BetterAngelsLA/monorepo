@@ -17,7 +17,7 @@ Permission group templates define a **set of Django permissions** that can be as
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
 
-Each `OrgTypeConfig` exposes a `member_template` field that identifies the default member-level role (e.g. `SHELTER_OPERATOR`, `CASEWORKER`). This is used by self-signup flows and invite forms — no more guessing that `templates[0]` is the member role.
+Each `OrgTypeConfig` exposes a `member_template` field that identifies the default member-level role (e.g. `SHELTER_OPERATOR`, `CASEWORKER`), used by self-signup flows and invite forms.
 
 ## Templates
 
