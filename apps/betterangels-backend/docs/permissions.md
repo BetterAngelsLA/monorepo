@@ -1,10 +1,23 @@
-# Permission Group Templates
+# Permission Architecture
+
+## Two-Layer Model
+
+BetterAngels uses a **two-layer permission model** — org-scoped permissions gate access at the organization level, and object-level permissions (via django-guardian) provide fine-grained per-object access control.
+
+| Layer | Mechanism | Scope | Used for |
+|---|---|---|---|
+| **Org-scoped** | `HasOrgPerm` extension | "Can this user perform action X in organization Y?" | Mutations, admin queries (shelters, rooms, beds) |
+| **Object-level** | django-guardian + `HasRetvalPerm` | "Can this user access this specific object?" | Notes, tasks, referrals, client documents |
+
+Both layers are backed by Django's permission system (Groups + Permissions), but they ask different questions and are checked independently.
 
 ## Overview
 
 Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective permissions are the **union of all templates** assigned to them for that org.
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
+
+Each `OrgTypeConfig` exposes a `member_template` field that identifies the default member-level role (e.g. `SHELTER_OPERATOR`, `CASEWORKER`). This is used by self-signup flows and invite forms — no more guessing that `templates[0]` is the member role.
 
 ## Templates
 
