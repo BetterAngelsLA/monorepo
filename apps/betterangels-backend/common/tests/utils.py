@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
@@ -15,6 +17,10 @@ from model_bakery import baker
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
+
+if TYPE_CHECKING:
+    from organizations.models import Organization
+
 
 # ---------------------------------------------------------------------------
 # Shared address fixture builder
@@ -169,7 +175,7 @@ class GraphQLBaseTestCase(
         # Default organization for @HasOrgPerm-scoped mutations/queries.
         self._set_active_org(self.org_1)
 
-    def _set_active_org(self, org: "Organization") -> None:
+    def _set_active_org(self, org: Organization) -> None:
         """Set the X-Organization-ID header for the current test client."""
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
 

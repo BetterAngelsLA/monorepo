@@ -55,7 +55,7 @@ class HasOrgPerm(HasPerm):
     - ``any_perm=False``: user must hold **all** of the given perms.
     """
 
-    SCHEMA_DIRECTIVE_DESCRIPTION: str = (
+    SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
         "Requires the user to have the specified permission(s) in the "
         "organization set via X-Organization-ID header."
     )
