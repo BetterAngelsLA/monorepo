@@ -9,7 +9,7 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
-from common.imgproxy import build_imgproxy_url
+from common.images import build_img_url
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
@@ -209,8 +209,7 @@ class ShelterTypeMixin:
         processing_options: Optional[str] = None,
     ) -> Optional[ShelterHeroImageType]:
         if photo := _get_hero_image(root):
-            if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
-                return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+            return ShelterHeroImageType(id=ID(str(photo.id)), url=build_img_url(photo.file, preset, processing_options))
 
         return None
 
