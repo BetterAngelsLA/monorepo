@@ -512,6 +512,7 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  status: ClientStatusEnum;
   unhousedStartDate?: Maybe<Scalars['Date']['output']>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
@@ -532,6 +533,12 @@ export type ClientSearchInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum ClientStatusEnum {
+  CheckedIn = 'CHECKED_IN',
+  CheckedOut = 'CHECKED_OUT',
+  Reserved = 'RESERVED'
+}
 
 export type CloneBedPayload = BedType | OperationInfo;
 
@@ -626,6 +633,7 @@ export type CreateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  status?: InputMaybe<ClientStatusEnum>;
   unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
@@ -3351,6 +3359,7 @@ export type UpdateClientProfileInput = {
   residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  status?: InputMaybe<ClientStatusEnum>;
   unhousedStartDate?: InputMaybe<Scalars['Date']['input']>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };

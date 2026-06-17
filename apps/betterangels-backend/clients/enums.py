@@ -182,3 +182,10 @@ class VeteranStatusEnum(models.TextChoices):
     NO = "no", _("No")
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
     OTHER_THAN_HONORABLE = "other_than_honorable", _("Other than Honorable Discharge")
+
+
+@strawberry.enum
+class ClientStatusEnum(models.TextChoices):
+    RESERVED = "reserved", _("Reserved")
+    CHECKED_IN = "checked_in", _("Checked in")
+    CHECKED_OUT = "checked_out", _("Checked out")
