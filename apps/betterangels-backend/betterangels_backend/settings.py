@@ -406,6 +406,7 @@ POST_OFFICE = {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
     "CELERY_ENABLED": True,
+    "DEFAULT_PRIORITY": "now",
 }
 EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
