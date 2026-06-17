@@ -59,9 +59,7 @@ class ReservationQueryTestCase(ReservationQueriesTestCase):
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
-                self.reservation_query, variables={"id": str(reservation.pk)}
-            )
+            response = self.execute_graphql(self.reservation_query, variables={"id": str(reservation.pk)})
         self.assertIsNone(response.get("errors"))
 
         data = response["data"]["reservation"]

@@ -3,7 +3,6 @@ from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import (
     AccessibilityChoices,
-    BedStatusChoices,
     DemographicChoices,
     FunderChoices,
     PetChoices,

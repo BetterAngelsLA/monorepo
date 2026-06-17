@@ -21,7 +21,6 @@ from shelters.enums import (
     PetChoices,
     ReferralRequirementChoices,
     ReservationStatusChoices,
-    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
