@@ -46,7 +46,7 @@ class HasOrgPermTestCase(TestCase):
     def _make_info(self, org_id: str | None = None, authenticated: bool = True) -> MagicMock:
         """Build a fake Strawberry Info with a request carrying an org header."""
         request = self.factory.post("/graphql")
-        request.organization_id = org_id  # middleware simulation
+        request.organization_id = org_id  # type: ignore[attr-defined]
 
         if authenticated:
             request.user = self.user

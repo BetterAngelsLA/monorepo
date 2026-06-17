@@ -60,11 +60,9 @@ class HasOrgPerm(HasPerm):
         "organization set via X-Organization-ID header."
     )
 
-    message = "You do not have permission to perform this action in this organization."
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("fail_silently", False)
-        kwargs.setdefault("message", self.message)
+        kwargs.setdefault("message", "You do not have permission to perform this action in this organization.")
         super().__init__(*args, **kwargs)
 
     def resolve_for_user(
@@ -102,12 +100,12 @@ class HasOrgPerm(HasPerm):
         if self.any_perm:
             q = Q()
             for perm_def in self.perms:
-                q |= _perm_q(perm_def.app or "", perm_def.permission)
+                q |= _perm_q(perm_def.app or "", str(perm_def.permission))
             has_perm = org_filter.filter(q).exists()
         else:
             for perm_def in self.perms:
                 org_filter = org_filter.filter(
-                    _perm_q(perm_def.app or "", perm_def.permission)
+                    _perm_q(perm_def.app or "", str(perm_def.permission))
                 )
             has_perm = org_filter.exists()
 

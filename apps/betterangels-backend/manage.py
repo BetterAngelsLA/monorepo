@@ -22,7 +22,7 @@ def _silence_geos_gevent_warnings() -> None:
 
         _original_del = CPointerBase.__del__
 
-        def _safe_del(self: object) -> None:
+        def _safe_del(self: "CPointerBase") -> None:
             try:
                 _original_del(self)
             except RuntimeError:

@@ -55,7 +55,6 @@ export default function Reports({ className = '' }: IProps) {
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
-      organizationId: activeOrg?.id ?? '',
       startDate: startStr,
       endDate: endStr,
     },

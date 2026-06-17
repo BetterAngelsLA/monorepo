@@ -169,7 +169,7 @@ class GraphQLBaseTestCase(
         # Default organization for @HasOrgPerm-scoped mutations/queries.
         self._set_active_org(self.org_1)
 
-    def _set_active_org(self, org: object) -> None:
+    def _set_active_org(self, org: "Organization") -> None:
         """Set the X-Organization-ID header for the current test client."""
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
 
