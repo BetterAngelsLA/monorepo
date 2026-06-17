@@ -1,5 +1,7 @@
-import { useQuery } from '@apollo/client/react';
-import { operatorPath } from '@monorepo/react/shelter';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import { operatorPath, useUser } from '@monorepo/react/shelter';
+import { Input, toError } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
 import { BookCheck, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -51,8 +53,82 @@ export function Dashboard() {
   const isOperatorRoot =
     pathname === operatorPath || pathname === `${operatorPath}/`;
 
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, organizations } = useActiveOrg();
+  const { refetchUser } = useUser();
   const selectedOrganizationId = activeOrg?.id ?? '';
+
+  // Create-org form state (shown when user has no organizations)
+  const [orgName, setOrgName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const [createOrganization] = useMutation(
+    gql`
+      mutation CreateOrganization($data: CreateOrganizationInput!) {
+        createOrganization(data: $data) {
+          user { id email firstName lastName }
+          organization { id name }
+        }
+      }
+    `
+  );
+
+  const handleCreateOrg = async () => {
+    if (!orgName.trim()) return;
+    setSubmitting(true);
+    setCreateError(null);
+    try {
+      await createOrganization({
+        variables: { data: { organizationName: orgName.trim() } },
+      });
+      await refetchUser();
+    } catch (err) {
+      setCreateError(toError(err).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // User has no organizations — show create form
+  if (organizations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="max-w-md w-full mx-4">
+          <h1 className="text-2xl font-bold mb-2">Welcome to BetterAngels</h1>
+          <p className="text-neutral-55 mb-6">
+            Create your shelter organization to get started managing shelters,
+            rooms, and beds.
+          </p>
+          <div className="mb-4">
+            <Input
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              disabled={submitting}
+              type="text"
+              inputClassname="input-md w-full"
+              label="Organization Name"
+              placeholder="Enter your organization name"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateOrg();
+              }}
+            />
+          </div>
+          {createError && (
+            <p className="text-red-500 text-sm mb-4">{createError}</p>
+          )}
+          <Button
+            size="2xl"
+            variant="accent"
+            onClick={handleCreateOrg}
+            disabled={submitting || !orgName.trim()}
+            className="w-full"
+          >
+            {submitting ? 'Creating...' : 'Create Organization'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 

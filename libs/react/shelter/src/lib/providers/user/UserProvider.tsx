@@ -58,11 +58,12 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   }, [loading, data, error, updateUser]);
 
-  const refetchUser = useCallback(async () => {
+  const refetchUser = useCallback(async (): Promise<TUser | undefined> => {
     setIsRefetching(true);
     try {
       const res = await refetch();
       updateUser(res);
+      return parseUser(res.data?.currentUser);
     } catch (err) {
       console.error('Error refetching user data:', err);
       setUser(undefined);
