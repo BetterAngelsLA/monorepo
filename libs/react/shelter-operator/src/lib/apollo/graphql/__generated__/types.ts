@@ -752,6 +752,7 @@ export type CreateNoteTaskInput = {
 };
 
 export type CreateOrganizationInput = {
+  orgType: Scalars['NonEmptyString']['input'];
   organizationName: Scalars['NonEmptyString']['input'];
 };
 

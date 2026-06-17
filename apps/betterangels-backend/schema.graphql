@@ -746,6 +746,7 @@ input CreateNoteTaskInput {
 
 input CreateOrganizationInput {
   organizationName: NonEmptyString!
+  orgType: NonEmptyString!
 }
 
 type CreateOrganizationResponse {
