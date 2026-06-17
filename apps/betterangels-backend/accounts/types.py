@@ -162,7 +162,7 @@ class UserType(UserBaseType):
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
     @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
-    def is_outreach_authorized(self, info: Info) -> bool:
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
         """Backwards-compatible field for old mobile clients.
 
         Returns True if the user belongs to a Caseworker permission group
@@ -172,7 +172,7 @@ class UserType(UserBaseType):
         """
         user = get_current_user(info)
         if not user or not user.is_authenticated:
-            return False
+            return None
         return PermissionGroup.objects.filter(
             group__user=user.pk,
             template__name=CASEWORKER.name,
@@ -195,7 +195,7 @@ class CurrentUserType(UserBaseType):
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
     @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
-    def is_outreach_authorized(self, info: Info) -> bool:
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
         """Backwards-compatible field for old clients.
 
         Returns True if the user belongs to a Caseworker permission group
@@ -205,7 +205,7 @@ class CurrentUserType(UserBaseType):
         """
         user = get_current_user(info)
         if not user or not user.is_authenticated:
-            return False
+            return None
         return PermissionGroup.objects.filter(
             group__user=user.pk,
             template__name=CASEWORKER.name,

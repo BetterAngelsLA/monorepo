@@ -874,7 +874,7 @@ type CurrentUserType {
   hasAcceptedPrivacyPolicy: Boolean
   username: String
   isHmisUser: Boolean
-  isOutreachAuthorized: Boolean! @deprecated(reason: "Use userPermissions check instead.")
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
 """Date (isoformat)"""
@@ -2953,7 +2953,7 @@ type UserType {
   hasAcceptedPrivacyPolicy: Boolean
   username: String
   isHmisUser: Boolean
-  isOutreachAuthorized: Boolean! @deprecated(reason: "Use userPermissions check instead.")
+  isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
 enum VaccinationRequirementChoices {
