@@ -12,22 +12,22 @@ from shelters.models import Bed, Reservation, Room, Shelter
 class ReservationModelTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = baker.make(Shelter, name="Test Shelter")
-        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
-        self.room2 = baker.make(Room, shelter=self.shelter, name="Room-202")
-        self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
-        self.bed2 = baker.make(Bed, shelter=self.shelter, room=self.room2, name="Bed-2")
+        self.room_1 = baker.make(Room, shelter=self.shelter, name="Room-101")
+        self.room_2 = baker.make(Room, shelter=self.shelter, name="Room-202")
+        self.bed_1 = baker.make(Bed, shelter=self.shelter, room=self.room_1, name="Bed-1")
+        self.bed_2 = baker.make(Bed, shelter=self.shelter, room=self.room_2, name="Bed-2")
 
     # --- creation ---
 
     def test_can_create_bed_only_reservation(self) -> None:
-        reservation = baker.make(Reservation, bed=self.bed)
-        self.assertEqual(reservation.bed, self.bed)
+        reservation = baker.make(Reservation, bed=self.bed_1)
+        self.assertEqual(reservation.bed, self.bed_1)
         self.assertIsNone(reservation.room)
         self.assertEqual(reservation.status, ReservationStatusChoices.CONFIRMED)
 
     def test_can_create_room_only_reservation(self) -> None:
-        reservation = baker.make(Reservation, room=self.room2, bed=None)
-        self.assertEqual(reservation.room, self.room2)
+        reservation = baker.make(Reservation, room=self.room_2, bed=None)
+        self.assertEqual(reservation.room, self.room_2)
         self.assertIsNone(reservation.bed)
         self.assertEqual(reservation.status, ReservationStatusChoices.CONFIRMED)
 
@@ -41,40 +41,40 @@ class ReservationModelTestCase(TestCase):
     # --- double-booking prevention: bed ---
 
     def test_cannot_create_reservation_for_bed_with_confirmed_reservation(self) -> None:
-        baker.make(Reservation, bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
+        baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
         with self.assertRaises(IntegrityError):
-            baker.make(Reservation, bed=self.bed)
+            baker.make(Reservation, bed=self.bed_1)
 
     def test_cannot_create_reservation_for_bed_with_checked_in_reservation(self) -> None:
-        baker.make(Reservation, bed=self.bed, status=ReservationStatusChoices.CHECKED_IN)
+        baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CHECKED_IN)
         with self.assertRaises(IntegrityError):
-            baker.make(Reservation, bed=self.bed)
+            baker.make(Reservation, bed=self.bed_1)
 
     def test_cannot_create_reservation_for_bed_with_overdue_reservation(self) -> None:
-        baker.make(Reservation, bed=self.bed, status=ReservationStatusChoices.CHECK_IN_OVERDUE)
+        baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CHECK_IN_OVERDUE)
         with self.assertRaises(IntegrityError):
-            baker.make(Reservation, bed=self.bed)
+            baker.make(Reservation, bed=self.bed_1)
 
     # --- double-booking prevention: room-only ---
 
     def test_cannot_create_second_room_only_reservation(self) -> None:
         """Room-only (bed=null) is unique per room for active reservations."""
-        baker.make(Reservation, room=self.room2, bed=None, status=ReservationStatusChoices.CONFIRMED)
+        baker.make(Reservation, room=self.room_2, bed=None, status=ReservationStatusChoices.CONFIRMED)
         with self.assertRaises(IntegrityError):
-            baker.make(Reservation, room=self.room2, bed=None)
+            baker.make(Reservation, room=self.room_2, bed=None)
 
     def test_multiple_bed_reservations_allowed_for_same_room(self) -> None:
         """When both room and bed are set, the room constraint does not apply."""
-        baker.make(Reservation, room=self.room, bed=self.bed, status=ReservationStatusChoices.CONFIRMED)
-        baker.make(Reservation, room=self.room, bed=self.bed2, status=ReservationStatusChoices.CONFIRMED)
-        self.assertEqual(Reservation.objects.filter(room=self.room).count(), 2)
+        baker.make(Reservation, room=self.room_1, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
+        baker.make(Reservation, room=self.room_1, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
+        self.assertEqual(Reservation.objects.filter(room=self.room_1).count(), 2)
 
     # --- completing a reservation sets checked_out_at ---
 
     def test_completing_reservation_sets_checked_out_at(self) -> None:
         reservation = baker.make(
             Reservation,
-            bed=self.bed,
+            bed=self.bed_1,
             status=ReservationStatusChoices.CHECKED_IN,
         )
         self.assertIsNone(reservation.checked_out_at)
@@ -98,10 +98,10 @@ class BedComputedStatusTestCase(TestCase):
 
     def setUp(self) -> None:
         self.shelter = baker.make(Shelter, name="Test Shelter")
-        self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
+        self.room_1 = baker.make(Room, shelter=self.shelter, name="Room-101")
 
     def _make_bed(self, **kwargs: object) -> Bed:
-        return baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1", **kwargs)  # type: ignore
+        return baker.make(Bed, shelter=self.shelter, room=self.room_1, name="Bed-1", **kwargs)  # type: ignore
 
     def _make_completed_reservation(self, bed: Bed, checked_out_at: datetime.datetime) -> Reservation:
         return baker.make(
