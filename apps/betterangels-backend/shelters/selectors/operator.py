@@ -47,9 +47,7 @@ def user_shelter_list(
     Does NOT require a specific organization — used by global permission
     checks (e.g., photo mutations using ``HasPerm``).
     """
-    return queryset.filter(
-        Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user))
-    )
+    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user)))
 
 
 def operator_shelter_list(
