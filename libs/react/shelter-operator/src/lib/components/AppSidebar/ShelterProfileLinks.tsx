@@ -91,6 +91,16 @@ export function ShelterProfileLinks(props: IProps) {
         >
           Ecosystem
         </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(shelterId, shelterProfileSegments.media)}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: shelterProfileSegments.media,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Media
+        </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar.NestedLinks>
   );

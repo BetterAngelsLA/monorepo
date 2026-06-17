@@ -4,11 +4,17 @@ import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.models import User
-from common.graphql.types import BulkDeleteInput, BulkDeleteResult
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    BulkDeleteInput,
+    BulkDeleteResult,
+)
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
+from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
@@ -18,16 +24,22 @@ from shelters.types import (
     CreateBedInput,
     CreateRoomInput,
     CreateShelterInput,
+    GenerateShelterPhotoUploadsInput,
     OperatorShelterType,
+    ResolveShelterPhotoUploadsInput,
     RoomType,
     ServiceCategoryType,
+    ShelterPhotoType,
+    ShelterPhotoUploadsType,
     ShelterType,
     SPAType,
     UpdateBedInput,
     UpdateRoomInput,
     UpdateShelterInput,
+    UpdateShelterPhotoInput,
 )
 from strawberry import ID
+from strawberry.scalars import JSON
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -156,4 +168,59 @@ class Mutation:
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
         deleted_ids = bed_delete(user=user, organization_id=org_id, bed_ids=ids)
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
+
+    # ── Shelter Photos ─────────────────────────────────────────────────────
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def generate_shelter_photo_uploads(
+        self,
+        info: Info,
+        data: GenerateShelterPhotoUploadsInput,
+    ) -> AuthorizedPresignedS3UploadsType:
+        user = cast(User, get_current_user(info))
+
+        presigned_uploads = shelter_photo.create_presigned_uploads(
+            user=user, shelter_id=data.shelter_id, uploads=data.uploads
+        )
+
+        return AuthorizedPresignedS3UploadsType(
+            uploads=[
+                AuthorizedPresignedS3UploadType(
+                    ref_id=item["ref_id"],
+                    url=item["url"],
+                    fields=cast(JSON, item["fields"]),
+                    presigned_key=item["presigned_key"],
+                    upload_token=item["upload_token"],
+                )
+                for item in presigned_uploads["uploads"]
+            ]
+        )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def resolve_shelter_photo_uploads(
+        self,
+        info: Info,
+        data: ResolveShelterPhotoUploadsInput,
+    ) -> ShelterPhotoUploadsType:
+        user = cast(User, get_current_user(info))
+
+        photos = shelter_photo.resolve_uploads(
+            user=user,
+            shelter_id=data.shelter_id,
+            photos=data.photos,
+        )
+
+        return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def update_shelter_photo(self, info: Info, data: UpdateShelterPhotoInput) -> ShelterPhotoType:
+        user = cast(User, get_current_user(info))
+        return cast(ShelterPhotoType, shelter_photo.update_shelter_photo(user=user, data=data))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
+        user = cast(User, get_current_user(info))
+        ids = [int(id) for id in data.ids]
+        deleted_ids = shelter_photo.delete_shelter_photos(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

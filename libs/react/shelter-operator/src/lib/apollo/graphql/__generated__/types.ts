@@ -857,6 +857,8 @@ export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
+export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
+
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
@@ -1007,6 +1009,13 @@ export type GenerateClientProfilePhotoUploadInput = {
 };
 
 export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
+
+export type GenerateShelterPhotoUploadsInput = {
+  shelterId: Scalars['ID']['input'];
+  uploads: Array<ShelterPhotoUploadItemInput>;
+};
+
+export type GenerateShelterPhotoUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
 
 export type GeolocationInput = {
   latitude: Scalars['Float']['input'];
@@ -1518,10 +1527,12 @@ export type Mutation = {
   deleteReferral: DeleteReferralPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
+  generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1531,6 +1542,7 @@ export type Mutation = {
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
+  resolveShelterPhotoUploads: ResolveShelterPhotoUploadsPayload;
   revertNote: RevertNotePayload;
   updateBed: UpdateBedPayload;
   updateClientContact: UpdateClientContactPayload;
@@ -1548,6 +1560,7 @@ export type Mutation = {
   updateReferral: UpdateReferralPayload;
   updateRoom: UpdateRoomPayload;
   updateShelter: UpdateShelterPayload;
+  updateShelterPhoto: UpdateShelterPhotoPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateUserProfile: UpdateUserProfilePayload;
@@ -1730,6 +1743,11 @@ export type MutationDeleteServiceRequestArgs = {
 };
 
 
+export type MutationDeleteShelterPhotosArgs = {
+  data: BulkDeleteInput;
+};
+
+
 export type MutationDeleteSocialMediaProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
@@ -1747,6 +1765,11 @@ export type MutationGenerateClientDocumentUploadsArgs = {
 
 export type MutationGenerateClientProfilePhotoUploadArgs = {
   data: GenerateClientProfilePhotoUploadInput;
+};
+
+
+export type MutationGenerateShelterPhotoUploadsArgs = {
+  data: GenerateShelterPhotoUploadsInput;
 };
 
 
@@ -1788,6 +1811,11 @@ export type MutationResolveClientDocumentUploadsArgs = {
 
 export type MutationResolveClientProfilePhotoUploadArgs = {
   data: ResolveClientProfilePhotoUploadInput;
+};
+
+
+export type MutationResolveShelterPhotoUploadsArgs = {
+  data: ResolveShelterPhotoUploadsInput;
 };
 
 
@@ -1875,6 +1903,11 @@ export type MutationUpdateRoomArgs = {
 
 export type MutationUpdateShelterArgs = {
   data: UpdateShelterInput;
+};
+
+
+export type MutationUpdateShelterPhotoArgs = {
+  data: UpdateShelterPhotoInput;
 };
 
 
@@ -2754,6 +2787,13 @@ export type ResolveClientProfilePhotoUploadInput = {
 
 export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
 
+export type ResolveShelterPhotoUploadsInput = {
+  photos: Array<ShelterPhotoFromUploadInput>;
+  shelterId: Scalars['ID']['input'];
+};
+
+export type ResolveShelterPhotoUploadsPayload = OperationInfo | ShelterPhotoUploadsType;
+
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
   revertBeforeTimestamp: Scalars['DateTime']['input'];
@@ -3039,6 +3079,14 @@ export enum ShelterPermissions {
   View = 'VIEW'
 }
 
+export type ShelterPhotoFromUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  photoType: ShelterPhotoTypeChoices;
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
@@ -3051,6 +3099,17 @@ export enum ShelterPhotoTypeChoices {
   Exterior = 'EXTERIOR',
   Interior = 'INTERIOR'
 }
+
+export type ShelterPhotoUploadItemInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type ShelterPhotoUploadsType = {
+  __typename?: 'ShelterPhotoUploadsType';
+  photos: Array<ShelterPhotoType>;
+};
 
 export enum ShelterProgramChoices {
   BridgeHome = 'BRIDGE_HOME',
@@ -3524,6 +3583,7 @@ export type UpdateShelterInput = {
   exitPolicyOther?: InputMaybe<Scalars['String']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
   fundersOther?: InputMaybe<Scalars['String']['input']>;
+  heroImageId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<ShelterLocationInput>;
@@ -3555,6 +3615,13 @@ export type UpdateShelterInput = {
 };
 
 export type UpdateShelterPayload = OperationInfo | ShelterType;
+
+export type UpdateShelterPhotoInput = {
+  id: Scalars['ID']['input'];
+  photoType: ShelterPhotoTypeChoices;
+};
+
+export type UpdateShelterPhotoPayload = OperationInfo | ShelterPhotoType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 

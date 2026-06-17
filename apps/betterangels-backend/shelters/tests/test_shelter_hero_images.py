@@ -38,12 +38,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         super().setUp()
         self.setup_shelter_graphql_fixtures()
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_returns_explicit_fk_url_when_set(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_returns_explicit_fk_url_when_set(self, mock_build_img_url: Mock) -> None:
         """``heroImage`` should use the ID of the ``ShelterPhoto`` when set."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         for ptype in (ShelterPhotoTypeChoices.EXTERIOR, ShelterPhotoTypeChoices.INTERIOR):
             with self.subTest(photo_type=ptype):
                 shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -56,12 +54,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
                 hero_images = {r["id"]: r["heroImage"]["id"] for r in results}
                 self.assertEqual(str(photo.pk), hero_images[str(shelter.pk)])
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_falls_back_to_exterior_photo(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_falls_back_to_exterior_photo(self, mock_build_img_url: Mock) -> None:
         """When ``hero_image`` is unset, use the first exterior photo."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
 
@@ -70,12 +66,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_falls_back_to_interior_photo(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_falls_back_to_interior_photo(self, mock_build_img_url: Mock) -> None:
         """When there is no hero FK and no exterior photos, use the first interior photo."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         interior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.INTERIOR)
 
@@ -84,12 +78,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["heroImage"]["id"], str(interior.pk))
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_returns_none_when_no_photos(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_returns_none_when_no_photos(self, mock_build_img_url: Mock) -> None:
         """``heroImage`` is None when there is no hero FK and no gallery photos."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter_recipe.make(status=StatusChoices.APPROVED)
 
         response = self.execute_graphql(self.HERO_IMAGE_QUERY)
@@ -97,13 +89,11 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 1)
         self.assertIsNone(results[0]["heroImage"])
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_after_hero_photo_deleted_uses_fallback(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_after_hero_photo_deleted_uses_fallback(self, mock_build_img_url: Mock) -> None:
         """If the explicit hero ``ShelterPhoto`` is deleted, ``hero_image`` is cleared (SET_NULL) and
         the resolver falls back to remaining photos."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         hero = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
         shelter.hero_image = hero
@@ -124,12 +114,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["heroImage"]["id"], str(fallback.pk))
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_with_null_hero_fk_uses_exterior(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_with_null_hero_fk_uses_exterior(self, mock_build_img_url: Mock) -> None:
         """When ``hero_image`` is null, the first exterior photo is used."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         exterior = ShelterPhoto.objects.create(shelter=shelter, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)
         self.assertIsNone(shelter.hero_image_id)
@@ -140,12 +128,10 @@ class ShelterHeroImageRegressionTestCase(ShelterGraphQLFixtureMixin, GraphQLTest
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["heroImage"]["id"], str(exterior.pk))
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_hero_image_multiple_shelters_mixed_states(self, mock_build_imgproxy_url: Mock) -> None:
+    @patch("shelters.types.outputs.build_img_url")
+    def test_hero_image_multiple_shelters_mixed_states(self, mock_build_img_url: Mock) -> None:
         """Multiple shelters with different hero states resolve without errors."""
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
-            file, "url", None
-        )
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(file, "url", None)
 
         s1 = shelter_recipe.make(status=StatusChoices.APPROVED)
         p1 = ShelterPhoto.objects.create(shelter=s1, file=self.file, type=ShelterPhotoTypeChoices.EXTERIOR)

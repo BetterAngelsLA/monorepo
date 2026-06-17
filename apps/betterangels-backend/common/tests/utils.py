@@ -112,6 +112,33 @@ class SupportsAssertNumQueries(Protocol):
     def assertNumQueries(self, num: int, func: Any = None, *args: Any, **kwargs: Any) -> Any: ...
 
 
+class _MaxNumQueriesContext:
+    """Context manager that asserts the number of queries does not exceed a maximum."""
+
+    def __init__(self, test_case: Any, max_queries: int) -> None:
+        self.test_case = test_case
+        self.max_queries = max_queries
+        self.captured: Any = None
+
+    def __enter__(self) -> "_MaxNumQueriesContext":
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self.captured = CaptureQueriesContext(connection)
+        self.captured.__enter__()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.captured.__exit__(exc_type, exc_val, exc_tb)
+        if exc_type is None:
+            num = len(self.captured)
+            self.test_case.assertLessEqual(
+                num,
+                self.max_queries,
+                f"Expected at most {self.max_queries} queries, but {num} were executed.",
+            )
+
+
 class NumQueriesWithoutCacheMixin:
 
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
@@ -125,6 +152,15 @@ class NumQueriesWithoutCacheMixin:
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
         return self.assertNumQueries(query_count)
+
+    def assertMaxNumQueriesWithoutCache(self: Any, max_query_count: int) -> _MaxNumQueriesContext:
+        """
+        Like assertNumQueriesWithoutCache but asserts the query count does not
+        exceed *max_query_count* rather than requiring an exact match.
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return _MaxNumQueriesContext(self, max_query_count)
 
 
 class GraphQLBaseTestCase(

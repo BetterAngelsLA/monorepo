@@ -3,12 +3,10 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
-import { Dashboard } from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateBedPage } from './pages/beds/CreateBedPage';
 import { EditBedPage } from './pages/beds/EditBedPage';
-import { CreateRoomPage } from './pages/rooms/CreateRoomPage';
-import { EditRoomPage } from './pages/rooms/EditRoomPage';
+import { Dashboard } from './pages/dashboard/Dashboard';
+import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
 import { AddProfilePage } from './pages/reservation/AddProfilePage';
 import { CheckInByDate } from './pages/reservation/CheckInByDate';
@@ -16,10 +14,13 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
+import { CreateRoomPage } from './pages/rooms/CreateRoomPage';
+import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
+  ShelterMediaPage,
   ShelterOperatingHoursPage,
   ShelterPoliciesPage,
   ShelterServicesPage,
@@ -86,6 +87,10 @@ export function OperatorApp() {
               <Route
                 path={shelterProfileSegments.ecosystem}
                 element={<ShelterEcosystemPage />}
+              />
+              <Route
+                path={shelterProfileSegments.media}
+                element={<ShelterMediaPage />}
               />
             </Route>
             <Route path={routePath(paths.shelterManage)}>
