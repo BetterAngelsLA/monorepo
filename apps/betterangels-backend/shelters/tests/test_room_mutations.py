@@ -115,12 +115,14 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
     def test_create_room_shelter_not_found(self) -> None:
         variables = {"data": {"shelterId": 999999, "name": "Room-101"}}
 
-        expected_query_count = 3
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn("Shelter matching ID 999999 could not be found.", response["errors"][0]["message"])
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_create_room_invalid_status(self) -> None:
         variables = {"data": {"shelterId": self.shelter.pk, "name": "Room-101", "status": "INVALID_STATUS"}}
@@ -260,12 +262,14 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
     def test_update_room_not_found_returns_operation_info(self) -> None:
         variables = {"id": "999999", "data": {"name": "Missing"}}
 
-        expected_query_count = 3
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn("Room matching ID 999999 could not be found.", response["errors"][0]["message"])
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Room matching ID 999999 could not be found.", messages[0]["message"])
 
     def test_update_room_wrong_org_rejected(self) -> None:
         other_org = organization_recipe.make()
@@ -274,12 +278,14 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(room.pk), "data": {"name": "Unauthorized update"}}
 
-        expected_query_count = 3
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(f"Room matching ID {room.pk} could not be found.", response["errors"][0]["message"])
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateRoom"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn(f"Room matching ID {room.pk} could not be found.", messages[0]["message"])
 
     def test_update_room_invalid_status(self) -> None:
         room = baker.make(Room, shelter=self.shelter)

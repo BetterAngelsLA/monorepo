@@ -420,7 +420,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(db_shelter.description, "This should be in the database")
 
     def test_create_shelter_wrong_org_rejected(self) -> None:
-        """Creating a shelter for an organization the user doesn't belong to is rejected."""
+        """Creating a shelter with a header org the user doesn't belong to is rejected by HasOrgPerm."""
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
@@ -439,11 +439,12 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             }
         }
 
-        response = self.execute_graphql(mutation, variables)
+        # Pass org_2 header so HasOrgPerm fails (user isn't a member)
+        response = self.execute_graphql(mutation, variables, HTTP_X_ORGANIZATION_ID=str(self.org_2.pk))
 
         self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
-            "You do not have permission to create a shelter for this organization.",
+            "You do not have permission to perform this action in this organization.",
             response["errors"][0]["message"],
         )
 
@@ -565,7 +566,11 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertCountEqual(demographic_names, ["FAMILIES", "SINGLE_MEN"])
 
     def test_update_shelter_wrong_org_rejected(self) -> None:
-        """A user cannot update a shelter owned by a different organization."""
+        """A user cannot update a shelter owned by a different organization — scoped by HasOrgPerm.
+
+        The shelter_get call raises ObjectDoesNotExist which is caught by
+        MUTATIONS_DEFAULT_HANDLE_ERRORS and returned as OperationInfo.
+        """
         other_shelter = Shelter.objects.create(
             name="Other Org Shelter",
             organization=self.org_2,
@@ -576,6 +581,12 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
                 updateShelter(data: $data) {
                     ... on ShelterType {
                         id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
                     }
                 }
             }
@@ -589,11 +600,10 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "You do not have permission to update this shelter.",
-            response["errors"][0]["message"],
-        )
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID", messages[0]["message"])
 
     def test_update_shelter_services_applied(self) -> None:
         """Providing services in an update sets the shelter's services."""
@@ -712,7 +722,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0]["kind"], "ERROR")
         self.assertIsNone(messages[0]["field"])
-        self.assertIn("matching query does not exist", messages[0]["message"])
+        self.assertIn("Shelter matching ID", messages[0]["message"])
 
     def test_update_shelter_cities_served_ids(self) -> None:
         """Providing citiesServedIds replaces the shelter's citiesServed M2M relation."""

@@ -25,7 +25,9 @@ from shelters.tests.baker_recipes import shelter_recipe
 class RoomServiceTestCase(TestCase):
     def setUp(self) -> None:
         User = get_user_model()
-        self.org, self.other_org = organization_recipe.make(_quantity=2, preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        self.org, self.other_org = organization_recipe.make(
+            _quantity=2, preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,)
+        )
         OrganizationProfile.objects.update_or_create(
             organization=self.org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
         )

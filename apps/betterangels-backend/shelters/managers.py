@@ -5,10 +5,9 @@ from django.db import models
 from django.db.models import QuerySet
 from shelters.enums import ScheduleTypeChoices
 from shelters.open_at import shelters_open_at
-from shelters.selectors import operator_shelter_list, shelter_list
+from shelters.selectors import shelter_list
 
 if TYPE_CHECKING:
-    from accounts.models import User
     from shelters.models import Shelter  # noqa: F401
 
 
@@ -38,16 +37,3 @@ class ShelterManager(models.Manager["Shelter"]):
         schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
     ) -> ShelterQuerySet:
         return self.get_queryset().open_at(dt, schedule_type)
-
-
-class AdminShelterQuerySet(ShelterQuerySet):
-    def for_user(self, user: "User", organization_id: str) -> "AdminShelterQuerySet":
-        return operator_shelter_list(self, user=user, organization_id=organization_id)  # type: ignore[return-value]
-
-
-class AdminShelterManager(models.Manager["Shelter"]):
-    def get_queryset(self) -> AdminShelterQuerySet:
-        return AdminShelterQuerySet(self.model, using=self._db)
-
-    def for_user(self, user: "User", organization_id: str) -> AdminShelterQuerySet:
-        return self.get_queryset().for_user(user, organization_id=organization_id)

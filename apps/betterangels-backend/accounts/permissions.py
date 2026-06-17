@@ -91,7 +91,7 @@ def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[s
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 group__user=user,
-            ).filter(_perm_q(app_label, codename))
+            ).filter(_perm_q(app_label, codename, prefix="group__permissions"))
         )
     return annotations
 

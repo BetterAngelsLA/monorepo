@@ -5,11 +5,10 @@ All org-scoped functions live here.  None are imported by
 circular import with the model layer.
 """
 
-import datetime
 from typing import TYPE_CHECKING
 
 from common.permissions.utils import permissioned_queryset
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
 
@@ -86,7 +85,10 @@ def room_queryset(
 
         queryset = Room.objects.all()
     return permissioned_queryset(
-        queryset, user=user, organization_id=organization_id, perms=perms,
+        queryset,
+        user=user,
+        organization_id=organization_id,
+        perms=perms,
         organization_field="shelter__organization_id",
     )
 
@@ -107,7 +109,10 @@ def bed_queryset(
 
         queryset = Bed.objects.all()
     return permissioned_queryset(
-        queryset, user=user, organization_id=organization_id, perms=perms,
+        queryset,
+        user=user,
+        organization_id=organization_id,
+        perms=perms,
         organization_field="shelter__organization_id",
     )
 
@@ -130,7 +135,9 @@ def shelter_get(
     from shelters.models import Shelter
 
     return shelter_queryset(
-        Shelter.objects.all(), user=user, organization_id=organization_id,
+        Shelter.objects.all(),
+        user=user,
+        organization_id=organization_id,
         perms=[permission] if permission else None,
     ).get(pk=shelter_id)
 
@@ -146,7 +153,9 @@ def room_get(
     from shelters.models import Room
 
     return room_queryset(
-        Room.objects.select_related("shelter"), user=user, organization_id=organization_id,
+        Room.objects.select_related("shelter"),
+        user=user,
+        organization_id=organization_id,
         perms=[permission] if permission else None,
     ).get(pk=room_id)
 
@@ -162,6 +171,8 @@ def bed_get(
     from shelters.models import Bed
 
     return bed_queryset(
-        Bed.objects.select_related("shelter"), user=user, organization_id=organization_id,
+        Bed.objects.select_related("shelter"),
+        user=user,
+        organization_id=organization_id,
         perms=[permission] if permission else None,
     ).get(pk=bed_id)

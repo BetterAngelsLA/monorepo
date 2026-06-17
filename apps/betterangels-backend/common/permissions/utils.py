@@ -183,24 +183,25 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def _perm_q(app_label: str, codename: str) -> Q:
+def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
     """Return a Q object matching a specific Django permission.
 
-    The full permission path is ``permission_groups__group__permissions``
-    joined through PermissionGroup → Group → Permission → ContentType.
+    The default *prefix* ``permission_groups__group__permissions``
+    resolves from ``Organization`` through ``PermissionGroup`` →
+    ``Group`` → ``Permission`` → ``ContentType``.
 
-    Used by ``HasOrgPerm`` and permission annotators to avoid duplicating
-    the nested ORM path.
+    Pass ``prefix="group__permissions"`` when querying ``PermissionGroup``
+    directly (e.g. in ``permission_annotations``).
     """
     return Q(
-        permission_groups__group__permissions__content_type__app_label=app_label,
-        permission_groups__group__permissions__codename=codename,
+        **{f"{prefix}__content_type__app_label": app_label},
+        **{f"{prefix}__codename": codename},
     )
 
 
-def perm_filter(app_label: str, codename: str) -> Q:
+def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
     """Public alias for ``_perm_q`` — Q for a single permission."""
-    return _perm_q(app_label, codename)
+    return _perm_q(app_label, codename, prefix=prefix)
 
 
 def get_current_organization(info: Info) -> str:

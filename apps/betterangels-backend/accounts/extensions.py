@@ -24,7 +24,7 @@ from collections.abc import Callable
 from typing import Any
 
 from accounts.models import Organization
-from common.permissions.utils import get_current_organization, permissioned_queryset
+from common.permissions.utils import permissioned_queryset
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
@@ -72,7 +72,11 @@ class HasOrgPerm(HasPerm):
         if not user or not user.is_authenticated:
             raise DjangoNoPermission("Authentication required.")
 
-        org_id = get_current_organization(info)
+        org_id_raw = info.context.request.organization_id
+
+        if org_id_raw is None:
+            raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
+        org_id = str(org_id_raw)
 
         if not self.perms:
             raise DjangoNoPermission("No permissions specified for this operation.")
@@ -83,6 +87,7 @@ class HasOrgPerm(HasPerm):
             organization_id=org_id,
             perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
             any_perm=self.any_perm,
+            organization_field="pk",
         ).exists()
 
         if not has_perm:

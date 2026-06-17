@@ -51,7 +51,7 @@ class RoomQueriesTestCase(ShelterTestCase, TestCase):
 
 class RoomQueryTestCase(RoomQueriesTestCase):
     def test_room_query(self) -> None:
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.room_query, variables={"id": str(self.room.pk)})
         self.assertIsNone(response.get("errors"))
@@ -77,7 +77,7 @@ class RoomQueryTestCase(RoomQueriesTestCase):
 
 class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_returns_org_rooms(self) -> None:
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
         self.assertIsNone(response.get("errors"))
@@ -107,7 +107,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_room = Room.objects.create(shelter=other_shelter, name="Room-201")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -130,7 +130,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
             status=RoomStatusChoices.RESERVED,
         )
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -150,7 +150,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         Bed.objects.create(shelter=self.shelter, room=room_with_beds, name="Bed-1")
         Bed.objects.create(shelter=self.shelter, room=room_with_beds, name="Bed-2")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -170,7 +170,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         Room.objects.create(shelter=other_shelter, name="Other-Room")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
