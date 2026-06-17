@@ -265,7 +265,6 @@ class ReservationClientInput:
 
 @strawberry.input
 class CreateReservationInput:
-    shelter_id: ID
     room_id: Optional[ID] = None
     bed_id: Optional[ID] = None
     checked_in_at: Optional[datetime] = None

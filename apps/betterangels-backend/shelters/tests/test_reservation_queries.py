@@ -52,7 +52,6 @@ class ReservationQueryTestCase(ReservationQueriesTestCase):
     def test_reservation_query(self) -> None:
         reservation = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
             notes="Test reservation",
@@ -78,13 +77,11 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
     def test_reservations_query(self) -> None:
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
         baker.make(
             Reservation,
-            shelter=self.shelter,
             room=self.room,
             bed=None,
             status=ReservationStatusChoices.CHECKED_IN,
@@ -105,7 +102,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         """Reservations with a bed belonging to the shelter are returned."""
         reservation = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -114,7 +110,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         other_bed = baker.make(Bed, shelter=other_shelter, name="Bed-Other")
         other_reservation = baker.make(
             Reservation,
-            shelter=other_shelter,
             bed=other_bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -142,7 +137,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         """Reservations with a room (no bed) belonging to the shelter are returned."""
         room_only_reservation = baker.make(
             Reservation,
-            shelter=self.shelter,
             room=self.room,
             bed=None,
             status=ReservationStatusChoices.CONFIRMED,
@@ -167,7 +161,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         """Reservations with both a bed and room in the same shelter match once."""
         reservation_with_both = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             room=self.room,
             status=ReservationStatusChoices.CONFIRMED,
@@ -191,7 +184,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
     def test_reservations_query_excludes_other_org_reservations(self) -> None:
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -200,7 +192,6 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
         other_bed = baker.make(Bed, shelter=other_shelter, name="Other-Bed")
         baker.make(
             Reservation,
-            shelter=other_shelter,
             bed=other_bed,
             status=ReservationStatusChoices.CONFIRMED,
         )

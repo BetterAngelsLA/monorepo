@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Reservation, ReservationClient, Shelter
-from shelters.selectors import admin_reservation_list, reservation_get, shelter_get
+from shelters.selectors import admin_reservation_list, bed_get, reservation_get, room_get, shelter_get
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -24,10 +24,10 @@ def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | 
 
 @transaction.atomic
 def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
-    """Create a new Reservation associated with an existing Shelter.
+    """Create a new Reservation associated with a Room and/or Bed.
 
-    Validates that *user* belongs to the shelter's organization via
-    ``shelter_get`` before creating the reservation.
+    Validates that *user* belongs to the shelter's organization. The shelter
+    is derived from ``bed_id`` or ``room_id``.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -35,16 +35,26 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    shelter_id = data.pop("shelter_id")
+
+    bed_id = data.get("bed_id")
+    room_id = data.get("room_id")
+
+    if bed_id:
+        shelter_id = bed_get(user=user, bed_id=bed_id).shelter_id
+    elif room_id:
+        shelter_id = room_get(user=user, room_id=room_id).shelter_id
+    else:
+        raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
+
     try:
-        shelter = shelter_get(user=user, shelter_id=shelter_id)
+        shelter_get(user=user, shelter_id=shelter_id)
     except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+        raise ObjectDoesNotExist("You do not have permission to create a Reservation for this Shelter.")
 
     clients_data = data.pop("clients", None)
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
-    reservation = Reservation(shelter=shelter, created_by=user, **scalar_data)
+    reservation = Reservation(created_by=user, **scalar_data)
     reservation.full_clean()
     reservation.save()
     _set_clients(reservation, clients_data)

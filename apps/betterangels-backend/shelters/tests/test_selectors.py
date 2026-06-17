@@ -30,12 +30,15 @@ class ReservationStatusChangeCountsTestCase(TestCase):
     # -- helpers -------------------------------------------------------------
 
     def _make_reservation(self, shelter: Shelter, statuses: list[ReservationStatusChoices]) -> Reservation:
-        """Create a reservation (defaults to CONFIRMED) then apply each status in order.
+        """Create a reservation on a fresh bed then apply each status in order.
 
-        Each ``save`` that changes ``status`` fires a ``reservation.status_change``
-        event via the pghistory trigger.
+        Each reservation gets its own bed to avoid the
+        unique-active-reservation-per-bed constraint. Each ``save`` that changes
+        ``status`` fires a ``reservation.status_change`` event via the pghistory
+        trigger.
         """
-        reservation = Reservation.objects.create(shelter=shelter)
+        bed = baker.make(Bed, shelter=shelter, name="Test-Bed")
+        reservation = Reservation.objects.create(bed=bed)
         for status in statuses:
             reservation.status = status
             reservation.save()

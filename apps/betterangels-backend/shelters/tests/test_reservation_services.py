@@ -31,8 +31,8 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
             user=self.user,
             data={"bed_id": self.bed.pk},
         )
-
-        self.assertEqual(reservation.shelter_id, self.shelter.pk)
+        assert reservation.bed
+        self.assertEqual(reservation.bed.shelter_id, self.shelter.pk)
         self.assertEqual(reservation.bed_id, self.bed.pk)
         self.assertIsNone(reservation.room_id)
         self.assertEqual(reservation.status, ReservationStatusChoices.CONFIRMED)
@@ -44,16 +44,17 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
             data={"room_id": self.room2.pk},
         )
 
-        self.assertEqual(reservation.shelter_id, self.shelter.pk)
+        assert reservation.room
+        self.assertEqual(reservation.room.shelter_id, self.shelter.pk)
         self.assertEqual(reservation.room_id, self.room2.pk)
         self.assertIsNone(reservation.bed_id)
         self.assertEqual(reservation.status, ReservationStatusChoices.CONFIRMED)
         self.assertTrue(Reservation.objects.filter(pk=reservation.pk).exists())
 
     def test_requires_bed_or_room(self) -> None:
-        with self.assertRaises(ValidationError) as ctx:
+        with self.assertRaises(ObjectDoesNotExist) as ctx:
             reservation_create(user=self.user, data={})
-        self.assertIn("A reservation must have a bed or room assigned.", str(ctx.exception))
+        self.assertIn("A bed or room must be provided", str(ctx.exception))
 
     def test_bed_maintenance_flag_rejected(self) -> None:
         self.bed.maintenance_flag = True

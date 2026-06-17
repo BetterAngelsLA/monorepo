@@ -101,7 +101,7 @@ class BedComputedStatusTestCase(TestCase):
         self.room = baker.make(Room, shelter=self.shelter, name="Room-101")
 
     def _make_bed(self, **kwargs: object) -> Bed:
-        return baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1", **kwargs)
+        return baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1", **kwargs)  # type: ignore
 
     def _make_completed_reservation(self, bed: Bed, checked_out_at: datetime.datetime) -> Reservation:
         return baker.make(
@@ -155,7 +155,7 @@ class RoomComputedStatusTestCase(TestCase):
         self.shelter = baker.make(Shelter, name="Test Shelter")
 
     def _make_room(self, **kwargs: object) -> Room:
-        return baker.make(Room, shelter=self.shelter, name="Room-Test", **kwargs)
+        return baker.make(Room, shelter=self.shelter, name="Room-Test", **kwargs)  # type: ignore
 
     def _make_completed_reservation(self, room: Room, checked_out_at: datetime.datetime) -> Reservation:
         return baker.make(

@@ -31,6 +31,7 @@ class ReservationMutationTestCase(ShelterTestCase, TestCase):
             bed { id }
             room { id }
             shelter { id }
+            createdById
         """
 
 
@@ -88,7 +89,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createReservation"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("A reservation must have a bed or room assigned.", messages[0]["message"])
+        self.assertIn("bed or room", messages[0]["message"])
 
     def test_create_reservation_bed_out_of_service(self) -> None:
         self.bed.maintenance_flag = True
@@ -162,7 +163,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createReservation"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("could not be found", messages[0]["message"])
+        self.assertIn("does not exist", messages[0]["message"])
 
 
 class UpdateReservationMutationTestCase(ReservationMutationTestCase):
@@ -268,13 +269,11 @@ class DeleteReservationMutationTestCase(ReservationMutationTestCase):
     def test_delete_reservations(self) -> None:
         to_delete = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
         other = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed2,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -306,7 +305,6 @@ class ReservationQueryTestCase(ReservationMutationTestCase):
     def test_query_reservation(self) -> None:
         reservation = baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
@@ -332,13 +330,11 @@ class ReservationQueryTestCase(ReservationMutationTestCase):
     def test_query_reservations_list(self) -> None:
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed,
             status=ReservationStatusChoices.CONFIRMED,
         )
         baker.make(
             Reservation,
-            shelter=self.shelter,
             bed=self.bed2,
             status=ReservationStatusChoices.CHECKED_IN,
         )
