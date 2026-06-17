@@ -31,7 +31,6 @@ from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
 
 
 @strawberry.type
@@ -84,13 +83,13 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.ADD)])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_create(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
