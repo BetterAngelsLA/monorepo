@@ -1,13 +1,17 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { useUpdateShelterProfile } from '../../../../../hooks/useUpdateShelterProfile';
 
 type TProps = {
   photoId: string;
   shelterId: string;
   heroImageId?: string;
+  className?: string;
+  disabled?: boolean;
 };
 
 export function ToggleHeroShelterImageBtn(props: TProps) {
-  const { photoId, shelterId, heroImageId } = props;
+  const { photoId, shelterId, heroImageId, className, disabled } = props;
+
   const { updateShelter, loading } = useUpdateShelterProfile();
 
   const isHero = heroImageId === photoId;
@@ -23,17 +27,22 @@ export function ToggleHeroShelterImageBtn(props: TProps) {
     });
   }
 
+  const btnCss = [
+    'text-xs font-medium border border-transparent',
+    'p-2 rounded-full',
+    isHero
+      ? 'bg-green-100 text-green-700 cursor-not-allowed'
+      : 'bg-white text-gray-500 hover:text-green-600 hover:bg-white cursor-pointer',
+    className,
+  ];
+
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={loading}
-      className={`text-xs font-medium px-2 py-1 rounded border ${
-        isHero
-          ? 'bg-green-100 text-green-700 border-green-400'
-          : 'bg-white text-gray-500 border-gray-300 hover:border-green-400 hover:text-green-600'
-      }`}
-      aria-label={isHero ? 'Remove hero image' : 'Set as hero image'}
+      disabled={isHero || loading || disabled}
+      className={mergeCss(btnCss)}
+      aria-label="Set as hero image"
     >
       hero
     </button>

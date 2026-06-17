@@ -48,7 +48,7 @@ function buildColumns(
       label: 'Actions',
       width: '140px',
       render: (photo) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <ToggleHeroShelterImageBtn
             photoId={photo.id}
             shelterId={shelterId}
