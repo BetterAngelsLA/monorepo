@@ -1,11 +1,8 @@
 from typing import Any
 
-from common.tests.utils import GraphQLBaseTestCase
-from shelters.tests.utils import ShelterTestCase
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import SPA, Bed, City, Room, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, Service, ServiceCategory, Shelter
+from shelters.tests.utils import ShelterTestCase
 from unittest_parametrize import ParametrizedTestCase
 
 
@@ -449,7 +446,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "You do not have permission to create a shelter for this organization.",
             response["errors"][0]["message"],
         )
-
 
     def test_update_shelter_scalar_fields(self) -> None:
         """Updating scalar fields persists the new values."""

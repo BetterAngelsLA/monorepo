@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 from shelters.models import Room, Shelter
 from shelters.selectors import admin_room_list, room_get, shelter_get
 from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
@@ -114,15 +115,19 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, user: "User", ids: list[int], organization_id: str) -> list[int]:
-    """Delete rooms by their IDs and return the deleted instances.
+def room_delete(*, queryset: "QuerySet[Room]") -> list[int]:
+    """Delete rooms in *queryset* and return the deleted IDs.
+
+    The caller is responsible for scoping *queryset* appropriately
+    (e.g. via :func:`~shelters.selectors.admin_room_list`).
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+        ``django.core.exceptions.ObjectDoesNotExist`` when *queryset* is empty.
     """
-    rooms = admin_room_list(Room.objects.all(), user=user, organization_id=organization_id).filter(pk__in=ids)
-    deleted_ids = list(rooms.values_list("pk", flat=True))
-    rooms.delete()
+    deleted_ids = list(queryset.values_list("pk", flat=True))
+    if not deleted_ids:
+        raise ObjectDoesNotExist("No matching rooms found.")
+    queryset.delete()
     return deleted_ids
 
 

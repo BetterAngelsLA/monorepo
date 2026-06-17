@@ -9,6 +9,7 @@ from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Room, Shelter
+from shelters.selectors import admin_bed_list, admin_room_list
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
@@ -120,7 +121,8 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = room_delete(user=user, ids=ids, organization_id=org_id)
+        qs = admin_room_list(Room.objects.all(), user=user, organization_id=org_id).filter(pk__in=ids)
+        deleted_ids = room_delete(queryset=qs)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
@@ -148,5 +150,6 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = bed_delete(user=user, ids=ids, organization_id=org_id)
+        qs = admin_bed_list(Bed.objects.all(), user=user, organization_id=org_id).filter(pk__in=ids)
+        deleted_ids = bed_delete(queryset=qs)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

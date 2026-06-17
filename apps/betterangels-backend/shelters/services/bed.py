@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict, cast
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 from shelters.models import Bed, Shelter
 from shelters.selectors import admin_bed_list, bed_get, shelter_get
 from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
@@ -83,15 +84,19 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any], organiz
 
 
 @transaction.atomic
-def bed_delete(*, user: "User", ids: list[int], organization_id: str) -> list[int]:
-    """Delete beds by their IDs and return the deleted IDs.
+def bed_delete(*, queryset: "QuerySet[Bed]") -> list[int]:
+    """Delete beds in *queryset* and return the deleted IDs.
+
+    The caller is responsible for scoping *queryset* appropriately
+    (e.g. via :func:`~shelters.selectors.admin_bed_list`).
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
+        ``django.core.exceptions.ObjectDoesNotExist`` when *queryset* is empty.
     """
-    beds = admin_bed_list(Bed.objects.all(), user=user, organization_id=organization_id).filter(pk__in=ids)
-    deleted_ids = list(beds.values_list("pk", flat=True))
-    beds.delete()
+    deleted_ids = list(queryset.values_list("pk", flat=True))
+    if not deleted_ids:
+        raise ObjectDoesNotExist("No matching beds found.")
+    queryset.delete()
     return deleted_ids
 
 

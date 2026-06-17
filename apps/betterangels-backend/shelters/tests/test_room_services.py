@@ -219,7 +219,7 @@ class RoomDeleteTestCase(RoomServiceTestCase):
             shelter=self.shelter, room=other_room, name="Bed 2", status=BedStatusChoices.AVAILABLE
         )
 
-        deleted = room_delete(user=self.user, organization_id=self.org_id, ids=[room_to_delete.pk])
+        deleted = room_delete(queryset=Room.objects.filter(pk=room_to_delete.pk))
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], room_to_delete.pk)
@@ -237,19 +237,16 @@ class RoomDeleteTestCase(RoomServiceTestCase):
             shelter=self.shelter, room=other_room, name="Bed 1", status=BedStatusChoices.AVAILABLE
         )
 
-        deleted = room_delete(
-            user=self.user, organization_id=self.org_id, ids=[room_to_delete_1.pk, room_to_delete_2.pk]
-        )
+        deleted = room_delete(queryset=Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]))
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]).exists())
         self.assertTrue(Room.objects.filter(pk=other_room.pk).exists())
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
-    def test_empty_list_returns_empty(self) -> None:
-        deleted = room_delete(user=self.user, organization_id=self.org_id, ids=[])
-
-        self.assertEqual(deleted, [])
+    def test_empty_list_raises_object_does_not_exist(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist):
+            room_delete(queryset=Room.objects.none())
 
 
 class RoomCloneTestCase(RoomServiceTestCase):

@@ -203,7 +203,7 @@ class BedDeleteTestCase(BedServiceTestCase):
         bed_to_delete = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
         other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[bed_to_delete.pk])
+        deleted = bed_delete(queryset=Bed.objects.filter(pk=bed_to_delete.pk))
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], bed_to_delete.pk)
@@ -215,16 +215,15 @@ class BedDeleteTestCase(BedServiceTestCase):
         bed_to_delete_2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
         other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 3", status=BedStatusChoices.AVAILABLE)
 
-        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[bed_to_delete_1.pk, bed_to_delete_2.pk])
+        deleted = bed_delete(queryset=Bed.objects.filter(pk__in=[bed_to_delete_1.pk, bed_to_delete_2.pk]))
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Bed.objects.filter(pk__in=[bed_to_delete_1.pk, bed_to_delete_2.pk]).exists())
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_empty_list_returns_empty(self) -> None:
-        deleted = bed_delete(user=self.user, organization_id=self.org_id, ids=[])
-
-        self.assertEqual(deleted, [])
+        with self.assertRaises(ObjectDoesNotExist):
+            bed_delete(queryset=Bed.objects.none())
 
 
 class BedCloneTestCase(BedServiceTestCase):
