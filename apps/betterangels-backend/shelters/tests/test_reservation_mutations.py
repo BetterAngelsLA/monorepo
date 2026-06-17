@@ -1,6 +1,7 @@
 import datetime
 from typing import Any
 
+from clients.models import ClientProfile
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
@@ -19,6 +20,8 @@ class ReservationMutationTestCase(ShelterTestCase, TestCase):
         self.room2 = baker.make(Room, shelter=self.shelter, name="Room-202")
         self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
         self.bed2 = baker.make(Bed, shelter=self.shelter, room=self.room2, name="Bed-2")
+        self.client_1 = baker.make(ClientProfile)
+        self.client_2 = baker.make(ClientProfile)
 
         self.reservation_fields = """
             id
@@ -32,6 +35,10 @@ class ReservationMutationTestCase(ShelterTestCase, TestCase):
             room { id }
             shelter { id }
             createdById
+            clients {
+                clientProfileId
+                isPrimary
+            }
         """
 
 
@@ -164,6 +171,27 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         messages = response["data"]["createReservation"]["messages"]
         self.assertEqual(len(messages), 1)
         self.assertIn("does not exist", messages[0]["message"])
+
+    def test_create_reservation_with_clients(self) -> None:
+        variables: dict[str, Any] = {
+            "data": {
+                "bedId": str(self.bed.pk),
+                "clients": [
+                    {"clientProfileId": str(self.client_1.pk), "isPrimary": True},
+                    {"clientProfileId": str(self.client_2.pk), "isPrimary": False},
+                ],
+            }
+        }
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["createReservation"]
+        self.assertIsNotNone(data["id"])
+        self.assertEqual(len(data["clients"]), 2)
+        client_map = {c["clientProfileId"]: c["isPrimary"] for c in data["clients"]}
+        self.assertTrue(client_map[str(self.client_1.pk)])
+        self.assertFalse(client_map[str(self.client_2.pk)])
 
 
 class UpdateReservationMutationTestCase(ReservationMutationTestCase):

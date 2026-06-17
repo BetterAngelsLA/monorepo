@@ -3,10 +3,12 @@ import datetime
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+from clients.models import ClientProfile
 from shelters.enums import ReservationStatusChoices
-from shelters.models import Bed, Reservation, Room
+from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -146,6 +148,42 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ObjectDoesNotExist):
             reservation_create(user=self.user, data={"bed_id": other_bed.pk})
 
+    def test_creates_reservation_with_clients(self) -> None:
+        client_1 = baker.make(ClientProfile)
+        client_2 = baker.make(ClientProfile)
+
+        reservation = reservation_create(
+            user=self.user,
+            data={
+                "bed_id": self.bed.pk,
+                "clients": [
+                    {"client_profile_id": client_1.pk, "is_primary": True},
+                    {"client_profile_id": client_2.pk, "is_primary": False},
+                ],
+            },
+        )
+
+        self.assertEqual(reservation.clients.count(), 2)
+        rc_1 = ReservationClient.objects.get(reservation=reservation, client_profile=client_1)
+        self.assertTrue(rc_1.is_primary)
+        rc_2 = ReservationClient.objects.get(reservation=reservation, client_profile=client_2)
+        self.assertFalse(rc_2.is_primary)
+
+    def test_duplicate_client_on_same_reservation_rejected(self) -> None:
+        client = baker.make(ClientProfile)
+
+        with self.assertRaises(IntegrityError):
+            reservation_create(
+                user=self.user,
+                data={
+                    "bed_id": self.bed.pk,
+                    "clients": [
+                        {"client_profile_id": client.pk},
+                        {"client_profile_id": client.pk},
+                    ],
+                },
+            )
+
 
 class ReservationUpdateTestCase(ReservationServiceTestCase):
     def setUp(self) -> None:
@@ -223,6 +261,44 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
             reservation_update(user=outsider, reservation_id=self.reservation.pk, data={"notes": "Blocked"})
+
+    def test_update_replaces_clients(self) -> None:
+        client_1 = baker.make(ClientProfile)
+        client_2 = baker.make(ClientProfile)
+        client_3 = baker.make(ClientProfile)
+
+        # First, attach client_1 and client_2
+        reservation_update(
+            user=self.user,
+            reservation_id=self.reservation.pk,
+            data={
+                "clients": [
+                    {"client_profile_id": client_1.pk, "is_primary": True},
+                    {"client_profile_id": client_2.pk, "is_primary": False},
+                ],
+            },
+        )
+
+        self.assertEqual(self.reservation.clients.count(), 2)
+        client_ids_before = set(self.reservation.clients.values_list("pk", flat=True))
+        self.assertIn(client_1.pk, client_ids_before)
+        self.assertIn(client_2.pk, client_ids_before)
+
+        # Replace entirely: remove client_1/2, add client_3 as primary
+        reservation_update(
+            user=self.user,
+            reservation_id=self.reservation.pk,
+            data={
+                "clients": [
+                    {"client_profile_id": client_3.pk, "is_primary": True},
+                ],
+            },
+        )
+
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.clients.count(), 1)
+        self.assertEqual(self.reservation.reservation_clients.first().client_profile.pk, client_3.pk)
+        self.assertTrue(self.reservation.reservation_clients.first().is_primary)
 
 
 class ReservationDeleteTestCase(ReservationServiceTestCase):
