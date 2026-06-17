@@ -31,15 +31,14 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
-        # HasOrgPerm checks org-scoped permissions, not global Django perms.
-        # Add view_shelter to the CASEWORKER permission group so the user's
-        # org membership grants the permission.
+        # Grant view_shelter to the CASEWORKER permission group so the
+        # user inherits it through their org role.  HasOrgPerm checks
+        # the group's permissions at query time.
         from notes.groups import CASEWORKER
 
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
-        pg.group.permissions.add(perm)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
 
     def test_admin_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
@@ -119,11 +118,10 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.org_2.add_user(self.org_1_case_manager_1)
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
 
-        # Grant view_shelter permission in org_2 too
+        # Grant view_shelter to the CASEWORKER group in org_2
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        pg2 = self.org_2.permission_groups.get(template__name=CASEWORKER.name)
-        pg2.group.permissions.add(perm)
+        self.org_2.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
 
         self._set_active_org(self.org_2)
         self.graphql_client.force_login(self.org_1_case_manager_1)
