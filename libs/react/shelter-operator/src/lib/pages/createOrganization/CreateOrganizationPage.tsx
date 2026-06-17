@@ -70,11 +70,10 @@ export function CreateOrganizationPage() {
         )}
 
         <Button
-          size="2xl"
-          variant="accent"
+          variant="floating"
           onClick={handleCreateOrg}
           disabled={submitting || !orgName.trim()}
-          className="w-full"
+          className="w-full justify-center text-lg py-4"
         >
           {submitting ? 'Creating...' : 'Create Organization'}
         </Button>
