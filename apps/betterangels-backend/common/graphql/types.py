@@ -1,14 +1,15 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Tuple, cast
+from typing import Any, Mapping, NewType, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
-from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
+from common.images import build_img_url
 from common.models import Address, Attachment, Location, PhoneNumber
 from django.db.models import Q, QuerySet, Subquery
+from django.db.models.fields.files import FieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -208,11 +209,12 @@ class TransformableImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        if is_imgproxy_enabled():
-            if imgproxy_url := build_imgproxy_url(self, preset, processing_options):
-                return imgproxy_url
+        file_obj: object = self
 
-        return cast(str, self.url)
+        if not isinstance(file_obj, FieldFile):
+            raise TypeError("TransformableImageType.url expects a Django FieldFile instance")
+
+        return build_img_url(file_obj, preset, processing_options)
 
 
 @strawberry_django.type(Location)

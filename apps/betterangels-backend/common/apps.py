@@ -9,6 +9,8 @@ class CommonConfig(AppConfig):
     name = "common"
 
     def ready(self) -> None:
+        from . import signals  # noqa: F401
+
         self._register_imgproxy_image_type()
         self._configure_allowed_hosts()
 

@@ -59,9 +59,9 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         self.setup_shelter_graphql_fixtures()
         waffle.switch_is_active(IMGPROXY_SWITCH)
 
-    @patch("common.graphql.types.build_imgproxy_url")
-    def test_shelter_query(self, mock_build_imgproxy_url: Mock) -> None:
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+    @patch("common.graphql.types.build_img_url")
+    def test_shelter_query(self, mock_build_img_url: Mock) -> None:
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
@@ -325,9 +325,9 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             ],
         )
 
-    @patch("shelters.types.outputs.build_imgproxy_url")
-    def test_shelters_query(self, mock_build_imgproxy_url: Mock) -> None:
-        mock_build_imgproxy_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
+    @patch("shelters.types.outputs.build_img_url")
+    def test_shelters_query(self, mock_build_img_url: Mock) -> None:
+        mock_build_img_url.side_effect = lambda file, preset=None, processing_options=None: getattr(
             file, "url", None
         )
 

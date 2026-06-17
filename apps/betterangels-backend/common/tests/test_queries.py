@@ -50,7 +50,7 @@ class FeatureControlDataTestCase(GraphQLBaseTestCase):
         result = self.execute_graphql(query)
         self.assertNotIn("errors", result)
         self.assertEqual(len(result["data"]["featureControls"]["flags"]), 3)
-        self.assertEqual(len(result["data"]["featureControls"]["switches"]), 2)
+        self.assertEqual(len(result["data"]["featureControls"]["switches"]), 3)
         self.assertEqual(len(result["data"]["featureControls"]["samples"]), 1)
 
 
