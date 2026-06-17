@@ -28,7 +28,6 @@ from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
     HasPerm,
-    PermTarget,
 )
 from strawberry_django.utils.typing import UserType
 
@@ -56,8 +55,7 @@ class HasOrgPerm(HasPerm):
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to have the specified permission(s) in the "
-        "organization set via X-Organization-ID header."
+        "Requires the user to have the specified permission(s) in the " "organization set via X-Organization-ID header."
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -81,8 +79,7 @@ class HasOrgPerm(HasPerm):
 
         if not org_id:
             raise DjangoNoPermission(
-                "Organization ID is required for this operation. "
-                "Set the X-Organization-ID header."
+                "Organization ID is required for this operation. " "Set the X-Organization-ID header."
             )
 
         if not self.perms:
@@ -104,15 +101,10 @@ class HasOrgPerm(HasPerm):
             has_perm = org_filter.filter(q).exists()
         else:
             for perm_def in self.perms:
-                org_filter = org_filter.filter(
-                    _perm_q(perm_def.app or "", str(perm_def.permission))
-                )
+                org_filter = org_filter.filter(_perm_q(perm_def.app or "", str(perm_def.permission)))
             has_perm = org_filter.exists()
 
         if not has_perm:
-            raise DjangoNoPermission(
-                "You do not have permission to perform this action "
-                "in this organization."
-            )
+            raise DjangoNoPermission("You do not have permission to perform this action " "in this organization.")
 
         return resolver()

@@ -128,7 +128,7 @@ _original_clean_email = BaseRequestLoginCodeForm.clean_email
 
 
 def _patched_clean_email(self: BaseRequestLoginCodeForm) -> str:
-    email = _original_clean_email(self)
+    email: str = _original_clean_email(self)
     if email and not getattr(self, "_user", None):
         UserModel = get_user_model()
         user = UserModel.objects.create_user(

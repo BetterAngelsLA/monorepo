@@ -102,13 +102,17 @@ class RoomCreateTestCase(RoomServiceTestCase):
         other_shelter = shelter_recipe.make(organization=self.other_org)
 
         with self.assertRaises(ObjectDoesNotExist):
-            room_create(user=self.user, organization_id=self.org_id, data={"shelter_id": other_shelter.pk, "name": "Room-101"})
+            room_create(
+                user=self.user, organization_id=self.org_id, data={"shelter_id": other_shelter.pk, "name": "Room-101"}
+            )
 
     def test_duplicate_name_raises_validation_error(self) -> None:
         Room.objects.create(shelter=self.shelter, name="Room-101")
 
         with self.assertRaises(ValidationError):
-            room_create(user=self.user, organization_id=self.org_id, data={"shelter_id": self.shelter.pk, "name": "Room-101"})
+            room_create(
+                user=self.user, organization_id=self.org_id, data={"shelter_id": self.shelter.pk, "name": "Room-101"}
+            )
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
         shelter = Shelter.objects.create(organization=self.org)
@@ -160,7 +164,9 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.assertEqual(self.room.name, "Room-101 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        room_update(user=self.user, organization_id=self.org_id, room_id=self.room.pk, data={"name": "Renamed", "status": None})
+        room_update(
+            user=self.user, organization_id=self.org_id, room_id=self.room.pk, data={"name": "Renamed", "status": None}
+        )
 
         self.room.refresh_from_db()
         self.assertEqual(self.room.name, "Renamed")
@@ -231,7 +237,9 @@ class RoomDeleteTestCase(RoomServiceTestCase):
             shelter=self.shelter, room=other_room, name="Bed 1", status=BedStatusChoices.AVAILABLE
         )
 
-        deleted = room_delete(user=self.user, organization_id=self.org_id, ids=[room_to_delete_1.pk, room_to_delete_2.pk])
+        deleted = room_delete(
+            user=self.user, organization_id=self.org_id, ids=[room_to_delete_1.pk, room_to_delete_2.pk]
+        )
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Room.objects.filter(pk__in=[room_to_delete_1.pk, room_to_delete_2.pk]).exists())

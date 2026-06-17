@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, cast
+from typing import List, Optional
 
 import strawberry
 import strawberry_django

@@ -26,3 +26,4 @@ export const orgLink = new ApolloLink((operation, forward) => {
 
   return forward(operation);
 });
+

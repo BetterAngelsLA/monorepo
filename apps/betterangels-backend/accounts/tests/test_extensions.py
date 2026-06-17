@@ -4,13 +4,13 @@ from unittest.mock import MagicMock
 
 from accounts.extensions import HasOrgPerm
 from accounts.models import PermissionGroup, User
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.test import RequestFactory, TestCase
-from strawberry_django.permissions import DjangoNoPermission
 from model_bakery import baker
 from organizations.models import Organization
 from shelters.models import Shelter
 from strawberry.types import Info
+from strawberry_django.permissions import DjangoNoPermission
 
 
 class HasOrgPermTestCase(TestCase):
@@ -34,9 +34,7 @@ class HasOrgPermTestCase(TestCase):
 
         # Grant the shelter view permission through this group.
         app_label, codename = Shelter.perms.VIEW.split(".")
-        self.perm: Permission = Permission.objects.get(
-            codename=codename, content_type__app_label=app_label
-        )
+        self.perm: Permission = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.group.permissions.add(self.perm)
         self.group.user_set.add(self.user)
 

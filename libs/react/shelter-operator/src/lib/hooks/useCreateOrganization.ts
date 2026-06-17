@@ -5,8 +5,16 @@ import { useCallback, useState } from 'react';
 const CREATE_ORGANIZATION_MUTATION = gql`
   mutation CreateOrganization($data: CreateOrganizationInput!) {
     createOrganization(data: $data) {
-      user { id email firstName lastName }
-      organization { id name }
+      user {
+        id
+        email
+        firstName
+        lastName
+      }
+      organization {
+        id
+        name
+      }
     }
   }
 `;

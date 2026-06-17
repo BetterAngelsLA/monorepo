@@ -151,7 +151,9 @@ def admin_room_list(queryset: "QuerySet[Room]", *, user: "User", organization_id
 def room_get(*, user: "User", room_id: int | str, organization_id: str) -> "Room":
     from shelters.models import Room
 
-    return admin_room_list(Room.objects.select_related("shelter"), user=user, organization_id=organization_id).get(pk=room_id)
+    return admin_room_list(Room.objects.select_related("shelter"), user=user, organization_id=organization_id).get(
+        pk=room_id
+    )
 
 
 def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User", organization_id: str) -> "QuerySet[Bed]":
@@ -164,7 +166,9 @@ def admin_bed_list(queryset: "QuerySet[Bed]", *, user: "User", organization_id: 
 def bed_get(*, user: "User", bed_id: int | str, organization_id: str) -> "Bed":
     from shelters.models import Bed
 
-    return admin_bed_list(Bed.objects.select_related("shelter"), user=user, organization_id=organization_id).get(pk=bed_id)
+    return admin_bed_list(Bed.objects.select_related("shelter"), user=user, organization_id=organization_id).get(
+        pk=bed_id
+    )
 
 
 def shelters_open_at(

@@ -97,7 +97,9 @@ class BedCreateTestCase(BedServiceTestCase):
         other_shelter = shelter_recipe.make(organization=self.other_org)
 
         with self.assertRaises(ObjectDoesNotExist):
-            bed_create(user=self.user, organization_id=self.org_id, data={"shelter_id": other_shelter.pk, "name": "Bed 1"})
+            bed_create(
+                user=self.user, organization_id=self.org_id, data={"shelter_id": other_shelter.pk, "name": "Bed 1"}
+            )
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
         shelter = Shelter.objects.create(organization=self.org)
@@ -146,7 +148,9 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed", "status": None})
+        bed_update(
+            user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed", "status": None}
+        )
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")

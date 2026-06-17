@@ -7,10 +7,10 @@ from accounts.emails import send_welcome_email
 from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.conf import settings
 from django.contrib import auth
@@ -287,7 +287,6 @@ class Mutation:
         single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
         permission.
         """
-        current_user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
@@ -309,5 +308,5 @@ class Mutation:
         OrgRoleManager(organization).replace_roles(target_user, template)
 
         if hasattr(target_user, "_member_role"):
-            delattr(target_user, "_member_role")
+            object.__delattr__(target_user, "_member_role")
         return cast(OrganizationMemberType, target_user)
