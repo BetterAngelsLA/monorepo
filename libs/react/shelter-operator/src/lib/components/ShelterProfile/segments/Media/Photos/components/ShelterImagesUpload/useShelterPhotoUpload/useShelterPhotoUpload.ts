@@ -9,8 +9,7 @@ import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
-
-export const MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB
+import { SHELTER_PHOTO_MAX_SIZE } from './constants';
 
 function userFacingError(error: unknown): string {
   const message = parseS3Error(error);
@@ -48,7 +47,7 @@ type TProps = {
 };
 
 export function useShelterPhotoUpload(props?: TProps) {
-  const { maxFileSizeBytes = MAX_FILE_SIZE_BYTES } = props ?? {};
+  const { maxFileSizeBytes = SHELTER_PHOTO_MAX_SIZE } = props ?? {};
 
   const [generateUploads] = useMutation(GenerateShelterPhotoUploadsDocument);
   const [resolveUploads] = useMutation(ResolveShelterPhotoUploadsDocument);

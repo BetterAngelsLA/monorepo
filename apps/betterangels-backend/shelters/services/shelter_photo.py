@@ -21,7 +21,7 @@ UPLOAD_PATH = "shelters"
 SERVICE_NAME = "shelter_photo"
 
 ALLOWED_CONTENT_TYPES = DEFAULT_IMAGE_CONTENT_TYPES
-SHELTER_PHOTO_MAX_FILE_SIZE = 30 * 1024 * 1024
+SHELTER_PHOTO_MAX_FILE_SIZE = 10_000_000
 
 
 def _validate_content_type(content_type: str, filename: str) -> None:

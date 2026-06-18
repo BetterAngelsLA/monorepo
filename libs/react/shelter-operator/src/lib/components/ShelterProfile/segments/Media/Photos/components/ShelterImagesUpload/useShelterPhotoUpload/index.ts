@@ -1,4 +1,2 @@
-export {
-  MAX_FILE_SIZE_BYTES,
-  useShelterPhotoUpload,
-} from './useShelterPhotoUpload';
+export { SHELTER_PHOTO_MAX_SIZE } from './constants';
+export { useShelterPhotoUpload } from './useShelterPhotoUpload';

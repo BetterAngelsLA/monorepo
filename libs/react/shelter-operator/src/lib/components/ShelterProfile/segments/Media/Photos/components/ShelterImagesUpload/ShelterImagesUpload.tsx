@@ -16,7 +16,7 @@ import {
   ShelterImagesUploadFormData,
 } from './formSchema';
 import {
-  MAX_FILE_SIZE_BYTES,
+  SHELTER_PHOTO_MAX_SIZE,
   useShelterPhotoUpload,
 } from './useShelterPhotoUpload';
 
@@ -118,7 +118,7 @@ export function ShelterImagesUpload(props: TProps) {
               MimeTypes.WEBP,
               MimeTypes.GIF,
             ]}
-            maxFilesizeBytes={MAX_FILE_SIZE_BYTES}
+            maxFilesizeBytes={SHELTER_PHOTO_MAX_SIZE}
             multiple
             disabled={isSubmitting}
             value={field.value}

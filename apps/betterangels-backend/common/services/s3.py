@@ -9,7 +9,7 @@ from storages.backends.s3 import S3Storage
 
 # generate_presigned_post
 DEFAULT_UPLOAD_EXPIRATION_SECONDS = 300
-DEFAULT_MAX_FILE_SIZE = 25 * 1024 * 1024
+DEFAULT_MAX_FILE_SIZE = 10_000_000
 
 
 def get_storage_location() -> str:
