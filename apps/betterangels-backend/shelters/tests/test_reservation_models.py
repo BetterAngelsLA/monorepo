@@ -118,6 +118,14 @@ class BedComputedStatusTestCase(TestCase):
         self._make_completed_reservation(bed, checkout)
         self.assertEqual(bed.computed_status, BedStatusChoices.IN_TURNAROUND)
 
+    def test_bed_checked_in_with_stale_checkout_returns_occupied(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        bed = self._make_bed(last_cleaned=last_cleaned)
+        self._make_completed_reservation(bed, checkout)
+        baker.make(Reservation, bed=bed, status=ReservationStatusChoices.CHECKED_IN)
+        self.assertEqual(bed.computed_status, BedStatusChoices.OCCUPIED)
+
     def test_bed_with_checkout_before_last_cleaned_returns_available(self) -> None:
         last_cleaned = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
         checkout = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
@@ -172,6 +180,19 @@ class RoomComputedStatusTestCase(TestCase):
         room = self._make_room(last_cleaned=last_cleaned)
         self._make_completed_reservation(room, checkout)
         self.assertEqual(room.computed_status, RoomStatusChoices.IN_TURNAROUND)
+
+    def test_room_checked_in_with_stale_checkout_returns_occupied(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        room = self._make_room(last_cleaned=last_cleaned)
+        self._make_completed_reservation(room, checkout)
+        baker.make(
+            Reservation,
+            room=room,
+            bed=None,
+            status=ReservationStatusChoices.CHECKED_IN,
+        )
+        self.assertEqual(room.computed_status, RoomStatusChoices.OCCUPIED)
 
     def test_room_with_checkout_before_last_cleaned_returns_available(self) -> None:
         last_cleaned = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)

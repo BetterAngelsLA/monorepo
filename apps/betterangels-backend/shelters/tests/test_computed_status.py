@@ -35,6 +35,32 @@ class ComputeBedStatusTestCase(TestCase):
             BedStatusChoices.IN_TURNAROUND,
         )
 
+    def test_occupied_over_turnaround(self) -> None:
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        self.assertEqual(
+            compute_bed_status(
+                maintenance_flag=False,
+                last_cleaned=cleaned,
+                last_checkout=checkout,
+                active_reservation_statuses={ReservationStatusChoices.CHECKED_IN},
+            ),
+            BedStatusChoices.OCCUPIED,
+        )
+
+    def test_reserved_over_turnaround(self) -> None:
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        self.assertEqual(
+            compute_bed_status(
+                maintenance_flag=False,
+                last_cleaned=cleaned,
+                last_checkout=checkout,
+                active_reservation_statuses={ReservationStatusChoices.CONFIRMED},
+            ),
+            BedStatusChoices.RESERVED,
+        )
+
     def test_occupied_over_reserved(self) -> None:
         self.assertEqual(
             compute_bed_status(
@@ -97,6 +123,42 @@ class BedQuerySetComputedStatusTestCase(TestCase):
         ids = set(Bed.objects.filter_by_status(BedStatusChoices.RESERVED).values_list("pk", flat=True))
         self.assertEqual(ids, {bed.pk})
         self.assertNotIn(other.pk, ids)
+
+    def test_occupied_over_turnaround_annotation(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        bed = baker.make(Bed, shelter=self.shelter, room=self.room, last_cleaned=last_cleaned)
+        baker.make(
+            Reservation,
+            bed=bed,
+            status=ReservationStatusChoices.COMPLETED,
+            checked_out_at=checkout,
+        )
+        baker.make(Reservation, bed=bed, status=ReservationStatusChoices.CHECKED_IN)
+
+        annotated = Bed.objects.with_computed_status().get(pk=bed.pk)
+        self.assertEqual(annotated._computed_status, BedStatusChoices.OCCUPIED)
+        self.assertEqual(annotated.computed_status, BedStatusChoices.OCCUPIED)
+
+    def test_filter_by_status_occupied_when_needs_cleaning(self) -> None:
+        last_cleaned = datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)
+        checkout = datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc)
+        bed = baker.make(Bed, shelter=self.shelter, room=self.room, last_cleaned=last_cleaned)
+        baker.make(
+            Reservation,
+            bed=bed,
+            status=ReservationStatusChoices.COMPLETED,
+            checked_out_at=checkout,
+        )
+        baker.make(Reservation, bed=bed, status=ReservationStatusChoices.CHECKED_IN)
+
+        ids = set(Bed.objects.filter_by_status(BedStatusChoices.OCCUPIED).values_list("pk", flat=True))
+        self.assertEqual(ids, {bed.pk})
+
+        turnaround_ids = set(
+            Bed.objects.filter_by_status(BedStatusChoices.IN_TURNAROUND).values_list("pk", flat=True)
+        )
+        self.assertNotIn(bed.pk, turnaround_ids)
 
 
 class ComputeRoomStatusTestCase(TestCase):

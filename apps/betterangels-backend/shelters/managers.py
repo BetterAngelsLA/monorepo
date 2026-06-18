@@ -165,18 +165,16 @@ def status_filter_q(
 
     base = Q(maintenance_flag=False)
 
-    if status == status_enum.IN_TURNAROUND:
-        return base & in_turnaround_filter_q(fk_field)
+    if status == status_enum.OCCUPIED:
+        return base & Q(has_checked_in_exists(fk_field))
+
+    if status == status_enum.RESERVED:
+        return base & Q(has_confirmed_or_overdue_exists(fk_field)) & ~Q(has_checked_in_exists(fk_field))
 
     not_turnaround = ~in_turnaround_filter_q(fk_field)
 
-    if status == status_enum.OCCUPIED:
-        return base & not_turnaround & Q(has_checked_in_exists(fk_field))
-
-    if status == status_enum.RESERVED:
-        return (
-            base & not_turnaround & Q(has_confirmed_or_overdue_exists(fk_field)) & ~Q(has_checked_in_exists(fk_field))
-        )
+    if status == status_enum.IN_TURNAROUND:
+        return base & in_turnaround_filter_q(fk_field) & ~Q(has_active_reservation_exists(fk_field))
 
     if status == status_enum.AVAILABLE:
         return base & not_turnaround & ~Q(has_active_reservation_exists(fk_field))
@@ -203,10 +201,9 @@ class ReservableStatusQuerySetMixin:
             qs.annotate(_latest_checkout=latest_checkout).annotate(
                 _computed_status=Case(
                     When(maintenance_flag=True, then=Value(enum.OUT_OF_SERVICE)),
-                    # IN_TURNAROUND fires before OCCUPIED/RESERVED — the When order is load-bearing.
-                    When(in_turnaround_q(checkout_field="_latest_checkout"), then=Value(enum.IN_TURNAROUND)),
                     When(checked_in, then=Value(enum.OCCUPIED)),
                     When(confirmed_or_overdue, then=Value(enum.RESERVED)),
+                    When(in_turnaround_q(checkout_field="_latest_checkout"), then=Value(enum.IN_TURNAROUND)),
                     default=Value(enum.AVAILABLE),
                     output_field=CharField(),
                 )

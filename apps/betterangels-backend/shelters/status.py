@@ -22,9 +22,6 @@ def compute_reservable_status(
     if maintenance_flag:
         return status_enum.OUT_OF_SERVICE
 
-    if last_checkout and (last_cleaned is None or last_cleaned <= last_checkout):
-        return status_enum.IN_TURNAROUND
-
     if ReservationStatusChoices.CHECKED_IN in active_reservation_statuses:
         return status_enum.OCCUPIED
 
@@ -33,6 +30,9 @@ def compute_reservable_status(
         ReservationStatusChoices.CHECK_IN_OVERDUE,
     }:
         return status_enum.RESERVED
+
+    if last_checkout and (last_cleaned is None or last_cleaned <= last_checkout):
+        return status_enum.IN_TURNAROUND
 
     return status_enum.AVAILABLE
 
