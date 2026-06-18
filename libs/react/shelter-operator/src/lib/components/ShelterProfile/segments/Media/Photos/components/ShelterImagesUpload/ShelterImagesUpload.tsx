@@ -15,7 +15,10 @@ import {
   formSchema,
   ShelterImagesUploadFormData,
 } from './formSchema';
-import { useShelterPhotoUpload } from './useShelterPhotoUpload';
+import {
+  MAX_FILE_SIZE_BYTES,
+  useShelterPhotoUpload,
+} from './useShelterPhotoUpload';
 
 const PHOTO_TYPE_OPTIONS: DropdownOption<ShelterPhotoTypeChoices>[] = [
   { label: 'Interior', value: ShelterPhotoTypeChoices.Interior },
@@ -26,10 +29,11 @@ type TProps = {
   shelterId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  onError?: (error: Error) => void;
 };
 
 export function ShelterImagesUpload(props: TProps) {
-  const { shelterId, onSuccess, onCancel } = props;
+  const { shelterId, onSuccess, onCancel, onError } = props;
 
   const { uploadPhotos } = useShelterPhotoUpload();
   const { showToast } = useToast();
@@ -54,12 +58,7 @@ export function ShelterImagesUpload(props: TProps) {
       onSuccess?.();
     } catch (err) {
       console.error(`[ShelterImagesUpload error]: ${err}.`);
-
-      showToast({
-        status: 'error',
-        title: 'Update failed',
-        description: 'An unexpected error occurred.',
-      });
+      onError?.(err instanceof Error ? err : new Error('Upload failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +119,7 @@ export function ShelterImagesUpload(props: TProps) {
               MimeTypes.WEBP,
               MimeTypes.GIF,
             ]}
+            maxFilesizeBytes={MAX_FILE_SIZE_BYTES}
             multiple
             disabled={isSubmitting}
             value={field.value}

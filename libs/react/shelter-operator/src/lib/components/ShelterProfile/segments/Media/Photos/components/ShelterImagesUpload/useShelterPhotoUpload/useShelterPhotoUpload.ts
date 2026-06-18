@@ -1,13 +1,55 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
-import { uploadFileToS3WithPresignedPost } from '@monorepo/react/shared';
+import {
+  parseS3Error,
+  uploadFileToS3WithPresignedPost,
+} from '@monorepo/react/shared';
 import { ShelterPhotoTypeChoices } from '../../../../../../../../apollo/graphql/__generated__/types';
 import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
 
-export function useShelterPhotoUpload() {
+function userFacingError(error: unknown): string {
+  const message = parseS3Error(error);
+
+  if (
+    message.includes('EntityTooLarge') ||
+    message.includes('exceeds the maximum')
+  ) {
+    return 'File too large.';
+  }
+
+  return 'An unexpected error occurred.';
+}
+
+function getFileErrors(files: File[], maxFileSizeBytes?: number) {
+  if (!maxFileSizeBytes) {
+    return null;
+  }
+
+  const fileNames = files
+    .filter((f) => f.size > maxFileSizeBytes)
+    .map((f) => f.name);
+
+  if (!fileNames.length) {
+    return null;
+  }
+
+  return fileNames.length === 1
+    ? `File is too large: ${fileNames[0]}`
+    : `Files are too large: ${fileNames.join(', ')}`;
+}
+
+export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 50MB
+
+type TProps = {
+  maxFileSizeBytes?: number;
+};
+
+export function useShelterPhotoUpload(props?: TProps) {
+  const { maxFileSizeBytes = MAX_FILE_SIZE_BYTES } = props ?? {};
+
   const [generateUploads] = useMutation(GenerateShelterPhotoUploadsDocument);
   const [resolveUploads] = useMutation(ResolveShelterPhotoUploadsDocument);
 
@@ -22,6 +64,12 @@ export function useShelterPhotoUpload() {
   }) {
     if (!files.length) {
       return;
+    }
+
+    const sizeError = getFileErrors(files, maxFileSizeBytes);
+
+    if (sizeError) {
+      throw new Error(sizeError);
     }
 
     // 1. Prepare upload inputs + build refId → File map
@@ -62,24 +110,28 @@ export function useShelterPhotoUpload() {
     }
 
     // 3. Upload files directly to S3 using presigned POST
-    await Promise.all(
-      payload.uploads.map((upload) => {
-        const file = fileMap.get(upload.refId);
+    try {
+      await Promise.all(
+        payload.uploads.map((upload) => {
+          const file = fileMap.get(upload.refId);
 
-        if (!file) {
-          throw new Error(`Missing file for refId ${upload.refId}`);
-        }
+          if (!file) {
+            throw new Error(`Missing file for refId ${upload.refId}`);
+          }
 
-        return uploadFileToS3WithPresignedPost({
-          presignedPost: {
-            url: upload.url,
-            fields: upload.fields as Record<string, string>,
-            key: upload.presignedKey,
-          },
-          file,
-        });
-      })
-    );
+          return uploadFileToS3WithPresignedPost({
+            presignedPost: {
+              url: upload.url,
+              fields: upload.fields as Record<string, string>,
+              key: upload.presignedKey,
+            },
+            file,
+          });
+        })
+      );
+    } catch (error) {
+      throw new Error(userFacingError(error));
+    }
 
     // 4. Resolve uploaded photos in backend
     const photosToSave = payload.uploads.map((upload) => {

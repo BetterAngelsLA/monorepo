@@ -1,6 +1,6 @@
 import { mergeCss, TMimeType } from '@monorepo/react/shared';
 import { AlertCircle, FileUp } from 'lucide-react';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Label } from '../label';
 import { LabelVariant } from '../label/label';
@@ -14,6 +14,7 @@ export interface FileUploadInputProps {
   value?: File[];
   onChange: (files: File[]) => void;
   acceptedMimeTypes?: TMimeType[];
+  maxFilesizeBytes?: number;
   multiple?: boolean;
   supportedFilesText?: string;
   browseText?: string;
@@ -33,6 +34,7 @@ export function FileUploadInput({
   value,
   onChange,
   acceptedMimeTypes,
+  maxFilesizeBytes,
   multiple = false,
   supportedFilesText,
   browseText = 'Browse',
@@ -47,17 +49,40 @@ export function FileUploadInput({
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
 
-  const shouldShowError = Boolean(error);
+  const [dropzoneError, setDropzoneError] = useState<string | null>(null);
   const selectedFiles = value ?? [];
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     accept: acceptedMimeTypes
       ? Object.fromEntries(acceptedMimeTypes.map((m) => [m, []]))
       : undefined,
+    maxSize: maxFilesizeBytes,
     multiple,
     disabled,
-    onDrop: (acceptedFiles) => onChange(acceptedFiles),
+    onDrop: (acceptedFiles) => {
+      setDropzoneError(null);
+
+      if (acceptedFiles.length > 0) {
+        onChange(acceptedFiles);
+      }
+    },
+    onDropRejected: (fileRejections) => {
+      const oversizedFilenames = fileRejections
+        .filter((r) => r.errors.some((e) => e.code === 'file-too-large'))
+        .map((r) => r.file.name);
+
+      setDropzoneError(
+        oversizedFilenames.length
+          ? `File${
+              oversizedFilenames.length > 1 ? 's' : ''
+            } too large: ${oversizedFilenames.join(', ')}`
+          : null
+      );
+    },
   });
+
+  const displayError = error ?? dropzoneError;
+  const shouldShowError = Boolean(displayError);
 
   return (
     <div
@@ -137,7 +162,7 @@ export function FileUploadInput({
           className="mt-1 flex items-center gap-1 text-red-500"
         >
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
-          {error}
+          {displayError}
         </Text>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
+import { useToast } from '../../../../base-ui/toast';
 import { Form } from '../../../../form/Form';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
@@ -73,8 +74,20 @@ export function ShelterPhotos(props: TProps) {
   const { photos = [], shelterId, heroImageId } = props;
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const columns = buildColumns(shelterId, heroImageId);
+
+  function handleUploadError(error: Error) {
+    setUploadModalOpen(false);
+
+    showToast({
+      status: 'error',
+      title: 'Upload failed',
+      description: error.message || 'An unexpected error occurred.',
+      persistent: true,
+    });
+  }
 
   return (
     <div className="p-8 flex flex-col gap-6">
@@ -95,6 +108,7 @@ export function ShelterPhotos(props: TProps) {
             shelterId={shelterId}
             onSuccess={() => setUploadModalOpen(false)}
             onCancel={() => setUploadModalOpen(false)}
+            onError={handleUploadError}
           />
         </ModalBody>
       </Modal>
