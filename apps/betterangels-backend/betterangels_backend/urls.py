@@ -16,8 +16,6 @@ Including another URLconf
 """
 
 import admin_async_upload.views
-from accounts.headless_views import AutoCreateRequestLoginCodeView
-from allauth.headless.constants import Client
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -48,13 +46,6 @@ urlpatterns = [
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("reports/", include("reports.urls"), name="reports"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
-    # Override request_login_code with custom view that auto-creates users
-    # for unknown emails. Uses as_api_view(client=BROWSER) so the headless
-    # decorator sets request.allauth.headless.client correctly.
-    path(
-        "_allauth/browser/v1/auth/code/request",
-        AutoCreateRequestLoginCodeView.as_api_view(client=Client.BROWSER),
-    ),
     path("_allauth/", include("allauth.headless.urls", namespace="headless")),
 ]
 
