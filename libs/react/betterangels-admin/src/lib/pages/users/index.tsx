@@ -62,7 +62,7 @@ const COLUMNS: {
           <StarIconSm className="w-4 h-4" />
         </span>
       ) : (
-        <></>
+        ''
       ),
   },
   {
