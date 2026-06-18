@@ -46,6 +46,7 @@ urlpatterns = [
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("reports/", include("reports.urls"), name="reports"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
+    path("_allauth/", include("allauth.headless.urls", namespace="headless")),
     path("_allauth/", include("accounts.headless_urls")),
 ]
 
