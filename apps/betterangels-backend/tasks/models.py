@@ -1,6 +1,5 @@
 import pghistory
 from accounts.models import User
-from common.enums import SelahTeamEnum  # @deprecated — use Team model instead
 from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models

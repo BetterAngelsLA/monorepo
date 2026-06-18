@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
-from common.enums import SelahTeamEnum  # @deprecated — use Team model instead
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation

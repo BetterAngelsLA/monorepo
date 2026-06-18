@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 import pghistory
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from common.models import Location
 from common.permissions.utils import assign_object_permissions
 from django.db import transaction
