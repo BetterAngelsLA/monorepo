@@ -131,10 +131,6 @@ export function FilterPills(props: IProps) {
     group
     flex shrink-0 items-center justify-center
     rounded-full p-1
-    text-neutral-50
-    hover:bg-primary-90
-    hover:text-neutral-20
-    active:bg-[#E8ECF2]
   "
               aria-label={`Remove ${pill.label} filter`}
               onClick={() => onClearPill(pill)}
@@ -146,7 +142,7 @@ export function FilterPills(props: IProps) {
       rounded-full
       p-0.5
       text-primary-20
-      group-active:text-primary-40
+      group-active:text-[#E8ECF2]
     "
               />
             </button>
