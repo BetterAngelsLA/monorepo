@@ -10,7 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from django.db.models import OuterRef, Prefetch, QuerySet
+from django.db.models import Prefetch, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -288,7 +288,7 @@ def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
 
 def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
-    bed_qs = models.Bed.objects.with_computed_status()
+    bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
         bed_qs = admin_bed_list(bed_qs, user=cast(User, user))
     return Prefetch("beds", queryset=bed_qs)

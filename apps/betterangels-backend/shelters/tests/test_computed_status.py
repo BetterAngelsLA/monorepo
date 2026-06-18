@@ -155,9 +155,7 @@ class BedQuerySetComputedStatusTestCase(TestCase):
         ids = set(Bed.objects.filter_by_status(BedStatusChoices.OCCUPIED).values_list("pk", flat=True))
         self.assertEqual(ids, {bed.pk})
 
-        turnaround_ids = set(
-            Bed.objects.filter_by_status(BedStatusChoices.IN_TURNAROUND).values_list("pk", flat=True)
-        )
+        turnaround_ids = set(Bed.objects.filter_by_status(BedStatusChoices.IN_TURNAROUND).values_list("pk", flat=True))
         self.assertNotIn(bed.pk, turnaround_ids)
 
 

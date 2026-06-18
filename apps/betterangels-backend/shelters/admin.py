@@ -34,6 +34,7 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
+from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (
     AccessibilityChoices,
@@ -54,8 +55,6 @@ from .enums import (
     StorageChoices,
     VaccinationRequirementChoices,
 )
-from shelters.managers import BedQuerySet, RoomQuerySet
-
 from .models import (
     SPA,
     Accessibility,
