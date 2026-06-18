@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MimeTypes } from '@monorepo/react/shared';
+import { enumDisplayShelterPhotoTypeChoices } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
 import {
   Dropdown,
-  type DropdownOption,
+  toDropdownOptions,
 } from '../../../../../../base-ui/dropdown';
 import { FileUploadInput } from '../../../../../../base-ui/fileUpload';
 import { useToast } from '../../../../../../base-ui/toast';
@@ -20,10 +20,9 @@ import {
   useShelterPhotoUpload,
 } from './useShelterPhotoUpload';
 
-const PHOTO_TYPE_OPTIONS: DropdownOption<ShelterPhotoTypeChoices>[] = [
-  { label: 'Interior', value: ShelterPhotoTypeChoices.Interior },
-  { label: 'Exterior', value: ShelterPhotoTypeChoices.Exterior },
-];
+const PHOTO_TYPE_OPTIONS = toDropdownOptions(
+  enumDisplayShelterPhotoTypeChoices
+);
 
 type TProps = {
   shelterId: string;

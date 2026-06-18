@@ -6,12 +6,13 @@ import { Form } from '../../../../form/Form';
 import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
 import { DeleteShelterImageBtn } from './components/DeleteShelterImageBtn';
+import { EditShelterPhotoBtn } from './components/EditShelterPhotoBtn/EditShelterPhotoBtn';
 import { ShelterImagesUpload } from './components/ShelterImagesUpload';
 import { ThumbImg } from './components/ThumbImg';
 import { ToggleHeroShelterImageBtn } from './components/ToggleHeroShelterImageBtn';
 
 function getLastPathSegment(path: string): string {
-  return (path.split('/').at(-1) ?? path).toLowerCase();
+  return path.split('/').at(-1) ?? path;
 }
 
 function buildColumns(
@@ -37,7 +38,7 @@ function buildColumns(
     {
       key: 'name',
       label: 'File Name',
-      render: (photo) => getLastPathSegment(photo.file.name),
+      render: (photo) => getLastPathSegment(photo.file.name).toLowerCase(),
     },
     {
       key: 'type',
@@ -56,6 +57,11 @@ function buildColumns(
             photoId={photo.id}
             shelterId={shelterId}
             heroImageId={heroImageId}
+          />
+          <EditShelterPhotoBtn
+            photoId={photo.id}
+            photoType={photo.type}
+            shelterId={shelterId}
           />
           <DeleteShelterImageBtn photoId={photo.id} shelterId={shelterId} />
         </div>

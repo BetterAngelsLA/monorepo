@@ -1,0 +1,1 @@
+export { useUpdateShelterPhoto } from './useUpdateShelterPhoto';

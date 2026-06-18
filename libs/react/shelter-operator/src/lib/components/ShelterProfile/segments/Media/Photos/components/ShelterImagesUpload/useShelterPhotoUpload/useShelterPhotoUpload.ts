@@ -10,6 +10,8 @@ import {
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
 
+export const MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB
+
 function userFacingError(error: unknown): string {
   const message = parseS3Error(error);
 
@@ -40,8 +42,6 @@ function getFileErrors(files: File[], maxFileSizeBytes?: number) {
     ? `File is too large: ${fileNames[0]}`
     : `Files are too large: ${fileNames.join(', ')}`;
 }
-
-export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 50MB
 
 type TProps = {
   maxFileSizeBytes?: number;
