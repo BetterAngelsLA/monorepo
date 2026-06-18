@@ -1,7 +1,10 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useSetAtom } from 'jotai';
-import { shelterPropertyFiltersAtom, shelterSearchTriggerAtom } from '../../atoms';
+import {
+  shelterPropertyFiltersAtom,
+  shelterSearchTriggerAtom,
+} from '../../atoms';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { getFilterLabel } from './config';
 
@@ -124,7 +127,14 @@ export function FilterPills(props: IProps) {
             <span>{pill.label}</span>
             <button
               type="button"
-              className="flex shrink-0 items-center justify-center rounded-full p-1 text-neutral-50 hover:bg-primary-90 hover:text-neutral-20"
+              className="
+    flex shrink-0 items-center justify-center
+    rounded-full p-1
+    text-neutral-50
+    hover:bg-primary-90
+    hover:text-neutral-20
+    active:bg-[#E8ECF2]
+  "
               aria-label={`Remove ${pill.label} filter`}
               onClick={() => onClearPill(pill)}
             >
