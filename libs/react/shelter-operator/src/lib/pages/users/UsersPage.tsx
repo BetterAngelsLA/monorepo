@@ -131,7 +131,7 @@ export function UsersPage() {
     RemoveOrganizationMemberDocument
   );
 
-  const { members, totalPages, loading, isInitialLoad, isEmpty } =
+  const { members, totalPages, loading, isInitialLoad } =
     useOrganizationMembers(organizationId, page, sort, search);
 
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);

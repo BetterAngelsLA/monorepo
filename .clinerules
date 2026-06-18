@@ -20,6 +20,8 @@ The backend follows the [HackSoftware Django-Styleguide](https://github.com/Hack
 
 ## Project-Specific Conventions
 
+- **CRITICAL: All files must end with a trailing newline.** The `eol-last` ESLint rule is enforced across the monorepo. Every new file you create must have a blank line at the end.
+
 - This is the BetterAngels monorepo. It contains multiple apps (`betterangels`, `betterangels-backend`, `betterangels-admin`, `shelter-web`, `wildfires`) and shared libraries.
 - The backend uses Django with GraphQL. The frontend uses React Native (Expo) and React (Vite).
 - Always run backend tests with `yarn nx test betterangels-backend` and frontend tests with `yarn nx test betterangels` or `yarn nx test shelter-web`.
