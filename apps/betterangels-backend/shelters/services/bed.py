@@ -87,7 +87,8 @@ def bed_delete(*, user: "User", ids: list[int]) -> list[int]:
     """Delete beds by their IDs and return the deleted IDs.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a bed.
+        Unmatched or inaccessible IDs are silently skipped; only successfully
+        deleted IDs are returned.
     """
     beds = admin_bed_list(Bed.objects.all(), user=user).filter(pk__in=ids)
     deleted_ids = list(beds.values_list("pk", flat=True))

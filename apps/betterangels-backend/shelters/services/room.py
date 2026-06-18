@@ -112,7 +112,8 @@ def room_delete(*, user: "User", ids: list[int]) -> list[int]:
     """Delete rooms by their IDs and return the deleted instances.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+        Unmatched or inaccessible IDs are silently skipped; only successfully
+        deleted IDs are returned.
     """
     rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
     deleted_ids = list(rooms.values_list("pk", flat=True))

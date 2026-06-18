@@ -100,8 +100,8 @@ def reservation_delete(*, user: "User", ids: list[int]) -> list[int]:
     """Delete reservations by their IDs and return the deleted IDs.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a reservation
-        the user can access.
+        Unmatched or inaccessible IDs are silently skipped; only successfully
+        deleted IDs are returned.
     """
     reservations = admin_reservation_list(Reservation.objects.all(), user=user).filter(pk__in=ids)
     deleted_ids = []
