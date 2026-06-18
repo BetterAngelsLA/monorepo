@@ -6,6 +6,10 @@ import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
+  UserOrganizationPermissions,
+} from '../../apollo/graphql/__generated__/types';
+import { useActiveOrg } from '../../providers';
+import {
   isShelterManageRoute,
   isShelterRoute,
   paths,
@@ -25,6 +29,7 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
+  const { hasPermission } = useActiveOrg();
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
@@ -46,14 +51,16 @@ export function AppSidebar(props: IProps) {
           Dashboard
         </Sidebar.Link>
 
-        <Sidebar.Link
-          to={paths.users}
-          isActive={location.pathname === paths.users}
-          collapsed={!isOpen}
-          icon={(color: string) => <UsersIcon className="w-4" fill={color} />}
-        >
-          Users
-        </Sidebar.Link>
+        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) && (
+          <Sidebar.Link
+            to={paths.users}
+            isActive={location.pathname === paths.users}
+            collapsed={!isOpen}
+            icon={(color: string) => <UsersIcon className="w-4" fill={color} />}
+          >
+            Users
+          </Sidebar.Link>
+        )}
 
         {isShelterRoute(location.pathname) && shelterId && (
           <>

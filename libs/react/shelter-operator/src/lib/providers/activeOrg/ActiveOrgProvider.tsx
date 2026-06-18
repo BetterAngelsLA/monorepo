@@ -1,6 +1,8 @@
+import { hasPermission as hasPermissionFn } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext from './ActiveOrgContext';
+import { PermissionEnum } from './ActiveOrgContext';
 
 const STORAGE_KEY = 'shelter_operator_active_org_id';
 
@@ -66,9 +68,15 @@ export function ActiveOrgProvider({
     [organizations]
   );
 
+  const hasPermission = useCallback(
+    (perm: PermissionEnum): boolean =>
+      hasPermissionFn(activeOrg?.permissions, perm),
+    [activeOrg]
+  );
+
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId }),
-    [activeOrg, organizations, setActiveOrgId]
+    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
+    [activeOrg, organizations, setActiveOrgId, hasPermission]
   );
 
   return (
