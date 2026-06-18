@@ -2,7 +2,8 @@ import { useQuery } from '@apollo/client/react';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useAtomValue } from 'jotai';
 import { BookCheck, Search, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDebounce } from '@monorepo/react/shared';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import type {
   DemographicChoices,
@@ -58,25 +59,13 @@ export function Dashboard() {
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset to first page when filters change
   useEffect(() => {
     setPage(1);
   }, [selectedFilters]);
-
-  // Debounce: only update the query variable after the user stops typing
-  useEffect(() => {
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-      setPage(1);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [searchInput]);
 
   const propertyFilters = useMemo(() => {
     const demographics = selectedFilters.demographics?.length

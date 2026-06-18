@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDebounce } from '@monorepo/react/shared';
 import {
   Ordering,
   OrganizationMemberOrdering,
@@ -136,21 +137,12 @@ export function UsersPage() {
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(1);
-    }, 300);
-  }, []);
-
+  // Reset page when debounced search changes
   useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
+    setPage(1);
+  }, [debouncedSearch]);
 
   const handleSort = (field: keyof OrganizationMemberOrdering) => {
     setPage(1);
@@ -253,7 +245,7 @@ export function UsersPage() {
             type="text"
             placeholder="Search users..."
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="h-12 w-full rounded-full border border-gray-200 bg-white px-5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-200 focus-within:border-[#008CEE]"
           />
         </div>
