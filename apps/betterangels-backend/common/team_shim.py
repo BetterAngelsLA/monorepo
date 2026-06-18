@@ -4,6 +4,23 @@ from common.enums import SelahTeamEnum
 from teams.models import Team
 
 
+def _normalize_slug(team: str | SelahTeamEnum) -> str:
+    """Convert a ``SelahTeamEnum`` or string to a Team slug (the enum ``.value``).
+
+    Strings are first tried as enum member names (e.g. ``"WDI_ON_SITE"``),
+    then as enum values (e.g. ``"wdi_on_site"``).  If neither matches the
+    string is returned unchanged (allowing custom slugs).
+    """
+    if isinstance(team, SelahTeamEnum):
+        return team.value
+    for converter in (lambda s: SelahTeamEnum[s], lambda s: SelahTeamEnum(s)):
+        try:
+            return converter(team).value
+        except (KeyError, ValueError):
+            pass
+    return team
+
+
 def resolve_team_id(
     team: str | SelahTeamEnum | None = None,
     team_id: int | None = None,
@@ -12,36 +29,15 @@ def resolve_team_id(
 ) -> int | None:
     """Resolve a team reference to a Team FK, preferring *team_id*.
 
-    If *team_id* is provided it is returned directly.  Otherwise the
-    deprecated *team* value (enum member or string) is resolved:
-    - ``SelahTeamEnum`` instance → looks up by ``.value`` (the enum's db value).
-    - string → tries as-is first, then tries as ``SelahTeamEnum[value].value``
-      (i.e. treat the string as the enum member name), then tries as
-      ``SelahTeamEnum(value).value`` (i.e. treat the string as the enum db value).
-
     Returns ``None`` when neither is provided or no matching team is found.
     """
     if team_id is not None:
         return team_id
-    if team is not None:
-        candidates: list[str] = []
-        if isinstance(team, SelahTeamEnum):
-            candidates.append(team.value)
-        else:
-            # Try the string as-is, as enum member name, and as enum value.
-            candidates.append(team)
-            try:
-                candidates.append(SelahTeamEnum[team].value)
-            except KeyError:
-                pass
-            try:
-                candidates.append(SelahTeamEnum(team).value)
-            except ValueError:
-                pass
+    if team is None:
+        return None
 
-        for candidate in candidates:
-            try:
-                return Team.objects.get(slug=candidate, organization_id=organization_id).pk
-            except Team.DoesNotExist:
-                continue
-    return None
+    slug = _normalize_slug(team)
+    try:
+        return Team.objects.get(slug=slug, organization_id=organization_id).pk
+    except Team.DoesNotExist:
+        return None
