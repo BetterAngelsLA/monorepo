@@ -1,29 +1,26 @@
 import { ApolloLink } from '@apollo/client';
 
-const STORAGE_KEY = 'betterangels_active_org_id';
+/** localStorage key for the active organization ID — shared across all apps and tabs. */
+export const ACTIVE_ORG_STORAGE_KEY = 'betterangels_active_org_id';
 
 /**
- * Injects the X-Organization-ID header from localStorage into every
- * GraphQL request.  The header is read by ``OrganizationMiddleware`` on
- * the backend, attached as ``request.organization_id``, and consumed by
- * ``HasOrgPerm`` extensions and org-scoping selectors.
+ * Apollo Link that injects the ``X-Organization-ID`` header into every
+ * GraphQL request.  Reads the active organization from ``localStorage``
+ * so the header survives page reloads and is shared across tabs.
  */
 export const orgLink = new ApolloLink((operation, forward) => {
-  const orgId = (() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return null;
+  try {
+    const orgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY);
+    if (orgId) {
+      operation.setContext(({ headers = {} }) => ({
+        headers: {
+          ...headers,
+          'X-Organization-ID': orgId,
+        },
+      }));
     }
-  })();
-
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      ...(orgId ? { 'X-Organization-ID': orgId } : {}),
-    },
-  }));
-
+  } catch {
+    // localStorage may be unavailable (SSR / test environments).
+  }
   return forward(operation);
 });
-
