@@ -286,6 +286,14 @@ def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
     )
 
 
+def _room_beds_prefetch(info: Info) -> Prefetch:
+    user = get_current_user(info)
+    bed_qs = models.Bed.objects.with_computed_status()
+    if user is not None and user.is_authenticated:
+        bed_qs = admin_bed_list(bed_qs, user=cast(User, user))
+    return Prefetch("beds", queryset=bed_qs)
+
+
 @strawberry_django.type(models.Bed, filters=BedFilter, ordering=BedOrder)
 class BedType:
     @classmethod
@@ -328,7 +336,11 @@ class RoomType:
     id: ID
     accessibility: List[AccessibilityType]
     amenities: auto
-    beds: List["BedType"]
+    beds: List["BedType"] = strawberry_django.field(
+        filters=BedFilter,
+        ordering=BedOrder,
+        prefetch_related=[_room_beds_prefetch],
+    )
     demographics: List[DemographicType]
     funders: List[FunderType]
     last_cleaned: auto

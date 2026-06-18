@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Iterable, Union, cast
+from typing import TYPE_CHECKING, Iterable, Self, Union, cast
 
 from django.db import models
 from django.db.models import (
@@ -204,10 +204,10 @@ class ReservableStatusQuerySetMixin:
     reservable_fk: str = "bed_id"
     status_enum: type[BedStatusChoices] | type[RoomStatusChoices] = BedStatusChoices
 
-    def with_computed_status(self) -> QuerySet:
+    def with_computed_status(self) -> Self:
         qs = cast(QuerySet, self)
         return cast(
-            QuerySet,
+            Self,
             qs.annotate(_computed_status=computed_status_case(self.reservable_fk, self.status_enum)),
         )
 
@@ -244,7 +244,7 @@ class BedManager(Manager["Bed"]):
         return BedQuerySet(self.model, using=self._db)
 
     def with_computed_status(self) -> BedQuerySet:
-        return cast(BedQuerySet, self.get_queryset().with_computed_status())
+        return self.get_queryset().with_computed_status()
 
     def filter_by_status(self, status: BedStatusChoices) -> BedQuerySet:
         return cast(BedQuerySet, self.get_queryset().filter_by_status(status))
@@ -258,7 +258,7 @@ class RoomManager(Manager["Room"]):
         return RoomQuerySet(self.model, using=self._db)
 
     def with_computed_status(self) -> RoomQuerySet:
-        return cast(RoomQuerySet, self.get_queryset().with_computed_status())
+        return self.get_queryset().with_computed_status()
 
     def filter_by_status(self, status: RoomStatusChoices) -> RoomQuerySet:
         return cast(RoomQuerySet, self.get_queryset().filter_by_status(status))

@@ -5,9 +5,31 @@ from __future__ import annotations
 import datetime
 from typing import Set, TypeVar
 
+from django.db.models import QuerySet
+
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 
 _StatusChoice = TypeVar("_StatusChoice", BedStatusChoices, RoomStatusChoices)
+
+
+def get_last_completed_checkout(reservations: QuerySet) -> datetime.datetime | None:
+    """Return the most recent ``checked_out_at`` from completed reservations."""
+    completed = (
+        reservations.filter(status=ReservationStatusChoices.COMPLETED)
+        .order_by("-checked_out_at")
+        .only("checked_out_at")
+        .first()
+    )
+    return completed.checked_out_at if completed else None
+
+
+def is_in_turnaround(
+    *,
+    last_cleaned: datetime.datetime | None,
+    last_checkout: datetime.datetime | None,
+) -> bool:
+    """Return True when the latest checkout is newer than the last cleaning."""
+    return bool(last_checkout and (last_cleaned is None or last_cleaned <= last_checkout))
 
 
 def compute_reservable_status(
@@ -31,7 +53,7 @@ def compute_reservable_status(
     }:
         return status_enum.RESERVED
 
-    if last_checkout and (last_cleaned is None or last_cleaned <= last_checkout):
+    if is_in_turnaround(last_cleaned=last_cleaned, last_checkout=last_checkout):
         return status_enum.IN_TURNAROUND
 
     return status_enum.AVAILABLE

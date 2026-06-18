@@ -1,7 +1,13 @@
 from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
-from shelters.enums import ReservationStatusChoices, RoomStatusChoices, RoomStyleChoices, StatusChoices
+from shelters.enums import (
+    BedStatusChoices,
+    ReservationStatusChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+    StatusChoices,
+)
 from shelters.models import Bed, Reservation, Room
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
@@ -74,6 +80,37 @@ class RoomQueryTestCase(RoomQueriesTestCase):
         self.assertEqual(room["funders"], [])
         self.assertEqual(room["pets"], [])
         self.assertEqual(room["shelter"], {"id": str(self.shelter.pk)})
+
+    def test_room_query_with_beds_status(self) -> None:
+        bed1 = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-1")
+        bed2 = baker.make(Bed, shelter=self.shelter, room=self.room, name="Bed-2")
+        baker.make(Reservation, bed=bed1, status=ReservationStatusChoices.CONFIRMED)
+
+        query = """
+            query ($id: ID!) {
+                room(pk: $id) {
+                    id
+                    beds {
+                        id
+                        status
+                    }
+                }
+            }
+        """
+        expected_query_count = 6
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"id": str(self.room.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        room = response["data"]["room"]
+        beds_by_id = {bed["id"]: bed["status"] for bed in room["beds"]}
+        self.assertEqual(
+            beds_by_id,
+            {
+                str(bed1.pk): BedStatusChoices.RESERVED.name,
+                str(bed2.pk): BedStatusChoices.AVAILABLE.name,
+            },
+        )
 
 
 class RoomsQueryTestCase(RoomQueriesTestCase):

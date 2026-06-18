@@ -54,6 +54,8 @@ from .enums import (
     StorageChoices,
     VaccinationRequirementChoices,
 )
+from shelters.managers import BedQuerySet, RoomQuerySet
+
 from .models import (
     SPA,
     Accessibility,
@@ -1481,6 +1483,10 @@ class BedAdmin(admin.ModelAdmin):
         ),
     )
 
+    def get_queryset(self, request: HttpRequest) -> BedQuerySet:
+        qs = cast(BedQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
     def display_status(self, obj: Bed) -> str:
         return obj.computed_status
 
@@ -1523,6 +1529,10 @@ class RoomAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request: HttpRequest) -> RoomQuerySet:
+        qs = cast(RoomQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
 
     def display_status(self, obj: Room) -> str:
         return obj.computed_status

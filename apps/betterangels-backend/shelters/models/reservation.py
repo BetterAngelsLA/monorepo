@@ -10,6 +10,7 @@ from django.db.models import UniqueConstraint
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from shelters.enums import ReservationStatusChoices
+from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 from .shelter import ACTIVE_RESERVATION_STATUSES, Bed, Room
 
@@ -105,19 +106,19 @@ class Reservation(BaseModel):
         """Return True if the assigned bed is in turnaround (last checkout after last cleaned)."""
         if not self.bed:
             return False
-        last_checkout = self.bed._get_last_completed_checkout()
-        if not last_checkout:
-            return False
-        return self.bed.last_cleaned is None or self.bed.last_cleaned <= last_checkout
+        return is_in_turnaround(
+            last_cleaned=self.bed.last_cleaned,
+            last_checkout=get_last_completed_checkout(self.bed.reservations.all()),
+        )
 
     def _is_room_in_turnaround(self) -> bool:
         """Return True if the assigned room is in turnaround (last checkout after last cleaned)."""
         if not self.room:
             return False
-        last_checkout = self.room._get_last_completed_checkout()
-        if not last_checkout:
-            return False
-        return self.room.last_cleaned is None or self.room.last_cleaned <= last_checkout
+        return is_in_turnaround(
+            last_cleaned=self.room.last_cleaned,
+            last_checkout=get_last_completed_checkout(self.room.reservations.all()),
+        )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

@@ -30,7 +30,7 @@ from shelters.enums import (
 )
 from shelters.managers import AdminShelterManager, BedManager, RoomManager, ShelterManager
 from shelters.selectors import shelters_open_at
-from shelters.status import compute_bed_status, compute_room_status
+from shelters.status import compute_bed_status, compute_room_status, get_last_completed_checkout
 
 from .lookups import (
     SPA,
@@ -263,43 +263,23 @@ class Bed(CloneMixin, BaseModel):
 
     @property
     def computed_status(self) -> BedStatusChoices:
+        """Return computed status.
+
+        List/detail querysets should use ``Bed.objects.with_computed_status()`` so
+        ``_computed_status`` is set via SQL annotation. Otherwise falls back to
+        pure-Python rules in ``status.py`` (single-object paths like tests).
+        """
         annotated = getattr(self, "_computed_status", None)
         if annotated is not None:
             return BedStatusChoices(annotated)
 
-        if hasattr(self, "_active_reservations") and self._active_reservations is not None:
-            active = self._active_reservations
-        else:
-            active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
-
+        active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
         return compute_bed_status(
             maintenance_flag=self.maintenance_flag,
             last_cleaned=self.last_cleaned,
-            last_checkout=self._get_last_completed_checkout(),
+            last_checkout=get_last_completed_checkout(self.reservations.all()),
             active_reservation_statuses={r.status for r in active},
         )
-
-    def _get_last_completed_checkout(self) -> datetime.datetime | None:
-        """Return the ``checked_out_at`` of the most recent completed reservation for this bed.
-
-        Uses prefetched data from ``_completed_reservations`` when available
-        (set by the GraphQL ``BedType.status`` resolver via ``Prefetch``).
-        Falls back to a DB query only when the attribute is not present.
-        """
-        if hasattr(self, "_completed_reservations") and self._completed_reservations is not None:
-            if reservations := self._completed_reservations:
-                return max(r.checked_out_at for r in reservations if r.checked_out_at)  # type: ignore[no-any-return]
-
-            return None
-
-        completed = (
-            self.reservations.filter(status=ReservationStatusChoices.COMPLETED)
-            .order_by("-checked_out_at")
-            .only("checked_out_at")
-            .first()
-        )
-
-        return completed.checked_out_at if completed else None
 
 
 class Room(CloneMixin, BaseModel):
@@ -347,43 +327,23 @@ class Room(CloneMixin, BaseModel):
 
     @property
     def computed_status(self) -> RoomStatusChoices:
+        """Return computed status.
+
+        List/detail querysets should use ``Room.objects.with_computed_status()`` so
+        ``_computed_status`` is set via SQL annotation. Otherwise falls back to
+        pure-Python rules in ``status.py`` (single-object paths like tests).
+        """
         annotated = getattr(self, "_computed_status", None)
         if annotated is not None:
             return RoomStatusChoices(annotated)
 
-        if hasattr(self, "_active_reservations") and self._active_reservations is not None:
-            active = self._active_reservations
-        else:
-            active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
-
+        active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
         return compute_room_status(
             maintenance_flag=self.maintenance_flag,
             last_cleaned=self.last_cleaned,
-            last_checkout=self._get_last_completed_checkout(),
+            last_checkout=get_last_completed_checkout(self.reservations.all()),
             active_reservation_statuses={r.status for r in active},
         )
-
-    def _get_last_completed_checkout(self) -> datetime.datetime | None:
-        """Return the ``checked_out_at`` of the most recent completed reservation for this room.
-
-        Uses prefetched data from ``_completed_reservations`` when available
-        (set by the GraphQL ``RoomType.status`` resolver via ``Prefetch``).
-        Falls back to a DB query only when the attribute is not present.
-        """
-        if hasattr(self, "_completed_reservations") and self._completed_reservations is not None:
-            if reservations := self._completed_reservations:
-                return max(r.checked_out_at for r in reservations if r.checked_out_at)  # type: ignore[no-any-return]
-            return None
-
-        completed = (
-            self.reservations.filter(
-                status=ReservationStatusChoices.COMPLETED,
-            )
-            .order_by("-checked_out_at")
-            .only("checked_out_at")
-            .first()
-        )
-        return completed.checked_out_at if completed else None
 
 
 @pghistory.track(
