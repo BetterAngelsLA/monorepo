@@ -1,7 +1,10 @@
 from typing import Any
 
 from allauth.headless.account.views import RequestLoginCodeView
+from allauth.headless.constants import Client
+from allauth.headless.internal.decorators import mark_request_as_headless
 from django.contrib.auth import get_user_model
+from django.http import HttpRequest
 
 
 class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
@@ -12,6 +15,10 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
     a user is created on the fly.  This preserves ``ACCOUNT_PREVENT_ENUMERATION=True``
     while still allowing brand-new operators to sign in.
     """
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Any:
+        mark_request_as_headless(request, Client.BROWSER)
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form: Any) -> Any:
         email = form.cleaned_data.get("email")
