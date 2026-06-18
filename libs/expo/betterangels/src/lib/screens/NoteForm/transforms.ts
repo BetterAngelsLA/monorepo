@@ -28,7 +28,7 @@ export function buildNotePayload(
 
   if (include('purpose')) payload.purpose = form.purpose;
   if (include('interactedAt')) payload.interactedAt = form.interactedAt;
-  if (include('team')) payload.team = form.team;
+  if (include('teamId')) payload.teamId = form.teamId;
   if (include('publicNote')) {
     payload.publicDetails = form.publicNote || undefined;
   }
@@ -48,7 +48,7 @@ export function buildNotePayload(
       summary: task.summary || '',
       description: task.description || undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,
-      team: task.team || undefined,
+      teamId: task.team || undefined,
     }));
   }
 
@@ -61,7 +61,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
   return {
     purpose: note.purpose,
     interactedAt: note.interactedAt,
-    team: note.team,
+    teamId: note.currentTeam?.id,
     publicNote: note.publicDetails || '',
     location: note.location?.point
       ? {

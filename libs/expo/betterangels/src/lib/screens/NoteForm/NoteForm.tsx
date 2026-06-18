@@ -106,8 +106,8 @@ export default function NoteForm(props: NoteFormProps) {
           scrollRef={scrollRef}
         />
         <Team
-          team={form.team}
-          onTeamChange={(v) => setValue('team', v, { shouldDirty: true })}
+          teamId={form.teamId}
+          onTeamChange={(v) => setValue('teamId', v, { shouldDirty: true })}
         />
         <Location
           point={

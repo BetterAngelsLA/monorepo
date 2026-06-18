@@ -2445,7 +2445,7 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
-  teams: TeamType;
+  teams: Array<TeamType>;
 };
 
 

@@ -35,6 +35,7 @@ type TProps = {
   authors?: string[];
   organizations?: string[];
   teams?: string[];
+  teamIds?: string[];
   taskStatus?: string[];
   clientProfiles?: string[];
   hmisClientProfiles?: string[];
@@ -53,6 +54,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
     clientProfiles,
     hmisClientProfiles,
     teams,
+    teamIds,
     taskStatus,
     hmisNote,
     note,
@@ -73,6 +75,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
     clientProfileLookup,
     createdBy: toNonEmptyStringOrUndefined(createdBy),
     teams: toEnumArray<SelahTeamEnum>(SelahTeamEnum, teams),
+    teamIds,
     status: toEnumArray<TaskStatusEnum>(TaskStatusEnum, taskStatus),
   };
 

@@ -6,7 +6,6 @@ from accounts.extensions import HasOrgPerm
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from strawberry.types import Info
-from strawberry_django.pagination import OffsetPaginated
 
 from .models import Team
 from .selectors import team_get, team_list
@@ -16,8 +15,8 @@ from .types import CreateTeamInput, TeamType, UpdateTeamInput
 
 @strawberry.type
 class Query:
-    @strawberry_django.offset_paginated(TeamType, permission_classes=[IsAuthenticated])
-    def teams(self, info: Info) -> OffsetPaginated[TeamType]:
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def teams(self, info: Info) -> list[TeamType]:
         organization = get_current_organization(info)
         return team_list(organization=organization)
 
