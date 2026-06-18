@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
+from .groups import ORG_ADMIN
 from .models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -238,7 +239,7 @@ def create_organization_service(
         name=organization_name,
         preset_names=[org_type_name],
         owner=user,
-        owner_roles=(org_config.member_template,),
+        owner_roles=(org_config.member_template, ORG_ADMIN),
     )
 
     return user, organization
