@@ -10,7 +10,7 @@ import { NoteType } from '../../apollo';
 interface INoteCardBylineProps {
   createdBy?: NoteType['createdBy'];
   organization: NoteType['organization'];
-  currentTeam?: NoteType['currentTeam'];
+  currentTeam?: { name?: string | null } | null;
 }
 
 export default function NoteCardByline(props: INoteCardBylineProps) {

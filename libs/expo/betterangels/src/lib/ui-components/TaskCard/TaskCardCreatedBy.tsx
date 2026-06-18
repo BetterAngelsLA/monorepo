@@ -9,7 +9,7 @@ import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
 
 type TaskCardCreatedByProps = {
   createdBy: TasksQuery['tasks']['results'][number]['createdBy'];
-  currentTeam?: TasksQuery['tasks']['results'][number]['currentTeam'];
+  currentTeam?: { name?: string | null } | null;
   organization?: TasksQuery['tasks']['results'][number]['organization'];
 };
 

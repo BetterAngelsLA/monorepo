@@ -10,7 +10,7 @@ import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 interface INoteBylineProps {
   createdBy?: NoteSummaryQuery['note']['createdBy'];
   organization: NoteSummaryQuery['note']['organization'];
-  currentTeam?: NoteSummaryQuery['note']['currentTeam'];
+  currentTeam?: { name?: string | null } | null;
 }
 
 export default function NoteByline(props: INoteBylineProps) {

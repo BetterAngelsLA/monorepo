@@ -10,6 +10,7 @@ from .models import Team
 @strawberry_django.type(Team)
 class TeamType:
     id: ID
+    # TEMPORARY — remove after SelahTeamEnum deprecation window.
     slug: auto
     name: auto
     is_active: auto

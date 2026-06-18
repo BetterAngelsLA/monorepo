@@ -11,8 +11,11 @@ class Team(BaseModel):
     the deprecated ``SelahTeamEnum``.
 
     *slug* is the machine-readable identifier (maps to
-    ``SelahTeamEnum.value`` during migration).  *name* is the
-    human-readable display name (maps to ``SelahTeamEnum.label``).
+    ``SelahTeamEnum.value`` during migration).
+
+    TEMPORARY — remove after ``SelahTeamEnum`` deprecation window.
+    Teams are identified by ``id`` (FK); *slug* exists only for the
+    enum-to-FK migration shim.
     """
 
     slug = models.CharField(max_length=100)

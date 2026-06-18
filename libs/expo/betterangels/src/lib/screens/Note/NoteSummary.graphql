@@ -7,7 +7,6 @@ query NoteSummary($id: ID!) {
       isSubmitted
       publicDetails
       purpose
-      team
       currentTeam {
         id
         slug

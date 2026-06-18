@@ -83,7 +83,7 @@ export function ClientTasksViewHmis(props: TProps) {
             summary: task.summary!,
             description: task.description,
             status: task.status,
-            team: task.team || null,
+            teamId: task.teamId || null,
             hmisClientProfile: client.id,
           },
         },
