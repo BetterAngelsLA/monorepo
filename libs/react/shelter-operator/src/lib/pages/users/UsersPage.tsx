@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Ordering,
   OrganizationMemberOrdering,
@@ -8,6 +8,8 @@ import {
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { Button } from '../../components/base-ui/buttons/buttons';
+import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
+import { useToast } from '../../components/base-ui/toast';
 import { Table, TableColumn } from '../../components/Table';
 import { useActiveOrg } from '../../providers';
 import { AddUserFormDrawer } from '../../components/AddUserForm';
@@ -17,6 +19,18 @@ import {
 } from './__generated__/users.generated';
 
 const PAGE_SIZE = 25;
+
+const ROLE_LABELS: Record<string, string> = {
+  SHELTER_OPERATOR: 'Shelter Operator',
+  ORG_ADMIN: 'Org Admin',
+  ORG_SUPERUSER: 'Org Superuser',
+  CASEWORKER: 'Caseworker',
+  MEMBER: 'Member',
+};
+
+function humanizeRole(role: string): string {
+  return ROLE_LABELS[role] ?? role;
+}
 
 const COLUMNS: TableColumn<OrganizationMemberType>[] = [
   {
@@ -32,7 +46,7 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
   {
     key: 'memberRole',
     label: 'Job Role',
-    render: (m) => m.memberRole,
+    render: (m) => humanizeRole(m.memberRole),
   },
   {
     key: 'email',
@@ -88,11 +102,19 @@ function useOrganizationMembers(
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,
+    isEmpty: !loading && totalCount === 0,
   };
+}
+
+interface RemoveConfirmation {
+  isOpen: boolean;
+  member: OrganizationMemberType | null;
 }
 
 export function UsersPage() {
   const { activeOrg, hasPermission } = useActiveOrg();
+  const { showToast } = useToast();
+  const [rawSearch, setRawSearch] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{
@@ -100,23 +122,37 @@ export function UsersPage() {
     direction: Ordering;
   }>({ field: 'lastName', direction: Ordering.Asc });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [removeConfirmation, setRemoveConfirmation] =
+    useState<RemoveConfirmation>({ isOpen: false, member: null });
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const organizationId = activeOrg?.id ?? '';
 
-  const [removeOrganizationMember] = useMutation(
+  const [removeOrganizationMember, { loading: isRemoving }] = useMutation(
     RemoveOrganizationMemberDocument
   );
 
-  const { members, totalPages, loading, isInitialLoad } =
+  const { members, totalPages, loading, isInitialLoad, isEmpty } =
     useOrganizationMembers(organizationId, page, sort, search);
 
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
+  const handleRawSearchChange = useCallback((value: string) => {
+    setRawSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(value);
+      setPage(1);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const handleSort = (field: keyof OrganizationMemberOrdering) => {
     setPage(1);
@@ -143,9 +179,29 @@ export function UsersPage() {
         refetchQueries: [OrganizationMembersDocument],
         awaitRefetchQueries: true,
       });
+      showToast({
+        status: 'success',
+        title: `${member.firstName ?? 'User'} ${member.lastName ?? ''} removed.`,
+      });
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to remove user.';
       console.error('error removing user:', err);
+      showToast({
+        status: 'error',
+        title: message,
+      });
+    } finally {
+      setRemoveConfirmation({ isOpen: false, member: null });
     }
+  };
+
+  const handleAddSuccess = () => {
+    setIsAddModalOpen(false);
+    showToast({
+      status: 'success',
+      title: 'User added successfully.',
+    });
   };
 
   if (!organizationId) return null;
@@ -177,6 +233,11 @@ export function UsersPage() {
     ),
   }));
 
+  const hasSearchResults = rawSearch.length > 0;
+  const emptyMessage = hasSearchResults
+    ? 'No users match your search.'
+    : 'No users in this organization.';
+
   return (
     <div className="flex flex-col h-full">
       <div className="mb-10">
@@ -193,8 +254,8 @@ export function UsersPage() {
           <input
             type="text"
             placeholder="Search users..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            value={rawSearch}
+            onChange={(e) => handleRawSearchChange(e.target.value)}
             className="h-12 w-full rounded-full border border-gray-200 bg-white px-5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-200 focus-within:border-[#008CEE]"
           />
         </div>
@@ -220,7 +281,9 @@ export function UsersPage() {
               <div className="flex justify-end gap-2">
                 <Button
                   variant="trash"
-                  onClick={() => handleRemoveMember(member)}
+                  onClick={() =>
+                    setRemoveConfirmation({ isOpen: true, member })
+                  }
                 />
               </div>
             )}
@@ -233,7 +296,7 @@ export function UsersPage() {
             }
             emptyState={
               <div className="flex justify-center py-8 text-[#747A82]">
-                No users found.
+                {emptyMessage}
               </div>
             }
           />
@@ -269,8 +332,30 @@ export function UsersPage() {
       <AddUserFormDrawer
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false);
+        onSuccess={handleAddSuccess}
+      />
+
+      <ConfirmationModal
+        isOpen={removeConfirmation.isOpen}
+        onClose={() =>
+          setRemoveConfirmation({ isOpen: false, member: null })
+        }
+        title={`Remove ${removeConfirmation.member?.firstName ?? 'User'} ${removeConfirmation.member?.lastName ?? ''}?`}
+        description="This action cannot be undone."
+        variant="danger"
+        primaryAction={{
+          label: isRemoving ? 'Removing…' : 'Remove User',
+          onClick: () => {
+            if (removeConfirmation.member) {
+              handleRemoveMember(removeConfirmation.member);
+            }
+          },
+          isLoading: isRemoving,
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () =>
+            setRemoveConfirmation({ isOpen: false, member: null }),
         }}
       />
     </div>
