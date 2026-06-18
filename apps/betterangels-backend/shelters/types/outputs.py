@@ -603,7 +603,11 @@ class ReservationType:
         if root.bed:
             return cast("AdminShelterType", root.bed.shelter)
 
-        assert root.room is not None
+        if root.room is None:
+            raise ValueError(
+                f"Reservation {root.pk} has neither bed nor room assigned."
+            )
+
         return cast("AdminShelterType", root.room.shelter)
 
     @strawberry_django.field(only=["created_by_id"])
