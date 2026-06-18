@@ -28,6 +28,11 @@ mutation CreateTask($data: CreateTaskInput!) {
       status
       summary
       team
+      currentTeam {
+        id
+        slug
+        name
+      }
       updatedAt
     }
   }

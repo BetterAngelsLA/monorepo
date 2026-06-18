@@ -228,6 +228,7 @@ export const enumDisplayAdaAccommodationEnum: {
 };
 
 export const enumDisplaySelahTeam: {
+  /** @deprecated — Use `teams` query + `TeamType.name` instead. Remove after deprecation window. */
   [key in SelahTeamEnum]: string;
 } = {
   [SelahTeamEnum.BowtieRiversideOutreach]: 'Bowtie & Riverside Outreach',

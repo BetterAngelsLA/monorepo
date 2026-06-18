@@ -8,6 +8,11 @@ query NoteSummary($id: ID!) {
       publicDetails
       purpose
       team
+      currentTeam {
+        id
+        slug
+        name
+      }
       clientProfile {
         id
         email
