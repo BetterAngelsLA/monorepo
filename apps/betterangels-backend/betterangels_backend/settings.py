@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "django_structlog",
     "guardian",
+    "model_clone",
     "places",
     "post_office",
     "rest_framework",
@@ -169,8 +170,15 @@ MIDDLEWARE = [
 
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_TIMEOUT = 300
+ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
 ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_LOGIN_METHODS = ["email"]
+ACCOUNT_SIGNUP_FIELDS = ["email*", "first_name*", "last_name*"]
 
 ROOT_URLCONF = "betterangels_backend.urls"
 

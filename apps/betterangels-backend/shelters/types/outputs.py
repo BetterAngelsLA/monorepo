@@ -9,7 +9,7 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
-from common.imgproxy import build_imgproxy_url
+from common.images import build_img_url
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
@@ -19,7 +19,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import admin_shelter_list, shelter_list
+from shelters.selectors import admin_bed_list, admin_room_list, admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -75,12 +75,17 @@ class ShelterLocationType:
     longitude: float
 
 
-@strawberry.type
+@strawberry_django.type(models.ShelterPhoto)
 class ShelterPhotoType:
     id: ID
     type: ShelterPhotoTypeChoices
     created_at: datetime
     file: TransformableImageType
+
+
+@strawberry.type
+class ShelterPhotoUploadsType:
+    photos: list[ShelterPhotoType]
 
 
 @strawberry.type
@@ -204,8 +209,7 @@ class ShelterTypeMixin:
         processing_options: Optional[str] = None,
     ) -> Optional[ShelterHeroImageType]:
         if photo := _get_hero_image(root):
-            if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
-                return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+            return ShelterHeroImageType(id=ID(str(photo.id)), url=build_img_url(photo.file, preset, processing_options))
 
         return None
 
@@ -281,7 +285,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        return admin_bed_list(queryset, user=user)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -308,7 +312,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        return admin_room_list(queryset, user=user)
 
     id: ID
     accessibility: List[AccessibilityType]

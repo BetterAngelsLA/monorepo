@@ -1,0 +1,49 @@
+query GetBed($id: ID!) {
+  beds(filters: { id: $id }) {
+    results {
+      id
+      name
+      status
+      statusNotes
+      type
+      storage
+      maintenanceFlag
+      b7
+      fees
+      room {
+        id
+      }
+      accessibility {
+        name
+      }
+      demographics {
+        name
+      }
+      funders {
+        name
+      }
+      medicalNeeds {
+        name
+      }
+      pets {
+        name
+      }
+    }
+  }
+}
+
+query GetBeds($shelterId: ID!) {
+  beds(filters: { shelterId: $shelterId }) {
+    results {
+      id
+      name
+      status
+      maintenanceFlag
+      type
+      room {
+        id
+        name
+      }
+    }
+  }
+}

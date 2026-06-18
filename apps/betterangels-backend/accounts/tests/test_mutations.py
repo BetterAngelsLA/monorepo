@@ -1,14 +1,14 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
-from accounts.utils import OrgPermissionManager
+from accounts.types import PermissionTemplateEnum
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase
 
@@ -55,7 +55,6 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
         user = response["data"]["updateCurrentUser"]
         expected_user = {
             **variables,
-            "isOutreachAuthorized": True,
             "organizations": [
                 {"id": str(self.user_organization.pk), "name": self.user_organization.name},
             ],
@@ -145,11 +144,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         self.org_admin = baker.make(User, first_name="admin")
 
-        self.org = organization_recipe.make(name="org")
-        self.org.add_user(self.org_admin)
-
-        omb = OrgPermissionManager(self.org)
-        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
+        self.org = organization_recipe.make(name="org", owner=self.org_admin)
 
         self.graphql_client.force_login(self.org_admin)
 
@@ -189,10 +184,11 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         variables = {
             **new_member,
             "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(19):
+            with self.assertNumQueriesWithoutCache(22):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -209,7 +205,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         group = Group.objects.get(
             permissiongroup__organization=self.org,
-            permissiongroup__template__name=GroupTemplateNames.CASEWORKER,
+            permissiongroup__template__name=CASEWORKER.name,
         )
         self.assertIn(group, new_user.groups.all())
 
@@ -251,16 +247,15 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         variables = {
             **new_member,
             "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
         }
 
-        with self.assertNumQueriesWithoutCache(9):
-            response = self.execute_graphql(mutation, {"data": variables})
+        response = self.execute_graphql(mutation, {"data": variables})
 
-        self.assertEqual(len(response["data"]["addOrganizationMember"]["messages"]), 1)
-        self.assertEqual(
-            response["data"]["addOrganizationMember"]["messages"][0]["message"],
-            "New Member is already a member of org.",
-        )
+        # No error — already-member still gets missing templates assigned and an
+        # invitation created (cross-portal re-invite support).
+        self.assertNotIn("messages", response["data"]["addOrganizationMember"])
+        self.assertIsNotNone(response["data"]["addOrganizationMember"]["id"])
         self.assertEqual(initial_org_member_count, OrganizationUser.objects.count())
 
     def test_remove_organization_member(self) -> None:

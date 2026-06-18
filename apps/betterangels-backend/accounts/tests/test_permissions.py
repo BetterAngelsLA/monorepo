@@ -1,8 +1,6 @@
 from typing import Optional
 
-from accounts.enums import OrgRoleEnum
 from accounts.models import User
-from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
@@ -15,21 +13,15 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     def setUp(self) -> None:
         super().setUp()
 
-        self.org_1 = organization_recipe.make(name="org 1")
-        self.org_2 = organization_recipe.make(name="org 2")
         self.org_member = baker.make(User, first_name="org member")
         self.org_1_admin = baker.make(User, first_name="org 1 admin")
         self.org_2_admin = baker.make(User, first_name="org 2 admin")
 
-        self.org_1.add_user(self.org_member)
-        self.org_1.add_user(self.org_1_admin)
-        self.org_2.add_user(self.org_member)
-        self.org_2.add_user(self.org_2_admin)
+        self.org_1 = organization_recipe.make(name="org 1", owner=self.org_1_admin)
+        self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
 
-        self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
-        self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+        self.org_1.add_user(self.org_member)
+        self.org_2.add_user(self.org_member)
 
     @parametrize(
         "user, expected_error",
@@ -123,20 +115,14 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
     def setUp(self) -> None:
         super().setUp()
 
-        self.org_1 = organization_recipe.make(name="org 1")
-        self.org_2 = organization_recipe.make(name="org 2")
         self.org_member = baker.make(User, first_name="org member")
         self.org_1_admin = baker.make(User, first_name="org 1 admin")
         self.org_2_admin = baker.make(User, first_name="org 2 admin")
 
-        self.org_1.add_user(self.org_member)
-        self.org_1.add_user(self.org_1_admin)
-        self.org_2.add_user(self.org_2_admin)
+        self.org_1 = organization_recipe.make(name="org 1", owner=self.org_1_admin)
+        self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
 
-        self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
-        self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+        self.org_1.add_user(self.org_member)
 
     @parametrize(
         "user, expected_error",
@@ -171,6 +157,7 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
             "firstName": "new",
             "lastName": "guy",
             "organizationId": self.org_1.pk,
+            "permissionTemplate": "CASEWORKER",
         }
 
         response = self.execute_graphql(mutation, {"data": variables})
@@ -188,9 +175,6 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
     def setUp(self) -> None:
         super().setUp()
 
-        self.org_1 = organization_recipe.make(name="org 1")
-        self.org_2 = organization_recipe.make(name="org 2")
-
         # NOTE: use a dedicated removable member so we don't accidentally target the org owner
         self.org_member = baker.make(User, first_name="org member")
         self.removable_member = baker.make(
@@ -201,15 +185,11 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         self.org_1_admin = baker.make(User, first_name="org 1 admin")
         self.org_2_admin = baker.make(User, first_name="org 2 admin")
 
+        self.org_1 = organization_recipe.make(name="org 1", owner=self.org_1_admin)
+        self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
+
         self.org_1.add_user(self.org_member)
         self.org_1.add_user(self.removable_member)
-        self.org_1.add_user(self.org_1_admin)
-        self.org_2.add_user(self.org_2_admin)
-
-        self.omb_1 = OrgPermissionManager(self.org_1)
-        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
-        self.omb_2 = OrgPermissionManager(self.org_2)
-        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
 
     @parametrize(
         "user, expected_error",

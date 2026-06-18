@@ -1,7 +1,6 @@
 from typing import Optional
 from unittest.mock import patch
 
-from accounts.tests.baker_recipes import permission_group_recipe
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
 from clients.tests.utils import (
@@ -11,7 +10,6 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
 )
 from common.models import Attachment
-from common.tests.utils import GraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
@@ -1027,45 +1025,3 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
-
-
-class OrganizationPermissionTestCase(GraphQLBaseTestCase):
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Case Manager should succeed
-            ("non_case_manager_user", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_view_caseworker_organizations_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        query = """
-            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
-                caseworkerOrganizations(pagination: $pagination) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-        variables = {"pagination": {"offset": 0, "limit": 10}}
-        response = self.execute_graphql(query, variables=variables)
-
-        if should_succeed:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
-        elif user_label is None:
-            self.assertGraphQLUnauthenticated(response)
-        else:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)

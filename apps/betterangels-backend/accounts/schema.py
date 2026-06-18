@@ -1,13 +1,13 @@
 import logging
-import uuid
 from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from common.graphql.types import DeletedObjectType
+from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib import auth
@@ -15,9 +15,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
-from notes.permissions import NotePermissions
 from organizations.backends import invitation_backend
-from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -25,6 +23,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 from .models import PermissionGroup, User
+from .services import member_add, organization_remove_member
 from .types import (
     AuthResponse,
     CurrentUserType,
@@ -32,8 +31,6 @@ from .types import (
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
-    OrganizationOrder,
-    OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
@@ -48,14 +45,14 @@ def annotate_member_role(org_id: str) -> Case:
     is_superuser = Exists(
         PermissionGroup.objects.filter(
             organization_id=org_id,
-            template__name=GroupTemplateNames.ORG_SUPERUSER,
+            template__name=ORG_SUPERUSER.name,
             group__user=OuterRef("pk"),
         )
     )
     is_admin = Exists(
         PermissionGroup.objects.filter(
             organization_id=org_id,
-            template__name=GroupTemplateNames.ORG_ADMIN,
+            template__name=ORG_ADMIN.name,
             group__user=OuterRef("pk"),
         )
     )
@@ -73,17 +70,6 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
-
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
-    )
-    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
-        queryset: QuerySet[Organization] = Organization.objects.filter(
-            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
-        )
-        return queryset
 
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
@@ -201,26 +187,26 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to add members.")
 
-        with transaction.atomic():
-            user, created = User.objects.get_or_create(
-                email=data.email,
-                defaults={"username": str(uuid.uuid4()), "is_active": True},
+        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
+        if template is None:
+            valid = REGISTRY.invitable_template_names_for(organization)
+            raise ValidationError(
+                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
+                f"Available: {', '.join(valid)}"
             )
-            if created:
-                user.first_name = data.first_name
-                user.last_name = data.last_name
-                user.middle_name = data.middle_name
-                user.set_unusable_password()
-                user.save()
 
-            try:
-                OrganizationUser.objects.create(user=user, organization=organization)
-            except Exception:
-                raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
+        user = member_add(
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            middle_name=data.middle_name,
+            organization=organization,
+            permission_templates=(template,),
+        )
 
-            invitation_backend().create_organization_invite(
-                organization=organization, invited_by_user=current_user, invitee_user=user
-            )
+        invitation_backend().create_organization_invite(
+            organization=organization, invited_by_user=current_user, invitee_user=user
+        )
 
         site = Site.objects.get(pk=settings.SITE_ID)
         invitation_backend().send_invitation(
@@ -228,6 +214,7 @@ class Mutation:
             sender=current_user,
             organization=organization,
             domain=site,
+            role_template=template,
         )
 
         return cast(OrganizationMemberType, user)
@@ -242,7 +229,6 @@ class Mutation:
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
-        user_id = int(data.id)
 
         organization = get_user_permitted_org(
             current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.REMOVE_ORG_MEMBER
@@ -250,24 +236,10 @@ class Mutation:
         if organization is None:
             raise PermissionDenied("You do not have permission to remove members.")
 
-        try:
-            org_user = OrganizationUser.objects.get(
-                organization=organization,
-                user_id=user_id,
-            )
-        except OrganizationUser.DoesNotExist:
-            raise ValidationError("User is not a member of this organization.")
-
-        if OrganizationOwner.objects.filter(
+        removed_id = organization_remove_member(
             organization=organization,
-            organization_user=org_user,
-        ).exists():
-            raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+            user_id=int(data.id),
+            removed_by=current_user,
+        )
 
-        if user_id == current_user.pk:
-            raise ValidationError("You cannot remove yourself from the organization.")
-
-        with transaction.atomic():
-            org_user.delete()
-
-        return DeletedObjectType(id=user_id)
+        return DeletedObjectType(id=removed_id)

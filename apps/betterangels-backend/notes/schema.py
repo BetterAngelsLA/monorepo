@@ -1,16 +1,18 @@
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
+from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
+from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
@@ -25,6 +27,7 @@ from notes.services import (
     service_request_delete,
 )
 from notes.utils import NoteReverter
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -77,6 +80,30 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+    )
+    def caseworker_organizations(
+        self,
+        info: Info,
+        ordering: Optional[list[OrganizationOrder]] = None,
+        filters: Optional[OrganizationFilter] = None,
+    ) -> QuerySet[Organization]:
+        """Return organizations where the current user is a caseworker."""
+        user = cast(User, get_current_user(info))
+        from accounts.models import PermissionGroup
+
+        has_caseworker_group = Exists(
+            PermissionGroup.objects.filter(
+                organization=OuterRef("pk"),
+                template__name=CASEWORKER.name,
+                group__user=user,
+            )
+        )
+        queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
+        return queryset
+
 
 @strawberry.type
 class Mutation:
@@ -89,7 +116,7 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -122,7 +149,7 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
         clean = asdict(data)
@@ -183,7 +210,7 @@ class Mutation:
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(
@@ -275,7 +302,7 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
         try:
             with transaction.atomic():
                 note = note_create(

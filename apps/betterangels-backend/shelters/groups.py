@@ -13,4 +13,6 @@ SHELTER_OPERATOR = TemplateConfig(
         # Custom perms
         Shelter.perms.VIEW_PRIVATE,
     ],
+    invite_html="account/email/shelter_operator_invite.html",
+    invite_txt="account/messages/shelter_operator_invite.txt",
 )

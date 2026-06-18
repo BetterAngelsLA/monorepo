@@ -1,3 +1,8 @@
-import { UseShelterResultType } from '../../hooks/useShelter';
+import {
+  UseAdminShelterProfilePhotoType,
+  UseAdminShelterProfileResultType,
+} from '../../hooks/useAdminShelterProfile';
 
-export type ShelterProfileType = UseShelterResultType;
+export type ShelterProfileType = UseAdminShelterProfileResultType;
+
+export type ShelterProfilePhotoType = UseAdminShelterProfilePhotoType;

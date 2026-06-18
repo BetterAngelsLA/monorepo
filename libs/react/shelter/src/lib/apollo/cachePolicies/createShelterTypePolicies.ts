@@ -13,7 +13,16 @@ export function createShelterTypePolicies(isDevEnv: boolean): TypePolicies {
     ...queryTypePolicies,
     DjangoImageType: {
       keyFields: (obj: StoreObject) => {
-        const urlKey = toUrlKeyFieldValue(obj['url']);
+        // Use `url` when present; otherwise pick the first URL-like string value
+        // (e.g. sm/lg aliases). toUrlKeyFieldValue strips query params so the
+        // key is stable regardless of which preset was requested.
+        const rawUrl =
+          obj['url'] ??
+          Object.values(obj).find(
+            (v) => typeof v === 'string' && v.startsWith('http')
+          );
+
+        const urlKey = toUrlKeyFieldValue(rawUrl);
 
         if (isDevEnv && !urlKey) {
           console.warn(
@@ -48,6 +57,9 @@ export function createShelterTypePolicies(isDevEnv: boolean): TypePolicies {
       keyFields: ['id'],
     },
     OrganizationType: {
+      keyFields: ['id'],
+    },
+    AdminShelterType: {
       keyFields: ['id'],
     },
   };

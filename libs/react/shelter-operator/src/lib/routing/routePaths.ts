@@ -32,11 +32,16 @@ export const shelterProfileSegments = {
   details: 'details',
   services: 'services',
   ecosystem: 'ecosystem',
+  media: 'media',
 } as const;
 
 export const manageSegments = {
   rooms: 'rooms',
+  roomsCreate: 'rooms/create',
+  roomsEdit: 'rooms/:roomId/edit',
   beds: 'beds',
+  bedsCreate: 'beds/create',
+  bedsEdit: 'beds/:bedId/edit',
   occupancy: 'occupancy',
   label: 'label',
 } as const;
@@ -53,6 +58,39 @@ export const reservationSegments = {
 
 export function shelterManageRoute(shelterId: string): string {
   return generatePath(paths.shelterManage, { shelterId });
+}
+
+export function shelterManageRoomsRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.rooms}`;
+}
+
+export function shelterCreateRoomRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.roomsCreate}`;
+}
+
+export function shelterEditRoomRoute(
+  shelterId: string,
+  roomId: string
+): string {
+  return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
+    shelterId,
+    roomId,
+  });
+}
+
+export function shelterManageBedsRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.beds}`;
+}
+
+export function shelterCreateBedRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.bedsCreate}`;
+}
+
+export function shelterEditBedRoute(shelterId: string, bedId: string): string {
+  return generatePath(`${paths.shelterManage}/${manageSegments.bedsEdit}`, {
+    shelterId,
+    bedId,
+  });
 }
 
 export function shelterProfileRoute(
