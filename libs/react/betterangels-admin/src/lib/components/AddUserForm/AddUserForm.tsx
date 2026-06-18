@@ -71,7 +71,10 @@ export function AddUserForm(props: TProps) {
         throw new Error('Sorry, something went wrong.');
       }
 
-      onComplete?.(invitedUser);
+      onComplete?.({
+        ...invitedUser,
+        isOrgOwner: false,
+      } as OrganizationMemberType);
     } catch (err) {
       const error = toError(err);
 

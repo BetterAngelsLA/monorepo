@@ -15,6 +15,7 @@ query OrganizationMembers(
       email
       firstName
       id
+      isOrgOwner
       lastLogin
       lastName
       memberRole

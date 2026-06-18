@@ -61,7 +61,9 @@ const COLUMNS: {
         <span title="Organization Owner" className="text-amber-500">
           <StarIconSm className="w-4 h-4" />
         </span>
-      ) : null,
+      ) : (
+        <></>
+      ),
   },
   {
     label: 'Name',
