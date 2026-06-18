@@ -21,19 +21,21 @@ export function Table<T>({
   totalPages,
   onPageChange,
 }: TableProps<T>): ReactElement {
+  const hasAction = !!action;
   return (
     <div className="overflow-x-auto w-full rounded-lg">
-      <table className="min-w-[800px] w-full text-left text-sm">
+      <table className="w-full text-left text-sm">
         <thead>
           <tr className="bg-primary-95">
             {header.map((title, index) => (
               <th
                 key={index}
-                className="text-sm py-4 px-8 font-normal whitespace-nowrap"
+                className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap"
               >
                 {title}
               </th>
             ))}
+            {hasAction && <th className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap w-0" />}
           </tr>
         </thead>
         <tbody>
@@ -43,17 +45,18 @@ export function Table<T>({
               className="border-b border-neutral-90"
             >
               {header.map((_, colIndex) => (
-                <td key={colIndex} className={`px-8 py-4 whitespace-nowrap`}>
-                  {colIndex === header.length - 1 ? (
-                    <div className="flex items-center justify-between w-full max-w-[200px]">
-                      {renderCell(row, colIndex)}
-                      {action && <span>{action(row)}</span>}
-                    </div>
-                  ) : (
-                    renderCell(row, colIndex)
-                  )}
+                <td
+                  key={colIndex}
+                  className="px-4 md:px-8 py-4 whitespace-normal break-words overflow-hidden text-ellipsis max-w-[250px]"
+                >
+                  {renderCell(row, colIndex)}
                 </td>
               ))}
+              {hasAction && (
+                <td className="px-4 md:px-8 py-4 whitespace-nowrap w-0">
+                  {action!(row)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

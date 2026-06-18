@@ -69,7 +69,7 @@ export function AddUserForm(props: TProps) {
         return;
       }
 
-      onComplete?.(invitedUser);
+      onComplete?.({ ...invitedUser, isOrgOwner: false } as OrganizationMemberType);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'A network error occurred.';

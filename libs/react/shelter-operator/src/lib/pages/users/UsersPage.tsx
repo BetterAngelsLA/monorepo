@@ -1,19 +1,21 @@
 import { useMutation, useQuery } from '@apollo/client/react';
-import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { UserIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
+import { useUser } from '@monorepo/react/shelter';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Ordering,
   OrganizationMemberOrdering,
   OrganizationMemberType,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
+import { AddUserFormDrawer } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import { useToast } from '../../components/base-ui/toast';
 import { Table, TableColumn } from '../../components/Table';
 import { useActiveOrg } from '../../providers';
-import { AddUserFormDrawer } from '../../components/AddUserForm';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -33,44 +35,69 @@ function humanizeRole(role: string): string {
   return ROLE_LABELS[role] ?? role;
 }
 
+const getFullName = (m: OrganizationMemberType): string =>
+  `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || 'Unknown';
+
+const formatRelative = (iso: string | null | undefined): string | null =>
+  iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : null;
+
+const SORTABLE_KEYS = [
+  'firstName',
+  'lastName',
+  'memberRole',
+  'email',
+  'dateJoined',
+  'lastLogin',
+] as const;
+
 const COLUMNS: TableColumn<OrganizationMemberType>[] = [
   {
-    key: 'firstName',
-    label: 'First Name',
-    render: (m) => m.firstName ?? '',
+    key: 'isOrgOwner',
+    label: '',
+    width: '36px',
+    headerClassName: 'justify-self-center',
+    cellClassName: 'justify-self-center',
+    render: (m) =>
+      m.isOrgOwner ? (
+        <span title="Organization Owner" className="text-amber-500">
+          <StarIcon className="w-4 h-4" />
+        </span>
+      ) : null,
   },
   {
-    key: 'lastName',
-    label: 'Last Name',
-    render: (m) => m.lastName ?? '',
+    key: 'firstName',
+    label: 'Name',
+    width: '1.4fr',
+    cellClassName: 'font-medium text-gray-900 truncate',
+    render: getFullName,
   },
   {
     key: 'memberRole',
     label: 'Job Role',
+    width: '0.9fr',
+    cellClassName: 'truncate text-gray-700',
     render: (m) => humanizeRole(m.memberRole),
   },
   {
     key: 'email',
     label: 'Email',
+    width: '1.3fr',
+    cellClassName: 'truncate text-gray-700',
     render: (m) => m.email ?? '',
   },
   {
     key: 'dateJoined',
-    label: 'Created At',
-    render: (m) =>
-      m.dateJoined
-        ? formatDistanceToNow(parseISO(m.dateJoined), { addSuffix: true })
-        : 'Unknown',
-    width: '180px',
+    label: 'Created',
+    width: '0.9fr',
+    cellClassName: 'truncate text-gray-700',
+    render: (m) => formatRelative(m.dateJoined) ?? 'Unknown',
   },
   {
     key: 'lastLogin',
     label: 'Last Login',
-    render: (m) =>
-      m.lastLogin
-        ? formatDistanceToNow(parseISO(m.lastLogin), { addSuffix: true })
-        : 'Never',
-    width: '180px',
+    width: '0.9fr',
+    cellClassName: 'truncate text-gray-700',
+    render: (m) => formatRelative(m.lastLogin) ?? 'Never',
   },
 ];
 
@@ -103,7 +130,6 @@ function useOrganizationMembers(
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,
-    isEmpty: !loading && totalCount === 0,
   };
 }
 
@@ -114,6 +140,7 @@ interface RemoveConfirmation {
 
 export function UsersPage() {
   const { activeOrg, hasPermission } = useActiveOrg();
+  const { user: currentUser } = useUser();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -144,7 +171,7 @@ export function UsersPage() {
     setPage(1);
   }, [debouncedSearch]);
 
-  const handleSort = (field: keyof OrganizationMemberOrdering) => {
+  const handleSort = useCallback((field: keyof OrganizationMemberOrdering) => {
     setPage(1);
     setSort((prev) => ({
       field,
@@ -153,46 +180,88 @@ export function UsersPage() {
           ? Ordering.Desc
           : Ordering.Asc,
     }));
-  };
+  }, []);
 
-  const handleRemoveMember = async (member: OrganizationMemberType) => {
-    if (!organizationId) return;
+  const handleRemoveMember = useCallback(
+    async (member: OrganizationMemberType) => {
+      if (!organizationId) return;
 
-    try {
-      await removeOrganizationMember({
-        variables: {
-          data: {
-            id: member.id,
-            organizationId,
+      try {
+        await removeOrganizationMember({
+          variables: {
+            data: {
+              id: member.id,
+              organizationId,
+            },
           },
-        },
-        refetchQueries: [OrganizationMembersDocument],
-        awaitRefetchQueries: true,
-      });
-      showToast({
-        status: 'success',
-        title: `${member.firstName ?? 'User'} ${member.lastName ?? ''} removed.`,
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to remove user.';
-      console.error('error removing user:', err);
-      showToast({
-        status: 'error',
-        title: message,
-      });
-    } finally {
-      setRemoveConfirmation({ isOpen: false, member: null });
-    }
-  };
+          refetchQueries: [OrganizationMembersDocument],
+          awaitRefetchQueries: true,
+        });
+        showToast({
+          status: 'success',
+          title: `${getFullName(member)} removed.`,
+        });
+      } catch (err) {
+        showToast({
+          status: 'error',
+          title: err instanceof Error ? err.message : 'Failed to remove user.',
+        });
+      } finally {
+        setRemoveConfirmation({ isOpen: false, member: null });
+      }
+    },
+    [organizationId, removeOrganizationMember, showToast]
+  );
 
-  const handleAddSuccess = () => {
+  const handleAddSuccess = useCallback(() => {
     setIsAddModalOpen(false);
     showToast({
       status: 'success',
       title: 'User added successfully.',
     });
-  };
+  }, [showToast]);
+
+  // Build sortable columns (memo-ized — only recomputes when sort changes)
+  const sortableColumns = useMemo(
+    () =>
+      COLUMNS.map((col) => ({
+        ...col,
+        label: SORTABLE_KEYS.includes(
+          col.key as (typeof SORTABLE_KEYS)[number]
+        ) ? (
+          <SortHeader
+            label={col.label as string}
+            isActive={sort.field === col.key}
+            direction={sort.direction}
+            onClick={() =>
+              handleSort(col.key as keyof OrganizationMemberOrdering)
+            }
+          />
+        ) : (
+          col.label
+        ),
+      })),
+    [sort, handleSort]
+  );
+
+  const emptyMessage = search
+    ? 'No users match your search.'
+    : 'No users in this organization.';
+
+  const renderAction = useCallback(
+    (member: OrganizationMemberType) => {
+      if (currentUser?.id === member.id) {
+        return <span className="text-xs text-[#747A82]">You</span>;
+      }
+      return (
+        <Button
+          variant="trash"
+          onClick={() => setRemoveConfirmation({ isOpen: true, member })}
+        />
+      );
+    },
+    [currentUser]
+  );
 
   if (!organizationId) return null;
 
@@ -204,43 +273,17 @@ export function UsersPage() {
     );
   }
 
-  // Sortable header labels
-  const sortableColumns = COLUMNS.map((col) => ({
-    ...col,
-    label: (
-      <button
-        type="button"
-        onClick={() => handleSort(col.key as keyof OrganizationMemberOrdering)}
-        className="flex items-center gap-1 hover:text-[#008CEE] transition-colors bg-transparent border-none cursor-pointer p-0 text-left font-medium text-[22px] text-[#747A82]"
-      >
-        {col.label as string}
-        {sort.field === col.key && (
-          <span className="text-xs">
-            {sort.direction === Ordering.Asc ? '▲' : '▼'}
-          </span>
-        )}
-      </button>
-    ),
-  }));
-
-  const hasSearchResults = search.length > 0;
-  const emptyMessage = hasSearchResults
-    ? 'No users match your search.'
-    : 'No users in this organization.';
-
   return (
     <div className="flex flex-col h-full">
       <div className="mb-10">
         <h1 className="mb-3 text-2xl font-bold text-[#383B40]">
           User Management
         </h1>
-        <p className="max-w-[800px] text-[#747A82]">
-          Manage users in your organization.
-        </p>
+        <p className="text-[#747A82]">Manage users in your organization.</p>
       </div>
 
       <div className="flex items-center justify-between gap-5 mb-6">
-        <div className="relative w-80">
+        <div className="relative w-full max-w-xs">
           <input
             type="text"
             placeholder="Search users..."
@@ -262,35 +305,39 @@ export function UsersPage() {
       </div>
 
       {canView ? (
-        <div className="flex flex-1">
-          <Table<OrganizationMemberType>
-            columns={sortableColumns}
-            rows={members}
-            getRowKey={(member) => member.id}
-            getRowSlot={(member) => (
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="trash"
-                  onClick={() =>
-                    setRemoveConfirmation({ isOpen: true, member })
-                  }
+        <>
+          {/* Mobile & Tablet: cards */}
+          <div className="lg:hidden space-y-2">
+            {loading && !members.length ? (
+              <StatusMessage text="Loading..." />
+            ) : members.length === 0 ? (
+              <StatusMessage text={emptyMessage} />
+            ) : (
+              members.map((member) => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  renderAction={renderAction}
                 />
-              </div>
+              ))
             )}
-            trailingHeader={<div className="w-16" />}
-            loading={loading && !!members.length}
-            loadingState={
-              <div className="flex justify-center py-8 text-[#747A82]">
-                Loading...
-              </div>
-            }
-            emptyState={
-              <div className="flex justify-center py-8 text-[#747A82]">
-                {emptyMessage}
-              </div>
-            }
-          />
-        </div>
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden lg:block w-full">
+            <Table<OrganizationMemberType>
+              columns={sortableColumns}
+              rows={members}
+              getRowKey={(m) => m.id}
+              trailingColumnWidth="60px"
+              trailingHeader={<div />}
+              getRowSlot={renderAction}
+              loading={loading}
+              loadingState={<StatusMessage text="Loading..." />}
+              emptyState={<StatusMessage text={emptyMessage} />}
+            />
+          </div>
+        </>
       ) : (
         <p className="text-[#747A82]">
           You don't have permission to view this organization's members.
@@ -298,25 +345,11 @@ export function UsersPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="flex justify-center mt-4 space-x-2">
-          <Button
-            variant="primary-sm"
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-          >
-            ‹ Prev
-          </Button>
-          <span className="flex items-center px-4 text-sm text-[#747A82]">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="primary-sm"
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-          >
-            Next ›
-          </Button>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
 
       <AddUserFormDrawer
@@ -327,27 +360,162 @@ export function UsersPage() {
 
       <ConfirmationModal
         isOpen={removeConfirmation.isOpen}
-        onClose={() =>
-          setRemoveConfirmation({ isOpen: false, member: null })
-        }
-        title={`Remove ${removeConfirmation.member?.firstName ?? 'User'} ${removeConfirmation.member?.lastName ?? ''}?`}
+        onClose={() => setRemoveConfirmation({ isOpen: false, member: null })}
+        title={`Remove ${
+          removeConfirmation.member
+            ? getFullName(removeConfirmation.member)
+            : 'User'
+        }?`}
         description="This action cannot be undone."
         variant="danger"
         primaryAction={{
           label: isRemoving ? 'Removing…' : 'Remove User',
           onClick: () => {
             if (removeConfirmation.member) {
-              handleRemoveMember(removeConfirmation.member);
+              void handleRemoveMember(removeConfirmation.member);
             }
           },
           isLoading: isRemoving,
         }}
         secondaryAction={{
           label: 'Cancel',
-          onClick: () =>
-            setRemoveConfirmation({ isOpen: false, member: null }),
+          onClick: () => setRemoveConfirmation({ isOpen: false, member: null }),
         }}
       />
+    </div>
+  );
+}
+
+/** Star icon for org owner indicator. */
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+    >
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
+
+function SortHeader({
+  label,
+  isActive,
+  direction,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  direction: Ordering;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1 max-w-full hover:text-[#008CEE] transition-colors bg-transparent border-none cursor-pointer p-0 text-left font-medium text-sm md:text-base text-[#747A82] truncate"
+    >
+      {label}
+      {isActive && (
+        <span className="text-xs shrink-0">
+          {direction === Ordering.Asc ? '▲' : '▼'}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function MemberCard({
+  member,
+  renderAction,
+}: {
+  member: OrganizationMemberType;
+  renderAction: (m: OrganizationMemberType) => React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="shrink-0 w-8 h-8 rounded-full bg-[#F4F6FD] flex items-center justify-center">
+          <UserIcon className="w-4 h-4 text-[#008CEE]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-gray-900 text-sm truncate">
+            {getFullName(member)}
+          </div>
+          <div className="text-xs text-[#747A82] truncate">
+            {humanizeRole(member.memberRole)}
+          </div>
+        </div>
+        {member.isOrgOwner && (
+          <span title="Organization Owner" className="text-amber-500 shrink-0">
+            <StarIcon className="w-3.5 h-3.5" />
+          </span>
+        )}
+        <div className="shrink-0">{renderAction(member)}</div>
+      </div>
+
+      <div className="mt-2.5 pt-2.5 border-t border-gray-50 text-xs">
+        <div className="truncate mb-1.5">
+          <span className="text-[#A0A5AE]">Email: </span>
+          <span className="text-gray-900">{member.email ?? '—'}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-3">
+          <div className="min-w-0 truncate">
+            <span className="text-[#A0A5AE]">Created: </span>
+            <span className="text-gray-900">
+              {formatRelative(member.dateJoined) ?? '—'}
+            </span>
+          </div>
+          <div className="min-w-0 truncate">
+            <span className="text-[#A0A5AE]">Last Login: </span>
+            <span className="text-gray-900">
+              {formatRelative(member.lastLogin) ?? 'Never'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusMessage({ text }: { text: string }) {
+  return (
+    <div className="flex justify-center py-8 text-sm text-[#747A82]">
+      {text}
+    </div>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (p: number) => void;
+}) {
+  return (
+    <div className="flex justify-center mt-4 space-x-2">
+      <Button
+        variant="primary-sm"
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+        disabled={page === 1}
+      >
+        ‹ Prev
+      </Button>
+      <span className="flex items-center px-4 text-sm text-[#747A82]">
+        Page {page} of {totalPages}
+      </span>
+      <Button
+        variant="primary-sm"
+        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+      >
+        Next ›
+      </Button>
     </div>
   );
 }
