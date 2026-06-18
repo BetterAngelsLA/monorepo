@@ -1,6 +1,5 @@
 """Team mutation services — per the Django Styleguide."""
 
-from accounts.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from organizations.models import Organization
@@ -13,7 +12,6 @@ def team_create(
     slug: str,
     name: str,
     organization: Organization,
-    user: User,
 ) -> Team:
     """Create a new Team for *organization*."""
     slug = slug.strip()
@@ -59,5 +57,5 @@ def team_delete(
     *,
     team: Team,
 ) -> None:
-    """Hard-delete a Team. Caller must verify no FK references remain."""
+    """Hard-delete a Team. FK references are SET_NULL by the database."""
     team.delete()

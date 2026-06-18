@@ -1,15 +1,11 @@
 """Team GraphQL Query + Mutation — thin delegation to services + selectors."""
 
-from typing import cast
-
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
-from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 
 from .models import Team
@@ -33,9 +29,8 @@ class Mutation:
         extensions=[HasOrgPerm(Team.perms.ADD)],
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
-        user = cast(User, get_current_user(info))
         organization = get_current_organization(info)
-        return team_create(slug=data.slug, name=data.name, organization=organization, user=user)
+        return team_create(slug=data.slug, name=data.name, organization=organization)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

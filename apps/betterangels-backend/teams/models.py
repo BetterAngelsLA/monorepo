@@ -36,6 +36,3 @@ class Team(BaseModel):
 
     def __str__(self) -> str:
         return self.name
-
-    def __str__(self) -> str:
-        return self.name
