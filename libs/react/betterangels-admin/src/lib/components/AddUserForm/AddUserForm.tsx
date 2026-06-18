@@ -140,7 +140,7 @@ export function AddUserForm(props: TProps) {
             disabled={disabled}
             className="select select-md w-96 rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
           >
-            {Object.values(PermissionTemplateEnum).map((role) => (
+            {[PermissionTemplateEnum.Caseworker].map((role) => (
               <option key={role} value={role}>
                 {role}
               </option>

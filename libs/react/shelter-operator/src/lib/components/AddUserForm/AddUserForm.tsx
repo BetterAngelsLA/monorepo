@@ -128,7 +128,7 @@ export function AddUserForm(props: TProps) {
           disabled={disabled}
           className="h-12 w-full rounded-full border border-gray-200 bg-white px-5 text-sm text-gray-900 outline-none transition-colors duration-200 focus-within:border-[#008CEE]"
         >
-          {Object.values(PermissionTemplateEnum).map((role) => (
+          {[PermissionTemplateEnum.ShelterOperator].map((role) => (
             <option key={role} value={role}>
               {role}
             </option>
