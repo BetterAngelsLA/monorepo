@@ -37,7 +37,10 @@ class Reservation(BaseModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=["status"]),
+            models.Index(fields=["bed", "status", "checked_out_at"], name="reservation_bed_status_co_idx"),
+            models.Index(fields=["bed", "status"], name="reservation_bed_status_idx"),
+            models.Index(fields=["room", "status", "checked_out_at"], name="reservation_room_status_co_idx"),
+            models.Index(fields=["room", "status"], name="reservation_room_status_idx"),
         ]
         constraints = [
             models.UniqueConstraint(

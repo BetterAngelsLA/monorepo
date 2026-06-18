@@ -307,7 +307,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"maintenanceFlag": True},
         }
 
-        expected_query_count = 15
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

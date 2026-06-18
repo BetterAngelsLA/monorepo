@@ -28,8 +28,9 @@ from shelters.enums import (
     ScheduleTypeChoices,
     StatusChoices,
 )
-from shelters.managers import AdminShelterManager, ShelterManager
+from shelters.managers import AdminShelterManager, BedManager, RoomManager, ShelterManager
 from shelters.selectors import shelters_open_at
+from shelters.status import compute_bed_status, compute_room_status
 
 from .lookups import (
     SPA,
@@ -222,6 +223,8 @@ class Shelter(BaseModel):
     pghistory.UpdateEvent("bed.maintenance_flag_change", condition=pghistory.AnyChange("maintenance_flag")),
 )
 class Bed(CloneMixin, BaseModel):
+    objects = BedManager()
+
     _clone_linked_m2m_fields = [
         "accessibility",
         "demographics",
@@ -260,27 +263,21 @@ class Bed(CloneMixin, BaseModel):
 
     @property
     def computed_status(self) -> BedStatusChoices:
-        from shelters.enums import ReservationStatusChoices
-
-        if self.maintenance_flag:
-            return BedStatusChoices.OUT_OF_SERVICE
-
-        last_checkout = self._get_last_completed_checkout()
-        if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
-            return BedStatusChoices.IN_TURNAROUND
+        annotated = getattr(self, "_computed_status", None)
+        if annotated is not None:
+            return BedStatusChoices(annotated)
 
         if hasattr(self, "_active_reservations") and self._active_reservations is not None:
             active = self._active_reservations
         else:
             active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
 
-        statuses = {r.status for r in active}
-
-        if ReservationStatusChoices.CHECKED_IN in statuses:
-            return BedStatusChoices.OCCUPIED
-        if statuses & {ReservationStatusChoices.CONFIRMED, ReservationStatusChoices.CHECK_IN_OVERDUE}:
-            return BedStatusChoices.RESERVED
-        return BedStatusChoices.AVAILABLE
+        return compute_bed_status(
+            maintenance_flag=self.maintenance_flag,
+            last_cleaned=self.last_cleaned,
+            last_checkout=self._get_last_completed_checkout(),
+            active_reservation_statuses={r.status for r in active},
+        )
 
     def _get_last_completed_checkout(self) -> datetime.datetime | None:
         """Return the ``checked_out_at`` of the most recent completed reservation for this bed.
@@ -306,6 +303,8 @@ class Bed(CloneMixin, BaseModel):
 
 
 class Room(CloneMixin, BaseModel):
+    objects = RoomManager()
+
     _clone_linked_m2m_fields = [
         "accessibility",
         "demographics",
@@ -348,27 +347,21 @@ class Room(CloneMixin, BaseModel):
 
     @property
     def computed_status(self) -> RoomStatusChoices:
-        from shelters.enums import ReservationStatusChoices
-
-        if self.maintenance_flag:
-            return RoomStatusChoices.OUT_OF_SERVICE
-
-        last_checkout = self._get_last_completed_checkout()
-        if last_checkout and (self.last_cleaned is None or self.last_cleaned <= last_checkout):
-            return RoomStatusChoices.IN_TURNAROUND
+        annotated = getattr(self, "_computed_status", None)
+        if annotated is not None:
+            return RoomStatusChoices(annotated)
 
         if hasattr(self, "_active_reservations") and self._active_reservations is not None:
             active = self._active_reservations
         else:
             active = self.reservations.filter(status__in=ACTIVE_RESERVATION_STATUSES)
 
-        statuses = {r.status for r in active}
-
-        if ReservationStatusChoices.CHECKED_IN in statuses:
-            return RoomStatusChoices.OCCUPIED
-        if statuses & {ReservationStatusChoices.CONFIRMED, ReservationStatusChoices.CHECK_IN_OVERDUE}:
-            return RoomStatusChoices.RESERVED
-        return RoomStatusChoices.AVAILABLE
+        return compute_room_status(
+            maintenance_flag=self.maintenance_flag,
+            last_cleaned=self.last_cleaned,
+            last_checkout=self._get_last_completed_checkout(),
+            active_reservation_statuses={r.status for r in active},
+        )
 
     def _get_last_completed_checkout(self) -> datetime.datetime | None:
         """Return the ``checked_out_at`` of the most recent completed reservation for this room.

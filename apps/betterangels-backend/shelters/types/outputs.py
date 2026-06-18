@@ -10,7 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Prefetch, Q, QuerySet, Subquery
+from django.db.models import OuterRef, Prefetch, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -20,6 +20,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
+from shelters.managers import shelter_bed_status_count_subquery, shelter_room_status_count_subquery
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.selectors import admin_bed_list, admin_reservation_list, admin_room_list, admin_shelter_list, shelter_list
 from shelters.types.lookups import (
@@ -57,202 +58,6 @@ from .filters import (
     ShelterFilter,
     ShelterOrder,
 )
-
-
-def _beds_occupied_subquery() -> Subquery:
-    return Subquery(
-        models.Bed.objects.filter(
-            shelter_id=OuterRef("pk"),
-            reservations__status=ReservationStatusChoices.CHECKED_IN,
-        )
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _beds_reserved_subquery() -> Subquery:
-    return Subquery(
-        models.Bed.objects.filter(
-            shelter_id=OuterRef("pk"),
-            reservations__status__in=[
-                ReservationStatusChoices.CONFIRMED,
-                ReservationStatusChoices.CHECK_IN_OVERDUE,
-            ],
-        )
-        .exclude(reservations__status=ReservationStatusChoices.CHECKED_IN)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _beds_out_of_service_subquery() -> Subquery:
-    return Subquery(
-        models.Bed.objects.filter(shelter_id=OuterRef("pk"), maintenance_flag=True)
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _beds_in_turnaround_subquery() -> Subquery:
-    """Beds in turnaround: maintenance_flag=False, have a completed reservation with
-    checked_out_at after last_cleaned (or no last_cleaned), and no active reservations."""
-    latest_completed_checkout = Subquery(
-        models.Reservation.objects.filter(
-            bed_id=OuterRef("pk"),
-            status=ReservationStatusChoices.COMPLETED,
-            checked_out_at__isnull=False,
-        )
-        .order_by("-checked_out_at")
-        .values("checked_out_at")[:1],
-        output_field=DateTimeField(),
-    )
-    return Subquery(
-        models.Bed.objects.filter(
-            shelter_id=OuterRef("pk"),
-            maintenance_flag=False,
-        )
-        .annotate(_lc=latest_completed_checkout)
-        .filter(Q(_lc__isnull=False) & (Q(last_cleaned__isnull=True) | Q(last_cleaned__lt=F("_lc"))))
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _beds_available_subquery() -> Subquery:
-    """Beds available: maintenance_flag=False, not in turnaround, no active reservations."""
-    latest_completed_checkout = Subquery(
-        models.Reservation.objects.filter(
-            bed_id=OuterRef("pk"),
-            status=ReservationStatusChoices.COMPLETED,
-            checked_out_at__isnull=False,
-        )
-        .order_by("-checked_out_at")
-        .values("checked_out_at")[:1],
-        output_field=DateTimeField(),
-    )
-    return Subquery(
-        models.Bed.objects.filter(shelter_id=OuterRef("pk"), maintenance_flag=False)
-        .annotate(_lc=latest_completed_checkout)
-        .filter(Q(_lc__isnull=True) | Q(last_cleaned__gte=F("_lc")))
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _rooms_occupied_subquery() -> Subquery:
-    return Subquery(
-        models.Room.objects.filter(
-            shelter_id=OuterRef("pk"),
-            reservations__status=ReservationStatusChoices.CHECKED_IN,
-        )
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _rooms_reserved_subquery() -> Subquery:
-    return Subquery(
-        models.Room.objects.filter(
-            shelter_id=OuterRef("pk"),
-            reservations__status__in=[
-                ReservationStatusChoices.CONFIRMED,
-                ReservationStatusChoices.CHECK_IN_OVERDUE,
-            ],
-        )
-        .exclude(reservations__status=ReservationStatusChoices.CHECKED_IN)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _rooms_out_of_service_subquery() -> Subquery:
-    return Subquery(
-        models.Room.objects.filter(shelter_id=OuterRef("pk"), maintenance_flag=True)
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _rooms_in_turnaround_subquery() -> Subquery:
-    """Rooms in turnaround: maintenance_flag=False, have a completed reservation with
-    checked_out_at after last_cleaned (or no last_cleaned), and no active reservations."""
-    latest_completed_checkout = Subquery(
-        models.Reservation.objects.filter(
-            room_id=OuterRef("pk"),
-            status=ReservationStatusChoices.COMPLETED,
-            checked_out_at__isnull=False,
-        )
-        .order_by("-checked_out_at")
-        .values("checked_out_at")[:1],
-        output_field=DateTimeField(),
-    )
-    return Subquery(
-        models.Room.objects.filter(
-            shelter_id=OuterRef("pk"),
-            maintenance_flag=False,
-        )
-        .annotate(_lc=latest_completed_checkout)
-        .filter(Q(_lc__isnull=False) & (Q(last_cleaned__isnull=True) | Q(last_cleaned__lt=F("_lc"))))
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
-
-
-def _rooms_available_subquery() -> Subquery:
-    """Rooms available: maintenance_flag=False, not in turnaround, no active reservations."""
-    latest_completed_checkout = Subquery(
-        models.Reservation.objects.filter(
-            room_id=OuterRef("pk"),
-            status=ReservationStatusChoices.COMPLETED,
-            checked_out_at__isnull=False,
-        )
-        .order_by("-checked_out_at")
-        .values("checked_out_at")[:1],
-        output_field=DateTimeField(),
-    )
-    return Subquery(
-        models.Room.objects.filter(shelter_id=OuterRef("pk"), maintenance_flag=False)
-        .annotate(_lc=latest_completed_checkout)
-        .filter(Q(_lc__isnull=True) | Q(last_cleaned__gte=F("_lc")))
-        .exclude(reservations__status__in=ACTIVE_RESERVATION_STATUSES)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk", distinct=True))
-        .values("c"),
-        output_field=IntegerField(),
-    )
 
 
 def _annotated_count(root: models.Shelter, name: str) -> int:
@@ -417,11 +222,11 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         annotate={
-            "_bed_available": lambda info: _beds_available_subquery(),
-            "_bed_in_turnaround": lambda info: _beds_in_turnaround_subquery(),
-            "_bed_occupied": lambda info: _beds_occupied_subquery(),
-            "_bed_out_of_service": lambda info: _beds_out_of_service_subquery(),
-            "_bed_reserved": lambda info: _beds_reserved_subquery(),
+            "_bed_available": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.AVAILABLE),
+            "_bed_in_turnaround": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.IN_TURNAROUND),
+            "_bed_occupied": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OCCUPIED),
+            "_bed_out_of_service": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OUT_OF_SERVICE),
+            "_bed_reserved": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.RESERVED),
         }
     )
     def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
@@ -435,11 +240,11 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         annotate={
-            "_room_available": lambda info: _rooms_available_subquery(),
-            "_room_in_turnaround": lambda info: _rooms_in_turnaround_subquery(),
-            "_room_occupied": lambda info: _rooms_occupied_subquery(),
-            "_room_out_of_service": lambda info: _rooms_out_of_service_subquery(),
-            "_room_reserved": lambda info: _rooms_reserved_subquery(),
+            "_room_available": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.AVAILABLE),
+            "_room_in_turnaround": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.IN_TURNAROUND),
+            "_room_occupied": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OCCUPIED),
+            "_room_out_of_service": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OUT_OF_SERVICE),
+            "_room_reserved": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.RESERVED),
         }
     )
     def rooms_by_status(self, root: models.Shelter) -> RoomsByStatusType:
@@ -604,9 +409,7 @@ class ReservationType:
             return cast("AdminShelterType", root.bed.shelter)
 
         if root.room is None:
-            raise ValueError(
-                f"Reservation {root.pk} has neither bed nor room assigned."
-            )
+            raise ValueError(f"Reservation {root.pk} has neither bed nor room assigned.")
 
         return cast("AdminShelterType", root.room.shelter)
 

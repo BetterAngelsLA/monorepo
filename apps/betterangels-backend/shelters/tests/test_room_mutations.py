@@ -159,7 +159,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             },
         }
 
-        expected_query_count = 13
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

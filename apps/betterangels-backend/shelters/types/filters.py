@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, DateTimeField, Exists, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, Q, QuerySet
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -37,7 +37,7 @@ from shelters.enums import (
     ShelterChoices,
     SpecialSituationRestrictionChoices,
 )
-from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
+from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.selectors import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -245,118 +245,13 @@ class BedFilter(CommonBedRoomFilterMixin):
     def status(
         self, queryset: QuerySet, value: Optional[List[BedStatusChoices]], prefix: str
     ) -> Tuple[QuerySet[models.Bed], Q]:
-        """Filter beds by their computed status.
-
-        Since Bed has no ``status`` database column, this filter translates
-        BedStatusChoices into Q-conditions that mirror the logic in
-        ``Bed.computed_status``.
-        """
+        """Filter beds by their computed status."""
         if not value:
             return queryset, Q()
 
         q = Q()
         for choice in value:
-            if choice == BedStatusChoices.OUT_OF_SERVICE:
-                q |= Q(maintenance_flag=True)
-            elif choice == BedStatusChoices.IN_TURNAROUND:
-                has_completed_with_checkout = Q(
-                    Exists(
-                        models.Reservation.objects.filter(
-                            bed_id=OuterRef("pk"),
-                            status=ReservationStatusChoices.COMPLETED,
-                            checked_out_at__isnull=False,
-                        )
-                    )
-                )
-                latest_completed_checked_out_at = Subquery(
-                    models.Reservation.objects.filter(
-                        bed_id=OuterRef("pk"),
-                        status=ReservationStatusChoices.COMPLETED,
-                        checked_out_at__isnull=False,
-                    )
-                    .order_by("-checked_out_at")
-                    .values("checked_out_at")[:1],
-                    output_field=DateTimeField(),
-                )
-                latest_gt_cleaned = Q(last_cleaned__isnull=True) | Q(
-                    last_cleaned__lt=latest_completed_checked_out_at,
-                )
-                q |= Q(maintenance_flag=False) & has_completed_with_checkout & latest_gt_cleaned
-
-            elif choice in (
-                BedStatusChoices.OCCUPIED,
-                BedStatusChoices.RESERVED,
-                BedStatusChoices.AVAILABLE,
-            ):
-                # Shared "not in turnaround" base condition:
-                # Either no completed reservation with checked_out_at exists, OR
-                # the most recent completed checked_out_at is <= last_cleaned.
-                latest_completed_checked_out_at = Subquery(
-                    models.Reservation.objects.filter(
-                        bed_id=OuterRef("pk"),
-                        status=ReservationStatusChoices.COMPLETED,
-                        checked_out_at__isnull=False,
-                    )
-                    .order_by("-checked_out_at")
-                    .values("checked_out_at")[:1],
-                    output_field=DateTimeField(),
-                )
-                no_completed_checkout = ~Q(
-                    Exists(
-                        models.Reservation.objects.filter(
-                            bed_id=OuterRef("pk"),
-                            status=ReservationStatusChoices.COMPLETED,
-                            checked_out_at__isnull=False,
-                        )
-                    )
-                )
-                latest_lte_cleaned = Q(last_cleaned__gte=latest_completed_checked_out_at)
-                not_in_turnaround = no_completed_checkout | latest_lte_cleaned
-
-                base = Q(maintenance_flag=False) & not_in_turnaround
-
-                if choice == BedStatusChoices.OCCUPIED:
-                    has_checked_in = Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                bed_id=OuterRef("pk"),
-                                status=ReservationStatusChoices.CHECKED_IN,
-                            )
-                        )
-                    )
-                    q |= base & has_checked_in
-                elif choice == BedStatusChoices.RESERVED:
-                    has_confirmed_or_overdue = Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                bed_id=OuterRef("pk"),
-                                status__in=[
-                                    ReservationStatusChoices.CONFIRMED,
-                                    ReservationStatusChoices.CHECK_IN_OVERDUE,
-                                ],
-                            )
-                        )
-                    )
-                    no_checked_in = ~Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                bed_id=OuterRef("pk"),
-                                status=ReservationStatusChoices.CHECKED_IN,
-                            )
-                        )
-                    )
-                    q |= base & has_confirmed_or_overdue & no_checked_in
-                elif choice == BedStatusChoices.AVAILABLE:
-                    no_active = ~Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                bed_id=OuterRef("pk"),
-                                status__in=ACTIVE_RESERVATION_STATUSES,
-                            )
-                        )
-                    )
-                    q |= base & no_active
-
+            q |= BedQuerySet.status_filter_q(choice)
         return queryset, q
 
 
@@ -378,85 +273,13 @@ class RoomFilter(CommonBedRoomFilterMixin):
     def status(
         self, queryset: QuerySet, value: Optional[List[RoomStatusChoices]], prefix: str
     ) -> Tuple[QuerySet[models.Room], Q]:
-        """Filter rooms by their computed status.
-
-        Since room has no ``status`` database column, this filter translates
-        RoomStatusChoices into Q-conditions that mirror the logic in
-        ``Room.computed_status``.
-        """
+        """Filter rooms by their computed status."""
         if not value:
             return queryset, Q()
 
         q = Q()
         for choice in value:
-            if choice == RoomStatusChoices.OUT_OF_SERVICE:
-                q |= Q(maintenance_flag=True)
-
-            elif choice == RoomStatusChoices.IN_TURNAROUND:
-                # Room turnaround is determined per bed: a room is in turnaround
-                # if any of its beds are. We use a simpler approach here since
-                # rooms don't have their own last_checkout.
-                has_completed_with_checkout = Q(
-                    Exists(
-                        models.Reservation.objects.filter(
-                            room_id=OuterRef("pk"),
-                            status=ReservationStatusChoices.COMPLETED,
-                            checked_out_at__isnull=False,
-                            bed__isnull=False,
-                        )
-                    )
-                )
-                q |= Q(maintenance_flag=False) & has_completed_with_checkout
-
-            elif choice in (
-                RoomStatusChoices.OCCUPIED,
-                RoomStatusChoices.RESERVED,
-                RoomStatusChoices.AVAILABLE,
-            ):
-                base = Q(maintenance_flag=False)
-
-                if choice == RoomStatusChoices.OCCUPIED:
-                    has_checked_in = Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                room_id=OuterRef("pk"),
-                                status=ReservationStatusChoices.CHECKED_IN,
-                            )
-                        )
-                    )
-                    q |= base & has_checked_in
-                elif choice == RoomStatusChoices.RESERVED:
-                    has_confirmed_or_overdue = Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                room_id=OuterRef("pk"),
-                                status__in=[
-                                    ReservationStatusChoices.CONFIRMED,
-                                    ReservationStatusChoices.CHECK_IN_OVERDUE,
-                                ],
-                            )
-                        )
-                    )
-                    no_checked_in = ~Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                room_id=OuterRef("pk"),
-                                status=ReservationStatusChoices.CHECKED_IN,
-                            )
-                        )
-                    )
-                    q |= base & has_confirmed_or_overdue & no_checked_in
-                elif choice == RoomStatusChoices.AVAILABLE:
-                    no_active = ~Q(
-                        Exists(
-                            models.Reservation.objects.filter(
-                                room_id=OuterRef("pk"),
-                                status__in=ACTIVE_RESERVATION_STATUSES,
-                            )
-                        )
-                    )
-                    q |= base & no_active
-
+            q |= RoomQuerySet.status_filter_q(choice)
         return queryset, q
 
 
