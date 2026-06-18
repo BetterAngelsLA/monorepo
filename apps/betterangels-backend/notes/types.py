@@ -128,7 +128,7 @@ class NoteFilter:
 
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
-    teams = make_in_filter("team", SelahTeamEnum)  # @deprecated — use teamIds
+    teams = make_in_filter("team", SelahTeamEnum)  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
     team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
@@ -170,7 +170,8 @@ class NoteType:
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
 
-    # @deprecated — use currentTeam instead
+    # TEMPORARY — @deprecated, use currentTeam instead.
+    # Remove this resolver and the `team` field after the deprecation window.
     @strawberry_django.field(field_name="team", deprecation_reason="Use currentTeam instead")
     def team(self, root: models.Note) -> Optional[SelahTeamEnum]:
         if root.team is None:
@@ -242,7 +243,7 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
 
 
@@ -256,7 +257,7 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
@@ -292,7 +293,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
@@ -364,7 +365,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
     public_details: auto
     private_details: auto

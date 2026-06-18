@@ -1,11 +1,19 @@
-"""Helper to resolve deprecated SelahTeamEnum → Team FK for note/task mutations."""
+"""TEMPORARY SHIM — REMOVE AFTER ``SelahTeamEnum`` DEPRECATION WINDOW.
+
+Resolves deprecated ``SelahTeamEnum`` references to ``teams.Team`` FKs
+for note/task mutations.  Once all clients have migrated to ``teamId`` /
+``currentTeam``, delete this entire module and the deprecated ``team``
+fields on ``NoteType`` / ``TaskType``.
+"""
 
 from common.enums import SelahTeamEnum
 from teams.models import Team
 
 
 def _normalize_slug(team: str | SelahTeamEnum) -> str:
-    """Convert a ``SelahTeamEnum`` or string to a Team slug (the enum ``.value``).
+    """TEMPORARY: Convert a ``SelahTeamEnum`` or string to a Team slug.
+
+    Remove once the deprecated ``team`` field is dropped from the schema.
 
     Strings are first tried as enum member names (e.g. ``"WDI_ON_SITE"``),
     then as enum values (e.g. ``"wdi_on_site"``).  If neither matches the
@@ -27,9 +35,9 @@ def resolve_team_id(
     *,
     organization_id: int,
 ) -> int | None:
-    """Resolve a team reference to a Team FK, preferring *team_id*.
+    """TEMPORARY: Resolve a team reference to a Team FK, preferring *team_id*.
 
-    Returns ``None`` when neither is provided or no matching team is found.
+    Remove when the deprecated ``team`` field is dropped.
     """
     if team_id is not None:
         return team_id

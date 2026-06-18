@@ -29,7 +29,7 @@ class TaskFilter:
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
-    teams = make_in_filter("team", SelahTeamEnum)  # @deprecated — use teamIds
+    teams = make_in_filter("team", SelahTeamEnum)  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
     team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
@@ -115,7 +115,8 @@ class TaskType:
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
 
-    # @deprecated — use currentTeam instead
+    # TEMPORARY — @deprecated, use currentTeam instead.
+    # Remove this resolver and the `team` field after the deprecation window.
     @strawberry_django.field(field_name="team", deprecation_reason="Use currentTeam instead")
     def team(self, root: models.Task) -> Optional[SelahTeamEnum]:
         if root.team is None:
@@ -137,7 +138,7 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
     status: Optional[TaskStatusEnum]
 
@@ -147,6 +148,6 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID | None]  # new FK-based field
     status: Optional[TaskStatusEnum]
