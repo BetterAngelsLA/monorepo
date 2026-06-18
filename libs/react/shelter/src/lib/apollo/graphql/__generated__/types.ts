@@ -2200,6 +2200,7 @@ export type OrganizationMemberType = {
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
+  isOrgOwner: Scalars['Boolean']['output'];
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
