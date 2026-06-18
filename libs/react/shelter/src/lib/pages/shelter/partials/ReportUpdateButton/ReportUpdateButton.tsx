@@ -25,7 +25,10 @@ export function ReportUpdateButton(props: TProps) {
 
   return (
     <Button
-      className={mergeCss(className)}
+      className={mergeCss(
+        className,
+        'active:bg-[#E8ECF2] rounded-lg transition-colors'
+      )}
       size="sm"
       variant="text"
       onClick={showModal}
