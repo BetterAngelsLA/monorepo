@@ -10,7 +10,6 @@ from django.db.models import (
     Count,
     DateTimeField,
     Exists,
-    F,
     IntegerField,
     Manager,
     OuterRef,
@@ -140,12 +139,6 @@ def has_active_reservation_exists(fk_field: str) -> Exists:
     )
 
 
-def in_turnaround_q(*, checkout_field: str = "_latest_checkout") -> Q:
-    return Q(**{f"{checkout_field}__isnull": False}) & (
-        Q(last_cleaned__isnull=True) | Q(last_cleaned__lte=F(checkout_field))
-    )
-
-
 def in_turnaround_filter_q(fk_field: str) -> Q:
     """``Q`` for in-turnaround without a prior ``annotate`` (uses correlated subqueries)."""
     has_completed_checkout = Q(has_completed_checkout_exists(fk_field))
@@ -182,6 +175,29 @@ def status_filter_q(
     return Q()
 
 
+def computed_status_case(
+    fk_field: str,
+    status_enum: type[BedStatusChoices] | type[RoomStatusChoices],
+) -> Case:
+    """First-match status annotation; priority matches ``compute_reservable_status``."""
+    return Case(
+        When(maintenance_flag=True, then=Value(status_enum.OUT_OF_SERVICE)),
+        When(has_checked_in_exists(fk_field), then=Value(status_enum.OCCUPIED)),
+        When(has_confirmed_or_overdue_exists(fk_field), then=Value(status_enum.RESERVED)),
+        When(in_turnaround_filter_q(fk_field), then=Value(status_enum.IN_TURNAROUND)),
+        default=Value(status_enum.AVAILABLE),
+        output_field=CharField(),
+    )
+
+
+def bed_computed_status_annotation() -> Case:
+    return computed_status_case("bed_id", BedStatusChoices)
+
+
+def room_computed_status_annotation() -> Case:
+    return computed_status_case("room_id", RoomStatusChoices)
+
+
 class ReservableStatusQuerySetMixin:
     """Shared status filtering/annotation for Bed and Room querysets."""
 
@@ -189,25 +205,10 @@ class ReservableStatusQuerySetMixin:
     status_enum: type[BedStatusChoices] | type[RoomStatusChoices] = BedStatusChoices
 
     def with_computed_status(self) -> QuerySet:
-        fk = self.reservable_fk
-        enum = self.status_enum
-        latest_checkout = latest_completed_checkout_subquery(fk)
-        checked_in = has_checked_in_exists(fk)
-        confirmed_or_overdue = has_confirmed_or_overdue_exists(fk)
         qs = cast(QuerySet, self)
-
         return cast(
             QuerySet,
-            qs.annotate(_latest_checkout=latest_checkout).annotate(
-                _computed_status=Case(
-                    When(maintenance_flag=True, then=Value(enum.OUT_OF_SERVICE)),
-                    When(checked_in, then=Value(enum.OCCUPIED)),
-                    When(confirmed_or_overdue, then=Value(enum.RESERVED)),
-                    When(in_turnaround_q(checkout_field="_latest_checkout"), then=Value(enum.IN_TURNAROUND)),
-                    default=Value(enum.AVAILABLE),
-                    output_field=CharField(),
-                )
-            ),
+            qs.annotate(_computed_status=computed_status_case(self.reservable_fk, self.status_enum)),
         )
 
     def filter_by_status(self, status: StatusChoice) -> QuerySet:

@@ -20,8 +20,12 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.managers import shelter_bed_status_count_subquery, shelter_room_status_count_subquery
-from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
+from shelters.managers import (
+    bed_computed_status_annotation,
+    room_computed_status_annotation,
+    shelter_bed_status_count_subquery,
+    shelter_room_status_count_subquery,
+)
 from shelters.selectors import admin_bed_list, admin_reservation_list, admin_room_list, admin_shelter_list, shelter_list
 from shelters.types.lookups import (
     AccessibilityType,
@@ -308,24 +312,7 @@ class BedType:
     type: Optional[BedTypeChoices]
 
     @strawberry_django.field(
-        only=["maintenance_flag", "last_cleaned"],
-        prefetch_related=[
-            lambda info: Prefetch(
-                "reservations",
-                queryset=models.Reservation.objects.filter(
-                    status__in=ACTIVE_RESERVATION_STATUSES,
-                ).only("bed_id", "status"),
-                to_attr="_active_reservations",
-            ),
-            lambda info: Prefetch(
-                "reservations",
-                queryset=models.Reservation.objects.filter(
-                    status=ReservationStatusChoices.COMPLETED,
-                    checked_out_at__isnull=False,
-                ).only("bed_id", "checked_out_at"),
-                to_attr="_completed_reservations",
-            ),
-        ],
+        annotate={"_computed_status": lambda info: bed_computed_status_annotation()},
     )
     def status(self, root: models.Bed) -> BedStatusChoices:
         return root.computed_status
@@ -357,24 +344,7 @@ class RoomType:
     type_other: auto
 
     @strawberry_django.field(
-        only=["maintenance_flag", "last_cleaned"],
-        prefetch_related=[
-            lambda info: Prefetch(
-                "reservations",
-                queryset=models.Reservation.objects.filter(
-                    status__in=ACTIVE_RESERVATION_STATUSES,
-                ).only("room_id", "status"),
-                to_attr="_active_reservations",
-            ),
-            lambda info: Prefetch(
-                "reservations",
-                queryset=models.Reservation.objects.filter(
-                    status=ReservationStatusChoices.COMPLETED,
-                    checked_out_at__isnull=False,
-                ).only("room_id", "checked_out_at"),
-                to_attr="_completed_reservations",
-            ),
-        ],
+        annotate={"_computed_status": lambda info: room_computed_status_annotation()},
     )
     def status(self, root: models.Room) -> RoomStatusChoices:
         return root.computed_status
