@@ -116,27 +116,25 @@ class Reservation(BaseModel):
             return False
         return self.room.last_cleaned is None or self.room.last_cleaned <= last_checkout
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._initial_status = self.status
+
     def save(self, *args: Any, **kwargs: Any) -> None:
-        if self.pk:
-            try:
-                previous = Reservation.objects.get(pk=self.pk)
-
-                if (
-                    self.status == ReservationStatusChoices.COMPLETED
-                    and previous.status != ReservationStatusChoices.COMPLETED
-                ):
-                    self.checked_out_at = timezone.now()
-
-                if (
-                    self.status == ReservationStatusChoices.CHECKED_IN
-                    and previous.status != ReservationStatusChoices.CHECKED_IN
-                ):
-                    self.checked_in_at = timezone.now()
-
-            except Reservation.DoesNotExist:
-                pass
+        if self.pk is not None and self.status != self._initial_status:
+            if (
+                self.status == ReservationStatusChoices.COMPLETED
+                and self._initial_status != ReservationStatusChoices.COMPLETED
+            ):
+                self.checked_out_at = timezone.now()
+            elif (
+                self.status == ReservationStatusChoices.CHECKED_IN
+                and self._initial_status != ReservationStatusChoices.CHECKED_IN
+            ):
+                self.checked_in_at = timezone.now()
 
         super().save(*args, **kwargs)
+        self._initial_status = self.status
 
     def __str__(self) -> str:
         shelter = self.bed.shelter if self.bed else self.room.shelter if self.room else "No Shelter"
