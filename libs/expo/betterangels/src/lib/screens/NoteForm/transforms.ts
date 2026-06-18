@@ -48,7 +48,7 @@ export function buildNotePayload(
       summary: task.summary || '',
       description: task.description || undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,
-      teamId: task.team || undefined,
+      teamId: task.teamId || undefined,
     }));
   }
 
@@ -61,7 +61,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
   return {
     purpose: note.purpose,
     interactedAt: note.interactedAt,
-    teamId: note.currentTeam?.id,
+    teamId: note.currentTeam?.id as string | undefined,
     publicNote: note.publicDetails || '',
     location: note.location?.point
       ? {
@@ -115,7 +115,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
       summary: task.summary ?? null,
       description: task.description ?? null,
       status: task.status ?? null,
-      team: task.team ?? null,
+      teamId: task.currentTeam?.id ?? null,
     })),
   };
 }
