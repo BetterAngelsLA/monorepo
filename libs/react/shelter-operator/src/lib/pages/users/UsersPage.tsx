@@ -114,7 +114,6 @@ interface RemoveConfirmation {
 export function UsersPage() {
   const { activeOrg, hasPermission } = useActiveOrg();
   const { showToast } = useToast();
-  const [rawSearch, setRawSearch] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{
@@ -124,8 +123,6 @@ export function UsersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [removeConfirmation, setRemoveConfirmation] =
     useState<RemoveConfirmation>({ isOpen: false, member: null });
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const organizationId = activeOrg?.id ?? '';
 
@@ -139,11 +136,12 @@ export function UsersPage() {
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
 
-  const handleRawSearchChange = useCallback((value: string) => {
-    setRawSearch(value);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setSearch(value);
       setPage(1);
     }, 300);
   }, []);
@@ -233,7 +231,7 @@ export function UsersPage() {
     ),
   }));
 
-  const hasSearchResults = rawSearch.length > 0;
+  const hasSearchResults = search.length > 0;
   const emptyMessage = hasSearchResults
     ? 'No users match your search.'
     : 'No users in this organization.';
@@ -254,8 +252,8 @@ export function UsersPage() {
           <input
             type="text"
             placeholder="Search users..."
-            value={rawSearch}
-            onChange={(e) => handleRawSearchChange(e.target.value)}
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="h-12 w-full rounded-full border border-gray-200 bg-white px-5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-200 focus-within:border-[#008CEE]"
           />
         </div>
