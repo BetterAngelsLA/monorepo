@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
-from common.enums import SelahTeamEnum
+from common.enums import SelahTeamEnum  # @deprecated — use Team model instead
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -16,6 +16,7 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
+from teams.models import Team
 
 from .enums import ServiceRequestStatusEnum
 
@@ -154,7 +155,7 @@ class Note(BaseModel):
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
-    team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
 
     objects = models.Manager()
 

@@ -16,7 +16,7 @@ from typing import Any
 
 from accounts.models import User
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
+from teams.models import Team
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum
@@ -150,7 +150,7 @@ LAST_NAMES = [
     "Martin",
 ]
 
-TEAMS = list(SelahTeamEnum)
+TEAMS: list = []
 
 
 class Command(BaseCommand):
@@ -191,6 +191,10 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
+        # Populate TEAMS from the org's actual Team objects (moved from SelahTeamEnum).
+        global TEAMS
+        TEAMS[:] = list(Team.objects.filter(organization=org))
+
         num_notes = options["notes"]
 
         # 1. Create service categories and services
@@ -228,7 +232,7 @@ class Command(BaseCommand):
                 team=team,
                 purpose=purpose,
                 is_submitted=True,
-                public_details=f"Test interaction #{i + 1} - {purpose} by {team.label}",
+                public_details=f"Test interaction #{i + 1} - {purpose} by {team.name}",
                 client_profile=random.choice(clients),
             )
 

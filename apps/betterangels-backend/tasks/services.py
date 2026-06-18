@@ -33,7 +33,7 @@ def task_create(
                 summary=item.get("summary", ""),
                 description=item.get("description") or "",
                 status=item.get("status") or Task.Status.TO_DO,
-                team=item.get("team"),
+                team_id=item.get("team_id"),
                 note=note,
                 hmis_note=hmis_note,
                 client_profile=client_profile,

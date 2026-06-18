@@ -3,6 +3,7 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
+from teams.models import Team
 from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
@@ -42,7 +43,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -86,7 +87,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createTask"]
 
-        expected_query_count = 4
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query())
 
@@ -224,7 +225,8 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createTask"]["id"]
 
-        filters = {"teams": [SelahTeamEnum.SLCC_ON_SITE.name]}
+        team = Team.objects.get(slug=SelahTeamEnum.SLCC_ON_SITE.value, organization=self.org_1)
+        filters = {"teamIds": [team.pk]}
         variables = {"filters": filters}
 
         expected_query_count = 4

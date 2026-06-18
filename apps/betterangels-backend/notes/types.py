@@ -27,9 +27,10 @@ from django.db.models import (
 )
 from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
-from strawberry import ID, Info, auto
+from strawberry import ID, Info, Maybe, auto
 from strawberry_django.utils.query import filter_for_user
 from tasks.types import TaskType
+from teams.types import TeamType
 
 from . import models
 
@@ -127,7 +128,8 @@ class NoteFilter:
 
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
-    teams = make_in_filter("team", SelahTeamEnum)
+    teams = make_in_filter("team", SelahTeamEnum)  # @deprecated — use teamIds
+    team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -167,7 +169,18 @@ class NoteType:
     purpose: auto
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
-    team: Optional[SelahTeamEnum]
+
+    # @deprecated — use currentTeam instead
+    @strawberry_django.field(field_name="team", deprecation_reason="Use currentTeam instead")
+    def team(self, root: models.Note) -> Optional[SelahTeamEnum]:
+        if root.team is None:
+            return None
+        try:
+            return SelahTeamEnum(root.team.slug)
+        except (KeyError, ValueError):
+            return None
+
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
 
     @strawberry_django.field(
         annotate={
@@ -229,7 +242,8 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Optional[SelahTeamEnum] = None
+    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team_id: Maybe[ID | None]  # new FK-based field
 
 
 @strawberry.input
@@ -242,7 +256,8 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Optional[SelahTeamEnum] = strawberry.UNSET
+    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team_id: Maybe[ID | None]  # new FK-based field
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
@@ -277,7 +292,8 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Optional[SelahTeamEnum] = None
+    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team_id: Maybe[ID | None]  # new FK-based field
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -348,7 +364,8 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Optional[SelahTeamEnum]
+    team: Maybe[SelahTeamEnum | None]  # @deprecated — use teamId
+    team_id: Maybe[ID | None]  # new FK-based field
     public_details: auto
     private_details: auto
     client_profile: ID | None

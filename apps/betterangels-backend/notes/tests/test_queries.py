@@ -6,6 +6,7 @@ from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
+from teams.models import Team
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
@@ -69,7 +70,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 6
+        expected_query_count = 8
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -137,7 +138,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }}
             }}
         """
-        expected_query_count = 7
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -278,7 +279,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createNote"]
 
-        filters = {"teams": teams}
+        # Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site")
+        slugs = [SelahTeamEnum[t].value for t in teams] if teams else []
+        team_ids = list(
+            Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True)
+        ) if slugs else []
+        filters = {"teamIds": team_ids}
 
         query = """
             query ($filters: NoteFilter) {
