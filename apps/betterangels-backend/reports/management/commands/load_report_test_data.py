@@ -150,8 +150,6 @@ LAST_NAMES = [
     "Martin",
 ]
 
-TEAMS: list = []
-
 
 class Command(BaseCommand):
     help = "Load realistic test data for reports (Notes with teams, purposes, services) into test_org."
@@ -191,9 +189,11 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
-        # Populate TEAMS from the org's actual Team objects (moved from SelahTeamEnum).
-        global TEAMS
-        TEAMS[:] = list(Team.objects.filter(organization=org))
+        # Populate available teams from the database (replaces old SelahTeamEnum).
+        teams = list(Team.objects.filter(organization=org))
+        if not teams:
+            self.stderr.write(self.style.ERROR("No teams found in test_org."))
+            return
 
         num_notes = options["notes"]
 
@@ -222,7 +222,7 @@ class Command(BaseCommand):
             random_hours = random.randint(8, 20)  # business hours
             interaction_date = three_months_ago + timedelta(days=random_days, hours=random_hours)
 
-            team = random.choice(TEAMS)
+            team = random.choice(teams)
             purpose = random.choice(PURPOSES)
 
             note = Note.objects.create(
@@ -270,7 +270,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days.")
         )
         self.stdout.write(f"  Date range: {three_months_ago.date()} to {now.date()}")
-        self.stdout.write(f"  Teams used: {len(TEAMS)}")
+        self.stdout.write(f"  Teams used: {len(teams)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")
         self.stdout.write(f"  Services available: {len(services)}")
         self.stdout.write(f"  Unique clients: {len(clients)}")

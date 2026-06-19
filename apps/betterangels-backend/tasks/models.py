@@ -3,7 +3,7 @@ from accounts.models import User
 from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
-from django_choices_field import IntegerChoicesField, TextChoicesField
+from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
 from teams.models import Team
 

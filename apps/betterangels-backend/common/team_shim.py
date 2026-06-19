@@ -6,8 +6,18 @@ for note/task mutations.  Once all clients have migrated to ``teamId`` /
 fields on ``NoteType`` / ``TaskType``.
 """
 
+from typing import Any
+
+import strawberry
 from common.enums import SelahTeamEnum
 from teams.models import Team
+
+
+def maybe_value(maybe: Any) -> Any:
+    """Extract the value from a Strawberry ``Maybe[T]``, or ``None`` if UNSET/null."""
+    if maybe is strawberry.UNSET or maybe is None:
+        return None
+    return maybe
 
 
 def _normalize_slug(team: str | SelahTeamEnum) -> str:
@@ -21,11 +31,15 @@ def _normalize_slug(team: str | SelahTeamEnum) -> str:
     """
     if isinstance(team, SelahTeamEnum):
         return team.value
-    for converter in (lambda s: SelahTeamEnum[s], lambda s: SelahTeamEnum(s)):
-        try:
-            return converter(team).value
-        except (KeyError, ValueError):
-            pass
+    # Try as enum member name, then as enum value
+    try:
+        return SelahTeamEnum[team].value
+    except KeyError:
+        pass
+    try:
+        return SelahTeamEnum(team).value
+    except ValueError:
+        pass
     return team
 
 

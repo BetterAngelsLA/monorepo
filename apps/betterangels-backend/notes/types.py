@@ -245,8 +245,8 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
 
 
 @strawberry.input
@@ -259,8 +259,8 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
@@ -295,8 +295,8 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -367,8 +367,8 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     public_details: auto
     private_details: auto
     client_profile: ID | None

@@ -785,7 +785,6 @@ input CreateTaskInput {
 union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateTeamInput {
-  slug: String!
   name: String!
 }
 
@@ -2993,7 +2992,6 @@ union UpdateTaskPayload = TaskType | OperationInfo
 
 input UpdateTeamInput {
   id: ID!
-  slug: String
   name: String
   isActive: Boolean
 }

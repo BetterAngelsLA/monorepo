@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.text import slugify
 from organizations.models import Organization
 
 from .models import Team
@@ -9,13 +10,15 @@ from .models import Team
 
 def team_create(
     *,
-    slug: str,
     name: str,
     organization: Organization,
 ) -> Team:
-    """Create a new Team for *organization*."""
-    slug = slug.strip()
+    """Create a new Team for *organization*. Slug is auto-generated from name."""
     name = name.strip()
+    slug = slugify(name)
+
+    if not slug:
+        raise ValidationError('Team name must contain at least one alphanumeric character.')
 
     if Team.objects.filter(slug=slug, organization=organization).exists():
         raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
@@ -31,19 +34,19 @@ def team_create(
 def team_update(
     *,
     team: Team,
-    slug: str | None = None,
     name: str | None = None,
     is_active: bool | None = None,
 ) -> Team:
-    """Update a Team's slug, name and/or active status."""
-    if slug is not None:
-        slug = slug.strip()
+    """Update a Team's name and/or active status. Slug is auto-generated from name."""
+    if name is not None:
+        name = name.strip()
+        slug = slugify(name)
+        if not slug:
+            raise ValidationError('Team name must contain at least one alphanumeric character.')
         if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
             raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
+        team.name = name
         team.slug = slug
-
-    if name is not None:
-        team.name = name.strip()
 
     if is_active is not None:
         team.is_active = is_active

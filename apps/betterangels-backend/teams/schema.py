@@ -1,10 +1,13 @@
 """Team GraphQL Query + Mutation — thin delegation to services + selectors."""
 
+from typing import cast
+
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
+from common.team_shim import maybe_value
 from strawberry.types import Info
 
 from .models import Team
@@ -18,7 +21,7 @@ class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def teams(self, info: Info) -> list[TeamType]:
         organization = get_current_organization(info)
-        return team_list(organization=organization)
+        return [cast(TeamType, t) for t in team_list(organization=organization)]
 
 
 @strawberry.type
@@ -29,7 +32,7 @@ class Mutation:
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
         organization = get_current_organization(info)
-        return team_create(slug=data.slug, name=data.name, organization=organization)
+        return cast(TeamType, team_create(name=data.name, organization=organization))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -41,14 +44,14 @@ class Mutation:
         if team is None:
             raise ValueError(f"Team with id {data.id} not found.")
 
-        kwargs = {}
-        if data.slug is not strawberry.UNSET:
-            kwargs["slug"] = data.slug
-        if data.name is not strawberry.UNSET:
-            kwargs["name"] = data.name
-        if data.is_active is not strawberry.UNSET:
-            kwargs["is_active"] = data.is_active
-        return team_update(team=team, **kwargs)
+        return cast(
+            TeamType,
+            team_update(
+                team=team,
+                name=maybe_value(data.name),
+                is_active=maybe_value(data.is_active),
+            ),
+        )
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

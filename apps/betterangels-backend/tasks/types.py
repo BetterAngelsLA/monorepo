@@ -140,8 +140,8 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     status: Optional[TaskStatusEnum]
 
 
@@ -150,6 +150,6 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team: Maybe[SelahTeamEnum | None]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID | None]  # new FK-based field
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     status: Optional[TaskStatusEnum]
