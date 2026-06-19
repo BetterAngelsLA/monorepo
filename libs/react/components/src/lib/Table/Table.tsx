@@ -10,6 +10,7 @@ type TableProps<T> = {
   page?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  tableClassName?: string;
 };
 
 export function Table<T>({
@@ -20,20 +21,24 @@ export function Table<T>({
   page,
   totalPages,
   onPageChange,
+  tableClassName = '',
 }: TableProps<T>): ReactElement {
   return (
     <div className="overflow-x-auto w-full rounded-lg">
-      <table className="min-w-[800px] w-full text-left text-sm">
+      <table className={`min-w-[800px] w-full text-left text-sm ${tableClassName}`}>
         <thead>
           <tr className="bg-primary-95">
-            {header.map((title, index) => (
+            {header.map((title, index) => {
+              const isLast = index === header.length - 1;
+              return (
               <th
                 key={index}
-                className="text-sm py-4 px-8 font-normal whitespace-nowrap"
+                className={`text-sm py-4 px-8 font-normal whitespace-nowrap${isLast ? ' text-right' : ''}`}
               >
                 {title}
               </th>
-            ))}
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -42,18 +47,21 @@ export function Table<T>({
               key={`${row}-${rowIndex}`}
               className="border-b border-neutral-90"
             >
-              {header.map((_, colIndex) => (
-                <td key={colIndex} className={`px-8 py-4 whitespace-nowrap`}>
-                  {colIndex === header.length - 1 ? (
-                    <div className="flex items-center justify-between w-full max-w-[200px]">
-                      {renderCell(row, colIndex)}
-                      {action && <span>{action(row)}</span>}
+              {header.map((_, colIndex) => {
+                const isLast = colIndex === header.length - 1;
+                return (
+                <td key={colIndex} className={`px-8 py-4 whitespace-nowrap${isLast ? ' text-right' : ''}`}>
+                  {isLast ? (
+                    <div className="inline-flex items-center justify-end gap-3">
+                      <span>{renderCell(row, colIndex)}</span>
+                      {action && action(row)}
                     </div>
                   ) : (
                     renderCell(row, colIndex)
                   )}
                 </td>
-              ))}
+                );
+              })}
             </tr>
           ))}
         </tbody>

@@ -3,6 +3,6 @@ export type {
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
 export { ActiveOrgProvider } from './ActiveOrgProvider';
-export { hasPermission } from './hasPermission';
+export { hasPermission, TeamPermissions } from './hasPermission';
 export type { PermissionEnum } from './hasPermission';
 export { useActiveOrg } from './useActiveOrg';

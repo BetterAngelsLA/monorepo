@@ -1,10 +1,11 @@
 import {
   ReportPermissions,
+  TeamPermissions,
   useActiveOrg,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
-import { BarChartIcon, ChevronUpIcon, UsersIcon } from '@monorepo/react/icons';
+import { BarChartIcon, ChevronUpIcon, GroupsIcon, UsersIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -123,6 +124,16 @@ export function AppSidebar(props: IProps) {
             )}
           >
             Reports
+          </Sidebar.Link>
+        )}
+        {hasPermission(TeamPermissions.VIEW) && (
+          <Sidebar.Link
+            to="/teams"
+            isActive={location.pathname === '/teams'}
+            collapsed={!isOpen}
+            icon={(color: string) => <GroupsIcon className="w-4" fill={color} />}
+          >
+            Teams
           </Sidebar.Link>
         )}
       </Sidebar.Content>

@@ -1,14 +1,18 @@
 import {
   ReportPermissions,
   ShelterPermissions,
+  TeamPermissions,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { TOrganizationWithPermissions } from './ActiveOrgContext';
 
+export { TeamPermissions };
+
 export type PermissionEnum =
   | UserOrganizationPermissions
   | ReportPermissions
-  | ShelterPermissions;
+  | ShelterPermissions
+  | TeamPermissions;
 
 let cachedOrg: TOrganizationWithPermissions | undefined;
 let cachedSet: Set<string> | undefined;
