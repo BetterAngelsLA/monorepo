@@ -35,7 +35,7 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/teams',
     element: (
-      <PermissionGuard permission={TeamPermissions.VIEW}>
+      <PermissionGuard permission={TeamPermissions.View}>
         <TeamsPage />
       </PermissionGuard>
     ),

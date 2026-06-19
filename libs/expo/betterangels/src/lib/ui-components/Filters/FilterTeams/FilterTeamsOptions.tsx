@@ -28,7 +28,7 @@ export function FilterTeamsOptions(props: TProps) {
   const { data, error } = useQuery<TeamsQuery>(TeamsDocument);
 
   const options = useMemo<TFilterOption[]>(() => {
-    const teams = data?.teams ?? [];
+    const teams = data?.teams?.results ?? [];
     return teams
       .filter((t) => t.isActive)
       .map((t) => ({

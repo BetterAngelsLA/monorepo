@@ -203,7 +203,7 @@ export default function Teams(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {hasPermission(activeOrg, TeamPermissions.ADD) && (
+        {hasPermission(activeOrg, TeamPermissions.Add) && (
           <button
             onClick={() =>
               showDrawer({
@@ -225,7 +225,7 @@ export default function Teams(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {hasPermission(activeOrg, TeamPermissions.VIEW) ? (
+        {hasPermission(activeOrg, TeamPermissions.View) ? (
           <Table<TeamType>
             tableClassName="table-fixed"
             action={(row) => {

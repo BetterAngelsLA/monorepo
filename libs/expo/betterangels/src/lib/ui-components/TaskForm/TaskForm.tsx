@@ -98,7 +98,7 @@ export function TaskForm(props: TProps) {
                   label="Team"
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={(data?.teams ?? []).map(
+                  items={(data?.teams?.results ?? []).map(
                     (t) => ({ value: t.id, displayValue: t.name })
                   )}
                   selectedValue={field.value}
