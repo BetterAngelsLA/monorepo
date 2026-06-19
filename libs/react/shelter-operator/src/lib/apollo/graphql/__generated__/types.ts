@@ -788,7 +788,6 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateTeamInput = {
   name: Scalars['String']['input'];
-  slug: Scalars['String']['input'];
 };
 
 export type CreateTeamPayload = OperationInfo | TeamType;
@@ -3687,7 +3686,6 @@ export type UpdateTeamInput = {
   id: Scalars['ID']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTeamPayload = OperationInfo | TeamType;

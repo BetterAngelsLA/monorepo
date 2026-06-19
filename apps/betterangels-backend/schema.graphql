@@ -632,7 +632,7 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
   purpose: String = null
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
@@ -665,7 +665,7 @@ input CreateNoteTaskInput {
   summary: String!
   description: String = null
   status: Int = null
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
   teamId: ID
 }
 
@@ -1337,7 +1337,7 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String
@@ -2871,7 +2871,7 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String

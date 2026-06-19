@@ -18,7 +18,7 @@ def team_create(
     slug = slugify(name)
 
     if not slug:
-        raise ValidationError('Team name must contain at least one alphanumeric character.')
+        raise ValidationError("Team name must contain at least one alphanumeric character.")
 
     if Team.objects.filter(slug=slug, organization=organization).exists():
         raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
@@ -42,7 +42,7 @@ def team_update(
         name = name.strip()
         slug = slugify(name)
         if not slug:
-            raise ValidationError('Team name must contain at least one alphanumeric character.')
+            raise ValidationError("Team name must contain at least one alphanumeric character.")
         if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
             raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
         team.name = name

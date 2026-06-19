@@ -150,6 +150,27 @@ LAST_NAMES = [
     "Martin",
 ]
 
+# Seed teams mapped from the deprecated SelahTeamEnum.
+# (slug, display_name) — created via get_or_create so the command is
+# self-contained for local dev.
+SEED_TEAMS = [
+    ("bowtie_riverside_outreach", "Bowtie & Riverside Outreach"),
+    ("echo_park_on_site", "Echo Park On-site"),
+    ("echo_park_outreach", "Echo Park Outreach"),
+    ("hollywood_on_site", "Hollywood On-site"),
+    ("hollywood_outreach", "Hollywood Outreach"),
+    ("la_river_outreach", "LA River Outreach"),
+    ("los_feliz_outreach", "Los Feliz Outreach"),
+    ("northeast_hollywood_outreach", "Northeast Hollywood Outreach"),
+    ("selah_staff", "SELAH Staff"),
+    ("silver_lake_outreach", "Silver Lake Outreach"),
+    ("slcc_on_site", "SLCC On-site"),
+    ("sunday_social_atwater_on_site", "Sunday Social / Atwater On-site"),
+    ("sunday_social_atwater_outreach", "Sunday Social / Atwater Outreach"),
+    ("wdi_on_site", "WDI On-site"),
+    ("wdi_outreach", "WDI Outreach"),
+]
+
 
 class Command(BaseCommand):
     help = "Load realistic test data for reports (Notes with teams, purposes, services) into test_org."
@@ -189,11 +210,12 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
-        # Populate available teams from the database (replaces old SelahTeamEnum).
-        teams = list(Team.objects.filter(organization=org))
-        if not teams:
-            self.stderr.write(self.style.ERROR("No teams found in test_org."))
-            return
+        # Seed teams (replaces old SelahTeamEnum).  get_or_create so the
+        # fixture is self-contained — no pre-existing teams required.
+        teams = []
+        for slug, name in SEED_TEAMS:
+            team, _ = Team.objects.get_or_create(slug=slug, organization=org, defaults={"name": name})
+            teams.append(team)
 
         num_notes = options["notes"]
 
