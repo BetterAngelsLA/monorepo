@@ -13,7 +13,7 @@ from unittest_parametrize import ParametrizedTestCase, parametrize
 class AdminShelterQueryTestCase(GraphQLBaseTestCase):
     ADMIN_SHELTERS_QUERY = """
         query AdminShelters($orgIds: [ID!], $offset: Int, $limit: Int) {
-            adminShelters(
+            operatorShelters(
                 filters: { organizations: $orgIds }
                 ordering: [{ createdAt: DESC }]
                 pagination: { offset: $offset, limit: $limit }
@@ -45,7 +45,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"orgIds": [str(self.org_1.id)], "offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 2)
 
         returned_ids = {r["id"] for r in payload["results"]}
@@ -64,7 +64,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         # org_1_case_manager_1 belongs to org_1 only
         self.assertEqual(payload["totalCount"], 2)
         returned_ids = {r["id"] for r in payload["results"]}
@@ -82,7 +82,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
@@ -99,7 +99,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 3)
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
@@ -131,7 +131,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
@@ -143,7 +143,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         query = """
             query AdminShelters($orgIds: [ID!], $name: String) {
-                adminShelters(
+                operatorShelters(
                     filters: { organizations: $orgIds, name: $name }
                 ) {
                     totalCount
@@ -156,7 +156,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"orgIds": [str(self.org_1.id)], "name": "safe haven"},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
         self.assertEqual(payload["results"][0]["name"], "Safe Haven")
@@ -172,7 +172,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         query = """
             query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
-                adminShelters(
+                operatorShelters(
                     filters: { organizations: $orgIds, properties: $properties }
                 ) {
                     totalCount
@@ -188,7 +188,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             },
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
 
@@ -205,7 +205,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         query = """
             query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -221,7 +221,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        results = response["data"]["adminShelters"]["results"]
+        results = response["data"]["operatorShelters"]["results"]
         shelter_data = next(r for r in results if r["id"] == str(shelter.id))
         self.assertEqual(
             shelter_data["bedsByStatus"],
@@ -239,7 +239,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         query = """
             query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -256,7 +256,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             }
         """
         response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        shelter_data = next(r for r in response["data"]["adminShelters"]["results"] if r["id"] == str(shelter.id))
+        shelter_data = next(r for r in response["data"]["operatorShelters"]["results"] if r["id"] == str(shelter.id))
         self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
         self.assertEqual(
             shelter_data["roomsByStatus"],
@@ -269,7 +269,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
         query = """
             query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -285,7 +285,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        results = response["data"]["adminShelters"]["results"]
+        results = response["data"]["operatorShelters"]["results"]
         for result in results:
             self.assertEqual(
                 result["bedsByStatus"],
@@ -294,14 +294,14 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
 
 class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
-    """Tests for the `properties` filter in ViewSheltersByOrganization (adminShelters)."""
+    """Tests for the `properties` filter in ViewSheltersByOrganization (operatorShelters)."""
 
     VIEW_SHELTERS_BY_ORGANIZATION_QUERY = """
         query ViewSheltersByOrganization(
             $organizationId: ID!
             $properties: ShelterPropertyInput
         ) {
-            adminShelters(
+            operatorShelters(
                 filters: {
                     organizations: [$organizationId]
                     properties: $properties
@@ -349,7 +349,7 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             variables={"organizationId": str(self.org_1.pk), "properties": properties},
         )
         self.assertIsNone(response.get("errors"))
-        return cast(list[dict[Any, Any]], response["data"]["adminShelters"]["results"])
+        return cast(list[dict[Any, Any]], response["data"]["operatorShelters"]["results"])
 
     @parametrize(
         "properties, expected_count",
