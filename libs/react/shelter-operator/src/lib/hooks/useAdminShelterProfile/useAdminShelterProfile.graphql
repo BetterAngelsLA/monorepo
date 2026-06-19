@@ -1,5 +1,5 @@
 query GetAdminShelterProfile($id: ID!) {
-  adminShelter(pk: $id) {
+  operatorShelter(pk: $id) {
     bedFees
     cityCouncilDistrict
     curfew

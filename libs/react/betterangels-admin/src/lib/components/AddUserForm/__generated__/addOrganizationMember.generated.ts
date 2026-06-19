@@ -8,7 +8,7 @@ export type AddOrganizationMemberMutationVariables = Types.Exact<{
 
 export type AddOrganizationMemberMutation = { __typename?: 'Mutation', addOrganizationMember:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'OrganizationMemberType', id: string, email?: string | null, firstName?: string | null, isOrgOwner: boolean, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: any }
+    | { __typename?: 'OrganizationMemberType', id: string, email?: string | null, firstName?: string | null, isOrgOwner?: boolean | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: any }
    };
 
 

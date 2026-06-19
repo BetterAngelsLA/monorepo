@@ -1,7 +1,7 @@
 import { GetAdminShelterProfileQuery } from './__generated__/useAdminShelterProfile.generated';
 
 export type UseAdminShelterProfileResultType =
-  GetAdminShelterProfileQuery['adminShelter'];
+  GetAdminShelterProfileQuery['operatorShelter'];
 
 export type UseAdminShelterProfilePhotoType =
-  GetAdminShelterProfileQuery['adminShelter']['photos'][number];
+  GetAdminShelterProfileQuery['operatorShelter']['photos'][number];

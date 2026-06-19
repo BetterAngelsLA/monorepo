@@ -15,7 +15,7 @@ export function useAdminShelterProfile(shelterId: string) {
   });
 
   return {
-    shelter: data?.adminShelter,
+    shelter: data?.operatorShelter,
     loading,
     error,
   };
