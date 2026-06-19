@@ -1,27 +1,27 @@
+import { useQuery } from '@apollo/client/react';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { SelahTeamEnum } from '../../apollo';
-import { enumDisplaySelahTeam } from '../../static';
+import { TeamsDocument, TeamsQuery } from '../../ui-components/UserPreferences/UserTeamPreference/__generated__/teams.generated';
 
 interface ITeamProps {
-  team?: SelahTeamEnum | null;
-  onTeamChange: (value: SelahTeamEnum | null) => void;
+  teamId?: string | null;
+  onTeamChange: (value: string | null) => void;
 }
 
 export default function Team(props: ITeamProps) {
-  const { team, onTeamChange } = props;
+  const { teamId, onTeamChange } = props;
+  const { data } = useQuery<TeamsQuery>(TeamsDocument);
+  const teams = data?.teams?.results ?? [];
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
       <Picker
         allowSelectNone
         placeholder="Select Team"
-        selectedValue={team}
-        items={Object.entries(enumDisplaySelahTeam).map(
-          ([value, displayValue]) => ({ value, displayValue })
-        )}
-        onChange={(t) => onTeamChange(t as SelahTeamEnum | null)}
+        selectedValue={teamId ?? undefined}
+        items={teams.map((t) => ({ value: t.id, displayValue: t.name }))}
+        onChange={(t) => onTeamChange((t as string) || null)}
       />
     </View>
   );

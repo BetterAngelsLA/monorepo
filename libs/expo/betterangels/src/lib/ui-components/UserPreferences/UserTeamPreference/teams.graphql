@@ -1,0 +1,10 @@
+query Teams {
+  teams {
+    results {
+      id
+      slug
+      name
+      isActive
+    }
+  }
+}
