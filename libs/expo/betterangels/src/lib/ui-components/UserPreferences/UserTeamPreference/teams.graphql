@@ -1,10 +1,8 @@
 query Teams {
   teams {
-    results {
-      id
-      slug
-      name
-      isActive
-    }
+    id
+    slug
+    name
+    isActive
   }
 }

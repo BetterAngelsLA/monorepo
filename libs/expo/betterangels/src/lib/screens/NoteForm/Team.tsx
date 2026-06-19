@@ -12,7 +12,7 @@ interface ITeamProps {
 export default function Team(props: ITeamProps) {
   const { teamId, onTeamChange } = props;
   const { data } = useQuery<TeamsQuery>(TeamsDocument);
-  const teams = data?.teams?.results ?? [];
+  const teams = data?.teams ?? [];
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
