@@ -5,10 +5,20 @@ import {
 } from '../../apollo/graphql/__generated__/types';
 import { TOrganizationWithPermissions } from './ActiveOrgContext';
 
+// Team CRUD permissions — matches teams.permissions.TeamPermissions on the backend.
+// TODO: regenerate types after schema export to pick up the strawberry enum.
+export enum TeamPermissions {
+  VIEW = 'teams.view_team',
+  ADD = 'teams.add_team',
+  CHANGE = 'teams.change_team',
+  DELETE = 'teams.delete_team',
+}
+
 export type PermissionEnum =
   | UserOrganizationPermissions
   | ReportPermissions
-  | ShelterPermissions;
+  | ShelterPermissions
+  | TeamPermissions;
 
 let cachedOrg: TOrganizationWithPermissions | undefined;
 let cachedSet: Set<string> | undefined;
