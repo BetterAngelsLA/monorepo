@@ -10,6 +10,7 @@ from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
+from common.team_shim import resolve_team_id
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from notes.groups import CASEWORKER
@@ -123,11 +124,21 @@ class Mutation:
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
+        team_id = resolve_team_id(
+            team_slug=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
+            organization_id=permission_group.organization_id,
+        )
+
         note = note_create(
             user=user,
             permission_group=permission_group,
             purpose=data.purpose,
-            team=data.team,
+            team_id=team_id,
             public_details=data.public_details or "",
             private_details=data.private_details or "",
             client_profile_id=str(data.client_profile) if data.client_profile else None,
@@ -152,7 +163,23 @@ class Mutation:
         permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
+
+        # Resolve deprecated team enum / new teamId → FK before asdict.
+        team_id = resolve_team_id(
+            team_slug=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
+            organization_id=permission_group.organization_id,
+        )
+
         clean = asdict(data)
+        # Pop Maybe-wrapped team fields so setattr doesn't choke on them.
+        clean.pop("team", None)
+        clean.pop("team_id", None)
+        clean["team_id"] = team_id
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -309,7 +336,21 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team=data.note.team if data.note.team is not strawberry.UNSET else None,
+                    team_id=resolve_team_id(
+                        team_slug=(
+                            data.note.team.value
+                            if data.note.team is not strawberry.UNSET and data.note.team is not None
+                            else None
+                        ),
+                        team_id=(
+                            int(data.note.team_id.value)
+                            if data.note.team_id is not strawberry.UNSET
+                            and data.note.team_id is not None
+                            and data.note.team_id.value is not None
+                            else None
+                        ),
+                        organization_id=permission_group.organization_id,
+                    ),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

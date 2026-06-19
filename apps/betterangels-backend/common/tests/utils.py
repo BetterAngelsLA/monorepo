@@ -193,10 +193,22 @@ class GraphQLBaseTestCase(
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
+        from common.enums import SelahTeamEnum
         from notes.groups import CASEWORKER
+        from teams.models import Team
 
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
+
+        # Create Team objects matching SelahTeamEnum values for backward
+        # compatibility with the deprecated ``team`` GraphQL field.
+        for org in (self.org_1, self.org_2):
+            for team_value in SelahTeamEnum.values:
+                Team.objects.get_or_create(
+                    slug=team_value,
+                    organization=org,
+                )
+
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of
         # relying on the deleted handle_organization_user_added signal.
