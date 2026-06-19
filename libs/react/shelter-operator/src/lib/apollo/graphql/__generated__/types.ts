@@ -2193,6 +2193,7 @@ export type OrgPermissions = {
   accounts: Array<UserOrganizationPermissions>;
   reports: Array<ReportPermissions>;
   shelters: Array<ShelterPermissions>;
+  teams: Array<TeamPermissions>;
 };
 
 export enum OrgRoleEnum {
@@ -2444,7 +2445,7 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
-  teams: Array<TeamType>;
+  teams: TeamTypeOffsetPaginated;
 };
 
 
@@ -2686,6 +2687,11 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
   ordering?: InputMaybe<Array<TaskOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTeamsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3408,12 +3414,29 @@ export type TaskTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export enum TeamPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
+
 export type TeamType = {
   __typename?: 'TeamType';
+  createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];
+};
+
+export type TeamTypeOffsetPaginated = {
+  __typename?: 'TeamTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TeamType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UpdateBedInput = {
