@@ -1,0 +1,1 @@
+export { hasPermission } from './hasPermission';

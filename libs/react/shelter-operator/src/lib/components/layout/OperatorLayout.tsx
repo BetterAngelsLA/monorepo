@@ -11,7 +11,7 @@ export function OperatorLayout() {
       <div className="flex flex-row flex-1">
         <AppSidebar />
 
-        <main className="pt-6 flex-1">
+        <main className="pt-6 px-6 flex-1 min-w-0 overflow-hidden">
           <Outlet />
         </main>
 

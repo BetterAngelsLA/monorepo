@@ -61,7 +61,10 @@ const TableBase = <TItem, TRowObject = TItem>({
   rowStyle,
 }: TableProps<TItem, TRowObject>) => {
   const dataTemplateColumns = columns
-    .map((column) => column.width ?? '1fr')
+    .map((column) => {
+      const w = column.width ?? '1fr';
+      return w.endsWith('fr') ? `minmax(60px, ${w})` : w;
+    })
     .join(' ');
   const hasTrailingColumn = !!onDelete || !!getRowSlot || !!trailingHeader;
   const templateColumns = hasTrailingColumn
@@ -72,7 +75,7 @@ const TableBase = <TItem, TRowObject = TItem>({
     <div
       role="table"
       className={mergeCss([
-        'bg-white rounded-2xl overflow-hidden w-full',
+        'bg-white rounded-2xl overflow-hidden',
         wrapperClassName,
       ])}
       style={tableStyle}
@@ -80,7 +83,7 @@ const TableBase = <TItem, TRowObject = TItem>({
       <div
         role="row"
         className={mergeCss([
-          'grid items-center px-6 pb-2 pt-6 font-medium text-[22px] text-[#747A82]',
+          'grid items-center px-6 pb-2 pt-6 font-medium text-sm text-[#747A82]',
           headerClassName,
           headerInsetClassName,
         ])}
@@ -91,7 +94,7 @@ const TableBase = <TItem, TRowObject = TItem>({
             role="columnheader"
             key={column.key}
             className={mergeCss([
-              'text-left justify-self-start',
+              'text-left justify-self-start min-w-0 overflow-hidden',
               column.headerClassName,
             ])}
           >

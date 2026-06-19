@@ -5,4 +5,5 @@ export * from './hooks';
 export * from './observers';
 export { Regex } from './static/regex';
 export * from './types';
+export * from './permissions';
 export * from './utils';
