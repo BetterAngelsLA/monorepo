@@ -248,9 +248,12 @@ class OrganizationMemberType(UserBaseType):
         return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
     @strawberry_django.field
-    def is_org_owner(self, info: Info) -> bool:
+    def is_org_owner(self, info: Info) -> bool | None:
         """Whether this member is the organization owner."""
-        return bool(getattr(self, "_is_org_owner", False))
+        value = getattr(self, "_is_org_owner", None)
+        if value is None:
+            return None
+        return bool(value)
 
 
 @strawberry_django.input(User, partial=True)
