@@ -97,6 +97,8 @@ export default function Teams(props: TProps) {
 
   const containerClass = mergeCss(['flex flex-col gap-4', className]);
 
+  const TeamsTable = Table<TeamType>;
+
   return (
     <div className={containerClass}>
       <div className="flex items-center justify-between">
@@ -127,7 +129,7 @@ export default function Teams(props: TProps) {
         </Button>
       </div>
 
-      <Table<TeamType>
+      <TeamsTable
         data={teams}
         header={HEADERS}
         renderCell={(team, colIndex) => {
@@ -199,7 +201,6 @@ export default function Teams(props: TProps) {
             )}
           </div>
         )}
-      )}
       />
     </div>
   );
