@@ -1,0 +1,56 @@
+query AdminTeams {
+  teams {
+    id
+    slug
+    name
+    isActive
+  }
+}
+
+mutation CreateTeam($data: CreateTeamInput!) {
+  createTeam(data: $data) {
+    ... on TeamType {
+      id
+      slug
+      name
+      isActive
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateTeam($data: UpdateTeamInput!) {
+  updateTeam(data: $data) {
+    ... on TeamType {
+      id
+      slug
+      name
+      isActive
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteTeam($data: DeleteDjangoObjectInput!) {
+  deleteTeam(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
