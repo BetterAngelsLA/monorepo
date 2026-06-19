@@ -1,5 +1,6 @@
 from accounts.permissions import ReportOrgPermissions, UserOrganizationPermissions
 from common.permissions.config import TemplateConfig
+from teams.models import Team
 
 ORG_ADMIN = TemplateConfig(
     name="Organization Admin",
@@ -9,6 +10,10 @@ ORG_ADMIN = TemplateConfig(
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         ReportOrgPermissions.VIEW_REPORTS,
+        Team.perms.ADD,
+        Team.perms.CHANGE,
+        Team.perms.DELETE,
+        Team.perms.VIEW,
     ],
     is_invitable=False,
 )
@@ -22,6 +27,10 @@ ORG_SUPERUSER = TemplateConfig(
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         ReportOrgPermissions.VIEW_REPORTS,
+        Team.perms.ADD,
+        Team.perms.CHANGE,
+        Team.perms.DELETE,
+        Team.perms.VIEW,
     ],
     is_invitable=False,
 )
