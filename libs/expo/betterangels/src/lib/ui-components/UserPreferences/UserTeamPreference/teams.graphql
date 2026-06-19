@@ -1,8 +1,11 @@
-query Teams {
-  teams {
-    id
-    slug
-    name
-    isActive
+query Teams($pagination: OffsetPaginationInput) {
+  teams(pagination: $pagination) {
+    results {
+      id
+      slug
+      name
+      isActive
+    }
+    totalCount
   }
 }

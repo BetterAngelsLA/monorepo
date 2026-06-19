@@ -16,7 +16,7 @@ export function UserTeamPreferenceSelect(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const { data } = useQuery<TeamsQuery>(TeamsDocument);
 
-  const teams = data?.teams ?? [];
+  const teams = data?.teams?.results ?? [];
 
   const handleTeamSelect = (newTeamId: string) => {
     setTeamId(newTeamId);
