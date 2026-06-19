@@ -1809,6 +1809,7 @@ type OrganizationMemberType {
   lastLogin: DateTime
   dateJoined: DateTime!
   memberRole: OrgRoleEnum!
+  isOrgOwner: Boolean!
 }
 
 type OrganizationMemberTypeOffsetPaginated {
