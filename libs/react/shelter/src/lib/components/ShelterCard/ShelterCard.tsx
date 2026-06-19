@@ -47,7 +47,15 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = location?.place.replace(/, USA$/, '');
 
-  const parentCss = ['flex', 'flex-col', 'cursor-pointer', className];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'cursor-pointer',
+    'rounded-lg',
+    'transition-colors',
+    'active:bg-[#E8ECF2]',
+    className,
+  ];
 
   const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'overflow-hidden'];
 
