@@ -85,7 +85,7 @@ export default function Teams(props: IProps) {
 
   const activeData = data ?? previousData;
   const teams = activeData?.teams?.results ?? [];
-  const totalCount = activeData?.teams?.totalCount ?? 0;
+  const _totalCount = activeData?.teams?.totalCount ?? 0;
   const isInitialLoad = loading && !activeData;
 
   const parentCss = [
