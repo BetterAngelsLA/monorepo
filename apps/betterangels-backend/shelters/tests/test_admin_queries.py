@@ -27,7 +27,7 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._set_organization_header(self.org_1)
+        self._set_active_org(self.org_1)
         self._add_shelter_view_permission()
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
