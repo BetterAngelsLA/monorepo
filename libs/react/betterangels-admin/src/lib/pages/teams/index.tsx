@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@apollo/client/react';
 import { Button, Table, useAlert } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
 import { mergeCss, toError } from '@monorepo/react/shared';
-import { ChangeEvent, KeyboardEvent, JSX, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { TeamType } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import {
