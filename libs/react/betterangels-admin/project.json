@@ -7,7 +7,6 @@
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
-      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
     ]
   },
   "targets": {
