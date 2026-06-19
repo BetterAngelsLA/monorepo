@@ -32,11 +32,31 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        test_usernames = ["admin", "agent"]
-        test_users = User.objects.filter(username__in=test_usernames)
-        test_org = Organization.objects.create(name="test_org")
+        from accounts.groups import ORG_ADMIN
+        from notes.groups import CASEWORKER
+
+        from .role_manager import OrgRoleManager
+        from .services import create_organization_with_presets
+
+        test_users = list(User.objects.filter(username__in=["admin", "agent"]))
+
+        if not test_users:
+            logger.warning("test_org not created: admin and agent users do not exist yet.")
+            return
+
+        owner = next((u for u in test_users if u.username == "admin"), test_users[0])
+
+        org = create_organization_with_presets(
+            name="test_org",
+            preset_names=["outreach"],
+            owner=owner,
+            owner_roles=(CASEWORKER, ORG_ADMIN),
+        )
+
         for test_user in test_users:
-            test_org.add_user(test_user)
+            if test_user.pk != owner.pk:
+                org.add_user(test_user)
+                OrgRoleManager(org).add_roles(test_user, CASEWORKER)
 
 
 @receiver(post_migrate)
