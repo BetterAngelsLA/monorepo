@@ -245,7 +245,7 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID]  # new FK-based field
 
 
@@ -259,7 +259,7 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID]  # new FK-based field
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
@@ -295,7 +295,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID]  # new FK-based field
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
@@ -367,7 +367,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
     team_id: Maybe[ID]  # new FK-based field
     public_details: auto
     private_details: auto
