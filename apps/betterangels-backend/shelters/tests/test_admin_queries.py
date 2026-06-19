@@ -32,9 +32,20 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1_case_manager_1.user_permissions.add(perm)
+        """Grant view_shelter to org_1_case_manager_1 via their PermissionGroup.
+
+        Uses PermissionGroup (not user_permissions) because operatorShelters
+        checks permissions via HasOrgPerm, which validates org-scoped permissions
+        through permission_groups, not global Django permissions."""
+        from accounts.models import PermissionGroup
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get_for_model(Shelter)
+        perm = Permission.objects.get(codename="view_shelter", content_type=ct)
+        pg = PermissionGroup.objects.filter(group__user=self.org_1_case_manager_1).first()
+        if pg:
+            pg.group.permissions.add(perm)
 
     def test_operator_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
