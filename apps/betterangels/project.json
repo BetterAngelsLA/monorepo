@@ -92,7 +92,6 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "inputs": ["{projectRoot}/**/*"],
       "outputs": ["{options.outputFile}"]
     },
     "test": {

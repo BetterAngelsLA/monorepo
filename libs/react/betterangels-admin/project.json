@@ -7,6 +7,7 @@
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
+      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
     ]
   },
   "targets": {
@@ -22,7 +23,6 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "inputs": ["{projectRoot}/**/*"],
       "outputs": ["{options.outputFile}"]
     }
   }
