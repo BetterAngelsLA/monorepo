@@ -632,7 +632,8 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
   purpose: String = null
-  team: SelahTeamEnum = null
+  team: SelahTeamEnum
+  teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
   clientProfile: ID = null
@@ -664,7 +665,8 @@ input CreateNoteTaskInput {
   summary: String!
   description: String = null
   status: Int = null
-  team: SelahTeamEnum = null
+  team: SelahTeamEnum
+  teamId: ID
 }
 
 input CreateOrganizationInput {
@@ -776,10 +778,18 @@ input CreateTaskInput {
   hmisNote: ID
   summary: String!
   team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
+
+input CreateTeamInput {
+  slug: String!
+  name: String!
+}
+
+union CreateTeamPayload = TeamType | OperationInfo
 
 type CurrentUserOrganizationType {
   id: ID!
@@ -855,6 +865,8 @@ union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
+
+union DeleteTeamPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -1327,6 +1339,7 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 input ImportNoteDataInput {
   purpose: String
   team: SelahTeamEnum
+  teamId: ID
   publicDetails: String
   privateDetails: String
   clientProfile: ID
@@ -1529,6 +1542,9 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
@@ -1580,6 +1596,7 @@ input NoteFilter {
   authors: [ID!]
   organizations: [ID!]
   teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
 }
 
@@ -1613,7 +1630,8 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  team: SelahTeamEnum
+  currentTeam: TeamType
+  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1989,6 +2007,7 @@ type Query {
   reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  teams: [TeamType!]!
   operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
@@ -2648,6 +2667,7 @@ input TaskFilter {
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
   hmisClientProfileLookup: IDFilterLookup
@@ -2678,8 +2698,9 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  team: SelahTeamEnum
+  currentTeam: TeamType
   updatedAt: DateTime!
+  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
 }
 
 type TaskTypeOffsetPaginated {
@@ -2690,6 +2711,13 @@ type TaskTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [TaskType!]!
+}
+
+type TeamType {
+  id: ID!
+  slug: String!
+  name: String!
+  isActive: Boolean!
 }
 
 """Time (isoformat)"""
@@ -2845,6 +2873,7 @@ input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
   team: SelahTeamEnum
+  teamId: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
@@ -2956,10 +2985,20 @@ input UpdateTaskInput {
   description: String
   summary: String
   team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
+
+input UpdateTeamInput {
+  id: ID!
+  slug: String
+  name: String
+  isActive: Boolean
+}
+
+union UpdateTeamPayload = TeamType | OperationInfo
 
 input UpdateUserInput {
   firstName: NonBlankString
