@@ -1,8 +1,5 @@
-import strawberry
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+from common.permissions.utils import permissions_enum_from_model
 
+from .models import Team
 
-@strawberry.enum
-class TeamPermissions(models.TextChoices):
-    MANAGE = "teams.manage_teams", _("Can manage teams")
+TeamPermissions = permissions_enum_from_model(Team)
