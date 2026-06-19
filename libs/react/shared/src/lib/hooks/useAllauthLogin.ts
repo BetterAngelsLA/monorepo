@@ -152,7 +152,7 @@ export function useAllauthLogin({
         const res = await fetchClient('/_allauth/browser/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
-            username: cleaned,
+            email: cleaned,
             password,
           }),
         });
