@@ -178,7 +178,7 @@ export function ClientTasksViewHmis(props: TProps) {
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
-        filters={['teams', 'taskStatus', 'authors', 'organizations']}
+        filters={['teamIds', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList

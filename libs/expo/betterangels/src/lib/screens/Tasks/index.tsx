@@ -74,7 +74,7 @@ export default function Tasks() {
         style={styles.filters}
         filters={[
           isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
-          'teams',
+          'teamIds',
           'taskStatus',
           'authors',
           'organizations',

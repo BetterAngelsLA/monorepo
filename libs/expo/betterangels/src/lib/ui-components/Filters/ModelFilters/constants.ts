@@ -6,11 +6,6 @@ export const modelFilterConfigDefault: Record<
   TModelFilterType,
   Omit<TModelFilterFullConfig, 'type'>
 > = {
-  teams: {
-    buttonLabel: 'All Teams',
-    headerTitle: 'Filter - Teams',
-    searchPlaceholder: 'Search teams',
-  },
   teamIds: {
     buttonLabel: 'All Teams',
     headerTitle: 'Filter - Teams',
@@ -49,6 +44,3 @@ export const taskStatusOptions: TFilterOption[] = Object.entries(
   id: key,
   label: value,
 }));
-
-/** @deprecated — Use teams query instead. */
-export const teamOptions: TFilterOption[] = [];

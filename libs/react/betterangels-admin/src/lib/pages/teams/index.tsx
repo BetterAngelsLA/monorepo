@@ -69,6 +69,7 @@ export default function Teams(props: TProps) {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this team?')) return;
     try {
       const response = await deleteTeam({
         variables: { data: { id } },
@@ -101,6 +102,10 @@ export default function Teams(props: TProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teams</h1>
       </div>
+
+      {loading && teams.length === 0 && (
+        <div className="text-neutral-60 py-8 text-center">Loading teams...</div>
+      )}
 
       <div className="flex gap-2 items-end">
         <div className="flex flex-col">
@@ -194,6 +199,7 @@ export default function Teams(props: TProps) {
             )}
           </div>
         )}
+      )}
       />
     </div>
   );
