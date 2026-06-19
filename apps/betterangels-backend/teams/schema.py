@@ -1,5 +1,7 @@
 """Team GraphQL Query + Mutation — thin delegation to services + selectors."""
 
+from typing import cast
+
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
@@ -36,7 +38,7 @@ class Mutation:
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
-        return team_create(name=data.name, organization=org)
+        return cast(TeamType, team_create(name=data.name, organization=org))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -48,10 +50,13 @@ class Mutation:
         if team is None:
             raise ValueError(f"Team with id {data.id} not found.")
 
-        return team_update(
-            team=team,
-            name=maybe_value(data.name),
-            is_active=maybe_value(data.is_active),
+        return cast(
+            TeamType,
+            team_update(
+                team=team,
+                name=maybe_value(data.name),
+                is_active=maybe_value(data.is_active),
+            ),
         )
 
     @strawberry_django.mutation(

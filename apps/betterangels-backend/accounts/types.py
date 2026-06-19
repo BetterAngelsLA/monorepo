@@ -140,7 +140,7 @@ class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
     shelters: List[ShelterPermissions]  # type: ignore[valid-type]
-    teams: List[TeamPermissions]
+    teams: List[TeamPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)
