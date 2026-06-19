@@ -126,7 +126,11 @@ class Mutation:
 
         team_id = resolve_team_id(
             team=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=int(data.team_id.value) if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
             organization_id=permission_group.organization_id,
         )
 
@@ -163,7 +167,11 @@ class Mutation:
         # Resolve deprecated team enum / new teamId → FK before asdict.
         team_id = resolve_team_id(
             team=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=int(data.team_id.value) if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
             organization_id=permission_group.organization_id,
         )
 
@@ -329,10 +337,16 @@ class Mutation:
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
                     team_id=resolve_team_id(
-                        team=data.note.team.value if data.note.team is not strawberry.UNSET and data.note.team is not None else None,
+                        team=(
+                            data.note.team.value
+                            if data.note.team is not strawberry.UNSET and data.note.team is not None
+                            else None
+                        ),
                         team_id=(
                             int(data.note.team_id.value)
-                            if data.note.team_id is not strawberry.UNSET and data.note.team_id is not None and data.note.team_id.value is not None
+                            if data.note.team_id is not strawberry.UNSET
+                            and data.note.team_id is not None
+                            and data.note.team_id.value is not None
                             else None
                         ),
                         organization_id=permission_group.organization_id,

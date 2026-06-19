@@ -56,7 +56,11 @@ class Mutation:
         # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
         task_data["team_id"] = resolve_team_id(
             team=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=int(data.team_id.value) if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
             organization_id=permission_group.organization_id,
         )
         task_data.pop("team", None)
@@ -101,7 +105,11 @@ class Mutation:
         task: Task = qs.get(pk=data.id)
         team_id = resolve_team_id(
             team=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=int(data.team_id.value) if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None else None,
+            team_id=(
+                int(data.team_id.value)
+                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
+                else None
+            ),
             organization_id=task.organization_id or 0,
         )
 

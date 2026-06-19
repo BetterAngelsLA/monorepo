@@ -29,7 +29,9 @@ class TaskFilter:
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
-    teams = make_in_filter("team", SelahTeamEnum)  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
+    teams = make_in_filter(
+        "team", SelahTeamEnum
+    )  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
     team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field

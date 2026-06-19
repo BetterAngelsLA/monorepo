@@ -16,7 +16,6 @@ from typing import Any
 
 from accounts.models import User
 from clients.models import ClientProfile
-from teams.models import Team
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum
@@ -27,6 +26,7 @@ from notes.models import (
     ServiceRequest,
 )
 from organizations.models import Organization
+from teams.models import Team
 
 PURPOSES = [
     "Outreach",

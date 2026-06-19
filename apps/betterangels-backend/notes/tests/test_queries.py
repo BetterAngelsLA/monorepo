@@ -6,7 +6,6 @@ from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from teams.models import Team
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
@@ -19,6 +18,7 @@ from notes.models import (
 )
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 from unittest_parametrize import parametrize
 
 
@@ -281,9 +281,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         # Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site")
         slugs = [SelahTeamEnum[t].value for t in teams] if teams else []
-        team_ids = list(
-            Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True)
-        ) if slugs else []
+        team_ids = (
+            list(Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True))
+            if slugs
+            else []
+        )
         filters = {"teamIds": team_ids}
 
         query = """

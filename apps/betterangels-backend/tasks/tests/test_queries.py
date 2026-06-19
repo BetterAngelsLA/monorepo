@@ -3,12 +3,12 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from teams.models import Team
 from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 
 
 class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
