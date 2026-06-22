@@ -15,7 +15,11 @@
     "editor.defaultFormatter": "monosans.djlint"
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "charliermarsh.ruff"
+    }
   },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
