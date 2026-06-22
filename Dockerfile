@@ -138,9 +138,11 @@ USER betterangels
 RUN git config --global --add safe.directory "*"
 
 FROM base AS uv-stage
-COPY --chown=betterangels pyproject.toml uv.lock /workspace/
-COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
-COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
+COPY --chown=betterangels --parents \
+  pyproject.toml \
+  uv.lock \
+  apps/betterangels-backend/pyproject.toml \
+  /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
 
