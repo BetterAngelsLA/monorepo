@@ -22,7 +22,7 @@
     "update": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "uv lock --upgrade-package",
+        "command": "uv lock --upgrade",
         "cwd": "apps/betterangels-backend"
       }
     },
@@ -129,7 +129,7 @@
     "install": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "uv sync",
+        "command": "uv sync --group dev",
         "cwd": "apps/betterangels-backend"
       }
     },

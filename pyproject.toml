@@ -5,7 +5,7 @@ autoActivate = true
 name = "monorepo"
 version = "1.0.0"
 description = "Better Angels monorepo"
-requires-python = ">=3.14"
+requires-python = ">=3.14,<3.15"
 dependencies = ["betterangels-backend"]
 
 [tool.uv.sources]
