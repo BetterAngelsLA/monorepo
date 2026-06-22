@@ -93,8 +93,8 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run black --config ../../pyproject.toml .",
-          "poetry run isort ."
+          "poetry run ruff check --fix .",
+          "poetry run ruff format ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false
@@ -131,9 +131,8 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run flake8 .",
-          "poetry run black --config ../../pyproject.toml --check .",
-          "poetry run isort . --check-only"
+          "poetry run ruff check .",
+          "poetry run ruff format --check ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false

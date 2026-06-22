@@ -602,7 +602,6 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
-
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
@@ -1343,7 +1342,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
@@ -1637,7 +1636,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
