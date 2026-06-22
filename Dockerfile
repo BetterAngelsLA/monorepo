@@ -135,21 +135,14 @@ USER betterangels
 RUN git config --global --add safe.directory "*"
 
 FROM base AS uv-stage
-COPY --chown=betterangels --parents \
-  pyproject.toml \
-  uv.lock \
-  apps/betterangels-backend/pyproject.toml \
-  /workspace/
+COPY --chown=betterangels pyproject.toml uv.lock /workspace/
+COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
 
 FROM base AS yarn
-COPY --chown=betterangels --parents \
-  .yarnrc.yml \
-  yarn.lock \
-  package.json \
-  .yarn \
-  /workspace/
+COPY --chown=betterangels .yarnrc.yml yarn.lock package.json /workspace/
+COPY --chown=betterangels .yarn /workspace/.yarn
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
 
