@@ -19,9 +19,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "summary": "ba task",
                 "clientProfile": str(self.client_profile.pk),
             }
-        )[
-            "data"
-        ]["createTask"]["id"]
+        )["data"]["createTask"]["id"]
 
     @parametrize(
         "user_label, should_succeed",
