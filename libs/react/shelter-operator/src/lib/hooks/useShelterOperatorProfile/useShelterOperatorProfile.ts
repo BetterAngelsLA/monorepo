@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import { GetAdminShelterProfileDocument } from './__generated__/useAdminShelterProfile.generated';
+import { GetShelterOperatorProfileDocument } from './__generated__/useShelterOperatorProfile.generated';
 
 /**
  * Fetches the profile data for a shelter, such as name, address, and
@@ -8,14 +8,14 @@ import { GetAdminShelterProfileDocument } from './__generated__/useAdminShelterP
  * For day-to-day operational data like bed/room inventory and availability,
  * use a separate dedicated hook instead.
  */
-export function useAdminShelterProfile(shelterId: string) {
-  const { data, loading, error } = useQuery(GetAdminShelterProfileDocument, {
+export function useShelterOperatorProfile(shelterId: string) {
+  const { data, loading, error } = useQuery(GetShelterOperatorProfileDocument, {
     variables: { id: shelterId },
     skip: !shelterId,
   });
 
   return {
-    shelter: data?.adminShelter,
+    shelter: data?.operatorShelter,
     loading,
     error,
   };

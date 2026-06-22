@@ -5,7 +5,7 @@ query ViewSheltersByOrganization(
   $limit: Int
   $properties: ShelterPropertyInput
 ) {
-  adminShelters(
+  operatorShelters(
     filters: {
       organizations: [$organizationId]
       name: $name

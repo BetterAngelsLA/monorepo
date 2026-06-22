@@ -1,5 +1,5 @@
 import { useMutation } from '@apollo/client/react';
-import { GetAdminShelterProfileDocument } from '../useAdminShelterProfile/__generated__/useAdminShelterProfile.generated';
+import { GetShelterOperatorProfileDocument } from '../useShelterOperatorProfile/__generated__/useShelterOperatorProfile.generated';
 import {
   UpdateShelterProfileDocument,
   UpdateShelterProfileMutation,
@@ -13,7 +13,7 @@ type TProps = {
 /**
  * Mutation hook for updating the fairly static shelter profile data (name, address, general info).
  *
- * By default, automatically refetches {@link GetAdminShelterProfileDocument} after a
+ * By default, automatically refetches {@link GetShelterOperatorProfileDocument} after a
  * successful update so the UI stays in sync. Pass `refetch: false` to suppress this
  * if the caller manages cache updates itself.
  *
@@ -34,7 +34,7 @@ export function useUpdateShelterProfile(props?: TProps) {
           if (payload?.__typename === 'ShelterType') {
             return [
               {
-                query: GetAdminShelterProfileDocument,
+                query: GetShelterOperatorProfileDocument,
                 variables: { id: payload.id },
               },
             ];

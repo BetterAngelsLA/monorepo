@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Protocol, Sequence, Tuple, Type, cast
+from typing import Any, Protocol, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
 from common.errors import UnauthenticatedGQLError
-from django.contrib.auth.models import Group
-from django.db.models import Model, TextChoices
+from django.contrib.auth.models import AbstractBaseUser, Group
+from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
+from organizations.models import Organization
+from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -179,6 +181,130 @@ class IsAuthenticated(strawberry.BasePermission):
             raise UnauthenticatedGQLError()
 
         return True
+
+
+def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+    """Return a Q object matching a specific Django permission.
+
+    The default *prefix* ``permission_groups__group__permissions``
+    resolves from ``Organization`` through ``PermissionGroup`` →
+    ``Group`` → ``Permission`` → ``ContentType``.
+
+    Pass ``prefix="group__permissions"`` when querying ``PermissionGroup``
+    directly (e.g. in ``permission_annotations``).
+    """
+    return Q(
+        **{f"{prefix}__content_type__app_label": app_label},
+        **{f"{prefix}__codename": codename},
+    )
+
+
+def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+    """Public alias for ``_perm_q`` — Q for a single permission."""
+    return _perm_q(app_label, codename, prefix=prefix)
+
+
+def get_current_organization(info: Info) -> str:
+    """Return the organization ID from the current request context.
+
+    Reads ``request.organization_id``, which is set by
+    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header.
+
+    Companion to ``get_current_user(info)`` — use it anywhere a schema
+    method needs the active organization for selector/service calls.
+
+    Raises:
+        ``AttributeError`` if the request does not have ``organization_id``
+        set.  This only happens when a field/mutation uses ``@HasOrgPerm``
+        without the middleware being installed — which is a configuration
+        error.
+    """
+    return str(info.context.request.organization_id)
+
+
+_T = TypeVar("_T", bound=Model)
+
+
+def permissioned_queryset(
+    queryset: "QuerySet[_T]",
+    *,
+    user: AbstractBaseUser,
+    organization_id: str,
+    perms: Sequence[str] | None = None,
+    any_perm: bool = True,
+    organization_field: str = "organization_id",
+) -> "QuerySet[_T]":
+    """Scope *queryset* to records in *organization_id* where *user* belongs to the org.
+
+    When *perms* is provided, further restricts to records where the
+    user holds the specified permission(s).  The org-membership check is
+    implicit — ``permission_groups__group__user`` proves both.
+
+    Parameters
+    ----------
+    queryset : QuerySet
+        The base queryset to filter (e.g. ``Shelter.objects.all()``).
+    user : User
+        The authenticated user.
+    organization_id : str
+        The active organization ID.
+    perms : Sequence[str] | None
+        Optional permission(s) in ``"app_label.codename"`` format.
+        If ``None``, only org membership is checked.
+    any_perm : bool
+        If ``True`` (default), user must hold at least one permission.
+        If ``False``, user must hold **all** permissions.  Ignored
+        when *perms* is ``None``.
+    organization_field : str
+        The Django field lookup path to the owning organization.
+        Default ``"organization_id"`` works for models with a direct FK.
+        Use ``"shelter__organization_id"`` for indirect (Bed, Room).
+
+    Returns
+    -------
+    QuerySet
+        The filtered queryset.
+    """
+    queryset = queryset.filter(**{organization_field: organization_id})
+
+    if perms is None:
+        # Org membership only — no permission check
+        queryset = queryset.filter(
+            Exists(
+                Organization.objects.filter(
+                    pk=OuterRef(organization_field),
+                    users=user,
+                )
+            )
+        )
+    elif any_perm:
+        q = Q()
+        for perm_str in perms:
+            app_label, codename = perm_str.split(".", 1)
+            q |= Q(
+                Exists(
+                    Organization.objects.filter(
+                        pk=OuterRef(organization_field),
+                    )
+                    .filter(permission_groups__group__user=user)
+                    .filter(_perm_q(app_label, codename))
+                )
+            )
+        queryset = queryset.filter(q)
+    else:
+        for perm_str in perms:
+            app_label, codename = perm_str.split(".", 1)
+            queryset = queryset.filter(
+                Exists(
+                    Organization.objects.filter(
+                        pk=OuterRef(organization_field),
+                    )
+                    .filter(permission_groups__group__user=user)
+                    .filter(_perm_q(app_label, codename))
+                )
+            )
+
+    return queryset
 
 
 def assign_object_permissions(

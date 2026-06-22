@@ -36,7 +36,7 @@ from shelters.enums import (
     ShelterChoices,
     SpecialSituationRestrictionChoices,
 )
-from shelters.selectors import shelters_open_at
+from shelters.open_at import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 

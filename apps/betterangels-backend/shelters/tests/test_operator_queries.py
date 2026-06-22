@@ -10,10 +10,10 @@ from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class AdminShelterQueryTestCase(GraphQLBaseTestCase):
-    ADMIN_SHELTERS_QUERY = """
-        query AdminShelters($orgIds: [ID!], $offset: Int, $limit: Int) {
-            adminShelters(
+class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
+    OPERATOR_SHELTERS_QUERY = """
+        query OperatorShelters($orgIds: [ID!], $offset: Int, $limit: Int) {
+            operatorShelters(
                 filters: { organizations: $orgIds }
                 ordering: [{ createdAt: DESC }]
                 pagination: { offset: $offset, limit: $limit }
@@ -31,21 +31,26 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
+        # Grant view_shelter to the CASEWORKER permission group so the
+        # user inherits it through their org role.  HasOrgPerm checks
+        # the group's permissions at query time.
+        from notes.groups import CASEWORKER
+
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1_case_manager_1.user_permissions.add(perm)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
 
-    def test_admin_shelters_filter_by_organization(self) -> None:
+    def test_operator_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"orgIds": [str(self.org_1.id)], "offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 2)
 
         returned_ids = {r["id"] for r in payload["results"]}
@@ -54,17 +59,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_admin_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
+    def test_operator_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         # org_1_case_manager_1 belongs to org_1 only
         self.assertEqual(payload["totalCount"], 2)
         returned_ids = {r["id"] for r in payload["results"]}
@@ -73,77 +78,100 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_admin_shelters_excludes_non_member_org(self) -> None:
+    def test_operator_shelters_excludes_non_member_org(self) -> None:
         """Filtering by an org the user doesn't belong to returns empty results."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
-    def test_admin_shelters_multi_org_user_sees_all_member_orgs(self) -> None:
-        """A user belonging to multiple orgs sees shelters from all of them."""
-        # org_1_case_manager_1 belongs only to org_1; add them to org_2 as well
+    def test_operator_shelters_multi_org_user_sees_org_1_shelters(self) -> None:
+        """A user belonging to multiple orgs sees shelters from the org in the header."""
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
-        org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
-        self.assertEqual(payload["totalCount"], 3)
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 2)
         returned_ids = {r["id"] for r in payload["results"]}
         self.assertSetEqual(
             returned_ids,
-            {
-                str(self.shelter.id),
-                str(shelter_2.id),
-                str(org_2_shelter.id),
-            },
+            {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_admin_shelters_unauthenticated(self) -> None:
+    def test_operator_shelters_multi_org_user_sees_org_2_shelters(self) -> None:
+        """When the header changes, the same user sees the other org's shelters."""
+        from accounts.role_manager import OrgRoleManager
+        from notes.groups import CASEWORKER
+
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+
+        # Grant view_shelter to the CASEWORKER group in org_2
+        app_label, codename = Shelter.perms.VIEW.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        self.org_2.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+
+        self._set_active_org(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"offset": 0, "limit": 10},
+        )
+
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
+
+    def test_operator_shelters_unauthenticated(self) -> None:
         """Unauthenticated requests are rejected."""
         self.graphql_client.logout()
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"offset": 0, "limit": 10},
         )
 
         self.assertGraphQLUnauthenticated(response)
 
-    def test_admin_shelters_without_permission(self) -> None:
-        """Users without shelter view permission see no results (HasPerm filters silently)."""
+    def test_operator_shelters_without_permission(self) -> None:
+        """Users without shelter view permission are rejected."""
         self.graphql_client.force_login(self.non_case_manager_user)
 
         response = self.execute_graphql(
-            self.ADMIN_SHELTERS_QUERY,
+            self.OPERATOR_SHELTERS_QUERY,
             variables={"offset": 0, "limit": 10},
         )
 
-        payload = response["data"]["adminShelters"]
-        self.assertEqual(payload["totalCount"], 0)
-        self.assertEqual(payload["results"], [])
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
 
-    def test_admin_shelters_filter_by_name(self) -> None:
+    def test_operator_shelters_filter_by_name(self) -> None:
         """Name filter returns only shelters whose name matches (case-insensitive)."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.shelter.name = "Safe Haven"
         self.shelter.save()
 
         query = """
-            query AdminShelters($orgIds: [ID!], $name: String) {
-                adminShelters(
+            query OperatorShelters($orgIds: [ID!], $name: String) {
+                operatorShelters(
                     filters: { organizations: $orgIds, name: $name }
                 ) {
                     totalCount
@@ -156,13 +184,13 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"orgIds": [str(self.org_1.id)], "name": "safe haven"},
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
         self.assertEqual(payload["results"][0]["name"], "Safe Haven")
 
-    def test_admin_shelters_filter_by_properties(self) -> None:
-        """Property filters narrow results through the admin endpoint."""
+    def test_operator_shelters_filter_by_properties(self) -> None:
+        """Property filters narrow results through the operator endpoint."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
 
@@ -171,8 +199,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         shelter_2.pets.clear()
 
         query = """
-            query AdminShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
-                adminShelters(
+            query OperatorShelters($orgIds: [ID!], $properties: ShelterPropertyInput) {
+                operatorShelters(
                     filters: { organizations: $orgIds, properties: $properties }
                 ) {
                     totalCount
@@ -188,11 +216,11 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             },
         )
 
-        payload = response["data"]["adminShelters"]
+        payload = response["data"]["operatorShelters"]
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
 
-    def test_admin_shelters_beds_by_status(self) -> None:
+    def test_operator_shelters_beds_by_status(self) -> None:
         """Bed counts are returned grouped by status."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter = self.shelter
@@ -204,8 +232,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.OUT_OF_SERVICE)
 
         query = """
-            query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+            query OperatorShelters($orgIds: [ID!]) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -218,17 +246,17 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        results = response["data"]["adminShelters"]["results"]
+        results = response["data"]["operatorShelters"]["results"]
         shelter_data = next(r for r in results if r["id"] == str(shelter.id))
         self.assertEqual(
             shelter_data["bedsByStatus"],
             {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
         )
 
-    def test_admin_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
+    def test_operator_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
         """Room counts stay correct when beds and rooms are requested together."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter = self.shelter
@@ -238,8 +266,8 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
         Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
 
         query = """
-            query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+            query OperatorShelters($orgIds: [ID!]) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -256,20 +284,20 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             }
         """
         response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        shelter_data = next(r for r in response["data"]["adminShelters"]["results"] if r["id"] == str(shelter.id))
+        shelter_data = next(r for r in response["data"]["operatorShelters"]["results"] if r["id"] == str(shelter.id))
         self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
         self.assertEqual(
             shelter_data["roomsByStatus"],
             {"available": 0, "reserved": 0, "needsMaintenance": 1},
         )
 
-    def test_admin_shelters_beds_by_status_no_beds(self) -> None:
+    def test_operator_shelters_beds_by_status_no_beds(self) -> None:
         """Shelter with no beds returns all zeros for beds by status."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
-            query AdminShelters($orgIds: [ID!]) {
-                adminShelters(filters: { organizations: $orgIds }) {
+            query OperatorShelters($orgIds: [ID!]) {
+                operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
                         bedsByStatus {
@@ -282,10 +310,10 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        results = response["data"]["adminShelters"]["results"]
+        results = response["data"]["operatorShelters"]["results"]
         for result in results:
             self.assertEqual(
                 result["bedsByStatus"],
@@ -293,15 +321,15 @@ class AdminShelterQueryTestCase(GraphQLBaseTestCase):
             )
 
 
-class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
-    """Tests for the `properties` filter in ViewSheltersByOrganization (adminShelters)."""
+class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
+    """Tests for the `properties` filter on operatorShelters."""
 
-    VIEW_SHELTERS_BY_ORGANIZATION_QUERY = """
-        query ViewSheltersByOrganization(
+    OPERATOR_SHELTERS_PROPERTY_QUERY = """
+        query OperatorSheltersByProperty(
             $organizationId: ID!
             $properties: ShelterPropertyInput
         ) {
-            adminShelters(
+            operatorShelters(
                 filters: {
                     organizations: [$organizationId]
                     properties: $properties
@@ -316,9 +344,15 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
     def setUp(self) -> None:
         super().setUp()
+
+        # HasOrgPerm checks org-scoped permissions, not global Django perms.
+        from notes.groups import CASEWORKER
+
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1_case_manager_1.user_permissions.add(perm)
+        pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
+        pg.group.permissions.add(perm)
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         # Shelters A & B: SINGLE_MEN, VETERANS, BUILDING, SPA ONE
@@ -345,11 +379,11 @@ class AdminShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
     def _query(self, properties: dict[str, Any]) -> list[dict[Any, Any]]:
         response = self.execute_graphql(
-            self.VIEW_SHELTERS_BY_ORGANIZATION_QUERY,
+            self.OPERATOR_SHELTERS_PROPERTY_QUERY,
             variables={"organizationId": str(self.org_1.pk), "properties": properties},
         )
         self.assertIsNone(response.get("errors"))
-        return cast(list[dict[Any, Any]], response["data"]["adminShelters"]["results"])
+        return cast(list[dict[Any, Any]], response["data"]["operatorShelters"]["results"])
 
     @parametrize(
         "properties, expected_count",

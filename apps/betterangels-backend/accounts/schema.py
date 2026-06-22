@@ -3,16 +3,19 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
+from accounts.emails import send_welcome_emails_for_org
 from accounts.enums import OrgRoleEnum
+from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
-from common.permissions.utils import IsAuthenticated
+from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
@@ -22,15 +25,23 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import PermissionGroup, User
-from .services import member_add, organization_remove_member
+from .models import Organization, PermissionGroup, User
+from .services import (
+    create_organization_service,
+    member_add,
+    organization_remove_member,
+)
 from .types import (
     AuthResponse,
+    ChangeOrganizationMemberRoleInput,
+    CreateOrganizationInput,
+    CreateOrganizationResponse,
     CurrentUserType,
     LoginInput,
     OrganizationMemberFilter,
     OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationType,
     OrgInvitationInput,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
@@ -71,6 +82,7 @@ class Query:
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
+    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
     )
@@ -90,6 +102,7 @@ class Query:
 
         return cast(OrganizationMemberType, user)
 
+    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
@@ -177,23 +190,14 @@ class Mutation:
         return DeletedObjectType(id=user_id)
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
+        permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
-        organization = get_user_permitted_org(
-            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.ADD_ORG_MEMBER
-        )
-        if organization is None:
-            raise PermissionDenied("You do not have permission to add members.")
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
-        if template is None:
-            valid = REGISTRY.invitable_template_names_for(organization)
-            raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
-                f"Available: {', '.join(valid)}"
-            )
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         user = member_add(
             email=data.email,
@@ -221,7 +225,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
     )
     def remove_organization_member(
         self,
@@ -229,12 +233,8 @@ class Mutation:
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
         current_user = cast(User, get_current_user(info))
-
-        organization = get_user_permitted_org(
-            current_user, org_id=str(data.organization_id), permission=UserOrganizationPermissions.REMOVE_ORG_MEMBER
-        )
-        if organization is None:
-            raise PermissionDenied("You do not have permission to remove members.")
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
 
         removed_id = organization_remove_member(
             organization=organization,
@@ -243,3 +243,57 @@ class Mutation:
         )
 
         return DeletedObjectType(id=removed_id)
+
+    # ── Organization Creation ──────────────────────────────────────
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def create_organization(self, info: Info, data: CreateOrganizationInput) -> CreateOrganizationResponse:
+        """Create an organization for the authenticated user.
+
+        Creates a new Organization with the requested org type, links the
+        current user as owner, assigns the member-level role, and sends a
+        welcome email.
+        """
+        current_user = cast(User, get_current_user(info))
+        user, organization = create_organization_service(
+            user=current_user,
+            organization_name=data.organization_name,
+            org_type_name=data.org_type,
+        )
+
+        send_welcome_emails_for_org(user, organization)
+
+        return CreateOrganizationResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
+
+    # ── Role Change ────────────────────────────────────────────────
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+    )
+    def change_organization_member_role(
+        self, info: Info, data: ChangeOrganizationMemberRoleInput
+    ) -> OrganizationMemberType:
+        """Promote or demote a member within an organization.
+
+        Replaces all of the member's current org-scoped roles with the
+        single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
+        permission.
+        """
+        org_id = get_current_organization(info)
+        organization = Organization.objects.get(pk=org_id)
+
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
+
+        target_user = User.objects.filter(
+            id=data.user_id,
+            organizations_organization=organization,
+        ).first()
+        if not target_user:
+            raise PermissionDenied("Target user is not a member of this organization.")
+
+        OrgRoleManager(organization).replace_roles(target_user, template)
+
+        if hasattr(target_user, "_member_role"):
+            object.__delattr__(target_user, "_member_role")
+        return cast(OrganizationMemberType, target_user)
