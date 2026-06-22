@@ -43,13 +43,13 @@
         "charliermarsh.ruff",
         "ms-python.python",
         "nrwl.angular-console@18.10.1",
-        "tamasfe.even-better-toml",
         "wix.vscode-import-cost",
         "batisteo.vscode-django",
         "monosans.djlint",
         "matangover.mypy",
         "eamodio.gitlens",
         "GraphQL.vscode-graphql",
+        "TypeScriptTeam.native-preview",
         "saoudrizwan.claude-dev"
       ]
     }

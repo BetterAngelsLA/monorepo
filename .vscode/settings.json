@@ -21,9 +21,8 @@
       "source.organizeImports": "charliermarsh.ruff"
     }
   },
-  "[toml]": {
-    "editor.defaultFormatter": "tamasfe.even-better-toml"
-  },
+
+  "js/ts.experimental.useTsgo": true,
   "js/ts.suggest.autoImports": true,
   "search.exclude": {
     "**/.pnp.*": true,
