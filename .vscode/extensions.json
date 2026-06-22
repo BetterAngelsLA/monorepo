@@ -6,7 +6,6 @@
     "dbaeumer.vscode-eslint",
     "arcanis.vscode-zipfs",
     "ms-python.python",
-    "tamasfe.even-better-toml",
     "charliermarsh.ruff",
     "wix.vscode-import-cost",
     "batisteo.vscode-django",

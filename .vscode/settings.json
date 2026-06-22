@@ -18,21 +18,23 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
-      "source.organizeImports": "charliermarsh.ruff"
+      "source.organizeImports": "explicit"
     }
   },
-  "[toml]": {
-    "editor.defaultFormatter": "tamasfe.even-better-toml"
-  },
-  "typescript.suggest.autoImports": true,
+
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.suggest.autoImports": true,
   "search.exclude": {
     "**/.pnp.*": true,
     "**/.yarn": true,
     "**/.venv": true
   },
   "mypy.enabled": true,
-  "mypy.runUsingActiveInterpreter": true,
+  "mypy.targets": [],
+  "mypy.runUsingActiveInterpreter": false,
+  "mypy.dmypyExecutable": "${workspaceFolder}/tools/scripts/dmypy-wrapper.sh",
   "python.analysis.typeCheckingMode": "off",
+  "python.analysis.include": ["apps/betterangels-backend"],
   "python.testing.pytestArgs": ["apps", "libs"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
