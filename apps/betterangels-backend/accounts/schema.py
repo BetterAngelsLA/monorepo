@@ -3,7 +3,7 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
-from accounts.emails import send_welcome_email
+from accounts.emails import send_welcome_emails_for_org
 from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
@@ -15,7 +15,7 @@ from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
@@ -197,13 +197,7 @@ class Mutation:
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
-        if template is None:
-            valid = REGISTRY.invitable_template_names_for(organization)
-            raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
-                f"Available: {', '.join(valid)}"
-            )
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         user = member_add(
             email=data.email,
@@ -267,9 +261,7 @@ class Mutation:
             org_type_name=data.org_type,
         )
 
-        templates = [t for t in REGISTRY.templates_for(organization) if t.welcome_html]
-        for template in templates:
-            send_welcome_email(user, organization, template)
+        send_welcome_emails_for_org(user, organization)
 
         return CreateOrganizationResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
 
@@ -291,13 +283,7 @@ class Mutation:
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
-        if template is None:
-            valid = REGISTRY.invitable_template_names_for(organization)
-            raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
-                f"Available: {', '.join(valid)}"
-            )
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         target_user = User.objects.filter(
             id=data.user_id,

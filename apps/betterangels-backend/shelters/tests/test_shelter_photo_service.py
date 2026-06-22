@@ -80,6 +80,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[self.upload],
         )
@@ -100,6 +101,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         create_presigned_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[self.upload],
         )
@@ -124,6 +126,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         create_presigned_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[self.upload],
         )
@@ -141,7 +144,8 @@ class CreatePresignedUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported content_type: application/pdf for filename=photo.jpg"):
             create_presigned_uploads(
                 user=self.user,
-                shelter_id=str(self.shelter.pk),
+            organization_id=str(self.org.pk),
+            shelter_id=str(self.shelter.pk),
                 uploads=[self.upload],
             )
 
@@ -163,6 +167,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[self.upload, upload2],
         )
@@ -205,6 +210,7 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[self.photo_input],
         )
@@ -217,6 +223,7 @@ class ResolveUploadsTest(TestCase):
     def test_saves_correct_file_path(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         result = resolve_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[self.photo_input],
         )
@@ -230,6 +237,7 @@ class ResolveUploadsTest(TestCase):
     def test_associates_photo_with_shelter(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         result = resolve_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[self.photo_input],
         )
@@ -241,6 +249,7 @@ class ResolveUploadsTest(TestCase):
     def test_validates_token_with_correct_params(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         resolve_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[self.photo_input],
         )
@@ -257,7 +266,8 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid or expired upload token for 'photo.jpg'"):
             resolve_uploads(
                 user=self.user,
-                shelter_id=self.shelter.pk,
+            organization_id=str(self.org.pk),
+            shelter_id=self.shelter.pk,
                 photos=[self.photo_input],
             )
 
@@ -267,7 +277,8 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "File not found in storage for 'photo.jpg'"):
             resolve_uploads(
                 user=self.user,
-                shelter_id=self.shelter.pk,
+            organization_id=str(self.org.pk),
+            shelter_id=self.shelter.pk,
                 photos=[self.photo_input],
             )
 
@@ -279,7 +290,8 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported content_type: application/pdf for filename=photo.jpg"):
             resolve_uploads(
                 user=self.user,
-                shelter_id=self.shelter.pk,
+            organization_id=str(self.org.pk),
+            shelter_id=self.shelter.pk,
                 photos=[self.photo_input],
             )
 
@@ -297,6 +309,7 @@ class ResolveUploadsTest(TestCase):
 
         resolve_uploads(
             user=self.user,
+            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[self.photo_input, photo2],
         )
@@ -321,7 +334,8 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid or expired upload token for 'bad.png'"):
             resolve_uploads(
                 user=self.user,
-                shelter_id=self.shelter.pk,
+            organization_id=str(self.org.pk),
+            shelter_id=self.shelter.pk,
                 photos=[self.photo_input, photo2],
             )
 
@@ -344,7 +358,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, ids=[photo.pk])
+        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk])
 
         self.assertEqual(result, [photo.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
@@ -355,7 +369,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, ids=[photo1.pk, photo2.pk])
+        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo1.pk, photo2.pk])
 
         self.assertCountEqual(result, [photo1.pk, photo2.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk__in=[photo1.pk, photo2.pk]).exists())
@@ -365,7 +379,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
 
         with self.assertRaisesRegex(Exception, "999999"):
-            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
 
     def test_raises_for_unauthorized_photo(self) -> None:
         other_org: Any = organization_recipe.make()
@@ -374,14 +388,14 @@ class DeleteShelterPhotosTest(TestCase):
         unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
 
         with self.assertRaisesRegex(Exception, str(unauthorized.pk)):
-            delete_shelter_photos(user=self.user, ids=[authorized.pk, unauthorized.pk])
+            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[authorized.pk, unauthorized.pk])
 
     def test_is_atomic_no_deletes_when_one_id_missing(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         initial_count = ShelterPhoto.objects.count()
 
         with self.assertRaisesRegex(ObjectDoesNotExist, "999999"):
-            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
 
@@ -393,7 +407,7 @@ class DeleteShelterPhotosTest(TestCase):
         initial_count = ShelterPhoto.objects.count()
 
         with self.assertRaisesRegex(ObjectDoesNotExist, str(unauthorized.pk)):
-            delete_shelter_photos(user=self.user, ids=[authorized.pk, unauthorized.pk])
+            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[authorized.pk, unauthorized.pk])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
 
@@ -416,7 +430,7 @@ class UpdateShelterPhotoTest(TestCase):
     def test_updates_photo_type(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
 
-        result = update_shelter_photo(user=self.user, data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
+        result = update_shelter_photo(user=self.user, organization_id=str(self.org.pk), data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
 
         self.assertEqual(result.pk, photo.pk)
         photo.refresh_from_db()
@@ -424,7 +438,7 @@ class UpdateShelterPhotoTest(TestCase):
 
     def test_raises_for_nonexistent_photo(self) -> None:
         with self.assertRaisesRegex(Exception, "999999"):
-            update_shelter_photo(user=self.user, data=self._input(999999, ShelterPhotoTypeChoices.EXTERIOR))
+            update_shelter_photo(user=self.user, organization_id=str(self.org.pk), data=self._input(999999, ShelterPhotoTypeChoices.EXTERIOR))
 
     def test_raises_for_unauthorized_photo(self) -> None:
         other_org: Any = organization_recipe.make()
@@ -432,7 +446,7 @@ class UpdateShelterPhotoTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=other_shelter, type=ShelterPhotoTypeChoices.INTERIOR)
 
         with self.assertRaisesRegex(Exception, str(photo.pk)):
-            update_shelter_photo(user=self.user, data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
+            update_shelter_photo(user=self.user, organization_id=str(self.org.pk), data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR))
 
         photo.refresh_from_db()
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)

@@ -101,6 +101,23 @@ class Registry:
         """Return invitable-only template names (is_invitable=True)."""
         return sorted(self._invitable_templates_by_name.keys())
 
+    def get_template_or_raise(self, name: str, org: Organization) -> TemplateConfig:
+        """Look up a template by *name* and raise ``ValidationError`` if not found for *org*.
+
+        DRY helper for mutations that accept a ``permission_template`` input
+        and need to validate it against the org's available invitable templates.
+        """
+        from django.core.exceptions import ValidationError
+
+        template = self.template(name)
+        if template is None:
+            valid = self.invitable_template_names_for(org)
+            raise ValidationError(
+                f"Invalid permission template '{name}'. "
+                f"Available: {', '.join(valid)}"
+            )
+        return template
+
     def invitable_template_names_for(self, org: Organization) -> list[str]:
         """Invitable template names available for *org*, based on ``profile.org_types``."""
         org_types = org.profile.org_types if hasattr(org, "profile") else []
