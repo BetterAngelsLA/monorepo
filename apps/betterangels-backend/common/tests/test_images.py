@@ -86,8 +86,9 @@ class BuildImgUrlTest(TestCase):
     def test_falls_back_when_imgproxy_raises(self) -> None:
         """If build_imgproxy_url raises, fall back to file.url."""
         file = _make_field_file()
-        with patch("common.images.build_imgproxy_url", side_effect=ValueError("bad hex key")), patch.object(
-            FieldFile, "url", new_callable=PropertyMock, return_value="https://cdn/fallback.jpg"
+        with (
+            patch("common.images.build_imgproxy_url", side_effect=ValueError("bad hex key")),
+            patch.object(FieldFile, "url", new_callable=PropertyMock, return_value="https://cdn/fallback.jpg"),
         ):
             url = build_img_url(file, preset=ImagePresetEnum.MD)
         self.assertEqual(url, "https://cdn/fallback.jpg")
