@@ -1,14 +1,18 @@
 [tool.nx]
 autoActivate = true
 
-[tool.poetry]
-name = "@monorepo/source"
+[project]
+name = "monorepo"
 version = "1.0.0"
-description = ""
-authors = []
-license = "Proprietary"
-readme = "README.md"
-package-mode = false
+description = "Better Angels monorepo"
+requires-python = ">=3.14"
+dependencies = ["betterangels-backend"]
+
+[tool.uv.sources]
+betterangels-backend = { workspace = true }
+
+[tool.uv.workspace]
+members = ["apps/betterangels-backend"]
 
 [tool.black]
 line-length = 120
@@ -24,44 +28,31 @@ profile = "black"
 line_length = 120
 skip_glob = ["*/migrations/*"]
 
-[tool.poetry.dependencies]
-python = "3.14.2"
-
-[tool.poetry.dependencies.betterangels-backend]
-path = "apps/betterangels-backend"
-develop = true
-
-
-[tool.poetry.group.dev.dependencies]
-flake8 = "^7.3.0"
-isort = "^8.0.1"
-black = "^26.1.0"
-flake8-bugbear = "^25.11.29"
-django-stubs-ext = "^5.2.9"
-djlint = "^1.36.4"
-django-stubs = {extras = ["compatible-mypy"], version = "^5.2.9"}
-celery-types = "^0.26.0"
-vcrpy = "^8.1.0"
-djangorestframework-stubs = { extras = [
-    "compatible-mypy",
-], version = "^3.16.6" }
-ipython = "^9.9.0"
-pytest-django = "^4.11.1"
-boto3-stubs = {extras = ["essential"], version = "^1.42.41"}
-model-bakery = "^1.23.2"
-unittest-parametrize = "^1.6.0"
-time-machine = "^3.2.0"
-types-python-dateutil = "^2.9.0.20260124"
-types-gevent = "^25.4.0.20250801"
-types-requests = "^2.32.0"
-pre-commit = "^4.3.1"
-virtualenv = "^21.1.0"
-faker = "^40.15.0"
-
+[dependency-groups]
+dev = [
+    "black>=26.1.0,<27",
+    "boto3-stubs[essential]>=1.42.41,<2",
+    "celery-types>=0.26.0,<1",
+    "django-stubs[compatible-mypy]>=5.2.9,<6",
+    "django-stubs-ext>=5.2.9,<6",
+    "djangorestframework-stubs[compatible-mypy]>=3.16.6,<4",
+    "djlint>=1.36.4,<2",
+    "faker>=40.15.0,<41",
+    "flake8>=7.3.0,<8",
+    "flake8-bugbear>=25.11.29,<26",
+    "ipython>=9.9.0,<10",
+    "isort>=8.0.1,<9",
+    "model-bakery>=1.23.2,<2",
+    "pre-commit>=4.3.1,<5",
+    "pytest-django>=4.11.1,<5",
+    "time-machine>=3.2.0,<4",
+    "types-gevent>=25.4.0.20250801,<26",
+    "types-python-dateutil>=2.9.0.20260124,<3",
+    "types-requests>=2.32.0,<3",
+    "unittest-parametrize>=1.6.0,<2",
+    "vcrpy>=8.1.0,<9",
+    "virtualenv>=21.1.0,<22",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "betterangels_backend.settings"
-
-[build-system]
-requires = ["poetry-core==1.1.0"]
-build-backend = "poetry.core.masonry.api"

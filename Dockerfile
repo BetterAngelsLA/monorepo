@@ -93,8 +93,9 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
-# Python
-RUN pip install poetry==2.3.2
+# Python - uv (pinned version)
+COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
+ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -136,13 +137,12 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 USER betterangels
 RUN git config --global --add safe.directory "*"
 
-FROM base AS poetry
-# Need to create bare Python Packages otherwise poetry will explode (sadpanda)
-COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
+FROM base AS uv-stage
+COPY --chown=betterangels pyproject.toml uv.lock /workspace/
 COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
 COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
-RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
-    poetry install --no-interaction --no-ansi
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
+    uv sync --no-install-project --no-dev
 
 FROM base AS yarn
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
@@ -152,6 +152,6 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
 
 # Production Build
 FROM base AS production
-COPY --from=poetry /workspace /workspace
+COPY --from=uv-stage /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace

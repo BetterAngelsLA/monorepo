@@ -25,9 +25,9 @@ alias ynx-typecheck="yarn nx affected -t typecheck"
 # db
 alias ynx-reset-db="yarn nx run betterangels-backend:reset_db"
 
-# poetry installs
-alias ynx-poetry-add="yarn nx run betterangels-backend:add --name"
-alias ynx-poetry-install="yarn nx run betterangels-backend:install"
+# uv installs
+alias ynx-uv-add="yarn nx run betterangels-backend:add --name"
+alias ynx-uv-sync="yarn nx run betterangels-backend:install"
 
 # service start
 alias ynx-start-be="yarn nx start betterangels-backend"
@@ -65,7 +65,7 @@ ynx-test-be() {
       return 1
     fi
 
-    cd apps/betterangels-backend && poetry run pytest "$filepath"
+    cd apps/betterangels-backend && uv run pytest "$filepath"
     cd -
   else
     yarn nx test betterangels-backend
@@ -107,8 +107,8 @@ ynx() {
   echo "    ynx-reset-db             - reset the database"
   echo ""
   echo "  Dependencies"
-  echo "    ynx-poetry-add <name>    - add a poetry dependency"
-  echo "    ynx-poetry-install       - install poetry dependencies"
+    echo "    ynx-uv-add <name>    - add a uv dependency"
+    echo "    ynx-uv-sync           - sync uv dependencies"
   echo ""
   echo "  Start Services"
   echo "    ynx-start-be             - start backend"
