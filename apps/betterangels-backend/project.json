@@ -152,7 +152,7 @@
     "typecheck": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "commands": ["poetry run mypy --config-file=../../mypy.ini ."],
+        "commands": ["poetry run dmypy run -- --config-file=../../mypy.ini ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
