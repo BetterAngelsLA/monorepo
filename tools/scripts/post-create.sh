@@ -8,7 +8,7 @@ echo "=== postCreate: Installing Node dependencies ==="
 yarn install
 
 echo "=== postCreate: Installing Python dependencies ==="
-poetry install
+uv sync
 
 echo "=== postCreate: Setting up Cline MCP config ==="
 mkdir -p ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings

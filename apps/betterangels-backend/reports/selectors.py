@@ -66,7 +66,7 @@ def _team_value_to_label(value: str) -> str:
     """Convert a SelahTeamEnum value to its human-readable label."""
     try:
         return str(SelahTeamEnum(value).label)
-    except (ValueError, KeyError):
+    except ValueError, KeyError:
         return value
 
 
