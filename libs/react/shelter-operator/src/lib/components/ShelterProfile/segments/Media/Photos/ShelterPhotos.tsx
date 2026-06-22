@@ -38,7 +38,7 @@ function buildColumns(
     {
       key: 'name',
       label: 'File Name',
-      sortValue: (photo) => getLastPathSegment(photo.file.name),
+      filterValue: (photo) => photo.file.name,
       render: (photo) => getLastPathSegment(photo.file.name).toLowerCase(),
     },
     {
@@ -46,6 +46,7 @@ function buildColumns(
       label: 'Type',
       width: '140px',
       cellClassName: 'capitalize',
+      filterValue: (photo) => photo.type,
       sortValue: (photo) => photo.type,
       render: (photo) => photo.type.toLowerCase(),
     },

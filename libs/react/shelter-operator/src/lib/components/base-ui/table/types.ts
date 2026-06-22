@@ -12,6 +12,8 @@ export type TableColumn<TItem> = {
   render: (item: TItem) => ReactNode;
   /** When provided, the column becomes sortable. Extracts a string or number from an item for comparison. */
   sortValue?: (item: TItem) => string | number;
+  /** When provided, the column becomes filterable with a text input below its header. */
+  filterValue?: (item: TItem) => string;
 };
 
 export type TableProps<TItem, TRowObject = TItem> = {
@@ -44,4 +46,8 @@ export type TableProps<TItem, TRowObject = TItem> = {
     column: string | null,
     direction: SortDirection | null
   ) => void;
+  /** Controlled filter values keyed by column key. */
+  filters?: Record<string, string>;
+  /** Called when a filter input value changes. */
+  onFilterChange?: (columnKey: string, value: string) => void;
 };

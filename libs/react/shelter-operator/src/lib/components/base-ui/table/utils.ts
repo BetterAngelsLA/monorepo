@@ -11,3 +11,8 @@ export function compareValues(
   }
   return String(a).localeCompare(String(b)) * multiplier;
 }
+
+export function matchesFilter(itemValue: string, filterText: string): boolean {
+  if (!filterText) return true;
+  return itemValue.toLowerCase().includes(filterText.toLowerCase());
+}

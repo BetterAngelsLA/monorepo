@@ -1,9 +1,9 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { ColumnHeader } from './header/ColumnHeader';
+import { useTableSortFilter } from './header/useTableSortFilter';
 import { TableRow, type TableRowCell } from './TableRow';
-import type { SortDirection, TableColumn, TableProps } from './types';
-import { compareValues } from './utils';
+import type { TableProps } from './types';
 
 const TableBase = <TItem, TRowObject = TItem>({
   columns,
@@ -26,74 +26,38 @@ const TableBase = <TItem, TRowObject = TItem>({
   tableStyle,
   headerStyle,
   rowStyle,
-  sortColumn: controlledSortColumn,
-  sortDirection: controlledSortDirection,
+  sortColumn,
+  sortDirection,
   onSortChange,
+  filters: controlledFilters,
+  onFilterChange,
 }: TableProps<TItem, TRowObject>) => {
-  const isControlled = onSortChange !== undefined;
+  const {
+    visibleRows,
+    sortColumn: activeSortColumn,
+    sortDirection: activeSortDirection,
+    handleSortToggle,
+    filters,
+    handleFilterChange,
+  } = useTableSortFilter({
+    columns,
+    rows,
+    sortColumn,
+    sortDirection,
+    onSortChange,
+    filters: controlledFilters,
+    onFilterChange,
+  });
 
-  const [internalSortColumn, setInternalSortColumn] = useState<string | null>(
-    null
-  );
-  const [internalSortDirection, setInternalSortDirection] =
-    useState<SortDirection | null>(null);
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
 
-  const sortColumn = isControlled
-    ? controlledSortColumn ?? null
-    : internalSortColumn;
-  const sortDirection = isControlled
-    ? controlledSortDirection ?? null
-    : internalSortDirection;
-
-  const handleSortToggle = useCallback(
+  const handleClearFilter = useCallback(
     (columnKey: string) => {
-      const column = columns.find((c) => c.key === columnKey);
-
-      if (!column?.sortValue) {
-        return;
-      }
-
-      let nextColumn: string | null;
-      let nextDirection: SortDirection | null;
-
-      if (sortColumn !== columnKey) {
-        nextColumn = columnKey;
-        nextDirection = 'asc';
-      } else if (sortDirection === 'asc') {
-        nextColumn = columnKey;
-        nextDirection = 'desc';
-      } else {
-        nextColumn = null;
-        nextDirection = null;
-      }
-
-      if (isControlled) {
-        onSortChange(nextColumn, nextDirection);
-      } else {
-        setInternalSortColumn(nextColumn);
-        setInternalSortDirection(nextDirection);
-      }
+      handleFilterChange(columnKey, '');
+      setOpenFilterColumn(null);
     },
-    [columns, sortColumn, sortDirection, isControlled, onSortChange]
+    [handleFilterChange]
   );
-
-  const sortedRows = useMemo(() => {
-    if (!sortColumn || !sortDirection) {
-      return rows;
-    }
-
-    const sortableColumn = columns.find((c) => c.key === sortColumn);
-    if (!sortableColumn?.sortValue) {
-      return rows;
-    }
-
-    const sortFn = sortableColumn.sortValue;
-    return [...rows].sort((a, b) => {
-      const valA = sortFn(a);
-      const valB = sortFn(b);
-      return compareValues(valA, valB, sortDirection);
-    });
-  }, [rows, sortColumn, sortDirection, columns]);
 
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
@@ -104,29 +68,10 @@ const TableBase = <TItem, TRowObject = TItem>({
     ? `${dataTemplateColumns} ${trailingColumnWidth}`
     : dataTemplateColumns;
 
-  function renderSortIcon(column: TableColumn<TItem>) {
-    if (!column.sortValue) {
-      return null;
-    }
-
-    if (sortColumn !== column.key || !sortDirection) {
-      return <ArrowUpDown size={16} className="text-[#B0B5BD]" />;
-    }
-
-    if (sortDirection === 'asc') {
-      return <ArrowUp size={16} className="text-[#3D7FFF]" />;
-    }
-
-    return <ArrowDown size={16} className="text-[#3D7FFF]" />;
-  }
-
   return (
     <div
       role="table"
-      className={mergeCss([
-        'bg-white rounded-2xl overflow-hidden w-full',
-        wrapperClassName,
-      ])}
+      className={mergeCss(['bg-white rounded-2xl w-full', wrapperClassName])}
       style={tableStyle}
     >
       <div
@@ -139,40 +84,18 @@ const TableBase = <TItem, TRowObject = TItem>({
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
         {columns.map((column) => (
-          <div
-            role="columnheader"
+          <ColumnHeader
             key={column.key}
-            aria-sort={
-              sortColumn === column.key
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : undefined
-            }
-            tabIndex={column.sortValue ? 0 : undefined}
-            onClick={
-              column.sortValue ? () => handleSortToggle(column.key) : undefined
-            }
-            onKeyDown={
-              column.sortValue
-                ? (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSortToggle(column.key);
-                    }
-                  }
-                : undefined
-            }
-            className={mergeCss([
-              'text-left justify-self-start',
-              column.sortValue &&
-                'cursor-pointer select-none flex items-center gap-1',
-              column.headerClassName,
-            ])}
-          >
-            {column.label}
-            {renderSortIcon(column)}
-          </div>
+            column={column}
+            activeSortColumn={activeSortColumn}
+            activeSortDirection={activeSortDirection}
+            onSortToggle={handleSortToggle}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilter={handleClearFilter}
+            openFilterColumn={openFilterColumn}
+            setOpenFilterColumn={setOpenFilterColumn}
+          />
         ))}
         {hasTrailingColumn && (
           <div aria-hidden="true" className="justify-self-end">
@@ -183,10 +106,10 @@ const TableBase = <TItem, TRowObject = TItem>({
 
       {loading && loadingState}
 
-      {!loading && sortedRows.length === 0 && emptyState}
+      {!loading && visibleRows.length === 0 && emptyState}
 
       {!loading &&
-        sortedRows.map((item, index) => {
+        visibleRows.map((item, index) => {
           const rowObject = getRowObject
             ? getRowObject(item, index)
             : (item as unknown as TRowObject);
