@@ -4,7 +4,6 @@ import { operatorPath } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { type SubmitEvent, useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '../../../../providers/activeOrg';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -31,8 +30,6 @@ import { SummaryInformationSection } from './sections/SummaryInformationSection'
 
 export function CreateShelterForm() {
   const navigate = useNavigate();
-  const { activeOrg } = useActiveOrg();
-  const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -63,11 +60,6 @@ export function CreateShelterForm() {
     event.preventDefault();
     setSubmissionError(null);
 
-    if (!selectedOrganizationId) {
-      setSubmissionError('Please select an organization.');
-      return;
-    }
-
     const validation = validateShelterForm(formData);
     setErrors(validation.errors);
     if (!validation.isValid) {
@@ -77,7 +69,7 @@ export function CreateShelterForm() {
     try {
       const { data } = await createShelter({
         variables: {
-          data: buildCreateShelterInput(formData, selectedOrganizationId),
+          data: buildCreateShelterInput(formData),
         },
         errorPolicy: 'all',
       });
