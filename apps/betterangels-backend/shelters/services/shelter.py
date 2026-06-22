@@ -130,10 +130,9 @@ def shelter_create(*, user: "User", organization_id: str, data: Dict[str, Any]) 
     """Create a new Shelter with all M2M relationships and schedules.
 
     *organization_id* (from the ``X-Organization-ID`` header, validated by
-    ``HasOrgPerm``) is used as the owning organization.  Any
-    ``organization`` key in *data* is overwritten so the caller cannot
-    create a shelter in a different org than the one validated by the
-    permission extension.
+    ``HasOrgPerm``) is used as the owning organization.  The
+    ``CreateShelterInput`` no longer accepts an ``organization`` field;
+    the org is always determined by the header.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
@@ -141,8 +140,8 @@ def shelter_create(*, user: "User", organization_id: str, data: Dict[str, Any]) 
     Raises:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    # Use the header-validated org, not whatever may be in the payload.
-    data["organization"] = organization_id
+    # Use the header-validated org.
+    data["organization_id"] = organization_id
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 

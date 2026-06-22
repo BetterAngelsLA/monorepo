@@ -727,7 +727,6 @@ input CreateShelterInput {
   exitPolicy: [ExitPolicyChoices!] = null
   shelterPrograms: [ShelterProgramChoices!] = null
   funders: [FunderChoices!] = null
-  organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
   services: [ServiceInput!] = null
