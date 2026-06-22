@@ -93,8 +93,8 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run ruff format .",
-          "poetry run ruff check --fix ."
+          "poetry run black --config ../../pyproject.toml .",
+          "poetry run isort ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false
@@ -131,8 +131,9 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run ruff check .",
-          "poetry run ruff format --check ."
+          "poetry run flake8 .",
+          "poetry run black --config ../../pyproject.toml --check .",
+          "poetry run isort . --check-only"
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false
@@ -152,7 +153,7 @@
     "typecheck": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "commands": ["poetry run dmypy run -- --config-file=../../mypy.ini ."],
+        "commands": ["poetry run mypy --config-file=../../mypy.ini ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
