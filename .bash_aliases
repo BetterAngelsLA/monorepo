@@ -26,7 +26,7 @@ alias ynx-typecheck="yarn nx affected -t typecheck"
 alias ynx-reset-db="yarn nx run betterangels-backend:reset_db"
 
 # uv installs
-alias ynx-uv-add="yarn nx run betterangels-backend:add"
+alias ynx-uv-add="yarn nx run betterangels-backend:add --name"
 alias ynx-uv-sync="yarn nx run betterangels-backend:install"
 
 # service start

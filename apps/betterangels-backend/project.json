@@ -6,32 +6,20 @@
   "tags": [],
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "uv lock",
-        "cwd": "apps/betterangels-backend"
-      }
+      "executor": "@nxlv/python:lock",
+      "options": {}
     },
     "add": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "uv add",
-        "cwd": "apps/betterangels-backend"
-      }
+      "executor": "@nxlv/python:add",
+      "options": {}
     },
     "update": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "uv lock --upgrade",
-        "cwd": "apps/betterangels-backend"
-      }
+      "executor": "@nxlv/python:update",
+      "options": {}
     },
     "remove": {
-      "executor": "@nxlv/python:run-commands",
-      "options": {
-        "command": "uv remove",
-        "cwd": "apps/betterangels-backend"
-      }
+      "executor": "@nxlv/python:remove",
+      "options": {}
     },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh",
@@ -127,10 +115,9 @@
       "command": "cd apps/betterangels-backend && uv run python manage.py shell_plus"
     },
     "install": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "@nxlv/python:install",
       "options": {
-        "command": "uv sync --group dev",
-        "cwd": "apps/betterangels-backend"
+        "args": "--group dev"
       }
     },
     "lint": {
