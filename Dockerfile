@@ -135,6 +135,7 @@ USER betterangels
 RUN git config --global --add safe.directory "*"
 
 FROM base AS uv-stage
+# --parents requires Dockerfile syntax 1.20+ (supported by BuildKit; VS Code Docker extension lags)
 COPY --chown=betterangels --parents \
   pyproject.toml \
   uv.lock \
@@ -144,6 +145,7 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
 
 FROM base AS yarn
+# --parents requires Dockerfile syntax 1.20+ (supported by BuildKit; VS Code Docker extension lags)
 COPY --chown=betterangels --parents \
   .yarnrc.yml \
   yarn.lock \
