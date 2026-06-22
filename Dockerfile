@@ -107,10 +107,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       jq \
       wget \
       zip \
-    # Install Python Lib Requirements
-    && apt-get install -y \
-    libpq5 \
-    gdal-bin
+      libpq5 \
+      gdal-bin
 ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
 RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
     && chown -R betterangels:betterangels /workspace /home/betterangels
@@ -131,7 +129,6 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     fi \
     && dpkg -i session-manager-plugin.deb \
     && rm session-manager-plugin.deb \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER betterangels
@@ -147,7 +144,7 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
 
 FROM base AS yarn
-COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
+COPY --chown=betterangels .yarnrc.yml yarn.lock package.json /workspace/
 COPY --chown=betterangels .yarn /workspace/.yarn
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
