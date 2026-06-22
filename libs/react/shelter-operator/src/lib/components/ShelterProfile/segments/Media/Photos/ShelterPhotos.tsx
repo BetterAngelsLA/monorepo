@@ -1,9 +1,9 @@
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
+import { Table, type TableColumn } from '../../../../base-ui/table';
 import { useToast } from '../../../../base-ui/toast';
 import { Form } from '../../../../form/Form';
-import { Table, type TableColumn } from '../../../../Table';
 import { ShelterProfilePhotoType } from '../../../types';
 import { DeleteShelterImageBtn } from './components/DeleteShelterImageBtn';
 import { EditShelterPhotoBtn } from './components/EditShelterPhotoBtn/EditShelterPhotoBtn';
@@ -38,6 +38,7 @@ function buildColumns(
     {
       key: 'name',
       label: 'File Name',
+      sortValue: (photo) => getLastPathSegment(photo.file.name),
       render: (photo) => getLastPathSegment(photo.file.name).toLowerCase(),
     },
     {
@@ -45,6 +46,7 @@ function buildColumns(
       label: 'Type',
       width: '140px',
       cellClassName: 'capitalize',
+      sortValue: (photo) => photo.type,
       render: (photo) => photo.type.toLowerCase(),
     },
     {
