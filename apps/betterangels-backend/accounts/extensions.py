@@ -53,12 +53,16 @@ class HasOrgPerm(HasPerm):
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to have the specified permission(s) in the " "organization set via X-Organization-ID header."
+        "Requires the user to have the specified permission(s) in the "
+        "organization set via X-Organization-ID header."
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("fail_silently", False)
-        kwargs.setdefault("message", "You do not have permission to perform this action in this organization.")
+        kwargs.setdefault(
+            "message",
+            "You do not have permission to perform this action in this organization.",
+        )
         super().__init__(*args, **kwargs)
 
     def resolve_for_user(
@@ -75,7 +79,9 @@ class HasOrgPerm(HasPerm):
         org_id_raw = info.context.request.organization_id
 
         if org_id_raw is None:
-            raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
+            raise DjangoNoPermission(
+                "Organization ID (X-Organization-ID header) is required."
+            )
         org_id = str(org_id_raw)
 
         if not self.perms:
@@ -85,12 +91,17 @@ class HasOrgPerm(HasPerm):
             Organization.objects.all(),
             user=user,
             organization_id=org_id,
-            perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
+            perms=[
+                f"{p.app}.{p.permission}" if p.app else str(p.permission)
+                for p in self.perms
+            ],
             any_perm=self.any_perm,
             organization_field="pk",
         ).exists()
 
         if not has_perm:
-            raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
+            raise DjangoNoPermission(
+                "You do not have permission to perform this action in this organization."
+            )
 
         return resolver()

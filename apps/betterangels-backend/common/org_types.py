@@ -57,7 +57,9 @@ class Registry:
 
     _by_name: dict[str, OrgTypeConfig] = field(init=False, repr=False)
     _templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
-    _invitable_templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
+    _invitable_templates_by_name: dict[str, TemplateConfig] = field(
+        init=False, repr=False
+    )
 
     def __post_init__(self) -> None:
         by_name: dict[str, OrgTypeConfig] = {}
@@ -71,7 +73,9 @@ class Registry:
                     invitable_templates_by_name[template_config.name] = template_config
         object.__setattr__(self, "_by_name", by_name)
         object.__setattr__(self, "_templates_by_name", templates_by_name)
-        object.__setattr__(self, "_invitable_templates_by_name", invitable_templates_by_name)
+        object.__setattr__(
+            self, "_invitable_templates_by_name", invitable_templates_by_name
+        )
 
     # ── Queries ────────────────────────────────────────────────────────
 
@@ -94,7 +98,9 @@ class Registry:
         for org_type in org_types:
             org_config = self._by_name.get(org_type.value)
             if org_config:
-                names.extend(template_config.name for template_config in org_config.templates)
+                names.extend(
+                    template_config.name for template_config in org_config.templates
+                )
         return sorted(set(names))
 
     def invitable_template_names(self) -> list[str]:
@@ -113,8 +119,7 @@ class Registry:
         if template is None:
             valid = self.invitable_template_names_for(org)
             raise ValidationError(
-                f"Invalid permission template '{name}'. "
-                f"Available: {', '.join(valid)}"
+                f"Invalid permission template '{name}'. Available: {', '.join(valid)}"
             )
         return template
 
@@ -126,7 +131,9 @@ class Registry:
             org_config = self._by_name.get(org_type.value)
             if org_config:
                 names.extend(
-                    template_config.name for template_config in org_config.templates if template_config.is_invitable
+                    template_config.name
+                    for template_config in org_config.templates
+                    if template_config.is_invitable
                 )
         return sorted(set(names))
 
@@ -165,7 +172,9 @@ class Registry:
         """
         if template.invite_html and template.invite_txt:
             return {"html": template.invite_html, "txt": template.invite_txt}
-        raise ValueError(f"Template '{template.name}' is invitable but has no invite_html/invite_txt.")
+        raise ValueError(
+            f"Template '{template.name}' is invitable but has no invite_html/invite_txt."
+        )
 
 
 # ---------------------------------------------------------------------------
