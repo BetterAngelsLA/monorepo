@@ -18,7 +18,10 @@ exclude = ["node_modules", ".venv/lib"]
 select = ["E", "F", "B"]
 
 [tool.ruff.lint.isort]
-skip_glob = ["*/migrations/*"]
+known-first-party = []
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*" = ["I"]
 
 [tool.ruff.format]
 quote-style = "double"
