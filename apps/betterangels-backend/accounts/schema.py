@@ -19,6 +19,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
+from organizations.models import OrganizationOwner
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -76,6 +77,16 @@ def annotate_member_role(org_id: str) -> Case:
     )
 
 
+def annotate_is_org_owner(org_id: str) -> Exists:
+    """Annotate whether the user is the organization owner."""
+    return Exists(
+        OrganizationOwner.objects.filter(
+            organization_id=org_id,
+            organization_user__user=OuterRef("pk"),
+        )
+    )
+
+
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
@@ -95,7 +106,12 @@ class Query:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         user: User = (
-            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
+            organization.users.filter(id=user_id)
+            .annotate(
+                _member_role=annotate_member_role(organization_id),
+                _is_org_owner=annotate_is_org_owner(organization_id),
+            )
+            .first()
         )
         if not user:
             raise PermissionError("You do not have permission to view this member.")
@@ -124,7 +140,10 @@ class Query:
 
         queryset: QuerySet[User] = organization.users.all()
 
-        return queryset.annotate(_member_role=annotate_member_role(organization_id))
+        return queryset.annotate(
+            _member_role=annotate_member_role(organization_id),
+            _is_org_owner=annotate_is_org_owner(organization_id),
+        )
 
 
 @strawberry.type
