@@ -102,8 +102,8 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "uv run black --config ../../pyproject.toml .",
-          "uv run isort ."
+          "uv run ruff check --fix .",
+          "uv run ruff format ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false
@@ -137,9 +137,8 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "uv run flake8 .",
-          "uv run black --config ../../pyproject.toml --check .",
-          "uv run isort . --check-only"
+          "uv run ruff check .",
+          "uv run ruff format --check ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false

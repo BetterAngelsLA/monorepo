@@ -14,23 +14,26 @@ betterangels-backend = { workspace = true }
 [tool.uv.workspace]
 members = ["apps/betterangels-backend"]
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-exclude = '''
-/(
-    | node_modules
-    | .venv/lib
-)/
-'''
+exclude = ["node_modules", ".venv/lib", "*/migrations/*"]
 
-[tool.isort]
-profile = "black"
-line_length = 120
-skip_glob = ["*/migrations/*"]
+[tool.ruff.lint]
+select = ["E", "F", "B"]
+ignore = ["E501", "B904", "B905"]
+
+[tool.ruff.lint.isort]
+known-first-party = []
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*" = ["I"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [dependency-groups]
 dev = [
-    "black>=26.1.0,<27",
     "boto3-stubs[essential]>=1.42.41,<2",
     "celery-types>=0.26.0,<1",
     "django-stubs[compatible-mypy]>=5.2.9,<6",
@@ -38,13 +41,11 @@ dev = [
     "djangorestframework-stubs[compatible-mypy]>=3.16.6,<4",
     "djlint>=1.36.4,<2",
     "faker>=40.15.0,<41",
-    "flake8>=7.3.0,<8",
-    "flake8-bugbear>=25.11.29,<26",
     "ipython>=9.9.0,<10",
-    "isort>=8.0.1,<9",
     "model-bakery>=1.23.2,<2",
     "pre-commit>=4.3.1,<5",
     "pytest-django>=4.11.1,<5",
+    "ruff>=0.15.0,<1.0.0",
     "time-machine>=3.2.0,<4",
     "types-gevent>=25.4.0.20250801,<26",
     "types-python-dateutil>=2.9.0.20260124,<3",

@@ -33,8 +33,8 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is ~9 miles further from the reference point.
-                    latitude=f"{reference_point["latitude"]}.{i}",
-                    longitude=f"{reference_point["longitude"]}.{i}",
+                    latitude=f"{reference_point['latitude']}.{i}",
+                    longitude=f"{reference_point['longitude']}.{i}",
                 ),
                 status=StatusChoices.APPROVED,
             )
@@ -113,8 +113,8 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is two degrees further from the reference point
-                    latitude=f"{reference_point["latitude"] - i}",
-                    longitude=f"{reference_point["longitude"] - i}",
+                    latitude=f"{reference_point['latitude'] - i}",
+                    longitude=f"{reference_point['longitude'] - i}",
                 ),
                 status=StatusChoices.APPROVED,
             )
@@ -214,8 +214,8 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is two degrees further from the reference point
-                    latitude=f"{reference_point["latitude"] - i}",
-                    longitude=f"{reference_point["longitude"] - i}",
+                    latitude=f"{reference_point['latitude'] - i}",
+                    longitude=f"{reference_point['longitude'] - i}",
                 ),
                 status=StatusChoices.APPROVED,
             )
