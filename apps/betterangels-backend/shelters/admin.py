@@ -914,12 +914,12 @@ class PhotoCountFilter(admin.ListFilter):
             if min_val is not None and min_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__gte": int(str(min_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             if max_val is not None and max_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__lte": int(str(max_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
         return queryset
 

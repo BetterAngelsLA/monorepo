@@ -13,7 +13,7 @@ try:
         from celery import Task, shared_task
     else:
         raise ImportError()
-except (ImportError, NotImplementedError):
+except ImportError, NotImplementedError:
     # Fallback if Celery is not available or disabled
     def queued_mail_handler(sender: object, **kwargs: object) -> None:
         """
