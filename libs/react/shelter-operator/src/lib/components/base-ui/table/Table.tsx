@@ -142,8 +142,6 @@ const TableBase = <TItem, TRowObject = TItem>({
   );
 };
 
-export default TableBase;
-
 type TableComponent = typeof TableBase & {
   Row: typeof TableRow;
 };
