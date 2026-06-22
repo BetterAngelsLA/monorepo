@@ -3,7 +3,7 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
-from accounts.emails import send_welcome_email
+from accounts.emails import send_welcome_emails_for_org
 from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
@@ -15,11 +15,10 @@ from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
-from organizations.models import OrganizationOwner
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -51,16 +50,6 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def annotate_is_org_owner(org_id: str) -> Exists:
-    """Annotate whether the user is the organization owner."""
-    return Exists(
-        OrganizationOwner.objects.filter(
-            organization_id=org_id,
-            organization_user__user=OuterRef("pk"),
-        )
-    )
 
 
 def annotate_member_role(org_id: str) -> Case:
@@ -106,12 +95,7 @@ class Query:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         user: User = (
-            organization.users.filter(id=user_id)
-            .annotate(
-                _member_role=annotate_member_role(organization_id),
-                _is_org_owner=annotate_is_org_owner(organization_id),
-            )
-            .first()
+            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
         )
         if not user:
             raise PermissionError("You do not have permission to view this member.")
@@ -140,10 +124,7 @@ class Query:
 
         queryset: QuerySet[User] = organization.users.all()
 
-        return queryset.annotate(
-            _member_role=annotate_member_role(organization_id),
-            _is_org_owner=annotate_is_org_owner(organization_id),
-        )
+        return queryset.annotate(_member_role=annotate_member_role(organization_id))
 
 
 @strawberry.type
@@ -216,13 +197,7 @@ class Mutation:
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
-        if template is None:
-            valid = REGISTRY.invitable_template_names_for(organization)
-            raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
-                f"Available: {', '.join(valid)}"
-            )
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         user = member_add(
             email=data.email,
@@ -286,9 +261,7 @@ class Mutation:
             org_type_name=data.org_type,
         )
 
-        templates = [t for t in REGISTRY.templates_for(organization) if t.welcome_html]
-        for template in templates:
-            send_welcome_email(user, organization, template)
+        send_welcome_emails_for_org(user, organization)
 
         return CreateOrganizationResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
 
@@ -310,13 +283,7 @@ class Mutation:
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.template(data.permission_template.value)  # type: ignore[attr-defined, union-attr]
-        if template is None:
-            valid = REGISTRY.invitable_template_names_for(organization)
-            raise ValidationError(
-                f"Invalid permission template '{data.permission_template.value}'. "  # type: ignore[attr-defined, union-attr]
-                f"Available: {', '.join(valid)}"
-            )
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         target_user = User.objects.filter(
             id=data.user_id,

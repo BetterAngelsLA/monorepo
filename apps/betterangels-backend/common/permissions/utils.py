@@ -247,7 +247,7 @@ def permissioned_queryset(
     user : User
         The authenticated user.
     organization_id : str
-        The active organization UUID.
+        The active organization ID.
     perms : Sequence[str] | None
         Optional permission(s) in ``"app_label.codename"`` format.
         If ``None``, only org membership is checked.
