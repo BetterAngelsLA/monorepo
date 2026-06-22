@@ -405,6 +405,68 @@ class ScheduleModelTestCase(TestCase):
         self.assertIn(open_shelter, Shelter.objects.open_at(query_dt))
         self.assertNotIn(future_shelter, Shelter.objects.open_at(query_dt))
 
+    def test_open_at_overnight_schedule(self) -> None:
+        """Verify ``shelters_open_at`` handles schedules that span midnight.
+
+        A shelter open Monday 6 PM – 2 AM should be considered open at:
+        - 10 PM Monday (same calendar day, after opening)
+        - 1 AM Tuesday (next calendar day, before closing)
+
+        It should NOT be open at:
+        - 5 PM Monday (before opening)
+        - 2 AM Tuesday (at/after closing)
+        """
+        overnight_shelter = Shelter.objects.create(name="Overnight Shelter")
+
+        # Monday 6 PM – 2 AM (next calendar day)
+        Schedule.objects.create(
+            shelter=overnight_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(18, 0),
+            end_time=datetime.time(2, 0),
+        )
+
+        # Same calendar day, after opening → should be open.
+        monday_night = datetime.datetime(2026, 3, 2, 22, 0)  # Monday 10 PM
+        self.assertIn(
+            overnight_shelter,
+            Shelter.objects.open_at(monday_night),
+            "Overnight shelter (6 PM – 2 AM) should be open at 10 PM Monday.",
+        )
+
+        # Next calendar day, before closing → should be open.
+        tuesday_early = datetime.datetime(2026, 3, 3, 1, 0)  # Tuesday 1 AM
+        self.assertIn(
+            overnight_shelter,
+            Shelter.objects.open_at(tuesday_early),
+            "Overnight shelter (6 PM – 2 AM) should be open at 1 AM Tuesday.",
+        )
+
+        # Same calendar day, before opening → should NOT be open.
+        monday_evening = datetime.datetime(2026, 3, 2, 17, 0)  # Monday 5 PM
+        self.assertNotIn(
+            overnight_shelter,
+            Shelter.objects.open_at(monday_evening),
+            "Overnight shelter should NOT be open at 5 PM Monday (before 6 PM).",
+        )
+
+        # At closing time → still open (``end_time__gte`` is inclusive).
+        tuesday_closing = datetime.datetime(2026, 3, 3, 2, 0)  # Tuesday 2 AM
+        self.assertIn(
+            overnight_shelter,
+            Shelter.objects.open_at(tuesday_closing),
+            "Overnight shelter IS open at exactly 2 AM (``end_time__gte`` is inclusive).",
+        )
+
+        # One second past closing → should NOT be open.
+        tuesday_past = datetime.datetime(2026, 3, 3, 2, 0, 1)  # Tuesday 2:00:01 AM
+        self.assertNotIn(
+            overnight_shelter,
+            Shelter.objects.open_at(tuesday_past),
+            "Overnight shelter should NOT be open one second past closing.",
+        )
+
     def test_exception_subtracts_availability(self) -> None:
         """An is_exception entry with no times for a specific date should
         override the regular weekly schedule, causing the shelter to appear
