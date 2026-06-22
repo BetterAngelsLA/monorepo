@@ -93,7 +93,13 @@ class Query:
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
-    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
+    # TODO(SDB-178): Migrate to HasOrgPerm — drop ``organization_id`` argument,
+    # read org from ``X-Organization-ID`` header.  These queries are consumed by
+    # ``betterangels-admin`` (user management page) and the mobile app.  The
+    # migration is a breaking change: clients must send the header instead of the
+    # argument.  Once migrated, the ``_member_role`` / ``_is_org_owner``
+    # annotations can be moved to ``OrganizationMemberType.get_queryset()`` so
+    # they're applied automatically and not duplicated in every resolver.
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
     )
@@ -118,7 +124,7 @@ class Query:
 
         return cast(OrganizationMemberType, user)
 
-    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
+    # TODO(SDB-178): same migration as ``organization_member`` above.
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
