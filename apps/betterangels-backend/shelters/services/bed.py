@@ -18,7 +18,7 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
     ``view_shelter`` permission.
 
     Raises:
-        ``Shelter.DoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -62,7 +62,7 @@ def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: D
     skipped.
 
     Raises:
-        ``Bed.DoesNotExist`` when the bed is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)

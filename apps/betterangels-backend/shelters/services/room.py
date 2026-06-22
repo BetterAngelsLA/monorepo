@@ -19,7 +19,7 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     ``view_shelter`` permission.
 
     Raises:
-        ``Shelter.DoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -66,7 +66,7 @@ def room_update(*, user: "User", organization_id: str, room_id: int | str, data:
     skipped.
 
     Raises:
-        ``Room.DoesNotExist`` when the room is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)

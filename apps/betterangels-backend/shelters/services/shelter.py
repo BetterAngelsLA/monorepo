@@ -163,7 +163,7 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
     Schedules and services use full-replacement semantics when provided.
 
     Raises:
-        ``Shelter.DoesNotExist`` when no shelter matches the given ID
+        ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
         or the user lacks permission.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
