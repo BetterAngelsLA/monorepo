@@ -1,7 +1,6 @@
 from typing import Any, cast
 
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices, RoomStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
@@ -104,7 +103,8 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
-        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+        # Create a shelter in org_2 to verify it's excluded
+        shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.OPERATOR_SHELTERS_QUERY,
