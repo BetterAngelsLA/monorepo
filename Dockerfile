@@ -144,8 +144,12 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project
 
 FROM base AS yarn
-COPY --chown=betterangels .yarnrc.yml yarn.lock package.json /workspace/
-COPY --chown=betterangels .yarn /workspace/.yarn
+COPY --chown=betterangels --parents \
+  .yarnrc.yml \
+  yarn.lock \
+  package.json \
+  .yarn \
+  /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
 
