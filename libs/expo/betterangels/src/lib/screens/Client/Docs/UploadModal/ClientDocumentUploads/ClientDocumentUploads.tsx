@@ -2,10 +2,9 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
-import { useSnackbar } from '../../../../../hooks';
 import { UploadSection } from '../UploadSection';
 import UploadsPreview from '../UploadsPreview';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
@@ -15,6 +14,8 @@ export interface IClientDocUploadsProps {
   files: ReactNativeFile[];
   onFilesChange: (files: ReactNativeFile[]) => void;
   onClose: () => void;
+  onUploadSuccess?: () => void;
+  onUploadError?: () => void;
   namespace: ClientDocumentNamespaceEnum;
   title: string;
   allowMultiple?: boolean;
@@ -26,42 +27,56 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     files,
     onFilesChange,
     onClose,
+    onUploadSuccess,
+    onUploadError,
     namespace,
     title,
     allowMultiple = false,
   } = props;
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const { showSnackbar } = useSnackbar();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  const handleUpload = async () => {
-    if (!clientProfileId) {
-      return;
-    }
+  useEffect(() => {
+    setIsModalVisible(true);
+  }, []);
+
+  const handleMediaPickerClose = () => {
+    setIsModalVisible(false);
+
+    setTimeout(() => {
+      onClose();
+    }, 250);
+  };
+
+  const uploadSelectedFiles = async (selectedFiles: ReactNativeFile[]) => {
+    if (!clientProfileId || !selectedFiles.length) return;
 
     try {
       setProcessing(true);
 
       await uploadDocuments({
         clientProfileId,
-        documents: files,
+        documents: selectedFiles,
         namespace,
       });
 
-      onClose();
+      onUploadSuccess?.();
     } catch (err) {
       console.error(`[ClientDocumentUploads error:] ${err}`);
 
-      showSnackbar({
-        message: `Sorry, there was an error with the file upload.`,
-        type: 'error',
-      });
+      onUploadError?.();
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleUpload = async () => {
+    if (!clientProfileId) return;
+
+    await uploadSelectedFiles(files);
   };
 
   const onRemoveFile = (index: number) => {
@@ -77,6 +92,25 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
   const allDocsValid = files.every((file) => {
     return !!file.name && !!file.type && !!file.uri;
   });
+
+  if (processing) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.WHITE,
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color={Colors.PRIMARY}
+          style={{ transform: [{ translateY: -40 }] }}
+        />
+      </View>
+    );
+  }
 
   return (
     <>
@@ -103,9 +137,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
           }}
         >
           <Pressable
-            onPress={() => {
-              setIsModalVisible(true);
-            }}
+            onPress={() => setIsModalVisible(true)}
             accessibilityRole="button"
             style={{ alignItems: 'center' }}
           >
@@ -141,14 +173,19 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
       <MediaPicker
         allowMultiple={allowMultiple}
         isOpen={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        onClose={handleMediaPickerClose}
+        onSelectionComplete={() => setIsModalVisible(false)}
         onCameraCapture={(file) => {
-          onFilesChange(allowMultiple ? [...files, file] : [file]);
+          const updatedFiles = allowMultiple ? [...files, file] : [file];
+          onFilesChange(updatedFiles);
+          uploadSelectedFiles([file]);
         }}
         onFilesSelected={(newFiles) => {
-          onFilesChange(
-            allowMultiple ? [...files, ...newFiles] : [newFiles[0]]
-          );
+          const updatedFiles = allowMultiple
+            ? [...files, ...newFiles]
+            : [newFiles[0]];
+          onFilesChange(updatedFiles);
+          uploadSelectedFiles(newFiles);
         }}
       />
     </>

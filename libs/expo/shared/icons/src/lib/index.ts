@@ -69,6 +69,7 @@ export { default as LocationPinIcon } from './components/LocationPinIcon';
 export { default as MapLineIcon } from './components/MapLineIcon';
 export * from './components/MapPinIcon';
 export { default as MapSolidIcon } from './components/MapSolidIcon';
+export { default as NoFilesYet } from './components/NoFilesYet';
 export { default as NoteIcon } from './components/NoteIcon';
 export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';
