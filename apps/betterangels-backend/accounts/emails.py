@@ -43,7 +43,7 @@ def send_welcome_email(user: User, organization: Organization, template_config: 
     )
     html_body = render_to_string(template_config.welcome_html, context)
     msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
 
 
 def send_welcome_emails_for_org(user: User, organization: Organization) -> None:
