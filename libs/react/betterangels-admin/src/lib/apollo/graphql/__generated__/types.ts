@@ -643,6 +643,7 @@ export type CreateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
@@ -666,6 +667,7 @@ export type CreateNoteTaskInput = {
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateOrganizationInput = {
@@ -778,9 +780,16 @@ export type CreateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
+
+export type CreateTeamInput = {
+  name: Scalars['String']['input'];
+};
+
+export type CreateTeamPayload = OperationInfo | TeamType;
 
 export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
@@ -861,6 +870,8 @@ export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteTeamPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -1354,6 +1365,7 @@ export type ImportNoteDataInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ImportNoteInput = {
@@ -1514,6 +1526,7 @@ export type Mutation = {
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
+  createTeam: CreateTeamPayload;
   deleteBeds: DeleteBedsPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
@@ -1529,6 +1542,7 @@ export type Mutation = {
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  deleteTeam: DeleteTeamPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
@@ -1562,6 +1576,7 @@ export type Mutation = {
   updateShelterPhoto: UpdateShelterPhotoPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  updateTeam: UpdateTeamPayload;
   updateUserProfile: UpdateUserProfilePayload;
 };
 
@@ -1687,6 +1702,11 @@ export type MutationCreateTaskArgs = {
 };
 
 
+export type MutationCreateTeamArgs = {
+  data: CreateTeamInput;
+};
+
+
 export type MutationDeleteBedsArgs = {
   data: BulkDeleteInput;
 };
@@ -1753,6 +1773,11 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 
 export type MutationDeleteTaskArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTeamArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1920,6 +1945,11 @@ export type MutationUpdateTaskArgs = {
 };
 
 
+export type MutationUpdateTeamArgs = {
+  data: UpdateTeamInput;
+};
+
+
 export type MutationUpdateUserProfileArgs = {
   data: UpdateUserProfileInput;
 };
@@ -1950,6 +1980,7 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -1975,6 +2006,7 @@ export type NoteType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
+  currentTeam?: Maybe<TeamType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -1986,6 +2018,7 @@ export type NoteType = {
   purpose?: Maybe<Scalars['String']['output']>;
   requestedServices: Array<ServiceRequestType>;
   tasks: Array<TaskType>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
 };
@@ -2159,6 +2192,7 @@ export type OrgPermissions = {
   accounts: Array<UserOrganizationPermissions>;
   reports: Array<ReportPermissions>;
   shelters: Array<ShelterPermissions>;
+  teams: Array<TeamPermissions>;
 };
 
 export enum OrgRoleEnum {
@@ -2410,6 +2444,7 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+  teams: TeamTypeOffsetPaginated;
 };
 
 
@@ -2651,6 +2686,11 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
   ordering?: InputMaybe<Array<TaskOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTeamsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3328,6 +3368,7 @@ export type TaskFilter = {
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -3349,6 +3390,7 @@ export type TaskType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
+  currentTeam?: Maybe<TeamType>;
   description?: Maybe<Scalars['String']['output']>;
   hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
@@ -3357,6 +3399,7 @@ export type TaskType = {
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
   summary?: Maybe<Scalars['String']['output']>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -3366,6 +3409,31 @@ export type TaskTypeOffsetPaginated = {
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<TaskType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum TeamPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
+
+export type TeamType = {
+  __typename?: 'TeamType';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
+export type TeamTypeOffsetPaginated = {
+  __typename?: 'TeamTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TeamType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
@@ -3526,6 +3594,7 @@ export type UpdateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
@@ -3630,9 +3699,18 @@ export type UpdateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
+
+export type UpdateTeamInput = {
+  id: Scalars['ID']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTeamPayload = OperationInfo | TeamType;
 
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
