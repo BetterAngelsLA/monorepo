@@ -54,9 +54,7 @@ export function ShelterPhotoForm(props: TProps) {
                 PHOTO_TYPE_OPTIONS.find((o) => o.value === field.value) ?? null
               }
               onChange={(option) => {
-                if (option && !Array.isArray(option)) {
-                  field.onChange(option.value);
-                }
+                field.onChange(option?.value ?? null);
               }}
               error={errors.photoType?.message}
             />

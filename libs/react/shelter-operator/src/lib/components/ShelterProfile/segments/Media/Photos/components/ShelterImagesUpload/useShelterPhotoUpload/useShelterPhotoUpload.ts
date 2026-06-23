@@ -74,8 +74,9 @@ export function useShelterPhotoUpload(props?: TProps) {
     // 1. Prepare upload inputs + build refId → File map
     const fileMap = new Map<string, File>();
 
-    const uploadInputs = files.map((file, index) => {
-      const refId = `${Date.now()}-${index}`;
+    const uploadInputs = files.map((file) => {
+      const refId = crypto.randomUUID();
+
       fileMap.set(refId, file);
       return {
         refId,

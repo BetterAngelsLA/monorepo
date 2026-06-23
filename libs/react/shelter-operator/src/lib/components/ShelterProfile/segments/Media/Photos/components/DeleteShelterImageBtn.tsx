@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useDeleteShelterPhotos } from '../../../../../../hooks/useDeleteShelterPhotos';
 import { ConfirmationModal } from '../../../../../base-ui/modal/ConfirmationModal';
+import { useToast } from '../../../../../base-ui/toast';
 
 type TProps = {
   photoId: string;
@@ -18,10 +19,27 @@ export function DeleteShelterImageBtn(props: TProps) {
   const { deleteShelterPhotos, loading } = useDeleteShelterPhotos({
     shelterId,
   });
+  const { showToast } = useToast();
 
   async function handleConfirm() {
-    await deleteShelterPhotos({ variables: { data: { ids: [photoId] } } });
-    setIsOpen(false);
+    try {
+      await deleteShelterPhotos({ variables: { data: { ids: [photoId] } } });
+
+      showToast({
+        status: 'success',
+        title: 'Photo deleted.',
+      });
+    } catch (e) {
+      console.error(`[deleteShelterPhotos error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Delete failed',
+        description: 'Sorry, an unexpected error occurred.',
+      });
+    } finally {
+      setIsOpen(false);
+    }
   }
 
   const btnCss = [

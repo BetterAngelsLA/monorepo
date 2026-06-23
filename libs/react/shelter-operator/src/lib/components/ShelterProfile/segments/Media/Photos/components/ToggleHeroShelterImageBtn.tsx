@@ -1,5 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useUpdateShelterProfile } from '../../../../../../hooks/useUpdateShelterProfile';
+import { useToast } from '../../../../../base-ui/toast';
 
 type TProps = {
   photoId: string;
@@ -13,18 +14,34 @@ export function ToggleHeroShelterImageBtn(props: TProps) {
   const { photoId, shelterId, heroImageId, className, disabled } = props;
 
   const { updateShelter, loading } = useUpdateShelterProfile();
+  const { showToast } = useToast();
 
   const isHero = heroImageId === photoId;
 
-  function handleClick() {
-    updateShelter({
-      variables: {
-        data: {
-          id: shelterId,
-          heroImageId: isHero ? null : photoId,
+  async function handleClick() {
+    try {
+      await updateShelter({
+        variables: {
+          data: {
+            id: shelterId,
+            heroImageId: isHero ? null : photoId,
+          },
         },
-      },
-    });
+      });
+
+      showToast({
+        status: 'success',
+        title: 'Hero status updted.',
+      });
+    } catch (e) {
+      console.error(`[updateShelter heroImage error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: 'Sorry, an unexpected error occurred.',
+      });
+    }
   }
 
   const btnCss = [
