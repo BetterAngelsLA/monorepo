@@ -11,50 +11,54 @@ from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
-
-@receiver(post_migrate)
-def create_superuser(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV:
-        User.objects.get_or_create(
-            username="admin",
-            defaults={"email": "admin@example.com", "password": "password"},
-        )
-        # Ensure superuser flags even on existing record.
-        User.objects.filter(username="admin").update(is_superuser=True, is_staff=True)
-        # Set password in case it changed (get_or_create won't overwrite).
-        if (admin := User.objects.filter(username="admin").first()) and not admin.check_password("password"):
-            admin.set_password("password")
-            admin.save(update_fields=["password"])
+# ── Single post_migrate entry point (order is guaranteed within) ──────
 
 
 @receiver(post_migrate)
-def create_test_agent(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV:
-        User.objects.get_or_create(
-            username="agent",
-            defaults={
-                "email": "agent@example.com",
-                "password": "password",
-                "first_name": "Carolyn",
-            },
-        )
-        # Ensure password is correct even on existing record.
-        if (agent := User.objects.filter(username="agent").first()) and not agent.check_password("password"):
-            agent.set_password("password")
-            agent.save(update_fields=["password"])
+def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
+    """Create test users, org, and assign roles — then sync permissions.
 
-
-@receiver(post_migrate)
-def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    """Ensure ``test_org`` exists with the expected users, roles, and groups.
-
-    Delegates group creation to ``create_organization_with_presets`` on
-    first run; on subsequent runs the ``update_group_permissions`` signal
-    keeps everything in sync.
+    Everything runs inside one receiver so ordering is guaranteed:
+    users exist before the org references them, the org exists before
+    the permission sync iterates it.
     """
     if not settings.IS_LOCAL_DEV:
         return
 
+    _ensure_test_users()
+    _ensure_test_org_and_roles()
+    _sync_all_org_permission_groups()
+
+
+# ── Step helpers ──────────────────────────────────────────────────────
+
+
+def _ensure_test_users() -> None:
+    """Idempotent: create admin + agent with known passwords."""
+    admin, _ = User.objects.get_or_create(
+        username="admin",
+        defaults={"email": "admin@example.com", "password": "password"},
+    )
+    User.objects.filter(username="admin").update(is_superuser=True, is_staff=True)
+    if not admin.check_password("password"):
+        admin.set_password("password")
+        admin.save(update_fields=["password"])
+
+    agent, _ = User.objects.get_or_create(
+        username="agent",
+        defaults={
+            "email": "agent@example.com",
+            "password": "password",
+            "first_name": "Carolyn",
+        },
+    )
+    if not agent.check_password("password"):
+        agent.set_password("password")
+        agent.save(update_fields=["password"])
+
+
+def _ensure_test_org_and_roles() -> None:
+    """Idempotent: create test_org with presets, assign roles to admin + agent."""
     from accounts.groups import ORG_ADMIN
     from accounts.services import create_organization_with_presets, member_add
     from notes.groups import CASEWORKER
@@ -63,8 +67,6 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
     admin = User.objects.get(username="admin")
     agent = User.objects.get(username="agent")
 
-    # Create org + groups on first run; existing orgs are kept up to date
-    # by update_group_permissions below.
     test_org, created = Organization.objects.get_or_create(name="test_org")
     if created:
         test_org = create_organization_with_presets(
@@ -74,7 +76,7 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
             owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
         )
 
-    # Role assignments (idempotent — skips already-assigned templates).
+    # member_add is idempotent — only grants templates not already held.
     member_add(
         email=agent.email or "agent@example.com",
         first_name=agent.first_name or "",
@@ -85,16 +87,15 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
     )
 
 
-@receiver(post_migrate)
-def update_group_permissions(sender: Any, **kwargs: Any) -> None:
-    """Create missing PermissionGroups and sync permissions for all templates.
+def _sync_all_org_permission_groups() -> None:
+    """Create missing PermissionGroups from presets, then sync permissions.
 
     Iterates every registered org-type preset and creates any
     ``PermissionGroup`` records that don't exist yet (``get_or_create``),
     then syncs the Django ``Group.permissions`` for all existing groups.
 
-    This means adding a new template to a preset automatically propagates
-    to every org on the next ``post_migrate`` — no migration needed.
+    Adding a new template to a preset automatically propagates to every
+    org on the next ``post_migrate`` — no migration needed.
     """
     from common.org_types import REGISTRY
 
