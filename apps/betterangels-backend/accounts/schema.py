@@ -4,9 +4,7 @@ from typing import Optional, Union, cast
 import strawberry
 import strawberry_django
 from accounts.emails import send_welcome_emails_for_org
-from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
@@ -16,8 +14,8 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
 from django.db import transaction
-from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -25,7 +23,8 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import Organization, PermissionGroup, User
+from .annotations import annotate_is_org_owner, annotate_member_role
+from .models import Organization, User
 from .services import (
     create_organization_service,
     member_add,
@@ -52,57 +51,47 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 
-def annotate_member_role(org_id: str) -> Case:
-    is_superuser = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_SUPERUSER.name,
-            group__user=OuterRef("pk"),
-        )
-    )
-    is_admin = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_ADMIN.name,
-            group__user=OuterRef("pk"),
-        )
-    )
-
-    return Case(
-        When(is_superuser, then=Value(OrgRoleEnum.SUPERUSER)),
-        When(is_admin, then=Value(OrgRoleEnum.ADMIN)),
-        default=Value(OrgRoleEnum.MEMBER),
-        output_field=CharField(),
-    )
-
-
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def current_user(self, info: Info) -> CurrentUserType:
         return get_current_user(info)  # type: ignore
 
-    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
+    # TODO(SDB-178): Migrate to HasOrgPerm — drop ``organization_id`` argument,
+    # read org from ``X-Organization-ID`` header.  These queries are consumed by
+    # ``betterangels-admin`` (user management page) and the mobile app.  The
+    # migration is a breaking change: clients must send the header instead of the
+    # argument.  Once migrated, the ``_member_role`` / ``_is_org_owner``
+    # annotations can be moved to ``OrganizationMemberType.get_queryset()`` so
+    # they're applied automatically and not duplicated in every resolver.
     @strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
+            current_user,
+            org_id=organization_id,
+            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         user: User = (
-            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
+            organization.users.filter(id=user_id)
+            .annotate(
+                _member_role=annotate_member_role(organization_id),
+                _is_org_owner=annotate_is_org_owner(organization_id),
+            )
+            .first()
         )
         if not user:
             raise PermissionError("You do not have permission to view this member.")
 
         return cast(OrganizationMemberType, user)
 
-    # TODO(SDB-178): migrate to HasOrgPerm — drop organization_id arg, read org from header
+    # TODO(SDB-178): same migration as ``organization_member`` above.
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
@@ -117,14 +106,19 @@ class Query:
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
+            current_user,
+            org_id=organization_id,
+            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
 
-        return queryset.annotate(_member_role=annotate_member_role(organization_id))
+        return queryset.annotate(
+            _member_role=annotate_member_role(organization_id),
+            _is_org_owner=annotate_is_org_owner(organization_id),
+        )
 
 
 @strawberry.type
@@ -190,7 +184,8 @@ class Mutation:
         return DeletedObjectType(id=user_id)
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)

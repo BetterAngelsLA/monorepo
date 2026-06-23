@@ -105,7 +105,10 @@ class Mutation:
         clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_create(user=user, organization_id=org_id, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
+    )
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
@@ -126,7 +129,10 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(RoomType, room_update(user=user, organization_id=org_id, room_id=id, data=clean))
+        return cast(
+            RoomType,
+            room_update(user=user, organization_id=org_id, room_id=id, data=clean),
+        )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
     def clone_room(self, info: Info, id: ID) -> RoomType:
@@ -156,7 +162,10 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(BedType, bed_update(user=user, organization_id=org_id, bed_id=id, data=clean))
+        return cast(
+            BedType,
+            bed_update(user=user, organization_id=org_id, bed_id=id, data=clean),
+        )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
     def clone_bed(self, info: Info, id: ID) -> BedType:
@@ -196,7 +205,10 @@ class Mutation:
 
     # ── Shelter Photos ─────────────────────────────────────────────────────
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
+    )
     def generate_shelter_photo_uploads(
         self,
         info: Info,
@@ -206,7 +218,10 @@ class Mutation:
         org_id = get_current_organization(info)
 
         presigned_uploads = shelter_photo.create_presigned_uploads(
-            user=user, organization_id=org_id, shelter_id=data.shelter_id, uploads=data.uploads
+            user=user,
+            organization_id=org_id,
+            shelter_id=data.shelter_id,
+            uploads=data.uploads,
         )
 
         return AuthorizedPresignedS3UploadsType(
@@ -222,7 +237,10 @@ class Mutation:
             ]
         )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
+    )
     def resolve_shelter_photo_uploads(
         self,
         info: Info,
@@ -240,13 +258,22 @@ class Mutation:
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
+    )
     def update_shelter_photo(self, info: Info, data: UpdateShelterPhotoInput) -> ShelterPhotoType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        return cast(ShelterPhotoType, shelter_photo.update_shelter_photo(user=user, organization_id=org_id, data=data))
+        return cast(
+            ShelterPhotoType,
+            shelter_photo.update_shelter_photo(user=user, organization_id=org_id, data=data),
+        )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.CHANGE)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
+    )
     def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)

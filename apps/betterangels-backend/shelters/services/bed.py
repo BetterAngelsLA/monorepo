@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
@@ -129,9 +130,5 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
         user=user,
         organization_id=organization_id,
     )
-    try:
-        source = qs.get(pk=bed_id)
-    except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
-
+    source = get_by_pk_or_not_found(qs, pk=bed_id)
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

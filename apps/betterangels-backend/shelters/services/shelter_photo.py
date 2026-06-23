@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
+from common.utils import get_by_pk_or_not_found
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
@@ -153,15 +154,10 @@ def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShel
     """
     photo_id = data.id
 
-    org_shelters = shelter_queryset(user=user, organization_id=organization_id)
-
-    try:
-        photo = ShelterPhoto.objects.get(
-            shelter__in=org_shelters,
-            pk=photo_id,
-        )
-    except ShelterPhoto.DoesNotExist:
-        raise ObjectDoesNotExist(f"ShelterPhoto matching ID {photo_id} could not be found.")
+    photo = get_by_pk_or_not_found(
+        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, organization_id=organization_id)),
+        pk=photo_id,
+    )
 
     photo.type = data.photo_type
     photo.save(update_fields=["type", "updated_at"])

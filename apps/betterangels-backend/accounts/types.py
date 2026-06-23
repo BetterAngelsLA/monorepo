@@ -18,6 +18,7 @@ from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
+from teams.permissions import TeamPermissions
 
 from .models import User
 from .permissions import UserOrganizationPermissions
@@ -25,6 +26,7 @@ from .permissions import UserOrganizationPermissions
 AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
 SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
+TeamsGrantedPermissions = make_granted_permissions(TeamPermissions)
 
 
 @strawberry.input
@@ -118,6 +120,7 @@ class CurrentUserOrganizationType(OrganizationType):
             **AccountsGrantedPermissions.get_annotations(user),
             **ReportsGrantedPermissions.get_annotations(user),
             **SheltersGrantedPermissions.get_annotations(user),
+            **TeamsGrantedPermissions.get_annotations(user),
         )
 
         return qs
@@ -128,6 +131,7 @@ class CurrentUserOrganizationType(OrganizationType):
             accounts=AccountsGrantedPermissions.from_instance(self).granted,
             reports=ReportsGrantedPermissions.from_instance(self).granted,
             shelters=SheltersGrantedPermissions.from_instance(self).granted,
+            teams=TeamsGrantedPermissions.from_instance(self).granted,
         )
 
 
@@ -136,6 +140,7 @@ class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
     shelters: List[ShelterPermissions]  # type: ignore[valid-type]
+    teams: List[TeamPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)
@@ -246,6 +251,11 @@ class OrganizationMemberType(UserBaseType):
     @strawberry_django.field
     def member_role(self, info: Info) -> OrgRoleEnum:
         return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
+
+    @strawberry_django.field
+    def is_org_owner(self, info: Info) -> bool:
+        """Whether this member is the organization owner."""
+        return bool(getattr(self, "_is_org_owner", False))
 
 
 @strawberry_django.input(User, partial=True)
