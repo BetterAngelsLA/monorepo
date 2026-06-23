@@ -83,43 +83,52 @@ def _ensure_test_org_and_roles() -> None:
 
 @receiver(post_migrate)
 def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
-    """Create missing PermissionGroups from presets, then sync permissions.
+    """Reconcile PermissionGroups for every org against current presets.
 
-    Iterates every registered org-type preset and creates any
-    ``PermissionGroup`` records that don't exist yet (``get_or_create``),
-    then syncs the Django ``Group.permissions`` for all existing groups.
-
-    Adding a new template to a preset automatically propagates to every
-    org on the next ``post_migrate`` — no migration needed.
+    - Creates missing groups for templates newly added to a preset.
+    - Deletes groups whose template was removed from the org's presets.
+    - Syncs Django ``Group.permissions`` for all remaining groups.
     """
     from common.org_types import REGISTRY
 
     from .models import PermissionGroup
 
-    # 1. Ensure every org has a PermissionGroup for every template in its presets.
     for org in Organization.objects.all():
+        # Expected template names from the org's current presets.
+        expected: set[str] = set()
         org_type_values = org.profile.org_types if hasattr(org, "profile") else []
         for org_type_value in org_type_values:
             org_config = REGISTRY.org_type(org_type_value.value)
             if org_config is None:
                 continue
             for template_config in org_config.templates:
-                permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
-                    name=template_config.name,
-                )
-                PermissionGroup.objects.get_or_create(
-                    organization=org,
-                    template=permission_group_template,
-                )
+                expected.add(template_config.name)
 
-    # 2. Sync the Django Group permissions for every existing group.
+        if not expected:
+            continue
+
+        # Create missing.
+        for template_name in expected:
+            permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+                name=template_name,
+            )
+            PermissionGroup.objects.get_or_create(
+                organization=org,
+                template=permission_group_template,
+            )
+
+        # Delete stale groups whose template is no longer in any preset.
+        stale = PermissionGroup.objects.filter(organization=org).exclude(
+            template__name__in=expected,
+        )
+        stale.delete()
+
+    # Sync Django Group permissions.
     template_names = REGISTRY.template_names()
-
     with transaction.atomic():
         templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
             "permissions", "permissiongroup_set__group"
         )
-
         for template in templates:
             perms = list(template.permissions.all())
             for pgt in template.permissiongroup_set.all():
