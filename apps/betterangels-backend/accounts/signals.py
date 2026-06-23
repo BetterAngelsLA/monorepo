@@ -46,7 +46,13 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if not settings.IS_LOCAL_DEV or Organization.objects.filter(name="test_org").exists():
+    """Ensure ``test_org`` exists with the expected users, roles, and groups.
+
+    Fully idempotent — safe to run on every ``post_migrate`` regardless of
+    whether the data already exists.  Uses ``get_or_create`` for the org
+    and ``member_add`` (which skips already-assigned templates).
+    """
+    if not settings.IS_LOCAL_DEV:
         return
 
     from accounts.groups import ORG_ADMIN
@@ -57,26 +63,23 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
     admin = User.objects.get(username="admin")
     agent = User.objects.get(username="agent")
 
-    # Create the org with BOTH shelter and outreach presets so all
-    # templates are available for testing.
-    test_org = create_organization_with_presets(
-        name="test_org",
-        preset_names=["shelter", "outreach"],
-        owner=admin,
-        owner_roles=(ORG_ADMIN,),
-    )
+    # Create the org if it doesn't exist; skip preset group creation if it does.
+    test_org, created = Organization.objects.get_or_create(name="test_org")
 
-    # Admin: Organization Admin + Shelter Operator + Caseworker (outreach).
-    member_add(
-        email=admin.email or "admin@example.com",
-        first_name="Admin",
-        last_name="User",
-        middle_name=None,
-        organization=test_org,
-        permission_templates=(SHELTER_OPERATOR, CASEWORKER),
-    )
+    if created:
+        test_org = create_organization_with_presets(
+            name="test_org",
+            preset_names=["shelter", "outreach"],
+            owner=admin,
+            owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+        )
+    else:
+        # Org already exists — ensure owner is still linked.
+        if not test_org.owners.filter(organization_user__user=admin).exists():
+            test_org.add_user(admin)
 
-    # Agent: Shelter Operator + Caseworker (outreach).
+    # Role assignments are idempotent: member_add only grants templates
+    # the user doesn't already hold.
     member_add(
         email=agent.email or "agent@example.com",
         first_name=agent.first_name or "",
