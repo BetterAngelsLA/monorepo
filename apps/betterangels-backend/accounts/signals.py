@@ -7,7 +7,7 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from organizations.models import Organization
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -31,35 +31,33 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        test_usernames = ["admin", "agent"]
-        test_users = User.objects.filter(username__in=test_usernames)
-        test_org = Organization.objects.create(name="test_org")
-        for test_user in test_users:
-            test_org.add_user(test_user)
+    if not settings.IS_LOCAL_DEV or Organization.objects.filter(name="test_org").exists():
+        return
 
-        # Create permission groups for the test org based on its type (shelter).
-        _setup_test_org_groups(test_org, test_users)
+    from accounts.groups import ORG_ADMIN
+    from accounts.services import create_organization_with_presets, member_add
+    from shelters.groups import SHELTER_OPERATOR
 
+    admin = User.objects.get(username="admin")
+    agent = User.objects.get(username="agent")
 
-def _setup_test_org_groups(org: Organization, users: list[User]) -> None:
-    """Create PermissionGroup records for a shelter-type org and assign users."""
-    # Templates appropriate for a shelter organization.
-    shelter_templates = ["Organization Admin", "Shelter Operator"]
+    # Create the org with shelter preset — this also creates PermissionGroups.
+    test_org = create_organization_with_presets(
+        name="test_org",
+        preset_names=["shelter"],
+        owner=admin,
+        owner_roles=(ORG_ADMIN,),
+    )
 
-    admin_user = next((u for u in users if u.username == "admin"), None)
-
-    for template_name in shelter_templates:
-        template = PermissionGroupTemplate.objects.get(name=template_name)
-        pg, _ = PermissionGroup.objects.get_or_create(
-            organization=org,
-            name=template_name,
-            defaults={"template": template},
-        )
-        # Admin gets all shelter templates; agent only gets what was
-        # explicitly assigned elsewhere (handled by registration flow).
-        if admin_user:
-            admin_user.groups.add(pg.group)
+    # Agent gets the shelter member role.
+    member_add(
+        email=agent.email,
+        first_name=agent.first_name or "",
+        last_name=agent.last_name or "",
+        middle_name=None,
+        organization=test_org,
+        permission_templates=(SHELTER_OPERATOR,),
+    )
 
 
 @receiver(post_migrate)
