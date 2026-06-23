@@ -128,14 +128,14 @@ def create_organization_with_presets(
         assert org_config is not None
         org_types.append(org_config.name)
 
-    # Create PermissionGroup per template for this org.
-    reconcile_org_groups(org)
-
     # Profile with org types — update_or_create to fill in on existing orgs too.
     OrganizationProfile.objects.update_or_create(
         organization=org,
         defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
     )
+
+    # Create PermissionGroup per template for this org.
+    reconcile_org_groups(org)
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
     org.add_user(owner)
