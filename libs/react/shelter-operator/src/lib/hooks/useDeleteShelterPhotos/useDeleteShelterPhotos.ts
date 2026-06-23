@@ -1,5 +1,5 @@
 import { useMutation } from '@apollo/client/react';
-import { GetAdminShelterProfileDocument } from '../useAdminShelterProfile/__generated__/useAdminShelterProfile.generated';
+import { GetShelterOperatorProfileDocument } from '../useShelterOperatorProfile/__generated__/useShelterOperatorProfile.generated';
 import {
   DeleteShelterPhotosDocument,
   DeleteShelterPhotosMutation,
@@ -21,7 +21,7 @@ export function useDeleteShelterPhotos(props: TProps) {
     refetchQueries: refetch
       ? [
           {
-            query: GetAdminShelterProfileDocument,
+            query: GetShelterOperatorProfileDocument,
             variables: { id: shelterId },
           },
         ]
