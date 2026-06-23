@@ -9,9 +9,7 @@ from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, ReservationClient, Room
-from shelters.services.reservation import (reservation_create,
-                                           reservation_delete,
-                                           reservation_update)
+from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -61,7 +59,9 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
 
     def test_requires_bed_or_room(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_create(user=self.user, organization_id=self.org.pk, data={"clients": [{"client_profile_id": self.client_1.pk}]})
+            reservation_create(
+                user=self.user, organization_id=self.org.pk, data={"clients": [{"client_profile_id": self.client_1.pk}]}
+            )
         self.assertIn("A bed or room must be provided", str(ctx.exception))
 
     def test_bed_maintenance_flag_rejected(self) -> None:
@@ -149,7 +149,7 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ValidationError):
             reservation_create(
                 user=self.user,
-            organization_id=self.org.pk,
+                organization_id=self.org.pk,
                 data={"room_id": self.room_2.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
 
@@ -161,7 +161,7 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
             reservation_create(
                 user=self.user,
                 organization_id=self.org.pk,
-                data={"bed_id": other_bed.pk, "clients": [{"client_profile_id": self.client_1.pk}]}
+                data={"bed_id": other_bed.pk, "clients": [{"client_profile_id": self.client_1.pk}]},
             )
 
     def test_creates_reservation_with_clients(self) -> None:
@@ -281,14 +281,21 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
     def test_reservation_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            reservation_update(user=self.user, organization_id=self.org.pk, reservation_id=999999, data={"notes": "Missing"})
+            reservation_update(
+                user=self.user, organization_id=self.org.pk, reservation_id=999999, data={"notes": "Missing"}
+            )
         self.assertIn("Reservation matching ID 999999 could not be found.", str(ctx.exception))
 
     def test_user_without_org_access_raises_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
-            reservation_update(user=outsider, organization_id=self.org.pk, reservation_id=self.reservation.pk, data={"notes": "Blocked"})
+            reservation_update(
+                user=outsider,
+                organization_id=self.org.pk,
+                reservation_id=self.reservation.pk,
+                data={"notes": "Blocked"},
+            )
 
     def test_update_replaces_clients(self) -> None:
         client_1 = baker.make(ClientProfile)
@@ -352,7 +359,9 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete_2 = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, room=self.room_2, bed=None, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete_1.pk, to_delete_2.pk])
+        deleted = reservation_delete(
+            user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete_1.pk, to_delete_2.pk]
+        )
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Reservation.objects.filter(pk__in=[to_delete_1.pk, to_delete_2.pk]).exists())
@@ -361,4 +370,3 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
     def test_empty_list_raises(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[])
-

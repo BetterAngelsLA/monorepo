@@ -4,11 +4,22 @@ import datetime
 from typing import TYPE_CHECKING, Iterable, Self, Union, cast
 
 from django.db import models
-from django.db.models import (Case, CharField, Count, DateTimeField, Exists,
-                              IntegerField, Manager, OuterRef, Q, QuerySet,
-                              Subquery, Value, When)
-from shelters.enums import (BedStatusChoices, ReservationStatusChoices,
-                            RoomStatusChoices, ScheduleTypeChoices)
+from django.db.models import (
+    Case,
+    CharField,
+    Count,
+    DateTimeField,
+    Exists,
+    IntegerField,
+    Manager,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Value,
+    When,
+)
+from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices, ScheduleTypeChoices
 from shelters.open_at import shelters_open_at
 from shelters.selectors import shelter_list
 

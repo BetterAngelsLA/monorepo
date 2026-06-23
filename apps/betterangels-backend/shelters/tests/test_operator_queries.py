@@ -4,12 +4,10 @@ from typing import Any, cast
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from model_bakery import baker
-from shelters.enums import (BedStatusChoices, DemographicChoices, PetChoices,
-                            ReservationStatusChoices, RoomStatusChoices)
+from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
-from shelters.models import (Bed, Demographic, Pet, Reservation, Room, Shelter,
-                             ShelterType, SpecialSituationRestriction)
+from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize

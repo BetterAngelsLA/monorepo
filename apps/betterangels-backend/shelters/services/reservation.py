@@ -67,7 +67,9 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
 
 
 @transaction.atomic
-def reservation_update(*, user: "User", organization_id: str, reservation_id: int | str, data: Dict[str, Any]) -> Reservation:
+def reservation_update(
+    *, user: "User", organization_id: str, reservation_id: int | str, data: Dict[str, Any]
+) -> Reservation:
     """Update an existing reservation.
 
     Validates org access via the reservation's shelter. Only keys present in

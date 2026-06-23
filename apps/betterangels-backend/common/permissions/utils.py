@@ -270,42 +270,47 @@ def permissioned_queryset(
     """
     fields = organization_fields or [organization_field]
 
-    queryset = queryset.filter(
-        reduce(or_, (Q(**{f: organization_id}) for f in fields))
-    )
+    queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
 
     if perms is None:
         queryset = queryset.filter(
-            reduce(or_, (
-                Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user)))
-                for f in fields
-            ))
+            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields))
         )
     elif any_perm:
         q = Q()
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
-            q |= reduce(or_, (
-                Q(Exists(
-                    Organization.objects.filter(pk=OuterRef(f))
-                    .filter(permission_groups__group__user=user)
-                    .filter(_perm_q(app_label, codename))
-                ))
-                for f in fields
-            ))
+            q |= reduce(
+                or_,
+                (
+                    Q(
+                        Exists(
+                            Organization.objects.filter(pk=OuterRef(f))
+                            .filter(permission_groups__group__user=user)
+                            .filter(_perm_q(app_label, codename))
+                        )
+                    )
+                    for f in fields
+                ),
+            )
         queryset = queryset.filter(q)
     else:
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
             queryset = queryset.filter(
-                reduce(or_, (
-                    Q(Exists(
-                        Organization.objects.filter(pk=OuterRef(f))
-                        .filter(permission_groups__group__user=user)
-                        .filter(_perm_q(app_label, codename))
-                    ))
-                    for f in fields
-                ))
+                reduce(
+                    or_,
+                    (
+                        Q(
+                            Exists(
+                                Organization.objects.filter(pk=OuterRef(f))
+                                .filter(permission_groups__group__user=user)
+                                .filter(_perm_q(app_label, codename))
+                            )
+                        )
+                        for f in fields
+                    ),
+                )
             )
 
     return queryset

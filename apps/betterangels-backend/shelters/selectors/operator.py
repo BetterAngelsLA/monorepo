@@ -7,10 +7,9 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
-from common.permissions.utils import perm_filter, permissioned_queryset
+from common.permissions.utils import permissioned_queryset
 from common.utils import get_by_pk_or_not_found
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
 
@@ -151,6 +150,7 @@ def reservation_queryset(
     """
     if queryset is None:
         from shelters.models import Reservation
+
         queryset = Reservation.objects.all()
 
     return permissioned_queryset(
@@ -235,7 +235,13 @@ def bed_get(
     )
 
 
-def reservation_get(*, user: "User", organization_id: str, reservation_id: int | str, permission: str | None = None,) -> "Reservation":
+def reservation_get(
+    *,
+    user: "User",
+    organization_id: str,
+    reservation_id: int | str,
+    permission: str | None = None,
+) -> "Reservation":
     """Return the reservation scoped to *organization_id* for *user*.
 
     Raises:

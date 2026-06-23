@@ -4,32 +4,44 @@ import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.models import User
-from common.graphql.types import (AuthorizedPresignedS3UploadsType,
-                                  AuthorizedPresignedS3UploadType,
-                                  BulkDeleteInput, BulkDeleteResult)
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    AuthorizedPresignedS3UploadType,
+    BulkDeleteInput,
+    BulkDeleteResult,
+)
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
-from shelters.services.reservation import (reservation_create,
-                                           reservation_delete,
-                                           reservation_update)
-from shelters.services.room import (room_clone, room_create, room_delete,
-                                    room_update)
+from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
+from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
-from shelters.types import (BedType, CityType, CreateBedInput,
-                            CreateReservationInput, CreateRoomInput,
-                            CreateShelterInput,
-                            GenerateShelterPhotoUploadsInput,
-                            OperatorShelterType, ReservationType,
-                            ResolveShelterPhotoUploadsInput, RoomType,
-                            ServiceCategoryType, ShelterPhotoType,
-                            ShelterPhotoUploadsType, ShelterType, SPAType,
-                            UpdateBedInput, UpdateReservationInput,
-                            UpdateRoomInput, UpdateShelterInput,
-                            UpdateShelterPhotoInput)
+from shelters.types import (
+    BedType,
+    CityType,
+    CreateBedInput,
+    CreateReservationInput,
+    CreateRoomInput,
+    CreateShelterInput,
+    GenerateShelterPhotoUploadsInput,
+    OperatorShelterType,
+    ReservationType,
+    ResolveShelterPhotoUploadsInput,
+    RoomType,
+    ServiceCategoryType,
+    ShelterPhotoType,
+    ShelterPhotoUploadsType,
+    ShelterType,
+    SPAType,
+    UpdateBedInput,
+    UpdateReservationInput,
+    UpdateRoomInput,
+    UpdateShelterInput,
+    UpdateShelterPhotoInput,
+)
 from strawberry import ID
 from strawberry.scalars import JSON
 from strawberry.types import Info
@@ -193,7 +205,9 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean))
+        return cast(
+            ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean)
+        )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.DELETE)])
     def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:

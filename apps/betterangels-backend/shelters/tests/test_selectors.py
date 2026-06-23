@@ -9,10 +9,13 @@ from model_bakery import baker
 
 # isort: split
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
-from shelters.models import (Bed, BedEvent,  # type: ignore[attr-defined]
-                             Reservation, Shelter)
-from shelters.selectors import (report_bed_status_counts,
-                                reservation_status_change_counts)
+from shelters.models import (
+    Bed,
+    BedEvent,  # type: ignore[attr-defined]
+    Reservation,
+    Shelter,
+)
+from shelters.selectors import report_bed_status_counts, reservation_status_change_counts
 from shelters.tests.baker_recipes import shelter_recipe
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
@@ -30,7 +33,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     # -- helpers -------------------------------------------------------------
 
-    def _make_reservation(self, statuses: list[ReservationStatusChoices], bed: Bed | None=None) -> Reservation:
+    def _make_reservation(self, statuses: list[ReservationStatusChoices], bed: Bed | None = None) -> Reservation:
         """Create a reservation on a fresh bed then apply each status in order.
 
         Each reservation gets its own bed to avoid the

@@ -2,11 +2,16 @@ from datetime import datetime, timezone
 
 from django.test import TestCase
 from model_bakery import baker
-from shelters.enums import (AccessibilityChoices, BedStatusChoices,
-                            BedTypeChoices, DemographicChoices, FunderChoices,
-                            MedicalNeedChoices, PetChoices)
-from shelters.models import (Accessibility, Bed, Demographic, Funder,
-                             MedicalNeed, Pet, Room)
+from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
+    DemographicChoices,
+    FunderChoices,
+    MedicalNeedChoices,
+    PetChoices,
+)
+from shelters.models import Accessibility, Bed, Demographic, Funder, MedicalNeed, Pet, Room
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 

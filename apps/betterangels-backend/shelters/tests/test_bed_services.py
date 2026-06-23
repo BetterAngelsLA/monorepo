@@ -6,12 +6,16 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
 from model_bakery import baker
-from shelters.enums import (AccessibilityChoices, BedStatusChoices,
-                            BedTypeChoices, DemographicChoices, FunderChoices,
-                            PetChoices)
+from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
+    DemographicChoices,
+    FunderChoices,
+    PetChoices,
+)
 from shelters.groups import SHELTER_OPERATOR
-from shelters.models import (Accessibility, Bed, Demographic, Funder, Pet,
-                             Room, Shelter)
+from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -134,7 +138,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, organization_id=self.org_id,bed_id=self.bed.pk, data={"name": "Renamed"})
+        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")

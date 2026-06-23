@@ -11,33 +11,59 @@ from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
 from common.permissions.utils import get_current_organization
-from django.db.models import (Count, IntegerField, OuterRef, Prefetch,
-                              QuerySet, Subquery)
+from django.db.models import Prefetch, QuerySet
 from shelters import models
-from shelters.enums import (BedStatusChoices, BedTypeChoices,
-                            ReservationStatusChoices, RoomStatusChoices,
-                            RoomStyleChoices, ShelterPhotoTypeChoices)
-from shelters.managers import (bed_computed_status_annotation,
-                               room_computed_status_annotation,
-                               shelter_bed_status_count_subquery,
-                               shelter_room_status_count_subquery)
-from shelters.selectors import (bed_queryset, room_queryset, shelter_list,
-                                shelter_queryset)
+from shelters.enums import (
+    BedStatusChoices,
+    BedTypeChoices,
+    ReservationStatusChoices,
+    RoomStatusChoices,
+    RoomStyleChoices,
+    ShelterPhotoTypeChoices,
+)
+from shelters.managers import (
+    bed_computed_status_annotation,
+    room_computed_status_annotation,
+    shelter_bed_status_count_subquery,
+    shelter_room_status_count_subquery,
+)
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.selectors.operator import reservation_queryset
-from shelters.types.lookups import (AccessibilityType, CityType,
-                                    ContactInfoType, DemographicType,
-                                    EntryRequirementType, ExitPolicyType,
-                                    FunderType, MedicalNeedType, ParkingType,
-                                    PetType, ReferralRequirementType,
-                                    RoomStyleType, ScheduleType, ServiceType,
-                                    ShelterProgramType, ShelterTypeType,
-                                    SPAType, SpecialSituationRestrictionType,
-                                    StorageType, VaccinationRequirementType)
+from shelters.types.lookups import (
+    AccessibilityType,
+    CityType,
+    ContactInfoType,
+    DemographicType,
+    EntryRequirementType,
+    ExitPolicyType,
+    FunderType,
+    MedicalNeedType,
+    ParkingType,
+    PetType,
+    ReferralRequirementType,
+    RoomStyleType,
+    ScheduleType,
+    ServiceType,
+    ShelterProgramType,
+    ShelterTypeType,
+    SPAType,
+    SpecialSituationRestrictionType,
+    StorageType,
+    VaccinationRequirementType,
+)
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import (BedFilter, BedOrder, ReservationFilter, ReservationOrder,
-                      RoomFilter, RoomOrder, ShelterFilter, ShelterOrder)
+from .filters import (
+    BedFilter,
+    BedOrder,
+    ReservationFilter,
+    ReservationOrder,
+    RoomFilter,
+    RoomOrder,
+    ShelterFilter,
+    ShelterOrder,
+)
 
 
 def _annotated_count(root: models.Shelter, name: str) -> int:

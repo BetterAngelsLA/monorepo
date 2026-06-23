@@ -5,9 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import bed_get, bed_queryset, shelter_get
-from shelters.services.utils import (_BED_M2M_FIELDS, _clone_label,
-                                     _set_m2m_from_enums,
-                                     _validate_subset_attributes)
+from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
     from accounts.models import User
