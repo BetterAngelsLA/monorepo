@@ -288,7 +288,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         with self.assertRaises(ObjectDoesNotExist):
             User = get_user_model()
             outsider = User.objects.create_user(username="outsider", password="pw")
-            reservation_update(user=outsider, reservation_id=self.reservation.pk, data={"notes": "Blocked"})
+            reservation_update(user=outsider, organization_id=self.org.pk, reservation_id=self.reservation.pk, data={"notes": "Blocked"})
 
     def test_update_replaces_clients(self) -> None:
         client_1 = baker.make(ClientProfile)
@@ -340,7 +340,7 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete = baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, ids=[to_delete.pk])
+        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], to_delete.pk)
@@ -352,12 +352,13 @@ class ReservationDeleteTestCase(ReservationServiceTestCase):
         to_delete_2 = baker.make(Reservation, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
         other = baker.make(Reservation, room=self.room_2, bed=None, status=ReservationStatusChoices.CONFIRMED)
 
-        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, ids=[to_delete_1.pk, to_delete_2.pk])
+        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[to_delete_1.pk, to_delete_2.pk])
 
         self.assertEqual(len(deleted), 2)
         self.assertFalse(Reservation.objects.filter(pk__in=[to_delete_1.pk, to_delete_2.pk]).exists())
         self.assertTrue(Reservation.objects.filter(pk=other.pk).exists())
 
-    def test_empty_list_returns_empty(self) -> None:
-        deleted = reservation_delete(user=self.user, organization_id=self.org.pk, ids=[])
-        self.assertEqual(deleted, [])
+    def test_empty_list_raises(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist):
+            reservation_delete(user=self.user, organization_id=self.org.pk, reservation_ids=[])
+

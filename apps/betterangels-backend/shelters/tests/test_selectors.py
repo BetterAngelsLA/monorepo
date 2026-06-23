@@ -7,11 +7,10 @@ from model_bakery import baker
 
 # isort: split
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
-from shelters.models import Bed, BedEvent, Reservation, Shelter  # type: ignore[attr-defined]
-from shelters.selectors import (
-    report_bed_status_counts,
-    reservation_status_change_counts,
-)
+from shelters.models import (Bed, BedEvent,  # type: ignore[attr-defined]
+                             Reservation, Shelter)
+from shelters.selectors import (report_bed_status_counts,
+                                reservation_status_change_counts)
 from shelters.tests.baker_recipes import shelter_recipe
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
@@ -29,7 +28,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     # -- helpers -------------------------------------------------------------
 
-    def _make_reservation(self, shelter: Shelter, statuses: list[ReservationStatusChoices]) -> Reservation:
+    def _make_reservation(self, statuses: list[ReservationStatusChoices], bed: Bed | None=None) -> Reservation:
         """Create a reservation on a fresh bed then apply each status in order.
 
         Each reservation gets its own bed to avoid the
@@ -37,11 +36,12 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         ``status`` fires a ``reservation.status_change`` event via the pghistory
         trigger.
         """
-        bed = baker.make(Bed, shelter=shelter, name="Test-Bed")
+        bed = bed or baker.make(Bed, shelter=self.shelter, name="Test-Bed")
         reservation = Reservation.objects.create(bed=bed)
         for status in statuses:
             reservation.status = status
             reservation.save()
+
         return reservation
 
     def _set_event_dates(self, reservation: Reservation, dt: datetime.datetime) -> None:
@@ -58,9 +58,9 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_counts_each_transition_type(self) -> None:
         """One reservation per status produces a count of 1 in each bucket."""
-        overdue = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECK_IN_OVERDUE])
-        cancelled = self._make_reservation(self.shelter, [ReservationStatusChoices.CANCELLED])
-        checked_in = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        overdue = self._make_reservation([ReservationStatusChoices.CHECK_IN_OVERDUE])
+        cancelled = self._make_reservation([ReservationStatusChoices.CANCELLED])
+        checked_in = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         for r in (overdue, cancelled, checked_in):
             self._set_event_dates(r, self._in_range())
 
@@ -74,7 +74,6 @@ class ReservationStatusChangeCountsTestCase(TestCase):
     def test_overdue_to_checked_in_transition(self) -> None:
         """A check_in_overdue -> checked_in transition is counted via pgh_diff."""
         reservation = self._make_reservation(
-            self.shelter,
             [ReservationStatusChoices.CHECK_IN_OVERDUE, ReservationStatusChoices.CHECKED_IN],
         )
         self._set_event_dates(reservation, self._in_range())
@@ -88,7 +87,6 @@ class ReservationStatusChangeCountsTestCase(TestCase):
     def test_each_reservation_counted_once_per_status(self) -> None:
         """Two transitions to checked_in on one reservation count as one (distinct)."""
         reservation = self._make_reservation(
-            self.shelter,
             [
                 ReservationStatusChoices.CHECKED_IN,
                 ReservationStatusChoices.CANCELLED,
@@ -103,7 +101,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_events_before_end_datetime_are_included(self) -> None:
         """An event before the exclusive end datetime is counted."""
-        reservation = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        reservation = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(
             reservation,
             timezone.make_aware(datetime.datetime(2026, 1, 31, 23, 0)),
@@ -115,8 +113,8 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_events_outside_range_excluded(self) -> None:
         """Events before start or at the exclusive end datetime are not counted."""
-        before = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
-        after = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
+        before = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
+        after = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(
             before,
             timezone.make_aware(datetime.datetime(2025, 12, 31, 12, 0)),
@@ -132,7 +130,8 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_other_shelter_events_excluded(self) -> None:
         """Events belonging to a different shelter are not counted."""
-        reservation = self._make_reservation(self.other_shelter, [ReservationStatusChoices.CHECKED_IN])
+        other_bed = baker.make(Bed, shelter=self.other_shelter, name="Other-Bed")
+        reservation = self._make_reservation([ReservationStatusChoices.CHECKED_IN], bed=other_bed)
         self._set_event_dates(reservation, self._in_range())
 
         result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
@@ -169,8 +168,8 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_counts_across_date_range(self) -> None:
         """Counts are aggregated across the whole datetime range."""
-        checked_in = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECKED_IN])
-        cancelled = self._make_reservation(self.shelter, [ReservationStatusChoices.CANCELLED])
+        checked_in = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
+        cancelled = self._make_reservation([ReservationStatusChoices.CANCELLED])
         self._set_event_dates(
             checked_in,
             timezone.make_aware(datetime.datetime(2026, 1, 1, 12, 0)),
@@ -191,7 +190,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_counts_support_one_day_datetime_range(self) -> None:
         """A one-day datetime range includes events on that date."""
-        reservation = self._make_reservation(self.shelter, [ReservationStatusChoices.CHECK_IN_OVERDUE])
+        reservation = self._make_reservation([ReservationStatusChoices.CHECK_IN_OVERDUE])
         self._set_event_dates(
             reservation,
             timezone.make_aware(datetime.datetime(2026, 1, 15, 23, 0)),
