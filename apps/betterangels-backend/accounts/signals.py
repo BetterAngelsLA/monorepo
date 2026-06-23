@@ -56,10 +56,7 @@ def _ensure_test_users() -> None:
 
 def _ensure_test_org() -> None:
     """Idempotent: create test_org with presets and owner (no role assignment yet)."""
-    from accounts.groups import ORG_ADMIN
     from accounts.services import create_organization_with_presets
-    from notes.groups import CASEWORKER
-    from shelters.groups import SHELTER_OPERATOR
 
     admin = User.objects.get(username="admin")
 
@@ -125,6 +122,7 @@ def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
         )
     except Exception:
         pass
+
 
 def _sync_template_permissions() -> None:
     """Sync Django Group.permissions for all registered templates."""
