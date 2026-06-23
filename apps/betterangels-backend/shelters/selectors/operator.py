@@ -8,7 +8,7 @@ circular import with the model layer.
 from typing import TYPE_CHECKING
 
 from common.permissions.utils import permissioned_queryset
-from common.errors import get_by_pk_or_not_found
+from common.utils import get_by_pk_or_not_found
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
