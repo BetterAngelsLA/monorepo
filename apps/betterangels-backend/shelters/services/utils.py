@@ -5,6 +5,7 @@ from django.db import models
 from places import Places
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.models import Bed, Room, Schedule, Shelter
+from shelters.models.schedule import _duration_minutes, _start_week_minutes
 
 
 def _get_m2m_field_names(model: type[models.Model]) -> set[str]:
@@ -126,13 +127,17 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
         raw_days = entry.get("days") or [None]
         for raw_day in raw_days:
             day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
+            start_time = entry.get("start_time")
+            end_time = entry.get("end_time")
             objs.append(
                 Schedule(
                     shelter=shelter,
                     schedule_type=schedule_type,
                     day=day,
-                    start_time=entry.get("start_time"),
-                    end_time=entry.get("end_time"),
+                    start_time=start_time,
+                    end_time=end_time,
+                    start_week_minutes=_start_week_minutes(day, start_time),
+                    duration_minutes=_duration_minutes(start_time, end_time),
                     start_date=entry.get("start_date"),
                     end_date=entry.get("end_date"),
                     condition=condition,
