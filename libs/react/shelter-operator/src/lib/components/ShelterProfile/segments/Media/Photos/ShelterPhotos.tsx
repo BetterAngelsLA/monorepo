@@ -47,6 +47,8 @@ function buildColumns(
       width: '140px',
       cellClassName: 'capitalize',
       filterValue: (photo) => photo.type,
+      autoFilterOptions: true,
+      renderFilterOption: (v) => v.toLowerCase(),
       sortValue: (photo) => photo.type,
       render: (photo) => photo.type.toLowerCase(),
     },

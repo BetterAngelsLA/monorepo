@@ -39,6 +39,7 @@ const TableBase = <TItem, TRowObject = TItem>({
     handleSortToggle,
     filters,
     handleFilterChange,
+    resolvedFilterOptions,
   } = useTableSortFilter({
     columns,
     rows,
@@ -95,6 +96,7 @@ const TableBase = <TItem, TRowObject = TItem>({
             onClearFilter={handleClearFilter}
             openFilterColumn={openFilterColumn}
             setOpenFilterColumn={setOpenFilterColumn}
+            filterOptions={resolvedFilterOptions[column.key]}
           />
         ))}
         {hasTrailingColumn && (

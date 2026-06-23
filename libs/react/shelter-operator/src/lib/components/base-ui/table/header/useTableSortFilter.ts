@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { SortDirection, TableColumn, TableProps } from '../types';
+import type { ColumnFilterOption } from './ColumnFilter';
 import { compareValues, matchesFilter } from '../utils';
 
 type UseTableSortFilterParams<TItem> = {
@@ -21,7 +22,7 @@ export function useTableSortFilter<TItem>({
   filters: controlledFilters,
   onFilterChange,
 }: UseTableSortFilterParams<TItem>) {
-  // ── sort state ──
+  // sort state
   const isSortControlled = onSortChange !== undefined;
 
   const [internalSortColumn, setInternalSortColumn] = useState<string | null>(
@@ -70,7 +71,7 @@ export function useTableSortFilter<TItem>({
     [columns, sortColumn, sortDirection, isSortControlled, onSortChange]
   );
 
-  // ── filter state ──
+  // filter state
   const isFilterControlled = onFilterChange !== undefined;
 
   const [internalFilters, setInternalFilters] = useState<
@@ -93,7 +94,43 @@ export function useTableSortFilter<TItem>({
     [isFilterControlled, onFilterChange]
   );
 
-  // ── pipeline: filter → sort ──
+  // filter options: explicit list > auto-derived > none
+  const resolvedFilterOptions = useMemo<
+    Record<string, ColumnFilterOption[]>
+  >(() => {
+    const result: Record<string, ColumnFilterOption[]> = {};
+
+    for (const column of columns) {
+      if (!column.filterValue) {
+        continue;
+      }
+
+      const fmt = column.renderFilterOption;
+
+      // Explicit list always takes precedence
+      if (column.filterOptions) {
+        result[column.key] = fmt
+          ? column.filterOptions.map((o) => ({ ...o, label: fmt(o.value) }))
+          : column.filterOptions;
+
+        continue;
+      }
+
+      // Auto-derive only when explicitly opted in (safe for low-cardinality columns)
+      if (column.autoFilterOptions) {
+        const uniqueValues = [...new Set(rows.map(column.filterValue))].sort();
+
+        result[column.key] = uniqueValues.map((v) => ({
+          label: fmt ? fmt(v) : v,
+          value: v,
+        }));
+      }
+    }
+
+    return result;
+  }, [columns, rows]);
+
+  // pipeline: filter → sort
   const filteredRows = useMemo(() => {
     const activeFilters = Object.entries(filters).filter(
       ([, v]) => v.trim() !== ''
@@ -142,5 +179,6 @@ export function useTableSortFilter<TItem>({
     handleSortToggle,
     filters,
     handleFilterChange,
+    resolvedFilterOptions,
   } as const;
 }

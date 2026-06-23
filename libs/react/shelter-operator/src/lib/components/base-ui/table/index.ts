@@ -1,3 +1,4 @@
+export type { ColumnFilterOption } from './header/ColumnFilter';
 export { Table } from './Table';
 export {
   TableRow,

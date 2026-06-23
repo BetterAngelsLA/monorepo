@@ -2,7 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { Filter } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { SortDirection, TableColumn } from '../types';
-import { ColumnFilter } from './ColumnFilter';
+import { ColumnFilter, type ColumnFilterOption } from './ColumnFilter';
 import { SortIcon } from './SortIcon';
 
 type ColumnHeaderProps<TItem> = {
@@ -15,6 +15,8 @@ type ColumnHeaderProps<TItem> = {
   onClearFilter: (columnKey: string) => void;
   openFilterColumn: string | null;
   setOpenFilterColumn: Dispatch<SetStateAction<string | null>>;
+  /** Resolved filter options (auto-derived from data or explicit override). */
+  filterOptions?: ColumnFilterOption[];
 };
 
 export function ColumnHeader<TItem>({
@@ -27,6 +29,7 @@ export function ColumnHeader<TItem>({
   onClearFilter,
   openFilterColumn,
   setOpenFilterColumn,
+  filterOptions,
 }: ColumnHeaderProps<TItem>) {
   const isFilterOpen = openFilterColumn === column.key;
 
@@ -66,6 +69,7 @@ export function ColumnHeader<TItem>({
           value={filters[column.key] ?? ''}
           onChange={(v) => onFilterChange(column.key, v)}
           onClear={() => onClearFilter(column.key)}
+          filterOptions={filterOptions}
         />
       )}
 
