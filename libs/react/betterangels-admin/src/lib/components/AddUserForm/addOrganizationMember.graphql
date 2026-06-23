@@ -16,6 +16,7 @@ mutation AddOrganizationMember($data: OrgInvitationInput!) {
       memberRole
       middleName
       dateJoined
+      isOrgOwner
     }
   }
 }

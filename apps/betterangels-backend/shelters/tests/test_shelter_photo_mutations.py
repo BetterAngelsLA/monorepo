@@ -53,7 +53,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
             ]
         }
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -94,7 +94,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
             ]
         }
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -135,7 +135,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertGraphQLUnauthenticated(response)
 
     def test_returns_operation_info_for_nonexistent_shelter(self) -> None:
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -154,7 +154,7 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     def test_returns_operation_info_for_unauthorized_shelter(self) -> None:
         other_shelter: Any = shelter_recipe.make()
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -211,7 +211,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     ) -> None:
         initial_count = ShelterPhoto.objects.count()
 
-        expected_query_count = 7
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -253,7 +253,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
         waffle.switch_is_active(IMGPROXY_SWITCH)
 
-        expected_query_count = 8
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -319,7 +319,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     @patch("shelters.services.shelter_photo.validate_upload_token", return_value=False)
     def test_returns_error_on_invalid_token(self, mock_validate: MagicMock) -> None:
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -345,7 +345,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     @patch("shelters.services.shelter_photo.s3_key_exists", return_value=False)
     @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
     def test_returns_error_when_file_not_in_s3(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -373,7 +373,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
     def test_returns_operation_info_for_nonexistent_shelter(
         self, mock_validate: MagicMock, mock_s3_exists: MagicMock
     ) -> None:
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -407,7 +407,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         # raises DoesNotExist, which Strawberry wraps in the response.
         other_shelter: Any = shelter_recipe.make()
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION,
@@ -473,7 +473,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo.pk)]}})
 
@@ -488,7 +488,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
         photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo1.pk), str(photo2.pk)]}})
 
@@ -503,7 +503,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
         other_shelter: Any = shelter_recipe.make()
         unauthorized = baker.make(ShelterPhoto, shelter=other_shelter)
 
-        expected_query_count = 7
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.MUTATION, {"data": {"ids": [str(authorized.pk), str(unauthorized.pk)]}}
@@ -517,7 +517,7 @@ class DeleteShelterPhotosMutationTest(ShelterTestCase, TestCase):
     def test_returns_operation_info_for_nonexistent_id(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        expected_query_count = 7
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"ids": [str(photo.pk), "999999"]}})
 
@@ -564,7 +564,7 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
     def test_updates_photo_type(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
 
-        expected_query_count = 5
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
 
@@ -576,7 +576,7 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.EXTERIOR)
 
     def test_returns_operation_info_for_nonexistent_photo(self) -> None:
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"id": "999999", "photoType": "EXTERIOR"}})
 
@@ -586,7 +586,7 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
         other_shelter: Any = shelter_recipe.make()
         photo = baker.make(ShelterPhoto, shelter=other_shelter, type=ShelterPhotoTypeChoices.INTERIOR)
 
-        expected_query_count = 4
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
 

@@ -1,4 +1,6 @@
 import datetime
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from django.test import TestCase
 from django.utils import timezone
@@ -233,7 +235,7 @@ class ReportBedStatusCountsTestCase(TestCase):
         )
         BedEvent.objects.filter(pgh_id=event.pgh_id).update(pgh_created_at=dt)
 
-    def _assert_result(self, result: list[dict], expected: list[dict]) -> None:
+    def _assert_result(self, result: Sequence[Mapping[str, Any]], expected: Sequence[Mapping[str, Any]]) -> None:
         """Assert result matches expected list of {date, available, occupied, ...}."""
         self.assertEqual(len(result), len(expected))
         for i, exp in enumerate(expected):

@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import bed_get, bed_queryset, shelter_get
+from common.utils import get_by_pk_or_not_found
 from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -18,21 +19,18 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
     ``view_shelter`` permission.
 
     Raises:
-        ``Shelter.DoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
     shelter_id = data.pop("shelter_id")
 
-    try:
-        shelter = shelter_get(
-            user=user,
-            shelter_id=shelter_id,
-            organization_id=organization_id,
-            permission=Shelter.perms.VIEW,
-        )
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.VIEW,
+    )
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
@@ -62,21 +60,18 @@ def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: D
     skipped.
 
     Raises:
-        ``Bed.DoesNotExist`` when the bed is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
     data.pop("id", None)
 
-    try:
-        bed = bed_get(
-            user=user,
-            bed_id=bed_id,
-            organization_id=organization_id,
-            permission=Bed.perms.CHANGE,
-        )
-    except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
+    bed = bed_get(
+        user=user,
+        bed_id=bed_id,
+        organization_id=organization_id,
+        permission=Bed.perms.CHANGE,
+    )
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
@@ -130,9 +125,5 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
         user=user,
         organization_id=organization_id,
     )
-    try:
-        source = qs.get(pk=bed_id)
-    except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
-
+    source = get_by_pk_or_not_found(qs, pk=bed_id)
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

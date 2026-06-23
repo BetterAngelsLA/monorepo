@@ -1,6 +1,7 @@
 import logging
 
 from accounts.models import Organization, User
+from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -42,4 +43,15 @@ def send_welcome_email(user: User, organization: Organization, template_config: 
     )
     html_body = render_to_string(template_config.welcome_html, context)
     msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
+
+
+def send_welcome_emails_for_org(user: User, organization: Organization) -> None:
+    """Send welcome emails for every org template that has ``welcome_html`` set.
+
+    Call this from mutations after ``create_organization_service`` completes
+    successfully so that email dispatch happens outside the transaction.
+    """
+    templates = [t for t in REGISTRY.templates_for(organization) if t.welcome_html]
+    for template in templates:
+        send_welcome_email(user, organization, template)

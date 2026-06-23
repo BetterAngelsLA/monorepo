@@ -21,6 +21,7 @@ query OrganizationMembers(
       memberRole
       middleName
       dateJoined
+      isOrgOwner
     }
   }
 }
