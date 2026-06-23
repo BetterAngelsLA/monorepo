@@ -69,7 +69,7 @@ def _ensure_test_org() -> None:
             name="test_org",
             preset_names=["shelter", "outreach"],
             owner=admin,
-            owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+            owner_roles=(),  # roles assigned by sync_all_org_permission_groups
         )
 
 
@@ -101,8 +101,20 @@ def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
         return
 
     try:
-        agent = User.objects.get(username="agent")
+        from accounts.groups import ORG_ADMIN
+
         test_org = Organization.objects.get(name="test_org")
+        admin = User.objects.get(username="admin")
+        agent = User.objects.get(username="agent")
+
+        member_add(
+            email=admin.email or "admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+        )
         member_add(
             email=agent.email or "agent@example.com",
             first_name=agent.first_name or "",
