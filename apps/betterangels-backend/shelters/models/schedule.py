@@ -13,6 +13,23 @@ from .shelter import Shelter
 
 DAILY_MINUTES = 24 * 60  # 1440
 
+# ── Helpers ───────────────────────────────────────────────────────────────
+
+
+def _time_to_minutes(time_field: str) -> ExpressionWrapper:
+    """``EXTRACT(HOUR FROM time) * 60 + EXTRACT(MINUTE FROM time)`` as integer.
+
+    PostgreSQL ``EXTRACT`` returns double precision, so every call is
+    wrapped with ``Cast(..., IntegerField())`` and the final arithmetic
+    is wrapped with ``ExpressionWrapper(output_field=IntegerField())``.
+    """
+    return ExpressionWrapper(
+        Cast(Extract(F(time_field), "hour"), output_field=models.IntegerField()) * 60
+        + Cast(Extract(F(time_field), "minute"), output_field=models.IntegerField()),
+        output_field=models.IntegerField(),
+    )
+
+
 # ── Generated-column expressions ──────────────────────────────────────────
 
 
@@ -33,13 +50,7 @@ def _start_week_minutes_expression():
         When(day="sunday", then=Value(6 * DAILY_MINUTES)),
         default=Value(0),
     )
-    # PostgreSQL EXTRACT returns double precision — cast to integer.
-    start_minutes = ExpressionWrapper(
-        Cast(Extract(F("start_time"), "hour"), output_field=models.IntegerField()) * 60
-        + Cast(Extract(F("start_time"), "minute"), output_field=models.IntegerField()),
-        output_field=models.IntegerField(),
-    )
-    result = ExpressionWrapper(day_offset + start_minutes, output_field=models.IntegerField())
+    result = ExpressionWrapper(day_offset + _time_to_minutes("start_time"), output_field=models.IntegerField())
     return Case(
         When(Q(start_time__isnull=False), then=result),
         default=None,
@@ -55,18 +66,11 @@ def _duration_minutes_expression():
     1440 when start == end (24 h schedule).  NULL when either time is
     NULL.
     """
-    start_m = ExpressionWrapper(
-        Cast(Extract(F("start_time"), "hour"), output_field=models.IntegerField()) * 60
-        + Cast(Extract(F("start_time"), "minute"), output_field=models.IntegerField()),
-        output_field=models.IntegerField(),
-    )
-    end_m = ExpressionWrapper(
-        Cast(Extract(F("end_time"), "hour"), output_field=models.IntegerField()) * 60
-        + Cast(Extract(F("end_time"), "minute"), output_field=models.IntegerField()),
-        output_field=models.IntegerField(),
-    )
     raw = ExpressionWrapper(
-        Mod(end_m - start_m + Value(DAILY_MINUTES), Value(DAILY_MINUTES)),
+        Mod(
+            _time_to_minutes("end_time") - _time_to_minutes("start_time") + Value(DAILY_MINUTES),
+            Value(DAILY_MINUTES),
+        ),
         output_field=models.IntegerField(),
     )
     duration = ExpressionWrapper(
