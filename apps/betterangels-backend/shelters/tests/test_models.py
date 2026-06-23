@@ -510,6 +510,42 @@ class ScheduleModelTestCase(TestCase):
         self.assertNotIn(shelter, Shelter.objects.open_at(christmas))
         self.assertFalse(shelter.is_open_at(christmas))
 
+    def test_open_at_full_day_exception_respects_day(self) -> None:
+        """A full-day exception for a specific weekday should only close the
+        shelter on that day, not on other days.
+
+        Scenario
+        --------
+        - Shelter has a full-day operating schedule (every day, 0:00–23:59).
+        - An exception closes the shelter on Mondays (no times = closed all day).
+        - Querying on a Monday should NOT return the shelter.
+        - Querying on a Tuesday SHOULD return the shelter.
+        """
+        shelter = Shelter.objects.create(name="Exception Shelter")
+
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(23, 59),
+        )
+
+        Schedule.objects.create(
+            shelter=shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=None,
+            end_time=None,
+            is_exception=True,
+        )
+
+        monday = datetime.datetime(2026, 3, 2, 12, 0)
+        tuesday = datetime.datetime(2026, 3, 3, 12, 0)
+
+        self.assertNotIn(shelter, Shelter.objects.open_at(monday))
+        self.assertIn(shelter, Shelter.objects.open_at(tuesday))
+
 
 class CreateSchedulesServiceTestCase(TestCase):
     """Tests for _create_schedules multi-day fan-out."""

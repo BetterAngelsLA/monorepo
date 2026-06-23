@@ -74,9 +74,9 @@ def shelters_open_at(
     )
 
     # Step 2: exclude shelters with an active exception covering *dt*.
-    #   - Full-day:  start_time IS NULL  → closed all day.
+    #   - Full-day:  start_time IS NULL  → closed all day, but must match the day.
     #   - Partial:   same time+day logic as above, including overnight.
-    covers_now = Q(start_time__isnull=True) | time_day
+    covers_now = (Q(start_time__isnull=True) & (Q(day=None) | Q(day=day))) | time_day
     has_active_exception = Exists(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),
