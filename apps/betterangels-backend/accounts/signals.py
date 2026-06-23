@@ -48,38 +48,38 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
     """Ensure ``test_org`` exists with the expected users, roles, and groups.
 
-    Fully idempotent — safe to run on every ``post_migrate`` regardless of
-    whether the data already exists.  Uses ``get_or_create`` for the org
-    and ``member_add`` (which skips already-assigned templates).
+    Fully idempotent — uses ``get_or_create`` for the org and always syncs
+    groups from the current presets so new templates are picked up.
     """
     if not settings.IS_LOCAL_DEV:
         return
 
     from accounts.groups import ORG_ADMIN
-    from accounts.services import create_organization_with_presets, member_add
+    from accounts.services import member_add
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
     admin = User.objects.get(username="admin")
     agent = User.objects.get(username="agent")
 
-    # Create the org if it doesn't exist; skip preset group creation if it does.
-    test_org, created = Organization.objects.get_or_create(name="test_org")
+    # Create the org and sync groups from current presets.
+    # PermissionGroup.objects.get_or_create makes group creation idempotent.
+    test_org, _ = Organization.objects.get_or_create(name="test_org")
+    _sync_org_groups(test_org, preset_names=["shelter", "outreach"])
 
-    if created:
-        test_org = create_organization_with_presets(
-            name="test_org",
-            preset_names=["shelter", "outreach"],
-            owner=admin,
-            owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
-        )
-    else:
-        # Org already exists — ensure owner is still linked.
-        if not test_org.owners.filter(organization_user__user=admin).exists():
-            test_org.add_user(admin)
+    # Ensure owner is linked.
+    if not test_org.owners.filter(organization_user__user=admin).exists():
+        test_org.add_user(admin)
 
-    # Role assignments are idempotent: member_add only grants templates
-    # the user doesn't already hold.
+    # Role assignments (idempotent — skips already-assigned templates).
+    member_add(
+        email=admin.email or "admin@example.com",
+        first_name="Admin",
+        last_name="User",
+        middle_name=None,
+        organization=test_org,
+        permission_templates=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+    )
     member_add(
         email=agent.email or "agent@example.com",
         first_name=agent.first_name or "",
@@ -88,6 +88,30 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
         organization=test_org,
         permission_templates=(SHELTER_OPERATOR, CASEWORKER),
     )
+
+
+def _sync_org_groups(org: Organization, *, preset_names: list[str]) -> None:
+    """Create or sync PermissionGroups for *org* from the current preset configs.
+
+    Uses ``get_or_create`` so it's safe to call repeatedly — new templates
+    added to presets get picked up on the next run.
+    """
+    from common.org_types import REGISTRY
+
+    from .models import PermissionGroup, PermissionGroupTemplate
+
+    for preset_name in preset_names:
+        org_config = REGISTRY.org_type(preset_name)
+        if org_config is None:
+            continue
+        for template_config in org_config.templates:
+            permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+                name=template_config.name,
+            )
+            PermissionGroup.objects.get_or_create(
+                organization=org,
+                template=permission_group_template,
+            )
 
 
 @receiver(post_migrate)
