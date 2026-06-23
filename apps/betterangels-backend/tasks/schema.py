@@ -9,7 +9,7 @@ from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
-from common.team_shim import resolve_team_id
+from common.team_shim import resolve_team_id_from_input
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
@@ -54,14 +54,8 @@ class Mutation:
         task_data = asdict(data)
 
         # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
-        task_data["team_id"] = resolve_team_id(
-            team_slug=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=(
-                int(data.team_id.value)
-                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
-                else None
-            ),
-            organization_id=permission_group.organization_id,
+        task_data["team_id"] = resolve_team_id_from_input(
+            data, organization_id=permission_group.organization_id
         )
         task_data.pop("team", None)
 
@@ -103,14 +97,8 @@ class Mutation:
 
         # Resolve team before asdict.
         task: Task = qs.get(pk=data.id)
-        team_id = resolve_team_id(
-            team_slug=data.team.value if data.team is not strawberry.UNSET and data.team is not None else None,
-            team_id=(
-                int(data.team_id.value)
-                if data.team_id is not strawberry.UNSET and data.team_id is not None and data.team_id.value is not None
-                else None
-            ),
-            organization_id=task.organization_id or 0,
+        team_id = resolve_team_id_from_input(
+            data, organization_id=task.organization_id or 0
         )
 
         clean = asdict(data)
