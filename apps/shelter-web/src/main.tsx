@@ -1,10 +1,6 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import {
-  createApolloClient,
-  createOrgLink,
-} from '@monorepo/react/shared/apollo';
-import { localStorageAdapter } from '@monorepo/react/shared';
+import { createApolloClient } from '@monorepo/react/shared/apollo';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
@@ -33,7 +29,6 @@ const apolloClient = createApolloClient({
   csrfHeaderName,
   typePolicies: createShelterTypePolicies(isDevEnv),
   isDevEnv,
-  orgLink: createOrgLink(localStorageAdapter, 'shelter_operator_active_org_id'),
 });
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';

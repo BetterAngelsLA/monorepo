@@ -4,7 +4,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext from './ActiveOrgContext';
 import { PermissionEnum } from './ActiveOrgContext';
 
-const DEFAULT_STORAGE_KEY = 'shelter_operator_active_org_id';
+const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
