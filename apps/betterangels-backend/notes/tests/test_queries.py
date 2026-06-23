@@ -279,7 +279,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createNote"]
 
-        # Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site")
+        # TEMPORARY: Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site").
+        # Remove this shim once SelahTeamEnum is fully deprecated and old_team is removed.
         slugs = [SelahTeamEnum[t].value for t in teams] if teams else []
         team_ids = (
             list(Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True))

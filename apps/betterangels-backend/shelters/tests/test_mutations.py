@@ -31,7 +31,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
-                "organization": str(self.org.pk),
             }
         }
 
@@ -47,6 +46,11 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(shelter["status"], "DRAFT")
         self.assertIsNotNone(shelter["id"])
         self.assertEqual(Shelter.objects.count(), initial_shelter_count + 1)
+        # Verify the shelter was created under the header org, not some other org.
+        self.assertEqual(
+            Shelter.objects.get(pk=shelter["id"]).organization_id,
+            self.org.pk,
+        )
 
     def test_create_shelter_with_optional_fields(self) -> None:
         """Test creating a shelter with optional fields"""
@@ -74,7 +78,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
-                "organization": str(self.org.pk),
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
@@ -138,7 +141,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
-                "organization": str(self.org.pk),
                 "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
                 "demographics": ["FAMILIES", "SINGLE_WOMEN"],
                 "shelterTypes": ["BUILDING"],
@@ -185,7 +187,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
-                "organization": str(self.org.pk),
                 "location": {
                     "place": "123 Main St, Los Angeles, CA 90012",
                     "latitude": 34.0522,
@@ -251,7 +252,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Shelter With Custom Services",
                 "description": "A shelter with official and custom services",
-                "organization": str(self.org.pk),
                 "services": [
                     {"id": str(official.pk)},
                     {"categoryId": str(category.pk), "displayName": "Laundry"},
@@ -307,7 +307,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         variables: dict[str, Any] = {
             "data": {
                 # name intentionally omitted — should fail GraphQL validation
-                "organization": str(self.org.pk),
             }
         }
 
@@ -337,7 +336,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
-                "organization": str(self.org.pk),
                 "overallRating": 4,
                 "subjectiveReview": "Clean facilities with helpful staff",
             }
@@ -374,7 +372,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Invalid Email Shelter",
                 "description": "Should fail model validation",
-                "organization": str(self.org.pk),
                 "email": "not-an-email",
             }
         }
@@ -405,7 +402,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
-                "organization": str(self.org.pk),
             }
         }
 
@@ -435,7 +431,6 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
-                "organization": str(self.org_2.pk),
             }
         }
 

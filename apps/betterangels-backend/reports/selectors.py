@@ -62,7 +62,7 @@ def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
 
 
 def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Aggregate note counts grouped by team, using FK join to get team name."""
+    """Aggregate note counts grouped by team, with display labels."""
     rows = notes.exclude(team__isnull=True).values("team__name").annotate(count=Count("id")).order_by("-count")
     return [{"name": row["team__name"], "count": row["count"]} for row in rows]
 

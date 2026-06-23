@@ -8,6 +8,7 @@ circular import with the model layer.
 from typing import TYPE_CHECKING
 
 from common.permissions.utils import permissioned_queryset
+from common.utils import get_by_pk_or_not_found
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
@@ -56,7 +57,7 @@ def operator_shelter_list(
     user: "User",
     organization_id: str,
 ) -> "QuerySet[Shelter]":
-    """Filter to shelters in *organization_id* that *user* belongs to."""
+    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
     user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
     return queryset.filter(Exists(user_orgs), organization_id=organization_id)
 
@@ -147,12 +148,15 @@ def shelter_get(
     """
     from shelters.models import Shelter
 
-    return shelter_queryset(
-        Shelter.objects.all(),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=shelter_id)
+    return get_by_pk_or_not_found(
+        shelter_queryset(
+            Shelter.objects.all(),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ),
+        pk=shelter_id,
+    )
 
 
 def room_get(
@@ -165,12 +169,15 @@ def room_get(
     """Return the room scoped to *organization_id* for *user*."""
     from shelters.models import Room
 
-    return room_queryset(
-        Room.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=room_id)
+    return get_by_pk_or_not_found(
+        room_queryset(
+            Room.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ),
+        pk=room_id,
+    )
 
 
 def bed_get(
@@ -183,9 +190,12 @@ def bed_get(
     """Return the bed scoped to *organization_id* for *user*."""
     from shelters.models import Bed
 
-    return bed_queryset(
-        Bed.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=bed_id)
+    return get_by_pk_or_not_found(
+        bed_queryset(
+            Bed.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ),
+        pk=bed_id,
+    )

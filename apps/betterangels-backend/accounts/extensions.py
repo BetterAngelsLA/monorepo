@@ -53,12 +53,15 @@ class HasOrgPerm(HasPerm):
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to have the specified permission(s) in the " "organization set via X-Organization-ID header."
+        "Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header."
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("fail_silently", False)
-        kwargs.setdefault("message", "You do not have permission to perform this action in this organization.")
+        kwargs.setdefault(
+            "message",
+            "You do not have permission to perform this action in this organization.",
+        )
         super().__init__(*args, **kwargs)
 
     def resolve_for_user(

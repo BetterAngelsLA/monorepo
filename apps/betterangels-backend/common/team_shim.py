@@ -6,10 +6,21 @@ for note/task mutations.  Once all clients have migrated to ``teamId`` /
 fields on ``NoteType`` / ``TaskType``.
 """
 
-from typing import Any
+from typing import Any, Optional, Protocol
 
 import strawberry
+from strawberry import ID, Maybe
+
+from common.enums import SelahTeamEnum
 from teams.models import Team
+
+
+class HasTeamFields(Protocol):
+    """Structural protocol matching any Strawberry mutation input that carries
+    the deprecated ``team`` enum and/or the new ``team_id`` FK field."""
+
+    team: Optional[SelahTeamEnum]
+    team_id: Maybe[ID]
 
 
 def maybe_value(maybe: Any) -> Any:
@@ -17,6 +28,32 @@ def maybe_value(maybe: Any) -> Any:
     if maybe is strawberry.UNSET or maybe is None:
         return None
     return maybe
+
+
+def resolve_team_id_from_input(
+    data: HasTeamFields,
+    *,
+    organization_id: int,
+) -> int | None:
+    """TEMPORARY: Resolve team from a Strawberry mutation input.
+
+    Unwraps ``Maybe[T]`` for both the deprecated ``team`` enum and the new
+    ``team_id`` field, then delegates to ``resolve_team_id``.
+
+    Usage in mutations::
+
+        team_id = resolve_team_id_from_input(data, organization_id=org_id)
+    """
+    team_slug: str | None = None
+    team_id: int | None = None
+
+    if (raw_team := maybe_value(data.team)) is not None:
+        team_slug = raw_team.value  # type: ignore[union-attr]
+
+    if (raw_team_id := maybe_value(data.team_id)) is not None:
+        team_id = int(raw_team_id.value) if raw_team_id.value is not None else None  # type: ignore[union-attr]
+
+    return resolve_team_id(team_slug=team_slug, team_id=team_id, organization_id=organization_id)
 
 
 def resolve_team_id(

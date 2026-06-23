@@ -180,7 +180,7 @@ class NoteType:
             return None
         try:
             return SelahTeamEnum(root.team.slug)
-        except (KeyError, ValueError):
+        except KeyError, ValueError:
             return None
 
     current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
