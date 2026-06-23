@@ -21,16 +21,8 @@ ORG_ADMIN = TemplateConfig(
 ORG_SUPERUSER = TemplateConfig(
     name="Organization Superuser",
     permissions=[
-        UserOrganizationPermissions.ACCESS_ORG_PORTAL,
-        UserOrganizationPermissions.ADD_ORG_MEMBER,
+        *ORG_ADMIN.permissions,
         UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE,
-        UserOrganizationPermissions.REMOVE_ORG_MEMBER,
-        UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        ReportOrgPermissions.VIEW_REPORTS,
-        Team.perms.ADD,
-        Team.perms.CHANGE,
-        Team.perms.DELETE,
-        Team.perms.VIEW,
     ],
     is_invitable=False,
 )
