@@ -126,7 +126,7 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
@@ -138,7 +138,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 
-    shelter = Shelter(**scalar_data)
+    shelter = Shelter(organization_id=organization_id, **scalar_data)
     shelter.full_clean()
     shelter.save()
 
