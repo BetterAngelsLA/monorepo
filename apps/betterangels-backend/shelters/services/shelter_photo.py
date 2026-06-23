@@ -13,7 +13,7 @@ from common.services.types import AuthorizedPresignedUpload, AuthorizedPresigned
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from shelters.models import Shelter, ShelterPhoto
+from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
