@@ -1,5 +1,7 @@
 """Schedule model — per-day, per-type operating hours for shelters."""
 
+import datetime
+
 import pghistory
 from common.models import BaseModel
 from django.db import models
@@ -9,6 +11,47 @@ from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoic
 
 from .lookups import Demographic
 from .shelter import Shelter
+
+WEEK_MINUTES = 7 * 24 * 60  # 10080
+DAILY_MINUTES = 24 * 60  # 1440
+
+
+def _minutes_since_midnight(t: "datetime.time | None") -> int | None:
+    """Convert a time to minutes since midnight (0–1439)."""
+    if t is None:
+        return None
+    return t.hour * 60 + t.minute
+
+
+def _duration_minutes(start_time, end_time) -> int | None:
+    """Compute positive duration in minutes, handling overnight schedules.
+
+    For overnight schedules (e.g. 6 PM – 2 AM), the modulo naturally
+    produces the correct positive duration without branching.
+    Returns None when either time is None.
+    """
+    start_m = _minutes_since_midnight(start_time)
+    end_m = _minutes_since_midnight(end_time)
+    if start_m is None or end_m is None:
+        return None
+    duration = (end_m - start_m) % DAILY_MINUTES
+    return duration if duration != 0 else DAILY_MINUTES
+
+
+def _start_week_minutes(day, start_time) -> int | None:
+    """Compute week-minute offset for the schedule start.
+
+    Returns ``day_index * 1440 + start_minutes`` for day-specific schedules,
+    or ``start_minutes`` for every-day (day=None) schedules.
+    Returns None when start_time is None.
+    """
+    start_m = _minutes_since_midnight(start_time)
+    if start_m is None:
+        return None
+    if day is None:
+        return start_m
+    day_index = list(DayOfWeekChoices).index(day)
+    return day_index * DAILY_MINUTES + start_m
 
 
 @pghistory.track(
@@ -27,6 +70,21 @@ class Schedule(BaseModel):
     )
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
+
+    # Precomputed cyclic-interval columns for branchless "is this schedule
+    # active at a given datetime?" queries using modular arithmetic.
+    #
+    # ``start_week_minutes`` is the week-minute offset (0–10079) for
+    # day-specific schedules, or the daily-minute offset (0–1439) for
+    # every-day (day=None) schedules.  Null when ``start_time`` is null
+    # (full-day schedule with no time window).
+    #
+    # ``duration_minutes`` is the positive duration in minutes, computed
+    # via ``(end_m - start_m) % 1440`` so that overnight schedules
+    # (e.g. 18:00–02:00 → 480 min) are represented identically to normal
+    # schedules.  Null when either time is null.
+    start_week_minutes = models.IntegerField(null=True, blank=True)
+    duration_minutes = models.IntegerField(null=True, blank=True)
 
     # Date range — use both for a range, or set start_date == end_date for a single date
     start_date = models.DateField(
@@ -56,6 +114,12 @@ class Schedule(BaseModel):
             ),
         ]
         ordering = ["is_exception", "schedule_type", "day", "start_time"]
+
+    def save(self, *args: object, **kwargs: object) -> None:
+        """Auto-populate ``start_week_minutes`` and ``duration_minutes``."""
+        self.start_week_minutes = _start_week_minutes(self.day, self.start_time)
+        self.duration_minutes = _duration_minutes(self.start_time, self.end_time)
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         if self.is_exception:
