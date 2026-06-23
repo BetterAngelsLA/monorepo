@@ -83,47 +83,16 @@ def _ensure_test_org_and_roles() -> None:
 
 @receiver(post_migrate)
 def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
-    """Reconcile PermissionGroups for every org against current presets.
-
-    - Creates missing groups for templates newly added to a preset.
-    - Deletes groups whose template was removed from the org's presets.
-    - Syncs Django ``Group.permissions`` for all remaining groups.
-    """
-    from common.org_types import REGISTRY
-
-    from .models import PermissionGroup
+    """Reconcile every org's PermissionGroups against current presets."""
+    from accounts.services import reconcile_org_groups as reconcile
 
     for org in Organization.objects.all():
-        # Expected template names from the org's current presets.
-        expected: set[str] = set()
-        org_type_values = org.profile.org_types if hasattr(org, "profile") else []
-        for org_type_value in org_type_values:
-            org_config = REGISTRY.org_type(org_type_value.value)
-            if org_config is None:
-                continue
-            for template_config in org_config.templates:
-                expected.add(template_config.name)
+        reconcile(org)
 
-        if not expected:
-            continue
+def _sync_template_permissions() -> None:
+    """Sync Django Group.permissions for all registered templates."""
+    from common.org_types import REGISTRY
 
-        # Create missing.
-        for template_name in expected:
-            permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
-                name=template_name,
-            )
-            PermissionGroup.objects.get_or_create(
-                organization=org,
-                template=permission_group_template,
-            )
-
-        # Delete stale groups whose template is no longer in any preset.
-        stale = PermissionGroup.objects.filter(organization=org).exclude(
-            template__name__in=expected,
-        )
-        stale.delete()
-
-    # Sync Django Group permissions.
     template_names = REGISTRY.template_names()
     with transaction.atomic():
         templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(

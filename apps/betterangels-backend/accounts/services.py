@@ -121,23 +121,15 @@ def create_organization_with_presets(
     org = Organization.objects.create(name=name)
 
     # Collect unique templates from all requested presets (deduplicate by name).
-    templates_by_name: dict[str, PermissionGroupTemplate] = {}
     org_types: list[str] = []
 
     for preset_name in preset_names:
         org_config = REGISTRY.org_type(preset_name)
         assert org_config is not None
         org_types.append(org_config.name)
-        for template_config in org_config.templates:
-            if template_config.name not in templates_by_name:
-                permission_group_template, _created = PermissionGroupTemplate.objects.get_or_create(
-                    name=template_config.name
-                )
-                templates_by_name[template_config.name] = permission_group_template
 
     # Create PermissionGroup per template for this org.
-    for permission_group_template in templates_by_name.values():
-        PermissionGroup.objects.get_or_create(organization=org, template=permission_group_template)
+    reconcile_org_groups(org)
 
     # Profile with org types.
     OrganizationProfile.objects.create(
@@ -152,6 +144,49 @@ def create_organization_with_presets(
         OrgRoleManager(org).add_roles(owner, *owner_roles)
 
     return org
+
+
+# ── Group reconciliation ──────────────────────────────────────────────
+
+
+def reconcile_org_groups(org: Organization) -> None:
+    """Create missing and delete stale ``PermissionGroup`` records for *org*.
+
+    Expected templates are derived from the org's ``profile.org_types``
+    via :data:`common.org_types.REGISTRY`.  Groups whose template is no
+    longer in the org's presets are deleted.
+
+    Safe to call repeatedly — all operations are idempotent.
+    """
+    from .models import PermissionGroup
+
+    # Expected template names from current org-type presets.
+    expected: set[str] = set()
+    org_type_values = org.profile.org_types if hasattr(org, "profile") else []
+    for org_type_value in org_type_values:
+        org_config = REGISTRY.org_type(org_type_value.value)
+        if org_config is None:
+            continue
+        for template_config in org_config.templates:
+            expected.add(template_config.name)
+
+    if not expected:
+        return
+
+    # Create missing.
+    for template_name in expected:
+        permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+            name=template_name,
+        )
+        PermissionGroup.objects.get_or_create(
+            organization=org,
+            template=permission_group_template,
+        )
+
+    # Delete stale.
+    PermissionGroup.objects.filter(organization=org).exclude(
+        template__name__in=expected,
+    ).delete()
 
 
 # ── Member removal ───────────────────────────────────────────────────
