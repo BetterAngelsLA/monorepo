@@ -7,7 +7,7 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from organizations.models import Organization
 
-from .models import PermissionGroupTemplate, User
+from .models import PermissionGroup, PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,29 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
         test_org = Organization.objects.create(name="test_org")
         for test_user in test_users:
             test_org.add_user(test_user)
+
+        # Create permission groups for the test org based on its type (shelter).
+        _setup_test_org_groups(test_org, test_users)
+
+
+def _setup_test_org_groups(org: Organization, users: list[User]) -> None:
+    """Create PermissionGroup records for a shelter-type org and assign users."""
+    # Templates appropriate for a shelter organization.
+    shelter_templates = ["Organization Admin", "Shelter Operator"]
+
+    admin_user = next((u for u in users if u.username == "admin"), None)
+
+    for template_name in shelter_templates:
+        template = PermissionGroupTemplate.objects.get(name=template_name)
+        pg, _ = PermissionGroup.objects.get_or_create(
+            organization=org,
+            name=template_name,
+            defaults={"template": template},
+        )
+        # Admin gets all shelter templates; agent only gets what was
+        # explicitly assigned elsewhere (handled by registration flow).
+        if admin_user:
+            admin_user.groups.add(pg.group)
 
 
 @receiver(post_migrate)
