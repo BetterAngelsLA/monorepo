@@ -22,6 +22,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
 
         self.org_1.add_user(self.org_member)
         self.org_2.add_user(self.org_member)
+        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",
@@ -75,6 +76,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
         expected_members: list[str],
     ) -> None:
         self.graphql_client.force_login(getattr(self, f"{user}"))
+        self._set_active_org(getattr(self, org))
 
         query = """
             query ($organizationId: String!) {
@@ -123,13 +125,14 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         self.org_2 = organization_recipe.make(name="org 2", owner=self.org_2_admin)
 
         self.org_1.add_user(self.org_member)
+        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            ("org_member", "You do not have permission to perform this action in this organization."),
             ("org_1_admin", None),
-            ("org_2_admin", "You do not have permission to add members."),
+            ("org_2_admin", "You do not have permission to perform this action in this organization."),
         ],
     )
     def test_add_organization_member_permission(self, user: str, expected_error: Optional[str]) -> None:
@@ -138,13 +141,6 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         mutation = """
             mutation ($data: OrgInvitationInput!) {
                 addOrganizationMember(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
                     ... on OrganizationMemberType {
                         email
                     }
@@ -163,8 +159,9 @@ class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedT
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            self.assertEqual(len(response["data"]["addOrganizationMember"]["messages"]), 1)
-            self.assertEqual(response["data"]["addOrganizationMember"]["messages"][0]["message"], expected_error)
+            self.assertIsNone(response["data"])
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertEqual(expected_error, response["errors"][0]["message"])
             with self.assertRaises(User.DoesNotExist):
                 User.objects.get(email=variables["email"])
         else:
@@ -190,13 +187,14 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
 
         self.org_1.add_user(self.org_member)
         self.org_1.add_user(self.removable_member)
+        self._set_active_org(self.org_1)
 
     @parametrize(
         "user, expected_error",
         [
-            ("org_member", "You don't have permission to access this app."),
+            ("org_member", "You do not have permission to perform this action in this organization."),
             ("org_1_admin", None),
-            ("org_2_admin", "You do not have permission to remove members."),
+            ("org_2_admin", "You do not have permission to perform this action in this organization."),
         ],
     )
     def test_remove_organization_member_permission(self, user: str, expected_error: Optional[str]) -> None:
@@ -205,9 +203,6 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         mutation = """
             mutation ($data: RemoveOrganizationMemberInput!) {
                 removeOrganizationMember(data: $data) {
-                    ... on OperationInfo {
-                        messages { kind field message }
-                    }
                     ... on DeletedObjectType {
                         id
                     }
@@ -223,18 +218,9 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
         response = self.execute_graphql(mutation, {"data": variables})
 
         if expected_error:
-            # Permission can fail in two ways:
-            # 1) hard GraphQL error => data is None
-            if response.get("data") is None:
-                self.assertEqual(len(response["errors"]), 1)
-                self.assertEqual(response["errors"][0]["message"], expected_error)
-            else:
-                # 2) union OperationInfo => messages inside data
-                self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-                    expected_error,
-                )
+            self.assertIsNone(response["data"])
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertEqual(expected_error, response["errors"][0]["message"])
 
             # membership should still exist
             self.assertTrue(
@@ -245,12 +231,6 @@ class RemoveOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, Parametriz
             )
 
         else:
-            # success: make sure we actually got data; if not, show errors (avoids NoneType crash)
-            self.assertIsNotNone(
-                response.get("data"),
-                f"Expected success but got errors: {response.get('errors')}",
-            )
-
             self.assertEqual(
                 response["data"]["removeOrganizationMember"]["id"],
                 self.removable_member.pk,

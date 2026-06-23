@@ -1,8 +1,7 @@
-import {
-  UseAdminShelterProfilePhotoType,
-  UseAdminShelterProfileResultType,
-} from '../../hooks/useAdminShelterProfile';
+import { UseShelterOperatorProfileResultType } from '../../hooks/useShelterOperatorProfile';
 
-export type ShelterProfileType = UseAdminShelterProfileResultType;
+export type ShelterProfileType = UseShelterOperatorProfileResultType;
 
-export type ShelterProfilePhotoType = UseAdminShelterProfilePhotoType;
+export type ShelterProfilePhotoType = NonNullable<
+  UseShelterOperatorProfileResultType
+>['photos'][number];

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminShelterProfile } from '../../../../hooks';
+import { useShelterOperatorProfile } from '../../../../hooks';
 import { Tabs } from '../../../base-ui/tabs';
 import { Form } from '../../../form/Form';
 import { MEDIA_TABS, MEDIA_TAB_LABELS, MediaTab } from './constants';
@@ -14,7 +14,7 @@ export function ShelterMedia(props: TProps) {
 
   const [currentTab, setCurrentTab] = useState<MediaTab>('photos');
 
-  const { shelter } = useAdminShelterProfile(shelterId);
+  const { shelter } = useShelterOperatorProfile(shelterId);
 
   if (!shelter) {
     return null;

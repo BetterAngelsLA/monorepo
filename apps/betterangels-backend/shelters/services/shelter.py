@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.text import slugify
-from organizations.models import Organization
 from shelters.models import Service, ServiceCategory, Shelter
+from shelters.selectors import shelter_get
 from shelters.services.utils import (
     _SHELTER_M2M_FIELDS,
     _create_schedules,
@@ -15,13 +15,6 @@ from strawberry import UNSET
 
 if TYPE_CHECKING:
     from accounts.models import User
-
-
-def _assert_org_membership(
-    user: "User", org_id: Any, *, message: str = "You do not have permission to perform this action."
-) -> None:
-    if not Organization.objects.filter(pk=org_id, users=user).exists():
-        raise PermissionError(message)
 
 
 def _apply_services(shelter: Shelter, raw_services: List[Any]) -> None:
@@ -133,24 +126,22 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
-    Validates that *user* belongs to the target organization before
-    creating anything.
+    *organization_id* (from the ``X-Organization-ID`` header, validated by
+    ``HasOrgPerm``) is used as the owning organization.  The
+    ``CreateShelterInput`` no longer accepts an ``organization`` field;
+    the org is always determined by the header.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
     Raises:
-        ``PermissionError`` when the user is not a member of the org.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    org_id = data.get("organization")
-    _assert_org_membership(
-        user, org_id, message="You do not have permission to create a shelter for this organization."
-    )
-
+    # Use the header-validated org.
+    data["organization_id"] = organization_id
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 
@@ -168,27 +159,34 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
+
+    Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
+    ``change_shelter`` permission, so the caller does not need to
+    pre-lookup the entity.
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules and services use full-replacement semantics when provided.
 
     Raises:
-        ``Shelter.DoesNotExist`` when no shelter matches the given ID.
-        ``PermissionError`` when the user is not a member of the shelter's organization.
+        ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
+        or the user lacks permission.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    shelter_id = data.pop("id")
     data = {k: v for k, v in data.items() if v is not UNSET}
     data.pop("organization", None)  # organization cannot be changed after creation
+    shelter_id = data.pop("id")
 
     cities_served_ids = data.pop("cities_served_ids", None)
     spas_served_ids = data.pop("spas_served_ids", None)
 
-    shelter = Shelter.objects.get(pk=shelter_id)
-
-    _assert_org_membership(user, shelter.organization_id, message="You do not have permission to update this shelter.")
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.CHANGE,
+    )
 
     has_schedules = "schedules" in data
     has_services = "services" in data

@@ -1,4 +1,4 @@
-export * from './useAdminShelterProfile';
+export * from './useShelterOperatorProfile';
 export * from './useBed';
 export * from './useDeleteShelterPhotos';
 export * from './useRoom';

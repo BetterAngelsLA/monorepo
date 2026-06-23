@@ -1,5 +1,5 @@
-query GetAdminShelterOverview($shelterId: ID!) {
-  adminShelter(pk: $shelterId) {
+query GetShelterOperatorOverview($shelterId: ID!) {
+  operatorShelter(pk: $shelterId) {
     id
     name
     organization {
