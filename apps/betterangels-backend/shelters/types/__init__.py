@@ -1,67 +1,39 @@
 """Shelter GraphQL types, inputs, filters, and ordering definitions."""
 
-from shelters.types.filters import (
-    BedFilter,
-    BedOrder,
-    GeolocationInput,
-    MapBoundsInput,
-    ReservationFilter,
-    ReservationOrder,
-    RoomFilter,
-    RoomOrder,
-    ShelterFilter,
-    ShelterOrder,
-    ShelterPropertyInput,
-)
-from shelters.types.inputs import (
-    CreateBedInput,
-    CreateReservationInput,
-    CreateRoomInput,
-    CreateShelterInput,
-    GenerateShelterPhotoUploadsInput,
-    ResolveShelterPhotoUploadsInput,
-    ScheduleInput,
-    ServiceInput,
-    ShelterLocationInput,
-    ShelterPhotoFromUploadInput,
-    ShelterPhotoUploadItemInput,
-    UpdateBedInput,
-    UpdateReservationInput,
-    UpdateRoomInput,
-    UpdateShelterInput,
-    UpdateShelterPhotoInput,
-)
-from shelters.types.lookups import (
-    AccessibilityType,
-    CityType,
-    ContactInfoType,
-    DemographicType,
-    EntryRequirementType,
-    FunderType,
-    ParkingType,
-    PetType,
-    RoomStyleType,
-    ScheduleType,
-    ServiceCategoryType,
-    ServiceType,
-    ShelterProgramType,
-    ShelterTypeType,
-    SPAType,
-    SpecialSituationRestrictionType,
-    StorageType,
-)
-from shelters.types.outputs import (
-    AdminShelterType,
-    BedType,
-    ReservationType,
-    RoomType,
-    ShelterAvailabilityType,
-    ShelterLocationType,
-    ShelterPhotoType,
-    ShelterPhotoUploadsType,
-    ShelterType,
-    ShelterTypeMixin,
-)
+from shelters.types.filters import (BedFilter, BedOrder, GeolocationInput,
+                                    MapBoundsInput, ReservationFilter,
+                                    ReservationOrder, RoomFilter, RoomOrder,
+                                    ShelterFilter, ShelterOrder,
+                                    ShelterPropertyInput)
+from shelters.types.inputs import (CreateBedInput, CreateReservationInput,
+                                   CreateRoomInput, CreateShelterInput,
+                                   GenerateShelterPhotoUploadsInput,
+                                   ResolveShelterPhotoUploadsInput,
+                                   ScheduleInput, ServiceInput,
+                                   ShelterLocationInput,
+                                   ShelterPhotoFromUploadInput,
+                                   ShelterPhotoUploadItemInput, UpdateBedInput,
+                                   UpdateReservationInput, UpdateRoomInput,
+                                   UpdateShelterInput, UpdateShelterPhotoInput)
+from shelters.types.lookups import (AccessibilityType, CityType,
+                                    ContactInfoType, DemographicType,
+                                    EntryRequirementType, FunderType,
+                                    ParkingType, PetType, RoomStyleType,
+                                    ScheduleType, ServiceCategoryType,
+                                    ServiceType, ShelterProgramType,
+                                    ShelterTypeType, SPAType,
+                                    SpecialSituationRestrictionType,
+                                    StorageType)
+from shelters.types.outputs import (BedType, OperatorShelterType,
+                                    ReservationType, RoomType,
+                                    ShelterAvailabilityType,
+                                    ShelterLocationType, ShelterPhotoType,
+                                    ShelterPhotoUploadsType, ShelterType,
+                                    ShelterTypeMixin)
+from shelters.types.reporting import (DailyBedStatusMetricsType,
+                                      DailyOccupancyMetricsType,
+                                      ReservationMetricsType,
+                                      ShelterOccupancyMetricsType)
 
 __all__ = [
     # lookups
@@ -112,8 +84,8 @@ __all__ = [
     "ShelterPhotoFromUploadInput",
     "ShelterPhotoUploadItemInput",
     # outputs
-    "AdminShelterType",
     "BedType",
+    "OperatorShelterType",
     "ReservationType",
     "RoomType",
     "ShelterAvailabilityType",
@@ -122,4 +94,9 @@ __all__ = [
     "ShelterPhotoUploadsType",
     "ShelterType",
     "ShelterTypeMixin",
+    # reporting
+    "DailyBedStatusMetricsType",
+    "DailyOccupancyMetricsType",
+    "ReservationMetricsType",
+    "ShelterOccupancyMetricsType",
 ]

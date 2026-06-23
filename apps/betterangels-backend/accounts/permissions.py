@@ -4,6 +4,7 @@ from typing import Any, List, Optional, Protocol, Type, Union
 
 import strawberry
 from accounts.models import PermissionGroup, User
+from common.permissions.utils import _perm_q
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import Exists, OuterRef, TextChoices
@@ -36,24 +37,28 @@ class ReportOrgPermissions(models.TextChoices):
 def get_user_permitted_org(
     user: UserLike,
     org_id: str,
-    permission: TextChoices,
+    permission: str | TextChoices,
 ) -> Optional[Organization]:
     """Return an organization filtered by org_id, user membership in a
     permission group, and the given permission.
 
     *permission* should be a ``TextChoices`` enum member whose value is
-    ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``).
+    ``"app_label.codename"`` (e.g. ``ReportPermissions.VIEW_REPORTS``), or
+    a plain ``"app_label.codename"`` string.
 
     Returns ``None`` when the user does not belong to the organization
     or does not hold the required permission.
     """
-    app_label, codename = permission.value.split(".", 1)
-    return Organization.objects.filter(
-        pk=org_id,
-        permission_groups__group__user=user,
-        permission_groups__group__permissions__content_type__app_label=app_label,
-        permission_groups__group__permissions__codename=codename,
-    ).first()
+    perm_value = permission.value if isinstance(permission, TextChoices) else permission
+    app_label, codename = perm_value.split(".", 1)
+    return (
+        Organization.objects.filter(
+            pk=org_id,
+            permission_groups__group__user=user,
+        )
+        .filter(_perm_q(app_label, codename))
+        .first()
+    )
 
 
 # ── Granted permissions factory ────────────────────────────────────────────────
@@ -86,9 +91,7 @@ def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[s
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 group__user=user,
-                group__permissions__codename=codename,
-                group__permissions__content_type__app_label=app_label,
-            )
+            ).filter(_perm_q(app_label, codename, prefix="group__permissions"))
         )
     return annotations
 

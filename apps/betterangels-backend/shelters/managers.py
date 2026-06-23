@@ -4,26 +4,15 @@ import datetime
 from typing import TYPE_CHECKING, Iterable, Self, Union, cast
 
 from django.db import models
-from django.db.models import (
-    Case,
-    CharField,
-    Count,
-    DateTimeField,
-    Exists,
-    IntegerField,
-    Manager,
-    OuterRef,
-    Q,
-    QuerySet,
-    Subquery,
-    Value,
-    When,
-)
-from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices, ScheduleTypeChoices
-from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
+from django.db.models import (Case, CharField, Count, DateTimeField, Exists,
+                              IntegerField, Manager, OuterRef, Q, QuerySet,
+                              Subquery, Value, When)
+from shelters.enums import (BedStatusChoices, ReservationStatusChoices,
+                            RoomStatusChoices, ScheduleTypeChoices)
+from shelters.open_at import shelters_open_at
+from shelters.selectors import shelter_list
 
 if TYPE_CHECKING:
-    from accounts.models import User
     from shelters.models import Shelter  # noqa: F401
     from shelters.models import Bed, Reservation, Room
 
@@ -58,19 +47,6 @@ class ShelterManager(models.Manager["Shelter"]):
         schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
     ) -> ShelterQuerySet:
         return self.get_queryset().open_at(dt, schedule_type)
-
-
-class AdminShelterQuerySet(ShelterQuerySet):
-    def for_user(self, user: "User") -> "AdminShelterQuerySet":
-        return admin_shelter_list(self, user=user)  # type: ignore[return-value]
-
-
-class AdminShelterManager(models.Manager["Shelter"]):
-    def get_queryset(self) -> AdminShelterQuerySet:
-        return AdminShelterQuerySet(self.model, using=self._db)
-
-    def for_user(self, user: "User") -> AdminShelterQuerySet:
-        return self.get_queryset().for_user(user)
 
 
 def _reservation_model() -> type[Reservation]:

@@ -172,7 +172,7 @@ class UserType(UserBaseType):
         """
         user = get_current_user(info)
         if not user or not user.is_authenticated:
-            return False
+            return None
         return PermissionGroup.objects.filter(
             group__user=user.pk,
             template__name=CASEWORKER.name,
@@ -205,7 +205,7 @@ class CurrentUserType(UserBaseType):
         """
         user = get_current_user(info)
         if not user or not user.is_authenticated:
-            return False
+            return None
         return PermissionGroup.objects.filter(
             group__user=user.pk,
             template__name=CASEWORKER.name,
@@ -290,3 +290,28 @@ class UpdateUserProfileInput:
 class RemoveOrganizationMemberInput:
     id: ID
     organization_id: ID
+
+
+# ── Self-Signup ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class CreateOrganizationInput:
+    organization_name: NonEmptyString
+    org_type: NonEmptyString
+
+
+@strawberry.type
+class CreateOrganizationResponse:
+    user: UserType
+    organization: OrganizationType
+
+
+# ── Role Change ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class ChangeOrganizationMemberRoleInput:
+    user_id: ID
+    organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]

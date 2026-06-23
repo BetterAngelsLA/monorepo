@@ -10,58 +10,34 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from django.db.models import Prefetch, QuerySet
+from common.permissions.utils import get_current_organization
+from django.db.models import (Count, IntegerField, OuterRef, Prefetch,
+                              QuerySet, Subquery)
 from shelters import models
-from shelters.enums import (
-    BedStatusChoices,
-    BedTypeChoices,
-    ReservationStatusChoices,
-    RoomStatusChoices,
-    RoomStyleChoices,
-    ShelterPhotoTypeChoices,
-)
-from shelters.managers import (
-    bed_computed_status_annotation,
-    room_computed_status_annotation,
-    shelter_bed_status_count_subquery,
-    shelter_room_status_count_subquery,
-)
-from shelters.selectors import admin_bed_list, admin_reservation_list, admin_room_list, admin_shelter_list, shelter_list
-from shelters.types.lookups import (
-    AccessibilityType,
-    CityType,
-    ContactInfoType,
-    DemographicType,
-    EntryRequirementType,
-    ExitPolicyType,
-    FunderType,
-    MedicalNeedType,
-    ParkingType,
-    PetType,
-    ReferralRequirementType,
-    RoomStyleType,
-    ScheduleType,
-    ServiceType,
-    ShelterProgramType,
-    ShelterTypeType,
-    SPAType,
-    SpecialSituationRestrictionType,
-    StorageType,
-    VaccinationRequirementType,
-)
+from shelters.enums import (BedStatusChoices, BedTypeChoices,
+                            ReservationStatusChoices, RoomStatusChoices,
+                            RoomStyleChoices, ShelterPhotoTypeChoices)
+from shelters.managers import (bed_computed_status_annotation,
+                               room_computed_status_annotation,
+                               shelter_bed_status_count_subquery,
+                               shelter_room_status_count_subquery)
+from shelters.selectors import (bed_queryset, room_queryset, shelter_list,
+                                shelter_queryset)
+from shelters.selectors.operator import reservation_queryset
+from shelters.types.lookups import (AccessibilityType, CityType,
+                                    ContactInfoType, DemographicType,
+                                    EntryRequirementType, ExitPolicyType,
+                                    FunderType, MedicalNeedType, ParkingType,
+                                    PetType, ReferralRequirementType,
+                                    RoomStyleType, ScheduleType, ServiceType,
+                                    ShelterProgramType, ShelterTypeType,
+                                    SPAType, SpecialSituationRestrictionType,
+                                    StorageType, VaccinationRequirementType)
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import (
-    BedFilter,
-    BedOrder,
-    ReservationFilter,
-    ReservationOrder,
-    RoomFilter,
-    RoomOrder,
-    ShelterFilter,
-    ShelterOrder,
-)
+from .filters import (BedFilter, BedOrder, ReservationFilter, ReservationOrder,
+                      RoomFilter, RoomOrder, ShelterFilter, ShelterOrder)
 
 
 def _annotated_count(root: models.Shelter, name: str) -> int:
@@ -270,11 +246,12 @@ class ShelterType(ShelterTypeMixin):
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class AdminShelterType(ShelterTypeMixin):
+class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return admin_shelter_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -290,7 +267,9 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
     bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
-        bed_qs = admin_bed_list(bed_qs, user=cast(User, user))
+        org_id = get_current_organization(info)
+        bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=org_id, perms=[models.Bed.perms.VIEW])
+
     return Prefetch("beds", queryset=bed_qs)
 
 
@@ -299,7 +278,8 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return admin_bed_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -331,7 +311,8 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return admin_room_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -373,7 +354,8 @@ class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
         user = cast(User, get_current_user(info))
-        return admin_reservation_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return reservation_queryset(queryset, user=user, organization_id=org_id, perms=[models.Reservation.perms.VIEW])
 
     id: ID
     bed: Optional["BedType"]
@@ -386,14 +368,14 @@ class ReservationType:
     status: ReservationStatusChoices
 
     @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
-    def shelter(self, root: models.Reservation) -> "AdminShelterType":
+    def shelter(self, root: models.Reservation) -> "OperatorShelterType":
         if root.bed:
-            return cast("AdminShelterType", root.bed.shelter)
+            return cast("OperatorShelterType", root.bed.shelter)
 
         if root.room is None:
             raise ValueError(f"Reservation {root.pk} has neither bed nor room assigned.")
 
-        return cast("AdminShelterType", root.room.shelter)
+        return cast("OperatorShelterType", root.room.shelter)
 
     @strawberry_django.field(only=["created_by_id"])
     def created_by_id(self, root: models.Reservation) -> Optional[ID]:

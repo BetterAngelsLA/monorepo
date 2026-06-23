@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
+from .groups import ORG_ADMIN
 from .models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -207,3 +208,38 @@ def create_default_org_permission_groups(organization: Organization) -> None:
     for template_config in REGISTRY.templates_for(organization):
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+
+# ── Self-signup ───────────────────────────────────────────────────────
+
+
+@transaction.atomic
+def create_organization_service(
+    *,
+    user: UserModel,
+    organization_name: str,
+    org_type_name: str,
+) -> tuple[UserModel, Organization]:
+    """Create an organization and link *user* as the owner.
+
+    *org_type_name* must match a registered :class:`OrgTypeConfig` with
+    ``allow_public_signup=True`` (e.g. ``"shelter"``).
+
+    Returns ``(user, organization)``.
+
+    Does **not** send a welcome email — callers (mutations) are
+    responsible for triggering email delivery after the transaction
+    commits successfully.
+    """
+    org_config = REGISTRY.org_type(org_type_name)
+    if not org_config or not org_config.allow_public_signup:
+        raise ValidationError(f"Org type '{org_type_name}' does not support self-signup.")
+
+    organization = create_organization_with_presets(
+        name=organization_name,
+        preset_names=[org_type_name],
+        owner=user,
+        owner_roles=(org_config.member_template, ORG_ADMIN),
+    )
+
+    return user, organization

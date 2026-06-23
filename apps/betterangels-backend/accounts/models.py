@@ -49,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("active"),
         default=True,
         help_text=(
-            "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
+            "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
         ),
     )
     is_staff = models.BooleanField(

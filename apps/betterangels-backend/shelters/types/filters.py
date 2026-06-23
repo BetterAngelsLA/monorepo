@@ -7,38 +7,24 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import (
-    LatitudeScalar,
-    LongitudeScalar,
-    make_icontains_filter,
-    make_in_filter,
-    make_m2m_in_filter,
-)
+from common.graphql.types import (LatitudeScalar, LongitudeScalar,
+                                  make_icontains_filter, make_in_filter,
+                                  make_m2m_in_filter)
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Count, Q, QuerySet
 from shelters import models
-from shelters.enums import (
-    AccessibilityChoices,
-    BedStatusChoices,
-    BedTypeChoices,
-    DemographicChoices,
-    EntryRequirementChoices,
-    FunderChoices,
-    MedicalNeedChoices,
-    ParkingChoices,
-    PetChoices,
-    ReferralRequirementChoices,
-    ReservationStatusChoices,
-    RoomStatusChoices,
-    RoomStyleChoices,
-    ScheduleTypeChoices,
-    ShelterChoices,
-    SpecialSituationRestrictionChoices,
-)
+from shelters.enums import (AccessibilityChoices, BedStatusChoices,
+                            BedTypeChoices, DemographicChoices,
+                            EntryRequirementChoices, FunderChoices,
+                            MedicalNeedChoices, ParkingChoices, PetChoices,
+                            ReferralRequirementChoices,
+                            ReservationStatusChoices, RoomStatusChoices,
+                            RoomStyleChoices, ScheduleTypeChoices,
+                            ShelterChoices, SpecialSituationRestrictionChoices)
 from shelters.managers import BedQuerySet, RoomQuerySet
-from shelters.selectors import shelters_open_at
+from shelters.open_at import shelters_open_at
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 

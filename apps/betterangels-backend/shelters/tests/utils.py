@@ -1,30 +1,9 @@
-from accounts.models import OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import OrganizationProfile, OrgTypeChoices, User
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from model_bakery import baker
 from shelters.groups import SHELTER_OPERATOR
-from shelters.models import Bed, Reservation, Room, Shelter
-
-SHELTER_OPERATOR_PERMISSIONS = (
-    (Bed, "add_bed"),
-    (Bed, "change_bed"),
-    (Bed, "delete_bed"),
-    (Bed, "view_bed"),
-    (Reservation, "add_reservation"),
-    (Reservation, "change_reservation"),
-    (Reservation, "delete_reservation"),
-    (Reservation, "view_reservation"),
-    (Room, "add_room"),
-    (Room, "change_room"),
-    (Room, "delete_room"),
-    (Room, "view_room"),
-    (Shelter, "add_shelter"),
-    (Shelter, "change_shelter"),
-    (Shelter, "delete_shelter"),
-    (Shelter, "view_shelter"),
-)
 
 
 class ShelterTestCase(GraphQLBaseTestCase):
@@ -83,21 +62,15 @@ class ShelterTestCase(GraphQLBaseTestCase):
         """
 
     def setup_org_with_user(self) -> None:
-        self.org = organization_recipe.make(name="Shelter Org")
+        self.org = organization_recipe.make(
+            name="Shelter Org",
+            preset_names=["shelter"],
+            owner_roles=(SHELTER_OPERATOR,),
+        )
         OrganizationProfile.objects.update_or_create(
             organization=self.org, defaults={"org_types": [OrgTypeChoices.SHELTER]}
         )
         self.operator = baker.make(User)
         self.org.users.add(self.operator)
-        # TODO: temporary solution until operator template implemented. See: SDB-178
-        self.grant_operator_permissions(self.operator)
-
-    def grant_operator_permissions(self, user: User) -> None:
-        pgt, _ = PermissionGroupTemplate.objects.get_or_create(name=SHELTER_OPERATOR.name)
-        pg, _ = PermissionGroup.objects.get_or_create(organization=self.org, template=pgt)
-        user.groups.add(pg.group)
-
-        for model, codename in SHELTER_OPERATOR_PERMISSIONS:
-            content_type = ContentType.objects.get_for_model(model)
-            permission = Permission.objects.get(content_type=content_type, codename=codename)
-            user.user_permissions.add(permission)
+        self._set_active_org(self.org)
+        OrgRoleManager(self.org).add_roles(self.operator, SHELTER_OPERATOR)

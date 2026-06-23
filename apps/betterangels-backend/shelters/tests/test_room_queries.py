@@ -58,7 +58,7 @@ class RoomQueriesTestCase(ShelterTestCase, TestCase):
 
 class RoomQueryTestCase(RoomQueriesTestCase):
     def test_room_query(self) -> None:
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.room_query, variables={"id": str(self.room.pk)})
         self.assertIsNone(response.get("errors"))
@@ -153,7 +153,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_room = baker.make(Room, shelter=other_shelter, name="Room-201")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -192,7 +192,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-1")
         baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-2")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -212,7 +212,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         baker.make(Room, shelter=other_shelter, name="Other-Room")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
@@ -221,22 +221,21 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.room.pk))
 
-    def test_rooms_query_without_permission_returns_empty(self) -> None:
+    def test_rooms_query_without_permission_returns_permission_denied(self) -> None:
         self.operator.user_permissions.clear()
+        self.operator.groups.clear()
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
-        payload = response["data"]["rooms"]
-        self.assertEqual(payload["totalCount"], 0)
-        self.assertEqual(payload["results"], [])
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
 
     def test_rooms_query_unauthenticated(self) -> None:
         self.graphql_client.logout()
 
-        expected_query_count = 0
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
         self.assertGraphQLUnauthenticated(response)

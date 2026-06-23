@@ -1,8 +1,8 @@
+import { ACTIVE_ORG_STORAGE_KEY } from '@monorepo/apollo';
+import { useActiveOrgState } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import ActiveOrgContext from './ActiveOrgContext';
-
-const STORAGE_KEY = 'shelter_operator_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
@@ -13,58 +13,10 @@ export function ActiveOrgProvider({
   children,
   organizations,
 }: ActiveOrgProviderProps) {
-  const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
-    () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored && organizations.some((o) => o.id === stored)) {
-          return stored;
-        }
-      } catch {
-        // localStorage may be unavailable
-      }
-      return organizations[0]?.id;
-    }
-  );
-
-  // Re-validate when the organizations list changes (e.g. after async load)
-  useEffect(() => {
-    if (activeOrgId && organizations.some((o) => o.id === activeOrgId)) {
-      return;
-    }
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && organizations.some((o) => o.id === stored)) {
-        setActiveOrgIdState(stored);
-        return;
-      }
-    } catch {
-      // localStorage may be unavailable
-    }
-    setActiveOrgIdState(organizations[0]?.id);
-    // Intentionally omitting activeOrgId from deps to avoid a re-validation
-    // loop: this effect only needs to run when the organizations list changes
-    // (e.g. after the user query loads), not on every activeOrgId update.
-  }, [organizations]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const activeOrg = useMemo(
-    () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
-    [organizations, activeOrgId]
-  );
-
-  const setActiveOrgId = useCallback(
-    (orgId: string) => {
-      if (organizations.some((o) => o.id === orgId)) {
-        setActiveOrgIdState(orgId);
-        try {
-          localStorage.setItem(STORAGE_KEY, orgId);
-        } catch {
-          // localStorage may be unavailable
-        }
-      }
-    },
-    [organizations]
-  );
+  const { activeOrg, setActiveOrgId } = useActiveOrgState({
+    organizations,
+    storageKey: ACTIVE_ORG_STORAGE_KEY,
+  });
 
   const value = useMemo(
     () => ({ activeOrg, organizations, setActiveOrgId }),

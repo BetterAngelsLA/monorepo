@@ -17,40 +17,21 @@ from model_clone import CloneMixin
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
-from shelters.enums import (
-    CITY_COUNCIL_DISTRICT_CHOICES,
-    SUPERVISORIAL_DISTRICT_CHOICES,
-    BedStatusChoices,
-    BedTypeChoices,
-    ReservationStatusChoices,
-    RoomStatusChoices,
-    RoomStyleChoices,
-    ScheduleTypeChoices,
-    StatusChoices,
-)
-from shelters.managers import AdminShelterManager, BedManager, RoomManager, ShelterManager
-from shelters.selectors import shelters_open_at
-from shelters.status import compute_bed_status, compute_room_status, get_last_completed_checkout
+from shelters.enums import (CITY_COUNCIL_DISTRICT_CHOICES,
+                            SUPERVISORIAL_DISTRICT_CHOICES, BedStatusChoices,
+                            BedTypeChoices, ReservationStatusChoices,
+                            RoomStatusChoices, RoomStyleChoices,
+                            ScheduleTypeChoices, StatusChoices)
+from shelters.managers import BedManager, RoomManager, ShelterManager
+from shelters.open_at import shelters_open_at
+from shelters.status import (compute_bed_status, compute_room_status,
+                             get_last_completed_checkout)
 
-from .lookups import (
-    SPA,
-    Accessibility,
-    City,
-    Demographic,
-    EntryRequirement,
-    ExitPolicy,
-    Funder,
-    MedicalNeed,
-    Parking,
-    Pet,
-    ReferralRequirement,
-    RoomStyle,
-    ShelterProgram,
-    ShelterType,
-    SpecialSituationRestriction,
-    Storage,
-    VaccinationRequirement,
-)
+from .lookups import (SPA, Accessibility, City, Demographic, EntryRequirement,
+                      ExitPolicy, Funder, MedicalNeed, Parking, Pet,
+                      ReferralRequirement, RoomStyle, ShelterProgram,
+                      ShelterType, SpecialSituationRestriction, Storage,
+                      VaccinationRequirement)
 from .service import Service
 
 ACTIVE_RESERVATION_STATUSES = {
@@ -71,7 +52,6 @@ class Shelter(BaseModel):
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
 
     objects: ShelterManager = ShelterManager()
-    admin_objects: AdminShelterManager = AdminShelterManager()
 
     # Basic Information
     name = models.CharField(max_length=255)
