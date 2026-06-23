@@ -16,9 +16,7 @@ def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
     """
     obj = queryset.filter(pk=pk).first()
     if obj is None:
-        raise ObjectDoesNotExist(
-            f"{queryset.model.__name__} matching ID {pk} could not be found."
-        )
+        raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
     return obj
 
 

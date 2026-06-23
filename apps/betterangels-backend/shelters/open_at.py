@@ -11,7 +11,9 @@ if TYPE_CHECKING:
     from shelters.models import Shelter
 
 
-def _time_and_day_condition(*, time: datetime.time, day: DayOfWeekChoices, yesterday: DayOfWeekChoices, include_full_day: bool = False) -> Q:
+def _time_and_day_condition(
+    *, time: datetime.time, day: DayOfWeekChoices, yesterday: DayOfWeekChoices, include_full_day: bool = False
+) -> Q:
     """Build a Q object matching schedules whose time window covers *time*.
 
     Handles both normal schedules (``start_time <= end_time``) and overnight
