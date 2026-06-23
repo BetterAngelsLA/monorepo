@@ -126,7 +126,7 @@ function useOrganizationMembers(
 
   return {
     loading,
-    members: activeData?.organizationMembers?.results ?? [],
+    members: (activeData?.organizationMembers?.results ?? []) as OrganizationMemberType[],
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,

@@ -1,29 +1,35 @@
-import { hasPermission as hasPermissionFn } from '@monorepo/react/shared';
+import { hasPermission as hasPermissionFn, localStorageAdapter, StorageAdapter } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext from './ActiveOrgContext';
 import { PermissionEnum } from './ActiveOrgContext';
 
-const STORAGE_KEY = 'shelter_operator_active_org_id';
+const DEFAULT_STORAGE_KEY = 'shelter_operator_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
   organizations: TOrganization[];
+  /** Storage adapter — defaults to :const:`localStorageAdapter`. */
+  storage?: StorageAdapter;
+  /** Storage key — defaults to ``'shelter_operator_active_org_id'``. */
+  storageKey?: string;
 }
 
 export function ActiveOrgProvider({
   children,
   organizations,
+  storage = localStorageAdapter,
+  storageKey = DEFAULT_STORAGE_KEY,
 }: ActiveOrgProviderProps) {
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = storage.getItem(storageKey) as string | null;
         if (stored && organizations.some((o) => o.id === stored)) {
           return stored;
         }
       } catch {
-        // localStorage may be unavailable
+        // storage may be unavailable
       }
       return organizations[0]?.id;
     }
@@ -35,19 +41,19 @@ export function ActiveOrgProvider({
       return;
     }
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(storageKey) as string | null;
       if (stored && organizations.some((o) => o.id === stored)) {
         setActiveOrgIdState(stored);
         return;
       }
     } catch {
-      // localStorage may be unavailable
+      // storage may be unavailable
     }
     setActiveOrgIdState(organizations[0]?.id);
     // Intentionally omitting activeOrgId from deps to avoid a re-validation
     // loop: this effect only needs to run when the organizations list changes
     // (e.g. after the user query loads), not on every activeOrgId update.
-  }, [organizations]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
@@ -59,13 +65,13 @@ export function ActiveOrgProvider({
       if (organizations.some((o) => o.id === orgId)) {
         setActiveOrgIdState(orgId);
         try {
-          localStorage.setItem(STORAGE_KEY, orgId);
+          storage.setItem(storageKey, orgId);
         } catch {
-          // localStorage may be unavailable
+          // storage may be unavailable
         }
       }
     },
-    [organizations]
+    [organizations, storage, storageKey]
   );
 
   const hasPermission = useCallback(

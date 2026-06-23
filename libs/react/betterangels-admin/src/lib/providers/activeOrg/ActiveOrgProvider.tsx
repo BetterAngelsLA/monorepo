@@ -1,3 +1,4 @@
+import { localStorageAdapter, StorageAdapter } from '@monorepo/react/shared';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext, {
   TOrganizationWithPermissions,
@@ -7,11 +8,15 @@ import {
   PermissionEnum,
 } from './hasPermission';
 
-const STORAGE_KEY = 'betterangels_active_org_id';
+const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
   organizations: TOrganizationWithPermissions[];
+  /** Storage adapter — defaults to :const:`localStorageAdapter`. */
+  storage?: StorageAdapter;
+  /** Storage key — defaults to ``'betterangels_active_org_id'``. */
+  storageKey?: string;
 }
 
 /**
@@ -19,9 +24,9 @@ interface ActiveOrgProviderProps {
  * to the component tree.
  *
  * Defaults to the first org in the list but persists the user's choice
- * in `localStorage` so it survives page reloads.
+ * in the configured storage so it survives page reloads.
  *
- * `hasPermission(perm)` checks the active org's permissions
+ * ``hasPermission(perm)`` checks the active org's permissions
  * and automatically reflects the correct org when the user
  * switches.  Because the check is enum-driven there is nothing to
  * update here when the backend adds new permissions — just re-run
@@ -30,16 +35,18 @@ interface ActiveOrgProviderProps {
 export function ActiveOrgProvider({
   children,
   organizations,
+  storage = localStorageAdapter,
+  storageKey = DEFAULT_STORAGE_KEY,
 }: ActiveOrgProviderProps) {
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = storage.getItem(storageKey) as string | null;
         if (stored && organizations.some((o) => o.id === stored)) {
           return stored;
         }
       } catch (err) {
-        console.error('Failed to read localStorage:', err);
+        console.error('Failed to read storage:', err);
       }
       return organizations[0]?.id;
     }
@@ -51,16 +58,16 @@ export function ActiveOrgProvider({
       return; // current selection is still valid
     }
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = storage.getItem(storageKey) as string | null;
       if (stored && organizations.some((o) => o.id === stored)) {
         setActiveOrgIdState(stored);
         return;
       }
     } catch (err) {
-      console.error('Failed to read localStorage:', err);
+      console.error('Failed to read storage:', err);
     }
     setActiveOrgIdState(organizations[0]?.id);
-  }, [organizations]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
@@ -72,13 +79,13 @@ export function ActiveOrgProvider({
       if (organizations.some((o) => o.id === orgId)) {
         setActiveOrgIdState(orgId);
         try {
-          localStorage.setItem(STORAGE_KEY, orgId);
+          storage.setItem(storageKey, orgId);
         } catch (err) {
-          console.error('Failed to write localStorage:', err);
+          console.error('Failed to write storage:', err);
         }
       }
     },
-    [organizations]
+    [organizations, storage, storageKey]
   );
 
   const hasPermission = useCallback(

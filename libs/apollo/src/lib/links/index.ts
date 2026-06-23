@@ -1,2 +1,0 @@
-export { orgLink } from './orgLink';
-

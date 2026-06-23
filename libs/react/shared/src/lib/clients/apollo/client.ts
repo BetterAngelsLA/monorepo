@@ -4,8 +4,9 @@ import {
   InMemoryCache,
   TypePolicies,
 } from '@apollo/client';
-import { createApolloCache, orgLink } from '@monorepo/apollo';
+import { createApolloCache } from '@monorepo/apollo';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { orgLink as defaultOrgLink } from '../../apollo/links';
 import { csrfLink } from './csrf';
 
 type IApolloClient = {
@@ -15,6 +16,8 @@ type IApolloClient = {
   cacheStore?: InMemoryCache;
   typePolicies?: TypePolicies;
   isDevEnv?: boolean;
+  /** Override the default org-link (e.g. when using a different storage key or adapter). */
+  orgLink?: ApolloLink;
 };
 
 export const createApolloClient = ({
@@ -23,6 +26,7 @@ export const createApolloClient = ({
   csrfHeaderName,
   cacheStore,
   typePolicies,
+  orgLink = defaultOrgLink,
 }: IApolloClient): ApolloClient => {
   const cache = cacheStore || createApolloCache({ typePolicies });
 

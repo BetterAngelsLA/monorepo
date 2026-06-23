@@ -1,9 +1,10 @@
+export * from './apollo';
 export * from './auth';
 export * from './components';
 export * from './featureControls';
 export * from './hooks';
 export * from './observers';
+export * from './permissions';
 export { Regex } from './static/regex';
 export * from './types';
-export * from './permissions';
 export * from './utils';
