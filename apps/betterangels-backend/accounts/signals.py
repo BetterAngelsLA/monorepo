@@ -16,12 +16,18 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_migrate)
 def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
-    """Create test users, org, and assign roles — local dev only."""
+    """Create test users and org — local dev only.
+
+    Role assignment is deferred to ``sync_all_org_permission_groups``
+    which runs after all migration app tables exist.  This avoids
+    ``PermissionGroup.DoesNotExist`` when the signal fires before
+    the accounts app is fully migrated.
+    """
     if not settings.IS_LOCAL_DEV:
         return
 
     _ensure_test_users()
-    _ensure_test_org_and_roles()
+    _ensure_test_org()
 
 
 def _ensure_test_users() -> None:
@@ -48,34 +54,23 @@ def _ensure_test_users() -> None:
         agent.save(update_fields=["password"])
 
 
-def _ensure_test_org_and_roles() -> None:
-    """Idempotent: create test_org with presets, assign roles to admin + agent."""
+def _ensure_test_org() -> None:
+    """Idempotent: create test_org with presets and owner (no role assignment yet)."""
     from accounts.groups import ORG_ADMIN
-    from accounts.services import create_organization_with_presets, member_add
+    from accounts.services import create_organization_with_presets
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
     admin = User.objects.get(username="admin")
-    agent = User.objects.get(username="agent")
 
     test_org, created = Organization.objects.get_or_create(name="test_org")
     if created:
-        test_org = create_organization_with_presets(
+        create_organization_with_presets(
             name="test_org",
             preset_names=["shelter", "outreach"],
             owner=admin,
             owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
         )
-
-    # member_add is idempotent — only grants templates not already held.
-    member_add(
-        email=agent.email or "agent@example.com",
-        first_name=agent.first_name or "",
-        last_name=agent.last_name or "",
-        middle_name=None,
-        organization=test_org,
-        permission_templates=(SHELTER_OPERATOR, CASEWORKER),
-    )
 
 
 # ── Permission sync (all environments) ────────────────────────────────
@@ -83,11 +78,41 @@ def _ensure_test_org_and_roles() -> None:
 
 @receiver(post_migrate)
 def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
-    """Reconcile every org's PermissionGroups against current presets."""
-    from accounts.services import reconcile_org_groups as reconcile
+    """Reconcile every org's PermissionGroups against current presets.
 
-    for org in Organization.objects.all():
-        reconcile(org)
+    Also assigns test-agent roles on local dev (safe to call repeatedly
+    — ``member_add`` is idempotent).
+    """
+    from accounts.services import member_add, reconcile_org_groups as reconcile
+    from notes.groups import CASEWORKER
+    from shelters.groups import SHELTER_OPERATOR
+
+    # The accounts app tables may not be ready when this fires for other
+    # apps; skip gracefully until the final post_migrate run.
+    try:
+        for org in Organization.objects.all():
+            reconcile(org)
+    except Exception:
+        return
+
+    _sync_template_permissions()
+
+    if not settings.IS_LOCAL_DEV:
+        return
+
+    try:
+        agent = User.objects.get(username="agent")
+        test_org = Organization.objects.get(name="test_org")
+        member_add(
+            email=agent.email or "agent@example.com",
+            first_name=agent.first_name or "",
+            last_name=agent.last_name or "",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(SHELTER_OPERATOR, CASEWORKER),
+        )
+    except Exception:
+        pass
 
 def _sync_template_permissions() -> None:
     """Sync Django Group.permissions for all registered templates."""

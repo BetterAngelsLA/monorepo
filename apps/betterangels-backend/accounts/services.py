@@ -118,7 +118,7 @@ def create_organization_with_presets(
         if REGISTRY.org_type(preset_name) is None:
             raise ValidationError(f"Unknown org-type preset: {preset_name}")
 
-    org = Organization.objects.create(name=name)
+    org, _ = Organization.objects.get_or_create(name=name)
 
     # Collect unique templates from all requested presets (deduplicate by name).
     org_types: list[str] = []
@@ -131,10 +131,10 @@ def create_organization_with_presets(
     # Create PermissionGroup per template for this org.
     reconcile_org_groups(org)
 
-    # Profile with org types.
-    OrganizationProfile.objects.create(
+    # Profile with org types (AutoOneToOneField — safe to skip if exists).
+    OrganizationProfile.objects.get_or_create(
         organization=org,
-        org_types=[OrgTypeChoices(org_type) for org_type in org_types],
+        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
     )
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
