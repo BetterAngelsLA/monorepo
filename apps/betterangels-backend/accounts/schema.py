@@ -65,12 +65,15 @@ class Query:
     # annotations can be moved to ``OrganizationMemberType.get_queryset()`` so
     # they're applied automatically and not duplicated in every resolver.
     @strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
+            current_user,
+            org_id=organization_id,
+            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
@@ -103,7 +106,9 @@ class Query:
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
-            current_user, org_id=organization_id, permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS
+            current_user,
+            org_id=organization_id,
+            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
@@ -179,7 +184,8 @@ class Mutation:
         return DeletedObjectType(id=user_id)
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
