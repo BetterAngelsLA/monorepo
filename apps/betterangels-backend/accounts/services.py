@@ -131,8 +131,8 @@ def create_organization_with_presets(
     # Create PermissionGroup per template for this org.
     reconcile_org_groups(org)
 
-    # Profile with org types (AutoOneToOneField — safe to skip if exists).
-    OrganizationProfile.objects.get_or_create(
+    # Profile with org types — update_or_create to fill in on existing orgs too.
+    OrganizationProfile.objects.update_or_create(
         organization=org,
         defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
     )
