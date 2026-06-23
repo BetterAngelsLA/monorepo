@@ -88,9 +88,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_member(
-        self, info: Info, organization_id: str, user_id: str
-    ) -> OrganizationMemberType:
+    def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
             current_user,
@@ -98,14 +96,10 @@ class Query:
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
-            raise PermissionError(
-                "You do not have permission to view this organization's members."
-            )
+            raise PermissionError("You do not have permission to view this organization's members.")
 
         user: User = (
-            organization.users.filter(id=user_id)
-            .annotate(_member_role=annotate_member_role(organization_id))
-            .first()
+            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
         )
         if not user:
             raise PermissionError("You do not have permission to view this member.")
@@ -132,9 +126,7 @@ class Query:
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
-            raise PermissionError(
-                "You do not have permission to view this organization's members."
-            )
+            raise PermissionError("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
 
@@ -163,9 +155,7 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_current_user(
-        self, info: Info, data: UpdateUserInput
-    ) -> Union[UserType, CurrentUserType]:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> Union[UserType, CurrentUserType]:
         user = cast(User, get_current_user(info))
         if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")
@@ -184,9 +174,7 @@ class Mutation:
         return cast(UserType, user)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_user_profile(
-        self, info: Info, data: UpdateUserProfileInput
-    ) -> CurrentUserType:
+    def update_user_profile(self, info: Info, data: UpdateUserProfileInput) -> CurrentUserType:
         user = cast(User, get_current_user(info))
 
         user_data: dict = strawberry.asdict(data)
@@ -211,16 +199,12 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
-    def add_organization_member(
-        self, info: Info, data: OrgInvitationInput
-    ) -> OrganizationMemberType:
+    def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.get_template_or_raise(
-            data.permission_template.value, organization
-        )  # type: ignore[attr-defined, union-attr]
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         user = member_add(
             email=data.email,
@@ -270,9 +254,7 @@ class Mutation:
     # ── Organization Creation ──────────────────────────────────────
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
-    def create_organization(
-        self, info: Info, data: CreateOrganizationInput
-    ) -> CreateOrganizationResponse:
+    def create_organization(self, info: Info, data: CreateOrganizationInput) -> CreateOrganizationResponse:
         """Create an organization for the authenticated user.
 
         Creates a new Organization with the requested org type, links the
@@ -288,9 +270,7 @@ class Mutation:
 
         send_welcome_emails_for_org(user, organization)
 
-        return CreateOrganizationResponse(
-            user=cast(UserType, user), organization=cast(OrganizationType, organization)
-        )
+        return CreateOrganizationResponse(user=cast(UserType, user), organization=cast(OrganizationType, organization))
 
     # ── Role Change ────────────────────────────────────────────────
 
@@ -310,9 +290,7 @@ class Mutation:
         org_id = get_current_organization(info)
         organization = Organization.objects.get(pk=org_id)
 
-        template = REGISTRY.get_template_or_raise(
-            data.permission_template.value, organization
-        )  # type: ignore[attr-defined, union-attr]
+        template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
         target_user = User.objects.filter(
             id=data.user_id,

@@ -11,9 +11,7 @@ from accounts.models import Organization, User
 logger = logging.getLogger(__name__)
 
 
-def send_welcome_email(
-    user: User, organization: Organization, template_config: TemplateConfig
-) -> None:
+def send_welcome_email(user: User, organization: Organization, template_config: TemplateConfig) -> None:
     """Send a welcome email using the given template config.
 
     The caller is responsible for selecting which ``TemplateConfig``
@@ -27,9 +25,7 @@ def send_welcome_email(
     URLs.
     """
     if not template_config.welcome_html or not template_config.welcome_txt:
-        logger.warning(
-            f"No welcome email templates for '{template_config.name}' — skipping."
-        )
+        logger.warning(f"No welcome email templates for '{template_config.name}' — skipping.")
         return
 
     base_url = getattr(settings, template_config.base_url_setting, "")
