@@ -4,9 +4,7 @@ from typing import Optional, Union, cast
 import strawberry
 import strawberry_django
 from accounts.emails import send_welcome_emails_for_org
-from accounts.enums import OrgRoleEnum
 from accounts.extensions import HasOrgPerm
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
@@ -16,17 +14,17 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
 from django.db import transaction
-from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from organizations.backends import invitation_backend
-from organizations.models import OrganizationOwner
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .models import Organization, PermissionGroup, User
+from .annotations import annotate_is_org_owner, annotate_member_role
+from .models import Organization, User
 from .services import (
     create_organization_service,
     member_add,
@@ -51,40 +49,6 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def annotate_member_role(org_id: str) -> Case:
-    is_superuser = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_SUPERUSER.name,
-            group__user=OuterRef("pk"),
-        )
-    )
-    is_admin = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_ADMIN.name,
-            group__user=OuterRef("pk"),
-        )
-    )
-
-    return Case(
-        When(is_superuser, then=Value(OrgRoleEnum.SUPERUSER)),
-        When(is_admin, then=Value(OrgRoleEnum.ADMIN)),
-        default=Value(OrgRoleEnum.MEMBER),
-        output_field=CharField(),
-    )
-
-
-def annotate_is_org_owner(org_id: str) -> Exists:
-    """Annotate whether the user is the organization owner."""
-    return Exists(
-        OrganizationOwner.objects.filter(
-            organization_id=org_id,
-            organization_user__user=OuterRef("pk"),
-        )
-    )
 
 
 @strawberry.type
