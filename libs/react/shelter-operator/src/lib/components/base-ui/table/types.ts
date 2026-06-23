@@ -1,9 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { TableRowClickHandler } from './TableRow';
+import type { ColumnFilterOption } from './header/ColumnFilter';
 
 export type SortDirection = 'asc' | 'desc';
-
-import type { ColumnFilterOption } from './header/ColumnFilter';
 
 export type TableColumn<TItem> = {
   key: string;
