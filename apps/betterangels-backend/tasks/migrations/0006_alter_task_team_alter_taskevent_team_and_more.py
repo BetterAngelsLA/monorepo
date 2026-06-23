@@ -100,8 +100,8 @@ class Migration(migrations.Migration):
             trigger=pgtrigger.compiler.Trigger(
                 name="task_add_insert",
                 sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (NEW."client_profile_id", NEW."created_at", NEW."created_by_id", NEW."description", NEW."hmis_client_profile_id", NEW."hmis_note_id", NEW."id", NEW."note_id", NEW."organization_id", _pgh_attach_context(), NOW(), \'task.add\', NEW."id", NEW."status", NEW."summary", NEW."team_id", NEW."updated_at"); RETURN NULL;',
-                    hash="cdfbfdaa74c0debb24cbf7e34a0b8143c8315f78",
+                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "old_team", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (NEW."client_profile_id", NEW."created_at", NEW."created_by_id", NEW."description", NEW."hmis_client_profile_id", NEW."hmis_note_id", NEW."id", NEW."note_id", NEW."old_team", NEW."organization_id", _pgh_attach_context(), NOW(), \'task.add\', NEW."id", NEW."status", NEW."summary", NEW."team_id", NEW."updated_at"); RETURN NULL;',
+                    hash="6e6b306117fed13c9f551aa8049412ab2fdbb17c",
                     operation="INSERT",
                     pgid="pgtrigger_task_add_insert_be0f1",
                     table="tasks_task",
@@ -115,8 +115,8 @@ class Migration(migrations.Migration):
                 name="task_update_update",
                 sql=pgtrigger.compiler.UpsertTriggerSql(
                     condition="WHEN (OLD.* IS DISTINCT FROM NEW.*)",
-                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (NEW."client_profile_id", NEW."created_at", NEW."created_by_id", NEW."description", NEW."hmis_client_profile_id", NEW."hmis_note_id", NEW."id", NEW."note_id", NEW."organization_id", _pgh_attach_context(), NOW(), \'task.update\', NEW."id", NEW."status", NEW."summary", NEW."team_id", NEW."updated_at"); RETURN NULL;',
-                    hash="c1737d6042b369efe5ff4bc5b5e199cead642827",
+                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "old_team", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (NEW."client_profile_id", NEW."created_at", NEW."created_by_id", NEW."description", NEW."hmis_client_profile_id", NEW."hmis_note_id", NEW."id", NEW."note_id", NEW."old_team", NEW."organization_id", _pgh_attach_context(), NOW(), \'task.update\', NEW."id", NEW."status", NEW."summary", NEW."team_id", NEW."updated_at"); RETURN NULL;',
+                    hash="47c1d8adfc5d611db5634b0e202473cd11a21fc3",
                     operation="UPDATE",
                     pgid="pgtrigger_task_update_update_1c3f7",
                     table="tasks_task",
@@ -129,8 +129,8 @@ class Migration(migrations.Migration):
             trigger=pgtrigger.compiler.Trigger(
                 name="task_remove_delete",
                 sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (OLD."client_profile_id", OLD."created_at", OLD."created_by_id", OLD."description", OLD."hmis_client_profile_id", OLD."hmis_note_id", OLD."id", OLD."note_id", OLD."organization_id", _pgh_attach_context(), NOW(), \'task.remove\', OLD."id", OLD."status", OLD."summary", OLD."team_id", OLD."updated_at"); RETURN NULL;',
-                    hash="45d6d4499a873511ddbc48081407f7973f70b733",
+                    func='INSERT INTO "tasks_taskevent" ("client_profile_id", "created_at", "created_by_id", "description", "hmis_client_profile_id", "hmis_note_id", "id", "note_id", "old_team", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "status", "summary", "team_id", "updated_at") VALUES (OLD."client_profile_id", OLD."created_at", OLD."created_by_id", OLD."description", OLD."hmis_client_profile_id", OLD."hmis_note_id", OLD."id", OLD."note_id", OLD."old_team", OLD."organization_id", _pgh_attach_context(), NOW(), \'task.remove\', OLD."id", OLD."status", OLD."summary", OLD."team_id", OLD."updated_at"); RETURN NULL;',
+                    hash="6c092423eb1d8144e65ea1203ff833059cf84999",
                     operation="DELETE",
                     pgid="pgtrigger_task_remove_delete_093f2",
                     table="tasks_task",
