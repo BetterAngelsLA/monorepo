@@ -3,9 +3,9 @@ from typing import Any, Dict, List, overload
 from django.core.exceptions import ValidationError
 from django.db import models
 from places import Places
+
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.models import Bed, Room, Schedule, Shelter
-from shelters.models.schedule import _duration_minutes, _start_week_minutes
 
 
 def _get_m2m_field_names(model: type[models.Model]) -> set[str]:
@@ -17,7 +17,9 @@ def _get_m2m_field_names(model: type[models.Model]) -> set[str]:
 _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
 _ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
-_COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
+_COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (
+    _SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS
+)
 
 
 @overload
@@ -49,7 +51,10 @@ def _set_m2m_from_enums(instance: models.Model, data: Dict[str, List[Any]]) -> N
             continue
 
         related_model: Any = instance._meta.get_field(field_name).related_model
-        instances = [related_model.objects.get_or_create(name=getattr(v, "value", v))[0] for v in values]
+        instances = [
+            related_model.objects.get_or_create(name=getattr(v, "value", v))[0]
+            for v in values
+        ]
         getattr(instance, field_name).set(instances)
 
 
@@ -80,7 +85,9 @@ def _prepare_shelter_data(
 
     Returns ``(scalar_data, m2m_data, schedules_data)``.
     """
-    m2m_data: Dict[str, List[Any]] = {k: data.pop(k) for k in list(data) if k in m2m_field_names}
+    m2m_data: Dict[str, List[Any]] = {
+        k: data.pop(k) for k in list(data) if k in m2m_field_names
+    }
 
     # Extract schedules before model creation
     schedules_data: List[Dict[str, Any]] = data.pop("schedules", None) or []
@@ -115,29 +122,33 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
         # Resolve enum values to their raw strings for TextChoicesField
         raw_type = entry.get("schedule_type")
         schedule_type = (
-            ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
+            ScheduleTypeChoices(getattr(raw_type, "value", raw_type))
+            if raw_type
+            else ScheduleTypeChoices.OPERATING
         )
 
         raw_condition = entry.get("condition")
         condition: ConditionChoices | None = (
-            ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
+            ConditionChoices(getattr(raw_condition, "value", raw_condition))
+            if raw_condition
+            else None
         )
 
         # Fan out: one row per day (or a single row with day=None)
         raw_days = entry.get("days") or [None]
         for raw_day in raw_days:
-            day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
-            start_time = entry.get("start_time")
-            end_time = entry.get("end_time")
+            day: DayOfWeekChoices | None = (
+                DayOfWeekChoices(getattr(raw_day, "value", raw_day))
+                if raw_day
+                else None
+            )
             objs.append(
                 Schedule(
                     shelter=shelter,
                     schedule_type=schedule_type,
                     day=day,
-                    start_time=start_time,
-                    end_time=end_time,
-                    start_week_minutes=_start_week_minutes(day, start_time),
-                    duration_minutes=_duration_minutes(start_time, end_time),
+                    start_time=entry.get("start_time"),
+                    end_time=entry.get("end_time"),
                     start_date=entry.get("start_date"),
                     end_date=entry.get("end_date"),
                     condition=condition,
@@ -147,7 +158,9 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
     Schedule.objects.bulk_create(objs)
 
 
-def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
+def _validate_subset_attributes(
+    shelter: Shelter, m2m_data: Dict[str, List[Any]]
+) -> None:
     """Ensure room/bed attributes are a strict subset of the shelter's attributes."""
     from django.db.models import prefetch_related_objects
 
@@ -161,5 +174,7 @@ def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]
         invalid = set(provided_values) - shelter_allowed
         if invalid:
             raise ValidationError(
-                {field_name: f"The following {field_name} are not supported by the shelter: {', '.join(invalid)}"}
+                {
+                    field_name: f"The following {field_name} are not supported by the shelter: {', '.join(invalid)}"
+                }
             )
