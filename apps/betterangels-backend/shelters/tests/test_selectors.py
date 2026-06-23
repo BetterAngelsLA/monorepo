@@ -11,7 +11,6 @@ from model_bakery import baker
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 from shelters.models import (
     Bed,
-    BedEvent,  # type: ignore[attr-defined]
     Reservation,
     Shelter,
 )
@@ -19,6 +18,7 @@ from shelters.selectors import report_bed_status_counts, reservation_status_chan
 from shelters.tests.baker_recipes import shelter_recipe
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
+BedEvent = Bed.pgh_event_model  # type: ignore[attr-defined]
 
 
 class ReservationStatusChangeCountsTestCase(TestCase):
