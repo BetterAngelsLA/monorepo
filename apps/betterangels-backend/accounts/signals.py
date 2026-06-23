@@ -72,6 +72,35 @@ def _ensure_test_org() -> None:
 
 # ── Permission sync (all environments) ────────────────────────────────
 
+@receiver(post_migrate)
+def create_test_organization(sender: Any, **kwargs: Any) -> None:
+    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
+        from accounts.groups import ORG_ADMIN
+        from notes.groups import CASEWORKER
+
+        from .role_manager import OrgRoleManager
+        from .services import create_organization_with_presets
+
+        test_users = list(User.objects.filter(username__in=["admin", "agent"]))
+
+        if not test_users:
+            logger.warning("test_org not created: admin and agent users do not exist yet.")
+            return
+
+        owner = next((u for u in test_users if u.username == "admin"), test_users[0])
+
+        org = create_organization_with_presets(
+            name="test_org",
+            preset_names=["outreach"],
+            owner=owner,
+            owner_roles=(CASEWORKER, ORG_ADMIN),
+        )
+
+        for test_user in test_users:
+            if test_user.pk != owner.pk:
+                org.add_user(test_user)
+                OrgRoleManager(org).add_roles(test_user, CASEWORKER)
+
 
 @receiver(post_migrate)
 def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
@@ -127,13 +156,26 @@ def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
 def _sync_template_permissions() -> None:
     """Sync Django Group.permissions for all registered templates."""
     from common.org_types import REGISTRY
+    from django.contrib.auth.models import Permission
+    from django.db.models import Q
 
     template_names = REGISTRY.template_names()
     with transaction.atomic():
         templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
             "permissions", "permissiongroup_set__group"
         )
-        for template in templates:
-            perms = list(template.permissions.all())
-            for pgt in template.permissiongroup_set.all():
+
+        for template_db in templates:
+            # Sync template permissions from REGISTRY definition → DB.
+            template_config = REGISTRY.template(template_db.name)
+            if template_config and template_config.permissions:
+                perm_filters = Q()
+                for perm_str in template_config.permissions:
+                    app_label, codename = perm_str.split(".", 1)
+                    perm_filters |= Q(codename=codename, content_type__app_label=app_label)
+                template_db.permissions.set(Permission.objects.filter(perm_filters))
+
+            # Sync group permissions from template → groups.
+            perms = list(template_db.permissions.all())
+            for pgt in template_db.permissiongroup_set.all():
                 pgt.group.permissions.set(perms)
