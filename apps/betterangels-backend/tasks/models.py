@@ -51,6 +51,8 @@ class Task(BaseModel):
     status = IntegerChoicesField(Status, default=Status.TO_DO, db_index=True)
     summary = models.CharField(max_length=100, db_index=True)
     team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
+    # TEMPORARY — preserved from the old SelahTeamEnum field; remove in a subsequent PR
+    # once the data migration (0006) has been deployed and verified.
     old_team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
 
     def __str__(self) -> str:
