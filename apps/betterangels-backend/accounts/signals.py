@@ -48,36 +48,33 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
     """Ensure ``test_org`` exists with the expected users, roles, and groups.
 
-    Fully idempotent — uses ``get_or_create`` for the org and always syncs
-    groups from the current presets so new templates are picked up.
+    Delegates group creation to ``create_organization_with_presets`` on
+    first run; on subsequent runs the ``update_group_permissions`` signal
+    keeps everything in sync.
     """
     if not settings.IS_LOCAL_DEV:
         return
 
     from accounts.groups import ORG_ADMIN
-    from accounts.services import member_add
+    from accounts.services import create_organization_with_presets, member_add
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
     admin = User.objects.get(username="admin")
     agent = User.objects.get(username="agent")
 
-    # Create the org and sync groups from current presets.
-    test_org, _ = Organization.objects.get_or_create(name="test_org")
-
-    # Ensure owner is linked.
-    if not test_org.owners.filter(organization_user__user=admin).exists():
-        test_org.add_user(admin)
+    # Create org + groups on first run; existing orgs are kept up to date
+    # by update_group_permissions below.
+    test_org, created = Organization.objects.get_or_create(name="test_org")
+    if created:
+        test_org = create_organization_with_presets(
+            name="test_org",
+            preset_names=["shelter", "outreach"],
+            owner=admin,
+            owner_roles=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+        )
 
     # Role assignments (idempotent — skips already-assigned templates).
-    member_add(
-        email=admin.email or "admin@example.com",
-        first_name="Admin",
-        last_name="User",
-        middle_name=None,
-        organization=test_org,
-        permission_templates=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
-    )
     member_add(
         email=agent.email or "agent@example.com",
         first_name=agent.first_name or "",
