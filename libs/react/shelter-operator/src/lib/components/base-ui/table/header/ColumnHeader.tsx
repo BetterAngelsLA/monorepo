@@ -33,6 +33,11 @@ export function ColumnHeader<TItem>({
 }: ColumnHeaderProps<TItem>) {
   const isFilterOpen = openFilterColumn === column.key;
 
+  const isSortable = !!column.sortValue;
+  const isFilterable = !!column.filterValue;
+
+  const LabelTag = isSortable ? 'button' : 'span';
+
   return (
     <div
       role="columnheader"
@@ -43,24 +48,11 @@ export function ColumnHeader<TItem>({
             : ('descending' as const)
           : undefined
       }
-      tabIndex={column.sortValue ? 0 : undefined}
-      onClick={column.sortValue ? () => onSortToggle(column.key) : undefined}
-      onKeyDown={
-        column.sortValue
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onSortToggle(column.key);
-              }
-            }
-          : undefined
-      }
       className={mergeCss([
         'text-left',
         'justify-self-start',
-        column.filterValue && 'relative',
-        (column.sortValue || column.filterValue) && 'flex items-center gap-1',
-        column.sortValue && 'cursor-pointer select-none',
+        isFilterable && 'relative',
+        (isSortable || isFilterable) && 'flex items-center gap-1',
         column.headerClassName,
       ])}
     >
@@ -74,20 +66,32 @@ export function ColumnHeader<TItem>({
       )}
 
       <div className="flex items-center gap-1">
-        {column.label}
+        <LabelTag
+          type={isSortable ? 'button' : undefined}
+          onClick={isSortable ? () => onSortToggle(column.key) : undefined}
+          className={mergeCss([
+            'flex items-center gap-1 bg-transparent border-none p-0 font-inherit text-inherit text-[22px]',
+            isSortable && 'cursor-pointer select-none',
+          ])}
+        >
+          {column.label}
 
-        <SortIcon
-          hasSortValue={!!column.sortValue}
-          isActive={activeSortColumn === column.key && !!activeSortDirection}
-          direction={activeSortDirection}
-        />
+          {isSortable && (
+            <SortIcon
+              isActive={
+                activeSortColumn === column.key && !!activeSortDirection
+              }
+              direction={activeSortDirection}
+            />
+          )}
+        </LabelTag>
 
-        {column.filterValue && (
-          <Filter
-            size={14}
+        {isFilterable && (
+          <button
+            type="button"
             className={mergeCss([
-              'text-[#B0B5BD] cursor-pointer',
-              filters[column.key] && 'text-[#3D7FFF]',
+              'bg-transparent border-none p-0 cursor-pointer',
+              filters[column.key] ? 'text-[#3D7FFF]' : 'text-[#B0B5BD]',
             ])}
             onClick={(e) => {
               e.stopPropagation();
@@ -95,7 +99,9 @@ export function ColumnHeader<TItem>({
                 prev === column.key ? null : column.key
               );
             }}
-          />
+          >
+            <Filter size={14} />
+          </button>
         )}
       </div>
     </div>

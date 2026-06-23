@@ -32,9 +32,8 @@ export function ColumnFilter(props: ColumnFilterProps) {
     'bg-white',
     'border',
     'border-gray-200',
-    hasFilterOptions ? 'rounded-2xl' : 'rounded-full',
+    hasFilterOptions ? 'rounded-2xl' : 'rounded-full pr-2',
     'shadow-lg',
-    'pr-2',
     'flex',
     'flex-col',
     'min-w-[180px]',
@@ -76,33 +75,46 @@ export function ColumnFilter(props: ColumnFilterProps) {
       )}
 
       {hasFilterOptions && (
-        <div className="space-y-1 overflow-y-auto px-2 py-2">
-          {filterOptions.map((option) => {
-            const isActive = value === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onChange(isActive ? '' : option.value)}
-                className={mergeCss([
-                  'cursor-pointer rounded-lg px-3 py-2.5 transition-colors w-full text-left',
-                  isActive ? 'bg-blue-50' : 'hover:bg-gray-50',
-                ])}
-              >
-                <Text
-                  variant="body"
+        <>
+          <div className="space-y-1 overflow-y-auto px-2 py-2">
+            {filterOptions.map((option) => {
+              const isActive = value === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onChange(isActive ? '' : option.value)}
                   className={mergeCss([
-                    'flex items-center justify-between gap-2 min-w-0',
-                    isActive ? 'text-[#008CEE]' : 'text-gray-900',
+                    'cursor-pointer rounded-lg px-3 py-2.5 transition-colors w-full text-left',
+                    isActive ? 'bg-blue-50' : 'hover:bg-gray-50',
                   ])}
                 >
-                  <span className="truncate text-sm">{option.label}</span>
-                  {isActive && <Check size={18} className="shrink-0" />}
-                </Text>
-              </button>
-            );
-          })}
-        </div>
+                  <Text
+                    variant="body"
+                    className={mergeCss([
+                      'flex items-center justify-between gap-2 min-w-0',
+                      isActive ? 'text-[#008CEE]' : 'text-gray-900',
+                    ])}
+                  >
+                    <span className="truncate text-sm">{option.label}</span>
+                    {isActive && <Check size={18} className="shrink-0" />}
+                  </Text>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-end px-4 py-1.5 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-xs font-sans text-gray-500 hover:text-gray-900 cursor-pointer"
+            >
+              clear
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

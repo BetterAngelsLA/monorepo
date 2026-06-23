@@ -2,14 +2,11 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import type { SortDirection } from '../types';
 
 type SortIconProps = {
-  hasSortValue: boolean;
   isActive: boolean;
   direction: SortDirection | null;
 };
 
-export function SortIcon({ hasSortValue, isActive, direction }: SortIconProps) {
-  if (!hasSortValue) return null;
-
+export function SortIcon({ isActive, direction }: SortIconProps) {
   if (!isActive || !direction) {
     return <ArrowUpDown size={16} className="text-[#B0B5BD]" />;
   }
