@@ -1,6 +1,7 @@
 export * from './AddressAutocomplete/AddressAutocomplete';
 export * from './Alert';
 export * from './AppDrawer';
+export * from './BarChart';
 export * from './BetterAngelsLogoBadge';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
