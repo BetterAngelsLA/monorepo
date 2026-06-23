@@ -19,11 +19,11 @@ line-length = 120
 exclude = ["node_modules", ".venv/lib", "*/migrations/*"]
 
 [tool.ruff.lint]
-select = ["E", "F", "B"]
+select = ["E", "F", "B", "I"]
 ignore = ["E501", "B904", "B905"]
 
 [tool.ruff.lint.isort]
-known-first-party = []
+known-first-party = ["accounts", "betterangels_backend", "clients", "common", "hmis", "legal", "notes", "proxy", "referrals", "reports", "shelters", "tasks", "teams"]
 
 [tool.ruff.lint.per-file-ignores]
 "*/migrations/*" = ["I"]
@@ -31,6 +31,13 @@ known-first-party = []
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.pyright]
+typeCheckingMode = "off"
+pythonVersion = "3.14"
+pythonPlatform = "Linux"
+reportLineTooLong = "none"
+include = ["apps/betterangels-backend"]
 
 [dependency-groups]
 dev = [
