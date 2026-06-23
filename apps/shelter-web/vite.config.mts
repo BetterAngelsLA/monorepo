@@ -16,6 +16,18 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
     changeOrigin: true,
     rewrite: (path) => path.replace(/^\/media/, ''),
   },
+  '/graphql': {
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+  },
+  '/_allauth': {
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+  },
+  '/admin': {
+    target: 'http://localhost:8000',
+    changeOrigin: true,
+  },
 };
 
 export default defineConfig(({ mode }) => {
