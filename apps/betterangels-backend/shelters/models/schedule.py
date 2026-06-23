@@ -3,12 +3,90 @@
 import pghistory
 from common.models import BaseModel
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
+from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
 from .lookups import Demographic
 from .shelter import Shelter
+
+DAILY_MINUTES = 24 * 60  # 1440
+
+# ── Helpers ───────────────────────────────────────────────────────────────
+
+
+def _time_to_minutes(time_field: str) -> ExpressionWrapper:
+    """``EXTRACT(HOUR FROM time) * 60 + EXTRACT(MINUTE FROM time)`` as integer.
+
+    PostgreSQL ``EXTRACT`` returns double precision, so every call is
+    wrapped with ``Cast(..., IntegerField())`` and the final arithmetic
+    is wrapped with ``ExpressionWrapper(output_field=IntegerField())``.
+    """
+    return ExpressionWrapper(
+        Cast(Extract(F(time_field), "hour"), output_field=models.IntegerField()) * 60
+        + Cast(Extract(F(time_field), "minute"), output_field=models.IntegerField()),
+        output_field=models.IntegerField(),
+    )
+
+
+# ── Generated-column expressions ──────────────────────────────────────────
+
+
+def _start_week_minutes_expression():
+    """``GENERATED ALWAYS`` expression for ``start_week_minutes``.
+
+    Week-minute offset for day-specific schedules (day_index * 1440 +
+    start_minutes), or daily-minute offset for every-day (day=None)
+    schedules.  NULL when ``start_time`` is NULL.
+    """
+    day_offset = Case(
+        When(day="monday", then=Value(0 * DAILY_MINUTES)),
+        When(day="tuesday", then=Value(1 * DAILY_MINUTES)),
+        When(day="wednesday", then=Value(2 * DAILY_MINUTES)),
+        When(day="thursday", then=Value(3 * DAILY_MINUTES)),
+        When(day="friday", then=Value(4 * DAILY_MINUTES)),
+        When(day="saturday", then=Value(5 * DAILY_MINUTES)),
+        When(day="sunday", then=Value(6 * DAILY_MINUTES)),
+        default=Value(0),
+    )
+    result = ExpressionWrapper(day_offset + _time_to_minutes("start_time"), output_field=models.IntegerField())
+    return Case(
+        When(Q(start_time__isnull=False), then=result),
+        default=None,
+    )
+
+
+def _duration_minutes_expression():
+    """``GENERATED ALWAYS`` expression for ``duration_minutes``.
+
+    ``COALESCE(NULLIF((end_m − start_m + 1440) % 1440, 0), 1440)``
+
+    Handles overnight schedules via modular arithmetic.  Falls back to
+    1440 when start == end (24 h schedule).  NULL when either time is
+    NULL.
+    """
+    raw = ExpressionWrapper(
+        Mod(
+            _time_to_minutes("end_time") - _time_to_minutes("start_time") + Value(DAILY_MINUTES),
+            Value(DAILY_MINUTES),
+        ),
+        output_field=models.IntegerField(),
+    )
+    duration = ExpressionWrapper(
+        Coalesce(NullIf(raw, Value(0)), Value(DAILY_MINUTES)),
+        output_field=models.IntegerField(),
+    )
+    return Case(
+        When(
+            Q(start_time__isnull=False) & Q(end_time__isnull=False),
+            then=duration,
+        ),
+        default=None,
+    )
+
+
+# ── Model ─────────────────────────────────────────────────────────────────
 
 
 @pghistory.track(
@@ -27,6 +105,21 @@ class Schedule(BaseModel):
     )
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
+
+    # Generated cyclic-interval columns for branchless "is this schedule
+    # active at a given datetime?" queries using modular arithmetic.
+    # Both are STORED generated columns — the database keeps them in sync
+    # with ``day``, ``start_time``, and ``end_time`` automatically.
+    start_week_minutes = models.GeneratedField(
+        expression=_start_week_minutes_expression(),
+        output_field=models.IntegerField(null=True),
+        db_persist=True,
+    )
+    duration_minutes = models.GeneratedField(
+        expression=_duration_minutes_expression(),
+        output_field=models.IntegerField(null=True),
+        db_persist=True,
+    )
 
     # Date range — use both for a range, or set start_date == end_date for a single date
     start_date = models.DateField(
