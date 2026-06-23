@@ -210,7 +210,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createReservation"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("does not exist", messages[0]["message"])
+        self.assertIn(f"Bed matching ID {other_bed.pk} could not be found.", messages[0]["message"])
 
     def test_create_reservation_with_clients(self) -> None:
         variables: dict[str, Any] = {

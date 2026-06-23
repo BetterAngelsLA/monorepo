@@ -70,7 +70,7 @@ class CreateRoomMutationTestCase(RoomMutationTestCase):
             }
         }
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -160,7 +160,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             },
         }
 
-        expected_query_count = 15
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -198,7 +198,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"notes": "New notes"},
         }
 
-        expected_query_count = 15
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -218,7 +218,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
-        expected_query_count = 19
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -321,7 +321,7 @@ class CloneRoomMutationTestCase(RoomMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

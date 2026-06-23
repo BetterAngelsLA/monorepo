@@ -154,7 +154,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         self.assertEqual(self.room.name, "Room-101 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        room_update(user=self.user, room_id=self.room.pk, data={"name": "Renamed", "medical_respite": None})
+        room_update(user=self.user, organization_id=self.org_id, room_id=self.room.pk, data={"name": "Renamed", "medical_respite": None})
 
         self.room.refresh_from_db()
         self.assertEqual(self.room.name, "Renamed")

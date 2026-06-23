@@ -97,7 +97,7 @@ class RoomQueryTestCase(RoomQueriesTestCase):
                 }
             }
         """
-        expected_query_count = 6
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"id": str(self.room.pk)})
 
@@ -117,7 +117,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_returns_org_rooms(self) -> None:
         baker.make(Room, shelter=self.shelter, name="Room-102")
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -172,7 +172,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_filters_by_status(self) -> None:
         reserved_room = baker.make(Room, shelter=self.shelter, name="Room-102")
         baker.make(Reservation, room=reserved_room, status=ReservationStatusChoices.CONFIRMED)
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,

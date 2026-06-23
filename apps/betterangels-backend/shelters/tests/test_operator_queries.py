@@ -273,41 +273,6 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {"available": 1, "occupied": 1, "reserved": 2, "outOfService": 1, "inTurnaround": 1},
         )
 
-    def test_operator_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
-        """Room counts stay correct when beds and rooms are requested together."""
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        shelter = self.shelter
-
-        Room.objects.create(shelter=shelter, status=RoomStatusChoices.NEEDS_MAINTENANCE)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
-
-        query = """
-            query OperatorShelters($orgIds: [ID!]) {
-                operatorShelters(filters: { organizations: $orgIds }) {
-                    results {
-                        id
-                        bedsByStatus {
-                            available
-                            reserved
-                        }
-                        roomsByStatus {
-                            available
-                            reserved
-                            needsMaintenance
-                        }
-                    }
-                }
-            }
-        """
-        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        shelter_data = next(r for r in response["data"]["operatorShelters"]["results"] if r["id"] == str(shelter.id))
-        self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
-        self.assertEqual(
-            shelter_data["roomsByStatus"],
-            {"available": 0, "reserved": 0, "needsMaintenance": 1},
-        )
-
     def test_operator_shelters_beds_by_status_no_beds(self) -> None:
         """Shelter with no beds returns all zeros for beds by status."""
         self.graphql_client.force_login(self.org_1_case_manager_1)

@@ -134,7 +134,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, bed_id=self.bed.pk, data={"name": "Renamed"})
+        bed_update(user=self.user, organization_id=self.org_id,bed_id=self.bed.pk, data={"name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")

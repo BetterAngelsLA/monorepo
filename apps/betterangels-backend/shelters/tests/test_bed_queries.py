@@ -83,7 +83,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_returns_org_beds(self) -> None:
         baker.make(Bed, shelter=self.shelter, name="Bed-2")
 
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
