@@ -11,26 +11,17 @@ from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
-# ── Single post_migrate entry point (order is guaranteed within) ──────
+# ── Local dev data setup ──────────────────────────────────────────────
 
 
 @receiver(post_migrate)
 def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
-    """Create test users, org, and assign roles — then sync permissions.
-
-    Everything runs inside one receiver so ordering is guaranteed:
-    users exist before the org references them, the org exists before
-    the permission sync iterates it.
-    """
+    """Create test users, org, and assign roles — local dev only."""
     if not settings.IS_LOCAL_DEV:
         return
 
     _ensure_test_users()
     _ensure_test_org_and_roles()
-    _sync_all_org_permission_groups()
-
-
-# ── Step helpers ──────────────────────────────────────────────────────
 
 
 def _ensure_test_users() -> None:
@@ -87,7 +78,11 @@ def _ensure_test_org_and_roles() -> None:
     )
 
 
-def _sync_all_org_permission_groups() -> None:
+# ── Permission sync (all environments) ────────────────────────────────
+
+
+@receiver(post_migrate)
+def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
     """Create missing PermissionGroups from presets, then sync permissions.
 
     Iterates every registered org-type preset and creates any
