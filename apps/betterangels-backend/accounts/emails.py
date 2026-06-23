@@ -1,16 +1,19 @@
 import logging
 
-from accounts.models import Organization, User
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from accounts.models import Organization, User
+
 logger = logging.getLogger(__name__)
 
 
-def send_welcome_email(user: User, organization: Organization, template_config: TemplateConfig) -> None:
+def send_welcome_email(
+    user: User, organization: Organization, template_config: TemplateConfig
+) -> None:
     """Send a welcome email using the given template config.
 
     The caller is responsible for selecting which ``TemplateConfig``
@@ -24,7 +27,9 @@ def send_welcome_email(user: User, organization: Organization, template_config: 
     URLs.
     """
     if not template_config.welcome_html or not template_config.welcome_txt:
-        logger.warning(f"No welcome email templates for '{template_config.name}' — skipping.")
+        logger.warning(
+            f"No welcome email templates for '{template_config.name}' — skipping."
+        )
         return
 
     base_url = getattr(settings, template_config.base_url_setting, "")
@@ -43,7 +48,7 @@ def send_welcome_email(user: User, organization: Organization, template_config: 
     )
     html_body = render_to_string(template_config.welcome_html, context)
     msg.attach_alternative(html_body, "text/html")
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
 
 
 def send_welcome_emails_for_org(user: User, organization: Organization) -> None:
