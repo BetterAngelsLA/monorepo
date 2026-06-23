@@ -10,6 +10,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 from datetime import date, timedelta
 from typing import Any
 
+from common.enums import SelahTeamEnum
 from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -61,10 +62,20 @@ def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     )
 
 
+def _team_value_to_label(value: str) -> str:
+    """Convert a SelahTeamEnum value to its human-readable label."""
+    try:
+        return str(SelahTeamEnum(value).label)
+    except ValueError, KeyError:
+        return value
+
+
 def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Aggregate note counts grouped by team, using FK join to get team name."""
-    rows = notes.exclude(team__isnull=True).values("team__name").annotate(count=Count("id")).order_by("-count")
-    return [{"name": row["team__name"], "count": row["count"]} for row in rows]
+    """Aggregate note counts grouped by team, with display labels."""
+    rows = (
+        notes.exclude(team__isnull=True).exclude(team="").values("team").annotate(count=Count("id")).order_by("-count")
+    )
+    return [{"name": _team_value_to_label(row["team"]), "count": row["count"]} for row in rows]
 
 
 def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dict[str, Any]]:

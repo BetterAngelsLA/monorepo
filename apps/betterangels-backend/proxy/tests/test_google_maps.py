@@ -9,7 +9,6 @@ from model_bakery import baker
 
 
 class GoogleMapsApiViewTestCase(TestCase):
-
     def setUp(self) -> None:
         self.client = Client()
         self.user = baker.make(User)
@@ -37,7 +36,6 @@ class GoogleMapsApiViewTestCase(TestCase):
 
 
 class GooglePlacesApiNewViewTestCase(TestCase):
-
     def setUp(self) -> None:
         self.client = Client()
         self.user = baker.make(User)

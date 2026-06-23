@@ -6,7 +6,7 @@ Docker so you can start contributing immediately.
 
 ## What's Included
 
-- **Python 3.14** with Poetry for dependency management
+- **Python 3.14** with uv for dependency management
 - **Node.js 22** with Yarn for frontend packages
 - **PostgreSQL 17** with PostGIS for spatial data
 - **Valkey** (Redis-compatible) for caching and task queues

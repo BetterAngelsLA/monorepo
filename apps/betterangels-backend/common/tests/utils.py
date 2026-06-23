@@ -140,7 +140,6 @@ class _MaxNumQueriesContext:
 
 
 class NumQueriesWithoutCacheMixin:
-
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.

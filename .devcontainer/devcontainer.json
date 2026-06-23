@@ -29,7 +29,7 @@
   // "shutdownAction": "none",
 
   // Uncomment the next line to run commands after the container is created.
-  "postCreateCommand": "yarn install && poetry install && mkdir -p ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings && cp -n docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
+  "postCreateCommand": "bash tools/scripts/post-create.sh",
 
   // Configure tool-specific properties.
   "customizations": {
@@ -39,19 +39,14 @@
         "esbenp.prettier-vscode",
         "firsttris.vscode-jest-runner",
         "arcanis.vscode-zipfs",
-        "ms-azuretools.vscode-docker",
-        "ms-python.black-formatter",
-        "ms-python.isort",
+        "charliermarsh.ruff",
         "ms-python.python",
-        "nrwl.angular-console@18.10.1",
-        "tamasfe.even-better-toml",
-        "wix.vscode-import-cost",
-        "ms-python.flake8",
         "batisteo.vscode-django",
         "monosans.djlint",
         "matangover.mypy",
-        "eamodio.gitlens",
+        "docker.docker",
         "GraphQL.vscode-graphql",
+        "TypeScriptTeam.native-preview",
         "saoudrizwan.claude-dev"
       ]
     }

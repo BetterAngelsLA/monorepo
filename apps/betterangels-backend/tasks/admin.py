@@ -9,7 +9,6 @@ from .models import Task
 
 @admin.register(Task)
 class TaskAdmin(ExportActionMixin, admin.ModelAdmin):
-
     list_display = (
         "task_summary",
         "client_profile_name",

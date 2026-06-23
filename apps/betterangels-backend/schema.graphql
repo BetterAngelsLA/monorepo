@@ -633,7 +633,6 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 input CreateNoteInput {
   purpose: String = null
   team: SelahTeamEnum = null
-  teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
   clientProfile: ID = null
@@ -666,7 +665,6 @@ input CreateNoteTaskInput {
   description: String = null
   status: Int = null
   team: SelahTeamEnum = null
-  teamId: ID
 }
 
 input CreateOrganizationInput {
@@ -729,7 +727,6 @@ input CreateShelterInput {
   exitPolicy: [ExitPolicyChoices!] = null
   shelterPrograms: [ShelterProgramChoices!] = null
   funders: [FunderChoices!] = null
-  organization: ID!
   location: ShelterLocationInput = null
   schedules: [ScheduleInput!] = null
   services: [ServiceInput!] = null
@@ -778,17 +775,10 @@ input CreateTaskInput {
   hmisNote: ID
   summary: String!
   team: SelahTeamEnum
-  teamId: ID
   status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
-
-input CreateTeamInput {
-  name: String!
-}
-
-union CreateTeamPayload = TeamType | OperationInfo
 
 type CurrentUserOrganizationType {
   id: ID!
@@ -864,8 +854,6 @@ union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
-
-union DeleteTeamPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -1337,8 +1325,7 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum = null
-  teamId: ID
+  team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
   clientProfile: ID
@@ -1541,9 +1528,6 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
-  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
-  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
@@ -1554,10 +1538,10 @@ type Mutation {
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!): CloneBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
-  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -1595,7 +1579,6 @@ input NoteFilter {
   authors: [ID!]
   organizations: [ID!]
   teams: [SelahTeamEnum!]
-  teamIds: [ID!]
   search: String
 }
 
@@ -1629,8 +1612,7 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  currentTeam: TeamType
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
+  team: SelahTeamEnum
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1783,7 +1765,6 @@ type OrgPermissions {
   accounts: [UserOrganizationPermissions!]!
   reports: [ReportPermissions!]!
   shelters: [ShelterPermissions!]!
-  teams: [TeamPermissions!]!
 }
 
 enum OrgRoleEnum {
@@ -2007,7 +1988,6 @@ type Query {
   reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  teams(pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
@@ -2667,7 +2647,6 @@ input TaskFilter {
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
-  teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
   hmisClientProfileLookup: IDFilterLookup
@@ -2698,9 +2677,8 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  currentTeam: TeamType
+  team: SelahTeamEnum
   updatedAt: DateTime!
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
 }
 
 type TaskTypeOffsetPaginated {
@@ -2711,31 +2689,6 @@ type TaskTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [TaskType!]!
-}
-
-enum TeamPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
-type TeamType {
-  id: ID!
-  slug: String!
-  name: String!
-  isActive: Boolean!
-  createdAt: DateTime!
-}
-
-type TeamTypeOffsetPaginated {
-  pageInfo: OffsetPaginationInfo!
-
-  """Total count of existing results."""
-  totalCount: Int!
-
-  """List of paginated results."""
-  results: [TeamType!]!
 }
 
 """Time (isoformat)"""
@@ -2890,8 +2843,7 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum = null
-  teamId: ID
+  team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
@@ -3003,19 +2955,10 @@ input UpdateTaskInput {
   description: String
   summary: String
   team: SelahTeamEnum
-  teamId: ID
   status: TaskStatusEnum
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
-
-input UpdateTeamInput {
-  id: ID!
-  name: String
-  isActive: Boolean
-}
-
-union UpdateTeamPayload = TeamType | OperationInfo
 
 input UpdateUserInput {
   firstName: NonBlankString

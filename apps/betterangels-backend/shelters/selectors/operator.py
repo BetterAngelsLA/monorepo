@@ -8,6 +8,7 @@ circular import with the model layer.
 from typing import TYPE_CHECKING
 
 from common.permissions.utils import permissioned_queryset
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
@@ -56,7 +57,7 @@ def operator_shelter_list(
     user: "User",
     organization_id: str,
 ) -> "QuerySet[Shelter]":
-    """Filter to shelters in *organization_id* that *user* belongs to."""
+    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
     user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
     return queryset.filter(Exists(user_orgs), organization_id=organization_id)
 
@@ -144,15 +145,22 @@ def shelter_get(
 
     When *permission* is provided, org membership AND the permission are
     checked in a single query.
+
+    Raises:
+        ``ObjectDoesNotExist`` when no matching shelter exists in the
+        organization or the user lacks the required permission.
     """
     from shelters.models import Shelter
 
-    return shelter_queryset(
-        Shelter.objects.all(),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=shelter_id)
+    try:
+        return shelter_queryset(
+            Shelter.objects.all(),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=shelter_id)
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
 
 
 def room_get(
@@ -162,15 +170,23 @@ def room_get(
     organization_id: str,
     permission: str | None = None,
 ) -> "Room":
-    """Return the room scoped to *organization_id* for *user*."""
+    """Return the room scoped to *organization_id* for *user*.
+
+    Raises:
+        ``ObjectDoesNotExist`` when no matching room exists in the
+        organization or the user lacks the required permission.
+    """
     from shelters.models import Room
 
-    return room_queryset(
-        Room.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=room_id)
+    try:
+        return room_queryset(
+            Room.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=room_id)
+    except Room.DoesNotExist:
+        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
 
 def bed_get(
@@ -180,12 +196,20 @@ def bed_get(
     organization_id: str,
     permission: str | None = None,
 ) -> "Bed":
-    """Return the bed scoped to *organization_id* for *user*."""
+    """Return the bed scoped to *organization_id* for *user*.
+
+    Raises:
+        ``ObjectDoesNotExist`` when no matching bed exists in the
+        organization or the user lacks the required permission.
+    """
     from shelters.models import Bed
 
-    return bed_queryset(
-        Bed.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=bed_id)
+    try:
+        return bed_queryset(
+            Bed.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=bed_id)
+    except Bed.DoesNotExist:
+        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
