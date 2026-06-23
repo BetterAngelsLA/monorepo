@@ -7,9 +7,9 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
-from common.permissions.utils import permissioned_queryset
+from common.permissions.utils import perm_filter, permissioned_queryset
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
 
@@ -141,19 +141,51 @@ def reservation_queryset(
 ) -> "QuerySet[Reservation]":
     """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
 
+    Reservation links to a shelter via two optional paths
+    (``bed__shelter`` and ``room__shelter``), so the standard
+    ``permissioned_queryset`` helper (which expects a single
+    ``organization_field``) is not suitable.
+
     Falls back to ``Reservation.objects.all()`` when *queryset* is omitted.
     """
     if queryset is None:
-        from shelters.models import Bed
+        from shelters.models import Reservation
 
         queryset = Reservation.objects.all()
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_field="shelter__organization_id",
+
+    bed_org = "bed__shelter__organization_id"
+    room_org = "room__shelter__organization_id"
+
+    # Scope to the organization via either FK path
+    queryset = queryset.filter(
+        Q(**{bed_org: organization_id}) | Q(**{room_org: organization_id})
     )
+
+    if perms is None:
+        # Org membership check via either path
+        queryset = queryset.filter(
+            Q(Exists(Organization.objects.filter(pk=OuterRef(bed_org), users=user)))
+            | Q(Exists(Organization.objects.filter(pk=OuterRef(room_org), users=user)))
+        )
+    else:
+        q = Q()
+        for perm_str in perms:
+            app_label, codename = perm_str.split(".", 1)
+            q |= (
+                Q(Exists(
+                    Organization.objects.filter(pk=OuterRef(bed_org))
+                    .filter(permission_groups__group__user=user)
+                    .filter(perm_filter(app_label, codename))
+                ))
+                | Q(Exists(
+                    Organization.objects.filter(pk=OuterRef(room_org))
+                    .filter(permission_groups__group__user=user)
+                    .filter(perm_filter(app_label, codename))
+                ))
+            )
+        queryset = queryset.filter(q)
+
+    return queryset
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
