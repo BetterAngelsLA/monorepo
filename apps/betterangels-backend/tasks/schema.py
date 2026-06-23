@@ -54,9 +54,7 @@ class Mutation:
         task_data = asdict(data)
 
         # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
-        task_data["team_id"] = resolve_team_id_from_input(
-            data, organization_id=permission_group.organization_id
-        )
+        task_data["team_id"] = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
         task_data.pop("team", None)
 
         # Resolve FK references
@@ -97,9 +95,7 @@ class Mutation:
 
         # Resolve team before asdict.
         task: Task = qs.get(pk=data.id)
-        team_id = resolve_team_id_from_input(
-            data, organization_id=task.organization_id or 0
-        )
+        team_id = resolve_team_id_from_input(data, organization_id=task.organization_id or 0)
 
         clean = asdict(data)
         clean.pop("team", None)

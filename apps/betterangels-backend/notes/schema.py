@@ -320,9 +320,7 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=resolve_team_id_from_input(
-                        data.note, organization_id=permission_group.organization_id
-                    ),
+                    team_id=resolve_team_id_from_input(data.note, organization_id=permission_group.organization_id),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

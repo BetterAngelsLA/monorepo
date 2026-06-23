@@ -23,9 +23,6 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from accounts.enums import OrgRoleEnum
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-
 from .annotations import annotate_is_org_owner, annotate_member_role
 from .models import Organization, User
 from .services import (
