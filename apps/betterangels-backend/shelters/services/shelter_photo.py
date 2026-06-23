@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
+from common.utils import get_by_pk_or_not_found
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
@@ -121,8 +122,14 @@ def resolve_uploads(
 
 @transaction.atomic
 def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int]) -> list[int]:
+    """Delete shelter photos scoped to *organization_id*.
+
+    Only photos belonging to shelters in the active organization are
+    eligible for deletion.
+    """
+    org_shelters = shelter_queryset(user=user, organization_id=organization_id)
     photos = ShelterPhoto.objects.filter(
-        shelter__in=shelter_queryset(user=user, organization_id=organization_id),
+        shelter__in=org_shelters,
         pk__in=ids,
     )
     deleted_ids = list(photos.values_list("pk", flat=True))
@@ -139,7 +146,7 @@ def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int])
 def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShelterPhotoInput) -> ShelterPhoto:
     """Update a shelter photo's type.
 
-    Validates org access via the photo's shelter.
+    Validates org access via the photo's shelter, scoped to *organization_id*.
 
     Raises:
         ``ObjectDoesNotExist`` when the photo is not found or the user does not
@@ -147,13 +154,10 @@ def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShel
     """
     photo_id = data.id
 
-    try:
-        photo = ShelterPhoto.objects.get(
-            shelter__in=shelter_queryset(user=user, organization_id=organization_id),
-            pk=photo_id,
-        )
-    except ShelterPhoto.DoesNotExist:
-        raise ObjectDoesNotExist(f"ShelterPhoto matching ID {photo_id} could not be found.")
+    photo = get_by_pk_or_not_found(
+        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, organization_id=organization_id)),
+        pk=photo_id,
+    )
 
     photo.type = data.photo_type
     photo.save(update_fields=["type", "updated_at"])
