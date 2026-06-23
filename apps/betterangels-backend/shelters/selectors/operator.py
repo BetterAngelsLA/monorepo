@@ -57,7 +57,7 @@ def operator_shelter_list(
     user: "User",
     organization_id: str,
 ) -> "QuerySet[Shelter]":
-    """Filter to shelters in *organization_id* that *user* belongs to."""
+    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
     user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
     return queryset.filter(Exists(user_orgs), organization_id=organization_id)
 
