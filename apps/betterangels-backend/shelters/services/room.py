@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import room_get, room_queryset, shelter_get
+from common.utils import get_by_pk_or_not_found
 from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -156,11 +157,7 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
         user=user,
         organization_id=organization_id,
     )
-    try:
-        source = qs.get(pk=room_id)
-    except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
-
+    source = get_by_pk_or_not_found(qs, pk=room_id)
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),
