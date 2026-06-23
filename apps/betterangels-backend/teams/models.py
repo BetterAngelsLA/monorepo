@@ -1,11 +1,11 @@
-"""Outreach teams — per-organization team management."""
+"""Teams — per-organization team management."""
 
 from common.models import BaseModel
 from django.db import models
 
 
 class Team(BaseModel):
-    """Outreach team, scoped per organization.
+    """Team, scoped per organization.
 
     Teams are managed by org admins through the admin app and replace
     the deprecated ``SelahTeamEnum``.
