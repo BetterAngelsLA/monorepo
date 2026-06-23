@@ -8,6 +8,7 @@ circular import with the model layer.
 from typing import TYPE_CHECKING
 
 from common.permissions.utils import permissioned_queryset
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 from shelters.enums import StatusChoices
@@ -147,12 +148,15 @@ def shelter_get(
     """
     from shelters.models import Shelter
 
-    return shelter_queryset(
-        Shelter.objects.all(),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=shelter_id)
+    try:
+        return shelter_queryset(
+            Shelter.objects.all(),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=shelter_id)
+    except Shelter.DoesNotExist:
+        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
 
 
 def room_get(
@@ -165,12 +169,15 @@ def room_get(
     """Return the room scoped to *organization_id* for *user*."""
     from shelters.models import Room
 
-    return room_queryset(
-        Room.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=room_id)
+    try:
+        return room_queryset(
+            Room.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=room_id)
+    except Room.DoesNotExist:
+        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
 
 
 def bed_get(
@@ -183,9 +190,12 @@ def bed_get(
     """Return the bed scoped to *organization_id* for *user*."""
     from shelters.models import Bed
 
-    return bed_queryset(
-        Bed.objects.select_related("shelter"),
-        user=user,
-        organization_id=organization_id,
-        perms=[permission] if permission else None,
-    ).get(pk=bed_id)
+    try:
+        return bed_queryset(
+            Bed.objects.select_related("shelter"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ).get(pk=bed_id)
+    except Bed.DoesNotExist:
+        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from shelters.models import Shelter
 
 
-def _time_and_day_condition(*, time: datetime.time, day: DayOfWeekChoices, yesterday: DayOfWeekChoices) -> Q:
+def _time_and_day_condition(*, time: datetime.time, day: DayOfWeekChoices, yesterday: DayOfWeekChoices, include_full_day: bool = False) -> Q:
     """Build a Q object matching schedules whose time window covers *time*.
 
     Handles both normal schedules (``start_time <= end_time``) and overnight
@@ -23,16 +23,28 @@ def _time_and_day_condition(*, time: datetime.time, day: DayOfWeekChoices, yeste
     Overnight schedules:
         - ``time >= start_time`` on the schedule's ``day`` (same calendar day), or
         - ``time <= end_time`` on the next calendar day (``yesterday`` matches).
+
+    When *include_full_day* is True, schedules with no times
+    (``start_time IS NULL``) also match, which is useful for
+    full-day exception checks.
     """
     is_normal = Q(start_time__lte=F("end_time"))
     is_overnight = Q(start_time__gt=F("end_time"))
 
-    normal_window = is_normal & Q(start_time__lte=time, end_time__gte=time) & (Q(day=None) | Q(day=day))
+    day_match = Q(day=None) | Q(day=day)
+    yesterday_match = Q(day=None) | Q(day=yesterday)
 
-    overnight_same_day = is_overnight & Q(start_time__lte=time) & (Q(day=None) | Q(day=day))
-    overnight_next_day = is_overnight & Q(end_time__gte=time) & (Q(day=None) | Q(day=yesterday))
+    normal_window = is_normal & Q(start_time__lte=time, end_time__gte=time) & day_match
 
-    return normal_window | overnight_same_day | overnight_next_day
+    overnight_same_day = is_overnight & Q(start_time__lte=time) & day_match
+    overnight_next_day = is_overnight & Q(end_time__gte=time) & yesterday_match
+
+    result = normal_window | overnight_same_day | overnight_next_day
+
+    if include_full_day:
+        result |= Q(start_time__isnull=True) & day_match
+
+    return result
 
 
 def shelters_open_at(
@@ -74,9 +86,9 @@ def shelters_open_at(
     )
 
     # Step 2: exclude shelters with an active exception covering *dt*.
-    #   - Full-day:  start_time IS NULL  → closed all day, but must match the day.
+    #   - Full-day:  start_time IS NULL  → closed all day, must match the day.
     #   - Partial:   same time+day logic as above, including overnight.
-    covers_now = (Q(start_time__isnull=True) & (Q(day=None) | Q(day=day))) | time_day
+    covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
     has_active_exception = Exists(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from shelters.models import Service, ServiceCategory, Shelter
@@ -174,15 +174,12 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
     cities_served_ids = data.pop("cities_served_ids", None)
     spas_served_ids = data.pop("spas_served_ids", None)
 
-    try:
-        shelter = shelter_get(
-            user=user,
-            shelter_id=shelter_id,
-            organization_id=organization_id,
-            permission=Shelter.perms.CHANGE,
-        )
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.CHANGE,
+    )
 
     has_schedules = "schedules" in data
     has_services = "services" in data

@@ -25,15 +25,12 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     data = dict(data)
     shelter_id = data.pop("shelter_id")
 
-    try:
-        shelter = shelter_get(
-            user=user,
-            shelter_id=shelter_id,
-            organization_id=organization_id,
-            permission=Shelter.perms.VIEW,
-        )
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.VIEW,
+    )
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
@@ -72,15 +69,12 @@ def room_update(*, user: "User", organization_id: str, room_id: int | str, data:
     data = dict(data)
     data.pop("id", None)
 
-    try:
-        room = room_get(
-            user=user,
-            room_id=room_id,
-            organization_id=organization_id,
-            permission=Room.perms.CHANGE,
-        )
-    except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
+    room = room_get(
+        user=user,
+        room_id=room_id,
+        organization_id=organization_id,
+        permission=Room.perms.CHANGE,
+    )
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None

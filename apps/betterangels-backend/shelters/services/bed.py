@@ -24,15 +24,12 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
     data = dict(data)
     shelter_id = data.pop("shelter_id")
 
-    try:
-        shelter = shelter_get(
-            user=user,
-            shelter_id=shelter_id,
-            organization_id=organization_id,
-            permission=Shelter.perms.VIEW,
-        )
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.VIEW,
+    )
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
@@ -68,15 +65,12 @@ def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: D
     data = dict(data)
     data.pop("id", None)
 
-    try:
-        bed = bed_get(
-            user=user,
-            bed_id=bed_id,
-            organization_id=organization_id,
-            permission=Bed.perms.CHANGE,
-        )
-    except Bed.DoesNotExist:
-        raise ObjectDoesNotExist(f"Bed matching ID {bed_id} could not be found.")
+    bed = bed_get(
+        user=user,
+        bed_id=bed_id,
+        organization_id=organization_id,
+        permission=Bed.perms.CHANGE,
+    )
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
