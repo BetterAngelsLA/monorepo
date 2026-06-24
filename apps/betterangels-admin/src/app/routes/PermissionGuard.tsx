@@ -10,9 +10,9 @@ type IProps = {
 };
 
 export function PermissionGuard({ permission, children }: IProps) {
-  const { hasPermission } = useActiveOrg();
+  const { can } = useActiveOrg();
 
-  if (!hasPermission(permission)) {
+  if (!can(permission)) {
     return <Navigate to="/" replace />;
   }
 

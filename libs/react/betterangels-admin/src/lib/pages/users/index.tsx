@@ -101,7 +101,7 @@ function useOrganizationMembers(
   sort: { field: string; direction: Ordering },
   search?: string
 ) {
-  const { data, loading, previousData } = useQuery(
+  const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
     {
       variables: {
@@ -124,6 +124,7 @@ function useOrganizationMembers(
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,
+    refetch,
   };
 }
 
@@ -150,7 +151,7 @@ export default function Users(props: IProps) {
   const [removeOrganizationMember, { loading: isRemovingOrganizationMember }] =
     useMutation(RemoveOrganizationMemberDocument);
 
-  const { members, totalPages, loading, isInitialLoad } =
+  const { members, totalPages, loading, isInitialLoad, refetch } =
     useOrganizationMembers(organizationId, page, sort, search);
 
   const parentCss = [
@@ -269,7 +270,7 @@ export default function Users(props: IProps) {
           <button
             onClick={() =>
               showDrawer({
-                content: <AddUserFormDrawer />,
+                content: <AddUserFormDrawer onSuccess={refetch} />,
                 contentClassName: 'p-0',
               })
             }

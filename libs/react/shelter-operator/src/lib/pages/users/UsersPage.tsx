@@ -116,7 +116,7 @@ function useOrganizationMembers(
   sort: { field: keyof OrganizationMemberOrdering; direction: Ordering },
   search?: string
 ) {
-  const { data, loading, previousData } = useQuery(
+  const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
     {
       variables: {
@@ -140,6 +140,7 @@ function useOrganizationMembers(
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,
+    refetch,
   };
 }
 
@@ -168,7 +169,7 @@ export function UsersPage() {
     RemoveOrganizationMemberDocument
   );
 
-  const { members, totalPages, loading, isInitialLoad } =
+  const { members, totalPages, loading, isInitialLoad, refetch } =
     useOrganizationMembers(organizationId, page, sort, search);
 
   const canView = can(UserOrganizationPermissions.ViewOrgMembers);
@@ -230,11 +231,12 @@ export function UsersPage() {
 
   const handleAddSuccess = useCallback(() => {
     setIsAddModalOpen(false);
+    refetch();
     showToast({
       status: 'success',
       title: 'User added successfully.',
     });
-  }, [showToast]);
+  }, [refetch, showToast]);
 
   const emptyMessage = search
     ? 'No users match your search.'

@@ -1,5 +1,4 @@
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
-import { filter, isArray, pipe, some, values } from 'remeda';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext, {
   PermissionEnum,
@@ -24,11 +23,14 @@ interface ActiveOrgProviderProps {
  * Defaults to the first org in the list but persists the user's choice
  * in the configured storage so it survives page reloads.
  *
- * ``hasPermission(perm)`` checks the active org's permissions
+ * ``can(perm)`` checks the active org's permissions
  * and automatically reflects the correct org when the user
  * switches.  Because the check is enum-driven there is nothing to
  * update here when the backend adds new permissions — just re-run
  * codegen.
+ *
+ * TODO: Merge with shelter-operator's ActiveOrgProvider into a shared
+ * BA-specific lib (along with orgLink) when one is created.
  */
 export function ActiveOrgProvider({
   children,
@@ -96,7 +98,9 @@ export function ActiveOrgProvider({
   const can = useCallback(
     (permission: PermissionEnum): boolean =>
       activeOrg?.permissions != null &&
-      pipe(activeOrg.permissions, values(), filter(isArray), some((arr) => (arr as string[]).includes(permission))),
+      Object.values(activeOrg.permissions).some(
+        (v) => Array.isArray(v) && (v as string[]).includes(permission)
+      ),
     [activeOrg]
   );
 

@@ -1,6 +1,5 @@
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
-import { filter, isArray, pipe, some, values } from 'remeda';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext, { PermissionEnum } from './ActiveOrgContext';
 
@@ -11,10 +10,17 @@ interface ActiveOrgProviderProps {
   organizations: TOrganization[];
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
   storage?: StorageAdapter;
-  /** Storage key — defaults to ``'shelter_operator_active_org_id'``. */
+  /** Storage key — defaults to ``'betterangels_active_org_id'``. */
   storageKey?: string;
 }
 
+/**
+ * Provides the currently-selected organization **and its permissions**
+ * to the component tree.
+ *
+ * TODO: Merge with betterangels-admin's ActiveOrgProvider into a shared
+ * BA-specific lib (along with orgLink) when one is created.
+ */
 export function ActiveOrgProvider({
   children,
   organizations,
@@ -84,7 +90,9 @@ export function ActiveOrgProvider({
   const can = useCallback(
     (permission: PermissionEnum): boolean =>
       activeOrg?.permissions != null &&
-      pipe(activeOrg.permissions, values(), filter(isArray), some((arr) => (arr as string[]).includes(permission))),
+      Object.values(activeOrg.permissions).some(
+        (v) => Array.isArray(v) && (v as string[]).includes(permission)
+      ),
     [activeOrg]
   );
 
