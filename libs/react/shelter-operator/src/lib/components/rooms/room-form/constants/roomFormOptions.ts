@@ -3,7 +3,9 @@ import { toDropdownOptions } from '../../../base-ui/dropdown';
 
 const ROOM_STATUS_LABELS: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'Available',
-  [RoomStatusChoices.NeedsMaintenance]: 'Out of Service',
+  [RoomStatusChoices.OutOfService]: 'Out of Service',
+  [RoomStatusChoices.InTurnaround]: 'In Turnaround',
+  [RoomStatusChoices.Occupied]: 'Occupied',
   [RoomStatusChoices.Reserved]: 'Reserved',
 };
 

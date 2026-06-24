@@ -9,7 +9,6 @@ from common.graphql.types import PhoneNumberScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
-    BedStatusChoices,
     BedTypeChoices,
     ConditionChoices,
     DayOfWeekChoices,
@@ -21,7 +20,7 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
-    RoomStatusChoices,
+    ReservationStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
@@ -195,11 +194,11 @@ class CreateBedInput:
     fees: Optional[int] = None
     funders: Optional[List[FunderChoices]] = None
     last_cleaned_inspected: Optional[datetime] = None
+    last_cleaned: Optional[datetime] = None
     maintenance_flag: Optional[bool] = None
     medical_needs: Optional[List[MedicalNeedChoices]] = None
     name: Optional[str] = None
     pets: Optional[List[PetChoices]] = None
-    status: Optional[BedStatusChoices] = None
     status_notes: Optional[str] = None
     storage: Optional[bool] = None
     type: Optional[BedTypeChoices] = None
@@ -218,7 +217,6 @@ class UpdateBedInput:
     medical_needs: Maybe[List[MedicalNeedChoices] | None]
     name: Maybe[str | None]
     pets: Maybe[List[PetChoices] | None]
-    status: Maybe[BedStatusChoices | None]
     status_notes: Maybe[str | None]
     storage: Maybe[bool]
     type: Maybe[BedTypeChoices | None]
@@ -237,7 +235,6 @@ class CreateRoomInput:
     name: str
     notes: Optional[str] = None
     pets: Optional[List[PetChoices]] = None
-    status: Optional[RoomStatusChoices] = None
     storage: Optional[bool] = None
     type: Optional[RoomStyleChoices] = None
     type_other: Optional[str] = None
@@ -255,10 +252,41 @@ class UpdateRoomInput:
     name: Maybe[str | None]
     notes: Maybe[str | None]
     pets: Maybe[List[PetChoices] | None]
-    status: Maybe[RoomStatusChoices | None]
     storage: Maybe[bool]
     type: Maybe[RoomStyleChoices | None]
     type_other: Maybe[str | None]
+
+
+@strawberry.input
+class ReservationClientInput:
+    client_profile_id: ID
+    is_primary: bool = False
+
+
+@strawberry.input
+class CreateReservationInput:
+    room_id: Optional[ID] = None
+    bed_id: Optional[ID] = None
+    checked_in_at: Optional[datetime] = None
+    checked_out_at: Optional[datetime] = None
+    clients: List[ReservationClientInput]
+    duration: Optional[int] = None
+    notes: Optional[str] = None
+    start_date: Optional[date] = None
+    status: Optional[ReservationStatusChoices] = None
+
+
+@strawberry.input
+class UpdateReservationInput:
+    room_id: Maybe[ID | None]
+    bed_id: Maybe[ID | None]
+    checked_in_at: Maybe[datetime | None]
+    checked_out_at: Maybe[datetime | None]
+    clients: Maybe[List[ReservationClientInput] | None]
+    duration: Maybe[int | None]
+    notes: Maybe[str | None]
+    start_date: Maybe[date | None]
+    status: Maybe[ReservationStatusChoices | None]
 
 
 @strawberry.input
