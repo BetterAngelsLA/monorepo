@@ -39,7 +39,10 @@ A **global placement queue** with three core ideas:
 | Document | Contents |
 |---|---|
 | [`scope.md`](./scope.md) | What changes, what stays the same, migration impact |
-| [`architecture.md`](./architecture.md) | Core models, matching engine, acceptance workflow, data flow diagrams |
+| [`models.md`](./models.md) | All new and modified model definitions (EligibilityCriterion, Referral) |
+| [`matching.md`](./matching.md) | Matching engine — derivation, lookup dict, and shelter query |
+| [`workflow.md`](./workflow.md) | Acceptance flow, referral creation, queue view, lifecycle diagrams |
+| [`decisions.md`](./decisions.md) | Key decisions with rationale and trade-offs |
 | [`api.md`](./api.md) | GraphQL queries, mutations, types, and schema |
 | [`frontend.md`](./frontend.md) | shelter-web pages, routes, UX flow; mobile app referral creation; future shelter intake |
 | [`notifications.md`](./notifications.md) | Email subscription model, Celery task, digest format |
