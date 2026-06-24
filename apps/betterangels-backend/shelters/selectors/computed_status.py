@@ -59,24 +59,24 @@ def _reservation_exists(
 
 
 # Convenience wrappers -- self-documenting callers for the status filter chain.
-def _checked_in_exists(fk_field: str) -> Exists:
+def checked_in_exists(fk_field: str) -> Exists:
     return _reservation_exists(fk_field, status=ReservationStatusChoices.CHECKED_IN)
 
 
-def _confirmed_or_overdue_exists(fk_field: str) -> Exists:
+def confirmed_or_overdue_exists(fk_field: str) -> Exists:
     return _reservation_exists(
         fk_field,
         status__in=[ReservationStatusChoices.CONFIRMED, ReservationStatusChoices.CHECK_IN_OVERDUE],
     )
 
 
-def _completed_checkout_exists(fk_field: str) -> Exists:
+def completed_checkout_exists(fk_field: str) -> Exists:
     return _reservation_exists(
         fk_field, status=ReservationStatusChoices.COMPLETED, extra={"checked_out_at__isnull": False}
     )
 
 
-def _active_reservation_exists(fk_field: str) -> Exists:
+def active_reservation_exists(fk_field: str) -> Exists:
     from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 
     return _reservation_exists(fk_field, status__in=list(ACTIVE_RESERVATION_STATUSES))
@@ -98,7 +98,7 @@ def latest_completed_checkout_subquery(fk_field: str) -> Subquery:
 
 def in_turnaround_filter_q(fk_field: str) -> Q:
     """``Q`` for in-turnaround without a prior ``annotate`` (uses correlated subqueries)."""
-    has_completed_checkout = Q(_completed_checkout_exists(fk_field))
+    has_completed_checkout = Q(completed_checkout_exists(fk_field))
     needs_cleaning = Q(last_cleaned__isnull=True) | Q(last_cleaned__lte=latest_completed_checkout_subquery(fk_field))
     return has_completed_checkout & needs_cleaning
 
@@ -116,16 +116,16 @@ def status_filter_q(
     base = Q(maintenance_flag=False)
 
     if status == status_enum.OCCUPIED:
-        return base & Q(_checked_in_exists(fk_field))
+        return base & Q(checked_in_exists(fk_field))
 
     if status == status_enum.RESERVED:
-        return base & Q(_confirmed_or_overdue_exists(fk_field)) & ~Q(_checked_in_exists(fk_field))
+        return base & Q(confirmed_or_overdue_exists(fk_field)) & ~Q(checked_in_exists(fk_field))
 
     if status == status_enum.IN_TURNAROUND:
-        return base & in_turnaround_filter_q(fk_field) & ~Q(_active_reservation_exists(fk_field))
+        return base & in_turnaround_filter_q(fk_field) & ~Q(active_reservation_exists(fk_field))
 
     if status == status_enum.AVAILABLE:
-        return base & ~in_turnaround_filter_q(fk_field) & ~Q(_active_reservation_exists(fk_field))
+        return base & ~in_turnaround_filter_q(fk_field) & ~Q(active_reservation_exists(fk_field))
 
     return Q()
 
@@ -137,8 +137,8 @@ def computed_status_case(
     """First-match status annotation; priority matches ``compute_reservable_status``."""
     return Case(
         When(maintenance_flag=True, then=Value(status_enum.OUT_OF_SERVICE)),
-        When(_checked_in_exists(fk_field), then=Value(status_enum.OCCUPIED)),
-        When(_confirmed_or_overdue_exists(fk_field), then=Value(status_enum.RESERVED)),
+        When(checked_in_exists(fk_field), then=Value(status_enum.OCCUPIED)),
+        When(confirmed_or_overdue_exists(fk_field), then=Value(status_enum.RESERVED)),
         When(in_turnaround_filter_q(fk_field), then=Value(status_enum.IN_TURNAROUND)),
         default=Value(status_enum.AVAILABLE),
         output_field=CharField(),
