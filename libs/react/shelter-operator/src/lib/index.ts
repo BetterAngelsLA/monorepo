@@ -1,4 +1,5 @@
 export * from './OperatorApp';
+export * from './apollo';
 export * from './pages';
 export * from './providers';
 export * from './routing';

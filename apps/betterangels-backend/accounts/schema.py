@@ -3,10 +3,6 @@ from typing import Optional, Union, cast
 
 import strawberry
 import strawberry_django
-from accounts.emails import send_welcome_emails_for_org
-from accounts.extensions import HasOrgPerm
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
-from accounts.role_manager import OrgRoleManager
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated, get_current_organization
@@ -14,8 +10,8 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
-from django.db.models import QuerySet
 from django.db import transaction
+from django.db.models import QuerySet
 from organizations.backends import invitation_backend
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -23,7 +19,12 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from .annotations import annotate_is_org_owner, annotate_member_role
+from accounts.emails import send_welcome_emails_for_org
+from accounts.extensions import HasOrgPerm
+from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.role_manager import OrgRoleManager
+
+from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
 from .models import Organization, User
 from .services import (
     create_organization_service,
@@ -83,6 +84,7 @@ class Query:
             .annotate(
                 _member_role=annotate_member_role(organization_id),
                 _is_org_owner=annotate_is_org_owner(organization_id),
+                _permission_templates=annotate_permission_templates(organization_id),
             )
             .first()
         )
@@ -118,6 +120,7 @@ class Query:
         return queryset.annotate(
             _member_role=annotate_member_role(organization_id),
             _is_org_owner=annotate_is_org_owner(organization_id),
+            _permission_templates=annotate_permission_templates(organization_id),
         )
 
 

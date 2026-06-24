@@ -72,7 +72,7 @@ const TableRowBase = <TRowObject,>({
       onKeyDown={onRowClick ? handleKeyDown : undefined}
       className={mergeCss([
         'grid items-center py-2 text-sm border-t border-gray-200',
-        'px-4 mx-4',
+        'px-6',
         rowInsetClassName,
         'hover:bg-[#F4F6FD]',
         onRowClick && 'cursor-pointer',
@@ -84,7 +84,7 @@ const TableRowBase = <TRowObject,>({
         <div
           role="cell"
           key={cell.key}
-          className={mergeCss(['text-left justify-self-start', cell.className])}
+          className={mergeCss(['text-left min-w-0', cell.className])}
         >
           {cell.content}
         </div>

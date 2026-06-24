@@ -1854,6 +1854,7 @@ type OrganizationMemberType {
   dateJoined: DateTime!
   memberRole: OrgRoleEnum!
   isOrgOwner: Boolean!
+  permissionTemplates: [PermissionTemplateEnum!]!
 }
 
 type OrganizationMemberTypeOffsetPaginated {
