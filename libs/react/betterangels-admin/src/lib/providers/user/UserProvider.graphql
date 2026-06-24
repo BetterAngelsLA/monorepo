@@ -12,7 +12,6 @@ query currentOrgUser {
         accounts
         reports
         shelters
-        teams
       }
     }
   }

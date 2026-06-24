@@ -5,11 +5,7 @@ query Task($id: ID!) {
       summary
       description
       status
-      currentTeam {
-        id
-        slug
-        name
-      }
+      team
       organization {
         id
         name

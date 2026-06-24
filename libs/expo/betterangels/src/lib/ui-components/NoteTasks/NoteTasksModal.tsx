@@ -1,5 +1,5 @@
 import { useMutation } from '@apollo/client/react';
-import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
+import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 
 // 1. Import Mutations
@@ -16,7 +16,7 @@ interface INoteTasksModalProps {
   noteId?: string;
   hmisNoteId?: string;
   refetch: () => void;
-  teamId?: string | null;
+  team?: SelahTeamEnum | null;
   task?: UpdateTaskInput;
   onSubmit?: (data: TaskFormData, existingId?: string) => void;
   onDelete?: (id: string) => void;
@@ -30,7 +30,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     noteId,
     hmisNoteId,
     refetch,
-    teamId,
+    team,
     task,
     onSubmit,
     onDelete,
@@ -75,7 +75,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     // B. Live Mode
     try {
       const cleanStatus = formData.status || undefined;
-      const cleanTeamId = !formData.teamId ? null : formData.teamId;
+      const cleanTeam = !formData.team ? null : formData.team;
 
       if (task?.id) {
         await updateTask({
@@ -85,7 +85,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               summary: formData.summary,
               description: formData.description,
               status: cleanStatus,
-              teamId: cleanTeamId,
+              team: cleanTeam,
             },
           },
         });
@@ -96,7 +96,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               summary: formData.summary || '',
               description: formData.description,
               status: cleanStatus,
-              teamId: cleanTeamId || teamId || null,
+              team: cleanTeam || team || null,
 
               // FIX: Map IDs correctly based on which props are present
               clientProfile: clientProfileId || null,
@@ -148,7 +148,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     summary: task?.summary || '',
     description: task?.description || '',
     status: task?.status || TaskStatusEnum.ToDo,
-    teamId: (task?.teamId as string) || teamId || '',
+    team: (task?.team as SelahTeamEnum) || team || '',
   };
 
   const showDelete = !!onDelete || !!task?.id;

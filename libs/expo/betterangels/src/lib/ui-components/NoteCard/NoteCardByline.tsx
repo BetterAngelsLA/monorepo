@@ -6,15 +6,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
+import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 
 interface INoteCardBylineProps {
   createdBy?: NoteType['createdBy'];
   organization: NoteType['organization'];
-  currentTeam?: { name?: string | null } | null;
+  team?: NoteType['team'];
 }
 
 export default function NoteCardByline(props: INoteCardBylineProps) {
-  const { createdBy, organization, currentTeam } = props;
+  const { createdBy, organization, team } = props;
 
   const authorName = createdBy
     ? `${createdBy.firstName} ${createdBy.lastName}`
@@ -47,10 +48,10 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
 
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {currentTeam?.name && (
+          {team && (
             <TextRegular size="xs">
               {' - '}
-              {currentTeam.name}
+              {enumDisplaySelahTeam[team]}
             </TextRegular>
           )}
         </TextRegular>

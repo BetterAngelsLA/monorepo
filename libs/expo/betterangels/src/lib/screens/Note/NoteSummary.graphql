@@ -7,11 +7,7 @@ query NoteSummary($id: ID!) {
       isSubmitted
       publicDetails
       purpose
-      currentTeam {
-        id
-        slug
-        name
-      }
+      team
       clientProfile {
         id
         email

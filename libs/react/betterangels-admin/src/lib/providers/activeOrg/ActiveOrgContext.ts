@@ -3,7 +3,6 @@ import { CurrentOrgUserQuery } from '../user/__generated__/UserProvider.generate
 import {
   ReportPermissions,
   ShelterPermissions,
-  TeamPermissions,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 
@@ -15,8 +14,7 @@ export type TOrganizationWithPermissions = OrganizationsArray[number];
 export type PermissionEnum =
   | UserOrganizationPermissions
   | ReportPermissions
-  | ShelterPermissions
-  | TeamPermissions;
+  | ShelterPermissions;
 
 export interface IActiveOrgContextValue {
   /** The currently selected organization (with its capabilities). */

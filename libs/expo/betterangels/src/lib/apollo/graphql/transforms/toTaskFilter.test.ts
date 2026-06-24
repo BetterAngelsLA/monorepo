@@ -3,7 +3,7 @@
  */
 
 import type { IdFilterLookup, TaskFilter } from '../__generated__/types';
-import { TaskStatusEnum } from '../__generated__/types';
+import { SelahTeamEnum, TaskStatusEnum } from '../__generated__/types';
 import { toTaskFilter } from './toTaskFilter';
 
 describe('toTaskFilter', () => {
@@ -92,28 +92,37 @@ describe('toTaskFilter', () => {
     });
   });
 
-  it('includes teamIds as-is (string IDs, no enum conversion)', () => {
+  it('omits teams when undefined', () => {
+    const result = toTaskFilter({ teams: undefined });
+
+    expect(result).toEqual({});
+    expect('teams' in result).toBe(false);
+  });
+
+  it('omits teams when empty array', () => {
+    const result = toTaskFilter({ teams: [] });
+
+    expect(result).toEqual({});
+    expect('teams' in result).toBe(false);
+  });
+
+  it('filters out invalid enum strings for teams', () => {
     const result = toTaskFilter({
-      teamIds: ['team-1', 'team-2'],
+      teams: ['ECHO_PARK_ON_SITE', 'NOT_A_TEAM', 'HOLLYWOOD_ON_SITE'],
     });
 
     expect(result).toEqual({
-      teamIds: ['team-1', 'team-2'],
+      teams: [SelahTeamEnum.EchoParkOnSite, SelahTeamEnum.HollywoodOnSite],
     });
   });
 
-  it('omits teamIds when undefined', () => {
-    const result = toTaskFilter({ teamIds: undefined });
+  it('omits teams if all provided values are invalid', () => {
+    const result = toTaskFilter({
+      teams: ['NOT_A_TEAM', 'ALSO_NOT_A_TEAM'],
+    });
 
     expect(result).toEqual({});
-    expect('teamIds' in result).toBe(false);
-  });
-
-  it('omits teamIds when empty array', () => {
-    const result = toTaskFilter({ teamIds: [] });
-
-    expect(result).toEqual({});
-    expect('teamIds' in result).toBe(false);
+    expect('teams' in result).toBe(false);
   });
 
   it('omits status when undefined', () => {
@@ -167,7 +176,7 @@ describe('toTaskFilter', () => {
       search: '  urgent ',
       authors: [],
       organizations: ['org-1'],
-      teamIds: ['team-1', 'team-2'],
+      teams: ['ECHO_PARK_ON_SITE', 'NOT_A_TEAM'],
       taskStatus: [],
       note,
     });
@@ -175,7 +184,7 @@ describe('toTaskFilter', () => {
     expect(result).toEqual({
       search: 'urgent',
       organizations: ['org-1'],
-      teamIds: ['team-1', 'team-2'],
+      teams: [SelahTeamEnum.EchoParkOnSite],
       note,
     });
   });

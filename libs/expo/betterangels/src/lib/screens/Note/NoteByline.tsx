@@ -5,16 +5,17 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
+import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 interface INoteBylineProps {
   createdBy?: NoteSummaryQuery['note']['createdBy'];
   organization: NoteSummaryQuery['note']['organization'];
-  currentTeam?: { name?: string | null } | null;
+  team?: NoteSummaryQuery['note']['team'];
 }
 
 export default function NoteByline(props: INoteBylineProps) {
-  const { createdBy, organization, currentTeam } = props;
+  const { createdBy, organization, team } = props;
 
   const authorName = createdBy
     ? `${createdBy.firstName} ${createdBy.lastName}`
@@ -47,10 +48,10 @@ export default function NoteByline(props: INoteBylineProps) {
         </TextMedium>
         <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {currentTeam?.name && (
+          {team && (
             <TextRegular selectable size="xs">
               {' - '}
-              {currentTeam.name}
+              {enumDisplaySelahTeam[team]}
             </TextRegular>
           )}
         </TextRegular>

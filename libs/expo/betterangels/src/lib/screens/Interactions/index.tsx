@@ -81,7 +81,7 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
-          filters={['teamIds', 'authors', 'organizations']}
+          filters={['teams', 'authors', 'organizations']}
           style={styles.filters}
         />
 

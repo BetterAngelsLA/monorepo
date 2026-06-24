@@ -33,7 +33,7 @@ export function CreateClientInteractionBtn(props: TProps) {
       clientProfileId,
     };
     if (teamPreference) {
-      params.teamId = teamPreference;
+      params.team = teamPreference;
     }
 
     router.navigate({

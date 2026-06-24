@@ -1,9 +1,9 @@
-import { useQuery } from '@apollo/client/react';
 import { SingleSelect } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
+import { SelahTeamEnum } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useUserTeamPreference } from '../../../state';
-import { TeamsDocument, TeamsQuery } from './__generated__/teams.generated';
+import { enumDisplaySelahTeam } from '../../../static';
 
 type TProps = {
   style?: ViewStyle;
@@ -12,14 +12,11 @@ type TProps = {
 
 export function UserTeamPreferenceSelect(props: TProps) {
   const { disabled, style } = props;
-  const [teamId, setTeamId] = useUserTeamPreference();
+  const [team, setTeam] = useUserTeamPreference();
   const { showSnackbar } = useSnackbar();
-  const { data } = useQuery<TeamsQuery>(TeamsDocument);
 
-  const teams = data?.teams?.results ?? [];
-
-  const handleTeamSelect = (newTeamId: string) => {
-    setTeamId(newTeamId);
+  const handleTeamSelect = (newTeam: SelahTeamEnum) => {
+    setTeam(newTeam);
     showSnackbar({
       message: 'Default team saved.',
       type: 'success',
@@ -32,10 +29,12 @@ export function UserTeamPreferenceSelect(props: TProps) {
         allowSelectNone={true}
         disabled={disabled}
         placeholder="Select team"
-        items={teams.map((t) => ({ value: t.id, displayValue: t.name }))}
-        selectedValue={teamId ?? undefined}
+        items={Object.entries(enumDisplaySelahTeam).map(
+          ([value, displayValue]) => ({ value, displayValue })
+        )}
+        selectedValue={team ?? undefined}
         onChange={(value) => {
-          handleTeamSelect(value as string);
+          handleTeamSelect(value as SelahTeamEnum);
         }}
       />
     </View>

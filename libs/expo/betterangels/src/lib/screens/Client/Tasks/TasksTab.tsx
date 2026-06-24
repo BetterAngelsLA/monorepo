@@ -76,7 +76,7 @@ export function TasksTab(props: TProps) {
             summary: task.summary!,
             description: task.description,
             status: task.status,
-            teamId: task.teamId || null,
+            team: task.team || null,
             clientProfile: client.clientProfile.id,
           },
         },
@@ -174,7 +174,7 @@ export function TasksTab(props: TProps) {
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
-        filters={['teamIds', 'taskStatus', 'authors', 'organizations']}
+        filters={['teams', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList

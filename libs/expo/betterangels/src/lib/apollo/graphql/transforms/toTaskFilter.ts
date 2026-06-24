@@ -1,6 +1,7 @@
 import { toNonEmptyStringOrUndefined } from '@monorepo/expo/shared/utils';
 import {
   IdFilterLookup,
+  SelahTeamEnum,
   TaskFilter,
   TaskStatusEnum,
 } from '../__generated__/types';
@@ -33,7 +34,7 @@ type TProps = {
   search?: string;
   authors?: string[];
   organizations?: string[];
-  teamIds?: string[];
+  teams?: string[];
   taskStatus?: string[];
   clientProfiles?: string[];
   hmisClientProfiles?: string[];
@@ -51,7 +52,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
     organizations,
     clientProfiles,
     hmisClientProfiles,
-    teamIds,
+    teams,
     taskStatus,
     hmisNote,
     note,
@@ -71,7 +72,7 @@ export function toTaskFilter(props: TProps): TaskFilter {
     hmisClientProfileLookup,
     clientProfileLookup,
     createdBy: toNonEmptyStringOrUndefined(createdBy),
-    teamIds,
+    teams: toEnumArray<SelahTeamEnum>(SelahTeamEnum, teams),
     status: toEnumArray<TaskStatusEnum>(TaskStatusEnum, taskStatus),
   };
 

@@ -43,11 +43,7 @@ query ViewNoteHmis($id: ID!) {
         summary
         description
         status
-        currentTeam {
-          id
-          slug
-          name
-        }
+        team
       }
       providedServices {
         id

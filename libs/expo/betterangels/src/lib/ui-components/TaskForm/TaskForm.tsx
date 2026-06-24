@@ -1,4 +1,3 @@
-import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ControlledInput,
@@ -12,8 +11,7 @@ import {
   SubmitHandler,
   useForm,
 } from 'react-hook-form';
-import { enumDisplayTaskStatus } from '../../static';
-import { TeamsDocument, TeamsQuery } from '../UserPreferences/UserTeamPreference/__generated__/teams.generated';
+import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 
 import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
@@ -38,8 +36,6 @@ export function TaskForm(props: TProps) {
     defaultValues: { ...emptyState, ...initialValues },
     mode: 'onChange',
   });
-
-  const { data } = useQuery<TeamsQuery>(TeamsDocument);
 
   const {
     control,
@@ -90,7 +86,7 @@ export function TaskForm(props: TProps) {
             />
 
             <Controller
-              name="teamId"
+              name="team"
               control={control}
               render={({ field }) => (
                 <SingleSelect
@@ -98,12 +94,12 @@ export function TaskForm(props: TProps) {
                   label="Team"
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={(data?.teams?.results ?? []).map(
-                    (t) => ({ value: t.id, displayValue: t.name })
+                  items={Object.entries(enumDisplaySelahTeam).map(
+                    ([value, displayValue]) => ({ value, displayValue })
                   )}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
-                  error={errors.teamId?.message}
+                  error={errors.team?.message}
                 />
               )}
             />

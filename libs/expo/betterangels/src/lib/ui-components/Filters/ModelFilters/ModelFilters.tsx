@@ -6,11 +6,11 @@ import { FilterClients } from '../FilterClients';
 import { FilterClientsHmis } from '../FilterClientsHmis';
 import { FilterOrganizations } from '../FilterOrganizations';
 import { FilterStatic } from '../FilterStatic';
-import { FilterTeams } from '../FilterTeams/FilterTeams';
 import { FilterUsers } from '../FilterUsers';
 import {
   modelFilterConfigDefault,
   taskStatusOptions,
+  teamOptions,
 } from './constants';
 import {
   TModelFilterConfig,
@@ -78,14 +78,17 @@ export function ModelFilters(props: TProps) {
       {filterConfigs.map((config) => {
         const { type, buttonLabel, headerTitle, searchPlaceholder } = config;
 
-        if (type === 'teamIds') {
+        if (type === 'teams') {
           return (
-            <FilterTeams
-              key="teamIds"
+            <FilterStatic
+              key="teams"
               title={headerTitle}
               buttonLabel={buttonLabel}
-              onChange={(next) => onFilterChange('teamIds', next)}
-              initialSelected={selected.teamIds}
+              withLocalFilter
+              withSelectAll
+              options={teamOptions}
+              onChange={(next) => onFilterChange('teams', next)}
+              initialSelected={selected.teams}
               searchPlaceholder={searchPlaceholder}
             />
           );

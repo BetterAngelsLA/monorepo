@@ -1,6 +1,5 @@
 import {
   ReportPermissions,
-  TeamPermissions,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { RouteObject } from 'react-router-dom';
@@ -34,11 +33,7 @@ export const routeChildren: RouteObject[] = [
   },
   {
     path: '/teams',
-    element: (
-      <PermissionGuard permission={TeamPermissions.View}>
-        <TeamsPage />
-      </PermissionGuard>
-    ),
+    element: <TeamsPage />,
   },
   {
     path: '/services',

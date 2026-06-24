@@ -1,5 +1,6 @@
 import { toNonEmptyStringOrUndefined } from '@monorepo/expo/shared/utils';
-import { NoteFilter } from '../__generated__/types';
+import { NoteFilter, SelahTeamEnum } from '../__generated__/types';
+import { toEnumArray } from './toEnumArray';
 
 function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {
   const pruned: Partial<T> = {};
@@ -28,7 +29,7 @@ type TProps = {
   search?: string;
   authors?: string[];
   organizations?: string[];
-  teamIds?: string[];
+  teams?: string[];
   clientProfile?: string;
   createdBy?: string;
   isSubmitted?: boolean;
@@ -39,7 +40,7 @@ export function toNoteFilter(props: TProps): NoteFilter {
     search,
     authors,
     organizations,
-    teamIds,
+    teams,
     clientProfile,
     createdBy,
     isSubmitted,
@@ -49,7 +50,7 @@ export function toNoteFilter(props: TProps): NoteFilter {
     search: toNonEmptyStringOrUndefined(search),
     authors,
     organizations,
-    teamIds,
+    teams: toEnumArray<SelahTeamEnum>(SelahTeamEnum, teams),
     clientProfile: toNonEmptyStringOrUndefined(clientProfile),
     createdBy: toNonEmptyStringOrUndefined(createdBy),
     isSubmitted,
