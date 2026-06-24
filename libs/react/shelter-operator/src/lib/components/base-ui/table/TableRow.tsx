@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
-import { Button } from './base-ui/buttons';
+import { Button } from '../buttons';
 
 export type TableRowCell = {
   key: string;
@@ -113,8 +113,3 @@ type TableRowComponent = typeof TableRowBase & {
 export const TableRow = Object.assign(TableRowBase, {
   Slot: TableRowSlot,
 }) as TableRowComponent;
-
-// Backward-compatible aliases while callers migrate to TableRow naming.
-export const Row = TableRow;
-export type RowCell = TableRowCell;
-export type RowClickHandler<TRowObject> = TableRowClickHandler<TRowObject>;

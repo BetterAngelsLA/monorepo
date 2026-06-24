@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { Shelter } from '../types/shelter';
-import { Table, type TableColumn } from './Table';
+import { Table, type TableColumn } from './base-ui/table';
 
 export type ShelterRowObject = {
   id: string;
