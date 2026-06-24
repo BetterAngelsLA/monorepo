@@ -84,7 +84,7 @@ const TableRowBase = <TRowObject,>({
         <div
           role="cell"
           key={cell.key}
-          className={mergeCss(['text-left min-w-0 overflow-hidden', cell.className])}
+          className={mergeCss(['text-left min-w-0', cell.className])}
         >
           {cell.content}
         </div>

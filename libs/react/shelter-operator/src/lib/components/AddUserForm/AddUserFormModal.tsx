@@ -1,8 +1,8 @@
-import { Modal, ModalHeader, ModalBody } from '../base-ui/modal';
-import { Text } from '../base-ui/text/text';
-import { AddUserForm } from './AddUserForm';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { useActiveOrg } from '../../providers';
+import { Modal, ModalBody, ModalHeader } from '../base-ui/modal';
+import { Text } from '../base-ui/text/text';
+import { AddUserForm } from './AddUserForm';
 
 type TProps = {
   isOpen: boolean;
@@ -10,7 +10,7 @@ type TProps = {
   onSuccess?: () => void;
 };
 
-export function AddUserFormDrawer(props: TProps) {
+export function AddUserFormModal(props: TProps) {
   const { isOpen, onClose, onSuccess } = props;
   const { activeOrg } = useActiveOrg();
 

@@ -12,8 +12,8 @@ export const localStorageAdapter: StorageAdapter = {
   setItem(key: string, value: string) {
     try {
       localStorage.setItem(key, value);
-    } catch {
-      // Storage unavailable — silently noop.
+    } catch (err) {
+      console.error('[localStorageAdapter] Failed to setItem:', err);
     }
   },
 };

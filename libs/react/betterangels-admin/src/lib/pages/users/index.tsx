@@ -45,7 +45,7 @@ function humanizeRole(role: string): string {
 const getFullName = (m: OrganizationMemberType): string =>
   `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || 'Unknown';
 
-const formatRelative = (iso: string | null | undefined): string | null =>
+const formatRelativeDate = (iso: string | null | undefined): string | null =>
   iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : null;
 
 const COLUMNS: {
@@ -79,12 +79,12 @@ const COLUMNS: {
   {
     label: 'Created',
     field: 'dateJoined',
-    render: (m) => formatRelative(m.dateJoined) ?? 'Unknown',
+    render: (m) => formatRelativeDate(m.dateJoined) ?? 'Unknown',
   },
   {
     label: 'Last Login',
     field: 'lastLogin',
-    render: (m) => formatRelative(m.lastLogin) ?? 'Never',
+    render: (m) => formatRelativeDate(m.lastLogin) ?? 'Never',
   },
 ];
 
@@ -356,13 +356,13 @@ export default function Users(props: IProps) {
                       <div className="min-w-0 truncate">
                         <span className="text-gray-400">Created: </span>
                         <span className="text-gray-900">
-                          {formatRelative(member.dateJoined) ?? '—'}
+                          {formatRelativeDate(member.dateJoined) ?? '—'}
                         </span>
                       </div>
                       <div className="min-w-0 truncate">
                         <span className="text-gray-400">Last Login: </span>
                         <span className="text-gray-900">
-                          {formatRelative(member.lastLogin) ?? 'Never'}
+                          {formatRelativeDate(member.lastLogin) ?? 'Never'}
                         </span>
                       </div>
                     </div>

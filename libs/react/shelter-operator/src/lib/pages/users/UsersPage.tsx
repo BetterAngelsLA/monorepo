@@ -10,7 +10,7 @@ import {
   OrganizationMemberType,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
-import { AddUserFormDrawer } from '../../components/AddUserForm';
+import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import { useToast } from '../../components/base-ui/toast';
@@ -38,7 +38,7 @@ function humanizeRole(role: string): string {
 const getFullName = (m: OrganizationMemberType): string =>
   `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || 'Unknown';
 
-const formatRelative = (iso: string | null | undefined): string | null =>
+const formatRelativeDate = (iso: string | null | undefined): string | null =>
   iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : null;
 
 const SORTABLE_KEYS = [
@@ -90,14 +90,14 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
     label: 'Created',
     width: '0.9fr',
     cellClassName: 'truncate text-gray-700',
-    render: (m) => formatRelative(m.dateJoined) ?? 'Unknown',
+    render: (m) => formatRelativeDate(m.dateJoined) ?? 'Unknown',
   },
   {
     key: 'lastLogin',
     label: 'Last Login',
     width: '0.9fr',
     cellClassName: 'truncate text-gray-700',
-    render: (m) => formatRelative(m.lastLogin) ?? 'Never',
+    render: (m) => formatRelativeDate(m.lastLogin) ?? 'Never',
   },
 ];
 
@@ -126,7 +126,8 @@ function useOrganizationMembers(
 
   return {
     loading,
-    members: (activeData?.organizationMembers?.results ?? []) as OrganizationMemberType[],
+    members: (activeData?.organizationMembers?.results ??
+      []) as OrganizationMemberType[],
     totalCount,
     totalPages: Math.ceil(totalCount / PAGE_SIZE),
     isInitialLoad: loading && !activeData,
@@ -352,7 +353,7 @@ export function UsersPage() {
         />
       )}
 
-      <AddUserFormDrawer
+      <AddUserFormModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
@@ -465,13 +466,13 @@ function MemberCard({
           <div className="min-w-0 truncate">
             <span className="text-[#A0A5AE]">Created: </span>
             <span className="text-gray-900">
-              {formatRelative(member.dateJoined) ?? '—'}
+              {formatRelativeDate(member.dateJoined) ?? '—'}
             </span>
           </div>
           <div className="min-w-0 truncate">
             <span className="text-[#A0A5AE]">Last Login: </span>
             <span className="text-gray-900">
-              {formatRelative(member.lastLogin) ?? 'Never'}
+              {formatRelativeDate(member.lastLogin) ?? 'Never'}
             </span>
           </div>
         </div>

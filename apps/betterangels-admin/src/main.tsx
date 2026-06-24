@@ -4,7 +4,7 @@ import {
   AuthProvider,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
-import { createApolloClient } from '@monorepo/react/shared/apollo';
+import { createApolloClient, orgLink } from '@monorepo/react/shared/apollo';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -21,6 +21,7 @@ const apolloClient = createApolloClient({
   apiUrl: import.meta.env.VITE_BETTERANGELS_ADMIN_API_URL,
   csrfCookieName,
   csrfHeaderName,
+  links: [orgLink],
 });
 
 const root = ReactDOM.createRoot(

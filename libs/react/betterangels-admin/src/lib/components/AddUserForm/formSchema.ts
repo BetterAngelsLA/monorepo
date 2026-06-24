@@ -7,12 +7,12 @@ export const defaultValues: TFormSchema = {
   firstName: '',
   lastName: '',
   email: '',
-  permissionTemplate: PermissionTemplateEnum.Caseworker as PermissionTemplateEnum,
+  permissionTemplate: PermissionTemplateEnum.Caseworker,
 };
 
 export const FormSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.email('Invalid email address.'),
-  permissionTemplate: z.nativeEnum(PermissionTemplateEnum),
+  permissionTemplate: z.enum(PermissionTemplateEnum),
 });
