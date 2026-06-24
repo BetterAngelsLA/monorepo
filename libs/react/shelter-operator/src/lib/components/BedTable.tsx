@@ -8,7 +8,7 @@ import {
   type BedType,
 } from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
-import { Table, type TableColumn } from './Table';
+import { Table, type TableColumn } from './base-ui/table';
 
 export type BedRoomForList = {
   id: string;

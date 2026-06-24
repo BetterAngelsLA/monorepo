@@ -11,8 +11,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './base-ui/buttons/buttons';
 import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
+import { Table, type TableColumn } from './base-ui/table';
 import { Text } from './base-ui/text/text';
-import { Table, type TableColumn } from './Table';
 
 // REPLACE WITH ACTUAL QUERIED DATA
 import {
@@ -50,19 +50,25 @@ type RoomTableProps = {
 // TODO: Create Tag Components in Base UI -----------------
 const STATUS_STYLE: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'bg-[#D7F5DF]',
-  [RoomStatusChoices.NeedsMaintenance]: 'bg-[#FFE5E0]',
+  [RoomStatusChoices.OutOfService]: 'bg-[#FFE5E0]',
+  [RoomStatusChoices.InTurnaround]: 'bg-[#FFEBCB]',
+  [RoomStatusChoices.Occupied]: 'bg-[#FFEBCB]',
   [RoomStatusChoices.Reserved]: 'bg-[#FFEBCB]',
 };
 
 const STATUS_TEXT_STYLE: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'text-[#0F8F2F] font-medium',
-  [RoomStatusChoices.NeedsMaintenance]: 'text-[#D7332A] font-medium',
+  [RoomStatusChoices.OutOfService]: 'text-[#D7332A] font-medium',
+  [RoomStatusChoices.InTurnaround]: 'text-[#CC6F00] font-medium',
+  [RoomStatusChoices.Occupied]: 'text-[#CC6F00] font-medium',
   [RoomStatusChoices.Reserved]: 'text-[#CC6F00] font-medium',
 };
 
 const STATUS_LABEL: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'Available',
-  [RoomStatusChoices.NeedsMaintenance]: 'Out of Service',
+  [RoomStatusChoices.OutOfService]: 'Out of Service',
+  [RoomStatusChoices.InTurnaround]: 'In Turnaround',
+  [RoomStatusChoices.Occupied]: 'Occupied',
   [RoomStatusChoices.Reserved]: 'Reserved',
 };
 // ------------------------------------------

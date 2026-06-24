@@ -9,7 +9,10 @@ interface IShowToastParams {
   title: string;
   description?: string;
   action?: IToastAction;
+  /** Auto-dismiss duration in ms. Defaults to AUTO_DISMISS_MS. Ignored if `persistent` is true. */
   duration?: number;
+  /** If true, the toast stays visible until the user dismisses it. */
+  persistent?: boolean;
 }
 
 let toastCounter = 0;
@@ -33,7 +36,9 @@ export function useToast() {
   const showToast = useCallback(
     (params: IShowToastParams) => {
       const id = `toast-${++toastCounter}`;
-      const duration = params.duration ?? AUTO_DISMISS_MS;
+      const duration = params.persistent
+        ? 0
+        : params.duration ?? AUTO_DISMISS_MS;
 
       setToasts((prev) => [
         ...prev,

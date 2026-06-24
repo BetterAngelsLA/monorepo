@@ -1,11 +1,13 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { Text } from '../text/text';
 
+export type LabelVariant = 'default' | 'offset';
+
 type TProps = {
   label?: string;
   inputId?: string;
   required?: boolean;
-  variant?: 'default' | 'offset';
+  variant?: LabelVariant;
   className?: string;
 };
 
