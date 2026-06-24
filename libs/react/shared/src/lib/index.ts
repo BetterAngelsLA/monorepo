@@ -4,7 +4,6 @@ export * from './components';
 export * from './featureControls';
 export * from './hooks';
 export * from './observers';
-export * from './permissions';
 export * from './s3';
 export * from './static';
 export * from './types';

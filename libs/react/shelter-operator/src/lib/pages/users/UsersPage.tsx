@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { UserIcon } from '@monorepo/react/icons';
-import { arrayIncludes, useDebounce } from '@monorepo/react/shared';
+import { useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
@@ -149,7 +149,7 @@ interface RemoveConfirmation {
 }
 
 export function UsersPage() {
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, can } = useActiveOrg();
   const { user: currentUser } = useUser();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
@@ -171,8 +171,8 @@ export function UsersPage() {
   const { members, totalPages, loading, isInitialLoad } =
     useOrganizationMembers(organizationId, page, sort, search);
 
-  const canView = arrayIncludes(activeOrg?.permissions, UserOrganizationPermissions.ViewOrgMembers);
-  const canAdd = arrayIncludes(activeOrg?.permissions, UserOrganizationPermissions.AddOrgMember);
+  const canView = can(UserOrganizationPermissions.ViewOrgMembers);
+  const canAdd = can(UserOrganizationPermissions.AddOrgMember);
 
   const debouncedSearch = useDebounce(search, 300);
 

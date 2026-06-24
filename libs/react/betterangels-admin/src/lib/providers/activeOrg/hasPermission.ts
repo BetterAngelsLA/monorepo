@@ -1,4 +1,4 @@
-import { arrayIncludes } from '@monorepo/react/shared';
+import { checkPermission } from '@monorepo/react/shared';
 import {
   ReportPermissions,
   ShelterPermissions,
@@ -15,5 +15,5 @@ export function hasPermission(
   org: TOrganizationWithPermissions | undefined,
   permission: PermissionEnum
 ): boolean {
-  return arrayIncludes(org?.permissions, permission);
+  return checkPermission(org?.permissions, permission);
 }

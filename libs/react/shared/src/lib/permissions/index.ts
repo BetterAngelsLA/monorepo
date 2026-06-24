@@ -1,1 +1,0 @@
-export { arrayIncludes } from './hasPermission';

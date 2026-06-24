@@ -1,7 +1,7 @@
 import { CarryOutOutlined, HomeOutlined } from '@ant-design/icons';
 import { Divider, Sidebar } from '@monorepo/react/components';
 import { UsersIcon } from '@monorepo/react/icons';
-import { arrayIncludes, mergeCss } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -29,8 +29,8 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
-  const { activeOrg } = useActiveOrg();
-  const canViewMembers = arrayIncludes(activeOrg?.permissions, UserOrganizationPermissions.ViewOrgMembers);
+  const { activeOrg, can } = useActiveOrg();
+  const canViewMembers = can(UserOrganizationPermissions.ViewOrgMembers);
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
