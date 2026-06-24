@@ -40,6 +40,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function roleLabel(m: OrganizationMemberType): string {
+  if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
+    return ROLE_LABELS[m.memberRole];
+  }
   const templates = (m.permissionTemplates ?? [])
     .map((t) => ROLE_LABELS[t])
     .filter(Boolean)

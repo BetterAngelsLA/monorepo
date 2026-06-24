@@ -1,4 +1,4 @@
-import { arrayIncludes, localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
+import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext from './ActiveOrgContext';
@@ -81,15 +81,9 @@ export function ActiveOrgProvider({
     [organizations, storage, storageKey]
   );
 
-  const hasPermission = useCallback(
-    (perm: PermissionEnum): boolean =>
-      arrayIncludes(activeOrg?.permissions, perm),
-    [activeOrg]
-  );
-
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    () => ({ activeOrg, organizations, setActiveOrgId }),
+    [activeOrg, organizations, setActiveOrgId]
   );
 
   return (

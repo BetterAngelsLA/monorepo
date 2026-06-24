@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { UserIcon } from '@monorepo/react/icons';
-import { useDebounce } from '@monorepo/react/shared';
+import { arrayIncludes, useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
@@ -37,6 +37,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function roleLabel(m: OrganizationMemberType): string {
+  if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
+    return ROLE_LABELS[m.memberRole];
+  }
   const templates = (m.permissionTemplates ?? [])
     .map((t) => ROLE_LABELS[t])
     .filter(Boolean)
@@ -146,7 +149,7 @@ interface RemoveConfirmation {
 }
 
 export function UsersPage() {
-  const { activeOrg, hasPermission } = useActiveOrg();
+  const { activeOrg } = useActiveOrg();
   const { user: currentUser } = useUser();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
@@ -168,8 +171,8 @@ export function UsersPage() {
   const { members, totalPages, loading, isInitialLoad } =
     useOrganizationMembers(organizationId, page, sort, search);
 
-  const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
-  const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
+  const canView = arrayIncludes(activeOrg?.permissions, UserOrganizationPermissions.ViewOrgMembers);
+  const canAdd = arrayIncludes(activeOrg?.permissions, UserOrganizationPermissions.AddOrgMember);
 
   const debouncedSearch = useDebounce(search, 300);
 
