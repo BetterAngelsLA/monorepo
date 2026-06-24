@@ -126,7 +126,7 @@ export function AppSidebar(props: IProps) {
             Reports
           </Sidebar.Link>
         )}
-        {hasPermission(TeamPermissions.View) && (
+        {can(TeamPermissions.View) && (
           <Sidebar.Link
             to="/teams"
             isActive={location.pathname === '/teams'}

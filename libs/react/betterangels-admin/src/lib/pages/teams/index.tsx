@@ -17,7 +17,6 @@ import {
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';
 import { useActiveOrg } from '../../providers';
-import { hasPermission } from '../../providers/activeOrg/hasPermission';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
@@ -58,7 +57,7 @@ const COLUMNS: {
 
 export default function Teams(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, can } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -203,7 +202,7 @@ export default function Teams(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {hasPermission(activeOrg, TeamPermissions.Add) && (
+        {can(TeamPermissions.Add) && (
           <button
             onClick={() =>
               showDrawer({
@@ -225,7 +224,7 @@ export default function Teams(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {hasPermission(activeOrg, TeamPermissions.View) ? (
+        {can(TeamPermissions.View) ? (
           <Table<TeamType>
             tableClassName="table-fixed"
             action={(row) => {
