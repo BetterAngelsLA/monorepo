@@ -1,4 +1,4 @@
-import { hasPermission as genericHasPermission } from '@monorepo/react/shared';
+import { arrayIncludes } from '@monorepo/react/shared';
 import {
   ReportPermissions,
   ShelterPermissions,
@@ -15,5 +15,5 @@ export function hasPermission(
   org: TOrganizationWithPermissions | undefined,
   permission: PermissionEnum
 ): boolean {
-  return genericHasPermission(org?.permissions, permission);
+  return arrayIncludes(org?.permissions, permission);
 }

@@ -1,1 +1,1 @@
-export { hasPermission } from './hasPermission';
+export { arrayIncludes } from './hasPermission';
