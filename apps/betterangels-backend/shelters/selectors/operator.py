@@ -142,9 +142,8 @@ def reservation_queryset(
     """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
 
     Reservation links to a shelter via two optional paths
-    (``bed__shelter`` and ``room__shelter``), so the standard
-    ``permissioned_queryset`` helper (which expects a single
-    ``organization_field``) is not suitable.
+    (``bed__shelter`` and ``room__shelter``), so we pass
+    ``organization_fields`` to ``permissioned_queryset`` to check both.
 
     Falls back to ``Reservation.objects.all()`` when *queryset* is omitted.
     """

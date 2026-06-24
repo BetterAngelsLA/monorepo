@@ -151,13 +151,11 @@ def status_filter_q(
     if status == status_enum.RESERVED:
         return base & Q(has_confirmed_or_overdue_exists(fk_field)) & ~Q(has_checked_in_exists(fk_field))
 
-    not_turnaround = ~in_turnaround_filter_q(fk_field)
-
     if status == status_enum.IN_TURNAROUND:
         return base & in_turnaround_filter_q(fk_field) & ~Q(has_active_reservation_exists(fk_field))
 
     if status == status_enum.AVAILABLE:
-        return base & not_turnaround & ~Q(has_active_reservation_exists(fk_field))
+        return base & ~in_turnaround_filter_q(fk_field) & ~Q(has_active_reservation_exists(fk_field))
 
     return Q()
 

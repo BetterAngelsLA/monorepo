@@ -8,6 +8,11 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Drop stored status/occupant/shelter columns in favor of computed status.
+
+    No RunPython data migration -- assumes a clean environment with no
+    production data to preserve in the dropped columns.
+    """
 
     dependencies = [
         ("clients", "0032_unhoused_start_date"),

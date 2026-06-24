@@ -227,6 +227,28 @@ def get_current_organization(info: Info) -> str:
 _T = TypeVar("_T", bound=Model)
 
 
+def _org_perm_exists_across_fields(
+    user: AbstractBaseUser,
+    app_label: str,
+    codename: str,
+    fields: list[str],
+) -> Q:
+    """Return a ``Q`` checking the user holds a permission on any of the org fields."""
+    return reduce(
+        or_,
+        (
+            Q(
+                Exists(
+                    Organization.objects.filter(pk=OuterRef(f))
+                    .filter(permission_groups__group__user=user)
+                    .filter(_perm_q(app_label, codename))
+                )
+            )
+            for f in fields
+        ),
+    )
+
+
 def permissioned_queryset(
     queryset: "QuerySet[_T]",
     *,
@@ -262,6 +284,13 @@ def permissioned_queryset(
         The Django field lookup path to the owning organization.
         Default ``"organization_id"`` works for models with a direct FK.
         Use ``"shelter__organization_id"`` for indirect (Bed, Room).
+        Ignored when *organization_fields* is provided.
+    organization_fields : list[str] | None
+        Multiple field paths (OR'd together). Use when a model reaches
+        its organization through more than one path (e.g. Reservation
+        via ``bed__shelter__organization_id`` or
+        ``room__shelter__organization_id``). Takes precedence over
+        *organization_field*. Default ``None``.
 
     Returns
     -------
@@ -280,38 +309,12 @@ def permissioned_queryset(
         q = Q()
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
-            q |= reduce(
-                or_,
-                (
-                    Q(
-                        Exists(
-                            Organization.objects.filter(pk=OuterRef(f))
-                            .filter(permission_groups__group__user=user)
-                            .filter(_perm_q(app_label, codename))
-                        )
-                    )
-                    for f in fields
-                ),
-            )
+            q |= _org_perm_exists_across_fields(user, app_label, codename, fields)
         queryset = queryset.filter(q)
     else:
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
-            queryset = queryset.filter(
-                reduce(
-                    or_,
-                    (
-                        Q(
-                            Exists(
-                                Organization.objects.filter(pk=OuterRef(f))
-                                .filter(permission_groups__group__user=user)
-                                .filter(_perm_q(app_label, codename))
-                            )
-                        )
-                        for f in fields
-                    ),
-                )
-            )
+            queryset = queryset.filter(_org_perm_exists_across_fields(user, app_label, codename, fields))
 
     return queryset
 

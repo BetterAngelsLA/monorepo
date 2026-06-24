@@ -395,13 +395,9 @@ class ReservationType:
 
     @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
     def shelter(self, root: models.Reservation) -> "OperatorShelterType":
-        if root.bed:
-            return cast("OperatorShelterType", root.bed.shelter)
-
-        if root.room is None:
+        if root.shelter is None:
             raise ValueError(f"Reservation {root.pk} has neither bed nor room assigned.")
-
-        return cast("OperatorShelterType", root.room.shelter)
+        return cast("OperatorShelterType", root.shelter)
 
     @strawberry_django.field(only=["created_by_id"])
     def created_by_id(self, root: models.Reservation) -> Optional[ID]:

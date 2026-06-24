@@ -2,12 +2,17 @@ from typing import TYPE_CHECKING, Any, Dict
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from shelters.models import Reservation, ReservationClient, Shelter
-from shelters.selectors import bed_get, reservation_get, room_get, shelter_get
+from django.utils import timezone
+from shelters.enums import ReservationStatusChoices
+from shelters.models import Reservation, ReservationClient
+from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
+from shelters.selectors import bed_get, reservation_get, room_get
 from shelters.selectors.operator import reservation_queryset
+from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 if TYPE_CHECKING:
     from accounts.models import User
+    from shelters.models.shelter import Bed, Room
 
 
 def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | None) -> None:
@@ -21,6 +26,51 @@ def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | 
             client_profile_id=entry["client_profile_id"],
             is_primary=entry.get("is_primary", False),
         )
+
+
+def _validate_reservation(reservation: Reservation) -> None:
+    """Validate reservation against business rules: availability, turnaround, conflicts."""
+    errors: dict[str, str] = {}
+
+    if reservation.bed:
+        _validate_reservable(errors, reservation, reservation.bed, "bed")
+    if reservation.room and not reservation.bed:
+        _validate_reservable(errors, reservation, reservation.room, "room", room_only=True)
+
+    if errors:
+        raise ValidationError(errors)
+
+
+def _validate_reservable(
+    errors: dict[str, str],
+    reservation: Reservation,
+    reservable: "Bed | Room",
+    field_name: str,
+    *,
+    room_only: bool = False,
+) -> None:
+    """Validate a single reservable (bed or room) for availability and conflicts."""
+    if reservable.maintenance_flag:
+        errors[field_name] = f"The selected {field_name} is out of service."
+        return
+
+    if is_in_turnaround(
+        last_cleaned=reservable.last_cleaned,
+        last_checkout=get_last_completed_checkout(reservable.reservations.all()),
+    ):
+        errors[field_name] = f"The selected {field_name} is currently in turnaround."
+        return
+
+    conflicting_qs = Reservation.objects.filter(
+        **{f"{field_name}_id": reservable.pk},
+        status__in=ACTIVE_RESERVATION_STATUSES,
+    )
+    if room_only:
+        conflicting_qs = conflicting_qs.filter(bed__isnull=True)
+    if reservation.pk:
+        conflicting_qs = conflicting_qs.exclude(pk=reservation.pk)
+    if conflicting_qs.exists():
+        errors[field_name] = f"This {field_name} already has an active reservation."
 
 
 @transaction.atomic
@@ -45,21 +95,17 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        shelter_id = bed_get(user=user, organization_id=organization_id, bed_id=bed_id).shelter_id
+        bed_get(user=user, organization_id=organization_id, bed_id=bed_id)
     elif room_id:
-        shelter_id = room_get(user=user, organization_id=organization_id, room_id=room_id).shelter_id
+        room_get(user=user, organization_id=organization_id, room_id=room_id)
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
-
-    try:
-        shelter_get(user=user, organization_id=organization_id, shelter_id=shelter_id)
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist("You do not have permission to create a Reservation for this Shelter.")
 
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
     reservation = Reservation(created_by=user, **scalar_data)
     reservation.full_clean()
+    _validate_reservation(reservation)
     reservation.save()
     _set_clients(reservation, clients_data)
 
@@ -86,12 +132,22 @@ def reservation_update(
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
     clients_data = data.pop("clients", None)
+    previous_status = reservation.status
 
     for key, value in data.items():
         if value is not None:
             setattr(reservation, key, value)
 
+    # Auto-set timestamps on status transitions
+    new_status = data.get("status")
+    if new_status is not None and new_status != previous_status:
+        if new_status == ReservationStatusChoices.COMPLETED:
+            reservation.checked_out_at = timezone.now()
+        elif new_status == ReservationStatusChoices.CHECKED_IN:
+            reservation.checked_in_at = timezone.now()
+
     reservation.full_clean()
+    _validate_reservation(reservation)
     reservation.save()
     _set_clients(reservation, clients_data)
 
