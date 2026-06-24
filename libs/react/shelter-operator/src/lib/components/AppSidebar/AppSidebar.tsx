@@ -29,8 +29,8 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
-  const { can } = useActiveOrg();
-  const canViewMembers = can(UserOrganizationPermissions.ViewOrgMembers);
+  const { hasPermission } = useActiveOrg();
+  const canViewMembers = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
 
   const parentCss = ['bg-[#FAFAFA]', className];
 

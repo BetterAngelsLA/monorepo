@@ -24,7 +24,7 @@ export interface IActiveOrgContextValue {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /** Check if the active org has a specific permission. */
-  can: (permission: PermissionEnum) => boolean;
+  hasPermission: (permission: PermissionEnum) => boolean;
 }
 
 const ActiveOrgContext = createContext<IActiveOrgContextValue | undefined>(

@@ -29,7 +29,7 @@ import {
 
 const PAGE_SIZE = 25;
 
-const ROLE_LABELS: Record<string, string> = {
+const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>> = {
   [PermissionTemplateEnum.ShelterOperator]: 'Shelter Operator',
   [OrgRoleEnum.Admin]: 'Admin',
   [OrgRoleEnum.Member]: 'Member',
@@ -38,13 +38,13 @@ const ROLE_LABELS: Record<string, string> = {
 
 function roleLabel(m: OrganizationMemberType): string {
   if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
-    return ROLE_LABELS[m.memberRole];
+    return ROLE_LABELS[m.memberRole] ?? m.memberRole;
   }
   const templates = (m.permissionTemplates ?? [])
     .map((t) => ROLE_LABELS[t])
     .filter(Boolean)
     .join(', ');
-  return templates || ROLE_LABELS[m.memberRole];
+  return templates || (ROLE_LABELS[m.memberRole] ?? m.memberRole);
 }
 
 const getFullName = (m: OrganizationMemberType): string =>
@@ -150,7 +150,7 @@ interface RemoveConfirmation {
 }
 
 export function UsersPage() {
-  const { activeOrg, can } = useActiveOrg();
+  const { activeOrg, hasPermission } = useActiveOrg();
   const { user: currentUser } = useUser();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
@@ -172,8 +172,8 @@ export function UsersPage() {
   const { members, totalPages, loading, isInitialLoad, refetch } =
     useOrganizationMembers(organizationId, page, sort, search);
 
-  const canView = can(UserOrganizationPermissions.ViewOrgMembers);
-  const canAdd = can(UserOrganizationPermissions.AddOrgMember);
+  const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
+  const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
 
   const debouncedSearch = useDebounce(search, 300);
 

@@ -24,7 +24,7 @@ interface ActiveOrgProviderProps {
  * Defaults to the first org in the list but persists the user's choice
  * in the configured storage so it survives page reloads.
  *
- * ``can(perm)`` checks the active org's permissions
+ * ``hasPermission(perm)`` checks the active org's permissions
  * and automatically reflects the correct org when the user
  * switches.  Because the check is enum-driven there is nothing to
  * update here when the backend adds new permissions — just re-run
@@ -96,7 +96,7 @@ export function ActiveOrgProvider({
     [organizations, storage, storageKey]
   );
 
-  const can = useCallback(
+  const hasPermission = useCallback(
     (permission: PermissionEnum): boolean =>
       activeOrg?.permissions != null &&
       pipe(
@@ -109,8 +109,8 @@ export function ActiveOrgProvider({
   );
 
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, can }),
-    [activeOrg, organizations, setActiveOrgId, can]
+    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
+    [activeOrg, organizations, setActiveOrgId, hasPermission]
   );
 
   return (
