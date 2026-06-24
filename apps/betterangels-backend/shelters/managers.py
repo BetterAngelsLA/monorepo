@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Iterable, Self, Union, cast
+from typing import TYPE_CHECKING, Iterable, Self, cast
 
 from django.db import models
 from django.db.models import Manager, Q, QuerySet
@@ -9,6 +9,7 @@ from shelters.enums import BedStatusChoices, RoomStatusChoices, ScheduleTypeChoi
 from shelters.open_at import shelters_open_at
 from shelters.selectors import shelter_list
 from shelters.selectors.computed_status import (
+    StatusChoice,
     computed_status_case,
     status_filter_q,
 )
@@ -16,10 +17,6 @@ from shelters.selectors.computed_status import (
 if TYPE_CHECKING:
     from shelters.models import Shelter  # noqa: F401
     from shelters.models import Bed, Room
-
-
-# Not a TypeVar -- the two enums are independent and correspondence can't be enforced here.
-StatusChoice = Union[BedStatusChoices, RoomStatusChoices]
 
 
 class ShelterQuerySet(QuerySet["Shelter"]):
