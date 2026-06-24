@@ -3,18 +3,24 @@ import { UserIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Ordering,
+  OrgRoleEnum,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  PermissionTemplateEnum,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
+import {
+  Table,
+  type SortDirection,
+  type TableColumn,
+} from '../../components/base-ui/table';
 import { useToast } from '../../components/base-ui/toast';
-import { Table, type TableColumn } from '../../components/base-ui/table';
 import { useActiveOrg } from '../../providers';
 import {
   OrganizationMembersDocument,
@@ -23,18 +29,19 @@ import {
 
 const PAGE_SIZE = 25;
 
-type OrgRole = 'CASEWORKER' | 'MEMBER' | 'ORG_ADMIN' | 'ORG_SUPERUSER' | 'SHELTER_OPERATOR';
-
-const ROLE_LABELS: Record<OrgRole, string> = {
-  SHELTER_OPERATOR: 'Shelter Operator',
-  ORG_ADMIN: 'Org Admin',
-  ORG_SUPERUSER: 'Org Superuser',
-  CASEWORKER: 'Caseworker',
-  MEMBER: 'Member',
+const ROLE_LABELS: Record<string, string> = {
+  [PermissionTemplateEnum.ShelterOperator]: 'Shelter Operator',
+  [OrgRoleEnum.Admin]: 'Admin',
+  [OrgRoleEnum.Member]: 'Member',
+  [OrgRoleEnum.Superuser]: 'Superuser',
 };
 
-function humanizeRole(role: string): string {
-  return ROLE_LABELS[role as OrgRole] ?? role;
+function roleLabel(m: OrganizationMemberType): string {
+  const templates = (m.permissionTemplates ?? [])
+    .map((t) => ROLE_LABELS[t])
+    .filter(Boolean)
+    .join(', ');
+  return templates || ROLE_LABELS[m.memberRole];
 }
 
 const getFullName = (m: OrganizationMemberType): string =>
@@ -42,15 +49,6 @@ const getFullName = (m: OrganizationMemberType): string =>
 
 const formatRelativeDate = (iso: string | null | undefined): string | null =>
   iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : null;
-
-const SORTABLE_KEYS = [
-  'firstName',
-  'lastName',
-  'memberRole',
-  'email',
-  'dateJoined',
-  'lastLogin',
-] as const;
 
 const COLUMNS: TableColumn<OrganizationMemberType>[] = [
   {
@@ -72,13 +70,16 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
     width: '1.4fr',
     cellClassName: 'font-medium text-gray-900 truncate',
     render: getFullName,
+    sortValue: (m) => getFullName(m),
   },
   {
-    key: 'memberRole',
-    label: 'Job Role',
-    width: '0.9fr',
+    key: 'role',
+    label: 'Role',
+    width: '1fr',
     cellClassName: 'truncate text-gray-700',
-    render: (m) => humanizeRole(m.memberRole),
+    render: (m) => roleLabel(m),
+    sortValue: (m) => roleLabel(m),
+    filterValue: (m) => roleLabel(m),
   },
   {
     key: 'email',
@@ -86,6 +87,7 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
     width: '1.3fr',
     cellClassName: 'truncate text-gray-700',
     render: (m) => m.email ?? '',
+    sortValue: (m) => m.email ?? '',
   },
   {
     key: 'dateJoined',
@@ -93,6 +95,7 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
     width: '0.9fr',
     cellClassName: 'truncate text-gray-700',
     render: (m) => formatRelativeDate(m.dateJoined) ?? 'Unknown',
+    sortValue: (m) => m.dateJoined ?? '',
   },
   {
     key: 'lastLogin',
@@ -100,6 +103,7 @@ const COLUMNS: TableColumn<OrganizationMemberType>[] = [
     width: '0.9fr',
     cellClassName: 'truncate text-gray-700',
     render: (m) => formatRelativeDate(m.lastLogin) ?? 'Never',
+    sortValue: (m) => m.lastLogin ?? '',
   },
 ];
 
@@ -174,16 +178,21 @@ export function UsersPage() {
     setPage(1);
   }, [debouncedSearch]);
 
-  const handleSort = useCallback((field: keyof OrganizationMemberOrdering) => {
-    setPage(1);
-    setSort((prev) => ({
-      field,
-      direction:
-        prev.field === field && prev.direction === Ordering.Asc
-          ? Ordering.Desc
-          : Ordering.Asc,
-    }));
-  }, []);
+  const handleSortChange = useCallback(
+    (column: string | null, direction: SortDirection | null) => {
+      setPage(1);
+      if (!column || !direction) {
+        setSort({ field: 'lastName', direction: Ordering.Asc });
+        return;
+      }
+      const field = column as keyof OrganizationMemberOrdering;
+      setSort({
+        field,
+        direction: direction === 'asc' ? Ordering.Asc : Ordering.Desc,
+      });
+    },
+    []
+  );
 
   const handleRemoveMember = useCallback(
     async (member: OrganizationMemberType) => {
@@ -223,29 +232,6 @@ export function UsersPage() {
       title: 'User added successfully.',
     });
   }, [showToast]);
-
-  // Build sortable columns (memo-ized — only recomputes when sort changes)
-  const sortableColumns = useMemo(
-    () =>
-      COLUMNS.map((col) => ({
-        ...col,
-        label: SORTABLE_KEYS.includes(
-          col.key as (typeof SORTABLE_KEYS)[number]
-        ) ? (
-          <SortHeader
-            label={col.label as string}
-            isActive={sort.field === col.key}
-            direction={sort.direction}
-            onClick={() =>
-              handleSort(col.key as keyof OrganizationMemberOrdering)
-            }
-          />
-        ) : (
-          col.label
-        ),
-      })),
-    [sort, handleSort]
-  );
 
   const emptyMessage = search
     ? 'No users match your search.'
@@ -329,7 +315,7 @@ export function UsersPage() {
           {/* Desktop: table */}
           <div className="hidden lg:block w-full">
             <Table<OrganizationMemberType>
-              columns={sortableColumns}
+              columns={COLUMNS}
               rows={members}
               getRowKey={(m) => m.id}
               trailingColumnWidth="60px"
@@ -338,6 +324,9 @@ export function UsersPage() {
               loading={loading}
               loadingState={<StatusMessage text="Loading..." />}
               emptyState={<StatusMessage text={emptyMessage} />}
+              sortColumn={sort.field}
+              sortDirection={sort.direction === Ordering.Asc ? 'asc' : 'desc'}
+              onSortChange={handleSortChange}
             />
           </div>
         </>
@@ -403,33 +392,6 @@ function StarIcon({ className }: { className?: string }) {
   );
 }
 
-function SortHeader({
-  label,
-  isActive,
-  direction,
-  onClick,
-}: {
-  label: string;
-  isActive: boolean;
-  direction: Ordering;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-1 max-w-full hover:text-[#008CEE] transition-colors bg-transparent border-none cursor-pointer p-0 text-left font-medium text-sm md:text-base text-[#747A82] truncate"
-    >
-      {label}
-      {isActive && (
-        <span className="text-xs shrink-0">
-          {direction === Ordering.Asc ? '▲' : '▼'}
-        </span>
-      )}
-    </button>
-  );
-}
-
 function MemberCard({
   member,
   renderAction,
@@ -448,7 +410,7 @@ function MemberCard({
             {getFullName(member)}
           </div>
           <div className="text-xs text-[#747A82] truncate">
-            {humanizeRole(member.memberRole)}
+            {ROLE_LABELS[member.memberRole]}
           </div>
         </div>
         {member.isOrgOwner && (

@@ -1,12 +1,13 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { createApolloClient, orgLink } from '@monorepo/react/shared/apollo';
+import { createApolloClient } from '@monorepo/react/shared/apollo';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
   UserProvider,
   createShelterTypePolicies,
 } from '@monorepo/react/shelter';
+import { orgLink } from '@monorepo/react/shelter-operator';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

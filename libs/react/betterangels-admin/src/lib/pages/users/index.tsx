@@ -11,8 +11,10 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useMemo, useRef, useState } from 'react';
 import {
   Ordering,
+  OrgRoleEnum,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  PermissionTemplateEnum,
   UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
@@ -30,18 +32,19 @@ type IProps = {
   className?: string;
 };
 
-type OrgRole = 'CASEWORKER' | 'MEMBER' | 'ORG_ADMIN' | 'ORG_SUPERUSER' | 'SHELTER_OPERATOR';
-
-const ROLE_LABELS: Record<OrgRole, string> = {
-  SHELTER_OPERATOR: 'Shelter Operator',
-  ORG_ADMIN: 'Org Admin',
-  ORG_SUPERUSER: 'Org Superuser',
-  CASEWORKER: 'Caseworker',
-  MEMBER: 'Member',
+const ROLE_LABELS: Record<string, string> = {
+  [PermissionTemplateEnum.Caseworker]: 'Caseworker',
+  [OrgRoleEnum.Admin]: 'Admin',
+  [OrgRoleEnum.Member]: 'Member',
+  [OrgRoleEnum.Superuser]: 'Superuser',
 };
 
-function humanizeRole(role: string): string {
-  return ROLE_LABELS[role as OrgRole] ?? role;
+function roleLabel(m: OrganizationMemberType): string {
+  const templates = (m.permissionTemplates ?? [])
+    .map((t) => ROLE_LABELS[t])
+    .filter(Boolean)
+    .join(', ');
+  return templates || ROLE_LABELS[m.memberRole];
 }
 
 const getFullName = (m: OrganizationMemberType): string =>
@@ -75,7 +78,7 @@ const COLUMNS: {
   {
     label: 'Job Role',
     field: 'memberRole',
-    render: (m) => humanizeRole(m.memberRole),
+    render: (m) => roleLabel(m),
   },
   { label: 'Email', field: 'email', render: (m) => m.email ?? '' },
   {
@@ -305,7 +308,7 @@ export default function Users(props: IProps) {
                         {member.firstName ?? ''} {member.lastName ?? ''}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {humanizeRole(member.memberRole)}
+                        {ROLE_LABELS[member.memberRole]}
                       </div>
                     </div>
                     {member.isOrgOwner && (

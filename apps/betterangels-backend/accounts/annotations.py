@@ -1,7 +1,10 @@
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Case, CharField, Exists, OuterRef, Q, Value, When
+from organizations.models import OrganizationOwner
+
 from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from django.db.models import Case, CharField, Exists, OuterRef, Value, When
-from organizations.models import OrganizationOwner
+from common.org_types import REGISTRY
 
 from .models import PermissionGroup
 
@@ -37,4 +40,21 @@ def annotate_is_org_owner(org_id: str) -> Exists:
             organization_id=org_id,
             organization_user__user=OuterRef("pk"),
         )
+    )
+
+
+def annotate_permission_templates(org_id: str) -> ArrayAgg:
+    """Return the user's invitable permission template names for *org_id*.
+
+    Filters to member-level templates only (the same set exposed by
+    ``PermissionTemplateEnum``), excluding org-level templates like
+    Org Admin / Org Superuser which are surfaced via ``member_role``.
+    """
+    return ArrayAgg(
+        "permission_groups__template__name",
+        filter=Q(
+            permission_groups__organization_id=org_id,
+            permission_groups__template__name__in=REGISTRY.invitable_template_names(),
+        ),
+        distinct=True,
     )

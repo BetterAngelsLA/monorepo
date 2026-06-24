@@ -2238,6 +2238,7 @@ export type OrganizationMemberType = {
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  permissionTemplates: Array<PermissionTemplateEnum>;
 };
 
 export type OrganizationMemberTypeOffsetPaginated = {

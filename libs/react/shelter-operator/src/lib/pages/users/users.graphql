@@ -21,6 +21,7 @@ query OrganizationMembers(
       middleName
       dateJoined
       isOrgOwner
+      permissionTemplates
     }
   }
 }
