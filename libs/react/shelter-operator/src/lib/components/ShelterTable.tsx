@@ -98,6 +98,7 @@ export function ShelterTable({
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (shelter) => shelter.name ?? 'N/A',
+        sortValue: (shelter) => shelter.name ?? '',
       },
       {
         key: 'capacity',
@@ -128,6 +129,7 @@ export function ShelterTable({
             </div>
           );
         },
+        sortValue: (shelter) => shelter.totalBeds ?? 0,
       },
       {
         key: 'tags',
@@ -142,6 +144,9 @@ export function ShelterTable({
         width: '0.8fr',
         cellClassName: 'text-gray-600',
         render: (shelter) => shelter.status,
+        sortValue: (shelter) => shelter.status,
+        filterValue: (shelter) => shelter.status,
+        autoFilterOptions: true,
       },
     ],
     []

@@ -12,7 +12,7 @@ const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
 ];
 
 export default function Home() {
-  const { organizations, activeOrg, hasPermission } = useActiveOrg();
+  const { organizations, activeOrg, can } = useActiveOrg();
 
   if (organizations.length === 0 || !activeOrg) {
     return (
@@ -21,7 +21,7 @@ export default function Home() {
   }
 
   const firstAllowed = permissionRoutes.find((r) =>
-    hasPermission(r.permission)
+    can(r.permission)
   );
 
   if (firstAllowed) return <Navigate to={firstAllowed.path} replace />;

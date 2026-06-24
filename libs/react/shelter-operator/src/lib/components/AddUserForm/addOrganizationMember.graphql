@@ -11,12 +11,10 @@ mutation AddOrganizationMember($data: OrgInvitationInput!) {
       id
       email
       firstName
-      isOrgOwner
       lastName
       memberRole
       middleName
       dateJoined
-      isOrgOwner
     }
   }
 }

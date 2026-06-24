@@ -5,9 +5,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import OrgRoleEnum
-from accounts.models import PermissionGroup
-from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
@@ -19,6 +16,10 @@ from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 from teams.permissions import TeamPermissions
+
+from accounts.enums import OrgRoleEnum
+from accounts.models import PermissionGroup
+from accounts.permissions import make_granted_permissions
 
 from .models import User
 from .permissions import UserOrganizationPermissions
@@ -256,6 +257,13 @@ class OrganizationMemberType(UserBaseType):
     def is_org_owner(self, info: Info) -> bool:
         """Whether this member is the organization owner."""
         return bool(getattr(self, "_is_org_owner", False))
+
+    @strawberry_django.field
+    def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:
+        raw = getattr(self, "_permission_templates", None)
+        if not raw:
+            return []
+        return [PermissionTemplateEnum(v) for v in raw.split(", ")]
 
 
 @strawberry_django.input(User, partial=True)

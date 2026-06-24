@@ -23,22 +23,21 @@ export function Table<T>({
   onPageChange,
   tableClassName = '',
 }: TableProps<T>): ReactElement {
+  const hasAction = !!action;
   return (
     <div className="overflow-x-auto w-full rounded-lg">
       <table className={`min-w-[800px] w-full text-left text-sm ${tableClassName}`}>
         <thead>
           <tr className="bg-primary-95">
-            {header.map((title, index) => {
-              const isLast = index === header.length - 1;
-              return (
+            {header.map((title, index) => (
               <th
                 key={index}
-                className={`text-sm py-4 px-8 font-normal whitespace-nowrap${isLast ? ' text-right' : ''}`}
+                className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap"
               >
                 {title}
               </th>
-              );
-            })}
+            ))}
+            {hasAction && <th className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap w-0" />}
           </tr>
         </thead>
         <tbody>
@@ -47,21 +46,19 @@ export function Table<T>({
               key={`${row}-${rowIndex}`}
               className="border-b border-neutral-90"
             >
-              {header.map((_, colIndex) => {
-                const isLast = colIndex === header.length - 1;
-                return (
-                <td key={colIndex} className={`px-8 py-4 whitespace-nowrap${isLast ? ' text-right' : ''}`}>
-                  {isLast ? (
-                    <div className="inline-flex items-center justify-end gap-3">
-                      <span>{renderCell(row, colIndex)}</span>
-                      {action && action(row)}
-                    </div>
-                  ) : (
-                    renderCell(row, colIndex)
-                  )}
+              {header.map((_, colIndex) => (
+                <td
+                  key={colIndex}
+                  className="px-4 md:px-8 py-4 whitespace-normal break-words overflow-hidden text-ellipsis max-w-[250px]"
+                >
+                  {renderCell(row, colIndex)}
                 </td>
-                );
-              })}
+              ))}
+              {hasAction && (
+                <td className="px-4 md:px-8 py-4 whitespace-nowrap w-0">
+                  {action!(row)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
