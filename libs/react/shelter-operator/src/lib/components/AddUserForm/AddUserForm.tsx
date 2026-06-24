@@ -155,13 +155,16 @@ export function AddUserForm(props: TProps) {
       <Controller
         name="permissionTemplate"
         control={control}
-        render={({ field }) => (
+        rules={{ required: 'Role is required.' }}
+        render={({ field, fieldState }) => (
           <Dropdown
             label="Role"
+            required
             options={ROLE_OPTIONS}
             value={ROLE_OPTIONS.find((o) => o.value === field.value) ?? null}
             onChange={(opt) => field.onChange(opt?.value ?? '')}
             disabled={disabled}
+            error={fieldState.error?.message}
           />
         )}
       />
