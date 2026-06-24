@@ -67,6 +67,13 @@ export function ActiveOrgProvider({
       console.error('Failed to read storage:', err);
     }
     setActiveOrgIdState(organizations[0]?.id);
+    if (organizations[0]?.id) {
+      try {
+        storage.setItem(storageKey, organizations[0].id);
+      } catch (err) {
+        console.error('Failed to persist org id:', err);
+      }
+    }
   }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeOrg = useMemo(

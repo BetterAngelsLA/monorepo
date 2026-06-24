@@ -50,6 +50,13 @@ export function ActiveOrgProvider({
       // storage may be unavailable
     }
     setActiveOrgIdState(organizations[0]?.id);
+    if (organizations[0]?.id) {
+      try {
+        storage.setItem(storageKey, organizations[0].id);
+      } catch {
+        // storage may be unavailable
+      }
+    }
     // Intentionally omitting activeOrgId from deps to avoid a re-validation
     // loop: this effect only needs to run when the organizations list changes
     // (e.g. after the user query loads), not on every activeOrgId update.
