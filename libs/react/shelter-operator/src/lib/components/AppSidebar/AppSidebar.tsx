@@ -3,6 +3,8 @@ import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
+import { useActiveOrg } from '../../providers';
 import {
   isShelterManageRoute,
   isShelterRoute,
@@ -23,6 +25,10 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
   const { shelterId } = useParams<{ shelterId: string }>();
+  const { hasPermission } = useActiveOrg();
+  const canViewMembers = hasPermission(
+    UserOrganizationPermissions.ViewOrgMembers
+  );
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
@@ -46,13 +52,15 @@ export function AppSidebar(props: IProps) {
           Dashboard
         </Sidebar.Link>
 
-        <Sidebar.Link
-          to={paths.users}
-          isActive={location.pathname === paths.users}
-          collapsed={!isOpen}
-        >
-          Users
-        </Sidebar.Link>
+        {canViewMembers && (
+          <Sidebar.Link
+            to={paths.users}
+            isActive={location.pathname === paths.users}
+            collapsed={!isOpen}
+          >
+            Users
+          </Sidebar.Link>
+        )}
 
         {isShelterRoute(location.pathname) && shelterId && (
           <>

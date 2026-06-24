@@ -184,16 +184,19 @@ class ReferralRequirementChoices(models.TextChoices):
 @strawberry.enum
 class BedStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    IN_TURNAROUND = "in_turnaround", _("In Turnaround")
     OCCUPIED = "occupied", _("Occupied")
-    RESERVED = "reserved", _("Reserved")
     OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
+    RESERVED = "reserved", _("Reserved")
 
 
 @strawberry.enum
 class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    IN_TURNAROUND = "in_turnaround", _("In Turnaround")
+    OCCUPIED = "occupied", _("Occupied")
+    OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
     RESERVED = "reserved", _("Reserved")
-    NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
 
 
 @strawberry.enum
@@ -214,7 +217,6 @@ class MedicalNeedChoices(models.TextChoices):
 
 @strawberry.enum
 class ReservationStatusChoices(models.TextChoices):
-    OPEN = "open", _("Open")
     CONFIRMED = "confirmed", _("Confirmed")
     CHECKED_IN = "checked_in", _("Checked In")
     COMPLETED = "completed", _("Completed")

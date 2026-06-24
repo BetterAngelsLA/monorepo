@@ -1,11 +1,11 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import room_get, room_queryset, shelter_get
-from common.utils import get_by_pk_or_not_found
 from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -36,7 +36,6 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
-    raw_occupants = m2m_data.pop("occupants", [])
 
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
@@ -45,11 +44,6 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     room.full_clean()
     room.save()
     _set_m2m_from_enums(room, m2m_data)
-    if raw_occupants:
-        room.occupants.set(raw_occupants)
-
-    # TODO: Assign perms here. See: SDB-178
-
     return room
 
 
@@ -128,6 +122,9 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
     """Delete rooms and return the deleted IDs.
 
     Scopes to *organization_id* where *user* is a member.
+
+    Unmatched or inaccessible IDs are silently skipped; only successfully
+    deleted IDs are returned.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.

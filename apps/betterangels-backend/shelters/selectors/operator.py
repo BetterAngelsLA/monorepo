@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
-    from shelters.models import Bed, Room, Shelter
+    from shelters.models import Bed, Reservation, Room, Shelter
 
 
 # ── List filters ──────────────────────────────────────────────────────────────
@@ -122,12 +122,45 @@ def bed_queryset(
         from shelters.models import Bed
 
         queryset = Bed.objects.all()
+
     return permissioned_queryset(
         queryset,
         user=user,
         organization_id=organization_id,
         perms=perms,
         organization_field="shelter__organization_id",
+    )
+
+
+def reservation_queryset(
+    queryset: "QuerySet[Reservation] | None" = None,
+    *,
+    user: "User",
+    organization_id: str,
+    perms: list[str] | None = None,
+) -> "QuerySet[Reservation]":
+    """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
+
+    Reservation links to a shelter via two optional paths
+    (``bed__shelter`` and ``room__shelter``), so we pass
+    ``organization_fields`` to ``permissioned_queryset`` to check both.
+
+    Falls back to ``Reservation.objects.all()`` when *queryset* is omitted.
+    """
+    if queryset is None:
+        from shelters.models import Reservation
+
+        queryset = Reservation.objects.all()
+
+    return permissioned_queryset(
+        queryset,
+        user=user,
+        organization_id=organization_id,
+        perms=perms,
+        organization_fields=[
+            "bed__shelter__organization_id",
+            "room__shelter__organization_id",
+        ],
     )
 
 
@@ -198,4 +231,30 @@ def bed_get(
             perms=[permission] if permission else None,
         ),
         pk=bed_id,
+    )
+
+
+def reservation_get(
+    *,
+    user: "User",
+    organization_id: str,
+    reservation_id: int | str,
+    permission: str | None = None,
+) -> "Reservation":
+    """Return the reservation scoped to *organization_id* for *user*.
+
+    Raises:
+        ``ObjectDoesNotExist`` when no matching reservation exists in the
+        organization or the user lacks the required permission.
+    """
+    from shelters.models import Reservation
+
+    return get_by_pk_or_not_found(
+        reservation_queryset(
+            Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
+            user=user,
+            organization_id=organization_id,
+            perms=[permission] if permission else None,
+        ),
+        pk=reservation_id,
     )

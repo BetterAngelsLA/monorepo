@@ -1,6 +1,7 @@
 import { SearchIcon } from '@monorepo/react/icons';
+import { useDebounce } from '@monorepo/react/shared';
 import { TPlacePrediction } from '@monorepo/shared/places';
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Input } from '../Input';
 import { LA_COUNTY_CENTER } from '../Map/constants.maps';
 import { usePlacesClient } from './hooks/usePlacesClient';
@@ -34,13 +35,7 @@ export function AddressAutocomplete(props: TProps) {
   const places = usePlacesClient();
   const [inputValue, setInputValue] = useState('');
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
+  const debouncedInput = useDebounce(inputValue, DEBOUNCE_MS);
 
   const fetchPredictions = useCallback(
     async (input: string) => {
@@ -71,15 +66,12 @@ export function AddressAutocomplete(props: TProps) {
     [countryRestrictions, places]
   );
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
+  useEffect(() => {
+    fetchPredictions(debouncedInput);
+  }, [debouncedInput, fetchPredictions]);
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(
-      () => fetchPredictions(value),
-      DEBOUNCE_MS
-    );
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
   };
 
   const handleSelect = useCallback(
