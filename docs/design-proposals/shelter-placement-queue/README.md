@@ -1,5 +1,15 @@
 # Shelter Placement Queue
 
+## TL;DR
+
+> **What:** A global placement queue where caseworkers refer homeless clients, shelters see only compatible matches, and shelters can claim clients for placement — all driven by a shared eligibility criteria system.
+
+> **Why:** Today, caseworkers must know *which* shelter has space for a client. Shelters have no way to discover compatible clients waiting for placement. This creates friction, slows placements, and leaves beds unfilled while clients wait.
+
+> **How:** A single new model (`EligibilityCriterion`) provides a shared vocabulary of client attributes. Criteria are derived from client profile fields once at referral creation and frozen on the referral. Shelters are matched against referrals via their *existing* acceptance M2Ms (demographics, accessibility, etc.) using a simple lookup dict — no data duplication, no sync issues. Shelters claim clients from the queue in a two-step process (accept → later create Reservation), with optional email digest notifications.
+
+---
+
 ## Purpose
 
 Enable caseworkers to refer clients into a **global placement queue** where shelters can discover and claim compatible clients for placement — without the caseworker needing to know which shelter has availability.
