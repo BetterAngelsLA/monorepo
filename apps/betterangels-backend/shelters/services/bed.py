@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import bed_get, bed_queryset, shelter_get
-from common.utils import get_by_pk_or_not_found
 from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -97,6 +97,9 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
     """Delete beds and return the deleted IDs.
 
     Scopes to *organization_id* where *user* is a member.
+
+    Unmatched or inaccessible IDs are silently skipped; only successfully
+    deleted IDs are returned.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.

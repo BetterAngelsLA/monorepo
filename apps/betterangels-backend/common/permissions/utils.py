@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import reduce
+from operator import or_
 from typing import Any, Protocol, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
@@ -225,6 +227,28 @@ def get_current_organization(info: Info) -> str:
 _T = TypeVar("_T", bound=Model)
 
 
+def _org_perm_exists_across_fields(
+    user: AbstractBaseUser,
+    app_label: str,
+    codename: str,
+    fields: list[str],
+) -> Q:
+    """Return a ``Q`` checking the user holds a permission on any of the org fields."""
+    return reduce(
+        or_,
+        (
+            Q(
+                Exists(
+                    Organization.objects.filter(pk=OuterRef(f))
+                    .filter(permission_groups__group__user=user)
+                    .filter(_perm_q(app_label, codename))
+                )
+            )
+            for f in fields
+        ),
+    )
+
+
 def permissioned_queryset(
     queryset: "QuerySet[_T]",
     *,
@@ -233,6 +257,7 @@ def permissioned_queryset(
     perms: Sequence[str] | None = None,
     any_perm: bool = True,
     organization_field: str = "organization_id",
+    organization_fields: list[str] | None = None,
 ) -> "QuerySet[_T]":
     """Scope *queryset* to records in *organization_id* where *user* belongs to the org.
 
@@ -259,50 +284,37 @@ def permissioned_queryset(
         The Django field lookup path to the owning organization.
         Default ``"organization_id"`` works for models with a direct FK.
         Use ``"shelter__organization_id"`` for indirect (Bed, Room).
+        Ignored when *organization_fields* is provided.
+    organization_fields : list[str] | None
+        Multiple field paths (OR'd together). Use when a model reaches
+        its organization through more than one path (e.g. Reservation
+        via ``bed__shelter__organization_id`` or
+        ``room__shelter__organization_id``). Takes precedence over
+        *organization_field*. Default ``None``.
 
     Returns
     -------
     QuerySet
         The filtered queryset.
     """
-    queryset = queryset.filter(**{organization_field: organization_id})
+    fields = organization_fields or [organization_field]
+
+    queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
 
     if perms is None:
-        # Org membership only — no permission check
         queryset = queryset.filter(
-            Exists(
-                Organization.objects.filter(
-                    pk=OuterRef(organization_field),
-                    users=user,
-                )
-            )
+            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields))
         )
     elif any_perm:
         q = Q()
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
-            q |= Q(
-                Exists(
-                    Organization.objects.filter(
-                        pk=OuterRef(organization_field),
-                    )
-                    .filter(permission_groups__group__user=user)
-                    .filter(_perm_q(app_label, codename))
-                )
-            )
+            q |= _org_perm_exists_across_fields(user, app_label, codename, fields)
         queryset = queryset.filter(q)
     else:
         for perm_str in perms:
             app_label, codename = perm_str.split(".", 1)
-            queryset = queryset.filter(
-                Exists(
-                    Organization.objects.filter(
-                        pk=OuterRef(organization_field),
-                    )
-                    .filter(permission_groups__group__user=user)
-                    .filter(_perm_q(app_label, codename))
-                )
-            )
+            queryset = queryset.filter(_org_perm_exists_across_fields(user, app_label, codename, fields))
 
     return queryset
 

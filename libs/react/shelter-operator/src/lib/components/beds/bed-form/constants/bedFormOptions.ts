@@ -7,9 +7,10 @@ import { toDropdownOptions } from '../../../base-ui/dropdown';
 
 const BED_STATUS_LABELS: Record<BedStatusChoices, string> = {
   [BedStatusChoices.Available]: 'Available',
+  [BedStatusChoices.InTurnaround]: 'In Turnaround',
   [BedStatusChoices.Occupied]: 'Occupied',
+  [BedStatusChoices.OutOfService]: 'Out of Service',
   [BedStatusChoices.Reserved]: 'Reserved',
-  [BedStatusChoices.OutOfService]: 'Out-of-Service',
 };
 
 const BED_TYPE_LABELS: Record<BedTypeChoices, string> = {
