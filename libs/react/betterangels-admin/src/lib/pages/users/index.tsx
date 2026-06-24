@@ -308,7 +308,7 @@ export default function Users(props: IProps) {
                         {member.firstName ?? ''} {member.lastName ?? ''}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {ROLE_LABELS[member.memberRole]}
+                        {roleLabel(member)}
                       </div>
                     </div>
                     {member.isOrgOwner && (

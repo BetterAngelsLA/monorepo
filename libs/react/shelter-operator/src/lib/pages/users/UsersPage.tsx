@@ -410,7 +410,7 @@ function MemberCard({
             {getFullName(member)}
           </div>
           <div className="text-xs text-[#747A82] truncate">
-            {ROLE_LABELS[member.memberRole]}
+            {roleLabel(member)}
           </div>
         </div>
         {member.isOrgOwner && (
