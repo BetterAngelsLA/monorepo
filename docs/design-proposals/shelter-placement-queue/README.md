@@ -20,15 +20,6 @@ Caseworkers referring homeless clients to shelters face two unknowns:
 
 Meanwhile, shelters have beds sitting empty and no way to proactively discover compatible clients waiting for placement.
 
-### Current State
-
-| Today | Pain point |
-|---|---|
-| Referrals must target a specific shelter | Caseworker needs encyclopedic knowledge of every shelter's profile |
-| No matching mechanism exists | Compatibility checks are manual and ad-hoc |
-| No queue concept | Clients fall through the cracks if the first shelter says no |
-| Shelters are passive | They wait for referrals to arrive; can't pull from a pool |
-
 ---
 
 ## The Proposal
@@ -41,29 +32,13 @@ A **global placement queue** with three core ideas:
 
 3. **Shelters pull from the queue** — Shelter operators view matching clients, claim them, and later complete placement via the existing Reservation workflow. Optional email digests keep shelters informed of new matches.
 
-### What changes
-
-| Component | Change |
-|---|---|
-| `Referral` model | New `QUEUED` status, new `criteria` M2M |
-| New: `EligibilityCriterion` | Shared vocabulary of matchable attributes (veteran, senior, family, etc.) |
-| New: `QueueNotificationSubscription` | Per-shelter email digest settings |
-| `shelter-web` | New Queue page + Notification Settings page |
-| `betterangels` mobile | Future: caseworker referral creation |
-
-### What does NOT change
-
-- `ClientProfile` — no new fields, no derived data
-- `Shelter` existing M2Ms — demographics, accessibility, etc. remain the source of truth
-- `Reservation` workflow — placements still go through the existing system
-- `betterangels-admin` — no changes
-
 ---
 
 ## Detailed Design
 
 | Document | Contents |
 |---|---|
+| [`scope.md`](./scope.md) | What changes, what stays the same, migration impact |
 | [`architecture.md`](./architecture.md) | Core models, matching engine, acceptance workflow, data flow diagrams |
 | [`api.md`](./api.md) | GraphQL queries, mutations, types, and schema |
 | [`frontend.md`](./frontend.md) | shelter-web pages, routes, UX flow; mobile app referral creation; future shelter intake |
