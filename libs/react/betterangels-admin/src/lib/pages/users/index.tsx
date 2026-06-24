@@ -155,7 +155,6 @@ export default function Users(props: IProps) {
     useOrganizationMembers(organizationId, page, sort, search);
 
   const parentCss = [
-    'flex',
     'flex-1',
     'min-h-0',
     'overflow-x-auto',
