@@ -7,8 +7,6 @@ export type SidebarVariant = 'basic' | 'decorated';
 // ─── Theme shape ────────────────────────────────────────────────────────────
 
 export interface SidebarTheme {
-  /** Visual variant: 'basic' hides marker + active background, 'decorated' shows them */
-  variant: SidebarVariant;
   /** Font color for inactive items */
   fontColor: string;
   /** Base color for active/selected state. fontColorActive and markerColor fall back to this. */
@@ -23,46 +21,63 @@ export interface SidebarTheme {
   markerColor?: string;
 }
 
+// ─── Internal context type (adds variant that Sidebar injects) ──────────────
+
+interface SidebarContextValue extends SidebarTheme {
+  variant: SidebarVariant;
+}
+
 // ─── Defaults ───────────────────────────────────────────────────────────────
 
-export const DEFAULT_SIDEBAR_THEME: SidebarTheme = {
-  variant: 'decorated',
+const DEFAULT_SIDEBAR_THEME: SidebarTheme = {
   fontColor: 'currentColor',
   activeColor: 'currentColor',
   bgHover: 'var(--color-neutral-98)',
   bgActive: 'var(--color-neutral-98)',
 };
 
+const DEFAULT_SIDEBAR_CONTEXT_VALUE: SidebarContextValue = {
+  ...DEFAULT_SIDEBAR_THEME,
+  variant: 'decorated',
+};
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-export function mergeSidebarTheme(
-  base: SidebarTheme,
-  overrides?: Partial<SidebarTheme>
-): SidebarTheme {
-  return { ...base, ...overrides };
+function mergeSidebarTheme(
+  base: SidebarContextValue,
+  theme?: Partial<SidebarTheme>,
+  variant?: SidebarVariant
+): SidebarContextValue {
+  return { ...base, ...theme, variant: variant ?? base.variant };
 }
 
 // ─── Context ────────────────────────────────────────────────────────────────
 
-const SidebarThemeContext = createContext<SidebarTheme>(DEFAULT_SIDEBAR_THEME);
+const SidebarThemeContext = createContext<SidebarContextValue>(
+  DEFAULT_SIDEBAR_CONTEXT_VALUE
+);
 
 export function SidebarThemeProvider({
   theme,
+  variant,
   children,
 }: {
   theme?: Partial<SidebarTheme>;
+  variant: SidebarVariant;
   children: ReactNode;
 }) {
   const parent = useContext(SidebarThemeContext);
 
   return (
-    <SidebarThemeContext.Provider value={mergeSidebarTheme(parent, theme)}>
+    <SidebarThemeContext.Provider
+      value={mergeSidebarTheme(parent, theme, variant)}
+    >
       {children}
     </SidebarThemeContext.Provider>
   );
 }
 
 /** Hook to read the current sidebar theme */
-export function useSidebarTheme(): SidebarTheme {
+export function useSidebarTheme(): SidebarContextValue {
   return useContext(SidebarThemeContext);
 }

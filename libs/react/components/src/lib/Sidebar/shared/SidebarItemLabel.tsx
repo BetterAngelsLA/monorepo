@@ -51,7 +51,8 @@ export function SidebarItemLabel(props: TProps) {
     'px-2',
     'truncate',
     'flex-1',
-    isActive ? 'font-semibold' : 'font-normal',
+    theme.variant === 'decorated' ? 'font-normal' : 'font-medium',
+    isActive && theme.variant === 'decorated' && 'font-semibold',
   ];
 
   const iconWrapperCss = [

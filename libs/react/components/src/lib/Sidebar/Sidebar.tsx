@@ -82,7 +82,7 @@ export function Sidebar(props: TProps) {
   ];
 
   return (
-    <SidebarThemeProvider theme={{ variant, ...theme }}>
+    <SidebarThemeProvider theme={theme} variant={variant}>
       <div className={mergeCss(parentCss)}>
         {collapsible && (
           <SidebarToggleBtn
