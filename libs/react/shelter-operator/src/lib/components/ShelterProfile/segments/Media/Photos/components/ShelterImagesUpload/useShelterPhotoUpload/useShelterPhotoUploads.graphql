@@ -1,0 +1,43 @@
+mutation GenerateShelterPhotoUploads($data: GenerateShelterPhotoUploadsInput!) {
+  generateShelterPhotoUploads(data: $data) {
+    __typename
+    ... on AuthorizedPresignedS3UploadsType {
+      uploads {
+        refId
+        url
+        fields
+        presignedKey
+        uploadToken
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        message
+      }
+    }
+  }
+}
+
+mutation ResolveShelterPhotoUploads($data: ResolveShelterPhotoUploadsInput!) {
+  resolveShelterPhotoUploads(data: $data) {
+    __typename
+    ... on ShelterPhotoUploadsType {
+      photos {
+        id
+        type
+        createdAt
+        file {
+          name
+          url
+          urlThumb: url(processingOptions: "rs:fit:400:400/f:jpg")
+          urlLg: url(processingOptions: "rs:fit:2400:2000/f:jpg")
+        }
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        message
+      }
+    }
+  }
+}
