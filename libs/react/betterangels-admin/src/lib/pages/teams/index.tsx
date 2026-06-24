@@ -57,7 +57,7 @@ const COLUMNS: {
 
 export default function Teams(props: IProps) {
   const { className = '' } = props;
-  const { can } = useActiveOrg();
+  const { hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -202,7 +202,7 @@ export default function Teams(props: IProps) {
         <div>
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {can(TeamPermissions.Add) && (
+        {hasPermission(TeamPermissions.Add) && (
           <button
             onClick={() =>
               showDrawer({
@@ -224,7 +224,7 @@ export default function Teams(props: IProps) {
       </div>
 
       <div className={mergeCss(parentCss)}>
-        {can(TeamPermissions.View) ? (
+        {hasPermission(TeamPermissions.View) ? (
           <Table<TeamType>
             tableClassName="table-fixed"
             action={(row) => {
