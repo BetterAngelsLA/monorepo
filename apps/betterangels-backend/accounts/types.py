@@ -260,8 +260,10 @@ class OrganizationMemberType(UserBaseType):
 
     @strawberry_django.field
     def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:
-        raw = getattr(self, "_permission_templates", None) or []
-        return [PermissionTemplateEnum(v) for v in raw]
+        raw = getattr(self, "_permission_templates", None)
+        if not raw:
+            return []
+        return [PermissionTemplateEnum(v) for v in raw.split(", ")]
 
 
 @strawberry_django.input(User, partial=True)

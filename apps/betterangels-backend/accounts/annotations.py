@@ -1,5 +1,5 @@
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Case, CharField, Exists, OuterRef, Q, Value, When
+from django.contrib.postgres.aggregates import StringAgg
+from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When
 from organizations.models import OrganizationOwner
 
 from accounts.enums import OrgRoleEnum
@@ -43,18 +43,27 @@ def annotate_is_org_owner(org_id: str) -> Exists:
     )
 
 
-def annotate_permission_templates(org_id: str) -> ArrayAgg:
-    """Return the user's invitable permission template names for *org_id*.
+def annotate_permission_templates(org_id: str) -> Subquery:
+    """Return comma-separated member-level permission template names for *org_id*.
 
     Filters to member-level templates only (the same set exposed by
     ``PermissionTemplateEnum``), excluding org-level templates like
     Org Admin / Org Superuser which are surfaced via ``member_role``.
+
+    Uses ``Subquery`` + ``StringAgg`` because ``User`` has no direct FK
+    to ``PermissionGroup`` — the path is ``User ↔ Group ↔ PermissionGroup``.
     """
-    return ArrayAgg(
-        "permission_groups__template__name",
-        filter=Q(
-            permission_groups__organization_id=org_id,
-            permission_groups__template__name__in=REGISTRY.invitable_template_names(),
-        ),
-        distinct=True,
+    return Subquery(
+        PermissionGroup.objects.filter(
+            organization_id=org_id,
+            group__user=OuterRef("pk"),
+            template__name__in=REGISTRY.invitable_template_names(),
+        )
+        .values("group__user")
+        .annotate(
+            names=StringAgg(
+                "template__name", ", ", distinct=True, ordering="template__name"
+            )
+        )
+        .values("names")
     )
