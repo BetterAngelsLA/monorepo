@@ -31,10 +31,8 @@ export function AddUserForm(props: TProps) {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const {
-    register,
     control,
     handleSubmit,
-    formState: { errors },
   } = useForm<TFormSchema>({
     resolver: zodResolver(FormSchema),
     defaultValues,
@@ -104,30 +102,54 @@ export function AddUserForm(props: TProps) {
         </div>
       )}
 
-      <Input
-        {...register('firstName')}
-        disabled={disabled}
-        label="First Name"
-        placeholder="Enter first name"
-        dataType="string"
+      <Controller
+        name="firstName"
+        control={control}
+        render={({ field }) => (
+          <Input
+            label="First Name"
+            placeholder="Enter first name"
+            dataType="string"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            disabled={disabled}
+          />
+        )}
       />
 
-      <Input
-        {...register('lastName')}
-        disabled={disabled}
-        label="Last Name"
-        placeholder="Enter last name"
-        dataType="string"
+      <Controller
+        name="lastName"
+        control={control}
+        render={({ field }) => (
+          <Input
+            label="Last Name"
+            placeholder="Enter last name"
+            dataType="string"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            disabled={disabled}
+          />
+        )}
       />
 
-      <Input
-        {...register('email')}
-        disabled={disabled}
-        required
-        label="Email Address"
-        placeholder="Enter email address"
-        dataType="email"
-        error={errors?.email?.message}
+      <Controller
+        name="email"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Input
+            label="Email Address"
+            placeholder="Enter email address"
+            dataType="email"
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            disabled={disabled}
+            required
+            error={fieldState.error?.message}
+          />
+        )}
       />
 
       <Controller
