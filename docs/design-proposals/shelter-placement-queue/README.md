@@ -10,30 +10,57 @@
 
 ---
 
-## Purpose
+## The Problem
 
-Enable caseworkers to refer clients into a **global placement queue** where shelters can discover and claim compatible clients for placement — without the caseworker needing to know which shelter has availability.
+Caseworkers referring homeless clients to shelters face two unknowns:
 
-## Problem
+1. **Which shelter can take this client?** A 62-year-old female veteran with a service dog needs a shelter that accepts seniors, women, veterans, and pets. The caseworker has to manually match these needs against shelters they're familiar with.
 
-Currently, caseworkers must know both *which* shelter to refer to and whether that shelter has space. There is no mechanism for:
+2. **Does that shelter have space?** Even if the caseworker knows a compatible shelter, they don't know if beds are available.
 
-1. **Caseworkers** to submit a client into a general pool for shelter matching
-2. **Shelters** to discover and claim compatible clients from a queue
-3. **Shelters** to receive notifications about clients matching their acceptance criteria
+Meanwhile, shelters have beds sitting empty and no way to proactively discover compatible clients waiting for placement.
 
-## Decisions at a Glance
+### Current State
 
-| # | Decision | Choice |
-|---|---|---|
-| 1 | Referral model | **Hybrid** — open (`QUEUED`, shelter=null) + targeted (`PENDING`, shelter set) |
-| 2 | Matching engine | **EligibilityCriterion** on Referral only, shelters use existing M2Ms with a lookup dict |
-| 3 | Acceptance workflow | **Two-step** — shelter claims (ACCEPTED) → later creates Reservation |
-| 4 | Notifications | **QueueNotificationSubscription** model — daily/weekly/on-demand email digests |
-| 5 | Frontend | **shelter-web** operator portal (Queue page, Notification Settings); **betterangels** mobile app (referral creation, role-based); future shelter intake |
-| 6 | Permissions | **Global queue** — attribute-filtered shelter views, no org silos |
+| Today | Pain point |
+|---|---|
+| Referrals must target a specific shelter | Caseworker needs encyclopedic knowledge of every shelter's profile |
+| No matching mechanism exists | Compatibility checks are manual and ad-hoc |
+| No queue concept | Clients fall through the cracks if the first shelter says no |
+| Shelters are passive | They wait for referrals to arrive; can't pull from a pool |
 
-## Documents
+---
+
+## The Proposal
+
+A **global placement queue** with three core ideas:
+
+1. **Caseworkers refer clients into a shared pool** — optionally targeting a specific shelter, or leaving it open for any compatible shelter to claim.
+
+2. **Matching is automated** — Client profile fields are mapped to eligibility criteria at referral time. Shelters are matched based on their existing acceptance attributes. Shelters only see clients compatible with who they serve.
+
+3. **Shelters pull from the queue** — Shelter operators view matching clients, claim them, and later complete placement via the existing Reservation workflow. Optional email digests keep shelters informed of new matches.
+
+### What changes
+
+| Component | Change |
+|---|---|
+| `Referral` model | New `QUEUED` status, new `criteria` M2M |
+| New: `EligibilityCriterion` | Shared vocabulary of matchable attributes (veteran, senior, family, etc.) |
+| New: `QueueNotificationSubscription` | Per-shelter email digest settings |
+| `shelter-web` | New Queue page + Notification Settings page |
+| `betterangels` mobile | Future: caseworker referral creation |
+
+### What does NOT change
+
+- `ClientProfile` — no new fields, no derived data
+- `Shelter` existing M2Ms — demographics, accessibility, etc. remain the source of truth
+- `Reservation` workflow — placements still go through the existing system
+- `betterangels-admin` — no changes
+
+---
+
+## Detailed Design
 
 | Document | Contents |
 |---|---|
@@ -42,21 +69,3 @@ Currently, caseworkers must know both *which* shelter to refer to and whether th
 | [`frontend.md`](./frontend.md) | shelter-web pages, routes, UX flow; mobile app referral creation; future shelter intake |
 | [`notifications.md`](./notifications.md) | Email subscription model, Celery task, digest format |
 | [`alternatives.md`](./alternatives.md) | Options evaluated and rationale for the chosen approach |
-
-## Quick Reference
-
-```
-CASEWORKER                      GLOBAL QUEUE                      SHELTER
-──────────                      ────────────                      ───────
-
-Refer client ────►         All open referrals               Shelter sees only
-(shelter=null,              waiting for match               compatible clients
- status=QUEUED)                                              (criteria overlap)
-                                     │
-                           Shelter clicks "Accept"
-                                     │
-                                     ▼
-                           Client claimed
-                           Removed from queue
-                           Reservation created later
-```
