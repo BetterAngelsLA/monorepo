@@ -2,6 +2,8 @@
  * S3 upload utilities for direct client-to-S3 file uploads via presigned POSTs.
  */
 
+import { parseS3Error } from './s3Errors';
+
 export type PresignedPostFields = Record<string, string>;
 
 export interface PresignedPostPayload {
@@ -68,14 +70,5 @@ export async function uploadFileToS3WithPresignedPost(
     return { key: presignedPost.key };
   }
 
-  const errorText = await response.text();
-
-  throw new Error(
-    [
-      'S3 upload failed',
-      `status=${response.status}`,
-      `statusText=${response.statusText}`,
-      `body=${errorText}`,
-    ].join(' ')
-  );
+  throw new Error(parseS3Error(new Error(await response.text())));
 }

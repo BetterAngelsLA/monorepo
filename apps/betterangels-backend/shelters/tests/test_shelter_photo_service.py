@@ -11,6 +11,7 @@ from shelters.models import ShelterPhoto
 from shelters.services.shelter_photo import (
     ALLOWED_CONTENT_TYPES,
     SERVICE_NAME,
+    SHELTER_PHOTO_MAX_FILE_SIZE,
     UPLOAD_PATH,
     _validate_content_type,
     create_presigned_uploads,
@@ -113,6 +114,7 @@ class CreatePresignedUploadsTest(TestCase):
                     "filename": "photo.jpg",
                     "content_type": "image/jpeg",
                     "upload_path": UPLOAD_PATH,
+                    "max_file_size": SHELTER_PHOTO_MAX_FILE_SIZE,
                 }
             ]
         )

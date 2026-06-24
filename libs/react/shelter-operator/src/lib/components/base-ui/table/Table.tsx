@@ -1,42 +1,9 @@
 import { mergeCss } from '@monorepo/react/shared';
-import type { CSSProperties, ReactNode } from 'react';
-import {
-  TableRow,
-  type TableRowCell,
-  type TableRowClickHandler,
-} from './TableRow';
-
-export type TableColumn<TItem> = {
-  key: string;
-  label: ReactNode;
-  width?: string;
-  headerClassName?: string;
-  cellClassName?: string;
-  render: (item: TItem) => ReactNode;
-};
-
-type TableProps<TItem, TRowObject = TItem> = {
-  columns: TableColumn<TItem>[];
-  rows: TItem[];
-  getRowKey: (item: TItem, index: number) => string;
-  getRowObject?: (item: TItem, index: number) => TRowObject;
-  getRowSlot?: (rowObject: TRowObject, item: TItem, index: number) => ReactNode;
-  trailingHeader?: ReactNode;
-  trailingColumnWidth?: string;
-  onRowClick?: TableRowClickHandler<TRowObject>;
-  onDelete?: (rowObject: TRowObject, rowIndex: number) => void;
-  loading?: boolean;
-  loadingState?: ReactNode;
-  emptyState?: ReactNode;
-  wrapperClassName?: string;
-  headerClassName?: string;
-  headerInsetClassName?: string;
-  rowClassName?: string;
-  rowInsetClassName?: string;
-  tableStyle?: CSSProperties;
-  headerStyle?: CSSProperties;
-  rowStyle?: CSSProperties;
-};
+import { useCallback, useState } from 'react';
+import { ColumnHeader } from './header/ColumnHeader';
+import { useTableSortFilter } from './header/useTableSortFilter';
+import { TableRow, type TableRowCell } from './TableRow';
+import type { TableProps } from './types';
 
 const TableBase = <TItem, TRowObject = TItem>({
   columns,
@@ -59,10 +26,44 @@ const TableBase = <TItem, TRowObject = TItem>({
   tableStyle,
   headerStyle,
   rowStyle,
+  sortColumn,
+  sortDirection,
+  onSortChange,
+  filters: controlledFilters,
+  onFilterChange,
 }: TableProps<TItem, TRowObject>) => {
+  const {
+    visibleRows,
+    sortColumn: activeSortColumn,
+    sortDirection: activeSortDirection,
+    handleSortToggle,
+    filters,
+    handleFilterChange,
+    resolvedFilterOptions,
+  } = useTableSortFilter({
+    columns,
+    rows,
+    sortColumn,
+    sortDirection,
+    onSortChange,
+    filters: controlledFilters,
+    onFilterChange,
+  });
+
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+
+  const handleClearFilter = useCallback(
+    (columnKey: string) => {
+      handleFilterChange(columnKey, '');
+      setOpenFilterColumn(null);
+    },
+    [handleFilterChange]
+  );
+
   const dataTemplateColumns = columns
     .map((column) => column.width ?? '1fr')
     .join(' ');
+
   const hasTrailingColumn = !!onDelete || !!getRowSlot || !!trailingHeader;
   const templateColumns = hasTrailingColumn
     ? `${dataTemplateColumns} ${trailingColumnWidth}`
@@ -71,10 +72,7 @@ const TableBase = <TItem, TRowObject = TItem>({
   return (
     <div
       role="table"
-      className={mergeCss([
-        'bg-white rounded-2xl overflow-hidden w-full',
-        wrapperClassName,
-      ])}
+      className={mergeCss(['bg-white rounded-2xl w-full', wrapperClassName])}
       style={tableStyle}
     >
       <div
@@ -87,16 +85,19 @@ const TableBase = <TItem, TRowObject = TItem>({
         style={{ gridTemplateColumns: templateColumns, ...headerStyle }}
       >
         {columns.map((column) => (
-          <div
-            role="columnheader"
+          <ColumnHeader
             key={column.key}
-            className={mergeCss([
-              'text-left justify-self-start',
-              column.headerClassName,
-            ])}
-          >
-            {column.label}
-          </div>
+            column={column}
+            activeSortColumn={activeSortColumn}
+            activeSortDirection={activeSortDirection}
+            onSortToggle={handleSortToggle}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilter={handleClearFilter}
+            openFilterColumn={openFilterColumn}
+            setOpenFilterColumn={setOpenFilterColumn}
+            filterOptions={resolvedFilterOptions[column.key]}
+          />
         ))}
         {hasTrailingColumn && (
           <div aria-hidden="true" className="justify-self-end">
@@ -107,10 +108,10 @@ const TableBase = <TItem, TRowObject = TItem>({
 
       {loading && loadingState}
 
-      {!loading && rows.length === 0 && emptyState}
+      {!loading && visibleRows.length === 0 && emptyState}
 
       {!loading &&
-        rows.map((item, index) => {
+        visibleRows.map((item, index) => {
           const rowObject = getRowObject
             ? getRowObject(item, index)
             : (item as unknown as TRowObject);

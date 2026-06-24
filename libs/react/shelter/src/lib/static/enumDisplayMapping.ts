@@ -9,6 +9,7 @@ import {
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
+  ShelterPhotoTypeChoices,
   ShelterProgramChoices,
   SpecialSituationRestrictionChoices,
   StatusChoices,
@@ -187,6 +188,13 @@ export const enumDisplayVaccinationRequirementChoices: {
   [VaccinationRequirementChoices.Tb]: 'TB',
   [VaccinationRequirementChoices.Flu]: 'Flu',
   [VaccinationRequirementChoices.Covid_19]: 'COVID-19',
+};
+
+export const enumDisplayShelterPhotoTypeChoices: {
+  [key in ShelterPhotoTypeChoices]: string;
+} = {
+  [ShelterPhotoTypeChoices.Interior]: 'Interior',
+  [ShelterPhotoTypeChoices.Exterior]: 'Exterior',
 };
 
 /*
