@@ -1,12 +1,10 @@
-import { localStorageAdapter, StorageAdapter } from '@monorepo/react/shared';
+import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
+import { filter, isArray, pipe, some, values } from 'remeda';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import ActiveOrgContext, {
+  PermissionEnum,
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
-import {
-  hasPermission as hasPermissionFn,
-  PermissionEnum,
-} from './hasPermission';
 
 const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
@@ -95,14 +93,16 @@ export function ActiveOrgProvider({
     [organizations, storage, storageKey]
   );
 
-  const hasPermission = useCallback(
-    (perm: PermissionEnum): boolean => hasPermissionFn(activeOrg, perm),
+  const can = useCallback(
+    (permission: PermissionEnum): boolean =>
+      activeOrg?.permissions != null &&
+      pipe(activeOrg.permissions, values(), filter(isArray), some((arr) => (arr as string[]).includes(permission))),
     [activeOrg]
   );
 
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    () => ({ activeOrg, organizations, setActiveOrgId, can }),
+    [activeOrg, organizations, setActiveOrgId, can]
   );
 
   return (

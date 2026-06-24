@@ -1,11 +1,20 @@
 import { createContext } from 'react';
 import { CurrentOrgUserQuery } from '../user/__generated__/UserProvider.generated';
-import { PermissionEnum } from './hasPermission';
+import {
+  ReportPermissions,
+  ShelterPermissions,
+  UserOrganizationPermissions,
+} from '../../apollo/graphql/__generated__/types';
 
 type OrganizationsArray = NonNullable<
   CurrentOrgUserQuery['currentUser']['organizations']
 >;
 export type TOrganizationWithPermissions = OrganizationsArray[number];
+
+export type PermissionEnum =
+  | UserOrganizationPermissions
+  | ReportPermissions
+  | ShelterPermissions;
 
 export interface IActiveOrgContextValue {
   /** The currently selected organization (with its capabilities). */
@@ -15,7 +24,7 @@ export interface IActiveOrgContextValue {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /** Check if the active org has a specific permission. */
-  hasPermission: (permission: PermissionEnum) => boolean;
+  can: (permission: PermissionEnum) => boolean;
 }
 
 const ActiveOrgContext = createContext<IActiveOrgContextValue | undefined>(

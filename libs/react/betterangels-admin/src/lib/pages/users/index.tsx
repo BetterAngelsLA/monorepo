@@ -21,7 +21,6 @@ import { extractOperationInfoMessage } from '../../apollo/graphql/response/extra
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
 import { useActiveOrg } from '../../providers';
-import { hasPermission } from '../../providers/activeOrg/hasPermission';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -130,7 +129,7 @@ function useOrganizationMembers(
 
 export default function Users(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, can } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -266,7 +265,7 @@ export default function Users(props: IProps) {
         <div className="flex-1 max-w-xs">
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {hasPermission(activeOrg, UserOrganizationPermissions.AddOrgMember) && (
+        {can(UserOrganizationPermissions.AddOrgMember) && (
           <button
             onClick={() =>
               showDrawer({
@@ -281,7 +280,7 @@ export default function Users(props: IProps) {
         )}
       </div>
 
-      {hasPermission(activeOrg, UserOrganizationPermissions.ViewOrgMembers) ? (
+      {can(UserOrganizationPermissions.ViewOrgMembers) ? (
         <>
           {/* ── Mobile & Tablet: card layout (shown < lg, i.e. < 1024px) ── */}
           <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
