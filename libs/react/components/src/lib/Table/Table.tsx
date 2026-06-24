@@ -10,6 +10,7 @@ type TableProps<T> = {
   page?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  tableClassName?: string;
 };
 
 export function Table<T>({
@@ -20,11 +21,12 @@ export function Table<T>({
   page,
   totalPages,
   onPageChange,
+  tableClassName = '',
 }: TableProps<T>): ReactElement {
   const hasAction = !!action;
   return (
     <div className="overflow-x-auto w-full rounded-lg">
-      <table className="w-full text-left text-sm">
+      <table className={`min-w-[800px] w-full text-left text-sm ${tableClassName}`}>
         <thead>
           <tr className="bg-primary-95">
             {header.map((title, index) => (

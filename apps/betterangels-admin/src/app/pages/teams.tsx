@@ -1,9 +1,5 @@
-import PageLayout from '../Layout/PageLayout';
+import { Teams } from '@monorepo/react/betterangels-admin';
 
 export function TeamsPage() {
-  return (
-    <PageLayout>
-      <div>Teams Page</div>
-    </PageLayout>
-  );
+  return <Teams />;
 }

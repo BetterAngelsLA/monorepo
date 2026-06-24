@@ -60,7 +60,7 @@ export function NavMenu(props: INavModalProps) {
           </BaseButton.Slot>
 
           <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
-          <TaskIndicator team={teamPreference} />
+          <TaskIndicator teamId={teamPreference} />
         </BaseButton>
 
         <BaseButton onPress={() => onNavigate('/settings')}>

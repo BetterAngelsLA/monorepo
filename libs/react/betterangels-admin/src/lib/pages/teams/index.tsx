@@ -1,0 +1,281 @@
+import { useMutation, useQuery } from '@apollo/client/react';
+import {
+  SearchInput,
+  Table,
+  useAlert,
+  useAppDrawer,
+} from '@monorepo/react/components';
+import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
+import { mergeCss, toError } from '@monorepo/react/shared';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { JSX, useRef, useState } from 'react';
+import {
+  Ordering,
+  TeamPermissions,
+  TeamType,
+} from '../../apollo/graphql/__generated__/types';
+import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
+import { useOutsideClick } from '../../hooks';
+import { useActiveOrg } from '../../providers';
+import {
+  AdminTeamsDocument,
+  DeleteTeamDocument,
+  UpdateTeamDocument,
+} from './__generated__/teams.generated';
+import { AddTeamDrawer } from './AddTeamDrawer';
+
+type IProps = {
+  className?: string;
+};
+
+type SortField = 'name' | 'createdAt';
+
+const COLUMNS: {
+  label: string;
+  field: SortField;
+  render: (t: TeamType) => string | JSX.Element;
+}[] = [
+  { label: 'Name', field: 'name', render: (t) => t.name },
+  {
+    label: 'Active',
+    field: 'name',
+    render: (t) => (
+      <span className="flex justify-center w-full">
+        {t.isActive ? 'Yes' : 'No'}
+      </span>
+    ),
+  },
+  {
+    label: 'Created',
+    field: 'createdAt',
+    render: (t) =>
+      t.createdAt
+        ? formatDistanceToNow(parseISO(t.createdAt), { addSuffix: true })
+        : '\u2014',
+  },
+];
+
+export default function Teams(props: IProps) {
+  const { className = '' } = props;
+  const { hasPermission } = useActiveOrg();
+  const { showDrawer } = useAppDrawer();
+  const { showAlert } = useAlert();
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<{
+    field: SortField;
+    direction: Ordering;
+  }>({ field: 'name', direction: Ordering.Asc });
+  const [openMenuRowId, setOpenMenuRowId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useOutsideClick(
+    menuRef,
+    () => setOpenMenuRowId(null),
+    openMenuRowId !== null
+  );
+
+  const { data, loading, previousData, refetch } = useQuery(
+    AdminTeamsDocument,
+    { fetchPolicy: 'cache-and-network' }
+  );
+
+  const [updateTeam, { loading: updating }] = useMutation(UpdateTeamDocument);
+  const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
+
+  const activeData = data ?? previousData;
+  const teams = activeData?.teams?.results ?? [];
+  const _totalCount = activeData?.teams?.totalCount ?? 0;
+  const isInitialLoad = loading && !activeData;
+
+  const parentCss = [
+    'flex',
+    'flex-1',
+    'h-screen',
+    `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
+    className,
+  ];
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+  };
+
+  const handleToggleActive = async (team: TeamType) => {
+    try {
+      const response = await updateTeam({
+        variables: { data: { id: team.id, isActive: !team.isActive } },
+      });
+      const error = extractOperationInfoMessage(response, 'updateTeam');
+      if (error) throw new Error(error);
+      showAlert({
+        type: 'success',
+        content: `${team.name} ${team.isActive ? 'deactivated' : 'activated'}.`,
+      });
+      refetch();
+    } catch (err) {
+      showAlert({ type: 'error', content: toError(err).message });
+    }
+  };
+
+  const handleDelete = async (team: TeamType) => {
+    if (!window.confirm('Are you sure you want to delete this team?')) return;
+    try {
+      const response = await deleteTeam({
+        variables: { data: { id: team.id } },
+      });
+      const error = extractOperationInfoMessage(response, 'deleteTeam');
+      if (error) throw new Error(error);
+      showAlert({
+        type: 'success',
+        content: `${team.name} successfully deleted.`,
+      });
+      refetch();
+    } catch (err) {
+      showAlert({ type: 'error', content: toError(err).message });
+    } finally {
+      setOpenMenuRowId(null);
+    }
+  };
+
+  const handleSort = (field: SortField) => {
+    setSort((prev) => ({
+      field,
+      direction:
+        prev.field === field && prev.direction === Ordering.Asc
+          ? Ordering.Desc
+          : Ordering.Asc,
+    }));
+  };
+
+  const headerButtons = COLUMNS.map((col, idx) => {
+    const isLast = idx === COLUMNS.length - 1;
+    return (
+      <button
+        key={col.label}
+        onClick={() => handleSort(col.field)}
+        className={`w-full inline-flex items-center gap-1 hover:text-primary-60 ${idx === 0 ? '' : isLast ? 'justify-end' : 'justify-center'}`}
+      >
+        {col.label}
+        {sort.field === col.field && (
+          <span className="text-xs text-primary-20">
+            {sort.direction === Ordering.Asc ? '\u25B2' : '\u25BC'}
+          </span>
+        )}
+      </button>
+    );
+  });
+
+  if (isInitialLoad)
+    return <div className="flex justify-center py-20">Loading...</div>;
+
+  // Filter/search client-side
+  let displayTeams = teams;
+  if (search) {
+    const lower = search.toLowerCase();
+    displayTeams = displayTeams.filter((t) =>
+      t.name.toLowerCase().includes(lower)
+    );
+  }
+  // Sort client-side
+  displayTeams = [...displayTeams].sort((a, b) => {
+    let cmp = 0;
+    if (sort.field === 'name') {
+      cmp = a.name.localeCompare(b.name);
+    } else if (sort.field === 'createdAt') {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      cmp = aTime - bTime;
+    }
+    return sort.direction === Ordering.Asc ? cmp : -cmp;
+  });
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="mb-10">
+        <h1 className="mb-3 text-2xl font-bold">Manage Teams</h1>
+        <p className="max-w-[800px]">
+          Manage the teams available in your organization for outreach
+          categorization.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-5 mb-6">
+        <div>
+          <SearchInput debounceMs={300} onChange={handleSearchChange} />
+        </div>
+        {hasPermission(TeamPermissions.Add) && (
+          <button
+            onClick={() =>
+              showDrawer({
+                content: (
+                  <AddTeamDrawer
+                    onSuccess={() => {
+                      refetch();
+                    }}
+                  />
+                ),
+                contentClassName: 'p-0',
+              })
+            }
+            className="btn btn-primary btn-lg gap-2 inline-flex items-center px-4"
+          >
+            <PlusIcon color="white" className="w-3 h-3" /> Add Team
+          </button>
+        )}
+      </div>
+
+      <div className={mergeCss(parentCss)}>
+        {hasPermission(TeamPermissions.View) ? (
+          <Table<TeamType>
+            tableClassName="table-fixed"
+            action={(row) => {
+              const isOpen = openMenuRowId === row.id;
+              return (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuRowId((prev) =>
+                        prev === row.id ? null : row.id
+                      );
+                    }}
+                    className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
+                  >
+                    <ThreeDotIcon className="w-6" fill="#052b73" />
+                  </button>
+                  {isOpen && (
+                    <div
+                      ref={menuRef}
+                      className="absolute flex flex-col items-start top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
+                    >
+                      <button
+                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left"
+                        onClick={() => handleToggleActive(row)}
+                        disabled={updating}
+                      >
+                        {row.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
+                        onClick={() => void handleDelete(row)}
+                        disabled={deleting}
+                      >
+                        Delete Team
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }}
+            data={displayTeams}
+            header={headerButtons}
+            renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
+          />
+        ) : (
+          <div className="text-center py-10 text-neutral-60">
+            You do not have permission to view teams.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
