@@ -23,7 +23,9 @@ import {
 
 const PAGE_SIZE = 25;
 
-const ROLE_LABELS: Record<string, string> = {
+type OrgRole = 'CASEWORKER' | 'MEMBER' | 'ORG_ADMIN' | 'ORG_SUPERUSER' | 'SHELTER_OPERATOR';
+
+const ROLE_LABELS: Record<OrgRole, string> = {
   SHELTER_OPERATOR: 'Shelter Operator',
   ORG_ADMIN: 'Org Admin',
   ORG_SUPERUSER: 'Org Superuser',
@@ -32,7 +34,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function humanizeRole(role: string): string {
-  return ROLE_LABELS[role] ?? role;
+  return ROLE_LABELS[role as OrgRole] ?? role;
 }
 
 const getFullName = (m: OrganizationMemberType): string =>

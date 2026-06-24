@@ -2,15 +2,20 @@ import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
   OrganizationMemberType,
   PermissionTemplateEnum,
 } from '../../apollo/graphql/__generated__/types';
 import { Button } from '../base-ui/buttons/buttons';
+import { Dropdown } from '../base-ui/dropdown';
 import { Input } from '../base-ui/input';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
+
+const ROLE_OPTIONS = [
+  { label: 'Shelter Operator', value: PermissionTemplateEnum.ShelterOperator },
+];
 
 type TProps = {
   className?: string;
@@ -27,6 +32,7 @@ export function AddUserForm(props: TProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<TFormSchema>({
@@ -124,20 +130,19 @@ export function AddUserForm(props: TProps) {
         error={errors?.email?.message}
       />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Role</label>
-        <select
-          {...register('permissionTemplate')}
-          disabled={disabled}
-          className="h-12 w-full rounded-full border border-gray-200 bg-white px-5 text-sm text-gray-900 outline-none transition-colors duration-200 focus-within:border-[#008CEE]"
-        >
-          {[PermissionTemplateEnum.ShelterOperator].map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Controller
+        name="permissionTemplate"
+        control={control}
+        render={({ field }) => (
+          <Dropdown
+            label="Role"
+            options={ROLE_OPTIONS}
+            value={ROLE_OPTIONS.find((o) => o.value === field.value) ?? null}
+            onChange={(opt) => field.onChange(opt?.value ?? '')}
+            disabled={disabled}
+          />
+        )}
+      />
 
       <div className="flex justify-end gap-3 pt-4">
         <Button variant="primary" onClick={handleOnCancel} disabled={disabled}>

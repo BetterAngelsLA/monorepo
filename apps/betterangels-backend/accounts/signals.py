@@ -34,9 +34,21 @@ def _ensure_test_users() -> None:
     """Idempotent: create admin + agent with known passwords."""
     admin, _ = User.objects.get_or_create(
         username="admin",
-        defaults={"email": "admin@example.com", "password": "password"},
+        defaults={
+            "email": "admin@example.com",
+            "password": "password",
+            "first_name": "Admin",
+            "has_accepted_privacy_policy": True,
+            "has_accepted_tos": True,
+        },
     )
-    User.objects.filter(username="admin").update(is_superuser=True, is_staff=True)
+    User.objects.filter(username="admin").update(
+        is_superuser=True,
+        is_staff=True,
+        first_name="Admin",
+        has_accepted_privacy_policy=True,
+        has_accepted_tos=True,
+    )
     if not admin.check_password("password"):
         admin.set_password("password")
         admin.save(update_fields=["password"])
@@ -71,6 +83,7 @@ def _ensure_test_org() -> None:
 
 
 # ── Permission sync (all environments) ────────────────────────────────
+
 
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:

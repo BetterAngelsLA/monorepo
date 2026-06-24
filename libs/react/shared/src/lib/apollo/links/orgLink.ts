@@ -5,9 +5,6 @@ import { localStorageAdapter, StorageAdapter } from '../../utils/storage';
 /** Default localStorage key shared by BA Admin and BA App. */
 const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
-/** @deprecated Use :type:`StorageAdapter` instead. */
-export type GetItemFn = StorageAdapter['getItem'];
-
 /**
  * Create an Apollo Link that injects the ``X-Organization-ID`` header
  * from a storage adapter.

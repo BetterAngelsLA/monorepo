@@ -13,6 +13,7 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .groups import ORG_ADMIN
@@ -183,9 +184,9 @@ def reconcile_org_groups(org: Organization) -> None:
             template=permission_group_template,
         )
 
-    # Delete stale.
-    PermissionGroup.objects.filter(organization=org).exclude(
-        template__name__in=expected,
+    # Delete stale (including groups whose template was set to NULL).
+    PermissionGroup.objects.filter(organization=org).filter(
+        Q(template__isnull=True) | ~Q(template__name__in=expected),
     ).delete()
 
 
