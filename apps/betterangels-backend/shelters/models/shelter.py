@@ -232,6 +232,7 @@ class Bed(CloneMixin, BaseModel):
         "pets",
     ]
     _clone_excluded_fields = [
+        # Excluded so cloned beds always start AVAILABLE (maintenance_flag=False).
         "last_cleaned",
         "last_cleaned_inspected",
         "maintenance_flag",
@@ -291,6 +292,7 @@ class Room(CloneMixin, BaseModel):
         "pets",
     ]
     _clone_excluded_fields = [
+        # Excluded so cloned rooms start fresh (AVAILABLE, no operational state).
         "last_cleaned",
         "last_cleaned_inspected",
         "maintenance_flag",
