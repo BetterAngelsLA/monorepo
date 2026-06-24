@@ -259,7 +259,7 @@ class OrganizationMemberType(UserBaseType):
         return bool(getattr(self, "_is_org_owner", False))
 
     @strawberry_django.field
-    def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:
+    def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:  # type: ignore[valid-type]
         raw = getattr(self, "_permission_templates", None)
         if not raw:
             return []
