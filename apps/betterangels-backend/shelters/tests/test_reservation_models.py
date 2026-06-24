@@ -3,7 +3,6 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
-from django.utils import timezone
 from model_bakery import baker
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
@@ -65,30 +64,21 @@ class ReservationModelTestCase(TestCase):
 
     def test_multiple_bed_reservations_allowed_for_same_room(self) -> None:
         """When both room and bed are set, the room constraint does not apply."""
+        bed_2_in_room_1 = baker.make(Bed, shelter=self.shelter, room=self.room_1, name="Bed-2-in-Room-1")
         baker.make(Reservation, room=self.room_1, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
-        baker.make(Reservation, room=self.room_1, bed=self.bed_2, status=ReservationStatusChoices.CONFIRMED)
+        baker.make(Reservation, room=self.room_1, bed=bed_2_in_room_1, status=ReservationStatusChoices.CONFIRMED)
         self.assertEqual(Reservation.objects.filter(room=self.room_1).count(), 2)
 
-    # --- completing a reservation sets checked_out_at ---
+    # --- cross-shelter validation ---
 
-    def test_completing_reservation_sets_checked_out_at(self) -> None:
-        reservation = baker.make(
-            Reservation,
-            bed=self.bed_1,
-            status=ReservationStatusChoices.CHECKED_IN,
-        )
-        self.assertIsNone(reservation.checked_out_at)
+    def test_rejects_bed_and_room_from_different_shelters(self) -> None:
+        other_shelter = baker.make(Shelter, name="Other Shelter")
+        other_bed = baker.make(Bed, shelter=other_shelter, name="Other-Bed")
+        with self.assertRaises(ValidationError) as ctx:
+            Reservation(bed=other_bed, room=self.room_1).clean()
+        self.assertIn("same shelter", str(ctx.exception))
 
-        before = timezone.now()
-        reservation.status = ReservationStatusChoices.COMPLETED
-        reservation.save()
-        after = timezone.now()
-
-        reservation.refresh_from_db()
-        self.assertIsNotNone(reservation.checked_out_at)
-        assert reservation.checked_out_at is not None
-        self.assertGreaterEqual(reservation.checked_out_at, before)
-        self.assertLessEqual(reservation.checked_out_at, after)
+    # --- cleanup validation ---
 
 
 class BedComputedStatusTestCase(TestCase):
@@ -142,16 +132,6 @@ class BedComputedStatusTestCase(TestCase):
         )
         self._make_completed_reservation(bed, checkout)
         self.assertEqual(bed.computed_status, BedStatusChoices.OUT_OF_SERVICE)
-
-    def test_bed_maintenance_flag_rejects_reservation(self) -> None:
-        """Regression: reservation clean() uses maintenance_flag, not out_of_service."""
-        bed = self._make_bed(maintenance_flag=True)
-        with self.assertRaises(ValidationError) as ctx:
-            Reservation(
-                bed=bed,
-                status=ReservationStatusChoices.CONFIRMED,
-            ).clean()
-        self.assertIn("bed", ctx.exception.message_dict)
 
 
 class RoomComputedStatusTestCase(TestCase):
