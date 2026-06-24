@@ -1,5 +1,4 @@
 import datetime
-from typing import Any
 
 from django.test import TestCase
 from django.utils import timezone
@@ -13,7 +12,6 @@ from shelters.models import (
     Shelter,
 )
 from shelters.selectors import reservation_status_change_counts
-from shelters.tests.baker_recipes import shelter_recipe
 
 ReservationEvent = Reservation.pgh_event_model  # type: ignore[attr-defined]
 
@@ -209,5 +207,3 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 def _dt(y: int, m: int, d: int) -> datetime.datetime:
     """Shortcut: UTC datetime at noon on the given date."""
     return datetime.datetime(y, m, d, 12, 0, 0, tzinfo=datetime.timezone.utc)
-
-
