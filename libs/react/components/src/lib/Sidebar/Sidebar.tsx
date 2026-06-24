@@ -35,7 +35,7 @@ export function Sidebar(props: TProps) {
     onOpenChange,
     initialOpen = false,
     collapsible = true,
-    variant,
+    variant = 'decorated',
     theme,
   } = props;
 
@@ -50,6 +50,10 @@ export function Sidebar(props: TProps) {
   useEffect(() => {
     onOpenChange?.(isOpen);
   }, [isOpen, onOpenChange]);
+
+  const transitionCss = ['transition-[width]', 'duration-300', 'ease-in-out'];
+
+  const collapsedWidth = variant === 'basic' ? 'w-[0px]' : 'w-[40px]';
 
   const parentCss = [
     'h-screen',
@@ -72,11 +76,9 @@ export function Sidebar(props: TProps) {
   ];
 
   const childrenCss = [
-    isOpen ? 'w-[260px]' : 'w-[40px]',
-    'transition-[width]',
-    'duration-300',
-    'ease-in-out',
+    isOpen ? 'w-[260px]' : collapsedWidth,
     'pb-8',
+    transitionCss,
   ];
 
   return (

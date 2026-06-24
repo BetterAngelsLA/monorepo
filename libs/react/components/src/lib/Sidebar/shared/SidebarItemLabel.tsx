@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useSidebarTheme } from '../SidebarTheme';
 
 type TProps = {
@@ -14,6 +14,8 @@ type TProps = {
 export function SidebarItemLabel(props: TProps) {
   const { className, icon, collapsed, isActive, children, suffix } = props;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const theme = useSidebarTheme();
 
   const showMarker = theme.variant === 'decorated';
@@ -26,6 +28,8 @@ export function SidebarItemLabel(props: TProps) {
     ? theme.markerColor ?? theme.activeColor
     : 'transparent';
 
+  const transitionCss = ['transition-[width]', 'duration-300', 'ease-in-out'];
+
   const parentCss = [
     'relative',
     'flex',
@@ -36,12 +40,10 @@ export function SidebarItemLabel(props: TProps) {
     'text-left',
     'cursor-pointer',
     collapsed ? 'w-[40px]' : 'w-full',
-    'transition-[width]',
-    'duration-300',
-    'ease-in-out',
     'items-center',
     'overflow-hidden',
     'rounded-lg',
+    transitionCss,
     className,
   ];
 
@@ -73,8 +75,18 @@ export function SidebarItemLabel(props: TProps) {
     'rounded-r-[2px]',
   ];
 
+  // backgroundColor is undefined).
+  useEffect(() => {
+    if (isActive && containerRef.current) {
+      containerRef.current.style.backgroundColor = '';
+    }
+  }, [isActive]);
+
+  console.log('*****************  theme.variant:', theme.variant);
+
   return (
     <div
+      ref={containerRef}
       className={mergeCss(parentCss)}
       style={{
         color: linkColor,

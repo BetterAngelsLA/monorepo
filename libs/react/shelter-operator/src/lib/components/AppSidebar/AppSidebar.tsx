@@ -30,6 +30,7 @@ export function AppSidebar(props: IProps) {
       className={mergeCss(parentCss)}
       onOpenChange={setIsOpen}
       initialOpen={initialOpenState}
+      variant="basic"
     >
       <Sidebar.Content className="pt-6">
         <Sidebar.Link

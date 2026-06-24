@@ -53,7 +53,7 @@ export function SidebarNestedLinks(props: TProps) {
     </div>
   ) : undefined;
 
-  const childrenCss = ['pl-6', 'pt-2'];
+  const childrenCss = ['pl-4', 'pt-2'];
 
   return (
     <div>
