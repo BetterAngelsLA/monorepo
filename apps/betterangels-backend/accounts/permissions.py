@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Protocol, Type, Union
 
 import strawberry
 from accounts.models import PermissionGroup, User
-from common.permissions.utils import _perm_q
+from common.permissions.utils import perm_filter
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import Exists, OuterRef, TextChoices
@@ -56,7 +56,7 @@ def get_user_permitted_org(
             pk=org_id,
             permission_groups__group__user=user,
         )
-        .filter(_perm_q(app_label, codename))
+        .filter(perm_filter(app_label, codename))
         .first()
     )
 
@@ -91,7 +91,7 @@ def permission_annotations(user: User, permissions: Type[TextChoices]) -> dict[s
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 group__user=user,
-            ).filter(_perm_q(app_label, codename, prefix="group__permissions"))
+            ).filter(perm_filter(app_label, codename, prefix="group__permissions"))
         )
     return annotations
 
