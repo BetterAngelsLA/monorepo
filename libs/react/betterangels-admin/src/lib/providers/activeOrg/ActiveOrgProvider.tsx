@@ -1,6 +1,6 @@
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { pipe, values, flat, isIncludedIn } from 'remeda';
+import { pipe, values, flat } from 'remeda';
 import ActiveOrgContext, {
   PermissionEnum,
   TOrganizationWithPermissions,
@@ -103,7 +103,7 @@ export function ActiveOrgProvider({
         activeOrg.permissions,
         values(),
         flat(),
-        isIncludedIn(permission)
+        (arr) => arr.includes(permission)
       ),
     [activeOrg]
   );

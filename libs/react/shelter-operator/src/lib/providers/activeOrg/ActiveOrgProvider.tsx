@@ -1,7 +1,7 @@
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { pipe, values, flat, isIncludedIn } from 'remeda';
+import { pipe, values, flat } from 'remeda';
 import ActiveOrgContext, { PermissionEnum } from './ActiveOrgContext';
 
 const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
@@ -95,7 +95,7 @@ export function ActiveOrgProvider({
         activeOrg.permissions,
         values(),
         flat(),
-        isIncludedIn(permission)
+        (arr) => arr.includes(permission)
       ),
     [activeOrg]
   );
