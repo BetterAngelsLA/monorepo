@@ -21,7 +21,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.managers import (
+from shelters.selectors.computed_status import (
     bed_computed_status_annotation,
     room_computed_status_annotation,
     shelter_bed_status_count_subquery,
