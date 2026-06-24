@@ -9,7 +9,7 @@ import {
   SidebarTheme,
   SidebarThemeProvider,
   SidebarVariant,
-} from './SidebarTheme';
+} from './SidebarTheme/index';
 
 type TProps = {
   children?: ReactNode;

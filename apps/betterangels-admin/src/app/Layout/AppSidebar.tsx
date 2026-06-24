@@ -49,7 +49,6 @@ export function AppSidebar(props: IProps) {
       theme={{
         fontColor: 'var(--color-primary-20)',
         activeColor: 'var(--color-primary-60)',
-        variant: 'decorated',
       }}
     >
       <Sidebar.Header>

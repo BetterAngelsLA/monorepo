@@ -2,7 +2,7 @@ import { ChevronLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode, useEffect, useState } from 'react';
 import { SidebarItemLabel } from './shared/SidebarItemLabel';
-import { useSidebarTheme } from './SidebarTheme';
+import { useSidebarTheme } from './SidebarTheme/index';
 
 type TProps = {
   className?: string;
@@ -34,7 +34,6 @@ export function SidebarNestedLinks(props: TProps) {
     setExpanded(defaultExpanded);
   }, [defaultExpanded]);
 
-  // const isOpen = !collapsed && (alwaysExpanded || expanded);
   const isOpen = alwaysExpanded || expanded;
 
   const chevronCss = [
@@ -44,14 +43,14 @@ export function SidebarNestedLinks(props: TProps) {
     expanded ? 'rotate-90' : '-rotate-90',
   ];
 
-  const chevronSuffix = !alwaysExpanded ? (
+  const chevronSuffix = !alwaysExpanded && (
     <div className="shrink-0 w-[28px] h-full flex items-center justify-center">
       <ChevronLeftIcon
         className={mergeCss(chevronCss)}
         style={{ color: theme.fontColor }}
       />
     </div>
-  ) : undefined;
+  );
 
   const childrenCss = ['pl-4', 'pt-2'];
 

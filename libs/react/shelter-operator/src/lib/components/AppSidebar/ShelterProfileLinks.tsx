@@ -20,12 +20,8 @@ export function ShelterProfileLinks(props: IProps) {
       className={className}
       label="Shelter Profile"
       isActive={false} // style only child links as active/inactive
-      // collapsed={!isOpen}
       collapsed={!isOpen}
       defaultExpanded={true}
-      // icon={(color: string) => (
-      //   <FileSearchOutlined className="w-4" style={{ color: color }} />
-      // )}
     >
       <Sidebar.Content>
         <Sidebar.Link
