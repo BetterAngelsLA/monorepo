@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 import pghistory
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from common.models import Location
 from common.permissions.utils import assign_object_permissions
 from django.db import transaction
@@ -224,7 +223,7 @@ def note_create(
     user: User,
     permission_group: PermissionGroup,
     purpose: Optional[str] = None,
-    team: Optional[SelahTeamEnum] = None,
+    team_id: Optional[int] = None,
     public_details: str = "",
     private_details: str = "",
     client_profile_id: Optional[str] = None,
@@ -248,7 +247,7 @@ def note_create(
 
     note = Note.objects.create(
         purpose=purpose,
-        team=team,
+        team_id=team_id,
         public_details=public_details or "",
         private_details=private_details or "",
         client_profile_id=client_profile_id,

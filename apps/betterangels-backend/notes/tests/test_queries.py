@@ -18,6 +18,7 @@ from notes.models import (
 )
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 from unittest_parametrize import parametrize
 
 
@@ -69,7 +70,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 6
+        expected_query_count = 8
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -137,7 +138,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }}
             }}
         """
-        expected_query_count = 7
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -278,7 +279,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createNote"]
 
-        filters = {"teams": teams}
+        # TEMPORARY: Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site").
+        # Remove this shim once SelahTeamEnum is fully deprecated and old_team is removed.
+        slugs = [SelahTeamEnum[t].value for t in teams] if teams else []
+        team_ids = (
+            list(Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True))
+            if slugs
+            else []
+        )
+        filters = {"teamIds": team_ids}
 
         query = """
             query ($filters: NoteFilter) {
