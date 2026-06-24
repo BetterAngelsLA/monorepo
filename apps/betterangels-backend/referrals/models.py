@@ -12,7 +12,6 @@ from organizations.models import Organization
     pghistory.DeleteEvent("referral.remove"),
 )
 class Referral(BaseModel):
-
     class Status(models.IntegerChoices):
         PENDING = 0, "Pending"
         ACCEPTED = 1, "Accepted"

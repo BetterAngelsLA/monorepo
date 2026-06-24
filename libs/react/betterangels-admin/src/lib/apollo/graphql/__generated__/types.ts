@@ -68,89 +68,6 @@ export type AddressType = {
   zipCode?: Maybe<Scalars['String']['output']>;
 };
 
-export type AdminShelterType = {
-  __typename?: 'AdminShelterType';
-  HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
-  accessibility: Array<AccessibilityType>;
-  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
-  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
-  availability?: Maybe<ShelterAvailabilityType>;
-  bedFees?: Maybe<Scalars['String']['output']>;
-  bedsByStatus: BedsByStatusType;
-  citiesServed: Array<CityType>;
-  city?: Maybe<CityType>;
-  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
-  curfew?: Maybe<Scalars['Time']['output']>;
-  demographics: Array<DemographicType>;
-  demographicsOther?: Maybe<Scalars['String']['output']>;
-  description: Scalars['String']['output'];
-  distanceInMiles?: Maybe<Scalars['Float']['output']>;
-  email?: Maybe<Scalars['String']['output']>;
-  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
-  entryInfo?: Maybe<Scalars['String']['output']>;
-  entryRequirements: Array<EntryRequirementType>;
-  exitPolicy: Array<ExitPolicyType>;
-  exitPolicyOther?: Maybe<Scalars['String']['output']>;
-  funders: Array<FunderType>;
-  fundersOther?: Maybe<Scalars['String']['output']>;
-  heroImage?: Maybe<ShelterHeroImageType>;
-  id: Scalars['ID']['output'];
-  instagram?: Maybe<Scalars['String']['output']>;
-  isPrivate: Scalars['Boolean']['output'];
-  location?: Maybe<ShelterLocationType>;
-  maxStay?: Maybe<Scalars['Int']['output']>;
-  mediaLinks: Array<MediaLinkType>;
-  name: Scalars['String']['output'];
-  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
-  organization?: Maybe<OrganizationType>;
-  otherRules?: Maybe<Scalars['String']['output']>;
-  otherServices?: Maybe<Scalars['String']['output']>;
-  overallRating?: Maybe<Scalars['Int']['output']>;
-  parking: Array<ParkingType>;
-  pets: Array<PetType>;
-  phone?: Maybe<Scalars['PhoneNumber']['output']>;
-  photos: Array<ShelterPhotoType>;
-  programFees?: Maybe<Scalars['String']['output']>;
-  referralRequirement: Array<ReferralRequirementType>;
-  roomStyles: Array<RoomStyleType>;
-  roomStylesOther?: Maybe<Scalars['String']['output']>;
-  roomsByStatus: RoomsByStatusType;
-  schedules: Array<ScheduleType>;
-  services: Array<ServiceType>;
-  shelterPrograms: Array<ShelterProgramType>;
-  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
-  shelterTypes: Array<ShelterTypeType>;
-  shelterTypesOther?: Maybe<Scalars['String']['output']>;
-  spa?: Maybe<SpaType>;
-  spasServed: Array<SpaType>;
-  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
-  status: StatusChoices;
-  storage: Array<StorageType>;
-  subjectiveReview?: Maybe<Scalars['String']['output']>;
-  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
-  totalBeds?: Maybe<Scalars['Int']['output']>;
-  updatedAt: Scalars['DateTime']['output'];
-  vaccinationRequirement: Array<VaccinationRequirementType>;
-  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
-  website?: Maybe<Scalars['String']['output']>;
-};
-
-
-export type AdminShelterTypeHeroImageArgs = {
-  preset?: InputMaybe<ImagePresetEnum>;
-  processingOptions?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AdminShelterTypeOffsetPaginated = {
-  __typename?: 'AdminShelterTypeOffsetPaginated';
-  pageInfo: OffsetPaginationInfo;
-  /** List of paginated results. */
-  results: Array<AdminShelterType>;
-  /** Total count of existing results. */
-  totalCount: Scalars['Int']['output'];
-};
-
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
   createdAt: Scalars['DateTime']['output'];
@@ -261,6 +178,14 @@ export type BulkDeleteResult = {
   __typename?: 'BulkDeleteResult';
   ids: Array<Scalars['ID']['output']>;
 };
+
+export type ChangeOrganizationMemberRoleInput = {
+  organizationId: Scalars['ID']['input'];
+  permissionTemplate: PermissionTemplateEnum;
+  userId: Scalars['ID']['input'];
+};
+
+export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
 
 export type CityType = {
   __typename?: 'CityType';
@@ -718,6 +643,7 @@ export type CreateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
@@ -741,6 +667,18 @@ export type CreateNoteTaskInput = {
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type CreateOrganizationInput = {
+  orgType: Scalars['NonEmptyString']['input'];
+  organizationName: Scalars['NonEmptyString']['input'];
+};
+
+export type CreateOrganizationResponse = {
+  __typename?: 'CreateOrganizationResponse';
+  organization: OrganizationType;
+  user: UserType;
 };
 
 export type CreateProfileDataImportInput = {
@@ -801,7 +739,6 @@ export type CreateShelterInput = {
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
-  organization: Scalars['ID']['input'];
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
@@ -843,9 +780,16 @@ export type CreateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
+
+export type CreateTeamInput = {
+  name: Scalars['String']['input'];
+};
+
+export type CreateTeamPayload = OperationInfo | TeamType;
 
 export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
@@ -926,6 +870,8 @@ export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteTeamPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -1419,6 +1365,7 @@ export type ImportNoteDataInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ImportNoteInput = {
@@ -1556,6 +1503,7 @@ export type MedicalNeedType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  changeOrganizationMemberRole: ChangeOrganizationMemberRolePayload;
   cloneBed: CloneBedPayload;
   cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
@@ -1572,11 +1520,13 @@ export type Mutation = {
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createOrganization: CreateOrganizationResponse;
   createReferral: CreateReferralPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
+  createTeam: CreateTeamPayload;
   deleteBeds: DeleteBedsPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
@@ -1592,6 +1542,7 @@ export type Mutation = {
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  deleteTeam: DeleteTeamPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
@@ -1625,12 +1576,18 @@ export type Mutation = {
   updateShelterPhoto: UpdateShelterPhotoPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  updateTeam: UpdateTeamPayload;
   updateUserProfile: UpdateUserProfilePayload;
 };
 
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationChangeOrganizationMemberRoleArgs = {
+  data: ChangeOrganizationMemberRoleInput;
 };
 
 
@@ -1715,6 +1672,11 @@ export type MutationCreateNoteServiceRequestArgs = {
 };
 
 
+export type MutationCreateOrganizationArgs = {
+  data: CreateOrganizationInput;
+};
+
+
 export type MutationCreateReferralArgs = {
   data: CreateReferralInput;
 };
@@ -1737,6 +1699,11 @@ export type MutationCreateSocialMediaProfileArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationCreateTeamArgs = {
+  data: CreateTeamInput;
 };
 
 
@@ -1806,6 +1773,11 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 
 export type MutationDeleteTaskArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTeamArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1973,6 +1945,11 @@ export type MutationUpdateTaskArgs = {
 };
 
 
+export type MutationUpdateTeamArgs = {
+  data: UpdateTeamInput;
+};
+
+
 export type MutationUpdateUserProfileArgs = {
   data: UpdateUserProfileInput;
 };
@@ -2003,6 +1980,7 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -2028,6 +2006,7 @@ export type NoteType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
+  currentTeam?: Maybe<TeamType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -2039,6 +2018,7 @@ export type NoteType = {
   purpose?: Maybe<Scalars['String']['output']>;
   requestedServices: Array<ServiceRequestType>;
   tasks: Array<TaskType>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
 };
@@ -2106,6 +2086,89 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export type OperatorShelterType = {
+  __typename?: 'OperatorShelterType';
+  HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
+  accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
+  additionalContacts: Array<ContactInfoType>;
+  availability?: Maybe<ShelterAvailabilityType>;
+  bedFees?: Maybe<Scalars['String']['output']>;
+  bedsByStatus: BedsByStatusType;
+  citiesServed: Array<CityType>;
+  city?: Maybe<CityType>;
+  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
+  curfew?: Maybe<Scalars['Time']['output']>;
+  demographics: Array<DemographicType>;
+  demographicsOther?: Maybe<Scalars['String']['output']>;
+  description: Scalars['String']['output'];
+  distanceInMiles?: Maybe<Scalars['Float']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  emergencySurge?: Maybe<Scalars['Boolean']['output']>;
+  entryInfo?: Maybe<Scalars['String']['output']>;
+  entryRequirements: Array<EntryRequirementType>;
+  exitPolicy: Array<ExitPolicyType>;
+  exitPolicyOther?: Maybe<Scalars['String']['output']>;
+  funders: Array<FunderType>;
+  fundersOther?: Maybe<Scalars['String']['output']>;
+  heroImage?: Maybe<ShelterHeroImageType>;
+  id: Scalars['ID']['output'];
+  instagram?: Maybe<Scalars['String']['output']>;
+  isPrivate: Scalars['Boolean']['output'];
+  location?: Maybe<ShelterLocationType>;
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  mediaLinks: Array<MediaLinkType>;
+  name: Scalars['String']['output'];
+  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  organization?: Maybe<OrganizationType>;
+  otherRules?: Maybe<Scalars['String']['output']>;
+  otherServices?: Maybe<Scalars['String']['output']>;
+  overallRating?: Maybe<Scalars['Int']['output']>;
+  parking: Array<ParkingType>;
+  pets: Array<PetType>;
+  phone?: Maybe<Scalars['PhoneNumber']['output']>;
+  photos: Array<ShelterPhotoType>;
+  programFees?: Maybe<Scalars['String']['output']>;
+  referralRequirement: Array<ReferralRequirementType>;
+  roomStyles: Array<RoomStyleType>;
+  roomStylesOther?: Maybe<Scalars['String']['output']>;
+  roomsByStatus: RoomsByStatusType;
+  schedules: Array<ScheduleType>;
+  services: Array<ServiceType>;
+  shelterPrograms: Array<ShelterProgramType>;
+  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
+  shelterTypes: Array<ShelterTypeType>;
+  shelterTypesOther?: Maybe<Scalars['String']['output']>;
+  spa?: Maybe<SpaType>;
+  spasServed: Array<SpaType>;
+  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
+  status: StatusChoices;
+  storage: Array<StorageType>;
+  subjectiveReview?: Maybe<Scalars['String']['output']>;
+  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  vaccinationRequirement: Array<VaccinationRequirementType>;
+  visitorsAllowed?: Maybe<Scalars['Boolean']['output']>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type OperatorShelterTypeHeroImageArgs = {
+  preset?: InputMaybe<ImagePresetEnum>;
+  processingOptions?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OperatorShelterTypeOffsetPaginated = {
+  __typename?: 'OperatorShelterTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OperatorShelterType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export enum Ordering {
   Asc = 'ASC',
   AscNullsFirst = 'ASC_NULLS_FIRST',
@@ -2129,6 +2192,7 @@ export type OrgPermissions = {
   accounts: Array<UserOrganizationPermissions>;
   reports: Array<ReportPermissions>;
   shelters: Array<ShelterPermissions>;
+  teams: Array<TeamPermissions>;
 };
 
 export enum OrgRoleEnum {
@@ -2169,6 +2233,7 @@ export type OrganizationMemberType = {
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
+  isOrgOwner: Scalars['Boolean']['output'];
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
@@ -2335,8 +2400,6 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
-  adminShelter: AdminShelterType;
-  adminShelters: AdminShelterTypeOffsetPaginated;
   bed: BedType;
   beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
@@ -2361,6 +2424,8 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  operatorShelter: OperatorShelterType;
+  operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   referral: ReferralType;
@@ -2380,18 +2445,7 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
-};
-
-
-export type QueryAdminShelterArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryAdminSheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
-  ordering?: Array<ShelterOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
+  teams: TeamTypeOffsetPaginated;
 };
 
 
@@ -2521,6 +2575,18 @@ export type QueryNotesArgs = {
 };
 
 
+export type QueryOperatorShelterArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryOperatorSheltersArgs = {
+  filters?: InputMaybe<ShelterFilter>;
+  ordering?: Array<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryOrganizationMemberArgs = {
   organizationId: Scalars['String']['input'];
   userId: Scalars['String']['input'];
@@ -2549,7 +2615,6 @@ export type QueryReferralsArgs = {
 
 export type QueryReportSummaryArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
-  organizationId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2622,6 +2687,11 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
   ordering?: InputMaybe<Array<TaskOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTeamsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3299,6 +3369,7 @@ export type TaskFilter = {
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -3320,6 +3391,7 @@ export type TaskType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
+  currentTeam?: Maybe<TeamType>;
   description?: Maybe<Scalars['String']['output']>;
   hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
@@ -3328,6 +3400,7 @@ export type TaskType = {
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
   summary?: Maybe<Scalars['String']['output']>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -3337,6 +3410,31 @@ export type TaskTypeOffsetPaginated = {
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<TaskType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum TeamPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
+
+export type TeamType = {
+  __typename?: 'TeamType';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
+export type TeamTypeOffsetPaginated = {
+  __typename?: 'TeamTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TeamType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
@@ -3497,6 +3595,7 @@ export type UpdateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
@@ -3601,9 +3700,18 @@ export type UpdateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
+
+export type UpdateTeamInput = {
+  id: Scalars['ID']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTeamPayload = OperationInfo | TeamType;
 
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;

@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Any, Dict, cast
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
-from shelters.selectors import admin_room_list, room_get, shelter_get
+from shelters.selectors import room_get, room_queryset, shelter_get
+from common.utils import get_by_pk_or_not_found
 from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
@@ -12,23 +13,25 @@ if TYPE_CHECKING:
 
 
 @transaction.atomic
-def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
+def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
-    Validates that *user* belongs to the shelter's organization via
-    ``shelter_get`` before creating the room.
+    Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
+    ``view_shelter`` permission.
 
     Raises:
-        ``ObjectDoesNotExist`` when the shelter is not found or the user
-        does not belong to its organization.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
     shelter_id = data.pop("shelter_id")
-    try:
-        shelter = shelter_get(user=user, shelter_id=shelter_id)
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
+
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.VIEW,
+    )
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
@@ -51,21 +54,28 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 
 
 @transaction.atomic
-def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Room:
+def room_update(*, user: "User", organization_id: str, room_id: int | str, data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
-    Validates org access via the room's shelter. Only keys present in *data*
-    are applied; ``None`` scalar values are skipped.
+    Resolves *room* via :func:`~shelters.selectors.room_get` with
+    ``change_room`` permission.
+
+    Only keys present in *data* are applied; ``None`` scalar values are
+    skipped.
 
     Raises:
-        ``ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.ObjectDoesNotExist`` when the room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    try:
-        room = room_get(user=user, room_id=room_id)
-    except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
+    data.pop("id", None)
+
+    room = room_get(
+        user=user,
+        room_id=room_id,
+        organization_id=organization_id,
+        permission=Room.perms.CHANGE,
+    )
 
     m2m_data: Dict[str, Any] = {
         k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None
@@ -114,37 +124,40 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, user: "User", ids: list[int]) -> list[int]:
-    """Delete rooms by their IDs and return the deleted instances.
+def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> list[int]:
+    """Delete rooms and return the deleted IDs.
+
+    Scopes to *organization_id* where *user* is a member.
 
     Raises:
-        ``ObjectDoesNotExist`` when any of the given IDs does not match a room.
+        ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    rooms = admin_room_list(Room.objects.all(), user=user).filter(pk__in=ids)
-    deleted_ids = list(rooms.values_list("pk", flat=True))
-    rooms.delete()
+    qs = room_queryset(user=user, organization_id=organization_id)
+    qs = qs.filter(pk__in=room_ids)
+    deleted_ids = list(qs.values_list("pk", flat=True))
+    if not deleted_ids:
+        raise ObjectDoesNotExist("No matching rooms found.")
+    qs.delete()
     return deleted_ids
 
 
 @transaction.atomic
-def room_clone(*, user: "User", room_id: str) -> Room:
-    """Clone an existing room on *shelter_id*, including all M2M relationships.
+def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
+    """Clone an existing room, including all M2M relationships.
 
-    Validates org access via ``room_get``. The source room must belong to
-    *shelter_id*. Beds are not copied.
+    Scopes to *organization_id* where *user* is a member.
+    Beds are not copied.
 
     Raises:
-        ``ObjectDoesNotExist`` when the shelter or room is not found.
+        ``ObjectDoesNotExist`` when the room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    try:
-        source = admin_room_list(
-            Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
-            user=user,
-        ).get(pk=room_id)
-    except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
-
+    qs = room_queryset(
+        Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
+        user=user,
+        organization_id=organization_id,
+    )
+    source = get_by_pk_or_not_found(qs, pk=room_id)
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),

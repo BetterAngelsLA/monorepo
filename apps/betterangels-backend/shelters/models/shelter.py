@@ -27,8 +27,8 @@ from shelters.enums import (
     ScheduleTypeChoices,
     StatusChoices,
 )
-from shelters.managers import AdminShelterManager, ShelterManager
-from shelters.selectors import shelters_open_at
+from shelters.managers import ShelterManager
+from shelters.open_at import shelters_open_at
 
 from .lookups import (
     SPA,
@@ -63,7 +63,6 @@ class Shelter(BaseModel):
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
 
     objects: ShelterManager = ShelterManager()
-    admin_objects: AdminShelterManager = AdminShelterManager()
 
     # Basic Information
     name = models.CharField(max_length=255)

@@ -16,6 +16,8 @@ Including another URLconf
 """
 
 import admin_async_upload.views
+from accounts.headless_views import AutoCreateRequestLoginCodeView
+from allauth.headless.constants import Client
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -46,7 +48,18 @@ urlpatterns = [
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("reports/", include("reports.urls"), name="reports"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
-    path("_allauth/", include("allauth.headless.urls")),
+    # Override code/request for browser and app clients BEFORE the headless
+    # include. Django resolves urlpatterns top-to-bottom (first match wins),
+    # so these explicit paths take precedence over the catch-all include below.
+    path(
+        "_allauth/browser/v1/auth/code/request",
+        AutoCreateRequestLoginCodeView.as_api_view(client=Client.BROWSER),
+    ),
+    path(
+        "_allauth/app/v1/auth/code/request",
+        AutoCreateRequestLoginCodeView.as_api_view(client=Client.APP),
+    ),
+    path("_allauth/", include("allauth.headless.urls", namespace="headless")),
 ]
 
 

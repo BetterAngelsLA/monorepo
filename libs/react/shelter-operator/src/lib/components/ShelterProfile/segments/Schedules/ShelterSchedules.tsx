@@ -5,7 +5,7 @@ import {
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import {
-  useAdminShelterProfile,
+  useShelterOperatorProfile,
   useUpdateShelterProfile,
 } from '../../../../hooks';
 import { ButtonDropdown } from '../../../base-ui/buttonDropdown';
@@ -27,7 +27,7 @@ export function ShelterSchedules(props: TProps) {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
-  const { shelter } = useAdminShelterProfile(shelterId);
+  const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 

@@ -10,6 +10,7 @@ from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
+from common.permissions.utils import get_current_organization
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
 from shelters import models
 from shelters.enums import (
@@ -19,7 +20,7 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import admin_bed_list, admin_room_list, admin_shelter_list, shelter_list
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -264,11 +265,12 @@ class ShelterType(ShelterTypeMixin):
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class AdminShelterType(ShelterTypeMixin):
+class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return admin_shelter_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -285,7 +287,8 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return admin_bed_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -312,7 +315,8 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return admin_room_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]

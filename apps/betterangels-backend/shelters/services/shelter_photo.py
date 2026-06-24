@@ -13,8 +13,9 @@ from common.services.types import AuthorizedPresignedUpload, AuthorizedPresigned
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from shelters.models import Shelter, ShelterPhoto
-from shelters.selectors import admin_shelter_list, shelter_get
+from shelters.models import ShelterPhoto
+from shelters.selectors import shelter_get, shelter_queryset
+from common.utils import get_by_pk_or_not_found
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
@@ -28,20 +29,14 @@ def _validate_content_type(content_type: str, filename: str) -> None:
         raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}.")
 
 
-def _get_shelter(*, user: User, shelter_id: int | str) -> Shelter:
-    try:
-        return shelter_get(user=user, shelter_id=shelter_id)
-    except Shelter.DoesNotExist:
-        raise ObjectDoesNotExist(f"Shelter matching ID {shelter_id} could not be found.")
-
-
 def create_presigned_uploads(
     *,
     user: User,
+    organization_id: str,
     shelter_id: int | str,
     uploads: Iterable[ShelterPhotoUploadItemInput],
 ) -> AuthorizedPresignedUploadBatch:
-    _get_shelter(user=user, shelter_id=shelter_id)
+    shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
 
     mapped_uploads: list[PresignedS3UploadInput] = []
 
@@ -85,6 +80,7 @@ def create_presigned_uploads(
 def resolve_uploads(
     *,
     user: User,
+    organization_id: str,
     shelter_id: int | str,
     photos: Iterable[ShelterPhotoFromUploadInput],
 ) -> list[ShelterPhoto]:
@@ -108,7 +104,7 @@ def resolve_uploads(
     # Validations passed — persist photos.
     created: list[ShelterPhoto] = []
 
-    shelter = _get_shelter(user=user, shelter_id=shelter_id)
+    shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
 
     with transaction.atomic():
         for photo in photo_list:
@@ -125,9 +121,15 @@ def resolve_uploads(
 
 
 @transaction.atomic
-def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
+def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int]) -> list[int]:
+    """Delete shelter photos scoped to *organization_id*.
+
+    Only photos belonging to shelters in the active organization are
+    eligible for deletion.
+    """
+    org_shelters = shelter_queryset(user=user, organization_id=organization_id)
     photos = ShelterPhoto.objects.filter(
-        shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
+        shelter__in=org_shelters,
         pk__in=ids,
     )
     deleted_ids = list(photos.values_list("pk", flat=True))
@@ -141,10 +143,10 @@ def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
     return deleted_ids
 
 
-def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> ShelterPhoto:
+def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShelterPhotoInput) -> ShelterPhoto:
     """Update a shelter photo's type.
 
-    Validates org access via the photo's shelter.
+    Validates org access via the photo's shelter, scoped to *organization_id*.
 
     Raises:
         ``ObjectDoesNotExist`` when the photo is not found or the user does not
@@ -152,13 +154,10 @@ def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> Shel
     """
     photo_id = data.id
 
-    try:
-        photo = ShelterPhoto.objects.get(
-            shelter__in=admin_shelter_list(Shelter.objects.all(), user=user),
-            pk=photo_id,
-        )
-    except ShelterPhoto.DoesNotExist:
-        raise ObjectDoesNotExist(f"ShelterPhoto matching ID {photo_id} could not be found.")
+    photo = get_by_pk_or_not_found(
+        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, organization_id=organization_id)),
+        pk=photo_id,
+    )
 
     photo.type = data.photo_type
     photo.save(update_fields=["type", "updated_at"])

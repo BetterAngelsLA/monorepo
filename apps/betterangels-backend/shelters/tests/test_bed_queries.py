@@ -52,7 +52,7 @@ class BedQueriesTestCase(ShelterTestCase, TestCase):
 
 class BedQueryTestCase(BedQueriesTestCase):
     def test_bed_query(self) -> None:
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.bed_query, variables={"id": str(self.bed.pk)})
         self.assertIsNone(response.get("errors"))
@@ -79,7 +79,7 @@ class BedQueryTestCase(BedQueriesTestCase):
 
 class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_returns_org_beds(self) -> None:
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
         self.assertIsNone(response.get("errors"))
@@ -110,7 +110,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_bed = Bed.objects.create(shelter=other_shelter, name="Bed-2")
 
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -133,7 +133,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
             status=BedStatusChoices.RESERVED,
         )
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -155,7 +155,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
             type=BedTypeChoices.BUNK,
         )
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -175,7 +175,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         Bed.objects.create(shelter=other_shelter, name="Other-Bed")
 
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
@@ -184,22 +184,21 @@ class BedsQueryTestCase(BedQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.bed.pk))
 
-    def test_beds_query_without_permission_returns_empty(self) -> None:
+    def test_beds_query_without_permission_returns_permission_denied(self) -> None:
         self.operator.user_permissions.clear()
+        self.operator.groups.clear()
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
-        payload = response["data"]["beds"]
-        self.assertEqual(payload["totalCount"], 0)
-        self.assertEqual(payload["results"], [])
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
 
     def test_beds_query_unauthenticated(self) -> None:
         self.graphql_client.logout()
 
-        expected_query_count = 0
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
+        response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
         self.assertGraphQLUnauthenticated(response)

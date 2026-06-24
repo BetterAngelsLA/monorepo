@@ -24,7 +24,7 @@ class OrgRecipe(Recipe[Organization]):
         _using: str = ...,
         _bulk_create: bool = ...,
         _save_kwargs: Optional[dict[str, Any]] = ...,
-        **attrs: Any
+        **attrs: Any,
     ) -> Organization: ...
 
     @overload
@@ -37,10 +37,20 @@ class OrgRecipe(Recipe[Organization]):
         _using: str = ...,
         _bulk_create: bool = ...,
         _save_kwargs: Optional[dict[str, Any]] = ...,
-        **attrs: Any
+        **attrs: Any,
     ) -> list[Organization]: ...
 
-    def make(self, _quantity: Union[int, None] = None, make_m2m: bool = False, _refresh_after_create: bool = False, _create_files: bool = False, _using: str = "", _bulk_create: bool = False, _save_kwargs: Optional[dict[str, Any]] = None, **attrs: Any) -> Union[Organization, list[Organization]]:  # type: ignore[override]
+    def make(
+        self,
+        _quantity: Union[int, None] = None,
+        make_m2m: bool = False,
+        _refresh_after_create: bool = False,
+        _create_files: bool = False,
+        _using: str = "",
+        _bulk_create: bool = False,
+        _save_kwargs: Optional[dict[str, Any]] = None,
+        **attrs: Any,
+    ) -> Union[Organization, list[Organization]]:  # type: ignore[override]
         if _quantity is not None:
             return [make_org_with_presets(**attrs) for _ in range(_quantity)]
         return make_org_with_presets(**attrs)

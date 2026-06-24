@@ -1,8 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import {
-  GetAdminShelterOverviewDocument,
-  type GetAdminShelterOverviewQuery,
-  type GetAdminShelterOverviewQueryVariables,
+  GetShelterOperatorOverviewDocument,
+  type GetShelterOperatorOverviewQuery,
+  type GetShelterOperatorOverviewQueryVariables,
 } from './__generated__/overview.generated';
 
 const cardClassName = 'rounded-xl border border-[#E5E7EB] bg-white p-5';
@@ -24,15 +24,15 @@ function SummaryRow({
 
 export function OverviewView({ shelterId }: { shelterId: string }) {
   const { data, error, loading } = useQuery<
-    GetAdminShelterOverviewQuery,
-    GetAdminShelterOverviewQueryVariables
-  >(GetAdminShelterOverviewDocument, {
+    GetShelterOperatorOverviewQuery,
+    GetShelterOperatorOverviewQueryVariables
+  >(GetShelterOperatorOverviewDocument, {
     variables: { shelterId },
     skip: !shelterId,
     fetchPolicy: 'cache-and-network',
   });
 
-  const shelter = data?.adminShelter;
+  const shelter = data?.operatorShelter;
   const bedsByStatus = shelter?.bedsByStatus;
   const roomsByStatus = shelter?.roomsByStatus;
 

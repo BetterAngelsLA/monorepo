@@ -27,6 +27,7 @@ class GraphQLTestCaseMixin:
         query: str,
         variables: Optional[Dict[str, Any]] = None,
         files: Optional[Dict[str, Any]] = None,
+        **extra: Any,
     ) -> Dict[str, Any]:
         # If there are files to upload, prepare multipart/form-data request
         if files:
@@ -44,14 +45,14 @@ class GraphQLTestCaseMixin:
             for i, file in enumerate(files.values(), start=1):
                 multipart_data[f"{i}"] = file
 
-            response = self.graphql_client.post(self.graphql_url, multipart_data, format="multipart")
+            response = self.graphql_client.post(self.graphql_url, multipart_data, format="multipart", **extra)
         else:
             # For non-multipart requests, just send JSON encoded data as usual
             data = {
                 "query": query,
                 "variables": variables or {},
             }
-            response = self.graphql_client.post(self.graphql_url, data, content_type="application/json")
+            response = self.graphql_client.post(self.graphql_url, data, content_type="application/json", **extra)
 
         json_data = response.json()
         if not isinstance(json_data, dict):

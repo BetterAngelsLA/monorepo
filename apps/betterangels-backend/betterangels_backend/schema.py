@@ -19,6 +19,8 @@ from strawberry.tools import merge_types
 from strawberry_django.optimizer import DjangoOptimizerExtension
 from tasks.schema import Mutation as TasksMutation
 from tasks.schema import Query as TasksQuery
+from teams.schema import Mutation as TeamsMutation
+from teams.schema import Query as TeamsQuery
 
 # Schema Stitching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
@@ -30,6 +32,7 @@ queries = (
     NotesQuery,
     ReportsQuery,
     TasksQuery,
+    TeamsQuery,
     SheltersQuery,
     ReferralsQuery,
 )
@@ -41,6 +44,7 @@ mutations = (
     HmisMutation,
     NotesMutation,
     TasksMutation,
+    TeamsMutation,
     SheltersMutation,
     ReferralsMutation,
 )

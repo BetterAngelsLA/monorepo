@@ -33,6 +33,15 @@ class OrgTypeConfig:
     name: str  # "outreach"
     label: str  # "Outreach"
     templates: tuple[TemplateConfig, ...]  # (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER)
+    member_template: TemplateConfig
+    """The member-level role template (e.g. Caseworker, Shelter Operator).
+
+    This is the default role assigned to new members and the role used
+    for self-signup flows.  It must be one of the entries in *templates*
+    and must be invitable (``is_invitable=True``).
+    """
+    allow_public_signup: bool = False
+    """Whether this org type supports public self-signup (e.g., shelter operator onboarding)."""
 
 
 @dataclass(frozen=True)
@@ -91,6 +100,20 @@ class Registry:
     def invitable_template_names(self) -> list[str]:
         """Return invitable-only template names (is_invitable=True)."""
         return sorted(self._invitable_templates_by_name.keys())
+
+    def get_template_or_raise(self, name: str, org: Organization) -> TemplateConfig:
+        """Look up a template by *name* and raise ``ValidationError`` if not found for *org*.
+
+        DRY helper for mutations that accept a ``permission_template`` input
+        and need to validate it against the org's available invitable templates.
+        """
+        from django.core.exceptions import ValidationError
+
+        template = self.template(name)
+        if template is None:
+            valid = self.invitable_template_names_for(org)
+            raise ValidationError(f"Invalid permission template '{name}'. Available: {', '.join(valid)}")
+        return template
 
     def invitable_template_names_for(self, org: Organization) -> list[str]:
         """Invitable template names available for *org*, based on ``profile.org_types``."""
@@ -151,10 +174,13 @@ REGISTRY = Registry(
         name="outreach",
         label="Outreach",
         templates=(CASEWORKER, ORG_ADMIN, ORG_SUPERUSER),
+        member_template=CASEWORKER,
     ),
     shelter=OrgTypeConfig(
         name="shelter",
         label="Shelter",
         templates=(SHELTER_OPERATOR, ORG_ADMIN, ORG_SUPERUSER),
+        member_template=SHELTER_OPERATOR,
+        allow_public_signup=True,
     ),
 )

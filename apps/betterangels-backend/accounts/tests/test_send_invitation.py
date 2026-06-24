@@ -86,15 +86,18 @@ class SendInvitationTestCase(TestCase):
         user = baker.make(User, email=self.email)
         sender = baker.make(User, email="admin@test.com")
 
-        with patch.object(
-            self.invitation_backend,
-            "email_message",
-            return_value=Mock(send=Mock(return_value=1)),
-        ), patch.object(
-            self.invitation_backend,
-            "_resolve_invite_templates",
-            return_value=(CustomInvitations.invitation_body_html, CustomInvitations.invitation_body_txt),
-        ) as mock_resolve:
+        with (
+            patch.object(
+                self.invitation_backend,
+                "email_message",
+                return_value=Mock(send=Mock(return_value=1)),
+            ),
+            patch.object(
+                self.invitation_backend,
+                "_resolve_invite_templates",
+                return_value=(CustomInvitations.invitation_body_html, CustomInvitations.invitation_body_txt),
+            ) as mock_resolve,
+        ):
             self.invitation_backend.send_invitation(
                 user,
                 sender,

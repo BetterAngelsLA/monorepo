@@ -3,7 +3,7 @@ import { operatorPath } from '@monorepo/react/shelter';
 import { useAtomValue } from 'jotai';
 import { BookCheck, Search, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import type {
   DemographicChoices,
   ShelterChoices,
@@ -51,9 +51,10 @@ export function Dashboard() {
   const isOperatorRoot =
     pathname === operatorPath || pathname === `${operatorPath}/`;
 
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, organizations } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
+  // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 
   const [searchInput, setSearchInput] = useState('');
@@ -119,10 +120,10 @@ export function Dashboard() {
 
   const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
-      ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
+      ViewSheltersByOrganizationQuery['operatorShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results
+      activeData?.operatorShelters?.results
         ?.filter((s): s is ShelterResult => s != null)
         .map((s) => ({
           id: String(s.id),
@@ -134,9 +135,9 @@ export function Dashboard() {
           status: s.status,
         })) ?? []
     );
-  }, [activeData?.adminShelters?.results]);
+  }, [activeData?.operatorShelters?.results]);
 
-  const totalCount = activeData?.adminShelters?.totalCount ?? 0;
+  const totalCount = activeData?.operatorShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const handleRowClick = useCallback(
@@ -145,6 +146,12 @@ export function Dashboard() {
     },
     [navigate]
   );
+  // ── End hooks ──────────────────────────────────────────────────────────────
+
+  // User has no organizations — redirect to create-org page (full-screen, no layout chrome)
+  if (organizations.length === 0) {
+    return <Navigate to={paths.createOrganization} replace />;
+  }
 
   return (
     <>
