@@ -43,7 +43,15 @@ export function AppSidebar(props: IProps) {
   }, [dropdownOpen]);
 
   return (
-    <Sidebar className={mergeCss(className)} onOpenChange={setIsOpen}>
+    <Sidebar
+      className={mergeCss(className)}
+      onOpenChange={setIsOpen}
+      theme={{
+        fontColor: 'var(--color-primary-20)',
+        activeColor: 'var(--color-primary-60)',
+        variant: 'decorated',
+      }}
+    >
       <Sidebar.Header>
         <div className="flex items-center w-full relative" ref={dropdownRef}>
           <BetterAngelsLogoBadge className="ml-1 mr-2 shrink-0" />

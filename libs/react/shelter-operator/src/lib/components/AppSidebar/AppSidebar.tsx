@@ -1,16 +1,11 @@
-import { CarryOutOutlined, HomeOutlined } from '@ant-design/icons';
+import { HomeOutlined } from '@ant-design/icons';
 import { Divider, Sidebar } from '@monorepo/react/components';
 import { UsersIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import {
-  isShelterManageRoute,
-  isShelterRoute,
-  paths,
-  shelterManageRoute,
-} from '../../routing';
+import { useLocation } from 'react-router-dom';
+import { isShelterManageRoute, paths, shelterManageRoute } from '../../routing';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
@@ -24,7 +19,9 @@ export function AppSidebar(props: IProps) {
 
   const [isOpen, setIsOpen] = useState(initialOpenState);
   const location = useLocation();
-  const { shelterId } = useParams<{ shelterId: string }>();
+  // const { shelterId } = useParams<{ shelterId: string }>();
+
+  const shelterId = '5';
 
   const parentCss = ['bg-[#FAFAFA]', className];
 
@@ -55,31 +52,29 @@ export function AppSidebar(props: IProps) {
           Users
         </Sidebar.Link>
 
-        {isShelterRoute(location.pathname) && shelterId && (
-          <>
-            <Divider
-              className="py-4"
-              label={isOpen ? 'shelter management' : ''}
-            />
+        <>
+          <Divider
+            className="my-4 h-6"
+            label={isOpen ? 'shelter management' : ''}
+          />
 
-            <Sidebar.Link
-              to={shelterManageRoute(shelterId)}
-              isActive={isShelterManageRoute(location.pathname)}
-              collapsed={!isOpen}
-              icon={(color: string) => (
-                <CarryOutOutlined className="w-4" style={{ color: color }} />
-              )}
-            >
-              Operations
-            </Sidebar.Link>
+          <Sidebar.Link
+            to={shelterManageRoute(shelterId)}
+            isActive={isShelterManageRoute(location.pathname)}
+            collapsed={!isOpen}
+            // icon={(color: string) => (
+            //   <CarryOutOutlined className="w-4" style={{ color: color }} />
+            // )}
+          >
+            Operations
+          </Sidebar.Link>
 
-            <ShelterProfileLinks
-              pathname={location.pathname}
-              shelterId={shelterId}
-              isOpen={isOpen}
-            />
-          </>
-        )}
+          <ShelterProfileLinks
+            pathname={location.pathname}
+            shelterId={shelterId}
+            isOpen={isOpen}
+          />
+        </>
       </Sidebar.Content>
     </Sidebar>
   );

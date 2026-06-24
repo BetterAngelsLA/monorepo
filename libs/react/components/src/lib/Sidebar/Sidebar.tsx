@@ -1,10 +1,15 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactNode, useEffect, useState } from 'react';
+import { SidebarToggleBtn } from './shared/SidebarToggleBtn';
 import { SidebarContent } from './SidebarContent';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarLink } from './SidebarLink';
 import { SidebarNestedLinks } from './SidebarNestedLinks';
-import { SidebarToggleBtn } from './shared/SidebarToggleBtn';
+import {
+  SidebarTheme,
+  SidebarThemeProvider,
+  SidebarVariant,
+} from './SidebarTheme';
 
 type TProps = {
   children?: ReactNode;
@@ -13,6 +18,12 @@ type TProps = {
   closedClassName?: string;
   onOpenChange?: (isOpen: boolean) => void;
   initialOpen?: boolean;
+  /** Whether the sidebar can be collapsed/expanded. Default: true */
+  collapsible?: boolean;
+  /** Visual variant. 'basic' hides marker + active background, 'decorated' shows them. Default: 'decorated' */
+  variant?: SidebarVariant;
+  /** Theme overrides for sidebar items (links, labels, nested groups) */
+  theme?: Partial<SidebarTheme>;
 };
 
 export function Sidebar(props: TProps) {
@@ -23,12 +34,17 @@ export function Sidebar(props: TProps) {
     children,
     onOpenChange,
     initialOpen = false,
+    collapsible = true,
+    variant,
+    theme,
   } = props;
 
-  const [isOpen, setIsOpen] = useState(initialOpen);
+  const [isOpen, setIsOpen] = useState(collapsible ? initialOpen : true);
 
   function toggleOpen() {
-    setIsOpen((prev) => !prev);
+    if (collapsible) {
+      setIsOpen((prev) => !prev);
+    }
   }
 
   useEffect(() => {
@@ -41,7 +57,6 @@ export function Sidebar(props: TProps) {
     'border-neutral-90',
     'bg-neutral-99',
     'relative',
-    'overflow-visible',
     isOpen ? openClassName : closedClassName,
     className,
   ];
@@ -65,16 +80,20 @@ export function Sidebar(props: TProps) {
   ];
 
   return (
-    <div className={mergeCss(parentCss)}>
-      <SidebarToggleBtn
-        open={isOpen}
-        className="absolute top-8 -translate-y-1/2 right-0 translate-x-1/2 z-10"
-        onClick={toggleOpen}
-      />
-      <div className={mergeCss(contentCss)}>
-        <div className={mergeCss(childrenCss)}>{children}</div>
+    <SidebarThemeProvider theme={{ variant, ...theme }}>
+      <div className={mergeCss(parentCss)}>
+        {collapsible && (
+          <SidebarToggleBtn
+            open={isOpen}
+            className="absolute top-8 -translate-y-1/2 right-0 translate-x-1/2 z-10"
+            onClick={toggleOpen}
+          />
+        )}
+        <div className={mergeCss(contentCss)}>
+          <div className={mergeCss(childrenCss)}>{children}</div>
+        </div>
       </div>
-    </div>
+    </SidebarThemeProvider>
   );
 }
 
