@@ -78,9 +78,9 @@ class Reservation(BaseModel):
     def shelter(self) -> Shelter | None:
         """Return the shelter for this reservation, resolved via bed or room."""
         if self.bed_id:
-            return self.bed.shelter
+            return self.bed.shelter  # type: ignore[union-attr]
         if self.room_id:
-            return self.room.shelter
+            return self.room.shelter  # type: ignore[union-attr]
         return None
 
     def __str__(self) -> str:

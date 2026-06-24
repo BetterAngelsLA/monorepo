@@ -3,7 +3,6 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
-from django.utils import timezone
 from model_bakery import baker
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
