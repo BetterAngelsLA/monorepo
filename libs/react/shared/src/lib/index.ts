@@ -5,6 +5,7 @@ export * from './featureControls';
 export * from './hooks';
 export * from './observers';
 export * from './permissions';
-export { Regex } from './static/regex';
+export * from './s3';
+export * from './static';
 export * from './types';
 export * from './utils';

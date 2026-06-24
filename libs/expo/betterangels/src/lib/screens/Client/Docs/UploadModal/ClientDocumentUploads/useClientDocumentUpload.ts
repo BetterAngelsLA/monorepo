@@ -29,8 +29,8 @@ export function useClientDocumentUpload() {
     // refId is to correlate server response back to original file
     const documentUploadMap = new Map<string, ReactNativeFile>();
 
-    const uploadInputs = documents.map((doc, index) => {
-      const refId = `${Date.now()}-${index}`;
+    const uploadInputs = documents.map((doc) => {
+      const refId = crypto.randomUUID();
 
       documentUploadMap.set(refId, doc);
 

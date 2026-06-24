@@ -14,7 +14,7 @@ import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import { useToast } from '../../components/base-ui/toast';
-import { Table, TableColumn } from '../../components/Table';
+import { Table, type TableColumn } from '../../components/base-ui/table';
 import { useActiveOrg } from '../../providers';
 import {
   OrganizationMembersDocument,

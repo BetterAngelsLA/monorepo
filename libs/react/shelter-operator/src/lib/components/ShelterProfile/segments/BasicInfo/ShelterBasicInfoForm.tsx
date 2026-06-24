@@ -64,10 +64,7 @@ export function ShelterBasicInfoForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <form className="flex flex-col gap-10 mt-8">
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
