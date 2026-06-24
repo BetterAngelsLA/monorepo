@@ -57,7 +57,7 @@ const COLUMNS: {
 
 export default function Teams(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg, can } = useActiveOrg();
+  const { can } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
