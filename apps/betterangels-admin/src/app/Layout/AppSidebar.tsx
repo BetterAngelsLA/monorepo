@@ -20,7 +20,7 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { activeOrg, organizations, setActiveOrgId, can } =
+  const { activeOrg, organizations, setActiveOrgId, hasPermission } =
     useActiveOrg();
   const location = useLocation();
 
@@ -104,7 +104,7 @@ export function AppSidebar(props: IProps) {
         </div>
       </Sidebar.Header>
       <Sidebar.Content>
-        {can(UserOrganizationPermissions.ViewOrgMembers) && (
+        {hasPermission(UserOrganizationPermissions.ViewOrgMembers) && (
           <Sidebar.Link
             to="/users"
             isActive={location.pathname === '/users'}
@@ -114,7 +114,7 @@ export function AppSidebar(props: IProps) {
             Users
           </Sidebar.Link>
         )}
-        {can(ReportPermissions.ViewReports) && (
+        {hasPermission(ReportPermissions.ViewReports) && (
           <Sidebar.Link
             to="/reports"
             isActive={location.pathname === '/reports'}

@@ -88,7 +88,7 @@ export function ActiveOrgProvider({
     [organizations, storage, storageKey]
   );
 
-  const can = useCallback(
+  const hasPermission = useCallback(
     (permission: PermissionEnum): boolean =>
       activeOrg?.permissions != null &&
       pipe(
@@ -101,8 +101,8 @@ export function ActiveOrgProvider({
   );
 
   const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, can }),
-    [activeOrg, organizations, setActiveOrgId, can]
+    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
+    [activeOrg, organizations, setActiveOrgId, hasPermission]
   );
 
   return (

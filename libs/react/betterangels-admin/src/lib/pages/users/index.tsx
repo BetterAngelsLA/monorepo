@@ -31,7 +31,7 @@ type IProps = {
   className?: string;
 };
 
-const ROLE_LABELS: Record<string, string> = {
+const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>> = {
   [PermissionTemplateEnum.Caseworker]: 'Caseworker',
   [OrgRoleEnum.Admin]: 'Admin',
   [OrgRoleEnum.Member]: 'Member',
@@ -40,13 +40,13 @@ const ROLE_LABELS: Record<string, string> = {
 
 function roleLabel(m: OrganizationMemberType): string {
   if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
-    return ROLE_LABELS[m.memberRole];
+    return ROLE_LABELS[m.memberRole] ?? m.memberRole;
   }
   const templates = (m.permissionTemplates ?? [])
     .map((t) => ROLE_LABELS[t])
     .filter(Boolean)
     .join(', ');
-  return templates || ROLE_LABELS[m.memberRole];
+  return templates || (ROLE_LABELS[m.memberRole] ?? m.memberRole);
 }
 
 const getFullName = (m: OrganizationMemberType): string =>
@@ -130,7 +130,7 @@ function useOrganizationMembers(
 
 export default function Users(props: IProps) {
   const { className = '' } = props;
-  const { activeOrg, can } = useActiveOrg();
+  const { activeOrg, hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -266,7 +266,7 @@ export default function Users(props: IProps) {
         <div className="flex-1 max-w-xs">
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
         </div>
-        {can(UserOrganizationPermissions.AddOrgMember) && (
+        {hasPermission(UserOrganizationPermissions.AddOrgMember) && (
           <button
             onClick={() =>
               showDrawer({
@@ -281,7 +281,7 @@ export default function Users(props: IProps) {
         )}
       </div>
 
-      {can(UserOrganizationPermissions.ViewOrgMembers) ? (
+      {hasPermission(UserOrganizationPermissions.ViewOrgMembers) ? (
         <>
           {/* ── Mobile & Tablet: card layout (shown < lg, i.e. < 1024px) ── */}
           <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
