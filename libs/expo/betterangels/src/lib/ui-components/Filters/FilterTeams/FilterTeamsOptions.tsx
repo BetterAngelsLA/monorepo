@@ -1,4 +1,3 @@
-import { useQuery } from '@apollo/client/react';
 import {
   Filters,
   MultiSelect_V2,
@@ -7,10 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import {
-  TeamsDocument,
-  TeamsQuery,
-} from '../../UserPreferences/UserTeamPreference/__generated__/teams.generated';
+import { useOrgTeams } from '../../../hooks';
 
 export type TProps = {
   onCommit: (selected: TFilterOption[]) => void;
@@ -25,16 +21,14 @@ export function FilterTeamsOptions(props: TProps) {
   const [localSelected, setLocalSelected] =
     useState<TFilterOption[]>(initialSelected);
 
-  const { data, error } = useQuery<TeamsQuery>(TeamsDocument);
+  const { teams, error } = useOrgTeams();
 
   const options = useMemo<TFilterOption[]>(() => {
-    const teams = data?.teams?.results ?? [];
-    return teams
-      .map((t) => ({
+    return teams.map((t) => ({
         id: t.id,
         label: t.name,
       }));
-  }, [data]);
+  }, [teams]);
 
   if (error) {
     console.error(error);

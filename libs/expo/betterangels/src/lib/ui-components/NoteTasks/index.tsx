@@ -185,7 +185,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           summary: taskToEdit.summary,
           description: taskToEdit.description || undefined,
           status: taskToEdit.status,
-          teamId: 'teamId' in taskToEdit ? taskToEdit.teamId : undefined,
+          teamId: taskToEdit.teamId,
         } as UpdateTaskInput)
       : undefined;
 

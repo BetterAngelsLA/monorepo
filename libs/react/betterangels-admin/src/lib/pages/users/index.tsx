@@ -6,7 +6,7 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { PlusIcon, ThreeDotIcon, UserIcon } from '@monorepo/react/icons';
-import { mergeCss, toError } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useMemo, useRef, useState } from 'react';
 import {
@@ -204,9 +204,10 @@ export default function Users(props: IProps) {
         content: `${getFullName(member)} successfully removed.`,
       });
     } catch (err) {
+      console.error(err);
       showAlert({
         type: 'error',
-        content: toError(err).message,
+        content: 'Sorry, something went wrong. Please try again.',
       });
     } finally {
       setOpenMenuRowId(null);

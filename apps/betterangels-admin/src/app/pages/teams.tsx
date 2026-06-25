@@ -1,5 +1,3 @@
-import { Teams } from '@monorepo/react/betterangels-admin';
+import { TeamsPage } from '@monorepo/react/betterangels-admin';
 
-export function TeamsPage() {
-  return <Teams />;
-}
+export { TeamsPage };

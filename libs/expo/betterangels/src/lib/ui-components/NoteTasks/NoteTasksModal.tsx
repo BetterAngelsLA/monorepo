@@ -148,7 +148,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     summary: task?.summary || '',
     description: task?.description || '',
     status: task?.status || TaskStatusEnum.ToDo,
-    teamId: (task?.teamId as string) || teamId || '',
+    teamId: task?.teamId ?? teamId ?? '',
   };
 
   const showDelete = !!onDelete || !!task?.id;

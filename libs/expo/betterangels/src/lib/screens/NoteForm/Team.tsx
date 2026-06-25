@@ -1,8 +1,7 @@
-import { useQuery } from '@apollo/client/react';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { TeamsDocument, TeamsQuery } from '../../ui-components/UserPreferences/UserTeamPreference/__generated__/teams.generated';
+import { useOrgTeams } from '../../hooks';
 
 interface ITeamProps {
   teamId?: string | null;
@@ -11,8 +10,7 @@ interface ITeamProps {
 
 export default function Team(props: ITeamProps) {
   const { teamId, onTeamChange } = props;
-  const { data } = useQuery<TeamsQuery>(TeamsDocument);
-  const teams = data?.teams?.results ?? [];
+  const { teams } = useOrgTeams();
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>

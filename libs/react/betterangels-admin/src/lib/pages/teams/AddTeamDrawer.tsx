@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { AppDrawer, Button, useAlert, useAppDrawer } from '@monorepo/react/components';
-import { Input, mergeCss, toError } from '@monorepo/react/shared';
+import { Input, mergeCss } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { CreateTeamDocument } from '../teams/__generated__/teams.generated';
@@ -32,7 +32,11 @@ export function AddTeamDrawer(props: TProps) {
       closeDrawer();
       onSuccess();
     } catch (err) {
-      showAlert({ type: 'error', content: toError(err).message });
+      console.error(err);
+      showAlert({
+        type: 'error',
+        content: 'Sorry, something went wrong. Please try again.',
+      });
     } finally {
       setDisabled(false);
     }

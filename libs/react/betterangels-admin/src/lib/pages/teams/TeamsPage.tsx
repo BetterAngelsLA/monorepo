@@ -6,7 +6,7 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { GroupsIcon, PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
-import { mergeCss, toError } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
 import {
@@ -38,15 +38,18 @@ const COLUMNS: {
   {
     label: 'Created',
     field: 'createdAt',
-    render: (t) =>
-      t.createdAt
-        ? formatDistanceToNow(parseISO(t.createdAt), { addSuffix: true })
-        : '\u2014',
+    render: (t) => (
+      <span className="text-right w-full block">
+        {t.createdAt
+          ? formatDistanceToNow(parseISO(t.createdAt), { addSuffix: true })
+          : '\u2014'}
+      </span>
+    ),
   },
 ];
 
-export default function Teams(props: IProps) {
-  const { className = '' } = props;
+export function TeamsPage(props: IProps) {
+  const { className } = props;
   const { hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
@@ -73,14 +76,13 @@ export default function Teams(props: IProps) {
 
   const activeData = data ?? previousData;
   const teams = activeData?.teams?.results ?? [];
-  const _totalCount = activeData?.teams?.totalCount ?? 0;
   const isInitialLoad = loading && !activeData;
 
   const parentCss = [
     'flex-1',
     'min-h-0',
     'overflow-x-auto',
-    `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
+    loading && 'opacity-50 transition-opacity duration-200',
     className,
   ];
 
@@ -105,7 +107,11 @@ export default function Teams(props: IProps) {
       });
       refetch();
     } catch (err) {
-      showAlert({ type: 'error', content: toError(err).message });
+      console.error(err);
+      showAlert({
+        type: 'error',
+        content: 'Sorry, something went wrong. Please try again.',
+      });
     } finally {
       setOpenMenuRowId(null);
     }
@@ -125,7 +131,10 @@ export default function Teams(props: IProps) {
     <button
       key={col.label}
       onClick={() => handleSort(col.field)}
-      className="flex items-center gap-1 hover:text-primary-60"
+      className={mergeCss([
+        'flex items-center gap-1 hover:text-primary-60',
+        col.field === 'createdAt' && 'justify-end w-full text-right',
+      ])}
     >
       {col.label}
       {sort.field === col.field && (
@@ -226,15 +235,22 @@ export default function Teams(props: IProps) {
         )}
       </div>
 
-      {hasPermission(TeamPermissions.View) ? (
+      {!hasPermission(TeamPermissions.View) && (
+        <div className="text-center py-10 text-neutral-60">
+          You do not have permission to view teams.
+        </div>
+      )}
+
+      {hasPermission(TeamPermissions.View) && displayTeams.length === 0 && (
+        <div className="text-center py-10 text-neutral-60">
+          {search
+            ? 'No teams match your search.'
+            : 'No teams in this organization.'}
+        </div>
+      )}
+
+      {hasPermission(TeamPermissions.View) && displayTeams.length > 0 && (
         <>
-          {displayTeams.length === 0 ? (
-            <div className="text-center py-10 text-neutral-60">
-              {search
-                ? 'No teams match your search.'
-                : 'No teams in this organization.'}
-            </div>
-          ) : (
             <>
               {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
               <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
@@ -271,12 +287,7 @@ export default function Teams(props: IProps) {
                 />
               </div>
             </>
-          )}
         </>
-      ) : (
-        <div className="text-center py-10 text-neutral-60">
-          You do not have permission to view teams.
-        </div>
       )}
     </div>
   );

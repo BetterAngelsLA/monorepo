@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement, ReactNode } from 'react';
 
 type TableHeader = string | ReactNode;
@@ -27,7 +27,7 @@ export function Table<T>({
   const hasAction = !!action;
   return (
     <div className="overflow-x-auto w-full rounded-lg">
-      <table className={clsx('min-w-[800px] w-full text-left text-sm', className)}>
+      <table className={mergeCss(['w-full text-left text-sm', className])}>
         <thead>
           <tr className="bg-primary-95">
             {header.map((title, index) => (
@@ -38,7 +38,9 @@ export function Table<T>({
                 {title}
               </th>
             ))}
-            {hasAction && <th className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap w-0" />}
+            {hasAction && (
+              <th className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap w-0" />
+            )}
           </tr>
         </thead>
         <tbody>
