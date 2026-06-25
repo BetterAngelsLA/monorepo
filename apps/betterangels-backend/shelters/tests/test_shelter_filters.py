@@ -404,6 +404,90 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(len(results), expected_result_count)
 
+    @parametrize(
+        "property_filters, expected_result_count",
+        [
+            # Without includeNull, only shelters WITH the specified property match
+            ({"pets": [PetChoices.CATS.name]}, 1),
+            # With includeNull, shelters with no pets also match
+            ({"pets": [PetChoices.CATS.name], "petsIncludeNull": True}, 2),
+            # Only includeNull — only shelters with no pets
+            ({"petsIncludeNull": True}, 1),
+            # includeNull=False has no effect (same as not specifying)
+            ({"pets": [PetChoices.CATS.name], "petsIncludeNull": False}, 1),
+            # includeNull on parking: CATS pets AND null parking → 0 shelters
+            # (A has CATS but RV parking, C has null parking but no CATS)
+            ({"pets": [PetChoices.CATS.name], "parkingIncludeNull": True}, 0),
+            # CATS pets AND (BICYCLE parking OR null parking)
+            # A: CATS+RV (no), B: DOGS+BICYCLE (no CATS), C: null (no CATS) → 0
+            (
+                {
+                    "pets": [PetChoices.CATS.name],
+                    "parking": [ParkingChoices.BICYCLE.name],
+                    "parkingIncludeNull": True,
+                },
+                0,
+            ),
+            # DOGS_UNDER_25 pets AND (BICYCLE parking OR null parking)
+            # B: DOGS_UNDER_25+BICYCLE (yes), C: null parking (no DOGS) → 1
+            (
+                {
+                    "pets": [PetChoices.DOGS_UNDER_25_LBS.name],
+                    "parking": [ParkingChoices.BICYCLE.name],
+                    "parkingIncludeNull": True,
+                },
+                1,
+            ),
+        ],
+    )
+    def test_shelter_property_filter_include_null(
+        self, property_filters: dict[str, Any], expected_result_count: int
+    ) -> None:
+        """Test that includeNull flags for property filters work correctly.
+
+        Creates three shelters:
+        - Shelter A: pets=[CATS], parking=[RV]
+        - Shelter B: pets=[DOGS_UNDER_25_LBS], parking=[BICYCLE]
+        - Shelter C: pets=[], parking=[] (no data for either property)
+        """
+        shelter_recipe.make(
+            parking=[Parking.objects.get_or_create(name=ParkingChoices.RV)[0]],
+            pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+            status=StatusChoices.APPROVED,
+        )
+        shelter_recipe.make(
+            parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
+            pets=[Pet.objects.get_or_create(name=PetChoices.DOGS_UNDER_25_LBS)[0]],
+            status=StatusChoices.APPROVED,
+        )
+        shelter_recipe.make(
+            parking=[],
+            pets=[],
+            status=StatusChoices.APPROVED,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["properties"] = property_filters
+
+        expected_query_count = 2
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        results = response["data"]["shelters"]["results"]
+
+        self.assertEqual(len(results), expected_result_count)
+
     def test_shelter_spa_filter(self) -> None:
         spa_one, _ = SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")
 
