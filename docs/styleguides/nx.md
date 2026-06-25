@@ -220,40 +220,53 @@ split them into separate feature libs:
 
 ```
 libs/
-├── shared/                      ← scope:shared
-│   ├── apollo/                  ← libs/apollo
-│   ├── assets/                  ← libs/assets
-│   ├── tailwind/                ← libs/tailwind
-│   ├── react-shared/            ← libs/react/shared
-│   ├── places/                  ← libs/shared/places
-│   ├── units/                   ← libs/shared/units
-│   ├── components/              ← libs/react/components
-│   └── icons/                   ← libs/react/icons
-├── ba-platform/                 ← scope:ba-platform
-│   └── data-access/             ← libs/ba-platform (no feature split; it's infrastructure)
-├── betterangels/                ← scope:betterangels
-│   └── mobile/                  ← libs/expo/betterangels (future: clients, interactions, tasks, notes)
-├── betterangels-admin/          ← scope:betterangels-admin
-│   └── admin/                   ← libs/react/betterangels-admin (future: users, reports, teams)
-├── shelter-web/                 ← scope:shelter-web
-│   └── shelter/                 ← libs/react/shelter (future: search, shelters, home)
-├── shelter-operator/            ← scope:shelter-operator
-│   └── operator/                ← libs/react/shelter-operator (future: dashboard, users, beds, rooms)
-└── ba-backend/                  ← scope:ba-backend (currently only an app, no libs)
+├── shared/                           ← scope:shared
+│   ├── apollo/                       ← libs/apollo
+│   ├── assets/                       ← libs/assets
+│   ├── tailwind/                     ← libs/tailwind
+│   ├── react-shared/                 ← libs/react/shared
+│   ├── places/                       ← libs/shared/places
+│   ├── units/                        ← libs/shared/units
+│   ├── components/                   ← libs/react/components
+│   └── icons/                        ← libs/react/icons
+│
+├── ba-platform/                      ← scope:ba-platform
+│   └── data-access/                  ← libs/ba-platform
+│
+├── betterangels/                     ← scope:betterangels
+│   ├── mobile/                       ← libs/expo/betterangels (current monolith)
+│   ├── clients/                      ← future: screens/Client*, Clients*
+│   ├── interactions/                 ← future: screens/Interactions*
+│   ├── tasks/                        ← future: screens/Task*, Tasks
+│   └── notes/                        ← future: screens/Note*, Notes*
+│
+├── betterangels-admin/               ← scope:betterangels-admin
+│   ├── admin/                        ← libs/react/betterangels-admin (current monolith)
+│   ├── users/                        ← future: pages/users
+│   ├── reports/                      ← future: pages/reports
+│   └── teams/                        ← future: pages/teams
+│
+├── shelter-web/                      ← scope:shelter-web
+│   ├── shelter/                      ← libs/react/shelter (current monolith)
+│   ├── search/                       ← future: pages/search
+│   ├── shelters/                     ← future: pages/shelter, pages/shelters
+│   └── home/                         ← future: pages/home
+│
+├── shelter-operator/                 ← scope:shelter-operator
+│   ├── operator/                     ← libs/react/shelter-operator (current monolith)
+│   ├── dashboard/                    ← future: pages/dashboard
+│   ├── users/                        ← future: pages/users
+│   ├── beds/                         ← future: pages/beds
+│   ├── rooms/                        ← future: pages/rooms
+│   └── reservations/                 ← future: pages/reservation
+│
+└── ba-backend/                       ← scope:ba-backend (currently only an app, no libs)
 ```
 
-**A scope with one project is the starting point.** Feature libs emerge when
-individual pages/screens become large enough to justify their own project:
-
-```
-libs/betterangels-admin/
-├── admin/          ← current monolith
-└── teams/          ← future: split out when teams grows
-```
-
-Don't pre-split. Wait until a page/screen has enough complexity (dedicated hooks,
-components, tests) to stand alone. The grouping folder alone provides the
-organizational benefit until then.
+**The current monolith is the starting point.** Each scope starts with one lib
+containing all its pages/screens. Split into feature libs only when a page grows
+enough complexity (dedicated hooks, components, tests) to stand alone. The
+grouping folder alone provides the organizational benefit until then.
 
 Migration tool: `nx g @nx/workspace:move --project <current> <target>`
 
