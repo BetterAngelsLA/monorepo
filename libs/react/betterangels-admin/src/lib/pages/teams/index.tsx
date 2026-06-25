@@ -20,7 +20,6 @@ import { useActiveOrg } from '../../providers';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
-  UpdateTeamDocument,
 } from './__generated__/teams.generated';
 import { AddTeamDrawer } from './AddTeamDrawer';
 
@@ -36,15 +35,6 @@ const COLUMNS: {
   render: (t: TeamType) => string | JSX.Element;
 }[] = [
   { label: 'Name', field: 'name', render: (t) => t.name },
-  {
-    label: 'Active',
-    field: 'name',
-    render: (t) => (
-      <span className="flex justify-center w-full">
-        {t.isActive ? 'Yes' : 'No'}
-      </span>
-    ),
-  },
   {
     label: 'Created',
     field: 'createdAt',
@@ -79,7 +69,6 @@ export default function Teams(props: IProps) {
     { fetchPolicy: 'cache-and-network' }
   );
 
-  const [updateTeam, { loading: updating }] = useMutation(UpdateTeamDocument);
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
 
   const activeData = data ?? previousData;
@@ -97,23 +86,6 @@ export default function Teams(props: IProps) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-  };
-
-  const handleToggleActive = async (team: TeamType) => {
-    try {
-      const response = await updateTeam({
-        variables: { data: { id: team.id, isActive: !team.isActive } },
-      });
-      const error = extractOperationInfoMessage(response, 'updateTeam');
-      if (error) throw new Error(error);
-      showAlert({
-        type: 'success',
-        content: `${team.name} ${team.isActive ? 'deactivated' : 'activated'}.`,
-      });
-      refetch();
-    } catch (err) {
-      showAlert({ type: 'error', content: toError(err).message });
-    }
   };
 
   const handleDelete = async (team: TeamType) => {
@@ -247,13 +219,6 @@ export default function Teams(props: IProps) {
                       ref={menuRef}
                       className="absolute flex flex-col items-start top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
                     >
-                      <button
-                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left"
-                        onClick={() => handleToggleActive(row)}
-                        disabled={updating}
-                      >
-                        {row.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
                       <button
                         className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
                         onClick={() => void handleDelete(row)}
