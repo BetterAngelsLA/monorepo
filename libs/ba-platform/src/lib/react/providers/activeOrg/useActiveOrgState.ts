@@ -1,6 +1,9 @@
-import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
+import {
+  localStorageAdapter,
+  type StorageAdapter,
+} from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { pipe, values, flat } from 'remeda';
+import { flat, pipe, values } from 'remeda';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 
@@ -8,7 +11,7 @@ import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 export interface BaseOrg {
   id: string;
   name: string;
-  permissions: Record<string, string[]>;
+  permissions: Record<string, any>;
 }
 
 interface UseActiveOrgStateOptions {
@@ -40,14 +43,14 @@ export interface ActiveOrgState<TOrg extends BaseOrg = BaseOrg> {
  * @param organizations  List of orgs the current user belongs to.
  * @param options  Optional storage adapter and key overrides.
  */
-export function useActiveOrgState<
-  TOrg extends BaseOrg = BaseOrg,
->(
+export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
   organizations: TOrg[],
   options: UseActiveOrgStateOptions = {}
 ): ActiveOrgState<TOrg> {
-  const { storage = localStorageAdapter, storageKey = DEFAULT_ORG_STORAGE_KEY } =
-    options;
+  const {
+    storage = localStorageAdapter,
+    storageKey = DEFAULT_ORG_STORAGE_KEY,
+  } = options;
 
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
@@ -124,11 +127,8 @@ export function useActiveOrgState<
   const hasPermission = useCallback(
     <P extends string>(permission: P): boolean =>
       activeOrg?.permissions != null &&
-      pipe(
-        activeOrg.permissions,
-        values(),
-        flat(),
-        (arr) => arr.includes(permission)
+      pipe(activeOrg.permissions, values(), flat(), (arr) =>
+        arr.includes(permission)
       ),
     [activeOrg]
   );
