@@ -39,6 +39,18 @@ Key alignments:
 
 Rejected alternatives: [see rejected-alternatives.md](./rejected-alternatives.md).
 
+### Metro Operational Model Compatibility
+
+This design supports all three dominant shelter placement models used by major metros (see [research.md](./research.md) for details):
+
+| Model | How the design supports it |
+|---|---|
+| **Centralized placement** (NYC, Boston) | Targeted `PENDING` referrals let a central coordinator assign clients to specific shelters. `ShelterAvailability` tracks beds. |
+| **Coordinated matching** (SF, Seattle) | `QUEUED` referrals + matching engine automate system-recommended matches. Priority tiers align with HUD vulnerability-based prioritization. System can push targeted referrals. |
+| **Shelter-choice** (LA, mid-size CoCs) | Queue view lets shelters browse and claim compatible clients. `declined_by` tracking prevents repeat views of declined clients. |
+
+**Bed availability integration path (future):** When shelters reliably update `ShelterAvailability` or `Bed.computed_status`, the matching query adds a simple filter — no model changes needed. See research.md for the query pattern.
+
 ---
 
 ## Models

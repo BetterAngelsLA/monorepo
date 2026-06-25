@@ -100,3 +100,62 @@ The Better Angels system already captures shelter-level acceptance criteria exce
 - Full VI-SPDAT or Next Step assessment integration (requires formal assessment tool licensing/training)
 - Automated vulnerability scoring (complex algorithm, better done by caseworkers for now)
 - Geographic zone-based routing (already in shelter model via SPA, can be added later)
+
+---
+
+## Operational Models: How Major Metros Manage Shelter Placement
+
+### Three Dominant Models
+
+| Model | Cities | How it works | Shelter role |
+|---|---|---|---|
+| **Centralized placement** | NYC, Boston, DC | Central assessment center evaluates all clients. System assigns to specific shelter based on assessment + availability. | Shelters report bed counts; accept whoever is sent. Little autonomy. |
+| **Coordinated matching** | SF, Seattle, Denver | Multiple access points feed a central system. System matches and refers, but shelters may have some choice. | Shelters report availability; receive system-generated referrals. Moderate autonomy. |
+| **Shelter-choice / provider-driven** | LA (hybrid), many mid-size CoCs | Shelters publish their criteria. Caseworkers or the system match. Shelters pull from a shared pool or accept direct referrals. | Shelters control who they accept. High autonomy. |
+
+### Key Operational Differences
+
+| Dimension | Centralized (NYC) | Coordinated (SF) | Shelter-choice (LA) |
+|---|---|---|---|
+| **Who decides placement?** | Central system | System matches, shelter confirms | Shelter chooses |
+| **Bed availability** | Real-time, centrally tracked | Real-time via ONE System | Provider-reported, not always real-time |
+| **Shelter autonomy** | Low — must accept referrals | Medium — can decline | High — can accept/decline freely |
+| **Intake model** | Central intake centers | Distributed access points | Direct to shelter or via CES |
+| **Referral direction** | System → Shelter (push) | System → Shelter (push) | Caseworker → Queue (pull) |
+| **Technology maturity** | High (proprietary DHS systems) | High (ONE System) | Varied (Better Angels is improving this) |
+
+### What This Means for Better Angels
+
+The Better Angels design naturally supports **all three models** because:
+
+1. **Centralized placement** — The `PENDING` + targeted referral path lets a central coordinator assign clients to specific shelters. The `ShelterAvailability` model already tracks beds.
+
+2. **Coordinated matching** — The `QUEUED` path + matching engine automates system-recommended matches. Shelters see compatible clients ranked by priority. The system can also push referrals via targeted `PENDING`.
+
+3. **Shelter-choice** — The queue view lets shelters browse and claim compatible clients. This is the default mode for LA but works for any CoC.
+
+### Bed Availability Integration (Future)
+
+The system already has `ShelterAvailability` (per-shelter bed counts: `non_restricted_beds`, `restricted_beds`) and `Bed`/`Room` models with computed status (AVAILABLE, OCCUPIED, RESERVED, etc.).
+
+When shelters begin reliably updating availability, the matching query can add:
+
+```python
+# Filter shelters with available beds (future)
+Shelter.objects.filter(
+    availability__non_restricted_beds__gt=0
+) | Shelter.objects.filter(
+    availability__restricted_beds__gt=0
+)
+```
+
+Or at the bed level:
+
+```python
+# Match only shelters with at least one available bed
+Shelter.objects.filter(
+    beds__computed_status=BedStatusChoices.AVAILABLE
+).distinct()
+```
+
+No design changes needed — availability filtering is a query addition, not a model change.
