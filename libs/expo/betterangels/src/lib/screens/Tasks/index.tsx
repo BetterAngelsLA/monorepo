@@ -21,7 +21,7 @@ export default function Tasks() {
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters({ teamPreference })
+    getInitialTaskFilters({ teamId: teamPreference })
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -43,7 +43,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
+    setCurrentFilters(getInitialTaskFilters({ teamId: teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
@@ -74,7 +74,7 @@ export default function Tasks() {
         style={styles.filters}
         filters={[
           isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
-          'teams',
+          'teamIds',
           'taskStatus',
           'authors',
           'organizations',
