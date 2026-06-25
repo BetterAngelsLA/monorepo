@@ -164,38 +164,49 @@ Key patterns from the reference repo:
 
 ### BetterAngels structure (current state)
 
-This is what we have today. Projects live at the top level of `libs/`.
-Tags define the architecture; folder moves are purely cosmetic.
+All projects are tagged. Here's the current layout:
 
 ```
 apps/
-├── betterangels/                ← React Native (Expo) mobile app
-├── betterangels-admin/          ← React (Vite) admin portal
-├── betterangels-backend/        ← Django + GraphQL backend
-├── shelter-web/                 ← React (Vite) shelter portal
-└── wildfires/                   ← Wildfires app
+├── betterangels/                ← type:app, scope:outreach
+├── betterangels-admin/          ← type:app, scope:outreach
+├── betterangels-backend/        ← type:app, scope:ba-backend
+├── shelter-web/                 ← type:app, scope:shelter-web
+└── wildfires/                   ← type:app, scope:wildfires
 
 libs/
 ├── apollo/                      ← type:util, scope:shared
 ├── assets/                      ← type:util, scope:shared
 ├── ba-platform/                 ← type:data-access, scope:ba-platform
-├── expo/                        ← type:feature, scope:mobile
-├── python/                      ← type:util, scope:shared
+├── expo/
+│   ├── betterangels/            ← type:feature, scope:outreach
+│   ├── modules/
+│   │   └── signing-fingerprint/ ← type:util, scope:shared
+│   └── shared/
+│       ├── clients/             ← type:util, scope:shared
+│       ├── icons/               ← type:ui, scope:shared
+│       ├── images/              ← type:util, scope:shared
+│       ├── services/            ← type:util, scope:shared
+│       ├── static/              ← type:util, scope:shared
+│       ├── ui-components/       ← type:ui, scope:shared
+│       └── utils/               ← type:util, scope:shared
+├── python/
+│   └── stubs/                   ← type:util, scope:shared
 ├── react/
-│   ├── betterangels-admin/      ← (to be tagged: type:feature, scope:ba-admin)
-│   ├── components/              ← (to be tagged: type:ui, scope:shared)
-│   ├── icons/                   ← (to be tagged: type:ui, scope:shared)
-│   ├── shared/                  ← (to be tagged: type:util, scope:shared)
-│   └── shelter-operator/        ← (to be tagged: type:feature, scope:shelter-operator)
+│   ├── betterangels-admin/      ← type:feature, scope:outreach
+│   ├── components/              ← type:ui, scope:shared
+│   ├── icons/                   ← type:ui, scope:shared
+│   ├── shared/                  ← type:util, scope:shared
+│   ├── shelter/                 ← type:feature, scope:shelter-web
+│   ├── shelter-operator/        ← type:feature, scope:shelter-operator
+│   └── storybook/               ← type:util, scope:shared
 ├── shared/
 │   ├── places/                  ← type:util, scope:shared
 │   └── units/                   ← type:util, scope:shared
 └── tailwind/                    ← type:util, scope:shared
 ```
 
-> **Note:** Only `ba-platform` has been tagged so far (`type:data-access, scope:ba-platform`).
-> Other projects use the default wildcard and will be tagged incrementally.
-> Nesting into scope/type folders (e.g., `libs/shared/ui-components/`) is a future
+> **Note:** Nesting into scope/type folders (e.g., `libs/shared/ui-components/`) is a future
 > optimization — do it when a scope has multiple projects, not before.
 
 ### Tagging roadmap (incremental)
@@ -217,17 +228,22 @@ Tags to apply to existing projects:
 | Current path                    | Type tag                   | Scope tag                   |
 | ------------------------------- | -------------------------- | --------------------------- |
 | `libs/ba-platform`              | `type:data-access` ✅ done | `scope:ba-platform` ✅ done |
-| `libs/apollo`                   | `type:util`                | `scope:shared`              |
-| `libs/assets`                   | `type:util`                | `scope:shared`              |
-| `libs/tailwind`                 | `type:util`                | `scope:shared`              |
-| `libs/react/components`         | `type:ui`                  | `scope:shared`              |
-| `libs/react/icons`              | `type:ui`                  | `scope:shared`              |
-| `libs/react/shared`             | `type:util`                | `scope:shared`              |
-| `libs/shared/places`            | `type:util`                | `scope:shared`              |
-| `libs/shared/units`             | `type:util`                | `scope:shared`              |
-| `libs/react/betterangels-admin` | `type:feature`             | `scope:ba-admin`            |
-| `libs/react/shelter-operator`   | `type:feature`             | `scope:shelter-operator`    |
-| `libs/expo/*`                   | `type:feature`             | `scope:mobile`              |
+| `libs/apollo`                   | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/assets`                   | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/tailwind`                 | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/react/components`         | `type:ui` ✅ done          | `scope:shared` ✅ done      |
+| `libs/react/icons`              | `type:ui` ✅ done          | `scope:shared` ✅ done      |
+| `libs/react/shared`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/react/storybook`          | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/react/shelter`            | `type:feature` ✅ done     | `scope:shelter-web` ✅ done |
+| `libs/shared/places`            | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/shared/units`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/react/betterangels-admin` | `type:feature` ✅ done     | `scope:outreach` ✅ done    |
+| `libs/react/shelter-operator`   | `type:feature` ✅ done     | `scope:shelter-operator` ✅ done |
+| `libs/expo/betterangels`        | `type:feature` ✅ done     | `scope:outreach` ✅ done    |
+| `libs/expo/shared/*`            | `type:ui` / `type:util` ✅ done | `scope:shared` ✅ done  |
+| `libs/expo/modules/*`           | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| `libs/python/stubs`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
 
 ---
 
@@ -275,12 +291,16 @@ should replace the wildcard:
           "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"]
         },
         {
-          "sourceTag": "scope:ba-admin",
-          "onlyDependOnLibsWithTags": ["scope:ba-admin", "scope:ba-platform", "scope:shared"]
+          "sourceTag": "scope:outreach",
+          "onlyDependOnLibsWithTags": ["scope:outreach", "scope:ba-platform", "scope:shared"]
         },
         {
           "sourceTag": "scope:shelter-operator",
           "onlyDependOnLibsWithTags": ["scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+        },
+        {
+          "sourceTag": "scope:shelter-web",
+          "onlyDependOnLibsWithTags": ["scope:shelter-web", "scope:ba-platform", "scope:shared"]
         }
       ]
     }
@@ -398,7 +418,7 @@ to assign responsibility:
 ```
 /libs/ba-platform/    @betterangels/platform-team
 /libs/shared/         @betterangels/platform-team
-/libs/ba-admin/       @betterangels/admin-team
+/libs/react/betterangels-admin/  @betterangels/outreach-team
 /libs/shelter-operator/ @betterangels/shelter-team
 ```
 
