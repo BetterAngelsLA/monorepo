@@ -45,9 +45,16 @@ export function FilterPills(props: IProps) {
         pills.push({
           id: 'openNow',
           label: 'Open now',
-          clear: (prev) => ({ ...prev, openNow: undefined }),
+          clear: (prev) => ({
+            ...prev,
+            openNow: undefined,
+            openNowScheduleTypes: undefined,
+          }),
         });
       }
+      continue;
+    }
+    if (key === 'openNowScheduleTypes') {
       continue;
     }
     if (key === 'isAccessCenter') {

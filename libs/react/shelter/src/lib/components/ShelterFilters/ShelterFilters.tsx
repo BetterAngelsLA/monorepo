@@ -1,6 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
+import { useState } from 'react';
+import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
@@ -22,11 +24,26 @@ type IProps = {
   onFiltersChange: (filters: TShelterPropertyFilters) => void;
 };
 
+const OPEN_NOW_OPTIONS: {
+  key: ScheduleTypeChoices;
+  label: string;
+}[] = [
+  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
+  { key: ScheduleTypeChoices.Intake, label: 'Intake' },
+  { key: ScheduleTypeChoices.MealService, label: 'Meal Services' },
+  { key: ScheduleTypeChoices.StaffAvailability, label: 'Staff Availability' },
+];
+
 export function ShelterFilters(props: IProps) {
   const { className, filters, onFiltersChange } = props;
 
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
+
+  const initialOpenNowTypes = filters.openNowScheduleTypes ?? [];
+  const [openNowTypes, setOpenNowTypes] = useState<ScheduleTypeChoices[]>(
+    initialOpenNowTypes
+  );
 
   const parentCss = ['pb-24', className];
 
@@ -40,10 +57,20 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
-  function onOpenNowChange(checked: boolean) {
+  function onOpenNowScheduleTypeChange(
+    scheduleType: ScheduleTypeChoices,
+    checked: boolean
+  ) {
+    const newTypes = checked
+      ? [...openNowTypes, scheduleType]
+      : openNowTypes.filter((t) => t !== scheduleType);
+
+    setOpenNowTypes(newTypes);
+
     onFiltersChange({
       ...filters,
-      openNow: checked,
+      openNow: newTypes.length > 0 ? true : undefined,
+      openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
     });
   }
 
@@ -94,12 +121,17 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
         <div className="mt-8">
-          <ExpandableContainer header="Availability">
-            <Checkbox
-              label="Open now"
-              checked={!!filters.openNow}
-              onChange={onOpenNowChange}
-            />
+          <ExpandableContainer header="Open Now">
+            {OPEN_NOW_OPTIONS.map((option) => (
+              <Checkbox
+                key={option.key}
+                label={option.label}
+                checked={openNowTypes.includes(option.key)}
+                onChange={(checked) =>
+                  onOpenNowScheduleTypeChange(option.key, checked)
+                }
+              />
+            ))}
           </ExpandableContainer>
         </div>
 
