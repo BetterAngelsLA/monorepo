@@ -1806,10 +1806,7 @@ input OrgInvitationInput {
 }
 
 type OrgPermissions {
-  accounts: [UserOrganizationPermissions!]!
-  reports: [ReportPermissions!]!
-  shelters: [ShelterPermissions!]!
-  teams: [TeamPermissions!]!
+  grants: [PermissionGroup!]!
 }
 
 enum OrgRoleEnum {
@@ -1942,6 +1939,18 @@ enum ParkingChoices {
 
 type ParkingType {
   name: ParkingChoices
+}
+
+enum PermissionDomain {
+  ACCOUNTS
+  REPORTS
+  SHELTERS
+  TEAMS
+}
+
+type PermissionGroup {
+  domain: PermissionDomain!
+  values: [String!]!
 }
 
 enum PermissionTemplateEnum {
@@ -2151,10 +2160,6 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
-
-enum ReportPermissions {
-  VIEW_REPORTS
-}
 
 type ReportSummaryType {
   totalNotes: Int!
@@ -2528,13 +2533,6 @@ input ShelterOrder {
   createdAt: Ordering
 }
 
-enum ShelterPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
 input ShelterPhotoFromUploadInput {
   presignedKey: String!
   uploadToken: String!
@@ -2814,13 +2812,6 @@ type TaskTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [TaskType!]!
-}
-
-enum TeamPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
 }
 
 type TeamType {
@@ -3149,14 +3140,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-}
 
 type UserType {
   firstName: NonBlankString

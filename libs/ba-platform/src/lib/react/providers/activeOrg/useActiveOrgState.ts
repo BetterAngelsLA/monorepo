@@ -3,7 +3,6 @@ import {
   type StorageAdapter,
 } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { flat, pipe, values } from 'remeda';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 import type { CurrentOrgUserQuery } from '../../apollo/user/__generated__/UserProvider.generated';
@@ -126,8 +125,8 @@ export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
   const hasPermission = useCallback(
     <P extends string>(permission: P): boolean =>
       activeOrg?.permissions != null &&
-      pipe(activeOrg.permissions, values(), flat(), (arr) =>
-        (arr as string[]).includes(permission)
+      (activeOrg.permissions.grants.flatMap((g) => g.values) as string[]).includes(
+        permission
       ),
     [activeOrg]
   );

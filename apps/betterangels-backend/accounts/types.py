@@ -128,20 +128,36 @@ class CurrentUserOrganizationType(OrganizationType):
 
     @strawberry_django.field
     def permissions(self, info: Info) -> "OrgPermissions":
-        return OrgPermissions(
-            accounts=AccountsGrantedPermissions.from_instance(self).granted,
-            reports=ReportsGrantedPermissions.from_instance(self).granted,
-            shelters=SheltersGrantedPermissions.from_instance(self).granted,
-            teams=TeamsGrantedPermissions.from_instance(self).granted,
-        )
+        grants: List[PermissionGroup] = []
+        for domain, granted_perms in [
+            (PermissionDomain.ACCOUNTS, AccountsGrantedPermissions),
+            (PermissionDomain.REPORTS, ReportsGrantedPermissions),
+            (PermissionDomain.SHELTERS, SheltersGrantedPermissions),
+            (PermissionDomain.TEAMS, TeamsGrantedPermissions),
+        ]:
+            perms = granted_perms.from_instance(self).granted
+            if perms:
+                grants.append(PermissionGroup(domain=domain, values=list(perms)))
+        return OrgPermissions(grants=grants)
+
+
+@strawberry.enum
+class PermissionDomain(Enum):
+    ACCOUNTS = "accounts"
+    REPORTS = "reports"
+    SHELTERS = "shelters"
+    TEAMS = "teams"
+
+
+@strawberry.type
+class PermissionGroup:
+    domain: PermissionDomain
+    values: List[str]
 
 
 @strawberry.type
 class OrgPermissions:
-    accounts: List[UserOrganizationPermissions]
-    reports: List[ReportPermissions]
-    shelters: List[ShelterPermissions]  # type: ignore[valid-type]
-    teams: List[TeamPermissions]  # type: ignore[valid-type]
+    grants: List[PermissionGroup]
 
 
 @strawberry_django.type(User)

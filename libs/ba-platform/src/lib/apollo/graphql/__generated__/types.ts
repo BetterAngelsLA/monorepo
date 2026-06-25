@@ -2232,10 +2232,7 @@ export type OrgInvitationInput = {
 
 export type OrgPermissions = {
   __typename?: 'OrgPermissions';
-  accounts: Array<UserOrganizationPermissions>;
-  reports: Array<ReportPermissions>;
-  shelters: Array<ShelterPermissions>;
-  teams: Array<TeamPermissions>;
+  grants: Array<PermissionGroup>;
 };
 
 export enum OrgRoleEnum {
@@ -2383,6 +2380,19 @@ export type PermDefinition = {
   app?: InputMaybe<Scalars['String']['input']>;
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum PermissionDomain {
+  Accounts = 'ACCOUNTS',
+  Reports = 'REPORTS',
+  Shelters = 'SHELTERS',
+  Teams = 'TEAMS'
+}
+
+export type PermissionGroup = {
+  __typename?: 'PermissionGroup';
+  domain: PermissionDomain;
+  values: Array<Scalars['String']['output']>;
 };
 
 export enum PermissionTemplateEnum {
@@ -2854,10 +2864,6 @@ export type RemoveOrganizationMemberInput = {
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
-export enum ReportPermissions {
-  ViewReports = 'VIEW_REPORTS'
-}
-
 export type ReportSummaryType = {
   __typename?: 'ReportSummaryType';
   endDate: Scalars['String']['output'];
@@ -3247,13 +3253,6 @@ export type ShelterOrder = {
   name?: InputMaybe<Ordering>;
 };
 
-export enum ShelterPermissions {
-  Add = 'ADD',
-  Change = 'CHANGE',
-  Delete = 'DELETE',
-  View = 'VIEW'
-}
-
 export type ShelterPhotoFromUploadInput = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
@@ -3548,13 +3547,6 @@ export type TaskTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
-
-export enum TeamPermissions {
-  Add = 'ADD',
-  Change = 'CHANGE',
-  Delete = 'DELETE',
-  View = 'VIEW'
-}
 
 export type TeamType = {
   __typename?: 'TeamType';
@@ -3874,14 +3866,6 @@ export type UpdateUserProfileInput = {
 };
 
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
-
-export enum UserOrganizationPermissions {
-  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
-  AddOrgMember = 'ADD_ORG_MEMBER',
-  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
-  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
-}
 
 export type UserType = {
   __typename?: 'UserType';

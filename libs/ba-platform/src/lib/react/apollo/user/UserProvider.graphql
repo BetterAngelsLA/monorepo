@@ -9,10 +9,10 @@ query currentOrgUser {
       id
       name
       permissions {
-        accounts
-        reports
-        shelters
-        teams
+        grants {
+          domain
+          values
+        }
       }
     }
   }
