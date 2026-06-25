@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/betterangels-admin/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:ba-admin"],
+  "tags": ["type:feature", "scope:outreach"],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
