@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { TOrganizationWithPermissions } from '../activeOrg';
+import { TOrganizationWithPermissions } from '../activeOrg/types';
 
 export type TUser = {
   id: string;

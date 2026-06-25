@@ -20,7 +20,7 @@ import {
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,

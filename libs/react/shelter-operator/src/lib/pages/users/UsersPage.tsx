@@ -21,7 +21,7 @@ import {
   type TableColumn,
 } from '../../components/base-ui/table';
 import { useToast } from '../../components/base-ui/toast';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
