@@ -106,8 +106,8 @@ export default function NoteForm(props: NoteFormProps) {
           scrollRef={scrollRef}
         />
         <Team
-          team={form.team}
-          onTeamChange={(v) => setValue('team', v, { shouldDirty: true })}
+          teamId={form.teamId}
+          onTeamChange={(v) => setValue('teamId', v, { shouldDirty: true })}
         />
         <Location
           point={
@@ -145,7 +145,7 @@ export default function NoteForm(props: NoteFormProps) {
           clientProfileId={clientProfileId}
           scrollRef={scrollRef}
           tasks={form.tasks}
-          team={form.team}
+          teamId={form.teamId}
           isDraftMode
           onDraftTasksChange={(v) =>
             setValue('tasks', v, { shouldDirty: true })
