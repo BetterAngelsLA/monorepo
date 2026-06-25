@@ -6,7 +6,7 @@
 
 > **Why:** Today, caseworkers must know *which* shelter has space for a client. Shelters have no way to discover compatible clients waiting for placement. This creates friction, slows placements, and leaves beds unfilled while clients wait.
 
-> **How:** A single new model (`EligibilityCriterion`) provides a shared vocabulary of client attributes. Criteria are derived from client profile fields once at referral creation and frozen on the referral. Shelters are matched against referrals via their *existing* acceptance M2Ms (demographics, accessibility, etc.) using a simple lookup dict — no data duplication, no sync issues. Shelters claim clients from the queue in a two-step process (accept → later create Reservation), with optional email digest notifications.
+> **How (selected architecture):** **Option 3 — Criteria on Referral Only.** A single new model (`EligibilityCriterion`) provides a shared vocabulary of client attributes. Criteria are derived from client profile fields once and frozen on the referral. Shelters are matched via their *existing* M2Ms using a lookup dict — no data duplication, no sync. Acceptance is a two-step claim-then-place workflow. Optional email digests keep shelters informed. [See full architecture →](./decisions.md)
 
 ---
 
@@ -38,12 +38,8 @@ A **global placement queue** with three core ideas:
 
 | Document | Contents |
 |---|---|
-| [`scope.md`](./scope.md) | What changes, what stays the same, migration impact |
-| [`models.md`](./models.md) | All new and modified model definitions (EligibilityCriterion, Referral) |
-| [`matching.md`](./matching.md) | Matching engine — derivation, lookup dict, and shelter query |
-| [`workflow.md`](./workflow.md) | Acceptance flow, referral creation, queue view, lifecycle diagrams |
-| [`decisions.md`](./decisions.md) | Key decisions with rationale and trade-offs |
+| [`proposal.md`](./proposal.md) | **Selected design** — summary, models, matching engine, workflows, key decisions |
+| [`rejected-alternatives.md`](./rejected-alternatives.md) | Options evaluated and why they were rejected |
 | [`api.md`](./api.md) | GraphQL queries, mutations, types, and schema |
 | [`frontend.md`](./frontend.md) | shelter-web pages, routes, UX flow; mobile app referral creation; future shelter intake |
 | [`notifications.md`](./notifications.md) | Email subscription model, Celery task, digest format |
-| [`alternatives/`](./alternatives/index.md) | Options evaluated and rationale for the chosen approach |
