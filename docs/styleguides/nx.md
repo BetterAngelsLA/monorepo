@@ -209,6 +209,36 @@ libs/
 > **Note:** Nesting into scope/type folders (e.g., `libs/shared/ui-components/`) is a future
 > optimization — do it when a scope has multiple projects, not before.
 
+### Target structure (future)
+
+When a scope accumulates multiple projects, group them by scope first, then type.
+This is the eventual target — no rush to get there:
+
+```
+libs/
+├── shared/                      ← scope:shared
+│   ├── util-apollo/             ← libs/apollo
+│   ├── util-react/              ← libs/react/shared
+│   ├── util-tailwind/           ← libs/tailwind
+│   ├── util-places/             ← libs/shared/places
+│   ├── util-units/              ← libs/shared/units
+│   ├── util-assets/             ← libs/assets
+│   ├── ui-components/           ← libs/react/components
+│   └── ui-icons/                ← libs/react/icons
+├── ba-platform/                 ← scope:ba-platform
+│   └── data-access/             ← libs/ba-platform
+├── outreach/                    ← scope:outreach
+│   ├── feature-admin/           ← libs/react/betterangels-admin
+│   └── feature-mobile/          ← libs/expo/betterangels
+├── shelter-web/                 ← scope:shelter-web
+│   └── feature-shelter/         ← libs/react/shelter
+├── shelter-operator/            ← scope:shelter-operator
+│   └── feature-operator/        ← libs/react/shelter-operator
+└── ba-backend/                  ← scope:ba-backend (currently only an app, no libs)
+```
+
+Migration tool: `nx g @nx/workspace:move --project <current> <target>`
+
 ### Tagging roadmap (incremental)
 
 **Tags come first. Folders come later (if at all).** From the NX docs:
