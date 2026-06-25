@@ -35,9 +35,7 @@ class Query:
             # Temporary fallback: the mobile app does not yet call the
             # Apollo orgLink to set the active organization on each request.
             # Until that is wired up, resolve the user's Caseworker org.
-            pg = resolve_permission_group(
-                info.context.request.user, template=CASEWORKER
-            )
+            pg = resolve_permission_group(info.context.request.user, template=CASEWORKER)
             org = pg.organization
         return team_list(organization=org)
 
