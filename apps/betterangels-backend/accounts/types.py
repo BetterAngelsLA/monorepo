@@ -139,7 +139,7 @@ class CurrentUserOrganizationType(OrganizationType):
         for enum in ORG_PERMISSION_ENUMS:
             for perm in enum:
                 if getattr(self, _annotation_key(perm), False):
-                    perms.append(perm.name)
+                    perms.append(perm.value)
         return perms
 
 
