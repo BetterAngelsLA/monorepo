@@ -37,5 +37,5 @@ This is the BetterAngels monorepo:
 ## Critical Environment Rules
 
 - **You are running INSIDE the dev container.** Do NOT use `docker compose` or `docker` commands.
-- **Always use the NX wrapper for Python commands.** The backend uses Poetry with a shared venv at `/workspace/.venv`. Use `yarn nx run betterangels-backend:<command>` or `yarn nx test betterangels-backend`. If you MUST run raw Python, activate first: `source /workspace/.venv/bin/activate && python ...`.
+- **Always use the NX wrapper for Python commands.** The backend uses `uv` with a shared venv at `/workspace/.venv`. Use `yarn nx run betterangels-backend:<command>` or `yarn nx test betterangels-backend`. If you MUST run raw Python, use `uv run python ...` — uv handles venv activation automatically.
 - See `docs/tooling.md` for the full command reference.
