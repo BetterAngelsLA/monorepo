@@ -61,21 +61,20 @@ const COLUMNS: {
   render: (m: OrganizationMemberType) => string | JSX.Element;
 }[] = [
   {
-    label: '',
-    field: 'firstName',
-    render: (m) =>
-      m.isOrgOwner ? (
-        <span title="Organization Owner" className="text-amber-500">
-          <StarIconSm className="w-4 h-4" />
-        </span>
-      ) : (
-        ''
-      ),
-  },
-  {
     label: 'Name',
     field: 'firstName',
-    render: getFullName,
+    render: (m) => (
+      <span className="whitespace-nowrap">
+        {m.isOrgOwner ? (
+          <span title="Organization Owner" className="inline-block mr-1">
+            <StarIconSm className="w-4 h-4 text-amber-500" />
+          </span>
+        ) : (
+          <span className="w-4 h-4 inline-block mr-1" />
+        )}
+        {getFullName(m)}
+      </span>
+    ),
   },
   {
     label: 'Job Role',
@@ -86,12 +85,20 @@ const COLUMNS: {
   {
     label: 'Created',
     field: 'dateJoined',
-    render: (m) => formatRelativeDate(m.dateJoined) ?? 'Unknown',
+    render: (m) => (
+      <span className="text-right w-full block">
+        {formatRelativeDate(m.dateJoined) ?? 'Unknown'}
+      </span>
+    ),
   },
   {
     label: 'Last Login',
     field: 'lastLogin',
-    render: (m) => formatRelativeDate(m.lastLogin) ?? 'Never',
+    render: (m) => (
+      <span className="text-right w-full block">
+        {formatRelativeDate(m.lastLogin) ?? 'Never'}
+      </span>
+    ),
   },
 ];
 
@@ -227,24 +234,24 @@ export default function Users(props: IProps) {
 
   const headerButtons = useMemo(
     () =>
-      COLUMNS.map((col) =>
-        col.label ? (
-          <button
-            key={col.label}
-            onClick={() => handleSort(col.field)}
-            className="flex items-center gap-1 hover:text-primary-60"
-          >
-            {col.label}
-            {sort.field === col.field && (
-              <span className="text-xs text-primary-20">
-                {sort.direction === Ordering.Asc ? '▲' : '▼'}
-              </span>
-            )}
-          </button>
-        ) : (
-          <span key="owner-col" />
-        )
-      ),
+      COLUMNS.map((col) => (
+        <button
+          key={col.label}
+          onClick={() => handleSort(col.field)}
+          className={mergeCss([
+            'flex items-center gap-1 hover:text-primary-60',
+            (col.field === 'dateJoined' || col.field === 'lastLogin') &&
+              'justify-end w-full text-right',
+          ])}
+        >
+          {col.label}
+          {sort.field === col.field && (
+            <span className="text-xs text-primary-20">
+              {sort.direction === Ordering.Asc ? '▲' : '▼'}
+            </span>
+          )}
+        </button>
+      )),
     [sort]
   );
 
