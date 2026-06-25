@@ -1,6 +1,8 @@
 import type { ColumnConfig } from '@ant-design/plots';
 import { Column } from '@ant-design/plots';
-import { useEffect, useState } from 'react';
+import clsx from 'clsx';
+import { useState } from 'react';
+import { mergeDeep } from 'remeda';
 const FONT_FAMILY = "'Poppins', ui-sans-serif, system-ui, sans-serif";
 function darkenHex(hex: string, amount = 0.18): string {
   const h = hex.replace('#', '');
@@ -35,21 +37,7 @@ export function BarChart({
   onViewChange,
   ...config
 }: BarChartProps) {
-  const [fontsReady, setFontsReady] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('count');
-  useEffect(() => {
-    if (typeof document === 'undefined' || !document.fonts) {
-      setFontsReady(true);
-      return;
-    }
-    let active = true;
-    document.fonts.ready.then(() => {
-      if (active) setFontsReady(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const defaultConfig: Partial<ColumnConfig> = {
     autoFit: true,
@@ -106,52 +94,16 @@ export function BarChart({
     },
   };
 
-  const defaultAxis = (defaultConfig.axis ?? {}) as {
-    x?: object;
-    y?: object;
-  };
-  const configAxis = (config.axis ?? {}) as { x?: object; y?: object };
-
-  const mergedConfig = {
-    ...defaultConfig,
-    ...config,
-    style: {
-      ...(defaultConfig.style as object | undefined),
-      ...(config.style as object | undefined),
-    },
-    axis: {
-      ...defaultAxis,
-      ...configAxis,
-      x: { ...(defaultAxis.x ?? {}), ...(configAxis.x ?? {}) },
-      y: { ...(defaultAxis.y ?? {}), ...(configAxis.y ?? {}) },
-    },
-  } as ColumnConfig;
+  const mergedConfig = mergeDeep(
+    defaultConfig as Record<string, unknown>,
+    config as Record<string, unknown>
+  ) as ColumnConfig;
 
   const viewOverrides = onViewChange?.(viewMode) ?? {};
-  const displayConfig: ColumnConfig = {
-    ...mergedConfig,
-    ...viewOverrides,
-    style: {
-      ...(mergedConfig.style as object | undefined),
-      ...(viewOverrides.style as object | undefined),
-    },
-    axis: {
-      ...(mergedConfig.axis as object | undefined),
-      ...(viewOverrides.axis as object | undefined),
-      x: {
-        ...((mergedConfig.axis as { x?: object } | undefined)?.x ?? {}),
-        ...((viewOverrides.axis as { x?: object } | undefined)?.x ?? {}),
-      },
-      y: {
-        ...((mergedConfig.axis as { y?: object } | undefined)?.y ?? {}),
-        ...((viewOverrides.axis as { y?: object } | undefined)?.y ?? {}),
-      },
-    },
-    scale: {
-      ...(mergedConfig.scale as object | undefined),
-      ...(viewOverrides.scale as object | undefined),
-    },
-  } as ColumnConfig;
+  const displayConfig = mergeDeep(
+    mergedConfig as Record<string, unknown>,
+    viewOverrides as Record<string, unknown>
+  ) as ColumnConfig;
 
   const cfg = mergedConfig as Record<string, unknown>;
   const colorField = cfg['colorField'] as string | undefined;
@@ -221,36 +173,14 @@ export function BarChart({
       : [];
 
   return (
-    <div
-      className={className}
-      style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
-    >
+    <div className={clsx('flex flex-col w-full', className)}>
       {hasHeader && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexShrink: 0,
-            marginBottom: 30,
-            paddingLeft: 40,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+        <div className="flex flex-col flex-shrink-0 mb-[30px] pl-10">
+          <div className="flex items-center justify-between">
             {chartTitle ? (
               <span
-                style={{
-                  fontFamily: FONT_FAMILY,
-                  fontSize: 20,
-                  fontWeight: 600,
-                  color: '#111827',
-                  lineHeight: '28px',
-                }}
+                className="text-xl font-semibold leading-7 text-gray-900"
+                style={{ fontFamily: FONT_FAMILY }}
               >
                 {chartTitle}
               </span>
@@ -258,35 +188,19 @@ export function BarChart({
               <span />
             )}
             {showViewToggle && (
-              <div
-                style={{
-                  display: 'flex',
-                  background: '#F3F4F6',
-                  borderRadius: 9999,
-                  padding: 4,
-                  gap: 2,
-                }}
-              >
+              <div className="flex bg-gray-100 rounded-full p-1 gap-0.5">
                 {(['count', 'percentage'] as const).map((mode) => (
                   <button
                     key={mode}
                     type="button"
                     onClick={() => setViewMode(mode)}
-                    style={{
-                      fontFamily: FONT_FAMILY,
-                      fontSize: 14,
-                      fontWeight: 500,
-                      padding: '6px 16px',
-                      borderRadius: 9999,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: viewMode === mode ? '#ffffff' : 'transparent',
-                      color: viewMode === mode ? '#111827' : '#6B7280',
-                      boxShadow:
-                        viewMode === mode
-                          ? '0 1px 2px rgba(0,0,0,0.1)'
-                          : 'none',
-                    }}
+                    className={clsx(
+                      'text-sm font-medium px-4 py-1.5 rounded-full border-none cursor-pointer transition-all',
+                      viewMode === mode
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'bg-transparent text-gray-500'
+                    )}
+                    style={{ fontFamily: FONT_FAMILY }}
                   >
                     {mode === 'count' ? 'Count' : 'Percentage'}
                   </button>
@@ -296,30 +210,14 @@ export function BarChart({
           </div>
           {legendItems.length > 0 && (
             <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '4px 24px',
-                marginTop: 20,
-                fontFamily: FONT_FAMILY,
-                fontSize: 12,
-                color: '#747A82',
-              }}
+              className="flex flex-wrap mt-5 text-xs gap-x-6 gap-y-1"
+              style={{ color: '#747A82', fontFamily: FONT_FAMILY }}
             >
               {legendItems.map(({ label, color }) => (
-                <span
-                  key={label}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
+                <span key={label} className="flex items-center gap-1.5">
                   <span
-                    style={{
-                      display: 'inline-block',
-                      width: 10,
-                      height: 10,
-                      borderRadius: 2,
-                      background: color,
-                      flexShrink: 0,
-                    }}
+                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                    style={{ background: color }}
                   />
                   {label}
                 </span>
@@ -328,11 +226,8 @@ export function BarChart({
           )}
         </div>
       )}
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <Column
-          key={`${viewMode}-${fontsReady ? 'fonts-ready' : 'fonts-loading'}`}
-          {...withState}
-        />
+      <div className="flex-1 min-h-0">
+        <Column key={viewMode} {...withState} />
       </div>
     </div>
   );

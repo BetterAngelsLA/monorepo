@@ -1,10 +1,9 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { BarChart } from './BarChart';
 
 const meta: Meta<typeof BarChart> = {
   component: BarChart,
-  title: 'Web Components/BarChart',
+  title: 'Charts/BarChart',
 };
 export default meta;
 
