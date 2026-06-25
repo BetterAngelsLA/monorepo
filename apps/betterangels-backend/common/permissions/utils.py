@@ -5,7 +5,6 @@ from operator import or_
 from typing import Any, Protocol, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
-from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import AbstractBaseUser, Group
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
@@ -13,6 +12,33 @@ from guardian.shortcuts import assign_perm
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+
+from common.errors import UnauthenticatedGQLError
+
+
+# ── Permission enum registry (frontend codegen) ───────────────────────────────
+
+_permission_enum_registry: list[type[TextChoices]] = []
+
+
+def permission_enum(cls: type[TextChoices]) -> type[TextChoices]:
+    """Decorator — registers as strawberry enum + frontend permission const.
+
+    Usage::
+
+        @permission_enum
+        class UserOrganizationPermissions(models.TextChoices):
+            VIEW_ORG_MEMBERS = "organizations.view_org_members", ...
+    """
+    strawberry.enum(cls)
+    _permission_enum_registry.append(cls)
+    return cls
+
+
+def get_registered_permission_enums() -> list[type[TextChoices]]:
+    """Return all enums registered via :func:`permission_enum` or
+    :func:`permissions_enum_from_model`."""
+    return list(_permission_enum_registry)
 
 
 def perm(codename: str, description: str) -> str:
@@ -62,7 +88,12 @@ def permissions_enum_from_model(model: type[Model]) -> type[TextChoices]:
         if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
             codename, description = value
             members.append((attr_name, (f"{app_label}.{codename}", description)))
-    return cast(type[TextChoices], TextChoices(name, members))  # type: ignore[call-overload]  # django-stubs: ChoicesType metaclass not stubbed
+    enum_cls = cast(type[TextChoices], TextChoices(name, members))
+    # Register with the frontend permission registry so the generation
+    # script auto-discovers new enums without a hardcoded list.
+    strawberry.enum(enum_cls)
+    _permission_enum_registry.append(enum_cls)
+    return enum_cls
 
 
 class PermissionSet:

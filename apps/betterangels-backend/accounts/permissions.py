@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Protocol, Type, Union
 
 import strawberry
 from accounts.models import PermissionGroup, User
-from common.permissions.utils import perm_filter
+from common.permissions.utils import perm_filter, permission_enum
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import Exists, OuterRef, TextChoices
@@ -17,7 +17,7 @@ UserLike = Union[AbstractBaseUser, AnonymousUser]
 # ── Permission enums ──────────────────────────────────────────────────────────
 
 
-@strawberry.enum(graphql_name_from='value')
+@permission_enum
 class UserOrganizationPermissions(models.TextChoices):
     ACCESS_ORG_PORTAL = "organizations.access_org_portal", _("Can access organization management portal")
     ADD_ORG_MEMBER = "organizations.add_org_member", _("Can add organization member")

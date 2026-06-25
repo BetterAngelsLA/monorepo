@@ -1,0 +1,23 @@
+{
+  "name": "ba-permissions",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-permissions/src",
+  "projectType": "library",
+  "tags": ["type:util", "scope:ba-platform"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "uv run python ../../tools/scripts/generate_permission_enums.py > ../../libs/ba-permissions/src/index.ts"
+      }
+    }
+  }
+}

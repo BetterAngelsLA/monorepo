@@ -817,7 +817,7 @@ export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  permissions: OrgPermissions;
+  permissions: Array<Scalars['String']['output']>;
 };
 
 export type CurrentUserType = {
@@ -2230,14 +2230,6 @@ export type OrgInvitationInput = {
   permissionTemplate: PermissionTemplateEnum;
 };
 
-export type OrgPermissions = {
-  __typename?: 'OrgPermissions';
-  accounts: Array<UserOrganizationPermissions>;
-  reports: Array<ReportPermissions>;
-  shelters: Array<ShelterPermissions>;
-  teams: Array<TeamPermissions>;
-};
-
 export enum OrgRoleEnum {
   Admin = 'ADMIN',
   Member = 'MEMBER',
@@ -2854,10 +2846,6 @@ export type RemoveOrganizationMemberInput = {
 
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
-export enum ReportPermissions {
-  ViewReports = 'VIEW_REPORTS'
-}
-
 export type ReportSummaryType = {
   __typename?: 'ReportSummaryType';
   endDate: Scalars['String']['output'];
@@ -3247,13 +3235,6 @@ export type ShelterOrder = {
   name?: InputMaybe<Ordering>;
 };
 
-export enum ShelterPermissions {
-  Add = 'ADD',
-  Change = 'CHANGE',
-  Delete = 'DELETE',
-  View = 'VIEW'
-}
-
 export type ShelterPhotoFromUploadInput = {
   contentType: Scalars['String']['input'];
   filename: Scalars['String']['input'];
@@ -3548,13 +3529,6 @@ export type TaskTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
-
-export enum TeamPermissions {
-  Add = 'ADD',
-  Change = 'CHANGE',
-  Delete = 'DELETE',
-  View = 'VIEW'
-}
 
 export type TeamType = {
   __typename?: 'TeamType';
@@ -3874,14 +3848,6 @@ export type UpdateUserProfileInput = {
 };
 
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
-
-export enum UserOrganizationPermissions {
-  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
-  AddOrgMember = 'ADD_ORG_MEMBER',
-  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
-  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
-  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
-}
 
 export type UserType = {
   __typename?: 'UserType';
