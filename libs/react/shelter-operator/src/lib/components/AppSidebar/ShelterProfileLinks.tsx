@@ -1,4 +1,3 @@
-import { FileSearchOutlined } from '@ant-design/icons';
 import { Sidebar } from '@monorepo/react/components';
 import {
   isShelterProfileRoute,
@@ -23,9 +22,6 @@ export function ShelterProfileLinks(props: IProps) {
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
       defaultExpanded={true}
-      icon={(color: string) => (
-        <FileSearchOutlined className="w-4" style={{ color: color }} />
-      )}
     >
       <Sidebar.Content>
         <Sidebar.Link

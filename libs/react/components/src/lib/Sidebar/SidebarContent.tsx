@@ -9,7 +9,14 @@ type TProps = {
 export function SidebarContent(props: TProps) {
   const { className, children } = props;
 
-  const parentCss = ['h-full', 'flex', 'flex-col', 'gap-2', className];
+  const parentCss = [
+    'h-full',
+    'flex',
+    'flex-col',
+    'gap-2',
+    className,
+    'overflow-hidden',
+  ];
 
   return <div className={mergeCss(parentCss)}>{children}</div>;
 }
