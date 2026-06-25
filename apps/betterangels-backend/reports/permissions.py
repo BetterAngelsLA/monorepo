@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 
-@strawberry.enum
+@strawberry.enum(graphql_name_from='value')
 class ReportPermissions(models.TextChoices):
     VIEW_REPORTS = "reports.view_reports", _("Can view reports")
 

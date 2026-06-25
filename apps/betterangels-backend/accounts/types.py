@@ -8,19 +8,30 @@ import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
-from django.contrib.auth.models import Permission
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import F, OuterRef, Q, QuerySet, Subquery, Value
-from django.db.models.functions import Coalesce, Concat
+from django.db.models import Q, QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
+from reports.permissions import ReportPermissions
+from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
+from teams.permissions import TeamPermissions
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
+from accounts.permissions import _annotation_key
 
 from .models import User
+from .permissions import UserOrganizationPermissions
+
+# All permission enums whose values are returned in the org's permissions list.
+# To add a new permission domain, add its enum here — no other changes needed.
+ORG_PERMISSION_ENUMS = [
+    UserOrganizationPermissions,
+    ReportPermissions,
+    ShelterPermissions,
+    TeamPermissions,
+]
 
 
 @strawberry.input
@@ -111,31 +122,25 @@ class CurrentUserOrganizationType(OrganizationType):
 
         assert isinstance(user, User)
 
-        # Single subquery that aggregates all permission strings for each org.
-        # No enum list needed — whatever permissions the user's groups grant
-        # on this org are automatically included.
-        perm_subquery = (
-            Permission.objects
-            .filter(group__permissiongroup__organization=OuterRef("pk"))
-            .filter(group__user=user)
-            .annotate(
-                perm=Concat(
-                    F("content_type__app_label"), Value("."), F("codename")
+        # Annotate each org with boolean flags for every known permission.
+        # The resolver collects the ones that are True.
+        annotations: dict[str, Q] = {}
+        for enum in ORG_PERMISSION_ENUMS:
+            for perm in enum:
+                annotations[_annotation_key(perm)] = Q(
+                    permission_groups__group__permissions__codename=perm.name,
+                    permission_groups__group__user=user,
                 )
-            )
-            .values("perm")
-        )
-
-        return queryset.filter(users=user).annotate(
-            _perms=Coalesce(
-                ArrayAgg(Subquery(perm_subquery), distinct=True),
-                Value([]),
-            )
-        )
+        return queryset.filter(users=user).annotate(**annotations)
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        return self._perms or []  # type: ignore[attr-defined]
+        perms: List[str] = []
+        for enum in ORG_PERMISSION_ENUMS:
+            for perm in enum:
+                if getattr(self, _annotation_key(perm), False):
+                    perms.append(perm.name)
+        return perms
 
 
 @strawberry_django.type(User)

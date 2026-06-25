@@ -17,7 +17,7 @@ UserLike = Union[AbstractBaseUser, AnonymousUser]
 # ── Permission enums ──────────────────────────────────────────────────────────
 
 
-@strawberry.enum
+@strawberry.enum(graphql_name_from='value')
 class UserOrganizationPermissions(models.TextChoices):
     ACCESS_ORG_PORTAL = "organizations.access_org_portal", _("Can access organization management portal")
     ADD_ORG_MEMBER = "organizations.add_org_member", _("Can add organization member")
@@ -26,7 +26,7 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
-@strawberry.enum
+@strawberry.enum(graphql_name_from='value')
 class ReportOrgPermissions(models.TextChoices):
     VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
 
