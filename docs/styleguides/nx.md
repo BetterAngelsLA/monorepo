@@ -214,8 +214,9 @@ libs/
 
 ### Target structure (future)
 
-When a scope has multiple projects, group them by scope first. Each scope folder
-contains its existing projects as-is — no artificial splitting:
+When a scope has multiple projects, group them by scope. Each scope folder
+contains its existing projects. When a lib's pages/screens grow large enough,
+split them into separate feature libs:
 
 ```
 libs/
@@ -229,24 +230,30 @@ libs/
 │   ├── components/              ← libs/react/components
 │   └── icons/                   ← libs/react/icons
 ├── ba-platform/                 ← scope:ba-platform
-│   └── ba-platform/             ← libs/ba-platform (currently the only project)
+│   └── data-access/             ← libs/ba-platform (no feature split; it's infrastructure)
 ├── betterangels/                ← scope:betterangels
-│   └── betterangels/            ← libs/expo/betterangels (currently the only project)
+│   └── mobile/                  ← libs/expo/betterangels (future: clients, interactions, tasks, notes)
 ├── betterangels-admin/          ← scope:betterangels-admin
-│   └── betterangels-admin/      ← libs/react/betterangels-admin (currently the only project)
+│   └── admin/                   ← libs/react/betterangels-admin (future: users, reports, teams)
 ├── shelter-web/                 ← scope:shelter-web
-│   └── shelter/                 ← libs/react/shelter (currently the only project)
+│   └── shelter/                 ← libs/react/shelter (future: search, shelters, home)
 ├── shelter-operator/            ← scope:shelter-operator
-│   └── shelter-operator/        ← libs/react/shelter-operator (currently the only project)
+│   └── operator/                ← libs/react/shelter-operator (future: dashboard, users, beds, rooms)
 └── ba-backend/                  ← scope:ba-backend (currently only an app, no libs)
 ```
 
-**A scope with one project is fine.** Don't invent feature sub-libs (`feature-admin`,
-`feature-mobile`, etc.) until a scope genuinely has multiple projects that need
-separating. The grouping folder alone provides the organizational benefit.
+**A scope with one project is the starting point.** Feature libs emerge when
+individual pages/screens become large enough to justify their own project:
 
-> When scopes grow, feature libs emerge naturally: `libs/betterangels-admin/teams/`,
-> `libs/betterangels-admin/users/`, etc. Split then, not before.
+```
+libs/betterangels-admin/
+├── admin/          ← current monolith
+└── teams/          ← future: split out when teams grows
+```
+
+Don't pre-split. Wait until a page/screen has enough complexity (dedicated hooks,
+components, tests) to stand alone. The grouping folder alone provides the
+organizational benefit until then.
 
 Migration tool: `nx g @nx/workspace:move --project <current> <target>`
 
