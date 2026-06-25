@@ -1,4 +1,3 @@
-import strawberry
 from common.permissions.utils import permissions_enum_from_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
