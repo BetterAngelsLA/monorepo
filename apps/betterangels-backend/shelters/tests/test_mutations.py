@@ -1,30 +1,16 @@
 from typing import Any
 
-from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, ignore_warnings
-from shelters.models import Bed, City, Room, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, Service, ServiceCategory, Shelter
+from shelters.tests.utils import ShelterTestCase
 from unittest_parametrize import ParametrizedTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
+class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        shelter_content_type = ContentType.objects.get_for_model(Shelter)
-        add_shelter_perm = Permission.objects.get(content_type=shelter_content_type, codename="add_shelter")
-        self.org_1_case_manager_1.user_permissions.add(add_shelter_perm)
-
-        bed_content_type = ContentType.objects.get_for_model(Bed)
-        add_bed_perm = Permission.objects.get(content_type=bed_content_type, codename="add_bed")
-        self.org_1_case_manager_1.user_permissions.add(add_bed_perm)
-
-        room_content_type = ContentType.objects.get_for_model(Room)
-        add_room_perm = Permission.objects.get(content_type=room_content_type, codename="add_room")
-        self.org_1_case_manager_1.user_permissions.add(add_room_perm)
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.graphql_client.force_login(self.operator)
 
     def test_create_shelter_minimal_fields(self) -> None:
         """Test creating a shelter with only required fields"""
@@ -45,7 +31,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
-                "organization": str(self.org_1.pk),
             }
         }
 
@@ -61,6 +46,11 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertEqual(shelter["status"], "DRAFT")
         self.assertIsNotNone(shelter["id"])
         self.assertEqual(Shelter.objects.count(), initial_shelter_count + 1)
+        # Verify the shelter was created under the header org, not some other org.
+        self.assertEqual(
+            Shelter.objects.get(pk=shelter["id"]).organization_id,
+            self.org.pk,
+        )
 
     def test_create_shelter_with_optional_fields(self) -> None:
         """Test creating a shelter with optional fields"""
@@ -88,7 +78,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
-                "organization": str(self.org_1.pk),
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
@@ -152,7 +141,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
-                "organization": str(self.org_1.pk),
                 "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
                 "demographics": ["FAMILIES", "SINGLE_WOMEN"],
                 "shelterTypes": ["BUILDING"],
@@ -199,7 +187,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
-                "organization": str(self.org_1.pk),
                 "location": {
                     "place": "123 Main St, Los Angeles, CA 90012",
                     "latitude": 34.0522,
@@ -265,7 +252,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Shelter With Custom Services",
                 "description": "A shelter with official and custom services",
-                "organization": str(self.org_1.pk),
                 "services": [
                     {"id": str(official.pk)},
                     {"categoryId": str(category.pk), "displayName": "Laundry"},
@@ -321,7 +307,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         variables: dict[str, Any] = {
             "data": {
                 # name intentionally omitted — should fail GraphQL validation
-                "organization": str(self.org_1.pk),
             }
         }
 
@@ -351,7 +336,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
-                "organization": str(self.org_1.pk),
                 "overallRating": 4,
                 "subjectiveReview": "Clean facilities with helpful staff",
             }
@@ -388,7 +372,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Invalid Email Shelter",
                 "description": "Should fail model validation",
-                "organization": str(self.org_1.pk),
                 "email": "not-an-email",
             }
         }
@@ -419,7 +402,6 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
-                "organization": str(self.org_1.pk),
             }
         }
 
@@ -434,7 +416,7 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertEqual(db_shelter.description, "This should be in the database")
 
     def test_create_shelter_wrong_org_rejected(self) -> None:
-        """Creating a shelter for an organization the user doesn't belong to is rejected."""
+        """Creating a shelter with a header org the user doesn't belong to is rejected by HasOrgPerm."""
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
@@ -449,118 +431,23 @@ class CreateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
             "data": {
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
-                "organization": str(self.org_2.pk),
             }
         }
 
-        response = self.execute_graphql(mutation, variables)
+        # Pass org_2 header so HasOrgPerm fails (user isn't a member)
+        response = self.execute_graphql(mutation, variables, HTTP_X_ORGANIZATION_ID=str(self.org_2.pk))
 
         self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
-            "You do not have permission to create a shelter for this organization.",
+            "You do not have permission to perform this action in this organization.",
             response["errors"][0]["message"],
         )
-
-    def test_create_bed_wrong_org_rejected(self) -> None:
-        """Creating a bed for a shelter the user's org doesn't own is rejected."""
-        other_org_shelter = Shelter.objects.create(
-            name="Other Org Shelter",
-            description="Belongs to org 2",
-            organization=self.org_2,
-        )
-
-        mutation = """
-            mutation ($data: CreateBedInput!) {
-                createBed(data: $data) {
-                    ... on BedType {
-                        id
-                    }
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                }
-            }
-        """
-
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(other_org_shelter.pk),
-                "status": "AVAILABLE",
-            }
-        }
-
-        response = self.execute_graphql(mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["createBed"]["messages"]
-        self.assertEqual(len(messages), 1)
-        self.assertIn(
-            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
-            messages[0]["message"],
-        )
-
-    def test_create_room_wrong_org_rejected(self) -> None:
-        """Creating a room for a shelter the user's org doesn't own is rejected."""
-        other_org_shelter = Shelter.objects.create(
-            name="Other Org Shelter",
-            description="Belongs to org 2",
-            organization=self.org_2,
-        )
-
-        mutation = """
-            mutation ($data: CreateRoomInput!) {
-                createRoom(data: $data) {
-                    ... on RoomType {
-                        id
-                    }
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                }
-            }
-        """
-
-        variables: dict[str, Any] = {
-            "data": {
-                "shelterId": str(other_org_shelter.pk),
-                "name": "Room 101",
-            }
-        }
-
-        response = self.execute_graphql(mutation, variables)
-
-        self.assertIsNone(response.get("errors"))
-        messages = response["data"]["createRoom"]["messages"]
-        self.assertEqual(len(messages), 1)
-        self.assertIn(
-            f"Shelter matching ID {other_org_shelter.pk} could not be found.",
-            messages[0]["message"],
-        )
-
-
-@ignore_warnings(category=UserWarning)
-class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        shelter_content_type = ContentType.objects.get_for_model(Shelter)
-        change_shelter_perm = Permission.objects.get(content_type=shelter_content_type, codename="change_shelter")
-        self.org_1_case_manager_1.user_permissions.add(change_shelter_perm)
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_update_shelter_scalar_fields(self) -> None:
         """Updating scalar fields persists the new values."""
         shelter = Shelter.objects.create(
             name="Shelter to Update",
-            organization=self.org_1,
+            organization=self.org,
         )
 
         mutation = """
@@ -609,7 +496,7 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         shelter = Shelter.objects.create(
             name="Patch Shelter",
             is_private=True,
-            organization=self.org_1,
+            organization=self.org,
         )
 
         mutation = """
@@ -642,7 +529,7 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         """Providing M2M enum fields replaces their values on the shelter."""
         shelter = Shelter.objects.create(
             name="M2M Shelter",
-            organization=self.org_1,
+            organization=self.org,
         )
 
         mutation = """
@@ -674,7 +561,11 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertCountEqual(demographic_names, ["FAMILIES", "SINGLE_MEN"])
 
     def test_update_shelter_wrong_org_rejected(self) -> None:
-        """A user cannot update a shelter owned by a different organization."""
+        """A user cannot update a shelter owned by a different organization — scoped by HasOrgPerm.
+
+        The shelter_get call raises ObjectDoesNotExist which is caught by
+        MUTATIONS_DEFAULT_HANDLE_ERRORS and returned as OperationInfo.
+        """
         other_shelter = Shelter.objects.create(
             name="Other Org Shelter",
             organization=self.org_2,
@@ -685,6 +576,12 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
                 updateShelter(data: $data) {
                     ... on ShelterType {
                         id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
                     }
                 }
             }
@@ -698,17 +595,16 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
 
         response = self.execute_graphql(mutation, variables)
 
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "You do not have permission to update this shelter.",
-            response["errors"][0]["message"],
-        )
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Shelter matching ID", messages[0]["message"])
 
     def test_update_shelter_services_applied(self) -> None:
         """Providing services in an update sets the shelter's services."""
         shelter = Shelter.objects.create(
             name="Service Shelter",
-            organization=self.org_1,
+            organization=self.org,
         )
         category, _ = ServiceCategory.objects.get_or_create(
             name="update_test_category",
@@ -754,7 +650,7 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         """An invalid email returns OperationInfo rather than raising an unhandled error."""
         shelter = Shelter.objects.create(
             name="Email Test Shelter",
-            organization=self.org_1,
+            organization=self.org,
         )
 
         mutation = """
@@ -821,4 +717,121 @@ class UpdateShelterTestCase(GraphQLBaseTestCase, ParametrizedTestCase, TestCase)
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0]["kind"], "ERROR")
         self.assertIsNone(messages[0]["field"])
-        self.assertIn("matching query does not exist", messages[0]["message"])
+        self.assertIn("Shelter matching ID", messages[0]["message"])
+
+    def test_update_shelter_cities_served_ids(self) -> None:
+        """Providing citiesServedIds replaces the shelter's citiesServed M2M relation."""
+        shelter = Shelter.objects.create(
+            name="Cities Served Shelter",
+            organization=self.org,
+        )
+        city_a, _ = City.objects.get_or_create(name="Los Angeles")
+        city_b, _ = City.objects.get_or_create(name="Long Beach")
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        citiesServed {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "citiesServedIds": [str(city_a.pk), str(city_b.pk)],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        city_names = {c["name"] for c in result["citiesServed"]}
+        self.assertEqual(city_names, {"Los Angeles", "Long Beach"})
+
+        # Verify patch semantics — omitting citiesServedIds leaves the field unchanged.
+        variables2: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "Updated description",
+            }
+        }
+        response2 = self.execute_graphql(mutation, variables2)
+        self.assertIsNone(response2.get("errors"))
+        city_names2 = {c["name"] for c in response2["data"]["updateShelter"]["citiesServed"]}
+        self.assertEqual(city_names2, {"Los Angeles", "Long Beach"})
+
+        # Verify full replacement — sending an empty list clears the relation.
+        variables3: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "citiesServedIds": [],
+            }
+        }
+        response3 = self.execute_graphql(mutation, variables3)
+        self.assertIsNone(response3.get("errors"))
+        self.assertEqual(response3["data"]["updateShelter"]["citiesServed"], [])
+
+    def test_update_shelter_spas_served_ids(self) -> None:
+        """Providing spasServedIds replaces the shelter's spasServed M2M relation."""
+        shelter = Shelter.objects.create(
+            name="SPAs Served Shelter",
+            organization=self.org,
+        )
+        spa_a, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
+        spa_b, _ = SPA.objects.get_or_create(short_name="2", defaults={"long_name": "2 - San Fernando Valley"})
+
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                        spasServed {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "spasServedIds": [str(spa_a.pk), str(spa_b.pk)],
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        result = response["data"]["updateShelter"]
+        spa_ids = {s["id"] for s in result["spasServed"]}
+        self.assertEqual(spa_ids, {str(spa_a.pk), str(spa_b.pk)})
+
+        # Verify patch semantics — omitting spasServedIds leaves the field unchanged.
+        variables2: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "description": "Updated description",
+            }
+        }
+        response2 = self.execute_graphql(mutation, variables2)
+        self.assertIsNone(response2.get("errors"))
+        spa_ids2 = {s["id"] for s in response2["data"]["updateShelter"]["spasServed"]}
+        self.assertEqual(spa_ids2, {str(spa_a.pk), str(spa_b.pk)})
+
+        # Verify full replacement — sending an empty list clears the relation.
+        variables3: dict[str, Any] = {
+            "data": {
+                "id": str(shelter.pk),
+                "spasServedIds": [],
+            }
+        }
+        response3 = self.execute_graphql(mutation, variables3)
+        self.assertIsNone(response3.get("errors"))
+        self.assertEqual(response3["data"]["updateShelter"]["spasServed"], [])

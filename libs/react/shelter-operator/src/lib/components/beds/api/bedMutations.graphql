@@ -1,0 +1,74 @@
+mutation CreateBed($data: CreateBedInput!) {
+  createBed(data: $data) {
+    ... on BedType {
+      id
+      name
+      status
+      type
+      room {
+        id
+        name
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation CloneBed($id: ID!) {
+  cloneBed(id: $id) {
+    ... on BedType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
+  updateBed(id: $id, data: $data) {
+    ... on BedType {
+      id
+      name
+      status
+      type
+      room {
+        id
+        name
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteBeds($data: BulkDeleteInput!) {
+  deleteBeds(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

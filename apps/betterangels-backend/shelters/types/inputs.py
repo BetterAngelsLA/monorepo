@@ -9,7 +9,6 @@ from common.graphql.types import PhoneNumberScalar
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
-    BedStatusChoices,
     BedTypeChoices,
     ConditionChoices,
     DayOfWeekChoices,
@@ -21,12 +20,13 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
-    RoomStatusChoices,
+    ReservationStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import (
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
@@ -88,7 +88,6 @@ class CreateShelterInput:
     funders: Optional[List[FunderChoices]] = None
 
     # Custom field types — can't be auto-derived from Django model fields
-    organization: ID
     location: Optional[ShelterLocationInput] = None
     schedules: Optional[List[ScheduleInput]] = None
     services: Optional[List[ServiceInput]] = None
@@ -140,6 +139,7 @@ class UpdateShelterInput:
     email: Maybe[Optional[str]] = UNSET
     website: Maybe[Optional[str]] = UNSET
     is_private: Maybe[bool] = UNSET
+    hero_image_id: Maybe[ID | None] = UNSET
     city_id: Maybe[ID | None] = UNSET
     spa_id: Maybe[ID | None] = UNSET
     cities_served_ids: Maybe[Optional[List[ID]]] = UNSET
@@ -194,14 +194,32 @@ class CreateBedInput:
     fees: Optional[int] = None
     funders: Optional[List[FunderChoices]] = None
     last_cleaned_inspected: Optional[datetime] = None
+    last_cleaned: Optional[datetime] = None
     maintenance_flag: Optional[bool] = None
     medical_needs: Optional[List[MedicalNeedChoices]] = None
     name: Optional[str] = None
     pets: Optional[List[PetChoices]] = None
-    status: Optional[BedStatusChoices] = None
     status_notes: Optional[str] = None
     storage: Optional[bool] = None
     type: Optional[BedTypeChoices] = None
+
+
+@strawberry.input
+class UpdateBedInput:
+    room_id: Maybe[ID | None]
+    accessibility: Maybe[List[AccessibilityChoices] | None]
+    b7: Maybe[bool]
+    demographics: Maybe[List[DemographicChoices] | None]
+    fees: Maybe[int]
+    funders: Maybe[List[FunderChoices] | None]
+    last_cleaned_inspected: Maybe[datetime | None]
+    maintenance_flag: Maybe[bool]
+    medical_needs: Maybe[List[MedicalNeedChoices] | None]
+    name: Maybe[str | None]
+    pets: Maybe[List[PetChoices] | None]
+    status_notes: Maybe[str | None]
+    storage: Maybe[bool]
+    type: Maybe[BedTypeChoices | None]
 
 
 @strawberry.input
@@ -216,9 +234,90 @@ class CreateRoomInput:
     medical_respite: Optional[bool] = False
     name: str
     notes: Optional[str] = None
-    occupants: Optional[List[ID]] = None
     pets: Optional[List[PetChoices]] = None
-    status: Optional[RoomStatusChoices] = None
     storage: Optional[bool] = None
     type: Optional[RoomStyleChoices] = None
     type_other: Optional[str] = None
+
+
+@strawberry.input
+class UpdateRoomInput:
+    accessibility: Maybe[List[AccessibilityChoices] | None]
+    amenities: Maybe[str | None]
+    demographics: Maybe[List[DemographicChoices] | None]
+    funders: Maybe[List[FunderChoices] | None]
+    last_cleaned_inspected: Maybe[datetime | None]
+    maintenance_flag: Maybe[bool]
+    medical_respite: Maybe[bool]
+    name: Maybe[str | None]
+    notes: Maybe[str | None]
+    pets: Maybe[List[PetChoices] | None]
+    storage: Maybe[bool]
+    type: Maybe[RoomStyleChoices | None]
+    type_other: Maybe[str | None]
+
+
+@strawberry.input
+class ReservationClientInput:
+    client_profile_id: ID
+    is_primary: bool = False
+
+
+@strawberry.input
+class CreateReservationInput:
+    room_id: Optional[ID] = None
+    bed_id: Optional[ID] = None
+    checked_in_at: Optional[datetime] = None
+    checked_out_at: Optional[datetime] = None
+    clients: List[ReservationClientInput]
+    duration: Optional[int] = None
+    notes: Optional[str] = None
+    start_date: Optional[date] = None
+    status: Optional[ReservationStatusChoices] = None
+
+
+@strawberry.input
+class UpdateReservationInput:
+    room_id: Maybe[ID | None]
+    bed_id: Maybe[ID | None]
+    checked_in_at: Maybe[datetime | None]
+    checked_out_at: Maybe[datetime | None]
+    clients: Maybe[List[ReservationClientInput] | None]
+    duration: Maybe[int | None]
+    notes: Maybe[str | None]
+    start_date: Maybe[date | None]
+    status: Maybe[ReservationStatusChoices | None]
+
+
+@strawberry.input
+class ShelterPhotoUploadItemInput:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateShelterPhotoUploadsInput:
+    shelter_id: ID
+    uploads: list[ShelterPhotoUploadItemInput]
+
+
+@strawberry.input
+class ShelterPhotoFromUploadInput:
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    photo_type: ShelterPhotoTypeChoices
+
+
+@strawberry.input
+class ResolveShelterPhotoUploadsInput:
+    shelter_id: ID
+    photos: list[ShelterPhotoFromUploadInput]
+
+
+@strawberry.input
+class UpdateShelterPhotoInput:
+    id: ID
+    photo_type: ShelterPhotoTypeChoices

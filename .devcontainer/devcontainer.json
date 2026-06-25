@@ -15,7 +15,9 @@
   // connected. This is typically a file mount in .devcontainer/docker-compose.yml
   "workspaceFolder": "/workspace",
 
-  "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
   // Features to add to the dev container. More info: https://containers.dev/features.
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
@@ -27,7 +29,7 @@
   // "shutdownAction": "none",
 
   // Uncomment the next line to run commands after the container is created.
-  "postCreateCommand": "yarn install && poetry install",
+  "postCreateCommand": "bash tools/scripts/post-create.sh",
 
   // Configure tool-specific properties.
   "customizations": {
@@ -37,19 +39,14 @@
         "esbenp.prettier-vscode",
         "firsttris.vscode-jest-runner",
         "arcanis.vscode-zipfs",
-        "ms-azuretools.vscode-docker",
-        "ms-python.black-formatter",
-        "ms-python.isort",
+        "charliermarsh.ruff",
         "ms-python.python",
-        "nrwl.angular-console@18.10.1",
-        "tamasfe.even-better-toml",
-        "wix.vscode-import-cost",
-        "ms-python.flake8",
         "batisteo.vscode-django",
         "monosans.djlint",
         "matangover.mypy",
-        "eamodio.gitlens",
+        "docker.docker",
         "GraphQL.vscode-graphql",
+        "TypeScriptTeam.native-preview",
         "saoudrizwan.claude-dev"
       ]
     }

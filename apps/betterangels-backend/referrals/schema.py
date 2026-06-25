@@ -3,13 +3,14 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
+from notes.groups import CASEWORKER
 from referrals.models import Referral
 from referrals.selectors import referral_list
 from referrals.services import referral_create, referral_delete, referral_update
@@ -55,7 +56,7 @@ class Mutation:
     )
     def create_referral(self, info: Info, data: CreateReferralInput) -> ReferralType:
         current_user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(current_user)
+        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
         referral_data = asdict(data)
 
         try:

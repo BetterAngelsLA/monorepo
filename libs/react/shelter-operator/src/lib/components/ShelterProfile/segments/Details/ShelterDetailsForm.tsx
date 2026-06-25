@@ -4,7 +4,7 @@ import { ShelterChoices } from '@monorepo/react/shelter';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
-import { Input } from '../../../base-ui/input';
+import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Form } from '../../../form/Form';
 import {
   ACCESSIBILITY_OPTIONS,
@@ -207,12 +207,8 @@ export function ShelterDetailsForm(props: TProps) {
             name="addNotesShelterDetails"
             control={control}
             render={({ field }) => (
-              <Input
+              <RichTextEditor
                 label="Additional Notes"
-                variant="paragraph"
-                inputClassName="min-h-auto"
-                rows={2}
-                dataType="string"
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}

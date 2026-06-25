@@ -1,12 +1,16 @@
 from typing import Any, cast
 
+from common.org_types import REGISTRY
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from organizations.backends import invitation_backend
+from organizations.models import OrganizationUser
 
 from .models import User
+from .services import member_add
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -37,8 +41,14 @@ class UserChangeForm(BaseUserChangeForm):
 
 
 class OrganizationUserForm(forms.ModelForm):
-    """
-    Form class for editing OrganizationUsers *and* the linked user model.
+    """Form class for editing OrganizationUsers *and* the linked user model.
+
+    When creating a new member, automatically assigns all invitable
+    permission templates for the selected organization.  The invite email
+    uses the first template's ``invite_html``/``invite_txt`` paths.
+
+    When editing, the organization field serves as a read-only identifier;
+    role changes should be made via the GraphQL API or the User admin.
     """
 
     email = forms.EmailField()
@@ -53,22 +63,57 @@ class OrganizationUserForm(forms.ModelForm):
             self.fields["email"].initial = self.instance.user.email
 
     def save(self, *args: Any, **kwargs: Any) -> User:
-        """
-        This method saves changes to the linked user model.
-        """
+        """Create or update the linked user model."""
+        organization = self.cleaned_data["organization"]
 
         if self.instance.pk is None:
+            # ── New member ────────────────────────────────────────────
+            invitable_templates = tuple(REGISTRY.invitable_templates_for(organization))
+            if not invitable_templates:
+                raise ValidationError(
+                    f"Organization '{organization.name}' has no invitable "
+                    f"permission templates.  Ensure the org has a profile "
+                    f"with org_types set."
+                )
+
+            user = member_add(
+                email=self.cleaned_data["email"],
+                first_name="",
+                last_name="",
+                middle_name=None,
+                organization=organization,
+                permission_templates=invitable_templates,
+            )
+
+            # The member template drives the invite email.
+            org_type_name = organization.profile.org_types[0].value
+            org_config = REGISTRY.org_type(org_type_name)
+            if not org_config:
+                raise ValidationError(f"No org type config for '{org_type_name}'.")
+            role_template = org_config.member_template
+
             site = Site.objects.get(pk=settings.SITE_ID)
-            self.instance.user = invitation_backend().invite_by_email(
-                self.cleaned_data["email"],
-                **{
-                    "organization": self.cleaned_data["organization"],
-                    "domain": site,
-                },
-            )
             invitation_backend().create_organization_invite(
-                self.cleaned_data["organization"], self.request.user, self.instance.user
+                organization=organization,
+                invited_by_user=self.request.user,
+                invitee_user=user,
             )
+            invitation_backend().send_invitation(
+                user=user,
+                sender=self.request.user,
+                organization=organization,
+                domain=site,
+                role_template=role_template,
+            )
+
+            self.instance.user = user
+
+            # member_add already created the OrganizationUser row via
+            # organization.add_user().  Point the form instance at it so
+            # super().save() sees an existing record (update, not insert).
+            org_user = OrganizationUser.objects.get(organization=organization, user=user)
+            self.instance.pk = org_user.pk
+
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
 

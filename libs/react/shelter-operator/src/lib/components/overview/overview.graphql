@@ -1,5 +1,5 @@
-query GetAdminShelterOverview($shelterId: ID!) {
-  adminShelter(pk: $shelterId) {
+query GetShelterOperatorOverview($shelterId: ID!) {
+  operatorShelter(pk: $shelterId) {
     id
     name
     organization {
@@ -11,14 +11,17 @@ query GetAdminShelterOverview($shelterId: ID!) {
     }
     bedsByStatus {
       available
+      inTurnaround
       occupied
-      reserved
       outOfService
+      reserved
     }
     roomsByStatus {
       available
+      inTurnaround
+      occupied
+      outOfService
       reserved
-      needsMaintenance
     }
   }
 }

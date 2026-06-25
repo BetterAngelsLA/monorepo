@@ -15,6 +15,11 @@ services:
       - AWS_CONFIG_FILE=/workspace/.aws/config
       - AWS_PROFILE=Development
 
+    volumes:
+      # Persist developer state (gh config, Cline data, VS Code settings, etc.) across rebuilds.
+      # If VS Code Server updates break things, clear with: docker volume rm <project>_dev_home
+      - dev_home:/home/betterangels
+
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:
     #   - SYS_PTRACE
@@ -23,3 +28,6 @@ services:
 
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/sh -c "while sleep 1000; do :; done"
+
+volumes:
+  dev_home:

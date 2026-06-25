@@ -9,6 +9,7 @@ import {
   toDropdownValue,
 } from '../../../base-ui/dropdown';
 import { Input } from '../../../base-ui/input';
+import { RichTextEditor } from '../../../base-ui/richTextEditor';
 import { Switch } from '../../../base-ui/switch';
 import { Form } from '../../../form/Form';
 import { STATUS_COLOR_MAP, STATUS_OPTIONS } from '../../constants';
@@ -63,10 +64,7 @@ export function ShelterBasicInfoForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <form className="flex flex-col gap-10 mt-8">
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
@@ -136,13 +134,8 @@ export function ShelterBasicInfoForm(props: TProps) {
             name="description"
             control={control}
             render={({ field }) => (
-              <Input
-                required
-                variant="paragraph"
-                inputClassName="min-h-auto"
-                rows={2}
+              <RichTextEditor
                 label="Description"
-                dataType="string"
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
@@ -226,6 +219,7 @@ export function ShelterBasicInfoForm(props: TProps) {
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled || !isValid}
               secondaryDisabled={disabled}
+              className="z-99"
             />
           )}
         </form>

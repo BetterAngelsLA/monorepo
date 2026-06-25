@@ -1,4 +1,4 @@
-from common.permissions.utils import model_permissions
+from common.permissions.utils import permissions_enum_from_model
 
 from .models import Referral
 
@@ -10,4 +10,4 @@ from .models import Referral
 #     Referral.perms.VIEW    → "referrals.view_referral"
 # ──────────────────────────────────────────────────────────────────────────────
 
-ReferralPermissions = model_permissions(Referral)
+ReferralPermissions = permissions_enum_from_model(Referral)

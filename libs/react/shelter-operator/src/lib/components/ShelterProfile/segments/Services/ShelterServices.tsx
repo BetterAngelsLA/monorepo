@@ -1,7 +1,40 @@
 import { useState } from 'react';
-import { useShelter } from '../../../../hooks/useShelter';
+import {
+  useShelterOperatorProfile,
+  useUpdateShelterProfile,
+  UseUpdateShelterProfileInput,
+} from '../../../../hooks';
+import { useToast } from '../../../base-ui/toast';
 import { ShelterServicesForm } from './ShelterServicesForm';
-import { toFormData } from './formSchema';
+import { type ServicesFormData, toFormData } from './formSchema';
+
+/**
+ * Converts a service ID to a `ServiceInput` object.
+ * Custom "other" services use the format `custom:{categoryId}:{encodedDisplayName}`
+ * and are mapped to `{ categoryId, displayName }`. Regular services are mapped to `{ id }`.
+ */
+function toUpdateInput(
+  shelterId: string,
+  data: ServicesFormData
+): UseUpdateShelterProfileInput {
+  return {
+    id: shelterId,
+    services: data.services.map(toServiceInput),
+  };
+}
+
+function toServiceInput(serviceId: string) {
+  if (serviceId.startsWith('custom:')) {
+    const firstColon = serviceId.indexOf(':');
+    const secondColon = serviceId.indexOf(':', firstColon + 1);
+    const categoryId = serviceId.slice(firstColon + 1, secondColon);
+    const displayName = decodeURIComponent(serviceId.slice(secondColon + 1));
+
+    return { categoryId, displayName };
+  }
+
+  return { id: serviceId };
+}
 
 type TProps = {
   shelterId: string;
@@ -12,13 +45,44 @@ export function ShelterServices(props: TProps) {
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
 
-  const { shelter } = useShelter(shelterId);
+  const { shelter } = useShelterOperatorProfile(shelterId);
+  const { updateShelter } = useUpdateShelterProfile();
+  const { showToast } = useToast();
 
-  // function onSubmit(data: BasicInfoFormData) {
-  //   // TODO: wire to update mutation
-  //   console.log('SAVE', data);
-  //   setEditMode(false);
-  // }
+  async function onSubmit(data: ServicesFormData) {
+    try {
+      const response = await updateShelter({
+        variables: { data: toUpdateInput(shelterId, data) },
+      });
+
+      const result = response.data?.updateShelter;
+
+      // success
+      if (result?.__typename === 'ShelterType') {
+        setEditMode(false);
+
+        showToast({
+          status: 'success',
+          title: 'Shelter updated.',
+        });
+
+        return;
+      }
+
+      // error
+      // TODO: handle specific OperationInfo field errors via SDB-241
+
+      throw new Error('unexpected query error');
+    } catch (e) {
+      console.error(`[updateShelter error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: 'An unexpected error occurred.',
+      });
+    }
+  }
 
   function onCancel() {
     setEditMode(false);
@@ -31,7 +95,7 @@ export function ShelterServices(props: TProps) {
   return (
     <ShelterServicesForm
       defaultValues={toFormData(shelter)}
-      onSubmit={() => console.log('submit')}
+      onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}
       onCancel={onCancel}

@@ -1,0 +1,24 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Form } from '../../../../form/Form';
+import { defaultFormValues, formSchema, VideosFormData } from './formSchema';
+
+type TProps = {
+  onSave: (data: VideosFormData) => void;
+};
+
+export function ShelterVideosForm(props: TProps) {
+  const { onSave } = props;
+
+  const { handleSubmit } = useForm<VideosFormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: defaultFormValues,
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSave)} className="p-8">
+      {/* TODO: add video fields */}
+      <Form.Actions onPrimaryClick={handleSubmit(onSave)} />
+    </form>
+  );
+}

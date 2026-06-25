@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { LabelVariant } from '../label/label';
 
 export interface DropdownOption<T extends string | number = string | number> {
   label: string;
@@ -7,6 +8,7 @@ export interface DropdownOption<T extends string | number = string | number> {
 
 interface DropdownBaseProps<T extends string | number = string | number> {
   label?: string;
+  labelVariant?: LabelVariant;
   placeholder?: string;
   options: ReadonlyArray<DropdownOption<T>>;
   isSearchable?: boolean;
@@ -16,8 +18,10 @@ interface DropdownBaseProps<T extends string | number = string | number> {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  labelClassname?: string;
   onOtherTextChange?: (text: string) => void;
   renderValue?: (selected: DropdownOption<T>[]) => ReactNode;
+  error?: string;
 }
 
 export type DropdownProps<T extends string | number = string | number> =

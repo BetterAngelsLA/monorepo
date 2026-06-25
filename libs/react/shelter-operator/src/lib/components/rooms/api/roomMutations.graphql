@@ -1,0 +1,68 @@
+mutation CreateRoom($data: CreateRoomInput!) {
+  createRoom(data: $data) {
+    ... on RoomType {
+      id
+      name
+      status
+      type
+      typeOther
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
+  updateRoom(id: $id, data: $data) {
+    ... on RoomType {
+      id
+      name
+      status
+      type
+      typeOther
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation DeleteRooms($data: BulkDeleteInput!) {
+  deleteRooms(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
+
+mutation CloneRoom($id: ID!) {
+  cloneRoom(id: $id) {
+    ... on RoomType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

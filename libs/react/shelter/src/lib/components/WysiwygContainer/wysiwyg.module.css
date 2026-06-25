@@ -45,3 +45,10 @@
 .wysiwyg ol li {
   line-height: 1.5;
 }
+
+.wysiwyg blockquote {
+  color: #6a7282;
+  font-style: italic;
+  border-left: 4px solid #d1d5dc;
+  padding: 2px 0 2px 12px;
+}

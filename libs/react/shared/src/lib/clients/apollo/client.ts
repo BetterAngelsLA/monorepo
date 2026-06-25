@@ -15,6 +15,8 @@ type IApolloClient = {
   cacheStore?: InMemoryCache;
   typePolicies?: TypePolicies;
   isDevEnv?: boolean;
+  /** Additional Apollo Links to compose into the link chain (e.g. orgLink). */
+  links?: ApolloLink[];
 };
 
 export const createApolloClient = ({
@@ -23,6 +25,7 @@ export const createApolloClient = ({
   csrfHeaderName,
   cacheStore,
   typePolicies,
+  links = [],
 }: IApolloClient): ApolloClient => {
   const cache = cacheStore || createApolloCache({ typePolicies });
 
@@ -38,6 +41,7 @@ export const createApolloClient = ({
         cookieName: csrfCookieName,
         headerName: csrfHeaderName,
       }),
+      ...links,
       uploadHttpLink,
     ]),
     cache,

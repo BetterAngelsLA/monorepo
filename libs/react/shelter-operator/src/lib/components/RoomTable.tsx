@@ -1,18 +1,11 @@
 import { mergeCss } from '@monorepo/react/shared';
-import {
-  CopyPlus,
-  Filter,
-  Minus,
-  Search,
-  Settings2,
-  Trash2,
-} from 'lucide-react';
+import { CopyPlus, Minus, Trash2 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './base-ui/buttons/buttons';
 import { ConfirmationModal } from './base-ui/modal/ConfirmationModal';
+import { Table, type TableColumn } from './base-ui/table';
 import { Text } from './base-ui/text/text';
-import { Table, type TableColumn } from './Table';
 
 // REPLACE WITH ACTUAL QUERIED DATA
 import {
@@ -31,8 +24,6 @@ type RoomTableProps = {
   rows: Room[];
   getRowKey?: (item: Room, index: number) => string;
   onRowClick?: (rowObject: RoomRowObject, rowIndex: number) => void;
-  onSearchChange?: (value: string) => void;
-  searchPlaceholder?: string;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -42,27 +33,32 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onCreateRoom?: () => void;
-  onDeleteRoom?: (roomId: string) => void;
+  onClone?: (rowObject: RoomRowObject) => void;
   onDeleteRooms?: (roomIds: string[]) => void;
 };
 
 // TODO: Create Tag Components in Base UI -----------------
 const STATUS_STYLE: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'bg-[#D7F5DF]',
-  [RoomStatusChoices.NeedsMaintenance]: 'bg-[#FFE5E0]',
+  [RoomStatusChoices.OutOfService]: 'bg-[#FFE5E0]',
+  [RoomStatusChoices.InTurnaround]: 'bg-[#FFEBCB]',
+  [RoomStatusChoices.Occupied]: 'bg-[#FFEBCB]',
   [RoomStatusChoices.Reserved]: 'bg-[#FFEBCB]',
 };
 
 const STATUS_TEXT_STYLE: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'text-[#0F8F2F] font-medium',
-  [RoomStatusChoices.NeedsMaintenance]: 'text-[#D7332A] font-medium',
+  [RoomStatusChoices.OutOfService]: 'text-[#D7332A] font-medium',
+  [RoomStatusChoices.InTurnaround]: 'text-[#CC6F00] font-medium',
+  [RoomStatusChoices.Occupied]: 'text-[#CC6F00] font-medium',
   [RoomStatusChoices.Reserved]: 'text-[#CC6F00] font-medium',
 };
 
 const STATUS_LABEL: Record<RoomStatusChoices, string> = {
   [RoomStatusChoices.Available]: 'Available',
-  [RoomStatusChoices.NeedsMaintenance]: 'Out of Service',
+  [RoomStatusChoices.OutOfService]: 'Out of Service',
+  [RoomStatusChoices.InTurnaround]: 'In Turnaround',
+  [RoomStatusChoices.Occupied]: 'Occupied',
   [RoomStatusChoices.Reserved]: 'Reserved',
 };
 // ------------------------------------------
@@ -71,8 +67,6 @@ export function RoomTable({
   rows,
   getRowKey,
   onRowClick,
-  onSearchChange,
-  searchPlaceholder = 'Search rooms',
   loading,
   loadingState,
   emptyState,
@@ -82,21 +76,15 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onDeleteRoom,
+  onClone,
   onDeleteRooms,
 }: RoomTableProps) {
-  const [searchInput, setSearchInput] = useState('');
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
-    roomIds?: string[];
-    roomId?: string;
+    roomIds: string[];
     roomName?: string;
-  }>({ isOpen: false });
-
-  useEffect(() => {
-    onSearchChange?.(searchInput);
-  }, [onSearchChange, searchInput]);
+  }>({ isOpen: false, roomIds: [] });
 
   useEffect(() => {
     const validIds = new Set(rows.map((room) => room.id));
@@ -111,38 +99,25 @@ export function RoomTable({
     );
   };
 
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({ isOpen: false, roomIds: [] });
+  };
+
   const selectedCount = selectedRoomIds.length;
 
   const handleDeleteSelected = () => {
     if (selectedCount === 0) return;
-
     setDeleteConfirmation({
       isOpen: true,
       roomIds: selectedRoomIds,
-      roomId: undefined,
-      roomName: undefined,
     });
   };
 
-  const closeDeleteConfirmation = () => {
-    setDeleteConfirmation({
-      isOpen: false,
-      roomIds: undefined,
-      roomId: undefined,
-      roomName: undefined,
-    });
-  };
-
-  const deleteConfirmationCount =
-    deleteConfirmation.roomIds?.length ?? (deleteConfirmation.roomId ? 1 : 0);
-
-  const deleteConfirmationTitle = deleteConfirmation.roomIds
-    ? deleteConfirmationCount === 1
-      ? 'Are you sure you want to delete the selected room?'
-      : `Are you sure you want to delete the ${deleteConfirmationCount} selected rooms?`
-    : `Are you sure you want to delete ${
-        deleteConfirmation.roomName || 'this room'
-      }?`;
+  const deleteConfirmationTitle = deleteConfirmation.roomName
+    ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
+    : deleteConfirmation.roomIds.length === 1
+    ? 'Are you sure you want to delete the selected room?'
+    : `Are you sure you want to delete the ${deleteConfirmation.roomIds.length} selected rooms?`;
 
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -184,6 +159,8 @@ export function RoomTable({
             {room.name}
           </Text>
         ),
+        sortValue: (room) => room.name,
+        filterValue: (room) => room.name,
       },
       {
         key: 'status',
@@ -206,6 +183,9 @@ export function RoomTable({
             </Text>
           </span>
         ),
+        sortValue: (room) => STATUS_LABEL[room.status ?? RoomStatusChoices.Available],
+        filterValue: (room) => STATUS_LABEL[room.status ?? RoomStatusChoices.Available],
+        autoFilterOptions: true,
       },
       {
         key: 'tags',
@@ -255,85 +235,41 @@ export function RoomTable({
     [selectedRoomIds]
   );
 
-  // local filtering that allows for filtering by name or status on hard coded data
-  const filteredRows = useMemo(() => {
-    const query = searchInput.trim().toLowerCase();
-
-    if (!query) return rows;
-
-    return rows.filter((room) => {
-      const normalizedStatus =
-        STATUS_LABEL[room.status ?? RoomStatusChoices.Available].toLowerCase();
-      const matchesName = room.name.toLowerCase().includes(query);
-      const matchesStatus = normalizedStatus.includes(query);
-      const matchesTags = (
-        room.amenities
-          ? room.amenities
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : []
-      ).some((tag) => tag.toLowerCase().includes(query));
-
-      return matchesName || matchesStatus || matchesTags;
-    });
-  }, [rows, searchInput]);
-
   return (
     <div className="relative flex flex-col">
-      <form
-        className="mt-8 flex w-full px-4 flex-wrap items-center bg-white"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="flex h-11 w-full max-w-[380px] flex-shrink items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-            <Search size={20} />
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-white border-b border-gray-200">
+          <span className="text-sm text-[#747A82]">
+            {selectedCount} {selectedCount === 1 ? 'room' : 'rooms'} selected
           </span>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-          />
-        </label>
-
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {selectedCount > 0 && (
-            <Button
-              variant="primary"
-              leftIcon={<Trash2 size={20} />}
-              rightIcon={false}
-              onClick={handleDeleteSelected}
-              color="red"
-            >
-              {selectedCount > 1 ? 'Delete All' : 'Delete'}
-            </Button>
-          )}
           <Button
             variant="primary"
-            leftIcon={<Filter size={20} />}
+            leftIcon={<Trash2 size={20} />}
             rightIcon={false}
+            onClick={handleDeleteSelected}
+            color="red"
           >
-            Filter
-          </Button>
-          <Button
-            variant="primary"
-            leftIcon={<Settings2 size={20} />}
-            rightIcon={false}
-          >
-            Sort
+            Delete
           </Button>
         </div>
-      </form>
-
+      )}
       <Table<Room, RoomRowObject>
         columns={columns}
-        rows={filteredRows}
+        rows={rows}
         getRowKey={getRowKey ?? ((room) => room.id)}
         getRowObject={(room) => ({ id: room.id, room })}
         getRowSlot={(rowObject) => (
           <div className="flex items-center gap-1">
+            <Button
+              variant="edit"
+              className="text-[#747A82]"
+              aria-label="Clone room"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClone?.(rowObject);
+              }}
+            />
             <Button
               variant="edit"
               className="text-[#747A82]"
@@ -343,18 +279,12 @@ export function RoomTable({
               }}
             />
             <Button
-              variant="edit"
-              className="text-[#747A82]"
-              leftIcon={<CopyPlus />}
-            />
-            <Button
               variant="trash"
               onClick={(e) => {
                 e.stopPropagation();
                 setDeleteConfirmation({
                   isOpen: true,
-                  roomIds: undefined,
-                  roomId: rowObject.id,
+                  roomIds: [rowObject.id],
                   roomName: rowObject.room.name,
                 });
               }}
@@ -381,16 +311,9 @@ export function RoomTable({
         primaryAction={{
           label: 'Delete',
           onClick: () => {
-            if (deleteConfirmation.roomIds) {
-              if (deleteConfirmation.roomIds.length === 1) {
-                const [roomId] = deleteConfirmation.roomIds;
-                if (roomId) onDeleteRoom?.(roomId);
-              } else {
-                onDeleteRooms?.(deleteConfirmation.roomIds);
-              }
+            if (deleteConfirmation.roomIds.length > 0) {
+              onDeleteRooms?.(deleteConfirmation.roomIds);
               setSelectedRoomIds([]);
-            } else if (deleteConfirmation.roomId) {
-              onDeleteRoom?.(deleteConfirmation.roomId);
             }
             closeDeleteConfirmation();
           },

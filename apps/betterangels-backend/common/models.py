@@ -63,7 +63,7 @@ class Attachment(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
+        return f"{self.content_object} {self.object_id} - {self.attachment_type} - {self.original_filename}"
 
     class Meta:
         indexes = [

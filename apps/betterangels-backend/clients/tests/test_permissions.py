@@ -1,7 +1,6 @@
 from typing import Optional
 from unittest.mock import patch
 
-from accounts.tests.baker_recipes import permission_group_recipe
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
 from clients.tests.utils import (
@@ -11,7 +10,6 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
 )
 from common.models import Attachment
-from common.tests.utils import GraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
@@ -382,19 +380,22 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_generate_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        with patch(
-            "clients.services.client_document.generate_s3_presigned_upload_urls",
-            return_value={
-                "uploads": [
-                    {
-                        "ref_id": "ref-1",
-                        "key": "media/attachments/test.pdf",
-                        "url": "https://s3.example.com/upload",
-                        "fields": {"Policy": "test"},
-                    }
-                ]
-            },
-        ), patch("clients.services.client_document.create_upload_token", return_value="mock-token"):
+        with (
+            patch(
+                "clients.services.client_document.generate_s3_presigned_upload_urls",
+                return_value={
+                    "uploads": [
+                        {
+                            "ref_id": "ref-1",
+                            "key": "media/attachments/test.pdf",
+                            "url": "https://s3.example.com/upload",
+                            "fields": {"Policy": "test"},
+                        }
+                    ]
+                },
+            ),
+            patch("clients.services.client_document.create_upload_token", return_value="mock-token"),
+        ):
             response = self._generate_client_document_uploads_fixture(
                 self.client_profile_1["id"],
                 [{"refId": "ref-1", "filename": "test.pdf", "contentType": "application/pdf"}],
@@ -421,11 +422,14 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_resolve_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        with patch("clients.services.client_document.validate_upload_token", return_value=True), patch(
-            "clients.services.client_document.assign_object_permissions"
-        ), patch("clients.services.client_document.s3_key_exists", return_value=True), patch(
-            "clients.services.client_document.strip_storage_location",
-            side_effect=lambda key: key.removeprefix("media/"),
+        with (
+            patch("clients.services.client_document.validate_upload_token", return_value=True),
+            patch("clients.services.client_document.assign_object_permissions"),
+            patch("clients.services.client_document.s3_key_exists", return_value=True),
+            patch(
+                "clients.services.client_document.strip_storage_location",
+                side_effect=lambda key: key.removeprefix("media/"),
+            ),
         ):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
@@ -463,19 +467,22 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self, user_label: Optional[str], should_succeed: bool
     ) -> None:
         self._handle_user_login(user_label)
-        with patch(
-            "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
-            return_value={
-                "uploads": [
-                    {
-                        "ref_id": "ref-photo",
-                        "key": "media/client_profile_photos/test.jpg",
-                        "url": "https://s3.example.com/upload",
-                        "fields": {"Policy": "test"},
-                    }
-                ]
-            },
-        ), patch("clients.services.client_profile_photo.create_upload_token", return_value="mock-token"):
+        with (
+            patch(
+                "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
+                return_value={
+                    "uploads": [
+                        {
+                            "ref_id": "ref-photo",
+                            "key": "media/client_profile_photos/test.jpg",
+                            "url": "https://s3.example.com/upload",
+                            "fields": {"Policy": "test"},
+                        }
+                    ]
+                },
+            ),
+            patch("clients.services.client_profile_photo.create_upload_token", return_value="mock-token"),
+        ):
             response = self._generate_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
                 ref_id="ref-photo",
@@ -506,8 +513,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self, user_label: Optional[str], should_succeed: bool
     ) -> None:
         self._handle_user_login(user_label)
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=True), patch(
-            "clients.services.client_profile_photo.s3_key_exists", return_value=True
+        with (
+            patch("clients.services.client_profile_photo.validate_upload_token", return_value=True),
+            patch("clients.services.client_profile_photo.s3_key_exists", return_value=True),
         ):
             response = self._resolve_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
@@ -1027,45 +1035,3 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
-
-
-class OrganizationPermissionTestCase(GraphQLBaseTestCase):
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Case Manager should succeed
-            ("non_case_manager_user", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_view_caseworker_organizations_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        query = """
-            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
-                caseworkerOrganizations(pagination: $pagination) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-        variables = {"pagination": {"offset": 0, "limit": 10}}
-        response = self.execute_graphql(query, variables=variables)
-
-        if should_succeed:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
-        elif user_label is None:
-            self.assertGraphQLUnauthenticated(response)
-        else:
-            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)

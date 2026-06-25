@@ -17,17 +17,13 @@ const parseUser = (
   if (!user) {
     return undefined;
   }
-  if (!user.organizations?.length) {
-    return undefined;
-  }
-
   return {
     id: user.id,
     username: user.username ?? undefined,
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
     email: user.email,
-    organizations: user.organizations ?? null,
+    organizations: user.organizations ?? [],
   };
 };
 

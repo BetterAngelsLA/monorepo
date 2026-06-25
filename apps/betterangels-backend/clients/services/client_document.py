@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from clients.types import ClientDocumentFromUploadsInput, ClientDocumentUploadsInputItem
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
@@ -18,6 +18,7 @@ from common.services.types import AuthorizedPresignedUpload, AuthorizedPresigned
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from notes.groups import CASEWORKER
 
 UPLOAD_PATH = "attachments"
 SERVICE_NAME = "client_document"
@@ -80,7 +81,7 @@ def resolve_upload(
     client_profile: ClientProfile,
     documents: Iterable[ClientDocumentFromUploadsInput],
 ) -> list[Attachment]:
-    permission_group = get_user_permission_group(user)
+    permission_group = resolve_permission_group(user, template=CASEWORKER)
     content_type = ContentType.objects.get_for_model(ClientProfile)
 
     # Validate the entire batch before any DB writes.

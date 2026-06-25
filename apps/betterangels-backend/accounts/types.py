@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import OrgRoleEnum
-from accounts.permissions import make_granted_permissions
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
+from common.org_types import REGISTRY
 from django.db.models import Q, QuerySet
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 from reports.permissions import ReportPermissions
 from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
+from teams.permissions import TeamPermissions
+
+from accounts.enums import OrgRoleEnum
+from accounts.models import PermissionGroup
+from accounts.permissions import make_granted_permissions
 
 from .models import User
 from .permissions import UserOrganizationPermissions
@@ -21,6 +27,7 @@ from .permissions import UserOrganizationPermissions
 AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
 ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
 SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
+TeamsGrantedPermissions = make_granted_permissions(TeamPermissions)
 
 
 @strawberry.input
@@ -114,6 +121,7 @@ class CurrentUserOrganizationType(OrganizationType):
             **AccountsGrantedPermissions.get_annotations(user),
             **ReportsGrantedPermissions.get_annotations(user),
             **SheltersGrantedPermissions.get_annotations(user),
+            **TeamsGrantedPermissions.get_annotations(user),
         )
 
         return qs
@@ -124,6 +132,7 @@ class CurrentUserOrganizationType(OrganizationType):
             accounts=AccountsGrantedPermissions.from_instance(self).granted,
             reports=ReportsGrantedPermissions.from_instance(self).granted,
             shelters=SheltersGrantedPermissions.from_instance(self).granted,
+            teams=TeamsGrantedPermissions.from_instance(self).granted,
         )
 
 
@@ -132,6 +141,7 @@ class OrgPermissions:
     accounts: List[UserOrganizationPermissions]
     reports: List[ReportPermissions]
     shelters: List[ShelterPermissions]  # type: ignore[valid-type]
+    teams: List[TeamPermissions]  # type: ignore[valid-type]
 
 
 @strawberry_django.type(User)
@@ -148,7 +158,6 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -157,6 +166,23 @@ class UserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old mobile clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return None
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.type(User)
@@ -165,7 +191,6 @@ class CurrentUserType(UserBaseType):
     organizations_organization: Optional[List[CurrentUserOrganizationType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_outreach_authorized: Optional[bool]
     username: Optional[str]
 
     @strawberry_django.field
@@ -174,6 +199,23 @@ class CurrentUserType(UserBaseType):
         session = request.session
 
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
+
+    @strawberry_django.field(deprecation_reason="Use userPermissions check instead.")
+    def is_outreach_authorized(self, info: Info) -> Optional[bool]:
+        """Backwards-compatible field for old clients.
+
+        Returns True if the user belongs to a Caseworker permission group
+        in any organization (i.e., they are an outreach worker).
+
+        TODO: Remove this field once mobile clients have migrated.
+        """
+        user = get_current_user(info)
+        if not user or not user.is_authenticated:
+            return None
+        return PermissionGroup.objects.filter(
+            group__user=user.pk,
+            template__name=CASEWORKER.name,
+        ).exists()
 
 
 @strawberry_django.order_type(User, one_of=False)
@@ -211,6 +253,18 @@ class OrganizationMemberType(UserBaseType):
     def member_role(self, info: Info) -> OrgRoleEnum:
         return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
+    @strawberry_django.field
+    def is_org_owner(self, info: Info) -> bool:
+        """Whether this member is the organization owner."""
+        return bool(getattr(self, "_is_org_owner", False))
+
+    @strawberry_django.field
+    def permission_templates(self, info: Info) -> list[PermissionTemplateEnum]:  # type: ignore[valid-type]
+        raw = getattr(self, "_permission_templates", None)
+        if not raw:
+            return []
+        return [PermissionTemplateEnum(v) for v in raw.split(", ")]
+
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
@@ -224,6 +278,16 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
+# Dynamically built from the registry — adding a template to
+# common.org_types.REGISTRY automatically exposes it here.
+PermissionTemplateEnum = strawberry.enum(  # type: ignore[call-overload]
+    Enum(
+        "PermissionTemplateEnum",  # type: ignore[arg-type]
+        {name.upper().replace(" ", "_"): name for name in REGISTRY.invitable_template_names()},
+    )
+)
+
+
 @strawberry.input
 class OrgInvitationInput:
     email: str
@@ -231,6 +295,7 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]
 
 
 @strawberry.input
@@ -243,3 +308,28 @@ class UpdateUserProfileInput:
 class RemoveOrganizationMemberInput:
     id: ID
     organization_id: ID
+
+
+# ── Self-Signup ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class CreateOrganizationInput:
+    organization_name: NonEmptyString
+    org_type: NonEmptyString
+
+
+@strawberry.type
+class CreateOrganizationResponse:
+    user: UserType
+    organization: OrganizationType
+
+
+# ── Role Change ───────────────────────────────────────────────────────
+
+
+@strawberry.input
+class ChangeOrganizationMemberRoleInput:
+    user_id: ID
+    organization_id: ID
+    permission_template: PermissionTemplateEnum  # type: ignore[valid-type]

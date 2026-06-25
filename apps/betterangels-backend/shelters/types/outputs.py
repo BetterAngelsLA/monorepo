@@ -1,7 +1,7 @@
 """Output types for shelter queries and mutations."""
 
-from datetime import datetime
-from typing import List, Optional, Type, cast
+from datetime import date, datetime
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -9,17 +9,26 @@ from accounts.models import User
 from accounts.types import OrganizationType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
-from common.imgproxy import build_imgproxy_url
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, QuerySet, Subquery
+from common.images import build_img_url
+from common.permissions.utils import get_current_organization
+from django.db.models import Prefetch, QuerySet
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
     BedTypeChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
-from shelters.selectors import admin_shelter_list, shelter_list
+from shelters.selectors.computed_status import (
+    bed_computed_status_annotation,
+    room_computed_status_annotation,
+    shelter_bed_status_count_subquery,
+    shelter_room_status_count_subquery,
+)
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
+from shelters.selectors.operator import reservation_queryset
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
@@ -45,22 +54,16 @@ from shelters.types.lookups import (
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .filters import BedFilter, RoomFilter, ShelterFilter, ShelterOrder
-
-
-def _shelter_status_count_subquery(
-    model: Type[models.Bed] | Type[models.Room],
-    status: BedStatusChoices | RoomStatusChoices,
-) -> Subquery:
-    """Count related beds/rooms per shelter without joining both relations on one queryset."""
-    return Subquery(
-        model.objects.filter(shelter=OuterRef("pk"), status=status)
-        .order_by()
-        .values("shelter")
-        .annotate(c=Count("pk"))
-        .values("c"),
-        output_field=IntegerField(),
-    )
+from .filters import (
+    BedFilter,
+    BedOrder,
+    ReservationFilter,
+    ReservationOrder,
+    RoomFilter,
+    RoomOrder,
+    ShelterFilter,
+    ShelterOrder,
+)
 
 
 def _annotated_count(root: models.Shelter, name: str) -> int:
@@ -75,12 +78,17 @@ class ShelterLocationType:
     longitude: float
 
 
-@strawberry.type
+@strawberry_django.type(models.ShelterPhoto)
 class ShelterPhotoType:
     id: ID
     type: ShelterPhotoTypeChoices
     created_at: datetime
     file: TransformableImageType
+
+
+@strawberry.type
+class ShelterPhotoUploadsType:
+    photos: list[ShelterPhotoType]
 
 
 @strawberry.type
@@ -97,19 +105,31 @@ class MediaLinkType:
     media_type: auto
 
 
+@strawberry_django.type(models.ShelterAvailability)
+class ShelterAvailabilityType:
+    id: ID
+    non_restricted_beds: auto
+    restricted_beds: auto
+    restriction_notes: auto
+    updated_at: auto
+
+
 @strawberry.type
 class BedsByStatusType:
     available: int = 0
+    in_turnaround: int = 0
     occupied: int = 0
-    reserved: int = 0
     out_of_service: int = 0
+    reserved: int = 0
 
 
 @strawberry.type
 class RoomsByStatusType:
     available: int = 0
+    in_turnaround: int = 0
+    occupied: int = 0
+    out_of_service: int = 0
     reserved: int = 0
-    needs_maintenance: int = 0
 
 
 @strawberry.type
@@ -173,6 +193,8 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
+    availability: Optional[ShelterAvailabilityType]
+
     _hero_photos: Optional[List[ShelterPhotoType]] = None
 
     @strawberry_django.field(
@@ -193,8 +215,7 @@ class ShelterTypeMixin:
         processing_options: Optional[str] = None,
     ) -> Optional[ShelterHeroImageType]:
         if photo := _get_hero_image(root):
-            if imgproxy_url := build_imgproxy_url(photo.file, preset, processing_options):
-                return ShelterHeroImageType(id=ID(str(photo.id)), url=imgproxy_url)
+            return ShelterHeroImageType(id=ID(str(photo.id)), url=build_img_url(photo.file, preset, processing_options))
 
         return None
 
@@ -207,36 +228,38 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         annotate={
-            "_bed_available": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.AVAILABLE),
-            "_bed_occupied": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.OCCUPIED),
-            "_bed_reserved": lambda info: _shelter_status_count_subquery(models.Bed, BedStatusChoices.RESERVED),
-            "_bed_out_of_service": lambda info: _shelter_status_count_subquery(
-                models.Bed, BedStatusChoices.OUT_OF_SERVICE
-            ),
+            "_bed_available": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.AVAILABLE),
+            "_bed_in_turnaround": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.IN_TURNAROUND),
+            "_bed_occupied": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OCCUPIED),
+            "_bed_out_of_service": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OUT_OF_SERVICE),
+            "_bed_reserved": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.RESERVED),
         }
     )
     def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
         return BedsByStatusType(
             available=_annotated_count(root, "_bed_available"),
+            in_turnaround=_annotated_count(root, "_bed_in_turnaround"),
             occupied=_annotated_count(root, "_bed_occupied"),
-            reserved=_annotated_count(root, "_bed_reserved"),
             out_of_service=_annotated_count(root, "_bed_out_of_service"),
+            reserved=_annotated_count(root, "_bed_reserved"),
         )
 
     @strawberry_django.field(
         annotate={
-            "_room_available": lambda info: _shelter_status_count_subquery(models.Room, RoomStatusChoices.AVAILABLE),
-            "_room_reserved": lambda info: _shelter_status_count_subquery(models.Room, RoomStatusChoices.RESERVED),
-            "_room_needs_maintenance": lambda info: _shelter_status_count_subquery(
-                models.Room, RoomStatusChoices.NEEDS_MAINTENANCE
-            ),
+            "_room_available": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.AVAILABLE),
+            "_room_in_turnaround": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.IN_TURNAROUND),
+            "_room_occupied": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OCCUPIED),
+            "_room_out_of_service": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OUT_OF_SERVICE),
+            "_room_reserved": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.RESERVED),
         }
     )
     def rooms_by_status(self, root: models.Shelter) -> RoomsByStatusType:
         return RoomsByStatusType(
             available=_annotated_count(root, "_room_available"),
+            in_turnaround=_annotated_count(root, "_room_in_turnaround"),
+            occupied=_annotated_count(root, "_room_occupied"),
+            out_of_service=_annotated_count(root, "_room_out_of_service"),
             reserved=_annotated_count(root, "_room_reserved"),
-            needs_maintenance=_annotated_count(root, "_room_needs_maintenance"),
         )
 
 
@@ -249,11 +272,12 @@ class ShelterType(ShelterTypeMixin):
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
-class AdminShelterType(ShelterTypeMixin):
+class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return admin_shelter_list(queryset, user=user)
+        org_id = get_current_organization(info)
+        return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -265,12 +289,23 @@ def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
     )
 
 
-@strawberry_django.type(models.Bed, filters=BedFilter)
+def _room_beds_prefetch(info: Info) -> Prefetch:
+    user = get_current_user(info)
+    bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
+    if user is not None and user.is_authenticated:
+        org_id = get_current_organization(info)
+        bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=org_id, perms=[models.Bed.perms.VIEW])
+
+    return Prefetch("beds", queryset=bed_qs)
+
+
+@strawberry_django.type(models.Bed, filters=BedFilter, ordering=BedOrder)
 class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        org_id = get_current_organization(info)
+        return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -279,32 +314,43 @@ class BedType:
     fees: Optional[int]
     funders: List[FunderType]
     last_cleaned_inspected: Optional[datetime]
+    last_cleaned: Optional[datetime]
     maintenance_flag: bool
     medical_needs: List[MedicalNeedType]
     name: Optional[str]
-    occupant_id: Optional[ID]
     pets: List[PetType]
     room: Optional["RoomType"]
     shelter: "ShelterType"
-    status: Optional[BedStatusChoices]
     status_notes: Optional[str]
     storage: bool
     type: Optional[BedTypeChoices]
 
+    @strawberry_django.field(
+        annotate={"_computed_status": lambda info: bed_computed_status_annotation()},
+    )
+    def status(self, root: models.Bed) -> BedStatusChoices:
+        return root.computed_status
 
-@strawberry_django.type(models.Room, filters=RoomFilter)
+
+@strawberry_django.type(models.Room, filters=RoomFilter, ordering=RoomOrder)
 class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return queryset.filter(shelter__in=admin_shelter_list(models.Shelter.objects.all(), user=user))
+        org_id = get_current_organization(info)
+        return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
 
     id: ID
     accessibility: List[AccessibilityType]
     amenities: auto
-    beds: List["BedType"]
+    beds: List["BedType"] = strawberry_django.field(
+        filters=BedFilter,
+        ordering=BedOrder,
+        prefetch_related=[_room_beds_prefetch],
+    )
     demographics: List[DemographicType]
     funders: List[FunderType]
+    last_cleaned: auto
     last_cleaned_inspected: auto
     maintenance_flag: bool
     medical_respite: auto
@@ -312,11 +358,59 @@ class RoomType:
     notes: auto
     pets: List[PetType]
     shelter: "ShelterType"
-    status: Optional[RoomStatusChoices]
     storage: bool
     type: Optional[RoomStyleChoices]
     type_other: auto
 
-    @strawberry_django.field
-    def occupant_ids(self, root: models.Room) -> List[ID]:
-        return cast(List[ID], [str(pk) for pk in root.occupants.values_list("pk", flat=True)])
+    @strawberry_django.field(
+        annotate={"_computed_status": lambda info: room_computed_status_annotation()},
+    )
+    def status(self, root: models.Room) -> RoomStatusChoices:
+        return root.computed_status
+
+
+@strawberry.type
+class ReservationClientAssignmentType:
+    client_profile_id: ID
+    is_primary: bool
+
+
+@strawberry_django.type(models.Reservation, filters=ReservationFilter, ordering=ReservationOrder)
+class ReservationType:
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
+        user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
+        return reservation_queryset(queryset, user=user, organization_id=org_id, perms=[models.Reservation.perms.VIEW])
+
+    id: ID
+    bed: Optional["BedType"]
+    checked_in_at: Optional[datetime]
+    checked_out_at: Optional[datetime]
+    duration: Optional[int]
+    notes: Optional[str]
+    room: Optional["RoomType"]
+    start_date: Optional[date]
+    status: ReservationStatusChoices
+
+    @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
+    def shelter(self, root: models.Reservation) -> "OperatorShelterType":
+        if root.shelter is None:
+            raise ValueError(f"Reservation {root.pk} has neither bed nor room assigned.")
+        return cast("OperatorShelterType", root.shelter)
+
+    @strawberry_django.field(only=["created_by_id"])
+    def created_by_id(self, root: models.Reservation) -> Optional[ID]:
+        if root.created_by_id is None:
+            return None
+        return ID(str(root.created_by_id))
+
+    @strawberry_django.field(prefetch_related=["reservation_clients"])
+    def clients(self, root: models.Reservation) -> List[ReservationClientAssignmentType]:
+        return [
+            ReservationClientAssignmentType(
+                client_profile_id=ID(str(rc.client_profile_id)),
+                is_primary=rc.is_primary,
+            )
+            for rc in root.reservation_clients.all()
+        ]

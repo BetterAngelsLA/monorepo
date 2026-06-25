@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
+import { CreateBedPage } from './pages/beds/CreateBedPage';
+import { EditBedPage } from './pages/beds/EditBedPage';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
@@ -12,15 +14,19 @@ import { ConfirmationPage } from './pages/reservation/ConfirmationPage';
 import { ReservationPage } from './pages/reservation/ReservationPage';
 import { SelectRoomPage } from './pages/reservation/SelectRoomPage';
 import { SelectShelterPage } from './pages/reservation/SelectShelterPage';
+import { CreateRoomPage } from './pages/rooms/CreateRoomPage';
+import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
+  ShelterMediaPage,
   ShelterOperatingHoursPage,
   ShelterPoliciesPage,
   ShelterServicesPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
+import { CreateOrganizationPage } from './pages/createOrganization';
 import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
 import {
   manageSegments,
@@ -38,6 +44,10 @@ export function OperatorApp() {
       <OperatorAuthProvider>
         <Routes>
           <Route path={routePath(paths.signIn)} element={<SignIn />} />
+          <Route
+            path={routePath(paths.createOrganization)}
+            element={<CreateOrganizationPage />}
+          />
           <Route element={<OperatorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path={routePath(paths.users)} element={<UsersPage />} />
@@ -78,13 +88,30 @@ export function OperatorApp() {
                 path={shelterProfileSegments.ecosystem}
                 element={<ShelterEcosystemPage />}
               />
+              <Route
+                path={shelterProfileSegments.media}
+                element={<ShelterMediaPage />}
+              />
             </Route>
             <Route path={routePath(paths.shelterManage)}>
               <Route index element={<ShelterDashboardPage tab="overview" />} />
               <Route
+                path={manageSegments.roomsCreate}
+                element={<CreateRoomPage />}
+              />
+              <Route
+                path={manageSegments.roomsEdit}
+                element={<EditRoomPage />}
+              />
+              <Route
                 path={manageSegments.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
               />
+              <Route
+                path={manageSegments.bedsCreate}
+                element={<CreateBedPage />}
+              />
+              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
               <Route
                 path={manageSegments.beds}
                 element={<ShelterDashboardPage tab="beds" />}

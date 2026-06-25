@@ -1,0 +1,28 @@
+## GitHub MCP Auto-Bootstrap
+
+When starting work in this project, check if `~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` exists. If it does not exist, copy it from `docs/cline_mcp_settings.example.json`:
+
+```
+cp docs/cline_mcp_settings.example.json ~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
+```
+
+Then reload the VS Code window. This enables the GitHub MCP server for creating PRs, managing issues, searching code, and other GitHub operations directly from Cline. The `postCreateCommand` in `.devcontainer/devcontainer.json` does this automatically on container creation — this rule is a fallback for existing containers.
+
+## Django Style Guide
+
+The backend follows the [HackSoftware Django-Styleguide](https://github.com/HackSoftware/Django-Styleguide). During code reviews, reference this guide for conventions around:
+
+- **Services** — business logic in `services.py` (not fat models or views)
+- **Selectors** — read-only queries in `selectors.py`
+- **APIs / serializers** — thin views, logic delegated to services
+- **Permission checks** — DRF permission classes + strawberry-django extensions
+- **Model structure** — keep models lean; push logic to services, queries to selectors
+
+## Project-Specific Conventions
+
+- This is the BetterAngels monorepo. It contains multiple apps (`betterangels`, `betterangels-backend`, `betterangels-admin`, `shelter-web`, `wildfires`) and shared libraries.
+- The backend uses Django with GraphQL. The frontend uses React Native (Expo) and React (Vite).
+- Always run backend tests with `yarn nx test betterangels-backend` and frontend tests with `yarn nx test betterangels` or `yarn nx test shelter-web`.
+- Use the dev container for all development work. Backend services (Django, PostgreSQL, MinIO, etc.) run inside Docker Compose.
+- **CRITICAL: You are running INSIDE the dev container.** Do NOT attempt to use `docker compose` or `docker` commands. All services (Django, PostgreSQL, MinIO, etc.) are already running and accessible. Run tests directly with `yarn nx test` or `python manage.py test` inside the container — NOT via docker compose exec.
+- **CRITICAL: Always use the NX wrapper for Python commands.** The backend uses Poetry with a shared virtual environment at `/workspace/.venv`. Running `python` directly fails because the venv is not on PATH by default. ALWAYS use `yarn nx run betterangels-backend:` (e.g., `yarn nx run betterangels-backend:typecheck`, `yarn nx run betterangels-backend:lint`) or `yarn nx test betterangels-backend` instead. If you MUST run a raw Python command (e.g., for a quick one-off script), activate the shared venv first: `source /workspace/.venv/bin/activate && python ...`.

@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "django_structlog",
     "guardian",
+    "model_clone",
     "places",
     "post_office",
     "rest_framework",
@@ -146,6 +147,7 @@ INSTALLED_APPS = [
     "shelters",
     "referrals",
     "tasks",
+    "teams",
     # Must be at the end
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -165,12 +167,19 @@ MIDDLEWARE = [
     "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
+    "common.middleware.organization.OrganizationMiddleware",
 ]
 
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
 ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_LOGIN_METHODS = ["email"]
+ACCOUNT_PREVENT_ENUMERATION = True
+ACCOUNT_SIGNUP_FIELDS = ["email*"]
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
@@ -403,6 +412,11 @@ POST_OFFICE = {
 EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
+# Base URLs for frontend apps, used by send_welcome_email to build
+# absolute dashboard links.  Each TemplateConfig references one of these
+# via its base_url_setting field.
+SHELTER_WEB_BASE_URL = env("SHELTER_WEB_BASE_URL", default="http://localhost:4200")
+
 # Django Guardian
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
@@ -495,6 +509,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
     *default_headers,
     "x-goog-fieldmask",
+    "x-organization-id",
 ]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")

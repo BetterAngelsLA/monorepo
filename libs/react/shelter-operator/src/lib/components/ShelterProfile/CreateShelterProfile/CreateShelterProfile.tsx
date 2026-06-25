@@ -19,34 +19,17 @@ import {
 } from '../segments/BasicInfo';
 
 function toCreateInput(
-  formData: BasicInfoFormData,
-  organizationId: string
+  formData: BasicInfoFormData
 ): CreateShelterInput {
   return {
     name: formData.name,
-    description: formData.description || '',
+    description: formData.description || undefined,
     location: formData.location ?? undefined,
-    email: formData.email?.trim() || undefined,
-    phone: formData.phone?.trim() || undefined,
-    website: formData.website?.trim() || undefined,
+    email: formData.email || undefined,
+    phone: formData.phone || undefined,
+    website: formData.website || undefined,
     isPrivate: formData.isPrivate,
-    status: formData.status, // TODO: enable query to return DRAFT shelters etc via permissions
-    organization: organizationId,
-    // Required arrays - empty for initial creation (TODO: remove requirement via SDB-209)
-    accessibility: [],
-    demographics: [],
-    specialSituationRestrictions: [],
-    shelterTypes: [],
-    roomStyles: [],
-    storage: [],
-    pets: [],
-    parking: [],
-    entryRequirements: [],
-    referralRequirement: [],
-    vaccinationRequirement: [],
-    exitPolicy: [],
-    shelterPrograms: [],
-    funders: [],
+    status: formData.status,
   };
 }
 
@@ -74,7 +57,7 @@ export function CreateShelterProfile(props: TProps) {
 
     setDisabled(true);
 
-    const data = toCreateInput(formData, activeOrg.id);
+    const data = toCreateInput(formData);
 
     try {
       const response = await createShelter({ variables: { data } });
