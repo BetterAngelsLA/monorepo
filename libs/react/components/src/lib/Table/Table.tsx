@@ -33,13 +33,13 @@ export function Table<T>({
             {header.map((title, index) => (
               <th
                 key={index}
-                className="text-sm py-4 px-3 md:px-6 font-normal whitespace-nowrap"
+                className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap"
               >
                 {title}
               </th>
             ))}
             {hasAction && (
-              <th className="text-sm py-4 px-1 font-normal whitespace-nowrap w-0" />
+              <th className="text-sm py-4 px-4 md:px-8 font-normal whitespace-nowrap w-0" />
             )}
           </tr>
         </thead>
@@ -52,13 +52,13 @@ export function Table<T>({
               {header.map((_, colIndex) => (
                 <td
                   key={colIndex}
-                  className="px-3 md:px-6 py-4 whitespace-normal break-words overflow-hidden text-ellipsis max-w-[250px]"
+                  className="px-4 md:px-8 py-4 whitespace-normal break-words overflow-hidden text-ellipsis max-w-[250px]"
                 >
                   {renderCell(row, colIndex)}
                 </td>
               ))}
               {hasAction && (
-                <td className="px-1 py-4 whitespace-nowrap w-0">
+                <td className="px-4 md:px-8 py-4 whitespace-nowrap w-0">
                   {action!(row)}
                 </td>
               )}

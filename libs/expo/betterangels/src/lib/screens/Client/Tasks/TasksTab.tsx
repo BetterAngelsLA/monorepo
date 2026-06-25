@@ -12,6 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
+import { useUserTeamPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
 import {
   ModelFilters,
@@ -49,6 +50,7 @@ export function TasksTab(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+  const [teamPreference] = useUserTeamPreference();
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
@@ -142,7 +144,11 @@ export function TasksTab(props: TProps) {
     showModalScreen({
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
-        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
+        <TaskForm
+          onCancel={close}
+          onSubmit={(task) => onSubmit(task, close)}
+          initialValues={{ teamId: teamPreference }}
+        />
       ),
       title: 'Follow-Up Task',
     });

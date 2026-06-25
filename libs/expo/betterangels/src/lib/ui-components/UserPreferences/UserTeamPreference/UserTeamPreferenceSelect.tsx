@@ -28,6 +28,7 @@ export function UserTeamPreferenceSelect(props: TProps) {
       <SingleSelect
         allowSelectNone={true}
         disabled={disabled}
+        maxRadioItems={0}
         placeholder="Select team"
         items={teams.map((t) => ({ value: t.id, displayValue: t.name }))}
         selectedValue={teamId ?? undefined}

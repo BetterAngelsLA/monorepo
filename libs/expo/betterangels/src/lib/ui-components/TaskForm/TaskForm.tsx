@@ -95,6 +95,7 @@ export function TaskForm(props: TProps) {
                 <SingleSelect
                   allowSelectNone={true}
                   label="Team"
+                  maxRadioItems={0}
                   placeholder="Select team"
                   disabled={isSubmitting}
                   items={teams.map((t) => ({

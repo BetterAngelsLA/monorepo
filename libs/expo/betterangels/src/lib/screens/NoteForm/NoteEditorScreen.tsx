@@ -11,6 +11,7 @@ import {
   ViewNoteDocument,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
 import NoteForm from './NoteForm';
@@ -30,7 +31,9 @@ type NoteEditorScreenProps = {
 };
 
 export default function NoteEditorScreen(props: NoteEditorScreenProps) {
-  const { mode, noteId, arrivedFrom, clientProfileId, teamId } = props;
+  const { mode, noteId, arrivedFrom, clientProfileId, teamId: routeTeamId } = props;
+  const [teamPreference] = useUserTeamPreference();
+  const teamId = routeTeamId || teamPreference || undefined;
 
   const router = useRouter();
   const navigation = useNavigation();
