@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { ReactElement, ReactNode } from 'react';
 
 type TableHeader = string | ReactNode;
@@ -10,7 +11,7 @@ type TableProps<T> = {
   page?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
-  tableClassName?: string;
+  className?: string;
 };
 
 export function Table<T>({
@@ -21,12 +22,12 @@ export function Table<T>({
   page,
   totalPages,
   onPageChange,
-  tableClassName = '',
+  className,
 }: TableProps<T>): ReactElement {
   const hasAction = !!action;
   return (
     <div className="overflow-x-auto w-full rounded-lg">
-      <table className={`min-w-[800px] w-full text-left text-sm ${tableClassName}`}>
+      <table className={clsx('min-w-[800px] w-full text-left text-sm', className)}>
         <thead>
           <tr className="bg-primary-95">
             {header.map((title, index) => (

@@ -226,7 +226,7 @@ export default function Teams(props: IProps) {
       <div className={mergeCss(parentCss)}>
         {hasPermission(TeamPermissions.View) ? (
           <Table<TeamType>
-            tableClassName="table-fixed"
+            className="table-fixed"
             action={(row) => {
               const isOpen = openMenuRowId === row.id;
               return (
