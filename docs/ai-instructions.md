@@ -39,3 +39,16 @@ This is the BetterAngels monorepo:
 - **You are running INSIDE the dev container.** Do NOT use `docker compose` or `docker` commands.
 - **Always use the NX wrapper for Python commands.** The backend uses `uv` with a shared venv at `/workspace/.venv`. Use `yarn nx run betterangels-backend:<command>` or `yarn nx test betterangels-backend`. If you MUST run raw Python, use `uv run python ...` — uv handles venv activation automatically.
 - See `docs/tooling.md` for the full command reference.
+
+## Before Committing Code
+
+**Always run these three checks before committing any changes:**
+
+```bash
+ynx-generate     # regenerate GraphQL schema + types
+ynx-lint         # lint all affected projects
+ynx-typecheck    # typecheck all affected projects
+```
+
+These use `yarn nx affected` under the hood — only changed projects are checked.
+All three must pass with zero errors before code is ready to commit.
