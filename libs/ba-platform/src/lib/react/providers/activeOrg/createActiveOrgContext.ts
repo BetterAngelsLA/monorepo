@@ -1,5 +1,5 @@
 import { createContext, Context, useContext } from 'react';
-import { type ActiveOrgState } from './useActiveOrgState';
+import { type ActiveOrgState, type BaseOrg } from './useActiveOrgState';
 
 /**
  * Create a React context typed for a specific organization type.
@@ -11,9 +11,7 @@ import { type ActiveOrgState } from './useActiveOrgState';
  *    const ActiveOrgContext = createActiveOrgContext<TOrganization>();
  *    export default ActiveOrgContext;
  */
-export function createActiveOrgContext<
-  TOrg extends { id: string; permissions: Record<string, string[]> },
->() {
+export function createActiveOrgContext<TOrg extends BaseOrg>() {
   return createContext<ActiveOrgState<TOrg> | undefined>(undefined);
 }
 
@@ -26,9 +24,7 @@ export function createActiveOrgContext<
  *
  *    export const useActiveOrg = createUseActiveOrg(ActiveOrgContext);
  */
-export function createUseActiveOrg<
-  TOrg extends { id: string; permissions: Record<string, string[]> },
->(OrgContext: Context<ActiveOrgState<TOrg> | undefined>) {
+export function createUseActiveOrg<TOrg extends BaseOrg>(OrgContext: Context<ActiveOrgState<TOrg> | undefined>) {
   return function useActiveOrg(): ActiveOrgState<TOrg> {
     const context = useContext(OrgContext);
     if (!context) {

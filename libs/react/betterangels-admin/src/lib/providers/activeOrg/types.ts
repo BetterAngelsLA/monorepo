@@ -1,4 +1,3 @@
-import { createActiveOrgContext } from '@monorepo/ba-platform';
 import { CurrentOrgUserQuery } from '../user/__generated__/UserProvider.generated';
 import {
   ReportPermissions,
@@ -15,8 +14,3 @@ export type PermissionEnum =
   | UserOrganizationPermissions
   | ReportPermissions
   | ShelterPermissions;
-
-const ActiveOrgContext =
-  createActiveOrgContext<TOrganizationWithPermissions>();
-
-export default ActiveOrgContext;

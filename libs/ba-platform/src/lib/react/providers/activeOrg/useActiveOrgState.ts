@@ -4,6 +4,13 @@ import { pipe, values, flat } from 'remeda';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 
+/** Minimum organization shape required by all active-org consumers. */
+export interface BaseOrg {
+  id: string;
+  name: string;
+  permissions: Record<string, string[]>;
+}
+
 interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
   storage?: StorageAdapter;
@@ -11,7 +18,7 @@ interface UseActiveOrgStateOptions {
   storageKey?: string;
 }
 
-export interface ActiveOrgState<TOrg extends { id: string; permissions: Record<string, string[]> }> {
+export interface ActiveOrgState<TOrg extends BaseOrg = BaseOrg> {
   /** The currently selected organization (with its capabilities). */
   activeOrg: TOrg | undefined;
   /** All organizations the user has access to. */
@@ -34,7 +41,7 @@ export interface ActiveOrgState<TOrg extends { id: string; permissions: Record<s
  * @param options  Optional storage adapter and key overrides.
  */
 export function useActiveOrgState<
-  TOrg extends { id: string; permissions: Record<string, string[]> },
+  TOrg extends BaseOrg = BaseOrg,
 >(
   organizations: TOrg[],
   options: UseActiveOrgStateOptions = {}

@@ -1,11 +1,8 @@
-import { createActiveOrgProvider } from '@monorepo/ba-platform';
-import ActiveOrgContext, { type TOrganizationWithPermissions } from './ActiveOrgContext';
+// ActiveOrgProvider, useActiveOrg, and ActiveOrgContext now live in the shared
+// @monorepo/ba-platform lib. This barrel re-exports them along with app-specific
+// types that other modules (e.g. UserProvider) depend on.
+export { ActiveOrgProvider, useActiveOrg } from '@monorepo/ba-platform';
 
-export type {
-  PermissionEnum,
-  TOrganizationWithPermissions,
-} from './ActiveOrgContext';
-export { useActiveOrg } from './useActiveOrg';
-
-export const ActiveOrgProvider =
-  createActiveOrgProvider<TOrganizationWithPermissions>(ActiveOrgContext);
+// App-specific types — kept here because they are derived from this app's
+// GraphQL generated types.
+export type { PermissionEnum, TOrganizationWithPermissions } from './types';

@@ -1,10 +1,8 @@
 import { ReactNode } from 'react';
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
-import { useActiveOrgState, type ActiveOrgState } from './useActiveOrgState';
+import { useActiveOrgState, type ActiveOrgState, type BaseOrg } from './useActiveOrgState';
 
-interface ActiveOrgProviderProps<
-  TOrg extends { id: string; permissions: Record<string, string[]> },
-> {
+interface ActiveOrgProviderProps<TOrg extends BaseOrg> {
   children: ReactNode;
   organizations: TOrg[];
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
@@ -25,9 +23,7 @@ interface ActiveOrgProviderProps<
  * @param OrgContext  A React context whose value type is
  *   ``ActiveOrgState<TOrg> | undefined``.
  */
-export function createActiveOrgProvider<
-  TOrg extends { id: string; permissions: Record<string, string[]> },
->(OrgContext: React.Context<ActiveOrgState<TOrg> | undefined>) {
+export function createActiveOrgProvider<TOrg extends BaseOrg>(OrgContext: React.Context<ActiveOrgState<TOrg> | undefined>) {
   return function ActiveOrgProvider({
     children,
     organizations,
