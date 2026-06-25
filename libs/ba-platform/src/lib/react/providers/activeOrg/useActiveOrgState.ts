@@ -2,7 +2,7 @@ import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { pipe, values, flat } from 'remeda';
 
-const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
+import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 
 interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
@@ -39,7 +39,7 @@ export function useActiveOrgState<
   organizations: TOrg[],
   options: UseActiveOrgStateOptions = {}
 ): ActiveOrgState<TOrg> {
-  const { storage = localStorageAdapter, storageKey = DEFAULT_STORAGE_KEY } =
+  const { storage = localStorageAdapter, storageKey = DEFAULT_ORG_STORAGE_KEY } =
     options;
 
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
