@@ -4,253 +4,253 @@
 
 
 export const AccessibilityPermissions = {
-  ADD: "shelters.add_accessibility",
-  CHANGE: "shelters.change_accessibility",
-  DELETE: "shelters.delete_accessibility",
-  VIEW: "shelters.view_accessibility",
+  ADD: 'shelters.add_accessibility',
+  CHANGE: 'shelters.change_accessibility',
+  DELETE: 'shelters.delete_accessibility',
+  VIEW: 'shelters.view_accessibility',
 } as const;
 
 export const BedPermissions = {
-  ADD: "shelters.add_bed",
-  CHANGE: "shelters.change_bed",
-  DELETE: "shelters.delete_bed",
-  VIEW: "shelters.view_bed",
+  ADD: 'shelters.add_bed',
+  CHANGE: 'shelters.change_bed',
+  DELETE: 'shelters.delete_bed',
+  VIEW: 'shelters.view_bed',
 } as const;
 
 export const CityPermissions = {
-  ADD: "shelters.add_city",
-  CHANGE: "shelters.change_city",
-  DELETE: "shelters.delete_city",
-  VIEW: "shelters.view_city",
+  ADD: 'shelters.add_city',
+  CHANGE: 'shelters.change_city',
+  DELETE: 'shelters.delete_city',
+  VIEW: 'shelters.view_city',
 } as const;
 
 export const ClientContactPermissions = {
-  ADD: "clients.add_clientcontact",
-  CHANGE: "clients.change_clientcontact",
-  DELETE: "clients.delete_clientcontact",
-  VIEW: "clients.view_clientcontact",
+  ADD: 'clients.add_clientcontact',
+  CHANGE: 'clients.change_clientcontact',
+  DELETE: 'clients.delete_clientcontact',
+  VIEW: 'clients.view_clientcontact',
 } as const;
 
 export const ClientHouseholdMemberPermissions = {
-  ADD: "clients.add_clienthouseholdmember",
-  CHANGE: "clients.change_clienthouseholdmember",
-  DELETE: "clients.delete_clienthouseholdmember",
-  VIEW: "clients.view_clienthouseholdmember",
+  ADD: 'clients.add_clienthouseholdmember',
+  CHANGE: 'clients.change_clienthouseholdmember',
+  DELETE: 'clients.delete_clienthouseholdmember',
+  VIEW: 'clients.view_clienthouseholdmember',
 } as const;
 
 export const ClientProfilePermissions = {
-  ADD: "clients.add_clientprofile",
-  CHANGE: "clients.change_clientprofile",
-  DELETE: "clients.delete_clientprofile",
-  VIEW: "clients.view_clientprofile",
+  ADD: 'clients.add_clientprofile',
+  CHANGE: 'clients.change_clientprofile',
+  DELETE: 'clients.delete_clientprofile',
+  VIEW: 'clients.view_clientprofile',
 } as const;
 
 export const ContactInfoPermissions = {
-  ADD: "shelters.add_contactinfo",
-  CHANGE: "shelters.change_contactinfo",
-  DELETE: "shelters.delete_contactinfo",
-  VIEW: "shelters.view_contactinfo",
+  ADD: 'shelters.add_contactinfo',
+  CHANGE: 'shelters.change_contactinfo',
+  DELETE: 'shelters.delete_contactinfo',
+  VIEW: 'shelters.view_contactinfo',
 } as const;
 
 export const DemographicPermissions = {
-  ADD: "shelters.add_demographic",
-  CHANGE: "shelters.change_demographic",
-  DELETE: "shelters.delete_demographic",
-  VIEW: "shelters.view_demographic",
+  ADD: 'shelters.add_demographic',
+  CHANGE: 'shelters.change_demographic',
+  DELETE: 'shelters.delete_demographic',
+  VIEW: 'shelters.view_demographic',
 } as const;
 
 export const EntryRequirementPermissions = {
-  ADD: "shelters.add_entryrequirement",
-  CHANGE: "shelters.change_entryrequirement",
-  DELETE: "shelters.delete_entryrequirement",
-  VIEW: "shelters.view_entryrequirement",
+  ADD: 'shelters.add_entryrequirement',
+  CHANGE: 'shelters.change_entryrequirement',
+  DELETE: 'shelters.delete_entryrequirement',
+  VIEW: 'shelters.view_entryrequirement',
 } as const;
 
 export const ExitPolicyPermissions = {
-  ADD: "shelters.add_exitpolicy",
-  CHANGE: "shelters.change_exitpolicy",
-  DELETE: "shelters.delete_exitpolicy",
-  VIEW: "shelters.view_exitpolicy",
+  ADD: 'shelters.add_exitpolicy',
+  CHANGE: 'shelters.change_exitpolicy',
+  DELETE: 'shelters.delete_exitpolicy',
+  VIEW: 'shelters.view_exitpolicy',
 } as const;
 
 export const ExteriorShelterPhotoPermissions = {
-  ADD: "shelters.add_exteriorshelterphoto",
-  CHANGE: "shelters.change_exteriorshelterphoto",
-  DELETE: "shelters.delete_exteriorshelterphoto",
-  VIEW: "shelters.view_exteriorshelterphoto",
+  ADD: 'shelters.add_exteriorshelterphoto',
+  CHANGE: 'shelters.change_exteriorshelterphoto',
+  DELETE: 'shelters.delete_exteriorshelterphoto',
+  VIEW: 'shelters.view_exteriorshelterphoto',
 } as const;
 
 export const FunderPermissions = {
-  ADD: "shelters.add_funder",
-  CHANGE: "shelters.change_funder",
-  DELETE: "shelters.delete_funder",
-  VIEW: "shelters.view_funder",
+  ADD: 'shelters.add_funder',
+  CHANGE: 'shelters.change_funder',
+  DELETE: 'shelters.delete_funder',
+  VIEW: 'shelters.view_funder',
 } as const;
 
 export const HmisProfilePermissions = {
-  ADD: "clients.add_hmisprofile",
-  CHANGE: "clients.change_hmisprofile",
-  DELETE: "clients.delete_hmisprofile",
-  VIEW: "clients.view_hmisprofile",
+  ADD: 'clients.add_hmisprofile',
+  CHANGE: 'clients.change_hmisprofile',
+  DELETE: 'clients.delete_hmisprofile',
+  VIEW: 'clients.view_hmisprofile',
 } as const;
 
 export const InteriorShelterPhotoPermissions = {
-  ADD: "shelters.add_interiorshelterphoto",
-  CHANGE: "shelters.change_interiorshelterphoto",
-  DELETE: "shelters.delete_interiorshelterphoto",
-  VIEW: "shelters.view_interiorshelterphoto",
+  ADD: 'shelters.add_interiorshelterphoto',
+  CHANGE: 'shelters.change_interiorshelterphoto',
+  DELETE: 'shelters.delete_interiorshelterphoto',
+  VIEW: 'shelters.view_interiorshelterphoto',
 } as const;
 
 export const MedicalNeedPermissions = {
-  ADD: "shelters.add_medicalneed",
-  CHANGE: "shelters.change_medicalneed",
-  DELETE: "shelters.delete_medicalneed",
-  VIEW: "shelters.view_medicalneed",
+  ADD: 'shelters.add_medicalneed',
+  CHANGE: 'shelters.change_medicalneed',
+  DELETE: 'shelters.delete_medicalneed',
+  VIEW: 'shelters.view_medicalneed',
 } as const;
 
 export const ParkingPermissions = {
-  ADD: "shelters.add_parking",
-  CHANGE: "shelters.change_parking",
-  DELETE: "shelters.delete_parking",
-  VIEW: "shelters.view_parking",
+  ADD: 'shelters.add_parking',
+  CHANGE: 'shelters.change_parking',
+  DELETE: 'shelters.delete_parking',
+  VIEW: 'shelters.view_parking',
 } as const;
 
 export const PetPermissions = {
-  ADD: "shelters.add_pet",
-  CHANGE: "shelters.change_pet",
-  DELETE: "shelters.delete_pet",
-  VIEW: "shelters.view_pet",
+  ADD: 'shelters.add_pet',
+  CHANGE: 'shelters.change_pet',
+  DELETE: 'shelters.delete_pet',
+  VIEW: 'shelters.view_pet',
 } as const;
 
 export const ReferralRequirementPermissions = {
-  ADD: "shelters.add_referralrequirement",
-  CHANGE: "shelters.change_referralrequirement",
-  DELETE: "shelters.delete_referralrequirement",
-  VIEW: "shelters.view_referralrequirement",
+  ADD: 'shelters.add_referralrequirement',
+  CHANGE: 'shelters.change_referralrequirement',
+  DELETE: 'shelters.delete_referralrequirement',
+  VIEW: 'shelters.view_referralrequirement',
 } as const;
 
 export const ReportPermissions = {
-  VIEW_REPORTS: "reports.view_reports",
+  VIEW_REPORTS: 'reports.view_reports',
 } as const;
 
 export const RoomPermissions = {
-  ADD: "shelters.add_room",
-  CHANGE: "shelters.change_room",
-  DELETE: "shelters.delete_room",
-  VIEW: "shelters.view_room",
+  ADD: 'shelters.add_room',
+  CHANGE: 'shelters.change_room',
+  DELETE: 'shelters.delete_room',
+  VIEW: 'shelters.view_room',
 } as const;
 
 export const RoomStylePermissions = {
-  ADD: "shelters.add_roomstyle",
-  CHANGE: "shelters.change_roomstyle",
-  DELETE: "shelters.delete_roomstyle",
-  VIEW: "shelters.view_roomstyle",
+  ADD: 'shelters.add_roomstyle',
+  CHANGE: 'shelters.change_roomstyle',
+  DELETE: 'shelters.delete_roomstyle',
+  VIEW: 'shelters.view_roomstyle',
 } as const;
 
 export const SPAPermissions = {
-  ADD: "shelters.add_spa",
-  CHANGE: "shelters.change_spa",
-  DELETE: "shelters.delete_spa",
-  VIEW: "shelters.view_spa",
+  ADD: 'shelters.add_spa',
+  CHANGE: 'shelters.change_spa',
+  DELETE: 'shelters.delete_spa',
+  VIEW: 'shelters.view_spa',
 } as const;
 
 export const SchedulePermissions = {
-  ADD: "shelters.add_schedule",
-  CHANGE: "shelters.change_schedule",
-  DELETE: "shelters.delete_schedule",
-  VIEW: "shelters.view_schedule",
+  ADD: 'shelters.add_schedule',
+  CHANGE: 'shelters.change_schedule',
+  DELETE: 'shelters.delete_schedule',
+  VIEW: 'shelters.view_schedule',
 } as const;
 
 export const ServiceCategoryPermissions = {
-  ADD: "shelters.add_servicecategory",
-  CHANGE: "shelters.change_servicecategory",
-  DELETE: "shelters.delete_servicecategory",
-  VIEW: "shelters.view_servicecategory",
+  ADD: 'shelters.add_servicecategory',
+  CHANGE: 'shelters.change_servicecategory',
+  DELETE: 'shelters.delete_servicecategory',
+  VIEW: 'shelters.view_servicecategory',
 } as const;
 
 export const ServicePermissions = {
-  ADD: "shelters.add_service",
-  CHANGE: "shelters.change_service",
-  DELETE: "shelters.delete_service",
-  VIEW: "shelters.view_service",
+  ADD: 'shelters.add_service',
+  CHANGE: 'shelters.change_service',
+  DELETE: 'shelters.delete_service',
+  VIEW: 'shelters.view_service',
 } as const;
 
 export const ShelterPermissions = {
-  ADD: "shelters.add_shelter",
-  CHANGE: "shelters.change_shelter",
-  DELETE: "shelters.delete_shelter",
-  VIEW: "shelters.view_shelter",
+  ADD: 'shelters.add_shelter',
+  CHANGE: 'shelters.change_shelter',
+  DELETE: 'shelters.delete_shelter',
+  VIEW: 'shelters.view_shelter',
 } as const;
 
 export const ShelterPhotoPermissions = {
-  ADD: "shelters.add_shelterphoto",
-  CHANGE: "shelters.change_shelterphoto",
-  DELETE: "shelters.delete_shelterphoto",
-  VIEW: "shelters.view_shelterphoto",
+  ADD: 'shelters.add_shelterphoto',
+  CHANGE: 'shelters.change_shelterphoto',
+  DELETE: 'shelters.delete_shelterphoto',
+  VIEW: 'shelters.view_shelterphoto',
 } as const;
 
 export const ShelterProgramPermissions = {
-  ADD: "shelters.add_shelterprogram",
-  CHANGE: "shelters.change_shelterprogram",
-  DELETE: "shelters.delete_shelterprogram",
-  VIEW: "shelters.view_shelterprogram",
+  ADD: 'shelters.add_shelterprogram',
+  CHANGE: 'shelters.change_shelterprogram',
+  DELETE: 'shelters.delete_shelterprogram',
+  VIEW: 'shelters.view_shelterprogram',
 } as const;
 
 export const ShelterTypePermissions = {
-  ADD: "shelters.add_sheltertype",
-  CHANGE: "shelters.change_sheltertype",
-  DELETE: "shelters.delete_sheltertype",
-  VIEW: "shelters.view_sheltertype",
+  ADD: 'shelters.add_sheltertype',
+  CHANGE: 'shelters.change_sheltertype',
+  DELETE: 'shelters.delete_sheltertype',
+  VIEW: 'shelters.view_sheltertype',
 } as const;
 
 export const SocialMediaProfilePermissions = {
-  ADD: "clients.add_socialmediaprofile",
-  CHANGE: "clients.change_socialmediaprofile",
-  DELETE: "clients.delete_socialmediaprofile",
-  VIEW: "clients.view_socialmediaprofile",
+  ADD: 'clients.add_socialmediaprofile',
+  CHANGE: 'clients.change_socialmediaprofile',
+  DELETE: 'clients.delete_socialmediaprofile',
+  VIEW: 'clients.view_socialmediaprofile',
 } as const;
 
 export const SpecialSituationRestrictionPermissions = {
-  ADD: "shelters.add_specialsituationrestriction",
-  CHANGE: "shelters.change_specialsituationrestriction",
-  DELETE: "shelters.delete_specialsituationrestriction",
-  VIEW: "shelters.view_specialsituationrestriction",
+  ADD: 'shelters.add_specialsituationrestriction',
+  CHANGE: 'shelters.change_specialsituationrestriction',
+  DELETE: 'shelters.delete_specialsituationrestriction',
+  VIEW: 'shelters.view_specialsituationrestriction',
 } as const;
 
 export const StoragePermissions = {
-  ADD: "shelters.add_storage",
-  CHANGE: "shelters.change_storage",
-  DELETE: "shelters.delete_storage",
-  VIEW: "shelters.view_storage",
+  ADD: 'shelters.add_storage',
+  CHANGE: 'shelters.change_storage',
+  DELETE: 'shelters.delete_storage',
+  VIEW: 'shelters.view_storage',
 } as const;
 
 export const TeamPermissions = {
-  ADD: "teams.add_team",
-  CHANGE: "teams.change_team",
-  DELETE: "teams.delete_team",
-  VIEW: "teams.view_team",
+  ADD: 'teams.add_team',
+  CHANGE: 'teams.change_team',
+  DELETE: 'teams.delete_team',
+  VIEW: 'teams.view_team',
 } as const;
 
 export const UserOrganizationPermissions = {
-  ACCESS_ORG_PORTAL: "organizations.access_org_portal",
-  ADD_ORG_MEMBER: "organizations.add_org_member",
-  CHANGE_ORG_MEMBER_ROLE: "organizations.change_org_member_role",
-  REMOVE_ORG_MEMBER: "organizations.remove_org_member",
-  VIEW_ORG_MEMBERS: "organizations.view_org_members",
+  ACCESS_ORG_PORTAL: 'organizations.access_org_portal',
+  ADD_ORG_MEMBER: 'organizations.add_org_member',
+  CHANGE_ORG_MEMBER_ROLE: 'organizations.change_org_member_role',
+  REMOVE_ORG_MEMBER: 'organizations.remove_org_member',
+  VIEW_ORG_MEMBERS: 'organizations.view_org_members',
 } as const;
 
 export const VaccinationRequirementPermissions = {
-  ADD: "shelters.add_vaccinationrequirement",
-  CHANGE: "shelters.change_vaccinationrequirement",
-  DELETE: "shelters.delete_vaccinationrequirement",
-  VIEW: "shelters.view_vaccinationrequirement",
+  ADD: 'shelters.add_vaccinationrequirement',
+  CHANGE: 'shelters.change_vaccinationrequirement',
+  DELETE: 'shelters.delete_vaccinationrequirement',
+  VIEW: 'shelters.view_vaccinationrequirement',
 } as const;
 
 export const VideoPermissions = {
-  ADD: "shelters.add_video",
-  CHANGE: "shelters.change_video",
-  DELETE: "shelters.delete_video",
-  VIEW: "shelters.view_video",
+  ADD: 'shelters.add_video',
+  CHANGE: 'shelters.change_video',
+  DELETE: 'shelters.delete_video',
+  VIEW: 'shelters.view_video',
 } as const;
 
 export type PermissionEnum = typeof UserOrganizationPermissions[keyof typeof UserOrganizationPermissions] | typeof ReportPermissions[keyof typeof ReportPermissions] | typeof AccessibilityPermissions[keyof typeof AccessibilityPermissions] | typeof BedPermissions[keyof typeof BedPermissions] | typeof CityPermissions[keyof typeof CityPermissions] | typeof ContactInfoPermissions[keyof typeof ContactInfoPermissions] | typeof DemographicPermissions[keyof typeof DemographicPermissions] | typeof EntryRequirementPermissions[keyof typeof EntryRequirementPermissions] | typeof ExitPolicyPermissions[keyof typeof ExitPolicyPermissions] | typeof ExteriorShelterPhotoPermissions[keyof typeof ExteriorShelterPhotoPermissions] | typeof FunderPermissions[keyof typeof FunderPermissions] | typeof InteriorShelterPhotoPermissions[keyof typeof InteriorShelterPhotoPermissions] | typeof MedicalNeedPermissions[keyof typeof MedicalNeedPermissions] | typeof ParkingPermissions[keyof typeof ParkingPermissions] | typeof PetPermissions[keyof typeof PetPermissions] | typeof ReferralRequirementPermissions[keyof typeof ReferralRequirementPermissions] | typeof RoomPermissions[keyof typeof RoomPermissions] | typeof RoomStylePermissions[keyof typeof RoomStylePermissions] | typeof SchedulePermissions[keyof typeof SchedulePermissions] | typeof ServicePermissions[keyof typeof ServicePermissions] | typeof ServiceCategoryPermissions[keyof typeof ServiceCategoryPermissions] | typeof ShelterPhotoPermissions[keyof typeof ShelterPhotoPermissions] | typeof ShelterProgramPermissions[keyof typeof ShelterProgramPermissions] | typeof ShelterTypePermissions[keyof typeof ShelterTypePermissions] | typeof SPAPermissions[keyof typeof SPAPermissions] | typeof SpecialSituationRestrictionPermissions[keyof typeof SpecialSituationRestrictionPermissions] | typeof StoragePermissions[keyof typeof StoragePermissions] | typeof VaccinationRequirementPermissions[keyof typeof VaccinationRequirementPermissions] | typeof VideoPermissions[keyof typeof VideoPermissions] | typeof ShelterPermissions[keyof typeof ShelterPermissions] | typeof TeamPermissions[keyof typeof TeamPermissions] | typeof ClientProfilePermissions[keyof typeof ClientProfilePermissions] | typeof ClientContactPermissions[keyof typeof ClientContactPermissions] | typeof ClientHouseholdMemberPermissions[keyof typeof ClientHouseholdMemberPermissions] | typeof HmisProfilePermissions[keyof typeof HmisProfilePermissions] | typeof SocialMediaProfilePermissions[keyof typeof SocialMediaProfilePermissions];

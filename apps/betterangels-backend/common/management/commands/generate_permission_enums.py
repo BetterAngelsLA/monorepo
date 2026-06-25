@@ -39,7 +39,7 @@ class Command(BaseCommand):
             name = enum_cls.__name__
             lines.append(f"export const {name} = {{")
             for member in enum_cls:
-                lines.append(f'  {member.name}: "{member.value}",')
+                lines.append(f"  {member.name}: '{member.value}',")
             lines.append("} as const;\n")
 
         union_members = " | ".join(
