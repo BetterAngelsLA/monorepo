@@ -107,7 +107,7 @@ def reservation_status_change_counts(
     from shelters.models import Reservation
 
     events = pghistory.models.Events.objects.filter(
-        pgh_obj_id__in=Reservation.objects.filter(shelter_id=shelter_id)
+        pgh_obj_id__in=Reservation.objects.filter(Q(bed__shelter_id=shelter_id) | Q(room__shelter_id=shelter_id))
         .annotate(pk_text=Cast("pk", TextField()))
         .values("pk_text"),
         pgh_label="reservation.status_change",

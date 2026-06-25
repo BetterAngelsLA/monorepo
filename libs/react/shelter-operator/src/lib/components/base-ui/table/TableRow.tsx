@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
-import { Button } from './base-ui/buttons';
+import { Button } from '../buttons';
 
 export type TableRowCell = {
   key: string;
@@ -72,7 +72,7 @@ const TableRowBase = <TRowObject,>({
       onKeyDown={onRowClick ? handleKeyDown : undefined}
       className={mergeCss([
         'grid items-center py-2 text-sm border-t border-gray-200',
-        'px-4 mx-4',
+        'px-6',
         rowInsetClassName,
         'hover:bg-[#F4F6FD]',
         onRowClick && 'cursor-pointer',
@@ -84,7 +84,7 @@ const TableRowBase = <TRowObject,>({
         <div
           role="cell"
           key={cell.key}
-          className={mergeCss(['text-left justify-self-start', cell.className])}
+          className={mergeCss(['text-left min-w-0', cell.className])}
         >
           {cell.content}
         </div>
@@ -113,8 +113,3 @@ type TableRowComponent = typeof TableRowBase & {
 export const TableRow = Object.assign(TableRowBase, {
   Slot: TableRowSlot,
 }) as TableRowComponent;
-
-// Backward-compatible aliases while callers migrate to TableRow naming.
-export const Row = TableRow;
-export type RowCell = TableRowCell;
-export type RowClickHandler<TRowObject> = TableRowClickHandler<TRowObject>;

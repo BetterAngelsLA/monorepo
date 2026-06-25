@@ -12,26 +12,23 @@ from common.graphql.types import (
 )
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
-from strawberry import ID
-from strawberry.scalars import JSON
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
-
 from shelters.enums import StatusChoices
-from shelters.models import Bed, Room, Shelter
+from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
+from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
 from shelters.types import (
     BedType,
     CityType,
     CreateBedInput,
+    CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
     GenerateShelterPhotoUploadsInput,
     OperatorShelterType,
+    ReservationType,
     ResolveShelterPhotoUploadsInput,
     RoomType,
     ServiceCategoryType,
@@ -40,10 +37,16 @@ from shelters.types import (
     ShelterType,
     SPAType,
     UpdateBedInput,
+    UpdateReservationInput,
     UpdateRoomInput,
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
+from strawberry import ID
+from strawberry.scalars import JSON
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
 
 
 @strawberry.type
@@ -67,6 +70,15 @@ class Query:
     beds: OffsetPaginated[BedType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasOrgPerm(Bed.perms.VIEW)],
+    )
+
+    reservation: ReservationType = strawberry_django.field(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Reservation.perms.VIEW)],
+    )
+    reservations: OffsetPaginated[ReservationType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Reservation.perms.VIEW)],
     )
 
     room: RoomType = strawberry_django.field(
@@ -179,6 +191,30 @@ class Mutation:
         org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
         deleted_ids = bed_delete(user=user, organization_id=org_id, bed_ids=ids)
+        return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.ADD)])
+    def create_reservation(self, info: Info, data: CreateReservationInput) -> ReservationType:
+        user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
+        clean = strawberry.asdict(data)
+        return cast(ReservationType, reservation_create(user=user, organization_id=org_id, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.CHANGE)])
+    def update_reservation(self, info: Info, id: ID, data: UpdateReservationInput) -> ReservationType:
+        user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
+        clean = strawberry.asdict(data)
+        return cast(
+            ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean)
+        )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.DELETE)])
+    def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
+        user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
+        ids = [int(id) for id in data.ids]
+        deleted_ids = reservation_delete(user=user, organization_id=org_id, reservation_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     # ── Shelter Photos ─────────────────────────────────────────────────────
