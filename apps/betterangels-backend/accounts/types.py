@@ -19,15 +19,19 @@ from teams.permissions import TeamPermissions
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
-from accounts.permissions import make_granted_permissions
+from accounts.permissions import _annotation_key, permission_annotations
 
 from .models import User
 from .permissions import UserOrganizationPermissions
 
-AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
-ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
-SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
-TeamsGrantedPermissions = make_granted_permissions(TeamPermissions)
+# All permission enums whose values are returned in the org's permissions list.
+# To add a new permission domain, add its enum here — no other changes needed.
+ORG_PERMISSION_ENUMS = [
+    UserOrganizationPermissions,
+    ReportPermissions,
+    ShelterPermissions,
+    TeamPermissions,
+]
 
 
 @strawberry.input
@@ -117,42 +121,19 @@ class CurrentUserOrganizationType(OrganizationType):
             return queryset.none()
 
         assert isinstance(user, User)
-        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
-            **AccountsGrantedPermissions.get_annotations(user),
-            **ReportsGrantedPermissions.get_annotations(user),
-            **SheltersGrantedPermissions.get_annotations(user),
-            **TeamsGrantedPermissions.get_annotations(user),
-        )
-
+        qs: QuerySet[Organization] = queryset.filter(users=user)
+        for enum in ORG_PERMISSION_ENUMS:
+            qs = qs.annotate(**permission_annotations(user, enum))
         return qs
 
     @strawberry_django.field
-    def permissions(self, info: Info) -> List[PermissionGroup]:
-        perms: List[PermissionGroup] = []
-        for domain, granted_perms in [
-            (PermissionDomain.ACCOUNTS, AccountsGrantedPermissions),
-            (PermissionDomain.REPORTS, ReportsGrantedPermissions),
-            (PermissionDomain.SHELTERS, SheltersGrantedPermissions),
-            (PermissionDomain.TEAMS, TeamsGrantedPermissions),
-        ]:
-            values = granted_perms.from_instance(self).granted
-            if values:
-                perms.append(PermissionGroup(domain=domain, values=list(values)))
+    def permissions(self, info: Info) -> List[str]:
+        perms: List[str] = []
+        for enum in ORG_PERMISSION_ENUMS:
+            for perm in enum:
+                if getattr(self, _annotation_key(perm), False):
+                    perms.append(perm.value)
         return perms
-
-
-@strawberry.enum
-class PermissionDomain(Enum):
-    ACCOUNTS = "accounts"
-    REPORTS = "reports"
-    SHELTERS = "shelters"
-    TEAMS = "teams"
-
-
-@strawberry.type
-class PermissionGroup:
-    domain: PermissionDomain
-    values: List[str]
 
 
 @strawberry_django.type(User)

@@ -817,7 +817,7 @@ export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  permissions: Array<PermissionGroup>;
+  permissions: Array<Scalars['String']['output']>;
 };
 
 export type CurrentUserType = {
@@ -2375,19 +2375,6 @@ export type PermDefinition = {
   app?: InputMaybe<Scalars['String']['input']>;
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
-};
-
-export enum PermissionDomain {
-  Accounts = 'ACCOUNTS',
-  Reports = 'REPORTS',
-  Shelters = 'SHELTERS',
-  Teams = 'TEAMS'
-}
-
-export type PermissionGroup = {
-  __typename?: 'PermissionGroup';
-  domain: PermissionDomain;
-  values: Array<Scalars['String']['output']>;
 };
 
 export enum PermissionTemplateEnum {

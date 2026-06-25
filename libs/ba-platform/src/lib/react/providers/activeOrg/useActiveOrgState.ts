@@ -124,10 +124,7 @@ export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
 
   const hasPermission = useCallback(
     <P extends string>(permission: P): boolean =>
-      activeOrg?.permissions != null &&
-      (activeOrg.permissions.flatMap((g) => g.values) as string[]).includes(
-        permission
-      ),
+      activeOrg?.permissions?.includes(permission) ?? false,
     [activeOrg]
   );
 

@@ -814,7 +814,7 @@ union CreateTeamPayload = TeamType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  permissions: [PermissionGroup!]!
+  permissions: [String!]!
 }
 
 type CurrentUserType {
@@ -1935,18 +1935,6 @@ enum ParkingChoices {
 
 type ParkingType {
   name: ParkingChoices
-}
-
-enum PermissionDomain {
-  ACCOUNTS
-  REPORTS
-  SHELTERS
-  TEAMS
-}
-
-type PermissionGroup {
-  domain: PermissionDomain!
-  values: [String!]!
 }
 
 enum PermissionTemplateEnum {
