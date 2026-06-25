@@ -99,7 +99,8 @@ function useOrganizationMembers(
   orgId: string,
   page: number,
   sort: { field: string; direction: Ordering },
-  search?: string
+  search?: string,
+  permissionTemplate?: PermissionTemplateEnum
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -109,6 +110,7 @@ function useOrganizationMembers(
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
         filters: { search },
+        permissionTemplate,
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
