@@ -18,6 +18,13 @@
         "cwd": "apps/betterangels-backend",
         "command": "uv run python manage.py generate_permission_enums ../libs/ba-permissions/src/index.ts"
       }
+    },
+    "validate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "bash -c 'uv run python manage.py generate_permission_enums /tmp/ba-perms.ts && diff /tmp/ba-perms.ts ../libs/ba-permissions/src/index.ts'"
+      }
     }
   }
 }
