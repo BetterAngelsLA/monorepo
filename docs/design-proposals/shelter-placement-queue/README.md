@@ -43,3 +43,4 @@ A **global placement queue** with three core ideas:
 | [`api.md`](./api.md) | GraphQL queries, mutations, types, and schema |
 | [`frontend.md`](./frontend.md) | shelter-web pages, routes, UX flow; mobile app referral creation; future shelter intake |
 | [`notifications.md`](./notifications.md) | Email subscription model, Celery task, digest format |
+| [`research.md`](./research.md) | LA, SF, NYC, and HUD national standards analysis |
