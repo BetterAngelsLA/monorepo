@@ -15,7 +15,8 @@
 
 - **Prefer custom hooks** for data fetching (e.g., `useOrgTeams`) over raw `useQuery` calls in components.
   - Hooks should handle loading, error, and empty states internally.
-  - Hooks should encapsulate query documents — consumers import the hook, not the GQL document.
+  - **Co-locate the `.graphql` file with the hook** — the query document and its `__generated__/` output should live in the same directory as the hook (e.g., `hooks/useOrgTeams/teams.graphql`). Consumers import the hook, never the GQL document directly.
+  - Delete the old `.graphql` and `__generated__/` from the previous location after co-locating.
 - **Handle loading, error, and empty states** explicitly.
 - **Use `useActiveOrg`** for org-scoped state; never read from localStorage directly.
 
@@ -36,6 +37,7 @@
 ## GraphQL
 
 - **Paginated queries must pass a `limit`** — defaults are small. For dropdowns/selects that need all results, pass a high limit (e.g., `10000`).
+- **Use `useInfiniteScrollQuery` for list/feed UX** — from `@monorepo/apollo`, handles offset pagination with `loadMore`/`reload`/`hasMore`. For simple selects and dropdowns, a flat query with a high `limit` is sufficient.
 - Use generated GraphQL types from codegen (never hand-write types).
 
 ## Imports
