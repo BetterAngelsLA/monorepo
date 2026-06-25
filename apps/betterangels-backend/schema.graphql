@@ -2827,7 +2827,6 @@ type TeamType {
   id: ID!
   slug: String!
   name: String!
-  isActive: Boolean!
   createdAt: DateTime!
 }
 
@@ -3127,7 +3126,6 @@ union UpdateTaskPayload = TaskType | OperationInfo
 input UpdateTeamInput {
   id: ID!
   name: String
-  isActive: Boolean
 }
 
 union UpdateTeamPayload = TeamType | OperationInfo

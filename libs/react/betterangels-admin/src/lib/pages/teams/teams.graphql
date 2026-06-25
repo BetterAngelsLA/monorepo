@@ -4,7 +4,6 @@ query AdminTeams($pagination: OffsetPaginationInput) {
       id
       slug
       name
-      isActive
       createdAt
     }
     totalCount
@@ -17,7 +16,6 @@ mutation CreateTeam($data: CreateTeamInput!) {
       id
       slug
       name
-      isActive
       createdAt
     }
     ... on OperationInfo {
@@ -36,7 +34,6 @@ mutation UpdateTeam($data: UpdateTeamInput!) {
       id
       slug
       name
-      isActive
       createdAt
     }
     ... on OperationInfo {

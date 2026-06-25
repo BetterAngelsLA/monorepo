@@ -4,7 +4,6 @@ query Teams($pagination: OffsetPaginationInput) {
       id
       slug
       name
-      isActive
     }
     totalCount
   }

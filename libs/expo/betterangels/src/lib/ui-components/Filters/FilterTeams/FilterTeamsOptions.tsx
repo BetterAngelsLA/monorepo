@@ -30,7 +30,6 @@ export function FilterTeamsOptions(props: TProps) {
   const options = useMemo<TFilterOption[]>(() => {
     const teams = data?.teams?.results ?? [];
     return teams
-      .filter((t) => t.isActive)
       .map((t) => ({
         id: t.id,
         label: t.name,
