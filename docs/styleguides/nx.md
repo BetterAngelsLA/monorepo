@@ -214,31 +214,39 @@ libs/
 
 ### Target structure (future)
 
-When a scope accumulates multiple projects, group them by scope first, then type.
-This is the eventual target — no rush to get there:
+When a scope has multiple projects, group them by scope first. Each scope folder
+contains its existing projects as-is — no artificial splitting:
 
 ```
 libs/
 ├── shared/                      ← scope:shared
-│   ├── util-apollo/             ← libs/apollo
-│   ├── util-react/              ← libs/react/shared
-│   ├── util-tailwind/           ← libs/tailwind
-│   ├── util-places/             ← libs/shared/places
-│   ├── util-units/              ← libs/shared/units
-│   ├── util-assets/             ← libs/assets
-│   ├── ui-components/           ← libs/react/components
-│   └── ui-icons/                ← libs/react/icons
+│   ├── apollo/                  ← libs/apollo
+│   ├── assets/                  ← libs/assets
+│   ├── tailwind/                ← libs/tailwind
+│   ├── react-shared/            ← libs/react/shared
+│   ├── places/                  ← libs/shared/places
+│   ├── units/                   ← libs/shared/units
+│   ├── components/              ← libs/react/components
+│   └── icons/                   ← libs/react/icons
 ├── ba-platform/                 ← scope:ba-platform
-│   └── data-access/             ← libs/ba-platform
+│   └── ba-platform/             ← libs/ba-platform (currently the only project)
 ├── betterangels/                ← scope:betterangels
-│   └── feature-mobile/          ← libs/expo/betterangels
+│   └── betterangels/            ← libs/expo/betterangels (currently the only project)
 ├── betterangels-admin/          ← scope:betterangels-admin
-│   └── feature-admin/           ← libs/react/betterangels-admin
+│   └── betterangels-admin/      ← libs/react/betterangels-admin (currently the only project)
 ├── shelter-web/                 ← scope:shelter-web
-│   └── feature-shelter/         ← libs/react/shelter
+│   └── shelter/                 ← libs/react/shelter (currently the only project)
 ├── shelter-operator/            ← scope:shelter-operator
+│   └── shelter-operator/        ← libs/react/shelter-operator (currently the only project)
 └── ba-backend/                  ← scope:ba-backend (currently only an app, no libs)
 ```
+
+**A scope with one project is fine.** Don't invent feature sub-libs (`feature-admin`,
+`feature-mobile`, etc.) until a scope genuinely has multiple projects that need
+separating. The grouping folder alone provides the organizational benefit.
+
+> When scopes grow, feature libs emerge naturally: `libs/betterangels-admin/teams/`,
+> `libs/betterangels-admin/users/`, etc. Split then, not before.
 
 Migration tool: `nx g @nx/workspace:move --project <current> <target>`
 
