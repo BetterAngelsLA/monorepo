@@ -59,19 +59,22 @@ const COLUMNS: {
   label: string;
   field: keyof OrganizationMemberOrdering;
   render: (m: OrganizationMemberType) => string | JSX.Element;
+  headerPrefix?: JSX.Element;
 }[] = [
   {
     label: 'Name',
     field: 'firstName',
+    headerPrefix: <span className="w-4 h-4 shrink-0" />,
     render: (m) => (
       <span className="whitespace-nowrap">
-        {m.isOrgOwner ? (
-          <span title="Organization Owner" className="inline-block mr-1">
-            <StarIconSm className="w-4 h-4 text-amber-500" />
-          </span>
-        ) : (
-          <span className="w-4 h-4 inline-block mr-1" />
-        )}
+        <span className="inline-block w-4 align-middle text-center">
+          {m.isOrgOwner && (
+            <StarIconSm
+              className="w-4 h-4 text-amber-500 align-middle"
+              title="Organization Owner"
+            />
+          )}
+        </span>{' '}
         {getFullName(m)}
       </span>
     ),
@@ -239,11 +242,12 @@ export default function Users(props: IProps) {
           key={col.label}
           onClick={() => handleSort(col.field)}
           className={mergeCss([
-            'flex items-center gap-1 hover:text-primary-60',
+            'flex items-center gap-1 hover:text-primary-60 p-0',
             (col.field === 'dateJoined' || col.field === 'lastLogin') &&
               'justify-end w-full text-right',
           ])}
         >
+          {col.headerPrefix}
           {col.label}
           {sort.field === col.field && (
             <span className="text-xs text-primary-20">
@@ -441,7 +445,7 @@ export default function Users(props: IProps) {
 }
 
 /** Star icon for org owner indicator. */
-function StarIconSm({ className }: { className?: string }) {
+function StarIconSm({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
       className={className}
@@ -449,6 +453,7 @@ function StarIconSm({ className }: { className?: string }) {
       fill="currentColor"
       stroke="none"
     >
+      {title && <title>{title}</title>}
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   );
