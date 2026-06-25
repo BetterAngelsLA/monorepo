@@ -48,7 +48,10 @@
         "GraphQL.vscode-graphql",
         "TypeScriptTeam.native-preview",
         "saoudrizwan.claude-dev"
-      ]
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+      }
     }
   },
   // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
