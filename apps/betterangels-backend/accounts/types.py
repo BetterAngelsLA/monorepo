@@ -11,7 +11,7 @@ from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import F, OuterRef, Q, QuerySet, Subquery, Value
-from django.db.models.functions import Concat
+from django.db.models.functions import Coalesce, Concat
 from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry import ID, Info, auto
@@ -127,12 +127,15 @@ class CurrentUserOrganizationType(OrganizationType):
         )
 
         return queryset.filter(users=user).annotate(
-            _perms=ArrayAgg(Subquery(perm_subquery), distinct=True)
+            _perms=Coalesce(
+                ArrayAgg(Subquery(perm_subquery), distinct=True),
+                Value([]),
+            )
         )
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        return getattr(self, "_perms", None) or []
+        return self._perms or []  # type: ignore[attr-defined]
 
 
 @strawberry_django.type(User)
