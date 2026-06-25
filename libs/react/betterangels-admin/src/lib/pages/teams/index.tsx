@@ -5,7 +5,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
+import { GroupsIcon, PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
 import { mergeCss, toError } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
@@ -77,12 +77,15 @@ export default function Teams(props: IProps) {
   const isInitialLoad = loading && !activeData;
 
   const parentCss = [
-    'flex',
     'flex-1',
-    'h-screen',
+    'min-h-0',
+    'overflow-x-auto',
     `${loading ? 'opacity-50 transition-opacity duration-200' : ''}`,
     className,
   ];
+
+  const formatCreatedDate = (iso: string | null | undefined): string =>
+    iso ? formatDistanceToNow(parseISO(iso), { addSuffix: true }) : '\u2014';
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -118,23 +121,20 @@ export default function Teams(props: IProps) {
     }));
   };
 
-  const headerButtons = COLUMNS.map((col, idx) => {
-    const isLast = idx === COLUMNS.length - 1;
-    return (
-      <button
-        key={col.label}
-        onClick={() => handleSort(col.field)}
-        className={`w-full inline-flex items-center gap-1 hover:text-primary-60 ${idx === 0 ? '' : isLast ? 'justify-end' : 'justify-center'}`}
-      >
-        {col.label}
-        {sort.field === col.field && (
-          <span className="text-xs text-primary-20">
-            {sort.direction === Ordering.Asc ? '\u25B2' : '\u25BC'}
-          </span>
-        )}
-      </button>
-    );
-  });
+  const headerButtons = COLUMNS.map((col) => (
+    <button
+      key={col.label}
+      onClick={() => handleSort(col.field)}
+      className="flex items-center gap-1 hover:text-primary-60"
+    >
+      {col.label}
+      {sort.field === col.field && (
+        <span className="text-xs text-primary-20">
+          {sort.direction === Ordering.Asc ? '\u25B2' : '\u25BC'}
+        </span>
+      )}
+    </button>
+  ));
 
   if (isInitialLoad)
     return <div className="flex justify-center py-20">Loading...</div>;
@@ -159,6 +159,37 @@ export default function Teams(props: IProps) {
     }
     return sort.direction === Ordering.Asc ? cmp : -cmp;
   });
+
+  const ThreeDotMenu = ({ team }: { team: TeamType }) => {
+    const isOpen = openMenuRowId === team.id;
+    return (
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenMenuRowId((prev) => (prev === team.id ? null : team.id));
+          }}
+          className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
+        >
+          <ThreeDotIcon className="w-6" fill="#052b73" />
+        </button>
+        {isOpen && (
+          <div
+            ref={menuRef}
+            className="absolute flex flex-col items-start top-full right-0 shadow-md bg-white z-10 p-2 rounded-lg"
+          >
+            <button
+              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
+              onClick={() => void handleDelete(team)}
+              disabled={deleting}
+            >
+              Delete Team
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -195,52 +226,58 @@ export default function Teams(props: IProps) {
         )}
       </div>
 
-      <div className={mergeCss(parentCss)}>
-        {hasPermission(TeamPermissions.View) ? (
-          <Table<TeamType>
-            className="table-fixed"
-            action={(row) => {
-              const isOpen = openMenuRowId === row.id;
-              return (
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenuRowId((prev) =>
-                        prev === row.id ? null : row.id
-                      );
-                    }}
-                    className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
+      {hasPermission(TeamPermissions.View) ? (
+        <>
+          {displayTeams.length === 0 ? (
+            <div className="text-center py-10 text-neutral-60">
+              {search
+                ? 'No teams match your search.'
+                : 'No teams in this organization.'}
+            </div>
+          ) : (
+            <>
+              {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
+              <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
+                {displayTeams.map((team) => (
+                  <div
+                    key={team.id}
+                    className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm"
                   >
-                    <ThreeDotIcon className="w-6" fill="#052b73" />
-                  </button>
-                  {isOpen && (
-                    <div
-                      ref={menuRef}
-                      className="absolute flex flex-col items-start top-full right-1/2 shadow-md bg-white z-10 p-2 rounded-lg"
-                    >
-                      <button
-                        className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
-                        onClick={() => void handleDelete(row)}
-                        disabled={deleting}
-                      >
-                        Delete Team
-                      </button>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-95 flex items-center justify-center">
+                        <GroupsIcon className="w-4 h-4 text-primary-40" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 text-sm truncate">
+                          {team.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Created {formatCreatedDate(team.createdAt)}
+                        </div>
+                      </div>
+                      <ThreeDotMenu team={team} />
                     </div>
-                  )}
-                </div>
-              );
-            }}
-            data={displayTeams}
-            header={headerButtons}
-            renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
-          />
-        ) : (
-          <div className="text-center py-10 text-neutral-60">
-            You do not have permission to view teams.
-          </div>
-        )}
-      </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
+              <div className={mergeCss(['hidden lg:flex', parentCss])}>
+                <Table<TeamType>
+                  action={(row) => <ThreeDotMenu team={row} />}
+                  data={displayTeams}
+                  header={headerButtons}
+                  renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
+                />
+              </div>
+            </>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-10 text-neutral-60">
+          You do not have permission to view teams.
+        </div>
+      )}
     </div>
   );
 }
