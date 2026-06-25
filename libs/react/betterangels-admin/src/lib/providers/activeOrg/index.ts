@@ -1,7 +1,11 @@
+import { createActiveOrgProvider } from '@monorepo/ba-platform';
+import ActiveOrgContext, { type TOrganizationWithPermissions } from './ActiveOrgContext';
+
 export type {
-  IActiveOrgContextValue,
   PermissionEnum,
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
-export { ActiveOrgProvider } from './ActiveOrgProvider';
 export { useActiveOrg } from './useActiveOrg';
+
+export const ActiveOrgProvider =
+  createActiveOrgProvider<TOrganizationWithPermissions>(ActiveOrgContext);

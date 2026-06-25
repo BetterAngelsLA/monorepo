@@ -2,7 +2,7 @@ import { StorageAdapter } from '@monorepo/react/shared';
 import { TOrganization } from '@monorepo/react/shelter';
 import { act, renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
-import { ActiveOrgProvider } from './ActiveOrgProvider';
+import { ActiveOrgProvider } from './index';
 import { useActiveOrg } from './useActiveOrg';
 
 function makeOrg(overrides: Partial<TOrganization> = {}): TOrganization {

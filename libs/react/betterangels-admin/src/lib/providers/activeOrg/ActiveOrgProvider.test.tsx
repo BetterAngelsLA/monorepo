@@ -1,7 +1,7 @@
 import { StorageAdapter } from '@monorepo/react/shared';
 import { act, renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
-import { ActiveOrgProvider } from './ActiveOrgProvider';
+import { ActiveOrgProvider } from './index';
 import {
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
