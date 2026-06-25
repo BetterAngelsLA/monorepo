@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { CurrentOrgUserQuery } from './__generated__/UserProvider.generated';
+import { CurrentOrgUserQuery } from '@monorepo/ba-platform';
 
 type OrganizationsArray = NonNullable<
   CurrentOrgUserQuery['currentUser']['organizations']

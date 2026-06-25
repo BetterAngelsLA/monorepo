@@ -6,13 +6,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { flat, pipe, values } from 'remeda';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
+import type { CurrentOrgUserQuery } from '../../apollo/user/__generated__/UserProvider.generated';
 
-/** Minimum organization shape required by all active-org consumers. */
-export interface BaseOrg {
-  id: string;
-  name: string;
-  permissions: Record<string, any>;
-}
+/** Organization type derived from the canonical org query. */
+export type BaseOrg = NonNullable<
+  NonNullable<CurrentOrgUserQuery['currentUser']>['organizations']
+>[number];
 
 interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
@@ -128,7 +127,7 @@ export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
     <P extends string>(permission: P): boolean =>
       activeOrg?.permissions != null &&
       pipe(activeOrg.permissions, values(), flat(), (arr) =>
-        arr.includes(permission)
+        (arr as string[]).includes(permission)
       ),
     [activeOrg]
   );

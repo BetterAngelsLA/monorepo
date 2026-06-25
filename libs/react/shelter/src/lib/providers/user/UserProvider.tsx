@@ -4,7 +4,7 @@ import UserContext, { TUser } from './UserContext';
 import {
   CurrentOrgUserDocument,
   CurrentOrgUserQuery,
-} from './__generated__/UserProvider.generated';
+} from '@monorepo/ba-platform';
 
 interface UserProviderProps {
   children: ReactNode;
