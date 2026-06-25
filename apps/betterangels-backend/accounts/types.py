@@ -8,30 +8,19 @@ import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
-from django.db.models import Q, QuerySet
+from django.contrib.auth.models import Permission
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import F, OuterRef, Q, QuerySet, Subquery, Value
+from django.db.models.functions import Concat
 from notes.groups import CASEWORKER
 from organizations.models import Organization
-from reports.permissions import ReportPermissions
-from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
-from teams.permissions import TeamPermissions
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
-from accounts.permissions import _annotation_key, permission_annotations
 
 from .models import User
-from .permissions import UserOrganizationPermissions
-
-# All permission enums whose values are returned in the org's permissions list.
-# To add a new permission domain, add its enum here — no other changes needed.
-ORG_PERMISSION_ENUMS = [
-    UserOrganizationPermissions,
-    ReportPermissions,
-    ShelterPermissions,
-    TeamPermissions,
-]
 
 
 @strawberry.input
@@ -121,19 +110,29 @@ class CurrentUserOrganizationType(OrganizationType):
             return queryset.none()
 
         assert isinstance(user, User)
-        qs: QuerySet[Organization] = queryset.filter(users=user)
-        for enum in ORG_PERMISSION_ENUMS:
-            qs = qs.annotate(**permission_annotations(user, enum))
-        return qs
+
+        # Single subquery that aggregates all permission strings for each org.
+        # No enum list needed — whatever permissions the user's groups grant
+        # on this org are automatically included.
+        perm_subquery = (
+            Permission.objects
+            .filter(group__permissiongroup__organization=OuterRef("pk"))
+            .filter(group__user=user)
+            .annotate(
+                perm=Concat(
+                    F("content_type__app_label"), Value("."), F("codename")
+                )
+            )
+            .values("perm")
+        )
+
+        return queryset.filter(users=user).annotate(
+            _perms=ArrayAgg(Subquery(perm_subquery), distinct=True)
+        )
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        perms: List[str] = []
-        for enum in ORG_PERMISSION_ENUMS:
-            for perm in enum:
-                if getattr(self, _annotation_key(perm), False):
-                    perms.append(perm.value)
-        return perms
+        return getattr(self, "_perms", None) or []
 
 
 @strawberry_django.type(User)
