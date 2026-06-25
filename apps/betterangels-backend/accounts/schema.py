@@ -11,7 +11,7 @@ from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models import QuerySet
 from organizations.backends import invitation_backend
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -21,7 +21,6 @@ from strawberry_django.permissions import HasPerm
 
 from accounts.emails import send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm
-from accounts.models import PermissionGroup
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 
@@ -44,7 +43,6 @@ from .types import (
     OrganizationMemberType,
     OrganizationType,
     OrgInvitationInput,
-    PermissionTemplateEnum,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
     UpdateUserProfileInput,
@@ -107,7 +105,6 @@ class Query:
         organization_id: str,
         ordering: Optional[list[OrganizationMemberOrdering]] = None,
         filters: Optional[OrganizationMemberFilter] = None,
-        permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         organization = get_user_permitted_org(
@@ -119,17 +116,6 @@ class Query:
             raise PermissionError("You do not have permission to view this organization's members.")
 
         queryset: QuerySet[User] = organization.users.all()
-
-        if permission_template is not None:
-            template_name = permission_template.value
-            has_template = Exists(
-                PermissionGroup.objects.filter(
-                    organization_id=organization_id,
-                    template__name=template_name,
-                    group__user=OuterRef("pk"),
-                )
-            )
-            queryset = queryset.filter(has_template)
 
         return queryset.annotate(
             _member_role=annotate_member_role(organization_id),
