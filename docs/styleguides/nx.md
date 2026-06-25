@@ -108,9 +108,12 @@ describes _which domain_ it belongs to. This is NX's second tagging dimension.
 | ------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `scope:shared`           | Generic code reusable across any project. No BA-specific logic, no backend conventions.  | Must never depend on domain-specific libraries                              |
 | `scope:ba-platform`      | BA-specific platform glue shared across BA apps (org headers, permissions, storage keys) | Can depend on `scope:ba-platform`, `scope:shared`                           |
-| `scope:ba-admin`         | BetterAngels admin portal                                                                | Can depend on `scope:ba-admin`, `scope:ba-platform`, `scope:shared`         |
-| `scope:shelter-operator` | Shelter operator portal                                                                  | Can depend on `scope:shelter-operator`, `scope:ba-platform`, `scope:shared` |
-| `scope:mobile`           | React Native (Expo) mobile app                                                           | Can depend on `scope:mobile`, `scope:ba-platform`, `scope:shared`           |
+| `scope:betterangels`     | BetterAngels mobile app (React Native / Expo)                                           | Can depend on `scope:betterangels`, `scope:ba-platform`, `scope:shared`      |
+| `scope:betterangels-admin` | BetterAngels admin portal (React / Vite)                                             | Can depend on `scope:betterangels-admin`, `scope:ba-platform`, `scope:shared` |
+| `scope:shelter-web`      | Shelter public search (React / Vite)                                                    | Can depend on `scope:shelter-web`, `scope:ba-platform`, `scope:shared`       |
+| `scope:shelter-operator` | Shelter operator portal (React / Vite)                                                  | Can depend on `scope:shelter-operator`, `scope:ba-platform`, `scope:shared`  |
+| `scope:ba-backend`       | Django backend                                                                            | Can depend on `scope:ba-backend`, `scope:shared`                            |
+| `scope:wildfires`        | Wildfires application                                                                     | Can depend on `scope:wildfires`, `scope:shared`                             |
 
 **The `scope:shared` isolation rule is critical.** If `libs/react/shared` (tagged
 `scope:shared`) imports from `libs/ba-platform` (tagged `scope:ba-platform`),
@@ -168,8 +171,8 @@ All projects are tagged. Here's the current layout:
 
 ```
 apps/
-├── betterangels/                ← type:app, scope:outreach
-├── betterangels-admin/          ← type:app, scope:outreach
+├── betterangels/                ← type:app, scope:betterangels
+├── betterangels-admin/          ← type:app, scope:betterangels-admin
 ├── betterangels-backend/        ← type:app, scope:ba-backend
 ├── shelter-web/                 ← type:app, scope:shelter-web
 └── wildfires/                   ← type:app, scope:wildfires
@@ -179,7 +182,7 @@ libs/
 ├── assets/                      ← type:util, scope:shared
 ├── ba-platform/                 ← type:data-access, scope:ba-platform
 ├── expo/
-│   ├── betterangels/            ← type:feature, scope:outreach
+│   ├── betterangels/            ← type:feature, scope:betterangels
 │   ├── modules/
 │   │   └── signing-fingerprint/ ← type:util, scope:shared
 │   └── shared/
@@ -193,7 +196,7 @@ libs/
 ├── python/
 │   └── stubs/                   ← type:util, scope:shared
 ├── react/
-│   ├── betterangels-admin/      ← type:feature, scope:outreach
+│   ├── betterangels-admin/      ← type:feature, scope:betterangels-admin
 │   ├── components/              ← type:ui, scope:shared
 │   ├── icons/                   ← type:ui, scope:shared
 │   ├── shared/                  ← type:util, scope:shared
@@ -227,13 +230,13 @@ libs/
 │   └── ui-icons/                ← libs/react/icons
 ├── ba-platform/                 ← scope:ba-platform
 │   └── data-access/             ← libs/ba-platform
-├── outreach/                    ← scope:outreach
-│   ├── feature-admin/           ← libs/react/betterangels-admin
+├── betterangels/                ← scope:betterangels
 │   └── feature-mobile/          ← libs/expo/betterangels
+├── betterangels-admin/          ← scope:betterangels-admin
+│   └── feature-admin/           ← libs/react/betterangels-admin
 ├── shelter-web/                 ← scope:shelter-web
 │   └── feature-shelter/         ← libs/react/shelter
 ├── shelter-operator/            ← scope:shelter-operator
-│   └── feature-operator/        ← libs/react/shelter-operator
 └── ba-backend/                  ← scope:ba-backend (currently only an app, no libs)
 ```
 
@@ -265,12 +268,12 @@ Tags to apply to existing projects:
 | `libs/react/icons`              | `type:ui` ✅ done          | `scope:shared` ✅ done      |
 | `libs/react/shared`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
 | `libs/react/storybook`          | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/shelter`            | `type:feature` ✅ done     | `scope:shelter-web` ✅ done |
+| `libs/react/shelter`            | `type:feature` ✅ done     | `scope:shelter-web` ✅ done    |
 | `libs/shared/places`            | `type:util` ✅ done        | `scope:shared` ✅ done      |
 | `libs/shared/units`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/betterangels-admin` | `type:feature` ✅ done     | `scope:outreach` ✅ done    |
+| `libs/react/betterangels-admin` | `type:feature` ✅ done     | `scope:betterangels-admin` ✅ done |
 | `libs/react/shelter-operator`   | `type:feature` ✅ done     | `scope:shelter-operator` ✅ done |
-| `libs/expo/betterangels`        | `type:feature` ✅ done     | `scope:outreach` ✅ done    |
+| `libs/expo/betterangels`        | `type:feature` ✅ done     | `scope:betterangels` ✅ done    |
 | `libs/expo/shared/*`            | `type:ui` / `type:util` ✅ done | `scope:shared` ✅ done  |
 | `libs/expo/modules/*`           | `type:util` ✅ done        | `scope:shared` ✅ done      |
 | `libs/python/stubs`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
@@ -321,17 +324,21 @@ should replace the wildcard:
           "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"]
         },
         {
-          "sourceTag": "scope:outreach",
-          "onlyDependOnLibsWithTags": ["scope:outreach", "scope:ba-platform", "scope:shared"]
+          "sourceTag": "scope:betterangels",
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:ba-platform", "scope:shared"]
+        },
+        {
+          "sourceTag": "scope:betterangels-admin",
+          "onlyDependOnLibsWithTags": ["scope:betterangels-admin", "scope:ba-platform", "scope:shared"]
+        },
+        {
+          "sourceTag": "scope:shelter-web",
+          "onlyDependOnLibsWithTags": ["scope:shelter-web", "scope:ba-platform", "scope:shared"]
         },
         {
           "sourceTag": "scope:shelter-operator",
           "onlyDependOnLibsWithTags": ["scope:shelter-operator", "scope:ba-platform", "scope:shared"]
         },
-        {
-          "sourceTag": "scope:shelter-web",
-          "onlyDependOnLibsWithTags": ["scope:shelter-web", "scope:ba-platform", "scope:shared"]
-        }
       ]
     }
   ]
@@ -449,7 +456,8 @@ to assign responsibility:
 /libs/ba-platform/    @betterangels/platform-team
 /libs/shared/         @betterangels/platform-team
 /libs/react/betterangels-admin/  @betterangels/outreach-team
-/libs/shelter-operator/ @betterangels/shelter-team
+/libs/react/shelter/       @betterangels/shelter-team
+/libs/react/shelter-operator/ @betterangels/shelter-team
 ```
 
 NX's [@nx/owners plugin](https://nx.dev/docs/reference/owners/overview) can
