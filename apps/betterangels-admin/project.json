@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels-admin/src",
   "projectType": "application",
-  "tags": [],
+  "tags": ["type:app", "scope:ba-admin"],
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",

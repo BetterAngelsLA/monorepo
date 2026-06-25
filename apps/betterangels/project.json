@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": [],
+  "tags": ["type:app", "scope:mobile"],
   "targets": {
     "start": {
       "executor": "@nx/expo:start",
