@@ -1,5 +1,10 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { TOrganizationWithPermissions } from '../activeOrg/types';
+import { CurrentOrgUserQuery } from './__generated__/UserProvider.generated';
+
+type OrganizationsArray = NonNullable<
+  CurrentOrgUserQuery['currentUser']['organizations']
+>;
+export type TOrganizationWithPermissions = OrganizationsArray[number];
 
 export type TUser = {
   id: string;
