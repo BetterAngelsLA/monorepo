@@ -7,7 +7,7 @@
   - Index files (`index.ts`) should only re-export: `export { TeamsPage } from './TeamsPage'`.
   - Never put component logic directly in an index file.
 - **Every lib component must accept `className`** — with few exceptions.
-- **Use `mergeCss` not `clsx`** — `mergeCss` from `@monorepo/react/shared` combines `clsx` + `twMerge`, so overridden Tailwind classes are properly removed.
+- **Use `mergeCss` not `clsx`** — `mergeCss` from `@monorepo/react/shared` combines `clsx` + `twMerge`, so overridden Tailwind classes are properly removed. Pass an array of class values: `mergeCss(["text-sm", className])`.
 - **No `className = ''` defaults** — `mergeCss` handles falsy values; defaulting to empty string is unnecessary.
 - **Don't stringify class conditions** — use `condition && 'class'` pattern inside `mergeCss()`, not template literals with empty strings.
 
