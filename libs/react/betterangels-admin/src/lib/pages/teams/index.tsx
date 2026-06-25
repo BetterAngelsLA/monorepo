@@ -183,7 +183,7 @@ export default function Teams(props: IProps) {
               onClick={() => void handleDelete(team)}
               disabled={deleting}
             >
-              Delete Team
+              Delete
             </button>
           </div>
         )}
