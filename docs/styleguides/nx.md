@@ -221,44 +221,44 @@ split them into separate feature libs:
 ```
 libs/
 ├── shared/                           ← scope:shared
-│   ├── apollo/                       ← libs/apollo
-│   ├── assets/                       ← libs/assets
-│   ├── tailwind/                     ← libs/tailwind
-│   ├── react-shared/                 ← libs/react/shared
-│   ├── places/                       ← libs/shared/places
-│   ├── units/                        ← libs/shared/units
-│   ├── components/                   ← libs/react/components
-│   └── icons/                        ← libs/react/icons
+│   ├── util-apollo/                  ← libs/apollo
+│   ├── util-assets/                  ← libs/assets
+│   ├── util-tailwind/                ← libs/tailwind
+│   ├── util-react-shared/            ← libs/react/shared
+│   ├── util-places/                  ← libs/shared/places
+│   ├── util-units/                   ← libs/shared/units
+│   ├── ui-components/                ← libs/react/components
+│   └── ui-icons/                     ← libs/react/icons
 │
 ├── ba-platform/                      ← scope:ba-platform
 │   └── data-access/                  ← libs/ba-platform
 │
 ├── betterangels/                     ← scope:betterangels
-│   ├── mobile/                       ← libs/expo/betterangels (current monolith)
-│   ├── clients/                      ← future: screens/Client*, Clients*
-│   ├── interactions/                 ← future: screens/Interactions*
-│   ├── tasks/                        ← future: screens/Task*, Tasks
-│   └── notes/                        ← future: screens/Note*, Notes*
+│   ├── feature-mobile/               ← libs/expo/betterangels (current monolith)
+│   ├── feature-clients/              ← future: screens/Client*, Clients*
+│   ├── feature-interactions/         ← future: screens/Interactions*
+│   ├── feature-tasks/                ← future: screens/Task*, Tasks
+│   └── feature-notes/                ← future: screens/Note*, Notes*
 │
 ├── betterangels-admin/               ← scope:betterangels-admin
-│   ├── admin/                        ← libs/react/betterangels-admin (current monolith)
-│   ├── users/                        ← future: pages/users
-│   ├── reports/                      ← future: pages/reports
-│   └── teams/                        ← future: pages/teams
+│   ├── feature-admin/                ← libs/react/betterangels-admin (current monolith)
+│   ├── feature-users/                ← future: pages/users
+│   ├── feature-reports/              ← future: pages/reports
+│   └── feature-teams/                ← future: pages/teams
 │
 ├── shelter-web/                      ← scope:shelter-web
-│   ├── shelter/                      ← libs/react/shelter (current monolith)
-│   ├── search/                       ← future: pages/search
-│   ├── shelters/                     ← future: pages/shelter, pages/shelters
-│   └── home/                         ← future: pages/home
+│   ├── feature-shelter/              ← libs/react/shelter (current monolith)
+│   ├── feature-search/               ← future: pages/search
+│   ├── feature-shelters/             ← future: pages/shelter, pages/shelters
+│   └── feature-home/                 ← future: pages/home
 │
 ├── shelter-operator/                 ← scope:shelter-operator
-│   ├── operator/                     ← libs/react/shelter-operator (current monolith)
-│   ├── dashboard/                    ← future: pages/dashboard
-│   ├── users/                        ← future: pages/users
-│   ├── beds/                         ← future: pages/beds
-│   ├── rooms/                        ← future: pages/rooms
-│   └── reservations/                 ← future: pages/reservation
+│   ├── feature-operator/             ← libs/react/shelter-operator (current monolith)
+│   ├── feature-dashboard/            ← future: pages/dashboard
+│   ├── feature-users/                ← future: pages/users
+│   ├── feature-beds/                 ← future: pages/beds
+│   ├── feature-rooms/                ← future: pages/rooms
+│   └── feature-reservations/         ← future: pages/reservation
 │
 └── ba-backend/                       ← scope:ba-backend (currently only an app, no libs)
 ```
@@ -267,6 +267,10 @@ libs/
 containing all its pages/screens. Split into feature libs only when a page grows
 enough complexity (dedicated hooks, components, tests) to stand alone. The
 grouping folder alone provides the organizational benefit until then.
+
+**Folder naming:** Use the type prefix (`feature-`, `ui-`, `util-`, `data-access`)
+so the folder name matches the tag. No need to open `project.json` to know what
+something is.
 
 Migration tool: `nx g @nx/workspace:move --project <current> <target>`
 
@@ -436,7 +440,7 @@ From the [NX docs on project size](https://nx.dev/docs/concepts/decisions/projec
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/<scope>/<type>/jest.config.ts"
+        "jestConfig": "libs/my-library/jest.config.ts"
       }
     }
   }
