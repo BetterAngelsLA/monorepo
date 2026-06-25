@@ -8,55 +8,45 @@ All new types are under the existing `referrals` and `shelters` Strawberry Djang
 
 ## Types
 
-### EligibilityCriterionType
-
-```graphql
-type EligibilityCriterionType {
-  id: ID!
-  category: EligibilityCriterionCategoryEnum!
-  name: String!
-  description: String
-}
-
-enum EligibilityCriterionCategoryEnum {
-  DEMOGRAPHIC
-  SITUATION
-  ACCESSIBILITY
-  HOUSEHOLD
-  PET
-  OTHER
-}
-```
-
-### QueueNotificationSubscriptionType
-
-```graphql
-type QueueNotificationSubscriptionType {
-  id: ID!
-  shelter: ShelterType!
-  emailRecipients: String!
-  frequency: NotificationFrequencyEnum!
-  isActive: Boolean!
-  lastSentAt: DateTime
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-enum NotificationFrequencyEnum {
-  DAILY
-  WEEKLY
-  ON_DEMAND
-}
-```
-
 ### ReferralType (Extended)
 
-Existing `ReferralType` gains a new field:
+Existing `ReferralType` gains new fields for frozen matchable attributes:
 
 ```graphql
 type ReferralType {
-  # ... existing fields ...
-  criteria: [EligibilityCriterionType!]!
+  # ... existing fields (id, clientProfile, shelter, createdBy, organization, notes, createdAt) ...
+
+  # ── New: segmentation + prioritization ──
+  population: PopulationEnum!
+  priority: PriorityEnum!
+
+  # ── New: frozen matchable attributes (derived once from ClientProfile) ──
+  isVeteran: Boolean!
+  isSenior: Boolean!
+  isTay: Boolean!
+  isFamily: Boolean!
+  isSingleWoman: Boolean!
+  isSingleMan: Boolean!
+  isWheelchairUser: Boolean!
+  hasMedicalEquipment: Boolean!
+
+  # ── New: manual-only criteria tags ──
+  manualTags: [String!]!
+
+  # ── New: decline history ──
+  declines: [ReferralDeclineType!]!
+}
+
+enum PopulationEnum {
+  ADULT
+  FAMILY
+  TAY
+}
+
+enum PriorityEnum {
+  STANDARD
+  ELEVATED
+  URGENT
 }
 ```
 
@@ -68,6 +58,18 @@ enum ReferralStatusEnum {
   PENDING
   ACCEPTED
   DECLINED
+}
+```
+
+### ReferralDeclineType (New)
+
+```graphql
+type ReferralDeclineType {
+  id: ID!
+  shelter: ShelterType!
+  declinedBy: UserType
+  reason: String
+  createdAt: DateTime!
 }
 ```
 
@@ -83,14 +85,21 @@ Existing paginated query. Filter extended to support queue-specific filters:
 query {
   referrals(
     filters: {
-      status: QUEUED           # filter by status
-      shelter: null            # open referrals only
+      status: QUEUED
+      shelter: null
+      population: FAMILY        # optional pre-filter
+      isVeteran: true           # optional attribute filter
     }
   ) {
     results {
       id
       status
-      criteria { name category }
+      population
+      priority
+      isVeteran
+      isSenior
+      isFamily
+      manualTags
       clientProfile { firstName lastName age }
       createdAt
     }
@@ -100,14 +109,25 @@ query {
 
 ### `queueReferrals` (New)
 
-Shelter-specific query: returns queued referrals matching the shelter's criteria.
+Shelter-specific query: returns queued referrals matching the shelter's criteria,
+sorted by priority then match count.
 
 ```graphql
 query($shelterId: ID!) {
   queueReferrals(shelterId: $shelterId) {
     id
     status
-    criteria { name category }
+    population
+    priority
+    isVeteran
+    isSenior
+    isTay
+    isFamily
+    isSingleWoman
+    isSingleMan
+    isWheelchairUser
+    hasMedicalEquipment
+    manualTags
     clientProfile {
       id
       firstName
@@ -115,11 +135,9 @@ query($shelterId: ID!) {
       age
       gender
       veteranStatus
-      # ... summary fields only, not full profile
     }
     createdAt
-    # Number of overlapping criteria with the shelter
-    matchCount
+    matchCount         # Number of attributes matching this shelter
   }
 }
 ```
@@ -128,25 +146,22 @@ query($shelterId: ID!) {
 1. Fetch shelter by ID
 2. Get all referrals with `status=QUEUED` and `shelter__isnull=True`
 3. For each referral, run `get_matching_shelters()` and include if the requested shelter is in the results
-4. Annotate each result with `matchCount` (number of criteria that overlap)
+4. Compute `matchCount` by counting how many of the referral's boolean attributes + manual tags overlap with the shelter's M2Ms
+5. Sort by priority descending, then matchCount descending, then created_at ascending
 
-**Performance note:** This query iterates over queued referrals. If the queue grows large (>1000), we should add a reverse index — precompute which criteria each shelter matches against and query referrals by criteria membership. This can be added later without API changes.
-
-### `queueNotificationSubscription` (New)
+### `referralDeclines` (New)
 
 ```graphql
-query($shelterId: ID!) {
-  queueNotificationSubscription(shelterId: $shelterId) {
+query($referralId: ID!) {
+  referralDeclines(referralId: $referralId) {
     id
-    emailRecipients
-    frequency
-    isActive
-    lastSentAt
+    shelter { id name }
+    declinedBy { id firstName lastName }
+    reason
+    createdAt
   }
 }
 ```
-
-Returns `null` if no subscription exists for the shelter.
 
 ---
 
@@ -154,14 +169,17 @@ Returns `null` if no subscription exists for the shelter.
 
 ### `createReferral` (Updated)
 
-Existing mutation. Extended to derive criteria internally:
-
 ```graphql
 mutation($data: CreateReferralInput!) {
   createReferral(data: $data) {
     id
     status
-    criteria { name category }
+    population
+    priority
+    isVeteran
+    isSenior
+    isFamily
+    manualTags
     ... on OperationInfo {
       messages { kind field message }
     }
@@ -172,7 +190,10 @@ mutation($data: CreateReferralInput!) {
 ```graphql
 input CreateReferralInput {
   clientProfile: ID!
-  shelter: ID                # Optional — null = open/QUEUED
+  shelter: ID                    # Optional — null = open/QUEUED
+  population: PopulationEnum!    # adult, family, tay
+  priority: PriorityEnum         # Defaults to STANDARD
+  manualTags: [String!]          # e.g. ["domestic_violence", "has_dog_small"]
   notes: String
 }
 ```
@@ -180,9 +201,10 @@ input CreateReferralInput {
 **Backend behavior:**
 1. Validate client exists
 2. Validate shelter exists (if provided)
-3. `derive_criteria(client)` → set criteria M2M
-4. `status = QUEUED` if shelter is null, `PENDING` if shelter is set
-5. Save and return
+3. `derive_referral_attrs(client)` → set boolean fields
+4. Validate `manualTags` against known tag set
+5. `status = QUEUED` if shelter is null, `PENDING` if shelter is set
+6. Save and return
 
 ### `acceptReferral` (New)
 
@@ -210,10 +232,9 @@ input AcceptReferralInput {
 
 **Backend behavior:**
 1. Verify referral exists and status is `QUEUED` or `PENDING`
-2. Verify `shelterId` matches the referral's criteria (prevent claiming incompatible clients)
-3. Set `referral.status = ACCEPTED`
-4. Set `referral.shelter = shelter`
-5. Save and return
+2. Verify shelter matches the referral (prevent claiming incompatible clients)
+3. Set `referral.status = ACCEPTED`, `referral.shelter = shelter`
+4. Save and return
 
 ### `declineReferral` (New)
 
@@ -224,6 +245,7 @@ mutation($data: DeclineReferralInput!) {
   declineReferral(data: $data) {
     id
     status
+    declines { shelter { id name } reason createdAt }
     ... on OperationInfo {
       messages { kind field message }
     }
@@ -234,63 +256,14 @@ mutation($data: DeclineReferralInput!) {
 ```graphql
 input DeclineReferralInput {
   referralId: ID!
+  reason: String                # Optional decline reason
 }
 ```
 
 **Backend behavior:**
-1. Verify referral is in the requesting shelter's queue
-2. If referral was targeted (`PENDING` → specific shelter), set `status = DECLINED`
-3. If referral was open (`QUEUED`), **leave status as QUEUED** — other shelters can still claim it
-4. Optionally record decline reason (future field)
-
-### `upsertQueueNotificationSubscription` (New)
-
-```graphql
-mutation($data: UpsertQueueNotificationSubscriptionInput!) {
-  upsertQueueNotificationSubscription(data: $data) {
-    id
-    emailRecipients
-    frequency
-    isActive
-    ... on OperationInfo {
-      messages { kind field message }
-    }
-  }
-}
-```
-
-```graphql
-input UpsertQueueNotificationSubscriptionInput {
-  shelterId: ID!
-  emailRecipients: String!
-  frequency: NotificationFrequencyEnum!
-  isActive: Boolean!
-}
-```
-
-Creates or updates the subscription for the given shelter. One subscription per shelter (enforced by `unique_together`).
-
-### `sendOnDemandNotification` (New)
-
-Triggers an immediate digest email:
-
-```graphql
-mutation($data: SendOnDemandNotificationInput!) {
-  sendOnDemandNotification(data: $data) {
-    success: Boolean!
-    matchCount: Int
-    ... on OperationInfo {
-      messages { kind field message }
-    }
-  }
-}
-```
-
-```graphql
-input SendOnDemandNotificationInput {
-  shelterId: ID!
-}
-```
+1. Verify referral is in the requesting shelter's queue view
+2. If referral was targeted (`PENDING`), set `status = DECLINED`
+3. If referral was open (`QUEUED`), create a `ReferralDecline` record (with timestamp and optional reason). Referral stays `QUEUED` for other shelters.
 
 ---
 
@@ -302,8 +275,6 @@ input SendOnDemandNotificationInput {
 | `queueReferrals` | `Referral.perms.VIEW` (shelter operator for their shelter) |
 | `acceptReferral` | `Referral.perms.CHANGE` (shelter operator for their shelter) |
 | `declineReferral` | `Referral.perms.CHANGE` (shelter operator for their shelter) |
-| `upsertQueueNotificationSubscription` | Shelter operator for their shelter |
-| `sendOnDemandNotification` | Shelter operator for their shelter |
 
 ---
 
@@ -317,4 +288,5 @@ All mutations return `OperationInfo` messages for validation errors:
 | Shelter not found | `{field: "shelter", message: "Shelter not found."}` |
 | Accepting incompatible client | `{field: "shelterId", message: "This shelter does not match the client's criteria."}` |
 | Referral already accepted | `{field: "referralId", message: "This referral has already been accepted."}` |
-| Invalid email recipients | `{field: "emailRecipients", message: "Invalid email address: ..."}` |
+| Invalid manual tag | `{field: "manualTags", message: "Unknown tag: ..."}` |
+| Duplicate QUEUED referral | `{field: "clientProfile", message: "Client already has an open referral."}` |

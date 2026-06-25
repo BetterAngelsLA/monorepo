@@ -1,128 +1,69 @@
-# Proposal: Shelter Placement Queue
+# Proposal: Shelter Placement Queue (Revised)
 
 ## Summary
 
-**Selected architecture: Option 3 — `EligibilityCriterion` on Referral Only.**
+**Frozen attributes on Referral, direct matching against existing Shelter M2Ms.**
 
-A single new model provides a shared vocabulary of matchable client attributes. Criteria are derived from client profile fields once at referral creation and frozen on the referral. Shelters are matched via their *existing* M2Ms — each criterion carries its own shelter field mapping, so no external lookup dict or sync is needed. Acceptance is a two-step claim-then-place workflow with prioritization tiers. Optional email digests keep shelters informed.
+Client attributes relevant to shelter matching are derived once from `ClientProfile`
+at referral creation and frozen as concrete boolean fields on the `Referral` model.
+Shelters are matched by a straightforward Python function that queries their
+*existing* M2Ms — no config tables, no stringly-typed field mappings, no sync.
+Acceptance is a two-step claim-then-place workflow with HUD-aligned prioritization
+tiers. A proper through-model tracks declines with timestamps.
+
+### Design Principles
+
+Based on [research into Django ecosystem patterns](./research.md#djangosql-patterns-for-attribute-based-matching):
+
+1. **Concrete columns for stable attributes.** For ≤15 attributes that change rarely,
+   `BooleanField` columns are simpler, type-safe, and database-queryable.
+2. **Matching logic in Python, not database rows.** Database-driven matching rules
+   (config tables with field-path strings) are a mini-EAV anti-pattern at this scale.
+3. **Through-model M2Ms for any relationship needing metadata.** Raw `ManyToManyField`
+   loses timestamps and actor tracking — the first "who declined when?" question
+   pays for the 5 extra lines of code.
+4. **Defer features until they're requested.** Notifications can start as a
+   management command; graduate to a dedicated model when shelters ask for
+   per-frequency preferences.
 
 ### At a Glance
 
 | Component | What changes |
 |---|---|
-| **`Referral`** | New `QUEUED` status (-1), new `criteria` M2M, new `population` and `priority` fields |
-| **`EligibilityCriterion`** (new) | Shared vocabulary of matchable attributes with categories and shelter field mappings |
-| **`QueueNotificationSubscription`** (new) | Per-shelter email digest settings |
-| **`shelter-web`** | New Queue page + Notification Settings page |
+| **`Referral`** | New `QUEUED` status (-1), 8 frozen boolean fields, `manual_tags` JSONField, `population`, `priority` |
+| **`ReferralDecline`** (new) | Through model tracking which shelter declined, when, and optionally why |
+| **`shelter-web`** | New Queue page |
 | **`betterangels`** mobile | Future: caseworker referral creation |
 
 ### What Does NOT Change
 
-`ClientProfile` (no new fields, no derived data), `Shelter` existing M2Ms (remain source of truth), `Reservation` workflow (unchanged), `betterangels-admin` (no changes), `Bed`/`Room` models (no changes).
+`ClientProfile` (no new fields), `Shelter` existing M2Ms (remain source of truth),
+`Reservation` workflow (unchanged), `betterangels-admin` (no changes),
+`Bed`/`Room` models (no changes).
 
 ### Why This Approach
 
 - **No sync** — Shelters own their data. No signal, no backfill, no drift.
 - **Auditable** — Referral captures exactly what was true at creation time.
-- **Low risk** — Only new tables, no data migration. Existing functionality untouched.
-- **Extensible** — Add criteria in admin. Each criterion knows its shelter mapping. No code deploy needed.
-- **Self-documenting** — Browse the admin to see all criteria and their shelter fields.
+- **Low risk** — New columns on an existing table + one small new table. No data migration.
+- **Type-safe** — Boolean fields have database-level integrity. No string typos.
+- **Simple to understand** — One Python file with `derive` + `match` functions, side by side.
+- **Follows Django conventions** — Through-model for decline tracking, concrete columns for
+  stable attributes. Patterns familiar to any Django developer.
 
 ### National Standards Alignment
 
-This design aligns with HUD's Coordinated Entry framework (CPD-17-01), used by LA, SF, NYC, and all federally-funded CoCs. See [research.md](./research.md) for the full analysis.
-
-Key alignments:
-- **Population segmentation** — Adult, Family, and TAY tracks (standard across all CoCs)
-- **Prioritization** — Simple tiers mirror HUD's vulnerability-based prioritization mandate
-- **Standardized criteria** — Derived from client profile fields (foundation for future assessment tool integration)
-
-Rejected alternatives: [see rejected-alternatives.md](./rejected-alternatives.md).
+Same as before — aligns with HUD's Coordinated Entry framework (CPD-17-01).
+See [research.md](./research.md) for the full analysis.
 
 ### Metro Operational Model Compatibility
 
-This design supports all three dominant shelter placement models used by major metros (see [research.md](./research.md) for details):
-
-| Model | How the design supports it |
-|---|---|
-| **Centralized placement** (NYC, Boston) | Targeted `PENDING` referrals let a central coordinator assign clients to specific shelters. `ShelterAvailability` tracks beds. |
-| **Coordinated matching** (SF, Seattle) | `QUEUED` referrals + matching engine automate system-recommended matches. Priority tiers align with HUD vulnerability-based prioritization. System can push targeted referrals. |
-| **Shelter-choice** (LA, mid-size CoCs) | Queue view lets shelters browse and claim compatible clients. `declined_by` tracking prevents repeat views of declined clients. |
-
-**Bed availability integration path (future):** When shelters reliably update `ShelterAvailability` or `Bed.computed_status`, the matching query adds a simple filter — no model changes needed. See research.md for the query pattern.
+Same as before — supports centralized placement (NYC), coordinated matching (SF),
+and shelter-choice (LA) models.
 
 ---
 
 ## Models
-
-### New: `EligibilityCriterion`
-
-A canonical vocabulary of matchable attributes. Managed via Django admin. Lives in the `referrals` app. Each row knows how to query shelters — no external mapping dict needed.
-
-```python
-class EligibilityCriterionCategory(models.TextChoices):
-    DEMOGRAPHIC = "demographic", "Demographic"
-    SITUATION = "situation", "Special Situation"
-    ACCESSIBILITY = "accessibility", "Accessibility"
-    HOUSEHOLD = "household", "Household"
-    PET = "pet", "Pet"
-    REQUIREMENT = "requirement", "Entry Requirement"
-    MEDICAL = "medical", "Medical Need"
-    OTHER = "other", "Other"
-
-class EligibilityCriterion(models.Model):
-    category = models.CharField(choices=EligibilityCriterionCategory.choices, max_length=50)
-    name = models.CharField(max_length=100, unique=True)
-    description = models.CharField(max_length=255, blank=True)
-
-    # How to match this criterion against shelters (null = manual-only criterion)
-    shelter_field = models.CharField(max_length=100, null=True, blank=True)
-    shelter_value = models.CharField(max_length=100, null=True, blank=True)
-    shelter_values = models.JSONField(null=True, blank=True)  # For multi-value matches
-
-    class Meta:
-        ordering = ["category", "name"]
-```
-
-**Why categories:** Without categories, criteria are a flat list of 25+ items. Categories enable grouped display in admin and filtering by type.
-
-**Why not a source of truth:** Criteria are derived, not primary. ClientProfile fields are the truth. Criteria are computed once at referral creation.
-
-**Why criterion-level mappings:** Each criterion carries `shelter_field`, `shelter_value`, and optional `shelter_values` (for multi-value matches like "families OR single_moms OR single_dads"). Adding a new criterion = 1 admin row. The mapping is self-documenting.
-
-### Seeded Criteria
-
-Initial set via management command `seed_eligibility_criteria`:
-
-| Category | Name | Auto-derived from | Shelter field | Shelter value(s) |
-|---|---|---|---|---|
-| DEMOGRAPHIC | `veteran` | `veteran_status == YES` | `special_situation_restrictions__name` | `veterans` |
-| DEMOGRAPHIC | `senior` | `age >= 55` | `demographics__name` | `seniors` |
-| DEMOGRAPHIC | `tay` | `13 <= age <= 24` | `demographics__name` | `tay_teen` |
-| DEMOGRAPHIC | `single_woman` | `gender == FEMALE and age >= 18` | `demographics__name` | `single_women` |
-| DEMOGRAPHIC | `single_man` | `gender == MALE and age >= 18` | `demographics__name` | `single_men` |
-| DEMOGRAPHIC | `lgbtq_plus` | Manual only | `demographics__name` | `lgbtq_plus` |
-| SITUATION | `domestic_violence` | Manual only | `special_situation_restrictions__name` | `domestic_violence` |
-| SITUATION | `human_trafficking` | Manual only | `special_situation_restrictions__name` | `human_trafficking` |
-| SITUATION | `justice_system` | Manual only | `special_situation_restrictions__name` | `justice_systems` |
-| SITUATION | `hiv_aids` | Manual only | `special_situation_restrictions__name` | `hiv_aids` |
-| ACCESSIBILITY | `wheelchair_user` | `ada_accommodation includes wheelchair` | `accessibility__name` | `wheelchair_accessible` |
-| ACCESSIBILITY | `medical_equipment` | `ada_accommodation includes medical_equipment` | `accessibility__name` | `medical_equipment_permitted` |
-| HOUSEHOLD | `family` | Has `ClientHouseholdMember` records | `demographics__name` | `["families","single_moms","single_dads"]` |
-| HOUSEHOLD | `single_parent` | Has household + marital indicates single | `demographics__name` | `["single_moms","single_dads"]` |
-| HOUSEHOLD | `couple` | Has partner household member | `demographics__name` | `couples` |
-| PET | `has_dog_small` | Manual only | `pets__name` | `dogs_under_25_lbs` |
-| PET | `has_dog_large` | Manual only | `pets__name` | `dogs_over_25_lbs` |
-| PET | `has_cat` | Manual only | `pets__name` | `cats` |
-| PET | `service_animal` | Manual only | `pets__name` | `service_animals` |
-| REQUIREMENT | `photo_id` | Manual only | `entry_requirements__name` | `photo_id` |
-| REQUIREMENT | `background_check` | Manual only | `entry_requirements__name` | `background` |
-| REQUIREMENT | `walk_ups` | Manual only | `entry_requirements__name` | `walk_ups` |
-| REQUIREMENT | `in_spa_only` | Manual only | `entry_requirements__name` | `in_spa_only` |
-| MEDICAL | `dmh` | Manual only | `medical_needs__name` | `dmh` |
-| MEDICAL | `oxygen` | Manual only | `medical_needs__name` | `oxygen` |
-
-Criteria marked "Manual only" represent data not currently captured in `ClientProfile` fields. These can be selected by caseworker at referral time (future enhancement).
 
 ### Modified: `Referral`
 
@@ -144,11 +85,45 @@ class Referral(BaseModel):
         ELEVATED = 1, "Elevated"
         URGENT = 2, "Urgent"
 
-    # ... existing fields ...
-    population = models.CharField(choices=Population.choices, max_length=20, default=Population.ADULT)
-    priority = models.IntegerField(choices=Priority.choices, default=Priority.STANDARD)
-    criteria = models.ManyToManyField("EligibilityCriterion", blank=True, related_name="referrals")
-    declined_by = models.ManyToManyField(Shelter, blank=True, related_name="declined_referrals")
+    # ── Existing fields (unchanged) ──
+    client_profile = models.ForeignKey("clients.ClientProfile", ...)
+    shelter = models.ForeignKey("shelters.Shelter", ..., null=True, blank=True)
+    created_by = models.ForeignKey(User, ...)
+    organization = models.ForeignKey(Organization, ...)
+    status = IntegerChoicesField(Status, default=Status.PENDING, db_index=True)
+    notes = models.TextField(blank=True, null=True)
+
+    # ── New: segmentation + prioritization ──
+    population = models.CharField(
+        choices=Population.choices, max_length=20, default=Population.ADULT
+    )
+    priority = models.IntegerField(
+        choices=Priority.choices, default=Priority.STANDARD
+    )
+
+    # ── New: frozen matchable attributes (derived once from ClientProfile) ──
+    is_veteran = models.BooleanField(default=False)
+    is_senior = models.BooleanField(default=False)           # age >= 55
+    is_tay = models.BooleanField(default=False)              # 13 <= age <= 24
+    is_family = models.BooleanField(default=False)           # has household members
+    is_single_woman = models.BooleanField(default=False)     # gender=F, age>=18
+    is_single_man = models.BooleanField(default=False)       # gender=M, age>=18
+    is_wheelchair_user = models.BooleanField(default=False)
+    has_medical_equipment = models.BooleanField(default=False)
+
+    # ── New: manual-only criteria not captured in ClientProfile fields ──
+    # e.g. ["domestic_violence", "has_dog_small", "photo_id"]
+    manual_tags = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client_profile"],
+                condition=models.Q(status=Referral.Status.QUEUED),
+                name="one_queued_referral_per_client",
+            )
+        ]
+        ordering = ["-created_at"]
 ```
 
 | Status | `shelter` FK | Meaning |
@@ -158,9 +133,10 @@ class Referral(BaseModel):
 | `ACCEPTED` | Set | Claimed. Removed from queue. |
 | `DECLINED` | Set | Targeted referral was declined by its shelter. Final. |
 
-**`population`** — Explicit population segment (Adult, Family, TAY). Aligns with HUD Coordinated Entry standards used by LA, SF, and NYC. Shelters can filter the queue by population before checking detailed criteria.
+**`population`** — Explicit HUD population track (Adult, Family, TAY). Shelters
+can pre-filter the queue by population before checking detailed criteria.
 
-**`priority`** — Caseworker-assigned prioritization tier:
+**`priority`** — Caseworker-assigned tier:
 
 | Tier | Criteria |
 |---|---|
@@ -168,105 +144,198 @@ class Referral(BaseModel):
 | Elevated (1) | Chronic homelessness, veteran, disabling condition, 55+ |
 | Standard (0) | All others |
 
-**`declined_by` M2M:** Tracks which shelters have declined an open referral. Prevents shelters from seeing clients they already passed on.
+**`manual_tags`** — JSON list of strings for criteria without corresponding
+`ClientProfile` fields (e.g., `"domestic_violence"`, `"has_dog_small"`,
+`"photo_id"`). Selected by caseworker at referral time. These are matched
+against shelter M2Ms using the same pattern as boolean fields — a Python
+function maps each tag name to the appropriate shelter M2M lookup. Unlike the
+previous proposal's `EligibilityCriterion` model, there is no separate database
+table for these tags; they are plain strings validated against a known set in
+the application layer.
 
-**Duplicate prevention:** A unique constraint ensures at most one `QUEUED` referral per client at a time.
+**Duplicate prevention:** The `UniqueConstraint` ensures at most one `QUEUED`
+referral per client at a time.
 
-### New: `QueueNotificationSubscription`
+### New: `ReferralDecline`
 
-Defined in [notifications.md](./notifications.md).
+A through model capturing metadata about each decline, following the standard
+Django pattern for M2M relationships that need extra fields.
+
+```python
+class ReferralDecline(BaseModel):
+    referral = models.ForeignKey(
+        Referral, on_delete=models.CASCADE, related_name="declines"
+    )
+    shelter = models.ForeignKey(
+        Shelter, on_delete=models.CASCADE, related_name="declined_referrals"
+    )
+    declined_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="referral_declines"
+    )
+    reason = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["referral", "shelter"],
+                name="one_decline_per_shelter_per_referral",
+            )
+        ]
+```
+
+**Why a through model:** A raw `declined_by = ManyToManyField(Shelter)` loses
+the timestamp (via `BaseModel.created_at`), the identity of who declined, and
+any reason. These are valuable for audit trails and operational debugging. The
+cost is ~10 lines of code.
 
 ---
 
 ## Matching Engine
 
-### Step 1: Derive Criteria (at Referral Creation)
+### Step 1: Derive Attributes (at Referral Creation)
 
-A simple function reads client profile fields and returns matching `EligibilityCriterion` instances. It handles 7 auto-derivable criteria in ~20 lines:
+A simple function reads `ClientProfile` fields and returns a dict of boolean
+values + manual tags. Lives in `referrals/selectors.py`.
 
 ```python
-def derive_criteria(client: ClientProfile) -> set[EligibilityCriterion]:
-    criteria_names = set()
+def derive_referral_attrs(client: ClientProfile) -> dict:
+    """Derive frozen matchable attributes from client profile fields.
+
+    Called once at referral creation. Returns kwargs for Referral() constructor.
+    """
     age = client.age
+    ada = client.ada_accommodation or ""
 
-    if client.veteran_status == VeteranStatusEnum.YES:
-        criteria_names.add("veteran")
-    if age and age >= 55:
-        criteria_names.add("senior")
-    if age and 13 <= age <= 24:
-        criteria_names.add("tay")
-    if client.gender == GenderEnum.FEMALE and age and age >= 18:
-        criteria_names.add("single_woman")
-    if client.gender == GenderEnum.MALE and age and age >= 18:
-        criteria_names.add("single_man")
-    if client.ada_accommodation and "wheelchair" in client.ada_accommodation:
-        criteria_names.add("wheelchair_user")
-    if client.ada_accommodation and "medical_equipment" in client.ada_accommodation:
-        criteria_names.add("medical_equipment")
-    if client.household_members.exists():
-        criteria_names.add("family")
-
-    return set(EligibilityCriterion.objects.filter(name__in=criteria_names))
+    return {
+        "is_veteran": client.veteran_status == VeteranStatusEnum.YES,
+        "is_senior": bool(age and age >= 55),
+        "is_tay": bool(age and 13 <= age <= 24),
+        "is_family": client.household_members.exists(),
+        "is_single_woman": (
+            client.gender == GenderEnum.FEMALE and bool(age and age >= 18)
+        ),
+        "is_single_man": (
+            client.gender == GenderEnum.MALE and bool(age and age >= 18)
+        ),
+        "is_wheelchair_user": "wheelchair" in ada,
+        "has_medical_equipment": "medical_equipment" in ada,
+    }
+    # manual_tags are set separately by the caseworker at referral time
 ```
 
-The remaining criteria are manual-only — selected by the caseworker at referral time.
-
-Derived criteria are frozen on the referral as an M2M. They do not change if the client profile is later updated.
+Derived attributes are frozen as boolean columns on the referral. They do not
+change if the client profile is later updated.
 
 ### Step 2: Match Shelters (at Query Time)
 
-Each `EligibilityCriterion` carries its own shelter mapping. No external lookup dict needed:
+A straightforward function that queries Shelter M2Ms based on the referral's
+frozen attributes. Lives in `referrals/selectors.py`, alongside the derivation
+function.
 
 ```python
 def get_matching_shelters(referral: Referral) -> QuerySet[Shelter]:
-    """Return shelters whose acceptance profile matches the referral's criteria."""
-    q = Q()
+    """Return shelters whose acceptance profile matches the referral's attributes."""
 
     # Shelters accepting "All" demographics match every client
-    q |= Q(demographics__name="all")
+    q = Q(demographics__name="all")
 
-    # Each criterion knows which shelter M2M field and value to query
-    for criterion in referral.criteria.filter(shelter_field__isnull=False):
-        if criterion.shelter_values:
-            q |= Q(**{f"{criterion.shelter_field}__in": criterion.shelter_values})
-        else:
-            q |= Q(**{criterion.shelter_field: criterion.shelter_value})
+    if referral.is_veteran:
+        q |= Q(special_situation_restrictions__name="veterans")
+    if referral.is_senior:
+        q |= Q(demographics__name="seniors")
+    if referral.is_tay:
+        q |= Q(demographics__name="tay_teen")
+    if referral.is_single_woman:
+        q |= Q(demographics__name="single_women")
+    if referral.is_single_man:
+        q |= Q(demographics__name="single_men")
+    if referral.is_family:
+        q |= Q(demographics__name__in=["families", "single_moms", "single_dads"])
+    if referral.is_wheelchair_user:
+        q |= Q(accessibility__name="wheelchair_accessible")
+    if referral.has_medical_equipment:
+        q |= Q(accessibility__name="medical_equipment_permitted")
+
+    # Manual tags: each tag maps to a shelter M2M lookup
+    for tag in referral.manual_tags:
+        q |= _tag_to_shelter_q(tag)
+
+    declined_shelter_ids = referral.declines.values_list("shelter_id", flat=True)
 
     return Shelter.objects.filter(
         q,
         status=Shelter.Status.APPROVED,
     ).exclude(
-        id__in=referral.declined_by.values_list("id", flat=True),
+        id__in=declined_shelter_ids,
     ).distinct()
+
+
+def _tag_to_shelter_q(tag: str) -> Q:
+    """Map a manual tag name to a shelter M2M query condition."""
+    mapping = {
+        "domestic_violence": Q(special_situation_restrictions__name="domestic_violence"),
+        "human_trafficking": Q(special_situation_restrictions__name="human_trafficking"),
+        "justice_system": Q(special_situation_restrictions__name="justice_systems"),
+        "hiv_aids": Q(special_situation_restrictions__name="hiv_aids"),
+        "lgbtq_plus": Q(demographics__name="lgbtq_plus"),
+        "has_dog_small": Q(pets__name="dogs_under_25_lbs"),
+        "has_dog_large": Q(pets__name="dogs_over_25_lbs"),
+        "has_cat": Q(pets__name="cats"),
+        "service_animal": Q(pets__name="service_animals"),
+        "photo_id": Q(entry_requirements__name="photo_id"),
+        "background_check": Q(entry_requirements__name="background"),
+        "walk_ups": Q(entry_requirements__name="walk_ups"),
+        "in_spa_only": Q(entry_requirements__name="in_spa_only"),
+        "dmh": Q(medical_needs__name="dmh"),
+        "oxygen": Q(medical_needs__name="oxygen"),
+    }
+    return mapping.get(tag, Q())
 ```
 
-Adding a new criterion = 1 admin row. No code change. No mapping dict to update. The admin becomes the configuration interface for matching rules.
+### Why This Approach vs. the Original `EligibilityCriterion` Model
+
+| Concern | Frozen booleans + Python function |
+|---|---|
+| **Adding a new auto-derived criterion** | 1 migration (new BooleanField) + 1 line in `derive_referral_attrs` + 2 lines in `get_matching_shelters`. ~5 lines total. |
+| **Adding a new manual tag** | 1 line in `_tag_to_shelter_q` mapping dict. ~1 line. |
+| **Field renames caught?** | Yes — ORM attribute access fails loudly at import time, not silently at query time. |
+| **Referential integrity** | Boolean columns are type-checked by the database. Tag names are validated against the mapping dict. |
+| **Can non-engineers add criteria?** | No — requires a code deploy. For the current scale (7 auto + ~15 manual), this is acceptable. If the system reaches 30+ criteria with frequent non-engineer additions, graduate to a Tag model (django-taggit pattern). |
 
 ### Matching Example
 
 ```
-Referral #42 criteria:         Shelter "Hope Haven" accepts:
-  [veteran, senior,              demographics: [seniors, families]
-   family,                        special_situations: [veterans]
-   wheelchair_user]               accessibility: [wheelchair_accessible]
+Referral #42 attributes:          Shelter "Hope Haven" accepts:
+  is_veteran = True                 demographics: [seniors, families]
+  is_senior = True                  special_situations: [veterans]
+  is_family = True                  accessibility: [wheelchair_accessible]
+  is_wheelchair_user = True
 
-  veteran       → special_situations=veterans          ✅
-  senior        → demographics=seniors                 ✅
-  family        → demographics in [families,...]       ✅
-  wheelchair    → accessibility=wheelchair_accessible  ✅
+  is_veteran          → special_situations=veterans          ✅
+  is_senior           → demographics=seniors                 ✅
+  is_family           → demographics in [families,...]       ✅
+  is_wheelchair_user  → accessibility=wheelchair_accessible  ✅
 
-  Result: 4/4 criteria match → Hope Haven shown in queue
+  Result: 4/4 attributes match → Hope Haven shown in queue
 ```
 
 ### Queue Ordering
 
-1. **Priority descending** (Urgent → Elevated → Standard) — aligns with HUD prioritization
+1. **Priority descending** (Urgent → Elevated → Standard)
 2. Then **match count descending** (most compatible first)
 3. Then **created_at ascending** (oldest first)
 
+### Match Count
+
+Computed at query time or annotated on the queryset by counting how many of
+the referral's attributes overlap with the shelter's M2Ms.
+
 ### Performance Note
 
-The matching query builds one OR filter per criterion. If the queue grows large (>1000 referrals), add a reverse index — precompute which criteria each shelter matches and query referrals by criteria membership. This optimization can be added without API changes.
+The matching query builds one OR filter per attribute. For the expected queue
+size (dozens to low hundreds), this is well within PostgreSQL's capabilities.
+If the queue grows large (>1000 referrals), caching shelter M2M memberships
+or adding a materialized view can be added without API changes.
 
 ---
 
@@ -286,21 +355,25 @@ Client removed from other             same ClientProfile.
 shelters' queue views.
 ```
 
-The queue is the matchmaking layer; Reservation is the operational layer. Decoupled by design.
+The queue is the matchmaking layer; Reservation is the operational layer.
+Decoupled by design.
 
 ### Decline
 
 - **Targeted referrals** (`PENDING`): Decline is final. Status → `DECLINED`.
-- **Open referrals** (`QUEUED`): Shelter added to `declined_by` M2M. Referral stays `QUEUED` for other shelters.
+- **Open referrals** (`QUEUED`): A `ReferralDecline` record is created with
+  timestamp and optional reason. Referral stays `QUEUED` for other shelters.
 
 ### Referral Creation Flow
 
 ```
-Caseworker submits form → Validate → derive_criteria(client) → Create Referral
-  population = adult|family|tay
-  priority = standard|elevated|urgent
-  status = QUEUED (if shelter=null) or PENDING (if shelter set)
-  criteria.set(derived_criteria)
+Caseworker submits form → Validate →
+  derive_referral_attrs(client) → Create Referral with:
+    population = adult|family|tay
+    priority = standard|elevated|urgent
+    is_veteran, is_senior, is_tay, ... (from derive function)
+    manual_tags = ["domestic_violence", "has_dog_small"] (caseworker-selected)
+    status = QUEUED (if shelter=null) or PENDING (if shelter set)
 ```
 
 ### Referral Lifecycle
@@ -317,7 +390,7 @@ Caseworker submits form → Validate → derive_criteria(client) → Create Refe
               │          │
               ▼          ▼
         ┌─────────┐  Stays QUEUED
-        │ACCEPTED │  (B added to declined_by)
+        │ACCEPTED │  (B → ReferralDecline created)
         └────┬────┘
              ▼
         Reservation created
@@ -332,14 +405,14 @@ Caseworker submits form → Validate → derive_criteria(client) → Create Refe
 | # | Decision | Why |
 |---|---|---|
 | 1 | Hybrid referrals (open + targeted) | Backward compatible. Caseworkers sometimes know the right shelter. |
-| 2 | `EligibilityCriterion` on Referral only | No sync. Each criterion carries its own shelter mapping. |
-| 3 | Two-step acceptance | Bed assignment happens at check-in, not at claim time. |
-| 4 | Dedicated notification model | `ScheduledReport` is for org-level exports. Queue alerts are shelter-level. |
+| 2 | Frozen boolean fields on Referral | Type-safe, database-queryable, no config table overhead. Django ecosystem standard for ≤15 stable attributes. |
+| 3 | Two-step acceptance | Bed assignment happens at check-in, not at claim time. Decouples matching from operations. |
+| 4 | Through-model for declines | Timestamps, actor, and reason are standard for audit trails. A raw M2M loses this. |
 | 5 | Frontend in shelter-web | Queue is a shelter operator workflow, not an admin workflow. |
 | 6 | Global queue (no org silos) | Maximizes placements. Matching is attribute-driven. |
 | 7 | Population segmentation | Adult/Family/TAY tracks align with HUD CE standards (LA, SF, NYC). |
 | 8 | Priority tiers | Simple caseworker-assigned prioritization mirrors HUD's vulnerability mandate. |
-| 9 | Criterion-level shelter mappings | Each criterion knows its shelter field. No external mapping dict. |
+| 9 | Matching logic in Python, not DB rows | For 7 auto-derived + ~15 manual attributes, a Python function is more readable, testable, and maintainable than a config table with string field paths. |
 
 ---
 
@@ -347,21 +420,34 @@ Caseworker submits form → Validate → derive_criteria(client) → Create Refe
 
 | Change | Type | Risk |
 |---|---|---|
-| `EligibilityCriterion` table | New | None — seeded by management command |
-| `Referral.criteria` M2M | New through table | None |
-| `Referral.declined_by` M2M | New through table | None |
+| `Referral.is_veteran` through `Referral.has_medical_equipment` (8 fields) | New boolean columns | None — all default to `False` |
+| `Referral.manual_tags` | New JSONField column | None — defaults to `[]` |
 | `Referral.population` field | New column | None |
 | `Referral.priority` field | New column | None |
 | `Referral.Status.QUEUED = -1` | New integer choice | None — no conflict with 0/1/2 |
-| `QueueNotificationSubscription` table | New | None |
+| `ReferralDecline` table | New table | None |
 
-No data migration required. Existing functionality is untouched.
+No data migration required. No management commands to run. Existing
+functionality is untouched.
+
+---
+
+## What's Deferred
+
+| Feature | Rationale |
+|---|---|
+| **Email notifications** | The codebase already has `django-post_office` + Celery. When shelters request queue notifications, start with a management command that queries matching referrals and sends via the existing `send_queued_mail` infrastructure. Graduate to a `QueueNotificationSubscription` model only when per-shelter per-frequency preferences are needed. |
+| **Admin-managed criteria vocabulary** | For the current scale (7 auto-derived + ~15 manual), the `_tag_to_shelter_q` mapping dict is sufficient. If the system reaches 30+ criteria with frequent additions by non-engineers, graduate to a `Tag`-style model (following the django-taggit pattern: `name` + `category` only, no field mappings). |
+| **Bed availability filtering** | Already possible via `ShelterAvailability` and `Bed.computed_status`. Add a filter to the matching query when shelters begin reliably updating availability. No model changes needed. |
+| **Full VI-SPDAT / Next Step assessment integration** | Requires formal assessment tool licensing and training. |
 
 ---
 
 ## Open Questions
 
-1. Should caseworkers be able to override/adjust auto-derived criteria at referral time?
+1. Should caseworkers be able to override auto-derived boolean fields at referral
+   time? (e.g., uncheck `is_senior` for a 56-year-old who doesn't identify as senior)
 2. What auto-expiry period for accepted-but-not-placed referrals?
-3. Should shelters provide a reason when declining?
-4. Should priority be auto-derived from client fields (chronic homelessness, age, DV) rather than caseworker-assigned?
+3. Should `ReferralDecline.reason` be a free-text field or a choice enum?
+4. Should priority be auto-derived from client fields (chronic homelessness, age,
+   DV history) rather than caseworker-assigned?

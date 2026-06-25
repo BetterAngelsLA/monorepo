@@ -159,3 +159,145 @@ Shelter.objects.filter(
 ```
 
 No design changes needed — availability filtering is a query addition, not a model change.
+
+---
+
+## Django/SQL Patterns for Attribute-Based Matching
+
+Research into how the broader Django ecosystem handles similar matching/eligibility
+problems. Four dominant patterns exist, with a clear consensus on when each is
+appropriate.
+
+### Pattern 1: django-taggit — Simple Tag M2M
+
+The most widely-used tagging library in Django (3.4k stars). Tags ARE the
+vocabulary — no separate config table mapping tags to fields.
+
+```python
+class Tag(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+
+class TaggedItem(models.Model):  # through model
+    tag = models.ForeignKey(Tag, ...)
+    content_object = models.ForeignKey(...)
+```
+
+Matching is done via standard ORM filtering:
+
+```python
+Model.objects.filter(tags__name__in=["veteran", "family"])
+```
+
+**Key insight:** The tag name IS the lookup key. Fifteen years of production use
+prove this pattern. If you want an admin-managed vocabulary, a `Tag`-style model
+with just `name` + `category` is sufficient. No `shelter_field`/`shelter_value`
+mapping strings needed — the matching function uses the tag name to decide which
+Shelter M2M to query.
+
+### Pattern 2: PostgreSQL JSONField — Semi-structured Attributes
+
+Increasingly popular for 10-50 dynamic boolean attributes. Django has built-in
+`JSONField` since 3.1.
+
+```python
+class Referral(BaseModel):
+    criteria = models.JSONField(default=dict)
+    # {"veteran": true, "senior": true, "family": true, ...}
+
+# Django JSON queries + PostgreSQL GIN indexes:
+Referral.objects.filter(criteria__veteran=True)
+```
+
+**When to use:** Moderate number of dynamic boolean attributes, schema flexibility
+without EAV complexity, database-level queryability needed.
+
+**When NOT to use:** Need referential integrity (FKs), complex joins across JSON
+keys, cross-app reuse of attribute vocabulary. Risk: freeform string keys can
+cause silent breakage if not controlled by code.
+
+### Pattern 3: EAV (Entity-Attribute-Value) — When NOT to use it
+
+The `django-eav2` library docs are remarkably honest:
+
+> EAV is a trade-off between flexibility and complexity. It should NOT be used
+> when system is performance-critical or low complexity is a priority.
+
+> An EAV design should be employed only for that sub-schema of a database where
+> sparse attributes need to be modeled. There are relatively few database-design
+> problems where sparse attributes are encountered.
+
+EAV is for cases like: "5,000 possible medical attributes per patient, but any
+given patient only has 50." That is not this problem — we have ~7-10 attributes
+that nearly every client will have values for.
+
+**Warning:** The `EligibilityCriterion` model with `shelter_field`/`shelter_value`
+strings is a hand-rolled mini-EAV for matching rules. The django-eav2 docs would
+recommend concrete columns or JSONField at this scale.
+
+### Pattern 4: Through-Model M2M — The Django Gold Standard
+
+For any M2M that needs metadata (timestamps, actor, reason), the standard
+Django pattern uses an explicit through model:
+
+```python
+class ReferralDecline(models.Model):
+    referral = models.ForeignKey(Referral, ...)
+    shelter = models.ForeignKey(Shelter, ...)
+    declined_at = models.DateTimeField(auto_now_add=True)
+    declined_by = models.ForeignKey(User, ...)
+    reason = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["referral", "shelter"],
+                name="one_decline_per_shelter",
+            )
+        ]
+```
+
+This is documented in Django's official tutorials and used in virtually every
+production Django project. A raw `ManyToManyField` without a through model loses
+the timestamp, actor, and reason — information that becomes invaluable for
+operational debugging and audit trails.
+
+### The Practical Consensus
+
+| Approach | When | Django pattern |
+|---|---|---|
+| **Concrete columns** | ≤15 attributes, stable schema | `BooleanField` / `CharField` |
+| **JSONField** | 10-50 attributes, somewhat dynamic | `models.JSONField(default=dict)` + GIN index |
+| **Tag M2M (django-taggit)** | Shared vocabulary, admin-managed | `Tag` + `through` |
+| **EAV** | 100+ sparse, highly dynamic attributes | `django-eav2` |
+| **Config table with string field refs** | Almost never | Anti-pattern in relational DBs |
+
+### What This Means for the Proposal
+
+The original proposal's `EligibilityCriterion` with `shelter_field`/`shelter_value`
+strings falls into the last category — a config table encoding ORM field paths as
+strings. This is fragile (no referential integrity, breaks on field renames) and
+unnecessary at this scale.
+
+For 7-10 auto-derivable attributes plus a handful of manual-only tags, the
+appropriate pattern is either:
+
+- **Concrete boolean columns** (simplest, type-safe, database-queryable), or
+- **A Tag-style M2M** (if an admin-managed vocabulary is genuinely needed, keep
+  it to `name` + `category` only — no field mappings)
+
+In both cases, the matching logic lives in a Python function (a `selectors.py` or
+`services.py` file), not in database rows. Database-driven matching rules only
+make sense when non-engineers need to create/modify rules without code deploys —
+and even then, established libraries like `django-rules` exist for this purpose.
+
+The decline tracking should use Pattern 4 (through-model M2M) rather than a raw
+`ManyToManyField`. A timestamp and optional reason on each decline costs ~5 extra
+lines of code and pays for itself the first time someone asks "when was this
+client declined and by whom?"
+
+The notification subsystem (dedicated model + Celery beat + GraphQL types) is
+premature for v1. The codebase already has `django-post_office` + Celery for
+email. When notifications are needed, a simple queryset + management command is
+sufficient. Graduate to a dedicated model when per-shelter per-frequency
+preferences are actually requested.
