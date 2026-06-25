@@ -9,10 +9,8 @@ query currentOrgUser {
       id
       name
       permissions {
-        grants {
-          domain
-          values
-        }
+        domain
+        values
       }
     }
   }

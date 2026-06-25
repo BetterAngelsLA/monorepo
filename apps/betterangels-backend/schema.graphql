@@ -814,7 +814,7 @@ union CreateTeamPayload = TeamType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  permissions: OrgPermissions!
+  permissions: [PermissionGroup!]!
 }
 
 type CurrentUserType {
@@ -1803,10 +1803,6 @@ input OrgInvitationInput {
   lastName: String!
   organizationId: ID!
   permissionTemplate: PermissionTemplateEnum!
-}
-
-type OrgPermissions {
-  grants: [PermissionGroup!]!
 }
 
 enum OrgRoleEnum {

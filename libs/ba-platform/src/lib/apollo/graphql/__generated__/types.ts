@@ -817,7 +817,7 @@ export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  permissions: OrgPermissions;
+  permissions: Array<PermissionGroup>;
 };
 
 export type CurrentUserType = {
@@ -2228,11 +2228,6 @@ export type OrgInvitationInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
   organizationId: Scalars['ID']['input'];
   permissionTemplate: PermissionTemplateEnum;
-};
-
-export type OrgPermissions = {
-  __typename?: 'OrgPermissions';
-  grants: Array<PermissionGroup>;
 };
 
 export enum OrgRoleEnum {
