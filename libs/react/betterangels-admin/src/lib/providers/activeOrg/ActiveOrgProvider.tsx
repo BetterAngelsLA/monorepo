@@ -1,12 +1,9 @@
+import { useActiveOrgState } from '@monorepo/ba-platform';
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { pipe, values, flat } from 'remeda';
+import { ReactNode } from 'react';
 import ActiveOrgContext, {
-  PermissionEnum,
   TOrganizationWithPermissions,
 } from './ActiveOrgContext';
-
-const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
 interface ActiveOrgProviderProps {
   children: ReactNode;
@@ -21,97 +18,16 @@ interface ActiveOrgProviderProps {
  * Provides the currently-selected organization **and its permissions**
  * to the component tree.
  *
- * Defaults to the first org in the list but persists the user's choice
- * in the configured storage so it survives page reloads.
- *
- * ``hasPermission(perm)`` checks the active org's permissions
- * and automatically reflects the correct org when the user
- * switches.  Because the check is enum-driven there is nothing to
- * update here when the backend adds new permissions — just re-run
- * codegen.
- *
- * TODO: Merge with shelter-operator's ActiveOrgProvider into a shared
- * BA-specific lib (along with orgLink) when one is created.
+ * Delegates state management to ``useActiveOrgState`` from ``@monorepo/ba-platform``
+ * and wraps it in this app's ``ActiveOrgContext``.
  */
 export function ActiveOrgProvider({
   children,
   organizations,
   storage = localStorageAdapter,
-  storageKey = DEFAULT_STORAGE_KEY,
+  storageKey,
 }: ActiveOrgProviderProps) {
-  const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
-    () => {
-      try {
-        const stored = storage.getItem(storageKey) as string | null;
-        if (stored && organizations.some((o) => o.id === stored)) {
-          return stored;
-        }
-      } catch (err) {
-        console.error('Failed to read storage:', err);
-      }
-      return organizations[0]?.id;
-    }
-  );
-
-  // Re-validate when the organizations list changes (e.g. after async load)
-  useEffect(() => {
-    if (activeOrgId && organizations.some((o) => o.id === activeOrgId)) {
-      return; // current selection is still valid
-    }
-    try {
-      const stored = storage.getItem(storageKey) as string | null;
-      if (stored && organizations.some((o) => o.id === stored)) {
-        setActiveOrgIdState(stored);
-        return;
-      }
-    } catch (err) {
-      console.error('Failed to read storage:', err);
-    }
-    setActiveOrgIdState(organizations[0]?.id);
-    if (organizations[0]?.id) {
-      try {
-        storage.setItem(storageKey, organizations[0].id);
-      } catch (err) {
-        console.error('Failed to persist org id:', err);
-      }
-    }
-  }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const activeOrg = useMemo(
-    () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
-    [organizations, activeOrgId]
-  );
-
-  const setActiveOrgId = useCallback(
-    (orgId: string) => {
-      if (organizations.some((o) => o.id === orgId)) {
-        setActiveOrgIdState(orgId);
-        try {
-          storage.setItem(storageKey, orgId);
-        } catch (err) {
-          console.error('Failed to write storage:', err);
-        }
-      }
-    },
-    [organizations, storage, storageKey]
-  );
-
-  const hasPermission = useCallback(
-    (permission: PermissionEnum): boolean =>
-      activeOrg?.permissions != null &&
-      pipe(
-        activeOrg.permissions,
-        values(),
-        flat(),
-        (arr) => arr.includes(permission)
-      ),
-    [activeOrg]
-  );
-
-  const value = useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
-  );
+  const value = useActiveOrgState(organizations, { storage, storageKey });
 
   return (
     <ActiveOrgContext.Provider value={value}>

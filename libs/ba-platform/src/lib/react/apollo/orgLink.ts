@@ -5,13 +5,7 @@ import {
   type StorageAdapter,
 } from '@monorepo/react/shared';
 
-/**
- * TODO: This is a temporary copy. In the future this should live in a
- * BA-specific shared library that both betterangels-admin and shelter-operator
- * can import from, rather than being duplicated across libs.
- */
-
-/** Default localStorage key shared by BA Admin and BA App. */
+/** Default localStorage key shared by BA Admin, Shelter Operator, and mobile. */
 const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
 
 /**

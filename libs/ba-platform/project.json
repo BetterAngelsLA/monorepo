@@ -1,0 +1,16 @@
+{
+  "name": "ba-platform",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-platform/src",
+  "projectType": "library",
+  "tags": ["type:shared"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  }
+}
