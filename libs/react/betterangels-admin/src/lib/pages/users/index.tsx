@@ -16,7 +16,7 @@ import {
   OrganizationMemberType,
   PermissionTemplateEnum,
 } from '../../apollo/graphql/__generated__/types';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '@monorepo/ba-permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';

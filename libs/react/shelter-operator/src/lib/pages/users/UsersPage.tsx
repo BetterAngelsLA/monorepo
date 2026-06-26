@@ -12,7 +12,7 @@ import {
   OrganizationMemberType,
   PermissionTemplateEnum,
 } from '../../apollo/graphql/__generated__/types';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '@monorepo/ba-permissions';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
