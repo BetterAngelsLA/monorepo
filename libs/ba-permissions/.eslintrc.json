@@ -1,7 +1,21 @@
 {
-  "extends": "../../.eslintrc.json",
-  "ignorePatterns": ["**/__generated__/**"],
-  "rules": {
-    "import/export": "off"
-  }
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": [
+    "!**/*",
+    "**/__generated__/**"
+  ],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {}
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {}
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "rules": {}
+    }
+  ]
 }
