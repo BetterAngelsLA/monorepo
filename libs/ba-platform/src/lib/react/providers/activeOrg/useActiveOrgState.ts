@@ -1,21 +1,27 @@
+import type { PermissionEnum } from '@monorepo/ba-permissions';
+
 import {
   localStorageAdapter,
   type StorageAdapter,
 } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
+
 /** Minimal org shape consumed by the active-org state. */
 export interface Org {
   id: string;
   name: string;
   permissions: string[];
 }
+
 interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
   storage?: StorageAdapter;
   /** Storage key — defaults to ``'betterangels_active_org_id'``. */
   storageKey?: string;
 }
+
 export interface ActiveOrgState {
   /** The currently selected organization. */
   activeOrg: Org | undefined;
@@ -24,8 +30,9 @@ export interface ActiveOrgState {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /** Check if the active org has a specific permission. */
-  hasPermission: (permission: string) => boolean;
+  hasPermission: (permission: PermissionEnum) => boolean;
 }
+
 /**
  * Shared state management for active organization selection.
  */
@@ -37,6 +44,7 @@ export function useActiveOrgState(
     storage = localStorageAdapter,
     storageKey = DEFAULT_ORG_STORAGE_KEY,
   } = options;
+
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
       try {
@@ -50,6 +58,7 @@ export function useActiveOrgState(
       return organizations[0]?.id;
     }
   );
+
   // Persist the active org ID to storage so that orgLink (Apollo link)
   // can attach the X-Organization-ID header on every GraphQL request.
   useEffect(() => {
@@ -61,6 +70,7 @@ export function useActiveOrgState(
       }
     }
   }, [activeOrgId, storage, storageKey]);
+
   // Re-validate when the organizations list changes (e.g. after async load)
   useEffect(() => {
     if (activeOrgId && organizations.some((o) => o.id === activeOrgId)) {
@@ -87,10 +97,12 @@ export function useActiveOrgState(
     // loop: this effect only needs to run when the organizations list changes
     // (e.g. after the user query loads), not on every activeOrgId update.
   }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
     [organizations, activeOrgId]
   );
+
   const setActiveOrgId = useCallback(
     (orgId: string) => {
       if (organizations.some((o) => o.id === orgId)) {
@@ -104,14 +116,17 @@ export function useActiveOrgState(
     },
     [organizations, storage, storageKey]
   );
+
   const permSet = useMemo(
     () => new Set(activeOrg?.permissions ?? []),
     [activeOrg?.permissions]
   );
+
   const hasPermission = useCallback(
-    (permission: string): boolean => permSet.has(permission),
+    (permission: PermissionEnum): boolean => permSet.has(permission),
     [permSet]
   );
+
   return useMemo(
     () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
     [activeOrg, organizations, setActiveOrgId, hasPermission]
