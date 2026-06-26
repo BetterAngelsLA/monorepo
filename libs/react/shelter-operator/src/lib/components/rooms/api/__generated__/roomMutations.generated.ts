@@ -8,7 +8,7 @@ export type CreateRoomMutationVariables = Types.Exact<{
 
 export type CreateRoomMutation = { __typename?: 'Mutation', createRoom:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'RoomType', id: string, name: string, status?: Types.RoomStatusChoices | null, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
+    | { __typename?: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
    };
 
 export type UpdateRoomMutationVariables = Types.Exact<{
@@ -19,7 +19,7 @@ export type UpdateRoomMutationVariables = Types.Exact<{
 
 export type UpdateRoomMutation = { __typename?: 'Mutation', updateRoom:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'RoomType', id: string, name: string, status?: Types.RoomStatusChoices | null, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
+    | { __typename?: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
    };
 
 export type DeleteRoomsMutationVariables = Types.Exact<{

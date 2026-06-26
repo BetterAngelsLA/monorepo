@@ -1,8 +1,11 @@
+from datetime import datetime, timezone
+
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
+from model_bakery import baker
 from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
@@ -36,21 +39,20 @@ class BedCreateTestCase(BedServiceTestCase):
             organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
-                "status": BedStatusChoices.AVAILABLE,
                 "name": "Bed 1",
                 "type": BedTypeChoices.TWIN,
             },
         )
 
         self.assertEqual(bed.shelter_id, self.shelter.pk)
-        self.assertEqual(bed.status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(bed.computed_status, BedStatusChoices.AVAILABLE)
         self.assertEqual(bed.name, "Bed 1")
         self.assertEqual(bed.type, BedTypeChoices.TWIN)
         self.assertIsNone(bed.room_id)
         self.assertTrue(Bed.objects.filter(pk=bed.pk).exists())
 
     def test_creates_bed_with_room(self) -> None:
-        room = Room.objects.create(shelter=self.shelter, name="Room-A1")
+        room = baker.make(Room, shelter=self.shelter, name="Room-A1")
 
         bed = bed_create(
             user=self.user,
@@ -58,7 +60,6 @@ class BedCreateTestCase(BedServiceTestCase):
             data={
                 "shelter_id": self.shelter.pk,
                 "room_id": room.pk,
-                "status": BedStatusChoices.AVAILABLE,
             },
         )
 
@@ -91,7 +92,7 @@ class BedCreateTestCase(BedServiceTestCase):
         self.assertEqual(funder_result.name, FunderChoices.CITY_OF_LOS_ANGELES)
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
-        shelter = Shelter.objects.create(organization=self.org)
+        shelter = baker.make(Shelter, organization=self.org)
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         shelter.demographics.add(demographic)
 
@@ -110,10 +111,10 @@ class BedCreateTestCase(BedServiceTestCase):
 class BedUpdateTestCase(BedServiceTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.bed = Bed.objects.create(
+        self.bed = baker.make(
+            Bed,
             shelter=self.shelter,
             name="Bed 1",
-            status=BedStatusChoices.AVAILABLE,
             type=BedTypeChoices.TWIN,
         )
 
@@ -123,30 +124,26 @@ class BedUpdateTestCase(BedServiceTestCase):
             organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={
+                "maintenance_flag": True,
                 "name": "Bed 1 Updated",
-                "status": BedStatusChoices.RESERVED,
                 "type": BedTypeChoices.BUNK,
             },
         )
 
         self.assertEqual(updated.pk, self.bed.pk)
         self.assertEqual(updated.name, "Bed 1 Updated")
-        self.assertEqual(updated.status, BedStatusChoices.RESERVED)
+        self.assertEqual(updated.computed_status, BedStatusChoices.OUT_OF_SERVICE)
         self.assertEqual(updated.type, BedTypeChoices.BUNK)
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(
-            user=self.user,
-            organization_id=self.org_id,
-            bed_id=self.bed.pk,
-            data={"name": "Renamed", "status": None},
-        )
+        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")
-        self.assertEqual(self.bed.status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(self.bed.computed_status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(self.bed.type, BedTypeChoices.TWIN)
 
     def test_updates_m2m_fields(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
@@ -186,8 +183,8 @@ class BedUpdateTestCase(BedServiceTestCase):
 
 class BedDeleteTestCase(BedServiceTestCase):
     def test_deletes_single_bed(self) -> None:
-        bed_to_delete = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
-        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
+        bed_to_delete = baker.make(Bed, shelter=self.shelter, name="Bed 1")
+        other_bed = baker.make(Bed, shelter=self.shelter, name="Bed 2")
 
         deleted = bed_delete(user=self.user, organization_id=self.org_id, bed_ids=[bed_to_delete.pk])
 
@@ -197,9 +194,9 @@ class BedDeleteTestCase(BedServiceTestCase):
         self.assertTrue(Bed.objects.filter(pk=other_bed.pk).exists())
 
     def test_deletes_multiple_beds(self) -> None:
-        bed_to_delete_1 = Bed.objects.create(shelter=self.shelter, name="Bed 1", status=BedStatusChoices.AVAILABLE)
-        bed_to_delete_2 = Bed.objects.create(shelter=self.shelter, name="Bed 2", status=BedStatusChoices.AVAILABLE)
-        other_bed = Bed.objects.create(shelter=self.shelter, name="Bed 3", status=BedStatusChoices.AVAILABLE)
+        bed_to_delete_1 = baker.make(Bed, shelter=self.shelter, name="Bed 1")
+        bed_to_delete_2 = baker.make(Bed, shelter=self.shelter, name="Bed 2")
+        other_bed = baker.make(Bed, shelter=self.shelter, name="Bed 3")
 
         deleted = bed_delete(
             user=self.user,
@@ -227,18 +224,19 @@ class BedCloneTestCase(BedServiceTestCase):
         self.shelter.accessibility.add(accessibility)
         self.shelter.pets.add(pet)
 
-        room = Room.objects.create(shelter=self.shelter, name="Room-A1")
-        source = Bed.objects.create(
+        room = baker.make(Room, shelter=self.shelter, name="Room-A1")
+        source = baker.make(
+            Bed,
             shelter=self.shelter,
             room=room,
-            name="Bed 1",
-            status=BedStatusChoices.AVAILABLE,
-            type=BedTypeChoices.TWIN,
             b7=True,
-            storage=True,
-            maintenance_flag=True,
-            status_notes="All good",
             fees=10,
+            last_cleaned=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            maintenance_flag=True,
+            name="Bed 1",
+            status_notes="All good",
+            storage=True,
+            type=BedTypeChoices.TWIN,
         )
         source.demographics.add(demographic)
         source.funders.add(funder)
@@ -251,12 +249,14 @@ class BedCloneTestCase(BedServiceTestCase):
         self.assertEqual(clone.name, "Bed 1 (Copy)")
         self.assertEqual(clone.shelter, source.shelter)
         self.assertEqual(clone.room, source.room)
-        self.assertEqual(clone.status, BedStatusChoices.AVAILABLE)
+        self.assertEqual(clone.computed_status, BedStatusChoices.AVAILABLE)
         self.assertEqual(clone.type, BedTypeChoices.TWIN)
         self.assertTrue(clone.b7)
         self.assertTrue(clone.storage)
-        self.assertTrue(clone.maintenance_flag)
-        self.assertEqual(clone.status_notes, "All good")
+        self.assertFalse(clone.maintenance_flag)
+        self.assertFalse(clone.maintenance_flag)
+        self.assertIsNone(clone.last_cleaned)
+        self.assertIsNone(clone.status_notes)
         self.assertEqual(clone.fees, 10)
         self.assertTrue(Bed.objects.filter(pk=clone.pk).exists())
         self.assertEqual(

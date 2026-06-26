@@ -15,6 +15,7 @@ from notes.models import Note
 from organizations.models import Organization
 from reports.models import ScheduledReport
 from rest_framework.test import APIClient
+from teams.models import Team
 
 
 def grant_view_reports(user: User, org: Organization) -> None:
@@ -361,12 +362,14 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_returns_correct_data(self) -> None:
         org, user = self._setup_org_user_with_access()
+        team_echo = baker.make(Team, slug="echo_park_outreach", name="Echo Park Outreach", organization=org)
+        team_hollywood = baker.make(Team, slug="hollywood_outreach", name="Hollywood Outreach", organization=org)
         baker.make(
             Note,
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 10, 12, 0, 0)),
             purpose="Outreach",
-            team="echo_park_outreach",
+            team=team_echo,
             _quantity=3,
         )
         baker.make(
@@ -374,7 +377,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 20, 12, 0, 0)),
             purpose="Follow-up",
-            team="hollywood_outreach",
+            team=team_hollywood,
             _quantity=2,
         )
         self._set_active_org(org)

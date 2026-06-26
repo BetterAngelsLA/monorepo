@@ -8,7 +8,7 @@ import {
   type BedType,
 } from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
-import { Table, type TableColumn } from './Table';
+import { Table, type TableColumn } from './base-ui/table';
 
 export type BedRoomForList = {
   id: string;
@@ -359,6 +359,8 @@ export function BedTable({
               />
             );
           },
+          sortValue: (row) =>
+            isMotelRoomRow(row) ? row.room.roomLabel : '',
         },
         {
           key: 'type',
@@ -375,6 +377,8 @@ export function BedTable({
           headerClassName: '!text-sm !font-medium',
           cellClassName: 'text-sm text-[#1E3342]',
           render: (r) => (isMotelRoomRow(r) ? String(r.room.beds.length) : '—'),
+          sortValue: (r) =>
+            isMotelRoomRow(r) ? r.room.beds.length : 0,
         },
         {
           key: 'tags',
@@ -403,6 +407,10 @@ export function BedTable({
             }`.trim();
             return <ReservationLinkName label={label} selected={selected} />;
           },
+          sortValue: (row) =>
+            isMotelRoomRow(row)
+              ? ''
+              : `${row.roomAssignment}, Bed ${row.bed.name ?? ''}`.trim(),
         },
         {
           key: 'type',
@@ -414,6 +422,10 @@ export function BedTable({
             !isMotelRoomRow(row) && row.bed.type
               ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
               : 'Bed Type',
+          sortValue: (row) =>
+            !isMotelRoomRow(row) && row.bed.type
+              ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
+              : '',
         },
         {
           key: 'occupants',
@@ -423,6 +435,8 @@ export function BedTable({
           cellClassName: 'text-sm text-[#1E3342]',
           render: (row) =>
             !isMotelRoomRow(row) ? String(occupantFn(row)) : '—',
+          sortValue: (row) =>
+            !isMotelRoomRow(row) ? occupantFn(row) : 0,
         },
         {
           key: 'tags',
@@ -453,6 +467,8 @@ export function BedTable({
             />
           );
         },
+        sortValue: (row) =>
+          isMotelRoomRow(row) ? '' : row.bed.name ?? '',
       },
       {
         key: 'type',
@@ -464,6 +480,10 @@ export function BedTable({
           !isMotelRoomRow(row) && row.bed.type
             ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
             : 'Bed Type',
+        sortValue: (row) =>
+          !isMotelRoomRow(row) && row.bed.type
+            ? BED_TYPE_LABEL[row.bed.type] ?? row.bed.type
+            : '',
       },
       {
         key: 'tags',
@@ -529,6 +549,8 @@ export function BedTable({
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
         render: ({ bed }) => bed.name || bed.id,
+        sortValue: ({ bed }) => bed.name || bed.id,
+        filterValue: ({ bed }) => bed.name || bed.id,
       },
       {
         key: 'status',
@@ -540,6 +562,11 @@ export function BedTable({
             maintenanceFlag={bed.maintenanceFlag}
           />
         ),
+        sortValue: ({ bed }) =>
+          statusLabel(bed.status, bed.maintenanceFlag),
+        filterValue: ({ bed }) =>
+          statusLabel(bed.status, bed.maintenanceFlag),
+        autoFilterOptions: true,
       },
       {
         key: 'room',
@@ -548,6 +575,7 @@ export function BedTable({
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
         render: ({ roomAssignment }) => roomAssignment || '—',
+        sortValue: ({ roomAssignment }) => roomAssignment || '',
       },
     ];
   }, [showCheckboxColumn, selectedSet, toggleOne]);

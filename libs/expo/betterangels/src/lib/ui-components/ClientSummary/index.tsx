@@ -39,7 +39,7 @@ export function ClientSummary(props: IClientSummaryProps) {
       clientProfileId: client.id,
     };
     if (teamPreference) {
-      params.team = teamPreference;
+      params.teamId = teamPreference;
     }
 
     if (arrivedFrom) {

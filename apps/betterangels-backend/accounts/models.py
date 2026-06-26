@@ -160,7 +160,7 @@ class PermissionGroup(models.Model):
     objects = models.Manager()
 
     class Meta:
-        unique_together = ("organization", "group")
+        unique_together = (("organization", "group"), ("organization", "template"))
 
     def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
         self.group.delete()

@@ -147,6 +147,7 @@ INSTALLED_APPS = [
     "shelters",
     "referrals",
     "tasks",
+    "teams",
     # Must be at the end
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -508,6 +509,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
     *default_headers,
     "x-goog-fieldmask",
+    "x-organization-id",
 ]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")

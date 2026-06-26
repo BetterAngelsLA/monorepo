@@ -111,14 +111,22 @@ export type BedFilter = {
   NOT?: InputMaybe<BedFilter>;
   OR?: InputMaybe<BedFilter>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
   shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<BedStatusChoices>>;
   type?: InputMaybe<Array<BedTypeChoices>>;
 };
 
+export type BedOrder = {
+  createdAt?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
+};
+
 export enum BedStatusChoices {
   Available = 'AVAILABLE',
+  InTurnaround = 'IN_TURNAROUND',
   Occupied = 'OCCUPIED',
   OutOfService = 'OUT_OF_SERVICE',
   Reserved = 'RESERVED'
@@ -132,15 +140,15 @@ export type BedType = {
   fees?: Maybe<Scalars['Int']['output']>;
   funders: Array<FunderType>;
   id: Scalars['ID']['output'];
+  lastCleaned?: Maybe<Scalars['DateTime']['output']>;
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
   maintenanceFlag: Scalars['Boolean']['output'];
   medicalNeeds: Array<MedicalNeedType>;
   name?: Maybe<Scalars['String']['output']>;
-  occupantId?: Maybe<Scalars['ID']['output']>;
   pets: Array<PetType>;
   room?: Maybe<RoomType>;
   shelter: ShelterType;
-  status?: Maybe<BedStatusChoices>;
+  status: BedStatusChoices;
   statusNotes?: Maybe<Scalars['String']['output']>;
   storage: Scalars['Boolean']['output'];
   type?: Maybe<BedTypeChoices>;
@@ -165,6 +173,7 @@ export type BedTypeOffsetPaginated = {
 export type BedsByStatusType = {
   __typename?: 'BedsByStatusType';
   available: Scalars['Int']['output'];
+  inTurnaround: Scalars['Int']['output'];
   occupied: Scalars['Int']['output'];
   outOfService: Scalars['Int']['output'];
   reserved: Scalars['Int']['output'];
@@ -485,6 +494,7 @@ export type CreateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
@@ -492,7 +502,6 @@ export type CreateBedInput = {
   pets?: InputMaybe<Array<PetChoices>>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId: Scalars['ID']['input'];
-  status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<BedTypeChoices>;
@@ -643,6 +652,7 @@ export type CreateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
@@ -666,6 +676,7 @@ export type CreateNoteTaskInput = {
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateOrganizationInput = {
@@ -692,6 +703,20 @@ export type CreateReferralInput = {
 
 export type CreateReferralPayload = OperationInfo | ReferralType;
 
+export type CreateReservationInput = {
+  bedId?: InputMaybe<Scalars['ID']['input']>;
+  checkedInAt?: InputMaybe<Scalars['DateTime']['input']>;
+  checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
+  clients: Array<ReservationClientInput>;
+  duration?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  status?: InputMaybe<ReservationStatusChoices>;
+};
+
+export type CreateReservationPayload = OperationInfo | ReservationType;
+
 export type CreateRoomInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
@@ -704,7 +729,6 @@ export type CreateRoomInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
   shelterId: Scalars['ID']['input'];
-  status?: InputMaybe<RoomStatusChoices>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<RoomStyleChoices>;
   typeOther?: InputMaybe<Scalars['String']['input']>;
@@ -778,9 +802,16 @@ export type CreateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
+
+export type CreateTeamInput = {
+  name: Scalars['String']['input'];
+};
+
+export type CreateTeamPayload = OperationInfo | TeamType;
 
 export type CurrentUserOrganizationType = {
   __typename?: 'CurrentUserOrganizationType';
@@ -852,6 +883,8 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
 
+export type DeleteReservationsPayload = BulkDeleteResult | OperationInfo;
+
 export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
@@ -861,6 +894,8 @@ export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteTeamPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -1354,6 +1389,7 @@ export type ImportNoteDataInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ImportNoteInput = {
@@ -1510,10 +1546,12 @@ export type Mutation = {
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createOrganization: CreateOrganizationResponse;
   createReferral: CreateReferralPayload;
+  createReservation: CreateReservationPayload;
   createRoom: CreateRoomPayload;
   createShelter: CreateShelterPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
+  createTeam: CreateTeamPayload;
   deleteBeds: DeleteBedsPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
@@ -1524,11 +1562,13 @@ export type Mutation = {
   deleteHmisProfile: DeleteHmisProfilePayload;
   deleteNote: DeleteNotePayload;
   deleteReferral: DeleteReferralPayload;
+  deleteReservations: DeleteReservationsPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  deleteTeam: DeleteTeamPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
   generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
@@ -1557,11 +1597,13 @@ export type Mutation = {
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateReferral: UpdateReferralPayload;
+  updateReservation: UpdateReservationPayload;
   updateRoom: UpdateRoomPayload;
   updateShelter: UpdateShelterPayload;
   updateShelterPhoto: UpdateShelterPhotoPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  updateTeam: UpdateTeamPayload;
   updateUserProfile: UpdateUserProfilePayload;
 };
 
@@ -1667,6 +1709,11 @@ export type MutationCreateReferralArgs = {
 };
 
 
+export type MutationCreateReservationArgs = {
+  data: CreateReservationInput;
+};
+
+
 export type MutationCreateRoomArgs = {
   data: CreateRoomInput;
 };
@@ -1684,6 +1731,11 @@ export type MutationCreateSocialMediaProfileArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationCreateTeamArgs = {
+  data: CreateTeamInput;
 };
 
 
@@ -1732,6 +1784,11 @@ export type MutationDeleteReferralArgs = {
 };
 
 
+export type MutationDeleteReservationsArgs = {
+  data: BulkDeleteInput;
+};
+
+
 export type MutationDeleteRoomsArgs = {
   data: BulkDeleteInput;
 };
@@ -1753,6 +1810,11 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 
 export type MutationDeleteTaskArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTeamArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1894,6 +1956,12 @@ export type MutationUpdateReferralArgs = {
 };
 
 
+export type MutationUpdateReservationArgs = {
+  data: UpdateReservationInput;
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationUpdateRoomArgs = {
   data: UpdateRoomInput;
   id: Scalars['ID']['input'];
@@ -1917,6 +1985,11 @@ export type MutationUpdateSocialMediaProfileArgs = {
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
+};
+
+
+export type MutationUpdateTeamArgs = {
+  data: UpdateTeamInput;
 };
 
 
@@ -1950,6 +2023,7 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -1975,6 +2049,7 @@ export type NoteType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
+  currentTeam?: Maybe<TeamType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -1986,6 +2061,7 @@ export type NoteType = {
   purpose?: Maybe<Scalars['String']['output']>;
   requestedServices: Array<ServiceRequestType>;
   tasks: Array<TaskType>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
 };
@@ -2159,6 +2235,7 @@ export type OrgPermissions = {
   accounts: Array<UserOrganizationPermissions>;
   reports: Array<ReportPermissions>;
   shelters: Array<ShelterPermissions>;
+  teams: Array<TeamPermissions>;
 };
 
 export enum OrgRoleEnum {
@@ -2199,10 +2276,12 @@ export type OrganizationMemberType = {
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
+  isOrgOwner: Scalars['Boolean']['output'];
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   memberRole: OrgRoleEnum;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  permissionTemplates: Array<PermissionTemplateEnum>;
 };
 
 export type OrganizationMemberTypeOffsetPaginated = {
@@ -2396,6 +2475,8 @@ export type Query = {
   referral: ReferralType;
   referrals: ReferralTypeOffsetPaginated;
   reportSummary: ReportSummaryType;
+  reservation: ReservationType;
+  reservations: ReservationTypeOffsetPaginated;
   room: RoomType;
   rooms: RoomTypeOffsetPaginated;
   serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
@@ -2410,6 +2491,7 @@ export type Query = {
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
   tasks: TaskTypeOffsetPaginated;
+  teams: TeamTypeOffsetPaginated;
 };
 
 
@@ -2420,6 +2502,7 @@ export type QueryBedArgs = {
 
 export type QueryBedsArgs = {
   filters?: InputMaybe<BedFilter>;
+  ordering?: Array<BedOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2583,6 +2666,18 @@ export type QueryReportSummaryArgs = {
 };
 
 
+export type QueryReservationArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryReservationsArgs = {
+  filters?: InputMaybe<ReservationFilter>;
+  ordering?: Array<ReservationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryRoomArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -2590,6 +2685,7 @@ export type QueryRoomArgs = {
 
 export type QueryRoomsArgs = {
   filters?: InputMaybe<RoomFilter>;
+  ordering?: Array<RoomOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2651,6 +2747,11 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
   ordering?: InputMaybe<Array<TaskOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTeamsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2771,6 +2872,70 @@ export type ReportSummaryType = {
   uniqueClientsByDate: Array<DateCountType>;
 };
 
+export type ReservationClientAssignmentType = {
+  __typename?: 'ReservationClientAssignmentType';
+  clientProfileId: Scalars['ID']['output'];
+  isPrimary: Scalars['Boolean']['output'];
+};
+
+export type ReservationClientInput = {
+  clientProfileId: Scalars['ID']['input'];
+  isPrimary?: Scalars['Boolean']['input'];
+};
+
+export type ReservationFilter = {
+  AND?: InputMaybe<ReservationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ReservationFilter>;
+  OR?: InputMaybe<ReservationFilter>;
+  bedId?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
+  shelterId?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<Array<ReservationStatusChoices>>;
+};
+
+export type ReservationOrder = {
+  checkedInAt?: InputMaybe<Ordering>;
+  checkedOutAt?: InputMaybe<Ordering>;
+  createdAt?: InputMaybe<Ordering>;
+  startDate?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
+};
+
+export enum ReservationStatusChoices {
+  Cancelled = 'CANCELLED',
+  CheckedIn = 'CHECKED_IN',
+  CheckInOverdue = 'CHECK_IN_OVERDUE',
+  Completed = 'COMPLETED',
+  Confirmed = 'CONFIRMED'
+}
+
+export type ReservationType = {
+  __typename?: 'ReservationType';
+  bed?: Maybe<BedType>;
+  checkedInAt?: Maybe<Scalars['DateTime']['output']>;
+  checkedOutAt?: Maybe<Scalars['DateTime']['output']>;
+  clients: Array<ReservationClientAssignmentType>;
+  createdById?: Maybe<Scalars['ID']['output']>;
+  duration?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  room?: Maybe<RoomType>;
+  shelter: OperatorShelterType;
+  startDate?: Maybe<Scalars['Date']['output']>;
+  status: ReservationStatusChoices;
+};
+
+export type ReservationTypeOffsetPaginated = {
+  __typename?: 'ReservationTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ReservationType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ResolveClientDocumentUploadsInput = {
   clientProfileId: Scalars['ID']['input'];
   documents: Array<ClientDocumentFromUploadsInput>;
@@ -2814,9 +2979,17 @@ export type RoomFilter = {
   type?: InputMaybe<Array<RoomStyleChoices>>;
 };
 
+export type RoomOrder = {
+  createdAt?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
+};
+
 export enum RoomStatusChoices {
   Available = 'AVAILABLE',
-  NeedsMaintenance = 'NEEDS_MAINTENANCE',
+  InTurnaround = 'IN_TURNAROUND',
+  Occupied = 'OCCUPIED',
+  OutOfService = 'OUT_OF_SERVICE',
   Reserved = 'RESERVED'
 }
 
@@ -2845,15 +3018,15 @@ export type RoomType = {
   demographics: Array<DemographicType>;
   funders: Array<FunderType>;
   id: Scalars['ID']['output'];
+  lastCleaned?: Maybe<Scalars['DateTime']['output']>;
   lastCleanedInspected?: Maybe<Scalars['DateTime']['output']>;
   maintenanceFlag: Scalars['Boolean']['output'];
   medicalRespite: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  occupantIds: Array<Scalars['ID']['output']>;
   pets: Array<PetType>;
   shelter: ShelterType;
-  status?: Maybe<RoomStatusChoices>;
+  status: RoomStatusChoices;
   storage: Scalars['Boolean']['output'];
   type?: Maybe<RoomStyleChoices>;
   typeOther?: Maybe<Scalars['String']['output']>;
@@ -2862,6 +3035,7 @@ export type RoomType = {
 
 export type RoomTypeBedsArgs = {
   filters?: InputMaybe<BedFilter>;
+  ordering?: Array<BedOrder>;
 };
 
 export type RoomTypeOffsetPaginated = {
@@ -2876,7 +3050,9 @@ export type RoomTypeOffsetPaginated = {
 export type RoomsByStatusType = {
   __typename?: 'RoomsByStatusType';
   available: Scalars['Int']['output'];
-  needsMaintenance: Scalars['Int']['output'];
+  inTurnaround: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
   reserved: Scalars['Int']['output'];
 };
 
@@ -3328,6 +3504,7 @@ export type TaskFilter = {
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
+  teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -3349,6 +3526,7 @@ export type TaskType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
+  currentTeam?: Maybe<TeamType>;
   description?: Maybe<Scalars['String']['output']>;
   hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
@@ -3357,6 +3535,7 @@ export type TaskType = {
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
   summary?: Maybe<Scalars['String']['output']>;
+  /** @deprecated Use currentTeam instead */
   team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -3366,6 +3545,30 @@ export type TaskTypeOffsetPaginated = {
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<TaskType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum TeamPermissions {
+  Add = 'ADD',
+  Change = 'CHANGE',
+  Delete = 'DELETE',
+  View = 'VIEW'
+}
+
+export type TeamType = {
+  __typename?: 'TeamType';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
+export type TeamTypeOffsetPaginated = {
+  __typename?: 'TeamTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TeamType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
@@ -3382,7 +3585,6 @@ export type UpdateBedInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<BedStatusChoices>;
   statusNotes?: InputMaybe<Scalars['String']['input']>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<BedTypeChoices>;
@@ -3526,6 +3728,7 @@ export type UpdateNoteInput = {
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
@@ -3545,6 +3748,20 @@ export type UpdateReferralInput = {
 
 export type UpdateReferralPayload = OperationInfo | ReferralType;
 
+export type UpdateReservationInput = {
+  bedId?: InputMaybe<Scalars['ID']['input']>;
+  checkedInAt?: InputMaybe<Scalars['DateTime']['input']>;
+  checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
+  clients?: InputMaybe<Array<ReservationClientInput>>;
+  duration?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  roomId?: InputMaybe<Scalars['ID']['input']>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  status?: InputMaybe<ReservationStatusChoices>;
+};
+
+export type UpdateReservationPayload = OperationInfo | ReservationType;
+
 export type UpdateRoomInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   amenities?: InputMaybe<Scalars['String']['input']>;
@@ -3556,7 +3773,6 @@ export type UpdateRoomInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
-  status?: InputMaybe<RoomStatusChoices>;
   storage?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<RoomStyleChoices>;
   typeOther?: InputMaybe<Scalars['String']['input']>;
@@ -3630,9 +3846,17 @@ export type UpdateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
+
+export type UpdateTeamInput = {
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTeamPayload = OperationInfo | TeamType;
 
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;

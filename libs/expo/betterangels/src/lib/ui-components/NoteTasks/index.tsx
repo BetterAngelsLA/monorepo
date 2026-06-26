@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
+import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
@@ -22,7 +22,7 @@ export interface TaskFormData {
   summary: string | null;
   description?: string | null;
   status?: TaskStatusEnum | null;
-  team?: SelahTeamEnum | null;
+  teamId?: string | null;
 }
 
 interface INoteTasksProps {
@@ -39,7 +39,7 @@ interface INoteTasksProps {
 
   // Live Handlers
   refetch?: () => void;
-  team?: SelahTeamEnum | null;
+  teamId?: string | null;
 
   // Visibility
   hideIfEmpty?: boolean;
@@ -54,7 +54,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     tasks = [],
     scrollRef,
     refetch,
-    team,
+    teamId,
     isDraftMode = false,
     onDraftTasksChange,
     hideIfEmpty = false,
@@ -98,7 +98,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      team: (data.team as SelahTeamEnum) || team || null,
+      teamId: data.teamId || teamId || null,
     };
 
     if (existingId) {
@@ -121,7 +121,7 @@ export default function NoteTasks(props: INoteTasksProps) {
   const handleLiveSave = async (data: TaskFormData, existingId?: string) => {
     try {
       const cleanStatus = data.status || undefined;
-      const cleanTeam = !data.team ? null : data.team;
+      const cleanTeamId = !data.teamId ? null : data.teamId;
 
       if (existingId) {
         await updateTask({
@@ -129,7 +129,7 @@ export default function NoteTasks(props: INoteTasksProps) {
             data: {
               ...data,
               status: cleanStatus,
-              team: cleanTeam,
+              teamId: cleanTeamId,
               id: existingId,
             },
           },
@@ -144,7 +144,7 @@ export default function NoteTasks(props: INoteTasksProps) {
               status: cleanStatus,
               clientProfile: clientProfileId,
               hmisClientProfile: hmisClientProfileId,
-              team: cleanTeam || team || null,
+              teamId: cleanTeamId || teamId || null,
               // Handle linking to either Note type
               note: noteId || null,
               hmisNote: hmisNoteId || null,
@@ -185,7 +185,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           summary: taskToEdit.summary,
           description: taskToEdit.description || undefined,
           status: taskToEdit.status,
-          team: taskToEdit.team,
+          teamId: taskToEdit.teamId,
         } as UpdateTaskInput)
       : undefined;
 
@@ -199,7 +199,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           noteId={noteId}
           hmisNoteId={hmisNoteId}
           task={taskProp}
-          team={team}
+          teamId={teamId}
           // ESLint Fix: async fallback
           refetch={refetch || (async () => undefined)}
           closeModal={close}

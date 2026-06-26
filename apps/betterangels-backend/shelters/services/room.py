@@ -1,6 +1,7 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
@@ -35,7 +36,6 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
-    raw_occupants = m2m_data.pop("occupants", [])
 
     # Drop None values so model defaults apply
     scalar_data = {k: v for k, v in data.items() if v is not None}
@@ -44,11 +44,6 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     room.full_clean()
     room.save()
     _set_m2m_from_enums(room, m2m_data)
-    if raw_occupants:
-        room.occupants.set(raw_occupants)
-
-    # TODO: Assign perms here. See: SDB-178
-
     return room
 
 
@@ -128,6 +123,9 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
 
     Scopes to *organization_id* where *user* is a member.
 
+    Unmatched or inaccessible IDs are silently skipped; only successfully
+    deleted IDs are returned.
+
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
@@ -156,11 +154,7 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
         user=user,
         organization_id=organization_id,
     )
-    try:
-        source = qs.get(pk=room_id)
-    except Room.DoesNotExist:
-        raise ObjectDoesNotExist(f"Room matching ID {room_id} could not be found.")
-
+    source = get_by_pk_or_not_found(qs, pk=room_id)
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),

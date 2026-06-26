@@ -7,7 +7,7 @@ export type CreateBedMutationVariables = Types.Exact<{
 
 
 export type CreateBedMutation = { __typename?: 'Mutation', createBed:
-    | { __typename?: 'BedType', id: string, name?: string | null, status?: Types.BedStatusChoices | null, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
+    | { __typename?: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
@@ -28,7 +28,7 @@ export type UpdateBedMutationVariables = Types.Exact<{
 
 
 export type UpdateBedMutation = { __typename?: 'Mutation', updateBed:
-    | { __typename?: 'BedType', id: string, name?: string | null, status?: Types.BedStatusChoices | null, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
+    | { __typename?: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 

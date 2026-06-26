@@ -26,7 +26,7 @@ export function useClientProfilePhotoUpload() {
       setProcessing(true);
 
       try {
-        const refId = `${Date.now()}`;
+        const refId = crypto.randomUUID();
 
         // 1: Request presigned POST data from backend
         const result = await generateUpload({

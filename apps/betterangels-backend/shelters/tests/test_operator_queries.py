@@ -1,11 +1,14 @@
+import datetime
 from typing import Any, cast
 
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
-from shelters.enums import BedStatusChoices, DemographicChoices, PetChoices, RoomStatusChoices
+from model_bakery import baker
+from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.enums import SpecialSituationRestrictionChoices
-from shelters.models import Bed, Demographic, Pet, Room, Shelter, ShelterType, SpecialSituationRestriction
+from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
+from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.tests.baker_recipes import shelter_recipe
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -225,11 +228,22 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter = self.shelter
 
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OCCUPIED)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.OUT_OF_SERVICE)
+        baker.make(Bed, shelter=shelter, maintenance_flag=True)
+        # Create a bed in turnaround: old last_cleaned with a completed reservation after it
+        turnaround_bed = baker.make(
+            Bed, shelter=shelter, last_cleaned=datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+        )
+        baker.make(
+            Reservation,
+            bed=turnaround_bed,
+            status=ReservationStatusChoices.COMPLETED,
+            checked_out_at=datetime.datetime.now(datetime.timezone.utc),
+        )
+        baker.make(Bed, shelter=shelter)
+        unavailable_beds = baker.make(Bed, shelter=shelter, _quantity=3)
+
+        for pair in zip(unavailable_beds, ACTIVE_RESERVATION_STATUSES):
+            baker.make(Reservation, bed=pair[0], status=pair[1])
 
         query = """
             query OperatorShelters($orgIds: [ID!]) {
@@ -238,9 +252,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                         id
                         bedsByStatus {
                             available
+                            inTurnaround
                             occupied
-                            reserved
                             outOfService
+                            reserved
                         }
                     }
                 }
@@ -253,42 +268,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         shelter_data = next(r for r in results if r["id"] == str(shelter.id))
         self.assertEqual(
             shelter_data["bedsByStatus"],
-            {"available": 2, "occupied": 1, "reserved": 1, "outOfService": 1},
-        )
-
-    def test_operator_shelters_rooms_by_status_with_beds_and_rooms(self) -> None:
-        """Room counts stay correct when beds and rooms are requested together."""
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        shelter = self.shelter
-
-        Room.objects.create(shelter=shelter, status=RoomStatusChoices.NEEDS_MAINTENANCE)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.RESERVED)
-        Bed.objects.create(shelter=shelter, status=BedStatusChoices.AVAILABLE)
-
-        query = """
-            query OperatorShelters($orgIds: [ID!]) {
-                operatorShelters(filters: { organizations: $orgIds }) {
-                    results {
-                        id
-                        bedsByStatus {
-                            available
-                            reserved
-                        }
-                        roomsByStatus {
-                            available
-                            reserved
-                            needsMaintenance
-                        }
-                    }
-                }
-            }
-        """
-        response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
-        shelter_data = next(r for r in response["data"]["operatorShelters"]["results"] if r["id"] == str(shelter.id))
-        self.assertEqual(shelter_data["bedsByStatus"], {"available": 1, "reserved": 1})
-        self.assertEqual(
-            shelter_data["roomsByStatus"],
-            {"available": 0, "reserved": 0, "needsMaintenance": 1},
+            {"available": 1, "occupied": 1, "reserved": 2, "outOfService": 1, "inTurnaround": 1},
         )
 
     def test_operator_shelters_beds_by_status_no_beds(self) -> None:
@@ -302,9 +282,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                         id
                         bedsByStatus {
                             available
+                            inTurnaround
                             occupied
-                            reserved
                             outOfService
+                            reserved
                         }
                     }
                 }
@@ -317,7 +298,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         for result in results:
             self.assertEqual(
                 result["bedsByStatus"],
-                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0},
+                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0, "inTurnaround": 0},
             )
 
 

@@ -111,6 +111,7 @@ type AuthorizedPresignedS3UploadsType {
 
 input BedFilter {
   id: ID
+  maintenanceFlag: Boolean
   shelterId: ID
   AND: BedFilter
   OR: BedFilter
@@ -121,11 +122,18 @@ input BedFilter {
   status: [BedStatusChoices!]
 }
 
+input BedOrder {
+  name: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+}
+
 enum BedStatusChoices {
   AVAILABLE
+  IN_TURNAROUND
   OCCUPIED
-  RESERVED
   OUT_OF_SERVICE
+  RESERVED
 }
 
 type BedType {
@@ -136,17 +144,17 @@ type BedType {
   fees: Int
   funders: [FunderType!]!
   lastCleanedInspected: DateTime
+  lastCleaned: DateTime
   maintenanceFlag: Boolean!
   medicalNeeds: [MedicalNeedType!]!
   name: String
-  occupantId: ID
   pets: [PetType!]!
   room: RoomType
   shelter: ShelterType!
-  status: BedStatusChoices
   statusNotes: String
   storage: Boolean!
   type: BedTypeChoices
+  status: BedStatusChoices!
 }
 
 enum BedTypeChoices {
@@ -168,9 +176,10 @@ type BedTypeOffsetPaginated {
 
 type BedsByStatusType {
   available: Int!
+  inTurnaround: Int!
   occupied: Int!
-  reserved: Int!
   outOfService: Int!
+  reserved: Int!
 }
 
 input BulkDeleteInput {
@@ -487,11 +496,11 @@ input CreateBedInput {
   fees: Int = null
   funders: [FunderChoices!] = null
   lastCleanedInspected: DateTime = null
+  lastCleaned: DateTime = null
   maintenanceFlag: Boolean = null
   medicalNeeds: [MedicalNeedChoices!] = null
   name: String = null
   pets: [PetChoices!] = null
-  status: BedStatusChoices = null
   statusNotes: String = null
   storage: Boolean = null
   type: BedTypeChoices = null
@@ -633,6 +642,7 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 input CreateNoteInput {
   purpose: String = null
   team: SelahTeamEnum = null
+  teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
   clientProfile: ID = null
@@ -665,6 +675,7 @@ input CreateNoteTaskInput {
   description: String = null
   status: Int = null
   team: SelahTeamEnum = null
+  teamId: ID
 }
 
 input CreateOrganizationInput {
@@ -690,6 +701,20 @@ input CreateReferralInput {
 
 union CreateReferralPayload = ReferralType | OperationInfo
 
+input CreateReservationInput {
+  roomId: ID = null
+  bedId: ID = null
+  checkedInAt: DateTime = null
+  checkedOutAt: DateTime = null
+  clients: [ReservationClientInput!]!
+  duration: Int = null
+  notes: String = null
+  startDate: Date = null
+  status: ReservationStatusChoices = null
+}
+
+union CreateReservationPayload = ReservationType | OperationInfo
+
 input CreateRoomInput {
   shelterId: ID!
   accessibility: [AccessibilityChoices!] = null
@@ -702,7 +727,6 @@ input CreateRoomInput {
   name: String!
   notes: String = null
   pets: [PetChoices!] = null
-  status: RoomStatusChoices = null
   storage: Boolean = null
   type: RoomStyleChoices = null
   typeOther: String = null
@@ -775,10 +799,17 @@ input CreateTaskInput {
   hmisNote: ID
   summary: String!
   team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
+
+input CreateTeamInput {
+  name: String!
+}
+
+union CreateTeamPayload = TeamType | OperationInfo
 
 type CurrentUserOrganizationType {
   id: ID!
@@ -845,6 +876,8 @@ union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteReferralPayload = DeletedObjectType | OperationInfo
 
+union DeleteReservationsPayload = BulkDeleteResult | OperationInfo
+
 union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
@@ -854,6 +887,8 @@ union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
+
+union DeleteTeamPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -1325,7 +1360,8 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
+  teamId: ID
   publicDetails: String
   privateDetails: String
   clientProfile: ID
@@ -1528,6 +1564,9 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
@@ -1538,6 +1577,9 @@ type Mutation {
   updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
   cloneBed(id: ID!): CloneBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
   deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
+  createReservation(data: CreateReservationInput!): CreateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_reservation"}], any: true)
+  updateReservation(id: ID!, data: UpdateReservationInput!): UpdateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
+  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_reservation"}], any: true)
   generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
@@ -1579,6 +1621,7 @@ input NoteFilter {
   authors: [ID!]
   organizations: [ID!]
   teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
 }
 
@@ -1612,7 +1655,8 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  team: SelahTeamEnum
+  currentTeam: TeamType
+  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1765,6 +1809,7 @@ type OrgPermissions {
   accounts: [UserOrganizationPermissions!]!
   reports: [ReportPermissions!]!
   shelters: [ShelterPermissions!]!
+  teams: [TeamPermissions!]!
 }
 
 enum OrgRoleEnum {
@@ -1808,6 +1853,8 @@ type OrganizationMemberType {
   lastLogin: DateTime
   dateJoined: DateTime!
   memberRole: OrgRoleEnum!
+  isOrgOwner: Boolean!
+  permissionTemplates: [PermissionTemplateEnum!]!
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -1988,14 +2035,17 @@ type Query {
   reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  teams(pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
   bed(pk: ID!): BedType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  beds(pagination: OffsetPaginationInput, filters: BedFilter): BedTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
+  reservation(pk: ID!): ReservationType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
+  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
   room(pk: ID!): RoomType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
-  rooms(pagination: OffsetPaginationInput, filters: RoomFilter): RoomTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
@@ -2119,6 +2169,69 @@ type ReportSummaryType {
   topRequestedServices: [NameCountType!]!
 }
 
+type ReservationClientAssignmentType {
+  clientProfileId: ID!
+  isPrimary: Boolean!
+}
+
+input ReservationClientInput {
+  clientProfileId: ID!
+  isPrimary: Boolean! = false
+}
+
+input ReservationFilter {
+  id: ID
+  roomId: ID
+  bedId: ID
+  AND: ReservationFilter
+  OR: ReservationFilter
+  NOT: ReservationFilter
+  DISTINCT: Boolean
+  status: [ReservationStatusChoices!]
+  shelterId: ID
+}
+
+input ReservationOrder {
+  startDate: Ordering
+  checkedInAt: Ordering
+  checkedOutAt: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+}
+
+enum ReservationStatusChoices {
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  CHECK_IN_OVERDUE
+}
+
+type ReservationType {
+  id: ID!
+  bed: BedType
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  duration: Int
+  notes: String
+  room: RoomType
+  startDate: Date
+  status: ReservationStatusChoices!
+  shelter: OperatorShelterType!
+  createdById: ID
+  clients: [ReservationClientAssignmentType!]!
+}
+
+type ReservationTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ReservationType!]!
+}
+
 input ResolveClientDocumentUploadsInput {
   clientProfileId: ID!
   documents: [ClientDocumentFromUploadsInput!]!
@@ -2158,14 +2271,22 @@ input RoomFilter {
   DISTINCT: Boolean
   amenities: String
   type: [RoomStyleChoices!]
-  status: [RoomStatusChoices!]
   numberOfBeds: Int
+  status: [RoomStatusChoices!]
+}
+
+input RoomOrder {
+  name: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
 }
 
 enum RoomStatusChoices {
   AVAILABLE
+  IN_TURNAROUND
+  OCCUPIED
+  OUT_OF_SERVICE
   RESERVED
-  NEEDS_MAINTENANCE
 }
 
 enum RoomStyleChoices {
@@ -2188,9 +2309,10 @@ type RoomType {
   id: ID!
   accessibility: [AccessibilityType!]!
   amenities: String
-  beds(filters: BedFilter): [BedType!]!
+  beds(filters: BedFilter, ordering: [BedOrder!]! = []): [BedType!]!
   demographics: [DemographicType!]!
   funders: [FunderType!]!
+  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean!
   medicalRespite: Boolean!
@@ -2198,11 +2320,10 @@ type RoomType {
   notes: String
   pets: [PetType!]!
   shelter: ShelterType!
-  status: RoomStatusChoices
   storage: Boolean!
   type: RoomStyleChoices
   typeOther: String
-  occupantIds: [ID!]!
+  status: RoomStatusChoices!
 }
 
 type RoomTypeOffsetPaginated {
@@ -2217,8 +2338,10 @@ type RoomTypeOffsetPaginated {
 
 type RoomsByStatusType {
   available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
   reserved: Int!
-  needsMaintenance: Int!
 }
 
 type SPAType {
@@ -2647,6 +2770,7 @@ input TaskFilter {
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
+  teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
   hmisClientProfileLookup: IDFilterLookup
@@ -2677,8 +2801,9 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  team: SelahTeamEnum
+  currentTeam: TeamType
   updatedAt: DateTime!
+  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
 }
 
 type TaskTypeOffsetPaginated {
@@ -2689,6 +2814,30 @@ type TaskTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [TaskType!]!
+}
+
+enum TeamPermissions {
+  ADD
+  CHANGE
+  DELETE
+  VIEW
+}
+
+type TeamType {
+  id: ID!
+  slug: String!
+  name: String!
+  createdAt: DateTime!
+}
+
+type TeamTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [TeamType!]!
 }
 
 """Time (isoformat)"""
@@ -2708,7 +2857,6 @@ input UpdateBedInput {
   medicalNeeds: [MedicalNeedChoices!]
   name: String
   pets: [PetChoices!]
-  status: BedStatusChoices
   statusNotes: String
   storage: Boolean
   type: BedTypeChoices
@@ -2843,7 +2991,8 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum
+  team: SelahTeamEnum = null
+  teamId: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
@@ -2871,6 +3020,20 @@ input UpdateReferralInput {
 
 union UpdateReferralPayload = ReferralType | OperationInfo
 
+input UpdateReservationInput {
+  roomId: ID
+  bedId: ID
+  checkedInAt: DateTime
+  checkedOutAt: DateTime
+  clients: [ReservationClientInput!]
+  duration: Int
+  notes: String
+  startDate: Date
+  status: ReservationStatusChoices
+}
+
+union UpdateReservationPayload = ReservationType | OperationInfo
+
 input UpdateRoomInput {
   accessibility: [AccessibilityChoices!]
   amenities: String
@@ -2882,7 +3045,6 @@ input UpdateRoomInput {
   name: String
   notes: String
   pets: [PetChoices!]
-  status: RoomStatusChoices
   storage: Boolean
   type: RoomStyleChoices
   typeOther: String
@@ -2955,10 +3117,18 @@ input UpdateTaskInput {
   description: String
   summary: String
   team: SelahTeamEnum
+  teamId: ID
   status: TaskStatusEnum
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
+
+input UpdateTeamInput {
+  id: ID!
+  name: String
+}
+
+union UpdateTeamPayload = TeamType | OperationInfo
 
 input UpdateUserInput {
   firstName: NonBlankString
