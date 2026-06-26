@@ -50,3 +50,5 @@ export const Colors = {
   IOS_GRAY: '#d1d3da',
   IOS_BLUE: '#007aff',
 } as const;
+
+export type Colors = typeof Colors[keyof typeof Colors];

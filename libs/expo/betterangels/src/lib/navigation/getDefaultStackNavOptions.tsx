@@ -15,5 +15,5 @@ export function getDefaultStackNavOptions(props?: TProps) {
       backgroundColor: Colors.BRAND_DARK_BLUE,
     },
     headerLeft: () => <HeaderLeftButton />,
-  };
+  } as const;
 }

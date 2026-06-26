@@ -30,4 +30,4 @@ export const defaultModalNavOpts = {
     },
     headerBackVisible: false,
   },
-};
+} as const;

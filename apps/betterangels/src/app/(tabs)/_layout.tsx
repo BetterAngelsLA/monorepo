@@ -33,8 +33,8 @@ const TabIcon = ({
   label,
 }: TabIconProps): React.ReactElement => (
   <View style={styles.tabIconContainer}>
-    {focused ? <Icon color={color} /> : <InactiveIcon color={color} />}
-    <TextRegular color={color} size="xs" style={styles.labelText}>
+    {focused ? <Icon color={color as string} /> : <InactiveIcon color={color as string} />}
+    <TextRegular color={color as string} size="xs" style={styles.labelText}>
       {label}
     </TextRegular>
   </View>
