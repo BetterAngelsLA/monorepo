@@ -145,6 +145,9 @@ def reservation_update(
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
     clients_data = data.pop("clients", None)
+    if clients_data:
+        _validate_clients(clients_data)
+
     previous_status = reservation.status
 
     for key, value in data.items():
@@ -162,7 +165,6 @@ def reservation_update(
     reservation.full_clean()
     _validate_reservation(reservation)
     reservation.save()
-    _validate_clients(clients_data)
     _set_clients(reservation, clients_data)
 
     return reservation
