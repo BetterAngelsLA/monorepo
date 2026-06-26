@@ -10,6 +10,6 @@
     "**/*.spec.tsx",
     "test-setup.ts"
   ],
-  "files": ["../../node_modules/@nx/expo/typings/svg.d.ts", "../../tools/types/css.d.ts"],
+  "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 }

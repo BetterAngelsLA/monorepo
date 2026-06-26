@@ -14,7 +14,7 @@ export function getDefaultStackNavOptions(
     headerTitleAlign: 'center',
     title: title || '',
     headerStyle: {
-      backgroundColor: Colors.BRAND_DARK_BLUE,
+      backgroundColor: Colors.BRAND_DARK_BLUE as string,
     },
     headerLeft: () => <HeaderLeftButton />,
   };

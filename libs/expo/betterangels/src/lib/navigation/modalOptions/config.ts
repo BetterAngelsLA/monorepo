@@ -8,29 +8,29 @@ export const defaultModalNavOpts: Record<
   card: {
     headerTitleAlign: 'center',
     headerStyle: {
-      backgroundColor: Colors.BRAND_DARK_BLUE,
+      backgroundColor: Colors.BRAND_DARK_BLUE as string,
     },
     headerTitleStyle: {
-      color: Colors.WHITE,
+      color: Colors.WHITE as string,
     },
   },
   modal: {
     headerTitleAlign: 'center',
     headerStyle: {
-      backgroundColor: Colors.BRAND_STEEL_BLUE,
+      backgroundColor: Colors.BRAND_STEEL_BLUE as string,
     },
     headerTitleStyle: {
-      color: Colors.WHITE,
+      color: Colors.WHITE as string,
     },
     headerBackVisible: false,
   },
   fullScreenModal: {
     headerTitleAlign: 'center',
     headerStyle: {
-      backgroundColor: Colors.BRAND_STEEL_BLUE,
+      backgroundColor: Colors.BRAND_STEEL_BLUE as string,
     },
     headerTitleStyle: {
-      color: Colors.WHITE,
+      color: Colors.WHITE as string,
     },
     headerBackVisible: false,
   },
