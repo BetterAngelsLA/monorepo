@@ -41,7 +41,7 @@ export function BottomSheetFullScreenContainer(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     elevation: 1,
   },
 });
