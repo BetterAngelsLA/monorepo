@@ -4,6 +4,7 @@
     "outDir": "../../../dist/out-tsc",
     "module": "esnext",
     "moduleResolution": "Bundler",
+    "composite": true,
     "types": ["jest", "node", "vite/client"]
   }
 }
