@@ -6,17 +6,15 @@
   - Component logic goes in named files (e.g., `TeamsPage.tsx`).
   - Index files (`index.ts`) should only re-export: `export { TeamsPage } from './TeamsPage'`.
   - Never put component logic directly in an index file.
-- **Every lib component must accept `className`** — with few exceptions.
-- **Use `mergeCss` not `clsx`** — `mergeCss` from `@monorepo/react/shared` combines `clsx` + `twMerge`, so overridden Tailwind classes are properly removed. Pass an array of class values: `mergeCss(["text-sm", className])`.
-- **No `className = ''` defaults** — `mergeCss` handles falsy values; defaulting to empty string is unnecessary.
-- **Don't stringify class conditions** — use `condition && 'class'` pattern inside `mergeCss()`, not template literals with empty strings.
+- **Every lib component should accept `className`** — with few exceptions, such as very local/non-shared components.
+- **Use `mergeCss` not `clsx`** — `mergeCss` from `@monorepo/react/shared` combines `clsx` + `twMerge`.
 
 ## State & Data
 
 - **Prefer custom hooks** for data fetching (e.g., `useOrgTeams`) over raw `useQuery` calls in components.
-  - Hooks should handle loading, error, and empty states internally.
+  - Hooks should handle loading and empty states. Return errors to the consumer — the caller decides how to display them. (Exception: local, non-exported hooks that abstract UI logic.)
   - **Co-locate the `.graphql` file with the hook** — the query document and its `__generated__/` output should live in the same directory as the hook (e.g., `hooks/useOrgTeams/teams.graphql`). Consumers import the hook, never the GQL document directly.
-  - Delete the old `.graphql` and `__generated__/` from the previous location after co-locating.
+
 - **Handle loading, error, and empty states** explicitly.
 - **Use `useActiveOrg`** for org-scoped state; never read from localStorage directly.
 
@@ -28,7 +26,11 @@
 
 ## Code Style
 
-- **Avoid nested ternaries in JSX** — use flat `condition && <Component />` patterns instead of `a ? (b ? c : d) : e`.
+- **Avoid ternary operators unless very basic.** Use early returns instead.
+  - "Very basic" means both branches are simple literals or single short identifiers — readable in one glance.
+  - As soon as either branch contains a function call, template literal with expressions, or any non-trivial computation, use `if/else`.
+  - In TSX, use guards for conditional rendering or separate components if it gets complicated.
+  - Example of an acceptable ternary: `const color = isError ? 'red' : 'gray';`
 - **Avoid type casting** (`as`) when possible — make function signatures accept the correct types.
   - If a callback receives `string | null`, the handler should accept `string | null` — don't cast at the call site.
   - Use `??` (nullish coalescing) instead of `||` for defaults where `0` or `''` are valid values.
