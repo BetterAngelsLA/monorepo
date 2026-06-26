@@ -51,12 +51,12 @@ export default function SliderTabs({
   }, [activePathSuffix, items]);
 
   return (
-    <div className="w-full border-b border-[#E5E7EB] bg-white px-5 pt-3">
+    <div className="w-full bg-white px-5 pt-3">
       <div className="w-full overflow-x-auto">
-        <div className="min-w-740px">
-          <div className="relative flex items-center gap-5">
+        <div className="min-w-[740px]">
+          <div className="relative flex items-center border-b border-neutral-90">
             <div
-              className="pointer-events-none absolute bottom-0 left-0 h-0.5 bg-[#008CEE] transition-transform duration-300 ease-out"
+              className="pointer-events-none absolute bottom-0 left-0 z-20 h-0.5 bg-[#008CEE] transition-transform duration-300 ease-out"
               style={{
                 width: `${sliderStyle.width}px`,
                 transform: `translateX(${sliderStyle.left}px)`,
@@ -75,10 +75,11 @@ export default function SliderTabs({
                   to={buildTabPath(basePath, item.pathSuffix)}
                   aria-current={isActive ? 'page' : undefined}
                   className={mergeCss([
-                    'relative z-10 px-4 py-4 text-center leading-none transition-colors',
+                    'relative z-10 px-4 py-3 text-center leading-none transition-colors',
+                    'border border-neutral-90 rounded-t-lg -mr-px',
                     isActive
-                      ? 'text-[#008CEE]'
-                      : 'text-[#6B7280] hover:text-[#4B5563]',
+                      ? 'text-[#008CEE] bg-white border-b-white border-t-2 border-t-[#008CEE] -mb-px'
+                      : 'text-[#6B7280] hover:text-[#4B5563] bg-neutral-97',
                   ])}
                 >
                   <Text variant="subheading-regular" textColor="text-inherit">

@@ -1,19 +1,20 @@
 import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isMutationSuccess } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Form } from '../../form/Form';
 import { GetRoomsDocument } from '../api/__generated__/roomQueries.generated';
 import {
-  CREATE_ROOM_MUTATION,
+  CreateRoomDocument,
   buildCreateRoomInput,
-  type CreateRoomMutationResult,
+  type CreateRoomMutation,
   type CreateRoomMutationVariables,
 } from '../api/createRoomMutation';
 import {
-  UPDATE_ROOM_MUTATION,
+  UpdateRoomDocument,
   buildUpdateRoomInput,
-  type UpdateRoomMutationResult,
+  type UpdateRoomMutation,
   type UpdateRoomMutationVariables,
 } from '../api/updateRoomMutation';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
@@ -58,14 +59,14 @@ export function RoomForm({
   );
 
   const [createRoom, { loading: isCreating }] = useMutation<
-    CreateRoomMutationResult,
+    CreateRoomMutation,
     CreateRoomMutationVariables
-  >(CREATE_ROOM_MUTATION, { refetchQueries });
+  >(CreateRoomDocument, { refetchQueries });
 
   const [updateRoom, { loading: isUpdating }] = useMutation<
-    UpdateRoomMutationResult,
+    UpdateRoomMutation,
     UpdateRoomMutationVariables
-  >(UPDATE_ROOM_MUTATION, { refetchQueries });
+  >(UpdateRoomDocument, { refetchQueries });
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -89,6 +90,10 @@ export function RoomForm({
           );
           return;
         }
+        if (!isMutationSuccess(result?.updateRoom, 'RoomType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
+          return;
+        }
       } else {
         const { data: result } = await createRoom({
           variables: {
@@ -102,6 +107,10 @@ export function RoomForm({
           setSubmissionError(
             firstMessage || 'Unable to create room. Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.createRoom, 'RoomType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
           return;
         }
       }
@@ -149,8 +158,8 @@ export function RoomForm({
               isSubmitting
                 ? 'Submitting…'
                 : isEditMode
-                  ? 'Save Room'
-                  : 'Create Room'
+                ? 'Save Room'
+                : 'Create Room'
             }
           />
         </form>

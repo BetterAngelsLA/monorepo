@@ -8,10 +8,7 @@ import { FormSection } from '../../../form/FormSection';
 import { RadioGroup } from '../../../form/RadioGroup';
 import { TextAreaField } from '../../../form/TextAreaField';
 import { TextField } from '../../../form/TextField';
-import {
-  BOOLEAN_OPTIONS,
-  ROOM_STATUS_OPTIONS,
-} from '../constants/roomFormOptions';
+import { BOOLEAN_OPTIONS } from '../constants/roomFormOptions';
 import type { RoomFormData } from '../formTypes';
 import type { SectionProps } from '../types';
 
@@ -31,7 +28,7 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           <TextField
             id="room-name"
             name="name"
-            label="Room Name"
+            label="Room"
             value={field.value}
             onChange={field.onChange}
             error={errors.name?.message}
@@ -39,27 +36,6 @@ export const BasicInformationSection = memo(function BasicInformationSection({
           />
         )}
       />
-
-      <Controller
-        name="status"
-        control={control}
-        render={({ field }) => (
-          <Dropdown
-            label="Status"
-            placeholder="Select a status"
-            options={ROOM_STATUS_OPTIONS}
-            value={
-              ROOM_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null
-            }
-            onChange={(option) => {
-              if (option) field.onChange(option.value);
-            }}
-          />
-        )}
-      />
-      {errors.status ? (
-        <p className="text-sm text-red-600">{errors.status.message}</p>
-      ) : null}
 
       <Controller
         name="type"

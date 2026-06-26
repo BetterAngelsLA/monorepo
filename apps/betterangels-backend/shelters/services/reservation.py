@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.utils import timezone
+
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Reservation, ReservationClient
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
@@ -12,6 +13,7 @@ from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 if TYPE_CHECKING:
     from accounts.models import User
+
     from shelters.models.shelter import Bed, Room
 
 
@@ -26,6 +28,16 @@ def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | 
             client_profile_id=entry["client_profile_id"],
             is_primary=entry.get("is_primary", False),
         )
+
+
+def _validate_clients(clients_data: list[dict[str, Any]]) -> None:
+    """Validate that exactly one client is primary when multiple clients are assigned."""
+    if len(clients_data) == 1:
+        return
+
+    primary_count = sum(1 for c in clients_data if c.get("is_primary", False))
+    if primary_count != 1:
+        raise ValidationError("Exactly one client must be marked as primary when multiple clients are assigned.")
 
 
 def _validate_reservation(reservation: Reservation) -> None:
@@ -107,6 +119,7 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
     reservation.full_clean()
     _validate_reservation(reservation)
     reservation.save()
+    _validate_clients(clients_data)
     _set_clients(reservation, clients_data)
 
     return reservation
@@ -149,6 +162,7 @@ def reservation_update(
     reservation.full_clean()
     _validate_reservation(reservation)
     reservation.save()
+    _validate_clients(clients_data)
     _set_clients(reservation, clients_data)
 
     return reservation
