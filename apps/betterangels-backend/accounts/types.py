@@ -8,30 +8,18 @@ import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
+from common.permissions.utils import get_registered_permission_enums
 from django.db.models import Q, QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
-from reports.permissions import ReportPermissions
-from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
-from teams.permissions import TeamPermissions
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
 from accounts.permissions import _annotation_key
 
 from .models import User
-from .permissions import UserOrganizationPermissions
-
-# All permission enums whose values are returned in the org's permissions list.
-# To add a new permission domain, add its enum here — no other changes needed.
-ORG_PERMISSION_ENUMS = [
-    UserOrganizationPermissions,
-    ReportPermissions,
-    ShelterPermissions,
-    TeamPermissions,
-]
 
 
 @strawberry.input
@@ -125,7 +113,7 @@ class CurrentUserOrganizationType(OrganizationType):
         # Annotate each org with boolean flags for every known permission.
         # The resolver collects the ones that are True.
         annotations: dict[str, Q] = {}
-        for enum in ORG_PERMISSION_ENUMS:
+        for enum in get_registered_permission_enums():
             for perm in enum:
                 annotations[_annotation_key(perm)] = Q(
                     permission_groups__group__permissions__codename=perm.name,
@@ -136,7 +124,7 @@ class CurrentUserOrganizationType(OrganizationType):
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
         perms: List[str] = []
-        for enum in ORG_PERMISSION_ENUMS:
+        for enum in get_registered_permission_enums():
             for perm in enum:
                 if getattr(self, _annotation_key(perm), False):
                     perms.append(perm.value)

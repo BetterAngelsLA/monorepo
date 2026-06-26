@@ -238,9 +238,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        org_perms = {
-            o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]
-        }
+        org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
         self.assertEqual(org_perms["o1"], sorted(expected_permissions))
         self.assertEqual(
             org_perms["o2"],

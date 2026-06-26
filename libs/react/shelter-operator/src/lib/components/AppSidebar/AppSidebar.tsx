@@ -5,9 +5,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import {
-  UserOrganizationPermissions,
-} from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '@monorepo/ba-permissions';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   isShelterManageRoute,

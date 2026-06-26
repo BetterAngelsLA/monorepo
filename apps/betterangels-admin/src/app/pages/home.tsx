@@ -1,3 +1,4 @@
+import { PermissionEnum } from '@monorepo/ba-permissions';
 import {
   ReportPermissions,
   UserOrganizationPermissions,
@@ -5,7 +6,7 @@ import {
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
-const permissionRoutes: { permission: string; path: string }[] = [
+const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
   { permission: UserOrganizationPermissions.ViewOrgMembers, path: '/users' },
   { permission: ReportPermissions.ViewReports, path: '/reports' },
 ];

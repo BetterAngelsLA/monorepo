@@ -1,0 +1,7 @@
+{
+  "extends": "../../.eslintrc.json",
+  "ignorePatterns": ["**/__generated__/**"],
+  "rules": {
+    "import/export": "off"
+  }
+}

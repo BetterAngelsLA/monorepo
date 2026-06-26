@@ -22,11 +22,16 @@ from tasks.schema import Query as TasksQuery
 from teams.schema import Mutation as TeamsMutation
 from teams.schema import Query as TeamsQuery
 
-# Ensure strawberry enum registrations fire during schema generation.
-# These modules use strawberry.enum() as a function call (not a decorator),
-# so their imports must be triggered for the enums to appear in the schema.
-import shelters.permissions  # noqa: F401  — registers ShelterPermissions
-import teams.permissions  # noqa: F401     — registers TeamPermissions
+# Ensure permission enum registrations fire during schema generation.
+# @permission_enum decorators fire at import time; model PermissionSets
+# are auto-discovered below.
+import accounts.permissions  # noqa: F401
+import clients.permissions  # noqa: F401
+import reports.permissions  # noqa: F401
+
+from common.permissions.utils import register_model_permissions  # noqa: E402
+
+register_model_permissions()
 
 # Schema Stitching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
