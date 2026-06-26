@@ -31,7 +31,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const composedLinks = [errorLink, uploadHttpLink];
+  const composedLinks: ApolloLink[] = [errorLink, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (

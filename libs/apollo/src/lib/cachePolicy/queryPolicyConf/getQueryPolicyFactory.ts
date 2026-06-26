@@ -163,7 +163,15 @@ export function getQueryPolicyFactory<
   paginationMode = PaginationModeEnum.Offset,
   paginationVariables,
   mergeOpts = { mode: MergeModeEnum.Object },
-}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>) {
+}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>): {
+  key: TFieldKey;
+  buildFn: () => {
+    entityTypename: TypenameOf<TItem>;
+    fieldPolicy: FieldPolicy;
+    keyFields: TypePolicy['keyFields'];
+    queryPolicyConfig: ReturnType<typeof generateQueryPolicyConfig>;
+  };
+} {
   const isArrayMergeMode = mergeOpts.mode === MergeModeEnum.Array;
 
   if (isArrayMergeMode) {
