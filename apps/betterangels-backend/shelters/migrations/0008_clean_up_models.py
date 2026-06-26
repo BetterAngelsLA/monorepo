@@ -223,7 +223,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="reservation",
             constraint=models.UniqueConstraint(
-                condition=models.Q(("status__in", {"checked_in", "check_in_overdue", "confirmed"})),
+                condition=models.Q(("status__in", ("checked_in", "check_in_overdue", "confirmed"))),
                 fields=("bed",),
                 name="unique_active_reservation_per_bed",
             ),
@@ -232,7 +232,7 @@ class Migration(migrations.Migration):
             model_name="reservation",
             constraint=models.UniqueConstraint(
                 condition=models.Q(
-                    ("bed__isnull", True), ("status__in", {"checked_in", "check_in_overdue", "confirmed"})
+                    ("bed__isnull", True), ("status__in", ("checked_in", "check_in_overdue", "confirmed"))
                 ),
                 fields=("room",),
                 name="unique_active_reservation_per_room",
