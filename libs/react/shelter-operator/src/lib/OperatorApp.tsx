@@ -27,7 +27,8 @@ import {
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
 import { CreateOrganizationPage } from './pages/createOrganization';
-import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
+import { OperatorAuthProvider } from './providers';
 import {
   manageSegments,
   paths,
