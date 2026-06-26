@@ -3,8 +3,8 @@ import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  OperatorShelterType,
   RoomStatusChoices,
-  ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
 import { shelterCreateRoomRoute, shelterEditRoomRoute } from '../../routing';
@@ -60,7 +60,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     maintenanceFlag: false,
     occupantIds: [],
     pets: [],
-    shelter: {} as ShelterType,
+    shelter: {} as OperatorShelterType,
     storage: false,
   }));
 

@@ -2218,9 +2218,9 @@ type ReservationType {
   room: RoomType
   startDate: Date
   status: ReservationStatusChoices!
+  clients: [ReservationClientAssignmentType!]!
   shelter: OperatorShelterType!
   createdById: ID
-  clients: [ReservationClientAssignmentType!]!
 }
 
 type ReservationTypeOffsetPaginated {
