@@ -6196,7 +6196,7 @@ __metadata:
     "@react-native-community/datetimepicker": "npm:9.1.0"
     "@react-native-picker/picker": "npm:2.11.4"
     "@react-native-vector-icons/ant-design": "npm:^13.1.2"
-    "@react-native/jest-preset": "npm:^0.86.0"
+    "@react-native/jest-preset": "npm:~0.85.0"
     "@sanity/client": "npm:^6.27.1"
     "@shopify/flash-list": "npm:2.0.2"
     "@storybook/addon-docs": "npm:^10.1.1"
@@ -6348,7 +6348,7 @@ __metadata:
     react-native-worklets: "npm:0.8.3"
     react-refresh: "npm:^0.18.0"
     react-router-dom: "npm:6.30.3"
-    react-test-renderer: "npm:19.2.0"
+    react-test-renderer: "npm:19.2.3"
     remeda: "npm:^2.20.0"
     rxjs: "npm:^7.8.2"
     sanitize-html: "npm:^2.17.0"
@@ -8887,18 +8887,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native/jest-preset@npm:^0.86.0":
-  version: 0.86.0
-  resolution: "@react-native/jest-preset@npm:0.86.0"
+"@react-native/jest-preset@npm:~0.85.0":
+  version: 0.85.3
+  resolution: "@react-native/jest-preset@npm:0.85.3"
   dependencies:
     "@jest/create-cache-key-function": "npm:^29.7.0"
-    "@react-native/js-polyfills": "npm:0.86.0"
+    "@react-native/js-polyfills": "npm:0.85.3"
     babel-jest: "npm:^29.7.0"
     jest-environment-node: "npm:^29.7.0"
     regenerator-runtime: "npm:^0.13.2"
   peerDependencies:
     react: ^19.2.3
-  checksum: 10/4dbb2a000da21753203dbaa5dd37224add83463ee46be1ac120974a4b1dfd836cf91831921960699efcf4508eb191707fba3b2d38924367cd2d77635542c1620
+  checksum: 10/663cfa48b0a9b18d965d6d107cb9a799262326ab7b17bb508ba27f98be23e01301f02cce290256ca2c3e844da752bfdb8f485c94821f96ac1ec59486c9dbb4ef
   languageName: node
   linkType: hard
 
@@ -8906,13 +8906,6 @@ __metadata:
   version: 0.85.3
   resolution: "@react-native/js-polyfills@npm:0.85.3"
   checksum: 10/17eedd2497c128f5c575f3804e2f23c441285e88a64522d740809588d93d11aade5069b3f20edec43715a8aecc3b90e816847e3ff91565bd35a9b692701265a1
-  languageName: node
-  linkType: hard
-
-"@react-native/js-polyfills@npm:0.86.0":
-  version: 0.86.0
-  resolution: "@react-native/js-polyfills@npm:0.86.0"
-  checksum: 10/cdd2a0d8c6202783754a77e05285884eeb884d5640b7068d9d38c6486028a6c49ff72a03da42699247233f250ed52a4c991823617490929d1a501e30bc187ddf
   languageName: node
   linkType: hard
 
@@ -26661,7 +26654,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^19.1.0, react-is@npm:^19.2.0":
+"react-is@npm:^19.1.0":
   version: 19.2.5
   resolution: "react-is@npm:19.2.5"
   checksum: 10/b2e18d4efd39496474956684a3757c43b9102af56add174abf2a46a6c1441dbdfe5fa7d9e7d7ebb42f543ffc9c7941fc74eb1e2bfdbf08979ea9e2ccc36da600
@@ -27163,18 +27156,6 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10/62498094ff3877a37f351b29e6cad9e38b2eb1ac3c0cb27ebf80aee96554f80b35e17bdb552bcd7ac8b7cb9904fea93ea5668f2057c73d38f90b5d46bb9b27ab
-  languageName: node
-  linkType: hard
-
-"react-test-renderer@npm:19.2.0":
-  version: 19.2.0
-  resolution: "react-test-renderer@npm:19.2.0"
-  dependencies:
-    react-is: "npm:^19.2.0"
-    scheduler: "npm:^0.27.0"
-  peerDependencies:
-    react: ^19.2.0
-  checksum: 10/1a072bf5c383ee9cec1eed5872114a25d8029e8fabe17a9154cbb7b5d6e5570711efc3e80e336d170bb1f60e29d395087147891fa198743d17c29ff86782cde3
   languageName: node
   linkType: hard
 

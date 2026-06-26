@@ -1,3 +1,9 @@
 {
-  "babelrcRoots": ["*"]
+  "presets": ["babel-preset-expo"],
+  "overrides": [
+    {
+      "include": ["**/node_modules/@react-native/jest-preset/**"],
+      "presets": ["babel-preset-expo"]
+    }
+  ]
 }
