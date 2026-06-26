@@ -5,16 +5,14 @@ type TProps = {
   title?: string;
 };
 
-export function getDefaultStackNavOptions(
-  props?: TProps
-) {
+export function getDefaultStackNavOptions(props?: TProps) {
   const { title } = props || {};
 
   return {
     headerTitleAlign: 'center',
     title: title || '',
     headerStyle: {
-      backgroundColor: Colors.BRAND_DARK_BLUE as string,
+      backgroundColor: Colors.BRAND_DARK_BLUE,
     },
     headerLeft: () => <HeaderLeftButton />,
   };

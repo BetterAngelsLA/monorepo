@@ -14,6 +14,8 @@
     "strict": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    // Bundler-based monorepo (Vite, Metro) — CSS side-effect imports are
+    // handled by bundlers, not by TypeScript's module resolution.
     "noUncheckedSideEffectImports": false,
     "paths": {
       "@betterangels/*": ["./apps/betterangels/*"],
