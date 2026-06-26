@@ -219,7 +219,10 @@ def reservation_status_change_counts(
         pgh_created_at__lt=end_dt,
     )
 
-    return events.aggregate(
+    # ``QuerySet.aggregate`` is typed as ``dict[str, Any]`` and conditional
+    # ``Count(..., filter=...)`` aggregates can be ``None`` on empty rowsets,
+    # so we build the ``TypedDict`` explicitly to satisfy mypy.
+    aggregated = events.aggregate(
         STATUS_TO_CHECK_IN_OVERDUE=Count(
             "pgh_obj_id",
             distinct=True,
@@ -233,3 +236,9 @@ def reservation_status_change_counts(
             filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
         ),
     )
+    return {
+        "STATUS_TO_CHECK_IN_OVERDUE": aggregated["STATUS_TO_CHECK_IN_OVERDUE"] or 0,
+        "STATUS_TO_CANCELLED": aggregated["STATUS_TO_CANCELLED"] or 0,
+        "STATUS_TO_CHECKED_IN": aggregated["STATUS_TO_CHECKED_IN"] or 0,
+        "STATUS_OVERDUE_TO_CHECKED_IN": aggregated["STATUS_OVERDUE_TO_CHECKED_IN"] or 0,
+    }
