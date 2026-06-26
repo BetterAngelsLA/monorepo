@@ -54,11 +54,11 @@ from .lookups import (
 )
 from .service import Service
 
-ACTIVE_RESERVATION_STATUSES = {
+ACTIVE_RESERVATION_STATUSES = (
     ReservationStatusChoices.CHECKED_IN,
     ReservationStatusChoices.CHECK_IN_OVERDUE,
     ReservationStatusChoices.CONFIRMED,
-}
+)
 
 
 @pghistory.track(
