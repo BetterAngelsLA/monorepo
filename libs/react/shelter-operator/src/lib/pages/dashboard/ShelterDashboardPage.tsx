@@ -4,20 +4,22 @@ import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { BedsView } from '../../components/beds/BedsView';
+import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { OverviewView } from '../../components/overview/OverviewView';
+import { ReservationsView } from '../../components/reservations/ReservationsView';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterManageRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
-type ShelterTab = 'overview' | 'rooms' | 'beds' | 'reservations' | 'occupancy';
+type ShelterTab = 'overview' | 'rooms' | 'beds' | 'reservations' | 'occupants';
 
 const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
   overview: { label: 'Overview', pathSuffix: '' },
   rooms: { label: 'Rooms', pathSuffix: 'rooms' },
   beds: { label: 'Beds', pathSuffix: 'beds' },
   reservations: { label: 'Reservations', pathSuffix: 'reservations' },
-  occupancy: { label: 'Occupants', pathSuffix: 'occupancy' },
+  occupants: { label: 'Occupants', pathSuffix: 'occupants' },
 };
 
 const TAB_ITEMS: SliderTabItem[] = [
@@ -25,7 +27,7 @@ const TAB_ITEMS: SliderTabItem[] = [
   TAB_CONFIG.rooms,
   TAB_CONFIG.beds,
   TAB_CONFIG.reservations,
-  TAB_CONFIG.occupancy,
+  TAB_CONFIG.occupants,
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
@@ -81,6 +83,8 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
       {tab === 'rooms' && <RoomsView shelterId={id} />}
       {tab === 'overview' && <OverviewView shelterId={id} />}
       {tab === 'beds' && <BedsView shelterId={id} />}
+      {tab === 'occupants' && <OccupantsView shelterId={id} />}
+      {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>
   );
 }
