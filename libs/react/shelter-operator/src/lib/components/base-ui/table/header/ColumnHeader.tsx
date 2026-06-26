@@ -15,6 +15,7 @@ type ColumnHeaderProps<TItem> = {
   onClearFilter: (columnKey: string) => void;
   openFilterColumn: string | null;
   setOpenFilterColumn: Dispatch<SetStateAction<string | null>>;
+  labelClassName?: string;
   /** Resolved filter options (auto-derived from data or explicit override). */
   filterOptions?: ColumnFilterOption[];
 };
@@ -30,6 +31,7 @@ export function ColumnHeader<TItem>({
   openFilterColumn,
   setOpenFilterColumn,
   filterOptions,
+  labelClassName,
 }: ColumnHeaderProps<TItem>) {
   const isFilterOpen = openFilterColumn === column.key;
 
@@ -72,10 +74,10 @@ export function ColumnHeader<TItem>({
           className={mergeCss([
             'flex items-center gap-1 bg-transparent border-none p-0 font-inherit text-inherit text-[22px]',
             isSortable && 'cursor-pointer select-none',
+            labelClassName,
           ])}
         >
           {column.label}
-
           {isSortable && (
             <SortIcon
               isActive={

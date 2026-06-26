@@ -1,8 +1,8 @@
 import type {
-  CreateBedInput,
-  UpdateBedInput,
+  CreateRoomInput,
+  UpdateRoomInput,
 } from '../../../apollo/graphql/__generated__/types';
-import type { BedFormData } from '../bed-form/formTypes';
+import type { RoomFormData } from '../room-form/formTypes';
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
@@ -13,18 +13,15 @@ const sanitizeString = (value?: string | null): string | undefined => {
   return trimmed.length ? trimmed : undefined;
 };
 
-const numberOrUndefined = (value: number | null | undefined) =>
-  typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
-
-const buildBedFieldInput = (formData: BedFormData) => ({
-  roomId: formData.roomId ?? undefined,
-  b7: formData.b7,
-  fees: numberOrUndefined(formData.fees),
-  maintenanceFlag: formData.maintenanceFlag,
+const buildRoomFieldInput = (formData: RoomFormData) => ({
   name: sanitizeString(formData.name),
-  statusNotes: sanitizeString(formData.statusNotes),
-  storage: formData.storage,
   type: formData.type ?? undefined,
+  typeOther: sanitizeString(formData.typeOther),
+  notes: sanitizeString(formData.notes),
+  amenities: sanitizeString(formData.amenities),
+  medicalRespite: formData.medicalRespite,
+  maintenanceFlag: formData.maintenanceFlag,
+  storage: formData.storage,
   accessibility: compactEnumValues(formData.accessibility).length
     ? compactEnumValues(formData.accessibility)
     : undefined,
@@ -34,21 +31,19 @@ const buildBedFieldInput = (formData: BedFormData) => ({
   funders: compactEnumValues(formData.funders).length
     ? compactEnumValues(formData.funders)
     : undefined,
-  medicalNeeds: compactEnumValues(formData.medicalNeeds).length
-    ? compactEnumValues(formData.medicalNeeds)
-    : undefined,
   pets: compactEnumValues(formData.pets).length
     ? compactEnumValues(formData.pets)
     : undefined,
 });
 
-export const buildCreateBedInput = (
-  formData: BedFormData,
+export const buildCreateRoomInput = (
+  formData: RoomFormData,
   shelterId: string
-): CreateBedInput => ({
+): CreateRoomInput => ({
   shelterId,
-  ...buildBedFieldInput(formData),
+  ...buildRoomFieldInput(formData),
+  name: sanitizeString(formData.name) ?? '',
 });
 
-export const buildUpdateBedInput = (formData: BedFormData): UpdateBedInput =>
-  buildBedFieldInput(formData);
+export const buildUpdateRoomInput = (formData: RoomFormData): UpdateRoomInput =>
+  buildRoomFieldInput(formData);

@@ -1,12 +1,11 @@
 import { z } from 'zod';
 import {
   AccessibilityChoices,
-  BedStatusChoices,
   BedTypeChoices,
   DemographicChoices,
   FunderChoices,
   MedicalNeedChoices,
-  PetChoices,
+  PetChoices
 } from '../../../../apollo/graphql/__generated__/types';
 
 export const formSchema = z.object({
@@ -24,7 +23,6 @@ export const formSchema = z.object({
   name: z.string(),
   pets: z.array(z.enum(PetChoices)),
   roomId: z.string().nullable(),
-  status: z.enum(BedStatusChoices),
   statusNotes: z.string(),
   storage: z.boolean(),
   type: z.enum(BedTypeChoices).nullable(),

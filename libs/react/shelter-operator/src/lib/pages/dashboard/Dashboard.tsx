@@ -1,10 +1,9 @@
 import { useQuery } from '@apollo/client/react';
-import { operatorPath } from '@monorepo/react/shelter';
-import { useAtomValue } from 'jotai';
-import { BookCheck, Search, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@monorepo/react/shared';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
+import { Search, Settings2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import type {
   DemographicChoices,
   ShelterChoices,
@@ -47,10 +46,7 @@ const emptyState = (
 );
 
 export function Dashboard() {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isOperatorRoot =
-    pathname === operatorPath || pathname === `${operatorPath}/`;
 
   const { activeOrg, organizations } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
@@ -119,7 +115,7 @@ export function Dashboard() {
           name: s.name ?? null,
           address: s.location?.place ?? null,
           totalBeds: s.totalBeds ?? null,
-          availableBeds: null,
+          availableBeds: s.bedsByStatus.available ?? null,
           tags: null,
           status: s.status,
         })) ?? []
@@ -143,101 +139,86 @@ export function Dashboard() {
   }
 
   return (
-    <>
-      <div className="flex flex-col mx-4">
-        {/* Search, filter, sort, and view controls */}
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-            <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-              <Search size={20} />
-            </span>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search shelters"
-              className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-            />
-          </label>
+    <div className="flex flex-col mx-4">
+      {/* Search, filter, sort, and view controls */}
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
+        style={{ fontFamily: 'Poppins, sans-serif' }}
+      >
+        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
+          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+            <Search size={20} />
+          </span>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search shelters"
+            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
+          />
+        </label>
 
-          {/* SEARCH BAR + FILTERING */}
+        {/* SEARCH BAR + FILTERING */}
 
-          <div className="flex w-full items-center justify-between mb-4">
-            <div className="text-sm text-gray-600">{totalCount} Results</div>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <ShelterFilterPanel />
+        <div className="flex w-full items-center justify-between mb-4">
+          <div className="text-sm text-gray-600">{totalCount} Results</div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <ShelterFilterPanel />
 
-              <Button
-                variant="primary"
-                leftIcon={<Settings2 size={20} />}
-                rightIcon={false}
-              >
-                Sort
-              </Button>
-            </div>
-          </div>
-        </form>
-
-        {/* TABLE */}
-        <ShelterTable
-          rows={shelters}
-          getRowKey={(shelter) => shelter.id}
-          onRowClick={handleRowClick}
-          loading={loading}
-          loadingState={loadingState}
-          emptyState={emptyState}
-          headerStyle={poppinsStyle}
-          rowStyle={poppinsStyle}
-        />
-
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
-          <div>
-            Page {page} of {totalPages}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
+            <Button
+              variant="primary"
+              leftIcon={<Settings2 size={20} />}
+              rightIcon={false}
             >
-              Prev
-            </button>
-
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </button>
+              Sort
+            </Button>
           </div>
         </div>
+      </form>
 
-        {error && (
-          <div className="mt-2 text-xs text-red-500">
-            Failed to load shelters.
-          </div>
-        )}
+      {/* TABLE */}
+      <ShelterTable
+        rows={shelters}
+        getRowKey={(shelter) => shelter.id}
+        onRowClick={handleRowClick}
+        loading={loading}
+        loadingState={loadingState}
+        emptyState={emptyState}
+        headerStyle={poppinsStyle}
+        rowStyle={poppinsStyle}
+      />
+
+      {/* PAGINATION */}
+      <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
+        <div>
+          Page {page} of {totalPages}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Prev
+          </button>
+
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
-      {isOperatorRoot && (
-        <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Button
-            leftIcon={<BookCheck size={24} />}
-            rightIcon={false}
-            variant="floating"
-            onClick={() => navigate(paths.reservation)}
-          >
-            Reserve
-          </Button>
+      {error && (
+        <div className="mt-2 text-xs text-red-500">
+          Failed to load shelters.
         </div>
       )}
-    </>
+    </div>
   );
 }
