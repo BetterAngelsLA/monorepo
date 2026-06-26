@@ -1,4 +1,4 @@
-import type { PermissionEnum } from '@monorepo/ba-permissions';
+
 
 import {
   localStorageAdapter,
@@ -30,7 +30,7 @@ export interface ActiveOrgState {
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /** Check if the active org has a specific permission. */
-  hasPermission: (permission: PermissionEnum) => boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 /**
@@ -123,7 +123,7 @@ export function useActiveOrgState(
   );
 
   const hasPermission = useCallback(
-    (permission: PermissionEnum): boolean => permSet.has(permission),
+    (permission: string): boolean => permSet.has(permission),
     [permSet]
   );
 

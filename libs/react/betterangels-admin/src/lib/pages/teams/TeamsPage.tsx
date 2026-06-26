@@ -11,12 +11,12 @@ import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
 import {
   Ordering,
+  TeamPermissions,
   TeamType,
 } from '../../apollo/graphql/__generated__/types';
-import { TeamPermissions } from '@monorepo/ba-permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '@monorepo/ba-platform';
+import { useActiveOrg } from '../../providers';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
