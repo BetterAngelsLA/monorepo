@@ -1,6 +1,7 @@
 import { Text } from '../../base-ui/text/text';
 
-const cardClassName = 'rounded-xl border border-[#E5E7EB] bg-white p-5';
+const cardClassName =
+  'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
 
 export type ChartLegendItem = { label: string; color: string };
 
@@ -68,7 +69,7 @@ export function ChartCardPlaceholder({
   return (
     <section className={cardClassName} data-testid={testId}>
       <div className="flex items-start justify-between gap-3">
-        <Text variant="body-bold" textColor="text-[#111827]">
+        <Text variant="subheading" textColor="text-[#111827]">
           {title}
         </Text>
         <CountPercentageToggle />
@@ -76,7 +77,7 @@ export function ChartCardPlaceholder({
 
       {legend && <ChartLegend items={legend} />}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex gap-2">
         <div className="flex items-center">
           <span
             className="text-xs text-[#9CA3AF]"
@@ -86,7 +87,7 @@ export function ChartCardPlaceholder({
           </span>
         </div>
         <div className="flex-1">
-          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-[#D1D5DB] bg-[#F9FAFB]">
+          <div className="flex min-h-[340px] items-center justify-center rounded-xl border border-dashed border-[#D1D5DB] bg-[#F9FAFB]">
             <Text variant="body" textColor="text-[#9CA3AF]">
               {title} chart placeholder
             </Text>

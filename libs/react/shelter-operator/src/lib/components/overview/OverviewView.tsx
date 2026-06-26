@@ -17,7 +17,7 @@ export function OverviewView() {
 
       <ReservationStatusChanges />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         <ChartCardPlaceholder
           title="Bed Status"
           yAxisLabel="Status by %"
