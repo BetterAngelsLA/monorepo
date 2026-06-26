@@ -2,8 +2,6 @@ import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-
-type Router = ReturnType<typeof useRouter>;
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
   OperationMessage,
@@ -26,6 +24,8 @@ import {
 } from './__generated__/clientContact.generated';
 import { defaultFormState, toFormState } from './toFormState';
 import { TClientContactFormState, TFormKey } from './types';
+
+type Router = ReturnType<typeof useRouter>;
 
 type TProps = {
   clientProfile?: TClientProfile;
