@@ -1,7 +1,9 @@
 import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
-import { Router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+
+type Router = ReturnType<typeof useRouter>;
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
   OperationMessage,

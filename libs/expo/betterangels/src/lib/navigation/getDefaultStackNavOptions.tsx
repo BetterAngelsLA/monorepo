@@ -1,5 +1,4 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { HeaderLeftButton } from './HeaderLeftButton';
 
 type TProps = {
@@ -8,7 +7,7 @@ type TProps = {
 
 export function getDefaultStackNavOptions(
   props?: TProps
-): NativeStackNavigationOptions {
+) {
   const { title } = props || {};
 
   return {
