@@ -21,7 +21,7 @@ import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-import { useActiveOrg } from '../../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 

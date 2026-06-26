@@ -1,9 +1,9 @@
+import { PermissionEnum } from '@monorepo/ba-permissions';
 import {
-  PermissionEnum,
   ReportPermissions,
-  useActiveOrg,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
 const permissionRoutes: { permission: PermissionEnum; path: string }[] = [

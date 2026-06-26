@@ -1,7 +1,5 @@
-import {
-  PermissionEnum,
-  useActiveOrg,
-} from '@monorepo/react/betterangels-admin';
+import type { PermissionEnum } from '@monorepo/ba-permissions';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
 type IProps = {

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
-import { useActiveOrg } from '../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
