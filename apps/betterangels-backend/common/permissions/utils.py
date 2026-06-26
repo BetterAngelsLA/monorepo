@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import or_
-from typing import Any, Protocol, Sequence, Tuple, Type, TypeVar, cast
+from typing import Any, Sequence, Tuple, Type, TypeVar
 
 import strawberry
-from common.errors import UnauthenticatedGQLError
 from django.contrib.auth.models import AbstractBaseUser, Group
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
@@ -13,6 +12,66 @@ from guardian.shortcuts import assign_perm
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+
+from common.errors import UnauthenticatedGQLError
+
+
+# ── Permission enum registry (frontend codegen) ───────────────────────────────
+
+_permission_enum_registry: list[type[TextChoices]] = []
+
+
+def register_permission(cls: type[TextChoices]) -> type[TextChoices]:
+    """Decorator — registers in the frontend permission const registry.
+
+    Usage::
+
+        @register_permission
+        class UserOrganizationPermissions(models.TextChoices):
+            VIEW_ORG_MEMBERS = "organizations.view_org_members", ...
+    """
+    _permission_enum_registry.append(cls)
+    return cls
+
+
+def get_registered_permission_enums() -> list[type[TextChoices]]:
+    """Return all enums registered via :func:`register_permission`."""
+    return list(_permission_enum_registry)
+
+
+def register_model_permissions() -> None:
+    """Auto-discover model PermissionSets and register them as TextChoices.
+
+    Call once after Django app registry is ready (e.g. in schema.py).
+    Models that declare an inner ``class perms(PermissionSet)`` are
+    automatically discovered and their permission values registered
+    for frontend codegen and the org permissions resolver.
+    """
+    from django.apps import apps
+
+    for model in apps.get_models():
+        perms_cls = getattr(model, "perms", None)
+        if perms_cls is None or not isinstance(perms_cls, type):
+            continue
+
+        members: list[tuple[str, str]] = []
+        for attr_name in dir(perms_cls):
+            if attr_name.startswith("_") or attr_name in ("contribute_to_class",):
+                continue
+            value = getattr(perms_cls, attr_name, None)
+            if isinstance(value, str) and "." in value:
+                members.append((attr_name, value))
+
+        if not members:
+            continue
+
+        name = f"{model.__name__}Permissions"
+        # Avoid duplicate registration
+        if any(e.__name__ == name for e in _permission_enum_registry):
+            continue
+
+        enum_cls = TextChoices(name, members)
+        _permission_enum_registry.append(enum_cls)
 
 
 def perm(codename: str, description: str) -> str:
@@ -23,46 +82,6 @@ def perm(codename: str, description: str) -> str:
     enabling full IDE autocomplete.
     """
     return (codename, description)  # type: ignore[return-value]
-
-
-class HasPerms(Protocol):
-    """Protocol for models that define a ``perms`` PermissionSet.
-
-    Ensures type-checkers reject plain ``models.Model`` subclasses that
-    lack the ``.perms`` attribute.
-    """
-
-    perms: type  # PermissionSet subclass
-
-
-def permissions_enum_from_model(model: type[Model]) -> type[TextChoices]:
-    """Build a TextChoices subclass from ``model.perms`` at import time.
-
-    Reads the raw ``perm()`` tuples from the PermissionSet class attributes
-    (no Django signals needed).  The name is ``<ModelName>Permissions``.
-
-    Usage::
-
-        from shelters.models import Shelter
-        ShelterPermissions = permissions_enum_from_model(Shelter)
-    """
-    if not hasattr(model, "perms"):
-        raise TypeError(f"{model.__name__} does not have a 'perms' PermissionSet.")
-    perms_cls = model.perms
-    app_label = model._meta.app_label
-    model_name = model._meta.model_name
-    name = f"{model.__name__}Permissions"
-
-    members: list[tuple[str, tuple[str, str]]] = [
-        (action.upper(), (f"{app_label}.{action}_{model_name}", f"Can {action} {model_name}"))
-        for action in ("add", "change", "delete", "view")
-    ]
-    for attr_name in list(vars(perms_cls)):
-        value = vars(perms_cls)[attr_name]
-        if isinstance(value, tuple) and len(value) == 2 and all(isinstance(v, str) for v in value):
-            codename, description = value
-            members.append((attr_name, (f"{app_label}.{codename}", description)))
-    return cast(type[TextChoices], TextChoices(name, members))  # type: ignore[call-overload]  # django-stubs: ChoicesType metaclass not stubbed
 
 
 class PermissionSet:
@@ -191,9 +210,6 @@ def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__
     The default *prefix* ``permission_groups__group__permissions``
     resolves from ``Organization`` through ``PermissionGroup`` →
     ``Group`` → ``Permission`` → ``ContentType``.
-
-    Pass ``prefix="group__permissions"`` when querying ``PermissionGroup``
-    directly (e.g. in ``permission_annotations``).
     """
     return Q(
         **{f"{prefix}__content_type__app_label": app_label},

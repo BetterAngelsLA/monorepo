@@ -185,20 +185,20 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             (
                 OrgRoleEnum.ADMIN,
                 [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.value,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.value,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.value,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.value,
                 ],
             ),
             (
                 OrgRoleEnum.SUPERUSER,
                 [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.value,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.value,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.value,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.value,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.value,
                 ],
             ),
         ],
@@ -220,9 +220,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        permissions {
-                            accounts
-                        }
+                        permissions
                     }
                 }
             }
@@ -240,9 +238,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        org_perms = {
-            o["name"]: sorted(o["permissions"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
-        }
+        org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
         self.assertEqual(org_perms["o1"], sorted(expected_permissions))
         self.assertEqual(
             org_perms["o2"],

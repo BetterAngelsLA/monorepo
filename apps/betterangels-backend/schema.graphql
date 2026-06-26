@@ -150,7 +150,7 @@ type BedType {
   name: String
   pets: [PetType!]!
   room: RoomType
-  shelter: OperatorShelterType!
+  shelter: ShelterType!
   statusNotes: String
   storage: Boolean!
   type: BedTypeChoices
@@ -814,7 +814,7 @@ union CreateTeamPayload = TeamType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  permissions: OrgPermissions!
+  permissions: [String!]!
 }
 
 type CurrentUserType {
@@ -1805,13 +1805,6 @@ input OrgInvitationInput {
   permissionTemplate: PermissionTemplateEnum!
 }
 
-type OrgPermissions {
-  accounts: [UserOrganizationPermissions!]!
-  reports: [ReportPermissions!]!
-  shelters: [ShelterPermissions!]!
-  teams: [TeamPermissions!]!
-}
-
 enum OrgRoleEnum {
   MEMBER
   ADMIN
@@ -2152,10 +2145,6 @@ input RemoveOrganizationMemberInput {
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
 
-enum ReportPermissions {
-  VIEW_REPORTS
-}
-
 type ReportSummaryType {
   totalNotes: Int!
   uniqueClients: Int!
@@ -2170,8 +2159,7 @@ type ReportSummaryType {
 }
 
 type ReservationClientAssignmentType {
-  id: ID!
-  clientProfile: ClientProfileType!
+  clientProfileId: ID!
   isPrimary: Boolean!
 }
 
@@ -2218,9 +2206,9 @@ type ReservationType {
   room: RoomType
   startDate: Date
   status: ReservationStatusChoices!
-  clients: [ReservationClientAssignmentType!]!
   shelter: OperatorShelterType!
   createdById: ID
+  clients: [ReservationClientAssignmentType!]!
 }
 
 type ReservationTypeOffsetPaginated {
@@ -2320,7 +2308,7 @@ type RoomType {
   name: String!
   notes: String
   pets: [PetType!]!
-  shelter: OperatorShelterType!
+  shelter: ShelterType!
   storage: Boolean!
   type: RoomStyleChoices
   typeOther: String
@@ -2527,13 +2515,6 @@ type ShelterLocationType {
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
-}
-
-enum ShelterPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
 }
 
 input ShelterPhotoFromUploadInput {
@@ -2817,13 +2798,6 @@ type TaskTypeOffsetPaginated {
   results: [TaskType!]!
 }
 
-enum TeamPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
 type TeamType {
   id: ID!
   slug: String!
@@ -2853,7 +2827,6 @@ input UpdateBedInput {
   demographics: [DemographicChoices!]
   fees: Int
   funders: [FunderChoices!]
-  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean
   medicalNeeds: [MedicalNeedChoices!]
@@ -3151,14 +3124,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-}
 
 type UserType {
   firstName: NonBlankString
