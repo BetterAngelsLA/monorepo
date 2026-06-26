@@ -15,6 +15,7 @@ from shelters.types.reporting import (
     ReservationMetricsType,
     ShelterOccupancyMetricsType,
 )
+from strawberry import ID
 
 from reports.exporters import (
     avg_days_to_occupancy_to_csv,
@@ -93,9 +94,9 @@ class TestShelterMetricsExport:
         rows = list(csv.reader(StringIO(csv_content)))
 
         assert rows == [
-            ["shelter_id", "date", "occupied_count", "total_beds", "occupancy_pct"],
-            ["shelter-1", "2026-06-01", "8", "10", "80.0"],
-            ["shelter-1", "2026-06-02", "9", "10", "90.0"],
+            ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
+            ["2026-06-01", "shelter-1", "8", "10", "80.0"],
+            ["2026-06-02", "shelter-1", "9", "10", "90.0"],
         ]
 
     def test_daily_bed_status_metrics_to_csv(self) -> None:
@@ -115,8 +116,8 @@ class TestShelterMetricsExport:
         rows = list(csv.reader(StringIO(csv_content)))
 
         assert rows == [
-            ["shelter_id", "date", "available", "occupied", "reserved", "out_of_service"],
-            ["shelter-1", "2026-06-01", "2", "8", "1", "0"],
+            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"],
+            ["2026-06-01", "shelter-1", "2", "8", "1", "0"],
         ]
 
     def test_reservation_metrics_to_csv(self) -> None:
@@ -136,15 +137,15 @@ class TestShelterMetricsExport:
 
         assert rows == [
             [
-                "shelter_id",
                 "start_date",
                 "end_date",
+                "shelter_id",
                 "check_in_overdue",
                 "cancelled",
                 "checked_in",
                 "check_in_overdue_to_checked_in",
             ],
-            ["shelter-1", "2026-06-01", "2026-06-30", "3", "2", "11", "1"],
+            ["2026-06-01", "2026-06-30", "shelter-1", "3", "2", "11", "1"],
         ]
 
     def test_avg_days_to_occupancy_to_csv(self) -> None:
@@ -158,8 +159,8 @@ class TestShelterMetricsExport:
         rows = list(csv.reader(StringIO(csv_content)))
 
         assert rows == [
-            ["shelter_id", "start_date", "end_date", "avg_days_to_occupancy"],
-            ["shelter-1", "2026-06-01", "2026-06-30", "4.5"],
+            ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"],
+            ["2026-06-01", "2026-06-30", "shelter-1", "4.5"],
         ]
 
     def test_csv_files_to_zip_includes_each_csv_file(self) -> None:
@@ -180,7 +181,7 @@ class TestShelterMetricsExport:
     def test_metrics_to_zip_exports_all_metric_files(self) -> None:
         zip_content = metrics_to_zip(
             ShelterOccupancyMetricsType(
-                shelter_id="shelter-1",
+                shelter_id=ID("shelter-1"),
                 start_date=date(2026, 6, 1),
                 end_date=date(2026, 6, 30),
                 daily_occupancy=[
@@ -221,20 +222,20 @@ class TestShelterMetricsExport:
             reservation_rows = list(csv.reader(StringIO(zip_file.read("reservation_metrics.csv").decode())))
 
         assert daily_occupancy_rows == [
-            ["shelter_id", "date", "occupied_count", "total_beds", "occupancy_pct"],
-            ["shelter-1", "2026-06-01", "8", "10", "80.0"],
+            ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
+            ["2026-06-01", "shelter-1", "8", "10", "80.0"],
         ]
         assert reservation_rows == [
             [
-                "shelter_id",
                 "start_date",
                 "end_date",
+                "shelter_id",
                 "check_in_overdue",
                 "cancelled",
                 "checked_in",
                 "check_in_overdue_to_checked_in",
             ],
-            ["shelter-1", "2026-06-01", "2026-06-30", "3", "2", "11", "1"],
+            ["2026-06-01", "2026-06-30", "shelter-1", "3", "2", "11", "1"],
         ]
 
 
