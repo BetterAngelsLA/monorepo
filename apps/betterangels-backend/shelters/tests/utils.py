@@ -62,7 +62,6 @@ class ShelterTestCase(GraphQLBaseTestCase):
             shelter { id }
             clients {
                 id
-                clientProfileId
                 isPrimary
                 clientProfile {
                     firstName

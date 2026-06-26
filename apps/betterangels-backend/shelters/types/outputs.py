@@ -301,6 +301,13 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     return Prefetch("beds", queryset=bed_qs)
 
 
+def _reservation_clients_prefetch(info: Info) -> Prefetch:
+    return Prefetch(
+        "reservation_clients",
+        queryset=models.ReservationClient.objects.select_related("client_profile").order_by("pk"),
+    )
+
+
 @strawberry_django.type(models.Bed, filters=BedFilter, ordering=BedOrder)
 class BedType:
     @classmethod
@@ -396,6 +403,11 @@ class ReservationType:
     start_date: Optional[date]
     status: ReservationStatusChoices
 
+    clients: list[ReservationClientAssignmentType] = strawberry_django.field(
+        field_name="reservation_clients",
+        prefetch_related=[_reservation_clients_prefetch],
+    )
+
     @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
     def shelter(self, root: models.Reservation) -> "OperatorShelterType":
         if root.shelter is None:
@@ -407,7 +419,3 @@ class ReservationType:
         if root.created_by_id is None:
             return None
         return ID(str(root.created_by_id))
-
-    @strawberry_django.field(prefetch_related=["reservation_clients__client_profile"])
-    def clients(self, root: models.Reservation) -> list[ReservationClientAssignmentType]:
-        return cast(list[ReservationClientAssignmentType], root.reservation_clients.all())
