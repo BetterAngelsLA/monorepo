@@ -166,7 +166,7 @@ export function getQueryPolicyFactory<
 }: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>): {
   key: TFieldKey;
   buildFn: () => {
-    entityTypename: TypenameOf<TItem>;
+    entityTypename: [TItem] extends [never] ? string : TypenameOf<TItem>;
     fieldPolicy: FieldPolicy;
     keyFields: TypePolicy['keyFields'];
     queryPolicyConfig: ReturnType<typeof generateQueryPolicyConfig>;
