@@ -37,7 +37,7 @@ function ExportDataButtonPlaceholder() {
       leftIcon={<Upload size={20} color="black" />}
       rightIcon={false}
       className="text-black"
-      disabled
+      aria-disabled
     >
       Export Data
     </Button>

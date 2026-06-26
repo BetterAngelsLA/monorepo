@@ -8,6 +8,9 @@ import {
 import type { ReactNode } from 'react';
 import { Text } from '../../base-ui/text/text';
 
+const ICON_SIZE = 22;
+const iconClass = 'shrink-0 text-[#747A82]';
+
 /** A single stat box: icon + label + value. Placeholder value for now. */
 function StatCardPlaceholder({
   icon,
@@ -21,31 +24,33 @@ function StatCardPlaceholder({
   testId?: string;
 }) {
   return (
-    <div className="min-w-[10rem] flex-1 px-4 py-3" data-testid={testId}>
-      <div className="flex items-center gap-2 text-[#6B7280]">
+    <div
+      className="flex min-h-[109px] flex-1 flex-col gap-3 rounded-[20px] bg-white p-3"
+      data-testid={testId}
+    >
+      <div className="flex items-start gap-2.5">
         {icon}
-        <Text variant="caption" textColor="text-[#6B7280]">
+        <Text variant="body" textColor="text-[#747A82]">
           {label}
         </Text>
       </div>
-      <Text
-        variant="header-md"
-        textColor="text-[#111827]"
-        className="mt-2 block"
-      >
+      <Text variant="header-lg" textColor="text-black" className="leading-none">
         {value}
       </Text>
     </div>
   );
 }
 
-const iconClass = 'text-[#6B7280]';
+/** Thin divider used between the paired stat cards. */
+function CardDivider() {
+  return <div className="my-3 w-[3px] shrink-0 rounded-full bg-[#F3F3F3]" />;
+}
 
 /**
- * "Reservation Status Changes" section — heading plus the row of reservation
- * stat boxes. Per the design, the first four boxes sit in one grouped container
- * (the first two form a divider-split pair) and "Average days to occupancy" is
- * a separated box. Values are placeholders until the real metrics are wired up.
+ * "Reservation Status Changes" section — heading plus the reservation stat
+ * boxes. Per the design, four transition stats sit grouped in one rounded grey
+ * container (the first two paired behind a divider) and "Average days to
+ * occupancy" is a separated container. Values are placeholders until wired up.
  */
 export function ReservationStatusChanges() {
   return (
@@ -54,21 +59,22 @@ export function ReservationStatusChanges() {
         Reservation Status Changes
       </Text>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="flex flex-1 flex-wrap divide-x divide-[#E5E7EB] rounded-xl border border-[#E5E7EB] bg-white">
-          <div className="flex flex-[2] divide-x divide-[#E5E7EB]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+        <div className="flex flex-[4] flex-wrap items-stretch gap-3 rounded-[28px] bg-[#F3F3F3] p-3">
+          <div className="flex min-w-[300px] flex-[1.6] items-stretch rounded-[20px] bg-white">
             <StatCardPlaceholder
-              icon={<CalendarCheck2 size={18} className={iconClass} />}
+              icon={<CalendarCheck2 size={ICON_SIZE} className={iconClass} />}
               label="Newly Checked In"
               value="8"
               testId="stat-newly-checked-in-placeholder"
             />
+            <CardDivider />
             <StatCardPlaceholder
-              icon={<CalendarClock size={18} className={iconClass} />}
+              icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
               label={
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                   Overdue
-                  <ArrowRight size={14} className={iconClass} />
+                  <ArrowRight size={16} className={iconClass} />
                   Checked In
                 </span>
               }
@@ -77,22 +83,22 @@ export function ReservationStatusChanges() {
             />
           </div>
           <StatCardPlaceholder
-            icon={<CalendarX2 size={18} className={iconClass} />}
+            icon={<CalendarX2 size={ICON_SIZE} className={iconClass} />}
             label="Newly Canceled"
             value="7"
             testId="stat-newly-canceled-placeholder"
           />
           <StatCardPlaceholder
-            icon={<CalendarClock size={18} className={iconClass} />}
+            icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
             label="Newly Overdue"
             value="12"
             testId="stat-newly-overdue-placeholder"
           />
         </div>
 
-        <div className="flex rounded-xl border border-[#E5E7EB] bg-white">
+        <div className="flex rounded-[28px] bg-[#F3F3F3] p-3 lg:flex-1">
           <StatCardPlaceholder
-            icon={<Clock size={18} className={iconClass} />}
+            icon={<Clock size={ICON_SIZE} className={iconClass} />}
             label="Average days to occupancy"
             value="10"
             testId="stat-average-days-to-occupancy-placeholder"
