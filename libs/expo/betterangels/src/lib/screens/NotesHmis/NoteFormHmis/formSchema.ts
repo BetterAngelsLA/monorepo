@@ -1,7 +1,6 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
 import {
-  SelahTeamEnum,
   ServiceRequestTypeEnum,
   TaskStatusEnum,
 } from '../../../apollo';
@@ -14,7 +13,7 @@ export type DraftTask = z.infer<typeof TaskFormSchema>;
 const TaskFormSchema = z.object({
   id: z.string().optional(),
   summary: z.string().min(1, 'Title is required.').nullable(),
-  team: z.enum(SelahTeamEnum).nullable(),
+  teamId: z.string().nullable(),
   description: z.string().nullable(),
   status: z
     .enum(TaskStatusEnum, {
