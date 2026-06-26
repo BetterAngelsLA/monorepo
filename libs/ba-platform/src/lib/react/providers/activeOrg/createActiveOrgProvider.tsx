@@ -1,10 +1,10 @@
 import { ReactNode } from 'react';
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
-import { useActiveOrgState, type ActiveOrgState, type BaseOrg } from './useActiveOrgState';
+import { useActiveOrgState, type ActiveOrgState, type Org } from './useActiveOrgState';
 
-interface ActiveOrgProviderProps<TOrg extends BaseOrg> {
+interface ActiveOrgProviderProps {
   children: ReactNode;
-  organizations: TOrg[];
+  organizations: Org[];
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
   storage?: StorageAdapter;
   /** Storage key — defaults to ``'betterangels_active_org_id'``. */
@@ -12,24 +12,15 @@ interface ActiveOrgProviderProps<TOrg extends BaseOrg> {
 }
 
 /**
- * Create an ``ActiveOrgProvider`` component bound to a specific
- * React context.
- *
- * Both ``betterangels-admin`` and ``shelter-operator`` use this
- * factory with their own ``ActiveOrgContext`` to produce a
- * type-safe provider that delegates to the shared
- * ``useActiveOrgState`` hook.
- *
- * @param OrgContext  A React context whose value type is
- *   ``ActiveOrgState<TOrg> | undefined``.
+ * Create an ``ActiveOrgProvider`` component bound to a specific React context.
  */
-export function createActiveOrgProvider<TOrg extends BaseOrg>(OrgContext: React.Context<ActiveOrgState<TOrg> | undefined>) {
+export function createActiveOrgProvider(OrgContext: React.Context<ActiveOrgState | undefined>) {
   return function ActiveOrgProvider({
     children,
     organizations,
     storage = localStorageAdapter,
     storageKey,
-  }: ActiveOrgProviderProps<TOrg>) {
+  }: ActiveOrgProviderProps) {
     const value = useActiveOrgState(organizations, { storage, storageKey });
 
     return (

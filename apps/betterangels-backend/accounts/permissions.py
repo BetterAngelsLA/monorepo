@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from common.permissions.utils import perm_filter, permission_enum
+from common.permissions.utils import perm_filter, register_permission
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
 from django.db.models import TextChoices
@@ -15,7 +15,7 @@ UserLike = Union[AbstractBaseUser, AnonymousUser]
 # ── Permission enums ──────────────────────────────────────────────────────────
 
 
-@permission_enum
+@register_permission
 class UserOrganizationPermissions(models.TextChoices):
     ACCESS_ORG_PORTAL = "organizations.access_org_portal", _("Can access organization management portal")
     ADD_ORG_MEMBER = "organizations.add_org_member", _("Can add organization member")
@@ -24,7 +24,7 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
-@permission_enum
+@register_permission
 class ReportOrgPermissions(models.TextChoices):
     VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
 
@@ -57,9 +57,3 @@ def get_user_permitted_org(
         .filter(perm_filter(app_label, codename))
         .first()
     )
-
-
-def _annotation_key(perm: TextChoices) -> str:
-    """Return a unique annotation key for the given permission enum value."""
-    app_label, codename = perm.value.split(".", 1)
-    return f"_perm_{app_label}_{codename}"

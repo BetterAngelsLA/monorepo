@@ -5,7 +5,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
 from accounts.permissions import get_user_permitted_org
-from common.permissions.utils import permission_enum
+from common.permissions.utils import register_permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import BasePermission
@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 
-@permission_enum
+@register_permission
 class ReportPermissions(models.TextChoices):
     VIEW_REPORTS = "reports.view_reports", _("Can view reports")
 

@@ -7,12 +7,13 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
-import type { CurrentOrgUserQuery } from '../../apollo/user/__generated__/UserProvider.generated';
 
-/** Organization type derived from the canonical org query. */
-export type BaseOrg = NonNullable<
-  NonNullable<CurrentOrgUserQuery['currentUser']>['organizations']
->[number];
+/** Minimal org shape consumed by the active-org state. */
+export interface Org {
+  id: string;
+  name: string;
+  permissions: string[];
+}
 
 interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
@@ -21,11 +22,11 @@ interface UseActiveOrgStateOptions {
   storageKey?: string;
 }
 
-export interface ActiveOrgState<TOrg extends BaseOrg = BaseOrg> {
-  /** The currently selected organization (with its capabilities). */
-  activeOrg: TOrg | undefined;
+export interface ActiveOrgState {
+  /** The currently selected organization. */
+  activeOrg: Org | undefined;
   /** All organizations the user has access to. */
-  organizations: TOrg[];
+  organizations: Org[];
   /** Switch to a different org by its id. */
   setActiveOrgId: (orgId: string) => void;
   /** Check if the active org has a specific permission. */
@@ -34,19 +35,11 @@ export interface ActiveOrgState<TOrg extends BaseOrg = BaseOrg> {
 
 /**
  * Shared state management for active organization selection.
- *
- * Handles storage persistence, default selection, and re-validation
- * when the organizations list changes.  Each app wraps the returned
- * state in its own React context (with its own ``PermissionEnum`` type)
- * via a thin ``ActiveOrgProvider`` component.
- *
- * @param organizations  List of orgs the current user belongs to.
- * @param options  Optional storage adapter and key overrides.
  */
-export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
-  organizations: TOrg[],
+export function useActiveOrgState(
+  organizations: Org[],
   options: UseActiveOrgStateOptions = {}
-): ActiveOrgState<TOrg> {
+): ActiveOrgState {
   const {
     storage = localStorageAdapter,
     storageKey = DEFAULT_ORG_STORAGE_KEY,
@@ -124,10 +117,14 @@ export function useActiveOrgState<TOrg extends BaseOrg = BaseOrg>(
     [organizations, storage, storageKey]
   );
 
+  const permSet = useMemo(
+    () => new Set(activeOrg?.permissions ?? []),
+    [activeOrg?.permissions]
+  );
+
   const hasPermission = useCallback(
-    (permission: PermissionEnum): boolean =>
-      activeOrg?.permissions?.includes(permission) ?? false,
-    [activeOrg]
+    (permission: PermissionEnum): boolean => permSet.has(permission),
+    [permSet]
   );
 
   return useMemo(

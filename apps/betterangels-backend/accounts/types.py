@@ -8,8 +8,9 @@ import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
-from common.permissions.utils import get_registered_permission_enums
-from django.db.models import Q, QuerySet
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import F, Q, QuerySet, Value
+from django.db.models.functions import Concat
 from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry import ID, Info, auto
@@ -17,7 +18,6 @@ from strawberry_django.auth.utils import get_current_user
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
-from accounts.permissions import _annotation_key
 
 from .models import User
 
@@ -108,27 +108,23 @@ class CurrentUserOrganizationType(OrganizationType):
         if not user or not user.is_authenticated:
             return queryset.none()
 
-        assert isinstance(user, User)
-
-        # Annotate each org with boolean flags for every known permission.
-        # The resolver collects the ones that are True.
-        annotations: dict[str, Q] = {}
-        for enum in get_registered_permission_enums():
-            for perm in enum:
-                annotations[_annotation_key(perm)] = Q(
-                    permission_groups__group__permissions__codename=perm.name,
-                    permission_groups__group__user=user,
-                )
-        return queryset.filter(users=user).annotate(**annotations)
+        # Annotate each org with a single array of granted permission strings
+        # (e.g. ["organizations.view_org_members", "reports.view_reports"]).
+        return queryset.filter(users=user).annotate(
+            _granted_perms=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                ),
+                filter=Q(permission_groups__group__user=user),
+                distinct=True,
+            )
+        )
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        perms: List[str] = []
-        for enum in get_registered_permission_enums():
-            for perm in enum:
-                if getattr(self, _annotation_key(perm), False):
-                    perms.append(perm.value)
-        return perms
+        return getattr(self, "_granted_perms", []) or []
 
 
 @strawberry_django.type(User)

@@ -22,15 +22,12 @@ from tasks.schema import Query as TasksQuery
 from teams.schema import Mutation as TeamsMutation
 from teams.schema import Query as TeamsQuery
 
-# Ensure permission enum registrations fire during schema generation.
-# @permission_enum decorators fire at import time; model PermissionSets
-# are auto-discovered below.
-import accounts.permissions  # noqa: F401
-import clients.permissions  # noqa: F401
-import reports.permissions  # noqa: F401
-
 from common.permissions.utils import register_model_permissions  # noqa: E402
 
+# Register all known permission enums.
+# - @register_permission decorators fire transitively via schema imports
+#   (e.g. accounts.schema → accounts.types → accounts.permissions).
+# - Model PermissionSets are auto-discovered below.
 register_model_permissions()
 
 # Schema Stitching

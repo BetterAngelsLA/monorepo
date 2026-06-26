@@ -21,12 +21,12 @@ from common.errors import UnauthenticatedGQLError
 _permission_enum_registry: list[type[TextChoices]] = []
 
 
-def permission_enum(cls: type[TextChoices]) -> type[TextChoices]:
+def register_permission(cls: type[TextChoices]) -> type[TextChoices]:
     """Decorator — registers in the frontend permission const registry.
 
     Usage::
 
-        @permission_enum
+        @register_permission
         class UserOrganizationPermissions(models.TextChoices):
             VIEW_ORG_MEMBERS = "organizations.view_org_members", ...
     """
@@ -35,7 +35,7 @@ def permission_enum(cls: type[TextChoices]) -> type[TextChoices]:
 
 
 def get_registered_permission_enums() -> list[type[TextChoices]]:
-    """Return all enums registered via :func:`permission_enum`."""
+    """Return all enums registered via :func:`register_permission`."""
     return list(_permission_enum_registry)
 
 
@@ -210,9 +210,6 @@ def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__
     The default *prefix* ``permission_groups__group__permissions``
     resolves from ``Organization`` through ``PermissionGroup`` →
     ``Group`` → ``Permission`` → ``ContentType``.
-
-    Pass ``prefix="group__permissions"`` when querying ``PermissionGroup``
-    directly (e.g. in ``permission_annotations``).
     """
     return Q(
         **{f"{prefix}__content_type__app_label": app_label},
