@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client/react';
+import { isMutationSuccess } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -117,12 +118,15 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           errorPolicy: 'all',
         });
 
-        const payload = result?.cloneBed;
-        if (payload?.__typename === 'OperationInfo') {
+        if (result?.cloneBed?.__typename === 'OperationInfo') {
+          const firstMessage = result.cloneBed.messages?.[0]?.message;
           setActionError(
-            payload.messages?.[0]?.message ||
-              'Unable to clone bed. Please try again.'
+            firstMessage || 'Unable to clone bed. Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.cloneBed, 'BedType')) {
+          setActionError('An unexpected error occurred. Please try again.');
           return;
         }
 
@@ -147,12 +151,15 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           errorPolicy: 'all',
         });
 
-        const payload = result?.deleteBeds;
-        if (payload?.__typename === 'OperationInfo') {
+        if (result?.deleteBeds?.__typename === 'OperationInfo') {
+          const firstMessage = result.deleteBeds.messages?.[0]?.message;
           setActionError(
-            payload.messages?.[0]?.message ||
-              'Unable to delete bed(s). Please try again.'
+            firstMessage || 'Unable to delete bed(s). Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.deleteBeds, 'BulkDeleteResult')) {
+          setActionError('An unexpected error occurred. Please try again.');
           return;
         }
 
@@ -185,12 +192,15 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           errorPolicy: 'all',
         });
 
-        const payload = result?.updateBed;
-        if (payload?.__typename === 'OperationInfo') {
+        if (result?.updateBed?.__typename === 'OperationInfo') {
+          const firstMessage = result.updateBed.messages?.[0]?.message;
           setActionError(
-            payload.messages?.[0]?.message ||
-              'Unable to update bed. Please try again.'
+            firstMessage || 'Unable to update bed. Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
+          setActionError('An unexpected error occurred. Please try again.');
           return;
         }
 

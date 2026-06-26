@@ -1,16 +1,20 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { RoomForm } from '../../components/rooms/room-form/RoomForm';
 import { mapRoomToFormData } from '../../components/rooms/room-form/utils/mapRoomToFormData';
-import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useRoom } from '../../hooks/useRoom';
 import { shelterManageRoomsRoute } from '../../routing';
 
 export function EditRoomPage() {
   const navigate = useNavigate();
   const { shelterId, roomId } = useParams();
-  const { room, loading, error } = useRoom(roomId ? roomId : '');
+  const { room, loading, error } = useRoom(roomId ?? '');
 
   const roomsPath = shelterManageRoomsRoute(shelterId ?? '');
+
+  if (!roomId) {
+    return null;
+  }
 
   return (
     <ManageFormPageLayout

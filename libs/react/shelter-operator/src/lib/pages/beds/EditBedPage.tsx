@@ -8,9 +8,13 @@ import { shelterManageBedsRoute } from '../../routing';
 export function EditBedPage() {
   const navigate = useNavigate();
   const { shelterId, bedId } = useParams();
-  const { bed, loading, error } = useBed(bedId ? bedId : '');
+  const { bed, loading, error } = useBed(bedId ?? '');
 
   const bedsPath = shelterManageBedsRoute(shelterId ?? '');
+
+  if (!bedId) {
+    return null;
+  }
 
   return (
     <ManageFormPageLayout
