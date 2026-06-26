@@ -94,7 +94,6 @@ import { generateFieldPolicy } from '../generateFieldPolicy';
 import type { TCacheMergeOpts } from '../merge';
 import type {
   KeyArgsFor,
-  KeyArgsFunction,
   ResultItemOf,
   TPaginationVariables,
   TypenameOf,
@@ -123,7 +122,7 @@ type TgetQueryPolicyFactory<
    * variables that affect cache key
    * can accept KeyArgsFunction, but not fully tested here
    */
-  cacheKeyVariables: KeyArgsFor<TVariables> | KeyArgsFunction | false;
+  cacheKeyVariables: KeyArgsFor<TVariables> | NonNullable<FieldPolicy['keyArgs']>;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
