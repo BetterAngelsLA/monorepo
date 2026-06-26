@@ -1,0 +1,30 @@
+{
+  "name": "ba-permissions",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-permissions/src",
+  "projectType": "library",
+  "tags": ["type:util", "scope:ba-platform"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "generate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "uv run python manage.py generate_permission_enums"
+      }
+    },
+    "validate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "bash -c 'uv run python manage.py generate_permission_enums /tmp/ba-perms.ts && diff /tmp/ba-perms.ts ../../libs/ba-permissions/src/__generated__/index.ts'"
+      }
+    }
+  }
+}
