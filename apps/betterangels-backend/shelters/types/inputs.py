@@ -6,6 +6,8 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from common.graphql.types import PhoneNumberScalar
+from strawberry import ID, UNSET, Maybe, auto
+
 from shelters import models
 from shelters.enums import (
     AccessibilityChoices,
@@ -23,9 +25,6 @@ from shelters.enums import (
     ReservationStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
-)
-from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import (
     ShelterPhotoTypeChoices,
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
@@ -33,7 +32,7 @@ from shelters.enums import (
     StorageChoices,
     VaccinationRequirementChoices,
 )
-from strawberry import ID, UNSET, Maybe, auto
+from shelters.enums import ShelterChoices as ShelterTypeChoices
 
 
 @strawberry.input
@@ -212,6 +211,7 @@ class UpdateBedInput:
     demographics: Maybe[List[DemographicChoices] | None]
     fees: Maybe[int]
     funders: Maybe[List[FunderChoices] | None]
+    last_cleaned: Maybe[datetime | None]
     last_cleaned_inspected: Maybe[datetime | None]
     maintenance_flag: Maybe[bool]
     medical_needs: Maybe[List[MedicalNeedChoices] | None]

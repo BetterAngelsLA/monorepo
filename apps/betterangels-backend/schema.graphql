@@ -150,7 +150,7 @@ type BedType {
   name: String
   pets: [PetType!]!
   room: RoomType
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   statusNotes: String
   storage: Boolean!
   type: BedTypeChoices
@@ -2170,7 +2170,8 @@ type ReportSummaryType {
 }
 
 type ReservationClientAssignmentType {
-  clientProfileId: ID!
+  id: ID!
+  clientProfile: ClientProfileType!
   isPrimary: Boolean!
 }
 
@@ -2319,7 +2320,7 @@ type RoomType {
   name: String!
   notes: String
   pets: [PetType!]!
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   storage: Boolean!
   type: RoomStyleChoices
   typeOther: String
@@ -2852,6 +2853,7 @@ input UpdateBedInput {
   demographics: [DemographicChoices!]
   fees: Int
   funders: [FunderChoices!]
+  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean
   medicalNeeds: [MedicalNeedChoices!]
