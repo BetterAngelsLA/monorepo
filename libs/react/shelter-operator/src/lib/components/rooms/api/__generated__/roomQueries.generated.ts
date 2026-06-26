@@ -6,7 +6,7 @@ export type GetRoomQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetRoomQuery = { __typename?: 'Query', room: { __typename?: 'RoomType', id: string, amenities?: string | null, lastCleanedInspected?: any | null, maintenanceFlag: boolean, medicalRespite: boolean, name: string, notes?: string | null, status: Types.RoomStatusChoices, storage: boolean, type?: Types.RoomStyleChoices | null, typeOther?: string | null, accessibility: Array<{ __typename?: 'AccessibilityType', name?: Types.AccessibilityChoices | null }>, demographics: Array<{ __typename?: 'DemographicType', name?: Types.DemographicChoices | null }>, funders: Array<{ __typename?: 'FunderType', name?: Types.FunderChoices | null }>, shelter: { __typename?: 'ShelterType', id: string }, pets: Array<{ __typename?: 'PetType', name?: Types.PetChoices | null }> } };
+export type GetRoomQuery = { __typename?: 'Query', room: { __typename?: 'RoomType', id: string, amenities?: string | null, lastCleanedInspected?: any | null, maintenanceFlag: boolean, medicalRespite: boolean, name: string, notes?: string | null, status: Types.RoomStatusChoices, storage: boolean, type?: Types.RoomStyleChoices | null, typeOther?: string | null, accessibility: Array<{ __typename?: 'AccessibilityType', name?: Types.AccessibilityChoices | null }>, demographics: Array<{ __typename?: 'DemographicType', name?: Types.DemographicChoices | null }>, funders: Array<{ __typename?: 'FunderType', name?: Types.FunderChoices | null }>, shelter: { __typename?: 'OperatorShelterType', id: string }, pets: Array<{ __typename?: 'PetType', name?: Types.PetChoices | null }> } };
 
 export type GetRoomsQueryVariables = Types.Exact<{
   shelterId: Types.Scalars['ID']['input'];

@@ -7,11 +7,15 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
+from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
 from common.permissions.utils import get_current_organization
 from django.db.models import Prefetch, QuerySet
+from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
+
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -21,13 +25,13 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.selectors.computed_status import (
     bed_computed_status_annotation,
     room_computed_status_annotation,
     shelter_bed_status_count_subquery,
     shelter_room_status_count_subquery,
 )
-from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.selectors.operator import reservation_queryset
 from shelters.types.lookups import (
     AccessibilityType,
@@ -51,8 +55,6 @@ from shelters.types.lookups import (
     StorageType,
     VaccinationRequirementType,
 )
-from strawberry import ID, Info, auto
-from strawberry_django.auth.utils import get_current_user
 
 from .filters import (
     BedFilter,
@@ -299,6 +301,13 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     return Prefetch("beds", queryset=bed_qs)
 
 
+def _reservation_clients_prefetch(info: Info) -> Prefetch:
+    return Prefetch(
+        "reservation_clients",
+        queryset=models.ReservationClient.objects.select_related("client_profile").order_by("pk"),
+    )
+
+
 @strawberry_django.type(models.Bed, filters=BedFilter, ordering=BedOrder)
 class BedType:
     @classmethod
@@ -320,7 +329,7 @@ class BedType:
     name: Optional[str]
     pets: List[PetType]
     room: Optional["RoomType"]
-    shelter: "ShelterType"
+    shelter: "OperatorShelterType"
     status_notes: Optional[str]
     storage: bool
     type: Optional[BedTypeChoices]
@@ -357,7 +366,7 @@ class RoomType:
     name: auto
     notes: auto
     pets: List[PetType]
-    shelter: "ShelterType"
+    shelter: "OperatorShelterType"
     storage: bool
     type: Optional[RoomStyleChoices]
     type_other: auto
@@ -369,10 +378,11 @@ class RoomType:
         return root.computed_status
 
 
-@strawberry.type
+@strawberry_django.type(models.ReservationClient)
 class ReservationClientAssignmentType:
-    client_profile_id: ID
-    is_primary: bool
+    id: ID
+    client_profile: ClientProfileType
+    is_primary: auto
 
 
 @strawberry_django.type(models.Reservation, filters=ReservationFilter, ordering=ReservationOrder)
@@ -393,6 +403,11 @@ class ReservationType:
     start_date: Optional[date]
     status: ReservationStatusChoices
 
+    clients: list[ReservationClientAssignmentType] = strawberry_django.field(
+        field_name="reservation_clients",
+        prefetch_related=[_reservation_clients_prefetch],
+    )
+
     @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
     def shelter(self, root: models.Reservation) -> "OperatorShelterType":
         if root.shelter is None:
@@ -404,13 +419,3 @@ class ReservationType:
         if root.created_by_id is None:
             return None
         return ID(str(root.created_by_id))
-
-    @strawberry_django.field(prefetch_related=["reservation_clients"])
-    def clients(self, root: models.Reservation) -> List[ReservationClientAssignmentType]:
-        return [
-            ReservationClientAssignmentType(
-                client_profile_id=ID(str(rc.client_profile_id)),
-                is_primary=rc.is_primary,
-            )
-            for rc in root.reservation_clients.all()
-        ]
