@@ -25,17 +25,15 @@ import {
 import { defaultFormState, toFormState } from './toFormState';
 import { TClientContactFormState, TFormKey } from './types';
 
-type Router = ReturnType<typeof useRouter>;
-
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
-  router: Router;
   showSnackbar: (props: TShowSnackbar) => void;
 };
 
 export function useClientContactForm(props: TProps) {
-  const { clientProfile, relationId, router, showSnackbar } = props;
+  const { clientProfile, relationId, showSnackbar } = props;
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
 
