@@ -83,7 +83,6 @@
  */
 
 import type { FieldPolicy, TypePolicy } from '@apollo/client';
-import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies';
 import {
   DEFAULT_QUERY_ID_KEY,
   DEFAULT_QUERY_RESULTS_KEY,
@@ -95,6 +94,7 @@ import { generateFieldPolicy } from '../generateFieldPolicy';
 import type { TCacheMergeOpts } from '../merge';
 import type {
   KeyArgsFor,
+  KeyArgsFunction,
   ResultItemOf,
   TPaginationVariables,
   TypenameOf,

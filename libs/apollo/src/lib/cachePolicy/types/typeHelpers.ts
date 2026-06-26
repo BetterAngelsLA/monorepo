@@ -6,6 +6,23 @@ import {
 export type TDefaultResultsKey = typeof DEFAULT_QUERY_RESULTS_KEY;
 export type TDefaultTotalKey = typeof DEFAULT_QUERY_TOTAL_COUNT_KEY;
 
+/**
+ * Local re-definition of Apollo Client's internal `KeyArgsFunction` type
+ * (from `@apollo/client/cache/inmemory/policies`), which is not part of the
+ * package's public `exports` map.  Defining it here avoids a TS2307 error when
+ * `moduleResolution` is set to `bundler` (or `node16`/`nodenext`), which
+ * enforces the `exports` field.
+ */
+export type KeyArgsFunction = (
+  args: Record<string, any> | null,
+  context: {
+    typename: string;
+    fieldName: string;
+    field?: unknown;
+    variables?: Record<string, any>;
+  },
+) => any;
+
 type ItemFromContainer<C, RK extends string> = C extends Record<
   RK,
   ReadonlyArray<infer I> | Array<infer I>
