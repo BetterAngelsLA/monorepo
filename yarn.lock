@@ -5244,7 +5244,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/create-cache-key-function@npm:^29.2.1":
+"@jest/create-cache-key-function@npm:^29.2.1, @jest/create-cache-key-function@npm:^29.7.0":
   version: 29.7.0
   resolution: "@jest/create-cache-key-function@npm:29.7.0"
   dependencies:
@@ -6196,6 +6196,7 @@ __metadata:
     "@react-native-community/datetimepicker": "npm:9.1.0"
     "@react-native-picker/picker": "npm:2.11.4"
     "@react-native-vector-icons/ant-design": "npm:^13.1.2"
+    "@react-native/jest-preset": "npm:^0.86.0"
     "@sanity/client": "npm:^6.27.1"
     "@shopify/flash-list": "npm:2.0.2"
     "@storybook/addon-docs": "npm:^10.1.1"
@@ -8886,10 +8887,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native/jest-preset@npm:^0.86.0":
+  version: 0.86.0
+  resolution: "@react-native/jest-preset@npm:0.86.0"
+  dependencies:
+    "@jest/create-cache-key-function": "npm:^29.7.0"
+    "@react-native/js-polyfills": "npm:0.86.0"
+    babel-jest: "npm:^29.7.0"
+    jest-environment-node: "npm:^29.7.0"
+    regenerator-runtime: "npm:^0.13.2"
+  peerDependencies:
+    react: ^19.2.3
+  checksum: 10/4dbb2a000da21753203dbaa5dd37224add83463ee46be1ac120974a4b1dfd836cf91831921960699efcf4508eb191707fba3b2d38924367cd2d77635542c1620
+  languageName: node
+  linkType: hard
+
 "@react-native/js-polyfills@npm:0.85.3":
   version: 0.85.3
   resolution: "@react-native/js-polyfills@npm:0.85.3"
   checksum: 10/17eedd2497c128f5c575f3804e2f23c441285e88a64522d740809588d93d11aade5069b3f20edec43715a8aecc3b90e816847e3ff91565bd35a9b692701265a1
+  languageName: node
+  linkType: hard
+
+"@react-native/js-polyfills@npm:0.86.0":
+  version: 0.86.0
+  resolution: "@react-native/js-polyfills@npm:0.86.0"
+  checksum: 10/cdd2a0d8c6202783754a77e05285884eeb884d5640b7068d9d38c6486028a6c49ff72a03da42699247233f250ed52a4c991823617490929d1a501e30bc187ddf
   languageName: node
   linkType: hard
 
