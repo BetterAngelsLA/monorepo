@@ -12,3 +12,5 @@ export { Calendar } from './Calendar';
 export type { CalendarProps, RdpDateRange } from './Calendar';
 export { YearGrid } from './YearGrid';
 export type { YearGridProps } from './YearGrid';
+export { DateRangePresetDropdown } from './DateRangePresetDropdown';
+export type { DateRangePresetDropdownProps } from './DateRangePresetDropdown';
