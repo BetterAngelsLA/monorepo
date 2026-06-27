@@ -9,3 +9,5 @@ export { Calendar } from './Calendar';
 // this folder: exporting it alongside DateRange would put two different
 // "date range" shapes in the package's public API.
 export type { CalendarProps } from './Calendar';
+export { YearGrid } from './YearGrid';
+export type { YearGridProps } from './YearGrid';
