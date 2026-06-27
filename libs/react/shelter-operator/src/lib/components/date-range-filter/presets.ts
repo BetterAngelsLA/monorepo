@@ -1,7 +1,11 @@
 import { startOfMonth, startOfYear, subDays } from 'date-fns';
 import type { DateRange, DateRangePreset } from './types';
 
-/** Human-readable labels for each preset (drives the dropdown options). */
+/**
+ * Human-readable labels for each preset. Drives the dropdown options via
+ * `toDropdownOptions`; key order here is the dropdown display order, so `CUSTOM`
+ * is last (it opens the calendar rather than resolving to a fixed range).
+ */
 export const PRESET_LABELS: Record<DateRangePreset, string> = {
   LAST_7_DAYS: 'Last 7 Days',
   LAST_30_DAYS: 'Last 30 Days',
@@ -11,18 +15,6 @@ export const PRESET_LABELS: Record<DateRangePreset, string> = {
   YEAR_TO_DATE: 'Year-To-Date',
   CUSTOM: 'Custom',
 };
-
-/**
- * Presets in dropdown display order. `CUSTOM` is last because it opens the
- * calendar rather than resolving to a fixed range.
- */
-export const PRESET_ORDER: readonly DateRangePreset[] = [
-  'LAST_7_DAYS',
-  'LAST_30_DAYS',
-  'MONTH_TO_DATE',
-  'YEAR_TO_DATE',
-  'CUSTOM',
-] as const;
 
 /** The preset selected by default on load. */
 export const DEFAULT_PRESET: DateRangePreset = 'LAST_30_DAYS';
