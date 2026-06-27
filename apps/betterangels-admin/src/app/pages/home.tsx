@@ -1,4 +1,4 @@
-import { useActiveOrg } from "@monorepo/ba-platform";
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   ReportPermissions,
   UserOrganizationPermissions,
