@@ -1,5 +1,4 @@
 import { useActiveOrg } from '@monorepo/ba-platform';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
 type IProps = {
