@@ -15,3 +15,5 @@ export { YearGrid } from './YearGrid';
 export type { YearGridProps } from './YearGrid';
 export { DateRangePresetDropdown } from './DateRangePresetDropdown';
 export type { DateRangePresetDropdownProps } from './DateRangePresetDropdown';
+export { DateRangeCalendar } from './DateRangeCalendar';
+export type { DateRangeCalendarProps } from './DateRangeCalendar';
