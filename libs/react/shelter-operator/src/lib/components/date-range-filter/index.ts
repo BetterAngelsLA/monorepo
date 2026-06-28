@@ -11,3 +11,5 @@ export {
 } from './dateRangeFilterAtom';
 export { Calendar } from './Calendar';
 export type { CalendarProps, RdpDateRange } from './Calendar';
+export { YearGrid } from './YearGrid';
+export type { YearGridProps } from './YearGrid';
