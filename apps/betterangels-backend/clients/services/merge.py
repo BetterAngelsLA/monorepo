@@ -199,7 +199,7 @@ def execute_merge(
     source_ids: list[int],
     target_id: int,
     *,
-    performed_by: User,
+    performed_by: User,  # reserved for future audit logging
 ) -> ClientProfile:
     """Execute a merge inside transaction.atomic(). Returns the target."""
     with transaction.atomic():
@@ -312,7 +312,7 @@ def execute_merge(
 def undo_merge(
     target_id: int,
     *,
-    performed_by: User,
+    performed_by: User,  # reserved for future audit logging
 ) -> list[ClientProfile]:
     """Undo a merge. Returns restored source profiles."""
     with transaction.atomic():
@@ -401,6 +401,7 @@ def _get_guardian_perm_models() -> list[type[models.Model]]:
         from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
         return [BigUserObjectPermission, BigGroupObjectPermission]
     except ImportError:
+        logger.warning("Guardian permission models not available — skipping permission merge.")
         return []
 
 

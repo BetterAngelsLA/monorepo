@@ -13,7 +13,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.encoding import force_str
@@ -176,7 +176,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
             qs = qs.filter(merged_into__isnull=True)
         return qs
 
-    def get_urls(self):
+    def get_urls(self) -> list:
         urls = super().get_urls()
         custom_urls = [
             path(
@@ -203,7 +203,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         ids = ",".join(str(pk) for pk in queryset.values_list("pk", flat=True))
         return redirect(reverse("admin:clients_clientprofile_merge") + f"?ids={ids}")
 
-    def merge_view(self, request: HttpRequest):
+    def merge_view(self, request: HttpRequest) -> HttpResponseRedirect | TemplateResponse:
         ids_param = request.GET.get("ids", "")
         try:
             ids = [int(i) for i in ids_param.split(",") if i]
@@ -223,7 +223,6 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         target_id = request.POST.get("target_id") or request.GET.get("target_id")
         is_preview = "preview" in request.POST
         is_confirm = "confirm" in request.POST
-        is_dry_run = request.GET.get("dry_run") == "1" and "ids" in request.GET
 
         # Step 1: Select target (initial page from action redirect)
         # Also supports adding clients by ID via POST "add_client_id"

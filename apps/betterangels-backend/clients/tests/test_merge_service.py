@@ -80,8 +80,6 @@ class MergeServiceTestCase(TestCase):
 
         return client
 
-        return client
-
 
 # ---------------------------------------------------------------------------
 # preview_merge tests
