@@ -81,7 +81,6 @@ export function ReservationTable({
         key: 'client',
         label: 'Client',
         width: '1.5fr',
-        cellClassName: 'min-w-0',
         sortValue: (row) => {
           const clients = row.clients ?? [];
           if (clients.length === 0) return '';
@@ -109,9 +108,7 @@ export function ReservationTable({
             : '';
           return (
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-sm font-medium text-gray-900">
-                {primaryDisplayName}
-              </span>
+              {primaryDisplayName}
               {clients.length > 1 && (
                 <span className="text-xs text-gray-500">
                   +{clients.length - 1}
@@ -145,9 +142,9 @@ export function ReservationTable({
           const bedName = row.bed?.name;
           if (roomName && bedName) {
             return (
-              <span>
+              <>
                 {roomName} &middot; {bedName}
-              </span>
+              </>
             );
           }
           if (roomName) return <span>{roomName}</span>;

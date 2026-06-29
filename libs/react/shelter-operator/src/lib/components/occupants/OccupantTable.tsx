@@ -55,7 +55,6 @@ export function OccupantTable({
         key: 'client',
         label: 'Client',
         width: '1.5fr',
-        cellClassName: 'min-w-0',
         sortValue: (row) => row.clientName,
         filterValue: (row) => row.clientName,
         render: (row) => (
@@ -87,9 +86,9 @@ export function OccupantTable({
           const { roomName, bedName } = row;
           if (roomName && bedName) {
             return (
-              <span>
+              <>
                 {roomName} &middot; {bedName}
-              </span>
+              </>
             );
           }
           if (roomName) return <span>{roomName}</span>;

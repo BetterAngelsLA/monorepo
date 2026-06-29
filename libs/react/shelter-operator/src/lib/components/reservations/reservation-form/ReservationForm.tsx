@@ -3,6 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import { useCreateReservation } from '../../../hooks/useCreateReservation';
+import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import {
   GetBedsDocument,
   type GetBedsQuery,
@@ -14,17 +16,15 @@ import {
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
-import {
-  buildCreateReservationInput,
-  buildUpdateReservationInput,
-} from './utils/reservationFormInput';
-import { useCreateReservation } from '../../../hooks/useCreateReservation';
-import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
 import type { ReservationFormData } from './formTypes';
 import { ReservationFormSection } from './sections/ReservationFormSection';
+import {
+  buildCreateReservationInput,
+  buildUpdateReservationInput,
+} from './utils/reservationFormInput';
 
 export type ReservationFormProps = {
   shelterId: string;
@@ -121,7 +121,7 @@ export function ReservationForm({
     }
   );
 
-  const allBeds = bedsData?.beds.results ?? [];
+  const allBeds = useMemo(() => bedsData?.beds.results ?? [], [bedsData]);
 
   const allBedOptions = useMemo(
     () =>
@@ -290,7 +290,7 @@ export function ReservationForm({
           />
 
           <Form.Actions
-            onPrimaryClick={() => handleSubmit(submitReservation)()}
+            onPrimaryClick={handleSubmit(submitReservation)}
             onSecondaryClick={onCancel ? handleCancel : undefined}
             primaryDisabled={isSubmitting || !isValid}
             secondaryDisabled={isSubmitting}
