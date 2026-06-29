@@ -11,7 +11,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from accounts.models import User
 from clients.models import ClientProfile
@@ -308,7 +308,7 @@ def execute_merge(
                 merged_data=source_snapshots[source.pk],
             )
 
-        return ClientProfile.objects.get(pk=target.pk)
+        return cast(ClientProfile, ClientProfile.objects.get(pk=target.pk))
 
 
 # ---------------------------------------------------------------------------

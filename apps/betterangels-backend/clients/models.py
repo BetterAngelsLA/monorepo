@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import pghistory
 from betterangels_backend import settings
@@ -145,7 +145,7 @@ class ClientProfileQuerySet(QuerySet["ClientProfile"]):
         return self.filter(merged_into__isnull=True)
 
 
-class ClientProfileManager(models.Manager["ClientProfile"]):
+class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["ClientProfile"]):  # type: ignore[misc]
     """Default manager: excludes merged profiles automatically.
 
     Use ``including_merged()`` when you need every profile (e.g. the merge
@@ -153,7 +153,7 @@ class ClientProfileManager(models.Manager["ClientProfile"]):
     """
 
     def get_queryset(self) -> ClientProfileQuerySet:
-        return ClientProfileQuerySet(self.model, using=self._db).active()
+        return cast(ClientProfileQuerySet, super().get_queryset().active())
 
     def including_merged(self) -> ClientProfileQuerySet:
         """Return an unfiltered QuerySet (all profiles, merged or not)."""
