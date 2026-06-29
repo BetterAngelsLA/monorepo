@@ -8,7 +8,7 @@ import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
-import { EditReservationPage } from './pages/reservations/EditReservationPage';
+import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import {
   ShelterBasicInfoPage,
@@ -110,11 +110,11 @@ export function OperatorApp() {
               />
               <Route
                 path={manageSegments.reservationsCreate}
-                element={<EditReservationPage />}
+                element={<ReservationFormPage />}
               />
               <Route
                 path={manageSegments.reservationsEdit}
-                element={<EditReservationPage />}
+                element={<ReservationFormPage />}
               />
               <Route
                 path={manageSegments.occupants}

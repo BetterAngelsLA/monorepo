@@ -15,7 +15,7 @@ interface ReservationLocationState {
   roomId?: string | null;
 }
 
-export function EditReservationPage() {
+export function ReservationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { shelterId, reservationId } = useParams();
