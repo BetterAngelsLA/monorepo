@@ -131,7 +131,7 @@ class PreviewMergeTest(MergeServiceTestCase):
 
         with self.assertRaises(MergeValidationError) as ctx:
             preview_merge(source_ids=[a.pk], target_id=t.pk)
-        self.assertIn("already been merged into another", str(ctx.exception))
+        self.assertIn("has already been merged", str(ctx.exception))
 
     def test_preview_counts_related_objects(self) -> None:
         a = self._make_client(first_name="Alice")
