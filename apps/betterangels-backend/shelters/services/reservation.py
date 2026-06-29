@@ -165,7 +165,6 @@ def reservation_update(
     reservation.full_clean()
     _validate_reservation(reservation)
     reservation.save()
-    _validate_clients(clients_data)
     _set_clients(reservation, clients_data)
 
     return reservation
