@@ -7,6 +7,7 @@ Selectors (clients/selectors/merge.py) handle database reads per Hacksoft patter
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -15,6 +16,7 @@ from typing import Any
 from accounts.models import User
 from clients.models import ClientProfile
 from clients.selectors.merge import (
+    MergeProfilesNotFoundError,
     get_fk_relations,
     get_gfk_relations,
     get_merge_profiles,
@@ -23,6 +25,7 @@ from clients.selectors.merge import (
     get_unique_fields,
 )
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -82,7 +85,12 @@ class MergeValidationError(ValueError):
 # ---------------------------------------------------------------------------
 
 
-def _validate_merge_inputs(source_ids: list[int], target_id: int) -> tuple[ClientProfile, list[ClientProfile]]:
+def _validate_merge_inputs(
+    source_ids: list[int],
+    target_id: int,
+    *,
+    for_update: bool = False,
+) -> tuple[ClientProfile, list[ClientProfile]]:
     """Validate business rules. DB fetch delegated to get_merge_profiles selector."""
     if not source_ids:
         raise MergeValidationError("At least one source profile is required.")
@@ -90,18 +98,17 @@ def _validate_merge_inputs(source_ids: list[int], target_id: int) -> tuple[Clien
     if target_id in source_ids:
         raise MergeValidationError("Target profile cannot also be a source.")
 
-    target, sources = get_merge_profiles(source_ids, target_id)
+    try:
+        target, sources = get_merge_profiles(source_ids, target_id, for_update=for_update)
+    except MergeProfilesNotFoundError as e:
+        raise MergeValidationError(str(e)) from e
 
     if target.merged_into_id is not None:
-        raise MergeValidationError(
-            f"Target profile '{target.full_name}' (#{target_id}) has already been merged."
-        )
+        raise MergeValidationError(f"Target profile '{target.full_name}' (#{target_id}) has already been merged.")
 
     for source in sources:
         if source.merged_into_id is not None:
-            raise MergeValidationError(
-                f"Source profile '{source.full_name}' (#{source.pk}) has already been merged."
-            )
+            raise MergeValidationError(f"Source profile '{source.full_name}' (#{source.pk}) has already been merged.")
 
     return target, sources
 
@@ -131,8 +138,7 @@ def preview_merge(source_ids: list[int], target_id: int) -> MergePreview:
             for sv in source_vals:
                 if sv is not None and sv != target_val and f.name in unique_fields:
                     conflicts.append(
-                        f"{f.name}: target has '{target_val}', "
-                        f"source has '{sv}' — target's value will be kept"
+                        f"{f.name}: target has '{target_val}', source has '{sv}' — target's value will be kept"
                     )
             resolution = "target_wins"
         elif any(v is not None for v in source_vals):
@@ -203,7 +209,7 @@ def execute_merge(
 ) -> ClientProfile:
     """Execute a merge inside transaction.atomic(). Returns the target."""
     with transaction.atomic():
-        target, sources = _validate_merge_inputs(source_ids, target_id)
+        target, sources = _validate_merge_inputs(source_ids, target_id, for_update=True)
 
         scalar_fields = get_scalar_fields(ClientProfile)
         unique_fields = get_unique_fields()
@@ -218,7 +224,10 @@ def execute_merge(
                 if f.name == "profile_photo":
                     val = source.profile_photo.name if source.profile_photo else None
                 snap[f.name] = val
-            source_snapshots[source.pk] = snap
+            # Round-trip through DjangoJSONEncoder so psycopg's stdlib
+            # json.dumps won't choke on date/datetime/Decimal/PhoneNumber/etc.
+            # default=str is a safety net for any type Django doesn't know.
+            source_snapshots[source.pk] = json.loads(json.dumps(snap, cls=DjangoJSONEncoder, default=str))
 
         # ---- Merge scalar fields ----
         for f in scalar_fields:
@@ -244,7 +253,7 @@ def execute_merge(
                     break
 
         # ---- Clear unique fields on sources before full_clean ----
-        clean_unique = unique_fields - {"id", "created_at", "updated_at"}
+        clean_unique = unique_fields - {"id"}  # id is always unique (PK)
         for source in sources:
             updated = []
             for fn in clean_unique:
@@ -271,23 +280,21 @@ def execute_merge(
             if rel_model._meta.model_name == "reservationclient":
                 _dedup_reservation_clients(sources, target)
 
-            rel_model.objects.filter(**{f"{field_name}__in": all_source_ids}).update(
-                **{field_name: target.pk}
-            )
+            rel_model.objects.filter(**{f"{field_name}__in": all_source_ids}).update(**{field_name: target.pk})
 
         # ---- Re-point GFK relations ----
         for gfk_info in get_gfk_relations():
             gfk_model = gfk_info["model"]
             for source in sources:
                 source_snapshots[source.pk][f"_moved_{gfk_info['model_label']}"] = list(
-                    gfk_model.objects.filter(
-                        content_type=content_type, object_id=source.pk
-                    ).values_list("pk", flat=True)
+                    gfk_model.objects.filter(content_type=content_type, object_id=source.pk).values_list(
+                        "pk", flat=True
+                    )
                 )
 
-            gfk_model.objects.filter(
-                content_type=content_type, object_id__in=all_source_ids
-            ).update(object_id=target.pk)
+            gfk_model.objects.filter(content_type=content_type, object_id__in=all_source_ids).update(
+                object_id=target.pk
+            )
 
         # ---- Re-point guardian permissions ----
         _merge_guardian_permissions(sources, target, content_type, source_snapshots)
@@ -316,13 +323,17 @@ def undo_merge(
 ) -> list[ClientProfile]:
     """Undo a merge. Returns restored source profiles."""
     with transaction.atomic():
-        target = ClientProfile.objects.select_for_update().filter(pk=target_id).first()
+        # Use including_merged() so the target can be found even if the
+        # default manager hides it; we check merged_into_id below.
+        target = ClientProfile.objects.including_merged().select_for_update().filter(pk=target_id).first()
         if target is None:
             raise MergeValidationError(f"Target profile {target_id} not found.")
         if target.merged_into_id is not None:
             raise MergeValidationError("Target profile has itself been merged — cannot undo.")
 
-        sources = list(target.merged_from.all())
+        # including_merged() is required because the default manager
+        # filters out merged profiles, and these sources ARE merged.
+        sources = list(ClientProfile.objects.including_merged().filter(merged_into=target))
         if not sources:
             raise MergeValidationError("No merged sources to undo.")
 
@@ -336,7 +347,8 @@ def undo_merge(
                 logger.warning("Source %s has no merged_data snapshot — skipping.", source.pk)
                 continue
 
-            # Restore scalar fields
+            # Restore scalar fields (Django fields natively accept
+            # ISO-format strings for date/datetime on save).
             for f in scalar_fields:
                 if f.name in snapshot:
                     setattr(source, f.name, snapshot[f.name])
@@ -346,27 +358,21 @@ def undo_merge(
                 key = f"_moved_{rel_info['model_label']}"
                 moved_ids = snapshot.get(key, [])
                 if moved_ids:
-                    existing = set(
-                        rel_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True)
-                    )
+                    existing = set(rel_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
                     if existing:
-                        rel_info["model"].objects.filter(pk__in=existing).update(
-                            **{rel_info["field_name"]: source.pk}
-                        )
+                        rel_info["model"].objects.filter(pk__in=existing).update(**{rel_info["field_name"]: source.pk})
 
             # Restore GFK relations
             for gfk_info in get_gfk_relations():
                 key = f"_moved_{gfk_info['model_label']}"
                 moved_ids = snapshot.get(key, [])
                 if moved_ids:
-                    existing = set(
-                        gfk_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True)
-                    )
+                    existing = set(gfk_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
                     if existing:
                         gfk_info["model"].objects.filter(pk__in=existing).update(object_id=source.pk)
 
             # Restore guardian permissions
-            _restore_guardian_permissions(source, target, content_type, snapshot)
+            _restore_guardian_permissions(source, content_type, snapshot)
 
             # Clear merge markers
             source.merged_into = None
@@ -399,6 +405,7 @@ def _dedup_reservation_clients(sources: list[ClientProfile], target: ClientProfi
 def _get_guardian_perm_models() -> list[type[models.Model]]:
     try:
         from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
+
         return [BigUserObjectPermission, BigGroupObjectPermission]
     except ImportError:
         logger.warning("Guardian permission models not available — skipping permission merge.")
@@ -415,8 +422,9 @@ def _append_guardian_permission_changes(
         total = 0
         for source in sources:
             ids = list(
-                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk))
-                .values_list("pk", flat=True)
+                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list(
+                    "pk", flat=True
+                )
             )
             per_source[source.pk] = ids
             total += len(ids)
@@ -440,11 +448,10 @@ def _merge_guardian_permissions(
 ) -> None:
     for perm_model in _get_guardian_perm_models():
         for source in sources:
-            source_snapshots[source.pk][
-                f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"
-            ] = list(
-                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk))
-                .values_list("pk", flat=True)
+            source_snapshots[source.pk][f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"] = list(
+                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list(
+                    "pk", flat=True
+                )
             )
         perm_model.objects.filter(
             content_type=content_type,
@@ -454,7 +461,6 @@ def _merge_guardian_permissions(
 
 def _restore_guardian_permissions(
     source: ClientProfile,
-    target: ClientProfile,
     content_type: ContentType,
     snapshot: dict[str, Any],
 ) -> None:

@@ -166,15 +166,27 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = ClientProfileResource
 
     actions = ["merge_clients"]
+    change_list_template = "admin/clients/clientprofile/change_list.html"
+    change_form_template = "admin/clients/clientprofile/change_form.html"
 
     def get_export_formats(self) -> list:
         return [CSV]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
-        qs = super().get_queryset(request)
-        if not request.GET.get("show_merged"):
-            qs = qs.filter(merged_into__isnull=True)
-        return qs
+        if request.GET.get("show_merged"):
+            # Bypass the default manager (which hides merged profiles).
+            return self.model._base_manager.all()
+        return super().get_queryset(request)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        # Show undo link when this profile has sources merged into it.
+        # Use including_merged() because merged sources are hidden by the
+        # default manager.
+        extra_context["merged_sources"] = list(
+            ClientProfile.objects.including_merged().filter(merged_into_id=object_id)
+        )
+        return super().change_view(request, object_id, form_url, extra_context)
 
     def get_urls(self) -> list:
         urls = super().get_urls()
@@ -204,28 +216,24 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         return redirect(reverse("admin:clients_clientprofile_merge") + f"?ids={ids}")
 
     def merge_view(self, request: HttpRequest) -> HttpResponseRedirect | TemplateResponse:
-        ids_param = request.GET.get("ids", "")
+        # Read ids from POST first (add-client form sends via hidden field),
+        # then fall back to GET (initial action redirect uses query string).
+        ids_param = request.POST.get("ids") or request.GET.get("ids", "")
         try:
             ids = [int(i) for i in ids_param.split(",") if i]
         except ValueError:
             self.message_user(request, "Invalid client IDs.", messages.ERROR)
             return redirect(reverse("admin:clients_clientprofile_changelist"))
 
-        if len(ids) < 2:
-            self.message_user(request, "Select at least 2 clients.", messages.ERROR)
-            return redirect(reverse("admin:clients_clientprofile_changelist"))
-
-        profiles = ClientProfile.objects.filter(pk__in=ids).order_by("pk")
-        if profiles.count() != len(ids):
-            self.message_user(request, "Some selected clients no longer exist.", messages.ERROR)
-            return redirect(reverse("admin:clients_clientprofile_changelist"))
+        profiles = ClientProfile.objects.filter(pk__in=ids).order_by("pk") if ids else ClientProfile.objects.none()
+        if ids and profiles.count() != len(ids):
+            self.message_user(request, "Some selected clients no longer exist.", messages.WARNING)
 
         target_id = request.POST.get("target_id") or request.GET.get("target_id")
         is_preview = "preview" in request.POST
         is_confirm = "confirm" in request.POST
 
-        # Step 1: Select target (initial page from action redirect)
-        # Also supports adding clients by ID via POST "add_client_id"
+        # Step 0: Add client by ID (works even with no initial selection)
         if request.method == "POST" and "add_client_id" in request.POST:
             added_id_str = request.POST["add_client_id"].strip()
             try:
@@ -254,6 +262,19 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
                     messages.ERROR,
                 )
 
+            # After adding, re-display the select target page
+            return TemplateResponse(
+                request,
+                "admin/clients/clientprofile/merge_select_target.html",
+                {
+                    "profiles": profiles,
+                    "ids": ids_param,
+                    "opts": self.model._meta,
+                    "title": "Merge Clients — Select Target",
+                },
+            )
+
+        # Step 1: Select target page
         if request.method == "GET" and not target_id:
             return TemplateResponse(
                 request,
@@ -266,15 +287,26 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
                 },
             )
 
+        # --- Minimum check: 2+ profiles required for preview & confirm ---
+        if profiles.count() < 2:
+            self.message_user(request, "Add at least 2 clients to merge.", messages.ERROR)
+            return redirect(reverse("admin:clients_clientprofile_merge") + (f"?ids={ids_param}" if ids_param else ""))
+
         # Step 2: Show preview
-        if (request.method == "POST" and is_preview) or (request.GET.get("target_id") and is_dry_run):
+        if request.method == "POST" and is_preview:
             try:
                 tid = int(target_id)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 self.message_user(request, "Please select a target profile.", messages.ERROR)
                 return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
 
             source_ids = [p.pk for p in profiles if p.pk != tid]
+            if not source_ids:
+                self.message_user(
+                    request, "Select at least one source profile (different from target).", messages.ERROR
+                )
+                return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}&target_id={tid}")
+
             try:
                 preview = preview_merge(source_ids=source_ids, target_id=tid)
             except MergeValidationError as e:
@@ -296,7 +328,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         if request.method == "POST" and is_confirm:
             try:
                 tid = int(target_id)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 self.message_user(request, "Invalid target ID.", messages.ERROR)
                 return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
 
@@ -313,13 +345,10 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
 
             self.message_user(
                 request,
-                f"Successfully merged {len(source_ids)} client(s) into "
-                f"'{merged.full_name}' (#{merged.pk}).",
+                f"Successfully merged {len(source_ids)} client(s) into '{merged.full_name}' (#{merged.pk}).",
                 messages.SUCCESS,
             )
-            return redirect(
-                reverse("admin:clients_clientprofile_change", args=[merged.pk])
-            )
+            return redirect(reverse("admin:clients_clientprofile_change", args=[merged.pk]))
 
         # Fallback
         return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
@@ -328,12 +357,12 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
 
     def undo_merge_view(self, request: HttpRequest, pk: int):
         try:
-            target = ClientProfile.objects.get(pk=pk)
+            target = ClientProfile.objects.including_merged().get(pk=pk)
         except ClientProfile.DoesNotExist:
             self.message_user(request, "Client not found.", messages.ERROR)
             return redirect(reverse("admin:clients_clientprofile_changelist"))
 
-        sources = target.merged_from.all()
+        sources = ClientProfile.objects.including_merged().filter(merged_into=target)
         if not sources:
             self.message_user(request, "No merged sources to undo.", messages.WARNING)
             return redirect(reverse("admin:clients_clientprofile_change", args=[pk]))

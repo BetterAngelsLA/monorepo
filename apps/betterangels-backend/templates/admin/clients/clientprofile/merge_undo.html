@@ -1,13 +1,15 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block content %}
-<h1>Undo Merge</h1>
+{% block content_title %}
+  <h1>Undo Merge</h1>
+  <p style="margin: 0 0 16px 0;">
+    This will restore the following profiles that were merged into
+    <strong>{{ target.full_name }}</strong> (ID: {{ target.pk }}):
+  </p>
+{% endblock %}
 
-<p>
-  This will restore the following profiles that were merged into
-  <strong>{{ target.full_name }}</strong> (ID: {{ target.pk }}):
-</p>
+{% block content %}
 
 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
   <thead>

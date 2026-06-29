@@ -1,13 +1,15 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block content %}
-<h1>Merge Clients — Preview</h1>
+{% block content_title %}
+  <h1>Merge Clients — Preview</h1>
+  <p style="margin: 0 0 16px 0;">
+    Merging <strong>{{ preview.source_names|join:", " }}</strong>
+    into <strong>{{ preview.target_name }}</strong> (ID: {{ preview.target_id }}).
+  </p>
+{% endblock %}
 
-<p>
-  Merging <strong>{{ preview.source_names|join:", " }}</strong>
-  into <strong>{{ preview.target_name }}</strong> (ID: {{ preview.target_id }}).
-</p>
+{% block content %}
 
 {% if preview.conflicts %}
 <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; margin-bottom: 16px; border-radius: 4px;">

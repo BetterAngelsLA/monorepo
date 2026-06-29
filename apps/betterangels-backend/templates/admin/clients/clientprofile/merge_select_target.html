@@ -1,13 +1,16 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
+{% block content_title %}
+  <h1>Merge Clients — Select Target</h1>
+  <p class="help" style="margin: 0 0 16px 0; color: var(--body-quiet-color);">
+    Select which profile to <strong>keep</strong>. All related objects (notes, contacts, documents, etc.)
+    from the other profiles will be moved to the selected target profile.
+    The other profiles will be marked as merged (reversible).
+  </p>
+{% endblock %}
+
 {% block content %}
-<h1>Merge Clients — Select Target</h1>
-<p class="help">
-  Select which profile to <strong>keep</strong>. All related objects (notes, contacts, documents, etc.)
-  from the other profiles will be moved to the selected target profile.
-  The other profiles will be marked as merged (reversible).
-</p>
 
 <form method="post" action="" style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
   {% csrf_token %}
@@ -15,53 +18,73 @@
   <label for="add_client_id" style="font-weight: bold;">Add client by ID:</label>
   <input type="text" id="add_client_id" name="add_client_id" placeholder="e.g. 42" style="margin: 0 8px; width: 120px;">
   <button type="submit" class="button">Add</button>
-  <span style="color: #666; font-size: 12px; margin-left: 8px;">Use this to add clients that don't appear together in search results.</span>
+  <span style="color: #666; font-size: 12px; margin-left: 8px;">Use this to add clients one at a time. You can find IDs from the client list or detail pages.</span>
 </form>
 
-<form method="post" action="">
-  {% csrf_token %}
-  <input type="hidden" name="ids" value="{{ ids }}">
-
-  <table style="width: 100%; border-collapse: collapse;">
-    <thead>
-      <tr>
-        <th style="width: 40px;">Keep</th>
-        <th>Name</th>
-        <th>ID</th>
-        <th>Email</th>
-        <th>CA ID</th>
-        <th>DOB</th>
-        <th>Notes</th>
-        <th>Contacts</th>
-        <th>Docs</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for profile in profiles %}
-      <tr style="border-bottom: 1px solid #eee;">
-        <td style="text-align: center;">
-          <input type="radio" name="target_id" value="{{ profile.pk }}"
-                 {% if forloop.first %}checked{% endif %}>
-        </td>
-        <td><strong>{{ profile.full_name }}</strong></td>
-        <td>{{ profile.pk }}</td>
-        <td>{{ profile.email|default:"—" }}</td>
-        <td>{{ profile.california_id|default:"—" }}</td>
-        <td>{{ profile.date_of_birth|date:"Y-m-d"|default:"—" }}</td>
-        <td>{{ profile.client_profile_notes.count }}</td>
-        <td>{{ profile.contacts.count }}</td>
-        <td>{{ profile.documents.count }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <div style="margin-top: 20px;">
-    <button type="submit" name="preview" value="1" class="button" style="font-size: 14px; padding: 10px 20px;">
-      Preview Merge
-    </button>
-    <a href="{% url 'admin:clients_clientprofile_changelist' %}" class="button cancel-link"
-       style="margin-left: 10px;">Cancel</a>
+{% if profiles|length == 0 %}
+  <div style="background: #e7f3ff; border: 1px solid #b6d4fe; padding: 24px; border-radius: 8px; text-align: center; margin-top: 16px;">
+    <p style="font-size: 16px; color: #0c5460; margin: 0 0 8px 0;">
+      👆 <strong>No clients added yet.</strong>
+    </p>
+    <p style="color: #0c5460; margin: 0;">
+      Add at least 2 clients by ID using the form above, or select them from the
+      <a href="{% url 'admin:clients_clientprofile_changelist' %}">client list</a>
+      and use the "Merge selected clients" action.
+    </p>
   </div>
-</form>
+{% else %}
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="ids" value="{{ ids }}">
+
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="width: 40px;">Keep</th>
+          <th>Name</th>
+          <th>ID</th>
+          <th>Email</th>
+          <th>CA ID</th>
+          <th>DOB</th>
+          <th>Notes</th>
+          <th>Contacts</th>
+          <th>Docs</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for profile in profiles %}
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="text-align: center;">
+            <input type="radio" name="target_id" value="{{ profile.pk }}"
+                   {% if forloop.first %}checked{% endif %}>
+          </td>
+          <td><strong>{{ profile.full_name }}</strong></td>
+          <td>{{ profile.pk }}</td>
+          <td>{{ profile.email|default:"—" }}</td>
+          <td>{{ profile.california_id|default:"—" }}</td>
+          <td>{{ profile.date_of_birth|date:"Y-m-d"|default:"—" }}</td>
+          <td>{{ profile.client_profile_notes.count }}</td>
+          <td>{{ profile.contacts.count }}</td>
+          <td>{{ profile.documents.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+      {% if profiles|length >= 2 %}
+        <button type="submit" name="preview" value="1" class="button" style="font-size: 14px; padding: 10px 20px;">
+          Preview Merge
+        </button>
+      {% else %}
+        <button type="submit" name="preview" value="1" class="button" style="font-size: 14px; padding: 10px 20px; opacity: 0.6;" disabled>
+          Preview Merge
+        </button>
+        <span style="color: #856404; margin-left: 12px;">⚠️ Add at least 2 clients to preview a merge.</span>
+      {% endif %}
+      <a href="{% url 'admin:clients_clientprofile_changelist' %}" class="button cancel-link"
+         style="margin-left: 10px;">Cancel</a>
+    </div>
+  </form>
+{% endif %}
 {% endblock %}
