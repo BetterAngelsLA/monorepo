@@ -2,7 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { BookCheck, CopyPlus, Minus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Button } from './base-ui/buttons/buttons';
+import { Button } from './base-ui/buttons';
 import {
   StatusBadge,
   type StatusBadgeVariant,
