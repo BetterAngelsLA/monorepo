@@ -2,8 +2,8 @@ import type {
   CreateReservationInput,
   ReservationClientInput,
   UpdateReservationInput,
-} from '../../../apollo/graphql/__generated__/types';
-import type { ReservationFormData } from '../reservation-form/formTypes';
+} from '../../../../apollo/graphql/__generated__/types';
+import type { ReservationFormData } from '../formTypes';
 
 const toInputString = (value?: string | null): string | undefined => {
   if (!value) return undefined;

@@ -17,7 +17,7 @@ import {
 import {
   buildCreateReservationInput,
   buildUpdateReservationInput,
-} from '../api/reservationFormInput';
+} from './utils/reservationFormInput';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import type { SelectedClient } from '../components/ClientSearchInput';
