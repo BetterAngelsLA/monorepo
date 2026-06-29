@@ -5,7 +5,7 @@ import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Fragment, useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';

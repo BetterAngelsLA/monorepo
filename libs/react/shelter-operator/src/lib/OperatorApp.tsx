@@ -20,13 +20,14 @@ import {
   ShelterServicesPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
-import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
+import { OperatorAuthProvider } from './providers';
 import {
   manageSegments,
   paths,
   routePath,
   shelterProfileSegments,
 } from './routing';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
 
 export function OperatorApp() {
   const { user } = useUser();
