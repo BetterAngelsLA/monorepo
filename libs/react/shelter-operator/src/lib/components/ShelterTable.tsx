@@ -8,7 +8,7 @@ export type ShelterRowObject = {
   name: string;
   address: string;
   totalBeds: number;
-  reservedBeds: number | null;
+  unavailableBeds: number;
   tags: string[];
 };
 
@@ -29,14 +29,8 @@ type ShelterTableProps = {
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
 
-function computeReservedBeds(shelter: Shelter): number | null {
-  const totalBeds = shelter.totalBeds ?? 0;
-  if (totalBeds === 0) return null;
-  return Math.min(
-    Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-    totalBeds
-  );
-}
+const sumAllBeds = (bedsByStatus: Shelter['bedsByStatus']): number =>
+  Object.values(bedsByStatus).reduce((sum, v) => sum + v, 0);
 
 function renderTags(tags: string[] | null) {
   const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
@@ -106,13 +100,16 @@ export function ShelterTable({
         width: '1.2fr',
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
-          const totalBeds = shelter.totalBeds ?? 0;
-          const reservedBeds = computeReservedBeds(shelter);
+          const totalBeds = sumAllBeds(shelter.bedsByStatus);
+          const unavailableBeds =
+            totalBeds - (shelter.bedsByStatus.available ?? 0);
           const progressPct =
-            reservedBeds !== null ? (reservedBeds / totalBeds) * 100 : 0;
+            totalBeds > 0 ? (unavailableBeds / totalBeds) * 100 : 0;
 
-          if (reservedBeds === null) {
-            return <div className="whitespace-nowrap">N/A</div>;
+          if (totalBeds === 0) {
+            return (
+              <div className="whitespace-nowrap">No availability data</div>
+            );
           }
 
           return (
@@ -124,12 +121,12 @@ export function ShelterTable({
                 />
               </div>
               <span className="leading-5 text-slate-700">
-                {reservedBeds} / {totalBeds} beds
+                {unavailableBeds} / {totalBeds} beds
               </span>
             </div>
           );
         },
-        sortValue: (shelter) => shelter.totalBeds ?? 0,
+        sortValue: (shelter) => sumAllBeds(shelter.bedsByStatus),
       },
       {
         key: 'tags',
@@ -158,15 +155,16 @@ export function ShelterTable({
       rows={rows}
       getRowKey={getRowKey ?? ((shelter) => shelter.id)}
       getRowObject={(shelter) => {
-        const totalBeds = shelter.totalBeds ?? 0;
-        const reservedBeds = computeReservedBeds(shelter);
+        const totalBeds = sumAllBeds(shelter.bedsByStatus);
+        const unavailableBeds =
+          totalBeds - (shelter.bedsByStatus.available ?? 0);
 
         return {
           id: shelter.id,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
           totalBeds,
-          reservedBeds,
+          unavailableBeds,
           tags: shelter.tags ?? [],
         };
       }}
