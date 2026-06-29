@@ -13,13 +13,13 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ColorValue, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 
 interface TabIconProps {
   focused: boolean;
-  color: string;
+  color: ColorValue;
   Icon: React.ComponentType<{ color: string }>;
   InactiveIcon: React.ComponentType<{ color: string }>;
   label: string;
@@ -33,8 +33,8 @@ const TabIcon = ({
   label,
 }: TabIconProps): React.ReactElement => (
   <View style={styles.tabIconContainer}>
-    {focused ? <Icon color={color} /> : <InactiveIcon color={color} />}
-    <TextRegular color={color} size="xs" style={styles.labelText}>
+    {focused ? <Icon color={color as string} /> : <InactiveIcon color={color as string} />}
+    <TextRegular color={color as string} size="xs" style={styles.labelText}>
       {label}
     </TextRegular>
   </View>
