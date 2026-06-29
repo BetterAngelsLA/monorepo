@@ -18,7 +18,7 @@ import {
   type UpdateRoomMutationVariables,
 } from '../api/updateRoomMutation';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
-import { formSchema } from './constants/validation';
+import { formSchema } from './constants/formSchema';
 import type { RoomFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { RoomDetailsSection } from './sections/RoomDetailsSection';

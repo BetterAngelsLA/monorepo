@@ -15,7 +15,7 @@ import {
   validateField,
   validateShelterForm,
   type FormErrors,
-} from './constants/validation';
+} from './constants/formSchema';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
 import { AdministrationSection } from './sections/AdministrationSection';
 import { BasicInformationSection } from './sections/BasicInformationSection';

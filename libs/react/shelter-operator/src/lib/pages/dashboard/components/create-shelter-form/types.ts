@@ -1,9 +1,9 @@
 import type { ShelterFormData } from '../../formTypes';
-import type { FormErrors } from './constants/validation';
+import type { FormErrors } from './constants/formSchema';
 
 export type ShelterFormFieldUpdater = <K extends keyof ShelterFormData>(
   field: K,
-  value: ShelterFormData[K],
+  value: ShelterFormData[K]
 ) => void;
 
 export interface SectionProps {

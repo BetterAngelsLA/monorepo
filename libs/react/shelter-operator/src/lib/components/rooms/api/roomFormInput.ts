@@ -7,18 +7,18 @@ import type { RoomFormData } from '../room-form/formTypes';
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
 
-const sanitizeString = (value?: string | null): string | undefined => {
+const toInputString = (value?: string | null): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
 };
 
 const buildRoomFieldInput = (formData: RoomFormData) => ({
-  name: sanitizeString(formData.name),
+  name: toInputString(formData.name),
   type: formData.type ?? undefined,
-  typeOther: sanitizeString(formData.typeOther),
-  notes: sanitizeString(formData.notes),
-  amenities: sanitizeString(formData.amenities),
+  typeOther: toInputString(formData.typeOther),
+  notes: toInputString(formData.notes),
+  amenities: toInputString(formData.amenities),
   medicalRespite: formData.medicalRespite,
   maintenanceFlag: formData.maintenanceFlag,
   storage: formData.storage,
@@ -42,7 +42,7 @@ export const buildCreateRoomInput = (
 ): CreateRoomInput => ({
   shelterId,
   ...buildRoomFieldInput(formData),
-  name: sanitizeString(formData.name) ?? '',
+  name: toInputString(formData.name) ?? '',
 });
 
 export const buildUpdateRoomInput = (formData: RoomFormData): UpdateRoomInput =>

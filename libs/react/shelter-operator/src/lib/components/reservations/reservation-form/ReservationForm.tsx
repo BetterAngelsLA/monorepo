@@ -30,7 +30,7 @@ import {
 } from '../api/updateReservationMutation';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
-import { formSchema } from './constants/validation';
+import { formSchema } from './constants/formSchema';
 import type { ReservationFormData } from './formTypes';
 import { ReservationFormSection } from './sections/ReservationFormSection';
 

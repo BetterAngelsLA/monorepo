@@ -23,7 +23,7 @@ import {
   type UpdateBedMutationVariables,
 } from '../api/updateBedMutation';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
-import { formSchema } from './constants/validation';
+import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';

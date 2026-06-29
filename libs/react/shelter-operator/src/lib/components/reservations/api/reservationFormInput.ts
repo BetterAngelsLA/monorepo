@@ -5,7 +5,7 @@ import type {
 } from '../../../apollo/graphql/__generated__/types';
 import type { ReservationFormData } from '../reservation-form/formTypes';
 
-const sanitizeString = (value?: string | null): string | undefined => {
+const toInputString = (value?: string | null): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
@@ -27,7 +27,7 @@ export const buildCreateReservationInput = (
   roomId: formData.roomId ?? undefined,
   status: formData.status,
   startDate: formData.startDate || undefined,
-  notes: sanitizeString(formData.notes),
+  notes: toInputString(formData.notes),
   clients: buildClientsInput(formData.clientIds, formData.primaryClientId),
 });
 
@@ -38,6 +38,6 @@ export const buildUpdateReservationInput = (
     bedId: formData.bedId ?? undefined,
     roomId: formData.roomId ?? undefined,
     startDate: formData.startDate || undefined,
-    notes: sanitizeString(formData.notes),
+    notes: toInputString(formData.notes),
     clients: buildClientsInput(formData.clientIds, formData.primaryClientId),
   } as UpdateReservationInput);
