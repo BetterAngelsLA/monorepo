@@ -48,6 +48,7 @@ export function ShelterEcosystemForm(props: TProps) {
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {

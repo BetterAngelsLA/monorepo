@@ -42,6 +42,7 @@ export function ShelterPoliciesForm(props: TProps) {
   } = useForm<PoliciesFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {

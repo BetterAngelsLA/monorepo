@@ -48,6 +48,7 @@ export function ShelterBasicInfoForm(props: TProps) {
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {

@@ -16,9 +16,17 @@ export const formSchema = z.object({
   status: z.enum(StatusChoices).refine(Boolean, 'Status is required'),
   description: z.string(),
   location: locationSchema,
-  email: z.email('Invalid email address').trim().optional().or(z.literal('')),
-  phone: z.string().trim().optional().or(z.literal('')),
-  website: z.url('Invalid URL').trim().optional().or(z.literal('')),
+  email: z
+    .email('Please enter a valid email address')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+  phone: z.string().trim().optional().or(z.literal('')), // Input dataType="phone-number" forces own message
+  website: z
+    .url('Please enter a valid URL')
+    .trim()
+    .optional()
+    .or(z.literal('')),
   isPrivate: z.boolean(),
 });
 
