@@ -18,12 +18,10 @@ import {
   type BasicInfoFormData,
 } from '../segments/BasicInfo';
 
-function toCreateInput(
-  formData: BasicInfoFormData
-): CreateShelterInput {
+function toCreateInput(formData: BasicInfoFormData): CreateShelterInput {
   return {
     name: formData.name,
-    description: formData.description || undefined,
+    description: formData.description || '',
     location: formData.location ?? undefined,
     email: formData.email || undefined,
     phone: formData.phone || undefined,
