@@ -145,6 +145,15 @@ class AbstractClientProfile(BaseModel):
 class ClientProfile(AbstractClientProfile):
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     gender_other = models.CharField(max_length=100, null=True, blank=True)
+    merged_at = models.DateTimeField(null=True, blank=True)
+    merged_data = models.JSONField(null=True, blank=True)
+    merged_into = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="merged_from",
+    )
     middle_name = models.CharField(max_length=50, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)

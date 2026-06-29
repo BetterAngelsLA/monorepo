@@ -6,11 +6,16 @@ from clients.enums import (
     LivingSituationEnum,
     RelationshipTypeEnum,
 )
+from clients.services.merge import MergeValidationError, execute_merge, preview_merge, undo_merge
 from common.models import Attachment, PhoneNumber
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, QuerySet
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.encoding import force_str
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
@@ -160,8 +165,205 @@ class ClientProfileResource(resources.ModelResource):
 class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = ClientProfileResource
 
+    actions = ["merge_clients"]
+
     def get_export_formats(self) -> list:
         return [CSV]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
+        qs = super().get_queryset(request)
+        if not request.GET.get("show_merged"):
+            qs = qs.filter(merged_into__isnull=True)
+        return qs
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "merge/",
+                self.admin_site.admin_view(self.merge_view),
+                name="clients_clientprofile_merge",
+            ),
+            path(
+                "<int:pk>/merge/undo/",
+                self.admin_site.admin_view(self.undo_merge_view),
+                name="clients_clientprofile_undo_merge",
+            ),
+        ]
+        return custom_urls + urls
+
+    # ---- Merge action ----
+
+    @admin.action(description="Merge selected clients")
+    def merge_clients(self, request: HttpRequest, queryset: QuerySet[ClientProfile]) -> HttpResponseRedirect:
+        if queryset.count() < 2:
+            self.message_user(request, "Select at least 2 clients to merge.", messages.ERROR)
+            return redirect(request.get_full_path())
+
+        ids = ",".join(str(pk) for pk in queryset.values_list("pk", flat=True))
+        return redirect(reverse("admin:clients_clientprofile_merge") + f"?ids={ids}")
+
+    def merge_view(self, request: HttpRequest):
+        ids_param = request.GET.get("ids", "")
+        try:
+            ids = [int(i) for i in ids_param.split(",") if i]
+        except ValueError:
+            self.message_user(request, "Invalid client IDs.", messages.ERROR)
+            return redirect(reverse("admin:clients_clientprofile_changelist"))
+
+        if len(ids) < 2:
+            self.message_user(request, "Select at least 2 clients.", messages.ERROR)
+            return redirect(reverse("admin:clients_clientprofile_changelist"))
+
+        profiles = ClientProfile.objects.filter(pk__in=ids).order_by("pk")
+        if profiles.count() != len(ids):
+            self.message_user(request, "Some selected clients no longer exist.", messages.ERROR)
+            return redirect(reverse("admin:clients_clientprofile_changelist"))
+
+        target_id = request.POST.get("target_id") or request.GET.get("target_id")
+        is_preview = "preview" in request.POST
+        is_confirm = "confirm" in request.POST
+        is_dry_run = request.GET.get("dry_run") == "1" and "ids" in request.GET
+
+        # Step 1: Select target (initial page from action redirect)
+        # Also supports adding clients by ID via POST "add_client_id"
+        if request.method == "POST" and "add_client_id" in request.POST:
+            added_id_str = request.POST["add_client_id"].strip()
+            try:
+                added_id = int(added_id_str)
+                if added_id not in ids:
+                    try:
+                        extra = ClientProfile.objects.get(pk=added_id)
+                        ids.append(added_id)
+                        profiles = ClientProfile.objects.filter(pk__in=ids).order_by("pk")
+                        ids_param = ",".join(str(pk) for pk in ids)
+                        self.message_user(
+                            request,
+                            f"Added '{extra.full_name}' (#{added_id}).",
+                            messages.SUCCESS,
+                        )
+                    except ClientProfile.DoesNotExist:
+                        self.message_user(
+                            request,
+                            f"Client #{added_id_str} not found.",
+                            messages.ERROR,
+                        )
+            except ValueError:
+                self.message_user(
+                    request,
+                    f"Invalid client ID: '{added_id_str}'.",
+                    messages.ERROR,
+                )
+
+        if request.method == "GET" and not target_id:
+            return TemplateResponse(
+                request,
+                "admin/clients/clientprofile/merge_select_target.html",
+                {
+                    "profiles": profiles,
+                    "ids": ids_param,
+                    "opts": self.model._meta,
+                    "title": "Merge Clients — Select Target",
+                },
+            )
+
+        # Step 2: Show preview
+        if (request.method == "POST" and is_preview) or (request.GET.get("target_id") and is_dry_run):
+            try:
+                tid = int(target_id)
+            except (ValueError, TypeError):
+                self.message_user(request, "Please select a target profile.", messages.ERROR)
+                return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
+
+            source_ids = [p.pk for p in profiles if p.pk != tid]
+            try:
+                preview = preview_merge(source_ids=source_ids, target_id=tid)
+            except MergeValidationError as e:
+                self.message_user(request, str(e), messages.ERROR)
+                return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
+
+            return TemplateResponse(
+                request,
+                "admin/clients/clientprofile/merge_preview.html",
+                {
+                    "preview": preview,
+                    "ids": ids_param,
+                    "opts": self.model._meta,
+                    "title": "Merge Clients — Preview",
+                },
+            )
+
+        # Step 3: Execute merge
+        if request.method == "POST" and is_confirm:
+            try:
+                tid = int(target_id)
+            except (ValueError, TypeError):
+                self.message_user(request, "Invalid target ID.", messages.ERROR)
+                return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
+
+            source_ids = [p.pk for p in profiles if p.pk != tid]
+            try:
+                merged = execute_merge(
+                    source_ids=source_ids,
+                    target_id=tid,
+                    performed_by=request.user,
+                )
+            except MergeValidationError as e:
+                self.message_user(request, str(e), messages.ERROR)
+                return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
+
+            self.message_user(
+                request,
+                f"Successfully merged {len(source_ids)} client(s) into "
+                f"'{merged.full_name}' (#{merged.pk}).",
+                messages.SUCCESS,
+            )
+            return redirect(
+                reverse("admin:clients_clientprofile_change", args=[merged.pk])
+            )
+
+        # Fallback
+        return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
+
+    # ---- Undo merge ----
+
+    def undo_merge_view(self, request: HttpRequest, pk: int):
+        try:
+            target = ClientProfile.objects.get(pk=pk)
+        except ClientProfile.DoesNotExist:
+            self.message_user(request, "Client not found.", messages.ERROR)
+            return redirect(reverse("admin:clients_clientprofile_changelist"))
+
+        sources = target.merged_from.all()
+        if not sources:
+            self.message_user(request, "No merged sources to undo.", messages.WARNING)
+            return redirect(reverse("admin:clients_clientprofile_change", args=[pk]))
+
+        if request.method == "POST" and "confirm_undo" in request.POST:
+            try:
+                restored = undo_merge(target_id=pk, performed_by=request.user)
+            except MergeValidationError as e:
+                self.message_user(request, str(e), messages.ERROR)
+                return redirect(reverse("admin:clients_clientprofile_change", args=[pk]))
+
+            names = ", ".join(p.full_name or f"#{p.pk}" for p in restored)
+            self.message_user(
+                request,
+                f"Successfully restored: {names}.",
+                messages.SUCCESS,
+            )
+            return redirect(reverse("admin:clients_clientprofile_change", args=[pk]))
+
+        return TemplateResponse(
+            request,
+            "admin/clients/clientprofile/merge_undo.html",
+            {
+                "target": target,
+                "sources": sources,
+                "opts": self.model._meta,
+                "title": f"Undo Merge — {target.full_name}",
+            },
+        )
 
     list_display = [
         "name",
@@ -361,6 +563,22 @@ class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientDocument]:
         return super().get_queryset(request).filter(content_type__model="clientprofile")
+
+    def get_search_results(self, request: HttpRequest, queryset: QuerySet, search_term: str):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+
+        if search_term:
+            client_content_type = ContentType.objects.get_for_model(ClientProfile)
+            matching_client_ids = ClientProfile.objects.filter(
+                Q(first_name__icontains=search_term) | Q(last_name__icontains=search_term)
+            ).values_list("pk", flat=True)
+
+            queryset |= self.model.objects.filter(
+                content_type=client_content_type,
+                object_id__in=matching_client_ids,
+            )
+
+        return queryset, use_distinct
 
     list_display = (
         "attachment_type",

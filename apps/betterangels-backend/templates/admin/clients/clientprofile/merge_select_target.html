@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<h1>Merge Clients — Select Target</h1>
+<p class="help">
+  Select which profile to <strong>keep</strong>. All related objects (notes, contacts, documents, etc.)
+  from the other profiles will be moved to the selected target profile.
+  The other profiles will be marked as merged (reversible).
+</p>
+
+<form method="post" action="" style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
+  {% csrf_token %}
+  <input type="hidden" name="ids" value="{{ ids }}">
+  <label for="add_client_id" style="font-weight: bold;">Add client by ID:</label>
+  <input type="text" id="add_client_id" name="add_client_id" placeholder="e.g. 42" style="margin: 0 8px; width: 120px;">
+  <button type="submit" class="button">Add</button>
+  <span style="color: #666; font-size: 12px; margin-left: 8px;">Use this to add clients that don't appear together in search results.</span>
+</form>
+
+<form method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="ids" value="{{ ids }}">
+
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th style="width: 40px;">Keep</th>
+        <th>Name</th>
+        <th>ID</th>
+        <th>Email</th>
+        <th>CA ID</th>
+        <th>DOB</th>
+        <th>Notes</th>
+        <th>Contacts</th>
+        <th>Docs</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in profiles %}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="text-align: center;">
+          <input type="radio" name="target_id" value="{{ profile.pk }}"
+                 {% if forloop.first %}checked{% endif %}>
+        </td>
+        <td><strong>{{ profile.full_name }}</strong></td>
+        <td>{{ profile.pk }}</td>
+        <td>{{ profile.email|default:"—" }}</td>
+        <td>{{ profile.california_id|default:"—" }}</td>
+        <td>{{ profile.date_of_birth|date:"Y-m-d"|default:"—" }}</td>
+        <td>{{ profile.client_profile_notes.count }}</td>
+        <td>{{ profile.contacts.count }}</td>
+        <td>{{ profile.documents.count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top: 20px;">
+    <button type="submit" name="preview" value="1" class="button" style="font-size: 14px; padding: 10px 20px;">
+      Preview Merge
+    </button>
+    <a href="{% url 'admin:clients_clientprofile_changelist' %}" class="button cancel-link"
+       style="margin-left: 10px;">Cancel</a>
+  </div>
+</form>
+{% endblock %}
