@@ -33,8 +33,7 @@ def test_all_template_permissions_resolve() -> None:
     if not expected:
         if REGISTRY.template_names():
             pytest.fail(
-                f"No permissions defined for any registered template: "
-                f"{', '.join(sorted(REGISTRY.template_names()))}"
+                f"No permissions defined for any registered template: {', '.join(sorted(REGISTRY.template_names()))}"
             )
         return
 
@@ -44,9 +43,7 @@ def test_all_template_permissions_resolve() -> None:
         (Q(codename=c, content_type__app_label=a) for a, c in expected),
         Q(),
     )
-    existing = set(
-        Permission.objects.filter(q).values_list("content_type__app_label", "codename")
-    )
+    existing = set(Permission.objects.filter(q).values_list("content_type__app_label", "codename"))
 
     # Missing = config expects it but DB doesn't have it.
     missing = {pair: templates for pair, templates in expected.items() if pair not in existing}
