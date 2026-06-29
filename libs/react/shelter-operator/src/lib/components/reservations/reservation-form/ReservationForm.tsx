@@ -212,14 +212,14 @@ export function ReservationForm({
     submitting: isCreating,
     error: createError,
     clearError: clearCreateError,
-  } = useCreateReservation();
+  } = useCreateReservation(shelterId);
 
   const {
     updateReservation,
     submitting: isUpdating,
     error: updateError,
     clearError: clearUpdateError,
-  } = useUpdateReservation();
+  } = useUpdateReservation(shelterId);
 
   const submissionError = createError || updateError;
   const isSubmitting = isCreating || isUpdating;

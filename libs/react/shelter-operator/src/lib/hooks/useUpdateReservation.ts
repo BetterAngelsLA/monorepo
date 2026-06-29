@@ -1,6 +1,9 @@
 import { useMutation } from '@apollo/client/react';
 import { gql } from '@apollo/client';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { GetBedsDocument } from '../components/beds/api/__generated__/bedQueries.generated';
+import { GetRoomsDocument } from '../components/rooms/api/__generated__/roomQueries.generated';
+import { GetReservationsDocument } from './useReservations/__generated__/useReservations.generated';
 
 const UPDATE_RESERVATION_MUTATION = gql`
   mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
@@ -40,8 +43,17 @@ interface UseUpdateReservationReturn {
   clearError: () => void;
 }
 
-export function useUpdateReservation(): UseUpdateReservationReturn {
-  const [mutate] = useMutation(UPDATE_RESERVATION_MUTATION);
+export function useUpdateReservation(shelterId: string): UseUpdateReservationReturn {
+  const refetchQueries = useMemo(
+    () => [
+      { query: GetBedsDocument, variables: { shelterId } },
+      { query: GetRoomsDocument, variables: { shelterId } },
+      { query: GetReservationsDocument, variables: { shelterId } },
+    ],
+    [shelterId]
+  );
+
+  const [mutate] = useMutation(UPDATE_RESERVATION_MUTATION, { refetchQueries });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

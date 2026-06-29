@@ -18,7 +18,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
     updateReservation,
     error: actionError,
     clearError,
-  } = useUpdateReservation();
+  } = useUpdateReservation(shelterId);
 
   const [loadingAction, setLoadingAction] = useState<
     'checkin' | 'complete' | 'cancel' | null
