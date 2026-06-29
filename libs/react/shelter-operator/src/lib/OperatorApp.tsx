@@ -41,11 +41,7 @@ export function OperatorApp() {
   const { user } = useUser();
 
   return (
-    <ActiveOrgProvider organizations={(user?.organizations ?? []).map(org => ({
-      id: org.id,
-      name: org.name,
-      permissions: Object.values(org.permissions).flat(),
-    }))}>
+    <ActiveOrgProvider organizations={user?.organizations ?? []}>
       <OperatorAuthProvider>
         <Routes>
           <Route path={routePath(paths.signIn)} element={<SignIn />} />
