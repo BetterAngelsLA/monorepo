@@ -1,11 +1,6 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from accounts.enums import OrgRoleEnum
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import User
-from accounts.permissions import UserOrganizationPermissions
-from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
@@ -14,6 +9,12 @@ from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from accounts.enums import OrgRoleEnum
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
+from accounts.role_manager import OrgRoleManager
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
@@ -193,9 +194,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             (OrgRoleEnum.SUPERUSER, [CASEWORKER, ORG_SUPERUSER]),
         ],
     )
-    def test_logged_in_user_org_permissions_query(
-        self, user_role: OrgRoleEnum, templates: list
-    ) -> None:
+    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, templates: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
@@ -230,19 +229,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         # non-DB-backed permissions.
         org_perm_values = {p.value for p in UserOrganizationPermissions}
         expected_org_perms = sorted(
-            _perm_value(p)
-            for t in templates
-            for p in t.permissions
-            if _perm_value(p) in org_perm_values
+            _perm_value(p) for t in templates for p in t.permissions if _perm_value(p) in org_perm_values
         )
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        org_perms = {
-            o["name"]: sorted(o["permissions"])
-            for o in response["data"]["currentUser"]["organizations"]
-        }
+        org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
         self.assertEqual(
             sorted(p for p in org_perms["o1"] if p in org_perm_values),
             expected_org_perms,
