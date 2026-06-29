@@ -1,5 +1,5 @@
-import { useMutation } from '@apollo/client/react';
 import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useCallback, useMemo, useState } from 'react';
 import { GetBedsDocument } from '../components/beds/api/__generated__/bedQueries.generated';
 import { GetRoomsDocument } from '../components/rooms/api/__generated__/roomQueries.generated';
@@ -43,7 +43,9 @@ interface UseUpdateReservationReturn {
   clearError: () => void;
 }
 
-export function useUpdateReservation(shelterId: string): UseUpdateReservationReturn {
+export function useUpdateReservation(
+  shelterId: string
+): UseUpdateReservationReturn {
   const refetchQueries = useMemo(
     () => [
       { query: GetBedsDocument, variables: { shelterId } },

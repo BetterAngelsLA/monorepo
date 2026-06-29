@@ -2,12 +2,14 @@ import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
-import { shelterCreateReservationRoute } from '../../routing';
-import { useUpdateReservation } from '../../hooks/useUpdateReservation';
 import { useReservations } from '../../hooks/useReservations';
+import { useUpdateReservation } from '../../hooks/useUpdateReservation';
+import { shelterCreateReservationRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { ReservationTable } from '../ReservationTable';
+
+type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
 
 export function ReservationsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
@@ -20,9 +22,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
     clearError,
   } = useUpdateReservation(shelterId);
 
-  const [loadingAction, setLoadingAction] = useState<
-    'checkin' | 'complete' | 'cancel' | null
-  >(null);
+  const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
   const isCheckingIn = loadingAction === 'checkin';
   const isCompleting = loadingAction === 'complete';
   const isCancelling = loadingAction === 'cancel';
@@ -40,7 +40,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
     async (
       reservationId: string,
       status: ReservationStatusChoices,
-      action: 'checkin' | 'complete' | 'cancel',
+      action: LoadingAction,
       onClose: () => void
     ) => {
       clearError();

@@ -40,7 +40,9 @@ interface UseCreateReservationReturn {
   clearError: () => void;
 }
 
-export function useCreateReservation(shelterId: string): UseCreateReservationReturn {
+export function useCreateReservation(
+  shelterId: string
+): UseCreateReservationReturn {
   const refetchQueries = useMemo(
     () => [
       { query: GetBedsDocument, variables: { shelterId } },
