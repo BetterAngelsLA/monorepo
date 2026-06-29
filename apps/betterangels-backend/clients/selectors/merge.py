@@ -20,6 +20,33 @@ class MergeProfilesNotFoundError(Exception):
     """Raised by get_merge_profiles when one or more profiles are missing."""
 
 
+def get_profiles_by_ids(ids: list[int]) -> list[ClientProfile]:
+    """Return ClientProfiles matching *ids*, ordered by pk.
+
+    Uses including_merged() so the admin can see merged profiles.
+    Returns empty list if none found (does not raise).
+    """
+    if not ids:
+        return []
+    return list(ClientProfile.objects.including_merged().filter(pk__in=ids).order_by("pk"))
+
+
+def get_client_by_id(pk: int) -> ClientProfile | None:
+    """Return a single ClientProfile by pk, or None if not found.
+
+    Uses including_merged() so merged profiles are visible.
+    """
+    try:
+        return ClientProfile.objects.including_merged().get(pk=pk)
+    except ClientProfile.DoesNotExist:
+        return None
+
+
+def get_merged_sources(target_id: int) -> list[ClientProfile]:
+    """Return all profiles that have been merged into *target_id*."""
+    return list(ClientProfile.objects.including_merged().filter(merged_into_id=target_id))
+
+
 def get_merge_profiles(
     source_ids: list[int],
     target_id: int,

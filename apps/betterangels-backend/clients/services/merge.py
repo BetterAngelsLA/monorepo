@@ -118,7 +118,7 @@ def _validate_merge_inputs(
 # ---------------------------------------------------------------------------
 
 
-def preview_merge(source_ids: list[int], target_id: int) -> MergePreview:
+def merge_preview(*, source_ids: list[int], target_id: int) -> MergePreview:
     """Dry-run: return MergePreview without mutating anything."""
     target, sources = _validate_merge_inputs(source_ids, target_id)
 
@@ -201,10 +201,10 @@ def preview_merge(source_ids: list[int], target_id: int) -> MergePreview:
 # ---------------------------------------------------------------------------
 
 
-def execute_merge(
+def merge_execute(
+    *,
     source_ids: list[int],
     target_id: int,
-    *,
     performed_by: User,  # reserved for future audit logging
 ) -> ClientProfile:
     """Execute a merge inside transaction.atomic(). Returns the target."""
@@ -316,9 +316,9 @@ def execute_merge(
 # ---------------------------------------------------------------------------
 
 
-def undo_merge(
-    target_id: int,
+def merge_undo(
     *,
+    target_id: int,
     performed_by: User,  # reserved for future audit logging
 ) -> list[ClientProfile]:
     """Undo a merge. Returns restored source profiles."""

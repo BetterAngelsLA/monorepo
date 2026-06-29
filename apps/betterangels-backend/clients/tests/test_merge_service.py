@@ -1,5 +1,5 @@
 """
-Tests for the client merge service (preview, execute, undo).
+Tests for the client merge service (merge_preview, merge_execute, merge_undo).
 """
 
 import secrets
@@ -11,21 +11,22 @@ from common.enums import AttachmentType
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.services.merge import (
     MergeValidationError,
-    execute_merge,
-    preview_merge,
-    undo_merge,
+    merge_execute,
+    merge_preview,
+    merge_undo,
 )
 from common.models import Attachment, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from model_bakery import baker
 from notes.models import Note, ServiceRequest
 from organizations.models import Organization
 from teams.models import Team
 
 
-class MergeServiceTestCase(TestCase):
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
+class MergeServiceTests(TestCase):
     """Base class that creates shared org/team/user for Notes."""
 
     _org: Organization | None = None
@@ -84,18 +85,18 @@ class MergeServiceTestCase(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# preview_merge tests
+# merge_preview tests
 # ---------------------------------------------------------------------------
 
 
-class PreviewMergeTest(MergeServiceTestCase):
+class PreviewMergeTests(MergeServiceTests):
     def test_preview_two_clean_sources(self) -> None:
         # Null out unique fields to avoid false conflicts in preview
         a = self._make_client(first_name="Alice", last_name="Doe", email=None)
         b = self._make_client(first_name="Alise", last_name="Doe", email=None)
         t = self._make_client(first_name="A", last_name="Doe", email=None)
 
-        preview = preview_merge(source_ids=[a.pk, b.pk], target_id=t.pk)
+        preview = merge_preview(source_ids=[a.pk, b.pk], target_id=t.pk)
 
         self.assertEqual(preview.target_id, t.pk)
         self.assertEqual(set(preview.source_ids), {a.pk, b.pk})
@@ -109,7 +110,7 @@ class PreviewMergeTest(MergeServiceTestCase):
         t = self._make_client(first_name="Target")
 
         with self.assertRaises(MergeValidationError) as ctx:
-            preview_merge(source_ids=[a.pk, t.pk], target_id=t.pk)
+            merge_preview(source_ids=[a.pk, t.pk], target_id=t.pk)
         self.assertIn("cannot also be a source", str(ctx.exception))
 
     def test_preview_already_merged_source_rejected(self) -> None:
@@ -119,7 +120,7 @@ class PreviewMergeTest(MergeServiceTestCase):
         a.save()
 
         with self.assertRaises(MergeValidationError) as ctx:
-            preview_merge(source_ids=[a.pk], target_id=t.pk)
+            merge_preview(source_ids=[a.pk], target_id=t.pk)
         self.assertIn("already been merged", str(ctx.exception))
 
     def test_preview_already_merged_target_rejected(self) -> None:
@@ -130,14 +131,14 @@ class PreviewMergeTest(MergeServiceTestCase):
         t.save()
 
         with self.assertRaises(MergeValidationError) as ctx:
-            preview_merge(source_ids=[a.pk], target_id=t.pk)
+            merge_preview(source_ids=[a.pk], target_id=t.pk)
         self.assertIn("has already been merged", str(ctx.exception))
 
     def test_preview_counts_related_objects(self) -> None:
         a = self._make_client(first_name="Alice")
         t = self._make_client(first_name="Target")
 
-        preview = preview_merge(source_ids=[a.pk], target_id=t.pk)
+        preview = merge_preview(source_ids=[a.pk], target_id=t.pk)
 
         # Check that each relation type appears with count > 0
         relation_names = {rc.relation_name for rc in preview.related_changes if rc.will_move > 0}
@@ -152,7 +153,7 @@ class PreviewMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice")
         t = self._make_client(first_name="Target")
 
-        preview = preview_merge(source_ids=[a.pk], target_id=t.pk)
+        preview = merge_preview(source_ids=[a.pk], target_id=t.pk)
 
         # Attachment (documents) via GFK should appear
         att_models = {rc.model_label for rc in preview.related_changes if "attachment" in rc.model_label.lower()}
@@ -162,17 +163,17 @@ class PreviewMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice", email="alice@test.com")
         t = self._make_client(first_name="Target", email="target@test.com")
 
-        preview = preview_merge(source_ids=[a.pk], target_id=t.pk)
+        preview = merge_preview(source_ids=[a.pk], target_id=t.pk)
 
         self.assertTrue(any("email" in c for c in preview.conflicts))
 
 
 # ---------------------------------------------------------------------------
-# execute_merge tests
+# merge_execute tests
 # ---------------------------------------------------------------------------
 
 
-class ExecuteMergeTest(MergeServiceTestCase):
+class ExecuteMergeTests(MergeServiceTests):
     def test_basic_merge(self) -> None:
         a = self._make_client(first_name="Alice", last_name="One")
         t = self._make_client(first_name="Target", last_name="Two")
@@ -180,7 +181,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a_note_count = Note.objects.filter(client_profile=a).count()
         t_note_count_before = Note.objects.filter(client_profile=t).count()
 
-        result = execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        result = merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         # Target survives
         self.assertEqual(result.pk, t.pk)
@@ -204,7 +205,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice", california_id=unique_ca)
         t = self._make_client(first_name="Target")
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         self.assertIsNone(a.email)
@@ -214,7 +215,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice", last_name="Doe")
         t = self._make_client(first_name="Target", last_name="Smith")
 
-        result = execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        result = merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         result.refresh_from_db()
         self.assertEqual(result.first_name, "Target")  # target wins
@@ -224,7 +225,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice", nickname="Al")
         t = self._make_client(first_name="Target", nickname=None)
 
-        result = execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        result = merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         result.refresh_from_db()
         self.assertEqual(result.nickname, "Al")  # filled from source
@@ -237,7 +238,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a_doc_count = Attachment.objects.filter(content_type=ct, object_id=a.pk).count()
         t_doc_before = Attachment.objects.filter(content_type=ct, object_id=t.pk).count()
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         self.assertEqual(Attachment.objects.filter(content_type=ct, object_id=a.pk).count(), 0)
         self.assertEqual(
@@ -252,7 +253,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a_contacts = ClientContact.objects.filter(client_profile=a).count()
         t_before = ClientContact.objects.filter(client_profile=t).count()
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         self.assertEqual(ClientContact.objects.filter(client_profile=a).count(), 0)
         self.assertEqual(ClientContact.objects.filter(client_profile=t).count(), t_before + a_contacts)
@@ -264,7 +265,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a_count = HmisProfile.objects.filter(client_profile=a).count()
         t_before = HmisProfile.objects.filter(client_profile=t).count()
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         self.assertEqual(HmisProfile.objects.filter(client_profile=a).count(), 0)
         self.assertEqual(HmisProfile.objects.filter(client_profile=t).count(), t_before + a_count)
@@ -278,7 +279,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         b_note_ids = set(Note.objects.filter(client_profile=b).values_list("pk", flat=True))
         t_before = Note.objects.filter(client_profile=t).count()
 
-        execute_merge(source_ids=[a.pk, b.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk, b.pk], target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         b.refresh_from_db()
@@ -294,7 +295,7 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a_email = a.email  # baker auto-generates unique email
         t = self._make_client(first_name="Target")
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         snapshot = a.merged_data
@@ -306,15 +307,15 @@ class ExecuteMergeTest(MergeServiceTestCase):
     def test_merge_rejects_empty_source_list(self) -> None:
         t = self._make_client(first_name="Target")
         with self.assertRaises(MergeValidationError):
-            execute_merge(source_ids=[], target_id=t.pk, performed_by=self._user)
+            merge_execute(source_ids=[], target_id=t.pk, performed_by=self._user)
 
 
 # ---------------------------------------------------------------------------
-# undo_merge tests
+# merge_undo tests
 # ---------------------------------------------------------------------------
 
 
-class UndoMergeTest(MergeServiceTestCase):
+class UndoMergeTests(MergeServiceTests):
     def test_undo_restores_notes(self) -> None:
         a = self._make_client(first_name="Alice")
         t = self._make_client(first_name="Target")
@@ -323,14 +324,14 @@ class UndoMergeTest(MergeServiceTestCase):
         a_note_count = len(a_note_ids)
         t_before = Note.objects.filter(client_profile=t).count()
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         # Verify moved
         self.assertEqual(Note.objects.filter(client_profile=a).count(), 0)
         self.assertEqual(Note.objects.filter(client_profile=t).count(), t_before + a_note_count)
 
         # Undo
-        restored = undo_merge(target_id=t.pk, performed_by=self._user)
+        restored = merge_undo(target_id=t.pk, performed_by=self._user)
 
         self.assertEqual(len(restored), 1)
         self.assertEqual(restored[0].pk, a.pk)
@@ -349,12 +350,12 @@ class UndoMergeTest(MergeServiceTestCase):
         a_email = a.email  # baker auto-generated unique email
         t = self._make_client(first_name="Target")
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         self.assertIsNone(a.email)  # cleared during merge
 
-        undo_merge(target_id=t.pk, performed_by=self._user)
+        merge_undo(target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         self.assertEqual(a.email, a_email)  # restored
@@ -368,10 +369,10 @@ class UndoMergeTest(MergeServiceTestCase):
         a_doc_ids = set(Attachment.objects.filter(content_type=ct, object_id=a.pk).values_list("pk", flat=True))
         t_doc_before = set(Attachment.objects.filter(content_type=ct, object_id=t.pk).values_list("pk", flat=True))
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
 
         # Undo
-        undo_merge(target_id=t.pk, performed_by=self._user)
+        merge_undo(target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         restored_a_docs = set(Attachment.objects.filter(content_type=ct, object_id=a.pk).values_list("pk", flat=True))
@@ -384,8 +385,8 @@ class UndoMergeTest(MergeServiceTestCase):
         a = self._make_client(first_name="Alice")
         t = self._make_client(first_name="Target")
 
-        execute_merge(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
-        undo_merge(target_id=t.pk, performed_by=self._user)
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_undo(target_id=t.pk, performed_by=self._user)
 
         a.refresh_from_db()
         self.assertIsNone(a.merged_into)
@@ -395,5 +396,5 @@ class UndoMergeTest(MergeServiceTestCase):
     def test_undo_no_sources_raises(self) -> None:
         t = self._make_client(first_name="Target")
         with self.assertRaises(MergeValidationError) as ctx:
-            undo_merge(target_id=t.pk, performed_by=self._user)
+            merge_undo(target_id=t.pk, performed_by=self._user)
         self.assertIn("No merged sources", str(ctx.exception))
