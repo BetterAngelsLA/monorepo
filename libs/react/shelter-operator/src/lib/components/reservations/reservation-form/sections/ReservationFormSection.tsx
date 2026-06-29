@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { Controller } from 'react-hook-form';
 import type { DropdownOption } from '../../../base-ui/dropdown';
 import { Dropdown } from '../../../base-ui/dropdown';
+import { Input } from '../../../base-ui/input';
 import { FormSection } from '../../../form/FormSection';
-import { TextAreaField } from '../../../form/TextAreaField';
 import { TextField } from '../../../form/TextField';
 import type { SelectedClient } from '../../components/ClientSearchInput';
 import { ClientSearchInput } from '../../components/ClientSearchInput';
@@ -119,13 +119,12 @@ export const ReservationFormSection = memo(function ReservationFormSection({
           name="notes"
           control={control}
           render={({ field }) => (
-            <TextAreaField
-              id="reservation-notes"
+            <Input
               name="notes"
               label="Notes"
               value={field.value}
               onChange={field.onChange}
-              rows={3}
+              variant="paragraph"
             />
           )}
         />
