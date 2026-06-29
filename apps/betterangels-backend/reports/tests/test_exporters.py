@@ -1,9 +1,242 @@
-"""Tests for data export via NoteResource."""
+"""Tests for report data export."""
+
+import csv
+import zipfile
+from datetime import date
+from io import BytesIO, StringIO
 
 import pytest
 from model_bakery import baker
 from notes.admin import NoteResource
 from notes.models import Note
+from shelters.types.reporting import (
+    DailyBedStatusMetricsType,
+    DailyOccupancyMetricsType,
+    ReservationMetricsType,
+    ShelterOccupancyMetricsType,
+)
+from strawberry import ID
+
+from reports.exporters import (
+    avg_days_to_occupancy_to_csv,
+    csv_files_to_zip,
+    daily_bed_status_metrics_to_csv,
+    daily_occupancy_metrics_to_csv,
+    metrics_to_zip,
+    reservation_metrics_to_csv,
+    rows_to_csv,
+)
+
+
+class TestRowsToCsv:
+    def test_exports_rows_with_headers(self) -> None:
+        csv_content = rows_to_csv(
+            rows=[
+                {"date": date(2026, 6, 1), "available": 5},
+                {"date": date(2026, 6, 2), "available": 7},
+            ],
+            headers=["date", "available"],
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["date", "available"],
+            ["2026-06-01", "5"],
+            ["2026-06-02", "7"],
+        ]
+
+    def test_fills_missing_row_values_with_empty_string(self) -> None:
+        csv_content = rows_to_csv(
+            rows=[
+                {"date": date(2026, 6, 1), "available": 5},
+                {"date": date(2026, 6, 2)},
+            ],
+            headers=["date", "available"],
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["date", "available"],
+            ["2026-06-01", "5"],
+            ["2026-06-02", ""],
+        ]
+
+    def test_exports_header_for_empty_rows(self) -> None:
+        csv_content = rows_to_csv(rows=[], headers=["date", "available"])
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [["date", "available"]]
+
+
+class TestShelterMetricsExport:
+    def test_daily_occupancy_metrics_to_csv(self) -> None:
+        csv_content = daily_occupancy_metrics_to_csv(
+            "shelter-1",
+            [
+                DailyOccupancyMetricsType(
+                    date=date(2026, 6, 1),
+                    occupied_count=8,
+                    total_beds=10,
+                    occupancy_pct=80.0,
+                ),
+                DailyOccupancyMetricsType(
+                    date=date(2026, 6, 2),
+                    occupied_count=9,
+                    total_beds=10,
+                    occupancy_pct=90.0,
+                ),
+            ],
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
+            ["2026-06-01", "shelter-1", "8", "10", "80.0"],
+            ["2026-06-02", "shelter-1", "9", "10", "90.0"],
+        ]
+
+    def test_daily_bed_status_metrics_to_csv(self) -> None:
+        csv_content = daily_bed_status_metrics_to_csv(
+            "shelter-1",
+            [
+                DailyBedStatusMetricsType(
+                    date=date(2026, 6, 1),
+                    available=2,
+                    occupied=8,
+                    reserved=1,
+                    out_of_service=0,
+                )
+            ],
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"],
+            ["2026-06-01", "shelter-1", "2", "8", "1", "0"],
+        ]
+
+    def test_reservation_metrics_to_csv(self) -> None:
+        csv_content = reservation_metrics_to_csv(
+            "shelter-1",
+            date(2026, 6, 1),
+            date(2026, 6, 30),
+            ReservationMetricsType(
+                check_in_overdue=3,
+                cancelled=2,
+                checked_in=11,
+                check_in_overdue_to_checked_in=1,
+            ),
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            [
+                "start_date",
+                "end_date",
+                "shelter_id",
+                "check_in_overdue",
+                "cancelled",
+                "checked_in",
+                "check_in_overdue_to_checked_in",
+            ],
+            ["2026-06-01", "2026-06-30", "shelter-1", "3", "2", "11", "1"],
+        ]
+
+    def test_avg_days_to_occupancy_to_csv(self) -> None:
+        csv_content = avg_days_to_occupancy_to_csv(
+            "shelter-1",
+            date(2026, 6, 1),
+            date(2026, 6, 30),
+            4.5,
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"],
+            ["2026-06-01", "2026-06-30", "shelter-1", "4.5"],
+        ]
+
+    def test_csv_files_to_zip_includes_each_csv_file(self) -> None:
+        zip_content = csv_files_to_zip(
+            {
+                "daily_occupancy_metrics.csv": "date,total_beds\r\n2026-06-01,10\r\n",
+                "reservation_metrics.csv": "start_date,checked_in\r\n2026-06-01,11\r\n",
+            }
+        )
+
+        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
+            assert sorted(zip_file.namelist()) == [
+                "daily_occupancy_metrics.csv",
+                "reservation_metrics.csv",
+            ]
+            assert zip_file.read("daily_occupancy_metrics.csv").decode() == "date,total_beds\r\n2026-06-01,10\r\n"
+
+    def test_metrics_to_zip_exports_all_metric_files(self) -> None:
+        zip_content = metrics_to_zip(
+            ShelterOccupancyMetricsType(
+                shelter_id=ID("shelter-1"),
+                start_date=date(2026, 6, 1),
+                end_date=date(2026, 6, 30),
+                daily_occupancy=[
+                    DailyOccupancyMetricsType(
+                        date=date(2026, 6, 1),
+                        occupied_count=8,
+                        total_beds=10,
+                        occupancy_pct=80.0,
+                    )
+                ],
+                daily_bed_status=[
+                    DailyBedStatusMetricsType(
+                        date=date(2026, 6, 1),
+                        available=2,
+                        occupied=8,
+                        reserved=1,
+                        out_of_service=0,
+                    )
+                ],
+                reservation_metrics=ReservationMetricsType(
+                    check_in_overdue=3,
+                    cancelled=2,
+                    checked_in=11,
+                    check_in_overdue_to_checked_in=1,
+                ),
+                avg_days_to_occupancy=4.5,
+            )
+        )
+
+        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
+            assert sorted(zip_file.namelist()) == [
+                "avg_days_to_occupancy.csv",
+                "daily_bed_status_metrics.csv",
+                "daily_occupancy_metrics.csv",
+                "reservation_metrics.csv",
+            ]
+            daily_occupancy_rows = list(csv.reader(StringIO(zip_file.read("daily_occupancy_metrics.csv").decode())))
+            reservation_rows = list(csv.reader(StringIO(zip_file.read("reservation_metrics.csv").decode())))
+
+        assert daily_occupancy_rows == [
+            ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
+            ["2026-06-01", "shelter-1", "8", "10", "80.0"],
+        ]
+        assert reservation_rows == [
+            [
+                "start_date",
+                "end_date",
+                "shelter_id",
+                "check_in_overdue",
+                "cancelled",
+                "checked_in",
+                "check_in_overdue_to_checked_in",
+            ],
+            ["2026-06-01", "2026-06-30", "shelter-1", "3", "2", "11", "1"],
+        ]
 
 
 class TestNoteResourceExport:
