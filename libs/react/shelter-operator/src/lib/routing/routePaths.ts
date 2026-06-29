@@ -44,7 +44,7 @@ export const manageSegments = {
   reservations: 'reservations',
   reservationsCreate: 'reservations/create',
   reservationsEdit: 'reservations/:reservationId/edit',
-  occupancy: 'occupancy',
+  occupants: 'occupants',
 } as const;
 
 // ─── DYNAMIC ROUTE HELPERS ───────────────────────────────────────────────────

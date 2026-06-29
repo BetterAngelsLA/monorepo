@@ -12,10 +12,6 @@ export function EditRoomPage() {
 
   const roomsPath = shelterManageRoomsRoute(shelterId ?? '');
 
-  if (!roomId) {
-    return null;
-  }
-
   return (
     <ManageFormPageLayout
       shelterId={shelterId}

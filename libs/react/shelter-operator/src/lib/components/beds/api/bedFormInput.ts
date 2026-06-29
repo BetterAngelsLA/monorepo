@@ -7,7 +7,7 @@ import type { BedFormData } from '../bed-form/formTypes';
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
 
-const sanitizeString = (value?: string | null): string | undefined => {
+const toInputString = (value?: string | null): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
@@ -21,8 +21,8 @@ const buildBedFieldInput = (formData: BedFormData) => ({
   b7: formData.b7,
   fees: numberOrUndefined(formData.fees),
   maintenanceFlag: formData.maintenanceFlag,
-  name: sanitizeString(formData.name),
-  statusNotes: sanitizeString(formData.statusNotes),
+  name: toInputString(formData.name),
+  statusNotes: toInputString(formData.statusNotes),
   storage: formData.storage,
   type: formData.type ?? undefined,
   accessibility: compactEnumValues(formData.accessibility).length

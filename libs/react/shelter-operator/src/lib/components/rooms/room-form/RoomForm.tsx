@@ -18,7 +18,7 @@ import {
   type UpdateRoomMutationVariables,
 } from '../api/updateRoomMutation';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
-import { formSchema } from './constants/validation';
+import { formSchema } from './constants/formSchema';
 import type { RoomFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { RoomDetailsSection } from './sections/RoomDetailsSection';
@@ -132,14 +132,14 @@ export function RoomForm({
   return (
     <FormProvider {...methods}>
       <div className="space-y-4 pb-48">
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit(submitRoom)}

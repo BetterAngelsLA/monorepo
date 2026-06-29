@@ -239,14 +239,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   return (
     <>
-      {actionError ? (
+      {actionError && (
         <div
           className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           role="alert"
         >
           {actionError}
         </div>
-      ) : null}
+      )}
 
       <div>
         <BedTable

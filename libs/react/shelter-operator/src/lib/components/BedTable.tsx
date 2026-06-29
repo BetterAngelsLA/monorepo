@@ -253,7 +253,6 @@ export function BedTable({
     <Table<FlatBedRow, BedRowObject>
       columns={defaultColumns}
       rows={flatBedRows}
-      labelClassName="text-lg"
       getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
       getRowObject={(row) =>
         toRowObject(row.bed, row.roomId, row.roomAssignment)

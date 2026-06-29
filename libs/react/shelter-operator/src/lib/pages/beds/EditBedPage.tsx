@@ -12,10 +12,6 @@ export function EditBedPage() {
 
   const bedsPath = shelterManageBedsRoute(shelterId ?? '');
 
-  if (!bedId) {
-    return null;
-  }
-
   return (
     <ManageFormPageLayout
       shelterId={shelterId}
