@@ -33,7 +33,6 @@ export function mapBedToFormData(bed: UseBedResultType): BedFormData {
     name: bed.name ?? '',
     pets: toChoiceNames<PetChoices>(bed.pets),
     roomId: bed.room?.id ?? null,
-    status: bed.status ?? defaults.status,
     statusNotes: bed.statusNotes ?? '',
     storage: bed.storage ?? defaults.storage,
     type: bed.type ?? null,

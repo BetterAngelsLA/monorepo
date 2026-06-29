@@ -240,11 +240,11 @@ export const Input = forwardRef<
         ) : null}
       </div>
 
-      {shouldShowError ? (
+      {shouldShowError && (
         <Text id={messageId} variant="caption" className="text-red-500">
           {displayError}
         </Text>
-      ) : null}
+      )}
     </div>
   );
 });

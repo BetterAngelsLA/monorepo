@@ -49,9 +49,12 @@ query ViewSheltersByOrganization(
   }
 }
 
-query GetShelterName($id: ID!) {
-  shelter(pk: $id) {
+query GetShelterSummary($id: ID!) {
+  operatorShelter(pk: $id) {
     id
     name
+    location {
+      place
+    }
   }
 }

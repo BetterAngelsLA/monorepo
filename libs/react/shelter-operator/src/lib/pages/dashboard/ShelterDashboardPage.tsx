@@ -1,61 +1,65 @@
 import { useQuery } from '@apollo/client/react';
-import { BookCheck, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
-import { BedsView } from '../../components/beds/BedsView';
-import { OverviewView } from '../../components/overview/OverviewView';
 import { Text } from '../../components/base-ui/text/text';
+import { BedsView } from '../../components/beds/BedsView';
+import { OccupantsView } from '../../components/occupants/OccupantsView';
+import { OverviewView } from '../../components/overview/OverviewView';
+import { ReservationsView } from '../../components/reservations/ReservationsView';
 import { RoomsView } from '../../components/rooms/RoomsView';
-import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
+import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterManageRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
-type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
+type ShelterTab = 'overview' | 'rooms' | 'beds' | 'reservations' | 'occupants';
 
 const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
   overview: { label: 'Overview', pathSuffix: '' },
   rooms: { label: 'Rooms', pathSuffix: 'rooms' },
   beds: { label: 'Beds', pathSuffix: 'beds' },
-  occupancy: { label: 'Occupancy', pathSuffix: 'occupancy' },
-  label: { label: 'Label', pathSuffix: 'label' },
+  reservations: { label: 'Reservations', pathSuffix: 'reservations' },
+  occupants: { label: 'Occupants', pathSuffix: 'occupants' },
 };
 
 const TAB_ITEMS: SliderTabItem[] = [
   TAB_CONFIG.overview,
   TAB_CONFIG.rooms,
   TAB_CONFIG.beds,
-  TAB_CONFIG.occupancy,
-  TAB_CONFIG.label,
+  TAB_CONFIG.reservations,
+  TAB_CONFIG.occupants,
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const { shelterId } = useParams();
   const id = shelterId ?? '';
 
-  const { data: shelterData } = useQuery(GetShelterNameDocument, {
+  const { data: shelterData } = useQuery(GetShelterSummaryDocument, {
     variables: { id },
     skip: !id,
   });
 
   if (!id) return null;
 
-  const shelterName = shelterData?.shelter?.name ?? 'Shelter Name';
-  const shelterAddress = '123 Thisisastreetname Street';
+  const shelterName = shelterData?.operatorShelter?.name ?? 'Shelter Name';
+  const shelterAddress =
+    shelterData?.operatorShelter?.location?.place ?? undefined;
 
   return (
     <div className="w-full">
       <div className="flex items-start justify-between gap-3 px-6">
         <div>
-          {/* Hard Coded For Now */}
           <Text
             variant="header-md"
             className="leading-none font-medium text-[#111827]"
           >
             {shelterName}
           </Text>
-          <Text variant="body" className="mt-4 block text-[#6B7280]">
-            {shelterAddress}
-          </Text>
+          {shelterAddress && (
+            <Text variant="body" className="mt-4 block text-[#6B7280]">
+              {shelterAddress}
+            </Text>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -66,16 +70,6 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
             className="text-black"
           >
             Settings
-          </Button>
-
-          <Button
-            variant="primary"
-            color="blue"
-            leftIcon={<BookCheck size={20} color="white" />}
-            rightIcon={false}
-            className="text-white"
-          >
-            Reserve
           </Button>
         </div>
       </div>
@@ -89,8 +83,8 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
       {tab === 'rooms' && <RoomsView shelterId={id} />}
       {tab === 'overview' && <OverviewView shelterId={id} />}
       {tab === 'beds' && <BedsView shelterId={id} />}
-      {tab === 'occupancy' && null}
-      {tab === 'label' && null}
+      {tab === 'occupants' && <OccupantsView shelterId={id} />}
+      {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>
   );
 }

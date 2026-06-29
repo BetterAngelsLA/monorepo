@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "jsx": "react-native",
+    "jsx": "react-jsx",
     "lib": ["dom", "esnext"],
     "moduleResolution": "bundler",
     "skipLibCheck": true,
