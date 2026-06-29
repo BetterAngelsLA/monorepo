@@ -7,18 +7,21 @@ extract reusable concern groups into mixins.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import cast
 
 from accounts.models import User
-from clients.models import ClientProfile
-from clients.selectors.merge import get_client_by_id, get_merged_sources, get_profiles_by_ids
-from clients.services.merge import MergeValidationError, merge_execute, merge_preview, merge_undo
 from django.contrib import admin, messages
+from django.contrib.admin.sites import AdminSite
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
+
+from clients.models import ClientProfile
+from clients.selectors.merge import get_client_by_id, get_merged_sources, get_profiles_by_ids
+from clients.services.merge import MergeValidationError, merge_execute, merge_preview, merge_undo
 
 
 class ClientProfileMergeMixin:
@@ -30,18 +33,15 @@ class ClientProfileMergeMixin:
 
     # Declared here so mypy knows these come from admin.ModelAdmin.
     model: type[ClientProfile]
-    message_user: admin.ModelAdmin.message_user
-    admin_site: admin.ModelAdmin.admin_site
+    message_user: Callable[..., None]
+    admin_site: AdminSite
 
     # ---- Queryset: show/hide merged profiles ----
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
         if request.GET.get("show_merged"):
-            return cast(QuerySet[ClientProfile], self.model._base_manager.all())
-        return cast(
-            QuerySet[ClientProfile],
-            super().get_queryset(request),  # type: ignore[safe-super]
-        )
+            return self.model._base_manager.all()
+        return cast(QuerySet[ClientProfile], cast(admin.ModelAdmin, self).get_queryset(request))
 
     # ---- Change view: show undo link when applicable ----
 
@@ -52,13 +52,13 @@ class ClientProfileMergeMixin:
         extra_context["merged_sources"] = get_merged_sources(int(object_id))
         return cast(
             HttpResponseRedirect | TemplateResponse,
-            super().change_view(request, object_id, form_url, extra_context),
+            cast(admin.ModelAdmin, self).change_view(request, object_id, form_url, extra_context),
         )
 
     # ---- URLs ----
 
     def get_urls(self) -> list:
-        urls = super().get_urls()
+        urls = cast(list, cast(admin.ModelAdmin, self).get_urls())
         custom_urls = [
             path(
                 "merge/",
