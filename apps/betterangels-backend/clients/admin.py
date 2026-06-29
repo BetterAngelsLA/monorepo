@@ -175,18 +175,23 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
         if request.GET.get("show_merged"):
             # Bypass the default manager (which hides merged profiles).
-            return self.model._base_manager.all()
+            return cast(QuerySet[ClientProfile], self.model._base_manager.all())
         return super().get_queryset(request)
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
+    def change_view(
+        self, request: HttpRequest, object_id: str, form_url: str = "", extra_context: dict | None = None
+    ) -> HttpResponseRedirect | TemplateResponse:
         extra_context = extra_context or {}
         # Show undo link when this profile has sources merged into it.
         # Use including_merged() because merged sources are hidden by the
         # default manager.
         extra_context["merged_sources"] = list(
-            ClientProfile.objects.including_merged().filter(merged_into_id=object_id)
+            ClientProfile.objects.including_merged().filter(merged_into_id=int(object_id))
         )
-        return super().change_view(request, object_id, form_url, extra_context)
+        return cast(
+            HttpResponseRedirect | TemplateResponse,
+            super().change_view(request, object_id, form_url, extra_context),
+        )
 
     def get_urls(self) -> list:
         urls = super().get_urls()

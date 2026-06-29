@@ -137,25 +137,25 @@ class AbstractClientProfile(BaseModel):
         abstract = True
 
 
-class ClientProfileQuerySet(QuerySet):
+class ClientProfileQuerySet(QuerySet["ClientProfile"]):
     """Custom QuerySet for ClientProfile."""
 
-    def active(self) -> QuerySet:
+    def active(self) -> ClientProfileQuerySet:
         """Exclude profiles that have been merged into another."""
         return self.filter(merged_into__isnull=True)
 
 
-class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)):
+class ClientProfileManager(models.Manager["ClientProfile"]):
     """Default manager: excludes merged profiles automatically.
 
     Use ``including_merged()`` when you need every profile (e.g. the merge
     service internals and admin merge view).
     """
 
-    def get_queryset(self) -> QuerySet:
-        return super().get_queryset().active()
+    def get_queryset(self) -> ClientProfileQuerySet:
+        return ClientProfileQuerySet(self.model, using=self._db).active()
 
-    def including_merged(self) -> QuerySet:
+    def including_merged(self) -> ClientProfileQuerySet:
         """Return an unfiltered QuerySet (all profiles, merged or not)."""
         return ClientProfileQuerySet(self.model, using=self._db)
 
