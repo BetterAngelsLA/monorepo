@@ -10,11 +10,6 @@ import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useReservation } from '../../hooks/useReservation';
 import { shelterManageReservationsRoute } from '../../routing';
 
-interface ReservationLocationState {
-  bedId?: string | null;
-  roomId?: string | null;
-}
-
 export function ReservationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +20,9 @@ export function ReservationFormPage() {
 
   const reservationsPath = shelterManageReservationsRoute(shelterId ?? '');
 
-  const state = (location.state ?? {}) as ReservationLocationState;
+  const rawState = location.state as Record<string, unknown> | null | undefined;
+  const bedId = typeof rawState?.bedId === 'string' ? rawState.bedId : undefined;
+  const roomId = typeof rawState?.roomId === 'string' ? rawState.roomId : undefined;
 
   const defaults = createEmptyReservationFormData();
   let initialData: ReservationFormData | undefined;
@@ -33,17 +30,17 @@ export function ReservationFormPage() {
 
   if (reservationId && reservation) {
     initialData = mapReservationToFormData(reservation);
-  } else if (!reservationId && state.bedId) {
+  } else if (!reservationId && bedId) {
     initialData = {
       ...defaults,
-      bedId: state.bedId,
-      roomId: state.roomId || null,
+      bedId,
+      roomId: roomId || null,
     };
     readOnlyFields.push('bedId', 'roomId');
-  } else if (!reservationId && state.roomId) {
+  } else if (!reservationId && roomId) {
     initialData = {
       ...defaults,
-      roomId: state.roomId,
+      roomId,
     };
     readOnlyFields.push('roomId');
   }
