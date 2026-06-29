@@ -1,8 +1,13 @@
 """Generate TypeScript permission consts from Django enums."""
 
+from argparse import ArgumentParser
 from pathlib import Path
+from typing import Any
 
-from common.permissions.utils import get_registered_permission_enums
+from common.permissions.utils import (
+    get_registered_permission_enums,
+    register_model_permissions,
+)
 from django.core.management.base import BaseCommand
 
 HEADER = """\
@@ -14,7 +19,7 @@ HEADER = """\
 class Command(BaseCommand):
     help = "Generate TypeScript permission consts from Django enums."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "output",
             nargs="?",
@@ -22,7 +27,8 @@ class Command(BaseCommand):
             help="Output path relative to repo root.",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
+        register_model_permissions()  # discover model PermissionSets
         repo_root = Path(__file__).resolve().parents[5]  # common/management/commands/ → repo root
         output_path = repo_root / options["output"]
         output_path.parent.mkdir(parents=True, exist_ok=True)

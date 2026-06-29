@@ -70,7 +70,7 @@ def register_model_permissions() -> None:
         if any(e.__name__ == name for e in _permission_enum_registry):
             continue
 
-        enum_cls = TextChoices(name, members)
+        enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
 
 

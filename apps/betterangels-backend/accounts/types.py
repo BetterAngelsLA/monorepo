@@ -110,7 +110,7 @@ class CurrentUserOrganizationType(OrganizationType):
 
         # Annotate each org with a single array of granted permission strings
         # (e.g. ["organizations.view_org_members", "reports.view_reports"]).
-        return queryset.filter(users=user).annotate(
+        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
             _granted_perms=ArrayAgg(
                 Concat(
                     F("permission_groups__group__permissions__content_type__app_label"),
@@ -121,6 +121,7 @@ class CurrentUserOrganizationType(OrganizationType):
                 distinct=True,
             )
         )
+        return qs
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:

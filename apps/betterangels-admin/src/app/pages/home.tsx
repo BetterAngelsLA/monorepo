@@ -1,4 +1,5 @@
 import { PermissionEnum } from '@monorepo/ba-permissions';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   ReportPermissions,
   UserOrganizationPermissions,

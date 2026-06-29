@@ -1,15 +1,8 @@
+import type { PermissionEnum } from '@monorepo/ba-permissions';
 import { TOrganization } from '@monorepo/react/shelter';
 import { createContext } from 'react';
-import {
-  ReportPermissions,
-  ShelterPermissions,
-  UserOrganizationPermissions,
-} from '../../apollo/graphql/__generated__/types';
 
-export type PermissionEnum =
-  | UserOrganizationPermissions
-  | ReportPermissions
-  | ShelterPermissions;
+export type { PermissionEnum } from '@monorepo/ba-permissions';
 
 export interface IActiveOrgContextValue {
   /** The currently selected organization (with its capabilities). */
