@@ -39,7 +39,7 @@ export type TShelterFilterOption = {
 };
 
 const unknownOption: TShelterFilterOption = {
-  label: 'Unknown',
+  label: 'Include Unknown',
   value: UNKNOWN_FILTER_VALUE,
 };
 
@@ -60,7 +60,7 @@ export function getFilterLabel(
 ): string | null {
   if (value === UNKNOWN_FILTER_VALUE) {
     const config = filterConfigs.find((c) => c.name === category);
-    return config ? `${config.header}: Unknown` : 'Unknown';
+    return config ? `${config.header}: Include unknown` : 'Include unknown';
   }
 
   switch (category) {
