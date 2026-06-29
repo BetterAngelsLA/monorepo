@@ -87,6 +87,9 @@ export function NavBar(props: TNavProps) {
           <Link to={operatorPath} className="shrink-0">
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
+          <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+            {displayTitle}
+          </p>
 
           {showBreadcrumbs ? (
             <BreadcrumbTrail items={breadcrumbs} />

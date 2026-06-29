@@ -1,11 +1,13 @@
 import datetime
 
+from clients.models import ClientProfile
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
-from shelters.models import Bed, Reservation, Room, Shelter
+from shelters.models import Bed, Reservation, ReservationClient, Room, Shelter
 
 
 class ReservationModelTestCase(TestCase):
@@ -62,6 +64,12 @@ class ReservationModelTestCase(TestCase):
         with self.assertRaises(IntegrityError):
             baker.make(Reservation, room=self.room_2, bed=None)
 
+    def test_cannot_create_multiple_reservations_for_same_bed(self) -> None:
+        """A bed is unique per active reservation."""
+        baker.make(Reservation, bed=self.bed_1, status=ReservationStatusChoices.CONFIRMED)
+        with self.assertRaises(IntegrityError):
+            baker.make(Reservation, bed=self.bed_1)
+
     def test_multiple_bed_reservations_allowed_for_same_room(self) -> None:
         """When both room and bed are set, the room constraint does not apply."""
         bed_2_in_room_1 = baker.make(Bed, shelter=self.shelter, room=self.room_1, name="Bed-2-in-Room-1")
@@ -77,6 +85,16 @@ class ReservationModelTestCase(TestCase):
         with self.assertRaises(ValidationError) as ctx:
             Reservation(bed=other_bed, room=self.room_1).clean()
         self.assertIn("same shelter", str(ctx.exception))
+
+    # --- ReservationClient constraints ---
+
+    def test_duplicate_client_per_reservation_rejected(self) -> None:
+        """A client cannot be added to the same reservation twice (unique_client_per_reservation constraint)."""
+        client = baker.make(ClientProfile)
+        reservation = baker.make(Reservation, bed=self.bed_1)
+        baker.make(ReservationClient, reservation=reservation, client_profile=client)
+        with self.assertRaises(IntegrityError):
+            baker.make(ReservationClient, reservation=reservation, client_profile=client)
 
     # --- cleanup validation ---
 

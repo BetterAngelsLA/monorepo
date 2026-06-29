@@ -17,6 +17,7 @@ from model_clone import CloneMixin
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
+
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -53,11 +54,11 @@ from .lookups import (
 )
 from .service import Service
 
-ACTIVE_RESERVATION_STATUSES = {
-    ReservationStatusChoices.CONFIRMED,
+ACTIVE_RESERVATION_STATUSES = (
     ReservationStatusChoices.CHECKED_IN,
     ReservationStatusChoices.CHECK_IN_OVERDUE,
-}
+    ReservationStatusChoices.CONFIRMED,
+)
 
 
 @pghistory.track(
