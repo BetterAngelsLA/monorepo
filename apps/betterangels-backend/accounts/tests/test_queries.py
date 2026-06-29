@@ -239,10 +239,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             response = self.execute_graphql(query)
 
         org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
-        # The user's roles may grant additional model-level permissions beyond the
-        # org-scoped ones we care about, so check expected as a subset.
-        for perm in expected_permissions:
-            self.assertIn(perm, org_perms["o1"])
+        # The permissions list also includes model-level permissions from role
+        # templates; filter to just the organization-scoped namespace we test.
+        self.assertEqual(
+            [p for p in org_perms["o1"] if p.startswith("organizations.")],
+            sorted(expected_permissions),
+        )
         self.assertEqual(
             org_perms["o2"],
             [],
