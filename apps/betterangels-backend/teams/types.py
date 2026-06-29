@@ -11,7 +11,6 @@ class TeamType:
     id: ID
     slug: auto
     name: auto
-    is_active: auto
     created_at: auto
 
 
@@ -24,4 +23,3 @@ class CreateTeamInput:
 class UpdateTeamInput:
     id: ID
     name: Maybe[str]
-    is_active: Maybe[bool]

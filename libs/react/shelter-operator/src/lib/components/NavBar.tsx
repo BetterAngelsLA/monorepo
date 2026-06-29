@@ -5,7 +5,6 @@ import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useBreadcrumbs } from '../hooks/useBreadcrumbs';
 import { useActiveOrg } from '../providers/activeOrg';
 import { paths } from '../routing';
 import { Button } from './base-ui/buttons';
@@ -42,15 +41,10 @@ export function NavBar(props: TNavProps) {
     location.pathname === operatorPath ||
     location.pathname === `${operatorPath}/`;
 
-  const breadcrumbs = useBreadcrumbs();
   const showCreateButton = isDashboardPage;
 
   const displayTitle =
-    breadcrumbs.length > 0
-      ? null
-      : organizations.length === 1
-      ? organizations[0].name
-      : 'Admin Dashboard';
+    organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
 
   const selectedOption = useMemo(() => {
     const org = organizations.find((o) => o.id === selectedOrganizationId);
@@ -78,33 +72,11 @@ export function NavBar(props: TNavProps) {
           <Link to={operatorPath} className="shrink-0">
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
+          <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
+            {displayTitle}
+          </p>
 
-          {breadcrumbs.length > 0 ? (
-            <div className="flex items-center gap-2 text-base md:text-xl">
-              {breadcrumbs.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  {index > 0 && (
-                    <span className="text-gray-400 font-normal">/</span>
-                  )}
-                  <span
-                    className={
-                      index === breadcrumbs.length - 1
-                        ? 'font-medium text-[#5A616B]'
-                        : 'font-normal text-[#5A616B]'
-                    }
-                  >
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
-              {displayTitle}
-            </p>
-          )}
-
-          {organizations.length > 1 && breadcrumbs.length === 0 && (
+          {organizations.length > 1 && (
             <div className="ml-1 min-w-52">
               <Dropdown
                 label="Organization"

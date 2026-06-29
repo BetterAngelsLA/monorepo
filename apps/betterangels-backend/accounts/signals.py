@@ -88,8 +88,10 @@ def _ensure_test_org() -> None:
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        from accounts.groups import ORG_ADMIN
         from notes.groups import CASEWORKER
+        from shelters.groups import SHELTER_OPERATOR
+
+        from accounts.groups import ORG_ADMIN
 
         from .role_manager import OrgRoleManager
         from .services import create_organization_with_presets
@@ -104,15 +106,15 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
 
         org = create_organization_with_presets(
             name="test_org",
-            preset_names=["outreach"],
+            preset_names=["outreach", "shelter"],
             owner=owner,
-            owner_roles=(CASEWORKER, ORG_ADMIN),
+            owner_roles=(CASEWORKER, SHELTER_OPERATOR, ORG_ADMIN),
         )
 
         for test_user in test_users:
             if test_user.pk != owner.pk:
                 org.add_user(test_user)
-                OrgRoleManager(org).add_roles(test_user, CASEWORKER)
+                OrgRoleManager(org).add_roles(test_user, CASEWORKER, SHELTER_OPERATOR)
 
 
 @receiver(post_migrate)

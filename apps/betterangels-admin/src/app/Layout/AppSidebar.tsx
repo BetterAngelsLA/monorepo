@@ -1,10 +1,16 @@
 import {
   ReportPermissions,
+  TeamPermissions,
   useActiveOrg,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
-import { BarChartIcon, ChevronUpIcon, UsersIcon } from '@monorepo/react/icons';
+import {
+  BarChartIcon,
+  ChevronUpIcon,
+  GroupsIcon,
+  UsersIcon,
+} from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -43,7 +49,14 @@ export function AppSidebar(props: IProps) {
   }, [dropdownOpen]);
 
   return (
-    <Sidebar className={mergeCss(className)} onOpenChange={setIsOpen}>
+    <Sidebar
+      className={mergeCss(className)}
+      onOpenChange={setIsOpen}
+      theme={{
+        fontColor: 'var(--color-primary-20)',
+        activeColor: 'var(--color-primary-60)',
+      }}
+    >
       <Sidebar.Header>
         <div className="flex items-center w-full relative" ref={dropdownRef}>
           <BetterAngelsLogoBadge className="ml-1 mr-2 shrink-0" />
@@ -123,6 +136,18 @@ export function AppSidebar(props: IProps) {
             )}
           >
             Reports
+          </Sidebar.Link>
+        )}
+        {hasPermission(TeamPermissions.View) && (
+          <Sidebar.Link
+            to="/teams"
+            isActive={location.pathname === '/teams'}
+            collapsed={!isOpen}
+            icon={(color: string) => (
+              <GroupsIcon className="w-4" fill={color} />
+            )}
+          >
+            Teams
           </Sidebar.Link>
         )}
       </Sidebar.Content>

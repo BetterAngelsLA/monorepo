@@ -21,6 +21,7 @@ const TableBase = <TItem, TRowObject = TItem>({
   wrapperClassName = '',
   headerClassName = '',
   headerInsetClassName = '',
+  labelClassName = '',
   rowClassName = '',
   rowInsetClassName = '',
   tableStyle,
@@ -97,6 +98,7 @@ const TableBase = <TItem, TRowObject = TItem>({
             openFilterColumn={openFilterColumn}
             setOpenFilterColumn={setOpenFilterColumn}
             filterOptions={resolvedFilterOptions[column.key]}
+            labelClassName={labelClassName}
           />
         ))}
         {hasTrailingColumn && (

@@ -150,7 +150,7 @@ type BedType {
   name: String
   pets: [PetType!]!
   room: RoomType
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   statusNotes: String
   storage: Boolean!
   type: BedTypeChoices
@@ -2170,7 +2170,8 @@ type ReportSummaryType {
 }
 
 type ReservationClientAssignmentType {
-  clientProfileId: ID!
+  id: ID!
+  clientProfile: ClientProfileType!
   isPrimary: Boolean!
 }
 
@@ -2217,9 +2218,9 @@ type ReservationType {
   room: RoomType
   startDate: Date
   status: ReservationStatusChoices!
+  clients: [ReservationClientAssignmentType!]!
   shelter: OperatorShelterType!
   createdById: ID
-  clients: [ReservationClientAssignmentType!]!
 }
 
 type ReservationTypeOffsetPaginated {
@@ -2319,7 +2320,7 @@ type RoomType {
   name: String!
   notes: String
   pets: [PetType!]!
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   storage: Boolean!
   type: RoomStyleChoices
   typeOther: String
@@ -2835,7 +2836,6 @@ type TeamType {
   id: ID!
   slug: String!
   name: String!
-  isActive: Boolean!
   createdAt: DateTime!
 }
 
@@ -2861,6 +2861,7 @@ input UpdateBedInput {
   demographics: [DemographicChoices!]
   fees: Int
   funders: [FunderChoices!]
+  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean
   medicalNeeds: [MedicalNeedChoices!]
@@ -3135,7 +3136,6 @@ union UpdateTaskPayload = TaskType | OperationInfo
 input UpdateTeamInput {
   id: ID!
   name: String
-  isActive: Boolean
 }
 
 union UpdateTeamPayload = TeamType | OperationInfo

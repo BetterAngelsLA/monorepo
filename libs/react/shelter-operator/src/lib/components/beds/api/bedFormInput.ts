@@ -22,7 +22,6 @@ const buildBedFieldInput = (formData: BedFormData) => ({
   fees: numberOrUndefined(formData.fees),
   maintenanceFlag: formData.maintenanceFlag,
   name: sanitizeString(formData.name),
-  status: formData.status ?? undefined,
   statusNotes: sanitizeString(formData.statusNotes),
   storage: formData.storage,
   type: formData.type ?? undefined,

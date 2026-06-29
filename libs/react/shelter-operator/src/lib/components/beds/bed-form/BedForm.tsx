@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isMutationSuccess } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Form } from '../../form/Form';
@@ -8,6 +9,7 @@ import {
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
+import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 import {
   CreateBedDocument,
   buildCreateBedInput,
@@ -25,7 +27,6 @@ import { formSchema } from './constants/validation';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
-import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 
 export type BedFormProps = {
   shelterId: string;
@@ -111,6 +112,10 @@ export function BedForm({
           );
           return;
         }
+        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
+          return;
+        }
       } else {
         const { data: result } = await createBed({
           variables: {
@@ -124,6 +129,10 @@ export function BedForm({
           setSubmissionError(
             firstMessage || 'Unable to create bed. Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.createBed, 'BedType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
           return;
         }
       }
