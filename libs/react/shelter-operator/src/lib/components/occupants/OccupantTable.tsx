@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '../apollo/graphql/__generated__/types';
-import { StatusBadge } from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
-import { reservationStatusInfo } from './reservations/reservation-form/constants/reservationFormOptions';
+import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
+import { StatusBadge } from '../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../base-ui/table';
+import { reservationStatusInfo } from '../reservations/reservation-form/constants/reservationFormOptions';
 
-type OccupantRow = {
+export type OccupantRow = {
   id: string;
   clientName: string;
   status: ReservationStatusChoices;
