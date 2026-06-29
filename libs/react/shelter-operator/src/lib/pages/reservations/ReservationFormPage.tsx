@@ -1,12 +1,12 @@
+import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { ReservationForm } from '../../components/reservations/reservation-form/ReservationForm';
 import { createEmptyReservationFormData } from '../../components/reservations/reservation-form/constants/defaultReservationFormData';
-import type { ReservationFormData } from '../../components/reservations/reservation-form/formTypes';
 import {
   mapReservationClientsToSelectedClients,
   mapReservationToFormData,
 } from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
-import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useReservation } from '../../hooks/useReservation';
 import { shelterManageReservationsRoute } from '../../routing';
 
@@ -21,29 +21,44 @@ export function ReservationFormPage() {
   const reservationsPath = shelterManageReservationsRoute(shelterId ?? '');
 
   const rawState = location.state as Record<string, unknown> | null | undefined;
-  const bedId = typeof rawState?.bedId === 'string' ? rawState.bedId : undefined;
-  const roomId = typeof rawState?.roomId === 'string' ? rawState.roomId : undefined;
+  const bedId =
+    typeof rawState?.bedId === 'string' ? rawState.bedId : undefined;
+  const roomId =
+    typeof rawState?.roomId === 'string' ? rawState.roomId : undefined;
 
-  const defaults = createEmptyReservationFormData();
-  let initialData: ReservationFormData | undefined;
-  const readOnlyFields: ('bedId' | 'roomId')[] = [];
+  const { initialData, readOnlyFields } = useMemo(() => {
+    const defaults = createEmptyReservationFormData();
+    const readOnlyFields: ('bedId' | 'roomId')[] = [];
 
-  if (reservationId && reservation) {
-    initialData = mapReservationToFormData(reservation);
-  } else if (!reservationId && bedId) {
-    initialData = {
-      ...defaults,
-      bedId,
-      roomId: roomId || null,
-    };
-    readOnlyFields.push('bedId', 'roomId');
-  } else if (!reservationId && roomId) {
-    initialData = {
-      ...defaults,
-      roomId,
-    };
-    readOnlyFields.push('roomId');
-  }
+    if (reservationId && reservation) {
+      return {
+        initialData: mapReservationToFormData(reservation),
+        readOnlyFields,
+      };
+    }
+    if (!reservationId && bedId) {
+      readOnlyFields.push('bedId', 'roomId');
+      return {
+        initialData: {
+          ...defaults,
+          bedId,
+          roomId: roomId || null,
+        },
+        readOnlyFields,
+      };
+    }
+    if (!reservationId && roomId) {
+      readOnlyFields.push('roomId');
+      return {
+        initialData: {
+          ...defaults,
+          roomId,
+        },
+        readOnlyFields,
+      };
+    }
+    return { initialData: undefined, readOnlyFields };
+  }, [reservationId, reservation, bedId, roomId]);
 
   const initialSelectedClients =
     reservationId && reservation
