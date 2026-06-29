@@ -26,9 +26,9 @@ export function ColumnFilter(props: ColumnFilterProps) {
 
   const parentCss = [
     'absolute',
-    'bottom-full',
+    'top-full',
     '-left-8',
-    'mb-1',
+    'mt-1',
     'bg-white',
     'border',
     'border-gray-200',
