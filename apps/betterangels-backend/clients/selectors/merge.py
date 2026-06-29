@@ -7,7 +7,7 @@ Services (merge.py) handle business logic and writes.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from clients.models import ClientProfile
 from common.models import Attachment, PhoneNumber
@@ -79,7 +79,7 @@ def get_scalar_fields(model: type[models.Model]) -> list[models.Field]:
             continue
         if not f.concrete:
             continue
-        fields.append(f)
+        fields.append(cast(models.Field, f))
     return fields
 
 
@@ -90,12 +90,13 @@ def get_fk_relations() -> list[dict[str, Any]]:
         if not isinstance(rel, ManyToOneRel):
             continue
         fk_field = rel.field
+        related_model = cast(type[models.Model], rel.related_model)
         relations.append(
             {
-                "model": rel.related_model,
-                "model_label": f"{rel.related_model._meta.app_label}.{rel.related_model._meta.model_name}",
+                "model": related_model,
+                "model_label": f"{related_model._meta.app_label}.{related_model._meta.model_name}",
                 "field_name": fk_field.name,
-                "related_name": rel.related_name or rel.related_model._meta.model_name,
+                "related_name": rel.related_name or related_model._meta.model_name,
                 "on_delete": fk_field.remote_field.on_delete,
             }
         )

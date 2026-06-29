@@ -418,21 +418,20 @@ def _append_guardian_permission_changes(
     related_changes: list[RelatedChange],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
+        model: Any = perm_model
         per_source: dict[int, list[int]] = {}
         total = 0
         for source in sources:
             ids = list(
-                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list(
-                    "pk", flat=True
-                )
+                model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
             )
             per_source[source.pk] = ids
             total += len(ids)
         if total > 0:
             related_changes.append(
                 RelatedChange(
-                    relation_name=perm_model._meta.verbose_name_plural.replace(" ", "_"),
-                    model_label=f"{perm_model._meta.app_label}.{perm_model._meta.model_name}",
+                    relation_name=str(model._meta.verbose_name_plural).replace(" ", "_"),
+                    model_label=f"{model._meta.app_label}.{model._meta.model_name}",
                     field_name="object_pk",
                     will_move=total,
                     per_source=per_source,
@@ -447,13 +446,12 @@ def _merge_guardian_permissions(
     source_snapshots: dict[int, dict[str, Any]],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
+        model: Any = perm_model
         for source in sources:
-            source_snapshots[source.pk][f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"] = list(
-                perm_model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list(
-                    "pk", flat=True
-                )
+            source_snapshots[source.pk][f"_moved_{model._meta.app_label}.{model._meta.model_name}"] = list(
+                model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
             )
-        perm_model.objects.filter(
+        model.objects.filter(
             content_type=content_type,
             object_pk__in=[str(s.pk) for s in sources],
         ).update(object_pk=str(target.pk))
@@ -465,9 +463,10 @@ def _restore_guardian_permissions(
     snapshot: dict[str, Any],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
-        key = f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"
+        model: Any = perm_model
+        key = f"_moved_{model._meta.app_label}.{model._meta.model_name}"
         moved_ids = snapshot.get(key, [])
         if moved_ids:
-            existing = set(perm_model.objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
+            existing = set(model.objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
             if existing:
-                perm_model.objects.filter(pk__in=existing).update(object_pk=str(source.pk))
+                model.objects.filter(pk__in=existing).update(object_pk=str(source.pk))

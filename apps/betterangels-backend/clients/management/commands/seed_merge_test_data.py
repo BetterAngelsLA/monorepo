@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import random
 from datetime import date, timedelta
+from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -22,6 +23,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from clients.enums import HmisAgencyEnum, LivingSituationEnum, RaceEnum
+from common.enums import AttachmentType
 from clients.models import (
     ClientContact,
     ClientHouseholdMember,
@@ -186,14 +188,14 @@ DUPLICATE_GROUPS: list[dict] = [
 class Command(BaseCommand):
     help = "Seed database with realistic test data for the client merge feature."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
             "--clear",
             action="store_true",
             help="Delete existing test profiles (email ending in @example.com) before seeding.",
         )
 
-    def handle(self, **options):
+    def handle(self, **options: Any) -> None:
         if options["clear"]:
             self._clear_existing()
 
@@ -301,7 +303,7 @@ class Command(BaseCommand):
                 content_type=content_type,
                 object_id=client.pk,
                 mime_type="application/pdf",
-                attachment_type="DOCUMENT",
+                attachment_type=AttachmentType.DOCUMENT,
             )
 
         PhoneNumber.objects.create(

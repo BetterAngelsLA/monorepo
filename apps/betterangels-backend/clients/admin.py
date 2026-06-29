@@ -1,5 +1,6 @@
 from typing import Optional, cast
 
+from accounts.models import User
 from clients.enums import (
     ClientDocumentNamespaceEnum,
     GenderEnum,
@@ -300,7 +301,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         # Step 2: Show preview
         if request.method == "POST" and is_preview:
             try:
-                tid = int(target_id)
+                tid = int(cast(str, target_id))
             except ValueError, TypeError:
                 self.message_user(request, "Please select a target profile.", messages.ERROR)
                 return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
@@ -332,7 +333,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         # Step 3: Execute merge
         if request.method == "POST" and is_confirm:
             try:
-                tid = int(target_id)
+                tid = int(cast(str, target_id))
             except ValueError, TypeError:
                 self.message_user(request, "Invalid target ID.", messages.ERROR)
                 return redirect(f"{reverse('admin:clients_clientprofile_merge')}?ids={ids_param}")
@@ -342,7 +343,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
                 merged = execute_merge(
                     source_ids=source_ids,
                     target_id=tid,
-                    performed_by=request.user,
+                    performed_by=cast(User, request.user),
                 )
             except MergeValidationError as e:
                 self.message_user(request, str(e), messages.ERROR)
@@ -360,7 +361,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
 
     # ---- Undo merge ----
 
-    def undo_merge_view(self, request: HttpRequest, pk: int):
+    def undo_merge_view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect | TemplateResponse:
         try:
             target = ClientProfile.objects.including_merged().get(pk=pk)
         except ClientProfile.DoesNotExist:
@@ -374,7 +375,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
 
         if request.method == "POST" and "confirm_undo" in request.POST:
             try:
-                restored = undo_merge(target_id=pk, performed_by=request.user)
+                restored = undo_merge(target_id=pk, performed_by=cast(User, request.user))
             except MergeValidationError as e:
                 self.message_user(request, str(e), messages.ERROR)
                 return redirect(reverse("admin:clients_clientprofile_change", args=[pk]))
@@ -597,7 +598,7 @@ class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientDocument]:
         return super().get_queryset(request).filter(content_type__model="clientprofile")
 
-    def get_search_results(self, request: HttpRequest, queryset: QuerySet, search_term: str):
+    def get_search_results(self, request: HttpRequest, queryset: QuerySet, search_term: str) -> tuple[QuerySet, bool]:
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
 
         if search_term:

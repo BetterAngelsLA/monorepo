@@ -3,10 +3,11 @@ Tests for the client merge service (preview, execute, undo).
 """
 
 import secrets
-from typing import Any
+from typing import Any, cast
 
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import HmisAgencyEnum
+from common.enums import AttachmentType
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.services.merge import (
     MergeValidationError,
@@ -37,13 +38,13 @@ class MergeServiceTestCase(TestCase):
         cls._team = baker.make(Team, organization=cls._org)
         cls._user = baker.make("accounts.User")
 
-    def _make_client(self, **kwargs) -> ClientProfile:
+    def _make_client(self, **kwargs: Any) -> ClientProfile:
         """Create a ClientProfile with all related objects including Notes.
 
         baker.make() auto-generates unique values for unique fields (email, california_id).
         Only pass explicit values when testing specific field behaviors.
         """
-        client = baker.make(ClientProfile, **kwargs)
+        client = cast(ClientProfile, baker.make(ClientProfile, **kwargs))
 
         # FK relations
         baker.make(HmisProfile, client_profile=client, hmis_id=f"HMIS-{client.pk}", agency=HmisAgencyEnum.LAHSA)
@@ -71,7 +72,7 @@ class MergeServiceTestCase(TestCase):
                 content_type=ct,
                 object_id=client.pk,
                 mime_type="application/pdf",
-                attachment_type="DOCUMENT",
+                attachment_type=AttachmentType.DOCUMENT,
             )
         PhoneNumber.objects.create(
             number=f"+1212555{client.pk:04d}"[:16],
@@ -298,9 +299,9 @@ class ExecuteMergeTest(MergeServiceTestCase):
         a.refresh_from_db()
         snapshot = a.merged_data
         self.assertIsNotNone(snapshot)
-        self.assertIn("first_name", snapshot)
-        self.assertIn("email", snapshot)
-        self.assertEqual(snapshot["email"], a_email)
+        self.assertIn("first_name", snapshot or {})
+        self.assertIn("email", snapshot or {})
+        self.assertEqual((snapshot or {}).get("email"), a_email)
 
     def test_merge_rejects_empty_source_list(self) -> None:
         t = self._make_client(first_name="Target")
