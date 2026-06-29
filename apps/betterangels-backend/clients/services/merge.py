@@ -2,7 +2,7 @@
 Client merge service.
 
 Services handle business logic + database writes.
-Selectors (merge_selectors.py) handle database reads per Hacksoft pattern.
+Selectors (clients/selectors/merge.py) handle database reads per Hacksoft pattern.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 
 from accounts.models import User
 from clients.models import ClientProfile
-from clients.services.merge_selectors import (
+from clients.selectors.merge import (
     get_fk_relations,
     get_gfk_relations,
     get_merge_profiles,
