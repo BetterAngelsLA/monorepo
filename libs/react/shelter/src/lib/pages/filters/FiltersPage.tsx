@@ -38,7 +38,7 @@ export function FiltersPage() {
       <div className="md:pt-8 p-6 md:p-10 max-h-[calc(100vh-88px)] overflow-hidden overflow-y-auto">
         <div className="flex justify-between align-center mt-0 mb-4">
           <button
-            className="ml-auto"
+            className="ml-auto p-2 rounded-lg transition-colors active:bg-[#E8ECF2]"
             onClick={handleClose}
             aria-label="Close filters"
           >

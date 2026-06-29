@@ -20,6 +20,9 @@ export function ReportUpdateNotice(props: TProps) {
     'leading-[18px]',
     'bg-primary-60',
     'text-white',
+    'active:bg-[#1650C1]',
+    'active:text-white',
+    'transition-colors',
     'focus:outline-hidden',
     'focus-visible:ring-2',
     'focus-visible:ring-offset-2',
@@ -40,7 +43,15 @@ export function ReportUpdateNotice(props: TProps) {
       </div>
 
       <div className="mt-8 flex justify-between">
-        <Button size="sm" variant="text" onClick={close}>
+        <Button
+          className={mergeCss([
+            'active:bg-[#E8ECF2]',
+            'transition-colors',
+          ])}
+          size="sm"
+          variant="text"
+          onClick={close}
+        >
           Cancel
         </Button>
 
