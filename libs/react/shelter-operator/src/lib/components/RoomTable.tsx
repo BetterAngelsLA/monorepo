@@ -164,7 +164,6 @@ export function RoomTable({
     <Table<Room, RoomRowObject>
       columns={columns}
       rows={rows}
-      labelClassName="text-lg"
       getRowKey={getRowKey ?? ((room) => room.id)}
       getRowObject={(room) => ({ id: room.id, room })}
       getRowSlot={(rowObject) => (

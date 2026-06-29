@@ -1,5 +1,6 @@
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { Check, X } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '../apollo/graphql/__generated__/types';
@@ -29,22 +30,48 @@ type ReservationTableProps = {
   rows: ReservationRow[];
   shelterId: string;
   loading?: boolean;
+  loadingState?: ReactNode;
+  emptyState?: ReactNode;
   isConfirmActionLoading?: boolean;
   isCancelActionLoading?: boolean;
   onCheckIn?: (reservationId: string) => void;
   onComplete?: (reservationId: string) => void;
   onCancel?: (reservationId: string) => void;
+  wrapperClassName?: string;
+  headerClassName?: string;
+  headerInsetClassName?: string;
+  rowClassName?: string;
+  rowInsetClassName?: string;
+  tableStyle?: CSSProperties;
+  headerStyle?: CSSProperties;
+  rowStyle?: CSSProperties;
+  trailingColumnWidth?: string;
 };
 
 export function ReservationTable({
   rows,
   shelterId,
   loading,
+  loadingState,
+  emptyState = (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No reservations yet.
+    </div>
+  ),
   isConfirmActionLoading,
   isCancelActionLoading,
   onCheckIn,
   onComplete,
   onCancel,
+  wrapperClassName,
+  headerClassName,
+  headerInsetClassName,
+  rowClassName,
+  rowInsetClassName,
+  tableStyle,
+  headerStyle,
+  rowStyle,
+  trailingColumnWidth = '140px',
 }: ReservationTableProps) {
   const navigate = useNavigate();
 
@@ -164,7 +191,6 @@ export function ReservationTable({
     <Table
       columns={columns}
       rows={rows}
-      labelClassName="text-lg"
       getRowKey={(row) => row.id}
       getRowSlot={(rowObject) => (
         <div
@@ -216,13 +242,18 @@ export function ReservationTable({
           />
         </div>
       )}
-      trailingColumnWidth="140px"
+      trailingColumnWidth={trailingColumnWidth}
       loading={loading}
-      emptyState={
-        <div className="px-6 py-8 text-center text-sm text-gray-500">
-          No reservations yet.
-        </div>
-      }
+      loadingState={loadingState}
+      emptyState={emptyState}
+      wrapperClassName={wrapperClassName}
+      headerClassName={headerClassName}
+      headerInsetClassName={headerInsetClassName}
+      rowClassName={rowClassName}
+      rowInsetClassName={rowInsetClassName}
+      tableStyle={tableStyle}
+      headerStyle={headerStyle}
+      rowStyle={rowStyle}
     />
   );
 }

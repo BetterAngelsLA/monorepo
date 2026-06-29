@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
 import { StatusBadge } from '../base-ui/status-badge/StatusBadge';
@@ -16,9 +17,38 @@ export type OccupantRow = {
 type OccupantTableProps = {
   rows: OccupantRow[];
   loading?: boolean;
+  loadingState?: ReactNode;
+  emptyState?: ReactNode;
+  wrapperClassName?: string;
+  headerClassName?: string;
+  headerInsetClassName?: string;
+  rowClassName?: string;
+  rowInsetClassName?: string;
+  tableStyle?: CSSProperties;
+  headerStyle?: CSSProperties;
+  rowStyle?: CSSProperties;
+  trailingColumnWidth?: string;
 };
 
-export function OccupantTable({ rows, loading }: OccupantTableProps) {
+export function OccupantTable({
+  rows,
+  loading,
+  loadingState,
+  emptyState = (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No occupants yet.
+    </div>
+  ),
+  wrapperClassName,
+  headerClassName,
+  headerInsetClassName,
+  rowClassName,
+  rowInsetClassName,
+  tableStyle,
+  headerStyle,
+  rowStyle,
+  trailingColumnWidth,
+}: OccupantTableProps) {
   const columns: TableColumn<OccupantRow>[] = useMemo(
     () => [
       {
@@ -89,14 +119,19 @@ export function OccupantTable({ rows, loading }: OccupantTableProps) {
     <Table
       columns={columns}
       rows={rows}
-      labelClassName="text-lg"
       getRowKey={(row) => row.id}
       loading={loading}
-      emptyState={
-        <div className="px-6 py-8 text-center text-sm text-gray-500">
-          No occupants yet.
-        </div>
-      }
+      loadingState={loadingState}
+      emptyState={emptyState}
+      wrapperClassName={wrapperClassName}
+      headerClassName={headerClassName}
+      headerInsetClassName={headerInsetClassName}
+      rowClassName={rowClassName}
+      rowInsetClassName={rowInsetClassName}
+      tableStyle={tableStyle}
+      headerStyle={headerStyle}
+      rowStyle={rowStyle}
+      trailingColumnWidth={trailingColumnWidth}
     />
   );
 }
