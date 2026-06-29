@@ -6,6 +6,7 @@ content type but the corresponding ``TemplateConfig`` is not updated,
 this test will catch it before it silently strips permissions from groups.
 """
 
+from collections import defaultdict
 from functools import reduce
 
 import pytest
@@ -22,21 +23,25 @@ def test_all_template_permissions_resolve() -> None:
     One query fetches all existing permissions; unresolved ones are
     the set difference between config expectations and DB reality."""
     # Map (app_label, codename) → list of template names that expect it.
-    expected: dict[tuple[str, str], list[str]] = {}
+    expected: dict[tuple[str, str], list[str]] = defaultdict(list)
     for tn in REGISTRY.template_names():
-        cfg = REGISTRY.template(tn)
-        if cfg and cfg.permissions:
-            for ps in cfg.permissions:
+        if cfg := REGISTRY.template(tn):
+            for ps in cfg.permissions or []:
                 a, c = ps.split(".", 1)
-                expected.setdefault((a, c), []).append(tn)
+                expected[(a, c)].append(tn)
 
     if not expected:
+        if REGISTRY.template_names():
+            pytest.fail(
+                f"No permissions defined for any registered template: "
+                f"{', '.join(sorted(REGISTRY.template_names()))}"
+            )
         return
 
     # Single OR-filter to find all expected permissions that exist.
     q = reduce(
-        lambda acc, pair: acc | Q(codename=pair[1], content_type__app_label=pair[0]),
-        expected,
+        Q.__or__,
+        (Q(codename=c, content_type__app_label=a) for a, c in expected),
         Q(),
     )
     existing = set(
