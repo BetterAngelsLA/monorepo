@@ -1,51 +1,24 @@
-import { useMutation, useQuery } from '@apollo/client/react';
-import { isMutationSuccess } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
 import { shelterCreateReservationRoute } from '../../routing';
+import { useUpdateReservation } from '../../hooks/useUpdateReservation';
+import { useReservations } from '../../hooks/useReservations';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { GetBedsDocument } from '../beds/api/__generated__/bedQueries.generated';
 import { ReservationTable } from '../ReservationTable';
-import { GetRoomsDocument } from '../rooms/api/__generated__/roomQueries.generated';
-import {
-  GetReservationsDocument,
-  type GetReservationsQuery,
-  type GetReservationsQueryVariables,
-} from './api/__generated__/reservationQueries.generated';
-import {
-  UpdateReservationDocument,
-  type UpdateReservationMutation,
-  type UpdateReservationMutationVariables,
-} from './api/updateReservationMutation';
 
 export function ReservationsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  const { data, loading } = useQuery<
-    GetReservationsQuery,
-    GetReservationsQueryVariables
-  >(GetReservationsDocument, {
-    variables: { shelterId },
-    skip: !shelterId,
-  });
+  const { reservations: rows, loading } = useReservations(shelterId);
 
-  const refetchQueries = useMemo(
-    () => [
-      { query: GetBedsDocument, variables: { shelterId } },
-      { query: GetRoomsDocument, variables: { shelterId } },
-      { query: GetReservationsDocument, variables: { shelterId } },
-    ],
-    [shelterId]
-  );
-
-  const [updateReservation] = useMutation<
-    UpdateReservationMutation,
-    UpdateReservationMutationVariables
-  >(UpdateReservationDocument, { refetchQueries });
+  const {
+    updateReservation,
+    error: actionError,
+    clearError,
+  } = useUpdateReservation();
 
   const [loadingAction, setLoadingAction] = useState<
     'checkin' | 'complete' | 'cancel' | null
@@ -68,37 +41,15 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
       reservationId: string,
       status: ReservationStatusChoices,
       action: 'checkin' | 'complete' | 'cancel',
-      errorVerb: string,
       onClose: () => void
     ) => {
-      setActionError(null);
+      clearError();
       setLoadingAction(action);
-      try {
-        const { data: result } = await updateReservation({
-          variables: { id: reservationId, data: { status } },
-          errorPolicy: 'all',
-        });
-
-        if (result?.updateReservation?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateReservation.messages?.[0]?.message;
-          setActionError(
-            firstMessage ||
-              `Unable to ${errorVerb} reservation. Please try again.`
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.updateReservation, 'ReservationType')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-      } catch {
-        setActionError('A network error occurred. Please try again.');
-      } finally {
-        setLoadingAction(null);
-        onClose();
-      }
+      await updateReservation(reservationId, { status });
+      setLoadingAction(null);
+      onClose();
     },
-    [updateReservation]
+    [updateReservation, clearError]
   );
 
   const [completeConfirmation, setCompleteConfirmation] = useState<{
@@ -118,8 +69,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
   const closeCancelConfirmation = useCallback(() => {
     setCancelConfirmation({ isOpen: false, reservationId: null });
   }, []);
-
-  const rows = data?.reservations.results ?? [];
 
   return (
     <div>
@@ -163,7 +112,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
                 checkinConfirmation.reservationId,
                 ReservationStatusChoices.CheckedIn,
                 'checkin',
-                'check in',
                 closeCheckinConfirmation
               );
             }
@@ -190,7 +138,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
                 completeConfirmation.reservationId,
                 ReservationStatusChoices.Completed,
                 'complete',
-                'complete',
                 closeCompleteConfirmation
               );
             }
@@ -216,7 +163,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
               handleStatusUpdate(
                 cancelConfirmation.reservationId,
                 ReservationStatusChoices.Cancelled,
-                'cancel',
                 'cancel',
                 closeCancelConfirmation
               );

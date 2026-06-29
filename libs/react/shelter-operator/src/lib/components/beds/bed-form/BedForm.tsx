@@ -5,22 +5,22 @@ import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Form } from '../../form/Form';
 import {
-  GetRoomsDocument,
-  type GetRoomsQuery,
-  type GetRoomsQueryVariables,
+    GetRoomsDocument,
+    type GetRoomsQuery,
+    type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
 import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 import {
-  CreateBedDocument,
-  buildCreateBedInput,
-  buildUpdateBedInput,
-  type CreateBedMutation,
-  type CreateBedMutationVariables,
+    CreateBedDocument,
+    buildCreateBedInput,
+    buildUpdateBedInput,
+    type CreateBedMutation,
+    type CreateBedMutationVariables,
 } from '../api/createBedMutation';
 import {
-  UpdateBedDocument,
-  type UpdateBedMutation,
-  type UpdateBedMutationVariables,
+    UpdateBedDocument,
+    type UpdateBedMutation,
+    type UpdateBedMutationVariables,
 } from '../api/updateBedMutation';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/formSchema';
@@ -154,14 +154,14 @@ export function BedForm({
   return (
     <FormProvider {...methods}>
       <div className="space-y-4 pb-48">
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit(submitBed)}

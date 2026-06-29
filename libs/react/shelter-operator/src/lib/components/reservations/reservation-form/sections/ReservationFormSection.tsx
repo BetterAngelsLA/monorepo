@@ -96,9 +96,7 @@ export const ReservationFormSection = memo(function ReservationFormSection({
           Optional. At least one of Room or Bed must be selected.
         </p>
 
-        {bedRoomError ? (
-          <p className="text-sm text-red-600">{bedRoomError}</p>
-        ) : null}
+        {bedRoomError && <p className="text-sm text-red-600">{bedRoomError}</p>}
 
         <Controller
           name="startDate"

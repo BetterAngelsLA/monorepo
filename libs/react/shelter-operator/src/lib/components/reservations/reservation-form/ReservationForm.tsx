@@ -1,6 +1,5 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isMutationSuccess } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
@@ -15,19 +14,12 @@ import {
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
-import { GetReservationsDocument } from '../api/__generated__/reservationQueries.generated';
 import {
-  CreateReservationDocument,
   buildCreateReservationInput,
   buildUpdateReservationInput,
-  type CreateReservationMutation,
-  type CreateReservationMutationVariables,
-} from '../api/createReservationMutation';
-import {
-  UpdateReservationDocument,
-  type UpdateReservationMutation,
-  type UpdateReservationMutationVariables,
-} from '../api/updateReservationMutation';
+} from '../api/reservationFormInput';
+import { useCreateReservation } from '../../../hooks/useCreateReservation';
+import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
@@ -54,7 +46,6 @@ export function ReservationForm({
   onCancel,
 }: ReservationFormProps) {
   const isEditMode = Boolean(reservationId);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const initialBedIdRef = useRef(initialData?.bedId ?? null);
 
   const defaults = createEmptyReservationFormData();
@@ -216,85 +207,49 @@ export function ReservationForm({
 
   // ─── Mutations ──────────────────────────────────────────────────────────
 
-  const refetchQueries = useMemo(
-    () => [
-      { query: GetBedsDocument, variables: { shelterId } },
-      { query: GetRoomsDocument, variables: { shelterId } },
-      { query: GetReservationsDocument, variables: { shelterId } },
-    ],
-    [shelterId]
-  );
+  const {
+    createReservation,
+    submitting: isCreating,
+    error: createError,
+    clearError: clearCreateError,
+  } = useCreateReservation();
 
-  const [createReservation, { loading: isCreating }] = useMutation<
-    CreateReservationMutation,
-    CreateReservationMutationVariables
-  >(CreateReservationDocument, { refetchQueries });
+  const {
+    updateReservation,
+    submitting: isUpdating,
+    error: updateError,
+    clearError: clearUpdateError,
+  } = useUpdateReservation();
 
-  const [updateReservation, { loading: isUpdating }] = useMutation<
-    UpdateReservationMutation,
-    UpdateReservationMutationVariables
-  >(UpdateReservationDocument, { refetchQueries });
-
+  const submissionError = createError || updateError;
   const isSubmitting = isCreating || isUpdating;
 
   async function submitReservation(data: ReservationFormData) {
-    setSubmissionError(null);
-
-    try {
-      if (isEditMode && reservationId) {
-        const { data: result } = await updateReservation({
-          variables: {
-            id: reservationId,
-            data: buildUpdateReservationInput(data),
-          },
-          errorPolicy: 'all',
-        });
-
-        if (result?.updateReservation?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateReservation.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to update reservation. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.updateReservation, 'ReservationType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-      } else {
-        const { data: result } = await createReservation({
-          variables: {
-            data: buildCreateReservationInput(data),
-          },
-          errorPolicy: 'all',
-        });
-
-        if (result?.createReservation?.__typename === 'OperationInfo') {
-          const firstMessage = result.createReservation.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to create reservation. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.createReservation, 'ReservationType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-      }
-
-      if (!isEditMode) {
-        reset();
-        setSelectedClients([]);
-      }
-      onSuccess?.();
-    } catch {
-      setSubmissionError('A network error occurred. Please try again.');
+    if (isEditMode && reservationId) {
+      const success = await updateReservation(
+        reservationId,
+        buildUpdateReservationInput(data)
+      );
+      if (!success) return;
+    } else {
+      const success = await createReservation(
+        buildCreateReservationInput(data)
+      );
+      if (!success) return;
     }
+
+    if (!isEditMode) {
+      reset();
+      setSelectedClients([]);
+    }
+    onSuccess?.();
   }
 
   function handleCancel() {
     reset();
     setSelectedClients([]);
+    clearCreateError();
+    clearUpdateError();
     onCancel?.();
   }
 
@@ -303,14 +258,14 @@ export function ReservationForm({
   return (
     <FormProvider {...methods}>
       <div className="space-y-4 pb-48">
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit(submitReservation)}

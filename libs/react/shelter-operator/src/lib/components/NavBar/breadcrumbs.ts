@@ -17,7 +17,7 @@ import {
   GetReservationDocument,
   type GetReservationQuery,
   type GetReservationQueryVariables,
-} from '../reservations/api/__generated__/reservationQueries.generated';
+} from '../../hooks/useReservation/__generated__/useReservation.generated';
 import {
   GetRoomDocument,
   type GetRoomQuery,

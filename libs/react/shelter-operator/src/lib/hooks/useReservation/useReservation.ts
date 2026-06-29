@@ -1,15 +1,45 @@
 import { useQuery } from '@apollo/client/react';
-import {
-  GetReservationDocument,
-  type GetReservationQuery,
-  type GetReservationQueryVariables,
-} from '../../components/reservations/api/__generated__/reservationQueries.generated';
+import { gql } from '@apollo/client';
+import type {
+  GetReservationQuery,
+  GetReservationQueryVariables,
+} from './__generated__/useReservation.generated';
+
+const GET_RESERVATION_QUERY = gql`
+  query GetReservation($pk: ID!) {
+    reservation(pk: $pk) {
+      id
+      status
+      startDate
+      notes
+      bed {
+        id
+        name
+      }
+      room {
+        id
+        name
+      }
+      clients {
+        id
+        isPrimary
+        clientProfile {
+          id
+          firstName
+          middleName
+          lastName
+          nickname
+        }
+      }
+    }
+  }
+`;
 
 export function useReservation(reservationId: string) {
   const { data, loading, error } = useQuery<
     GetReservationQuery,
     GetReservationQueryVariables
-  >(GetReservationDocument, {
+  >(GET_RESERVATION_QUERY, {
     variables: { pk: reservationId },
     skip: !reservationId,
   });

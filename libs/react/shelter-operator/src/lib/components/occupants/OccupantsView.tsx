@@ -7,7 +7,7 @@ import {
   GetReservationsDocument,
   type GetReservationsQuery,
   type GetReservationsQueryVariables,
-} from '../reservations/api/__generated__/reservationQueries.generated';
+} from '../../hooks/useReservations/__generated__/useReservations.generated';
 
 const ACTIVE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,

@@ -2,7 +2,7 @@ import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
 import { operatorPath } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import { type SubmitEvent, useCallback, useState } from 'react';
+import { useCallback, useState, type SubmitEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ShelterFormData } from '../../formTypes';
 import {
@@ -114,14 +114,14 @@ export function CreateShelterForm() {
           </p>
         </div>
 
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit}

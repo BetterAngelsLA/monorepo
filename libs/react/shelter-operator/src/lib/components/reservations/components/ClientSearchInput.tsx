@@ -1,14 +1,9 @@
-import { useLazyQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { Star, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  SearchClientsDocument,
-  type SearchClientsQuery,
-  type SearchClientsQueryVariables,
-} from '../api/__generated__/clientQueries.generated';
+import { useSearchClient } from '../../../hooks/useSearchClient';
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 150;
 const MIN_QUERY_LENGTH = 2;
 
 export interface SelectedClient {
@@ -42,10 +37,7 @@ export function ClientSearchInput({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [search, { data, loading }] = useLazyQuery<
-    SearchClientsQuery,
-    SearchClientsQueryVariables
-  >(SearchClientsDocument);
+  const [search, { data, loading }] = useSearchClient();
 
   // Debounce
   useEffect(() => {

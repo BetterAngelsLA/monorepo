@@ -3,11 +3,11 @@ import { Check, X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '../apollo/graphql/__generated__/types';
+import { GetReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
 import { shelterEditReservationRoute } from '../routing';
 import { Button } from './base-ui/buttons';
 import { StatusBadge } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
-import type { GetReservationsQuery } from './reservations/api/__generated__/reservationQueries.generated';
 import { reservationStatusInfo } from './reservations/reservation-form/constants/reservationFormOptions';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
