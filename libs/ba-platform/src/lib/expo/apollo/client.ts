@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { createNativeFetch } from '@monorepo/expo/shared/clients';
 import { isReactNativeFileInstance } from '@monorepo/expo/shared/clients';
 import { createErrorLink } from '@monorepo/expo/shared/clients';
-import { loggerLink } from './links/loggerLink';
+import { loggerLink } from '@monorepo/expo/shared/clients';
 import { expoOrgLink } from './links/orgLink/expoOrgLink';
 
 type TArgs = {
