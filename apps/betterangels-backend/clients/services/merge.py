@@ -426,9 +426,7 @@ def _append_guardian_permission_changes(
         per_source: dict[int, list[int]] = {}
         total = 0
         for source in sources:
-            ids = list(
-                manager.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
-            )
+            ids = list(manager.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True))
             per_source[source.pk] = ids
             total += len(ids)
         if total > 0:
@@ -484,11 +482,7 @@ def _check_unique_field_conflicts(source: ClientProfile) -> None:
     for fn in unique_fields:
         val = getattr(source, fn, None)
         if val is not None:
-            conflict = (
-                ClientProfile.objects.exclude(pk=source.pk)
-                .filter(**{fn: val})
-                .exists()
-            )
+            conflict = ClientProfile.objects.exclude(pk=source.pk).filter(**{fn: val}).exists()
             if conflict:
                 raise MergeValidationError(
                     f"Cannot undo merge for '{source.full_name}' (#{source.pk}): "
