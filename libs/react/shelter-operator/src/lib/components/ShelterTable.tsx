@@ -101,7 +101,6 @@ export function ShelterTable({
         width: '1.2fr',
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
-          console.log('Rendering capacity for shelter:', shelter);
           const unavailableBeds = getUnavailableBeds(shelter);
           const progressPct =
             shelter.bedCounts.total > 0

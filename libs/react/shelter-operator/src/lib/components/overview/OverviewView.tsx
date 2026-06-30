@@ -33,7 +33,6 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
   });
 
   const shelter = data?.operatorShelter;
-  console.log('OverviewView shelter:', shelter);
   const bedCounts = shelter?.bedCounts;
   const roomCounts = shelter?.roomCounts;
 
