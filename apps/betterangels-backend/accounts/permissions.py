@@ -24,10 +24,6 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
-@register_permission
-class ReportOrgPermissions(models.TextChoices):
-    VIEW_REPORTS = "organizations.view_reports", _("Can view reports")
-
 
 # ── Organization permission check ─────────────────────────────────────────────
 

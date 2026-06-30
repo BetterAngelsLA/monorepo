@@ -31,7 +31,6 @@ export function mapRoomToFormData(room: UseRoomResultType): RoomFormData {
     name: room.name ?? '',
     notes: room.notes ?? '',
     pets: toChoiceNames<PetChoices>(room.pets),
-    status: room.status ?? defaults.status,
     storage: room.storage ?? defaults.storage,
     type: room.type ?? null,
     typeOther: room.typeOther ?? '',
