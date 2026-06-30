@@ -3,14 +3,38 @@ import { generateCachePolicies } from '@monorepo/apollo';
 import { createShelterApolloCachePolicyRegistry } from './cachePolicyRegistry';
 import { toUrlKeyFieldValue } from './utils/toUrlKeyFieldValue';
 
-// TODO: add merge safety to avoid defining policy in both places
-export function createShelterTypePolicies(isDevEnv: boolean): TypePolicies {
+/**
+ * Creates the shelter-wide Apollo cache type policies.
+ *
+ * Only types whose cache key differs from Apollo's default are listed here.
+ * Apollo defaults to {@code keyFields: ['id']} for any type with an {@code id}
+ * field, so types like {@code UserType}, {@code OrganizationType}, and
+ * need no explicit policy.
+ *
+ * {@code DjangoImageType} and {@code DjangoFileType} use URL-based keys
+ * because their {@code id} fields are not stable across requests.
+ *
+ * @param props.isDevEnv - enables dev-mode warnings for missing key fields.
+ * @param props.extraPolicies - additional policies injected by consumers
+ *   (e.g. shelter-operator's {@code createOperatorTypePolicies}).
+ */
+export type CreateShelterTypePoliciesProps = {
+  isDevEnv: boolean;
+  extraPolicies?: TypePolicies;
+};
+
+export function createShelterTypePolicies(
+  props: CreateShelterTypePoliciesProps
+): TypePolicies {
+  const { isDevEnv, extraPolicies } = props;
+
   const cachePolicyRegistry = createShelterApolloCachePolicyRegistry(isDevEnv);
 
   const queryTypePolicies = generateCachePolicies(cachePolicyRegistry);
 
   return {
     ...queryTypePolicies,
+    ...extraPolicies,
     DjangoImageType: {
       keyFields: (obj: StoreObject) => {
         // Use `url` when present; otherwise pick the first URL-like string value
@@ -49,18 +73,6 @@ export function createShelterTypePolicies(isDevEnv: boolean): TypePolicies {
 
         return urlKey ?? false;
       },
-    },
-    UserType: {
-      keyFields: ['id'],
-    },
-    AddressType: {
-      keyFields: ['id'],
-    },
-    OrganizationType: {
-      keyFields: ['id'],
-    },
-    AdminShelterType: {
-      keyFields: ['id'],
     },
   };
 }

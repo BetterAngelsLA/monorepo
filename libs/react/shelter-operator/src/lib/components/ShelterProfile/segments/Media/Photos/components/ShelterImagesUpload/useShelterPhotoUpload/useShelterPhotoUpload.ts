@@ -5,7 +5,7 @@ import {
   uploadFileToS3WithPresignedPost,
 } from '@monorepo/react/shared';
 import { ShelterPhotoTypeChoices } from '../../../../../../../../apollo/graphql/__generated__/types';
-import { OPERATOR_SHELTER_TYPENAME } from '../../../../../../../../hooks/useShelterOperatorProfile/constants';
+import { OPERATOR_SHELTER_TYPENAME } from '../../../../../../../../hooks/useShelterOperatorProfile';
 import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
