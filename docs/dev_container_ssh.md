@@ -159,7 +159,6 @@ git push origin main
 
 ## Using AI Coding Assistants
 
-With the SSH agent forwarded, AI coding assistants like Cline can perform git operations
-(commit, push, create PRs, clone repos) directly from inside the dev container. The Cline
-extension is pre-installed — see [cline.md](./cline.md) for setup and
+With the SSH agent forwarded, AI coding assistants like Copilot can perform git operations
+(commit, push, create PRs, clone repos) directly from inside the dev container. See
 [devcontainer.md](./devcontainer.md) for overall dev container configuration.
