@@ -203,6 +203,7 @@ export function ShelterBasicInfoForm(props: TProps) {
               render={({ field }) => (
                 <Input
                   label="Website"
+                  dataType="url"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}

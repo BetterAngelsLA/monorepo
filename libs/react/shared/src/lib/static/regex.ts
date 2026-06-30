@@ -6,6 +6,8 @@ export const Regex = {
   phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
   phoneNumberWithExtensionUS: /^[2-9]\d{2}[2-9]\d{6}(x\d+)?$/,
   californiaId: /^[A-Z]\d{7}$/,
-  /** Accepts bare domains (google.com), full URLs (https://example.org/path), www prefixes, and IPs with ports. */
-  websiteBasic: /^(https?:\/\/)?[\w.-]+\.[\w]{2,}(\/\S*)?$/i,
+  /** Bare domain with optional path/query — no scheme. Accepts google.com, example.org/path?a=1 */
+  domain: /^[\w.-]+\.[\w]{2,}(\/\S*)?(\?\S*)?$/i,
+  /** Full URL with http/https scheme. Accepts https://google.com, http://example.org/path?a=1 */
+  url: /^https?:\/\/[\w.-]+\.[\w]{2,}(\/\S*)?(\?\S*)?$/i,
 } as const;

@@ -11,7 +11,8 @@ export type InputDataType =
   | 'email'
   | 'phone-number'
   | 'time'
-  | 'date';
+  | 'date'
+  | 'url';
 export type InputVariant = 'default' | 'paragraph';
 
 type NativeAttrsOmit =

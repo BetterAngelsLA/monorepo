@@ -26,7 +26,7 @@ export const formSchema = z.object({
   website: z
     .string()
     .trim()
-    .regex(Regex.websiteBasic, 'Please enter a valid URL')
+    .regex(Regex.url, 'Please enter a valid URL')
     .optional()
     .or(z.literal('')),
   isPrivate: z.boolean(),
