@@ -146,6 +146,7 @@ describe('Regex', () => {
       ['.com', false],
       ['google.', false],
       ['example.c', false],
+      ['example.123', false],
       ['just text with spaces', false],
     ];
 
@@ -169,6 +170,7 @@ describe('Regex', () => {
       ['https://google', false],
       ['https://.com', false],
       ['https://example.c', false],
+      ['https://example.123', false],
       ['ftp://example.com', false],
       ['', false],
       ['https://', false],
