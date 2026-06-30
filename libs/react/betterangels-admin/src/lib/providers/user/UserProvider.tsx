@@ -1,11 +1,11 @@
 import { useQuery } from '@apollo/client/react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActiveOrgProvider } from '../activeOrg';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import UserContext, { TUser } from './UserContext';
 import {
   CurrentOrgUserDocument,
   CurrentOrgUserQuery,
-} from './__generated__/UserProvider.generated';
+} from '@monorepo/ba-platform';
 
 interface UserProviderProps {
   children: ReactNode;

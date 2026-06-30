@@ -5,14 +5,7 @@ import {
   type StorageAdapter,
 } from '@monorepo/react/shared';
 
-/**
- * TODO: This is a temporary copy. In the future this should live in a
- * BA-specific shared library that both betterangels-admin and shelter-operator
- * can import from, rather than being duplicated across libs.
- */
-
-/** Default localStorage key shared by BA Admin and BA App. */
-const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
+import { DEFAULT_ORG_STORAGE_KEY } from '../../constants';
 
 /**
  * Create an Apollo Link that injects the ``X-Organization-ID`` header
@@ -30,7 +23,7 @@ export function createOrgLink(
   storage: StorageAdapter,
   storageKey?: string
 ): ApolloLink {
-  const key = storageKey ?? DEFAULT_STORAGE_KEY;
+  const key = storageKey ?? DEFAULT_ORG_STORAGE_KEY;
 
   return new SetContextLink(async (prevContext) => {
     const orgId = await storage.getItem(key);

@@ -1,5 +1,10 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { TOrganizationWithPermissions } from '../activeOrg';
+import { CurrentOrgUserQuery } from '@monorepo/ba-platform';
+
+type OrganizationsArray = NonNullable<
+  CurrentOrgUserQuery['currentUser']['organizations']
+>;
+export type TOrganizationWithPermissions = OrganizationsArray[number];
 
 export type TUser = {
   id: string;

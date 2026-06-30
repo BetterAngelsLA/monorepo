@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/shelter-web/src",
   "projectType": "application",
-  "tags": [],
+  "tags": ["type:app", "scope:shelter-web"],
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",

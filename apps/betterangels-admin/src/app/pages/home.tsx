@@ -1,12 +1,11 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
-  PermissionEnum,
   ReportPermissions,
-  useActiveOrg,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
 import { Navigate } from 'react-router-dom';
 
-const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
+const permissionRoutes: { permission: string; path: string }[] = [
   { permission: UserOrganizationPermissions.ViewOrgMembers, path: '/users' },
   { permission: ReportPermissions.ViewReports, path: '/reports' },
 ];

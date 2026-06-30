@@ -1,9 +1,9 @@
 import {
   ReportPermissions,
   TeamPermissions,
-  useActiveOrg,
   UserOrganizationPermissions,
 } from '@monorepo/react/betterangels-admin';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
 import {
   BarChartIcon,
