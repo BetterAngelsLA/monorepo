@@ -1,4 +1,4 @@
-import { createOrgLink } from '@monorepo/ba-platform';
+import { createOrgLink } from '../../../orgLink';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
 /**

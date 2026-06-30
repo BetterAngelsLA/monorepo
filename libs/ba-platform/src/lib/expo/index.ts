@@ -1,1 +1,2 @@
-export * from './apollo';
+export * from '../apollo/expo';
+export * from './ApolloClientProvider';
