@@ -4,7 +4,7 @@ import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
-import { TUser } from '../../providers/user/UserContext';
+import { TUser } from '../../providers/user/UserProvider';
 import {
   Header,
   HorizontalContainer,
