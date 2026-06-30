@@ -28,7 +28,6 @@ const apolloClient = createApolloClient({
   csrfCookieName,
   csrfHeaderName,
   typePolicies: createShelterTypePolicies(isDevEnv),
-  isDevEnv,
 });
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
