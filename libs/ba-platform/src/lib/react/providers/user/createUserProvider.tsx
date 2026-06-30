@@ -109,7 +109,6 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
 
   function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
-    const [isSettled, setIsSettled] = useState(false);
 
     const { data, loading, error, refetch } = useQuery(document, {
       fetchPolicy: 'network-only',
@@ -123,7 +122,6 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
         } else {
           setUser(parseUser(res.data?.currentUser));
         }
-        setIsSettled(true);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [],
@@ -172,6 +170,8 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
       </UserContext.Provider>
     );
   }
+
+  UserProvider.displayName = 'UserProvider';
 
   return { UserProvider, useUser, UserContext } as const;
 }
