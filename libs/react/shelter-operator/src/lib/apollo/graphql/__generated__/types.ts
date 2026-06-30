@@ -1,1 +1,1 @@
-export * from '@monorepo/ba-platform';
+export * from '@monorepo/ba-platform/types';

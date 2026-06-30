@@ -5,7 +5,7 @@ import {
   type StorageAdapter,
 } from '@monorepo/react/shared';
 
-import { DEFAULT_ORG_STORAGE_KEY } from '../../constants';
+import { DEFAULT_ORG_STORAGE_KEY } from '../constants';
 
 /**
  * Create an Apollo Link that injects the ``X-Organization-ID`` header

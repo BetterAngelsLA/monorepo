@@ -79,7 +79,7 @@ export interface UserProviderConfig<TUser, TQuery> {
  * });
  * ```
  */
-export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TQuery extends { currentUser?: unknown }>(
+export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TCurrentUser, TQuery extends { currentUser?: TCurrentUser }>(
   config: UserProviderConfig<TUser, TQuery>
 ) {
   const {

@@ -2,7 +2,7 @@ import { createUserProvider } from './createUserProvider';
 import {
   CurrentOrgUserDocument,
   type CurrentOrgUserQuery,
-} from '../../apollo';
+} from '../../../apollo';
 
 // ---------------------------------------------------------------------------
 // Standard user type for admin / dashboard apps
