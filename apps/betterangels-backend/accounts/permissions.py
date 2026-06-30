@@ -24,7 +24,6 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
-
 # ── Organization permission check ─────────────────────────────────────────────
 
 
