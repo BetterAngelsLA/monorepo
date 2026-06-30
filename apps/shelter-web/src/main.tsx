@@ -7,6 +7,7 @@ import {
   UserProvider,
   createShelterTypePolicies,
 } from '@monorepo/react/shelter';
+import { orgLink } from '@monorepo/ba-platform';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -29,6 +30,7 @@ const apolloClient = createApolloClient({
   csrfHeaderName,
   typePolicies: createShelterTypePolicies(isDevEnv),
   isDevEnv,
+  links: [orgLink],
 });
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
