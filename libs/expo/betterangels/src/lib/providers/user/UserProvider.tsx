@@ -15,7 +15,7 @@ import {
 
 const {
   UserProvider: BaseUserProvider,
-  useUser: useBaseUser,
+  useUser,
 } = createUserProvider({
   document: CurrentUserDocument,
   parseUser: (
@@ -55,7 +55,7 @@ interface ExpoShellProps {
 }
 
 function ExpoShell({ children }: ExpoShellProps) {
-  const { user, isLoading, refetchUser } = useBaseUser();
+  const { user, isLoading, refetchUser } = useUser();
   const { appBecameActive } = useAppState();
   const [settled, setSettled] = useState(false);
 
@@ -95,8 +95,4 @@ export default function UserProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Re-export the factory-based ``useUser`` so existing consumers
- * continue to work without import changes.
- */
-export { useBaseUser as useUser };
+export { useUser };
