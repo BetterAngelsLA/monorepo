@@ -4,7 +4,14 @@
  */
 export function normalizeUrlScheme(val: string): string | null {
   const trimmed = val.trim();
-  if (!trimmed) return null;
-  if (!/:\/\//i.test(trimmed)) return `https://${trimmed}`;
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (!/:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+
   return trimmed;
 }
