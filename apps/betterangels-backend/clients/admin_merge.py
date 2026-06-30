@@ -41,7 +41,7 @@ class ClientProfileMergeMixin:
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
         if request.GET.get("show_merged"):
             return self.model._base_manager.all()
-        return cast(QuerySet[ClientProfile], cast(admin.ModelAdmin, self).get_queryset(request))
+        return cast(QuerySet[ClientProfile], super().get_queryset(request))  # type: ignore[misc]
 
     # ---- Change view: show undo link when applicable ----
 
@@ -52,13 +52,13 @@ class ClientProfileMergeMixin:
         extra_context["merged_sources"] = get_merged_sources(int(object_id))
         return cast(
             HttpResponseRedirect | TemplateResponse,
-            cast(admin.ModelAdmin, self).change_view(request, object_id, form_url, extra_context),
+            super().change_view(request, object_id, form_url, extra_context),  # type: ignore[misc]
         )
 
     # ---- URLs ----
 
     def get_urls(self) -> list:
-        urls = cast(list, cast(admin.ModelAdmin, self).get_urls())
+        urls = cast(list, super().get_urls())  # type: ignore[misc]
         custom_urls = [
             path(
                 "merge/",
