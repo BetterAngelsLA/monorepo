@@ -14,7 +14,7 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { ApolloClientProvider } from '@monorepo/ba-platform';
+import { ApolloClientProvider } from '@monorepo/ba-platform/expo';
 import { ApiConfigProvider } from '@monorepo/expo/shared/clients';
 import {
   BottomSheetModalProvider,
