@@ -147,7 +147,7 @@ export type BedType = {
   name?: Maybe<Scalars['String']['output']>;
   pets: Array<PetType>;
   room?: Maybe<RoomType>;
-  shelter: ShelterType;
+  shelter: OperatorShelterType;
   status: BedStatusChoices;
   statusNotes?: Maybe<Scalars['String']['output']>;
   storage: Scalars['Boolean']['output'];
@@ -2862,7 +2862,8 @@ export type ReportSummaryType = {
 
 export type ReservationClientAssignmentType = {
   __typename?: 'ReservationClientAssignmentType';
-  clientProfileId: Scalars['ID']['output'];
+  clientProfile: ClientProfileType;
+  id: Scalars['ID']['output'];
   isPrimary: Scalars['Boolean']['output'];
 };
 
@@ -3013,7 +3014,7 @@ export type RoomType = {
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   pets: Array<PetType>;
-  shelter: ShelterType;
+  shelter: OperatorShelterType;
   status: RoomStatusChoices;
   storage: Scalars['Boolean']['output'];
   type?: Maybe<RoomStyleChoices>;
@@ -3553,6 +3554,7 @@ export type UpdateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
