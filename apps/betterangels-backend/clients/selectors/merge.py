@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 from clients.models import ClientProfile
-from common.models import Attachment, PhoneNumber
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
@@ -31,7 +31,7 @@ def get_profiles_by_ids(ids: list[int]) -> list[ClientProfile]:
     return list(ClientProfile.objects.including_merged().filter(pk__in=ids).order_by("pk"))
 
 
-def get_client_by_id(pk: int) -> ClientProfile | None:
+def get_profile_by_id(pk: int) -> ClientProfile | None:
     """Return a single ClientProfile by pk, or None if not found.
 
     Uses including_merged() so merged profiles are visible.
@@ -131,21 +131,25 @@ def get_fk_relations() -> list[dict[str, Any]]:
 
 
 def get_gfk_relations() -> list[dict[str, Any]]:
-    """Return known GFK models that may point to ClientProfile."""
-    return [
-        {
-            "model": Attachment,
-            "model_label": "common.attachment",
-            "content_type_field": "content_type",
-            "object_id_field": "object_id",
-        },
-        {
-            "model": PhoneNumber,
-            "model_label": "common.phonenumber",
-            "content_type_field": "content_type",
-            "object_id_field": "object_id",
-        },
-    ]
+    """Discover all GenericForeignKey relations pointing to ClientProfile
+    by introspecting GenericRelation fields on the model."""
+    relations: list[dict[str, Any]] = []
+    for field in ClientProfile._meta.private_fields:
+        if not isinstance(field, GenericRelation):
+            continue
+        gfk_model = field.remote_field.model
+        for gfk_field in gfk_model._meta.private_fields:
+            if isinstance(gfk_field, GenericForeignKey):
+                relations.append(
+                    {
+                        "model": gfk_model,
+                        "model_label": f"{gfk_model._meta.app_label}.{gfk_model._meta.model_name}",
+                        "content_type_field": gfk_field.ct_field,
+                        "object_id_field": gfk_field.fk_field,
+                    }
+                )
+                break
+    return relations
 
 
 def get_related_object_ids(

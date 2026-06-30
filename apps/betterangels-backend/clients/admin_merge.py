@@ -20,7 +20,7 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
 from clients.models import ClientProfile
-from clients.selectors.merge import get_client_by_id, get_merged_sources, get_profiles_by_ids
+from clients.selectors.merge import get_merged_sources, get_profile_by_id, get_profiles_by_ids
 from clients.services.merge import MergeValidationError, merge_execute, merge_preview, merge_undo
 
 
@@ -159,7 +159,7 @@ class ClientProfileMergeMixin:
         if added_id in ids:
             return self._render_select_target(request, profiles, ids_param)
 
-        client = get_client_by_id(added_id)
+        client = get_profile_by_id(added_id)
         if client is None:
             self.message_user(request, f"Client #{added_id_str} not found.", messages.ERROR)
             return self._render_select_target(request, profiles, ids_param)
@@ -257,7 +257,7 @@ class ClientProfileMergeMixin:
     # ---- Undo merge ----
 
     def undo_merge_view(self, request: HttpRequest, pk: int) -> HttpResponseRedirect | TemplateResponse:
-        target = get_client_by_id(pk)
+        target = get_profile_by_id(pk)
         if target is None:
             self.message_user(request, "Client not found.", messages.ERROR)
             return redirect(reverse("admin:clients_clientprofile_changelist"))

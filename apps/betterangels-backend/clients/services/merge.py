@@ -371,38 +371,12 @@ def merge_undo(
                     f"pre-merge snapshot. Undo cannot proceed — manual recovery may be required."
                 )
 
-            # Restore scalar fields (Django fields natively accept
-            # ISO-format strings for date/datetime on save).
-            for f in scalar_fields:
-                if f.name in snapshot:
-                    setattr(source, f.name, snapshot[f.name])
-
-            # Restore FK relations
-            for rel_info in get_fk_relations():
-                key = f"_moved_{rel_info['model_label']}"
-                moved_ids = snapshot.get(key, [])
-                if moved_ids:
-                    existing = set(rel_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
-                    if existing:
-                        rel_info["model"].objects.filter(pk__in=existing).update(**{rel_info["field_name"]: source.pk})
-
-            # Restore GFK relations
-            for gfk_info in get_gfk_relations():
-                key = f"_moved_{gfk_info['model_label']}"
-                moved_ids = snapshot.get(key, [])
-                if moved_ids:
-                    existing = set(gfk_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
-                    if existing:
-                        gfk_info["model"].objects.filter(pk__in=existing).update(object_id=source.pk)
-
-            # Restore guardian permissions
+            _restore_scalar_fields(source, snapshot, scalar_fields)
+            _check_unique_field_conflicts(source)
+            _restore_fk_relations(source, snapshot)
+            _restore_gfk_relations(source, snapshot)
             _restore_guardian_permissions(source, content_type, snapshot)
-
-            # Clear merge markers
-            source.merged_into = None
-            source.merged_at = None
-            source.merged_data = None
-            source.save()
+            _clear_merge_markers(source)
             restored.append(source)
 
         return restored
@@ -448,20 +422,20 @@ def _append_guardian_permission_changes(
     related_changes: list[RelatedChange],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
-        model: Any = perm_model
+        manager = perm_model._default_manager
         per_source: dict[int, list[int]] = {}
         total = 0
         for source in sources:
             ids = list(
-                model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
+                manager.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
             )
             per_source[source.pk] = ids
             total += len(ids)
         if total > 0:
             related_changes.append(
                 RelatedChange(
-                    relation_name=str(model._meta.verbose_name_plural).replace(" ", "_"),
-                    model_label=f"{model._meta.app_label}.{model._meta.model_name}",
+                    relation_name=str(perm_model._meta.verbose_name_plural).replace(" ", "_"),
+                    model_label=f"{perm_model._meta.app_label}.{perm_model._meta.model_name}",
                     field_name="object_pk",
                     will_move=total,
                     per_source=per_source,
@@ -476,12 +450,12 @@ def _merge_guardian_permissions(
     source_snapshots: dict[int, dict[str, Any]],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
-        model: Any = perm_model
+        manager = perm_model._default_manager
         for source in sources:
-            source_snapshots[source.pk][f"_moved_{model._meta.app_label}.{model._meta.model_name}"] = list(
-                model.objects.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
+            source_snapshots[source.pk][f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"] = list(
+                manager.filter(content_type=content_type, object_pk=str(source.pk)).values_list("pk", flat=True)
             )
-        model.objects.filter(
+        manager.filter(
             content_type=content_type,
             object_pk__in=[str(s.pk) for s in sources],
         ).update(object_pk=str(target.pk))
@@ -493,10 +467,78 @@ def _restore_guardian_permissions(
     snapshot: dict[str, Any],
 ) -> None:
     for perm_model in _get_guardian_perm_models():
-        model: Any = perm_model
-        key = f"_moved_{model._meta.app_label}.{model._meta.model_name}"
+        manager = perm_model._default_manager
+        key = f"_moved_{perm_model._meta.app_label}.{perm_model._meta.model_name}"
         moved_ids = snapshot.get(key, [])
         if moved_ids:
-            existing = set(model.objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
+            existing = set(manager.filter(pk__in=moved_ids).values_list("pk", flat=True))
             if existing:
-                model.objects.filter(pk__in=existing).update(object_pk=str(source.pk))
+                manager.filter(pk__in=existing).update(object_pk=str(source.pk))
+
+
+def _check_unique_field_conflicts(source: ClientProfile) -> None:
+    """Raise MergeValidationError if a restored unique field value is now
+    in use by a different profile (e.g. a new profile was created while
+    this source was merged)."""
+    unique_fields = get_unique_fields() - {"id"}
+    for fn in unique_fields:
+        val = getattr(source, fn, None)
+        if val is not None:
+            conflict = (
+                ClientProfile.objects.exclude(pk=source.pk)
+                .filter(**{fn: val})
+                .exists()
+            )
+            if conflict:
+                raise MergeValidationError(
+                    f"Cannot undo merge for '{source.full_name}' (#{source.pk}): "
+                    f"{fn} '{val}' is now in use by another profile. "
+                    f"Resolve the conflict before retrying undo."
+                )
+
+
+def _restore_scalar_fields(
+    source: ClientProfile,
+    snapshot: dict[str, Any],
+    scalar_fields: list[models.Field],
+) -> None:
+    """Restore scalar field values on *source* from its pre-merge snapshot."""
+    for f in scalar_fields:
+        if f.name in snapshot:
+            setattr(source, f.name, snapshot[f.name])
+
+
+def _restore_fk_relations(
+    source: ClientProfile,
+    snapshot: dict[str, Any],
+) -> None:
+    """Move FK-related objects back to *source* during undo."""
+    for rel_info in get_fk_relations():
+        key = f"_moved_{rel_info['model_label']}"
+        moved_ids = snapshot.get(key, [])
+        if moved_ids:
+            existing = set(rel_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
+            if existing:
+                rel_info["model"].objects.filter(pk__in=existing).update(**{rel_info["field_name"]: source.pk})
+
+
+def _restore_gfk_relations(
+    source: ClientProfile,
+    snapshot: dict[str, Any],
+) -> None:
+    """Move GFK-related objects back to *source* during undo."""
+    for gfk_info in get_gfk_relations():
+        key = f"_moved_{gfk_info['model_label']}"
+        moved_ids = snapshot.get(key, [])
+        if moved_ids:
+            existing = set(gfk_info["model"].objects.filter(pk__in=moved_ids).values_list("pk", flat=True))
+            if existing:
+                gfk_info["model"].objects.filter(pk__in=existing).update(object_id=source.pk)
+
+
+def _clear_merge_markers(source: ClientProfile) -> None:
+    """Clear merge fields and persist *source*."""
+    source.merged_into = None
+    source.merged_at = None
+    source.merged_data = None
+    source.save()

@@ -82,7 +82,7 @@ class MergeServiceTests(TestCase):
                 attachment_type=AttachmentType.DOCUMENT,
             )
         PhoneNumber.objects.create(
-            number=f"+1212555{client.pk:04d}"[:16],
+            number=f"+1212555{client.pk:04d}",
             content_type=ct,
             object_id=client.pk,
         )
@@ -424,6 +424,37 @@ class UndoMergeTests(MergeServiceTests):
         # Verify nothing was changed (transaction rolled back)
         a.refresh_from_db()
         self.assertIsNotNone(a.merged_into_id)
+
+    def test_undo_unique_field_conflict_raises(self) -> None:
+        """Undo raises MergeValidationError if a unique field value has been
+        claimed by a new profile created while the source was merged."""
+        unique_email = f"alice.conflict.{secrets.token_hex(4)}@example.com"
+        a = self._make_client(first_name="Alice", email=unique_email)
+        # Give target its own email so the source's email is cleared (not
+        # copied to target) and becomes available for a new profile to claim.
+        t = self._make_client(first_name="Target", email="target.keep@example.com")
+        a_email = a.email
+
+        self.assertEqual(a_email, unique_email)
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        a.refresh_from_db()
+        self.assertIsNone(a.email, f"Expected email to be None after merge, got {a.email!r}")
+
+        # A new profile claims Alice's old email while she's merged.
+        ClientProfile.objects.create(email=unique_email, first_name="Imposter")
+
+        with self.assertRaises(MergeValidationError) as ctx:
+            merge_undo(target_id=t.pk, performed_by=self._user)
+        self.assertIn("email", str(ctx.exception))
+        self.assertIn(unique_email, str(ctx.exception))
+        self.assertIn("now in use by another profile", str(ctx.exception))
+
+        # Verify nothing was changed (transaction rolled back)
+        a.refresh_from_db()
+        self.assertIsNotNone(a.merged_into_id)
+        self.assertIsNone(a.email)
 
 
 # ---------------------------------------------------------------------------

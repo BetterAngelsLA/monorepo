@@ -307,7 +307,7 @@ class Command(BaseCommand):
             )
 
         PhoneNumber.objects.create(
-            number=f"+1212555{client.pk:04d}"[:16],
+            number=f"+1212555{client.pk:04d}",
             content_type=content_type,
             object_id=client.pk,
         )
