@@ -18,8 +18,9 @@ export const formSchema = z.object({
   description: z.string(),
   location: locationSchema,
   email: z
-    .email('Please enter a valid email address')
+    .string()
     .trim()
+    .regex(Regex.email, 'Please enter a valid email address')
     .optional()
     .or(z.literal('')),
   phone: z.string().trim().optional().or(z.literal('')), // Input dataType="phone-number" forces own message
