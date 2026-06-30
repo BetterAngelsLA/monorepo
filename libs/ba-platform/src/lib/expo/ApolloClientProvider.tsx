@@ -3,7 +3,7 @@ import { ApolloProvider } from '@apollo/client/react';
 import { createApolloCache } from '@monorepo/apollo';
 import { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { createApolloClient } from './client';
+import { createApolloClient } from '../apollo/expo/client';
 
 /**
  * ApolloClientProvider component that initializes the Apollo Client instance

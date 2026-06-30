@@ -1,7 +1,7 @@
 import type { InMemoryCache, TypePolicies } from '@apollo/client';
 import { ApolloClient, ApolloLink } from '@apollo/client';
 import { createApolloCache } from '@monorepo/apollo';
-import { orgLink } from '@monorepo/ba-platform';
+import { orgLink } from '../orgLink';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { csrfLink } from './csrf';
 
