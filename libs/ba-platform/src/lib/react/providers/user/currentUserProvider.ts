@@ -27,17 +27,16 @@ export type CurrentUser = {
 
 export const { UserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
-  parseUser: (
-    data: CurrentOrgUserQuery['currentUser'] | undefined
-  ): CurrentUser | undefined => {
-    if (!data) return undefined;
+  parseUser: (data): CurrentUser | undefined => {
+    const user = data as CurrentOrgUserQuery['currentUser'] | undefined;
+    if (!user) return undefined;
     return {
-      id: data.id,
-      username: data.username ?? undefined,
-      firstName: data.firstName ?? undefined,
-      lastName: data.lastName ?? undefined,
-      email: data.email,
-      organizations: data.organizations ?? [],
+      id: user.id,
+      username: user.username ?? undefined,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+      email: user.email,
+      organizations: user.organizations ?? [],
     };
   },
   isUnauthenticated: (errors) =>
