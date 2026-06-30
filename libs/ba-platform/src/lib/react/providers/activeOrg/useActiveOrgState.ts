@@ -1,4 +1,4 @@
-import type { PermissionEnum } from '@monorepo/ba-permissions';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
 import {
   localStorageAdapter,

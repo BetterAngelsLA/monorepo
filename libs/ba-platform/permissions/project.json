@@ -1,7 +1,7 @@
 {
-  "name": "ba-permissions",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/ba-permissions/src",
+  "name": "ba-platform-permissions",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-platform/permissions/src",
   "projectType": "library",
   "tags": ["type:util", "scope:ba-platform"],
   "namedInputs": {
@@ -23,7 +23,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/betterangels-backend",
-        "command": "bash -c 'uv run python manage.py generate_permission_enums /tmp/ba-perms.ts && diff /tmp/ba-perms.ts ../../libs/ba-permissions/src/__generated__/index.ts'"
+        "command": "bash -c 'uv run python manage.py generate_permission_enums /tmp/ba-perms.ts && diff /tmp/ba-perms.ts ../../libs/ba-platform/permissions/src/__generated__/index.ts'"
       }
     }
   }

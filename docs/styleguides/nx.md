@@ -316,11 +316,8 @@ Tags to apply to existing projects:
 
 Configured in `.eslintrc.json` via `@nx/enforce-module-boundaries`.
 
-**Current state:** The repo uses a permissive wildcard (`*` → `*`).
-This allows any project to import from any other project — no enforcement yet.
-
-**Target state:** Once all projects are tagged, the following layered rules
-should replace the wildcard:
+**Current state:** Enforced. All projects are tagged and the following layered
+rules are active:
 
 ```jsonc
 {
@@ -347,35 +344,103 @@ should replace the wildcard:
           "onlyDependOnLibsWithTags": ["type:util"]
         },
         // SCOPE constraints (which domain)
+        // **Strict:** shared is the foundation — no BA dependencies allowed
         {
           "sourceTag": "scope:shared",
           "onlyDependOnLibsWithTags": ["scope:shared"]
         },
+        // **Strict:** ba-platform — the gate Tom asked for
         {
           "sourceTag": "scope:ba-platform",
           "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"]
         },
+        // **Liberal (intentional):** app scopes can import from each other
+        // while shared code (enum types, hooks) migrates into ba-platform.
+        // TODO: tighten to own scope + ba-platform + shared once resolved.
         {
           "sourceTag": "scope:betterangels",
-          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
         },
         {
           "sourceTag": "scope:betterangels-admin",
-          "onlyDependOnLibsWithTags": ["scope:betterangels-admin", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
         },
         {
           "sourceTag": "scope:shelter-web",
-          "onlyDependOnLibsWithTags": ["scope:shelter-web", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
         },
         {
           "sourceTag": "scope:shelter-operator",
-          "onlyDependOnLibsWithTags": ["scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
         },
       ]
     }
   ]
 }
 ```
+
+### Tightening roadmap
+
+App scopes are currently **liberal** — they can import from any other app
+scope. This is intentional. The `shelter-web` and `shelter-operator` scopes
+share enum types, display helpers, and some hooks that haven't been migrated
+to `ba-platform` yet. The liberal allowance keeps the linter green while
+that migration happens.
+
+**Target state** (no cross-scope app imports):
+
+| Scope | Current (liberal) | Target (tight) |
+|---|---|---|
+| `scope:shared` | `shared` | `shared` *(already strict)* |
+| `scope:ba-platform` | `ba-platform`, `shared` | `ba-platform`, `shared` *(already strict)* |
+| `scope:betterangels` | all app scopes + `ba-platform` + `shared` | `betterangels`, `ba-platform`, `shared` |
+| `scope:betterangels-admin` | all app scopes + `ba-platform` + `shared` | `betterangels-admin`, `ba-platform`, `shared` |
+| `scope:shelter-web` | all app scopes + `ba-platform` + `shared` | `shelter-web`, `ba-platform`, `shared` |
+| `scope:shelter-operator` | all app scopes + `ba-platform` + `shared` | `shelter-operator`, `ba-platform`, `shared` |
+
+**What needs to move:**
+
+| Code currently shared across app scopes | Move to |
+|---|---|
+| `enumDisplay*` enums in `@monorepo/react/shelter` | `@monorepo/ba-platform` (BA-specific display logic) |
+| `useUser` hook in `@monorepo/react/shelter` | `@monorepo/ba-platform` (already planned in PR #2202) |
+| Shared form validation schemas | `@monorepo/ba-platform/ts` (pure TS, BA-specific) |
+| Generic UI patterns reused across apps | `libs/react/components` (`scope:shared`, `type:ui`) |
+
+Once these migrations are complete, update the `depConstraints` in
+`.eslintrc.json` to the target state and remove the TODO comments.
+
+### ba-platform project split
+
+`ba-platform` currently uses TypeScript entry points (`src/react.ts`,
+`src/expo.ts`) as scaffolding. When platform-specific code arrives (PR #2203),
+each entry will graduate to its own NX project under `libs/ba-platform/`:
+
+```
+libs/ba-platform/
+├── shared/           ← @monorepo/ba-platform (orgLink, providers, constants, GQL types)
+├── web/              ← @monorepo/ba-platform-web (CSRF, web Apollo client)
+├── expo/             ← @monorepo/ba-platform-expo (native Apollo client, provider)
+└── types/            ← @monorepo/ba-platform-types (generated GQL types — optional split)
+```
+
+Migration commands (run once platform-specific code exists):
+
+```bash
+# 1. Extract web code into its own project
+nx g @nx/workspace:move --project ba-platform --destination ba-platform/shared
+nx g @nx/js:lib web --directory ba-platform/web --tags "type:data-access,scope:ba-platform"
+# Move src/lib/apollo/react/ → ba-platform/web/src/lib/
+
+# 2. Extract expo code into its own project
+nx g @nx/js:lib expo --directory ba-platform/expo --tags "type:data-access,scope:ba-platform"
+# Move src/lib/apollo/expo/ + src/lib/expo/ → ba-platform/expo/src/lib/
+```
+
+Benefits of separate projects over entry points:
+- **Mechanical safety** — depConstraints prevent `ba-platform-web` from importing `ba-platform-expo` (entry points rely on barrel discipline)
+- **Faster CI** — changes to expo code only rebuild expo consumers
+- **Clearer `nx graph`** — dependency relationships visible as separate nodes
 
 Additional recommended flags from the [NX blog](https://nx.dev/blog/mastering-the-project-boundaries-in-nx):
 

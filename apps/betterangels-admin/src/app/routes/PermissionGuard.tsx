@@ -1,4 +1,4 @@
-import type { PermissionEnum } from '@monorepo/ba-permissions';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
