@@ -11,10 +11,12 @@ type TArgs = {
   cacheStore?: InMemoryCache;
   onUnauthenticated?: () => void;
   authPath?: string;
+  /** Additional Apollo Links to compose into the link chain (e.g. orgLink). */
+  links?: ApolloLink[];
 };
 
 export const createApolloClient = (args: TArgs) => {
-  const { cacheStore, apiUrl, authPath, onUnauthenticated } = args;
+  const { cacheStore, apiUrl, authPath, onUnauthenticated, links = [] } = args;
 
   const nativeFetch =
     Platform.OS === 'web' ? undefined : createNativeFetch(apiUrl);
@@ -31,7 +33,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const composedLinks = [errorLink, uploadHttpLink];
+  const composedLinks = [errorLink, ...links, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (

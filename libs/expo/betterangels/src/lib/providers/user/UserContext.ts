@@ -9,7 +9,7 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: TOrganization[] | null;
+  organizations: TOrganization[];
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
