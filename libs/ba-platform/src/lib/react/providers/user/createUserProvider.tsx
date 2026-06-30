@@ -123,6 +123,9 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
           setUser(parseUser(res.data?.currentUser));
         }
       },
+      // parseUser and isUnauthenticated are factory-level params — they're
+      // stable references captured once at module init, so omitting them from
+      // the dep array is intentional and safe.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [],
     );
