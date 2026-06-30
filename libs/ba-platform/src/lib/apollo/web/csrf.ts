@@ -1,4 +1,5 @@
 import { ApolloLink, Observable } from '@apollo/client';
+import { CSRF_COOKIE_NAME } from '../../constants';
 import { eraseCookie, getCookie } from './cookies';
 
 type CSRFOptions = {
@@ -79,3 +80,28 @@ export const csrfLink = ({
         processOperation();
       })
   );
+
+// -- Standalone token helper ----------------------------------------------
+
+const readCookieValue = (name: string): string | null =>
+  document.cookie.match(new RegExp(`${name}=([^;]+)`))?.[1] ?? null;
+
+/**
+ * Read the CSRF token from ``document.cookie``, refreshing it from the
+ * server if missing. Used by ``ApiConfigProvider`` outside the Apollo
+ * link chain.
+ */
+export const getCsrfToken = async (
+  apiUrl: string,
+  csrfUrl: string
+): Promise<string | null> => {
+  let token = readCookieValue(CSRF_COOKIE_NAME);
+  if (!token) {
+    await fetch(csrfUrl, {
+      credentials: 'include',
+      headers: { Accept: 'text/html' },
+    });
+    token = readCookieValue(CSRF_COOKIE_NAME);
+  }
+  return token;
+};

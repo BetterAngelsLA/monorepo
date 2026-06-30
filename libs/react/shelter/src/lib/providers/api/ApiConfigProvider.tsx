@@ -1,6 +1,5 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
-import { CSRF_HEADER_NAME } from '@monorepo/ba-platform';
-import { getCSRFToken } from './csrf';
+import { CSRF_HEADER_NAME, getCsrfToken } from '@monorepo/ba-platform/web';
 
 interface ApiConfigContextType {
   apiUrl: string;
@@ -22,7 +21,7 @@ export const ApiConfigProvider = ({
 }: ApiConfigProviderProps) => {
   const fetchClient = useMemo(() => {
     return async (path: string, options: RequestInit = {}) => {
-      const token = await getCSRFToken(apiUrl, `${apiUrl}/admin/login/`);
+      const token = await getCsrfToken(apiUrl, `${apiUrl}/admin/login/`);
       const { headers: userHeaders = {}, ...otherOptions } = options;
       const headers = new Headers(userHeaders as HeadersInit);
       headers.set('Content-Type', 'application/json');
