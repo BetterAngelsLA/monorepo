@@ -43,7 +43,7 @@ export function ShelterBasicInfoForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     reset,
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
@@ -216,9 +216,9 @@ export function ShelterBasicInfoForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit(onSubmit)}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
               className="z-99"
             />

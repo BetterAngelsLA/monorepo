@@ -30,7 +30,7 @@ export function ShelterPhotoForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<ShelterPhotoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -66,8 +66,8 @@ export function ShelterPhotoForm(props: TProps) {
           className="ml-auto"
           variant="relative"
           primaryLabel={disabled ? 'Saving...' : 'Save'}
-          primaryDisabled={disabled || !isValid}
-          onPrimaryClick={() => handleSubmit(onSubmit)()}
+          primaryDisabled={disabled}
+          onPrimaryClick={handleSubmit(onSubmit)}
           secondaryLabel="Cancel"
           onSecondaryClick={onCancel}
           secondaryDisabled={disabled}

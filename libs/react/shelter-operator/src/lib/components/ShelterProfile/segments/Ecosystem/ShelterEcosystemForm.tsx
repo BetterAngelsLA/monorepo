@@ -43,7 +43,7 @@ export function ShelterEcosystemForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { isValid, errors },
+    formState: { errors },
     reset,
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
@@ -275,9 +275,9 @@ export function ShelterEcosystemForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit(onSubmit)}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
