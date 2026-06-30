@@ -18,12 +18,12 @@ import {
 import {
   ApiConfigProvider,
   ApolloClientProvider,
-  asyncStorageAdapter,
 } from '@monorepo/expo/shared/clients';
 import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
+import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
