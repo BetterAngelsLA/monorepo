@@ -1,4 +1,4 @@
-import { CSRF_COOKIE_NAME } from './constants';
+import { CSRF_COOKIE_NAME } from '@monorepo/ba-platform';
 
 const getTokenFromWeb = (): string | null =>
   document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;

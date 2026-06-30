@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
-import { CSRF_HEADER_NAME } from './constants';
+import { CSRF_HEADER_NAME } from '@monorepo/ba-platform';
 import { getCSRFToken } from './csrf';
 
 interface ApiConfigContextType {

@@ -1,7 +1,7 @@
 import { CSRF_COOKIE_NAME, CSRF_LOGIN_PATH } from '@monorepo/expo/shared/utils';
+import CookieManager from '@preeternal/react-native-cookie-manager';
 import { Platform } from 'react-native';
 import { createNativeFetch } from './nativeFetch';
-import CookieManager from '@preeternal/react-native-cookie-manager';
 
 const extractCookieValue = (cookieName: string): string | null => {
   const match = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));

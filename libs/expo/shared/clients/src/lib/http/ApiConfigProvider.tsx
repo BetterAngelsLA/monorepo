@@ -4,7 +4,7 @@ import {
   ENVIRONMENT_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {
+import {
   createContext,
   ReactNode,
   useCallback,
