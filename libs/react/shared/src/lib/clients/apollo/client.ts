@@ -1,7 +1,6 @@
 import type { InMemoryCache, TypePolicies } from '@apollo/client';
 import { ApolloClient, ApolloLink } from '@apollo/client';
 import { createApolloCache } from '@monorepo/apollo';
-import { orgLink } from '@monorepo/ba-platform';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { csrfLink } from './csrf';
 
@@ -11,6 +10,7 @@ type IApolloClient = {
   csrfHeaderName: string;
   cacheStore?: InMemoryCache;
   typePolicies?: TypePolicies;
+  orgLink: ApolloLink;
 };
 
 export const createApolloClient = ({
@@ -19,6 +19,7 @@ export const createApolloClient = ({
   csrfHeaderName,
   cacheStore,
   typePolicies,
+  orgLink,
 }: IApolloClient): ApolloClient => {
   const cache = cacheStore || createApolloCache({ typePolicies });
 
