@@ -40,7 +40,10 @@ class ClientProfileMergeMixin:
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientProfile]:
         if request.GET.get("show_merged"):
-            return self.model._base_manager.all()
+            qs = cast(QuerySet[ClientProfile], super().get_queryset(request))  # type: ignore[misc]
+            return ClientProfile.objects.including_merged().prefetch_related(
+                *qs._prefetch_related_lookups  # type: ignore[attr-defined]  # preserve parent optimizations
+            )
         return cast(QuerySet[ClientProfile], super().get_queryset(request))  # type: ignore[misc]
 
     # ---- Change view: show undo link when applicable ----

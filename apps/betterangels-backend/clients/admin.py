@@ -210,6 +210,7 @@ class ClientProfileAdmin(ExportActionMixin, ClientProfileMergeMixin, admin.Model
         "last_name",
         "middle_name",
     )
+    list_filter = ("merged_into",)
 
 
 @admin.register(ClientContact)

@@ -21,7 +21,7 @@ Allow admins to merge 2+ duplicate `ClientProfile` records into one. The merge:
 - HMIS deduplication (explicitly excluded)
 - GraphQL merge mutations (admin-only MVP)
 - React admin merge UI (admin-only MVP)
-- File cleanup (profile_photo) — won't move/copy files in MVP
+- File cleanup (profile_photo) — files are copied from the first source with a photo to a target without one; source photo files are NOT deleted
 - Guardian removal — orthogonal project, handled correctly by re-pointing GFK
 
 ---

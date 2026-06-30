@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, cast
 
+from functools import lru_cache
+
 from accounts.models import User
 from clients.models import ClientProfile
 from clients.selectors.merge import (
@@ -25,11 +27,34 @@ from clients.selectors.merge import (
     get_unique_fields,
 )
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models, transaction
 from django.utils import timezone
+from phonenumber_field.phonenumber import PhoneNumber
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# JSON Encoder
+# ---------------------------------------------------------------------------
+
+
+class MergeSnapshotEncoder(DjangoJSONEncoder):
+    """JSON encoder that handles all ClientProfile scalar field types.
+
+    DjangoJSONEncoder natively supports date, datetime, Decimal, and UUID.
+    This subclass adds PhoneNumber (→ E.164) and Point (→ WKT).
+    Unknown types raise TypeError instead of silently coercing to str.
+    """
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, PhoneNumber):
+            return obj.as_e164
+        if isinstance(obj, Point):
+            return obj.wkt
+        return super().default(obj)
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -224,10 +249,7 @@ def merge_execute(
                 if f.name == "profile_photo":
                     val = source.profile_photo.name if source.profile_photo else None
                 snap[f.name] = val
-            # Round-trip through DjangoJSONEncoder so psycopg's stdlib
-            # json.dumps won't choke on date/datetime/Decimal/PhoneNumber/etc.
-            # default=str is a safety net for any type Django doesn't know.
-            source_snapshots[source.pk] = json.loads(json.dumps(snap, cls=DjangoJSONEncoder, default=str))
+            source_snapshots[source.pk] = json.loads(json.dumps(snap, cls=MergeSnapshotEncoder))
 
         # ---- Merge scalar fields ----
         for f in scalar_fields:
@@ -266,6 +288,9 @@ def merge_execute(
         target.full_clean()
         target.save()
 
+        # ---- Handle ReservationClient dedup before FK re-point ----
+        _dedup_reservation_clients(sources, target)
+
         # ---- Re-point FK relations ----
         all_source_ids = [s.pk for s in sources]
         for rel_info in get_fk_relations():
@@ -276,9 +301,6 @@ def merge_execute(
                 source_snapshots[source.pk][f"_moved_{rel_info['model_label']}"] = list(
                     rel_model.objects.filter(**{field_name: source.pk}).values_list("pk", flat=True)
                 )
-
-            if rel_model._meta.model_name == "reservationclient":
-                _dedup_reservation_clients(sources, target)
 
             rel_model.objects.filter(**{f"{field_name}__in": all_source_ids}).update(**{field_name: target.pk})
 
@@ -344,8 +366,10 @@ def merge_undo(
         for source in sources:
             snapshot = source.merged_data or {}
             if not snapshot:
-                logger.warning("Source %s has no merged_data snapshot — skipping.", source.pk)
-                continue
+                raise MergeValidationError(
+                    f"Source profile '{source.full_name}' (#{source.pk}) is missing its "
+                    f"pre-merge snapshot. Undo cannot proceed — manual recovery may be required."
+                )
 
             # Restore scalar fields (Django fields natively accept
             # ISO-format strings for date/datetime on save).
@@ -402,13 +426,19 @@ def _dedup_reservation_clients(sources: list[ClientProfile], target: ClientProfi
         ).delete()
 
 
+@lru_cache(maxsize=1)
 def _get_guardian_perm_models() -> list[type[models.Model]]:
+    """Return guardian permission models, or empty list if guardian not installed."""
+    from django.conf import settings
+
+    if "guardian" not in settings.INSTALLED_APPS:
+        return []
     try:
         from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
 
         return [BigUserObjectPermission, BigGroupObjectPermission]
     except ImportError:
-        logger.warning("Guardian permission models not available — skipping permission merge.")
+        logger.warning("Guardian permission models not importable — skipping permission merge.")
         return []
 
 

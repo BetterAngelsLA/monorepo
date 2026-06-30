@@ -2,8 +2,10 @@
 Tests for the client merge service (merge_preview, merge_execute, merge_undo).
 """
 
+from __future__ import annotations
+
 import secrets
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import HmisAgencyEnum
@@ -23,6 +25,10 @@ from model_bakery import baker
 from notes.models import Note, ServiceRequest
 from organizations.models import Organization
 from teams.models import Team
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import Group, Permission
+    from shelters.models.reservation import Reservation
 
 
 @override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
@@ -398,3 +404,301 @@ class UndoMergeTests(MergeServiceTests):
         with self.assertRaises(MergeValidationError) as ctx:
             merge_undo(target_id=t.pk, performed_by=self._user)
         self.assertIn("No merged sources", str(ctx.exception))
+
+    def test_undo_missing_snapshot_raises(self) -> None:
+        """Corrupt merged_data should raise, not silently skip."""
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        # Simulate corrupt snapshot
+        a.refresh_from_db()
+        a.merged_data = None
+        a.save(update_fields=["merged_data"])
+
+        with self.assertRaises(MergeValidationError) as ctx:
+            merge_undo(target_id=t.pk, performed_by=self._user)
+        self.assertIn("missing its pre-merge snapshot", str(ctx.exception))
+
+        # Verify nothing was changed (transaction rolled back)
+        a.refresh_from_db()
+        self.assertIsNotNone(a.merged_into_id)
+
+
+# ---------------------------------------------------------------------------
+# ReservationClient dedup tests
+# ---------------------------------------------------------------------------
+
+
+class ReservationClientDedupTests(MergeServiceTests):
+    """Tests for ReservationClient deduplication during merge.
+
+    When source and target are in the same reservation, the source's
+    ReservationClient row is deleted to avoid unique constraint violations.
+    """
+
+    _reservation_a: Reservation
+    _reservation_b: Reservation
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        super().setUpTestData()
+        from shelters.models.reservation import Reservation
+
+        cls._reservation_a = baker.make(Reservation)
+        cls._reservation_b = baker.make(Reservation)
+
+    def test_merge_dedups_same_reservation(self) -> None:
+        """Source and target in same reservation → source's row deleted."""
+        from shelters.models.reservation import ReservationClient
+
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        # Both clients in the same reservation
+        ReservationClient.objects.create(reservation=self._reservation_a, client_profile=a)
+        ReservationClient.objects.create(reservation=self._reservation_a, client_profile=t)
+
+        a_count_before = ReservationClient.objects.filter(client_profile=a).count()
+        t_count_before = ReservationClient.objects.filter(client_profile=t).count()
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        # Source's ReservationClient in shared reservation was deleted
+        self.assertEqual(ReservationClient.objects.filter(client_profile=a).count(), a_count_before - 1)
+        # Target keeps its row (not duplicated)
+        self.assertEqual(ReservationClient.objects.filter(client_profile=t).count(), t_count_before)
+
+    def test_merge_moves_different_reservations(self) -> None:
+        """Source and target in different reservations → source's rows moved to target."""
+        from shelters.models.reservation import ReservationClient
+
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        # Each in a different reservation
+        ReservationClient.objects.create(reservation=self._reservation_a, client_profile=a)
+        ReservationClient.objects.create(reservation=self._reservation_b, client_profile=t)
+
+        a_count_before = ReservationClient.objects.filter(client_profile=a).count()
+        t_count_before = ReservationClient.objects.filter(client_profile=t).count()
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        # Source's rows moved to target (no dedup needed)
+        self.assertEqual(ReservationClient.objects.filter(client_profile=a).count(), 0)
+        self.assertEqual(
+            ReservationClient.objects.filter(client_profile=t).count(),
+            t_count_before + a_count_before,
+        )
+
+    def test_undo_restores_reservation_clients(self) -> None:
+        """Undo moves ReservationClient rows back to source."""
+        from shelters.models.reservation import ReservationClient
+
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        # Source in reservation_a only
+        rc = ReservationClient.objects.create(reservation=self._reservation_a, client_profile=a)
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        # Moved to target
+        self.assertEqual(ReservationClient.objects.filter(client_profile=a).count(), 0)
+
+        merge_undo(target_id=t.pk, performed_by=self._user)
+
+        # Restored to source
+        self.assertTrue(ReservationClient.objects.filter(client_profile=a, pk=rc.pk).exists())
+
+
+# ---------------------------------------------------------------------------
+# Guardian permission merge/undo tests
+# ---------------------------------------------------------------------------
+
+
+class GuardianPermissionTests(MergeServiceTests):
+    """Tests for guardian permission merging during merge and undo."""
+
+    _group: Group
+    _content_type: ContentType
+    _perm: Permission
+    _BigUserObjectPermission: Any  # guardian model class — not always importable
+    _BigGroupObjectPermission: Any  # guardian model class — not always importable
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        super().setUpTestData()
+        from accounts.models import BigGroupObjectPermission, BigUserObjectPermission
+        from django.contrib.auth.models import Group, Permission
+
+        cls._group = baker.make(Group)
+        cls._content_type = ContentType.objects.get_for_model(ClientProfile)
+        # Permission must match the ClientProfile content type for guardian validation
+        cls._perm = Permission.objects.get(content_type=cls._content_type, codename="view_clientprofile")
+
+        # Store model classes for use in tests
+        cls._BigUserObjectPermission = BigUserObjectPermission
+        cls._BigGroupObjectPermission = BigGroupObjectPermission
+
+    def _make_guardian_perms(self, client: ClientProfile) -> None:
+        """Create guardian permissions for a client profile."""
+        BigUserObjectPermission = self._BigUserObjectPermission
+        BigGroupObjectPermission = self._BigGroupObjectPermission
+
+        BigUserObjectPermission.objects.create(
+            content_type=self._content_type,
+            object_pk=str(client.pk),
+            user=self._user,
+            permission=self._perm,
+        )
+        BigGroupObjectPermission.objects.create(
+            content_type=self._content_type,
+            object_pk=str(client.pk),
+            group=self._group,
+            permission=self._perm,
+        )
+
+    def test_preview_counts_guardian_permissions(self) -> None:
+        """Preview shows guardian permissions in related_changes."""
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        self._make_guardian_perms(a)
+
+        preview = merge_preview(source_ids=[a.pk], target_id=t.pk)
+
+        # Guardian permissions should appear in related changes
+        perm_names = {rc.relation_name for rc in preview.related_changes if rc.will_move > 0}
+        self.assertTrue(
+            any("permission" in name.lower() for name in perm_names),
+            f"Guardian permissions not found in preview; got: {perm_names}",
+        )
+
+    def test_merge_moves_guardian_permissions(self) -> None:
+        """Merge moves guardian permissions from source to target."""
+        BigUserObjectPermission = self._BigUserObjectPermission
+        BigGroupObjectPermission = self._BigGroupObjectPermission
+
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        self._make_guardian_perms(a)
+
+        a_user_perms_before = BigUserObjectPermission.objects.filter(object_pk=str(a.pk)).count()
+        a_group_perms_before = BigGroupObjectPermission.objects.filter(object_pk=str(a.pk)).count()
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+
+        # Source's guardian perms cleared
+        self.assertEqual(BigUserObjectPermission.objects.filter(object_pk=str(a.pk)).count(), 0)
+        self.assertEqual(BigGroupObjectPermission.objects.filter(object_pk=str(a.pk)).count(), 0)
+
+        # Moved to target
+        self.assertEqual(
+            BigUserObjectPermission.objects.filter(object_pk=str(t.pk)).count(),
+            a_user_perms_before,
+        )
+        self.assertEqual(
+            BigGroupObjectPermission.objects.filter(object_pk=str(t.pk)).count(),
+            a_group_perms_before,
+        )
+
+    def test_undo_restores_guardian_permissions(self) -> None:
+        """Undo moves guardian permissions back to source."""
+        BigUserObjectPermission = self._BigUserObjectPermission
+        BigGroupObjectPermission = self._BigGroupObjectPermission
+
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        self._make_guardian_perms(a)
+
+        a_user_perm_ids = set(BigUserObjectPermission.objects.filter(object_pk=str(a.pk)).values_list("pk", flat=True))
+        a_group_perm_ids = set(
+            BigGroupObjectPermission.objects.filter(object_pk=str(a.pk)).values_list("pk", flat=True)
+        )
+
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        merge_undo(target_id=t.pk, performed_by=self._user)
+
+        # Permissions restored to source
+        restored_user_ids = set(
+            BigUserObjectPermission.objects.filter(object_pk=str(a.pk)).values_list("pk", flat=True)
+        )
+        restored_group_ids = set(
+            BigGroupObjectPermission.objects.filter(object_pk=str(a.pk)).values_list("pk", flat=True)
+        )
+
+        self.assertEqual(restored_user_ids, a_user_perm_ids)
+        self.assertEqual(restored_group_ids, a_group_perm_ids)
+
+
+# ---------------------------------------------------------------------------
+# Re-merge after undo tests
+# ---------------------------------------------------------------------------
+
+
+class ReMergeAfterUndoTests(MergeServiceTests):
+    """Tests for merging a profile that was previously merged and undone."""
+
+    def test_merge_undo_merge_cycle(self) -> None:
+        """Merge A → B, undo, then merge A → B again."""
+        a = self._make_client(first_name="Alice")
+        t = self._make_client(first_name="Target")
+
+        a_note_ids = set(Note.objects.filter(client_profile=a).values_list("pk", flat=True))
+
+        # First merge
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertEqual(a.merged_into_id, t.pk)
+
+        # Undo
+        merge_undo(target_id=t.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertIsNone(a.merged_into_id)
+
+        # Re-merge
+        merge_execute(source_ids=[a.pk], target_id=t.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertEqual(a.merged_into_id, t.pk)
+        self.assertIsNotNone(a.merged_data)
+
+        # Notes moved again
+        self.assertEqual(Note.objects.filter(client_profile=a).count(), 0)
+        self.assertEqual(
+            set(Note.objects.filter(client_profile=t).values_list("pk", flat=True)) & a_note_ids,
+            a_note_ids,
+        )
+
+    def test_merge_undo_merge_different_target(self) -> None:
+        """Merge A → B, undo, then merge A → C (different target)."""
+        a = self._make_client(first_name="Alice")
+        b = self._make_client(first_name="Bob")
+        c = self._make_client(first_name="Charlie")
+
+        a_note_ids = set(Note.objects.filter(client_profile=a).values_list("pk", flat=True))
+
+        # Merge A into B
+        merge_execute(source_ids=[a.pk], target_id=b.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertEqual(a.merged_into_id, b.pk)
+
+        # Undo
+        merge_undo(target_id=b.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertIsNone(a.merged_into_id)
+
+        # Re-merge A into C instead
+        merge_execute(source_ids=[a.pk], target_id=c.pk, performed_by=self._user)
+        a.refresh_from_db()
+        self.assertEqual(a.merged_into_id, c.pk)
+
+        # Notes moved to new target C
+        self.assertEqual(Note.objects.filter(client_profile=a).count(), 0)
+        self.assertTrue(
+            a_note_ids.issubset(set(Note.objects.filter(client_profile=c).values_list("pk", flat=True))),
+        )
