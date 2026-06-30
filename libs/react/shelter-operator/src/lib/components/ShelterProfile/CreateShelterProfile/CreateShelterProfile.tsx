@@ -7,7 +7,7 @@ import {
 } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '../../../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   shelterProfileRoute,
   shelterProfileSegments,

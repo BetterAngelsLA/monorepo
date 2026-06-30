@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { FormSection } from '../../../../../components/form/FormSection';
 import { ScheduleField } from '../../../../../components/form/ScheduleField';
 import { TextField } from '../../../../../components/form/TextField';
-import { useActiveOrg } from '../../../../../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { LocationPicker } from '../components/LocationPicker';
 import type { SectionProps } from '../types';
 

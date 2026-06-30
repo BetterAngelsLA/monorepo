@@ -109,6 +109,15 @@ type AuthorizedPresignedS3UploadsType {
   uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
+type BedCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
+
 input BedFilter {
   id: ID
   maintenanceFlag: Boolean
@@ -172,14 +181,6 @@ type BedTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [BedType!]!
-}
-
-type BedsByStatusType {
-  available: Int!
-  inTurnaround: Int!
-  occupied: Int!
-  outOfService: Int!
-  reserved: Int!
 }
 
 input BulkDeleteInput {
@@ -1773,8 +1774,8 @@ type OperatorShelterType {
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
-  roomsByStatus: RoomsByStatusType!
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
 }
 
 type OperatorShelterTypeOffsetPaginated {
@@ -2262,6 +2263,15 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+type RoomCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
+
 input RoomFilter {
   id: ID
   medicalRespite: Boolean
@@ -2335,14 +2345,6 @@ type RoomTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [RoomType!]!
-}
-
-type RoomsByStatusType {
-  available: Int!
-  inTurnaround: Int!
-  occupied: Int!
-  outOfService: Int!
-  reserved: Int!
 }
 
 type SPAType {
@@ -2591,13 +2593,21 @@ type ShelterProgramType {
 
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
+  petsIncludeNull: Boolean = false
   demographics: [DemographicChoices!] = null
+  demographicsIncludeNull: Boolean = false
   entryRequirements: [EntryRequirementChoices!] = null
+  entryRequirementsIncludeNull: Boolean = false
   referralRequirement: [ReferralRequirementChoices!] = null
+  referralRequirementIncludeNull: Boolean = false
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  specialSituationRestrictionsIncludeNull: Boolean = false
   shelterTypes: [ShelterChoices!] = null
+  shelterTypesIncludeNull: Boolean = false
   roomStyles: [RoomStyleChoices!] = null
+  roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
+  parkingIncludeNull: Boolean = false
 }
 
 type ShelterType {
@@ -2663,8 +2673,8 @@ type ShelterType {
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
-  roomsByStatus: RoomsByStatusType!
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
 }
 
 type ShelterTypeOffsetPaginated {

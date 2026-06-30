@@ -7,7 +7,7 @@ import {
   UserProvider,
   createShelterTypePolicies,
 } from '@monorepo/react/shelter';
-import { orgLink } from '@monorepo/react/shelter-operator';
+import { orgLink } from '@monorepo/ba-platform';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

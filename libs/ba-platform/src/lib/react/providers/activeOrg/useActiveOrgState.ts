@@ -1,33 +1,49 @@
-import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
-import { TOrganization } from '@monorepo/react/shelter';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { pipe, values, flat } from 'remeda';
-import ActiveOrgContext, { PermissionEnum } from './ActiveOrgContext';
 
-const DEFAULT_STORAGE_KEY = 'betterangels_active_org_id';
+import {
+  localStorageAdapter,
+  type StorageAdapter,
+} from '@monorepo/react/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-interface ActiveOrgProviderProps {
-  children: ReactNode;
-  organizations: TOrganization[];
+import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
+
+/** Minimal org shape consumed by the active-org state. */
+export interface Org {
+  id: string;
+  name: string;
+  permissions: string[];
+}
+
+interface UseActiveOrgStateOptions {
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
   storage?: StorageAdapter;
   /** Storage key — defaults to ``'betterangels_active_org_id'``. */
   storageKey?: string;
 }
 
+export interface ActiveOrgState {
+  /** The currently selected organization. */
+  activeOrg: Org | undefined;
+  /** All organizations the user has access to. */
+  organizations: Org[];
+  /** Switch to a different org by its id. */
+  setActiveOrgId: (orgId: string) => void;
+  /** Check if the active org has a specific permission. */
+  hasPermission: (permission: string) => boolean;
+}
+
 /**
- * Provides the currently-selected organization **and its permissions**
- * to the component tree.
- *
- * TODO: Merge with betterangels-admin's ActiveOrgProvider into a shared
- * BA-specific lib (along with orgLink) when one is created.
+ * Shared state management for active organization selection.
  */
-export function ActiveOrgProvider({
-  children,
-  organizations,
-  storage = localStorageAdapter,
-  storageKey = DEFAULT_STORAGE_KEY,
-}: ActiveOrgProviderProps) {
+export function useActiveOrgState(
+  organizations: Org[],
+  options: UseActiveOrgStateOptions = {}
+): ActiveOrgState {
+  const {
+    storage = localStorageAdapter,
+    storageKey = DEFAULT_ORG_STORAGE_KEY,
+  } = options;
+
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
       try {
@@ -41,6 +57,18 @@ export function ActiveOrgProvider({
       return organizations[0]?.id;
     }
   );
+
+  // Persist the active org ID to storage so that orgLink (Apollo link)
+  // can attach the X-Organization-ID header on every GraphQL request.
+  useEffect(() => {
+    if (activeOrgId) {
+      try {
+        storage.setItem(storageKey, activeOrgId);
+      } catch {
+        // storage may be unavailable
+      }
+    }
+  }, [activeOrgId, storage, storageKey]);
 
   // Re-validate when the organizations list changes (e.g. after async load)
   useEffect(() => {
@@ -88,26 +116,18 @@ export function ActiveOrgProvider({
     [organizations, storage, storageKey]
   );
 
-  const hasPermission = useCallback(
-    (permission: PermissionEnum): boolean =>
-      activeOrg?.permissions != null &&
-      pipe(
-        activeOrg.permissions,
-        values(),
-        flat(),
-        (arr) => arr.includes(permission)
-      ),
-    [activeOrg]
+  const permSet = useMemo(
+    () => new Set(activeOrg?.permissions ?? []),
+    [activeOrg?.permissions]
   );
 
-  const value = useMemo(
+  const hasPermission = useCallback(
+    (permission: string): boolean => permSet.has(permission),
+    [permSet]
+  );
+
+  return useMemo(
     () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
     [activeOrg, organizations, setActiveOrgId, hasPermission]
-  );
-
-  return (
-    <ActiveOrgContext.Provider value={value}>
-      {children}
-    </ActiveOrgContext.Provider>
   );
 }

@@ -1,11 +1,8 @@
-import {
-  PermissionEnum,
-  useActiveOrg,
-} from '@monorepo/react/betterangels-admin';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { Navigate } from 'react-router-dom';
 
 type IProps = {
-  permission: PermissionEnum;
+  permission: string;
   children: React.ReactNode;
 };
 

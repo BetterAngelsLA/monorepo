@@ -2,11 +2,11 @@ import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
 import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { MaxStayInput } from '../../apollo';
+import { MaxStayInput, ShelterPropertyInput } from '../../apollo';
 import {
-  shelterSearchTriggerAtom,
   shelterNameSearchAtom,
   sheltersAtom,
+  shelterSearchTriggerAtom,
 } from '../../atoms';
 import {
   ViewSheltersDocument,
@@ -15,6 +15,7 @@ import {
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
 import { ShelterCard, TShelter } from '../ShelterCard';
+import { UNKNOWN_FILTER_VALUE } from '../ShelterFilters/config';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
@@ -63,7 +64,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, isAccessCenter, maxStay, ...propertyOnlyFilters } =
+      const { openNow, openNowScheduleTypes, isAccessCenter, maxStay, ...propertyOnlyFilters } =
         propertyFilters;
 
       if (openNow) {
@@ -84,13 +85,14 @@ export function SheltersDisplay(props: TProps) {
         vars.filters.maxStay = maxStayToGraphQLInput(maxStay);
       }
 
-      const prunedFilters = pruneFilters(propertyOnlyFilters);
+      const prunedProperties =
+        propertyFiltersToGraphQLInput(propertyOnlyFilters);
 
-      if (prunedFilters) {
+      if (prunedProperties) {
         vars = vars || {};
         vars.filters = vars.filters || {};
 
-        vars.filters.properties = prunedFilters;
+        vars.filters.properties = prunedProperties;
       }
     }
 
@@ -107,7 +109,9 @@ export function SheltersDisplay(props: TProps) {
   // intermediate filter-state updates (e.g. name search set before the map
   // settles) never fire a premature query.
   const lastTriggerRef = useRef(-1);
-  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(undefined);
+  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(
+    undefined
+  );
 
   if (searchTrigger !== lastTriggerRef.current) {
     lastTriggerRef.current = searchTrigger;
@@ -275,4 +279,48 @@ function pruneFilters(
   );
 
   return Object.keys(result).length > 0 ? result : null;
+}
+
+const INCLUDE_NULL_KEY_MAP: Record<string, keyof ShelterPropertyInput> = {
+  demographics: 'demographicsIncludeNull',
+  entryRequirements: 'entryRequirementsIncludeNull',
+  parking: 'parkingIncludeNull',
+  pets: 'petsIncludeNull',
+  referralRequirement: 'referralRequirementIncludeNull',
+  roomStyles: 'roomStylesIncludeNull',
+  shelterTypes: 'shelterTypesIncludeNull',
+  specialSituationRestrictions: 'specialSituationRestrictionsIncludeNull',
+};
+
+function propertyFiltersToGraphQLInput(
+  filters: Omit<
+    TShelterPropertyFilters,
+    'openNow' | 'isAccessCenter' | 'maxStay'
+  >
+): ShelterPropertyInput | null {
+  const result: ShelterPropertyInput = {};
+  let hasAny = false;
+
+  for (const [key, values] of Object.entries(filters)) {
+    if (!Array.isArray(values) || values.length === 0) {
+      continue;
+    }
+
+    const includeNullKey = INCLUDE_NULL_KEY_MAP[key];
+    const stringValues = values as string[];
+    const hasUnknown = stringValues.includes(UNKNOWN_FILTER_VALUE);
+    const enumValues = stringValues.filter((v) => v !== UNKNOWN_FILTER_VALUE);
+
+    if (hasUnknown && includeNullKey) {
+      (result as Record<string, unknown>)[includeNullKey] = true;
+      hasAny = true;
+    }
+
+    if (enumValues.length > 0) {
+      (result as Record<string, unknown>)[key] = enumValues;
+      hasAny = true;
+    }
+  }
+
+  return hasAny ? result : null;
 }

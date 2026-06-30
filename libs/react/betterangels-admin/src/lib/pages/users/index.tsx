@@ -15,12 +15,12 @@ import {
   OrganizationMemberOrdering,
   OrganizationMemberType,
   PermissionTemplateEnum,
-  UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
