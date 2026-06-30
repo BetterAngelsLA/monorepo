@@ -1,9 +1,11 @@
 export const Regex = {
-  empty: /^\s*\S.*$/,
+  nonBlank: /^\s*\S.*$/,
   date: /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/,
   time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
   email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
   phoneNumberWithExtensionUS: /^[2-9]\d{2}[2-9]\d{6}(x\d+)?$/,
   californiaId: /^[A-Z]\d{7}$/,
+  /** Accepts bare domains (google.com), full URLs (https://example.org/path), www prefixes, and IPs with ports. */
+  websiteBasic: /^(https?:\/\/)?[\w.-]+\.[\w]{2,}(\/\S*)?$/i,
 } as const;
