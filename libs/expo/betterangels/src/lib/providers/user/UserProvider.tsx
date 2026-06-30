@@ -3,11 +3,27 @@ import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAppState } from '../../hooks';
-import type { TUser } from './UserContext';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
 } from './__generated__/UserProvider.generated';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type TUser = {
+  id: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
+  organizations: { id: string; name: string; permissions: string[] }[];
+  isOutreachAuthorized?: boolean;
+  hasAcceptedTos?: boolean;
+  hasAcceptedPrivacyPolicy?: boolean;
+  isHmisUser?: boolean;
+};
 
 // ---------------------------------------------------------------------------
 // Base provider (Apollo + ActiveOrg + context)

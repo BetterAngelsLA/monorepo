@@ -21,7 +21,7 @@ import { useMutation } from '@apollo/client/react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut, useUser } from '../hooks';
 import { UpdateCurrentUserDocument } from '../providers';
-import { TUser } from '../providers/user/UserContext';
+import { TUser } from '../providers/user/UserProvider';
 import { UserProfileEdit } from '../screens/UserProfile/UserProfileEdit/UserProfileEdit';
 
 interface IConsentModalProps {
