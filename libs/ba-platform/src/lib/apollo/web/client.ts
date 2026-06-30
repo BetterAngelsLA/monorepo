@@ -3,7 +3,7 @@ import { ApolloClient, ApolloLink } from '@apollo/client';
 import { createApolloCache } from '@monorepo/apollo';
 import { orgLink } from '../orgLink';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import { csrfLink } from './csrf';
+import { csrfLink } from './csrfLink';
 
 type IApolloClient = {
   apiUrl: string;

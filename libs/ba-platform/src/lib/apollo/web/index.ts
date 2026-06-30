@@ -1,2 +1,2 @@
 export { createApolloClient } from './client';
-export { csrfLink, getCsrfToken } from './csrf';
+export { csrfLink, getCsrfToken } from './csrfLink';
