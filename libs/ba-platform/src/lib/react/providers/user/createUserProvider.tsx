@@ -40,7 +40,7 @@ export interface UserProviderConfig<TUser, TQuery> {
    * Map the raw GraphQL ``currentUser`` (or ``undefined``) to the
    * app-specific user object.
    */
-  parseUser: (data: TQuery['currentUser'] | undefined) => TUser | undefined;
+  parseUser: (data: unknown) => TUser | undefined;
 
   /**
    * Return ``true`` when the errors indicate the session is expired or
@@ -79,7 +79,7 @@ export interface UserProviderConfig<TUser, TQuery> {
  * });
  * ```
  */
-export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TQuery extends { currentUser?: unknown }>(
+export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TCurrentUser, TQuery extends { currentUser?: TCurrentUser }>(
   config: UserProviderConfig<TUser, TQuery>
 ) {
   const {
