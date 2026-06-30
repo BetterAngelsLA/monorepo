@@ -1,11 +1,5 @@
 import { memo } from 'react';
 import { Controller } from 'react-hook-form';
-import {
-  ACCESSIBILITY_OPTIONS,
-  DEMOGRAPHICS_OPTIONS,
-  FUNDERS_OPTIONS,
-  PETS_OPTIONS,
-} from '../../../../pages/dashboard/formOptions';
 import { CheckboxGroup } from '../../../form/CheckboxGroup';
 import { FormSection } from '../../../form/FormSection';
 import { RadioGroup } from '../../../form/RadioGroup';
@@ -15,6 +9,7 @@ import type { SectionProps } from '../types';
 export const RoomDetailsSection = memo(function RoomDetailsSection({
   control,
   errors,
+  filteredPropertyOptions,
 }: SectionProps) {
   return (
     <FormSection title="Room Details">
@@ -25,7 +20,7 @@ export const RoomDetailsSection = memo(function RoomDetailsSection({
           <CheckboxGroup
             name="demographics"
             label="Demographics"
-            options={DEMOGRAPHICS_OPTIONS}
+            options={filteredPropertyOptions?.demographics ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.demographics?.message}
@@ -40,7 +35,7 @@ export const RoomDetailsSection = memo(function RoomDetailsSection({
           <CheckboxGroup
             name="accessibility"
             label="Accessibility"
-            options={ACCESSIBILITY_OPTIONS}
+            options={filteredPropertyOptions?.accessibility ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.accessibility?.message}
@@ -55,7 +50,7 @@ export const RoomDetailsSection = memo(function RoomDetailsSection({
           <CheckboxGroup
             name="funders"
             label="Funders"
-            options={FUNDERS_OPTIONS}
+            options={filteredPropertyOptions?.funders ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.funders?.message}
@@ -70,7 +65,7 @@ export const RoomDetailsSection = memo(function RoomDetailsSection({
           <CheckboxGroup
             name="pets"
             label="Pets"
-            options={PETS_OPTIONS}
+            options={filteredPropertyOptions?.pets ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.pets?.message}

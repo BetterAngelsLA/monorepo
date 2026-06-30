@@ -1,11 +1,5 @@
 import { memo } from 'react';
 import { Controller } from 'react-hook-form';
-import {
-  ACCESSIBILITY_OPTIONS,
-  DEMOGRAPHICS_OPTIONS,
-  FUNDERS_OPTIONS,
-  PETS_OPTIONS,
-} from '../../../../pages/dashboard/formOptions';
 import { CheckboxGroup } from '../../../form/CheckboxGroup';
 import { FormSection } from '../../../form/FormSection';
 import { NumberField } from '../../../form/NumberField';
@@ -19,6 +13,7 @@ import type { SectionProps } from '../types';
 export const BedDetailsSection = memo(function BedDetailsSection({
   control,
   errors,
+  filteredPropertyOptions,
 }: SectionProps) {
   return (
     <FormSection title="Bed Details">
@@ -29,7 +24,7 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           <CheckboxGroup
             name="demographics"
             label="Demographics"
-            options={DEMOGRAPHICS_OPTIONS}
+            options={filteredPropertyOptions?.demographics ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.demographics?.message}
@@ -43,7 +38,7 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           <CheckboxGroup
             name="accessibility"
             label="Accessibility"
-            options={ACCESSIBILITY_OPTIONS}
+            options={filteredPropertyOptions?.accessibility ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.accessibility?.message}
@@ -71,7 +66,7 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           <CheckboxGroup
             name="funders"
             label="Funders"
-            options={FUNDERS_OPTIONS}
+            options={filteredPropertyOptions?.funders ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.funders?.message}
@@ -85,7 +80,7 @@ export const BedDetailsSection = memo(function BedDetailsSection({
           <CheckboxGroup
             name="pets"
             label="Pets"
-            options={PETS_OPTIONS}
+            options={filteredPropertyOptions?.pets ?? []}
             values={field.value}
             onChange={field.onChange}
             error={errors.pets?.message}
