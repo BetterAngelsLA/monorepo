@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
@@ -41,9 +41,12 @@ export function ShelterFilters(props: IProps) {
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
   const initialOpenNowTypes = filters.openNowScheduleTypes ?? [];
-  const [openNowTypes, setOpenNowTypes] = useState<ScheduleTypeChoices[]>(
-    initialOpenNowTypes
-  );
+  const [openNowTypes, setOpenNowTypes] =
+    useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
+
+  useEffect(() => {
+    setOpenNowTypes(filters.openNowScheduleTypes ?? []);
+  }, [filters.openNowScheduleTypes]);
 
   const parentCss = ['pb-24', className];
 
@@ -122,16 +125,18 @@ export function ShelterFilters(props: IProps) {
         </div>
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
-            {OPEN_NOW_OPTIONS.map((option) => (
-              <Checkbox
-                key={option.key}
-                label={option.label}
-                checked={openNowTypes.includes(option.key)}
-                onChange={(checked) =>
-                  onOpenNowScheduleTypeChange(option.key, checked)
-                }
-              />
-            ))}
+            <div className="flex flex-col gap-2">
+              {OPEN_NOW_OPTIONS.map((option) => (
+                <Checkbox
+                  key={option.key}
+                  label={option.label}
+                  checked={openNowTypes.includes(option.key)}
+                  onChange={(checked) =>
+                    onOpenNowScheduleTypeChange(option.key, checked)
+                  }
+                />
+              ))}
+            </div>
           </ExpandableContainer>
         </div>
 
