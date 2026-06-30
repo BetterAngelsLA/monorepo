@@ -79,7 +79,7 @@ export interface UserProviderConfig<TUser, TQuery> {
  * });
  * ```
  */
-export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string }[] | null }, TQuery extends { currentUser?: unknown }>(
+export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TQuery extends { currentUser?: unknown }>(
   config: UserProviderConfig<TUser, TQuery>
 ) {
   const {
@@ -157,13 +157,11 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          organizations={
-            (user?.organizations ?? []) as unknown as {
-              id: string;
-              name: string;
-              permissions: string[];
-            }[]
-          }
+          organizations={(user?.organizations ?? []).map((org) => ({
+            id: org.id,
+            name: org.name,
+            permissions: [...(org.permissions ?? [])],
+          }))}
         >
           {children}
         </ActiveOrgProvider>
