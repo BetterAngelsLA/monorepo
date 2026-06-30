@@ -22,7 +22,7 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { expoOrgLink, hideDevMenuFab } from '@monorepo/expo/shared/utils';
+import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -75,7 +75,7 @@ export default function RootLayout() {
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
               <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies} links={[expoOrgLink]}>
+                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
                       <KeyboardToolbarProvider>

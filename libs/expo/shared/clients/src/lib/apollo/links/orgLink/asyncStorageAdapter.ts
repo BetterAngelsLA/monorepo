@@ -4,8 +4,8 @@ import type { StorageAdapter } from '@monorepo/react/shared';
 /**
  * ``StorageAdapter`` backed by React Native ``AsyncStorage``.
  *
- * Use with :func:`createOrgLink` from ``@monorepo/ba-platform`` to
- * attach the ``X-Organization-ID`` header in Expo / React Native apps.
+ * Used internally by ``expoOrgLink`` to persist the active
+ * organization ID.
  */
 export const asyncStorageAdapter: StorageAdapter = {
   async getItem(key: string): Promise<string | null> {
