@@ -34,6 +34,7 @@ export function ShelterPhotoForm(props: TProps) {
   } = useForm<ShelterPhotoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues,
+    mode: 'onBlur',
   });
 
   return (
@@ -66,7 +67,7 @@ export function ShelterPhotoForm(props: TProps) {
           variant="relative"
           primaryLabel={disabled ? 'Saving...' : 'Save'}
           primaryDisabled={disabled}
-          onPrimaryClick={() => handleSubmit(onSubmit)()}
+          onPrimaryClick={handleSubmit(onSubmit)}
           secondaryLabel="Cancel"
           onSecondaryClick={onCancel}
           secondaryDisabled={disabled}
