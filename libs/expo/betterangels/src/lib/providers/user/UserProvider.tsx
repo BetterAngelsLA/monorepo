@@ -22,7 +22,11 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
         firstName: user.firstName ?? undefined,
         lastName: user.lastName ?? undefined,
         email: user.email,
-        organizations: user.organizations ?? null,
+        organizations: (user.organizations ?? []).map((org) => ({
+          id: org.id,
+          name: org.name,
+          permissions: org.permissions ?? [],
+        })),
         isOutreachAuthorized: user.isOutreachAuthorized ?? false,
         hasAcceptedTos: user.hasAcceptedTos ?? false,
         hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,

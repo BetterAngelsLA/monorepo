@@ -2,6 +2,10 @@ import 'expo-dev-client';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
+  ActiveOrgProvider,
+  createOrgLink,
+} from '@monorepo/ba-platform';
+import {
   AppUpdatePrompt,
   BaFeatureControlProvider,
   BlockingScreenProvider,
@@ -13,10 +17,12 @@ import {
   SnackbarProvider,
   useNewRelic,
   UserProvider,
+  useUser,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
   ApolloClientProvider,
+  asyncStorageAdapter,
 } from '@monorepo/expo/shared/clients';
 import {
   BottomSheetModalProvider,
@@ -26,6 +32,7 @@ import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { type ReactNode } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -47,6 +54,8 @@ initApolloRuntimeConfig({
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
+const orgLink = createOrgLink(asyncStorageAdapter);
+
 const reactQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -65,6 +74,16 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
+/** Wraps children with ActiveOrgProvider using the current user's orgs. */
+function ActiveOrgWrapper({ children }: { children: ReactNode }) {
+  const { user } = useUser();
+  return (
+    <ActiveOrgProvider organizations={user?.organizations ?? []}>
+      {children}
+    </ActiveOrgProvider>
+  );
+}
+
 export default function RootLayout() {
   useNewRelic();
 
@@ -75,23 +94,25 @@ export default function RootLayout() {
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
               <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                <ApolloClientProvider typePolicies={baApolloTypePolicies} links={[orgLink]}>
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
                       <KeyboardToolbarProvider>
                         <SnackbarProvider>
                           <UserProvider>
-                            <BlockingScreenProvider>
-                              <ModalScreenProvider>
-                                <AppUpdatePrompt />
-                                <StatusBar
-                                  style={
-                                    Platform.OS === 'ios' ? 'light' : 'auto'
-                                  }
-                                />
-                                <AppRoutesStack />
-                              </ModalScreenProvider>
-                            </BlockingScreenProvider>
+                            <ActiveOrgWrapper>
+                                <BlockingScreenProvider>
+                                  <ModalScreenProvider>
+                                    <AppUpdatePrompt />
+                                    <StatusBar
+                                      style={
+                                        Platform.OS === 'ios' ? 'light' : 'auto'
+                                      }
+                                    />
+                                    <AppRoutesStack />
+                                  </ModalScreenProvider>
+                                </BlockingScreenProvider>
+                            </ActiveOrgWrapper>
                           </UserProvider>
                         </SnackbarProvider>
                       </KeyboardToolbarProvider>
