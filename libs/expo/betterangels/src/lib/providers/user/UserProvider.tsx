@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { GraphQLFormattedError } from 'graphql';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -100,18 +101,20 @@ export default function UserProvider({ children }: UserProviderProps) {
 
   return (
     <UserContext.Provider value={contextValue}>
-      <View
-        testID={
-          !isSettled
-            ? 'authorized-pending'
-            : user
-            ? 'authorized-root'
-            : 'unauthorized-root'
-        }
-        style={{ flex: 1 }}
-      >
-        {children}
-      </View>
+      <ActiveOrgProvider organizations={user?.organizations ?? []}>
+        <View
+          testID={
+            !isSettled
+              ? 'authorized-pending'
+              : user
+              ? 'authorized-root'
+              : 'unauthorized-root'
+          }
+          style={{ flex: 1 }}
+        >
+          {children}
+        </View>
+      </ActiveOrgProvider>
     </UserContext.Provider>
   );
 }

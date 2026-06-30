@@ -1,10 +1,7 @@
 import 'expo-dev-client';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import {
-  ActiveOrgProvider,
-  createOrgLink,
-} from '@monorepo/ba-platform';
+import { createOrgLink } from '@monorepo/ba-platform';
 import {
   AppUpdatePrompt,
   BaFeatureControlProvider,
@@ -17,7 +14,6 @@ import {
   SnackbarProvider,
   useNewRelic,
   UserProvider,
-  useUser,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
@@ -32,7 +28,6 @@ import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { type ReactNode } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -74,16 +69,6 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
-/** Wraps children with ActiveOrgProvider using the current user's orgs. */
-function ActiveOrgWrapper({ children }: { children: ReactNode }) {
-  const { user } = useUser();
-  return (
-    <ActiveOrgProvider organizations={user?.organizations ?? []}>
-      {children}
-    </ActiveOrgProvider>
-  );
-}
-
 export default function RootLayout() {
   useNewRelic();
 
@@ -100,19 +85,17 @@ export default function RootLayout() {
                       <KeyboardToolbarProvider>
                         <SnackbarProvider>
                           <UserProvider>
-                            <ActiveOrgWrapper>
-                                <BlockingScreenProvider>
-                                  <ModalScreenProvider>
-                                    <AppUpdatePrompt />
-                                    <StatusBar
-                                      style={
-                                        Platform.OS === 'ios' ? 'light' : 'auto'
-                                      }
-                                    />
-                                    <AppRoutesStack />
-                                  </ModalScreenProvider>
-                                </BlockingScreenProvider>
-                            </ActiveOrgWrapper>
+                            <BlockingScreenProvider>
+                              <ModalScreenProvider>
+                                <AppUpdatePrompt />
+                                <StatusBar
+                                  style={
+                                    Platform.OS === 'ios' ? 'light' : 'auto'
+                                  }
+                                />
+                                <AppRoutesStack />
+                              </ModalScreenProvider>
+                            </BlockingScreenProvider>
                           </UserProvider>
                         </SnackbarProvider>
                       </KeyboardToolbarProvider>
