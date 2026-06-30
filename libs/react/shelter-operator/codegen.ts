@@ -9,14 +9,6 @@ const config: CodegenConfig = {
   ],
   ignoreNoDocuments: true,
   generates: {
-    'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-      },
-    },
     'src/': {
       preset: 'near-operation-file',
       plugins: ['typescript-operations', 'typed-document-node'],

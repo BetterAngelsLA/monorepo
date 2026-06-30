@@ -8,14 +8,6 @@ const config: CodegenConfig = {
     '!src/**/__generated__/**/*.{graphql,ts,tsx}',
   ],
   generates: {
-    'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-      },
-    },
     'src/': {
       preset: 'near-operation-file',
       plugins: ['typescript-operations', 'typed-document-node'],
