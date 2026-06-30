@@ -1,1 +1,2 @@
-export { createApolloClient } from './lib/clients/apollo/client';
+// createApolloClient has moved to @monorepo/ba-platform
+export { createApolloClient } from '@monorepo/ba-platform';

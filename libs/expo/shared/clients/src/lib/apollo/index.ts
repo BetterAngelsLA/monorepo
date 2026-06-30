@@ -1,2 +1,2 @@
-export * from './ApolloClientProvider';
-export * from './ReactNativeFile';
+// ApolloClientProvider has moved to @monorepo/ba-platform
+export * from './links/errorLink';

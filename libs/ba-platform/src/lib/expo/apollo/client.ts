@@ -1,9 +1,9 @@
 import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { Platform } from 'react-native';
-import { createNativeFetch } from '../common/nativeFetch';
+import { createNativeFetch } from '@monorepo/expo/shared/clients';
 import { isReactNativeFileInstance } from './ReactNativeFile';
-import { createErrorLink } from './links/errorLink';
+import { createErrorLink } from '@monorepo/expo/shared/clients';
 import { loggerLink } from './links/loggerLink';
 import { expoOrgLink } from './links/orgLink/expoOrgLink';
 

@@ -1,6 +1,6 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { createApolloClient } from '@monorepo/react/shared/apollo';
+import { createApolloClient } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
