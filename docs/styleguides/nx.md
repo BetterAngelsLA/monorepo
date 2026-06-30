@@ -410,6 +410,38 @@ that migration happens.
 Once these migrations are complete, update the `depConstraints` in
 `.eslintrc.json` to the target state and remove the TODO comments.
 
+### ba-platform project split
+
+`ba-platform` currently uses TypeScript entry points (`src/react.ts`,
+`src/expo.ts`) as scaffolding. When platform-specific code arrives (PR #2203),
+each entry will graduate to its own NX project under `libs/ba-platform/`:
+
+```
+libs/ba-platform/
+├── shared/           ← @monorepo/ba-platform (orgLink, providers, constants, GQL types)
+├── web/              ← @monorepo/ba-platform-web (CSRF, web Apollo client)
+├── expo/             ← @monorepo/ba-platform-expo (native Apollo client, provider)
+└── types/            ← @monorepo/ba-platform-types (generated GQL types — optional split)
+```
+
+Migration commands (run once platform-specific code exists):
+
+```bash
+# 1. Extract web code into its own project
+nx g @nx/workspace:move --project ba-platform --destination ba-platform/shared
+nx g @nx/js:lib web --directory ba-platform/web --tags "type:data-access,scope:ba-platform"
+# Move src/lib/apollo/react/ → ba-platform/web/src/lib/
+
+# 2. Extract expo code into its own project
+nx g @nx/js:lib expo --directory ba-platform/expo --tags "type:data-access,scope:ba-platform"
+# Move src/lib/apollo/expo/ + src/lib/expo/ → ba-platform/expo/src/lib/
+```
+
+Benefits of separate projects over entry points:
+- **Mechanical safety** — depConstraints prevent `ba-platform-web` from importing `ba-platform-expo` (entry points rely on barrel discipline)
+- **Faster CI** — changes to expo code only rebuild expo consumers
+- **Clearer `nx graph`** — dependency relationships visible as separate nodes
+
 Additional recommended flags from the [NX blog](https://nx.dev/blog/mastering-the-project-boundaries-in-nx):
 
 - `"enforceBuildableLibDependency": true` — prevents importing non-buildable libs into buildable ones
