@@ -1,7 +1,6 @@
 import 'expo-dev-client';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { createOrgLink } from '@monorepo/ba-platform';
 import {
   AppUpdatePrompt,
   BaFeatureControlProvider,
@@ -23,7 +22,7 @@ import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { asyncStorageAdapter, hideDevMenuFab } from '@monorepo/expo/shared/utils';
+import { expoOrgLink, hideDevMenuFab } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -47,8 +46,6 @@ initApolloRuntimeConfig({
 });
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
-
-const orgLink = createOrgLink(asyncStorageAdapter);
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
@@ -78,7 +75,7 @@ export default function RootLayout() {
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
               <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies} links={[orgLink]}>
+                <ApolloClientProvider typePolicies={baApolloTypePolicies} links={[expoOrgLink]}>
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
                       <KeyboardToolbarProvider>
