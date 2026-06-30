@@ -33,8 +33,9 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
   });
 
   const shelter = data?.operatorShelter;
-  const bedsByStatus = shelter?.bedsByStatus;
-  const roomsByStatus = shelter?.roomsByStatus;
+  console.log('OverviewView shelter:', shelter);
+  const bedCounts = shelter?.bedCounts;
+  const roomCounts = shelter?.roomCounts;
 
   if (loading && !shelter) {
     return (
@@ -69,12 +70,12 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
       <section className={cardClassName}>
         <h3 className="text-base font-semibold text-[#111827]">Bed Summary</h3>
         <div className="mt-3 divide-y divide-[#F3F4F6]">
-          <SummaryRow label="Available" value={bedsByStatus?.available ?? 0} />
-          <SummaryRow label="Occupied" value={bedsByStatus?.occupied ?? 0} />
-          <SummaryRow label="Reserved" value={bedsByStatus?.reserved ?? 0} />
+          <SummaryRow label="Available" value={bedCounts?.available ?? 0} />
+          <SummaryRow label="Occupied" value={bedCounts?.occupied ?? 0} />
+          <SummaryRow label="Reserved" value={bedCounts?.reserved ?? 0} />
           <SummaryRow
             label="Out of Service"
-            value={bedsByStatus?.outOfService ?? 0}
+            value={bedCounts?.outOfService ?? 0}
           />
         </div>
       </section>
@@ -82,11 +83,11 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
       <section className={cardClassName}>
         <h3 className="text-base font-semibold text-[#111827]">Room Summary</h3>
         <div className="mt-3 divide-y divide-[#F3F4F6]">
-          <SummaryRow label="Available" value={roomsByStatus?.available ?? 0} />
-          <SummaryRow label="Reserved" value={roomsByStatus?.reserved ?? 0} />
+          <SummaryRow label="Available" value={roomCounts?.available ?? 0} />
+          <SummaryRow label="Reserved" value={roomCounts?.reserved ?? 0} />
           <SummaryRow
             label="Out of Service"
-            value={roomsByStatus?.outOfService ?? 0}
+            value={roomCounts?.outOfService ?? 0}
           />
         </div>
       </section>

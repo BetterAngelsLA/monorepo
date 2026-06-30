@@ -29,8 +29,9 @@ type ShelterTableProps = {
 
 const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
 
-const sumAllBeds = (bedsByStatus: Shelter['bedsByStatus']): number =>
-  Object.values(bedsByStatus).reduce((sum, v) => sum + v, 0);
+function getUnavailableBeds(shelter: Shelter) {
+  return shelter.bedCounts.total - (shelter.bedCounts.available ?? 0);
+}
 
 function renderTags(tags: string[] | null) {
   const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
@@ -100,13 +101,14 @@ export function ShelterTable({
         width: '1.2fr',
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
-          const totalBeds = sumAllBeds(shelter.bedsByStatus);
-          const unavailableBeds =
-            totalBeds - (shelter.bedsByStatus.available ?? 0);
+          console.log('Rendering capacity for shelter:', shelter);
+          const unavailableBeds = getUnavailableBeds(shelter);
           const progressPct =
-            totalBeds > 0 ? (unavailableBeds / totalBeds) * 100 : 0;
+            shelter.bedCounts.total > 0
+              ? (unavailableBeds / shelter.bedCounts.total) * 100
+              : 0;
 
-          if (totalBeds === 0) {
+          if (shelter.bedCounts.total === 0) {
             return (
               <div className="whitespace-nowrap">No availability data</div>
             );
@@ -121,12 +123,12 @@ export function ShelterTable({
                 />
               </div>
               <span className="leading-5 text-slate-700">
-                {unavailableBeds} / {totalBeds} beds
+                {unavailableBeds} / {shelter.bedCounts.total} beds
               </span>
             </div>
           );
         },
-        sortValue: (shelter) => sumAllBeds(shelter.bedsByStatus),
+        sortValue: (shelter) => shelter.bedCounts.total,
       },
       {
         key: 'tags',
@@ -155,15 +157,13 @@ export function ShelterTable({
       rows={rows}
       getRowKey={getRowKey ?? ((shelter) => shelter.id)}
       getRowObject={(shelter) => {
-        const totalBeds = sumAllBeds(shelter.bedsByStatus);
-        const unavailableBeds =
-          totalBeds - (shelter.bedsByStatus.available ?? 0);
+        const unavailableBeds = getUnavailableBeds(shelter);
 
         return {
           id: shelter.id,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
-          totalBeds,
+          totalBeds: shelter.bedCounts.total,
           unavailableBeds,
           tags: shelter.tags ?? [],
         };
