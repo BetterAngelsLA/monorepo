@@ -3313,13 +3313,21 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
+  entryRequirementsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
+  parkingIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
+  petsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
+  referralRequirementIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  roomStylesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  shelterTypesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
+  specialSituationRestrictionsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ShelterType = {
