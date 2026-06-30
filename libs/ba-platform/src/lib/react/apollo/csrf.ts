@@ -1,5 +1,5 @@
 import { ApolloLink, Observable } from '@apollo/client';
-import { eraseCookie, getCookie } from '../../utils/storage/cookies';
+import { eraseCookie, getCookie } from '@monorepo/react/shared';
 
 type CSRFOptions = {
   apiUrl: string;

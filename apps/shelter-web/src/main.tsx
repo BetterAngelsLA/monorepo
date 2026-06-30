@@ -1,7 +1,6 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { orgLink } from '@monorepo/ba-platform';
-import { createApolloClient } from '@monorepo/react/shared/apollo';
+import { createApolloClient } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
@@ -29,7 +28,6 @@ const apolloClient = createApolloClient({
   csrfCookieName,
   csrfHeaderName,
   typePolicies: createShelterTypePolicies(isDevEnv),
-  orgLink,
 });
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
