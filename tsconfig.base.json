@@ -4,7 +4,7 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -14,43 +14,47 @@
     "strict": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",
+    // Bundler-based monorepo (Vite, Metro) — CSS side-effect imports are
+    // handled by bundlers, not by TypeScript's module resolution.
+    "noUncheckedSideEffectImports": false,
     "paths": {
-      "@betterangels/*": ["apps/betterangels/*"],
-      "@monorepo/apollo": ["libs/apollo/src/index.ts"],
-      "@monorepo/assets": ["libs/assets/src/index.ts"],
-      "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
+      "@betterangels/*": ["./apps/betterangels/*"],
+      "@monorepo/apollo": ["./libs/apollo/src/index.ts"],
+      "@monorepo/assets": ["./libs/assets/src/index.ts"],
+      "@monorepo/ba-permissions": ["./libs/ba-permissions/src/index.ts"],
+      "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
+      "@monorepo/expo/betterangels": ["./libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [
-        "libs/expo/shared/clients/src/index.ts"
+        "./libs/expo/shared/clients/src/index.ts"
       ],
-      "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
-      "@monorepo/expo/shared/images": ["libs/expo/shared/images/src/index.ts"],
+      "@monorepo/expo/shared/icons": ["./libs/expo/shared/icons/src/index.ts"],
+      "@monorepo/expo/shared/images": ["./libs/expo/shared/images/src/index.ts"],
       "@monorepo/expo/shared/services": [
-        "libs/expo/shared/services/src/index.ts"
+        "./libs/expo/shared/services/src/index.ts"
       ],
-      "@monorepo/expo/shared/static": ["libs/expo/shared/static/src/index.ts"],
+      "@monorepo/expo/shared/static": ["./libs/expo/shared/static/src/index.ts"],
       "@monorepo/expo/shared/ui-components": [
-        "libs/expo/shared/ui-components/src/index.ts"
+        "./libs/expo/shared/ui-components/src/index.ts"
       ],
-      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"],
+      "@monorepo/expo/shared/utils": ["./libs/expo/shared/utils/src/index.ts"],
       "@monorepo/react/betterangels-admin": [
-        "libs/react/betterangels-admin/src/index.ts"
+        "./libs/react/betterangels-admin/src/index.ts"
       ],
-      "@monorepo/react/components": ["libs/react/components/src/index.ts"],
-      "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
-      "@monorepo/react/shared": ["libs/react/shared/src/index.ts"],
-      "@monorepo/react/shared/apollo": ["libs/react/shared/src/apollo.ts"],
-      "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"],
+      "@monorepo/react/components": ["./libs/react/components/src/index.ts"],
+      "@monorepo/react/icons": ["./libs/react/icons/src/index.ts"],
+      "@monorepo/react/shared": ["./libs/react/shared/src/index.ts"],
+      "@monorepo/react/shared/apollo": ["./libs/react/shared/src/apollo.ts"],
+      "@monorepo/react/shelter": ["./libs/react/shelter/src/index.ts"],
       "@monorepo/react/shelter-operator": [
-        "libs/react/shelter-operator/src/index.ts"
+        "./libs/react/shelter-operator/src/index.ts"
       ],
-      "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"],
-      "@monorepo/shared/places": ["libs/shared/places/src/index.ts"],
-      "@monorepo/shared/units": ["libs/shared/units/src/index.ts"],
+      "@monorepo/react/storybook": ["./libs/react/storybook/src/index.ts"],
+      "@monorepo/shared/places": ["./libs/shared/places/src/index.ts"],
+      "@monorepo/shared/units": ["./libs/shared/units/src/index.ts"],
       "@monorepo/signing-fingerprint": [
-        "libs/expo/modules/signing-fingerprint/index.ts"
+        "./libs/expo/modules/signing-fingerprint/index.ts"
       ],
-      "@monorepo/tailwind": ["libs/tailwind/src/index.ts"]
+      "@monorepo/tailwind": ["./libs/tailwind/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -2593,13 +2593,21 @@ type ShelterProgramType {
 
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
+  petsIncludeNull: Boolean = false
   demographics: [DemographicChoices!] = null
+  demographicsIncludeNull: Boolean = false
   entryRequirements: [EntryRequirementChoices!] = null
+  entryRequirementsIncludeNull: Boolean = false
   referralRequirement: [ReferralRequirementChoices!] = null
+  referralRequirementIncludeNull: Boolean = false
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  specialSituationRestrictionsIncludeNull: Boolean = false
   shelterTypes: [ShelterChoices!] = null
+  shelterTypesIncludeNull: Boolean = false
   roomStyles: [RoomStyleChoices!] = null
+  roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
+  parkingIncludeNull: Boolean = false
 }
 
 type ShelterType {

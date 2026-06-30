@@ -1,4 +1,4 @@
-import { AntDesign } from '@expo/vector-icons';
+import AntDesign from '@react-native-vector-icons/ant-design';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   ActionModal,
