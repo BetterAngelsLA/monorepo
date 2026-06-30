@@ -1,6 +1,7 @@
+import { Dropdown as MenuDropdown } from '@monorepo/react/components';
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
-import { operatorPath } from '@monorepo/react/shelter';
+import { operatorPath, useSignOut } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Fragment, useCallback, useMemo } from 'react';
@@ -15,17 +16,39 @@ import {
   type BreadcrumbItem,
 } from './NavBar/breadcrumbs';
 
-function NavBarActions({ children }: { children?: ReactNode }) {
+enum AccountOption {
+  SignOut = 'Sign Out',
+}
+
+function NavBarActions({
+  children,
+  onSignOut,
+}: {
+  children?: ReactNode;
+  onSignOut: () => void;
+}) {
+  const handleAccountSelect = (option: AccountOption) => {
+    if (option === AccountOption.SignOut) {
+      onSignOut();
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
       {children}
-      <button
-        type="button"
-        aria-label="Account settings"
-        className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
-      >
-        <UserCog size={20} />
-      </button>
+      <MenuDropdown
+        title={
+          <div
+            aria-label="Account settings"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-[#D3D9E3] bg-white text-[#3E4652] transition-colors hover:bg-[#F8FAFC] pl-1"
+          >
+            <UserCog size={20} />
+          </div>
+        }
+        options={[AccountOption.SignOut]}
+        onSelect={handleAccountSelect}
+        position="dropdown-end"
+      />
     </div>
   );
 }
@@ -40,6 +63,7 @@ export function NavBar(props: TNavProps) {
   const { activeOrg, organizations, setActiveOrgId } = useActiveOrg();
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useSignOut();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
   const isDashboardPage =
@@ -112,7 +136,7 @@ export function NavBar(props: TNavProps) {
           )}
         </div>
 
-        <NavBarActions>
+        <NavBarActions onSignOut={signOut}>
           {showCreateButton && (
             <Button
               leftIcon={<Plus size={20} />}
