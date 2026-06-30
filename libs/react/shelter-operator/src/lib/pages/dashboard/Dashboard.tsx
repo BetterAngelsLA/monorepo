@@ -115,7 +115,14 @@ export function Dashboard() {
           name: s.name ?? null,
           address: s.location?.place ?? null,
           totalBeds: s.totalBeds ?? null,
-          availableBeds: s.bedsByStatus.available ?? null,
+          bedCounts: {
+            available: s.bedCounts.available ?? 0,
+            inTurnaround: s.bedCounts.inTurnaround ?? 0,
+            occupied: s.bedCounts.occupied ?? 0,
+            outOfService: s.bedCounts.outOfService ?? 0,
+            reserved: s.bedCounts.reserved ?? 0,
+            total: s.bedCounts.total ?? 0,
+          },
           tags: null,
           status: s.status,
         })) ?? []
