@@ -5,6 +5,7 @@ import {
   uploadFileToS3WithPresignedPost,
 } from '@monorepo/react/shared';
 import { ShelterPhotoTypeChoices } from '../../../../../../../../apollo/graphql/__generated__/types';
+import { OPERATOR_SHELTER_TYPENAME } from '../../../../../../../../hooks/useShelterOperatorProfile/constants';
 import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
@@ -165,7 +166,10 @@ export function useShelterPhotoUpload(props?: TProps) {
         }
 
         cache.modify({
-          id: cache.identify({ __typename: 'AdminShelterType', id: shelterId }),
+          id: cache.identify({
+            __typename: OPERATOR_SHELTER_TYPENAME,
+            id: shelterId,
+          }),
           fields: {
             photos(existing = []) {
               const newRefs = resolveResult.photos.map((photo) =>
