@@ -5,13 +5,14 @@ import { createNativeFetch } from '../common/nativeFetch';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { createErrorLink } from './links/errorLink';
 import { loggerLink } from './links/loggerLink';
+import { expoOrgLink } from './links/orgLink/expoOrgLink';
 
 type TArgs = {
   apiUrl: string;
   cacheStore?: InMemoryCache;
   onUnauthenticated?: () => void;
   authPath?: string;
-  /** Additional Apollo Links to compose into the link chain (e.g. orgLink). */
+  /** Additional Apollo Links appended after the built-in links. */
   links?: ApolloLink[];
 };
 
@@ -33,7 +34,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const composedLinks = [errorLink, ...links, uploadHttpLink];
+  const composedLinks = [errorLink, expoOrgLink, ...links, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (
