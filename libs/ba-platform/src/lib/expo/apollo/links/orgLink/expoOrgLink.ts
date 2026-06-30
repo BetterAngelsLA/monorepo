@@ -1,5 +1,5 @@
 import { createOrgLink } from '@monorepo/ba-platform';
-import { asyncStorageAdapter } from './asyncStorageAdapter';
+import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
 /**
  * Pre-configured orgLink for Expo / React Native.
