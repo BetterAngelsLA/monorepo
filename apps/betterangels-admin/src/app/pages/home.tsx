@@ -3,7 +3,7 @@ import {
   ReportPermissions,
   UserOrganizationPermissions,
   type PermissionEnum,
-} from '@monorepo/ba-platform/permissions';
+} from '@monorepo/ba-permissions';
 import { Navigate } from 'react-router-dom';
 
 const permissionRoutes: { permission: PermissionEnum; path: string }[] = [

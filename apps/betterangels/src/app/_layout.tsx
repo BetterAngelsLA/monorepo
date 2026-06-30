@@ -1,5 +1,7 @@
 import 'expo-dev-client';
 
+import { ApolloLink } from '@apollo/client';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   AppUpdatePrompt,
@@ -15,7 +17,9 @@ import {
   UserProvider,
 } from '@monorepo/expo/betterangels';
 import { ApolloClientProvider } from '@monorepo/ba-platform/expo';
-import { ApiConfigProvider } from '@monorepo/expo/shared/clients';
+import {
+  ApiConfigProvider,
+} from '@monorepo/expo/shared/clients';
 import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
@@ -29,36 +33,25 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
+import { fetchClient } from './fetchClient';
 
-// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
-// (overlaps `nav-menu-btn`). No-op in production / store builds and on
-// Android. See helper for details.
-// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
-// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
 hideDevMenuFab();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
-
-initApolloRuntimeConfig({
-  isDevEnv: false,
-});
+initApolloRuntimeConfig({ isDevEnv: false });
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false, // need custom implementation for React Native
-    },
+    queries: { refetchOnWindowFocus: false },
   },
 });
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Render Error page on uncaught error
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
@@ -71,9 +64,23 @@ export default function RootLayout() {
       <BottomSheetModalProvider>
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
-            <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+            <ApiConfigProvider
+              productionUrl={apiUrl}
+              demoUrl={demoApiUrl}
+              fetch={fetchClient}
+            >
               <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                <ApolloClientProvider
+                  typePolicies={baApolloTypePolicies}
+                  link={
+                    ApolloLink.from([
+                      new UploadHttpLink({
+                        uri: `${apiUrl}/graphql`,
+                        fetch: fetchClient,
+                      }),
+                    ])
+                  }
+                >
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
                       <KeyboardToolbarProvider>

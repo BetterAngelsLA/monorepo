@@ -1,5 +1,4 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
-import { CSRF_HEADER_NAME, getCsrfToken } from '@monorepo/ba-platform/web';
 
 interface ApiConfigContextType {
   apiUrl: string;
@@ -13,27 +12,25 @@ const ApiConfigContext = createContext<ApiConfigContextType | undefined>(
 interface ApiConfigProviderProps {
   children: ReactNode;
   apiUrl: string;
+  /** CSRF + Org-ID pre-wired fetch function. */
+  fetch: typeof globalThis.fetch;
 }
 
 export const ApiConfigProvider = ({
   children,
   apiUrl,
+  fetch: fetchWithAuth,
 }: ApiConfigProviderProps) => {
   const fetchClient = useMemo(() => {
     return async (path: string, options: RequestInit = {}) => {
-      const token = await getCsrfToken(apiUrl, `${apiUrl}/admin/login/`);
-      const { headers: userHeaders = {}, ...otherOptions } = options;
-      const headers = new Headers(userHeaders as HeadersInit);
+      const headers = new Headers(options.headers);
       headers.set('Content-Type', 'application/json');
-      if (token) headers.set(CSRF_HEADER_NAME, token);
-
-      return fetch(`${apiUrl}${path}`, {
-        credentials: 'include',
+      return fetchWithAuth(`${apiUrl}${path}`, {
+        ...options,
         headers,
-        ...otherOptions,
       });
     };
-  }, [apiUrl]);
+  }, [apiUrl, fetchWithAuth]);
 
   return (
     <ApiConfigContext.Provider value={{ apiUrl, fetchClient }}>

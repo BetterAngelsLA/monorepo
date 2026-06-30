@@ -2,7 +2,7 @@ import {
   ReportPermissions,
   TeamPermissions,
   UserOrganizationPermissions,
-} from '@monorepo/ba-platform/permissions';
+} from '@monorepo/ba-permissions';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { BetterAngelsLogoBadge, Sidebar } from '@monorepo/react/components';
 import {

@@ -13,7 +13,7 @@ import {
   Ordering,
   TeamType,
 } from '../../apollo/graphql/__generated__/types';
-import { TeamPermissions } from '@monorepo/ba-platform/permissions';
+import { TeamPermissions } from '@monorepo/ba-permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';
 import { useActiveOrg } from '@monorepo/ba-platform';

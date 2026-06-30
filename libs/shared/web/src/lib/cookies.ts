@@ -1,7 +1,7 @@
 /**
- * Browser cookie utilities used by the web CSRF Apollo Link.
+ * Browser cookie utilities.
  *
- * Uses ``document.cookie`` — only import from ``@monorepo/ba-platform/web``.
+ * Uses ``document.cookie`` — only import from ``@monorepo/shared/web``.
  */
 
 export const getCookie = (name: string): string[] => {

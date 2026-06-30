@@ -1,6 +1,4 @@
 import {
-  CSRF_HEADER_NAME,
-  CSRF_LOGIN_PATH,
   ENVIRONMENT_STORAGE_KEY,
 } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,12 +8,8 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
-import { Platform } from 'react-native';
-import { getCsrfToken } from '@monorepo/ba-platform/expo';
-import { createNativeFetch } from '../common/nativeFetch';
 
 type Env = 'production' | 'demo';
 
@@ -28,15 +22,20 @@ interface ApiConfigContextType {
 
 const ApiConfigContext = createContext<ApiConfigContextType | null>(null);
 
+interface ApiConfigProviderProps {
+  children: ReactNode;
+  productionUrl: string;
+  demoUrl: string;
+  /** CSRF + Org-ID pre-wired fetch function. */
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+}
+
 export const ApiConfigProvider = ({
   children,
   productionUrl,
   demoUrl,
-}: {
-  children: ReactNode;
-  productionUrl: string;
-  demoUrl: string;
-}) => {
+  fetch: fetchWithAuth,
+}: ApiConfigProviderProps) => {
   const [environment, setEnvironment] = useState<Env | null>(null);
   const baseUrl = environment === 'demo' ? demoUrl : productionUrl;
 
@@ -50,45 +49,24 @@ export const ApiConfigProvider = ({
 
   const switchEnvironment = useCallback(
     async (env: Env) => {
-      if (env === environment) {
-        return;
-      }
+      if (env === environment) return;
       await AsyncStorage.setItem(ENVIRONMENT_STORAGE_KEY, env);
       setEnvironment(env);
     },
     [environment]
   );
 
-  const fetchClient = useMemo(() => {
-    if (Platform.OS === 'web') {
-      return async (path: string, options: RequestInit = {}) => {
-        const token = await getCsrfToken(
-          baseUrl,
-          `${baseUrl}${CSRF_LOGIN_PATH}`
-        );
-        const headers = new Headers(options.headers);
-        headers.set('Content-Type', 'application/json');
-        if (token) {
-          headers.set(CSRF_HEADER_NAME, token);
-        }
+  // Wrap the pre-wired fetch with the current baseUrl
+  const fetchClient = useCallback(
+    (path: string, options: RequestInit = {}) => {
+      const headers = new Headers(options.headers);
+      headers.set('Content-Type', 'application/json');
+      return fetchWithAuth(`${baseUrl}${path}`, { ...options, headers });
+    },
+    [baseUrl, fetchWithAuth]
+  );
 
-        return fetch(`${baseUrl}${path}`, {
-          ...options,
-          credentials: 'include',
-          headers,
-        });
-      };
-    }
-
-    const nativeFetch = createNativeFetch(baseUrl);
-    return async (path: string, options: RequestInit = {}) => {
-      return nativeFetch(`${baseUrl}${path}`, options);
-    };
-  }, [baseUrl]);
-
-  if (environment === null) {
-    return null;
-  }
+  if (environment === null) return null;
 
   return (
     <ApiConfigContext.Provider

@@ -3,5 +3,5 @@ export {
   ShelterPermissions,
   TeamPermissions,
   UserOrganizationPermissions,
-} from '@monorepo/ba-platform/permissions';
+} from '@monorepo/ba-permissions';
 export * from './graphql/response';
