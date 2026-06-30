@@ -28,11 +28,16 @@ export interface UserState<TUser> {
 /**
  * Configuration for :func:`createUserProvider`.
  *
- * @typeParam TUser  App-specific user type (the value stored in context).
- * @typeParam TQuery The GraphQL operation result type
+ * @typeParam TUser   App-specific user type (the value stored in context).
+ * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
+ * @typeParam TExtra  Extra fields merged into the context (e.g. ``isHmisUser``).
  */
-export interface UserProviderConfig<TUser, TQuery> {
+export interface UserProviderConfig<
+  TUser,
+  TQuery,
+  TExtra extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
 
@@ -54,7 +59,7 @@ export interface UserProviderConfig<TUser, TQuery> {
    * Optional extra context to merge into the context value exposed by
    * ``useUser``. Useful for app-specific fields like ``isHmisUser``.
    */
-  extraContextValue?: (user?: TUser) => Record<string, unknown>;
+  extraContextValue?: (user?: TUser) => TExtra;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,8 +84,12 @@ export interface UserProviderConfig<TUser, TQuery> {
  * });
  * ```
  */
-export function createUserProvider<TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null }, TQuery extends { currentUser?: unknown }>(
-  config: UserProviderConfig<TUser, TQuery>
+export function createUserProvider<
+  TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null },
+  TQuery extends { currentUser?: unknown },
+  TExtra extends Record<string, unknown> = Record<string, unknown>,
+>(
+  config: UserProviderConfig<TUser, TQuery, TExtra>
 ) {
   const {
     document,
@@ -91,7 +100,7 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
 
   // ---- Context -------------------------------------------------------
 
-  type ContextValue = UserState<TUser> & ReturnType<typeof extraContextValue>;
+  type ContextValue = UserState<TUser> & TExtra;
 
   const UserContext = createContext<ContextValue | undefined>(undefined);
 
