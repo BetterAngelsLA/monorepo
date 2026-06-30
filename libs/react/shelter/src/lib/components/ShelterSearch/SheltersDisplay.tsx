@@ -64,7 +64,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, isAccessCenter, maxStay, ...propertyOnlyFilters } =
+      const { openNow, openNowScheduleTypes, isAccessCenter, maxStay, ...propertyOnlyFilters } =
         propertyFilters;
 
       if (openNow) {

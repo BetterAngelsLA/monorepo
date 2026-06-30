@@ -9,19 +9,21 @@ query GetShelterOperatorOverview($shelterId: ID!) {
     location {
       place
     }
-    bedsByStatus {
+    bedCounts {
       available
       inTurnaround
       occupied
       outOfService
       reserved
+      total
     }
-    roomsByStatus {
+    roomCounts {
       available
       inTurnaround
       occupied
       outOfService
       reserved
+      total
     }
   }
 }
