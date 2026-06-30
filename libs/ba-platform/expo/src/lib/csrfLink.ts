@@ -64,3 +64,34 @@ export const expoCsrfLink = createCsrfLink(expoTokenProvider, {
   cookieName: CSRF_COOKIE_NAME,
   headerName: CSRF_HEADER_NAME,
 });
+
+// -- Standalone token helper (outside Apollo chain) ------------------------
+
+/**
+ * Read the CSRF token from cookies (``CookieManager`` on native,
+ * ``document.cookie`` on web), refreshing from ``/admin/login/`` if
+ * missing. Used by ``ApiConfigProvider`` outside the Apollo link chain.
+ */
+export const getCsrfToken = async (
+  apiUrl: string,
+  csrfUrl = `${apiUrl}/admin/login/`
+): Promise<string | null> => {
+  if (Platform.OS === 'web') {
+    let token = webReadToken(CSRF_COOKIE_NAME);
+    if (!token) {
+      await fetch(csrfUrl, {
+        credentials: 'include',
+        headers: { Accept: 'text/html' },
+      });
+      token = webReadToken(CSRF_COOKIE_NAME);
+    }
+    return token;
+  }
+
+  let token = await nativeReadToken(apiUrl, CSRF_COOKIE_NAME);
+  if (!token) {
+    await refreshNativeToken(apiUrl, '/admin/login/');
+    token = await nativeReadToken(apiUrl, CSRF_COOKIE_NAME);
+  }
+  return token;
+};

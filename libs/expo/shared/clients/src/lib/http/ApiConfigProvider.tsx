@@ -14,7 +14,7 @@ import {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import { getCSRFToken } from '../common';
+import { getCsrfToken } from '@monorepo/ba-platform/expo';
 import { createNativeFetch } from '../common/nativeFetch';
 
 type Env = 'production' | 'demo';
@@ -62,7 +62,7 @@ export const ApiConfigProvider = ({
   const fetchClient = useMemo(() => {
     if (Platform.OS === 'web') {
       return async (path: string, options: RequestInit = {}) => {
-        const token = await getCSRFToken(
+        const token = await getCsrfToken(
           baseUrl,
           `${baseUrl}${CSRF_LOGIN_PATH}`
         );
