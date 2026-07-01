@@ -13,17 +13,19 @@
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/libs/react/shelter-operator/src/lib/**/__generated__/"
+      ],
       "options": {
         "cwd": "libs/react/shelter-operator",
         "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/react/shelter-operator/src/lib/**/__generated__/"
-      ]
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -33,10 +35,14 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/react/shelter-operator"],
       "options": {
-        "jestConfig": "libs/react/shelter-operator/jest.config.ts"
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
       }
     }
   }
