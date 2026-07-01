@@ -1,21 +1,4 @@
-import {
-  composeFetchInterceptors,
-  userAgentInterceptor,
-  bodyInterceptor,
-  includeCredentialsInterceptor,
-  backendAuthInterceptor,
-  interceptorHmis,
-  createCsrfInterceptor as createNativeCsrfInterceptor,
-} from '@monorepo/expo/shared/clients';
-import { createOrgInterceptor, DEFAULT_ORG_STORAGE_KEY } from '@monorepo/ba-platform';
-import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
+import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
+import { apiUrl } from '../../config';
 
-export const fetchClient = composeFetchInterceptors(
-  createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
-  createNativeCsrfInterceptor(),
-  userAgentInterceptor,
-  bodyInterceptor,
-  backendAuthInterceptor,
-  includeCredentialsInterceptor,
-  interceptorHmis,
-);
+export const fetchClient = createExpoFetchClient(apiUrl);
