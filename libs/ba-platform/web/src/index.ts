@@ -8,4 +8,4 @@
  * ``depConstraints`` mechanically prevent web code from importing
  * expo code and vice versa.
  */
-export { createWebFetchClient, CSRF_COOKIE_NAME, DEFAULT_ORG_STORAGE_KEY } from './lib/fetchClient';
+export { createWebFetchClient } from './lib/fetchClient';

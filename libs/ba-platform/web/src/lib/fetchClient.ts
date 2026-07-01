@@ -8,9 +8,6 @@ import {
 } from '@monorepo/ba-platform';
 import { readCsrfToken, refreshCsrfToken } from './csrfTokenProvider';
 
-// Re-export for convenience so consumers don't need separate imports.
-export { CSRF_COOKIE_NAME, DEFAULT_ORG_STORAGE_KEY };
-
 /**
  * Pre-composed web fetch client.
  *

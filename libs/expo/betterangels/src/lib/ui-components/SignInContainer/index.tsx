@@ -1,4 +1,4 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
@@ -26,7 +26,7 @@ export default function SignInContainer({
   // On mount, optionally switch env when unauthenticated.
   useEffect(() => {
     if (!user && environment !== 'production') {
-      switchEnvironment('production');
+      switchEnvironment?.('production');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

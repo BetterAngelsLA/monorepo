@@ -19,12 +19,12 @@ import {
 import { ApolloClientProvider } from '@monorepo/ba-platform/expo';
 import {
   ApiConfigProvider,
-} from '@monorepo/expo/shared/clients';
+} from '@monorepo/ba-platform';
 import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
+import { hideDevMenuFab, asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -65,9 +65,14 @@ export default function RootLayout() {
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <ApiConfigProvider
-              productionUrl={apiUrl}
-              demoUrl={demoApiUrl}
+              apiUrl={apiUrl}
               fetch={fetchClient}
+              environments={[
+                { name: 'production', url: apiUrl },
+                { name: 'demo', url: demoApiUrl },
+              ]}
+              storage={asyncStorageAdapter}
+              storageKey="currentEnvironment"
             >
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider

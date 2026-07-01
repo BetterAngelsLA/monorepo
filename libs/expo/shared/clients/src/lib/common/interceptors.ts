@@ -23,10 +23,6 @@ import {
 
 export type HeadersObject = Record<string, string>;
 
-// Re-export for consumers that still import from this package.
-export { composeFetchInterceptors };
-export type { FetchInterceptor };
-
 export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
 

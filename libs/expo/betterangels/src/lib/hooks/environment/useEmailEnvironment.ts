@@ -1,4 +1,4 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useApiConfig } from '@monorepo/ba-platform';
 import { Regex } from '@monorepo/expo/shared/static';
 import { useEffect, useMemo } from 'react';
 
@@ -38,7 +38,7 @@ export default function useEmailEnvironment(email: string): {
 
   useEffect(() => {
     if (!isValidEmail || !targetEnv) return;
-    switchEnvironment(targetEnv);
+    switchEnvironment?.(targetEnv);
   }, [targetEnv, switchEnvironment, isValidEmail]);
 
   return { isValidEmail, isPasswordLogin };

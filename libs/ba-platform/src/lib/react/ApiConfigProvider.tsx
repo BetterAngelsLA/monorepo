@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useMemo } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -8,6 +8,52 @@ export interface ApiConfigContextType {
   apiUrl: string;
   /** Pre-wired fetch (CSRF + Org-ID) with base URL prepended. */
   fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
+  /** Current environment name (only when env-switching is enabled). */
+  environment?: string;
+  /** Switch to a different environment (only when env-switching is enabled). */
+  switchEnvironment?: (env: string) => Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// Storage adapter (same pattern as StorageReader in interceptors)
+// ---------------------------------------------------------------------------
+
+export interface ApiConfigStorage {
+  getItem(key: string): string | null | Promise<string | null>;
+  setItem(key: string, value: string): void | Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// Environment descriptor
+// ---------------------------------------------------------------------------
+
+export interface ApiEnvironment {
+  name: string;
+  url: string;
+}
+
+// ---------------------------------------------------------------------------
+// Provider props
+// ---------------------------------------------------------------------------
+
+export interface ApiConfigProviderProps {
+  children: ReactNode;
+  /**
+   * Base API URL.  When ``environments`` is provided this is the
+   * fallback / initial URL and ``environments`` drives selection.
+   */
+  apiUrl: string;
+  /** CSRF + Org-ID pre-wired fetch function. */
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  /**
+   * Optional — when provided the provider enables environment switching.
+   * The first environment is the default.
+   */
+  environments?: readonly ApiEnvironment[];
+  /** Storage backend for persisting the active environment. */
+  storage?: ApiConfigStorage;
+  /** Storage key (default: ``'ba_environment'``). */
+  storageKey?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -20,28 +66,49 @@ const ApiConfigContext = createContext<ApiConfigContextType | undefined>(undefin
 // Provider
 // ---------------------------------------------------------------------------
 
-export interface ApiConfigProviderProps {
-  children: ReactNode;
-  apiUrl: string;
-  /** CSRF + Org-ID pre-wired fetch function (e.g. from ``createWebFetchClient``). */
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-}
-
-/**
- * Provides ``apiUrl`` and a pre-configured ``fetchClient`` to the React tree.
- *
- * The ``fetchClient`` automatically prepends ``apiUrl`` to relative paths and
- * sets ``Content-Type: application/json``. All CSRF / org-id injection is
- * handled by the ``fetch`` function passed in — this provider just wraps it
- * with the base URL.
- *
- * Consumed via :hook:`useApiConfig`.
- */
 export const ApiConfigProvider = ({
   children,
-  apiUrl,
+  apiUrl: initialApiUrl,
   fetch: fetchWithAuth,
+  environments,
+  storage,
+  storageKey = 'ba_environment',
 }: ApiConfigProviderProps) => {
+  // ---- Environment switching (optional) ----
+  const [envName, setEnvName] = useState<string | null>(null);
+  const envEnabled = !!(environments?.length && storage);
+
+  useEffect(() => {
+    if (!envEnabled || !storage) return;
+    (async () => {
+      const saved = await storage.getItem(storageKey);
+      setEnvName(
+        saved && environments!.some((e) => e.name === saved)
+          ? saved
+          : environments![0].name
+      );
+    })();
+    // environments is intentionally omitted — it's a static config.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envEnabled, storage, storageKey]);
+
+  const switchEnvironment = useCallback(
+    async (env: string) => {
+      if (!storage || !environments) return;
+      if (env === envName) return;
+      await storage.setItem(storageKey, env);
+      setEnvName(env);
+    },
+    [envName, storage, storageKey, environments]
+  );
+
+  // ---- Resolve base URL ----
+  const apiUrl = useMemo(() => {
+    if (!envEnabled || !envName) return initialApiUrl;
+    return environments!.find((e) => e.name === envName)?.url ?? initialApiUrl;
+  }, [envEnabled, envName, initialApiUrl, environments]);
+
+  // ---- Fetch client ----
   const fetchClient = useMemo(() => {
     return async (path: string, options: RequestInit = {}) => {
       const headers = new Headers(options.headers);
@@ -53,8 +120,21 @@ export const ApiConfigProvider = ({
     };
   }, [apiUrl, fetchWithAuth]);
 
+  // ---- Pending state ----
+  if (envEnabled && envName === null) return null;
+
+  // ---- Context value ----
+  const value = useMemo<ApiConfigContextType>(
+    () => ({
+      apiUrl,
+      fetchClient,
+      ...(envEnabled ? { environment: envName!, switchEnvironment } : {}),
+    }),
+    [apiUrl, fetchClient, envEnabled, envName, switchEnvironment]
+  );
+
   return (
-    <ApiConfigContext.Provider value={{ apiUrl, fetchClient }}>
+    <ApiConfigContext.Provider value={value}>
       {children}
     </ApiConfigContext.Provider>
   );
