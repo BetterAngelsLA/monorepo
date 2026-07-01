@@ -19,7 +19,7 @@ const config: CodegenConfig = {
         useTypeImports: true,
       },
       presetConfig: {
-        baseTypesPath: '@monorepo/ba-platform/types',
+        baseTypesPath: '~@monorepo/ba-platform/types',
         folder: '__generated__',
         importTypes: true,
       },
