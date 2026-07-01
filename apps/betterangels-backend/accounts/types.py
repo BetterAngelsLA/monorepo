@@ -262,14 +262,13 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
-# Dynamically built from the registry — adding a template to
-# common.org_types.REGISTRY automatically exposes it here.
-PermissionTemplateEnum = strawberry.enum(  # type: ignore[call-overload]
-    Enum(
-        "PermissionTemplateEnum",  # type: ignore[arg-type]
-        {name.upper().replace(" ", "_"): name for name in REGISTRY.invitable_template_names()},
-    )
-)
+PermissionTemplateEnum = strawberry.enum(
+    Enum("PermissionTemplateEnum", {n.upper().replace(" ", "_"): n for n in REGISTRY.invitable_template_names()}),
+)  # type: ignore[call-overload]
+
+OrgTypeEnum = strawberry.enum(
+    Enum("OrgTypeEnum", {n.upper(): n for n in REGISTRY.org_type_names()}),
+)  # type: ignore[call-overload]
 
 
 @strawberry.input

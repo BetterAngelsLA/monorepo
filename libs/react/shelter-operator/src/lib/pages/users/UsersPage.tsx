@@ -10,6 +10,7 @@ import {
   OrgRoleEnum,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  OrgTypeEnum,
   PermissionTemplateEnum,
 } from '../../apollo/graphql/__generated__/types';
 import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
@@ -120,7 +121,7 @@ function useOrganizationMembers(
   page: number,
   sort: { field: keyof OrganizationMemberOrdering; direction: Ordering },
   search?: string,
-  permissionTemplate?: PermissionTemplateEnum
+  orgType?: OrgTypeEnum
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -130,7 +131,7 @@ function useOrganizationMembers(
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
         filters: { search },
-        permissionTemplate,
+        orgType,
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
@@ -177,7 +178,7 @@ export function UsersPage() {
   );
 
   const { members, totalPages, loading, isInitialLoad, refetch } =
-    useOrganizationMembers(organizationId, page, sort, search);
+    useOrganizationMembers(organizationId, page, sort, search, OrgTypeEnum.Shelter);
 
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);

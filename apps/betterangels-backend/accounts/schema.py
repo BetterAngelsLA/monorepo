@@ -21,12 +21,11 @@ from strawberry_django.permissions import HasPerm
 
 from accounts.emails import send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm
-from accounts.models import PermissionGroup
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
-from .models import Organization, User
+from .models import Organization, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
@@ -44,6 +43,7 @@ from .types import (
     OrganizationMemberType,
     OrganizationType,
     OrgInvitationInput,
+    OrgTypeEnum,
     PermissionTemplateEnum,
     RemoveOrganizationMemberInput,
     UpdateUserInput,
@@ -107,6 +107,7 @@ class Query:
         organization_id: str,
         ordering: Optional[list[OrganizationMemberOrdering]] = None,
         filters: Optional[OrganizationMemberFilter] = None,
+        org_type: Optional[OrgTypeEnum] = None,
         permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
@@ -120,12 +121,31 @@ class Query:
 
         queryset: QuerySet[User] = organization.users.all()
 
+        # When an org_type is provided, filter to members who have
+        # at least one permission template from that org type's template set.
+        # This allows interfaces (e.g. betterangels-admin vs shelter-operator)
+        # to scope the member list to their relevant org type, even when
+        # the organization has multiple types.
+        if org_type is not None:
+            org_config = REGISTRY.org_type(org_type.value)
+            if org_config:
+                template_names = [t.name for t in org_config.templates]
+                has_org_type_template = Exists(
+                    PermissionGroup.objects.filter(
+                        organization_id=organization_id,
+                        template__name__in=template_names,
+                        group__user=OuterRef("pk"),
+                    )
+                )
+                queryset = queryset.filter(has_org_type_template)
+
+        # When a permission_template is provided, filter to members who have
+        # that specific template (e.g. only Caseworkers).
         if permission_template is not None:
-            template_name = permission_template.value
             has_template = Exists(
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
-                    template__name=template_name,
+                    template__name=permission_template.value,
                     group__user=OuterRef("pk"),
                 )
             )

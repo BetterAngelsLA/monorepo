@@ -3,14 +3,14 @@ query OrganizationMembers(
   $ordering: [OrganizationMemberOrdering!]! = []
   $pagination: OffsetPaginationInput
   $filters: OrganizationMemberFilter
-  $permissionTemplate: PermissionTemplateEnum
+  $orgType: OrgTypeEnum
 ) {
   organizationMembers(
     organizationId: $organizationId
     pagination: $pagination
     ordering: $ordering
     filters: $filters
-    permissionTemplate: $permissionTemplate
+    orgType: $orgType
   ) {
     totalCount
     results {
