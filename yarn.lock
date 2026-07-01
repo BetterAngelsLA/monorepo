@@ -2583,21 +2583,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@config-plugins/react-native-blob-util@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@config-plugins/react-native-blob-util@npm:9.0.0"
+"@config-plugins/react-native-blob-util@npm:^14.0.0":
+  version: 14.0.1
+  resolution: "@config-plugins/react-native-blob-util@npm:14.0.1"
   peerDependencies:
-    expo: ^52
-  checksum: 10/2b4d899b28176712c798ec4c9818abe21138b1912d686c5e6f70873b89eeeb1ec0aad5e8a2d632b24570e4e42ac094dc9789a9272a9cf2c50881fd91c05b4540
+    expo: ^56
+  checksum: 10/545d3e5cb4b8dbb58e1646d00ccf3e864e8533f194af44c1d907a2b3cc94c143f1c651947ec43af777a89fe7bb9317648384ffcd4f2c65c1b0693dbc19819ca3
   languageName: node
   linkType: hard
 
-"@config-plugins/react-native-pdf@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@config-plugins/react-native-pdf@npm:9.0.0"
+"@config-plugins/react-native-pdf@npm:^14.0.0":
+  version: 14.0.1
+  resolution: "@config-plugins/react-native-pdf@npm:14.0.1"
   peerDependencies:
-    expo: ^52
-  checksum: 10/33a027eff86f0f42f2ac5d6070d573d71fbb2f71b9e1789dc626720bbdf7530119087d90cb67a4e14b7b8d3867ffe5162957b44bfab4f6b5eff477fdfc550829
+    expo: ^56
+  checksum: 10/dd9cf014fcb4a2f35c15389ca0e00a5bde460d320287373ef4698d9454d026d4bb6d4130af1b5c6555c08cc93d2fde68a5e8f0ec841f7f39838b83371d21ea32
   languageName: node
   linkType: hard
 
@@ -4030,6 +4030,17 @@ __metadata:
     react-native-worklets:
       optional: true
   checksum: 10/f29f3210c7a5c822b1db9047d86f7904116f51aa74ca29c7ae8a1a2fc08b007373d0efe7743840c7786a7800a102261d3cc2743fd96386a355d20942b1a3b9be
+  languageName: node
+  linkType: hard
+
+"@expo/vector-icons@npm:^15.1.1":
+  version: 15.1.1
+  resolution: "@expo/vector-icons@npm:15.1.1"
+  peerDependencies:
+    expo-font: ">=14.0.4"
+    react: "*"
+    react-native: "*"
+  checksum: 10/204fafd5141c81bd55dd33f6c00cdc48ec1d37b6460be6fa3f851ccb235e1fad1097f22d034470daa49a5b839d058bbcadda1efd349c670c2fdce2ae65fb9bba
   languageName: node
   linkType: hard
 
@@ -6159,9 +6170,10 @@ __metadata:
     "@babel/preset-react": "npm:^7.27.1"
     "@babel/preset-typescript": "npm:^7.27.1"
     "@chromatic-com/storybook": "npm:^4.1.0"
-    "@config-plugins/react-native-blob-util": "npm:^9.0.0"
-    "@config-plugins/react-native-pdf": "npm:^9.0.0"
+    "@config-plugins/react-native-blob-util": "npm:^14.0.0"
+    "@config-plugins/react-native-pdf": "npm:^14.0.0"
     "@expo/metro-runtime": "npm:~56.0.15"
+    "@expo/vector-icons": "npm:^15.1.1"
     "@gorhom/bottom-sheet": "npm:^5"
     "@graphql-codegen/cli": "npm:^6.0.1"
     "@graphql-codegen/client-preset": "npm:^5.3.0"
@@ -6326,7 +6338,7 @@ __metadata:
     react-hook-form: "npm:^7.52.1"
     react-mailchimp-subscribe: "npm:^2.1.3"
     react-native: "npm:0.85.3"
-    react-native-blob-util: "npm:^0.21.2"
+    react-native-blob-util: "npm:^0.24.9"
     react-native-gesture-handler: "npm:~2.31.1"
     react-native-google-places-autocomplete: "npm:^2.6.4"
     react-native-keyboard-controller: "npm:1.21.6"
@@ -14548,10 +14560,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base-64@npm:0.1.0":
-  version: 0.1.0
-  resolution: "base-64@npm:0.1.0"
-  checksum: 10/5a42938f82372ab5392cbacc85a5a78115cbbd9dbef9f7540fa47d78763a3a8bd7d598475f0d92341f66285afd377509851a9bb5c67bbecb89686e9255d5b3eb
+"base-64@npm:1.0.0":
+  version: 1.0.0
+  resolution: "base-64@npm:1.0.0"
+  checksum: 10/d10b64a1fc9b2c5a5f39f1ce1e6c9d1c5b249222bbfa3a0604c592d90623caf74419983feadd8a170f27dc0c3389704f72faafa3e645aeb56bfc030c93ff074a
   languageName: node
   linkType: hard
 
@@ -19762,6 +19774,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"glob@npm:13.0.6, glob@npm:^13.0.0, glob@npm:^13.0.1":
+  version: 13.0.6
+  resolution: "glob@npm:13.0.6"
+  dependencies:
+    minimatch: "npm:^10.2.2"
+    minipass: "npm:^7.1.3"
+    path-scurry: "npm:^2.0.2"
+  checksum: 10/201ad69e5f0aa74e1d8c00a481581f8b8c804b6a4fbfabeeb8541f5d756932800331daeba99b58fb9e4cd67e12ba5a7eba5b82fb476691588418060b84353214
+  languageName: node
+  linkType: hard
+
 "glob@npm:7.0.x":
   version: 7.0.6
   resolution: "glob@npm:7.0.6"
@@ -19789,17 +19812,6 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10/ab3bccfefcc0afaedbd1f480cd0c4a2c0e322eb3f0aa7ceaa31b3f00b825069f17cf0f1fc8b6f256795074b903f37c0ade37ddda6a176aa57f1c2bbfe7240653
-  languageName: node
-  linkType: hard
-
-"glob@npm:^13.0.0, glob@npm:^13.0.1":
-  version: 13.0.6
-  resolution: "glob@npm:13.0.6"
-  dependencies:
-    minimatch: "npm:^10.2.2"
-    minipass: "npm:^7.1.3"
-    path-scurry: "npm:^2.0.2"
-  checksum: 10/201ad69e5f0aa74e1d8c00a481581f8b8c804b6a4fbfabeeb8541f5d756932800331daeba99b58fb9e4cd67e12ba5a7eba5b82fb476691588418060b84353214
   languageName: node
   linkType: hard
 
@@ -26681,16 +26693,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-blob-util@npm:^0.21.2":
-  version: 0.21.3
-  resolution: "react-native-blob-util@npm:0.21.3"
+"react-native-blob-util@npm:^0.24.9":
+  version: 0.24.10
+  resolution: "react-native-blob-util@npm:0.24.10"
   dependencies:
-    base-64: "npm:0.1.0"
-    glob: "npm:^10.3.10"
+    base-64: "npm:1.0.0"
+    glob: "npm:13.0.6"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/0b8891f42fec2ee062e4dabf591c7e3f0a89feef2ddf44027e19e21df069062f108a47f3e02fac2231edbab6fa45519933555a2197b81c128ccf442e46398961
+  checksum: 10/3999fbe4c856fd45f09248a80c324c5cd464d9774c705138e864e06d8dab826d2be1ccba25beea09ce1352b66922094eef35435612d5b5e9bde5443803f0269a
   languageName: node
   linkType: hard
 
