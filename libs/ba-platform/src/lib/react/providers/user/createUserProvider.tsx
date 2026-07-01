@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,7 +121,7 @@ export function createUserProvider<
 
   // ---- Provider ------------------------------------------------------
 
-  function UserProvider({ children }: { children: ReactNode }) {
+  function UserProvider({ children, storage }: { children: ReactNode; storage?: StorageAdapter }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -176,6 +177,7 @@ export function createUserProvider<
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
+          storage={storage}
           organizations={(user?.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
