@@ -1,12 +1,11 @@
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import {
-  userAgentInterceptor,
   bodyInterceptor,
   includeCredentialsInterceptor,
-  hmisAuthInterceptor,
-  interceptorHmis,
 } from '@monorepo/expo/shared/clients';
 import {
   composeFetchInterceptors,
+  type FetchInterceptor,
 } from '@monorepo/fetch';
 import {
   createCsrfInterceptor,
@@ -20,30 +19,37 @@ import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { createNativeTokenReader } from './csrfTokenProvider';
 
 /**
- * Pre-composed Expo / React Native fetch client.
+ * Pre-composed Expo / React Native fetch client + Apollo HTTP link.
  *
  * Chains (in order):
  * 1. Org-ID injection (from ``AsyncStorage``)
  * 2. Proactive CSRF header injection (via ``CookieManager``)
- * 3. User-Agent spoofing
- * 4. Body serialisation
- * 5. HMIS auth token injection
- * 6. Credentials include
- * 7. HMIS-specific cookie extraction
+ * 3. Body serialisation
+ * 4. Credentials include
  *
- * Pass the result as the ``fetch`` option to Apollo's HTTP link or
- * ``ApiConfigProvider``.
+ * App-specific interceptors (HMIS auth, user-agent, etc.) can be passed
+ * via ``extraInterceptors`` — they are appended after the platform defaults.
+ *
+ * Returns a ``fetch`` function (pass to ``ApiConfigProvider`` /
+ * ``EnvironmentSwitcherProvider``) and a pre-configured ``UploadHttpLink``
+ * (pass to ``ApolloClientProvider``).
  */
-export const createExpoFetchClient = (baseUrl: string) =>
-  composeFetchInterceptors(
+export const createExpoFetchClient = (
+  apiUrl: string,
+  extraInterceptors: FetchInterceptor[] = [],
+) => {
+  const fetch = composeFetchInterceptors(
     createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
     createCsrfInterceptor(
-      createNativeTokenReader(baseUrl),
-      createCsrfTokenRefresher(baseUrl, (header) => CookieManager.setFromResponse(baseUrl, header)),
+      createNativeTokenReader(apiUrl),
+      createCsrfTokenRefresher(apiUrl, (header) => CookieManager.setFromResponse(apiUrl, header)),
     ),
-    userAgentInterceptor,
     bodyInterceptor,
-    hmisAuthInterceptor,
     includeCredentialsInterceptor,
-    interceptorHmis,
+    ...extraInterceptors,
   );
+
+  const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch });
+
+  return { fetch, link };
+};

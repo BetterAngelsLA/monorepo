@@ -1,3 +1,4 @@
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { composeFetchInterceptors } from '@monorepo/fetch';
 import { localStorageAdapter } from '@monorepo/react/shared';
 import {
@@ -10,14 +11,14 @@ import {
 import { readCsrfToken } from './csrfTokenProvider';
 
 /**
- * Pre-composed web fetch client.
+ * Pre-composed web fetch client + Apollo HTTP link.
  *
  * Chains org-id injection + CSRF token refresh, backed by browser-native
- * localStorage and cookie APIs. Pass the result as the ``fetch`` option
- * to Apollo's ``UploadHttpLink`` or any other fetch consumer.
+ * localStorage and cookie APIs.  Returns a ``fetch`` function and a
+ * pre-configured ``UploadHttpLink`` ready for ``ApolloClientProvider``.
  */
-export const createWebFetchClient = () =>
-  composeFetchInterceptors(
+export const createWebFetchClient = (apiUrl: string) => {
+  const fetch = composeFetchInterceptors(
     createOrgInterceptor(localStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
     createCsrfInterceptor(
       readCsrfToken,
@@ -25,3 +26,8 @@ export const createWebFetchClient = () =>
       CSRF_COOKIE_NAME,
     ),
   );
+
+  const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch });
+
+  return { fetch, link };
+};

@@ -1,6 +1,5 @@
 import 'expo-dev-client';
 
-import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   AppUpdatePrompt,
@@ -15,9 +14,16 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { ApolloClientProvider } from '@monorepo/ba-platform/expo';
+import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import {
-  ApiConfigProvider,
+  createRefererInterceptor,
+  userAgentInterceptor,
+  hmisAuthInterceptor,
+  interceptorHmis,
+} from '@monorepo/expo/shared/clients';
+import {
+  EnvironmentSwitcherProvider,
+  ApolloClientProvider,
 } from '@monorepo/ba-platform';
 import {
   BottomSheetModalProvider,
@@ -32,7 +38,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
-import { fetchClient } from './fetchClient';
 
 hideDevMenuFab();
 
@@ -47,6 +52,13 @@ const reactQueryClient = new QueryClient({
   },
 });
 
+const { fetch, link } = createExpoFetchClient(apiUrl, [
+  createRefererInterceptor(apiUrl),
+  userAgentInterceptor,
+  hmisAuthInterceptor,
+  interceptorHmis,
+]);
+
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
@@ -58,26 +70,23 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   useNewRelic();
 
-  const httpLink = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
-
   return (
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
-            <ApiConfigProvider
-              apiUrl={apiUrl}
-              fetch={fetchClient}
+            <EnvironmentSwitcherProvider
               environments={[
                 { name: 'production', url: apiUrl },
                 { name: 'demo', url: demoApiUrl },
               ]}
               storage={asyncStorageAdapter}
+              fetch={fetch}
             >
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider
                   typePolicies={baApolloTypePolicies}
-                  link={httpLink}
+                  link={link}
                 >
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
@@ -102,7 +111,7 @@ export default function RootLayout() {
                   </BaFeatureControlProvider>
                 </ApolloClientProvider>
               </QueryClientProvider>
-            </ApiConfigProvider>
+            </EnvironmentSwitcherProvider>
           </GooglePlacesProvider>
         </NativePaperProvider>
       </BottomSheetModalProvider>

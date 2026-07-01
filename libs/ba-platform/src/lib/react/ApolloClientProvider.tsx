@@ -16,10 +16,14 @@ export const ApolloClientProvider = ({ children, link, cache, typePolicies }: TP
     [cache, typePolicies]
   );
 
-  const client = new ApolloClient({
-    link,
-    cache: resolvedCache,
-    defaultOptions: { watchQuery: { notifyOnNetworkStatusChange: false } },
-  });
+  const client = useMemo(
+    () =>
+      new ApolloClient({
+        link,
+        cache: resolvedCache,
+        defaultOptions: { watchQuery: { notifyOnNetworkStatusChange: false } },
+      }),
+    [link, resolvedCache]
+  );
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };

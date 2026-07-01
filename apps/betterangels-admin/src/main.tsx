@@ -1,4 +1,4 @@
-import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { createWebFetchClient } from '@monorepo/ba-platform/web';
 import { ApolloClientProvider } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
@@ -10,10 +10,9 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { apiUrl } from '../config';
 import App from './app/app';
-import { fetchClient } from './lib/fetchClient';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
-const httpLink = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+const { fetch, link } = createWebFetchClient(apiUrl);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,8 +20,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
-      <ApolloClientProvider link={httpLink}>
+    <ApiConfigProvider apiUrl={apiUrl} fetch={fetch}>
+      <ApolloClientProvider link={link}>
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>

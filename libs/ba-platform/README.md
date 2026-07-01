@@ -85,10 +85,9 @@ with one target.
 
 | Import path | Target | Contents |
 |---|---|---|
-| `@monorepo/ba-platform` | All apps | Platform-agnostic — constants, orgLink, React providers, GQL hooks |
-| `@monorepo/ba-platform/react` | Web only | Browser APIs — CSRF link, web Apollo client |
-| `@monorepo/ba-platform/web` | Web only | Browser APIs — CSRF + org fetch client, web Apollo client |
-| `@monorepo/ba-platform/expo` | Expo only | Native APIs — Expo Apollo client, `ApolloClientProvider` |
+| `@monorepo/ba-platform` | All apps | Platform-agnostic — constants, React providers, `ApolloClientProvider`, `ApiConfigProvider`, `EnvironmentSwitcherProvider`, GQL hooks |
+| `@monorepo/ba-platform/web` | Web only | `createWebFetchClient` — pre-composed fetch + Apollo link (browser localStorage / cookies) |
+| `@monorepo/ba-platform/expo` | Expo only | `createExpoFetchClient` — pre-composed fetch + Apollo link (CookieManager / AsyncStorage) |
 | `@monorepo/ba-platform/types` | All apps | Generated GQL types only (no runtime code) |
 | `@monorepo/ba-platform/permissions` | All apps | Generated permission enums + `PermissionEnum` union type |
 
@@ -119,18 +118,20 @@ React works on both web and native. The only boundary that matters is
 
 If a new platform emerges (Node.js runtime, worker thread, etc.):
 
-1. **Create the barrel file** — `src/<name>.ts`, mirroring `src/react.ts`.
-   Start with an `export {};` placeholder and a doc comment.
+1. **Create the NX project** — add a `project.json` under `libs/ba-platform/<name>/`
+   (see `web/project.json` or `expo/project.json` for templates).
 
-2. **Register the path alias** — add to `tsconfig.base.json`:
-   `"@monorepo/ba-platform/<name>": ["./libs/ba-platform/src/<name>.ts"]`
+2. **Create the barrel file** — `libs/ba-platform/<name>/src/index.ts`.
 
-3. **Update this README** — add the entry point to the table and decision
+3. **Register the path alias** — add to `tsconfig.base.json`:
+   `"@monorepo/ba-platform/<name>": ["./libs/ba-platform/<name>/src/index.ts"]`
+
+4. **Update this README** — add the entry point to the table and decision
    tree above.
 
 The `src/lib/` directory structure stays the same — the new entry point
 re-exports from the internal directories that hold the platform-specific
-code (e.g. `src/lib/<name>/`).
+code.
 
 ## What belongs here
 
@@ -148,10 +149,13 @@ code (e.g. `src/lib/<name>/`).
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `constants.ts` | TS | `DEFAULT_ORG_STORAGE_KEY` — shared between `orgLink` and `useActiveOrgState` |
-| `apollo/orgLink` | Apollo | Creates an Apollo Link that injects `X-Organization-ID` from storage. Framework-agnostic — takes a `StorageAdapter` param. |
+| `constants.ts` | TS | `CSRF_COOKIE_NAME`, `CSRF_HEADER_NAME`, `CSRF_LOGIN_PATH`, `DEFAULT_ORG_STORAGE_KEY` |
+| `interceptors.ts` | TS | Re-exports from `@monorepo/fetch` + BA-specific constants for convenience |
 | `apollo/graphql/__generated__/` | Apollo | Generated TypeScript types from the BA GraphQL schema (codegen output) |
-| `apollo/user/` | Apollo | `CurrentOrgUser` query + generated `useCurrentOrgUserQuery` hook |
+| `apollo/user/` | Apollo | `CurrentOrgUser` query + generated `useCurrentOrgUserQuery` hook + `logout` mutation |
+| `react/ApiConfigProvider` | React | `ApiConfigProvider` + `useApiConfig` — provides base `apiUrl` and pre-wired `fetchClient` |
+| `react/ApolloClientProvider` | React | Thin `ApolloProvider` wrapper — accepts an `ApolloLink`, `TypePolicies`, and optional cache |
+| `react/EnvironmentSwitcherProvider` | React | `EnvironmentSwitcherProvider` + `useEnvironment` — wraps `ApiConfigProvider` with environment switching (persisted via storage). Only needed by apps that toggle API environments. |
 | `react/providers/activeOrg/` | React | `ActiveOrgContext`, `ActiveOrgProvider`, `useActiveOrg`, `useActiveOrgState` — shared org management. Factory exports (`createActiveOrgContext<T>()`, etc.) for custom org types. |
 | `react/providers/user/` | React | `UserProvider`, `useUser` — shared current-user context. Factory export (`createUserProvider`) for custom user types. |
 
@@ -159,15 +163,14 @@ code (e.g. `src/lib/<name>/`).
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `createWebFetchClient` | Fetch | Pre-composed web fetch client: org-id injection + CSRF token refresh, backed by browser localStorage and cookie APIs. Use as the `fetch` option for Apollo's `UploadHttpLink`. |
+| `createWebFetchClient(apiUrl)` | Fetch | Returns `{fetch, link}` — pre-composed web fetch (org-id injection + CSRF token refresh via browser localStorage / cookies) and a ready-to-use `UploadHttpLink`. Pass `fetch` to `ApiConfigProvider`, `link` to `ApolloClientProvider`. |
 
 ### Expo-only (`@monorepo/ba-platform/expo`)
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `apollo/expo/client` | Apollo | Expo Apollo client — composes native fetch, error link, expo org link |
-| `apollo/expo/links/orgLink/` | Apollo | Pre-configured org link using `AsyncStorage` adapter |
-| `expo/ApolloClientProvider` | React | RN `ApolloProvider` wrapper — reads API config from context, recreates client on URL change |
+| `createExpoFetchClient(apiUrl)` | Fetch | Returns `{fetch, link}` — pre-composed Expo fetch (org-id + CSRF via CookieManager / AsyncStorage, user-agent, body, HMIS auth, credentials) and a ready-to-use `UploadHttpLink`. Pass `fetch` to `EnvironmentSwitcherProvider`, `link` to `ApolloClientProvider`. |
+| `createNativeTokenReader(baseUrl)` | Fetch | React Native `TokenReader` — reads cookies via `CookieManager` for CSRF token detection. |
 
 ### Types only (`@monorepo/ba-platform/types`)
 
@@ -189,8 +192,8 @@ code (e.g. `src/lib/<name>/`).
 ## Conventions
 
 - **Symmetric layout** — mirror `libs/` internally. React → `react/`, Apollo → `apollo/`, TS → `ts/`.
-- **Right entry point** — shared → `@monorepo/ba-platform`, web → `@monorepo/ba-platform/react`, native → `@monorepo/ba-platform/expo`. See [decision tree](#decision-tree).
+- **Right entry point** — shared → `@monorepo/ba-platform`, web → `@monorepo/ba-platform/web`, native → `@monorepo/ba-platform/expo`. See [decision tree](#decision-tree).
 - **Single source of truth** — if two BA apps need it, it goes here. Apps re-export, never duplicate.
-- **Barrel discipline** — the main `src/index.ts` must never re-export from `src/react.ts` or `src/expo.ts`. Platform-specific code stays behind its own entry point.
+- **Barrel discipline** — the main `src/index.ts` must never re-export from platform-specific entry points. Platform-specific code stays behind its own entry point (`web/`, `expo/`).
 - **Factory exports** — providers and hooks that accept a type parameter (e.g. `createActiveOrgContext<T>()`) are exported as factories so apps can build their own typed instances.
 

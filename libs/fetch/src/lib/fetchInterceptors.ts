@@ -70,11 +70,12 @@ export const createCsrfInterceptor = (
   refreshToken: TokenRefresher,
   cookieName = 'csrftoken',
   headerName = 'x-csrftoken',
+  loginPath = '/admin/login/',
 ): FetchInterceptor =>
   async (_input, init, next) => {
     let token = await readToken(cookieName);
     if (!token) {
-      await refreshToken('/admin/login/');
+      await refreshToken(loginPath);
       token = await readToken(cookieName);
     }
     const headers = new Headers(init.headers);

@@ -3,11 +3,7 @@
  */
 
 import type { FetchInterceptor } from '@monorepo/fetch';
-import { composeFetchInterceptors } from '@monorepo/fetch';
 import {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-  CSRF_LOGIN_PATH,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
@@ -18,7 +14,6 @@ import {
   HEADER_NAMES,
   HEADER_VALUES,
   MODERN_BROWSER_USER_AGENT,
-  MUTATING_METHODS,
 } from './constants';
 
 export type HeadersObject = Record<string, string>;
@@ -165,7 +160,7 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
  * Injects the HMIS token header for authenticated HMIS API requests.
  *
  * CSRF header injection is handled separately by the ba-platform
- * ``createCsrfInterceptor`` (proactive) and the reactive retry below.
+ * ``createCsrfInterceptor`` (proactive).
  */
 export const hmisAuthInterceptor: FetchInterceptor = async (
   _input,
@@ -178,61 +173,6 @@ export const hmisAuthInterceptor: FetchInterceptor = async (
   const headers = new Headers(init.headers);
   headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
   return next(_input, { ...init, headers });
-};
-
-/**
- * Fetch a fresh CSRF token from the Django admin login endpoint.
- *
- * @param baseUrl  Base URL of the Django backend (defaults to ``''``
- *   which resolves relative to the app origin).
- */
-const fetchFreshCsrf = async (baseUrl: string = ''): Promise<void> => {
-  const csrfResponse = await fetch(
-    `${baseUrl}${CSRF_LOGIN_PATH}?t=${Date.now()}`,
-    {
-      headers: {
-        [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_HTML,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      },
-      credentials: 'include',
-      cache: 'no-store',
-    }
-  );
-
-  const setCookie = csrfResponse.headers.get('set-cookie');
-  if (setCookie) {
-    await CookieManager.setFromResponse(baseUrl, setCookie);
-  }
-};
-
-/**
- * CSRF interceptor for Django CSRF protection (reactive / retry strategy).
- *
- * On a 403 response to a mutating request the interceptor fetches a fresh
- * CSRF token from the Django admin login endpoint and retries the request
- * **once**.
- *
- * @param baseUrl  Base URL of the Django backend.  Defaults to ``''``
- *   (resolve relative to the current origin).
- */
-export const createCsrfInterceptor = (baseUrl: string = ''): FetchInterceptor => {
-  return async (input, init, next) => {
-    let response = await next(input, init);
-
-    if (response.status === 403) {
-      const method = (init.method || 'GET').toUpperCase();
-      const isMutating = MUTATING_METHODS.includes(
-        method as (typeof MUTATING_METHODS)[number]
-      );
-
-      if (isMutating) {
-        await fetchFreshCsrf(baseUrl);
-        response = await next(input, init);
-      }
-    }
-
-    return response;
-  };
 };
 
 /**
