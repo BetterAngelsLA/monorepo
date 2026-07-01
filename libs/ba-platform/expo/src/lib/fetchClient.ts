@@ -1,4 +1,3 @@
-import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import {
   bodyInterceptor,
   includeCredentialsInterceptor,
@@ -19,7 +18,7 @@ import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { createNativeTokenReader } from './csrfTokenProvider';
 
 /**
- * Pre-composed Expo / React Native fetch client + Apollo HTTP link.
+ * Pre-composed Expo / React Native fetch client.
  *
  * Chains (in order):
  * 1. Org-ID injection (from ``AsyncStorage``)
@@ -30,15 +29,15 @@ import { createNativeTokenReader } from './csrfTokenProvider';
  * App-specific interceptors (HMIS auth, user-agent, etc.) can be passed
  * via ``extraInterceptors`` — they are appended after the platform defaults.
  *
- * Returns a ``fetch`` function (pass to ``ApiConfigProvider`` /
- * ``EnvironmentSwitcherProvider``) and a pre-configured ``UploadHttpLink``
- * (pass to ``ApolloClientProvider``).
+ * Returns a ``fetch``-compatible function.  Pass it to
+ * ``EnvironmentSwitcherProvider`` (as ``fetch``) and to Apollo's
+ * ``UploadHttpLink`` (as the ``fetch`` option).
  */
 export const createExpoFetchClient = (
   apiUrl: string,
   extraInterceptors: FetchInterceptor[] = [],
-) => {
-  const fetch = composeFetchInterceptors(
+) =>
+  composeFetchInterceptors(
     createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
     createCsrfInterceptor(
       createNativeTokenReader(apiUrl),
@@ -48,8 +47,3 @@ export const createExpoFetchClient = (
     includeCredentialsInterceptor,
     ...extraInterceptors,
   );
-
-  const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch });
-
-  return { fetch, link };
-};

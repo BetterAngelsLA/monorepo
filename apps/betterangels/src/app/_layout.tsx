@@ -14,6 +14,7 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import {
   createRefererInterceptor,
@@ -52,12 +53,13 @@ const reactQueryClient = new QueryClient({
   },
 });
 
-const { fetch, link } = createExpoFetchClient(apiUrl, [
+const fetchClient = createExpoFetchClient(apiUrl, [
   createRefererInterceptor(apiUrl),
   userAgentInterceptor,
   hmisAuthInterceptor,
   interceptorHmis,
 ]);
+const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
