@@ -36,14 +36,10 @@ export function ShelterServicesForm(props: TProps) {
   const [createdOtherOptionsByCategory, setCreatedOtherOptionsByCategory] =
     useState<Record<string, DropdownOption<string>[]>>({});
 
-  const {
-    control,
-    handleSubmit,
-    formState: { isValid },
-    reset,
-  } = useForm<ServicesFormData>({
+  const { control, handleSubmit, reset } = useForm<ServicesFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {
@@ -110,9 +106,9 @@ export function ShelterServicesForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit(onSubmit)}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}

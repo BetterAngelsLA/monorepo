@@ -1,9 +1,5 @@
 # Tooling & Commands
 
-## GitHub MCP Auto-Bootstrap
-
-If `~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` does not exist, copy it from `docs/cline_mcp_settings.example.json`. The `postCreateCommand` in `.devcontainer/devcontainer.json` runs `tools/scripts/post-create.sh` which does this automatically — this is a fallback.
-
 ## Key Commands
 
 ```bash
