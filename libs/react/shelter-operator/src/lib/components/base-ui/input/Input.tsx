@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/shared';
+import { mergeCss, Regex } from '@monorepo/react/shared';
 import { AlertCircle } from 'lucide-react';
 import type {
   FocusEvent,
@@ -9,6 +9,7 @@ import { forwardRef, useId, useState } from 'react';
 import { Label } from '../label';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
+import { normalizeUrlScheme } from './utils/normalizeUrlScheme';
 
 const validationPatterns: Record<InputDataType, RegExp> = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -16,6 +17,7 @@ const validationPatterns: Record<InputDataType, RegExp> = {
   number: /^-?\d+(\.\d+)?$/,
   time: /^([01]\d|2[0-3]):([0-5]\d)$/,
   date: /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/,
+  url: Regex.url,
   // Match any non-empty string, including multiline textarea values.
   string: /[\s\S]+/,
 };
@@ -47,6 +49,7 @@ const dataTypeLabels: Partial<Record<InputDataType, string>> = {
   time: 'time',
   date: 'date',
   string: 'value',
+  url: 'URL',
 };
 
 const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
@@ -56,6 +59,7 @@ const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
   'phone-number': 'tel',
   time: 'time',
   date: 'date',
+  url: 'url',
 };
 
 const isValueValid = (
@@ -156,6 +160,17 @@ export const Input = forwardRef<
   ) => {
     setIsFocused(false);
     setInternalTouched(true);
+
+    // Auto-prepend https:// for url fields when no scheme is present
+    if (dataType === 'url') {
+      const url = normalizeUrlScheme(value as string);
+      if (url && url !== value) {
+        (inputProps.onChange as (e: { target: { value: string } }) => void)?.({
+          target: { value: url },
+        });
+      }
+    }
+
     externalOnBlur?.(e);
   };
 
@@ -240,11 +255,11 @@ export const Input = forwardRef<
         ) : null}
       </div>
 
-      {shouldShowError ? (
+      {shouldShowError && (
         <Text id={messageId} variant="caption" className="text-red-500">
           {displayError}
         </Text>
-      ) : null}
+      )}
     </div>
   );
 });

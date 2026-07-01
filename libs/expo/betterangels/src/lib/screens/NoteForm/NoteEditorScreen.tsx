@@ -7,11 +7,11 @@ import { useEffect, useLayoutEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   DeleteNoteDocument,
-  SelahTeamEnum,
   UpdateNoteDocument,
   ViewNoteDocument,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
 import { InteractionsDocument } from '../../ui-components/InteractionList';
 import NoteForm from './NoteForm';
@@ -27,11 +27,13 @@ type NoteEditorScreenProps = {
   noteId?: string;
   arrivedFrom?: string;
   clientProfileId?: string;
-  team?: string;
+  teamId?: string;
 };
 
 export default function NoteEditorScreen(props: NoteEditorScreenProps) {
-  const { mode, noteId, arrivedFrom, clientProfileId, team } = props;
+  const { mode, noteId, arrivedFrom, clientProfileId, teamId: routeTeamId } = props;
+  const [teamPreference] = useUserTeamPreference();
+  const teamId = routeTeamId || teamPreference || undefined;
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -59,7 +61,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
     resolver: zodResolver(NoteFormSchema),
     defaultValues: {
       ...NOTE_FORM_EMPTY_STATE,
-      team: (team as SelahTeamEnum) || undefined,
+      teamId: teamId || undefined,
     },
     mode: 'onSubmit',
   });

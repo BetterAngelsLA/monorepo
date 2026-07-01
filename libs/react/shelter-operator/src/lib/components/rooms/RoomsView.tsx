@@ -3,12 +3,17 @@ import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  OperatorShelterType,
   RoomStatusChoices,
-  ShelterType,
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
-import { shelterCreateRoomRoute, shelterEditRoomRoute } from '../../routing';
+import {
+  shelterCreateReservationRoute,
+  shelterCreateRoomRoute,
+  shelterEditRoomRoute,
+} from '../../routing';
 import { Button } from '../base-ui/buttons';
+import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { RoomTable, type RoomRowObject } from '../RoomTable';
 import {
   CloneRoomDocument,
@@ -27,6 +32,11 @@ import {
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    roomIds: string[];
+    roomName?: string;
+  }>({ isOpen: false, roomIds: [] });
 
   const { data, loading, refetch } = useQuery<
     GetRoomsQuery,
@@ -60,9 +70,46 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     maintenanceFlag: false,
     occupantIds: [],
     pets: [],
-    shelter: {} as ShelterType,
+    shelter: {} as OperatorShelterType,
     storage: false,
   }));
+
+  const handleDeleteRequest = useCallback(
+    (roomIds: string[], roomName?: string) => {
+      setDeleteConfirmation({ isOpen: true, roomIds, roomName });
+    },
+    []
+  );
+
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeleteConfirmation({ isOpen: false, roomIds: [] });
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    setActionError(null);
+    try {
+      await deleteRooms({
+        variables: { data: { ids: deleteConfirmation.roomIds } },
+      });
+      await refetch();
+    } catch (e) {
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : 'Unable to delete room(s). Please try again.'
+      );
+    }
+    closeDeleteConfirmation();
+  }, [
+    deleteConfirmation.roomIds,
+    deleteRooms,
+    refetch,
+    closeDeleteConfirmation,
+  ]);
+
+  const deleteConfirmationTitle = deleteConfirmation.roomName
+    ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
+    : 'Are you sure you want to delete the selected room?';
 
   const handleEdit = useCallback(
     (rowObject: RoomRowObject) => {
@@ -97,43 +144,53 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     [cloneRoom, refetch]
   );
 
-  const handleDeleteRooms = useCallback(
-    async (roomIds: string[]) => {
-      setActionError(null);
-      try {
-        await deleteRooms({ variables: { data: { ids: roomIds } } });
-        await refetch();
-      } catch (e) {
-        setActionError(
-          e instanceof Error
-            ? e.message
-            : 'Unable to delete room(s). Please try again.'
-        );
-      }
+  const handleReserve = useCallback(
+    (rowObject: RoomRowObject) => {
+      navigate(shelterCreateReservationRoute(shelterId), {
+        state: { roomId: rowObject.id },
+      });
     },
-    [deleteRooms, refetch]
+    [navigate, shelterId]
   );
 
   return (
     <>
-      {actionError ? (
+      {actionError && (
         <div
           className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           role="alert"
         >
           {actionError}
         </div>
-      ) : null}
+      )}
 
       <div>
         <RoomTable
           rows={rows}
           onRowClick={handleEdit}
           onClone={handleClone}
-          onDeleteRooms={handleDeleteRooms}
+          onDeleteRooms={(roomIds) => handleDeleteRequest(roomIds)}
+          onReserve={handleReserve}
           loading={loading}
         />
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        variant="danger"
+        title={deleteConfirmationTitle}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: confirmDelete,
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: closeDeleteConfirmation,
+        }}
+      />
+
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button
           leftIcon={<Plus />}

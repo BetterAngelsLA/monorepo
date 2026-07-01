@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/wildfires/src",
   "projectType": "application",
-  "tags": [],
+  "tags": ["type:app", "scope:wildfires"],
   "targets": {
     "test": {
       "executor": "@nx/jest:jest",

@@ -1,11 +1,6 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from accounts.enums import OrgRoleEnum
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import User
-from accounts.permissions import UserOrganizationPermissions
-from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
@@ -15,7 +10,23 @@ from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
+from accounts.enums import OrgRoleEnum
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
+from accounts.role_manager import OrgRoleManager
+
 from .baker_recipes import organization_recipe, permission_group_recipe
+
+
+def _perm_value(p: str) -> str:
+    """Extract the ``"app_label.codename"`` string from a permission item.
+
+    :class:`~django.db.models.TextChoices` members carry their value in
+    ``.value``; plain strings (from model ``PermissionSet``-backed perms)
+    are returned as-is.
+    """
+    return p.value if hasattr(p, "value") else p  # type: ignore[union-attr,return-value]
 
 
 @ignore_warnings(category=UserWarning)
@@ -176,34 +187,14 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
-        ("user_role, expected_permissions"),
+        ("user_role", "templates"),
         [
-            (
-                OrgRoleEnum.MEMBER,
-                [],
-            ),
-            (
-                OrgRoleEnum.ADMIN,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                ],
-            ),
-            (
-                OrgRoleEnum.SUPERUSER,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                ],
-            ),
+            (OrgRoleEnum.MEMBER, []),
+            (OrgRoleEnum.ADMIN, [CASEWORKER, ORG_ADMIN]),
+            (OrgRoleEnum.SUPERUSER, [CASEWORKER, ORG_SUPERUSER]),
         ],
     )
-    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, expected_permissions: list) -> None:
+    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, templates: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
@@ -220,9 +211,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        permissions {
-                            accounts
-                        }
+                        permissions
                     }
                 }
             }
@@ -230,24 +219,28 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         expected_query_count = 2
 
-        if user_role == OrgRoleEnum.MEMBER:
-            pass  # no roles assigned
-        elif user_role == OrgRoleEnum.ADMIN:
-            omb.add_roles(user, CASEWORKER, ORG_ADMIN)
-        elif user_role == OrgRoleEnum.SUPERUSER:
-            omb.add_roles(user, CASEWORKER, ORG_SUPERUSER)
+        if templates:
+            omb.add_roles(user, *templates)
+
+        # This test verifies org-scoped permissions specifically.  We compute
+        # the expected set from the same templates passed to add_roles(),
+        # filtering to the UserOrganizationPermissions namespace so the
+        # assertion stays exact without being polluted by model-level or
+        # non-DB-backed permissions.
+        org_perm_values = {p.value for p in UserOrganizationPermissions}
+        expected_org_perms = sorted(
+            _perm_value(p) for t in templates for p in t.permissions if _perm_value(p) in org_perm_values
+        )
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        org_perms = {
-            o["name"]: sorted(o["permissions"]["accounts"]) for o in response["data"]["currentUser"]["organizations"]
-        }
-        self.assertEqual(org_perms["o1"], sorted(expected_permissions))
+        org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
         self.assertEqual(
-            org_perms["o2"],
-            [],
+            sorted(p for p in org_perms["o1"] if p in org_perm_values),
+            expected_org_perms,
         )
+        self.assertEqual(org_perms["o2"], [])
 
 
 class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):

@@ -109,6 +109,15 @@ type AuthorizedPresignedS3UploadsType {
   uploads: [AuthorizedPresignedS3UploadType!]!
 }
 
+type BedCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
+
 input BedFilter {
   id: ID
   maintenanceFlag: Boolean
@@ -150,7 +159,7 @@ type BedType {
   name: String
   pets: [PetType!]!
   room: RoomType
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   statusNotes: String
   storage: Boolean!
   type: BedTypeChoices
@@ -172,14 +181,6 @@ type BedTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [BedType!]!
-}
-
-type BedsByStatusType {
-  available: Int!
-  inTurnaround: Int!
-  occupied: Int!
-  outOfService: Int!
-  reserved: Int!
 }
 
 input BulkDeleteInput {
@@ -814,7 +815,7 @@ union CreateTeamPayload = TeamType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  permissions: OrgPermissions!
+  permissions: [String!]!
 }
 
 type CurrentUserType {
@@ -1773,8 +1774,8 @@ type OperatorShelterType {
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
-  roomsByStatus: RoomsByStatusType!
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
 }
 
 type OperatorShelterTypeOffsetPaginated {
@@ -1803,13 +1804,6 @@ input OrgInvitationInput {
   lastName: String!
   organizationId: ID!
   permissionTemplate: PermissionTemplateEnum!
-}
-
-type OrgPermissions {
-  accounts: [UserOrganizationPermissions!]!
-  reports: [ReportPermissions!]!
-  shelters: [ShelterPermissions!]!
-  teams: [TeamPermissions!]!
 }
 
 enum OrgRoleEnum {
@@ -2152,10 +2146,6 @@ input RemoveOrganizationMemberInput {
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
 
-enum ReportPermissions {
-  VIEW_REPORTS
-}
-
 type ReportSummaryType {
   totalNotes: Int!
   uniqueClients: Int!
@@ -2170,7 +2160,8 @@ type ReportSummaryType {
 }
 
 type ReservationClientAssignmentType {
-  clientProfileId: ID!
+  id: ID!
+  clientProfile: ClientProfileType!
   isPrimary: Boolean!
 }
 
@@ -2217,9 +2208,9 @@ type ReservationType {
   room: RoomType
   startDate: Date
   status: ReservationStatusChoices!
+  clients: [ReservationClientAssignmentType!]!
   shelter: OperatorShelterType!
   createdById: ID
-  clients: [ReservationClientAssignmentType!]!
 }
 
 type ReservationTypeOffsetPaginated {
@@ -2260,6 +2251,15 @@ input RevertNoteInput {
 }
 
 union RevertNotePayload = NoteType | OperationInfo
+
+type RoomCountType {
+  available: Int!
+  inTurnaround: Int!
+  occupied: Int!
+  outOfService: Int!
+  reserved: Int!
+  total: Int!
+}
 
 input RoomFilter {
   id: ID
@@ -2319,7 +2319,7 @@ type RoomType {
   name: String!
   notes: String
   pets: [PetType!]!
-  shelter: ShelterType!
+  shelter: OperatorShelterType!
   storage: Boolean!
   type: RoomStyleChoices
   typeOther: String
@@ -2334,14 +2334,6 @@ type RoomTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [RoomType!]!
-}
-
-type RoomsByStatusType {
-  available: Int!
-  inTurnaround: Int!
-  occupied: Int!
-  outOfService: Int!
-  reserved: Int!
 }
 
 type SPAType {
@@ -2528,13 +2520,6 @@ input ShelterOrder {
   createdAt: Ordering
 }
 
-enum ShelterPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
 input ShelterPhotoFromUploadInput {
   presignedKey: String!
   uploadToken: String!
@@ -2590,13 +2575,21 @@ type ShelterProgramType {
 
 input ShelterPropertyInput {
   pets: [PetChoices!] = null
+  petsIncludeNull: Boolean = false
   demographics: [DemographicChoices!] = null
+  demographicsIncludeNull: Boolean = false
   entryRequirements: [EntryRequirementChoices!] = null
+  entryRequirementsIncludeNull: Boolean = false
   referralRequirement: [ReferralRequirementChoices!] = null
+  referralRequirementIncludeNull: Boolean = false
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  specialSituationRestrictionsIncludeNull: Boolean = false
   shelterTypes: [ShelterChoices!] = null
+  shelterTypesIncludeNull: Boolean = false
   roomStyles: [RoomStyleChoices!] = null
+  roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
+  parkingIncludeNull: Boolean = false
 }
 
 type ShelterType {
@@ -2662,8 +2655,8 @@ type ShelterType {
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
-  bedsByStatus: BedsByStatusType!
-  roomsByStatus: RoomsByStatusType!
+  bedCounts: BedCountType!
+  roomCounts: RoomCountType!
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2816,18 +2809,10 @@ type TaskTypeOffsetPaginated {
   results: [TaskType!]!
 }
 
-enum TeamPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
 type TeamType {
   id: ID!
   slug: String!
   name: String!
-  isActive: Boolean!
   createdAt: DateTime!
 }
 
@@ -2853,6 +2838,7 @@ input UpdateBedInput {
   demographics: [DemographicChoices!]
   fees: Int
   funders: [FunderChoices!]
+  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean
   medicalNeeds: [MedicalNeedChoices!]
@@ -3127,7 +3113,6 @@ union UpdateTaskPayload = TaskType | OperationInfo
 input UpdateTeamInput {
   id: ID!
   name: String
-  isActive: Boolean
 }
 
 union UpdateTeamPayload = TeamType | OperationInfo
@@ -3151,14 +3136,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-}
 
 type UserType {
   firstName: NonBlankString

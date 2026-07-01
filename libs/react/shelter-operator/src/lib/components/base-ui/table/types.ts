@@ -9,6 +9,7 @@ export type TableColumn<TItem> = {
   label: ReactNode;
   width?: string;
   headerClassName?: string;
+  labelClassName?: string;
   cellClassName?: string;
   render: (item: TItem) => ReactNode;
   /** When provided, the column becomes sortable. Extracts a string or number from an item for comparison. */
@@ -52,6 +53,7 @@ export type TableProps<TItem, TRowObject = TItem> = {
   wrapperClassName?: string;
   headerClassName?: string;
   headerInsetClassName?: string;
+  labelClassName?: string;
   rowClassName?: string;
   rowInsetClassName?: string;
   tableStyle?: CSSProperties;

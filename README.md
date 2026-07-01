@@ -52,8 +52,6 @@ Setting up SSH on GitHub allows you to securely connect to your repositories wit
 This project uses a VS Code Dev Container for a consistent, zero-config development environment.
 
 - **[Dev Container Guide](docs/devcontainer.md)**: SSH setup, GitHub CLI auth, state persistence, and container architecture.
-- **[Cline AI Assistant](docs/cline.md)**: Setup, browser control, and GitHub MCP integration for the built-in AI coding assistant.
-
 
 ## Frontend Development
 

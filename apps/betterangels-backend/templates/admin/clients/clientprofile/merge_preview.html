@@ -1,0 +1,105 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content_title %}
+  <h1>Merge Clients — Preview</h1>
+  <p style="margin: 0 0 16px 0;">
+    Merging <strong>{{ preview.source_names|join:", " }}</strong>
+    into <strong>{{ preview.target_name }}</strong> (ID: {{ preview.target_id }}).
+  </p>
+{% endblock %}
+
+{% block content %}
+
+{% if preview.conflicts %}
+<div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+  <h3 style="margin-top: 0; color: #856404;">⚠️ Conflicts</h3>
+  <ul style="margin-bottom: 0;">
+    {% for conflict in preview.conflicts %}
+    <li>{{ conflict }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<h2>📋 Field Changes</h2>
+<p class="help">Target's non-null values are kept. Null fields are filled from the first source that has a value.</p>
+
+<table style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Target Value</th>
+      <th>Source Values</th>
+      <th>Resolution</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for change in preview.field_changes %}
+    {% if change.resolution != "target_wins" or change.target_value != None %}
+    <tr style="border-bottom: 1px solid #eee; {% if change.resolution == 'conflict' %}background: #fff3cd;{% endif %}">
+      <td><code>{{ change.field_name }}</code></td>
+      <td>{{ change.target_value|default:"—" }}</td>
+      <td>
+        {% for val in change.source_values %}
+          {{ val|default:"—" }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
+      <td>
+        {% if change.resolution == "target_wins" %}
+          ✅ target wins
+        {% elif change.resolution == "filled_from_source" %}
+          📥 filled from source
+        {% elif change.resolution == "conflict" %}
+          ⚠️ conflict
+        {% endif %}
+      </td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>🔗 Related Objects (will move to target)</h2>
+
+<table style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Relation</th>
+      <th>Model</th>
+      <th>Will Move</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rc in preview.related_changes %}
+    {% if rc.will_move > 0 %}
+    <tr style="border-bottom: 1px solid #eee;">
+      <td><strong>{{ rc.relation_name }}</strong></td>
+      <td><code>{{ rc.model_label }}</code></td>
+      <td>{{ rc.will_move }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="margin-top: 20px; background: #f8f9fa; padding: 12px; border-radius: 4px;">
+  <p style="margin: 0;">
+    🗑️ The following profiles will be marked as merged (soft-deleted, reversible):
+    <strong>{{ preview.source_names|join:", " }}</strong>
+  </p>
+</div>
+
+<form method="post" action="" style="margin-top: 20px;">
+  {% csrf_token %}
+  <input type="hidden" name="ids" value="{{ ids }}">
+  <input type="hidden" name="target_id" value="{{ preview.target_id }}">
+
+  <button type="submit" name="confirm" value="1" class="button default"
+          style="font-size: 14px; padding: 10px 20px; background: #28a745;">
+    ✅ Confirm Merge
+  </button>
+  <a href="{% url 'admin:clients_clientprofile_merge' %}?ids={{ ids }}&amp;target_id={{ preview.target_id }}"
+     class="button" style="margin-left: 10px;">← Back</a>
+</form>
+{% endblock %}

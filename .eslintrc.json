@@ -13,10 +13,29 @@
             "enforceBuildableLibDependency": true,
             "allow": [".*libs/tailwind.*"],
             "depConstraints": [
-              {
-                "sourceTag": "*",
-                "onlyDependOnLibsWithTags": ["*"]
-              }
+              // ── TYPE constraints (what kind of code) ──
+              // Dependency flow: feature → data-access → util
+              //                    ui → util
+              { "sourceTag": "type:feature",     "onlyDependOnLibsWithTags": ["type:feature", "type:data-access", "type:ui", "type:util"] },
+              { "sourceTag": "type:data-access", "onlyDependOnLibsWithTags": ["type:data-access", "type:util"] },
+              { "sourceTag": "type:ui",          "onlyDependOnLibsWithTags": ["type:ui", "type:util"] },
+              { "sourceTag": "type:util",        "onlyDependOnLibsWithTags": ["type:util"] },
+              // ── SCOPE constraints (which domain) ──
+              // **Strict:** scope:shared is the foundation — no BA dependencies allowed.
+              // This prevents the generic layer from coupling to BA-specific conventions.
+              { "sourceTag": "scope:shared",      "onlyDependOnLibsWithTags": ["scope:shared"] },
+              // **Strict:** ba-platform can use shared + other ba-platform code.
+              // This is the gate Tom asked for — no generic UI components or
+              // app-specific code can be dumped here.
+              { "sourceTag": "scope:ba-platform", "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"] },
+              // **Liberal (intentional):** app scopes can import from each other
+              // while we migrate shared code (enum types, hooks) into ba-platform.
+              // TODO: tighten to only allow own scope + ba-platform + shared
+              // once the cross-scope imports are resolved.
+              { "sourceTag": "scope:betterangels",       "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"] },
+              { "sourceTag": "scope:betterangels-admin", "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"] },
+              { "sourceTag": "scope:shelter-web",        "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"] },
+              { "sourceTag": "scope:shelter-operator",   "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"] }
             ]
           }
         ]

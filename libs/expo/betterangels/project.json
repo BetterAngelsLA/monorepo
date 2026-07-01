@@ -3,11 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/betterangels/src",
   "projectType": "library",
-  "tags": [],
+  "tags": ["type:feature", "scope:betterangels"],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
-      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
     ]
   },
   "targets": {

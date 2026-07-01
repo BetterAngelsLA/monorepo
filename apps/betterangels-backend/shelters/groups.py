@@ -1,4 +1,6 @@
+from clients.models import ClientProfile
 from common.permissions.config import TemplateConfig
+
 from shelters.models.reservation import Reservation
 from shelters.models.shelter import Bed, Room, Shelter
 
@@ -27,6 +29,7 @@ SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.VIEW,
         # Custom perms
         Shelter.perms.VIEW_PRIVATE,
+        ClientProfile.perms.VIEW,
     ],
     invite_html="account/email/shelter_operator_invite.html",
     invite_txt="account/messages/shelter_operator_invite.txt",

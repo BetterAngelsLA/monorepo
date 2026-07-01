@@ -75,7 +75,11 @@ class Attachment(BaseModel):
                     "attachment_type",
                 ],
                 name="attachment_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="attachment_gfk_idx",
+            ),
         ]
 
     def save(
@@ -331,7 +335,11 @@ class PhoneNumber(models.Model):
                     "content_type_id",
                 ],
                 name="phonenumber_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="phonenumber_gfk_idx",
+            ),
         ]
 
     def save(self, *args: Any, **kwargs: Any) -> None:

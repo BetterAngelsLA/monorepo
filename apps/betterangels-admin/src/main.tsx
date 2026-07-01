@@ -2,9 +2,9 @@ import { ApolloProvider } from '@apollo/client/react';
 import {
   ApiConfigProvider,
   AuthProvider,
-  orgLink,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
+import { orgLink } from '@monorepo/ba-platform';
 import { createApolloClient } from '@monorepo/react/shared/apollo';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';

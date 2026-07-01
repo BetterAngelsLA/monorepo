@@ -6,7 +6,7 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { PlusIcon, ThreeDotIcon, UserIcon } from '@monorepo/react/icons';
-import { mergeCss, toError } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useMemo, useRef, useState } from 'react';
 import {
@@ -15,12 +15,12 @@ import {
   OrganizationMemberOrdering,
   OrganizationMemberType,
   PermissionTemplateEnum,
-  UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { AddUserFormDrawer } from '../../components';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -59,23 +59,25 @@ const COLUMNS: {
   label: string;
   field: keyof OrganizationMemberOrdering;
   render: (m: OrganizationMemberType) => string | JSX.Element;
+  headerPrefix?: JSX.Element;
 }[] = [
-  {
-    label: '',
-    field: 'firstName',
-    render: (m) =>
-      m.isOrgOwner ? (
-        <span title="Organization Owner" className="text-amber-500">
-          <StarIconSm className="w-4 h-4" />
-        </span>
-      ) : (
-        ''
-      ),
-  },
   {
     label: 'Name',
     field: 'firstName',
-    render: getFullName,
+    headerPrefix: <span className="w-4 h-4 shrink-0" />,
+    render: (m) => (
+      <span className="whitespace-nowrap">
+        <span className="inline-block w-4 align-middle text-center">
+          {m.isOrgOwner && (
+            <StarIconSm
+              className="w-4 h-4 text-amber-500 align-middle"
+              title="Organization Owner"
+            />
+          )}
+        </span>{' '}
+        {getFullName(m)}
+      </span>
+    ),
   },
   {
     label: 'Job Role',
@@ -86,12 +88,20 @@ const COLUMNS: {
   {
     label: 'Created',
     field: 'dateJoined',
-    render: (m) => formatRelativeDate(m.dateJoined) ?? 'Unknown',
+    render: (m) => (
+      <span className="text-right w-full block">
+        {formatRelativeDate(m.dateJoined) ?? 'Unknown'}
+      </span>
+    ),
   },
   {
     label: 'Last Login',
     field: 'lastLogin',
-    render: (m) => formatRelativeDate(m.lastLogin) ?? 'Never',
+    render: (m) => (
+      <span className="text-right w-full block">
+        {formatRelativeDate(m.lastLogin) ?? 'Never'}
+      </span>
+    ),
   },
 ];
 
@@ -206,9 +216,10 @@ export default function Users(props: IProps) {
         content: `${getFullName(member)} successfully removed.`,
       });
     } catch (err) {
+      console.error(err);
       showAlert({
         type: 'error',
-        content: toError(err).message,
+        content: 'Sorry, something went wrong. Please try again.',
       });
     } finally {
       setOpenMenuRowId(null);
@@ -228,24 +239,25 @@ export default function Users(props: IProps) {
 
   const headerButtons = useMemo(
     () =>
-      COLUMNS.map((col) =>
-        col.label ? (
-          <button
-            key={col.label}
-            onClick={() => handleSort(col.field)}
-            className="flex items-center gap-1 hover:text-primary-60"
-          >
-            {col.label}
-            {sort.field === col.field && (
-              <span className="text-xs text-primary-20">
-                {sort.direction === Ordering.Asc ? '▲' : '▼'}
-              </span>
-            )}
-          </button>
-        ) : (
-          <span key="owner-col" />
-        )
-      ),
+      COLUMNS.map((col) => (
+        <button
+          key={col.label}
+          onClick={() => handleSort(col.field)}
+          className={mergeCss([
+            'flex items-center gap-1 hover:text-primary-60 p-0',
+            (col.field === 'dateJoined' || col.field === 'lastLogin') &&
+              'justify-end w-full text-right',
+          ])}
+        >
+          {col.headerPrefix}
+          {col.label}
+          {sort.field === col.field && (
+            <span className="text-xs text-primary-20">
+              {sort.direction === Ordering.Asc ? '▲' : '▼'}
+            </span>
+          )}
+        </button>
+      )),
     [sort]
   );
 
@@ -435,7 +447,7 @@ export default function Users(props: IProps) {
 }
 
 /** Star icon for org owner indicator. */
-function StarIconSm({ className }: { className?: string }) {
+function StarIconSm({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
       className={className}
@@ -443,6 +455,7 @@ function StarIconSm({ className }: { className?: string }) {
       fill="currentColor"
       stroke="none"
     >
+      {title && <title>{title}</title>}
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   );

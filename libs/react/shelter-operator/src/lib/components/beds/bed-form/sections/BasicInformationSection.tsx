@@ -1,14 +1,11 @@
 import { memo } from 'react';
 import { Controller } from 'react-hook-form';
+import type { DropdownOption } from '../../../base-ui/dropdown';
 import { Dropdown } from '../../../base-ui/dropdown';
 import { FormSection } from '../../../form/FormSection';
 import { TextAreaField } from '../../../form/TextAreaField';
 import { TextField } from '../../../form/TextField';
-import type { DropdownOption } from '../../../base-ui/dropdown';
-import {
-  BED_STATUS_OPTIONS,
-  BED_TYPE_OPTIONS,
-} from '../constants/bedFormOptions';
+import { BED_TYPE_OPTIONS } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
 export type BasicInformationSectionProps = SectionProps & {
@@ -59,27 +56,6 @@ export const BasicInformationSection = memo(function BasicInformationSection({
       <p className="text-sm text-gray-600">
         Optional. Leave unassigned if the bed is not in a room yet.
       </p>
-
-      <Controller
-        name="status"
-        control={control}
-        render={({ field }) => (
-          <Dropdown
-            label="Status"
-            placeholder="Select a status"
-            options={BED_STATUS_OPTIONS}
-            value={
-              BED_STATUS_OPTIONS.find((o) => o.value === field.value) ?? null
-            }
-            onChange={(option) => {
-              if (option) field.onChange(option.value);
-            }}
-          />
-        )}
-      />
-      {errors.status ? (
-        <p className="text-sm text-red-600">{errors.status.message}</p>
-      ) : null}
 
       <Controller
         name="type"

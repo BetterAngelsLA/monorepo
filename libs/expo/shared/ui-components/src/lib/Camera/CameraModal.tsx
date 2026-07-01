@@ -77,13 +77,13 @@ export function CameraModal({ onClose, onCapture }: Props) {
 
 const styles = StyleSheet.create({
   panel: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'black',
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
   },
   content: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     padding: 0,
   },
 });

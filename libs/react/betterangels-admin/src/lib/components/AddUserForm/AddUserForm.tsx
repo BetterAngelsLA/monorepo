@@ -9,7 +9,7 @@ import {
   PermissionTemplateEnum,
 } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 

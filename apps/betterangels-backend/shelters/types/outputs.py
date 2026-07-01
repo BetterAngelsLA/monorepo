@@ -7,11 +7,15 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType
+from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
 from common.permissions.utils import get_current_organization
 from django.db.models import Prefetch, QuerySet
+from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
+
 from shelters import models
 from shelters.enums import (
     BedStatusChoices,
@@ -21,13 +25,12 @@ from shelters.enums import (
     RoomStyleChoices,
     ShelterPhotoTypeChoices,
 )
+from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.selectors.computed_status import (
     bed_computed_status_annotation,
     room_computed_status_annotation,
-    shelter_bed_status_count_subquery,
-    shelter_room_status_count_subquery,
+    shelter_count_subquery,
 )
-from shelters.selectors import bed_queryset, room_queryset, shelter_list, shelter_queryset
 from shelters.selectors.operator import reservation_queryset
 from shelters.types.lookups import (
     AccessibilityType,
@@ -51,8 +54,6 @@ from shelters.types.lookups import (
     StorageType,
     VaccinationRequirementType,
 )
-from strawberry import ID, Info, auto
-from strawberry_django.auth.utils import get_current_user
 
 from .filters import (
     BedFilter,
@@ -115,21 +116,23 @@ class ShelterAvailabilityType:
 
 
 @strawberry.type
-class BedsByStatusType:
+class BedCountType:
     available: int = 0
     in_turnaround: int = 0
     occupied: int = 0
     out_of_service: int = 0
     reserved: int = 0
+    total: int = 0
 
 
 @strawberry.type
-class RoomsByStatusType:
+class RoomCountType:
     available: int = 0
     in_turnaround: int = 0
     occupied: int = 0
     out_of_service: int = 0
     reserved: int = 0
+    total: int = 0
 
 
 @strawberry.type
@@ -228,38 +231,42 @@ class ShelterTypeMixin:
 
     @strawberry_django.field(
         annotate={
-            "_bed_available": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.AVAILABLE),
-            "_bed_in_turnaround": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.IN_TURNAROUND),
-            "_bed_occupied": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OCCUPIED),
-            "_bed_out_of_service": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.OUT_OF_SERVICE),
-            "_bed_reserved": lambda info: shelter_bed_status_count_subquery(BedStatusChoices.RESERVED),
+            "_bed_available": lambda info: shelter_count_subquery(models.Bed, BedStatusChoices.AVAILABLE),
+            "_bed_in_turnaround": lambda info: shelter_count_subquery(models.Bed, BedStatusChoices.IN_TURNAROUND),
+            "_bed_occupied": lambda info: shelter_count_subquery(models.Bed, BedStatusChoices.OCCUPIED),
+            "_bed_out_of_service": lambda info: shelter_count_subquery(models.Bed, BedStatusChoices.OUT_OF_SERVICE),
+            "_bed_reserved": lambda info: shelter_count_subquery(models.Bed, BedStatusChoices.RESERVED),
+            "_bed_total": lambda info: shelter_count_subquery(models.Bed),
         }
     )
-    def beds_by_status(self, root: models.Shelter) -> BedsByStatusType:
-        return BedsByStatusType(
+    def bed_counts(self, root: models.Shelter) -> BedCountType:
+        return BedCountType(
             available=_annotated_count(root, "_bed_available"),
             in_turnaround=_annotated_count(root, "_bed_in_turnaround"),
             occupied=_annotated_count(root, "_bed_occupied"),
             out_of_service=_annotated_count(root, "_bed_out_of_service"),
             reserved=_annotated_count(root, "_bed_reserved"),
+            total=_annotated_count(root, "_bed_total"),
         )
 
     @strawberry_django.field(
         annotate={
-            "_room_available": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.AVAILABLE),
-            "_room_in_turnaround": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.IN_TURNAROUND),
-            "_room_occupied": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OCCUPIED),
-            "_room_out_of_service": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.OUT_OF_SERVICE),
-            "_room_reserved": lambda info: shelter_room_status_count_subquery(RoomStatusChoices.RESERVED),
+            "_room_available": lambda info: shelter_count_subquery(models.Room, RoomStatusChoices.AVAILABLE),
+            "_room_in_turnaround": lambda info: shelter_count_subquery(models.Room, RoomStatusChoices.IN_TURNAROUND),
+            "_room_occupied": lambda info: shelter_count_subquery(models.Room, RoomStatusChoices.OCCUPIED),
+            "_room_out_of_service": lambda info: shelter_count_subquery(models.Room, RoomStatusChoices.OUT_OF_SERVICE),
+            "_room_reserved": lambda info: shelter_count_subquery(models.Room, RoomStatusChoices.RESERVED),
+            "_room_total": lambda info: shelter_count_subquery(models.Room),
         }
     )
-    def rooms_by_status(self, root: models.Shelter) -> RoomsByStatusType:
-        return RoomsByStatusType(
+    def room_counts(self, root: models.Shelter) -> RoomCountType:
+        return RoomCountType(
             available=_annotated_count(root, "_room_available"),
             in_turnaround=_annotated_count(root, "_room_in_turnaround"),
             occupied=_annotated_count(root, "_room_occupied"),
             out_of_service=_annotated_count(root, "_room_out_of_service"),
             reserved=_annotated_count(root, "_room_reserved"),
+            total=_annotated_count(root, "_room_total"),
         )
 
 
@@ -299,6 +306,13 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     return Prefetch("beds", queryset=bed_qs)
 
 
+def _reservation_clients_prefetch(info: Info) -> Prefetch:
+    return Prefetch(
+        "reservation_clients",
+        queryset=models.ReservationClient.objects.select_related("client_profile").order_by("pk"),
+    )
+
+
 @strawberry_django.type(models.Bed, filters=BedFilter, ordering=BedOrder)
 class BedType:
     @classmethod
@@ -320,7 +334,7 @@ class BedType:
     name: Optional[str]
     pets: List[PetType]
     room: Optional["RoomType"]
-    shelter: "ShelterType"
+    shelter: "OperatorShelterType"
     status_notes: Optional[str]
     storage: bool
     type: Optional[BedTypeChoices]
@@ -357,7 +371,7 @@ class RoomType:
     name: auto
     notes: auto
     pets: List[PetType]
-    shelter: "ShelterType"
+    shelter: "OperatorShelterType"
     storage: bool
     type: Optional[RoomStyleChoices]
     type_other: auto
@@ -369,10 +383,11 @@ class RoomType:
         return root.computed_status
 
 
-@strawberry.type
+@strawberry_django.type(models.ReservationClient)
 class ReservationClientAssignmentType:
-    client_profile_id: ID
-    is_primary: bool
+    id: ID
+    client_profile: ClientProfileType
+    is_primary: auto
 
 
 @strawberry_django.type(models.Reservation, filters=ReservationFilter, ordering=ReservationOrder)
@@ -393,6 +408,11 @@ class ReservationType:
     start_date: Optional[date]
     status: ReservationStatusChoices
 
+    clients: list[ReservationClientAssignmentType] = strawberry_django.field(
+        field_name="reservation_clients",
+        prefetch_related=[_reservation_clients_prefetch],
+    )
+
     @strawberry_django.field(select_related=["bed__shelter", "room__shelter"])
     def shelter(self, root: models.Reservation) -> "OperatorShelterType":
         if root.shelter is None:
@@ -404,13 +424,3 @@ class ReservationType:
         if root.created_by_id is None:
             return None
         return ID(str(root.created_by_id))
-
-    @strawberry_django.field(prefetch_related=["reservation_clients"])
-    def clients(self, root: models.Reservation) -> List[ReservationClientAssignmentType]:
-        return [
-            ReservationClientAssignmentType(
-                client_profile_id=ID(str(rc.client_profile_id)),
-                is_primary=rc.is_primary,
-            )
-            for rc in root.reservation_clients.all()
-        ]

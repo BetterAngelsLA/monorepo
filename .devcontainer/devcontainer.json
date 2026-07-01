@@ -46,8 +46,7 @@
         "matangover.mypy",
         "docker.docker",
         "GraphQL.vscode-graphql",
-        "TypeScriptTeam.native-preview",
-        "saoudrizwan.claude-dev"
+        "TypeScriptTeam.native-preview"
       ]
     }
   },

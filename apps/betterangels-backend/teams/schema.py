@@ -5,10 +5,12 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
+from accounts.selectors import resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from common.team_shim import maybe_value
 from django.db.models import QuerySet
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
@@ -26,7 +28,15 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info) -> QuerySet[Team]:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org_id = info.context.request.organization_id
+        if org_id is not None:
+            org = Organization.objects.get(pk=str(org_id))
+        else:
+            # Temporary fallback: the mobile app does not yet call the
+            # Apollo orgLink to set the active organization on each request.
+            # Until that is wired up, resolve the user's Caseworker org.
+            pg = resolve_permission_group(info.context.request.user, template=CASEWORKER)
+            org = pg.organization
         return team_list(organization=org)
 
 
@@ -55,7 +65,6 @@ class Mutation:
             team_update(
                 team=team,
                 name=maybe_value(data.name),
-                is_active=maybe_value(data.is_active),
             ),
         )
 
