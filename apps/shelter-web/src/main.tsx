@@ -33,8 +33,7 @@ const apolloClient = createApolloClient({
     isDevEnv,
     extraPolicies: createOperatorTypePolicies(),
   }),
-  isDevEnv,
-  links: [orgLink],
+  orgLink,
 });
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
