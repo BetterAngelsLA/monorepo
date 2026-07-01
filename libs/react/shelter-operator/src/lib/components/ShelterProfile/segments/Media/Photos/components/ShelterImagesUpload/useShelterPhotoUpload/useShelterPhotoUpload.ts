@@ -5,11 +5,17 @@ import {
   uploadFileToS3WithPresignedPost,
 } from '@monorepo/react/shared';
 import { ShelterPhotoTypeChoices } from '../../../../../../../../apollo/graphql/__generated__/types';
+import { OPERATOR_SHELTER_TYPENAME } from '../../../../../../../../hooks/useShelterOperatorProfile';
 import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
-import { SHELTER_PHOTO_MAX_SIZE } from './constants';
+import {
+  AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME,
+  OPERATION_INFO_TYPENAME,
+  SHELTER_PHOTO_MAX_SIZE,
+  SHELTER_PHOTO_UPLOADS_TYPENAME,
+} from './constants';
 
 function userFacingError(error: unknown): string {
   const message = parseS3Error(error);
@@ -101,11 +107,11 @@ export function useShelterPhotoUpload(props?: TProps) {
       throw new Error('Missing response from generateShelterPhotoUploads');
     }
 
-    if (payload.__typename === 'OperationInfo') {
+    if (payload.__typename === OPERATION_INFO_TYPENAME) {
       throw new Error(payload.messages.map((m) => m.message).join(', '));
     }
 
-    if (payload.__typename !== 'AuthorizedPresignedS3UploadsType') {
+    if (payload.__typename !== AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME) {
       throw new Error('Unexpected response type');
     }
 
@@ -160,12 +166,15 @@ export function useShelterPhotoUpload(props?: TProps) {
       update(cache, { data }) {
         const resolveResult = data?.resolveShelterPhotoUploads;
 
-        if (resolveResult?.__typename !== 'ShelterPhotoUploadsType') {
+        if (resolveResult?.__typename !== SHELTER_PHOTO_UPLOADS_TYPENAME) {
           return;
         }
 
         cache.modify({
-          id: cache.identify({ __typename: 'AdminShelterType', id: shelterId }),
+          id: cache.identify({
+            __typename: OPERATOR_SHELTER_TYPENAME,
+            id: shelterId,
+          }),
           fields: {
             photos(existing = []) {
               const newRefs = resolveResult.photos.map((photo) =>
@@ -197,7 +206,7 @@ export function useShelterPhotoUpload(props?: TProps) {
       throw new Error('Missing response from resolveShelterPhotoUploads');
     }
 
-    if (resolvePayload.__typename === 'OperationInfo') {
+    if (resolvePayload.__typename === OPERATION_INFO_TYPENAME) {
       throw new Error(resolvePayload.messages.map((m) => m.message).join(', '));
     }
   }

@@ -42,11 +42,12 @@ export function ShelterDetailsForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     reset,
   } = useForm<DetailsFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {
@@ -221,9 +222,9 @@ export function ShelterDetailsForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit(onSubmit)}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}

@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import pghistory
 from betterangels_backend import settings
@@ -30,7 +30,7 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.encoding import force_str
@@ -138,14 +138,47 @@ class AbstractClientProfile(BaseModel):
         abstract = True
 
 
+class ClientProfileQuerySet(QuerySet["ClientProfile"]):
+    """Custom QuerySet for ClientProfile."""
+
+    def active(self) -> ClientProfileQuerySet:
+        """Exclude profiles that have been merged into another."""
+        return self.filter(merged_into__isnull=True)
+
+
+class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["ClientProfile"]):  # type: ignore[misc]
+    """Default manager: excludes merged profiles automatically.
+
+    Use ``including_merged()`` when you need every profile (e.g. the merge
+    service internals and admin merge view).
+    """
+
+    def get_queryset(self) -> ClientProfileQuerySet:
+        return cast(ClientProfileQuerySet, super().get_queryset().active())
+
+    def including_merged(self) -> ClientProfileQuerySet:
+        """Return an unfiltered QuerySet (all profiles, merged or not)."""
+        return ClientProfileQuerySet(self.model, using=self._db)
+
+
 @pghistory.track(
     pghistory.InsertEvent("client_profile.add"),
     pghistory.UpdateEvent("client_profile.update"),
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(AbstractClientProfile):
+    objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     gender_other = models.CharField(max_length=100, null=True, blank=True)
+    merged_at = models.DateTimeField(null=True, blank=True)
+    merged_data = models.JSONField(null=True, blank=True)
+    merged_into = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="merged_from",
+    )
     middle_name = models.CharField(max_length=50, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)

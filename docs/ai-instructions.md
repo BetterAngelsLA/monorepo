@@ -1,7 +1,7 @@
 # AI Instructions — BetterAngels Monorepo
 
-This is the canonical entry point for all AI coding assistants (Cline, Copilot, etc.).
-Each tool reads its own config file (`.clinerules`, `.github/copilot-instructions.md`)
+This is the canonical entry point for all AI coding assistants (Copilot, etc.).
+Each tool reads its own config file (`.github/copilot-instructions.md`)
 which points here.
 
 **Read the following files for full conventions:**
