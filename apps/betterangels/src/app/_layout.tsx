@@ -72,7 +72,6 @@ export default function RootLayout() {
                 { name: 'demo', url: demoApiUrl },
               ]}
               storage={asyncStorageAdapter}
-              storageKey="currentEnvironment"
             >
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider

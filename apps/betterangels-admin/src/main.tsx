@@ -1,7 +1,5 @@
-import { ApolloClient } from '@apollo/client';
-import { ApolloProvider } from '@apollo/client/react';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import { createApolloCache } from '@monorepo/apollo';
+import { ApolloClientProvider } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   AuthProvider,
@@ -16,11 +14,6 @@ import { fetchClient } from './lib/fetchClient';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
-const apolloClient = new ApolloClient({
-  link: new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient }),
-  cache: createApolloCache(),
-});
-
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -28,7 +21,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
-      <ApolloProvider client={apolloClient}>
+      <ApolloClientProvider
+        link={new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient })}
+      >
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>
@@ -36,7 +31,7 @@ root.render(
             </AuthProvider>
           </UserProvider>
         </BrowserRouter>
-      </ApolloProvider>
+      </ApolloClientProvider>
     </ApiConfigProvider>
   </StrictMode>
 );
