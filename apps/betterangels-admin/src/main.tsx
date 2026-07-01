@@ -13,6 +13,7 @@ import App from './app/app';
 import { fetchClient } from './lib/fetchClient';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+const httpLink = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,9 +22,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
-      <ApolloClientProvider
-        link={new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient })}
-      >
+      <ApolloClientProvider link={httpLink}>
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>

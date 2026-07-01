@@ -19,6 +19,8 @@ initApolloRuntimeConfig({ isDevEnv });
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+const httpLink = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+const typePolicies = createShelterTypePolicies(isDevEnv);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -27,10 +29,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
-      <ApolloClientProvider
-        link={new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient })}
-        typePolicies={createShelterTypePolicies(isDevEnv)}
-      >
+      <ApolloClientProvider link={httpLink} typePolicies={typePolicies}>
         <ShelterFeatureControlProvider>
           <BrowserRouter basename={basename}>
             <UserProvider>

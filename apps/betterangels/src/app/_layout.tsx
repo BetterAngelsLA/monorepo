@@ -58,6 +58,8 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   useNewRelic();
 
+  const httpLink = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
@@ -75,12 +77,7 @@ export default function RootLayout() {
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider
                   typePolicies={baApolloTypePolicies}
-                  link={
-                    new UploadHttpLink({
-                      uri: `${apiUrl}/graphql`,
-                      fetch: fetchClient,
-                    })
-                  }
+                  link={httpLink}
                 >
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
