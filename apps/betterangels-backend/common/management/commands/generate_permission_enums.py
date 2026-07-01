@@ -23,7 +23,6 @@ class Command(BaseCommand):
         parser.add_argument(
             "output",
             nargs="?",
-            default="libs/ba-permissions/src/__generated__/index.ts",
             help="Output path relative to repo root.",
         )
 
