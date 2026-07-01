@@ -166,31 +166,22 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
 };
 
 /**
- * Adds backend authentication headers (CSRF token, HMIS token)
- * Cookies are automatically handled by nitro-cookies
+ * Injects the HMIS token header for authenticated HMIS API requests.
+ *
+ * CSRF header injection is handled separately by the ba-platform
+ * ``createCsrfInterceptor`` (proactive) and the reactive retry below.
  */
-export const backendAuthInterceptor: FetchInterceptor = async (
-  input,
+export const hmisAuthInterceptor: FetchInterceptor = async (
+  _input,
   init,
   next
 ) => {
-  const headers = new Headers(init.headers);
-  const url = getUrl(input);
-
-  // Add CSRF token header
-  const cookiesForUrl = await CookieManager.get(url);
-  const csrfCookie = cookiesForUrl[CSRF_COOKIE_NAME];
-  if (csrfCookie?.value) {
-    headers.set(CSRF_HEADER_NAME, csrfCookie.value);
-  }
-
-  // Add HMIS token header (retrieved from stored HMIS domain)
   const tokenHmis = await getAuthTokenHmis();
-  if (tokenHmis) {
-    headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
-  }
+  if (!tokenHmis) return next(_input, init);
 
-  return next(input, { ...init, headers });
+  const headers = new Headers(init.headers);
+  headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
+  return next(_input, { ...init, headers });
 };
 
 /**

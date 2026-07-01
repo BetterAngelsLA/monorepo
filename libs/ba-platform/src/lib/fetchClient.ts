@@ -1,6 +1,6 @@
 import { composeFetchInterceptors } from '@monorepo/apollo';
 import { localStorageAdapter } from '@monorepo/react/shared';
-import { readCsrfToken, refreshCsrfToken } from './csrfTokenProvider';
+import { readCsrfToken, refreshCsrfToken } from './web/csrfTokenProvider';
 import {
   createCsrfInterceptor,
   createOrgInterceptor,

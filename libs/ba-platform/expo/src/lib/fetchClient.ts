@@ -2,7 +2,7 @@ import {
   userAgentInterceptor,
   bodyInterceptor,
   includeCredentialsInterceptor,
-  backendAuthInterceptor,
+  hmisAuthInterceptor,
   interceptorHmis,
   createCsrfInterceptor as createReactiveCsrfInterceptor,
 } from '@monorepo/expo/shared/clients';
@@ -26,7 +26,7 @@ import { createNativeTokenReader, createNativeTokenRefresher } from './csrfToken
  * 2. Proactive CSRF header injection (via ``CookieManager``)
  * 3. User-Agent spoofing
  * 4. Body serialisation
- * 5. Backend auth headers (HMIS token)
+ * 5. HMIS auth token injection
  * 6. Credentials include
  * 7. Reactive CSRF 403-retry (safety net)
  * 8. HMIS-specific cookie extraction
@@ -43,7 +43,7 @@ export const createExpoFetchClient = (baseUrl: string) =>
     ),
     userAgentInterceptor,
     bodyInterceptor,
-    backendAuthInterceptor,
+    hmisAuthInterceptor,
     includeCredentialsInterceptor,
     createReactiveCsrfInterceptor(baseUrl),
     interceptorHmis,
