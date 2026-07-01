@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/clients';
 import {
   composeFetchInterceptors,
-} from '@monorepo/apollo';
+} from '@monorepo/fetch';
 import {
   createCsrfInterceptor,
   createCsrfTokenRefresher,

@@ -1,4 +1,4 @@
-import { composeFetchInterceptors } from '@monorepo/apollo';
+import { composeFetchInterceptors } from '@monorepo/fetch';
 import { localStorageAdapter } from '@monorepo/react/shared';
 import {
   createCsrfInterceptor,

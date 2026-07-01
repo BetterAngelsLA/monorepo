@@ -2,8 +2,8 @@
  * Fetch interceptor system for composable request/response handling
  */
 
-import type { FetchInterceptor } from '@monorepo/apollo';
-import { composeFetchInterceptors } from '@monorepo/apollo';
+import type { FetchInterceptor } from '@monorepo/fetch';
+import { composeFetchInterceptors } from '@monorepo/fetch';
 import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,

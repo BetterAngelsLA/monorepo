@@ -11,7 +11,7 @@ export {
   createCsrfInterceptor,
   createOrgInterceptor,
   createCsrfTokenRefresher,
-} from '@monorepo/apollo';
+} from '@monorepo/fetch';
 
 // Re-export for convenience so consumers don't need both imports.
 export { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, CSRF_LOGIN_PATH, DEFAULT_ORG_STORAGE_KEY };

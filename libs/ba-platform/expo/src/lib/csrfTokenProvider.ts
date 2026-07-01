@@ -1,5 +1,5 @@
 import CookieManager from '@preeternal/react-native-cookie-manager';
-import type { TokenReader } from '@monorepo/apollo';
+import type { TokenReader } from '@monorepo/fetch';
 
 /**
  * React Native ``TokenReader`` — reads a cookie value via ``CookieManager``.
