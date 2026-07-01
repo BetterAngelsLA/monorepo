@@ -23,6 +23,7 @@ from clients.enums import (
 )
 from common.constants import CALIFORNIA_ID_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
+from common.permissions.utils import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
@@ -349,6 +350,9 @@ class ClientProfileImportRecord(models.Model):
     success = models.BooleanField(default=False)
     error_message = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class perms(PermissionSet):
+        pass
 
     class Meta:
         indexes = [

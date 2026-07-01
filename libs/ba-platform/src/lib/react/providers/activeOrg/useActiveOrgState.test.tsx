@@ -1,21 +1,16 @@
 import { StorageAdapter } from '@monorepo/react/shared';
 import { act, renderHook } from '@testing-library/react';
-import { useActiveOrgState } from './useActiveOrgState';
+import { useActiveOrgState, type Org } from './useActiveOrgState';
 
-interface TestOrg {
-  id: string;
-  name: string;
-  permissions: Record<string, string[]>;
-}
-
-function makeOrg(overrides: Partial<TestOrg> = {}): TestOrg {
+function makeOrg(overrides: Partial<Org> = {}): Org {
   return {
     id: 'org-1',
     name: 'Test Org',
-    permissions: {
-      accounts: ['add_org_member', 'view_org_members'],
-      shelters: ['view_shelter'],
-    },
+    permissions: [
+      'organizations.add_org_member',
+      'organizations.view_org_members',
+      'shelters.view_shelter',
+    ],
     ...overrides,
   };
 }
@@ -92,9 +87,9 @@ describe('useActiveOrgState', () => {
       })
     );
 
-    expect(result.current.hasPermission('add_org_member')).toBe(true);
-    expect(result.current.hasPermission('view_shelter')).toBe(true);
-    expect(result.current.hasPermission('nonexistent')).toBe(false);
+    expect(result.current.hasPermission('organizations.add_org_member')).toBe(true);
+    expect(result.current.hasPermission('shelters.view_shelter')).toBe(true);
+    expect(result.current.hasPermission('shelters.delete_shelter')).toBe(false);
   });
 
   it('setActiveOrgId ignores unknown org IDs', () => {
