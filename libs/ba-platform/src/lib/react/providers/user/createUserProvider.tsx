@@ -36,7 +36,7 @@ export interface UserState<TUser> {
 export interface UserProviderConfig<
   TUser,
   TQuery,
-  TExtra extends Record<string, unknown> = Record<string, unknown>,
+  TExtra extends Record<string, unknown> = Record<string, unknown>
 > {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
@@ -52,7 +52,9 @@ export interface UserProviderConfig<
    * the user is not authenticated.
    */
   isUnauthenticated: (
-    errors: readonly { message: string; extensions?: Record<string, unknown> }[] | undefined
+    errors:
+      | readonly { message: string; extensions?: Record<string, unknown> }[]
+      | undefined
   ) => boolean;
 
   /**
@@ -85,12 +87,14 @@ export interface UserProviderConfig<
  * ```
  */
 export function createUserProvider<
-  TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null },
+  TUser extends {
+    organizations?:
+      | readonly { id: string; name: string; permissions?: readonly string[] }[]
+      | null;
+  },
   TQuery extends { currentUser?: unknown },
-  TExtra extends Record<string, unknown> = Record<string, unknown>,
->(
-  config: UserProviderConfig<TUser, TQuery, TExtra>
-) {
+  TExtra extends Record<string, unknown> = Record<string, unknown>
+>(config: UserProviderConfig<TUser, TQuery, TExtra>) {
   const {
     document,
     parseUser,
@@ -125,7 +129,13 @@ export function createUserProvider<
     });
 
     const updateUser = useCallback(
-      (res: { data?: TQuery; errors?: readonly { message: string; extensions?: Record<string, unknown> }[] }) => {
+      (res: {
+        data?: TQuery;
+        errors?: readonly {
+          message: string;
+          extensions?: Record<string, unknown>;
+        }[];
+      }) => {
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
         } else {
@@ -133,7 +143,7 @@ export function createUserProvider<
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [],
+      []
     );
 
     useEffect(() => {
@@ -159,8 +169,8 @@ export function createUserProvider<
           isLoading: loading,
           refetchUser,
           ...extraContextValue(user),
-        }) as ContextValue,
-      [user, loading, refetchUser],
+        } as ContextValue),
+      [user, loading, refetchUser]
     );
 
     return (
