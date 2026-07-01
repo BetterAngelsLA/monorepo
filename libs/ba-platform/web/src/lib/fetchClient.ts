@@ -2,11 +2,12 @@ import { composeFetchInterceptors } from '@monorepo/apollo';
 import { localStorageAdapter } from '@monorepo/react/shared';
 import {
   createCsrfInterceptor,
+  createCsrfTokenRefresher,
   createOrgInterceptor,
   CSRF_COOKIE_NAME,
   DEFAULT_ORG_STORAGE_KEY,
 } from '@monorepo/ba-platform';
-import { readCsrfToken, refreshCsrfToken } from './csrfTokenProvider';
+import { readCsrfToken } from './csrfTokenProvider';
 
 /**
  * Pre-composed web fetch client.
@@ -18,5 +19,9 @@ import { readCsrfToken, refreshCsrfToken } from './csrfTokenProvider';
 export const createWebFetchClient = () =>
   composeFetchInterceptors(
     createOrgInterceptor(localStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
-    createCsrfInterceptor(readCsrfToken, refreshCsrfToken, CSRF_COOKIE_NAME),
+    createCsrfInterceptor(
+      readCsrfToken,
+      createCsrfTokenRefresher(),
+      CSRF_COOKIE_NAME,
+    ),
   );

@@ -3,6 +3,9 @@ import { getCookie, eraseCookie } from './cookies';
 /**
  * Read a CSRF cookie value with duplicate cleanup across subdomains.
  * Returns the first (deduplicated) value or ``null``.
+ *
+ * Subdomain deduplication is web-specific — React Native uses
+ * ``createNativeTokenReader`` from ``@monorepo/ba-platform/expo``.
  */
 export const readCsrfToken = async (name: string): Promise<string | null> => {
   let t = getCookie(name);
@@ -13,9 +16,4 @@ export const readCsrfToken = async (name: string): Promise<string | null> => {
     t = getCookie(name);
   }
   return t[0] ?? null;
-};
-
-/** Fetch a fresh CSRF token from the Django admin login endpoint. */
-export const refreshCsrfToken = async (path: string): Promise<void> => {
-  await fetch(path, { credentials: 'include' });
 };

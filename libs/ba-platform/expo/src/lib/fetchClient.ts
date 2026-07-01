@@ -11,12 +11,14 @@ import {
 } from '@monorepo/apollo';
 import {
   createCsrfInterceptor,
+  createCsrfTokenRefresher,
   createOrgInterceptor,
   DEFAULT_ORG_STORAGE_KEY,
 } from '@monorepo/ba-platform';
+import CookieManager from '@preeternal/react-native-cookie-manager';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
-import { createNativeTokenReader, createNativeTokenRefresher } from './csrfTokenProvider';
+import { createNativeTokenReader } from './csrfTokenProvider';
 
 /**
  * Pre-composed Expo / React Native fetch client.
@@ -39,7 +41,7 @@ export const createExpoFetchClient = (baseUrl: string) =>
     createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
     createCsrfInterceptor(
       createNativeTokenReader(baseUrl),
-      createNativeTokenRefresher(baseUrl),
+      createCsrfTokenRefresher(baseUrl, (header) => CookieManager.setFromResponse(baseUrl, header)),
     ),
     userAgentInterceptor,
     bodyInterceptor,
