@@ -4,7 +4,8 @@
  * Exports code that depends on browser APIs (``document.cookie``,
  * ``localStorage``, etc.) and must never be resolved by Expo / React Native.
  *
- * TODO: graduate to separate NX project ``ba-platform-web``
- * (per ``docs/styleguides/nx.md`` ba-platform project split).
+ * This is a separate NX project (``ba-platform-web``) so that
+ * ``depConstraints`` mechanically prevent web code from importing
+ * expo code and vice versa.
  */
 export { createWebFetchClient, CSRF_COOKIE_NAME, DEFAULT_ORG_STORAGE_KEY } from './lib/fetchClient';

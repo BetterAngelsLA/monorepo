@@ -24,7 +24,7 @@
       "@monorepo/ba-platform/permissions": ["./libs/ba-platform/permissions/src/index.ts"],
       "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
       "@monorepo/ba-platform/types": ["./libs/ba-platform/src/types.ts"],
-      "@monorepo/ba-platform/web": ["./libs/ba-platform/src/web.ts"],
+      "@monorepo/ba-platform/web": ["./libs/ba-platform/web/src/index.ts"],
       "@monorepo/ba-platform/expo": ["./libs/ba-platform/expo/src/index.ts"],
       "@monorepo/expo/betterangels": ["./libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [

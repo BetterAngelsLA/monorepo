@@ -71,13 +71,11 @@ the **BA-specific** version goes under the corresponding directory here.
 **Four entry points**, organized by **platform API dependency** — not by
 UI framework.
 
-> **Target state:** entry points are scaffolding. Once platform-specific code
-> arrives (PR #2203), each entry will graduate to its own NX project under
-> `libs/ba-platform/` — e.g. `libs/ba-platform/web/`, `libs/ba-platform/expo/`.
-> Separate projects give mechanical compile-time safety (the linter prevents
-> web code from importing expo code) and independent `nx affected` caching.
-> See [`docs/styleguides/nx.md`](../../docs/styleguides/nx.md) for the migration
-> path.
+> **Current state:** The ``web`` and ``expo`` entry points have graduated to
+> separate NX projects under ``libs/ba-platform/`` (``ba-platform-web``,
+> ``ba-platform-expo``). The ``types`` and ``permissions`` entry points
+> remain as TypeScript barrel files until they grow enough code to warrant
+> their own projects.
 
 React runs on both web and native. Shared React code (hooks, providers)
 has no platform dependency and belongs in the main entry. Pure TypeScript
