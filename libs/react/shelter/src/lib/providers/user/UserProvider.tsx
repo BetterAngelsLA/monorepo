@@ -1,9 +1,9 @@
 import { createUserProvider } from '@monorepo/ba-platform';
-import type { TUser } from './UserContext';
 import {
   CurrentOrgUserDocument,
   type CurrentOrgUserQuery,
-} from './__generated__/UserProvider.generated';
+} from '@monorepo/ba-platform';
+import type { TUser } from './UserContext';
 
 const { UserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
