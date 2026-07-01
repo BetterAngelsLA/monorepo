@@ -79,14 +79,11 @@ export const ApiConfigProvider = ({
   const envEnabled = !!(environments?.length && storage);
 
   useEffect(() => {
-    if (!envEnabled || !storage) return;
+    if (!envEnabled || !storage || !environments) return;
     (async () => {
       const saved = await storage.getItem(storageKey);
-      setEnvName(
-        saved && environments!.some((e) => e.name === saved)
-          ? saved
-          : environments![0].name
-      );
+      const match = environments.find((e) => e.name === saved);
+      setEnvName(match ? saved : environments[0].name);
     })();
     // environments is intentionally omitted — it's a static config.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,7 +102,8 @@ export const ApiConfigProvider = ({
   // ---- Resolve base URL ----
   const apiUrl = useMemo(() => {
     if (!envEnabled || !envName) return initialApiUrl;
-    return environments!.find((e) => e.name === envName)?.url ?? initialApiUrl;
+    const env = environments.find((e) => e.name === envName);
+    return env?.url ?? initialApiUrl;
   }, [envEnabled, envName, initialApiUrl, environments]);
 
   // ---- Fetch client ----
@@ -120,18 +118,18 @@ export const ApiConfigProvider = ({
     };
   }, [apiUrl, fetchWithAuth]);
 
-  // ---- Pending state ----
-  if (envEnabled && envName === null) return null;
-
-  // ---- Context value ----
+  // ---- Context value (must be before any early return — Rules of Hooks) ----
   const value = useMemo<ApiConfigContextType>(
     () => ({
       apiUrl,
       fetchClient,
-      ...(envEnabled ? { environment: envName!, switchEnvironment } : {}),
+      ...(envEnabled && envName ? { environment: envName, switchEnvironment } : {}),
     }),
     [apiUrl, fetchClient, envEnabled, envName, switchEnvironment]
   );
+
+  // ---- Pending state (after all hooks) ----
+  if (envEnabled && envName === null) return null;
 
   return (
     <ApiConfigContext.Provider value={value}>
