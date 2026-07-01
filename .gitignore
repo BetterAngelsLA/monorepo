@@ -97,3 +97,7 @@ logs/
 
 # TypeScript build info
 *.tsbuildinfo
+
+.nx/polygraph
+.nx/self-healing
+.nx/migrate-runs
