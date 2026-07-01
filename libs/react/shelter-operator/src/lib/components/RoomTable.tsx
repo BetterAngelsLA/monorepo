@@ -12,7 +12,7 @@ import { Table, type TableColumn } from './base-ui/table';
 import {
   RoomStatusChoices,
   type RoomType,
-} from '../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 
 export type Room = RoomType;
 

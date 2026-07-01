@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 import {
   BedStatusChoices,
   type BedType,
-} from '../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { Button } from './base-ui/buttons';
 import {
   StatusBadge,

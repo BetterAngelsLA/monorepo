@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import {

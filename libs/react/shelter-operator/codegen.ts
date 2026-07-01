@@ -19,7 +19,7 @@ const config: CodegenConfig = {
         useTypeImports: true,
       },
       presetConfig: {
-        baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
+        baseTypesPath: '@monorepo/ba-platform/types',
         folder: '__generated__',
         importTypes: true,
       },

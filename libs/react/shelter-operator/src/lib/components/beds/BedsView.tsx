@@ -3,7 +3,7 @@ import { isMutationSuccess } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type BedType } from '../../apollo/graphql/__generated__/types';
+import { type BedType } from '@monorepo/ba-platform/types';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,

@@ -11,7 +11,7 @@ import {
   OrganizationMemberOrdering,
   OrganizationMemberType,
   PermissionTemplateEnum,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
