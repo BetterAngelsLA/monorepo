@@ -22,7 +22,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "output",
-            nargs="?",
             help="Output path relative to repo root.",
         )
 
