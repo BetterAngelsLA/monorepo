@@ -15,7 +15,8 @@ import { readCsrfToken } from './csrfTokenProvider';
  * Chains org-id injection + CSRF token refresh, backed by browser-native
  * localStorage and cookie APIs.  Returns a ``fetch``-compatible function.
  *
- * Pass the result to ``ApiConfigProvider`` (as ``fetch``) and to Apollo's\n * ``UploadHttpLink`` (as the ``fetch`` option).
+ * Pass the result to ``ApiConfigProvider`` (as ``fetch``) and to Apollo's
+ * ``UploadHttpLink`` (as the ``fetch`` option).
  */
 export const createWebFetchClient = () =>
   composeFetchInterceptors(
