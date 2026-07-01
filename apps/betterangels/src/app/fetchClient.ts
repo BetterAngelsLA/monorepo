@@ -2,7 +2,6 @@ import {
   composeFetchInterceptors,
   userAgentInterceptor,
   bodyInterceptor,
-  createRefererInterceptor,
   includeCredentialsInterceptor,
   backendAuthInterceptor,
   interceptorHmis,
@@ -13,11 +12,10 @@ import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
 export const fetchClient = composeFetchInterceptors(
   createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
-  createNativeCsrfInterceptor(''),
+  createNativeCsrfInterceptor(),
   userAgentInterceptor,
-  createRefererInterceptor(''),
   bodyInterceptor,
   backendAuthInterceptor,
   includeCredentialsInterceptor,
   interceptorHmis,
-)(fetch);
+);

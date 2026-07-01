@@ -163,7 +163,7 @@ export function createUserProvider<TUser extends { organizations?: readonly { id
           organizations={(user?.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
-            permissions: [...(org.permissions ?? [])],
+            permissions: org.permissions ?? [],
           }))}
         >
           {children}

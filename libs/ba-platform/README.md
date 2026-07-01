@@ -89,8 +89,10 @@ with one target.
 |---|---|---|
 | `@monorepo/ba-platform` | All apps | Platform-agnostic — constants, orgLink, React providers, GQL hooks |
 | `@monorepo/ba-platform/react` | Web only | Browser APIs — CSRF link, web Apollo client |
+| `@monorepo/ba-platform/web` | Web only | Browser APIs — CSRF + org fetch client, web Apollo client |
 | `@monorepo/ba-platform/expo` | Expo only | Native APIs — Expo Apollo client, `ApolloClientProvider` |
 | `@monorepo/ba-platform/types` | All apps | Generated GQL types only (no runtime code) |
+| `@monorepo/ba-platform/permissions` | All apps | Generated permission enums + `PermissionEnum` union type |
 
 ### Decision tree
 
@@ -101,7 +103,7 @@ When adding code, ask: **"Does this import a platform-specific API?"**
 | Pure TS (constants, enums, types, regex) | `@monorepo/ba-platform` |
 | React code with no platform imports | `@monorepo/ba-platform` |
 | Apollo code with no platform imports | `@monorepo/ba-platform` |
-| Uses `document.cookie`, `window`, or other browser-only APIs | `@monorepo/ba-platform/react` |
+| Uses `document.cookie`, `window`, or other browser-only APIs | `@monorepo/ba-platform/web` |
 | Uses `AsyncStorage`, `Platform.OS`, or other RN-only APIs | `@monorepo/ba-platform/expo` |
 | Uses a different platform API entirely | Add a new entry point (see below) |
 
@@ -155,12 +157,11 @@ code (e.g. `src/lib/<name>/`).
 | `react/providers/activeOrg/` | React | `ActiveOrgContext`, `ActiveOrgProvider`, `useActiveOrg`, `useActiveOrgState` — shared org management. Factory exports (`createActiveOrgContext<T>()`, etc.) for custom org types. |
 | `react/providers/user/` | React | `UserProvider`, `useUser` — shared current-user context. Factory export (`createUserProvider`) for custom user types. |
 
-### Web-only (`@monorepo/ba-platform/react`)
+### Web-only (`@monorepo/ba-platform/web`)
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `apollo/react/client` | Apollo | Web Apollo client — composes CSRF link, org link, upload HTTP link |
-| `apollo/react/csrf` | Apollo | CSRF token extraction from cookies + header injection. Uses `document.cookie`. |
+| `createWebFetchClient` | Fetch | Pre-composed web fetch client: org-id injection + CSRF token refresh, backed by browser localStorage and cookie APIs. Use as the `fetch` option for Apollo's `UploadHttpLink`. |
 
 ### Expo-only (`@monorepo/ba-platform/expo`)
 

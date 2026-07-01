@@ -150,13 +150,14 @@ export const userAgentInterceptor: FetchInterceptor = async (
 };
 
 /**
- * Adds Referer header
+ * Adds Referer header.  When ``referer`` is omitted the header is not sent
+ * (the browser / runtime default applies).
  */
-export const createRefererInterceptor = (referer: string): FetchInterceptor => {
+export const createRefererInterceptor = (referer?: string): FetchInterceptor => {
   return async (input, init, next) => {
+    if (referer === undefined) return next(input, init);
     const headers = new Headers(init.headers);
     headers.set(HEADER_NAMES.REFERER, referer);
-
     return next(input, { ...init, headers });
   };
 };
@@ -212,11 +213,14 @@ export const backendAuthInterceptor: FetchInterceptor = async (
 };
 
 /**
- * Helper to fetch fresh CSRF token from Django
+ * Fetch a fresh CSRF token from the Django admin login endpoint.
+ *
+ * @param baseUrl  Base URL of the Django backend (defaults to ``''``
+ *   which resolves relative to the app origin).
  */
-const fetchFreshCsrf = async (referer: string): Promise<void> => {
+const fetchFreshCsrf = async (baseUrl: string = ''): Promise<void> => {
   const csrfResponse = await fetch(
-    `${referer}${CSRF_LOGIN_PATH}?t=${Date.now()}`,
+    `${baseUrl}${CSRF_LOGIN_PATH}?t=${Date.now()}`,
     {
       headers: {
         [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_HTML,
@@ -229,15 +233,21 @@ const fetchFreshCsrf = async (referer: string): Promise<void> => {
 
   const setCookie = csrfResponse.headers.get('set-cookie');
   if (setCookie) {
-    await CookieManager.setFromResponse(referer, setCookie);
+    await CookieManager.setFromResponse(baseUrl, setCookie);
   }
 };
 
 /**
- * CSRF interceptor that handles Django CSRF protection
- * Uses retry strategy: attempt request, if 403 fetch CSRF and retry once
+ * CSRF interceptor for Django CSRF protection (reactive / retry strategy).
+ *
+ * On a 403 response to a mutating request the interceptor fetches a fresh
+ * CSRF token from the Django admin login endpoint and retries the request
+ * **once**.
+ *
+ * @param baseUrl  Base URL of the Django backend.  Defaults to ``''``
+ *   (resolve relative to the current origin).
  */
-export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
+export const createCsrfInterceptor = (baseUrl: string = ''): FetchInterceptor => {
   return async (input, init, next) => {
     let response = await next(input, init);
 
@@ -248,7 +258,7 @@ export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
       );
 
       if (isMutating) {
-        await fetchFreshCsrf(referer);
+        await fetchFreshCsrf(baseUrl);
         response = await next(input, init);
       }
     }

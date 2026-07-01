@@ -1,7 +1,7 @@
 import { ApolloClient } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import { initApolloRuntimeConfig } from '@monorepo/apollo';
+import { createApolloCache, initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
@@ -21,7 +21,7 @@ const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
 const apolloClient = new ApolloClient({
   link: new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient }),
-  cache: createShelterTypePolicies(isDevEnv),
+  cache: createApolloCache({ typePolicies: createShelterTypePolicies(isDevEnv) }),
 });
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
@@ -41,14 +41,6 @@ root.render(
             </UserProvider>
           </BrowserRouter>
         </ShelterFeatureControlProvider>
-      </ApolloProvider>
-    </ApiConfigProvider>
-  </StrictMode>
-);
-      </ApolloProvider>
-    </ApiConfigProvider>
-  </StrictMode>
-);
       </ApolloProvider>
     </ApiConfigProvider>
   </StrictMode>

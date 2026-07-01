@@ -6,7 +6,7 @@ import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, CSRF_LOGIN_PATH, DEFAULT_ORG_STORAG
 
 export type TokenReader = (name: string) => Promise<string | null>;
 export type TokenRefresher = (loginPath: string) => Promise<void>;
-export type StorageReader = { getItem: (key: string) => Promise<string | null> };
+export type StorageReader = { getItem: (key: string) => string | null | Promise<string | null> };
 
 export type FetchInterceptor = (
   input: RequestInfo | URL,

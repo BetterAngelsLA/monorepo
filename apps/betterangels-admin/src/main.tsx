@@ -1,6 +1,7 @@
 import { ApolloClient } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { createApolloCache } from '@monorepo/apollo';
 import {
   ApiConfigProvider,
   AuthProvider,
@@ -15,13 +16,9 @@ import { fetchClient } from './lib/fetchClient';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
-const fetchClient = composeFetchInterceptors(
-  createOrgInterceptor(localStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
-  createCsrfInterceptor(readCsrfToken, refreshCsrfToken, CSRF_COOKIE_NAME),
-)(window.fetch);
-
 const apolloClient = new ApolloClient({
   link: new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient }),
+  cache: createApolloCache(),
 });
 
 const root = ReactDOM.createRoot(
