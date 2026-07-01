@@ -1,11 +1,14 @@
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { useState } from 'react';
 import {
+  OPERATION_KEY,
+  PAYLOAD_TYPENAME,
   useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
-import { type BasicInfoFormData, toFormData } from './formSchema';
+import { type BasicInfoFormData, formSchema, toFormData } from './formSchema';
 import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 function toUpdateInput(
@@ -19,7 +22,8 @@ function toUpdateInput(
     description: data.description,
     email: data.email || null,
     phone: data.phone || null,
-    website: data.website || null,
+    // website: data.website || null,
+    website: 'hello',
     isPrivate: data.isPrivate,
     location: data.location
       ? {
@@ -50,32 +54,48 @@ export function ShelterBasicInfo(props: TProps) {
         variables: { data: toUpdateInput(shelterId, data) },
       });
 
-      const result = response.data?.updateShelter;
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        operationName: OPERATION_KEY,
+        successTypename: PAYLOAD_TYPENAME,
+        fields: Object.keys(formSchema.shape),
+      });
 
-      // success
-      if (result?.__typename === 'ShelterType') {
-        setEditMode(false);
+      console.log();
+      console.log('| -------------  fieldErrors  ------------- |');
+      console.log(fieldErrors);
+      console.log();
 
-        showToast({
-          status: 'success',
-          title: 'Shelter updated.',
-        });
-
+      if (fieldErrors.length) {
+        // TODO: applyFieldErrors(fieldErrors, setError) — once libs/ts is ready
+        console.error('[updateShelter field errors]:', fieldErrors);
         return;
       }
 
-      // error
-      // TODO: handle specific OperationInfo field errors via SDB-241
-
-      throw new Error('unexpected query error');
-    } catch (e) {
-      console.error(`[updateShelter error]: ${e}.`);
+      setEditMode(false);
 
       showToast({
-        status: 'error',
-        title: 'Update failed',
-        description: 'An unexpected error occurred.',
+        status: 'success',
+        title: 'Shelter updated.',
       });
+    } catch (e) {
+      if (e instanceof BaError) {
+        console.error(`[updateShelter error]: ${e.message}`);
+
+        showToast({
+          status: 'error',
+          title: 'Update failed',
+          description: e.message,
+        });
+      } else {
+        console.error(`[updateShelter error]: ${e}.`);
+
+        showToast({
+          status: 'error',
+          title: 'Update failed',
+          description: 'An unexpected error occurred.',
+        });
+      }
     }
   }
 
