@@ -1,4 +1,4 @@
-import { createCsrfInterceptor, createOrgInterceptor } from './interceptors';
+import { createCsrfInterceptor, createOrgInterceptor } from '@monorepo/apollo';
 
 describe('createCsrfInterceptor', () => {
   it('injects CSRF header when token is available', async () => {
