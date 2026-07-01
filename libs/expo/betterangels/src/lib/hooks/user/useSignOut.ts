@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
 import CookieManager from '@preeternal/react-native-cookie-manager';
-import useUser from './useUser';
+import { useUser } from '../../providers/user/UserProvider';
 
 export const LOGOUT_MUTATION = gql`
   mutation Logout {

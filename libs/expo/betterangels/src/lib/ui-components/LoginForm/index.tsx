@@ -9,7 +9,7 @@ import { useAllauthLogin } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment } from '../../hooks';
-import useUser from '../../hooks/user/useUser';
+import { useUser } from '../../providers/user/UserProvider';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 
 export default function LoginForm() {

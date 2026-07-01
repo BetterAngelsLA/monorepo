@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HmisNoteType, toNoteFilterHmis } from '../../apollo';
-import useUser from '../../hooks/user/useUser';
+import { useUser } from '../../providers/user/UserProvider';
 import { TUser } from '../../providers/user/UserProvider';
 import {
   Header,

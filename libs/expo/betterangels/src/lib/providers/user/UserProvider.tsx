@@ -35,26 +35,28 @@ const {
 } = createUserProvider({
   document: CurrentUserDocument,
   parseUser: (
-    data: CurrentUserQuery['currentUser'] | undefined
-  ): TUser | undefined =>
-    data
+    data: unknown
+  ): TUser | undefined => {
+    const userData = data as CurrentUserQuery['currentUser'] | undefined;
+    return userData
       ? {
-          id: data.id,
-          username: data.username ?? undefined,
-          firstName: data.firstName ?? undefined,
-          lastName: data.lastName ?? undefined,
-          email: data.email,
-          organizations: (data.organizations ?? []).map((org) => ({
+          id: userData.id,
+          username: userData.username ?? undefined,
+          firstName: userData.firstName ?? undefined,
+          lastName: userData.lastName ?? undefined,
+          email: userData.email,
+          organizations: (userData.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
             permissions: org.permissions ?? [],
           })),
-          isOutreachAuthorized: data.isOutreachAuthorized ?? false,
-          hasAcceptedTos: data.hasAcceptedTos ?? false,
-          hasAcceptedPrivacyPolicy: data.hasAcceptedPrivacyPolicy ?? false,
-          isHmisUser: data.isHmisUser ?? undefined,
+          isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
+          hasAcceptedTos: userData.hasAcceptedTos ?? false,
+          hasAcceptedPrivacyPolicy: userData.hasAcceptedPrivacyPolicy ?? false,
+          isHmisUser: userData.isHmisUser ?? undefined,
         }
-      : undefined,
+      : undefined;
+  },
   isUnauthenticated: (errors) =>
     errors?.some(
       (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
