@@ -4,7 +4,6 @@ import {
   includeCredentialsInterceptor,
   hmisAuthInterceptor,
   interceptorHmis,
-  createCsrfInterceptor as createReactiveCsrfInterceptor,
 } from '@monorepo/expo/shared/clients';
 import {
   composeFetchInterceptors,
@@ -30,8 +29,7 @@ import { createNativeTokenReader } from './csrfTokenProvider';
  * 4. Body serialisation
  * 5. HMIS auth token injection
  * 6. Credentials include
- * 7. Reactive CSRF 403-retry (safety net)
- * 8. HMIS-specific cookie extraction
+ * 7. HMIS-specific cookie extraction
  *
  * Pass the result as the ``fetch`` option to Apollo's HTTP link or
  * ``ApiConfigProvider``.
@@ -47,6 +45,5 @@ export const createExpoFetchClient = (baseUrl: string) =>
     bodyInterceptor,
     hmisAuthInterceptor,
     includeCredentialsInterceptor,
-    createReactiveCsrfInterceptor(baseUrl),
     interceptorHmis,
   );

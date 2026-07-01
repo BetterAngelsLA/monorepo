@@ -1,6 +1,5 @@
 import 'expo-dev-client';
 
-import { ApolloLink } from '@apollo/client';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import {
@@ -77,12 +76,10 @@ export default function RootLayout() {
                 <ApolloClientProvider
                   typePolicies={baApolloTypePolicies}
                   link={
-                    ApolloLink.from([
-                      new UploadHttpLink({
-                        uri: `${apiUrl}/graphql`,
-                        fetch: fetchClient,
-                      }),
-                    ])
+                    new UploadHttpLink({
+                      uri: `${apiUrl}/graphql`,
+                      fetch: fetchClient,
+                    })
                   }
                 >
                   <BaFeatureControlProvider>
