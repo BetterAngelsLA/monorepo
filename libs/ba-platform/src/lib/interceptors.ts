@@ -1,18 +1,16 @@
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, CSRF_LOGIN_PATH, DEFAULT_ORG_STORAGE_KEY } from './constants';
 
+import type { FetchInterceptor } from '@monorepo/apollo';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+export type { FetchInterceptor };
+
 export type TokenReader = (name: string) => Promise<string | null>;
 export type TokenRefresher = (loginPath: string) => Promise<void>;
 export type StorageReader = { getItem: (key: string) => string | null | Promise<string | null> };
-
-export type FetchInterceptor = (
-  input: RequestInfo | URL,
-  init: RequestInit,
-  next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
-) => Promise<Response>;
 
 // ---------------------------------------------------------------------------
 // CSRF Interceptor

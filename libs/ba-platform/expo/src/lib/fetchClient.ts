@@ -1,5 +1,4 @@
 import {
-  composeFetchInterceptors,
   userAgentInterceptor,
   bodyInterceptor,
   includeCredentialsInterceptor,
@@ -7,6 +6,9 @@ import {
   interceptorHmis,
   createCsrfInterceptor as createReactiveCsrfInterceptor,
 } from '@monorepo/expo/shared/clients';
+import {
+  composeFetchInterceptors,
+} from '@monorepo/apollo';
 import {
   createCsrfInterceptor,
   createOrgInterceptor,

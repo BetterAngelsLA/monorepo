@@ -2,6 +2,8 @@
  * Fetch interceptor system for composable request/response handling
  */
 
+import type { FetchInterceptor } from '@monorepo/apollo';
+import { composeFetchInterceptors } from '@monorepo/apollo';
 import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
@@ -21,11 +23,9 @@ import {
 
 export type HeadersObject = Record<string, string>;
 
-export type FetchInterceptor = (
-  input: RequestInfo | URL,
-  init: RequestInit,
-  next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
-) => Promise<Response>;
+// Re-export for consumers that still import from this package.
+export { composeFetchInterceptors };
+export type { FetchInterceptor };
 
 export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
@@ -111,25 +111,6 @@ export const loadFileHeadersHmis =
       return { headers: null, baseUrl: null };
     }
   };
-
-/**
- * Composes multiple interceptors into a single fetch function
- */
-export const composeFetchInterceptors = (
-  ...interceptors: FetchInterceptor[]
-): ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) => {
-  return (input: RequestInfo | URL, init: RequestInit = {}) => {
-    // Build the chain from right to left, ending with actual fetch
-    const chain = interceptors.reduceRight<
-      (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
-    >(
-      (next, interceptor) => (input, init) => interceptor(input, init, next),
-      (input: RequestInfo | URL, init: RequestInit) => fetch(input, init)
-    );
-
-    return chain(input, init);
-  };
-};
 
 // ============================================================================
 // INTERCEPTORS

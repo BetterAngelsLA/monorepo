@@ -1,8 +1,8 @@
 import { getCookie, eraseCookie } from './cookies';
 
 /**
- * Read a cookie value with duplicate cleanup across subdomains.
- * Returns the first (deduplicated) value or null.
+ * Read a CSRF cookie value with duplicate cleanup across subdomains.
+ * Returns the first (deduplicated) value or ``null``.
  */
 export const readCsrfToken = async (name: string): Promise<string | null> => {
   let t = getCookie(name);
