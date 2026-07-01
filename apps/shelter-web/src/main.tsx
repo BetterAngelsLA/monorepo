@@ -20,7 +20,7 @@ const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const fetchClient = createWebFetchClient();
-const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient, credentials: 'include' });
 const typePolicies = createShelterTypePolicies(isDevEnv);
 
 const root = ReactDOM.createRoot(

@@ -14,7 +14,7 @@ import App from './app/app';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const fetchClient = createWebFetchClient();
-const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient, credentials: 'include' });
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

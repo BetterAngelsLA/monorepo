@@ -14,6 +14,7 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
+import { ApolloLink } from '@apollo/client';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import {
@@ -21,6 +22,9 @@ import {
   userAgentInterceptor,
   hmisAuthInterceptor,
   interceptorHmis,
+  createErrorLink,
+  loggerLink,
+  isReactNativeFileInstance,
 } from '@monorepo/expo/shared/clients';
 import {
   EnvironmentSwitcherProvider,
@@ -59,7 +63,23 @@ const fetchClient = createExpoFetchClient(apiUrl, [
   hmisAuthInterceptor,
   interceptorHmis,
 ]);
-const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient });
+
+const httpLink = new UploadHttpLink({
+  uri: `${apiUrl}/graphql`,
+  fetch: fetchClient,
+  isExtractableFile: isReactNativeFileInstance,
+});
+
+const apolloLinks = [createErrorLink({ authPath: '/auth' }), httpLink];
+
+if (
+  process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true' &&
+  process.env['NODE_ENV'] !== 'production'
+) {
+  apolloLinks.unshift(loggerLink);
+}
+
+const link = ApolloLink.from(apolloLinks);
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
