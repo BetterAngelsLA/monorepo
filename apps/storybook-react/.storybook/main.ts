@@ -31,7 +31,23 @@ const config: StorybookConfig = {
     ...REACT_APP_LIB_STORIES,
   ],
   addons: [],
-  managerHead: (head) => `${head}<base href="${getBaseHref()}" />`,
+  managerHead: (head) => `${head}
+    <base href="${getBaseHref()}" />
+    <script>
+      // Patch for Storybook bug #35245 — iframe URL ignores <base href>
+      // Watch for the preview iframe and resolve its src against document.baseURI
+      new MutationObserver(() => {
+        const iframe = document.querySelector('#storybook-preview-iframe');
+        if (iframe && iframe.src) {
+          const srcURL = new URL(iframe.src, location.href);
+          if (srcURL.pathname.endsWith('/iframe.html')) {
+            const fixed = new URL('iframe.html', document.baseURI);
+            fixed.search = srcURL.search;
+            if (iframe.src !== fixed.href) iframe.src = fixed.href;
+          }
+        }
+      }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+    </script>`,
   previewHead: (head) => `${head}<base href="${getBaseHref()}" />`,
   framework: {
     name: '@storybook/react-native-web-vite',
