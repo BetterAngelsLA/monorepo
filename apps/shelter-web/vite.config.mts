@@ -1,5 +1,4 @@
 /// <reference types='vitest' />
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -44,7 +43,7 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
+    plugins: [react(), rawSvgPlugin()],
 
     css: {
       postcss: {
@@ -57,7 +56,7 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    resolve: {},
+    resolve: { tsconfigPaths: true },
 
     build: {
       outDir: '../../dist/apps/shelter-web',

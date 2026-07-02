@@ -3,7 +3,10 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels-admin/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:betterangels-admin"],
+  "tags": [
+    "type:app",
+    "scope:betterangels-admin"
+  ],
   "targets": {
     "test": {
       "options": {
@@ -52,12 +55,6 @@
         "production": {},
         "preview": {}
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
     },
     "post-pr-preview": {
       "executor": "nx:run-commands",

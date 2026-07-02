@@ -3,7 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/shelter/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:shelter-web"],
+  "tags": [
+    "type:feature",
+    "scope:shelter-web"
+  ],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -13,17 +16,13 @@
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/libs/react/shelter/src/lib/**/__generated__/"
+      ],
       "options": {
         "cwd": "libs/react/shelter",
         "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/react/shelter/src/lib/**/__generated__/"
-      ]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      }
     }
   }
 }

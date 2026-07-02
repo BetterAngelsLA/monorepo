@@ -3,12 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/shared/icons/src",
   "projectType": "library",
-  "tags": ["type:ui", "scope:shared"],
+  "tags": [
+    "type:ui",
+    "scope:shared"
+  ],
   "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

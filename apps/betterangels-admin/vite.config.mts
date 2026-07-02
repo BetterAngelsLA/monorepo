@@ -1,10 +1,9 @@
 /// <reference types='vitest' />
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 
 const SERVER_PORT = 8084;
@@ -48,8 +47,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       rawSvgPlugin(),
-      nxViteTsPaths(),
-      nxCopyAssetsPlugin(['*.md']),
+      viteStaticCopy({
+        targets: [
+          {
+            src: '*.md',
+            dest: '.',
+          },
+        ],
+      }),
     ],
 
     css: {
@@ -63,7 +68,7 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    resolve: {},
+    resolve: { tsconfigPaths: true },
 
     build: {
       outDir: '../../dist/apps/betterangels-admin',

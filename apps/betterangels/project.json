@@ -3,7 +3,10 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:betterangels"],
+  "tags": [
+    "type:app",
+    "scope:betterangels"
+  ],
   "targets": {
     "start": {
       "executor": "@nx/expo:start",
@@ -103,12 +106,8 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
       "inputs": [
         "{projectRoot}/**/*"
-      ],
-      "outputs": [
-        "{options.outputFile}"
       ]
     },
     "test": {

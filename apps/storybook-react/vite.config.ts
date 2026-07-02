@@ -1,6 +1,5 @@
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // export default defineConfig(() => ({
 export default defineConfig(({ mode }) => {
@@ -8,11 +7,12 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/storybook-react',
 
-    plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
+    plugins: [viteStaticCopy({ targets: [{ src: '*.md', dest: '.' }] })],
     // Uncomment this if you are using workers.
     // worker: {
-    //  plugins: [ nxViteTsPaths() ],
+    //  plugins: [],
     // },
+    resolve: { tsconfigPaths: true },
     test: {
       watch: false,
       globals: true,
