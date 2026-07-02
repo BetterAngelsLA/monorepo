@@ -3,13 +3,20 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels-admin/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:betterangels-admin"],
+  "tags": [
+    "type:app",
+    "scope:betterangels-admin"
+  ],
   "targets": {
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/betterangels-admin/jest.config.ts"
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
       }
     },
     "set-env": {
@@ -23,31 +30,26 @@
       }
     },
     "build": {
-      "executor": "@nx/vite:build",
-      "dependsOn": ["set-env"],
+      "dependsOn": [
+        "set-env"
+      ],
       "options": {
-        "outputPath": "dist/apps/betterangels-admin",
-        "configFile": "apps/betterangels-admin/vite.config.mts"
-      },
-      "configurations": {
-        "production": {},
-        "preview": {}
+        "config": "./vite.config.mts",
+        "outDir": "../../dist/apps/betterangels-admin"
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "dependsOn": [
+        "build"
+      ],
       "options": {
         "command": "./tools/deploy/cloudfront_deploy.sh"
       },
       "configurations": {
         "production": {},
         "preview": {}
-      },
-      "dependsOn": ["build"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      }
     },
     "post-pr-preview": {
       "executor": "nx:run-commands",
