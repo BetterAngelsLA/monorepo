@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:clients_clientprofile_merge' %}" class="addlink" style="background: #417690;">
+      🔀 Merge Clients
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}

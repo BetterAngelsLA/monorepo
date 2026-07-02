@@ -23,11 +23,13 @@ query ViewSheltersByOrganization(
       }
       status
       totalBeds
-      bedsByStatus {
+      bedCounts {
         available
+        inTurnaround
         occupied
-        reserved
         outOfService
+        reserved
+        total
       }
       demographics {
         name

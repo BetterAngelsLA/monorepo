@@ -8,26 +8,18 @@ import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
-from django.db.models import Q, QuerySet
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import F, Q, QuerySet, Value
+from django.db.models.functions import Concat
 from notes.groups import CASEWORKER
 from organizations.models import Organization
-from reports.permissions import ReportPermissions
-from shelters.permissions import ShelterPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
-from teams.permissions import TeamPermissions
 
 from accounts.enums import OrgRoleEnum
 from accounts.models import PermissionGroup
-from accounts.permissions import make_granted_permissions
 
 from .models import User
-from .permissions import UserOrganizationPermissions
-
-AccountsGrantedPermissions = make_granted_permissions(UserOrganizationPermissions)
-ReportsGrantedPermissions = make_granted_permissions(ReportPermissions)
-SheltersGrantedPermissions = make_granted_permissions(ShelterPermissions)
-TeamsGrantedPermissions = make_granted_permissions(TeamPermissions)
 
 
 @strawberry.input
@@ -116,32 +108,24 @@ class CurrentUserOrganizationType(OrganizationType):
         if not user or not user.is_authenticated:
             return queryset.none()
 
-        assert isinstance(user, User)
+        # Annotate each org with a single array of granted permission strings
+        # (e.g. ["organizations.view_org_members", "reports.view_reports"]).
         qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
-            **AccountsGrantedPermissions.get_annotations(user),
-            **ReportsGrantedPermissions.get_annotations(user),
-            **SheltersGrantedPermissions.get_annotations(user),
-            **TeamsGrantedPermissions.get_annotations(user),
+            _granted_perms=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                ),
+                filter=Q(permission_groups__group__user=user),
+                distinct=True,
+            )
         )
-
         return qs
 
     @strawberry_django.field
-    def permissions(self, info: Info) -> "OrgPermissions":
-        return OrgPermissions(
-            accounts=AccountsGrantedPermissions.from_instance(self).granted,
-            reports=ReportsGrantedPermissions.from_instance(self).granted,
-            shelters=SheltersGrantedPermissions.from_instance(self).granted,
-            teams=TeamsGrantedPermissions.from_instance(self).granted,
-        )
-
-
-@strawberry.type
-class OrgPermissions:
-    accounts: List[UserOrganizationPermissions]
-    reports: List[ReportPermissions]
-    shelters: List[ShelterPermissions]  # type: ignore[valid-type]
-    teams: List[TeamPermissions]  # type: ignore[valid-type]
+    def permissions(self, info: Info) -> List[str]:
+        return getattr(self, "_granted_perms", []) or []
 
 
 @strawberry_django.type(User)
@@ -278,14 +262,13 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
-# Dynamically built from the registry — adding a template to
-# common.org_types.REGISTRY automatically exposes it here.
-PermissionTemplateEnum = strawberry.enum(  # type: ignore[call-overload]
-    Enum(
-        "PermissionTemplateEnum",  # type: ignore[arg-type]
-        {name.upper().replace(" ", "_"): name for name in REGISTRY.invitable_template_names()},
-    )
-)
+PermissionTemplateEnum = strawberry.enum(
+    Enum("PermissionTemplateEnum", {n.upper().replace(" ", "_"): n for n in REGISTRY.invitable_template_names()}),
+)  # type: ignore[call-overload]
+
+OrgTypeEnum = strawberry.enum(
+    Enum("OrgTypeEnum", {n.upper(): n for n in REGISTRY.org_type_names()}),
+)  # type: ignore[call-overload]
 
 
 @strawberry.input

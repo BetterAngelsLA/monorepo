@@ -20,19 +20,24 @@ import {
   ShelterServicesPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
-import { ActiveOrgProvider, OperatorAuthProvider } from './providers';
+import { OperatorAuthProvider } from './providers';
 import {
   manageSegments,
   paths,
   routePath,
   shelterProfileSegments,
 } from './routing';
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
 
 export function OperatorApp() {
   const { user } = useUser();
 
   return (
-    <ActiveOrgProvider organizations={user?.organizations ?? []}>
+    <ActiveOrgProvider organizations={(user?.organizations ?? []).map(org => ({
+      id: org.id,
+      name: org.name,
+      permissions: Object.values(org.permissions).flat(),
+    }))}>
       <OperatorAuthProvider>
         <Routes>
           <Route path={routePath(paths.signIn)} element={<SignIn />} />

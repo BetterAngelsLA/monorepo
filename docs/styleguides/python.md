@@ -20,7 +20,7 @@ as the API layer instead of Django REST Framework.
   mutations; `types.py` defines Strawberry types for input/output.
 - **Permissions** — `ModelPermissionSet` inner classes on models (via
   `common/permissions/utils.py`) replace the old per-file `permissions.py` pattern.
-  See the `libs/ba-permissions/` package for the matching frontend permission enums.
+  See the `@monorepo/ba-platform/permissions` package for the matching frontend permission enums.
 - **Models** — inherit `BaseModel` (from `common/models.py`) which provides
   `created_at`/`updated_at` and a `PermissionSet` hook. Use `clean()` for
   multi-field validation and Django `Meta.constraints` for database-level checks.

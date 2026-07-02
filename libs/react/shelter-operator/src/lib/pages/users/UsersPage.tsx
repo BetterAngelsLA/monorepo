@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { UserIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
@@ -9,9 +10,10 @@ import {
   OrgRoleEnum,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  OrgTypeEnum,
   PermissionTemplateEnum,
-  UserOrganizationPermissions,
 } from '../../apollo/graphql/__generated__/types';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
@@ -21,7 +23,6 @@ import {
   type TableColumn,
 } from '../../components/base-ui/table';
 import { useToast } from '../../components/base-ui/toast';
-import { useActiveOrg } from '../../providers';
 import {
   OrganizationMembersDocument,
   RemoveOrganizationMemberDocument,
@@ -29,7 +30,9 @@ import {
 
 const PAGE_SIZE = 25;
 
-const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>> = {
+const ROLE_LABELS: Partial<
+  Record<PermissionTemplateEnum | OrgRoleEnum, string>
+> = {
   [PermissionTemplateEnum.ShelterOperator]: 'Shelter Operator',
   [OrgRoleEnum.Admin]: 'Admin',
   [OrgRoleEnum.Member]: 'Member',
@@ -37,7 +40,10 @@ const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>>
 };
 
 function roleLabel(m: OrganizationMemberType): string {
-  if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
+  if (
+    m.memberRole === OrgRoleEnum.Admin ||
+    m.memberRole === OrgRoleEnum.Superuser
+  ) {
     return ROLE_LABELS[m.memberRole] ?? m.memberRole;
   }
   const templates = (m.permissionTemplates ?? [])
@@ -114,7 +120,8 @@ function useOrganizationMembers(
   orgId: string,
   page: number,
   sort: { field: keyof OrganizationMemberOrdering; direction: Ordering },
-  search?: string
+  search?: string,
+  orgType?: OrgTypeEnum
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -124,6 +131,7 @@ function useOrganizationMembers(
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
         filters: { search },
+        orgType,
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
@@ -170,7 +178,7 @@ export function UsersPage() {
   );
 
   const { members, totalPages, loading, isInitialLoad, refetch } =
-    useOrganizationMembers(organizationId, page, sort, search);
+    useOrganizationMembers(organizationId, page, sort, search, OrgTypeEnum.Shelter);
 
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);

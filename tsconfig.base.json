@@ -21,8 +21,11 @@
       "@betterangels/*": ["./apps/betterangels/*"],
       "@monorepo/apollo": ["./libs/apollo/src/index.ts"],
       "@monorepo/assets": ["./libs/assets/src/index.ts"],
-      "@monorepo/ba-permissions": ["./libs/ba-permissions/src/index.ts"],
       "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
+      "@monorepo/ba-platform/expo": ["./libs/ba-platform/src/expo.ts"],
+      "@monorepo/ba-platform/permissions": ["./libs/ba-platform/permissions/src/index.ts"],
+      "@monorepo/ba-platform/react": ["./libs/ba-platform/src/react.ts"],
+      "@monorepo/ba-platform/types": ["./libs/ba-platform/src/types.ts"],
       "@monorepo/expo/betterangels": ["./libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [
         "./libs/expo/shared/clients/src/index.ts"

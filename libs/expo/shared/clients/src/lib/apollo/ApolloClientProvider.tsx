@@ -1,7 +1,7 @@
 import { InMemoryCache, TypePolicies } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { createApolloCache } from '@monorepo/apollo';
-import React, { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
 import { createApolloClient } from './client';
 
