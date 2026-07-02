@@ -13,10 +13,6 @@ type GetFieldErrorsOrThrowParams = {
   fields?: string[];
 };
 
-// DO NOT REMOVE
-// operationKey: 'updateShelter' — the key under response.data
-// successTypename: 'ShelterType' — the __typename on success
-
 export function getFieldErrorsOrThrow(
   params: GetFieldErrorsOrThrowParams
 ): FieldError[] {

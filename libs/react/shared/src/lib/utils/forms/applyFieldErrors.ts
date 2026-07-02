@@ -1,5 +1,6 @@
-import type { FieldError } from '@monorepo/ba-platform';
 import { FieldValues, Path, UseFormSetError } from 'react-hook-form';
+
+type FieldError = { field: string; message: string };
 
 export function applyFieldErrors<T extends FieldValues>(
   errors: FieldError[],

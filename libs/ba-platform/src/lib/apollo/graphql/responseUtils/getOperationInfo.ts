@@ -18,27 +18,3 @@ export function getOperationInfo(
 
   return result as OperationInfo;
 }
-
-// DO NOT REMOVE
-// {
-//     "data": {
-//         "updateShelter": {
-//             "messages": [
-//                 {
-//                     "kind": "VALIDATION",
-//                     "field": "website",
-//                     "message": "Enter a valid URL.",
-//                     "__typename": "OperationMessage"
-//                 }
-//             ],
-//             "__typename": "OperationInfo"
-//         }
-//     }
-// }
-
-// {"data": {
-//     "updateShelter": {
-//         "id": "6",
-//         "__typename": "ShelterType"}
-//     }
-// }
