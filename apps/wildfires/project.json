@@ -3,7 +3,10 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/wildfires/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:wildfires"],
+  "tags": [
+    "type:app",
+    "scope:wildfires"
+  ],
   "targets": {
     "test": {
       "options": {},
@@ -19,10 +22,9 @@
       "options": {}
     },
     "build": {
-      "executor": "@nx/vite:build",
       "options": {
-        "outputPath": "dist/apps/wildfires",
-        "configFile": "apps/wildfires/vite.config.mts"
+        "config": "./vite.config.mts",
+        "outDir": "../../dist/apps/wildfires"
       },
       "configurations": {
         "production": {

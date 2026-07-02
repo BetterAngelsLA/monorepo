@@ -3,10 +3,11 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
 
 const SERVER_PORT = 8084;
+const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
 const devServerProxy: Record<string, string | ProxyOptions> = {
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => {
         port: SERVER_PORT,
         host: true,
         proxy: devServerProxy,
-        fs: { allow: [path.resolve(__dirname, '../..')] },
+        fs: { allow: [WORKSPACE_ROOT] },
       },
     }),
 
@@ -47,28 +48,20 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       rawSvgPlugin(),
-      viteStaticCopy({
-        targets: [
-          {
-            src: '*.md',
-            dest: '.',
-          },
-        ],
-      }),
     ],
 
     css: {
       postcss: {
         plugins: [
           tailwindcss({
-            base: path.resolve(__dirname, '../..'),
+            base: WORKSPACE_ROOT,
             optimize: isDev ? { minify: false } : undefined,
           }),
         ],
       },
     },
 
-    resolve: { tsconfigPaths: true },
+    resolve: { alias: monorepoTsconfigAliases(WORKSPACE_ROOT) },
 
     build: {
       outDir: '../../dist/apps/betterangels-admin',

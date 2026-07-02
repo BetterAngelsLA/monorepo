@@ -4,8 +4,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
 
 const SERVER_PORT = 8083;
+const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
 const devServerProxy: Record<string, string | ProxyOptions> = {
@@ -34,7 +36,7 @@ export default defineConfig(({ mode }) => {
         port: SERVER_PORT,
         host: true,
         proxy: devServerProxy,
-        fs: { allow: [path.resolve(__dirname, '../..')] },
+        fs: { allow: [WORKSPACE_ROOT] },
       },
     }),
 
@@ -44,6 +46,10 @@ export default defineConfig(({ mode }) => {
     },
 
     plugins: [react(), rawSvgPlugin()],
+
+    resolve: {
+      alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
+    },
 
     css: {
       postcss: {
@@ -55,8 +61,6 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
-
-    resolve: { tsconfigPaths: true },
 
     build: {
       outDir: '../../dist/apps/shelter-web',

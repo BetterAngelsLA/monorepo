@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // export default defineConfig(() => ({
 export default defineConfig(({ mode }) => {
@@ -7,7 +6,7 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/storybook-react',
 
-    plugins: [viteStaticCopy({ targets: [{ src: '*.md', dest: '.' }] })],
+    plugins: [],
     // Uncomment this if you are using workers.
     // worker: {
     //  plugins: [],

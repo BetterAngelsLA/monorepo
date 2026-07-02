@@ -30,17 +30,12 @@
       }
     },
     "build": {
-      "executor": "@nx/vite:build",
       "dependsOn": [
         "set-env"
       ],
       "options": {
-        "outputPath": "dist/apps/betterangels-admin",
-        "configFile": "apps/betterangels-admin/vite.config.mts"
-      },
-      "configurations": {
-        "production": {},
-        "preview": {}
+        "config": "./vite.config.mts",
+        "outDir": "../../dist/apps/betterangels-admin"
       }
     },
     "deploy": {
