@@ -14,15 +14,28 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
+import { ApolloLink } from '@apollo/client';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import {
-  ApiConfigProvider,
-  ApolloClientProvider,
+  createRefererInterceptor,
+  userAgentInterceptor,
+  hmisAuthInterceptor,
+  interceptorHmis,
+  createErrorLink,
+  loggerLink,
+  isReactNativeFileInstance,
 } from '@monorepo/expo/shared/clients';
+import {
+  EnvironmentSwitcherProvider,
+  ApolloClientProvider,
+  getGraphqlUrl,
+} from '@monorepo/ba-platform';
 import {
   BottomSheetModalProvider,
   GooglePlacesProvider,
 } from '@monorepo/expo/shared/ui-components';
-import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
+import { hideDevMenuFab, asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -32,38 +45,55 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl, googlePlacesApiKey } from '../../config';
 import AppRoutesStack from './AppRoutesStack';
 
-// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
-// (overlaps `nav-menu-btn`). No-op in production / store builds and on
-// Android. See helper for details.
-// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
-// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
 hideDevMenuFab();
 
 const isDevEnv = process.env['NODE_ENV'] === 'development';
-
-initApolloRuntimeConfig({
-  isDevEnv: false,
-});
+initApolloRuntimeConfig({ isDevEnv: false });
 
 const baApolloTypePolicies = createBaTypePolicies(isDevEnv);
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false, // need custom implementation for React Native
-    },
+    queries: { refetchOnWindowFocus: false },
   },
 });
 
+const fetchClient = createExpoFetchClient(apiUrl, [
+  createRefererInterceptor(apiUrl),
+  userAgentInterceptor,
+  hmisAuthInterceptor,
+  interceptorHmis,
+]);
+
+const httpLink = new UploadHttpLink({
+  uri: getGraphqlUrl(apiUrl),
+  fetch: fetchClient,
+  isExtractableFile: isReactNativeFileInstance,
+});
+
+const apolloLinks = [createErrorLink({ authPath: '/auth' }), httpLink];
+
+if (
+  process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true' &&
+  process.env['NODE_ENV'] !== 'production'
+) {
+  apolloLinks.unshift(loggerLink);
+}
+
+const link = ApolloLink.from(apolloLinks);
+
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Render Error page on uncaught error
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
+
+const ENVIRONMENTS = [
+  { name: 'production' as const, url: apiUrl },
+  { name: 'demo' as const, url: demoApiUrl },
+];
 
 export default function RootLayout() {
   useNewRelic();
@@ -73,9 +103,16 @@ export default function RootLayout() {
       <BottomSheetModalProvider>
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
-            <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+            <EnvironmentSwitcherProvider
+              environments={ENVIRONMENTS}
+              storage={asyncStorageAdapter}
+              fetch={fetchClient}
+            >
               <QueryClientProvider client={reactQueryClient}>
-                <ApolloClientProvider typePolicies={baApolloTypePolicies}>
+                <ApolloClientProvider
+                  typePolicies={baApolloTypePolicies}
+                  link={link}
+                >
                   <BaFeatureControlProvider>
                     <KeyboardProvider>
                       <KeyboardToolbarProvider>
@@ -99,7 +136,7 @@ export default function RootLayout() {
                   </BaFeatureControlProvider>
                 </ApolloClientProvider>
               </QueryClientProvider>
-            </ApiConfigProvider>
+            </EnvironmentSwitcherProvider>
           </GooglePlacesProvider>
         </NativePaperProvider>
       </BottomSheetModalProvider>

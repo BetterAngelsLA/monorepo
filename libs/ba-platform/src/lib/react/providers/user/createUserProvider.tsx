@@ -32,12 +32,10 @@ export interface UserState<TUser> {
  * @typeParam TUser   App-specific user type (the value stored in context).
  * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
- * @typeParam TExtra  Extra fields merged into the context (e.g. ``isHmisUser``).
  */
 export interface UserProviderConfig<
   TUser,
   TQuery,
-  TExtra extends Record<string, unknown> = Record<string, unknown>
 > {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
@@ -55,14 +53,8 @@ export interface UserProviderConfig<
   isUnauthenticated: (
     errors:
       | readonly { message: string; extensions?: Record<string, unknown> }[]
-      | undefined
+      | undefined,
   ) => boolean;
-
-  /**
-   * Optional extra context to merge into the context value exposed by
-   * ``useUser``. Useful for app-specific fields like ``isHmisUser``.
-   */
-  extraContextValue?: (user?: TUser) => TExtra;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,18 +86,16 @@ export function createUserProvider<
       | null;
   },
   TQuery extends { currentUser?: unknown },
-  TExtra extends Record<string, unknown> = Record<string, unknown>
->(config: UserProviderConfig<TUser, TQuery, TExtra>) {
+>(config: UserProviderConfig<TUser, TQuery>) {
   const {
     document,
     parseUser,
     isUnauthenticated,
-    extraContextValue = () => ({}),
   } = config;
 
   // ---- Context -------------------------------------------------------
 
-  type ContextValue = UserState<TUser> & TExtra;
+  type ContextValue = UserState<TUser>;
 
   const UserContext = createContext<ContextValue | undefined>(undefined);
 
@@ -121,7 +111,7 @@ export function createUserProvider<
 
   // ---- Provider ------------------------------------------------------
 
-  function UserProvider({ children, storage }: { children: ReactNode; storage?: StorageAdapter }) {
+  function UserProvider({ children, storage }: { children: ReactNode; storage: StorageAdapter }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -143,13 +133,22 @@ export function createUserProvider<
           setUser(parseUser(res.data?.currentUser));
         }
       },
+      // parseUser and isUnauthenticated are factory-level params — they're
+      // stable references captured once at module init, so omitting them from
+      // the dep array is intentional and safe.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      [],
     );
 
     useEffect(() => {
       if (!loading) {
-        updateUser({ data, errors: error ? [error] : undefined });
+        // error is typed as ErrorLike but is an ApolloError at runtime
+        // with graphQLErrors — narrow via runtime check.
+        const gqlErrors =
+          error && 'graphQLErrors' in error
+            ? (error.graphQLErrors as readonly { message: string; extensions?: Record<string, unknown> }[])
+            : undefined;
+        updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
     }, [loading, data, error, updateUser]);
 
@@ -163,15 +162,13 @@ export function createUserProvider<
     }, [refetch, updateUser]);
 
     const contextValue = useMemo<ContextValue>(
-      () =>
-        ({
-          user,
-          setUser,
-          isLoading: loading,
-          refetchUser,
-          ...extraContextValue(user),
-        } as ContextValue),
-      [user, loading, refetchUser]
+      () => ({
+        user,
+        setUser,
+        isLoading: loading,
+        refetchUser,
+      }),
+      [user, loading, refetchUser],
     );
 
     return (

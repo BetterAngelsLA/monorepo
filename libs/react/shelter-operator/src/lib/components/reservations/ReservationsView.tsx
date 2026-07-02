@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { useReservations } from '../../hooks/useReservations';
 import { useUpdateReservation } from '../../hooks/useUpdateReservation';
 import { shelterCreateReservationRoute } from '../../routing';

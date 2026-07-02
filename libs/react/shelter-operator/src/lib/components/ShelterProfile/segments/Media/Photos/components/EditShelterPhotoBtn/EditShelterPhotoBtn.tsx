@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
-import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { useUpdateShelterPhoto } from '../../../../../../../hooks/useUpdateShelterPhoto';
 import { Modal, ModalBody, ModalHeader } from '../../../../../../base-ui/modal';
 import { useToast } from '../../../../../../base-ui/toast';

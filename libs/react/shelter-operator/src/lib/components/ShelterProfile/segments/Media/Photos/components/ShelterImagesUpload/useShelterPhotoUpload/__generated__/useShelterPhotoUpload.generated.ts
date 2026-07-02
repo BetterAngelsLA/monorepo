@@ -1,4 +1,4 @@
-import type * as Types from '../../../../../../../../../apollo/graphql/__generated__/types';
+import type * as Types from '@monorepo/ba-platform/types';
 
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type NewShelterPhotoFragment = { __typename?: 'ShelterPhotoType', id: string, type: Types.ShelterPhotoTypeChoices, createdAt: any, file: { __typename?: 'DjangoImageType', name: string, url: string } };

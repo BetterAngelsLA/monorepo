@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ReservationStatusChoices } from '../../../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 
 export const formSchema = z
   .object({

@@ -1,7 +1,7 @@
-import { ApolloProvider } from '@apollo/client/react';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { orgLink } from '@monorepo/ba-platform';
-import { createApolloClient } from '@monorepo/react/shared/apollo';
+import { createWebFetchClient } from '@monorepo/ba-platform/web';
+import { ApolloClientProvider, getGraphqlUrl } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
@@ -20,24 +20,15 @@ initApolloRuntimeConfig({
   isDevEnv,
 });
 
-const csrfCookieName =
-  import.meta.env.VITE_SHELTER_CSRF_COOKIE_NAME || 'csrftoken';
-const csrfHeaderName =
-  import.meta.env.VITE_SHELTER_CSRF_HEADER_NAME || 'x-csrftoken';
-
-const apolloClient = createApolloClient({
-  apiUrl: import.meta.env.VITE_SHELTER_API_URL,
-  csrfCookieName,
-  csrfHeaderName,
-  typePolicies: createShelterTypePolicies({
-    isDevEnv,
-    extraPolicies: createOperatorTypePolicies(),
-  }),
-  orgLink,
-});
-
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
+
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+const fetchClient = createWebFetchClient();
+const link = new UploadHttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient, credentials: 'include' });
+const typePolicies = createShelterTypePolicies({
+  isDevEnv,
+  extraPolicies: createOperatorTypePolicies(),
+});
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -45,8 +36,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider apiUrl={apiUrl}>
-      <ApolloProvider client={apolloClient}>
+    <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
+      <ApolloClientProvider link={link} typePolicies={typePolicies}>
         <ShelterFeatureControlProvider>
           <BrowserRouter basename={basename}>
             <UserProvider>
@@ -54,7 +45,7 @@ root.render(
             </UserProvider>
           </BrowserRouter>
         </ShelterFeatureControlProvider>
-      </ApolloProvider>
+      </ApolloClientProvider>
     </ApiConfigProvider>
   </StrictMode>
 );

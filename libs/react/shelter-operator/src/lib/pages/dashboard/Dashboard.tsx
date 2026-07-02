@@ -8,7 +8,7 @@ import type {
   DemographicChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { Button } from '../../components/base-ui/buttons';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';

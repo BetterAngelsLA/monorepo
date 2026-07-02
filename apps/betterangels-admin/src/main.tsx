@@ -1,11 +1,11 @@
-import { ApolloProvider } from '@apollo/client/react';
-import { orgLink } from '@monorepo/ba-platform';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { createWebFetchClient } from '@monorepo/ba-platform/web';
+import { ApolloClientProvider, getGraphqlUrl } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   AuthProvider,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
-import { createApolloClient } from '@monorepo/react/shared/apollo';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -13,17 +13,8 @@ import { apiUrl } from '../config';
 import App from './app/app';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
-const csrfCookieName =
-  import.meta.env.VITE_BETTERANGELS_ADMIN_CSRF_COOKIE_NAME || 'csrftoken';
-const csrfHeaderName =
-  import.meta.env.VITE_BETTERANGELS_ADMIN_CSRF_HEADER_NAME || 'x-csrftoken';
-
-const apolloClient = createApolloClient({
-  apiUrl: import.meta.env.VITE_BETTERANGELS_ADMIN_API_URL,
-  csrfCookieName,
-  csrfHeaderName,
-  orgLink,
-});
+const fetchClient = createWebFetchClient();
+const link = new UploadHttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient, credentials: 'include' });
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -31,8 +22,8 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider apiUrl={apiUrl}>
-      <ApolloProvider client={apolloClient}>
+    <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
+      <ApolloClientProvider link={link}>
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>
@@ -40,7 +31,7 @@ root.render(
             </AuthProvider>
           </UserProvider>
         </BrowserRouter>
-      </ApolloProvider>
+      </ApolloClientProvider>
     </ApiConfigProvider>
   </StrictMode>
 );

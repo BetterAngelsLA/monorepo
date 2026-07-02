@@ -14,9 +14,9 @@ export default function EditClientScreen() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
-  if (isHmisUser) {
+  if (user?.isHmisUser) {
     return <ClientEditHmis id={clientId} componentName={componentName} />;
   }
 

@@ -1,0 +1,16 @@
+{
+  "name": "ba-platform-web",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-platform/web/src",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:ba-platform"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  }
+}

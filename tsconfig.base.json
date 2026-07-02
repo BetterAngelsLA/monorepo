@@ -20,12 +20,13 @@
     "paths": {
       "@betterangels/*": ["./apps/betterangels/*"],
       "@monorepo/apollo": ["./libs/apollo/src/index.ts"],
+      "@monorepo/fetch": ["./libs/fetch/src/index.ts"],
       "@monorepo/assets": ["./libs/assets/src/index.ts"],
-      "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
-      "@monorepo/ba-platform/expo": ["./libs/ba-platform/src/expo.ts"],
       "@monorepo/ba-platform/permissions": ["./libs/ba-platform/permissions/src/index.ts"],
-      "@monorepo/ba-platform/react": ["./libs/ba-platform/src/react.ts"],
+      "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
       "@monorepo/ba-platform/types": ["./libs/ba-platform/src/types.ts"],
+      "@monorepo/ba-platform/web": ["./libs/ba-platform/web/src/index.ts"],
+      "@monorepo/ba-platform/expo": ["./libs/ba-platform/expo/src/index.ts"],
       "@monorepo/expo/betterangels": ["./libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [
         "./libs/expo/shared/clients/src/index.ts"
@@ -46,7 +47,6 @@
       "@monorepo/react/components": ["./libs/react/components/src/index.ts"],
       "@monorepo/react/icons": ["./libs/react/icons/src/index.ts"],
       "@monorepo/react/shared": ["./libs/react/shared/src/index.ts"],
-      "@monorepo/react/shared/apollo": ["./libs/react/shared/src/apollo.ts"],
       "@monorepo/react/shelter": ["./libs/react/shelter/src/index.ts"],
       "@monorepo/react/shelter-operator": [
         "./libs/react/shelter-operator/src/index.ts"

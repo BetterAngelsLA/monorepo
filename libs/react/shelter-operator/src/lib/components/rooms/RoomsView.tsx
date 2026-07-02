@@ -6,7 +6,7 @@ import {
   OperatorShelterType,
   RoomStatusChoices,
   type RoomType,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import {
   shelterCreateReservationRoute,
   shelterCreateRoomRoute,

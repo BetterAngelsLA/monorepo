@@ -105,6 +105,16 @@ export type AuthorizedPresignedS3UploadsType = {
   uploads: Array<AuthorizedPresignedS3UploadType>;
 };
 
+export type BedCountType = {
+  __typename?: 'BedCountType';
+  available: Scalars['Int']['output'];
+  inTurnaround: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
 export type BedFilter = {
   AND?: InputMaybe<BedFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -147,7 +157,7 @@ export type BedType = {
   name?: Maybe<Scalars['String']['output']>;
   pets: Array<PetType>;
   room?: Maybe<RoomType>;
-  shelter: ShelterType;
+  shelter: OperatorShelterType;
   status: BedStatusChoices;
   statusNotes?: Maybe<Scalars['String']['output']>;
   storage: Scalars['Boolean']['output'];
@@ -168,15 +178,6 @@ export type BedTypeOffsetPaginated = {
   results: Array<BedType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
-};
-
-export type BedsByStatusType = {
-  __typename?: 'BedsByStatusType';
-  available: Scalars['Int']['output'];
-  inTurnaround: Scalars['Int']['output'];
-  occupied: Scalars['Int']['output'];
-  outOfService: Scalars['Int']['output'];
-  reserved: Scalars['Int']['output'];
 };
 
 export type BulkDeleteInput = {
@@ -2137,8 +2138,8 @@ export type OperatorShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
+  bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
-  bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
@@ -2174,9 +2175,9 @@ export type OperatorShelterType = {
   photos: Array<ShelterPhotoType>;
   programFees?: Maybe<Scalars['String']['output']>;
   referralRequirement: Array<ReferralRequirementType>;
+  roomCounts: RoomCountType;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
-  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
@@ -2234,6 +2235,11 @@ export enum OrgRoleEnum {
   Admin = 'ADMIN',
   Member = 'MEMBER',
   Superuser = 'SUPERUSER'
+}
+
+export enum OrgTypeEnum {
+  Outreach = 'OUTREACH',
+  Shelter = 'SHELTER'
 }
 
 export type OrganizationFilter = {
@@ -2635,8 +2641,10 @@ export type QueryOrganizationMemberArgs = {
 export type QueryOrganizationMembersArgs = {
   filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
+  orgType?: InputMaybe<OrgTypeEnum>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
+  permissionTemplate?: InputMaybe<PermissionTemplateEnum>;
 };
 
 
@@ -2862,7 +2870,8 @@ export type ReportSummaryType = {
 
 export type ReservationClientAssignmentType = {
   __typename?: 'ReservationClientAssignmentType';
-  clientProfileId: Scalars['ID']['output'];
+  clientProfile: ClientProfileType;
+  id: Scalars['ID']['output'];
   isPrimary: Scalars['Boolean']['output'];
 };
 
@@ -2953,6 +2962,16 @@ export type RevertNoteInput = {
 
 export type RevertNotePayload = NoteType | OperationInfo;
 
+export type RoomCountType = {
+  __typename?: 'RoomCountType';
+  available: Scalars['Int']['output'];
+  inTurnaround: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
 export type RoomFilter = {
   AND?: InputMaybe<RoomFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3013,7 +3032,7 @@ export type RoomType = {
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   pets: Array<PetType>;
-  shelter: ShelterType;
+  shelter: OperatorShelterType;
   status: RoomStatusChoices;
   storage: Scalars['Boolean']['output'];
   type?: Maybe<RoomStyleChoices>;
@@ -3033,15 +3052,6 @@ export type RoomTypeOffsetPaginated = {
   results: Array<RoomType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
-};
-
-export type RoomsByStatusType = {
-  __typename?: 'RoomsByStatusType';
-  available: Scalars['Int']['output'];
-  inTurnaround: Scalars['Int']['output'];
-  occupied: Scalars['Int']['output'];
-  outOfService: Scalars['Int']['output'];
-  reserved: Scalars['Int']['output'];
 };
 
 export type SpaType = {
@@ -3293,13 +3303,21 @@ export type ShelterProgramType = {
 
 export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
+  demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
+  entryRequirementsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
+  parkingIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
+  petsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
+  referralRequirementIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  roomStylesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
+  shelterTypesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
+  specialSituationRestrictionsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ShelterType = {
@@ -3310,8 +3328,8 @@ export type ShelterType = {
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
+  bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
-  bedsByStatus: BedsByStatusType;
   citiesServed: Array<CityType>;
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
@@ -3347,9 +3365,9 @@ export type ShelterType = {
   photos: Array<ShelterPhotoType>;
   programFees?: Maybe<Scalars['String']['output']>;
   referralRequirement: Array<ReferralRequirementType>;
+  roomCounts: RoomCountType;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
-  roomsByStatus: RoomsByStatusType;
   schedules: Array<ScheduleType>;
   services: Array<ServiceType>;
   shelterPrograms: Array<ShelterProgramType>;
@@ -3553,6 +3571,7 @@ export type UpdateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalNeeds?: InputMaybe<Array<MedicalNeedChoices>>;
