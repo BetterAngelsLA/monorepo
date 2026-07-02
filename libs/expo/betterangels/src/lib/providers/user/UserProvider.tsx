@@ -1,5 +1,6 @@
 import { createUserProvider } from '@monorepo/ba-platform';
-import { API_ERROR_CODES, asyncStorageAdapter } from '@monorepo/expo/shared/clients';
+import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
+import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAppState } from '../../hooks';
@@ -29,11 +30,9 @@ export type TUser = {
 // Base provider (Apollo + ActiveOrg + context)
 // ---------------------------------------------------------------------------
 
-const {
-  UserProvider: BaseUserProvider,
-  useUser,
-} = createUserProvider({
+const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
+  defaultStorage: asyncStorageAdapter,
   parseUser: (
     data: unknown
   ): TUser | undefined => {
@@ -106,7 +105,7 @@ function ExpoShell({ children }: ExpoShellProps) {
 
 export default function UserProvider({ children }: { children: ReactNode }) {
   return (
-    <BaseUserProvider storage={asyncStorageAdapter}>
+    <BaseUserProvider>
       <ExpoShell>{children}</ExpoShell>
     </BaseUserProvider>
   );

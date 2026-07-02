@@ -1,4 +1,3 @@
-import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
@@ -27,112 +26,103 @@ import {
   routePath,
   shelterProfileSegments,
 } from './routing';
-import { ActiveOrgProvider } from '@monorepo/ba-platform';
 
 export function OperatorApp() {
-  const { user } = useUser();
-
   return (
-    <ActiveOrgProvider organizations={(user?.organizations ?? []).map(org => ({
-      id: org.id,
-      name: org.name,
-      permissions: Object.values(org.permissions).flat(),
-    }))}>
-      <OperatorAuthProvider>
-        <Routes>
-          <Route path={routePath(paths.signIn)} element={<SignIn />} />
+    <OperatorAuthProvider>
+      <Routes>
+        <Route path={routePath(paths.signIn)} element={<SignIn />} />
+        <Route
+          path={routePath(paths.createOrganization)}
+          element={<CreateOrganizationPage />}
+        />
+        <Route element={<OperatorLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path={routePath(paths.users)} element={<UsersPage />} />
           <Route
-            path={routePath(paths.createOrganization)}
-            element={<CreateOrganizationPage />}
+            path={routePath(paths.dashboardCreate)}
+            element={<CreateShelterForm />}
           />
-          <Route element={<OperatorLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path={routePath(paths.users)} element={<UsersPage />} />
+          <Route
+            path={routePath(paths.shelterCreate)}
+            element={<CreateShelterProfile />}
+          />
+          <Route path={routePath(paths.shelterProfile)}>
             <Route
-              path={routePath(paths.dashboardCreate)}
-              element={<CreateShelterForm />}
+              index
+              element={<Navigate to={shelterProfileSegments.basic} replace />}
             />
             <Route
-              path={routePath(paths.shelterCreate)}
-              element={<CreateShelterProfile />}
+              path={shelterProfileSegments.basic}
+              element={<ShelterBasicInfoPage />}
             />
-            <Route path={routePath(paths.shelterProfile)}>
-              <Route
-                index
-                element={<Navigate to={shelterProfileSegments.basic} replace />}
-              />
-              <Route
-                path={shelterProfileSegments.basic}
-                element={<ShelterBasicInfoPage />}
-              />
-              <Route
-                path={shelterProfileSegments.operatingHours}
-                element={<ShelterOperatingHoursPage />}
-              />
-              <Route
-                path={shelterProfileSegments.policies}
-                element={<ShelterPoliciesPage />}
-              />
-              <Route
-                path={shelterProfileSegments.details}
-                element={<ShelterDetailsPage />}
-              />
-              <Route
-                path={shelterProfileSegments.services}
-                element={<ShelterServicesPage />}
-              />
-              <Route
-                path={shelterProfileSegments.ecosystem}
-                element={<ShelterEcosystemPage />}
-              />
-              <Route
-                path={shelterProfileSegments.media}
-                element={<ShelterMediaPage />}
-              />
-            </Route>
-            <Route path={routePath(paths.shelterManage)}>
-              <Route index element={<ShelterDashboardPage tab="overview" />} />
-              <Route
-                path={manageSegments.roomsCreate}
-                element={<EditRoomPage />}
-              />
-              <Route
-                path={manageSegments.roomsEdit}
-                element={<EditRoomPage />}
-              />
-              <Route
-                path={manageSegments.rooms}
-                element={<ShelterDashboardPage tab="rooms" />}
-              />
-              <Route
-                path={manageSegments.bedsCreate}
-                element={<EditBedPage />}
-              />
-              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
-              <Route
-                path={manageSegments.beds}
-                element={<ShelterDashboardPage tab="beds" />}
-              />
-              <Route
-                path={manageSegments.reservationsCreate}
-                element={<ReservationFormPage />}
-              />
-              <Route
-                path={manageSegments.reservationsEdit}
-                element={<ReservationFormPage />}
-              />
-              <Route
-                path={manageSegments.occupants}
-                element={<ShelterDashboardPage tab="occupants" />}
-              />
-              <Route
-                path={manageSegments.reservations}
-                element={<ShelterDashboardPage tab="reservations" />}
-              />
-            </Route>
+            <Route
+              path={shelterProfileSegments.operatingHours}
+              element={<ShelterOperatingHoursPage />}
+            />
+            <Route
+              path={shelterProfileSegments.policies}
+              element={<ShelterPoliciesPage />}
+            />
+            <Route
+              path={shelterProfileSegments.details}
+              element={<ShelterDetailsPage />}
+            />
+            <Route
+              path={shelterProfileSegments.services}
+              element={<ShelterServicesPage />}
+            />
+            <Route
+              path={shelterProfileSegments.ecosystem}
+              element={<ShelterEcosystemPage />}
+            />
+            <Route
+              path={shelterProfileSegments.media}
+              element={<ShelterMediaPage />}
+            />
           </Route>
-        </Routes>
-      </OperatorAuthProvider>
-    </ActiveOrgProvider>
+          <Route path={routePath(paths.shelterManage)}>
+            <Route index element={<ShelterDashboardPage tab="overview" />} />
+            <Route
+              path={manageSegments.roomsCreate}
+              element={<EditRoomPage />}
+            />
+            <Route
+              path={manageSegments.roomsEdit}
+              element={<EditRoomPage />}
+            />
+            <Route
+              path={manageSegments.rooms}
+              element={<ShelterDashboardPage tab="rooms" />}
+            />
+            <Route
+              path={manageSegments.bedsCreate}
+              element={<EditBedPage />}
+            />
+            <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
+            <Route
+              path={manageSegments.beds}
+              element={<ShelterDashboardPage tab="beds" />}
+            />
+            <Route
+              path={manageSegments.reservationsCreate}
+              element={<ReservationFormPage />}
+            />
+            <Route
+              path={manageSegments.reservationsEdit}
+              element={<ReservationFormPage />}
+            />
+            <Route
+              path={manageSegments.occupants}
+              element={<ShelterDashboardPage tab="occupants" />}
+            />
+            <Route
+              path={manageSegments.reservations}
+              element={<ShelterDashboardPage tab="reservations" />}
+            />
+          </Route>
+        </Route>
+      </Routes>
+    </OperatorAuthProvider>
   );
 }

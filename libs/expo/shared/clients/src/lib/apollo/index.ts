@@ -1,4 +1,4 @@
 export * from './links/errorLink';
 export * from './links/loggerLink';
 export * from './ReactNativeFile';
-export { asyncStorageAdapter } from './links/orgLink/asyncStorageAdapter';
+export { asyncStorageAdapter } from '@monorepo/expo/shared/utils';

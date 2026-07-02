@@ -55,7 +55,28 @@ export interface UserProviderConfig<
       | readonly { message: string; extensions?: Record<string, unknown> }[]
       | undefined,
   ) => boolean;
+
+  /**
+   * Default storage adapter for the embedded :component:`ActiveOrgProvider`.
+   *
+   * If provided, consumers do not need to pass ``storage`` as a prop -
+   * the provider uses this default. Individual apps can still override
+   * via the ``storage`` prop when needed.
+   */
+  defaultStorage?: StorageAdapter;
+
+  /**
+   * Optional custom mapping from user organizations to the
+   * :type:`Org` shape expected by :component:`ActiveOrgProvider`.
+   *
+   * Defaults to spreading ``permissions`` into a new array.
+   */
+  mapOrganizations?: (
+    orgs: readonly OrgLike[],
+  ) => { id: string; name: string; permissions: string[] }[];
 }
+
+type OrgLike = { id: string; name: string; permissions?: readonly string[] };
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -91,7 +112,22 @@ export function createUserProvider<
     document,
     parseUser,
     isUnauthenticated,
+    defaultStorage,
+    mapOrganizations: customMapOrganizations,
   } = config;
+
+  // ---- Helpers -------------------------------------------------------
+
+  const defaultMapOrganizations = (
+    orgs: readonly OrgLike[],
+  ) =>
+    orgs.map((org) => ({
+      id: org.id,
+      name: org.name,
+      permissions: [...(org.permissions ?? [])],
+    }));
+
+  const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
 
   // ---- Context -------------------------------------------------------
 
@@ -109,9 +145,20 @@ export function createUserProvider<
     return ctx;
   }
 
-  // ---- Provider ------------------------------------------------------
-
-  function UserProvider({ children, storage }: { children: ReactNode; storage: StorageAdapter }) {
+  function UserProvider({
+    children,
+    storage,
+  }: {
+    children: ReactNode;
+    /** Storage adapter — defaults to :attr:`defaultStorage` from config. */
+    storage?: StorageAdapter;
+  }) {
+    const resolvedStorage = storage ?? defaultStorage;
+    if (!resolvedStorage) {
+      throw new Error(
+        'UserProvider requires a storage adapter. Pass it as a prop or set defaultStorage in createUserProvider config.',
+      );
+    }
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -174,12 +221,8 @@ export function createUserProvider<
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          storage={storage}
-          organizations={(user?.organizations ?? []).map((org) => ({
-            id: org.id,
-            name: org.name,
-            permissions: [...(org.permissions ?? [])],
-          }))}
+          storage={resolvedStorage}
+          organizations={user?.organizations ? mapOrganizations(user.organizations) : []}
         >
           {children}
         </ActiveOrgProvider>
