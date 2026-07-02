@@ -5,6 +5,7 @@ import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { baseHrefPlugin } from '../../tools/vite/base-href-plugin';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
@@ -21,14 +22,15 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-  const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
   return {
-    base: basePath,
+    base: isDev ? '/' : process.env.VITE_APP_BASE_PATH || '/',
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
     define: {
-      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
+      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(
+        process.env.VITE_APP_BASE_PATH || '/'
+      ),
     },
 
     ...(isDev && {
@@ -45,7 +47,11 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin()],
+    plugins: [
+      react(),
+      rawSvgPlugin(),
+      baseHrefPlugin(),
+    ],
 
     resolve: {
       alias: monorepoTsconfigAliases(WORKSPACE_ROOT),

@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { baseHrefPlugin } from '../../tools/vite/base-href-plugin';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
@@ -38,7 +39,11 @@ export default defineConfig(({ mode }) => ({
     host: 'localhost',
   },
 
-  plugins: [react(), rawSvgPlugin()],
+  plugins: [
+    react(),
+    rawSvgPlugin(),
+    baseHrefPlugin(),
+  ],
 
   resolve: { tsconfigPaths: true },
 

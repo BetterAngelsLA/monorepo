@@ -27,6 +27,7 @@
         "outDir": "../../dist/apps/wildfires"
       },
       "configurations": {
+        "preview": {},
         "production": {
           "mode": "production",
           "env": {

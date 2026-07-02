@@ -28,12 +28,17 @@
       }
     },
     "build": {
+      "executor": "nx:run-commands",
       "dependsOn": [
         "set-env"
       ],
       "options": {
-        "config": "./vite.config.mts",
-        "outDir": "../../dist/apps/shelter-web"
+        "command": "vite build",
+        "cwd": "apps/shelter-web"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
       }
     },
     "deploy": {

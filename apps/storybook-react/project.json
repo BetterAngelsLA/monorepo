@@ -29,6 +29,10 @@
       "options": {
         "configDir": "apps/storybook-react/.storybook",
         "outputDir": "dist/apps/storybook-react"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
       }
     },
     "deploy": {

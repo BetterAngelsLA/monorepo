@@ -3,10 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels-admin/src",
   "projectType": "application",
-  "tags": [
-    "type:app",
-    "scope:betterangels-admin"
-  ],
+  "tags": ["type:app", "scope:betterangels-admin"],
   "targets": {
     "test": {
       "options": {
@@ -30,19 +27,20 @@
       }
     },
     "build": {
-      "dependsOn": [
-        "set-env"
-      ],
+      "executor": "nx:run-commands",
+      "dependsOn": ["set-env"],
       "options": {
-        "config": "./vite.config.mts",
-        "outDir": "../../dist/apps/betterangels-admin"
+        "command": "vite build",
+        "cwd": "apps/betterangels-admin"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {}
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "options": {
         "command": "./tools/deploy/cloudfront_deploy.sh"
       },
