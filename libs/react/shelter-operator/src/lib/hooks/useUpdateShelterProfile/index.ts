@@ -1,4 +1,4 @@
-export { OPERATION_KEY, PAYLOAD_TYPENAME } from './constants';
+export * from './__generated__/useUpdateShelterProfile_meta.generated';
 export type {
   OperationKey,
   ShelterTypename,

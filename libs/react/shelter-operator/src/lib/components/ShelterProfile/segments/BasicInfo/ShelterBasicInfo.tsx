@@ -1,8 +1,9 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import {
-  OPERATION_KEY,
-  PAYLOAD_TYPENAME,
+  updateShelterProfileMeta,
   useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
@@ -48,7 +49,10 @@ export function ShelterBasicInfo(props: TProps) {
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
-  async function onSubmit(data: BasicInfoFormData) {
+  async function onSubmit(
+    data: BasicInfoFormData,
+    setError: UseFormSetError<BasicInfoFormData>
+  ) {
     try {
       const response = await updateShelter({
         variables: { data: toUpdateInput(shelterId, data) },
@@ -56,20 +60,14 @@ export function ShelterBasicInfo(props: TProps) {
 
       const fieldErrors = getFieldErrorsOrThrow({
         response,
-        operationKey: OPERATION_KEY,
-        successTypename: PAYLOAD_TYPENAME,
+        ...updateShelterProfileMeta,
         fields: Object.keys(formSchema.shape),
       });
 
-      console.log();
-      console.log('| -------------  fieldErrors  ------------- |');
-      console.log(fieldErrors);
-      console.log();
-
       if (fieldErrors.length) {
-        // TODO: applyFieldErrors(fieldErrors, setError) — once libs/ts is ready
-        console.error('[updateShelter field errors]:', fieldErrors);
-        return;
+        applyFieldErrors(fieldErrors, setError);
+
+        throw new BaError('Please see validation messages.');
       }
 
       setEditMode(false);
@@ -79,23 +77,19 @@ export function ShelterBasicInfo(props: TProps) {
         title: 'Shelter updated.',
       });
     } catch (e) {
+      let userMessage = 'An unexpected error occurred.';
+
       if (e instanceof BaError) {
-        console.error(`[updateShelter error]: ${e.message}`);
-
-        showToast({
-          status: 'error',
-          title: 'Update failed',
-          description: e.message,
-        });
-      } else {
-        console.error(`[updateShelter error]: ${e}.`);
-
-        showToast({
-          status: 'error',
-          title: 'Update failed',
-          description: 'An unexpected error occurred.',
-        });
+        userMessage = e.message;
       }
+
+      console.error(`[updateShelter error]: ${e}.`);
+
+      showToast({
+        status: 'error',
+        title: 'Update failed',
+        description: userMessage,
+      });
     }
   }
 

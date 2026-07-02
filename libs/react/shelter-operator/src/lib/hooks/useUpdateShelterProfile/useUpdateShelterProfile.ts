@@ -5,7 +5,7 @@ import {
   UpdateShelterProfileMutation,
   UpdateShelterProfileMutationVariables,
 } from './__generated__/useUpdateShelterProfile.generated';
-import { PAYLOAD_TYPENAME } from './constants';
+import { updateShelterProfileSuccessTypename } from './__generated__/useUpdateShelterProfile_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -32,7 +32,7 @@ export function useUpdateShelterProfile(props?: TProps) {
       ? (result) => {
           const payload = result.data?.updateShelter;
 
-          if (payload?.__typename === PAYLOAD_TYPENAME) {
+          if (payload?.__typename === updateShelterProfileSuccessTypename) {
             return [
               {
                 query: GetShelterOperatorProfileDocument,
