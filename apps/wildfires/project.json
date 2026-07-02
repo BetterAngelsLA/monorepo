@@ -6,9 +6,7 @@
   "tags": ["type:app", "scope:wildfires"],
   "targets": {
     "test": {
-      "options": {
-        "passWithNoTests": true
-      },
+      "options": {},
       "configurations": {
         "ci": {
           "ci": true,
