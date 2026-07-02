@@ -394,3 +394,109 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         self.assertTrue(
             all(member["dateJoined"] is not None for member in response["data"]["organizationMembers"]["results"])
         )
+
+    def test_organization_members_org_type_filter(self) -> None:
+        """Filtering by orgType returns only users with templates from that org type."""
+        self.graphql_client.force_login(self.org_admin)
+
+        # Create a dedicated user with CASEWORKER (outreach) template
+        caseworker_user = baker.make(User, first_name="Caseworker")
+        self.org.add_user(caseworker_user)
+        OrgRoleManager(self.org).add_roles(caseworker_user, CASEWORKER)
+
+        query = """
+            query ($organizationId: String!, $orgType: OrgTypeEnum) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    orgType: $orgType
+                ) {
+                    totalCount
+                    results {
+                        id
+                        memberRole
+                        permissionTemplates
+                    }
+                }
+            }
+        """
+
+        # Filter by OUTREACH — should return org_admin (CASEWORKER + ORG_ADMIN),
+        # org_superuser (CASEWORKER + ORG_SUPERUSER), and the new caseworker_user.
+        # org_member (no templates) should be excluded.
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "orgType": "OUTREACH",
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        result_ids = {r["id"] for r in results}
+        self.assertIn(str(caseworker_user.pk), result_ids)
+        self.assertIn(str(self.org_admin.pk), result_ids)
+        self.assertIn(str(self.org_superuser.pk), result_ids)
+        self.assertNotIn(str(self.org_member.pk), result_ids)
+
+        # Without filter — all 4 members should be returned
+        response_all = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+            },
+        )
+        self.assertEqual(response_all["data"]["organizationMembers"]["totalCount"], 4)
+
+    def test_organization_members_permission_template_filter(self) -> None:
+        """Filtering by permissionTemplate returns only users with that specific template."""
+        self.graphql_client.force_login(self.org_admin)
+
+        # Create a dedicated user with CASEWORKER template
+        caseworker_user = baker.make(User, first_name="Caseworker")
+        self.org.add_user(caseworker_user)
+        OrgRoleManager(self.org).add_roles(caseworker_user, CASEWORKER)
+
+        query = """
+            query ($organizationId: String!, $permissionTemplate: PermissionTemplateEnum) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    permissionTemplate: $permissionTemplate
+                ) {
+                    totalCount
+                    results {
+                        id
+                        memberRole
+                        permissionTemplates
+                    }
+                }
+            }
+        """
+
+        # Filter by CASEWORKER — should return org_admin, org_superuser, and caseworker_user.
+        # org_member (no templates) should be excluded.
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "permissionTemplate": "CASEWORKER",
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        result_ids = {r["id"] for r in results}
+        self.assertIn(str(caseworker_user.pk), result_ids)
+        self.assertIn(str(self.org_admin.pk), result_ids)
+        self.assertIn(str(self.org_superuser.pk), result_ids)
+        self.assertNotIn(str(self.org_member.pk), result_ids)
+
+        # Filter by SHELTER_OPERATOR — no one in this org has it
+        response_empty = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "permissionTemplate": "SHELTER_OPERATOR",
+            },
+        )
+        self.assertEqual(response_empty["data"]["organizationMembers"]["totalCount"], 0)

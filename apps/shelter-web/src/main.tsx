@@ -15,7 +15,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './app';
 
 const isDevEnv = import.meta.env.DEV;
-initApolloRuntimeConfig({ isDevEnv });
+
+initApolloRuntimeConfig({
+  isDevEnv,
+});
 
 const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 

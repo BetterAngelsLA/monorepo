@@ -1,5 +1,5 @@
 import { createUserProvider } from '@monorepo/ba-platform';
-import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
+import { API_ERROR_CODES, asyncStorageAdapter } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAppState } from '../../hooks';
@@ -107,7 +107,7 @@ function ExpoShell({ children }: ExpoShellProps) {
 
 export default function UserProvider({ children }: { children: ReactNode }) {
   return (
-    <BaseUserProvider>
+    <BaseUserProvider storage={asyncStorageAdapter}>
       <ExpoShell>{children}</ExpoShell>
     </BaseUserProvider>
   );

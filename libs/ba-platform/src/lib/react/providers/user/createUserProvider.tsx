@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,7 +53,9 @@ export interface UserProviderConfig<
    * the user is not authenticated.
    */
   isUnauthenticated: (
-    errors: readonly { message: string; extensions?: Record<string, unknown> }[] | undefined
+    errors:
+      | readonly { message: string; extensions?: Record<string, unknown> }[]
+      | undefined,
   ) => boolean;
 
   /**
@@ -85,12 +88,14 @@ export interface UserProviderConfig<
  * ```
  */
 export function createUserProvider<
-  TUser extends { organizations?: readonly { id: string; name: string; permissions?: readonly string[] }[] | null },
+  TUser extends {
+    organizations?:
+      | readonly { id: string; name: string; permissions?: readonly string[] }[]
+      | null;
+  },
   TQuery extends { currentUser?: unknown },
   TExtra extends Record<string, unknown> = Record<string, unknown>,
->(
-  config: UserProviderConfig<TUser, TQuery, TExtra>
-) {
+>(config: UserProviderConfig<TUser, TQuery, TExtra>) {
   const {
     document,
     parseUser,
@@ -116,7 +121,7 @@ export function createUserProvider<
 
   // ---- Provider ------------------------------------------------------
 
-  function UserProvider({ children }: { children: ReactNode }) {
+  function UserProvider({ children, storage }: { children: ReactNode; storage?: StorageAdapter }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -125,7 +130,13 @@ export function createUserProvider<
     });
 
     const updateUser = useCallback(
-      (res: { data?: TQuery; errors?: readonly { message: string; extensions?: Record<string, unknown> }[] }) => {
+      (res: {
+        data?: TQuery;
+        errors?: readonly {
+          message: string;
+          extensions?: Record<string, unknown>;
+        }[];
+      }) => {
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
         } else {
@@ -162,17 +173,18 @@ export function createUserProvider<
           isLoading: loading,
           refetchUser,
           ...extraContextValue(user),
-        }) as ContextValue,
+        } as ContextValue),
       [user, loading, refetchUser],
     );
 
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
+          storage={storage}
           organizations={(user?.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
-            permissions: org.permissions ?? [],
+            permissions: [...(org.permissions ?? [])],
           }))}
         >
           {children}

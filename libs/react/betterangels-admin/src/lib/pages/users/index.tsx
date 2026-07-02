@@ -14,6 +14,7 @@ import {
   OrgRoleEnum,
   OrganizationMemberOrdering,
   OrganizationMemberType,
+  OrgTypeEnum,
   PermissionTemplateEnum,
 } from '@monorepo/ba-platform/types';
 import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
@@ -109,7 +110,8 @@ function useOrganizationMembers(
   orgId: string,
   page: number,
   sort: { field: string; direction: Ordering },
-  search?: string
+  search?: string,
+  orgType?: OrgTypeEnum
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -119,6 +121,7 @@ function useOrganizationMembers(
         pagination: { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE },
         ordering: [{ [sort.field]: sort.direction }],
         filters: { search },
+        orgType,
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
@@ -162,7 +165,7 @@ export default function Users(props: IProps) {
     useMutation(RemoveOrganizationMemberDocument);
 
   const { members, totalPages, loading, isInitialLoad, refetch } =
-    useOrganizationMembers(organizationId, page, sort, search);
+    useOrganizationMembers(organizationId, page, sort, search, OrgTypeEnum.Outreach);
 
   const parentCss = [
     'flex-1',
