@@ -1,11 +1,9 @@
 mutation UpdateShelterProfile($data: UpdateShelterInput!) {
   updateShelter(data: $data) {
     ... on ShelterType {
-      __typename
       id
     }
     ... on OperationInfo {
-      __typename
       messages {
         kind
         field
