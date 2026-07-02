@@ -4,4 +4,4 @@ export {
   SHELTER_PHOTO_MAX_SIZE,
   SHELTER_PHOTO_UPLOADS_TYPENAME,
 } from './constants';
-export { useShelterPhotoUpload } from './useShelterPhotoUpload';
+export { useShelterPhotoUploads } from './useShelterPhotoUploads';

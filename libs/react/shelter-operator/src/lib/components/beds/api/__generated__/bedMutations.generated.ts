@@ -6,9 +6,9 @@ export type CreateBedMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateBedMutation = { __typename?: 'Mutation', createBed:
-    | { __typename?: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateBedMutation = { __typename: 'Mutation', createBed:
+    | { __typename: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename: 'RoomType', id: string, name: string } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CloneBedMutationVariables = Types.Exact<{
@@ -16,9 +16,9 @@ export type CloneBedMutationVariables = Types.Exact<{
 }>;
 
 
-export type CloneBedMutation = { __typename?: 'Mutation', cloneBed:
-    | { __typename?: 'BedType', id: string, name?: string | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CloneBedMutation = { __typename: 'Mutation', cloneBed:
+    | { __typename: 'BedType', id: string, name?: string | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type UpdateBedMutationVariables = Types.Exact<{
@@ -27,9 +27,9 @@ export type UpdateBedMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateBedMutation = { __typename?: 'Mutation', updateBed:
-    | { __typename?: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateBedMutation = { __typename: 'Mutation', updateBed:
+    | { __typename: 'BedType', id: string, name?: string | null, status: Types.BedStatusChoices, type?: Types.BedTypeChoices | null, room?: { __typename: 'RoomType', id: string, name: string } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type DeleteBedsMutationVariables = Types.Exact<{
@@ -37,9 +37,9 @@ export type DeleteBedsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteBedsMutation = { __typename?: 'Mutation', deleteBeds:
-    | { __typename?: 'BulkDeleteResult', ids: Array<string> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteBedsMutation = { __typename: 'Mutation', deleteBeds:
+    | { __typename: 'BulkDeleteResult', ids: Array<string> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -8,25 +8,25 @@ type GetFieldErrorsOrThrowParams = {
     data?: Record<string, unknown> | null;
     errors?: readonly { message: string }[];
   };
-  operationName: string;
+  operationKey: string;
   successTypename: string;
   fields?: string[];
 };
 
 // DO NOT REMOVE
-// operationName: 'updateShelter' — the key under response.data
+// operationKey: 'updateShelter' — the key under response.data
 // successTypename: 'ShelterType' — the __typename on success
 
 export function getFieldErrorsOrThrow(
   params: GetFieldErrorsOrThrowParams
 ): FieldError[] {
-  const { response, operationName, successTypename, fields } = params;
+  const { response, operationKey, successTypename, fields } = params;
 
   if (response.errors?.length) {
     throw new BaError(response.errors[0].message);
   }
 
-  const result = response.data?.[operationName];
+  const result = response.data?.[operationKey];
   if (!result || typeof result !== 'object') {
     throw new Error('No response data');
   }
@@ -37,7 +37,7 @@ export function getFieldErrorsOrThrow(
     return [];
   }
 
-  const operationInfo = getOperationInfo(response, operationName);
+  const operationInfo = getOperationInfo(response, operationKey);
 
   if (operationInfo) {
     const { fieldErrors, otherMessage } = partitionMessages(

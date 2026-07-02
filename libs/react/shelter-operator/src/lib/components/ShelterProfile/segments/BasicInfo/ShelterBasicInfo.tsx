@@ -56,7 +56,7 @@ export function ShelterBasicInfo(props: TProps) {
 
       const fieldErrors = getFieldErrorsOrThrow({
         response,
-        operationName: OPERATION_KEY,
+        operationKey: OPERATION_KEY,
         successTypename: PAYLOAD_TYPENAME,
         fields: Object.keys(formSchema.shape),
       });

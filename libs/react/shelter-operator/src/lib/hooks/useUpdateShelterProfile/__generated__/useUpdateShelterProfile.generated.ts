@@ -6,8 +6,8 @@ export type UpdateShelterProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateShelterProfileMutation = { __typename?: 'Mutation', updateShelter:
-    | { __typename: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateShelterProfileMutation = { __typename: 'Mutation', updateShelter:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
     | { __typename: 'ShelterType', id: string }
    };
 
