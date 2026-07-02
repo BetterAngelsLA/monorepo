@@ -32,12 +32,10 @@ export interface UserState<TUser> {
  * @typeParam TUser   App-specific user type (the value stored in context).
  * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
- * @typeParam TExtra  Extra fields merged into the context (e.g. ``isHmisUser``).
  */
 export interface UserProviderConfig<
   TUser,
   TQuery,
-  TExtra extends Record<string, unknown> = Record<string, unknown>,
 > {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
@@ -57,12 +55,6 @@ export interface UserProviderConfig<
       | readonly { message: string; extensions?: Record<string, unknown> }[]
       | undefined,
   ) => boolean;
-
-  /**
-   * Optional extra context to merge into the context value exposed by
-   * ``useUser``. Useful for app-specific fields like ``isHmisUser``.
-   */
-  extraContextValue?: (user?: TUser) => TExtra;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,18 +86,16 @@ export function createUserProvider<
       | null;
   },
   TQuery extends { currentUser?: unknown },
-  TExtra extends Record<string, unknown> = Record<string, unknown>,
->(config: UserProviderConfig<TUser, TQuery, TExtra>) {
+>(config: UserProviderConfig<TUser, TQuery>) {
   const {
     document,
     parseUser,
     isUnauthenticated,
-    extraContextValue = () => ({}),
   } = config;
 
   // ---- Context -------------------------------------------------------
 
-  type ContextValue = UserState<TUser> & TExtra;
+  type ContextValue = UserState<TUser>;
 
   const UserContext = createContext<ContextValue | undefined>(undefined);
 
@@ -172,14 +162,12 @@ export function createUserProvider<
     }, [refetch, updateUser]);
 
     const contextValue = useMemo<ContextValue>(
-      () =>
-        ({
-          user,
-          setUser,
-          isLoading: loading,
-          refetchUser,
-          ...extraContextValue(user),
-        } as ContextValue),
+      () => ({
+        user,
+        setUser,
+        isLoading: loading,
+        refetchUser,
+      }),
       [user, loading, refetchUser],
     );
 

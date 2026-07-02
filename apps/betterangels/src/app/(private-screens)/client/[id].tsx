@@ -19,7 +19,7 @@ type TSearchParams = {
 export default function ClientScreen() {
   const { id, arrivedFrom, openCard } = useLocalSearchParams<TSearchParams>();
 
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
   const updateInteractionsMapState = useResetClientInteractionsMapState();
   const updateInteractionsMapStateHmis =
@@ -35,7 +35,7 @@ export default function ClientScreen() {
     openCardName = openCard as ClientProfileSectionEnum;
   }
 
-  if (isHmisUser) {
+  if (user?.isHmisUser) {
     updateInteractionsMapStateHmis(id);
     return (
       <ClientHmis id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />

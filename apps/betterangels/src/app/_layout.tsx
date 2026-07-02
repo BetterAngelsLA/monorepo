@@ -29,6 +29,7 @@ import {
 import {
   EnvironmentSwitcherProvider,
   ApolloClientProvider,
+  getGraphqlUrl,
 } from '@monorepo/ba-platform';
 import {
   BottomSheetModalProvider,
@@ -65,7 +66,7 @@ const fetchClient = createExpoFetchClient(apiUrl, [
 ]);
 
 const httpLink = new UploadHttpLink({
-  uri: `${apiUrl}/graphql`,
+  uri: getGraphqlUrl(apiUrl),
   fetch: fetchClient,
   isExtractableFile: isReactNativeFileInstance,
 });
@@ -89,6 +90,11 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
+const ENVIRONMENTS = [
+  { name: 'production' as const, url: apiUrl },
+  { name: 'demo' as const, url: demoApiUrl },
+];
+
 export default function RootLayout() {
   useNewRelic();
 
@@ -98,10 +104,7 @@ export default function RootLayout() {
         <NativePaperProvider>
           <GooglePlacesProvider apiKey={googlePlacesApiKey}>
             <EnvironmentSwitcherProvider
-              environments={[
-                { name: 'production', url: apiUrl },
-                { name: 'demo', url: demoApiUrl },
-              ]}
+              environments={ENVIRONMENTS}
               storage={asyncStorageAdapter}
               fetch={fetchClient}
             >

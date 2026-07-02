@@ -61,7 +61,6 @@ const {
     errors?.some(
       (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
     ) ?? false,
-  extraContextValue: (user) => ({ isHmisUser: user?.isHmisUser }),
 });
 
 // ---------------------------------------------------------------------------

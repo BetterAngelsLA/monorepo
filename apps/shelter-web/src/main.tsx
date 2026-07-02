@@ -1,7 +1,7 @@
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { createWebFetchClient } from '@monorepo/ba-platform/web';
-import { ApolloClientProvider } from '@monorepo/ba-platform';
+import { ApolloClientProvider, getGraphqlUrl } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   ShelterFeatureControlProvider,
@@ -24,7 +24,7 @@ const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const fetchClient = createWebFetchClient();
-const link = new UploadHttpLink({ uri: `${apiUrl}/graphql`, fetch: fetchClient, credentials: 'include' });
+const link = new UploadHttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient, credentials: 'include' });
 const typePolicies = createShelterTypePolicies({
   isDevEnv,
   extraPolicies: createOperatorTypePolicies(),

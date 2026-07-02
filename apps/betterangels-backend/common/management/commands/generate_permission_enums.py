@@ -22,8 +22,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "output",
-            nargs="?",
-            default="libs/ba-permissions/src/__generated__/index.ts",
             help="Output path relative to repo root.",
         )
 
