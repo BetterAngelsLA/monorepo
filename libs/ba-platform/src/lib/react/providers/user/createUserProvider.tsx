@@ -121,7 +121,7 @@ export function createUserProvider<
 
   // ---- Provider ------------------------------------------------------
 
-  function UserProvider({ children, storage }: { children: ReactNode; storage?: StorageAdapter }) {
+  function UserProvider({ children, storage }: { children: ReactNode; storage: StorageAdapter }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -152,7 +152,13 @@ export function createUserProvider<
 
     useEffect(() => {
       if (!loading) {
-        updateUser({ data, errors: error ? [error] : undefined });
+        // error is typed as ErrorLike but is an ApolloError at runtime
+        // with graphQLErrors — narrow via runtime check.
+        const gqlErrors =
+          error && 'graphQLErrors' in error
+            ? (error.graphQLErrors as readonly { message: string; extensions?: Record<string, unknown> }[])
+            : undefined;
+        updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
     }, [loading, data, error, updateUser]);
 

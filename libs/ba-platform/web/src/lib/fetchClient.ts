@@ -5,6 +5,7 @@ import {
   createCsrfTokenRefresher,
   createOrgInterceptor,
   CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
   DEFAULT_ORG_STORAGE_KEY,
 } from '@monorepo/ba-platform';
 import { readCsrfToken } from './csrfTokenProvider';
@@ -25,5 +26,6 @@ export const createWebFetchClient = () =>
       readCsrfToken,
       createCsrfTokenRefresher(),
       CSRF_COOKIE_NAME,
+      CSRF_HEADER_NAME,
     ),
   );

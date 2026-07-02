@@ -1,3 +1,5 @@
+import { localStorageAdapter } from '@monorepo/react/shared';
+import React, { ReactNode } from 'react';
 import { createUserProvider } from './createUserProvider';
 import {
   CurrentOrgUserDocument,
@@ -25,7 +27,7 @@ export type CurrentUser = {
 // Pre-configured provider for the standard CurrentOrgUser query
 // ---------------------------------------------------------------------------
 
-export const { UserProvider, useUser } = createUserProvider({
+const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
   parseUser: (data): CurrentUser | undefined => {
     const user = data as CurrentOrgUserQuery['currentUser'] | undefined;
@@ -35,10 +37,19 @@ export const { UserProvider, useUser } = createUserProvider({
       username: user.username ?? undefined,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
-      email: user.email,
+      email: user.email ?? undefined,
       organizations: user.organizations ?? [],
     };
   },
   isUnauthenticated: (errors) =>
     errors?.some((e) => e.message.includes('User is not logged in.')) ?? false,
 });
+
+/**
+ * Web UserProvider — defaults ``storage`` to :const:`localStorageAdapter`.
+ */
+function UserProvider({ children }: { children: ReactNode }) {
+  return React.createElement(BaseUserProvider, { storage: localStorageAdapter, children });
+}
+
+export { UserProvider, useUser };

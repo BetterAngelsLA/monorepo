@@ -1,9 +1,6 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import {
-  localStorageAdapter,
-  type StorageAdapter,
-} from '@monorepo/react/shared';
+import { type StorageAdapter } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
@@ -16,8 +13,8 @@ export interface Org {
 }
 
 interface UseActiveOrgStateOptions {
-  /** Storage adapter — defaults to :const:`localStorageAdapter`. */
-  storage?: StorageAdapter;
+  /** Storage adapter (e.g. :const:`localStorageAdapter` for web, :const:`asyncStorageAdapter` for Expo). */
+  storage: StorageAdapter;
   /** Storage key — defaults to ``'betterangels_active_org_id'``. */
   storageKey?: string;
 }
@@ -38,10 +35,10 @@ export interface ActiveOrgState {
  */
 export function useActiveOrgState(
   organizations: Org[],
-  options: UseActiveOrgStateOptions = {}
+  options: UseActiveOrgStateOptions
 ): ActiveOrgState {
   const {
-    storage = localStorageAdapter,
+    storage,
     storageKey = DEFAULT_ORG_STORAGE_KEY,
   } = options;
 
@@ -107,14 +104,9 @@ export function useActiveOrgState(
     (orgId: string) => {
       if (organizations.some((o) => o.id === orgId)) {
         setActiveOrgIdState(orgId);
-        try {
-          storage.setItem(storageKey, orgId);
-        } catch {
-          // storage may be unavailable
-        }
       }
     },
-    [organizations, storage, storageKey]
+    [organizations]
   );
 
   const permSet = useMemo(

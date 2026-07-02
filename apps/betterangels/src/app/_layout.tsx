@@ -103,7 +103,7 @@ export default function RootLayout() {
                 { name: 'demo', url: demoApiUrl },
               ]}
               storage={asyncStorageAdapter}
-              fetch={fetch}
+              fetch={fetchClient}
             >
               <QueryClientProvider client={reactQueryClient}>
                 <ApolloClientProvider

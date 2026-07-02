@@ -1,4 +1,4 @@
-import { readCsrfToken, refreshCsrfToken } from './csrfTokenProvider';
+import { readCsrfToken } from './csrfTokenProvider';
 
 function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}; Path=/`;
@@ -23,14 +23,5 @@ describe('readCsrfToken', () => {
     setCookie('csrftoken', 'first');
     setCookie('csrftoken', 'second');
     expect(await readCsrfToken('csrftoken')).not.toBeNull();
-  });
-});
-
-describe('refreshCsrfToken', () => {
-  it('calls fetch with include credentials', async () => {
-    const fn = jest.fn().mockResolvedValue({ ok: true } as Response);
-    window.fetch = fn as any;
-    await refreshCsrfToken('/admin/login/');
-    expect(fn).toHaveBeenCalledWith('/admin/login/', { credentials: 'include' });
   });
 });

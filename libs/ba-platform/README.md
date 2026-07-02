@@ -42,25 +42,26 @@ not platform):
 libs/ba-platform/
 ├── permissions/                    ← @monorepo/ba-platform/permissions (separate NX project)
 │   └── src/__generated__/          ← Generated permission enums + PermissionEnum
-├── src/lib/
-│   ├── constants.ts                ← Platform-agnostic constants
-├── apollo/                         ← BA-specific Apollo code
-│   ├── orgLink.ts                  ← Platform-agnostic org link (takes StorageAdapter param)
-│   ├── react/                      ← Web-only Apollo (browser APIs)
-│   │   ├── client.ts
-│   │   └── csrf.ts
-│   ├── expo/                       ← Native-only Apollo (RN APIs)
-│   │   ├── client.ts
-│   │   └── links/orgLink/
-│   ├── graphql/__generated__/      ← Generated GQL types (codegen output)
-│   └── user/                       ← GQL operations + generated hooks
-├── react/                          ← Shared React code (works in web + native)
-│   └── providers/
-│       ├── activeOrg/
-│       └── user/
-├── expo/                           ← Native-only React (RN APIs)
-│   └── ApolloClientProvider.tsx
-└── ts/                             ← (future) BA-specific pure TS — enums, regex
+├── web/                            ← @monorepo/ba-platform/web (separate NX project)
+│   └── src/lib/                    ← Web fetch client, CSRF, cookies
+├── expo/                           ← @monorepo/ba-platform/expo (separate NX project)
+│   └── src/lib/                    ← Expo fetch client, CSRF
+├── src/
+│   ├── index.ts                    ← Main entry: @monorepo/ba-platform
+│   ├── react.ts, expo.ts           ← Secondary barrels
+│   └── lib/
+│       ├── constants.ts            ← Platform-agnostic constants
+│       ├── interceptors.ts         ← Re-exports from @monorepo/fetch
+│       ├── apollo/                 ← BA-specific Apollo code
+│       │   ├── graphql/            ← Generated GQL types (codegen output)
+│       │   └── user/               ← GQL operations + generated hooks
+│       └── react/                  ← Shared React code (works in web + native)
+│           ├── ApiConfigProvider.tsx
+│           ├── ApolloClientProvider.tsx
+│           ├── EnvironmentSwitcherProvider.tsx
+│           └── providers/
+│               ├── activeOrg/      ← ActiveOrgProvider, permissions
+│               └── user/           ← UserProvider, createUserProvider
 ```
 
 The rule: if you'd put a **generic** version in `libs/react/` or `libs/apollo/`,
