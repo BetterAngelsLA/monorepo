@@ -3,12 +3,13 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/shelter-web/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:shelter-web"],
+  "tags": [
+    "type:app",
+    "scope:shelter-web"
+  ],
   "targets": {
     "test": {
-      "options": {
-        "passWithNoTests": true
-      },
+      "options": {},
       "configurations": {
         "ci": {
           "ci": true,
@@ -27,17 +28,12 @@
       }
     },
     "build": {
-      "executor": "@nx/vite:build",
       "dependsOn": [
         "set-env"
       ],
       "options": {
-        "outputPath": "dist/apps/shelter-web",
-        "configFile": "apps/shelter-web/vite.config.mts"
-      },
-      "configurations": {
-        "production": {},
-        "preview": {}
+        "config": "./vite.config.mts",
+        "outDir": "../../dist/apps/shelter-web"
       }
     },
     "deploy": {
@@ -52,12 +48,6 @@
         "production": {},
         "preview": {}
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
     },
     "post-pr-preview": {
       "executor": "nx:run-commands",

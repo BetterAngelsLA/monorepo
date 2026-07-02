@@ -1,4 +1,3 @@
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import type { StorybookConfig } from '@storybook/react-native-web-vite';
 import tailwindcss from '@tailwindcss/postcss';
 import 'dotenv/config';
@@ -82,8 +81,8 @@ const config: StorybookConfig = {
           },
         }),
         rawSvgPlugin(), // TODO: switch to SVGR globally for react libs
-        nxViteTsPaths(),
       ],
+      resolve: { tsconfigPaths: true },
       server: { fs: { allow: [searchForWorkspaceRoot(process.cwd())] } },
     });
   },

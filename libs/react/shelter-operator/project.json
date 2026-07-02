@@ -3,7 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/shelter-operator/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:shelter-operator"],
+  "tags": [
+    "type:feature",
+    "scope:shelter-operator"
+  ],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -21,12 +24,6 @@
         "command": "graphql-codegen --config codegen.ts"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
@@ -35,9 +32,7 @@
       }
     },
     "test": {
-      "options": {
-        "passWithNoTests": true
-      },
+      "options": {},
       "configurations": {
         "ci": {
           "ci": true,

@@ -3,7 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/betterangels/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:betterangels"],
+  "tags": [
+    "type:feature",
+    "scope:betterangels"
+  ],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*"
@@ -21,12 +24,8 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
       "inputs": [
         "{projectRoot}/**/*"
-      ],
-      "outputs": [
-        "{options.outputFile}"
       ]
     },
     "typecheck": {
@@ -44,9 +43,7 @@
       "outputs": [
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
-      "options": {
-        "passWithNoTests": true
-      },
+      "options": {},
       "configurations": {
         "ci": {
           "ci": true,

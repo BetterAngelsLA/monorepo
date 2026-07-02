@@ -8,7 +8,7 @@ export default {
   moduleFileExtensions: ['ts', 'js', 'html', 'tsx', 'jsx'],
   setupFilesAfterEnv: ['<rootDir>/test-setup.ts'],
   moduleNameMapper: {
-    '.svg': '<rootDir>/../../../../jest-svg-mock.js',
+    '\\.svg$': '<rootDir>/../../../../jest-svg-mock.js',
   },
   preset: 'jest-expo',
   coverageDirectory: '../../../../coverage/libs/expo/shared/utils',
