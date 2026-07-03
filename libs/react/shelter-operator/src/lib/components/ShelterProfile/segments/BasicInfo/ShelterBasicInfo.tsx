@@ -23,8 +23,7 @@ function toUpdateInput(
     description: data.description,
     email: data.email || null,
     phone: data.phone || null,
-    // website: data.website || null,
-    website: 'hello',
+    website: data.website || null,
     isPrivate: data.isPrivate,
     location: data.location
       ? {
