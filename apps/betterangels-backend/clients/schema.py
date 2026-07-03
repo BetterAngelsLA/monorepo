@@ -15,7 +15,7 @@ from clients.models import (
     HmisProfile,
     SocialMediaProfile,
 )
-from clients.permissions import ClientProfileImportRecordPermissions
+
 from clients.services import client_document, client_profile_photo
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
@@ -403,7 +403,7 @@ class Query:
 
     # Data Import
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.VIEW)]
     )
     def bulk_client_profile_import_records(
         self, info: Info, data: ClientProfileImportRecordsBulkInput
@@ -756,7 +756,7 @@ class Mutation:
 
     # Data Import
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.ADD)]
     )
     def create_client_profile_data_import(
         self, info: Info, data: CreateProfileDataImportInput
@@ -776,7 +776,7 @@ class Mutation:
         )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.ADD)]
     )
     def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
         existing = ClientProfileImportRecord.objects.filter(

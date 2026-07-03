@@ -1,113 +1,116 @@
-import { useQuery } from '@apollo/client/react';
-import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
-import { GraphQLFormattedError } from 'graphql';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { createUserProvider } from '@monorepo/ba-platform';
+import { API_ERROR_CODES, asyncStorageAdapter } from '@monorepo/expo/shared/clients';
+import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAppState } from '../../hooks';
-import UserContext, { TUser } from './UserContext';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
 } from './__generated__/UserProvider.generated';
 
-interface UserProviderProps {
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type TUser = {
+  id: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
+  organizations: { id: string; name: string; permissions: string[] }[];
+  isOutreachAuthorized?: boolean;
+  hasAcceptedTos?: boolean;
+  hasAcceptedPrivacyPolicy?: boolean;
+  isHmisUser?: boolean;
+};
+
+// ---------------------------------------------------------------------------
+// Base provider (Apollo + ActiveOrg + context)
+// ---------------------------------------------------------------------------
+
+const {
+  UserProvider: BaseUserProvider,
+  useUser,
+} = createUserProvider({
+  document: CurrentUserDocument,
+  parseUser: (
+    data: unknown
+  ): TUser | undefined => {
+    const userData = data as CurrentUserQuery['currentUser'] | undefined;
+    return userData
+      ? {
+          id: userData.id,
+          username: userData.username ?? undefined,
+          firstName: userData.firstName ?? undefined,
+          lastName: userData.lastName ?? undefined,
+          email: userData.email,
+          organizations: (userData.organizations ?? []).map((org) => ({
+            id: org.id,
+            name: org.name,
+            permissions: org.permissions ?? [],
+          })),
+          isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
+          hasAcceptedTos: userData.hasAcceptedTos ?? false,
+          hasAcceptedPrivacyPolicy: userData.hasAcceptedPrivacyPolicy ?? false,
+          isHmisUser: userData.isHmisUser ?? undefined,
+        }
+      : undefined;
+  },
+  isUnauthenticated: (errors) =>
+    errors?.some(
+      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
+    ) ?? false,
+  extraContextValue: (user) => ({ isHmisUser: user?.isHmisUser }),
+});
+
+// ---------------------------------------------------------------------------
+// Expo shell — RN-specific UI + app-state refetch
+// ---------------------------------------------------------------------------
+
+interface ExpoShellProps {
   children: ReactNode;
 }
 
-const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
-  user
-    ? {
-        id: user.id,
-        username: user.username ?? undefined,
-        firstName: user.firstName ?? undefined,
-        lastName: user.lastName ?? undefined,
-        email: user.email,
-        organizations: user.organizations ?? null,
-        isOutreachAuthorized: user.isOutreachAuthorized ?? false,
-        hasAcceptedTos: user.hasAcceptedTos ?? false,
-        hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
-        isHmisUser: user.isHmisUser ?? undefined,
-      }
-    : undefined;
-
-type UserResponse = {
-  data?: CurrentUserQuery;
-  errors?: readonly GraphQLFormattedError[];
-};
-
-export default function UserProvider({ children }: UserProviderProps) {
-  const [user, setUser] = useState<TUser | undefined>();
-  const [isSettled, setIsSettled] = useState(false);
-
+function ExpoShell({ children }: ExpoShellProps) {
+  const { user, isLoading, refetchUser } = useUser();
   const { appBecameActive } = useAppState();
-  const { data, loading, error, refetch } = useQuery(CurrentUserDocument, {
-    fetchPolicy: 'network-only',
-    errorPolicy: 'all',
-  });
-
-  const updateUser = useCallback((res: UserResponse) => {
-    const invalidate = res.errors?.some((e) => {
-      return e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED;
-    });
-
-    const userValue = invalidate ? undefined : parseUser(res.data?.currentUser);
-
-    // Batch both updates: React 18 flushes them in the same render,
-    // eliminating the flash of unauthorized-root between loading=false and user being set.
-    setUser(userValue);
-    setIsSettled(true);
-  }, []);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      updateUser({ data, errors: error ? [error] : undefined });
-    }
-  }, [loading, data, error, updateUser]);
-
-  const refetchUser = useCallback(async () => {
-    try {
-      const res = await refetch();
-      updateUser(res);
-    } catch (err) {
-      setUser(undefined);
-    }
-  }, [refetch, updateUser]);
+    if (!isLoading) setSettled(true);
+  }, [isLoading]);
 
   useEffect(() => {
-    if (!appBecameActive) {
-      return;
-    }
-
-    // Refetch user data when app becomes active
-    // The server will handle session validation and return null user if expired
-    refetchUser();
+    if (appBecameActive) refetchUser();
   }, [appBecameActive, refetchUser]);
 
-  const contextValue = useMemo(
-    () => ({
-      user,
-      setUser,
-      isLoading: loading,
-      refetchUser,
-      isHmisUser: user?.isHmisUser,
-    }),
-    [user, loading, refetchUser]
-  );
-
   return (
-    <UserContext.Provider value={contextValue}>
-      <View
-        testID={
-          !isSettled
-            ? 'authorized-pending'
-            : user
-            ? 'authorized-root'
-            : 'unauthorized-root'
-        }
-        style={{ flex: 1 }}
-      >
-        {children}
-      </View>
-    </UserContext.Provider>
+    <View
+      testID={
+        !settled
+          ? 'authorized-pending'
+          : user
+          ? 'authorized-root'
+          : 'unauthorized-root'
+      }
+      style={{ flex: 1 }}
+    >
+      {children}
+    </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export default function UserProvider({ children }: { children: ReactNode }) {
+  return (
+    <BaseUserProvider storage={asyncStorageAdapter}>
+      <ExpoShell>{children}</ExpoShell>
+    </BaseUserProvider>
+  );
+}
+
+export { useUser };

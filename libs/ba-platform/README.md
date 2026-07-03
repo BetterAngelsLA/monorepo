@@ -39,8 +39,11 @@ Mirrors the top-level `libs/` structure. Organized by **layer** (framework,
 not platform):
 
 ```
-libs/ba-platform/src/lib/
-├── constants.ts                    ← Platform-agnostic constants
+libs/ba-platform/
+├── permissions/                    ← @monorepo/ba-platform/permissions (separate NX project)
+│   └── src/__generated__/          ← Generated permission enums + PermissionEnum
+├── src/lib/
+│   ├── constants.ts                ← Platform-agnostic constants
 ├── apollo/                         ← BA-specific Apollo code
 │   ├── orgLink.ts                  ← Platform-agnostic org link (takes StorageAdapter param)
 │   ├── react/                      ← Web-only Apollo (browser APIs)
@@ -172,6 +175,17 @@ code (e.g. `src/lib/<name>/`).
 | Module | Layer | Purpose |
 |---|---|---|
 | `apollo/graphql/__generated__/types` | Apollo | Lightweight re-export of generated GQL types for type-only consumers |
+
+### Permissions (`@monorepo/ba-platform/permissions`)
+
+> Separate NX project under `libs/ba-platform/permissions/`. See
+> [`docs/styleguides/nx.md`](../../docs/styleguides/nx.md) for the ba-platform
+> project split plan.
+
+| Module | Layer | Purpose |
+|---|---|---|
+| `src/__generated__/index.ts` | TS | Auto-generated permission enums + `PermissionEnum` union type from the Django backend (`manage.py generate_permission_enums`) |
+| `src/index.ts` | TS | Barrel re-export of generated permission types |
 
 ## Conventions
 

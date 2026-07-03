@@ -815,7 +815,7 @@ union CreateTeamPayload = TeamType | OperationInfo
 type CurrentUserOrganizationType {
   id: ID!
   name: String!
-  permissions: OrgPermissions!
+  permissions: [String!]!
 }
 
 type CurrentUserType {
@@ -1806,17 +1806,15 @@ input OrgInvitationInput {
   permissionTemplate: PermissionTemplateEnum!
 }
 
-type OrgPermissions {
-  accounts: [UserOrganizationPermissions!]!
-  reports: [ReportPermissions!]!
-  shelters: [ShelterPermissions!]!
-  teams: [TeamPermissions!]!
-}
-
 enum OrgRoleEnum {
   MEMBER
   ADMIN
   SUPERUSER
+}
+
+enum OrgTypeEnum {
+  OUTREACH
+  SHELTER
 }
 
 input OrganizationFilter {
@@ -2007,7 +2005,7 @@ enum PronounEnum {
 type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -2152,10 +2150,6 @@ input RemoveOrganizationMemberInput {
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo
-
-enum ReportPermissions {
-  VIEW_REPORTS
-}
 
 type ReportSummaryType {
   totalNotes: Int!
@@ -2531,13 +2525,6 @@ input ShelterOrder {
   createdAt: Ordering
 }
 
-enum ShelterPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
-}
-
 input ShelterPhotoFromUploadInput {
   presignedKey: String!
   uploadToken: String!
@@ -2825,13 +2812,6 @@ type TaskTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [TaskType!]!
-}
-
-enum TeamPermissions {
-  ADD
-  CHANGE
-  DELETE
-  VIEW
 }
 
 type TeamType {
@@ -3161,14 +3141,6 @@ union UpdateUserProfilePayload = CurrentUserType | OperationInfo
 
 """Represents a file upload."""
 scalar Upload
-
-enum UserOrganizationPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-  REMOVE_ORG_MEMBER
-  VIEW_ORG_MEMBERS
-}
 
 type UserType {
   firstName: NonBlankString

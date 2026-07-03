@@ -5,6 +5,7 @@ import { createNativeFetch } from '../common/nativeFetch';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { createErrorLink } from './links/errorLink';
 import { loggerLink } from './links/loggerLink';
+import { expoOrgLink } from './links/orgLink/expoOrgLink';
 
 type TArgs = {
   apiUrl: string;
@@ -31,7 +32,7 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const composedLinks = [errorLink, uploadHttpLink];
+  const composedLinks = [errorLink, expoOrgLink, uploadHttpLink];
 
   // Debug only: logs GraphQL requests/responses
   if (

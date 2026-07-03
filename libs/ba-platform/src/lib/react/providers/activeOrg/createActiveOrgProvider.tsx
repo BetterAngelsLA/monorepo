@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { localStorageAdapter, type StorageAdapter } from '@monorepo/react/shared';
 import { useActiveOrgState, type ActiveOrgState, type Org } from './useActiveOrgState';
 
-interface ActiveOrgProviderProps {
+export interface ActiveOrgProviderProps {
   children: ReactNode;
   organizations: Org[];
   /** Storage adapter — defaults to :const:`localStorageAdapter`. */
