@@ -17,7 +17,7 @@ from shelters.types.reporting import (
 )
 from strawberry import ID
 
-from reports.exporters import (
+from reports.export_to_csv import (
     avg_days_to_occupancy_to_csv,
     csv_files_to_zip,
     daily_bed_status_metrics_to_csv,
@@ -163,6 +163,21 @@ class TestShelterMetricsExport:
             ["2026-06-01", "2026-06-30", "shelter-1", "4.5"],
         ]
 
+    def test_avg_days_to_occupancy_to_csv_with_none(self) -> None:
+        csv_content = avg_days_to_occupancy_to_csv(
+            "shelter-1",
+            date(2026, 6, 1),
+            date(2026, 6, 30),
+            None,
+        )
+
+        rows = list(csv.reader(StringIO(csv_content)))
+
+        assert rows == [
+            ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"],
+            ["2026-06-01", "2026-06-30", "shelter-1", ""],
+        ]
+
     def test_csv_files_to_zip_includes_each_csv_file(self) -> None:
         zip_content = csv_files_to_zip(
             {
@@ -213,13 +228,17 @@ class TestShelterMetricsExport:
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
             assert sorted(zip_file.namelist()) == [
-                "avg_days_to_occupancy.csv",
-                "daily_bed_status_metrics.csv",
-                "daily_occupancy_metrics.csv",
-                "reservation_metrics.csv",
+                "20260601_20260630_avg_days_to_occupancy.csv",
+                "20260601_20260630_daily_bed_status_metrics.csv",
+                "20260601_20260630_daily_occupancy_metrics.csv",
+                "20260601_20260630_reservation_metrics.csv",
             ]
-            daily_occupancy_rows = list(csv.reader(StringIO(zip_file.read("daily_occupancy_metrics.csv").decode())))
-            reservation_rows = list(csv.reader(StringIO(zip_file.read("reservation_metrics.csv").decode())))
+            daily_occupancy_rows = list(
+                csv.reader(StringIO(zip_file.read("20260601_20260630_daily_occupancy_metrics.csv").decode()))
+            )
+            reservation_rows = list(
+                csv.reader(StringIO(zip_file.read("20260601_20260630_reservation_metrics.csv").decode()))
+            )
 
         assert daily_occupancy_rows == [
             ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
