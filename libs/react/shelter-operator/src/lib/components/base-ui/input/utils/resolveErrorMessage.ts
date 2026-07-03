@@ -1,4 +1,3 @@
-import { Regex } from '@monorepo/react/shared';
 import type { InputDataType } from '../types';
 
 const validationPatterns: Record<InputDataType, RegExp> = {
@@ -7,7 +6,8 @@ const validationPatterns: Record<InputDataType, RegExp> = {
   number: /^-?\d+(\.\d+)?$/,
   time: /^([01]\d|2[0-3]):([0-5]\d)$/,
   date: /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/,
-  url: Regex.url,
+  // TODO: import Regex.url from ts-lib once created - import issues otherwise
+  url: /^https?:\/\/[\w.-]+\.[a-zA-Z]{2,63}(\/\S*)?(\?\S*)?$/i,
   string: /[\s\S]+/,
 };
 

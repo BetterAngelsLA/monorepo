@@ -10,11 +10,11 @@ import {
   GenerateShelterPhotoUploadsDocument,
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
-import { resolveShelterPhotoUploadsSuccessTypename } from './__generated__/useShelterPhotoUploads_meta.generated';
 import {
-  AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME,
-  SHELTER_PHOTO_MAX_SIZE,
-} from './constants';
+  generateShelterPhotoUploadsSuccessTypename,
+  resolveShelterPhotoUploadsSuccessTypename,
+} from './__generated__/useShelterPhotoUploads_meta.generated';
+import { SHELTER_PHOTO_MAX_SIZE } from './constants';
 
 function userFacingError(error: unknown): string {
   const message = parseS3Error(error);
@@ -110,7 +110,7 @@ export function useShelterPhotoUploads(props?: TProps) {
       throw new Error(payload.messages.map((m) => m.message).join(', '));
     }
 
-    if (payload.__typename !== AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME) {
+    if (payload.__typename !== generateShelterPhotoUploadsSuccessTypename) {
       throw new Error('Unexpected response type');
     }
 
