@@ -378,14 +378,14 @@ describe('url', () => {
       undefined,
     ],
     [
-      'required, valid (bare domain)',
+      'required, invalid (bare domain, no scheme)',
       { required: true, dataType: 'url', value: 'example.com' },
-      undefined,
+      'Please enter a valid URL',
     ],
     [
-      'required, valid (with path)',
+      'required, invalid (no scheme)',
       { required: true, dataType: 'url', value: 'example.com/path?q=1' },
-      undefined,
+      'Please enter a valid URL',
     ],
     [
       'required, invalid (no dot)',
