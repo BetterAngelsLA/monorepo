@@ -112,13 +112,20 @@ def metrics_to_zip(metrics: ShelterOccupancyMetricsType) -> bytes:
     start_date = metrics.start_date
     end_date = metrics.end_date
 
+    start_str = start_date.strftime("%Y%m%d")
+    end_str = end_date.strftime("%Y%m%d")
+
     files = {
-        "daily_occupancy_metrics.csv": daily_occupancy_metrics_to_csv(shelter_id, metrics.daily_occupancy),
-        "daily_bed_status_metrics.csv": daily_bed_status_metrics_to_csv(shelter_id, metrics.daily_bed_status),
-        "reservation_metrics.csv": reservation_metrics_to_csv(
+        f"{start_str}_{end_str}_daily_occupancy_metrics.csv": daily_occupancy_metrics_to_csv(
+            shelter_id, metrics.daily_occupancy
+        ),
+        f"{start_str}_{end_str}_daily_bed_status_metrics.csv": daily_bed_status_metrics_to_csv(
+            shelter_id, metrics.daily_bed_status
+        ),
+        f"{start_str}_{end_str}_reservation_metrics.csv": reservation_metrics_to_csv(
             shelter_id, start_date, end_date, metrics.reservation_metrics
         ),
-        "avg_days_to_occupancy.csv": avg_days_to_occupancy_to_csv(
+        f"{start_str}_{end_str}_avg_days_to_occupancy.csv": avg_days_to_occupancy_to_csv(
             shelter_id, start_date, end_date, metrics.avg_days_to_occupancy
         ),
     }
