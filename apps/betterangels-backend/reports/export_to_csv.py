@@ -1,3 +1,10 @@
+"""CSV exporters for shelter reporting metrics.
+
+These adapters intentionally accept the Strawberry reporting DTOs from
+``shelters.types.reporting``. Keep the CSV column mapping in sync when those
+GraphQL-facing types change.
+"""
+
 import csv
 import zipfile
 from datetime import date
@@ -101,7 +108,12 @@ def avg_days_to_occupancy_to_csv(shelter_id: str, start_date: date, end_date: da
     headers = ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"]
 
     rows = [
-        {"start_date": start_date, "end_date": end_date, "shelter_id": shelter_id, "avg_days_to_occupancy": avg_days}
+        {
+            "start_date": start_date,
+            "end_date": end_date,
+            "shelter_id": shelter_id,
+            "avg_days_to_occupancy": "" if avg_days is None else avg_days,
+        }
     ]
 
     return rows_to_csv(rows, headers)
