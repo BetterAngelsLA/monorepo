@@ -9,7 +9,7 @@ import csv
 import zipfile
 from datetime import date
 from io import BytesIO, StringIO
-from typing import Any, Optional
+from typing import Any
 
 from shelters.types.reporting import (
     DailyBedStatusMetricsType,
@@ -104,7 +104,7 @@ def reservation_metrics_to_csv(
     return rows_to_csv(rows, headers)
 
 
-def avg_days_to_occupancy_to_csv(shelter_id: str, start_date: date, end_date: date, avg_days: Optional[float]) -> str:
+def avg_days_to_occupancy_to_csv(shelter_id: str, start_date: date, end_date: date, avg_days: float | None) -> str:
     headers = ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"]
 
     rows = [
