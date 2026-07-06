@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
             optimize: isDev ? { minify: false } : undefined,
           }),
         ],
-      },
+      } as any,
     },
 
     build: {
