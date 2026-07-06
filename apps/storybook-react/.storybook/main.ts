@@ -1,13 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-native-web-vite';
 import tailwindcss from '@tailwindcss/postcss';
-import { config as dotenvConfig } from 'dotenv';
-import 'dotenv/config';
 import { resolve } from 'path';
-
-// Load project-level .env.local (set by Nx set-env target with VITE_APP_BASE_PATH).
-// @nx/storybook:build runs in-process and doesn't inherit Nx's task-level env,
-// so process.env.VITE_APP_BASE_PATH is not automatically available.
-dotenvConfig({ path: resolve(__dirname, '../.env.local'), override: true });
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import {
