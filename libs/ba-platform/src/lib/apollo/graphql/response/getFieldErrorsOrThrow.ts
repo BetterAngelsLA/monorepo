@@ -2,7 +2,7 @@ import { BaPermissionError } from '../../../errors/BaPermissionError';
 import { getOperationInfo } from './getOperationInfo';
 import { isUnauthenticatedError } from './isUnauthenticatedError';
 import type { FieldError } from './types';
-import { composeErrorDescription } from './utils/composeErrorDescription';
+import { composeErrorMessage } from './utils/composeErrorMessage';
 import { getExtensionValidationErrors } from './utils/getExtensionValidationErrors';
 import { getOperationOtherMessage } from './utils/getOperationOtherMessage';
 import { getOperationValidationErrors } from './utils/getOperationValidationErrors';
@@ -66,14 +66,14 @@ export function getFieldErrorsOrThrow(
       throw new Error('An unexpected error occurred.');
     }
 
-    const errorMessage =
-      response.errors[0].message ?? 'An unknown error occurred.';
+    const errorMessages = response.errors?.map((e) => e.message) ?? [];
+    const errMesssage = composeErrorMessage(errorMessages);
 
     if (isUnauthenticatedError(response.errors)) {
-      throw new BaPermissionError(errorMessage);
+      throw new BaPermissionError(errMesssage);
     }
 
-    throw new Error(errorMessage);
+    throw new Error(errMesssage);
   }
 
   // ── No data ───────────────────────────────────────────────────────────
@@ -118,9 +118,8 @@ export function getFieldErrorsOrThrow(
   }
 
   const otherMessage = getOperationOtherMessage(opInfo, fields);
-  const errorMessages =
-    response.errors?.map((e) => e.message ?? 'Unknown error') ?? [];
-  const description = composeErrorDescription([otherMessage, ...errorMessages]);
+  const errorMessages = response.errors?.map((e) => e.message) ?? [];
+  const errMessage = composeErrorMessage([otherMessage, ...errorMessages]);
 
-  throw new Error(description);
+  throw new Error(errMessage);
 }

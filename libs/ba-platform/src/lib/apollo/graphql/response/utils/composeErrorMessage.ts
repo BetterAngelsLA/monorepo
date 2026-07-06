@@ -4,7 +4,9 @@
  * Joins all non-empty messages with "; " separators. Useful for logging
  * the full error context when throwing a generic Error in getFieldErrorsOrThrow.
  */
-export function composeErrorDescription(messages: (string | null)[]): string {
+export function composeErrorMessage(
+  messages: (string | null | undefined)[]
+): string {
   const filtered = messages
     .map((m) => m?.trim())
     .filter((m): m is string => !!m);
