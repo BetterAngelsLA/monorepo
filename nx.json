@@ -171,6 +171,7 @@
         "libs/expo/shared/static/**/*",
         "libs/expo/shared/ui-components/**/*",
         "libs/expo/shared/utils/**/*",
+        "libs/fetch/**/*",
         "libs/react/betterangels-admin/**/*",
         "libs/react/components/**/*",
         "libs/react/icons/**/*",

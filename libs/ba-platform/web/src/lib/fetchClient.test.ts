@@ -2,6 +2,8 @@
  * @jest-environment jsdom
  */
 
+/* eslint-disable import/first */
+
 // jsdom does not provide the ``Response`` global (it is a Node built-in).
 // Define a minimal stub so the mock fetch can resolve.
 if (typeof Response === 'undefined') {

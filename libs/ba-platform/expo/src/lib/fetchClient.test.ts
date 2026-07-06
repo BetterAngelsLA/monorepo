@@ -1,6 +1,9 @@
 /**
  * @jest-environment node
  */
+
+/* eslint-disable import/first */
+
 import type { FetchInterceptor } from '@monorepo/fetch';
 
 // ---------------------------------------------------------------------------
