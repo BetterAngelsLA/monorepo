@@ -12,6 +12,7 @@ import {
   createOrgInterceptor,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
+  CSRF_LOGIN_PATH,
   DEFAULT_ORG_STORAGE_KEY,
 } from '@monorepo/ba-platform';
 import CookieManager from '@preeternal/react-native-cookie-manager';
@@ -46,6 +47,7 @@ export const createExpoFetchClient = (
       createCsrfTokenRefresher(apiUrl, (header) => CookieManager.setFromResponse(apiUrl, header)),
       CSRF_COOKIE_NAME,
       CSRF_HEADER_NAME,
+      CSRF_LOGIN_PATH,
     ),
     bodyInterceptor,
     includeCredentialsInterceptor,

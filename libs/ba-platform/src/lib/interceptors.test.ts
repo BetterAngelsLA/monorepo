@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { createCsrfInterceptor, createOrgInterceptor } from '@monorepo/fetch';
 
 describe('createCsrfInterceptor', () => {

@@ -28,7 +28,16 @@ export interface ApiEnvironmentContextType {
 
 export interface EnvironmentSwitcherProviderProps {
   children: ReactNode;
-  /** Available API environments. The first is the default. */
+  /**
+   * Available API environments. The first is the default.
+   *
+   * **Important:** This array must be a **stable reference** — define it
+   * outside the component (module-level) rather than inline in JSX.
+   * The ``useEffect`` that reads the saved environment intentionally
+   * omits ``environments`` from its dependency array because it is
+   * treated as static config. Passing a dynamically-generated array
+   * will cause the provider to use a stale environment after switching.
+   */
   environments: readonly ApiEnvironment[];
   /** Storage backend for persisting the active environment. */
   storage: ApiConfigStorage;

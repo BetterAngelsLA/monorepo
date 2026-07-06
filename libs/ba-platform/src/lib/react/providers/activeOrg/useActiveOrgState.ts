@@ -9,7 +9,7 @@ import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
 export interface Org {
   id: string;
   name: string;
-  permissions: readonly string[];
+  permissions: readonly PermissionEnum[];
 }
 
 interface UseActiveOrgStateOptions {

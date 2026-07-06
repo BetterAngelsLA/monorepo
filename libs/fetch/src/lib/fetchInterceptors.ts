@@ -57,10 +57,22 @@ export const composeFetchInterceptors = (
 // ---------------------------------------------------------------------------
 
 /**
- * Inject a CSRF header into outgoing requests.
+ * Inject a CSRF header into outgoing requests (proactive strategy).
  *
  * Reads the token via ``readToken``, refreshes from the server if missing,
  * and sets the ``X-CSRFToken`` header (or a custom header name).
+ *
+ * Unlike the legacy reactive approach (send request → catch 403 → refresh
+ * → retry), this interceptor resolves the token **before** the first
+ * request leaves the client.  This eliminates a wasted round-trip for
+ * every mutating request.
+ *
+ * **Trade-off:** If the token is missing AND the refresh fails (e.g.
+ * offline), the interceptor **throws** and the request is never sent.
+ * The old reactive strategy would send the request anyway and let the
+ * server respond with 403.  In practice this is acceptable — if you
+ * cannot reach the server to refresh the token, you likely cannot reach
+ * the API endpoint either.
  *
  * Platform-agnostic — pass platform-specific ``TokenReader`` /
  * ``TokenRefresher`` implementations.

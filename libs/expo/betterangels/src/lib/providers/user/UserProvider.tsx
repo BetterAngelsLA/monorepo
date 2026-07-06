@@ -1,3 +1,4 @@
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { createUserProvider } from '@monorepo/ba-platform';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
@@ -19,7 +20,7 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: { id: string; name: string; permissions: string[] }[];
+  organizations: { id: string; name: string; permissions: readonly PermissionEnum[] }[];
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
@@ -47,7 +48,7 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
           organizations: (userData.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
-            permissions: org.permissions ?? [],
+            permissions: (org.permissions ?? []) as PermissionEnum[],
           })),
           isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
           hasAcceptedTos: userData.hasAcceptedTos ?? false,

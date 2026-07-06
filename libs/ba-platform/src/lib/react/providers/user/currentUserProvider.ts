@@ -1,3 +1,4 @@
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { localStorageAdapter } from '@monorepo/react/shared';
 import { createUserProvider } from './createUserProvider';
 import {
@@ -18,7 +19,7 @@ export type CurrentUser = {
   organizations: readonly {
     id: string;
     name: string;
-    permissions: readonly string[];
+    permissions: readonly PermissionEnum[];
   }[] | null;
 };
 
@@ -38,7 +39,7 @@ const { UserProvider, useUser } = createUserProvider({
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
       email: user.email ?? undefined,
-      organizations: user.organizations ?? [],
+      organizations: (user.organizations ?? []) as CurrentUser['organizations'],
     };
   },
   isUnauthenticated: (errors) =>

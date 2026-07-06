@@ -41,13 +41,13 @@ export default defineConfig(({ mode }) => {
     host: 'localhost',
   },
 
-plugins: [
-      react(),
-      rawSvgPlugin(),
-      baseHrefPlugin(basePath),
-    ],
+  plugins: [
+    react(),
+    rawSvgPlugin(),
+    baseHrefPlugin(basePath),
+  ],
 
-    resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
+  resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
 
   css: {
     postcss: {

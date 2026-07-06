@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
@@ -73,7 +74,7 @@ export interface UserProviderConfig<
    */
   mapOrganizations?: (
     orgs: readonly OrgLike[],
-  ) => { id: string; name: string; permissions: string[] }[];
+  ) => { id: string; name: string; permissions: readonly PermissionEnum[] }[];
 }
 
 type OrgLike = { id: string; name: string; permissions?: readonly string[] };
@@ -124,7 +125,7 @@ export function createUserProvider<
     orgs.map((org) => ({
       id: org.id,
       name: org.name,
-      permissions: [...(org.permissions ?? [])],
+      permissions: [...(org.permissions ?? [])] as PermissionEnum[],
     }));
 
   const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
