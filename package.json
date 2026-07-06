@@ -251,6 +251,7 @@
     "ws": ">=8.17.1",
     "graphql": "^16.13.2",
     "undici": ">=6.24.0",
+    "postcss": "8.5.16",
     "@tootallnate/once": ">=3.0.1"
   },
   "expo": {},

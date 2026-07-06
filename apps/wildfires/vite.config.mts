@@ -57,7 +57,7 @@ export default defineConfig(({ mode }) => {
           optimize: mode === 'development' ? { minify: false } : undefined,
         }),
       ],
-    } as any,
+    },
   },
 
   // Uncomment this if you are using workers.
