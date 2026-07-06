@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       rawSvgPlugin(),
-      baseHrefPlugin(),
+      baseHrefPlugin(basePath),
     ],
 
     resolve: {

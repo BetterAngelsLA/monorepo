@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
   plugins: [
     react(),
     rawSvgPlugin(),
-    baseHrefPlugin(),
+    baseHrefPlugin(basePath),
   ],
 
   resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },

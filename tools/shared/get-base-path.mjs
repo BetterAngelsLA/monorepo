@@ -35,13 +35,15 @@ export function getBranchBasePath() {
 /**
  * Vite plugin that injects <base href> into the HTML head.
  * Vite's `base` option rewrites asset paths but does NOT inject a <base href> tag.
+ *
+ * @param {string} [basePath] - Pre-computed base path. If omitted, calls getBranchBasePath().
  */
-export function baseHrefPlugin() {
+export function baseHrefPlugin(basePath) {
+  const resolved = basePath ?? getBranchBasePath();
+  const href = resolved.endsWith('/') ? resolved : resolved + '/';
   return {
     name: 'html-base-href',
     transformIndexHtml(html) {
-      const p = getBranchBasePath();
-      const href = p.endsWith('/') ? p : p + '/';
       return html.replace('</head>', `  <base href="${href}" />\n  </head>`);
     },
   };
