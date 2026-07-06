@@ -6,7 +6,7 @@ import { execSync } from 'child_process';
  * - Dev server → "/"
  * - VITE_APP_BASE_PATH env (explicit override) → use as-is
  * - Production configuration → "/"
- * - BRANCH_NAME env (set by CI) → "/branches/{branch}"
+ * - CI: BRANCH_NAME env → "/branches/{branch}"
  * - Git fallback → "/branches/{branch}"
  */
 export function getBranchBasePath() {
@@ -15,14 +15,14 @@ export function getBranchBasePath() {
   if (process.env.NX_TASK_TARGET_CONFIGURATION === 'production') return '/';
 
   let branch;
-  if (process.env.BRANCH_NAME) {
+  if (process.env.CI && process.env.BRANCH_NAME) {
     branch = process.env.BRANCH_NAME.replace(/\//g, '-');
   } else {
     try {
       branch = execSync('git rev-parse --abbrev-ref HEAD')
         .toString()
         .trim();
-      // Detached HEAD (common in CI) → use 'main' rather than 'HEAD'
+      // Detached HEAD (common in CI checkouts without BRANCH_NAME) → 'main'
       if (branch === 'HEAD') branch = 'main';
       branch = branch.replace(/\//g, '-');
     } catch {
