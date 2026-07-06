@@ -1,23 +1,25 @@
 /// <reference types='vitest' />
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
+import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
 
-export default defineConfig(({ mode }) => ({
-  base: process.env.VITE_APP_BASE_PATH || '/',
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
+  const basePath = getBranchBasePath();
+  return {
+  base: basePath,
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/wildfires',
 
   define: {
-    'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(
-      process.env.VITE_APP_BASE_PATH || '/'
-    ),
+    'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
   },
 
   server: {
@@ -39,7 +41,13 @@ export default defineConfig(({ mode }) => ({
     host: 'localhost',
   },
 
-  plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
+  plugins: [
+    react(),
+    rawSvgPlugin(),
+    baseHrefPlugin(basePath),
+  ],
+
+  resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
 
   css: {
     postcss: {
@@ -54,7 +62,7 @@ export default defineConfig(({ mode }) => ({
 
   // Uncomment this if you are using workers.
   // worker: {
-  //  plugins: [ nxViteTsPaths() ],
+  //  plugins: [],
   // },
 
   build: {
@@ -65,4 +73,5 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     },
   },
-}));
+};
+});

@@ -3,7 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/shelter-operator/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:shelter-operator"],
+  "tags": [
+    "type:feature",
+    "scope:shelter-operator"
+  ],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -13,17 +16,13 @@
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/libs/react/shelter-operator/src/lib/**/__generated__/"
+      ],
       "options": {
         "cwd": "libs/react/shelter-operator",
         "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/react/shelter-operator/src/lib/**/__generated__/"
-      ]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -33,10 +32,12 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/libs/react/shelter-operator"],
-      "options": {
-        "jestConfig": "libs/react/shelter-operator/jest.config.ts"
+      "options": {},
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
       }
     }
   }
