@@ -5,6 +5,7 @@ import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
@@ -21,7 +22,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-  const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
+  const basePath = getBranchBasePath();
   return {
     base: basePath,
     root: __dirname,
@@ -45,7 +46,11 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin()],
+    plugins: [
+      react(),
+      rawSvgPlugin(),
+      baseHrefPlugin(basePath),
+    ],
 
     resolve: {
       alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
