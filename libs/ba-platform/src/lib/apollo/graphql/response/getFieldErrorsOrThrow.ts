@@ -3,9 +3,9 @@ import { getOperationInfo } from './getOperationInfo';
 import { isUnauthenticatedError } from './isUnauthenticatedError';
 import type { FieldError } from './types';
 import { composeErrorDescription } from './utils/composeErrorDescription';
-import { getExtensionFieldErrors } from './utils/getExtensionFieldErrors';
-import { getOperationFieldErrors } from './utils/getOperationFieldErrors';
+import { getExtensionValidationErrors } from './utils/getExtensionValidationErrors';
 import { getOperationOtherMessage } from './utils/getOperationOtherMessage';
+import { getOperationValidationErrors } from './utils/getOperationValidationErrors';
 import { hasPermissionMessage } from './utils/hasPermissionMessage';
 
 type GetFieldErrorsOrThrowParams = {
@@ -54,11 +54,16 @@ export function getFieldErrorsOrThrow(
 
   // ── Top-level response errors ─────────────────────────────────────────
   if (response.errors?.length) {
-    const extensionFieldErrors = getExtensionFieldErrors(response);
+    const extensionFieldErrors = getExtensionValidationErrors(response, fields);
 
     // Extensions with field-level errors are recoverable — return for form display
     if (extensionFieldErrors.length) {
       return extensionFieldErrors;
+    }
+
+    // If fields filter excluded all extension errors, use generic fallback
+    if (fields?.length && response.errors[0]?.extensions?.errors) {
+      throw new Error('An unexpected error occurred.');
     }
 
     const errorMessage =
@@ -96,15 +101,22 @@ export function getFieldErrorsOrThrow(
   }
 
   // VALIDATION with field → return for form display
-  const fieldErrors: FieldError[] = [
-    ...getOperationFieldErrors(opInfo, fields),
+  const validationErrors: FieldError[] = [
+    ...getOperationValidationErrors(opInfo, fields),
   ];
 
-  if (fieldErrors.length) {
-    return fieldErrors;
+  if (validationErrors.length) {
+    return validationErrors;
   }
 
   // Everything else → throw
+  // If messages exist but no field errors matched (e.g. fields filter
+  // excluded everything), use a generic fallback rather than leaking an
+  // uncorrelated message from the server.
+  if (fields?.length && opInfo?.messages?.length) {
+    throw new Error('An unexpected error occurred.');
+  }
+
   const otherMessage = getOperationOtherMessage(opInfo, fields);
   const errorMessages =
     response.errors?.map((e) => e.message ?? 'Unknown error') ?? [];

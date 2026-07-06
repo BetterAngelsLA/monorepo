@@ -8,14 +8,22 @@ import type { FieldError } from '../types';
  * error path, which embeds `{field, location, errorCode}` objects in
  * `response.errors[0].extensions.errors`.
  */
-export function getExtensionFieldErrors(response: {
-  errors?: readonly { extensions?: Record<string, unknown> }[];
-}): FieldError[] {
+export function getExtensionValidationErrors(
+  response: {
+    errors?: readonly { extensions?: Record<string, unknown> }[];
+  },
+  fields?: string[]
+): FieldError[] {
   const extensionsErrors = response.errors?.[0]?.extensions?.errors;
   if (!Array.isArray(extensionsErrors)) return [];
 
+  const fieldSet = fields?.length ? new Set(fields) : null;
+
   return extensionsErrors
-    .filter((e: { field?: string }) => !!e.field)
+    .filter(
+      (e: { field?: string }) =>
+        !!e.field && (!fieldSet || fieldSet.has(e.field))
+    )
     .map((e: { field: string; errorCode?: string; message?: string }) => ({
       field: e.field,
       message:

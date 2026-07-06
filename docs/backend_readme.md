@@ -319,6 +319,12 @@ The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
 before creating new ones. This is useful when the schema changes or you want
 a clean slate without resetting the full database.
 
+---
+
+### Additional Documentation
+
+- **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
+
 ### Troubleshooting
 
 #### Aliases

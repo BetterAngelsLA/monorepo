@@ -8,7 +8,7 @@ import type { FieldError } from '../types';
  * If `fields` is provided, only messages whose field matches one of the
  * given field names are returned.
  */
-export function getOperationFieldErrors(
+export function getOperationValidationErrors(
   opInfo: OperationInfo | null,
   fields?: string[]
 ): FieldError[] {

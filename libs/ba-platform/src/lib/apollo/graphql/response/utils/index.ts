@@ -1,5 +1,5 @@
 export { composeErrorDescription } from './composeErrorDescription';
-export { getExtensionFieldErrors } from './getExtensionFieldErrors';
-export { getOperationFieldErrors } from './getOperationFieldErrors';
+export { getExtensionValidationErrors } from './getExtensionValidationErrors';
 export { getOperationOtherMessage } from './getOperationOtherMessage';
+export { getOperationValidationErrors } from './getOperationValidationErrors';
 export { hasPermissionMessage } from './hasPermissionMessage';
