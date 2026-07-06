@@ -6,7 +6,7 @@ import {
   Clock,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Text } from '../../base-ui/text/text';
+import { Text } from '../base-ui/text/text';
 
 const ICON_SIZE = 22;
 const iconClass = 'shrink-0 text-[#747A82]';
@@ -43,7 +43,13 @@ function StatCardPlaceholder({
 
 /** Thin divider used between the paired stat cards. */
 function CardDivider() {
-  return <div className="my-3 w-[3px] shrink-0 rounded-full bg-[#F3F3F3]" />;
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      className="my-3 w-[3px] shrink-0 rounded-full bg-[#F3F3F3]"
+    />
+  );
 }
 
 /**

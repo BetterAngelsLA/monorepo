@@ -1,6 +1,6 @@
-import { Calendar, ChevronDown, Upload } from 'lucide-react';
-import { Button } from '../../base-ui/buttons/buttons';
-import { Text } from '../../base-ui/text/text';
+import { Calendar, ChevronDown, Download } from 'lucide-react';
+import { Button } from '../base-ui/buttons/buttons';
+import { Text } from '../base-ui/text/text';
 
 const fieldClassName =
   'flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2';
@@ -10,7 +10,7 @@ function DateRangeFilterPlaceholder() {
   return (
     <div className={fieldClassName} aria-hidden="true">
       <Text variant="body" textColor="text-[#9CA3AF]">
-        MM/DD/YYYY – MM/DD/YYYY
+        YYYY-MM-DD – YYYY-MM-DD
       </Text>
       <Calendar size={18} className="text-[#6B7280]" />
     </div>
@@ -34,9 +34,9 @@ function ExportDataButtonPlaceholder() {
   return (
     <Button
       variant="primary"
-      leftIcon={<Upload size={20} color="black" />}
+      leftIcon={<Download size={20} color="black" />}
       rightIcon={false}
-      className="text-black"
+      className="text-black opacity-50 pointer-events-none"
       aria-disabled
     >
       Export Data

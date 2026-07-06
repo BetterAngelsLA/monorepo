@@ -1,16 +1,16 @@
 import {
   BED_STATUS_LEGEND,
   ChartCardPlaceholder,
-  ReportFilterBar,
-  ReservationStatusChanges,
-} from './reports';
+} from './ChartCardPlaceholder';
+import { ReportFilterBar } from './ReportFilterBar';
+import { ReservationStatusChanges } from './ReservationStatusChanges';
 
 /**
  * Reporting layout for a shelter's Overview tab. This is the placeholder
  * version: the filters, export, stat boxes, and charts are labeled placeholders
  * whose contents will be replaced with the real implementations in later tickets.
  */
-export function OverviewView() {
+export function OverviewView({ shelterId: _shelterId }: { shelterId?: string }) {
   return (
     <div className="mt-6 flex flex-col gap-6 px-6">
       <ReportFilterBar />

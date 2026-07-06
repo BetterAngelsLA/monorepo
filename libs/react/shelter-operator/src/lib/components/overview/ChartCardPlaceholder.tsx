@@ -1,4 +1,4 @@
-import { Text } from '../../base-ui/text/text';
+import { Text } from '../base-ui/text/text';
 
 const cardClassName =
   'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
@@ -12,24 +12,6 @@ export const BED_STATUS_LEGEND: ChartLegendItem[] = [
   { label: 'Reserved', color: '#F59E0B' },
   { label: 'Out of Service', color: '#EF4444' },
 ];
-
-/** Visual-only Count/Percentage toggle. Non-interactive in this placeholder PR. */
-function CountPercentageToggle() {
-  return (
-    <div
-      className="inline-flex items-center rounded-full bg-[#F3F4F6] p-0.5"
-      role="presentation"
-      aria-hidden="true"
-    >
-      <span className="rounded-full px-3 py-1 text-sm text-[#6B7280]">
-        Count
-      </span>
-      <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-[#111827] shadow-sm">
-        Percentage
-      </span>
-    </div>
-  );
-}
 
 function ChartLegend({ items }: { items: ChartLegendItem[] }) {
   return (
@@ -51,9 +33,13 @@ function ChartLegend({ items }: { items: ChartLegendItem[] }) {
 
 /**
  * Placeholder for a chart/graph box on the reporting Overview tab. Renders the
- * card shell (title, Count/Percentage toggle, optional legend, axis labels) with
- * a dashed plot region in place of the chart. Parametrized so it serves both the
- * Bed Status and Daily Occupancy boxes; swap the plot region for the real chart later.
+ * card shell (title, optional legend, axis labels) with a dashed plot region in
+ * place of the chart. Parametrized so it serves both the Bed Status and Daily
+ * Occupancy boxes.
+ *
+ * When wired up, the plot region is replaced by the BarChart component (#2162),
+ * which owns the Count/Percentage view toggle (showViewToggle) and its own
+ * title/legend — so no toggle is defined here.
  */
 export function ChartCardPlaceholder({
   title,
@@ -68,12 +54,9 @@ export function ChartCardPlaceholder({
 }) {
   return (
     <section className={cardClassName} data-testid={testId}>
-      <div className="flex items-start justify-between gap-3">
-        <Text variant="subheading" textColor="text-[#111827]">
-          {title}
-        </Text>
-        <CountPercentageToggle />
-      </div>
+      <Text variant="subheading" textColor="text-[#111827]">
+        {title}
+      </Text>
 
       {legend && <ChartLegend items={legend} />}
 
