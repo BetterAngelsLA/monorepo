@@ -1,4 +1,4 @@
 {
-  "extends": ["../../.eslintrc.json"],
+  "extends": ["plugin:@nx/react", "../../.eslintrc.json"],
   "ignorePatterns": ["!**/*"]
 }
