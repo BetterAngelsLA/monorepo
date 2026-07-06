@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 
-import { SelahTeamEnum } from '../__generated__/types';
 import { toNoteFilter } from './toNoteFilter';
 
 describe('toNoteFilter', () => {
@@ -21,7 +20,7 @@ describe('toNoteFilter', () => {
       search: undefined,
       authors: undefined,
       organizations: undefined,
-      teams: undefined,
+      teamIds: undefined,
       clientProfile: undefined,
       createdBy: undefined,
       isSubmitted: undefined,
@@ -34,13 +33,13 @@ describe('toNoteFilter', () => {
     const result = toNoteFilter({
       authors: [],
       organizations: [],
-      teams: [],
+      teamIds: [],
     });
 
     expect(result).toEqual({});
     expect('authors' in result).toBe(false);
     expect('organizations' in result).toBe(false);
-    expect('teams' in result).toBe(false);
+    expect('teamIds' in result).toBe(false);
   });
 
   it('keeps boolean false (does not prune falsy values other than undefined)', () => {
@@ -112,23 +111,23 @@ describe('toNoteFilter', () => {
     });
   });
 
-  it('filters teams to valid SelahTeamEnum values and omits invalid strings', () => {
+  it('passes teamIds through as-is (string IDs, no enum conversion needed)', () => {
     const result = toNoteFilter({
-      teams: ['ECHO_PARK_ON_SITE', 'NOT_A_TEAM', 'HOLLYWOOD_ON_SITE'],
+      teamIds: ['team-1', 'team-2'],
     });
 
     expect(result).toEqual({
-      teams: [SelahTeamEnum.EchoParkOnSite, SelahTeamEnum.HollywoodOnSite],
+      teamIds: ['team-1', 'team-2'],
     });
   });
 
-  it('omits teams entirely if all team values are invalid', () => {
+  it('omits teamIds entirely if the array is empty', () => {
     const result = toNoteFilter({
-      teams: ['NOT_A_TEAM', 'ALSO_NOT_A_TEAM'],
+      teamIds: [],
     });
 
     expect(result).toEqual({});
-    expect('teams' in result).toBe(false);
+    expect('teamIds' in result).toBe(false);
   });
 
   it('does not mutate the input props object', () => {
@@ -136,7 +135,7 @@ describe('toNoteFilter', () => {
       search: ' hello ',
       authors: ['a1'],
       organizations: ['o1'],
-      teams: ['ECHO_PARK_ON_SITE'],
+      teamIds: ['team-1'],
       clientProfile: ' cp-1 ',
       createdBy: ' u-1 ',
       isSubmitted: false,
@@ -154,7 +153,7 @@ describe('toNoteFilter', () => {
       search: '  urgent  ',
       authors: [],
       organizations: ['org-1'],
-      teams: ['ECHO_PARK_ON_SITE', 'INVALID'],
+      teamIds: ['team-1', 'team-2'],
       clientProfile: '  cp-1 ',
       createdBy: '  user-1 ',
       isSubmitted: false,
@@ -163,7 +162,7 @@ describe('toNoteFilter', () => {
     expect(result).toEqual({
       search: 'urgent',
       organizations: ['org-1'],
-      teams: [SelahTeamEnum.EchoParkOnSite],
+      teamIds: ['team-1', 'team-2'],
       clientProfile: 'cp-1',
       createdBy: 'user-1',
       isSubmitted: false,

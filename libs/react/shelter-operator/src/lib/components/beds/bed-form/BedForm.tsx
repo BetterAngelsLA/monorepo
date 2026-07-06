@@ -1,13 +1,16 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isMutationSuccess } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
+import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 import {
   CreateBedDocument,
   buildCreateBedInput,
@@ -21,11 +24,10 @@ import {
   type UpdateBedMutationVariables,
 } from '../api/updateBedMutation';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
-import { formSchema } from './constants/validation';
+import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
-import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
 
 export type BedFormProps = {
   shelterId: string;
@@ -74,6 +76,8 @@ export function BedForm({
     [roomsData?.rooms.results]
   );
 
+  const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
+
   const refetchQueries = useMemo(
     () => [{ query: GetBedsDocument, variables: { shelterId } }],
     [shelterId]
@@ -111,6 +115,10 @@ export function BedForm({
           );
           return;
         }
+        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
+          return;
+        }
       } else {
         const { data: result } = await createBed({
           variables: {
@@ -124,6 +132,10 @@ export function BedForm({
           setSubmissionError(
             firstMessage || 'Unable to create bed. Please try again.'
           );
+          return;
+        }
+        if (!isMutationSuccess(result?.createBed, 'BedType')) {
+          setSubmissionError('An unexpected error occurred. Please try again.');
           return;
         }
       }
@@ -145,14 +157,14 @@ export function BedForm({
   return (
     <FormProvider {...methods}>
       <div className="space-y-4 pb-48">
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit(submitBed)}
@@ -164,7 +176,11 @@ export function BedForm({
             errors={errors}
             roomOptions={roomOptions}
           />
-          <BedDetailsSection control={control} errors={errors} />
+          <BedDetailsSection
+            control={control}
+            errors={errors}
+            filteredPropertyOptions={filteredPropertyOptions}
+          />
 
           <Form.Actions
             onPrimaryClick={() => handleSubmit(submitBed)()}

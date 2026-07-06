@@ -103,16 +103,12 @@ const buildScheduleInputs = (
 // ---------------------------------------------------------------------------
 
 export const buildCreateShelterInput = (
-  formData: ShelterFormData,
-  organizationId: string
+  formData: ShelterFormData
 ): CreateShelterInput => {
   return {
     // Required
     name: formData.name.trim(),
     description: formData.description.trim(),
-
-    // Organization
-    organization: organizationId,
 
     // M2M enum arrays
     accessibility: compactEnumValues(formData.accessibility),

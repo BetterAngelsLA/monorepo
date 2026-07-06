@@ -1,6 +1,7 @@
 export {
   ReportPermissions,
   ShelterPermissions,
+  TeamPermissions,
   UserOrganizationPermissions,
-} from './graphql/__generated__/types';
+} from '@monorepo/ba-platform/permissions';
 export * from './graphql/response';

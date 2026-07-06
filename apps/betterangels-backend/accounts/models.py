@@ -49,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("active"),
         default=True,
         help_text=(
-            "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
+            "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
         ),
     )
     is_staff = models.BooleanField(
@@ -160,7 +160,7 @@ class PermissionGroup(models.Model):
     objects = models.Manager()
 
     class Meta:
-        unique_together = ("organization", "group")
+        unique_together = (("organization", "group"), ("organization", "template"))
 
     def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
         self.group.delete()

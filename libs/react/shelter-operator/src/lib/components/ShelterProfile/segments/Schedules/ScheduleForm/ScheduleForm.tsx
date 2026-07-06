@@ -66,6 +66,10 @@ export function ScheduleForm(props: TProps) {
   } = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: buildDefaultValues(initialSchedules),
+    // Deliberately 'onSubmit' (not 'onBlur'): the WeeklyScheduleEditor
+    // updates via setValue() programmatically — eager mode would trigger
+    // validation on every keystroke. Errors surface only after the first
+    // submit attempt, gated by the `isSubmitted` flag.
     mode: 'onSubmit',
   });
 

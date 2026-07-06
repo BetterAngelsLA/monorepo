@@ -3,7 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/shared/clients/src",
   "projectType": "library",
-  "tags": [],
+  "tags": ["type:util", "scope:shared"],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",

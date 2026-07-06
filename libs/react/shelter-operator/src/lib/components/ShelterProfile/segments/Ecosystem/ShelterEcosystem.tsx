@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  useAdminShelterProfile,
+  useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
@@ -35,7 +35,7 @@ export function ShelterEcosystem(props: TProps) {
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
 
-  const { shelter } = useAdminShelterProfile(shelterId);
+  const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 

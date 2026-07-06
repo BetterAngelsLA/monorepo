@@ -35,6 +35,8 @@ from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 
+from shelters.managers import BedQuerySet, RoomQuerySet
+
 from .enums import (
     AccessibilityChoices,
     DayOfWeekChoices,
@@ -602,7 +604,6 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
-
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
@@ -915,12 +916,12 @@ class PhotoCountFilter(admin.ListFilter):
             if min_val is not None and min_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__gte": int(str(min_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             if max_val is not None and max_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__lte": int(str(max_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
         return queryset
 
@@ -1343,7 +1344,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
@@ -1439,10 +1440,10 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "name", "status", "type", "occupant", "created_at", "updated_at")
-    list_filter = ("status", "type", "maintenance_flag")
-    search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
-    autocomplete_fields = ["shelter", "occupant"]
+    list_display = ("id", "shelter", "name", "display_status", "type", "created_at", "updated_at")
+    list_filter = ("type", "maintenance_flag")
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
     fieldsets = (
         (
             "Basic Information",
@@ -1450,9 +1451,7 @@ class BedAdmin(admin.ModelAdmin):
                 "fields": (
                     "shelter",
                     "name",
-                    "status",
                     "status_notes",
-                    "occupant",
                     "type",
                 )
             },
@@ -1483,6 +1482,13 @@ class BedAdmin(admin.ModelAdmin):
         ),
     )
 
+    def get_queryset(self, request: HttpRequest) -> BedQuerySet:
+        qs = cast(BedQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Bed) -> str:
+        return obj.computed_status
+
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
@@ -1491,11 +1497,11 @@ class RoomAdmin(admin.ModelAdmin):
         "shelter",
         "name",
         "type",
-        "status",
+        "display_status",
         "medical_respite",
         "last_cleaned_inspected",
     )
-    list_filter = ("status", "type", "medical_respite")
+    list_filter = ("type", "medical_respite")
     search_fields = ("name", "shelter__name", "notes")
     autocomplete_fields = ["shelter"]
     fieldsets = (
@@ -1507,7 +1513,6 @@ class RoomAdmin(admin.ModelAdmin):
                     "name",
                     "type",
                     "type_other",
-                    "status",
                 )
             },
         ),
@@ -1523,6 +1528,13 @@ class RoomAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request: HttpRequest) -> RoomQuerySet:
+        qs = cast(RoomQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Room) -> str:
+        return obj.computed_status
 
 
 @admin.register(City)
@@ -1543,17 +1555,17 @@ class ReservationClientInline(admin.TabularInline):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_display = ("id", "display_shelter", "status", "start_date", "duration", "created_by", "created_at")
     list_filter = ("status",)
     search_fields = ("shelter__name",)
-    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    autocomplete_fields = ["room", "bed", "created_by"]
     inlines = [ReservationClientInline]
     fieldsets = (
         (
             "Reservation Details",
             {
                 "fields": (
-                    "shelter",
+                    "display_shelter",
                     "room",
                     "bed",
                     "status",
@@ -1578,6 +1590,14 @@ class ReservationAdmin(admin.ModelAdmin):
         ),
     )
 
+    def display_shelter(self, obj: Reservation) -> Optional[str]:
+        shelter = obj.bed.shelter if obj.bed else (obj.room.shelter if obj.room else None)
+
+        if shelter:
+            return f"{shelter.name} ({shelter.pk})"
+
+        return None
+
 
 @admin.register(ShelterAvailability)
 class ShelterAvailabilityAdmin(admin.ModelAdmin):
@@ -1585,7 +1605,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "updated_by")
     fieldsets = (
         (
             None,
@@ -1637,7 +1657,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)

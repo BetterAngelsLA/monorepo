@@ -8,7 +8,7 @@ import {
 import { ApolloProvider } from '@apollo/client/react';
 import { renderHook } from '@testing-library/react';
 import { vi } from 'vitest';
-import React = require('react');
+import * as React from 'react';
 
 /**
  * Minimal useQuery result shape for mocking in tests.

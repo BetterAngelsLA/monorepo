@@ -9,30 +9,37 @@
   "eslint.format.enable": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "python.defaultInterpreterPath": ".venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "djlint.useVenv": true,
   "[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
     "editor.defaultFormatter": "monosans.djlint"
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
   },
-  "[toml]": {
-    "editor.defaultFormatter": "tamasfe.even-better-toml"
-  },
-  "typescript.suggest.autoImports": true,
+
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.suggest.autoImports": true,
   "search.exclude": {
     "**/.pnp.*": true,
     "**/.yarn": true,
     "**/.venv": true
   },
   "mypy.enabled": true,
-  "mypy.runUsingActiveInterpreter": true,
+  "mypy.targets": [],
+  "mypy.runUsingActiveInterpreter": false,
+  "mypy.dmypyExecutable": "${workspaceFolder}/tools/scripts/dmypy-wrapper.sh",
   "python.analysis.typeCheckingMode": "off",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportInvalidTypeForm": "none"
+  },
+  "python.analysis.include": ["apps/betterangels-backend"],
   "python.testing.pytestArgs": ["apps", "libs"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "python.analysis.autoImportCompletions": true,
-  "python-envs.defaultEnvManager": "ms-python.python:poetry",
-  "python-envs.defaultPackageManager": "ms-python.python:poetry"
+  "python.analysis.autoImportCompletions": true
 }

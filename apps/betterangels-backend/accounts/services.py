@@ -13,8 +13,10 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
+from .groups import ORG_ADMIN
 from .models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -117,32 +119,24 @@ def create_organization_with_presets(
         if REGISTRY.org_type(preset_name) is None:
             raise ValidationError(f"Unknown org-type preset: {preset_name}")
 
-    org = Organization.objects.create(name=name)
+    org, _ = Organization.objects.get_or_create(name=name)
 
     # Collect unique templates from all requested presets (deduplicate by name).
-    templates_by_name: dict[str, PermissionGroupTemplate] = {}
     org_types: list[str] = []
 
     for preset_name in preset_names:
         org_config = REGISTRY.org_type(preset_name)
         assert org_config is not None
         org_types.append(org_config.name)
-        for template_config in org_config.templates:
-            if template_config.name not in templates_by_name:
-                permission_group_template, _created = PermissionGroupTemplate.objects.get_or_create(
-                    name=template_config.name
-                )
-                templates_by_name[template_config.name] = permission_group_template
+
+    # Profile with org types — update_or_create to fill in on existing orgs too.
+    OrganizationProfile.objects.update_or_create(
+        organization=org,
+        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
+    )
 
     # Create PermissionGroup per template for this org.
-    for permission_group_template in templates_by_name.values():
-        PermissionGroup.objects.get_or_create(organization=org, template=permission_group_template)
-
-    # Profile with org types.
-    OrganizationProfile.objects.create(
-        organization=org,
-        org_types=[OrgTypeChoices(org_type) for org_type in org_types],
-    )
+    reconcile_org_groups(org)
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
     org.add_user(owner)
@@ -151,6 +145,49 @@ def create_organization_with_presets(
         OrgRoleManager(org).add_roles(owner, *owner_roles)
 
     return org
+
+
+# ── Group reconciliation ──────────────────────────────────────────────
+
+
+def reconcile_org_groups(org: Organization) -> None:
+    """Create missing and delete stale ``PermissionGroup`` records for *org*.
+
+    Expected templates are derived from the org's ``profile.org_types``
+    via :data:`common.org_types.REGISTRY`.  Groups whose template is no
+    longer in the org's presets are deleted.
+
+    Safe to call repeatedly — all operations are idempotent.
+    """
+    from .models import PermissionGroup
+
+    # Expected template names from current org-type presets.
+    expected: set[str] = set()
+    org_type_values = org.profile.org_types if hasattr(org, "profile") else []
+    for org_type_value in org_type_values:
+        org_config = REGISTRY.org_type(org_type_value.value)
+        if org_config is None:
+            continue
+        for template_config in org_config.templates:
+            expected.add(template_config.name)
+
+    if not expected:
+        return
+
+    # Create missing.
+    for template_name in expected:
+        permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+            name=template_name,
+        )
+        PermissionGroup.objects.get_or_create(
+            organization=org,
+            template=permission_group_template,
+        )
+
+    # Delete stale (including groups whose template was set to NULL).
+    PermissionGroup.objects.filter(organization=org).filter(
+        Q(template__isnull=True) | ~Q(template__name__in=expected),
+    ).delete()
 
 
 # ── Member removal ───────────────────────────────────────────────────
@@ -207,3 +244,38 @@ def create_default_org_permission_groups(organization: Organization) -> None:
     for template_config in REGISTRY.templates_for(organization):
         template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
         PermissionGroup.objects.get_or_create(organization=organization, template=template)
+
+
+# ── Self-signup ───────────────────────────────────────────────────────
+
+
+@transaction.atomic
+def create_organization_service(
+    *,
+    user: UserModel,
+    organization_name: str,
+    org_type_name: str,
+) -> tuple[UserModel, Organization]:
+    """Create an organization and link *user* as the owner.
+
+    *org_type_name* must match a registered :class:`OrgTypeConfig` with
+    ``allow_public_signup=True`` (e.g. ``"shelter"``).
+
+    Returns ``(user, organization)``.
+
+    Does **not** send a welcome email — callers (mutations) are
+    responsible for triggering email delivery after the transaction
+    commits successfully.
+    """
+    org_config = REGISTRY.org_type(org_type_name)
+    if not org_config or not org_config.allow_public_signup:
+        raise ValidationError(f"Org type '{org_type_name}' does not support self-signup.")
+
+    organization = create_organization_with_presets(
+        name=organization_name,
+        preset_names=[org_type_name],
+        owner=user,
+        owner_roles=(org_config.member_template, ORG_ADMIN),
+    )
+
+    return user, organization

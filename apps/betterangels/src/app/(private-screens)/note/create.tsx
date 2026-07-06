@@ -13,7 +13,7 @@ export default function NoteCreateRoute() {
       mode="create"
       arrivedFrom={arrivedFrom}
       clientProfileId={clientProfileId}
-      team={team}
+      teamId={team}
     />
   );
 }

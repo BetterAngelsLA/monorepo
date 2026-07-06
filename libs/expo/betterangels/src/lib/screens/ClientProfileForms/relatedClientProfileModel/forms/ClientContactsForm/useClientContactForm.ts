@@ -1,6 +1,6 @@
 import { ApolloClient, CombinedGraphQLErrors } from '@apollo/client';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
-import { Router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
 import {
@@ -28,12 +28,12 @@ import { TClientContactFormState, TFormKey } from './types';
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
-  router: Router;
   showSnackbar: (props: TShowSnackbar) => void;
 };
 
 export function useClientContactForm(props: TProps) {
-  const { clientProfile, relationId, router, showSnackbar } = props;
+  const { clientProfile, relationId, showSnackbar } = props;
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
 

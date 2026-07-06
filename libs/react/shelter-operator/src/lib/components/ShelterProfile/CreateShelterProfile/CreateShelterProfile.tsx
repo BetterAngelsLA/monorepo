@@ -7,7 +7,7 @@ import {
 } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '../../../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   shelterProfileRoute,
   shelterProfileSegments,
@@ -18,20 +18,16 @@ import {
   type BasicInfoFormData,
 } from '../segments/BasicInfo';
 
-function toCreateInput(
-  formData: BasicInfoFormData,
-  organizationId: string
-): CreateShelterInput {
+function toCreateInput(formData: BasicInfoFormData): CreateShelterInput {
   return {
     name: formData.name,
-    description: formData.description || undefined,
+    description: formData.description || '',
     location: formData.location ?? undefined,
     email: formData.email || undefined,
     phone: formData.phone || undefined,
     website: formData.website || undefined,
     isPrivate: formData.isPrivate,
     status: formData.status,
-    organization: organizationId,
   };
 }
 
@@ -59,7 +55,7 @@ export function CreateShelterProfile(props: TProps) {
 
     setDisabled(true);
 
-    const data = toCreateInput(formData, activeOrg.id);
+    const data = toCreateInput(formData);
 
     try {
       const response = await createShelter({ variables: { data } });

@@ -6,7 +6,7 @@ Docker so you can start contributing immediately.
 
 ## What's Included
 
-- **Python 3.14** with Poetry for dependency management
+- **Python 3.14** with uv for dependency management
 - **Node.js 22** with Yarn for frontend packages
 - **PostgreSQL 17** with PostGIS for spatial data
 - **Valkey** (Redis-compatible) for caching and task queues
@@ -63,24 +63,12 @@ rebuilds:
 | PostgreSQL data   | `pgdata`       | _(internal)_              |
 | MinIO data        | `minio_data`   | _(internal)_              |
 
-### Cline Data Details
-
-The `dev_home` volume backs `/home/betterangels/`. Cline stores its data under
-`~/.cline/`, which includes:
-
-- **MCP server config**: `~/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (copy from
-  [cline_mcp_settings.example.json](./cline_mcp_settings.example.json))
-- **API keys, task history, checkpoints**: Managed automatically by Cline
-
-Because `~/.cline/` is inside the `dev_home` volume, all Cline data survives container
-rebuilds — no manual setup required.
-
 ### Clearing Persisted State
 
 If you need to reset any persisted state, you can remove individual Docker volumes:
 
 ```bash
-# Clear ALL developer state (gh config, Cline data, VS Code settings, etc.)
+# Clear ALL developer state (gh config, VS Code settings, etc.)
 docker volume rm <project>_dev_home
 
 # Clear Node modules
@@ -93,10 +81,4 @@ docker volume rm <project>_venv
 Replace `<project>` with the Compose project name (usually the directory name, e.g.
 `monorepo`). Run `docker volume ls` to see the actual names.
 
-## Cline
 
-[Cline](https://github.com/cline/cline) is an AI coding assistant included in the dev
-container. It can read, write, edit, and run code across the entire monorepo with full
-project context.
-
-For setup, configuration, and available tools, see [cline.md](./cline.md).

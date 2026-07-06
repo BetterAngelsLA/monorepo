@@ -16,6 +16,14 @@ const policyFactoryList = [
   }),
 ] as const;
 
+/**
+ * Cache normalization policies for paginated queries.
+ *
+ * Each entry tells Apollo how to merge, evict, and key paginated results —
+ * e.g. {@code ViewSheltersQuery} under the top-level key {@code shelters},
+ * where each entity is typed as {@code ShelterType} and cache keys vary by
+ * {@code filters} and {@code ordering}.
+ */
 export function createShelterApolloCachePolicyRegistry(
   isDevEnv: boolean
 ): TCachePolicyConfig {

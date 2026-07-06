@@ -28,6 +28,8 @@ export function Dropdown<T extends string | number = string | number>(
 ) {
   const {
     label,
+    labelVariant,
+    labelClassname,
     placeholder = 'Please select',
     options,
     value,
@@ -42,8 +44,8 @@ export function Dropdown<T extends string | number = string | number>(
     className,
     onOtherTextChange,
     renderValue,
+    error,
   } = props as DropdownInternalProps<T>;
-
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -349,8 +351,9 @@ export function Dropdown<T extends string | number = string | number>(
       {label && (
         <Label
           label={label}
+          className={labelClassname}
           inputId={labelId}
-          variant={isViewEditMode ? 'offset' : undefined}
+          variant={labelVariant || (isViewEditMode ? 'offset' : undefined)}
           required={required}
         />
       )}
@@ -370,6 +373,7 @@ export function Dropdown<T extends string | number = string | number>(
               ? 'min-h-12 items-start rounded-2xl px-4 py-3'
               : 'h-12 items-center rounded-full px-4 overflow-hidden',
             isOpen ? 'border-[#008CEE]' : 'border-gray-200',
+            !!error && 'border-red-500',
             isViewMode && 'border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
           ])}
@@ -436,8 +440,16 @@ export function Dropdown<T extends string | number = string | number>(
             listRef={listRef}
             menuRef={menuRef}
           />,
-          document.body
+          // When inside a <dialog> (showModal top-layer), portal into the dialog
+          // so the menu isn't clipped behind the top-layer stacking context.
+          menuAnchorRef.current?.closest('dialog') ?? document.body
         )}
+
+      {!!error && (
+        <Text variant="caption" className="text-red-500">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

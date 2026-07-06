@@ -16,7 +16,8 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
-import { useActiveOrg, useApiConfig } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { useApiConfig } from '../../providers';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -55,7 +56,6 @@ export default function Reports({ className = '' }: IProps) {
 
   const { data, loading } = useQuery(ReportSummaryDocument, {
     variables: {
-      organizationId: activeOrg?.id ?? '',
       startDate: startStr,
       endDate: endStr,
     },

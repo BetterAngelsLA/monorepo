@@ -4,9 +4,12 @@ import { Button, useAlert } from '@monorepo/react/components';
 import { Input, mergeCss, toError } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
+import {
+  OrganizationMemberType,
+  PermissionTemplateEnum,
+} from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
-import { useActiveOrg } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
@@ -68,7 +71,10 @@ export function AddUserForm(props: TProps) {
         throw new Error('Sorry, something went wrong.');
       }
 
-      onComplete?.(invitedUser);
+      onComplete?.({
+        ...invitedUser,
+        isOrgOwner: false,
+      } as OrganizationMemberType);
     } catch (err) {
       const error = toError(err);
 
@@ -127,6 +133,23 @@ export function AddUserForm(props: TProps) {
           autoCorrect="off"
           error={errors?.email?.message}
         />
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-neutral-40 mb-1">
+            Role
+          </label>
+          <select
+            {...register('permissionTemplate')}
+            disabled={disabled}
+            className="select select-md w-96 rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
+          >
+            {[PermissionTemplateEnum.Caseworker].map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">

@@ -1,6 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services';
+import { randomUUID } from 'expo-crypto';
 import { useCallback, useState } from 'react';
 import {
   GenerateClientProfilePhotoUploadDocument,
@@ -26,7 +27,7 @@ export function useClientProfilePhotoUpload() {
       setProcessing(true);
 
       try {
-        const refId = `${Date.now()}`;
+        const refId = randomUUID();
 
         // 1: Request presigned POST data from backend
         const result = await generateUpload({

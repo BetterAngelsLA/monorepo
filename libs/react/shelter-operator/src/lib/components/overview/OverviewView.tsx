@@ -1,8 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import {
-  GetAdminShelterOverviewDocument,
-  type GetAdminShelterOverviewQuery,
-  type GetAdminShelterOverviewQueryVariables,
+  GetShelterOperatorOverviewDocument,
+  type GetShelterOperatorOverviewQuery,
+  type GetShelterOperatorOverviewQueryVariables,
 } from './__generated__/overview.generated';
 
 const cardClassName = 'rounded-xl border border-[#E5E7EB] bg-white p-5';
@@ -24,17 +24,17 @@ function SummaryRow({
 
 export function OverviewView({ shelterId }: { shelterId: string }) {
   const { data, error, loading } = useQuery<
-    GetAdminShelterOverviewQuery,
-    GetAdminShelterOverviewQueryVariables
-  >(GetAdminShelterOverviewDocument, {
+    GetShelterOperatorOverviewQuery,
+    GetShelterOperatorOverviewQueryVariables
+  >(GetShelterOperatorOverviewDocument, {
     variables: { shelterId },
     skip: !shelterId,
     fetchPolicy: 'cache-and-network',
   });
 
-  const shelter = data?.adminShelter;
-  const bedsByStatus = shelter?.bedsByStatus;
-  const roomsByStatus = shelter?.roomsByStatus;
+  const shelter = data?.operatorShelter;
+  const bedCounts = shelter?.bedCounts;
+  const roomCounts = shelter?.roomCounts;
 
   if (loading && !shelter) {
     return (
@@ -69,12 +69,12 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
       <section className={cardClassName}>
         <h3 className="text-base font-semibold text-[#111827]">Bed Summary</h3>
         <div className="mt-3 divide-y divide-[#F3F4F6]">
-          <SummaryRow label="Available" value={bedsByStatus?.available ?? 0} />
-          <SummaryRow label="Occupied" value={bedsByStatus?.occupied ?? 0} />
-          <SummaryRow label="Reserved" value={bedsByStatus?.reserved ?? 0} />
+          <SummaryRow label="Available" value={bedCounts?.available ?? 0} />
+          <SummaryRow label="Occupied" value={bedCounts?.occupied ?? 0} />
+          <SummaryRow label="Reserved" value={bedCounts?.reserved ?? 0} />
           <SummaryRow
             label="Out of Service"
-            value={bedsByStatus?.outOfService ?? 0}
+            value={bedCounts?.outOfService ?? 0}
           />
         </div>
       </section>
@@ -82,11 +82,11 @@ export function OverviewView({ shelterId }: { shelterId: string }) {
       <section className={cardClassName}>
         <h3 className="text-base font-semibold text-[#111827]">Room Summary</h3>
         <div className="mt-3 divide-y divide-[#F3F4F6]">
-          <SummaryRow label="Available" value={roomsByStatus?.available ?? 0} />
-          <SummaryRow label="Reserved" value={roomsByStatus?.reserved ?? 0} />
+          <SummaryRow label="Available" value={roomCounts?.available ?? 0} />
+          <SummaryRow label="Reserved" value={roomCounts?.reserved ?? 0} />
           <SummaryRow
-            label="Needs Maintenance"
-            value={roomsByStatus?.needsMaintenance ?? 0}
+            label="Out of Service"
+            value={roomCounts?.outOfService ?? 0}
           />
         </div>
       </section>

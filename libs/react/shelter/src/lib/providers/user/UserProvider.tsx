@@ -16,14 +16,10 @@ const parseUser = (
   if (!user) {
     return undefined;
   }
-  const userOrganization = user.organizations?.[0];
-  if (!userOrganization) {
-    return undefined;
-  }
 
   return {
     id: user.id,
-    organization: userOrganization,
+    organization: user.organizations?.[0] ?? undefined,
     username: user.username ?? undefined,
     firstName: user.firstName ?? undefined,
     lastName: user.lastName ?? undefined,
@@ -62,11 +58,12 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   }, [loading, data, error, updateUser]);
 
-  const refetchUser = useCallback(async () => {
+  const refetchUser = useCallback(async (): Promise<TUser | undefined> => {
     setIsRefetching(true);
     try {
       const res = await refetch();
       updateUser(res);
+      return parseUser(res.data?.currentUser);
     } catch (err) {
       console.error('Error refetching user data:', err);
       setUser(undefined);

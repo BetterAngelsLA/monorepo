@@ -43,11 +43,12 @@ export function ShelterBasicInfoForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     reset,
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { ...defaultFormValues, ...defaultValues },
+    mode: 'onBlur',
   });
 
   function handleCancel() {
@@ -64,10 +65,7 @@ export function ShelterBasicInfoForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <form className="flex flex-col gap-10 mt-8">
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
@@ -205,6 +203,7 @@ export function ShelterBasicInfoForm(props: TProps) {
               render={({ field }) => (
                 <Input
                   label="Website"
+                  dataType="url"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -218,9 +217,9 @@ export function ShelterBasicInfoForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit(onSubmit)}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
               className="z-99"
             />

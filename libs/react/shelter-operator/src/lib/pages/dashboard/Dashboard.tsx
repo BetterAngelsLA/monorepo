@@ -1,9 +1,9 @@
 import { useQuery } from '@apollo/client/react';
-import { operatorPath } from '@monorepo/react/shelter';
+import { useDebounce } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
-import { BookCheck, Search, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Settings2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import type {
   DemographicChoices,
   ShelterChoices,
@@ -20,7 +20,7 @@ import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-import { useActiveOrg } from '../../providers/activeOrg';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
@@ -46,36 +46,22 @@ const emptyState = (
 );
 
 export function Dashboard() {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isOperatorRoot =
-    pathname === operatorPath || pathname === `${operatorPath}/`;
 
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, organizations } = useActiveOrg();
   const selectedOrganizationId = activeOrg?.id ?? '';
 
+  // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
 
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset to first page when filters change
   useEffect(() => {
     setPage(1);
   }, [selectedFilters]);
-
-  // Debounce: only update the query variable after the user stops typing
-  useEffect(() => {
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-      setPage(1);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [searchInput]);
 
   const propertyFilters = useMemo(() => {
     const demographics = selectedFilters.demographics?.length
@@ -119,24 +105,31 @@ export function Dashboard() {
 
   const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
-      ViewSheltersByOrganizationQuery['adminShelters']['results'][number]
+      ViewSheltersByOrganizationQuery['operatorShelters']['results'][number]
     >;
     return (
-      activeData?.adminShelters?.results
+      activeData?.operatorShelters?.results
         ?.filter((s): s is ShelterResult => s != null)
         .map((s) => ({
           id: String(s.id),
           name: s.name ?? null,
           address: s.location?.place ?? null,
           totalBeds: s.totalBeds ?? null,
-          availableBeds: null,
+          bedCounts: {
+            available: s.bedCounts.available ?? 0,
+            inTurnaround: s.bedCounts.inTurnaround ?? 0,
+            occupied: s.bedCounts.occupied ?? 0,
+            outOfService: s.bedCounts.outOfService ?? 0,
+            reserved: s.bedCounts.reserved ?? 0,
+            total: s.bedCounts.total ?? 0,
+          },
           tags: null,
           status: s.status,
         })) ?? []
     );
-  }, [activeData?.adminShelters?.results]);
+  }, [activeData?.operatorShelters?.results]);
 
-  const totalCount = activeData?.adminShelters?.totalCount ?? 0;
+  const totalCount = activeData?.operatorShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const handleRowClick = useCallback(
@@ -145,103 +138,94 @@ export function Dashboard() {
     },
     [navigate]
   );
+  // ── End hooks ──────────────────────────────────────────────────────────────
+
+  // User has no organizations — redirect to create-org page (full-screen, no layout chrome)
+  if (organizations.length === 0) {
+    return <Navigate to={paths.createOrganization} replace />;
+  }
 
   return (
-    <>
-      <div className="flex flex-col mx-4">
-        {/* Search, filter, sort, and view controls */}
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-            <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-              <Search size={20} />
-            </span>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search shelters"
-              className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-            />
-          </label>
+    <div className="flex flex-col mx-4">
+      {/* Search, filter, sort, and view controls */}
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
+        style={{ fontFamily: 'Poppins, sans-serif' }}
+      >
+        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
+          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+            <Search size={20} />
+          </span>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search shelters"
+            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
+          />
+        </label>
 
-          {/* SEARCH BAR + FILTERING */}
+        {/* SEARCH BAR + FILTERING */}
 
-          <div className="flex w-full items-center justify-between mb-4">
-            <div className="text-sm text-gray-600">{totalCount} Results</div>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <ShelterFilterPanel />
+        <div className="flex w-full items-center justify-between mb-4">
+          <div className="text-sm text-gray-600">{totalCount} Results</div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <ShelterFilterPanel />
 
-              <Button
-                variant="primary"
-                leftIcon={<Settings2 size={20} />}
-                rightIcon={false}
-              >
-                Sort
-              </Button>
-            </div>
-          </div>
-        </form>
-
-        {/* TABLE */}
-        <ShelterTable
-          rows={shelters}
-          getRowKey={(shelter) => shelter.id}
-          onRowClick={handleRowClick}
-          loading={loading}
-          loadingState={loadingState}
-          emptyState={emptyState}
-          headerStyle={poppinsStyle}
-          rowStyle={poppinsStyle}
-        />
-
-        {/* PAGINATION */}
-        <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
-          <div>
-            Page {page} of {totalPages}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
+            <Button
+              variant="primary"
+              leftIcon={<Settings2 size={20} />}
+              rightIcon={false}
             >
-              Prev
-            </button>
-
-            <button
-              className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </button>
+              Sort
+            </Button>
           </div>
         </div>
+      </form>
 
-        {error && (
-          <div className="mt-2 text-xs text-red-500">
-            Failed to load shelters.
-          </div>
-        )}
+      {/* TABLE */}
+      <ShelterTable
+        rows={shelters}
+        getRowKey={(shelter) => shelter.id}
+        onRowClick={handleRowClick}
+        loading={loading}
+        loadingState={loadingState}
+        emptyState={emptyState}
+        headerStyle={poppinsStyle}
+        rowStyle={poppinsStyle}
+      />
+
+      {/* PAGINATION */}
+      <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
+        <div>
+          Page {page} of {totalPages}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Prev
+          </button>
+
+          <button
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
-      {isOperatorRoot && (
-        <div className="fixed bottom-6 right-6 text-sm z-20 ">
-          <Button
-            leftIcon={<BookCheck size={24} />}
-            rightIcon={false}
-            variant="floating"
-            onClick={() => navigate(paths.reservation)}
-          >
-            Reserve
-          </Button>
+      {error && (
+        <div className="mt-2 text-xs text-red-500">
+          Failed to load shelters.
         </div>
       )}
-    </>
+    </div>
   );
 }

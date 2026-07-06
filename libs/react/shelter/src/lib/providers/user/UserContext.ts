@@ -20,7 +20,7 @@ export interface IUserProviderValue {
   user: TUser | undefined;
   setUser: Dispatch<SetStateAction<TUser | undefined>>;
   isLoading: boolean;
-  refetchUser: () => Promise<void>;
+  refetchUser: () => Promise<TUser | undefined>;
 }
 
 const UserContext = createContext<IUserProviderValue | undefined>(undefined);

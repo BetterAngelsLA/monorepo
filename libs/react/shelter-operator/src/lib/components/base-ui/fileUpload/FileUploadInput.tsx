@@ -1,15 +1,20 @@
-import { mergeCss } from '@monorepo/react/shared';
+import { mergeCss, TMimeType } from '@monorepo/react/shared';
 import { AlertCircle, FileUp } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { Label } from '../label';
+import { LabelVariant } from '../label/label';
 import { Text } from '../text/text';
+import { getSupportedFilesText } from './utils/getSupportedFilesText';
 
 export interface FileUploadInputProps {
   id?: string;
   label?: string;
+  labelVariant?: LabelVariant;
   value?: File[];
   onChange: (files: File[]) => void;
-  accept?: string;
+  acceptedMimeTypes?: TMimeType[];
+  maxFilesizeBytes?: number;
   multiple?: boolean;
   supportedFilesText?: string;
   browseText?: string;
@@ -18,47 +23,66 @@ export interface FileUploadInputProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
-  isTouched?: boolean;
+  labelClassname?: string;
   isViewMode?: boolean;
 }
 
 export function FileUploadInput({
   id,
   label,
+  labelVariant,
   value,
   onChange,
-  accept,
+  acceptedMimeTypes,
+  maxFilesizeBytes,
   multiple = false,
-  supportedFilesText = 'Files supported: PNG, JPEG, PDF',
+  supportedFilesText,
   browseText = 'Browse',
   dragText = 'or drag your file here',
   error,
   required = false,
   disabled = false,
-  isViewMode,
   className,
-  isTouched,
+  labelClassname,
 }: FileUploadInputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
-  const shouldShowError = Boolean(error && isTouched);
+  const [dropzoneError, setDropzoneError] = useState<string | null>(null);
   const selectedFiles = value ?? [];
 
-  const isViewEditMode = typeof isViewMode === 'boolean';
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    accept: acceptedMimeTypes
+      ? Object.fromEntries(acceptedMimeTypes.map((m) => [m, []]))
+      : undefined,
+    maxSize: maxFilesizeBytes,
+    multiple,
+    disabled,
+    onDrop: (acceptedFiles) => {
+      setDropzoneError(null);
 
-  const normalizeFiles = (fileList: FileList | null) => {
-    const files = fileList ? Array.from(fileList) : [];
-    return multiple ? files : files.slice(0, 1);
-  };
+      if (acceptedFiles.length > 0) {
+        onChange(acceptedFiles);
+      }
+    },
+    onDropRejected: (fileRejections) => {
+      const oversizedFilenames = fileRejections
+        .filter((r) => r.errors.some((e) => e.code === 'file-too-large'))
+        .map((r) => r.file.name);
 
-  const openPicker = () => {
-    if (disabled) return;
-    inputRef.current?.click();
-  };
+      setDropzoneError(
+        oversizedFilenames.length
+          ? `File${
+              oversizedFilenames.length > 1 ? 's' : ''
+            } too large: ${oversizedFilenames.join(', ')}`
+          : null
+      );
+    },
+  });
+
+  const displayError = error ?? dropzoneError;
+  const shouldShowError = Boolean(displayError);
 
   return (
     <div
@@ -67,52 +91,32 @@ export function FileUploadInput({
       {label && (
         <Label
           label={label}
+          variant={labelVariant}
+          className={labelClassname}
           inputId={inputId}
-          variant={isViewEditMode ? 'offset' : undefined}
           required={required}
         />
       )}
 
       <input
-        ref={inputRef}
-        id={inputId}
-        type="file"
-        className="sr-only"
-        accept={accept}
-        multiple={multiple}
-        disabled={disabled}
-        aria-invalid={shouldShowError}
-        aria-describedby={shouldShowError ? messageId : undefined}
-        onChange={(event) => onChange(normalizeFiles(event.target.files))}
+        {...getInputProps({
+          id: inputId,
+          'aria-invalid': shouldShowError,
+          'aria-describedby': shouldShowError ? messageId : undefined,
+        })}
       />
 
       <div
+        {...getRootProps()}
         className={mergeCss([
           'rounded-[2rem] border-2 border-dashed px-6 py-10 text-center transition-colors',
           shouldShowError
             ? 'border-red-500 bg-red-50'
-            : isDragging
+            : isDragActive
             ? 'border-[#008CEE] bg-blue-50'
             : 'border-gray-300 bg-white',
           disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         ])}
-        onClick={openPicker}
-        onDragOver={(event) => {
-          if (disabled) return;
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-            setIsDragging(false);
-          }
-        }}
-        onDrop={(event) => {
-          if (disabled) return;
-          event.preventDefault();
-          setIsDragging(false);
-          onChange(normalizeFiles(event.dataTransfer.files));
-        }}
       >
         <div className="mx-auto flex max-w-xl flex-col items-center gap-1">
           <FileUp size={34} className="text-gray-400" aria-hidden="true" />
@@ -124,7 +128,7 @@ export function FileUploadInput({
               disabled={disabled}
               onClick={(event) => {
                 event.stopPropagation();
-                openPicker();
+                open();
               }}
             >
               {browseText}
@@ -133,7 +137,7 @@ export function FileUploadInput({
           </Text>
 
           <Text variant="caption-sm" className="text-gray-400">
-            {supportedFilesText}
+            {supportedFilesText ?? getSupportedFilesText(acceptedMimeTypes)}
           </Text>
 
           {selectedFiles.length > 0 ? (
@@ -151,16 +155,16 @@ export function FileUploadInput({
         </div>
       </div>
 
-      {shouldShowError ? (
+      {shouldShowError && (
         <Text
           id={messageId}
           variant="caption"
           className="mt-1 flex items-center gap-1 text-red-500"
         >
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
-          {error}
+          {displayError}
         </Text>
-      ) : null}
+      )}
     </div>
   );
 }

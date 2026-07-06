@@ -1,0 +1,154 @@
+query GetShelterOperatorProfile($id: ID!) {
+  operatorShelter(pk: $id) {
+    bedFees
+    cityCouncilDistrict
+    curfew
+    demographicsOther
+    description
+    email
+    entryInfo
+    heroImage(preset: SHELTER_HERO) {
+      id
+      url
+    }
+    id
+    instagram
+    isPrivate
+    maxStay
+    name
+    onSiteSecurity
+    fundersOther
+    otherRules
+    otherServices
+    addNotesShelterDetails
+    addNotesSleepingDetails
+    overallRating
+    phone
+    programFees
+    roomStylesOther
+    shelterProgramsOther
+    shelterTypesOther
+    status
+    subjectiveReview
+    supervisorialDistrict
+    totalBeds
+    website
+    visitorsAllowed
+    emergencySurge
+    exitPolicy {
+      name
+    }
+    exitPolicyOther
+    referralRequirement {
+      name
+    }
+    accessibility {
+      name
+    }
+    additionalContacts {
+      contactName
+      contactNumber
+    }
+    city {
+      id
+      name
+    }
+    citiesServed {
+      id
+      name
+    }
+    demographics {
+      name
+    }
+    entryRequirements {
+      name
+    }
+    photos {
+      id
+      type
+      createdAt
+      file {
+        name
+        url
+        urlThumb: url(processingOptions: "rs:fit:400:400/f:jpg")
+        urlLg: url(processingOptions: "rs:fit:2400:2000/f:jpg")
+      }
+    }
+    vaccinationRequirement {
+      name
+    }
+    funders {
+      name
+    }
+    location {
+      latitude
+      longitude
+      place
+    }
+    organization {
+      id
+      name
+    }
+    parking {
+      name
+    }
+    pets {
+      name
+    }
+    roomStyles {
+      name
+    }
+    schedules {
+      id
+      scheduleType
+      day
+      startTime
+      endTime
+      startDate
+      endDate
+      condition
+      demographic {
+        name
+      }
+      isException
+    }
+    services {
+      id
+      displayName
+      priority
+      category {
+        id
+        displayName
+        priority
+      }
+    }
+    shelterPrograms {
+      name
+    }
+    shelterTypes {
+      name
+    }
+    spa {
+      id
+      name
+    }
+    spasServed {
+      id
+      name
+      shortName
+    }
+    specialSituationRestrictions {
+      name
+    }
+    storage {
+      name
+    }
+    updatedAt
+    mediaLinks {
+      id
+      url
+      title
+      mediaType
+    }
+  }
+}

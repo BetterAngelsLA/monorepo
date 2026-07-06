@@ -63,7 +63,7 @@ class Attachment(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
+        return f"{self.content_object} {self.object_id} - {self.attachment_type} - {self.original_filename}"
 
     class Meta:
         indexes = [
@@ -75,7 +75,11 @@ class Attachment(BaseModel):
                     "attachment_type",
                 ],
                 name="attachment_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="attachment_gfk_idx",
+            ),
         ]
 
     def save(
@@ -331,7 +335,11 @@ class PhoneNumber(models.Model):
                     "content_type_id",
                 ],
                 name="phonenumber_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="phonenumber_gfk_idx",
+            ),
         ]
 
     def save(self, *args: Any, **kwargs: Any) -> None:

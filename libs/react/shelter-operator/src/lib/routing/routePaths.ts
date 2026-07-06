@@ -14,14 +14,13 @@ export function routePath(fullPath: string): string {
 
 export const paths = {
   signIn: '/operator/sign-in',
+  createOrganization: '/operator/create-organization',
   users: '/operator/users',
   dashboardCreate: '/operator/dashboard/create',
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
   shelterManage: '/operator/shelter/:shelterId/manage',
   shelterProfile: '/operator/shelter/:shelterId/profile',
-  shelterReservation: '/operator/shelter/:shelterId/reservation',
-  reservation: '/operator/reservation',
 } as const;
 
 // ─── SEGMENTS ────────────────────────────────────────────────────────────────
@@ -42,16 +41,10 @@ export const manageSegments = {
   beds: 'beds',
   bedsCreate: 'beds/create',
   bedsEdit: 'beds/:bedId/edit',
-  occupancy: 'occupancy',
-  label: 'label',
-} as const;
-
-export const reservationSegments = {
-  addProfile: 'add-profile',
-  selectShelter: 'select-shelter',
-  selectRoom: 'select-room',
-  checkInByDate: 'check-in-by-date',
-  confirmation: 'confirmation',
+  reservations: 'reservations',
+  reservationsCreate: 'reservations/create',
+  reservationsEdit: 'reservations/:reservationId/edit',
+  occupants: 'occupants',
 } as const;
 
 // ─── DYNAMIC ROUTE HELPERS ───────────────────────────────────────────────────
@@ -91,6 +84,26 @@ export function shelterEditBedRoute(shelterId: string, bedId: string): string {
     shelterId,
     bedId,
   });
+}
+
+export function shelterManageReservationsRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${manageSegments.reservations}`;
+}
+
+export function shelterCreateReservationRoute(shelterId: string): string {
+  return `${shelterManageRoute(shelterId)}/${
+    manageSegments.reservationsCreate
+  }`;
+}
+
+export function shelterEditReservationRoute(
+  shelterId: string,
+  reservationId: string
+): string {
+  return generatePath(
+    `${paths.shelterManage}/${manageSegments.reservationsEdit}`,
+    { shelterId, reservationId }
+  );
 }
 
 export function shelterProfileRoute(

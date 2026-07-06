@@ -2,9 +2,8 @@ import { useMutation } from '@apollo/client/react';
 import { Button } from '@monorepo/react/components';
 import { operatorPath } from '@monorepo/react/shelter';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import { type SubmitEvent, useCallback, useState } from 'react';
+import { useCallback, useState, type SubmitEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '../../../../providers/activeOrg';
 import type { ShelterFormData } from '../../formTypes';
 import {
   CREATE_SHELTER_MUTATION,
@@ -16,7 +15,7 @@ import {
   validateField,
   validateShelterForm,
   type FormErrors,
-} from './constants/validation';
+} from './constants/formSchema';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
 import { AdministrationSection } from './sections/AdministrationSection';
 import { BasicInformationSection } from './sections/BasicInformationSection';
@@ -31,8 +30,6 @@ import { SummaryInformationSection } from './sections/SummaryInformationSection'
 
 export function CreateShelterForm() {
   const navigate = useNavigate();
-  const { activeOrg } = useActiveOrg();
-  const selectedOrganizationId = activeOrg?.id ?? '';
   const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -63,11 +60,6 @@ export function CreateShelterForm() {
     event.preventDefault();
     setSubmissionError(null);
 
-    if (!selectedOrganizationId) {
-      setSubmissionError('Please select an organization.');
-      return;
-    }
-
     const validation = validateShelterForm(formData);
     setErrors(validation.errors);
     if (!validation.isValid) {
@@ -77,7 +69,7 @@ export function CreateShelterForm() {
     try {
       const { data } = await createShelter({
         variables: {
-          data: buildCreateShelterInput(formData, selectedOrganizationId),
+          data: buildCreateShelterInput(formData),
         },
         errorPolicy: 'all',
       });
@@ -122,14 +114,14 @@ export function CreateShelterForm() {
           </p>
         </div>
 
-        {submissionError ? (
+        {submissionError && (
           <div
             className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
             {submissionError}
           </div>
-        ) : null}
+        )}
 
         <form
           onSubmit={handleSubmit}

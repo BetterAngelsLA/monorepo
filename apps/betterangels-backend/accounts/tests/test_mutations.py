@@ -145,6 +145,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.org_admin = baker.make(User, first_name="admin")
 
         self.org = organization_recipe.make(name="org", owner=self.org_admin)
+        self._set_active_org(self.org)
 
         self.graphql_client.force_login(self.org_admin)
 
@@ -188,7 +189,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(22):
+            with self.assertNumQueriesWithoutCache(21):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()

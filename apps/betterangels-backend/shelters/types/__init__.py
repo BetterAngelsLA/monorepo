@@ -2,15 +2,20 @@
 
 from shelters.types.filters import (
     BedFilter,
+    BedOrder,
     GeolocationInput,
     MapBoundsInput,
+    ReservationFilter,
+    ReservationOrder,
     RoomFilter,
+    RoomOrder,
     ShelterFilter,
     ShelterOrder,
     ShelterPropertyInput,
 )
 from shelters.types.inputs import (
     CreateBedInput,
+    CreateReservationInput,
     CreateRoomInput,
     CreateShelterInput,
     GenerateShelterPhotoUploadsInput,
@@ -21,6 +26,7 @@ from shelters.types.inputs import (
     ShelterPhotoFromUploadInput,
     ShelterPhotoUploadItemInput,
     UpdateBedInput,
+    UpdateReservationInput,
     UpdateRoomInput,
     UpdateShelterInput,
     UpdateShelterPhotoInput,
@@ -45,8 +51,9 @@ from shelters.types.lookups import (
     StorageType,
 )
 from shelters.types.outputs import (
-    AdminShelterType,
     BedType,
+    OperatorShelterType,
+    ReservationType,
     RoomType,
     ShelterAvailabilityType,
     ShelterLocationType,
@@ -54,6 +61,12 @@ from shelters.types.outputs import (
     ShelterPhotoUploadsType,
     ShelterType,
     ShelterTypeMixin,
+)
+from shelters.types.reporting import (
+    DailyBedStatusMetricsType,
+    DailyOccupancyMetricsType,
+    ReservationMetricsType,
+    ShelterOccupancyMetricsType,
 )
 
 __all__ = [
@@ -77,20 +90,26 @@ __all__ = [
     "StorageType",
     # filters
     "BedFilter",
+    "BedOrder",
     "GeolocationInput",
     "MapBoundsInput",
+    "ReservationFilter",
+    "ReservationOrder",
     "RoomFilter",
+    "RoomOrder",
     "ShelterFilter",
     "ShelterOrder",
     "ShelterPropertyInput",
     # inputs
     "CreateBedInput",
     "CreateRoomInput",
+    "CreateReservationInput",
     "CreateShelterInput",
     "GenerateShelterPhotoUploadsInput",
     "ResolveShelterPhotoUploadsInput",
     "UpdateShelterPhotoInput",
     "UpdateBedInput",
+    "UpdateReservationInput",
     "UpdateRoomInput",
     "UpdateShelterInput",
     "ServiceInput",
@@ -99,8 +118,9 @@ __all__ = [
     "ShelterPhotoFromUploadInput",
     "ShelterPhotoUploadItemInput",
     # outputs
-    "AdminShelterType",
     "BedType",
+    "OperatorShelterType",
+    "ReservationType",
     "RoomType",
     "ShelterAvailabilityType",
     "ShelterLocationType",
@@ -108,4 +128,9 @@ __all__ = [
     "ShelterPhotoUploadsType",
     "ShelterType",
     "ShelterTypeMixin",
+    # reporting
+    "DailyBedStatusMetricsType",
+    "DailyOccupancyMetricsType",
+    "ReservationMetricsType",
+    "ShelterOccupancyMetricsType",
 ]

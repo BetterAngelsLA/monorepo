@@ -55,6 +55,7 @@ class EyeColorEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class GenderEnum(models.TextChoices):
     MALE = "male", _("Male")
     FEMALE = "female", _("Female")
@@ -140,6 +141,7 @@ class PronounEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class RaceEnum(models.TextChoices):
     AMERICAN_INDIAN_ALASKA_NATIVE = "american_indian_alaska_native", _("American Indian/Alaska Native")
     ASIAN = "asian", _("Asian")
@@ -177,6 +179,7 @@ class SocialMediaEnum(models.TextChoices):
     WHATSAPP = "whatsapp", _("WhatsApp")
 
 
+@strawberry.enum
 class VeteranStatusEnum(models.TextChoices):
     YES = "yes", _("Yes")
     NO = "no", _("No")

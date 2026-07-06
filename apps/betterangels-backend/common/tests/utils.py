@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Union
 
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
@@ -15,6 +17,10 @@ from model_bakery import baker
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
+
+if TYPE_CHECKING:
+    from organizations.models import Organization
+
 
 # ---------------------------------------------------------------------------
 # Shared address fixture builder
@@ -134,7 +140,6 @@ class _MaxNumQueriesContext:
 
 
 class NumQueriesWithoutCacheMixin:
-
     def assertNumQueriesWithoutCache(self: Any, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
@@ -187,10 +192,22 @@ class GraphQLBaseTestCase(
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
+        from common.enums import SelahTeamEnum
         from notes.groups import CASEWORKER
+        from teams.models import Team
 
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
+
+        # Create Team objects matching SelahTeamEnum values for backward
+        # compatibility with the deprecated ``team`` GraphQL field.
+        for org in (self.org_1, self.org_2):
+            for team_value in SelahTeamEnum.values:
+                Team.objects.get_or_create(
+                    slug=team_value,
+                    organization=org,
+                )
+
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of
         # relying on the deleted handle_organization_user_added signal.
@@ -201,6 +218,13 @@ class GraphQLBaseTestCase(
         OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_1, CASEWORKER)
         OrgRoleManager(self.org_1).add_roles(self.org_1_case_manager_2, CASEWORKER)
         OrgRoleManager(self.org_2).add_roles(self.org_2_case_manager_1, CASEWORKER)
+
+        # Default organization for @HasOrgPerm-scoped mutations/queries.
+        self._set_active_org(self.org_1)
+
+    def _set_active_org(self, org: Organization) -> None:
+        """Set the X-Organization-ID header for the current test client."""
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = str(org.id)
 
     def _setup_hmis_session(self) -> None:
         """

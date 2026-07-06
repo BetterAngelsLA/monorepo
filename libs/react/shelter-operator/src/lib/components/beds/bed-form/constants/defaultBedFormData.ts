@@ -1,4 +1,3 @@
-import { BedStatusChoices } from '../../../../apollo/graphql/__generated__/types';
 import type { BedFormData } from '../formTypes';
 
 /** Fresh copy of bed form defaults to avoid shared mutable state between renders. */
@@ -13,7 +12,6 @@ export const createEmptyBedFormData = (): BedFormData => ({
   name: '',
   pets: [],
   roomId: null,
-  status: BedStatusChoices.Available,
   statusNotes: '',
   storage: false,
   type: null,
