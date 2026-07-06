@@ -9,6 +9,7 @@ export function ControlBtnWrapper(props: TProps) {
   const { children, className } = props;
 
   const parentCss = [
+    'group',
     'w-10',
     'h-10',
     'bg-white',

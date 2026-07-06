@@ -121,7 +121,16 @@ export function ShelterSearch(props: TProps) {
             <SearchIcon className="text-neutral-70 w-4 h-4 mr-4" />
             Search
           </button>
-          <button onClick={onFilterClick} className="ml-4">
+          <button
+            onClick={onFilterClick}
+            className="
+    ml-4
+    p-2
+    rounded-lg
+    transition-colors
+    active:bg-[#E8ECF2]
+  "
+          >
             <FilterIcon className="w-6 text-primary-20" />
           </button>
         </div>
