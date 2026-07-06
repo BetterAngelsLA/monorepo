@@ -6,7 +6,7 @@ import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 export interface ApiConfigContextType {
   apiUrl: string;
-  /** Pre-wired fetch (CSRF + Org-ID) with base URL prepended. */
+  /** Legacy fetch — prepends ``apiUrl`` + sets ``Content-Type: application/json``. */
   fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
 }
 
@@ -14,11 +14,26 @@ export interface ApiConfigContextType {
 // Provider props
 // ---------------------------------------------------------------------------
 
+/**
+ * Two fetch patterns are available, serving different consumers:
+ *
+ * - **``fetch`` prop** — the composed interceptor chain (already injects
+ *   ``X-Organization-ID`` and ``X-CSRFToken``).  Passed directly to
+ *   Apollo's ``UploadHttpLink`` as its ``fetch`` option.  No extra
+ *   headers or URL manipulation.
+ *
+ * - **``fetchClient`` (from ``useApiConfig()``)** — wraps the composed
+ *   fetch: prepends ``apiUrl`` and sets ``Content-Type: application/json``.
+ *   Used by legacy REST callers (sign-in forms, report downloads, etc.).
+ */
 export interface ApiConfigProviderProps {
   children: ReactNode;
   /** Base API URL. */
   apiUrl: string;
-  /** CSRF + Org-ID pre-wired fetch function. */
+  /**
+   * Composed interceptor chain (org + CSRF headers pre-injected).
+   * Passed to Apollo ``UploadHttpLink`` as its ``fetch`` option.
+   */
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 

@@ -4,6 +4,11 @@ import { getCookie, eraseCookie } from './cookies';
  * Read a CSRF cookie value with duplicate cleanup across subdomains.
  * Returns the first (deduplicated) value or ``null``.
  *
+ * The function is ``async`` to satisfy the :type:`TokenReader` interface
+ * (``@monorepo/fetch``).  The underlying ``document.cookie`` reads are
+ * synchronous — the ``Promise`` wrapper exists purely for interface
+ * compatibility.
+ *
  * Subdomain deduplication is web-specific — React Native uses
  * ``createNativeTokenReader`` from ``@monorepo/ba-platform/expo``.
  */

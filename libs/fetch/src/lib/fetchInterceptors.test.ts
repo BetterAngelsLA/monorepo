@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { createCsrfInterceptor, createOrgInterceptor } from '@monorepo/fetch';
+import { createCsrfInterceptor, createOrgInterceptor } from './fetchInterceptors';
 
 describe('createCsrfInterceptor', () => {
   it('injects CSRF header when token is available', async () => {

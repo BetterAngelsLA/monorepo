@@ -131,7 +131,7 @@ export const createCsrfTokenRefresher = (
   persistCookies?: CookiePersister,
 ): TokenRefresher =>
   async (loginPath: string) => {
-    const url = `${baseUrl}${loginPath}`;
+    const url = `${baseUrl}${loginPath}?t=${Date.now()}`;
     const response = await fetch(url, { credentials: 'include' });
 
     if (persistCookies) {
