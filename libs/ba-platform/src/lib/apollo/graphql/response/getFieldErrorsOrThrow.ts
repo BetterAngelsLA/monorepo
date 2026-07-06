@@ -1,0 +1,114 @@
+import { BaPermissionError } from '../../../errors/BaPermissionError';
+import { getOperationInfo } from './getOperationInfo';
+import { isUnauthenticatedError } from './isUnauthenticatedError';
+import type { FieldError } from './types';
+import { composeErrorDescription } from './utils/composeErrorDescription';
+import { getExtensionFieldErrors } from './utils/getExtensionFieldErrors';
+import { getOperationFieldErrors } from './utils/getOperationFieldErrors';
+import { getOperationOtherMessage } from './utils/getOperationOtherMessage';
+import { hasPermissionMessage } from './utils/hasPermissionMessage';
+
+type GetFieldErrorsOrThrowParams = {
+  response: {
+    data?: Record<string, unknown> | null;
+    errors?: readonly {
+      message?: string;
+      extensions?: Record<string, unknown>;
+    }[];
+  };
+  operationKey: string;
+  successTypename: string;
+  fields?: string[];
+};
+
+/**
+ * Unified error handler for GraphQL mutation responses.
+ *
+ * Parses the response and either returns field-level validation errors
+ * (for inline form display) or throws an appropriate error. Handles two
+ * error sources from the backend:
+ *
+ * - **OperationInfo** (`data.<operationKey>.__typename === 'OperationInfo'`)
+ *   Messages by kind:
+ *     PERMISSION  → throws `BaPermissionError`
+ *     VALIDATION with field → returned as `FieldError[]`
+ *     ERROR, INFO, WARNING, VALIDATION without field → throws `Error`
+ *
+ * - **Top-level GraphQL errors** (`response.errors`)
+ *     UNAUTHENTICATED  → throws `BaPermissionError`
+ *     Has extensions.errors with fields → returned as `FieldError[]`
+ *     NOT_FOUND, other → throws `Error`
+ *
+ * @returns FieldError[] — empty on success, populated on validation errors
+ * @throws BaPermissionError — for unauthenticated or permission-denied.
+ *   We throw `BaPermissionError` to indicate that we trust its message
+ *   is safe to display to users.
+ * @throws Error — for all other non-recoverable errors.
+ *   We throw a generic `Error` because we cannot trust
+ *   the message is safe for user display.
+ */
+export function getFieldErrorsOrThrow(
+  params: GetFieldErrorsOrThrowParams
+): FieldError[] {
+  const { response, operationKey, successTypename, fields } = params;
+
+  // ── Top-level response errors ─────────────────────────────────────────
+  if (response.errors?.length) {
+    const extensionFieldErrors = getExtensionFieldErrors(response);
+
+    // Extensions with field-level errors are recoverable — return for form display
+    if (extensionFieldErrors.length) {
+      return extensionFieldErrors;
+    }
+
+    const errorMessage =
+      response.errors[0].message ?? 'An unknown error occurred.';
+
+    if (isUnauthenticatedError(response.errors)) {
+      throw new BaPermissionError(errorMessage);
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  // ── No data ───────────────────────────────────────────────────────────
+  const result = response.data?.[operationKey];
+
+  if (!result || typeof result !== 'object') {
+    throw new Error('No response data');
+  }
+
+  const typedResult = result as { __typename?: string };
+
+  // ── Success ───────────────────────────────────────────────────────────
+  if (typedResult.__typename === successTypename) {
+    return [];
+  }
+
+  // ── OperationInfo ─────────────────────────────────────────────────────
+  const opInfo = getOperationInfo(response, operationKey);
+
+  // PERMISSION → throw
+  if (hasPermissionMessage(opInfo)) {
+    throw new BaPermissionError(
+      getOperationOtherMessage(opInfo) || 'Permission denied.'
+    );
+  }
+
+  // VALIDATION with field → return for form display
+  const fieldErrors: FieldError[] = [
+    ...getOperationFieldErrors(opInfo, fields),
+  ];
+
+  if (fieldErrors.length) {
+    return fieldErrors;
+  }
+
+  // Everything else → throw
+  const otherMessage = getOperationOtherMessage(opInfo, fields);
+  const errorMessages =
+    response.errors?.map((e) => e.message ?? 'Unknown error') ?? [];
+  const description = composeErrorDescription([otherMessage, ...errorMessages]);
+
+  throw new Error(description);
+}
