@@ -25,6 +25,11 @@
     "build": {
       "executor": "@nx/storybook:build",
       "dependsOn": ["set-env"],
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/.storybook/**/*"
+      ],
       "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",
