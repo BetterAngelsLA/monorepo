@@ -5,7 +5,7 @@ import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
-import { baseHrefPlugin } from '../../tools/vite/base-href-plugin';
+import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
@@ -21,16 +21,14 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 };
 
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development';
+  const basePath = getBranchBasePath();
   return {
-    base: isDev ? '/' : process.env.VITE_APP_BASE_PATH || '/',
+    base: basePath,
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
     define: {
-      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(
-        process.env.VITE_APP_BASE_PATH || '/'
-      ),
+      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
     },
 
     ...(isDev && {

@@ -17,23 +17,12 @@
         }
       }
     },
-    "set-env": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/scripts/set-base-path.js"
-      },
-      "configurations": {
-        "production": {},
-        "preview": {}
-      }
-    },
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
       "options": {}
     },
     "build": {
       "executor": "nx:run-commands",
-      "dependsOn": ["set-env"],
       "options": {
         "command": "vite build",
         "cwd": "apps/wildfires"

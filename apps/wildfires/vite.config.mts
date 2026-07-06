@@ -4,20 +4,20 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
-import { baseHrefPlugin } from '../../tools/vite/base-href-plugin';
+import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
 
-export default defineConfig(({ mode }) => ({
-  base: process.env.VITE_APP_BASE_PATH || '/',
+export default defineConfig(({ mode }) => {
+  const basePath = getBranchBasePath();
+  return {
+  base: basePath,
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/wildfires',
 
   define: {
-    'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(
-      process.env.VITE_APP_BASE_PATH || '/'
-    ),
+    'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
   },
 
   server: {
@@ -71,4 +71,5 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     },
   },
-}));
+};
+});

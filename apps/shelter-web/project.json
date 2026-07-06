@@ -17,21 +17,8 @@
         }
       }
     },
-    "set-env": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/scripts/set-base-path.js"
-      },
-      "configurations": {
-        "production": {},
-        "preview": {}
-      }
-    },
     "build": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "set-env"
-      ],
       "options": {
         "command": "vite build",
         "cwd": "apps/shelter-web"
@@ -43,11 +30,9 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "options": {
-        "command": "./tools/deploy/cloudfront_deploy.sh"
+        "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
       "configurations": {
         "production": {},
@@ -57,7 +42,7 @@
     "post-pr-preview": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/post-preview-comment.js --url=https://shelter.dev.betterangels.la$VITE_APP_BASE_PATH"
+        "command": "node tools/scripts/post-preview-comment.js --url=https://shelter.dev.betterangels.la"
       }
     }
   }
