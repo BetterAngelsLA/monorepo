@@ -21,6 +21,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 };
 
 export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
   const basePath = getBranchBasePath();
   return {
     base: basePath,

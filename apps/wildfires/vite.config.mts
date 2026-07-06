@@ -10,6 +10,7 @@ const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
 
 export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
   const basePath = getBranchBasePath();
   return {
   base: basePath,
