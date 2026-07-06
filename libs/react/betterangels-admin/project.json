@@ -3,7 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/betterangels-admin/src",
   "projectType": "library",
-  "tags": ["type:feature", "scope:betterangels-admin"],
+  "tags": [
+    "type:feature",
+    "scope:betterangels-admin"
+  ],
   "namedInputs": {
     "default": [
       "{projectRoot}/**/*",
@@ -13,18 +16,18 @@
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/libs/react/betterangels-admin/src/lib/**/__generated__/"
+      ],
       "options": {
         "cwd": "libs/react/betterangels-admin",
         "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/react/betterangels-admin/src/lib/**/__generated__/"
-      ]
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "inputs": ["{projectRoot}/**/*"],
-      "outputs": ["{options.outputFile}"]
+      "inputs": [
+        "{projectRoot}/**/*"
+      ]
     }
   }
 }

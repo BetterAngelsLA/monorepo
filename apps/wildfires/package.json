@@ -4,9 +4,7 @@
   "type": "module",
   "description": "resource finder app for LA wildfires",
   "main": "src/index.tsx",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "author": "",
   "license": "MIT",
   "dependencies": {
