@@ -1,9 +1,12 @@
+from dataclasses import dataclass
 from typing import Iterable
 
 from accounts.models import User
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
+    GenerateUploadItem,
+    ResolveUploadItem,
     create_presigned_uploads as generic_create_presigned_uploads,
     validate_upload_batch,
 )
@@ -16,6 +19,35 @@ from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
+
+
+# ── Domain-specific types ───────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ShelterPhotoResolveItem:
+    """Typed input for ``resolve_uploads`` — preserves the ``photo_type`` enum.
+
+    Unlike ``strawberry.asdict()`` which serializes enums to strings,
+    this keeps ``photo_type`` as a ``ShelterPhotoTypeChoices`` member
+    so the service never needs to parse strings back into enums.
+    """
+
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    photo_type: ShelterPhotoTypeChoices
+
+    def to_resolve_item(self) -> ResolveUploadItem:
+        """Extract the generic fields for ``validate_upload_batch``."""
+        return ResolveUploadItem(
+            presigned_key=self.presigned_key,
+            upload_token=self.upload_token,
+            filename=self.filename,
+            content_type=self.content_type,
+        )
+
 
 SHELTER_PHOTO_CONFIG = AttachmentUploadConfig(
     upload_path="shelters",
@@ -30,7 +62,7 @@ def create_presigned_uploads(
     user: User,
     organization_id: str,
     shelter_id: int | str,
-    uploads: Iterable[dict],
+    uploads: Iterable[GenerateUploadItem],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
     shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
@@ -46,23 +78,33 @@ def resolve_uploads(
     user: User,
     organization_id: str,
     shelter_id: int | str,
-    photos: Iterable[dict],
+    photos: Iterable[ShelterPhotoResolveItem],
 ) -> list[ShelterPhoto]:
-    """Validate tokens + S3 → create ShelterPhoto rows (Phase 3)."""
-    items = validate_upload_batch(user=user, uploads=photos, config=SHELTER_PHOTO_CONFIG)
+    """Validate tokens + S3 → create ShelterPhoto rows (Phase 3).
+
+    Accepts typed ``ShelterPhotoResolveItem`` instances so that
+    ``photo_type`` arrives as a ``ShelterPhotoTypeChoices`` enum member
+    — no string parsing, no ``KeyError`` possible.
+    """
+    photo_list = list(photos)
+
+    # Validate the generic fields through the shared pipeline.
+    validated = validate_upload_batch(
+        user=user,
+        uploads=(p.to_resolve_item() for p in photo_list),
+        config=SHELTER_PHOTO_CONFIG,
+    )
 
     shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
     created: list[ShelterPhoto] = []
 
     with transaction.atomic():
-        for item in items:
-            photo_type = ShelterPhotoTypeChoices[item["photo_type"]]
-
+        for photo, item in zip(photo_list, validated):
             created.append(
                 ShelterPhoto.objects.create(
                     shelter=shelter,
-                    file=item["file_path"],
-                    type=photo_type,
+                    file=item.file_path,
+                    type=photo.photo_type,
                 )
             )
 

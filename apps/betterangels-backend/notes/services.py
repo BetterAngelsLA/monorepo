@@ -10,6 +10,8 @@ from common.models import Attachment, Location
 from common.permissions.utils import assign_object_permissions
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
+    GenerateUploadItem,
+    ResolveUploadItem,
     create_presigned_uploads as generic_create_presigned_uploads,
     resolve_attachments as generic_resolve_attachments,
 )
@@ -323,7 +325,7 @@ NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
 def create_note_attachment_presigned_uploads(
     *,
     user: User,
-    uploads: Iterable[dict],
+    uploads: Iterable[GenerateUploadItem],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for note attachments (Phase 1)."""
     return generic_create_presigned_uploads(
@@ -337,7 +339,7 @@ def resolve_note_attachment_uploads(
     *,
     user: User,
     note: Note,
-    attachments: Iterable[dict],
+    attachments: Iterable[ResolveUploadItem],
 ) -> list[Attachment]:
     """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
 

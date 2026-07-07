@@ -7,6 +7,8 @@ from clients.services.client_document import (
     resolve_upload,
 )
 from common.models import Attachment
+from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.exceptions import InvalidUploadTokenError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -16,10 +18,10 @@ class ValidateContentTypeTest(TestCase):
         for content_type in CLIENT_DOCUMENT_CONFIG.allowed_content_types:
             self.assertIn(content_type, CLIENT_DOCUMENT_CONFIG.allowed_content_types)
 
-    def test_rejects_invalid_content_type(self) -> None:
+    def test_zip_not_in_allowlist(self) -> None:
         self.assertNotIn("application/zip", CLIENT_DOCUMENT_CONFIG.allowed_content_types)
 
-    def test_rejects_empty_content_type(self) -> None:
+    def test_empty_string_not_in_allowlist(self) -> None:
         self.assertNotIn("", CLIENT_DOCUMENT_CONFIG.allowed_content_types)
 
 
@@ -32,7 +34,7 @@ class CreatePresignedUploadsTest(TestCase):
     @patch("clients.services.client_document.generic_create_presigned_uploads")
     def test_delegates_to_generic_with_client_document_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            {"ref_id": "ref-1", "filename": "doc1.pdf", "content_type": "application/pdf"},
+            GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", content_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -61,7 +63,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            uploads=[{"ref_id": "ref-1", "filename": "doc1.pdf", "content_type": "application/pdf"}],
+            uploads=[GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", content_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
@@ -79,8 +81,8 @@ class CreatePresignedUploadsTest(TestCase):
         result = create_presigned_uploads(
             user=self.user,
             uploads=[
-                {"ref_id": "ref-1", "filename": "a.pdf", "content_type": "application/pdf"},
-                {"ref_id": "ref-2", "filename": "b.pdf", "content_type": "application/pdf"},
+                GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
+                GenerateUploadItem(ref_id="ref-2", filename="b.pdf", content_type="application/pdf"),
             ],
         )
 
@@ -111,13 +113,13 @@ class ResolveUploadTest(TestCase):
         mock_generic.return_value = [attachment]
 
         documents = [
-            {
-                "presigned_key": "media/attachments/abc.pdf",
-                "upload_token": "token-1",
-                "filename": "doc.pdf",
-                "content_type": "application/pdf",
-                "namespace": "OTHER_CLIENT_DOCUMENT",
-            }
+            ResolveUploadItem(
+                presigned_key="media/attachments/abc.pdf",
+                upload_token="token-1",
+                filename="doc.pdf",
+                content_type="application/pdf",
+                namespace="OTHER_CLIENT_DOCUMENT",
+            )
         ]
 
         resolve_upload(
@@ -151,20 +153,20 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             documents=[
-                {
-                    "presigned_key": "media/attachments/a.pdf",
-                    "upload_token": "tok-1",
-                    "filename": "a.pdf",
-                    "content_type": "application/pdf",
-                    "namespace": "OTHER_CLIENT_DOCUMENT",
-                },
-                {
-                    "presigned_key": "media/attachments/b.pdf",
-                    "upload_token": "tok-2",
-                    "filename": "b.pdf",
-                    "content_type": "application/pdf",
-                    "namespace": "OTHER_CLIENT_DOCUMENT",
-                },
+                ResolveUploadItem(
+                    presigned_key="media/attachments/a.pdf",
+                    upload_token="tok-1",
+                    filename="a.pdf",
+                    content_type="application/pdf",
+                    namespace="OTHER_CLIENT_DOCUMENT",
+                ),
+                ResolveUploadItem(
+                    presigned_key="media/attachments/b.pdf",
+                    upload_token="tok-2",
+                    filename="b.pdf",
+                    content_type="application/pdf",
+                    namespace="OTHER_CLIENT_DOCUMENT",
+                ),
             ],
         )
 
@@ -198,13 +200,13 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             documents=[
-                {
-                    "presigned_key": "media/attachments/abc.pdf",
-                    "upload_token": "token-1",
-                    "filename": "doc.pdf",
-                    "content_type": "application/pdf",
-                    "namespace": "OTHER_CLIENT_DOCUMENT",
-                }
+                ResolveUploadItem(
+                    presigned_key="media/attachments/abc.pdf",
+                    upload_token="token-1",
+                    filename="doc.pdf",
+                    content_type="application/pdf",
+                    namespace="OTHER_CLIENT_DOCUMENT",
+                )
             ],
         )
 
@@ -220,20 +222,20 @@ class ResolveUploadTest(TestCase):
         mock_assign: MagicMock,
     ) -> None:
         mock_perm_group.return_value = self.permission_group
-        mock_generic.side_effect = ValueError("Invalid or expired upload signature for 'doc.pdf'")
+        mock_generic.side_effect = InvalidUploadTokenError("Invalid or expired upload signature for 'doc.pdf'")
 
-        with self.assertRaisesMessage(ValueError, "Invalid or expired upload signature for 'doc.pdf'"):
+        with self.assertRaisesMessage(InvalidUploadTokenError, "Invalid or expired upload signature for 'doc.pdf'"):
             resolve_upload(
                 user=self.user,
                 client_profile=self.client_profile,
                 documents=[
-                    {
-                        "presigned_key": "media/attachments/abc.pdf",
-                        "upload_token": "bad-token",
-                        "filename": "doc.pdf",
-                        "content_type": "application/pdf",
-                        "namespace": "OTHER_CLIENT_DOCUMENT",
-                    }
+                    ResolveUploadItem(
+                        presigned_key="media/attachments/abc.pdf",
+                        upload_token="bad-token",
+                        filename="doc.pdf",
+                        content_type="application/pdf",
+                        namespace="OTHER_CLIENT_DOCUMENT",
+                    )
                 ],
             )
 

@@ -16,6 +16,7 @@ from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.team_shim import resolve_team_id_from_input
+from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from notes.groups import CASEWORKER
@@ -394,8 +395,15 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         get_object_or_permission_error(qs, data.note_id)
 
-        upload_dicts = [strawberry.asdict(u) for u in data.uploads]
-        presigned = create_note_attachment_presigned_uploads(user=user, uploads=upload_dicts)
+        uploads = [
+            GenerateUploadItem(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                content_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = create_note_attachment_presigned_uploads(user=user, uploads=uploads)
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
@@ -416,7 +424,15 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.note_id)
 
-        attachment_dicts = [strawberry.asdict(a) for a in data.attachments]
-        attachments = resolve_note_attachment_uploads(user=user, note=note, attachments=attachment_dicts)
+        attachment_list = [
+            ResolveUploadItem(
+                presigned_key=a.presigned_key,
+                upload_token=a.upload_token,
+                filename=a.filename,
+                content_type=a.content_type,
+            )
+            for a in data.attachments
+        ]
+        attachments = resolve_note_attachment_uploads(user=user, note=note, attachments=attachment_list)
 
         return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))

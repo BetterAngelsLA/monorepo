@@ -12,7 +12,7 @@ authorization (permission checks, permission assignment) themselves.
 """
 
 from dataclasses import dataclass
-from typing import Iterable, NotRequired, TypedDict
+from typing import Iterable
 
 from accounts.models import User
 from common.models import Attachment
@@ -53,10 +53,11 @@ class AttachmentUploadConfig:
     max_file_size: int = DEFAULT_MAX_FILE_SIZE
 
 
-# ── Input types ──────────────────────────────────────────────────────────────
+# ── Generic input / output types ─────────────────────────────────────────────
 
 
-class GenerateUploadInput(TypedDict):
+@dataclass(frozen=True)
+class GenerateUploadItem:
     """Per-file input for the *generate* phase (Phase 1)."""
 
     ref_id: str
@@ -64,14 +65,32 @@ class GenerateUploadInput(TypedDict):
     content_type: str
 
 
-class ResolveUploadInput(TypedDict):
+@dataclass(frozen=True)
+class ResolveUploadItem:
     """Per-file input for the *resolve* phase (Phase 3)."""
 
     presigned_key: str
     upload_token: str
     filename: str
     content_type: str
-    namespace: NotRequired[str | None]
+    namespace: str | None = None
+
+
+@dataclass(frozen=True)
+class ValidatedResolveItem:
+    """Output of ``validate_upload_batch`` — validated + enriched with ``file_path``.
+
+    Domain services zip these back with their own typed items to access
+    domain-specific fields (e.g. ``photo_type``) alongside the validated
+    generic fields.
+    """
+
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    namespace: str | None
+    file_path: str
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,32 +107,24 @@ def _validate_content_type(content_type: str, filename: str, allowed: frozenset[
 def create_presigned_uploads(
     *,
     user: User,
-    uploads: Iterable[GenerateUploadInput],
+    uploads: Iterable[GenerateUploadItem],
     config: AttachmentUploadConfig,
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 POST URLs and signed upload tokens for a batch.
 
     Validates content types, generates presigned URLs via S3, and wraps
     each result with a scoped, expiring upload token.
-
-    Args:
-        user: The uploading user (token binds to ``user.pk``).
-        uploads: Iterable of dicts with keys ``ref_id``, ``filename``, ``content_type``.
-        config: Domain-specific configuration.
-
-    Returns:
-        ``AuthorizedPresignedUploadBatch`` ready to be mapped to a GraphQL response.
     """
     mapped_uploads: list[PresignedS3UploadInput] = []
 
     for upload in uploads:
-        _validate_content_type(upload["content_type"], upload["filename"], config.allowed_content_types)
+        _validate_content_type(upload.content_type, upload.filename, config.allowed_content_types)
 
         mapped_uploads.append(
             {
-                "ref_id": upload["ref_id"],
-                "filename": upload["filename"],
-                "content_type": upload["content_type"],
+                "ref_id": upload.ref_id,
+                "filename": upload.filename,
+                "content_type": upload.content_type,
                 "upload_path": config.upload_path,
                 "max_file_size": config.max_file_size,
             }
@@ -144,19 +155,20 @@ def create_presigned_uploads(
     return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
 
 
-# ── Phase 3: Resolve uploads → Attachment records ────────────────────────────
+# ── Phase 3: Validate batch ──────────────────────────────────────────────────
 
 
 def validate_upload_batch(
     *,
     user: User,
-    uploads: Iterable[dict],
+    uploads: Iterable[ResolveUploadItem],
     config: AttachmentUploadConfig,
-) -> list[dict]:
+) -> list[ValidatedResolveItem]:
     """Pre-flight validation: content types, tokens, and S3 keys.
 
     Validates every item in the batch before any database writes occur.
-    Returns the materialized list for the caller's persistence loop.
+    Returns typed ``ValidatedResolveItem`` instances with ``file_path``
+    populated.
 
     Raises:
         InvalidContentTypeError: If a content type is not in the allowlist.
@@ -164,32 +176,44 @@ def validate_upload_batch(
         S3KeyNotFoundError: If the file does not exist at the expected S3 key.
     """
     items = list(uploads)
+    validated: list[ValidatedResolveItem] = []
 
     for item in items:
-        _validate_content_type(item["content_type"], item["filename"], config.allowed_content_types)
+        _validate_content_type(item.content_type, item.filename, config.allowed_content_types)
 
         if not validate_upload_token(
-            upload_token=item["upload_token"],
-            key=item["presigned_key"],
+            upload_token=item.upload_token,
+            key=item.presigned_key,
             user_id=user.pk,
             scope=config.service_name,
         ):
-            raise InvalidUploadTokenError(f"Invalid or expired upload signature for '{item['filename']}'")
+            raise InvalidUploadTokenError(f"Invalid or expired upload signature for '{item.filename}'")
 
-        if not s3_key_exists(key=item["presigned_key"]):
-            raise S3KeyNotFoundError(f"File not found in storage for '{item['filename']}'")
+        if not s3_key_exists(key=item.presigned_key):
+            raise S3KeyNotFoundError(f"File not found in storage for '{item.filename}'")
 
-        # Normalize the S3 key to a Django FileField-compatible path.
-        item["file_path"] = strip_storage_location(item["presigned_key"])
+        validated.append(
+            ValidatedResolveItem(
+                presigned_key=item.presigned_key,
+                upload_token=item.upload_token,
+                filename=item.filename,
+                content_type=item.content_type,
+                namespace=item.namespace,
+                file_path=strip_storage_location(item.presigned_key),
+            )
+        )
 
-    return items
+    return validated
+
+
+# ── Phase 3: Resolve uploads → Attachment records ────────────────────────────
 
 
 def resolve_attachments(
     *,
     user: User,
     content_object,
-    uploads: Iterable[ResolveUploadInput],
+    uploads: Iterable[ResolveUploadItem],
     config: AttachmentUploadConfig,
 ) -> list[Attachment]:
     """Validate upload tokens, confirm S3 objects exist, and persist Attachment rows.
@@ -200,21 +224,6 @@ def resolve_attachments(
 
     **Does NOT assign object-level permissions** — that is the caller's
     responsibility.
-
-    Args:
-        user: The uploading user (token must match ``user.pk``).
-        content_object: The Django model instance the attachments belong to
-            (e.g. a ``ClientProfile`` or ``Note``).
-        uploads: Iterable of dicts with keys ``presigned_key``, ``upload_token``,
-            ``filename``, ``content_type``, and optionally ``namespace``.
-        config: Domain-specific configuration.
-
-    Returns:
-        List of persisted ``Attachment`` instances.
-
-    Raises:
-        InvalidContentTypeError, InvalidUploadTokenError, or S3KeyNotFoundError
-        from ``validate_upload_batch``.
     """
     items = validate_upload_batch(user=user, uploads=uploads, config=config)
 
@@ -224,10 +233,10 @@ def resolve_attachments(
     with transaction.atomic():
         for item in items:
             attachment = Attachment(
-                file=item["file_path"],
-                mime_type=item["content_type"],
-                original_filename=item["filename"],
-                namespace=item.get("namespace"),
+                file=item.file_path,
+                mime_type=item.content_type,
+                original_filename=item.filename,
+                namespace=item.namespace,
                 content_type=content_type,
                 object_id=content_object.id,
                 uploaded_by=user,

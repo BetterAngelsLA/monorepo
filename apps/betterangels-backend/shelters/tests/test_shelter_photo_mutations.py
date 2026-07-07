@@ -208,9 +208,10 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self, mock_validate: MagicMock
     ) -> None:
         mock_validate.return_value = [
-            {"presigned_key": "media/shelters/abc.jpg", "upload_token": "t",
-             "filename": "photo.jpg", "content_type": "image/jpeg", "photo_type": "INTERIOR",
-             "file_path": "shelters/abc.jpg"}
+            MagicMock(
+                presigned_key="media/shelters/abc.jpg",
+                file_path="shelters/abc.jpg",
+            )
         ]
         initial_count = ShelterPhoto.objects.count()
 
@@ -250,12 +251,8 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self, mock_validate: MagicMock
     ) -> None:
         mock_validate.return_value = [
-            {"presigned_key": "media/shelters/a.jpg", "upload_token": "t",
-             "filename": "a.jpg", "content_type": "image/jpeg", "photo_type": "INTERIOR",
-             "file_path": "shelters/a.jpg"},
-            {"presigned_key": "media/shelters/b.jpg", "upload_token": "t",
-             "filename": "b.jpg", "content_type": "image/jpeg", "photo_type": "EXTERIOR",
-             "file_path": "shelters/b.jpg"},
+            MagicMock(file_path="shelters/a.jpg"),
+            MagicMock(file_path="shelters/b.jpg"),
         ]
         initial_count = ShelterPhoto.objects.count()
 

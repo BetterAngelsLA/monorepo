@@ -12,6 +12,7 @@ from notes.services import (
     create_note_attachment_presigned_uploads,
     resolve_note_attachment_uploads,
 )
+from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
 
 
 class CreateNoteAttachmentPresignedUploadsTest(TestCase):
@@ -23,7 +24,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     @patch("notes.services.generic_create_presigned_uploads")
     def test_delegates_to_generic_with_note_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            {"ref_id": "ref-1", "filename": "a.pdf", "content_type": "application/pdf"},
+            GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -52,7 +53,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
 
         result = create_note_attachment_presigned_uploads(
             user=self.user,
-            uploads=[{"ref_id": "ref-1", "filename": "a.pdf", "content_type": "application/pdf"}],
+            uploads=[GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
@@ -88,12 +89,12 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         mock_generic.return_value = [attachment]
 
         attachments = [
-            {
-                "presigned_key": "media/note_attachments/abc.pdf",
-                "upload_token": "token-1",
-                "filename": "doc.pdf",
-                "content_type": "application/pdf",
-            }
+            ResolveUploadItem(
+                presigned_key="media/note_attachments/abc.pdf",
+                upload_token="token-1",
+                filename="doc.pdf",
+                content_type="application/pdf",
+            )
         ]
 
         resolve_note_attachment_uploads(user=self.user, note=self.note, attachments=attachments)
@@ -123,12 +124,12 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             user=self.user,
             note=self.note,
             attachments=[
-                {
-                    "presigned_key": "media/note_attachments/abc.pdf",
-                    "upload_token": "token-1",
-                    "filename": "doc.pdf",
-                    "content_type": "application/pdf",
-                }
+                ResolveUploadItem(
+                    presigned_key="media/note_attachments/abc.pdf",
+                    upload_token="token-1",
+                    filename="doc.pdf",
+                    content_type="application/pdf",
+                )
             ],
         )
 
@@ -158,18 +159,18 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             user=self.user,
             note=self.note,
             attachments=[
-                {
-                    "presigned_key": "media/note_attachments/a.pdf",
-                    "upload_token": "tok-1",
-                    "filename": "a.pdf",
-                    "content_type": "application/pdf",
-                },
-                {
-                    "presigned_key": "media/note_attachments/b.pdf",
-                    "upload_token": "tok-2",
-                    "filename": "b.pdf",
-                    "content_type": "application/pdf",
-                },
+                ResolveUploadItem(
+                    presigned_key="media/note_attachments/a.pdf",
+                    upload_token="tok-1",
+                    filename="a.pdf",
+                    content_type="application/pdf",
+                ),
+                ResolveUploadItem(
+                    presigned_key="media/note_attachments/b.pdf",
+                    upload_token="tok-2",
+                    filename="b.pdf",
+                    content_type="application/pdf",
+                ),
             ],
         )
 
@@ -203,12 +204,12 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             user=self.user,
             note=self.note,
             attachments=[
-                {
-                    "presigned_key": "media/note_attachments/abc.pdf",
-                    "upload_token": "token-1",
-                    "filename": "doc.pdf",
-                    "content_type": "application/pdf",
-                }
+                ResolveUploadItem(
+                    presigned_key="media/note_attachments/abc.pdf",
+                    upload_token="token-1",
+                    filename="doc.pdf",
+                    content_type="application/pdf",
+                )
             ],
         )
 
