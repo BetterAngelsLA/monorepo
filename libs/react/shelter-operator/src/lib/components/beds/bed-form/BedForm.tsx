@@ -1,20 +1,13 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isMutationSuccess } from '@monorepo/react/shared';
+import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { BedsDocument } from '../../../hooks/useBeds/__generated__/useBeds.generated';
 import {
-  CreateBedDocument,
-  type CreateBedMutation,
-  type CreateBedMutationVariables,
-} from '../../../hooks/useCreateBed/__generated__/useCreateBed.generated';
-import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
-import {
-  UpdateBedDocument,
-  type UpdateBedMutation,
-  type UpdateBedMutationVariables,
-} from '../../../hooks/useUpdateBed/__generated__/useUpdateBed.generated';
+  useCreateBed,
+  useFilteredPropertyOptions,
+  useUpdateBed,
+} from '../../../hooks';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
@@ -27,7 +20,6 @@ import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
-
 export type BedFormProps = {
   shelterId: string;
   bedId?: string;
@@ -77,20 +69,9 @@ export function BedForm({
 
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
 
-  const refetchQueries = useMemo(
-    () => [{ query: BedsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
+  const { createBed: createBedMutation, loading: isCreating } = useCreateBed();
 
-  const [createBed, { loading: isCreating }] = useMutation<
-    CreateBedMutation,
-    CreateBedMutationVariables
-  >(CreateBedDocument, { refetchQueries });
-
-  const [updateBed, { loading: isUpdating }] = useMutation<
-    UpdateBedMutation,
-    UpdateBedMutationVariables
-  >(UpdateBedDocument, { refetchQueries });
+  const { updateBed: updateBedMutation, loading: isUpdating } = useUpdateBed();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -99,53 +80,48 @@ export function BedForm({
 
     try {
       if (isEditMode && bedId) {
-        const { data: result } = await updateBed({
+        const { data: result } = await updateBedMutation({
           variables: {
             id: bedId,
             data: buildUpdateBedInput(data),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.updateBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateBed.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to update bed. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
+        const errorMessage = extractOperationInfoMessage(result, 'updateBed');
+        if (errorMessage) {
+          console.error(errorMessage);
+          setSubmissionError('Unable to update bed. Please try again.');
           return;
         }
       } else {
-        const { data: result } = await createBed({
+        const { data: result } = await createBedMutation({
           variables: {
             data: buildCreateBedInput(data, shelterId),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.createBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.createBed.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to create bed. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.createBed, 'BedType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
+        const errorMessage = extractOperationInfoMessage(result, 'createBed');
+        if (errorMessage) {
+          console.error(errorMessage);
+          setSubmissionError('Unable to create bed. Please try again.');
           return;
         }
       }
-
-      if (!isEditMode) {
-        reset();
-      }
-      onSuccess?.();
-    } catch {
-      setSubmissionError('A network error occurred. Please try again.');
+    } catch (err) {
+      const error = toError(err);
+      console.error(
+        `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`
+      );
+      setSubmissionError(
+        `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
+      );
+      return;
     }
+
+    if (!isEditMode) {
+      reset();
+    }
+    onSuccess?.();
   }
 
   function handleCancel() {
@@ -158,10 +134,17 @@ export function BedForm({
       <div className="space-y-4 pb-48">
         {submissionError && (
           <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
-            {submissionError}
+            <span className="flex-1">{submissionError}</span>
+            <button
+              onClick={() => setSubmissionError(null)}
+              className="ml-3 text-red-400 hover:text-red-600"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
