@@ -7,8 +7,13 @@ from accounts.selectors import resolve_permission_group
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
 from common.graphql.utils import get_object_or_permission_error
+from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.team_shim import resolve_team_id_from_input
 from django.db import transaction
@@ -21,10 +26,12 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from notes.services import (
+    create_note_attachment_presigned_uploads,
     note_create,
     note_service_request_create,
     note_update,
     note_update_location,
+    resolve_note_attachment_uploads,
     service_request_delete,
 )
 from notes.utils import NoteReverter
@@ -40,14 +47,18 @@ from .types import (
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteServiceRequestInput,
+    GenerateNoteAttachmentUploadsInput,
     ImportNoteInput,
     InteractionAuthorType,
+    NoteAttachmentType,
+    NoteAttachmentUploadsType,
     NoteDataImportType,
     NoteFilter,
     NoteImportRecordType,
     NoteType,
     OrganizationServiceCategoryType,
     OrganizationServiceType,
+    ResolveNoteAttachmentUploadsInput,
     RevertNoteInput,
     ServiceRequestType,
     UpdateNoteInput,
@@ -355,3 +366,49 @@ class Mutation:
                 error_message=str(e),
             )
         return cast(NoteImportRecordType, record)
+
+    # ── Note Attachment Presigned S3 Uploads ────────────────────────────
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(Attachment.perms.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
+    )
+    def generate_note_attachment_uploads(
+        self,
+        info: Info,
+        data: GenerateNoteAttachmentUploadsInput,
+    ) -> AuthorizedPresignedS3UploadsType:
+        user = cast(User, get_current_user(info))
+
+        qs: QuerySet[Note] = info.context.qs
+        get_object_or_permission_error(qs, data.note_id)
+
+        upload_dicts = [strawberry.asdict(u) for u in data.uploads]
+        presigned = create_note_attachment_presigned_uploads(user=user, uploads=upload_dicts)
+
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(Attachment.perms.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
+    )
+    def resolve_note_attachment_uploads(
+        self,
+        info: Info,
+        data: ResolveNoteAttachmentUploadsInput,
+    ) -> NoteAttachmentUploadsType:
+        user = cast(User, get_current_user(info))
+
+        qs: QuerySet[Note] = info.context.qs
+        note = get_object_or_permission_error(qs, data.note_id)
+
+        attachment_dicts = [strawberry.asdict(a) for a in data.attachments]
+        attachments = resolve_note_attachment_uploads(user=user, note=note, attachments=attachment_dicts)
+
+        return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))

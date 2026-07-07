@@ -1,14 +1,25 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
+import strawberry
 from accounts.models import PermissionGroup, User
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
-from common.models import Location
+from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
+from common.models import Attachment, Location
 from common.permissions.utils import assign_object_permissions
+from common.services.attachment_upload import (
+    AttachmentUploadConfig,
+    ResolveUploadInput,
+    create_presigned_uploads as generic_create_presigned_uploads,
+    resolve_attachments as generic_resolve_attachments,
+)
+from common.services.types import AuthorizedPresignedUploadBatch
 from django.db import transaction
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
@@ -296,3 +307,59 @@ def note_create(
         )
 
     return note
+
+
+# ---------------------------------------------------------------------------
+# Note Attachment Presigned S3 Uploads
+# ---------------------------------------------------------------------------
+
+NOTE_ATTACHMENT_UPLOAD_PATH = "note_attachments"
+NOTE_ATTACHMENT_SERVICE_NAME = "note_attachment"
+
+NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
+    upload_path=NOTE_ATTACHMENT_UPLOAD_PATH,
+    service_name=NOTE_ATTACHMENT_SERVICE_NAME,
+    allowed_content_types=DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES,
+)
+
+
+def create_note_attachment_presigned_uploads(
+    *,
+    user: User,
+    uploads: Iterable[dict],
+) -> AuthorizedPresignedUploadBatch:
+    """Generate presigned S3 URLs and upload tokens for note attachments (Phase 1)."""
+    return generic_create_presigned_uploads(
+        user=user,
+        uploads=uploads,
+        config=NOTE_ATTACHMENT_CONFIG,
+    )
+
+
+def resolve_note_attachment_uploads(
+    *,
+    user: User,
+    note: Note,
+    attachments: Iterable[dict],
+) -> list[Attachment]:
+    """Validate tokens + S3 → create Attachment rows for a note (Phase 3)."""
+    permission_group = resolve_permission_group(user, template=CASEWORKER)
+
+    attached = generic_resolve_attachments(
+        user=user,
+        content_object=note,
+        uploads=attachments,
+        config=NOTE_ATTACHMENT_CONFIG,
+    )
+
+    for att in attached:
+        assign_object_permissions(
+            permission_group.group,
+            att,
+            [
+                Attachment.perms.DELETE,
+                Attachment.perms.CHANGE,
+            ],
+        )
+
+    return attached
