@@ -13,42 +13,20 @@ import {
 } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
 
-export type BedRoomForList = {
-  id: string;
-  roomLabel: string;
-  beds: BedType[];
-};
-
-export type BedRowObject = {
-  bedId: string;
-  name: string;
-  status?: BedType['status'];
+export type Bed = BedType & {
   roomId: string;
   roomAssignment: string;
 };
 
-type FlatBedRow = {
-  bed: BedType;
+export type BedRowObject = {
+  id: string;
+  bed: Bed;
   roomId: string;
   roomAssignment: string;
 };
 
 function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
   return status === BedStatusChoices.Available;
-}
-
-function flattenRooms(rooms: BedRoomForList[]): FlatBedRow[] {
-  const out: FlatBedRow[] = [];
-  for (const room of rooms) {
-    for (const bed of room.beds) {
-      out.push({
-        bed,
-        roomId: room.id,
-        roomAssignment: room.roomLabel,
-      });
-    }
-  }
-  return out;
 }
 
 function bedStatusInfo(
@@ -78,16 +56,16 @@ function bedStatusInfo(
 }
 
 type BedTableProps = {
-  rooms: BedRoomForList[];
-  getRowKey?: (item: FlatBedRow, index: number) => string;
+  beds: Bed[];
+  getRowKey?: (bed: Bed, index: number) => string;
   onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
   selectedBedIds?: string[];
   onSelectedBedIdsChange?: (ids: string[]) => void;
-  onClone?: (rowObject: BedRowObject, rowIndex: number) => void;
-  onEdit?: (rowObject: BedRowObject, rowIndex: number) => void;
+  onClone?: (rowObject: BedRowObject) => void;
+  onEdit?: (rowObject: BedRowObject) => void;
   onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (rowObject: BedRowObject, rowIndex: number) => void;
-  onReserve?: (rowObject: BedRowObject, rowIndex: number) => void;
+  onMarkReady?: (rowObject: BedRowObject) => void;
+  onReserve?: (rowObject: BedRowObject) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -99,26 +77,11 @@ type BedTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  trailingColumnWidth?: string;
 };
 
-function toRowObject(
-  bed: BedType,
-  roomId: string,
-  roomAssignment: string
-): BedRowObject {
-  return {
-    bedId: bed.id,
-    name: bed.name ?? '',
-    status: bed.status,
-    roomId,
-    roomAssignment,
-  };
-}
-
 export function BedTable({
-  rooms,
-  getRowKey: getRowKeyFlat,
+  beds,
+  getRowKey,
   onRowClick,
   selectedBedIds,
   onSelectedBedIdsChange,
@@ -138,102 +101,89 @@ export function BedTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  trailingColumnWidth = '140px',
 }: BedTableProps) {
-  const flatBedRows = useMemo(() => flattenRooms(rooms), [rooms]);
-
   const selectedSet = useMemo(
     () => new Set(selectedBedIds ?? []),
     [selectedBedIds]
   );
 
-  const toggleOne = useCallback(
-    (bedId: string, checked: boolean) => {
+  const toggleRowSelection = useCallback(
+    (bedId: string) => {
       if (!onSelectedBedIdsChange) return;
       const next = new Set(selectedSet);
-      if (checked) next.add(bedId);
-      else next.delete(bedId);
+      if (next.has(bedId)) {
+        next.delete(bedId);
+      } else {
+        next.add(bedId);
+      }
       onSelectedBedIdsChange([...next]);
     },
     [onSelectedBedIdsChange, selectedSet]
   );
 
-  const hasActionSlot = !!(
-    onClone ||
-    onDeleteBeds ||
-    onEdit ||
-    onMarkReady ||
-    onReserve
-  );
   const showCheckboxColumn = !!onSelectedBedIdsChange;
 
-  const defaultColumns: TableColumn<FlatBedRow>[] = useMemo(() => {
-    const selectionColumn: TableColumn<FlatBedRow> = {
-      key: 'select',
-      label: <span className="sr-only">Select row</span>,
-      width: '52px',
-      headerClassName: 'justify-self-start',
-      cellClassName: 'justify-self-start',
-      render: ({ bed }) => {
-        const selected = selectedSet.has(bed.id);
-        return (
-          <span
-            className="inline-flex items-center"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <label className="inline-flex cursor-pointer items-center">
-              <input
-                type="checkbox"
-                className="peer sr-only"
-                checked={selected}
-                onChange={(e) => toggleOne(bed.id, e.target.checked)}
-                aria-label={`Select ${bed.name}`}
-              />
-              <span
-                className={mergeCss([
-                  'inline-flex size-4 shrink-0 items-center justify-center rounded border border-gray-300 bg-white',
-                  'peer-checked:border-[#008CEE] peer-checked:bg-[#008CEE]',
-                  'peer-focus-visible:ring-2 peer-focus-visible:ring-[#008CEE] peer-focus-visible:ring-offset-1',
-                  'peer-checked:[&_.bed-row-select-minus]:opacity-100',
-                ])}
-              >
-                <Minus
-                  className="bed-row-select-minus opacity-0 text-white"
-                  size={12}
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              </span>
-            </label>
-          </span>
-        );
-      },
-    };
-
-    return [
-      ...(showCheckboxColumn ? [selectionColumn] : []),
+  const columns: TableColumn<Bed>[] = useMemo(
+    () => [
+      ...(showCheckboxColumn
+        ? [
+            {
+              key: 'selected' as const,
+              label: '',
+              width: '2rem',
+              render: (bed: Bed) => {
+                const isSelected = selectedSet.has(bed.id);
+                return (
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    aria-label={isSelected ? 'Deselect bed' : 'Select bed'}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleRowSelection(bed.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        toggleRowSelection(bed.id);
+                      }
+                    }}
+                    className={mergeCss([
+                      'inline-flex size-5 items-center justify-center rounded border transition-colors',
+                      isSelected
+                        ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
+                        : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
+                    ])}
+                  >
+                    <Minus size={14} strokeWidth={3} />
+                  </button>
+                );
+              },
+            },
+          ]
+        : []),
       {
         key: 'bedId',
         label: 'Bed',
         width: '1.1fr',
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: ({ bed }) => bed.name || bed.id,
-        sortValue: ({ bed }) => bed.name || bed.id,
-        filterValue: ({ bed }) => bed.name || bed.id,
+        render: (bed) => bed.name ?? bed.id,
+        sortValue: (bed) => bed.name ?? bed.id,
+        filterValue: (bed) => bed.name ?? bed.id,
       },
       {
         key: 'status',
         label: 'Status',
         width: 'minmax(140px, 1fr)',
-        render: ({ bed }) => {
+        render: (bed) => {
           const info = bedStatusInfo(bed.status, bed.maintenanceFlag);
           return <StatusBadge label={info.label} variant={info.variant} />;
         },
-        sortValue: ({ bed }) =>
+        sortValue: (bed) =>
           bedStatusInfo(bed.status, bed.maintenanceFlag).label,
-        filterValue: ({ bed }) =>
+        filterValue: (bed) =>
           bedStatusInfo(bed.status, bed.maintenanceFlag).label,
         autoFilterOptions: true,
       },
@@ -243,85 +193,85 @@ export function BedTable({
         width: '1fr',
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: ({ roomAssignment }) => roomAssignment || '—',
-        sortValue: ({ roomAssignment }) => roomAssignment || '',
+        render: (bed) => bed.roomAssignment || '—',
+        sortValue: (bed) => bed.roomAssignment || '',
       },
-    ];
-  }, [showCheckboxColumn, selectedSet, toggleOne]);
+    ],
+    [selectedSet, toggleRowSelection, showCheckboxColumn]
+  );
 
   return (
-    <Table<FlatBedRow, BedRowObject>
-      columns={defaultColumns}
-      rows={flatBedRows}
-      getRowKey={getRowKeyFlat ?? ((row) => row.bed.id)}
-      getRowObject={(row) =>
-        toRowObject(row.bed, row.roomId, row.roomAssignment)
-      }
-      getRowSlot={
-        hasActionSlot
-          ? (rowObject, _item, rowIndex) => (
-              <div
-                className="flex items-center justify-end gap-1"
-                onClick={(e) => e.stopPropagation()}
-                role="group"
-                aria-label="Bed actions"
-              >
-                {rowObject.status === BedStatusChoices.InTurnaround &&
-                  onMarkReady && (
-                    <Button
-                      type="button"
-                      variant="confirm"
-                      aria-label="Mark ready"
-                      onClick={() => onMarkReady(rowObject, rowIndex)}
-                    />
-                  )}
-                {onReserve && (
-                  <Button
-                    type="button"
-                    variant="edit"
-                    aria-label="Reserve bed"
-                    disabled={!isBedAvailable(rowObject.status)}
-                    leftIcon={
-                      <BookCheck
-                        size={22}
-                        stroke={
-                          !isBedAvailable(rowObject.status) ? 'gray' : 'black'
-                        }
-                      />
-                    }
-                    onClick={() => onReserve(rowObject, rowIndex)}
-                  />
-                )}
-                {onClone && (
-                  <Button
-                    type="button"
-                    variant="edit"
-                    aria-label="Clone bed"
-                    leftIcon={<CopyPlus size={22} stroke="black" />}
-                    onClick={() => onClone(rowObject, rowIndex)}
-                  />
-                )}
-                {onEdit && (
-                  <Button
-                    type="button"
-                    variant="edit"
-                    aria-label="Edit bed"
-                    onClick={() => onEdit(rowObject, rowIndex)}
-                  />
-                )}
-                {onDeleteBeds && (
-                  <Button
-                    type="button"
-                    variant="trash"
-                    aria-label="Delete bed"
-                    onClick={() => onDeleteBeds([rowObject.bedId])}
-                  />
-                )}
-              </div>
-            )
-          : undefined
-      }
-      trailingColumnWidth={hasActionSlot ? trailingColumnWidth : undefined}
+    <Table<Bed, BedRowObject>
+      columns={columns}
+      rows={beds}
+      getRowKey={getRowKey ?? ((bed) => bed.id)}
+      getRowObject={(bed) => ({
+        id: bed.id,
+        bed,
+        roomId: bed.roomId,
+        roomAssignment: bed.roomAssignment,
+      })}
+      getRowSlot={(rowObject) => (
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={(e) => e.stopPropagation()}
+          role="group"
+          aria-label="Bed actions"
+        >
+          {rowObject.bed.status === BedStatusChoices.InTurnaround &&
+            onMarkReady && (
+              <Button
+                type="button"
+                variant="confirm"
+                aria-label="Mark ready"
+                onClick={() => onMarkReady(rowObject)}
+              />
+            )}
+          {onReserve && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="Reserve bed"
+              disabled={!isBedAvailable(rowObject.bed.status)}
+              leftIcon={
+                <BookCheck
+                  size={22}
+                  stroke={
+                    !isBedAvailable(rowObject.bed.status) ? 'gray' : 'black'
+                  }
+                />
+              }
+              onClick={() => onReserve(rowObject)}
+            />
+          )}
+          {onClone && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="Clone bed"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
+              onClick={() => onClone(rowObject)}
+            />
+          )}
+          {onEdit && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="Edit bed"
+              onClick={() => onEdit(rowObject)}
+            />
+          )}
+          {onDeleteBeds && (
+            <Button
+              type="button"
+              variant="trash"
+              aria-label="Delete bed"
+              onClick={() => onDeleteBeds([rowObject.id])}
+            />
+          )}
+        </div>
+      )}
+      trailingColumnWidth="140px"
       onRowClick={onRowClick}
       loading={loading}
       loadingState={loadingState}

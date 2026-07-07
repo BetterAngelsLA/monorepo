@@ -1,9 +1,12 @@
-import { useMutation, useQuery } from '@apollo/client/react';
-import { isMutationSuccess } from '@monorepo/react/shared';
+import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type BedType } from '../../apollo/graphql/__generated__/types';
+import { OperatorShelterType } from '../../apollo/graphql/__generated__/types';
+import { useBeds, type UseBedsResultType } from '../../hooks/useBeds';
+import { useCloneBed } from '../../hooks/useCloneBed';
+import { useDeleteBeds } from '../../hooks/useDeleteBeds';
+import { useUpdateBed } from '../../hooks/useUpdateBed';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
@@ -11,47 +14,65 @@ import {
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
-import {
-  CloneBedDocument,
-  DeleteBedsDocument,
-  UpdateBedDocument,
-  UpdateBedMutation,
-  UpdateBedMutationVariables,
-  type CloneBedMutation,
-  type CloneBedMutationVariables,
-  type DeleteBedsMutation,
-  type DeleteBedsMutationVariables,
-} from './api/__generated__/bedMutations.generated';
-import {
-  GetBedsDocument,
-  type GetBedsQuery,
-  type GetBedsQueryVariables,
-} from './api/__generated__/bedQueries.generated';
+import { BedTable, type Bed, type BedRowObject } from '../BedTable';
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
 
+function toBedRow(
+  bedData: UseBedsResultType[number],
+  roomId: string,
+  roomAssignment: string
+): Bed {
+  return {
+    __typename: 'BedType',
+    id: bedData.id,
+    name: bedData.name,
+    status: bedData.status,
+    maintenanceFlag: bedData.maintenanceFlag,
+    type: bedData.type ?? null,
+    accessibility: [],
+    b7: false,
+    demographics: [],
+    funders: [],
+    medicalNeeds: [],
+    pets: [],
+    shelter: {} as OperatorShelterType,
+    storage: false,
+    roomId,
+    roomAssignment,
+  };
+}
+
 export function BedsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  const { data, loading, refetch } = useQuery<
-    GetBedsQuery,
-    GetBedsQueryVariables
-  >(GetBedsDocument, {
-    variables: { shelterId },
-    skip: !shelterId,
-  });
+  const { beds: bedsData, loading, refetch } = useBeds(shelterId);
 
-  const [cloneBed] = useMutation<CloneBedMutation, CloneBedMutationVariables>(
-    CloneBedDocument
-  );
+  const beds = useMemo<Bed[]>(() => {
+    const grouped = new Map<string, Bed[]>();
 
-  const [deleteBeds] = useMutation<
-    DeleteBedsMutation,
-    DeleteBedsMutationVariables
-  >(DeleteBedsDocument);
+    for (const bed of bedsData) {
+      const roomId = bed.room?.id ?? UNASSIGNED_ROOM_ID;
+      const roomAssignment = bed.room?.name ?? UNASSIGNED_ROOM_LABEL;
+      const roomGroup = grouped.get(roomId) ?? [];
+
+      roomGroup.push(toBedRow(bed, roomId, roomAssignment));
+
+      grouped.set(roomId, roomGroup);
+    }
+
+    return Array.from(grouped.values()).flat();
+  }, [bedsData]);
+
+  const { cloneBed } = useCloneBed();
+  const [cloneError, setCloneError] = useState<string | null>(null);
+
+  const { deleteBeds } = useDeleteBeds();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const { updateBed } = useUpdateBed();
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
@@ -67,146 +88,93 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       ? 'Are you sure you want to delete the selected bed?'
       : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
 
-  const rooms = useMemo<BedRoomForList[]>(() => {
-    const grouped = new Map<string, BedRoomForList>();
-
-    for (const bed of data?.beds.results ?? []) {
-      const roomId = bed.room?.id ?? UNASSIGNED_ROOM_ID;
-      const roomLabel = bed.room?.name ?? UNASSIGNED_ROOM_LABEL;
-      const roomGroup = grouped.get(roomId) ?? {
-        id: roomId,
-        roomLabel,
-        beds: [],
-      };
-
-      roomGroup.beds.push({
-        __typename: 'BedType',
-        id: bed.id,
-        accessibility: [],
-        b7: false,
-        demographics: [],
-        funders: [],
-        maintenanceFlag: bed.maintenanceFlag,
-        medicalNeeds: [],
-        name: bed.name,
-        pets: [],
-        shelter: {} as never,
-        status: bed.status,
-        storage: false,
-        type: bed.type ?? null,
-      } as unknown as BedType);
-
-      grouped.set(roomId, roomGroup);
-    }
-
-    return Array.from(grouped.values());
-  }, [data?.beds.results]);
-
-  const handleEdit = useCallback(
-    (rowObject: BedRowObject) => {
-      navigate(shelterEditBedRoute(shelterId, rowObject.bedId));
-    },
-    [navigate, shelterId]
-  );
-
   const handleClone = useCallback(
     async (rowObject: BedRowObject) => {
-      setActionError(null);
+      const errorMsg = 'Unable to clone bed. Please try again.';
+      setCloneError(null);
       try {
-        const { data: result } = await cloneBed({
-          variables: { id: rowObject.bedId },
-          errorPolicy: 'all',
-        });
-
-        if (result?.cloneBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.cloneBed.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to clone bed. Please try again.'
-          );
+        const response = await cloneBed({ variables: { id: rowObject.id } });
+        const errorMessage = extractOperationInfoMessage(response, 'cloneBed');
+        if (errorMessage) {
+          console.error(`error cloning bed: ${errorMessage}`);
+          setCloneError(errorMsg);
           return;
         }
-        if (!isMutationSuccess(result?.cloneBed, 'BedType')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
         await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
+      } catch (err) {
+        const error = toError(err);
+
+        console.error(`error cloning bed: ${error.message}`);
+        setCloneError(errorMsg);
       }
     },
     [cloneBed, refetch]
   );
 
-  const handleDeleteBedsRequest = useCallback((bedIds: string[]) => {
+  const handleEdit = useCallback(
+    (rowObject: BedRowObject) => {
+      navigate(shelterEditBedRoute(shelterId, rowObject.id));
+    },
+    [navigate, shelterId]
+  );
+
+  const handleDeleteRequest = useCallback((bedIds: string[]) => {
     setDeleteConfirmation({ isOpen: true, bedIds });
   }, []);
 
-  const handleDeleteBeds = useCallback(
-    async (bedIds: string[]) => {
-      setActionError(null);
+  const handleDelete = useCallback(
+    async (ids: string[]) => {
+      const plural = ids.length > 1 ? 's' : '';
+      const errorMsg = `Unable to delete bed${plural}. Please try again.`;
+
+      setDeleteError(null);
       try {
-        const { data: result } = await deleteBeds({
-          variables: { data: { ids: bedIds } },
-          errorPolicy: 'all',
+        const response = await deleteBeds({
+          variables: { data: { ids: ids } },
         });
-
-        if (result?.deleteBeds?.__typename === 'OperationInfo') {
-          const firstMessage = result.deleteBeds.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to delete bed(s). Please try again.'
-          );
+        const errorMessage = extractOperationInfoMessage(
+          response,
+          'deleteBeds'
+        );
+        if (errorMessage) {
+          console.error(`error deleting bed${plural}: ${errorMessage}`);
+          setDeleteError(errorMsg);
           return;
         }
-        if (!isMutationSuccess(result?.deleteBeds, 'BulkDeleteResult')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
         await refetch();
-      } catch {
-        setActionError('Unable to delete bed(s). Please try again.');
+      } catch (err) {
+        const error = toError(err);
+
+        console.error(`error deleting bed${plural}: ${error.message}`);
+        setDeleteError(errorMsg);
       }
     },
     [deleteBeds, refetch]
   );
-  const refetchQueries = useMemo(
-    () => [{ query: GetBedsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
-  const [updateBed] = useMutation<
-    UpdateBedMutation,
-    UpdateBedMutationVariables
-  >(UpdateBedDocument, { refetchQueries });
+
   const handleMarkReady = useCallback(
     async (rowObject: BedRowObject) => {
-      setActionError(null);
+      const errorMsg = 'Unable to update bed. Please try again.';
+      setUpdateError(null);
       try {
-        const { data: result } = await updateBed({
+        const response = await updateBed({
           variables: {
-            id: rowObject.bedId,
-            data: {
-              lastCleaned: new Date().toISOString(),
-            },
+            id: rowObject.id,
+            data: { lastCleaned: new Date().toISOString() },
           },
-          errorPolicy: 'all',
         });
-
-        if (result?.updateBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateBed.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to update bed. Please try again.'
-          );
+        const errorMessage = extractOperationInfoMessage(response, 'updateBed');
+        if (errorMessage) {
+          console.error(`error updating bed: ${errorMessage}`);
+          setUpdateError(errorMsg);
           return;
         }
-        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
         await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
+      } catch (err) {
+        const error = toError(err);
+
+        console.error(`error updating bed: ${error.message}`);
+        setUpdateError(errorMsg);
       }
     },
     [updateBed, refetch]
@@ -228,7 +196,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const handleReserve = useCallback(
     (rowObject: BedRowObject) => {
       const state: Record<string, string | null> = {
-        bedId: rowObject.bedId,
+        bedId: rowObject.id,
         roomId:
           rowObject.roomId !== UNASSIGNED_ROOM_ID ? rowObject.roomId : null,
       };
@@ -239,22 +207,35 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   return (
     <>
-      {actionError && (
+      {(cloneError || deleteError || updateError) && (
         <div
-          className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="mx-4 mt-4 flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           role="alert"
         >
-          {actionError}
+          <span className="flex-1">
+            {cloneError || deleteError || updateError}
+          </span>
+          <button
+            onClick={() => {
+              setCloneError(null);
+              setDeleteError(null);
+              setUpdateError(null);
+            }}
+            className="ml-3 text-red-400 hover:text-red-600"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
         </div>
       )}
 
       <div>
         <BedTable
-          rooms={rooms}
+          beds={beds}
           loading={loading}
           onEdit={handleEdit}
           onClone={handleClone}
-          onDeleteBeds={handleDeleteBedsRequest}
+          onDeleteBeds={handleDeleteRequest}
           onMarkReady={handleMarkReadyRequest}
           onReserve={handleReserve}
         />
@@ -270,7 +251,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           label: 'Delete',
           onClick: () => {
             if (deleteConfirmation.bedIds.length > 0) {
-              handleDeleteBeds(deleteConfirmation.bedIds);
+              handleDelete(deleteConfirmation.bedIds);
             }
             closeDeleteConfirmation();
           },

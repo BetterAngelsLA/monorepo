@@ -3,26 +3,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { isMutationSuccess } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { BedsDocument } from '../../../hooks/useBeds/__generated__/useBeds.generated';
+import {
+  CreateBedDocument,
+  type CreateBedMutation,
+  type CreateBedMutationVariables,
+} from '../../../hooks/useCreateBed/__generated__/useCreateBed.generated';
 import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
+import {
+  UpdateBedDocument,
+  type UpdateBedMutation,
+  type UpdateBedMutationVariables,
+} from '../../../hooks/useUpdateBed/__generated__/useUpdateBed.generated';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
-import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
-import {
-  CreateBedDocument,
-  buildCreateBedInput,
-  buildUpdateBedInput,
-  type CreateBedMutation,
-  type CreateBedMutationVariables,
-} from '../api/createBedMutation';
-import {
-  UpdateBedDocument,
-  type UpdateBedMutation,
-  type UpdateBedMutationVariables,
-} from '../api/updateBedMutation';
+import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
@@ -79,7 +78,7 @@ export function BedForm({
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
 
   const refetchQueries = useMemo(
-    () => [{ query: GetBedsDocument, variables: { shelterId } }],
+    () => [{ query: BedsDocument, variables: { shelterId } }],
     [shelterId]
   );
 
