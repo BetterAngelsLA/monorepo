@@ -1,26 +1,17 @@
-import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isMutationSuccess } from '@monorepo/react/shared';
-import { useMemo, useState } from 'react';
+import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
+import {
+  useCreateRoom,
+  useFilteredPropertyOptions,
+  useUpdateRoom,
+} from '../../../hooks';
 import { Form } from '../../form/Form';
-import { GetRoomsDocument } from '../api/__generated__/roomQueries.generated';
-import {
-  CreateRoomDocument,
-  buildCreateRoomInput,
-  type CreateRoomMutation,
-  type CreateRoomMutationVariables,
-} from '../api/createRoomMutation';
-import {
-  UpdateRoomDocument,
-  buildUpdateRoomInput,
-  type UpdateRoomMutation,
-  type UpdateRoomMutationVariables,
-} from '../api/updateRoomMutation';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
 import { formSchema } from './constants/formSchema';
 import type { RoomFormData } from './formTypes';
+import { buildCreateRoomInput, buildUpdateRoomInput } from './roomFormInput';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { RoomDetailsSection } from './sections/RoomDetailsSection';
 
@@ -54,20 +45,9 @@ export function RoomForm({
     formState: { errors, isValid },
   } = methods;
 
-  const refetchQueries = useMemo(
-    () => [{ query: GetRoomsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
+  const { createRoom, loading: isCreating } = useCreateRoom();
 
-  const [createRoom, { loading: isCreating }] = useMutation<
-    CreateRoomMutation,
-    CreateRoomMutationVariables
-  >(CreateRoomDocument, { refetchQueries });
-
-  const [updateRoom, { loading: isUpdating }] = useMutation<
-    UpdateRoomMutation,
-    UpdateRoomMutationVariables
-  >(UpdateRoomDocument, { refetchQueries });
+  const { updateRoom, loading: isUpdating } = useUpdateRoom();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -83,18 +63,12 @@ export function RoomForm({
             id: roomId,
             data: buildUpdateRoomInput(data),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.updateRoom?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateRoom.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to update room. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.updateRoom, 'RoomType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
+        const errorMessage = extractOperationInfoMessage(result, 'updateRoom');
+        if (errorMessage) {
+          console.error(errorMessage);
+          setSubmissionError('Unable to update room. Please try again.');
           return;
         }
       } else {
@@ -102,29 +76,30 @@ export function RoomForm({
           variables: {
             data: buildCreateRoomInput(data, shelterId),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.createRoom?.__typename === 'OperationInfo') {
-          const firstMessage = result.createRoom.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to create room. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.createRoom, 'RoomType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
+        const errorMessage = extractOperationInfoMessage(result, 'createRoom');
+        if (errorMessage) {
+          console.error(errorMessage);
+          setSubmissionError('Unable to create room. Please try again.');
           return;
         }
       }
-
-      if (!isEditMode) {
-        reset();
-      }
-      onSuccess?.();
-    } catch {
-      setSubmissionError('A network error occurred. Please try again.');
+    } catch (err) {
+      const error = toError(err);
+      console.error(
+        `error ${roomId ? 'updating' : 'creating'} room: ${error.message}`
+      );
+      setSubmissionError(
+        `Unable to ${roomId ? 'update' : 'create'} room. Please try again.`
+      );
+      return;
     }
+
+    if (!isEditMode) {
+      reset();
+    }
+    onSuccess?.();
   }
 
   function handleCancel() {
@@ -137,10 +112,17 @@ export function RoomForm({
       <div className="space-y-4 pb-48">
         {submissionError && (
           <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
-            {submissionError}
+            <span className="flex-1">{submissionError}</span>
+            <button
+              onClick={() => setSubmissionError(null)}
+              className="ml-3 text-red-400 hover:text-red-600"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 

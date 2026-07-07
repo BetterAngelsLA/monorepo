@@ -9,13 +9,13 @@ import {
   type BedsQueryVariables,
 } from '../../../hooks/useBeds/__generated__/useBeds.generated';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
+import {
+  RoomsDocument,
+  type RoomsQuery,
+  type RoomsQueryVariables,
+} from '../../../hooks/useRooms/__generated__/useRooms.generated';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import { Form } from '../../form/Form';
-import {
-  GetRoomsDocument,
-  type GetRoomsQuery,
-  type GetRoomsQueryVariables,
-} from '../../rooms/api/__generated__/roomQueries.generated';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
@@ -133,8 +133,8 @@ export function ReservationForm({
     [allBeds]
   );
 
-  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
-    GetRoomsDocument,
+  const { data: roomsData } = useQuery<RoomsQuery, RoomsQueryVariables>(
+    RoomsDocument,
     {
       variables: { shelterId },
       skip: !shelterId,

@@ -10,13 +10,13 @@ import {
   useUpdateBed,
 } from '../../../hooks';
 import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
+import {
+  RoomsDocument,
+  type RoomsQuery,
+  type RoomsQueryVariables,
+} from '../../../hooks/useRooms/__generated__/useRooms.generated';
 import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
-import {
-  GetRoomsDocument,
-  type GetRoomsQuery,
-  type GetRoomsQueryVariables,
-} from '../../rooms/api/__generated__/roomQueries.generated';
 import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/formSchema';
@@ -54,8 +54,8 @@ export function BedForm({
     formState: { errors, isValid },
   } = methods;
 
-  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
-    GetRoomsDocument,
+  const { data: roomsData } = useQuery<RoomsQuery, RoomsQueryVariables>(
+    RoomsDocument,
     {
       variables: { shelterId },
       skip: !shelterId,

@@ -2,7 +2,7 @@ import type {
   CreateRoomInput,
   UpdateRoomInput,
 } from '../../../apollo/graphql/__generated__/types';
-import type { RoomFormData } from '../room-form/formTypes';
+import type { RoomFormData } from './formTypes';
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));

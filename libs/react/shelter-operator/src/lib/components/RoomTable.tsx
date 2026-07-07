@@ -16,15 +16,10 @@ import {
 
 export type Room = RoomType;
 
-export type RoomRowObject = {
-  id: string;
-  room: Room;
-};
-
 type RoomTableProps = {
-  rows: Room[];
+  rooms: Room[];
   getRowKey?: (item: Room, index: number) => string;
-  onRowClick?: (rowObject: RoomRowObject, rowIndex: number) => void;
+  onRowClick?: (room: Room, rowIndex: number) => void;
   selectedIds?: string[];
   onSelectedIdsChange?: (ids: string[]) => void;
   loading?: boolean;
@@ -38,9 +33,10 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onClone?: (rowObject: RoomRowObject) => void;
-  onDeleteRooms?: (roomIds: string[]) => void;
-  onReserve?: (rowObject: RoomRowObject) => void;
+  onEdit?: (room: Room) => void;
+  onClone?: (room: Room) => void;
+  onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
+  onReserve?: (room: Room) => void;
 };
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
@@ -64,7 +60,7 @@ function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
 }
 
 export function RoomTable({
-  rows,
+  rooms,
   getRowKey,
   onRowClick,
   selectedIds,
@@ -80,6 +76,7 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
+  onEdit,
   onClone,
   onDeleteRooms,
   onReserve,
@@ -161,12 +158,11 @@ export function RoomTable({
   );
 
   return (
-    <Table<Room, RoomRowObject>
+    <Table<Room>
       columns={columns}
-      rows={rows}
+      rows={rooms}
       getRowKey={getRowKey ?? ((room) => room.id)}
-      getRowObject={(room) => ({ id: room.id, room })}
-      getRowSlot={(rowObject) => (
+      getRowSlot={(room) => (
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
@@ -180,7 +176,7 @@ export function RoomTable({
               className="text-[#747A82]"
               aria-label="Reserve room"
               leftIcon={<BookCheck size={22} stroke="black" />}
-              onClick={() => onReserve(rowObject)}
+              onClick={() => onReserve(room)}
             />
           )}
           <Button
@@ -189,18 +185,18 @@ export function RoomTable({
             className="text-[#747A82]"
             aria-label="Clone room"
             leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone?.(rowObject)}
+            onClick={() => onClone?.(room)}
           />
           <Button
             type="button"
             variant="edit"
             className="text-[#747A82]"
-            onClick={() => onRowClick?.(rowObject, 0)}
+            onClick={() => onEdit?.(room)}
           />
           <Button
             type="button"
             variant="trash"
-            onClick={() => onDeleteRooms?.([rowObject.id])}
+            onClick={() => onDeleteRooms?.([room.id], room.name)}
           />
         </div>
       )}
