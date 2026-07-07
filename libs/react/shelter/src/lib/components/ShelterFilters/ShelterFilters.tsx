@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
+import { Checkbox, CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
@@ -25,13 +25,13 @@ type IProps = {
 };
 
 const OPEN_NOW_OPTIONS: {
-  key: ScheduleTypeChoices;
+  value: string;
   label: string;
 }[] = [
-  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
-  { key: ScheduleTypeChoices.Intake, label: 'Intake' },
-  { key: ScheduleTypeChoices.MealService, label: 'Meal Services' },
-  { key: ScheduleTypeChoices.StaffAvailability, label: 'Staff Availability' },
+  { value: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
+  { value: ScheduleTypeChoices.Intake, label: 'Intake' },
+  { value: ScheduleTypeChoices.MealService, label: 'Meal Services' },
+  { value: ScheduleTypeChoices.StaffAvailability, label: 'Staff Availability' },
 ];
 
 export function ShelterFilters(props: IProps) {
@@ -60,20 +60,23 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
-  function onOpenNowScheduleTypeChange(
-    scheduleType: ScheduleTypeChoices,
-    checked: boolean
-  ) {
-    const newTypes = checked
-      ? [...openNowTypes, scheduleType]
-      : openNowTypes.filter((t) => t !== scheduleType);
-
+  function onOpenNowScheduleTypesChange(selected: string[]) {
+    const newTypes = selected as ScheduleTypeChoices[];
     setOpenNowTypes(newTypes);
 
     onFiltersChange({
       ...filters,
-      openNow: newTypes.length > 0 ? true : undefined,
+      openNow:
+        newTypes.length > 0 || !!filters.openNowIncludeNull ? true : undefined,
       openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
+    });
+  }
+
+  function onOpenNowIncludeNullChange(checked: boolean) {
+    onFiltersChange({
+      ...filters,
+      openNowIncludeNull: checked || undefined,
+      openNow: openNowTypes.length > 0 || checked ? true : undefined,
     });
   }
 
@@ -125,18 +128,18 @@ export function ShelterFilters(props: IProps) {
         </div>
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
-            <div className="flex flex-col gap-2">
-              {OPEN_NOW_OPTIONS.map((option) => (
-                <Checkbox
-                  key={option.key}
-                  label={option.label}
-                  checked={openNowTypes.includes(option.key)}
-                  onChange={(checked) =>
-                    onOpenNowScheduleTypeChange(option.key, checked)
-                  }
-                />
-              ))}
-            </div>
+            <CheckboxGroup
+              options={OPEN_NOW_OPTIONS}
+              values={openNowTypes}
+              onChange={onOpenNowScheduleTypesChange}
+              selectAll="Select All"
+            />
+            <Checkbox
+              className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white mt-2"
+              label="Include unknown"
+              checked={!!filters.openNowIncludeNull}
+              onChange={onOpenNowIncludeNullChange}
+            />
           </ExpandableContainer>
         </div>
 
