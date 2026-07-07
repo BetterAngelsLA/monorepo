@@ -68,18 +68,32 @@ def _ensure_test_users() -> None:
 
 def _ensure_test_org() -> None:
     """Idempotent: create test_org with presets and owner (no role assignment yet)."""
-    from accounts.services import create_organization_with_presets
+    from accounts.models import OrganizationProfile, OrgTypeChoices
+    from accounts.services import reconcile_org_groups
+    from common.org_types import REGISTRY
 
     admin = User.objects.get(username="admin")
 
-    test_org, created = Organization.objects.get_or_create(name="test_org")
-    if created:
-        create_organization_with_presets(
-            name="test_org",
-            preset_names=["shelter", "outreach"],
-            owner=admin,
-            owner_roles=(),  # roles assigned by sync_all_org_permission_groups
-        )
+    test_org, _ = Organization.objects.get_or_create(name="test_org")
+
+    # Ensure profile and presets exist on the test organization.
+    # In local development, the first post_migrate signal might create test_org empty
+    # before all apps' tables/permission templates are ready. On subsequent runs,
+    # we need to make sure the presets are updated and reconciled.
+    org_types = []
+    for preset_name in ["shelter", "outreach"]:
+        org_config = REGISTRY.org_type(preset_name)
+        if org_config:
+            org_types.append(org_config.name)
+
+    OrganizationProfile.objects.update_or_create(
+        organization=test_org,
+        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
+    )
+    reconcile_org_groups(test_org)
+
+    if not test_org.users.filter(pk=admin.pk).exists():
+        test_org.add_user(admin)
 
 
 # ── Permission sync (all environments) ────────────────────────────────
