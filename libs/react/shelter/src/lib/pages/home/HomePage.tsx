@@ -244,6 +244,19 @@ export function HomePage() {
     if (!map || hasInitialized) return;
     setHasInitialized(true);
 
+    const savedBoundsJson = sessionStorage.getItem('savedMapBounds');
+    if (savedBoundsJson) {
+      const savedBounds = JSON.parse(savedBoundsJson) as TMapBounds;
+      // Consume the saved bounds so they aren't re-applied on subsequent
+      // navigations that don't originate from a shelter detail page.
+      sessionStorage.removeItem('savedMapBounds');
+      sessionStorage.removeItem('mapCenter');
+      // Restore the exact previous viewport via fitBounds, which triggers
+      // onPlaceViewportFitted -> setMapBoundsFilter + search.
+      setPlaceViewportToFit(savedBounds);
+      return;
+    }
+
     const savedCenter = sessionStorage.getItem('mapCenter');
 
     if (savedCenter) {
