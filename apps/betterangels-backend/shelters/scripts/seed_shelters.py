@@ -9,7 +9,6 @@ from urllib.parse import quote
 import django
 import requests
 from django.conf import settings
-from django.contrib.gis.geos import Point
 from django.core.files import File
 from django.db import transaction
 from faker import Faker
@@ -142,10 +141,7 @@ def _reverse_geocode_shelter(shelter: Shelter) -> Places | None:
 
     lat = shelter.location.latitude
     lng = shelter.location.longitude
-    api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
-    if not api_key:
-        print("  ⚠ GOOGLE_MAPS_API_KEY is not set; skipping geocoding.")
-        return None
+    api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", "")
 
     url = (
         "https://maps.googleapis.com/maps/api/geocode/json"
@@ -171,17 +167,6 @@ def _reverse_geocode_shelter(shelter: Shelter) -> Places | None:
         return None
 
     return Places(formatted_address, lat, lng)
-
-
-def _populate_geolocation(shelter: Shelter) -> None:
-    """Set ``geolocation`` PointField from the shelter's Places location."""
-    if not shelter.location:
-        return
-    shelter.geolocation = Point(
-        float(shelter.location.longitude),
-        float(shelter.location.latitude),
-        srid=4326,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -210,6 +195,10 @@ def main() -> None:
     clear_existing = "--clear" in flags
     use_places = "--use-places" in flags
 
+    if use_places and not getattr(settings, "GOOGLE_MAPS_API_KEY", None):
+        print("GOOGLE_MAPS_API_KEY is required when --use-places is passed.")
+        sys.exit(1)
+
     with transaction.atomic():
         if clear_existing:
             print("Clearing existing shelters...")
@@ -233,25 +222,17 @@ def main() -> None:
         # ---- Reverse-geocode locations when --use-places is set ----
         if use_places:
             print("  Reverse-geocoding shelter locations via Google Geocoding API...")
-            updated_shelters: list[Shelter] = []
             for idx, shelter in enumerate(shelters, 1):
                 new_location = _reverse_geocode_shelter(shelter)
                 if new_location:
                     shelter.location = new_location
-                    _populate_geolocation(shelter)
-                    updated_shelters.append(shelter)
+                    shelter.save()
                     print(f"  [{idx}/{num_shelters}] {new_location.place}")
                 else:
                     print(f"  [{idx}/{num_shelters}] ⚠ Skipped (geocoding failed)")
 
-                # Rate-limit: ~50 requests per second max for Google Geocoding API.
-                time.sleep(0.05)
-
-            if updated_shelters:
-                Shelter.objects.bulk_update(updated_shelters, ["location", "geolocation"])
-                print(f"  Updated {len(updated_shelters)}/{num_shelters} shelter locations.")
-            else:
-                print("  No shelter locations were updated.")
+                # Rate-limit: Google Geocoding API allows 50 QPS.
+                time.sleep(0.02)
 
         # ---- Images (1–10 per shelter) ----
         image_path = Path(__file__).with_name("shelter_seed_image.png")
