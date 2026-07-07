@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -26,6 +26,7 @@ from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
     BedTypeChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -41,7 +42,7 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
-from shelters.open_at import shelters_open_at
+from shelters.open_at import _time_and_day_condition, shelters_open_at
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -178,6 +179,61 @@ class ShelterFilter:
             ),
             Q(),
         )
+
+    @strawberry_django.filter_field
+    def open_now_schedule_types(
+        self, queryset: QuerySet, value: Optional[List[ScheduleTypeChoices]], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
+        """Filter shelters that are open now for ANY of the given schedule types.
+
+        Uses OR semantics: a shelter matches if it is open for at least one
+        of the requested schedule types (and does not have an active exception
+        for that type).
+        """
+        if not value:
+            return queryset, Q()
+
+        dt = get_current_shelter_schedule_datetime()
+        day = DayOfWeekChoices.from_date(dt.date())
+        yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
+        time = dt.time()
+        date = dt.date()
+
+        from shelters.models import Schedule
+
+        combined_q = Q()
+
+        for schedule_type in value:
+            time_day = _time_and_day_condition(time=time, day=day, yesterday=yesterday)
+
+            is_open = Exists(
+                Schedule.objects.filter(
+                    shelter=OuterRef("pk"),
+                    schedule_type=schedule_type,
+                    is_exception=False,
+                ).filter(
+                    time_day,
+                    Q(start_date=None) | Q(start_date__lte=date),
+                    Q(end_date=None) | Q(end_date__gte=date),
+                )
+            )
+
+            covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
+            has_active_exception = Exists(
+                Schedule.objects.filter(
+                    shelter=OuterRef("pk"),
+                    schedule_type=schedule_type,
+                    is_exception=True,
+                ).filter(
+                    covers_now,
+                    Q(start_date=None) | Q(start_date__lte=date),
+                    Q(end_date=None) | Q(end_date__gte=date),
+                )
+            )
+
+            combined_q |= is_open & ~has_active_exception
+
+        return queryset.filter(combined_q), Q()
 
     @strawberry_django.filter_field
     def map_bounds(

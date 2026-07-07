@@ -64,10 +64,19 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, openNowScheduleTypes, isAccessCenter, maxStay, ...propertyOnlyFilters } =
-        propertyFilters;
+      const {
+        openNow,
+        openNowScheduleTypes,
+        isAccessCenter,
+        maxStay,
+        ...propertyOnlyFilters
+      } = propertyFilters;
 
-      if (openNow) {
+      if (openNowScheduleTypes && openNowScheduleTypes.length > 0) {
+        vars = vars || {};
+        vars.filters = vars.filters || {};
+        vars.filters.openNowScheduleTypes = openNowScheduleTypes;
+      } else if (openNow) {
         vars = vars || {};
         vars.filters = vars.filters || {};
         vars.filters.openNow = true;
