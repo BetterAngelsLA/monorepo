@@ -40,7 +40,7 @@ export function BarChart({
 }: BarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('count');
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [resizeKey, setResizeKey] = useState(0);
+  const [_resizeKey, setResizeKey] = useState(0);
 
   useLayoutEffect(() => {
     const el = chartContainerRef.current;
