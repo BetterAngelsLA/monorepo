@@ -1,11 +1,13 @@
 """
-Generic presigned S3 upload service for Attachment-based models.
+Generic presigned S3 upload service.
 
-Provides a configuration-driven pipeline for:
-  1. Generating presigned S3 POST URLs with signed upload tokens.
-  2. Resolving uploads: validating tokens, checking S3, and creating Attachment rows.
+Provides a configuration-driven pipeline:
+  1. Generate presigned S3 POST URLs with signed upload tokens.
+  2. Client uploads files directly to S3 using the presigned URLs.
+  3. Pre-flight validation (tokens, S3 keys, content types).
+  4. Domain-specific persistence of upload records.
 
-Domain services configure this with an AttachmentUploadConfig and handle
+Domain services configure an ``AttachmentUploadConfig`` and handle
 authorization (permission checks, permission assignment) themselves.
 """
 
@@ -21,6 +23,11 @@ from common.services.s3 import (
     generate_s3_presigned_upload_urls,
     s3_key_exists,
     strip_storage_location,
+)
+from common.services.exceptions import (
+    InvalidContentTypeError,
+    InvalidUploadTokenError,
+    S3KeyNotFoundError,
 )
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
@@ -72,7 +79,7 @@ class ResolveUploadInput(TypedDict):
 
 def _validate_content_type(content_type: str, filename: str, allowed: frozenset[str]) -> None:
     if content_type not in allowed:
-        raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}.")
+        raise InvalidContentTypeError(f"Unsupported content_type: {content_type} for filename={filename}.")
 
 
 # ── Phase 1: Generate presigned upload URLs ──────────────────────────────────
@@ -140,6 +147,44 @@ def create_presigned_uploads(
 # ── Phase 3: Resolve uploads → Attachment records ────────────────────────────
 
 
+def validate_upload_batch(
+    *,
+    user: User,
+    uploads: Iterable[dict],
+    config: AttachmentUploadConfig,
+) -> list[dict]:
+    """Pre-flight validation: content types, tokens, and S3 keys.
+
+    Validates every item in the batch before any database writes occur.
+    Returns the materialized list for the caller's persistence loop.
+
+    Raises:
+        InvalidContentTypeError: If a content type is not in the allowlist.
+        InvalidUploadTokenError: If a token is expired, tampered, or mismatched.
+        S3KeyNotFoundError: If the file does not exist at the expected S3 key.
+    """
+    items = list(uploads)
+
+    for item in items:
+        _validate_content_type(item["content_type"], item["filename"], config.allowed_content_types)
+
+        if not validate_upload_token(
+            upload_token=item["upload_token"],
+            key=item["presigned_key"],
+            user_id=user.pk,
+            scope=config.service_name,
+        ):
+            raise InvalidUploadTokenError(f"Invalid or expired upload signature for '{item['filename']}'")
+
+        if not s3_key_exists(key=item["presigned_key"]):
+            raise S3KeyNotFoundError(f"File not found in storage for '{item['filename']}'")
+
+        # Normalize the S3 key to a Django FileField-compatible path.
+        item["file_path"] = strip_storage_location(item["presigned_key"])
+
+    return items
+
+
 def resolve_attachments(
     *,
     user: User,
@@ -149,10 +194,9 @@ def resolve_attachments(
 ) -> list[Attachment]:
     """Validate upload tokens, confirm S3 objects exist, and persist Attachment rows.
 
-    Performs a batch pre-flight (token validation + S3 existence check)
-    before opening a single ``transaction.atomic()`` block to create all
-    Attachment rows.  If any item fails validation, the entire batch is
-    rolled back.
+    Calls ``validate_upload_batch`` for pre-flight validation, then opens a
+    single ``transaction.atomic()`` block to create all Attachment rows.
+    If any item fails validation, the entire batch is rolled back.
 
     **Does NOT assign object-level permissions** — that is the caller's
     responsibility.
@@ -169,36 +213,18 @@ def resolve_attachments(
         List of persisted ``Attachment`` instances.
 
     Raises:
-        ValueError: If any token is invalid or the S3 key is missing.
+        InvalidContentTypeError, InvalidUploadTokenError, or S3KeyNotFoundError
+        from ``validate_upload_batch``.
     """
-    # Materialize the iterable so we can iterate twice (validate then persist).
-    items = list(uploads)
+    items = validate_upload_batch(user=user, uploads=uploads, config=config)
 
-    # ── Pre-flight: validate every item before touching the DB ──────────
-    for item in items:
-        _validate_content_type(item["content_type"], item["filename"], config.allowed_content_types)
-
-        if not validate_upload_token(
-            upload_token=item["upload_token"],
-            key=item["presigned_key"],
-            user_id=user.pk,
-            scope=config.service_name,
-        ):
-            raise ValueError(f"Invalid or expired upload signature for '{item['filename']}'")
-
-        if not s3_key_exists(key=item["presigned_key"]):
-            raise ValueError(f"File not found in storage for '{item['filename']}'")
-
-    # ── Persist ─────────────────────────────────────────────────────────
     content_type = ContentType.objects.get_for_model(content_object.__class__)
     attached: list[Attachment] = []
 
     with transaction.atomic():
         for item in items:
-            file_path = strip_storage_location(item["presigned_key"])
-
             attachment = Attachment(
-                file=file_path,
+                file=item["file_path"],
                 mime_type=item["content_type"],
                 original_filename=item["filename"],
                 namespace=item.get("namespace"),
