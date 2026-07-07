@@ -11,86 +11,33 @@ Domain services configure an ``AttachmentUploadConfig`` and handle
 authorization (permission checks, permission assignment) themselves.
 """
 
-from dataclasses import dataclass
 from typing import Iterable
 
 from accounts.models import User
 from common.models import Attachment
-from common.services.s3 import (
-    DEFAULT_MAX_FILE_SIZE,
-    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
-    PresignedS3UploadInput,
-    generate_s3_presigned_upload_urls,
-    s3_key_exists,
-    strip_storage_location,
-)
 from common.services.exceptions import (
     InvalidContentTypeError,
     InvalidUploadTokenError,
     S3KeyNotFoundError,
 )
-from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
+from common.services.s3 import (
+    PresignedS3UploadInput,
+    generate_s3_presigned_upload_urls,
+    s3_key_exists,
+    strip_storage_location,
+)
+from common.services.types import (
+    AttachmentUploadConfig,
+    AuthorizedPresignedUpload,
+    AuthorizedPresignedUploadBatch,
+    GenerateUploadItem,
+    ResolveUploadItem,
+    ValidatedResolveItem,
+)
 from common.services.upload_token import create_upload_token, validate_upload_token
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-
-
-# ── Config ───────────────────────────────────────────────────────────────────
-
-
-@dataclass(frozen=True)
-class AttachmentUploadConfig:
-    """Static configuration for a presigned attachment upload flow.
-
-    Each domain (client documents, note attachments, etc.) instantiates
-    one of these with its own upload_path, service_name, and content-type
-    allowlist.
-    """
-
-    upload_path: str
-    service_name: str
-    allowed_content_types: frozenset[str]
-    max_file_size: int = DEFAULT_MAX_FILE_SIZE
-
-
-# ── Generic input / output types ─────────────────────────────────────────────
-
-
-@dataclass(frozen=True)
-class GenerateUploadItem:
-    """Per-file input for the *generate* phase (Phase 1)."""
-
-    ref_id: str
-    filename: str
-    content_type: str
-
-
-@dataclass(frozen=True)
-class ResolveUploadItem:
-    """Per-file input for the *resolve* phase (Phase 3)."""
-
-    presigned_key: str
-    upload_token: str
-    filename: str
-    content_type: str
-    namespace: str | None = None
-
-
-@dataclass(frozen=True)
-class ValidatedResolveItem:
-    """Output of ``validate_upload_batch`` — validated + enriched with ``file_path``.
-
-    Domain services zip these back with their own typed items to access
-    domain-specific fields (e.g. ``photo_type``) alongside the validated
-    generic fields.
-    """
-
-    presigned_key: str
-    upload_token: str
-    filename: str
-    content_type: str
-    namespace: str | None
-    file_path: str
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -99,9 +46,6 @@ class ValidatedResolveItem:
 def _validate_content_type(content_type: str, filename: str, allowed: frozenset[str]) -> None:
     if content_type not in allowed:
         raise InvalidContentTypeError(f"Unsupported content_type: {content_type} for filename={filename}.")
-
-
-# ── Phase 1: Generate presigned upload URLs ──────────────────────────────────
 
 
 def create_presigned_uploads(
@@ -121,41 +65,41 @@ def create_presigned_uploads(
         _validate_content_type(upload.content_type, upload.filename, config.allowed_content_types)
 
         mapped_uploads.append(
-            {
-                "ref_id": upload.ref_id,
-                "filename": upload.filename,
-                "content_type": upload.content_type,
-                "upload_path": config.upload_path,
-                "max_file_size": config.max_file_size,
-            }
+            PresignedS3UploadInput(
+                ref_id=upload.ref_id,
+                filename=upload.filename,
+                content_type=upload.content_type,
+                upload_path=config.upload_path,
+                max_file_size=config.max_file_size,
+            )
         )
 
     presigned_batch = generate_s3_presigned_upload_urls(uploads=mapped_uploads)
 
     authorized_uploads: list[AuthorizedPresignedUpload] = []
 
-    for item in presigned_batch["uploads"]:
+    for item in presigned_batch.uploads:
         upload_token = create_upload_token(
-            key=item["key"],
+            key=item.key,
             user_id=user.pk,
-            expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=config.service_name,
         )
 
         authorized_uploads.append(
-            {
-                "ref_id": item["ref_id"],
-                "url": item["url"],
-                "fields": item["fields"],
-                "presigned_key": item["key"],
-                "upload_token": upload_token,
-            }
+            AuthorizedPresignedUpload(
+                ref_id=item.ref_id,
+                url=item.url,
+                fields=item.fields,
+                presigned_key=item.key,
+                upload_token=upload_token,
+            )
         )
 
     return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
 
 
-# ── Phase 3: Validate batch ──────────────────────────────────────────────────
+# ── Validate batch ────────────────────────────────────────────────────────────
 
 
 def validate_upload_batch(
@@ -206,10 +150,7 @@ def validate_upload_batch(
     return validated
 
 
-# ── Phase 3: Resolve uploads → Attachment records ────────────────────────────
-
-
-def resolve_attachments(
+def create_attachment_records(
     *,
     user: User,
     content_object,

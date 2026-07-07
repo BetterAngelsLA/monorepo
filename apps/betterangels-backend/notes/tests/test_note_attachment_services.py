@@ -21,7 +21,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
 
-    @patch("notes.services.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_note_config(self, mock_generic: MagicMock) -> None:
         uploads = [
             GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
@@ -36,7 +36,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
             config=NOTE_ATTACHMENT_CONFIG,
         )
 
-    @patch("notes.services.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [
@@ -76,7 +76,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
@@ -108,7 +108,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_scopes_permission_group_to_note_organization(
         self,
         mock_generic: MagicMock,
@@ -142,7 +142,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_assigns_change_and_delete_permissions_per_attachment(
         self,
         mock_generic: MagicMock,
@@ -188,7 +188,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,

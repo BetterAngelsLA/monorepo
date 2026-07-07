@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from common.models import Attachment
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from model_bakery import baker
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -36,17 +37,17 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
     @patch("notes.schema.create_note_attachment_presigned_uploads")
     def test_returns_presigned_upload_data(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload",
-                    "fields": {"Policy": "xyz"},
-                    "presigned_key": "media/note_attachments/abc.pdf",
-                    "upload_token": "token-abc",
-                }
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload",
+                    fields={"Policy": "xyz"},
+                    presigned_key="media/note_attachments/abc.pdf",
+                    upload_token="token-abc",
+                )
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -70,24 +71,24 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
     @patch("notes.schema.create_note_attachment_presigned_uploads")
     def test_returns_presigned_upload_data_for_multiple_uploads(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload-1",
-                    "fields": {"Policy": "abc"},
-                    "presigned_key": "media/note_attachments/a.pdf",
-                    "upload_token": "token-1",
-                },
-                {
-                    "ref_id": "ref-2",
-                    "url": "https://s3.example.com/upload-2",
-                    "fields": {"Policy": "def"},
-                    "presigned_key": "media/note_attachments/b.pdf",
-                    "upload_token": "token-2",
-                },
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload-1",
+                    fields={"Policy": "abc"},
+                    presigned_key="media/note_attachments/a.pdf",
+                    upload_token="token-1",
+                ),
+                AuthorizedPresignedUpload(
+                    ref_id="ref-2",
+                    url="https://s3.example.com/upload-2",
+                    fields={"Policy": "def"},
+                    presigned_key="media/note_attachments/b.pdf",
+                    upload_token="token-2",
+                ),
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -229,7 +230,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     @patch("notes.services.resolve_permission_group")
     def test_creates_attachment_and_returns_it(
         self,
@@ -280,11 +281,11 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         # The generic service creates a real Attachment, so count increases.
         # (mocked generic returns baker-made attachment, so count stays same)
-        # Actually, since we mock generic_resolve_attachments, the returned attachment
+        # Actually, since we mock attachments.create_attachment_records, the returned attachment
         # was pre-made by baker — the count reflects that.
         self.assertEqual(Attachment.objects.count(), initial_count + 1)
 
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     @patch("notes.services.resolve_permission_group")
     def test_creates_multiple_attachments(
         self,
@@ -366,7 +367,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLUnauthenticated(response)
 
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_returns_error_on_invalid_token(
         self,
         mock_generic: MagicMock,
@@ -394,7 +395,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLError(response, "Invalid or expired upload signature for 'doc.pdf'")
 
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_returns_error_when_file_not_in_s3(
         self,
         mock_generic: MagicMock,
@@ -486,7 +487,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             ("non_case_manager_user", False),
         ],
     )
-    @patch("notes.services.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     @patch("notes.services.resolve_permission_group")
     def test_permission_checks(
         self,

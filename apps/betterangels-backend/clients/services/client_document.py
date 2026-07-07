@@ -6,12 +6,11 @@ from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment
 from common.permissions.utils import assign_object_permissions
+from common.services import attachment_upload
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
     GenerateUploadItem,
     ResolveUploadItem,
-    create_presigned_uploads as generic_create_presigned_uploads,
-    resolve_attachments as generic_resolve_attachments,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
 from django.conf import settings
@@ -31,7 +30,7 @@ def create_presigned_uploads(
     uploads: Iterable[GenerateUploadItem],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for client documents (Phase 1)."""
-    return generic_create_presigned_uploads(
+    return attachment_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
         config=CLIENT_DOCUMENT_CONFIG,
@@ -54,7 +53,7 @@ def resolve_upload(
     # to resolve_permission_group like notes/services.py does.
     permission_group = resolve_permission_group(user, template=CASEWORKER)
 
-    attached = generic_resolve_attachments(
+    attached = attachment_upload.create_attachment_records(
         user=user,
         content_object=client_profile,
         uploads=documents,

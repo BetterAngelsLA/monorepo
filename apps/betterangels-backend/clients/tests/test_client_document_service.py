@@ -31,7 +31,7 @@ class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
 
-    @patch("clients.services.client_document.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_client_document_config(self, mock_generic: MagicMock) -> None:
         uploads = [
             GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", content_type="application/pdf"),
@@ -46,7 +46,7 @@ class CreatePresignedUploadsTest(TestCase):
             config=CLIENT_DOCUMENT_CONFIG,
         )
 
-    @patch("clients.services.client_document.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [
@@ -68,7 +68,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch("clients.services.client_document.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_handles_multiple_uploads(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [
@@ -101,7 +101,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("clients.services.client_document.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
@@ -137,7 +137,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("clients.services.client_document.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_assigns_permissions_per_attachment(
         self,
         mock_generic: MagicMock,
@@ -185,7 +185,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("clients.services.client_document.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,
@@ -214,7 +214,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("clients.services.client_document.generic_resolve_attachments")
+    @patch("common.services.attachment_upload.create_attachment_records")
     def test_raises_on_generic_failure(
         self,
         mock_generic: MagicMock,
