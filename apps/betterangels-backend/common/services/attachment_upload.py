@@ -11,7 +11,7 @@ Domain services configure an ``AttachmentUploadConfig`` and handle
 authorization (permission checks, permission assignment) themselves.
 """
 
-from typing import Iterable
+from typing import Any, Iterable
 
 from accounts.models import User
 from common.models import Attachment
@@ -153,7 +153,7 @@ def validate_upload_batch(
 def create_attachment_records(
     *,
     user: User,
-    content_object,
+    content_object: Any,
     uploads: Iterable[ResolveUploadItem],
     config: AttachmentUploadConfig,
 ) -> list[Attachment]:
