@@ -14,6 +14,7 @@ from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services import shelter_photo
+from shelters.services.shelter_photo import GenerateUploadItem, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
@@ -229,12 +230,19 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
 
-        upload_dicts = [strawberry.asdict(u) for u in data.uploads]
+        uploads = [
+            GenerateUploadItem(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                content_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
         presigned = shelter_photo.create_presigned_uploads(
             user=user,
             organization_id=org_id,
             shelter_id=data.shelter_id,
-            uploads=upload_dicts,
+            uploads=uploads,
         )
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
@@ -251,12 +259,21 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
 
-        photo_dicts = [strawberry.asdict(p) for p in data.photos]
+        items = [
+            ShelterPhotoResolveItem(
+                presigned_key=p.presigned_key,
+                upload_token=p.upload_token,
+                filename=p.filename,
+                content_type=p.content_type,
+                photo_type=p.photo_type,
+            )
+            for p in data.photos
+        ]
         photos = shelter_photo.resolve_uploads(
             user=user,
             organization_id=org_id,
             shelter_id=data.shelter_id,
-            photos=photo_dicts,
+            photos=items,
         )
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))

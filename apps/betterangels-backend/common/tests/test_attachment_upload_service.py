@@ -5,9 +5,16 @@ from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTE
 from common.models import Attachment
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
+    GenerateUploadItem,
+    ResolveUploadItem,
     _validate_content_type,
     create_presigned_uploads,
     resolve_attachments,
+)
+from common.services.exceptions import (
+    InvalidContentTypeError,
+    InvalidUploadTokenError,
+    S3KeyNotFoundError,
 )
 from common.services.s3 import DEFAULT_MAX_FILE_SIZE, DEFAULT_UPLOAD_EXPIRATION_SECONDS
 from django.test import TestCase
@@ -48,12 +55,12 @@ class ValidateContentTypeTest(TestCase):
 
     def test_rejects_invalid_content_type(self) -> None:
         with self.assertRaisesMessage(
-            ValueError, "Unsupported content_type: application/zip for filename=test_file.zip."
+            InvalidContentTypeError, "Unsupported content_type: application/zip for filename=test_file.zip."
         ):
             _validate_content_type("application/zip", "test_file.zip", TEST_CONFIG.allowed_content_types)
 
     def test_rejects_empty_content_type(self) -> None:
-        with self.assertRaisesMessage(ValueError, "Unsupported content_type:  for filename=test_file."):
+        with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type:  for filename=test_file."):
             _validate_content_type("", "test_file", TEST_CONFIG.allowed_content_types)
 
     def test_allows_all_default_document_and_image_types(self) -> None:
@@ -72,16 +79,16 @@ class ValidateContentTypeTest(TestCase):
 class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.upload_1 = {
-            "ref_id": "ref-1",
-            "filename": "doc1.pdf",
-            "content_type": "application/pdf",
-        }
-        self.upload_2 = {
-            "ref_id": "ref-2",
-            "filename": "doc2.png",
-            "content_type": "image/png",
-        }
+        self.upload_1 = GenerateUploadItem(
+            ref_id="ref-1",
+            filename="doc1.pdf",
+            content_type="application/pdf",
+        )
+        self.upload_2 = GenerateUploadItem(
+            ref_id="ref-2",
+            filename="doc2.png",
+            content_type="image/png",
+        )
 
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
@@ -163,10 +170,14 @@ class CreatePresignedUploadsTest(TestCase):
         )
 
     def test_rejects_invalid_content_type(self) -> None:
-        self.upload_1["content_type"] = "application/zip"
+        bad_upload = GenerateUploadItem(
+            ref_id="ref-1",
+            filename="doc1.pdf",
+            content_type="application/zip",
+        )
 
-        with self.assertRaisesMessage(ValueError, "Unsupported content_type: application/zip for filename=doc1.pdf."):
-            create_presigned_uploads(user=self.user, uploads=[self.upload_1], config=TEST_CONFIG)
+        with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc1.pdf."):
+            create_presigned_uploads(user=self.user, uploads=[bad_upload], config=TEST_CONFIG)
 
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
@@ -225,16 +236,14 @@ class ResolveAttachmentsTest(TestCase):
         filename: str = "doc.pdf",
         content_type: str = "application/pdf",
         namespace: str | None = None,
-    ) -> dict[str, Any]:
-        item: dict[str, Any] = {
-            "presigned_key": presigned_key or "media/test_attachments/abc.pdf",
-            "upload_token": upload_token,
-            "filename": filename,
-            "content_type": content_type,
-        }
-        if namespace is not None:
-            item["namespace"] = namespace
-        return item
+    ) -> ResolveUploadItem:
+        return ResolveUploadItem(
+            presigned_key=presigned_key or "media/test_attachments/abc.pdf",
+            upload_token=upload_token,
+            filename=filename,
+            content_type=content_type,
+            namespace=namespace,
+        )
 
     @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
     @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
@@ -339,7 +348,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_rejects_invalid_content_type(self) -> None:
         item = self._make_item(content_type="application/zip")
 
-        with self.assertRaisesMessage(ValueError, "Unsupported content_type: application/zip for filename=doc.pdf."):
+        with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc.pdf."):
             resolve_attachments(
                 user=self.user,
                 content_object=self.content_object,
@@ -351,7 +360,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_raises_on_invalid_token(self, mock_validate: MagicMock) -> None:
         item = self._make_item(upload_token="bad-token")
 
-        with self.assertRaisesMessage(ValueError, "Invalid or expired upload signature for 'doc.pdf'"):
+        with self.assertRaisesMessage(InvalidUploadTokenError, "Invalid or expired upload signature for 'doc.pdf'"):
             resolve_attachments(
                 user=self.user,
                 content_object=self.content_object,
@@ -364,7 +373,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_raises_when_file_not_in_s3(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item()
 
-        with self.assertRaisesMessage(ValueError, "File not found in storage for 'doc.pdf'"):
+        with self.assertRaisesMessage(S3KeyNotFoundError, "File not found in storage for 'doc.pdf'"):
             resolve_attachments(
                 user=self.user,
                 content_object=self.content_object,
@@ -377,7 +386,7 @@ class ResolveAttachmentsTest(TestCase):
         initial_count = Attachment.objects.count()
         item = self._make_item(upload_token="bad-token")
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidUploadTokenError):
             resolve_attachments(
                 user=self.user,
                 content_object=self.content_object,
@@ -398,7 +407,7 @@ class ResolveAttachmentsTest(TestCase):
 
         initial_count = Attachment.objects.count()
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidUploadTokenError):
             resolve_attachments(
                 user=self.user,
                 content_object=self.content_object,

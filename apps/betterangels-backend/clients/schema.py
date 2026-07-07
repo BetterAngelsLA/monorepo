@@ -17,6 +17,7 @@ from clients.models import (
 )
 
 from clients.services import client_document, client_profile_photo
+from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -664,8 +665,15 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        upload_dicts = [strawberry.asdict(u) for u in data.uploads]
-        presigned = client_document.create_presigned_uploads(user=user, uploads=upload_dicts)
+        uploads = [
+            GenerateUploadItem(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                content_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = client_document.create_presigned_uploads(user=user, uploads=uploads)
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
@@ -681,14 +689,23 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        document_dicts = [strawberry.asdict(d) for d in data.documents]
-        documents = client_document.resolve_upload(
+        documents = [
+            ResolveUploadItem(
+                presigned_key=d.presigned_key,
+                upload_token=d.upload_token,
+                filename=d.filename,
+                content_type=d.content_type,
+                namespace=d.namespace,
+            )
+            for d in data.documents
+        ]
+        attachments = client_document.resolve_upload(
             user=user,
             client_profile=client_profile,
-            documents=document_dicts,
+            documents=documents,
         )
 
-        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
+        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], attachments))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE])]

@@ -89,13 +89,19 @@ WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
-# Upload size limits
-# Django defaults: 2.5 MB (2621440 bytes). Bumped to match S3 presigned limit.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max request body size
-FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max file size before streaming to disk
-SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")  # default 50 MB
-NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")  # default 50 MB
-CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")  # default 50 MB
+# ── Upload size limits (50 MB) ──────────────────────────────────────────
+#
+# All limits are aligned with the S3 presigned POST policy max (DEFAULT_MAX_FILE_SIZE
+# in common/services/s3.py).  Django's built-in defaults are 2.5 MB — too low for
+# file uploads that arrive via presigned S3 URLs, so we raise them here.
+#
+# Per-domain overrides are available via environment variables; the env defaults
+# (declared above) are 50_000_000 bytes each.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max request body size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max in-memory file before streaming to disk
+SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
+NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
+CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
 
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
