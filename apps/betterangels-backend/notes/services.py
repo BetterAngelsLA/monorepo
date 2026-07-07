@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
-import strawberry
 from accounts.models import PermissionGroup, User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
@@ -11,11 +10,11 @@ from common.models import Attachment, Location
 from common.permissions.utils import assign_object_permissions
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
-    ResolveUploadInput,
     create_presigned_uploads as generic_create_presigned_uploads,
     resolve_attachments as generic_resolve_attachments,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
@@ -313,13 +312,11 @@ def note_create(
 # Note Attachment Presigned S3 Uploads
 # ---------------------------------------------------------------------------
 
-NOTE_ATTACHMENT_UPLOAD_PATH = "note_attachments"
-NOTE_ATTACHMENT_SERVICE_NAME = "note_attachment"
-
 NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
-    upload_path=NOTE_ATTACHMENT_UPLOAD_PATH,
-    service_name=NOTE_ATTACHMENT_SERVICE_NAME,
+    upload_path="note_attachments",
+    service_name="note_attachment",
     allowed_content_types=DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.NOTE_ATTACHMENT_MAX_FILE_SIZE,
 )
 
 

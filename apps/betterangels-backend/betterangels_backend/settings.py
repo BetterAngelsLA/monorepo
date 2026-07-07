@@ -79,6 +79,8 @@ env = environ.Env(
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
     SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50_000_000),
+    NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50_000_000),
+    CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50_000_000),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -92,6 +94,8 @@ IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max request body size
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max file size before streaming to disk
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")  # default 50 MB
+NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")  # default 50 MB
+CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")  # default 50 MB
 
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))

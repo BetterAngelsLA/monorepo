@@ -664,20 +664,10 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
+        upload_dicts = [strawberry.asdict(u) for u in data.uploads]
+        presigned = client_document.create_presigned_uploads(user=user, uploads=upload_dicts)
 
-        return AuthorizedPresignedS3UploadsType(
-            uploads=[
-                AuthorizedPresignedS3UploadType(
-                    ref_id=item["ref_id"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    presigned_key=item["presigned_key"],
-                    upload_token=item["upload_token"],
-                )
-                for item in presigned_uploads["uploads"]
-            ]
-        )
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def resolve_client_document_uploads(
@@ -691,10 +681,11 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
+        document_dicts = [strawberry.asdict(d) for d in data.documents]
         documents = client_document.resolve_upload(
             user=user,
             client_profile=client_profile,
-            documents=data.documents,
+            documents=document_dicts,
         )
 
         return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
