@@ -17,7 +17,7 @@ from clients.models import (
 )
 
 from clients.services import client_document, client_profile_photo
-from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.types import GenerateUploadItem, ResolveUploadItem
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -725,15 +725,19 @@ class Mutation:
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
-            upload=data,
+            upload=GenerateUploadItem(
+                ref_id=data.ref_id,
+                filename=data.filename,
+                content_type=data.content_type,
+            ),
         )
 
         return AuthorizedPresignedS3UploadType(
-            ref_id=result["ref_id"],
-            url=result["url"],
-            fields=cast(JSON, result["fields"]),
-            presigned_key=result["presigned_key"],
-            upload_token=result["upload_token"],
+            ref_id=result.ref_id,
+            url=result.url,
+            fields=result.fields,
+            presigned_key=result.presigned_key,
+            upload_token=result.upload_token,
         )
 
     @strawberry_django.mutation(

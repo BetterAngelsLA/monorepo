@@ -50,7 +50,7 @@ class CreatePresignedUploadsTest(TestCase):
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
 
-    @patch("shelters.services.shelter_photo.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_shelter_photo_config(self, mock_generic: MagicMock) -> None:
         uploads = [GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", content_type="image/jpeg")]
         mock_generic.return_value = {"uploads": []}
@@ -68,7 +68,7 @@ class CreatePresignedUploadsTest(TestCase):
             config=SHELTER_PHOTO_CONFIG,
         )
 
-    @patch("shelters.services.shelter_photo.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [
@@ -92,7 +92,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         self.assertEqual(result, expected)
 
-    @patch("shelters.services.shelter_photo.generic_create_presigned_uploads")
+    @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_handles_multiple_uploads(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [

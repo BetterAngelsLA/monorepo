@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Tuple, cast
+from typing import Any, Mapping, NewType, Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -304,13 +304,13 @@ class AuthorizedPresignedS3UploadsType:
         return cls(
             uploads=[
                 AuthorizedPresignedS3UploadType(
-                    ref_id=item["ref_id"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    presigned_key=item["presigned_key"],
-                    upload_token=item["upload_token"],
+                    ref_id=item.ref_id,
+                    url=item.url,
+                    fields=item.fields,
+                    presigned_key=item.presigned_key,
+                    upload_token=item.upload_token,
                 )
-                for item in batch["uploads"]
+                for item in batch.uploads
             ]
         )
 

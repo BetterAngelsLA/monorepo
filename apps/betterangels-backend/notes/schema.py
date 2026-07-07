@@ -16,7 +16,7 @@ from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.team_shim import resolve_team_id_from_input
-from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.types import GenerateUploadItem, ResolveUploadItem
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from notes.groups import CASEWORKER

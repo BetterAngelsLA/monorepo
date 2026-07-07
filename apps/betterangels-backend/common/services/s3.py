@@ -1,15 +1,13 @@
 import mimetypes
 import uuid
-from typing import NotRequired, TypedDict, cast
+from dataclasses import dataclass
+from typing import TypedDict, cast
 
 from botocore.exceptions import ClientError
+from django.conf import settings
 from django.core.files.storage import default_storage
 from mypy_boto3_s3 import S3Client
 from storages.backends.s3 import S3Storage
-
-# generate_presigned_post
-DEFAULT_UPLOAD_EXPIRATION_SECONDS = 300
-DEFAULT_MAX_FILE_SIZE = 50_000_000  # 50 MB
 
 
 def get_storage_location() -> str:
@@ -32,13 +30,14 @@ def strip_storage_location(key: str) -> str:
     return key.removeprefix(f"{location}/")
 
 
-class PresignedS3UploadInput(TypedDict):
+@dataclass(frozen=True)
+class PresignedS3UploadInput:
     ref_id: str
     filename: str
     content_type: str
     upload_path: str
-    expires_in: NotRequired[int]
-    max_file_size: NotRequired[int]
+    expires_in: int | None = None
+    max_file_size: int | None = None
 
 
 class S3ClientPresignedPostResponse(TypedDict):
@@ -46,14 +45,16 @@ class S3ClientPresignedPostResponse(TypedDict):
     fields: dict[str, str]
 
 
-class PresignedS3UploadResult(TypedDict):
+@dataclass(frozen=True)
+class PresignedS3UploadResult:
     ref_id: str
     url: str
     fields: dict[str, str]
     key: str
 
 
-class PresignedS3UploadBatchResult(TypedDict):
+@dataclass(frozen=True)
+class PresignedS3UploadBatchResult:
     uploads: list[PresignedS3UploadResult]
 
 
@@ -104,10 +105,10 @@ def _generate_presigned_post_with_client(
     max_file_size: int | None = None,
 ) -> PresignedS3UploadResult:
     if expires_in is None:
-        expires_in = DEFAULT_UPLOAD_EXPIRATION_SECONDS
+        expires_in = settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS
 
     if max_file_size is None:
-        max_file_size = DEFAULT_MAX_FILE_SIZE
+        max_file_size = settings.S3_PRESIGNED_MAX_FILE_SIZE
 
     normalized_path = _normalize_upload_path(upload_path)
     key = _build_s3_key(
@@ -149,12 +150,12 @@ def _generate_presigned_post_with_client(
     if fields_key != key:
         raise RuntimeError(f"Presigned POST key mismatch: expected '{key}', got '{fields_key}'")
 
-    return {
-        "ref_id": ref_id,
-        "url": response["url"],
-        "fields": fields,
-        "key": key,
-    }
+    return PresignedS3UploadResult(
+        ref_id=ref_id,
+        url=response["url"],
+        fields=fields,
+        key=key,
+    )
 
 
 def _get_s3_client_and_bucket(*, external: bool = False) -> tuple[S3Client, str]:
@@ -195,20 +196,20 @@ def generate_s3_presigned_upload_urls(
     results: list[PresignedS3UploadResult] = []
 
     for upload in uploads:
-        upload_path = upload["upload_path"]
+        upload_path = upload.upload_path
         if storage_location:
             upload_path = f"{storage_location}/{upload_path}"
 
         result = _generate_presigned_post_with_client(
             s3_client=s3_client,
             bucket_name=bucket_name,
-            ref_id=upload["ref_id"],
-            filename=upload["filename"],
-            content_type=upload["content_type"],
+            ref_id=upload.ref_id,
+            filename=upload.filename,
+            content_type=upload.content_type,
             upload_path=upload_path,
-            expires_in=upload.get("expires_in"),
-            max_file_size=upload.get("max_file_size"),
+            expires_in=upload.expires_in,
+            max_file_size=upload.max_file_size,
         )
         results.append(result)
 
-    return {"uploads": results}
+    return PresignedS3UploadBatchResult(uploads=results)

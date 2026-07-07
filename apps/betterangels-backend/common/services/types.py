@@ -1,7 +1,10 @@
-from typing import TypedDict
+from dataclasses import dataclass
+
+from django.conf import settings
 
 
-class AuthorizedPresignedUpload(TypedDict):
+@dataclass(frozen=True)
+class AuthorizedPresignedUpload:
     ref_id: str
     presigned_key: str
     url: str
@@ -9,5 +12,61 @@ class AuthorizedPresignedUpload(TypedDict):
     upload_token: str
 
 
-class AuthorizedPresignedUploadBatch(TypedDict):
+@dataclass(frozen=True)
+class AuthorizedPresignedUploadBatch:
     uploads: list[AuthorizedPresignedUpload]
+
+
+# ── Attachment upload pipeline types ──────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class AttachmentUploadConfig:
+    """Static configuration for a presigned attachment upload flow.
+
+    Each domain (client documents, note attachments, etc.) instantiates
+    one of these with its own upload_path, service_name, and content-type
+    allowlist.
+    """
+
+    upload_path: str
+    service_name: str
+    allowed_content_types: frozenset[str]
+    max_file_size: int = settings.S3_PRESIGNED_MAX_FILE_SIZE
+
+
+@dataclass(frozen=True)
+class GenerateUploadItem:
+    """Per-file input for the *generate* phase (Phase 1)."""
+
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@dataclass(frozen=True)
+class ResolveUploadItem:
+    """Per-file input for the *resolve* phase (Phase 3)."""
+
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    namespace: str | None = None
+
+
+@dataclass(frozen=True)
+class ValidatedResolveItem:
+    """Output of ``validate_upload_batch`` — validated + enriched with ``file_path``.
+
+    Domain services zip these back with their own typed items to access
+    domain-specific fields (e.g. ``photo_type``) alongside the validated
+    generic fields.
+    """
+
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+    namespace: str | None
+    file_path: str

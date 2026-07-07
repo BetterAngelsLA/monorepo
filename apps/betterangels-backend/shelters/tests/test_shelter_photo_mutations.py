@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import waffle
 from common.imgproxy import IMGPROXY_SWITCH
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
@@ -41,17 +42,17 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     @patch("shelters.schema.shelter_photo.create_presigned_uploads")
     def test_returns_presigned_upload_data(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload",
-                    "fields": {"Policy": "xyz"},
-                    "presigned_key": "media/shelters/abc.jpg",
-                    "upload_token": "token-abc",
-                }
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload",
+                    fields={"Policy": "xyz"},
+                    presigned_key="media/shelters/abc.jpg",
+                    upload_token="token-abc",
+                )
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -75,24 +76,24 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     @patch("shelters.schema.shelter_photo.create_presigned_uploads")
     def test_returns_presigned_upload_data_for_multiple_uploads(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload-1",
-                    "fields": {"Policy": "abc"},
-                    "presigned_key": "media/shelters/a.jpg",
-                    "upload_token": "token-1",
-                },
-                {
-                    "ref_id": "ref-2",
-                    "url": "https://s3.example.com/upload-2",
-                    "fields": {"Policy": "def"},
-                    "presigned_key": "media/shelters/b.jpg",
-                    "upload_token": "token-2",
-                },
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload-1",
+                    fields={"Policy": "abc"},
+                    presigned_key="media/shelters/a.jpg",
+                    upload_token="token-1",
+                ),
+                AuthorizedPresignedUpload(
+                    ref_id="ref-2",
+                    url="https://s3.example.com/upload-2",
+                    fields={"Policy": "def"},
+                    presigned_key="media/shelters/b.jpg",
+                    upload_token="token-2",
+                ),
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):

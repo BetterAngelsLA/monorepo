@@ -9,14 +9,15 @@ from common.services.attachment_upload import (
     ResolveUploadItem,
     _validate_content_type,
     create_presigned_uploads,
-    resolve_attachments,
+    create_attachment_records,
 )
 from common.services.exceptions import (
     InvalidContentTypeError,
     InvalidUploadTokenError,
     S3KeyNotFoundError,
 )
-from common.services.s3 import DEFAULT_MAX_FILE_SIZE, DEFAULT_UPLOAD_EXPIRATION_SECONDS
+from common.services.s3 import PresignedS3UploadResult, PresignedS3UploadBatchResult, PresignedS3UploadInput
+from django.conf import settings
 from django.test import TestCase
 from model_bakery import baker
 
@@ -28,7 +29,7 @@ TEST_CONFIG = AttachmentUploadConfig(
     upload_path="test_attachments",
     service_name="test_service",
     allowed_content_types=frozenset({"application/pdf", "image/png", "image/jpeg"}),
-    max_file_size=DEFAULT_MAX_FILE_SIZE,
+    max_file_size=settings.S3_PRESIGNED_MAX_FILE_SIZE,
 )
 
 COMBINED_CONTENT_TYPES = DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES
@@ -93,64 +94,66 @@ class CreatePresignedUploadsTest(TestCase):
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
     def test_returns_batch_with_all_uploads(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
-        mock_s3.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "key": "media/test_attachments/abc.pdf",
-                    "url": "https://s3.example.com/upload1",
-                    "fields": {"Policy": "p1"},
-                },
-                {
-                    "ref_id": "ref-2",
-                    "key": "media/test_attachments/def.png",
-                    "url": "https://s3.example.com/upload2",
-                    "fields": {"Policy": "p2"},
-                },
+        mock_s3.return_value = PresignedS3UploadBatchResult(
+            uploads=[
+                PresignedS3UploadResult(
+                    ref_id="ref-1",
+                    key="media/test_attachments/abc.pdf",
+                    url="https://s3.example.com/upload1",
+                    fields={"Policy": "p1"},
+                ),
+                PresignedS3UploadResult(
+                    ref_id="ref-2",
+                    key="media/test_attachments/def.png",
+                    url="https://s3.example.com/upload2",
+                    fields={"Policy": "p2"},
+                ),
             ]
-        }
+        )
         mock_token.side_effect = ["token-1", "token-2"]
 
         result = create_presigned_uploads(user=self.user, uploads=[self.upload_1, self.upload_2], config=TEST_CONFIG)
 
-        self.assertEqual(len(result["uploads"]), 2)
-        self.assertEqual(result["uploads"][0]["ref_id"], "ref-1")
-        self.assertEqual(result["uploads"][0]["presigned_key"], "media/test_attachments/abc.pdf")
-        self.assertEqual(result["uploads"][0]["url"], "https://s3.example.com/upload1")
-        self.assertEqual(result["uploads"][0]["fields"], {"Policy": "p1"})
-        self.assertEqual(result["uploads"][0]["upload_token"], "token-1")
-        self.assertEqual(result["uploads"][1]["ref_id"], "ref-2")
-        self.assertEqual(result["uploads"][1]["upload_token"], "token-2")
+        self.assertEqual(len(result.uploads), 2)
+        self.assertEqual(result.uploads[0].ref_id, "ref-1")
+        self.assertEqual(result.uploads[0].presigned_key, "media/test_attachments/abc.pdf")
+        self.assertEqual(result.uploads[0].url, "https://s3.example.com/upload1")
+        self.assertEqual(result.uploads[0].fields, {"Policy": "p1"})
+        self.assertEqual(result.uploads[0].upload_token, "token-1")
+        self.assertEqual(result.uploads[1].ref_id, "ref-2")
+        self.assertEqual(result.uploads[1].upload_token, "token-2")
 
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
     def test_passes_config_to_s3(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
-        mock_s3.return_value = {"uploads": [{"ref_id": "ref-1", "key": "k", "url": "u", "fields": {}}]}
+        mock_s3.return_value = PresignedS3UploadBatchResult(
+            uploads=[PresignedS3UploadResult(ref_id="ref-1", key="k", url="u", fields={})]
+        )
         mock_token.return_value = "t"
 
         create_presigned_uploads(user=self.user, uploads=[self.upload_1], config=TEST_CONFIG)
 
         mock_s3.assert_called_once_with(
             uploads=[
-                {
-                    "ref_id": "ref-1",
-                    "filename": "doc1.pdf",
-                    "content_type": "application/pdf",
-                    "upload_path": TEST_CONFIG.upload_path,
-                    "max_file_size": TEST_CONFIG.max_file_size,
-                }
+                PresignedS3UploadInput(
+                    ref_id="ref-1",
+                    filename="doc1.pdf",
+                    content_type="application/pdf",
+                    upload_path=TEST_CONFIG.upload_path,
+                    max_file_size=TEST_CONFIG.max_file_size,
+                )
             ]
         )
 
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
     def test_creates_token_per_upload_with_correct_scope(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
-        mock_s3.return_value = {
-            "uploads": [
-                {"ref_id": "ref-1", "key": "media/test_attachments/abc.pdf", "url": "u", "fields": {}},
-                {"ref_id": "ref-2", "key": "media/test_attachments/def.png", "url": "u", "fields": {}},
+        mock_s3.return_value = PresignedS3UploadBatchResult(
+            uploads=[
+                PresignedS3UploadResult(ref_id="ref-1", key="media/test_attachments/abc.pdf", url="u", fields={}),
+                PresignedS3UploadResult(ref_id="ref-2", key="media/test_attachments/def.png", url="u", fields={}),
             ]
-        }
+        )
         mock_token.side_effect = ["t1", "t2"]
 
         create_presigned_uploads(user=self.user, uploads=[self.upload_1, self.upload_2], config=TEST_CONFIG)
@@ -159,13 +162,13 @@ class CreatePresignedUploadsTest(TestCase):
         mock_token.assert_any_call(
             key="media/test_attachments/abc.pdf",
             user_id=self.user.pk,
-            expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=TEST_CONFIG.service_name,
         )
         mock_token.assert_any_call(
             key="media/test_attachments/def.png",
             user_id=self.user.pk,
-            expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=TEST_CONFIG.service_name,
         )
 
@@ -182,37 +185,37 @@ class CreatePresignedUploadsTest(TestCase):
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
     def test_single_upload(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
-        mock_s3.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "key": "media/test_attachments/abc.pdf",
-                    "url": "https://s3.example.com/upload",
-                    "fields": {"Policy": "xyz"},
-                }
+        mock_s3.return_value = PresignedS3UploadBatchResult(
+            uploads=[
+                PresignedS3UploadResult(
+                    ref_id="ref-1",
+                    key="media/test_attachments/abc.pdf",
+                    url="https://s3.example.com/upload",
+                    fields={"Policy": "xyz"},
+                )
             ]
-        }
+        )
         mock_token.return_value = "token-single"
 
         result = create_presigned_uploads(user=self.user, uploads=[self.upload_1], config=TEST_CONFIG)
 
-        self.assertEqual(len(result["uploads"]), 1)
-        self.assertEqual(result["uploads"][0]["upload_token"], "token-single")
+        self.assertEqual(len(result.uploads), 1)
+        self.assertEqual(result.uploads[0].upload_token, "token-single")
 
     @patch("common.services.attachment_upload.create_upload_token")
     @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
     def test_empty_uploads_list(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
-        mock_s3.return_value = {"uploads": []}
+        mock_s3.return_value = PresignedS3UploadBatchResult(uploads=[])
 
         result = create_presigned_uploads(user=self.user, uploads=[], config=TEST_CONFIG)
 
-        self.assertEqual(len(result["uploads"]), 0)
+        self.assertEqual(len(result.uploads), 0)
         mock_s3.assert_called_once_with(uploads=[])
         mock_token.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
-# resolve_attachments (Phase 3 — generic)
+# create_attachment_records (Phase 3 — generic)
 # ---------------------------------------------------------------------------
 
 
@@ -250,7 +253,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_creates_attachment(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item()
 
-        result = resolve_attachments(
+        result = create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item],
@@ -272,7 +275,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_creates_attachment_with_namespace(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item(namespace="CUSTOM_NAMESPACE")
 
-        result = resolve_attachments(
+        result = create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item],
@@ -290,7 +293,7 @@ class ResolveAttachmentsTest(TestCase):
             presigned_key="media/test_attachments/b.png", filename="b.png", content_type="image/png"
         )
 
-        result = resolve_attachments(
+        result = create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item1, item2],
@@ -307,7 +310,7 @@ class ResolveAttachmentsTest(TestCase):
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf", upload_token="tok-1")
         item2 = self._make_item(presigned_key="media/test_attachments/b.pdf", upload_token="tok-2")
 
-        resolve_attachments(
+        create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item1, item2],
@@ -334,7 +337,7 @@ class ResolveAttachmentsTest(TestCase):
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf")
         item2 = self._make_item(presigned_key="media/test_attachments/b.pdf")
 
-        resolve_attachments(
+        create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item1, item2],
@@ -349,7 +352,7 @@ class ResolveAttachmentsTest(TestCase):
         item = self._make_item(content_type="application/zip")
 
         with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc.pdf."):
-            resolve_attachments(
+            create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
                 uploads=[item],
@@ -361,7 +364,7 @@ class ResolveAttachmentsTest(TestCase):
         item = self._make_item(upload_token="bad-token")
 
         with self.assertRaisesMessage(InvalidUploadTokenError, "Invalid or expired upload signature for 'doc.pdf'"):
-            resolve_attachments(
+            create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
                 uploads=[item],
@@ -374,7 +377,7 @@ class ResolveAttachmentsTest(TestCase):
         item = self._make_item()
 
         with self.assertRaisesMessage(S3KeyNotFoundError, "File not found in storage for 'doc.pdf'"):
-            resolve_attachments(
+            create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
                 uploads=[item],
@@ -387,7 +390,7 @@ class ResolveAttachmentsTest(TestCase):
         item = self._make_item(upload_token="bad-token")
 
         with self.assertRaises(InvalidUploadTokenError):
-            resolve_attachments(
+            create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
                 uploads=[item],
@@ -408,7 +411,7 @@ class ResolveAttachmentsTest(TestCase):
         initial_count = Attachment.objects.count()
 
         with self.assertRaises(InvalidUploadTokenError):
-            resolve_attachments(
+            create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
                 uploads=[item1, item2],
@@ -423,7 +426,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_strips_storage_dir_prefix(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item(presigned_key="media/some_path/file.txt")
 
-        result = resolve_attachments(
+        result = create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[item],
@@ -435,7 +438,7 @@ class ResolveAttachmentsTest(TestCase):
     @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
     @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
     def test_empty_uploads_returns_empty_list(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
-        result = resolve_attachments(
+        result = create_attachment_records(
             user=self.user,
             content_object=self.content_object,
             uploads=[],

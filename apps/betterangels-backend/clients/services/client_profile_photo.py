@@ -1,61 +1,34 @@
 from accounts.models import User
 from clients.models import ClientProfile
-from clients.types import GenerateClientProfilePhotoUploadInput
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
-from common.services.s3 import (
-    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
-    generate_s3_presigned_upload_urls,
-    s3_key_exists,
-    strip_storage_location,
+from common.services import attachment_upload
+from common.services.attachment_upload import (
+    AttachmentUploadConfig,
+    GenerateUploadItem,
 )
+from common.services.s3 import s3_key_exists, strip_storage_location
 from common.services.types import AuthorizedPresignedUpload
-from common.services.upload_token import create_upload_token, validate_upload_token
+from common.services.upload_token import validate_upload_token
 
-UPLOAD_PATH = "client_profile_photos"
-SERVICE_NAME = "client_profile_photo"
-
-ALLOWED_CONTENT_TYPES = DEFAULT_IMAGE_CONTENT_TYPES
-
-
-def _validate_content_type(content_type: str) -> None:
-    if content_type not in ALLOWED_CONTENT_TYPES:
-        raise ValueError(f"Content type not allowed: {content_type}")
+CLIENT_PROFILE_PHOTO_CONFIG = AttachmentUploadConfig(
+    upload_path="client_profile_photos",
+    service_name="client_profile_photo",
+    allowed_content_types=DEFAULT_IMAGE_CONTENT_TYPES,
+)
 
 
 def create_presigned_upload(
     *,
     user: User,
-    upload: GenerateClientProfilePhotoUploadInput,
+    upload: GenerateUploadItem,
 ) -> AuthorizedPresignedUpload:
-    _validate_content_type(upload.content_type)
-
-    presigned_urls = generate_s3_presigned_upload_urls(
-        uploads=[
-            {
-                "ref_id": upload.ref_id,
-                "filename": upload.filename,
-                "content_type": upload.content_type,
-                "upload_path": UPLOAD_PATH,
-            }
-        ]
+    """Generate a presigned S3 URL and upload token for a single profile photo (Phase 1)."""
+    batch = attachment_upload.create_presigned_uploads(
+        user=user,
+        uploads=[upload],
+        config=CLIENT_PROFILE_PHOTO_CONFIG,
     )
-
-    result = presigned_urls["uploads"][0]
-
-    upload_token = create_upload_token(
-        key=result["key"],
-        user_id=user.pk,
-        expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
-        scope=SERVICE_NAME,
-    )
-
-    return {
-        "ref_id": result["ref_id"],
-        "presigned_key": result["key"],
-        "url": result["url"],
-        "fields": result["fields"],
-        "upload_token": upload_token,
-    }
+    return batch.uploads[0]
 
 
 def resolve_upload(
@@ -69,7 +42,7 @@ def resolve_upload(
         upload_token=upload_token,
         key=presigned_key,
         user_id=user.pk,
-        scope=SERVICE_NAME,
+        scope=CLIENT_PROFILE_PHOTO_CONFIG.service_name,
     ):
         raise ValueError("Invalid or expired upload signature")
 

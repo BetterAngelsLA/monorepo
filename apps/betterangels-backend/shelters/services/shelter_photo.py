@@ -3,11 +3,11 @@ from typing import Iterable
 
 from accounts.models import User
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
+from common.services import attachment_upload
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
     GenerateUploadItem,
     ResolveUploadItem,
-    create_presigned_uploads as generic_create_presigned_uploads,
     validate_upload_batch,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
@@ -28,9 +28,13 @@ from shelters.types.inputs import UpdateShelterPhotoInput
 class ShelterPhotoResolveItem:
     """Typed input for ``resolve_uploads`` — preserves the ``photo_type`` enum.
 
-    Unlike ``strawberry.asdict()`` which serializes enums to strings,
-    this keeps ``photo_type`` as a ``ShelterPhotoTypeChoices`` member
-    so the service never needs to parse strings back into enums.
+    GraphQL resolvers receive ``photo_type`` as a ``ShelterPhotoTypeChoices``
+    enum member.  If we used ``strawberry.asdict()`` (or a plain Strawberry
+    input type) it would serialize the enum to a string, and the service layer
+    would have to parse it back — losing type safety and risking ``KeyError``.
+
+    This dataclass keeps the typed enum from schema → service so the service
+    never needs to parse strings back into enums.
     """
 
     presigned_key: str
@@ -66,7 +70,7 @@ def create_presigned_uploads(
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
     shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
-    return generic_create_presigned_uploads(
+    return attachment_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
         config=SHELTER_PHOTO_CONFIG,
