@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Tuple
+from typing import Any, Mapping, NewType, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
@@ -8,6 +8,7 @@ from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
 from common.images import build_img_url
 from common.models import Address, Attachment, Location, PhoneNumber
+from common.services.types import AuthorizedPresignedUploadBatch
 from django.db.models import Q, QuerySet, Subquery
 from django.db.models.fields.files import FieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -297,6 +298,21 @@ class AuthorizedPresignedS3UploadType(PresignedS3UploadType):
 @strawberry.type
 class AuthorizedPresignedS3UploadsType:
     uploads: list[AuthorizedPresignedS3UploadType]
+
+    @classmethod
+    def from_batch(cls, batch: AuthorizedPresignedUploadBatch) -> "AuthorizedPresignedS3UploadsType":
+        return cls(
+            uploads=[
+                AuthorizedPresignedS3UploadType(
+                    ref_id=item["ref_id"],
+                    url=item["url"],
+                    fields=cast(JSON, item["fields"]),
+                    presigned_key=item["presigned_key"],
+                    upload_token=item["upload_token"],
+                )
+                for item in batch["uploads"]
+            ]
+        )
 
 
 @strawberry.input
