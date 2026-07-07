@@ -342,8 +342,17 @@ def resolve_note_attachment_uploads(
     note: Note,
     attachments: Iterable[dict],
 ) -> list[Attachment]:
-    """Validate tokens + S3 → create Attachment rows for a note (Phase 3)."""
-    permission_group = resolve_permission_group(user, template=CASEWORKER)
+    """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
+
+    Uses the note's organization to resolve the permission group, so
+    object-level permissions are scoped to the correct org even when
+    the user belongs to multiple organizations.
+    """
+    permission_group = resolve_permission_group(
+        user,
+        template=CASEWORKER,
+        organization_id=note.organization_id,
+    )
 
     attached = generic_resolve_attachments(
         user=user,
