@@ -11,18 +11,18 @@ from common.services.s3 import (
 )
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from common.services.upload_token import create_upload_token, validate_upload_token
+from common.utils import get_by_pk_or_not_found
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
-from common.utils import get_by_pk_or_not_found
 from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
 
 UPLOAD_PATH = "shelters"
 SERVICE_NAME = "shelter_photo"
 
 ALLOWED_CONTENT_TYPES = DEFAULT_IMAGE_CONTENT_TYPES
-SHELTER_PHOTO_MAX_FILE_SIZE = 50_000_000  # 50 MB
 
 
 def _validate_content_type(content_type: str, filename: str) -> None:
@@ -50,7 +50,7 @@ def create_presigned_uploads(
                 "filename": upload.filename,
                 "content_type": upload.content_type,
                 "upload_path": UPLOAD_PATH,
-                "max_file_size": SHELTER_PHOTO_MAX_FILE_SIZE,
+                "max_file_size": settings.SHELTER_PHOTO_MAX_FILE_SIZE,
             }
         )
 

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from accounts.tests.baker_recipes import organization_recipe
 from common.services.s3 import DEFAULT_UPLOAD_EXPIRATION_SECONDS
+from django.conf import settings as django_settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from model_bakery import baker
@@ -11,7 +12,6 @@ from shelters.models import ShelterPhoto
 from shelters.services.shelter_photo import (
     ALLOWED_CONTENT_TYPES,
     SERVICE_NAME,
-    SHELTER_PHOTO_MAX_FILE_SIZE,
     UPLOAD_PATH,
     _validate_content_type,
     create_presigned_uploads,
@@ -114,7 +114,7 @@ class CreatePresignedUploadsTest(TestCase):
                     "filename": "photo.jpg",
                     "content_type": "image/jpeg",
                     "upload_path": UPLOAD_PATH,
-                    "max_file_size": SHELTER_PHOTO_MAX_FILE_SIZE,
+                    "max_file_size": django_settings.SHELTER_PHOTO_MAX_FILE_SIZE,
                 }
             ]
         )
