@@ -46,7 +46,7 @@ def daily_occupancy_metrics_to_csv(shelter_id: str, metrics: list[DailyOccupancy
 
     rows = [
         {
-            "date": metric.date,
+            "date": metric.date.isoformat(),
             "shelter_id": shelter_id,
             "occupied_count": metric.occupied_count,
             "total_beds": metric.total_beds,
