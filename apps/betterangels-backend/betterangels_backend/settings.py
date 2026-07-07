@@ -78,6 +78,7 @@ env = environ.Env(
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
+    SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50_000_000),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -90,6 +91,7 @@ IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 # Django defaults: 2.5 MB (2621440 bytes). Bumped to match S3 presigned limit.
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max request body size
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max file size before streaming to disk
+SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")  # default 50 MB
 
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
