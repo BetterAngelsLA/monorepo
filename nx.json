@@ -5,12 +5,21 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
       "cache": true
     },
     "test": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ],
       "cache": true
     },
     "lint": {
@@ -31,7 +40,11 @@
       "cache": true
     },
     "@nx/jest:jest": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ],
       "cache": true,
       "options": {
         "passWithNoTests": true
@@ -53,12 +66,20 @@
     },
     "@nx/js:swc": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
@@ -82,21 +103,6 @@
   },
   "plugins": [
     "@nxlv/python",
-    {
-      "plugin": "@nx/vite/plugin",
-      "options": {
-        "buildTargetName": "build",
-        "serveTargetName": "serve",
-        "previewTargetName": "preview",
-        "serveStaticTargetName": "serve-static"
-      }
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
-    },
     {
       "plugin": "@nx/react/router-plugin",
       "options": {
@@ -128,6 +134,69 @@
       "options": {
         "testTargetName": "test"
       }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      },
+      "include": [
+        "apps/betterangels/**/*",
+        "apps/betterangels-admin/**/*",
+        "apps/shelter-web/**/*",
+        "apps/wildfires/**/*",
+        "libs/expo/betterangels/**/*",
+        "libs/expo/shared/clients/**/*",
+        "libs/expo/shared/ui-components/**/*",
+        "libs/expo/shared/utils/**/*",
+        "libs/react/components/**/*",
+        "libs/react/shelter-operator/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      },
+      "include": [
+        "apps/betterangels/**/*",
+        "apps/betterangels-admin/**/*",
+        "apps/shelter-web/**/*",
+        "libs/apollo/**/*",
+        "libs/ba-platform/permissions/**/*",
+        "libs/ba-platform/**/*",
+        "libs/expo/betterangels/**/*",
+        "libs/expo/shared/icons/**/*",
+        "libs/expo/shared/images/**/*",
+        "libs/expo/shared/static/**/*",
+        "libs/expo/shared/ui-components/**/*",
+        "libs/expo/shared/utils/**/*",
+        "libs/react/betterangels-admin/**/*",
+        "libs/react/components/**/*",
+        "libs/react/icons/**/*",
+        "libs/react/shared/**/*",
+        "libs/react/shelter/**/*",
+        "libs/react/shelter-operator/**/*",
+        "libs/shared/places/**/*",
+        "libs/shared/units/**/*",
+        "libs/tailwind/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "serveStaticTargetName": "serve-static",
+        "devTargetName": "dev",
+        "typecheckTargetName": "typecheck"
+      },
+      "include": [
+        "apps/betterangels-admin/**/*",
+        "apps/shelter-web/**/*",
+        "apps/wildfires/**/*"
+      ]
     }
   ],
   "generators": {

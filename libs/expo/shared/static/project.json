@@ -3,12 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/shared/static/src",
   "projectType": "library",
-  "tags": ["type:util", "scope:shared"],
+  "tags": [
+    "type:util",
+    "scope:shared"
+  ],
   "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
