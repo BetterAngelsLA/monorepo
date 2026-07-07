@@ -81,8 +81,8 @@ env = environ.Env(
     SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50_000_000),
     NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50_000_000),
     CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50_000_000),
-    S3_PRESIGNED_MAX_FILE_SIZE=(int, 50_000_000),
-    S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
+    S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50_000_000),
+    S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -93,17 +93,18 @@ IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
 # ── Upload size limits (50 MB) ──────────────────────────────────────────
 #
-# All limits are aligned with the S3 presigned POST policy max (DEFAULT_MAX_FILE_SIZE
-# in common/services/s3.py).  Django's built-in defaults are 2.5 MB — too low for
-# file uploads that arrive via presigned S3 URLs, so we raise them here.
+# All limits are aligned with S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE — the fallback
+# used by common/services/s3.py when no per-domain value is given.
+# Django's built-in defaults are 2.5 MB — too low for file uploads that
+# arrive via presigned S3 URLs, so we raise them here.
 #
 # Per-domain overrides are available via environment variables; the env defaults
 # (declared above) are 50_000_000 bytes each.
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max request body size
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max in-memory file before streaming to disk
 # S3 presigned POST max file size — shared default for per-domain limits.
-S3_PRESIGNED_MAX_FILE_SIZE = env("S3_PRESIGNED_MAX_FILE_SIZE")
-S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
+S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE = env("S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE")
+S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
 NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
 CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
