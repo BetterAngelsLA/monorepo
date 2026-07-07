@@ -119,6 +119,14 @@ class Query:
 
 @strawberry.type
 class Mutation:
+    # TODO(org-scoping): Mutations currently rely on resolve_permission_group()
+    # (first-match org) and object-level PermissionedQuerySet checks.  These
+    # should migrate to org-header-based scoping via HasOrgPerm +
+    # get_current_organization(info), matching the pattern used in
+    # shelters/schema.py.  This affects create_note, update_note, revert_note,
+    # delete_note, create_note_service_request, and the note attachment
+    # upload mutations.
+
     # Notes
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
