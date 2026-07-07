@@ -2,7 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TLatLng } from '../Map';
+import { TLatLng, toMapBounds } from '../Map';
 import { PrivateBadge } from '../PrivateBadge';
 import { DistanceAway } from './DistanceAway';
 import { ShelterCardHero } from './ShelterCardHero';
@@ -65,6 +65,7 @@ export function ShelterCard(props: TShelterCard) {
   const footerCss = ['mt-4', 'md:mt-10', footerClassName];
 
   const onNavigate = () => {
+    const currentBounds = map?.getBounds();
     sessionStorage.setItem(
       'mapCenter',
       JSON.stringify({
@@ -73,6 +74,12 @@ export function ShelterCard(props: TShelterCard) {
         zoom: map?.getZoom(),
       })
     );
+    if (currentBounds) {
+      sessionStorage.setItem(
+        'savedMapBounds',
+        JSON.stringify(toMapBounds(currentBounds))
+      );
+    }
     navigate(`/shelter/${id}`);
   };
 
