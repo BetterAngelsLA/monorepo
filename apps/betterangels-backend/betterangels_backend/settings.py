@@ -85,6 +85,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
+
+# Upload size limits
+# Django defaults: 2.5 MB (2621440 bytes). Bumped to match S3 presigned limit.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max request body size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB — max file size before streaming to disk
+
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
     environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
