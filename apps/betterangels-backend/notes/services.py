@@ -349,7 +349,7 @@ def resolve_note_attachment_uploads(
     permission_group = resolve_permission_group(
         user,
         template=CASEWORKER,
-        organization_id=note.organization_id,
+        organization_id=str(note.organization_id),
     )
 
     attached = attachment_upload.create_attachment_records(
