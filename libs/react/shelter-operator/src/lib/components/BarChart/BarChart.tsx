@@ -246,7 +246,8 @@ export function BarChart({
         </div>
       )}
       <div ref={chartContainerRef} className="flex-1 min-h-0">
-        <Column key={`${viewMode}-${resizeKey}`} {...withState} />
+        {/* Remount only when viewMode changes; rely on autoFit for resize instead of resizeKey */}
+        <Column key={viewMode} {...withState} />
       </div>
     </div>
   );
