@@ -87,37 +87,19 @@
     "tsconfig-paths": "*",
     "use-deep-compare-effect": "*",
     "validator": "*",
-    "zod": "*"
-  },
-  "devDependencies": {
-    "@expo/metro": "*",
-    "@expo/metro-config": "*",
+    "zod": "*",
     "@graphql-codegen/cli": "*",
-    "@jest/globals": "*",
-    "@nx/detox": "*",
-    "@nx/devkit": "*",
-    "@nx/eslint": "*",
-    "@nx/jest": "*",
-    "@nx/js": "*",
-    "@nx/react": "*",
-    "@nx/rollup": "*",
-    "@nx/vite": "*",
-    "@nx/web": "*",
-    "@nx/webpack": "*",
-    "@storybook/react": "*",
-    "@storybook/react-native": "*",
-    "@storybook/react-native-web-vite": "*",
-    "@storybook/react-webpack5": "*",
-    "@swc/helpers": "*",
+    "vitest": "*",
     "@testing-library/react": "*",
-    "@testing-library/react-native": "*",
-    "@types/geojson": "*",
-    "@types/google.maps": "*",
-    "@types/set-cookie-parser": "*",
-    "tslib": "*",
     "vite": "*",
-    "vitest": "*"
+    "vite-plugin-static-copy": "*",
+    "@testing-library/react-native": "*",
+    "@jest/globals": "*",
+    "@types/geojson": "*",
+    "@storybook/react-native-web-vite": "*",
+    "@types/google.maps": "*"
   },
+  "devDependencies": {},
   "expo": {
     "autolinking": {
       "nativeModulesDir": "../../libs/expo/modules"
@@ -128,6 +110,5 @@
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
-  },
-  "devDependencies": {}
+  }
 }

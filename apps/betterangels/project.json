@@ -3,18 +3,12 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": [
-    "type:app",
-    "scope:betterangels"
-  ],
+  "tags": ["type:app", "scope:betterangels"],
   "targets": {
     "start": {
-      "executor": "@nx/expo:start",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["sync-deps"],
       "options": {
-        "port": 8081
+        "args": ["--port=8081"]
       }
     },
     "serve": {
@@ -24,30 +18,16 @@
       }
     },
     "run-ios": {
-      "executor": "@nx/expo:run",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["sync-deps"],
       "options": {
-        "platform": "ios"
+        "args": []
       }
     },
     "run-android": {
-      "executor": "@nx/expo:run",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["sync-deps"],
       "options": {
-        "platform": "android"
+        "args": []
       }
-    },
-    "eas-build": {
-      "executor": "@nx/expo:build",
-      "options": {}
-    },
-    "submit": {
-      "executor": "@nx/expo:submit",
-      "options": {}
     },
     "build-list": {
       "executor": "@nx/expo:build-list",
@@ -64,15 +44,7 @@
       "options": {}
     },
     "prebuild": {
-      "executor": "@nx/expo:prebuild",
-      "dependsOn": [
-        "sync-deps"
-      ],
-      "options": {}
-    },
-    "install": {
-      "executor": "@nx/expo:install",
-      "options": {}
+      "dependsOn": ["sync-deps"]
     },
     "eas-update": {
       "executor": "@nx/expo:update",
@@ -93,27 +65,20 @@
       }
     },
     "export": {
-      "executor": "@nx/expo:export",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["sync-deps"],
       "outputs": [
-        "{options.outputDir}"
+        "{projectRoot}/{options.outputDir}",
+        "{workspaceRoot}/apps/betterangels/dist"
       ],
       "options": {
-        "platform": "all",
-        "outputDir": "dist/apps/betterangels"
+        "args": ["--output-dir=../../dist/apps/betterangels", "--platform=all"]
       }
     },
     "lint": {
-      "inputs": [
-        "{projectRoot}/**/*"
-      ]
+      "inputs": ["{projectRoot}/**/*"]
     },
     "test": {
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "passWithNoTests": true
       },
