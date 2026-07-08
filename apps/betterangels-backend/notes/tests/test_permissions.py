@@ -1,8 +1,9 @@
 from typing import Optional
 
+from unittest_parametrize import parametrize
+
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from unittest_parametrize import parametrize
 
 
 class NotePermissionTestCase(NoteGraphQLBaseTestCase):
@@ -316,7 +317,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                     {
                         "kind": "PERMISSION",
                         "field": None,
-                        "message": "You do not have permission to modify this note.",
+                        "message": "You do not have permission to perform this action.",
                     },
                 )
             elif user_label is None:
