@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, Tuple
+from typing import Any, Mapping, NewType, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
@@ -306,7 +306,7 @@ class AuthorizedPresignedS3UploadsType:
                 AuthorizedPresignedS3UploadType(
                     ref_id=item.ref_id,
                     url=item.url,
-                    fields=item.fields,
+                    fields=cast(JSON, item.fields),
                     presigned_key=item.presigned_key,
                     upload_token=item.upload_token,
                 )
