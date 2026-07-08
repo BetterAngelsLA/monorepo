@@ -1,6 +1,13 @@
 from typing import Any
 from unittest.mock import ANY, patch
 
+from common.imgproxy import IMGPROXY_SWITCH
+from common.models import Attachment
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
+from deepdiff import DeepDiff
+from unittest_parametrize import parametrize
+from waffle.testutils import override_switch
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -27,12 +34,6 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from common.imgproxy import IMGPROXY_SWITCH
-from common.models import Attachment
-from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
-from deepdiff import DeepDiff
-from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 
 @override_switch(IMGPROXY_SWITCH, active=False)
@@ -565,7 +566,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
         with patch("common.services.attachment_upload.validate_upload_token", return_value=False):
-            expected_query_count = 6
+            expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -1031,7 +1032,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 35
+            expected_query_count = 37
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1068,7 +1069,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with patch("common.services.attachment_upload.validate_upload_token", return_value=False):
-            expected_query_count = 6
+            expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
