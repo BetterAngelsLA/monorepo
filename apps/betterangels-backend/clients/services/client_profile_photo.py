@@ -30,6 +30,7 @@ def create_presigned_upload(
         uploads=[upload],
         config=CLIENT_PROFILE_PHOTO_CONFIG,
     )
+    # Profile photos are always single-upload; pick the first (only) item.
     return batch.uploads[0]
 
 
