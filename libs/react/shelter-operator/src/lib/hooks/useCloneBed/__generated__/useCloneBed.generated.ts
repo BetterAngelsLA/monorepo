@@ -6,9 +6,9 @@ export type CloneBedMutationVariables = Types.Exact<{
 }>;
 
 
-export type CloneBedMutation = { __typename?: 'Mutation', cloneBed:
-    | { __typename?: 'BedType', id: string, name?: string | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CloneBedMutation = { __typename: 'Mutation', cloneBed:
+    | { __typename: 'BedType', id: string, name?: string | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

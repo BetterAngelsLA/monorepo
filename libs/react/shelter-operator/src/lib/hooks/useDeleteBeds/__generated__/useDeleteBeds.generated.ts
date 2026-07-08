@@ -6,9 +6,9 @@ export type DeleteBedsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteBedsMutation = { __typename?: 'Mutation', deleteBeds:
-    | { __typename?: 'BulkDeleteResult', ids: Array<string> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteBedsMutation = { __typename: 'Mutation', deleteBeds:
+    | { __typename: 'BulkDeleteResult', ids: Array<string> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 
