@@ -14,6 +14,7 @@ from common.services.attachment_upload import (
 )
 from common.services.types import AuthorizedPresignedUploadBatch
 from django.conf import settings
+from django.db import transaction
 from notes.groups import CASEWORKER
 
 # TODO: upload_path="attachments" is too generic — it dates from before the
@@ -58,18 +59,19 @@ def resolve_upload(
     # have a similar TODO about this migration.
     permission_group = resolve_permission_group(user, template=CASEWORKER)
 
-    attached = attachment_upload.create_attachment_records(
-        user=user,
-        content_object=client_profile,
-        uploads=documents,
-        config=CLIENT_DOCUMENT_CONFIG,
-    )
-
-    for att in attached:
-        assign_object_permissions(
-            permission_group.group,
-            att,
-            [Attachment.perms.DELETE, Attachment.perms.CHANGE],
+    with transaction.atomic():
+        attached = attachment_upload.create_attachment_records(
+            user=user,
+            content_object=client_profile,
+            uploads=documents,
+            config=CLIENT_DOCUMENT_CONFIG,
         )
+
+        for att in attached:
+            assign_object_permissions(
+                permission_group.group,
+                att,
+                [Attachment.perms.DELETE, Attachment.perms.CHANGE],
+            )
 
     return attached

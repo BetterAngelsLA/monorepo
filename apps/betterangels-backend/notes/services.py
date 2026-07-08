@@ -352,21 +352,22 @@ def resolve_note_attachment_uploads(
         organization_id=str(note.organization_id),
     )
 
-    attached = attachment_upload.create_attachment_records(
-        user=user,
-        content_object=note,
-        uploads=attachments,
-        config=NOTE_ATTACHMENT_CONFIG,
-    )
-
-    for att in attached:
-        assign_object_permissions(
-            permission_group.group,
-            att,
-            [
-                Attachment.perms.DELETE,
-                Attachment.perms.CHANGE,
-            ],
+    with transaction.atomic():
+        attached = attachment_upload.create_attachment_records(
+            user=user,
+            content_object=note,
+            uploads=attachments,
+            config=NOTE_ATTACHMENT_CONFIG,
         )
+
+        for att in attached:
+            assign_object_permissions(
+                permission_group.group,
+                att,
+                [
+                    Attachment.perms.DELETE,
+                    Attachment.perms.CHANGE,
+                ],
+            )
 
     return attached
