@@ -24,6 +24,7 @@ import {
 } from '../../../ui-components';
 import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TasksDocument } from '../../../ui-components/TaskList/__generated__/Tasks.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
 function getInitialTaskFilters(): TModelFilters {
@@ -75,13 +76,15 @@ export function TasksTab(props: TProps) {
       const result = await createTask({
         variables: {
           data: {
-            summary: task.summary!,
+            summary: task.summary ?? '',
             description: task.description,
             status: task.status,
             teamId: task.teamId || null,
             clientProfile: client.clientProfile.id,
           },
         },
+        refetchQueries: [TasksDocument],
+        awaitRefetchQueries: true,
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
