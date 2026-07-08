@@ -576,6 +576,55 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertIsNotNone(response.get("errors"))
 
+    def test_delete_client_profile_photo(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+
+        # First, set a profile photo via the existing upload fixture.
+        photo_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
+        self._update_client_profile_photo_fixture(
+            client_profile_id,
+            photo_content,
+            "profile_photo.jpg",
+        )
+
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertIsNotNone(client_profile.profile_photo)
+        self.assertTrue(client_profile.profile_photo.name)
+
+        # Now delete the photo.
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_client_profile_photo_fixture(client_profile_id)
+
+        result = response["data"]["deleteClientProfilePhoto"]
+        self.assertEqual(result["id"], client_profile_id)
+        self.assertIsNone(result["profilePhoto"])
+
+        # Verify the database row was updated.
+        client_profile.refresh_from_db()
+        self.assertEqual(client_profile.profile_photo.name, "")
+
+    def test_delete_client_profile_photo_no_photo(self) -> None:
+        """Deleting when there is no photo should not error."""
+        # Create a fresh profile that has no photo.
+        client_profile = self._create_client_profile_fixture({"firstName": "NoPhoto"})
+        client_profile_id = client_profile["data"]["createClientProfile"]["id"]
+
+        # Verify it has no photo.
+        db_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertEqual(db_profile.profile_photo.name, "")
+
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_client_profile_photo_fixture(client_profile_id)
+
+        result = response["data"]["deleteClientProfilePhoto"]
+        self.assertEqual(result["id"], client_profile_id)
+        self.assertIsNone(result["profilePhoto"])
+
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):
     def setUp(self) -> None:

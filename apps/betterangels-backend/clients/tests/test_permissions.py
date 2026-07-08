@@ -533,6 +533,31 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             else:
                 self.assertIsNone(profile_id)
 
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("non_case_manager_user", False),
+            (None, False),
+        ],
+    )
+    def test_delete_client_profile_photo_permission(
+        self, user_label: Optional[str], should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        response = self._delete_client_profile_photo_fixture(
+            client_profile_id=self.client_profile_1["id"],
+        )
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
+            return
+
+        result = response.get("data", {}) or {}
+        self.assertEqual("deleteClientProfilePhoto" in result and "id" in (result.get("deleteClientProfilePhoto") or {}), should_succeed)
+
 
 class ClientContactPermissionTestCase(ClientContactBaseTestCase):
     def setUp(self) -> None:
