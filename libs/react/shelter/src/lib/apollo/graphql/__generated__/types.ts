@@ -2990,8 +2990,6 @@ export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | Op
 
 export type ResolveClientProfilePhotoUploadInput = {
   clientProfileId: Scalars['ID']['input'];
-  contentType: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
   presignedKey: Scalars['String']['input'];
   uploadToken: Scalars['String']['input'];
 };

@@ -2275,8 +2275,6 @@ input ResolveClientProfilePhotoUploadInput {
   clientProfileId: ID!
   presignedKey: String!
   uploadToken: String!
-  filename: String!
-  contentType: String!
 }
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
