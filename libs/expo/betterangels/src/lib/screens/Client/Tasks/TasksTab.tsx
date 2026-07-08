@@ -79,7 +79,7 @@ export function TasksTab(props: TProps) {
             summary: task.summary ?? '',
             description: task.description,
             status: task.status,
-            teamId: task.teamId || null,
+            teamId: task.teamId ?? undefined,
             clientProfile: client.clientProfile.id,
           },
         },

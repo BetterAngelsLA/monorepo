@@ -81,7 +81,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
             summary: task.summary ?? '',
             description: task.description,
             status: task.status,
-            teamId: task.teamId || null,
+            teamId: task.teamId ?? undefined,
           },
         },
       });
@@ -121,7 +121,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         <TaskForm
           initialValues={{
             summary: task.summary || '',
-            teamId: task.currentTeam?.id || null,
+            teamId: task.currentTeam?.id ?? undefined,
             description: task.description || '',
             status: task.status || TaskStatusEnum.ToDo,
           }}
