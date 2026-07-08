@@ -6,8 +6,8 @@ export type UpdateShelterPhotoMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateShelterPhotoMutation = { __typename?: 'Mutation', updateShelterPhoto:
-    | { __typename: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', message: string }> }
+export type UpdateShelterPhotoMutation = { __typename: 'Mutation', updateShelterPhoto:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', message: string }> }
     | { __typename: 'ShelterPhotoType', id: string, type: Types.ShelterPhotoTypeChoices }
    };
 

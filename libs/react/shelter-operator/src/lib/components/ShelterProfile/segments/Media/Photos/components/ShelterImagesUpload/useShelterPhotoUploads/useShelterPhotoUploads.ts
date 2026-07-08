@@ -11,11 +11,10 @@ import {
   ResolveShelterPhotoUploadsDocument,
 } from './__generated__/useShelterPhotoUploads.generated';
 import {
-  AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME,
-  OPERATION_INFO_TYPENAME,
-  SHELTER_PHOTO_MAX_SIZE,
-  SHELTER_PHOTO_UPLOADS_TYPENAME,
-} from './constants';
+  generateShelterPhotoUploadsSuccessTypename,
+  resolveShelterPhotoUploadsSuccessTypename,
+} from './__generated__/useShelterPhotoUploads_meta.generated';
+import { SHELTER_PHOTO_MAX_SIZE } from './constants';
 
 function userFacingError(error: unknown): string {
   const message = parseS3Error(error);
@@ -52,7 +51,7 @@ type TProps = {
   maxFileSizeBytes?: number;
 };
 
-export function useShelterPhotoUpload(props?: TProps) {
+export function useShelterPhotoUploads(props?: TProps) {
   const { maxFileSizeBytes = SHELTER_PHOTO_MAX_SIZE } = props ?? {};
 
   const [generateUploads] = useMutation(GenerateShelterPhotoUploadsDocument);
@@ -107,11 +106,11 @@ export function useShelterPhotoUpload(props?: TProps) {
       throw new Error('Missing response from generateShelterPhotoUploads');
     }
 
-    if (payload.__typename === OPERATION_INFO_TYPENAME) {
+    if (payload.__typename === 'OperationInfo') {
       throw new Error(payload.messages.map((m) => m.message).join(', '));
     }
 
-    if (payload.__typename !== AUTHORIZED_PRESIGNED_S3_UPLOADS_TYPENAME) {
+    if (payload.__typename !== generateShelterPhotoUploadsSuccessTypename) {
       throw new Error('Unexpected response type');
     }
 
@@ -166,7 +165,10 @@ export function useShelterPhotoUpload(props?: TProps) {
       update(cache, { data }) {
         const resolveResult = data?.resolveShelterPhotoUploads;
 
-        if (resolveResult?.__typename !== SHELTER_PHOTO_UPLOADS_TYPENAME) {
+        if (
+          resolveResult?.__typename !==
+          resolveShelterPhotoUploadsSuccessTypename
+        ) {
           return;
         }
 
@@ -206,7 +208,7 @@ export function useShelterPhotoUpload(props?: TProps) {
       throw new Error('Missing response from resolveShelterPhotoUploads');
     }
 
-    if (resolvePayload.__typename === OPERATION_INFO_TYPENAME) {
+    if (resolvePayload.__typename === 'OperationInfo') {
       throw new Error(resolvePayload.messages.map((m) => m.message).join(', '));
     }
   }
