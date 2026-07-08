@@ -1,0 +1,14 @@
+mutation DeleteReservations($data: BulkDeleteInput!) {
+  deleteReservations(data: $data) {
+    ... on BulkDeleteResult {
+      ids
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

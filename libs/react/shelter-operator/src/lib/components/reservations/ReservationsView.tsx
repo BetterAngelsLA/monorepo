@@ -1,12 +1,16 @@
+import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
 import { useReservations } from '../../hooks/useReservations';
 import { useUpdateReservation } from '../../hooks/useUpdateReservation';
+import { updateReservationMeta } from '../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
 import { shelterCreateReservationRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
+import { useToast } from '../base-ui/toast';
 import { ReservationTable } from '../ReservationTable';
 
 type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
@@ -14,13 +18,11 @@ type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
 export function ReservationsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
-  const { reservations: rows, loading } = useReservations(shelterId);
+  const { reservations, loading } = useReservations(shelterId);
 
-  const {
-    updateReservation,
-    error: actionError,
-    clearError,
-  } = useUpdateReservation(shelterId);
+  const { updateReservation } = useUpdateReservation({ shelterId });
+
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
   const isCheckingIn = loadingAction === 'checkin';
@@ -35,21 +37,44 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
   const closeCheckinConfirmation = useCallback(() => {
     setCheckinConfirmation({ isOpen: false, reservationId: null });
   }, []);
+  const { showToast } = useToast();
 
   const handleStatusUpdate = useCallback(
     async (
       reservationId: string,
       status: ReservationStatusChoices,
       action: LoadingAction,
-      onClose: () => void
+      onClose: () => void,
     ) => {
-      clearError();
+      const errorMessage = 'Unable to update reservation. Please try again.';
+      setActionError(null);
       setLoadingAction(action);
-      await updateReservation(reservationId, { status });
-      setLoadingAction(null);
+      try {
+        const response = await updateReservation({
+          variables: { id: reservationId, data: { status } },
+        });
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateReservationMeta,
+          fields: ['ids'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error updating reservation: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
+      } finally {
+        setLoadingAction(null);
+      }
       onClose();
     },
-    [updateReservation, clearError]
+    [updateReservation],
   );
 
   const [completeConfirmation, setCompleteConfirmation] = useState<{
@@ -74,15 +99,22 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
     <div>
       {actionError && (
         <div
-          className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="mb-4 flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           role="alert"
         >
-          {actionError}
+          <span className="flex-1">{actionError}</span>
+          <button
+            onClick={() => setActionError(null)}
+            className="ml-3 text-red-400 hover:text-red-600"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
         </div>
       )}
       <div>
         <ReservationTable
-          rows={rows}
+          reservations={reservations}
           shelterId={shelterId}
           loading={loading}
           isConfirmActionLoading={isCheckingIn || isCompleting}
@@ -112,7 +144,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
                 checkinConfirmation.reservationId,
                 ReservationStatusChoices.CheckedIn,
                 'checkin',
-                closeCheckinConfirmation
+                closeCheckinConfirmation,
               );
             }
           },
@@ -138,7 +170,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
                 completeConfirmation.reservationId,
                 ReservationStatusChoices.Completed,
                 'complete',
-                closeCompleteConfirmation
+                closeCompleteConfirmation,
               );
             }
           },
@@ -164,7 +196,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
                 cancelConfirmation.reservationId,
                 ReservationStatusChoices.Cancelled,
                 'cancel',
-                closeCancelConfirmation
+                closeCancelConfirmation,
               );
             }
           },

@@ -1,0 +1,25 @@
+mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
+  updateReservation(id: $id, data: $data) {
+    ... on ReservationType {
+      id
+      status
+      startDate
+      notes
+      bed {
+        id
+        name
+      }
+      room {
+        id
+        name
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}
