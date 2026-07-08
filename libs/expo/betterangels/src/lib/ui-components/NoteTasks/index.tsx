@@ -98,7 +98,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      teamId: data.teamId ?? teamId ?? undefined,
+      teamId: data.teamId ?? teamId ?? null,
     };
 
     if (existingId) {
