@@ -1,10 +1,10 @@
 import { DEFAULT_GQL_ERROR_MESSAGE } from '../../constants';
 
 /**
- * Compose a loggable error description from one or more message sources.
+ * Joins non-empty messages with "; " separators into a single error string.
+ * Falls back to `DEFAULT_GQL_ERROR_MESSAGE` when all messages are empty.
  *
- * Joins all non-empty messages with "; " separators. Useful for logging
- * the full error context when throwing a generic Error in getFieldErrorsOrThrow.
+ * @param messages - Messages from `response.errors` to join.
  */
 export function composeErrorMessage(
   messages: (string | null | undefined)[]

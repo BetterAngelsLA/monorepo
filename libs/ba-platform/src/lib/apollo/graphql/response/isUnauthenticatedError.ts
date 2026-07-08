@@ -2,8 +2,10 @@ import { BE_PROTOCOL_ERROR_CODE } from '../backendApiCodes';
 import type { GraphQLError } from './types';
 
 /**
- * Checks whether a GraphQL response contains an unauthenticated error
- * (extensions.code === "UNAUTHENTICATED"), indicating the user is not logged in.
+ * Checks whether any error in the list has an UNAUTHENTICATED code,
+ * indicating the user is not logged in.
+ *
+ * @param errors - The `errors` array from a GraphQL response.
  */
 export function isUnauthenticatedError(
   errors?: readonly GraphQLError[]
