@@ -15,7 +15,6 @@ class AuthorizedPresignedUploadBatch:
     uploads: list[AuthorizedPresignedUpload]
 
 
-# ── Attachment upload pipeline types ──────────────────────────────────────────
 
 
 @dataclass(frozen=True)
