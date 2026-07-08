@@ -138,8 +138,6 @@ def validate_upload_batch(
 
         validated.append(
             ValidatedResolveItem(
-                presigned_key=item.presigned_key,
-                upload_token=item.upload_token,
                 filename=item.filename,
                 mime_type=item.mime_type,
                 namespace=item.namespace,

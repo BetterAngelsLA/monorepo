@@ -62,8 +62,6 @@ class ValidatedResolveItem:
     generic fields.
     """
 
-    presigned_key: str
-    upload_token: str
     filename: str
     mime_type: str
     namespace: str | None
