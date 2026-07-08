@@ -863,6 +863,8 @@ union DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | Operation
 
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
+union DeleteClientProfilePhotoPayload = ClientProfileType | OperationInfo
+
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
 
 input DeleteDjangoObjectInput {
@@ -1543,7 +1545,8 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)

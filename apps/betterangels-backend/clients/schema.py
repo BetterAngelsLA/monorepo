@@ -632,6 +632,7 @@ class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+        deprecation_reason="Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.",
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
         with transaction.atomic():
@@ -648,6 +649,29 @@ class Mutation:
                 client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+    )
+    def delete_client_profile_photo(self, info: Info, client_profile_id: strawberry.ID) -> ClientProfileType:
+        """Remove a client's profile photo."""
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfile.perms.CHANGE],
+                ).get(id=client_profile_id)
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            client_profile.profile_photo = None
+            client_profile.save(update_fields=["profile_photo"])
 
             return cast(ClientProfileType, client_profile)
 
