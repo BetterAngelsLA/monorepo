@@ -415,15 +415,12 @@ class NoteImportRecordType:
     raw_data: auto
 
 
-# --- Note Attachment Type ---
-
 
 @strawberry_django.type(Attachment, pagination=True)
 class NoteAttachmentType(AttachmentInterface):
     pass
 
 
-# --- Note Attachment Presigned Uploads ---
 
 
 @strawberry.input

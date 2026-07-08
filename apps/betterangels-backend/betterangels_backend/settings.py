@@ -91,6 +91,11 @@ WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
+if IS_LOCAL_DEV:
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+    environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
+
 # ── Upload size limits ─────────────────────────────────────────────────
 #
 # File uploads go through presigned S3 POST URLs (client → S3 directly),
@@ -104,11 +109,6 @@ S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOA
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
 NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
 CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
-
-if IS_LOCAL_DEV:
-    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
-    environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
-    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
 
 
 # Quick-start development settings - unsuitable for production
