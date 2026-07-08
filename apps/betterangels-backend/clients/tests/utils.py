@@ -620,6 +620,33 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
             },
         )
 
+    def _delete_client_profile_photo_fixture(
+        self,
+        client_profile_id: str,
+    ) -> Dict[str, Any]:
+        return self.execute_graphql(
+            """
+            mutation DeleteClientProfilePhoto($clientProfileId: ID!) {
+                deleteClientProfilePhoto(clientProfileId: $clientProfileId) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientProfileType {
+                        id
+                        profilePhoto {
+                            url
+                        }
+                    }
+                }
+            }
+            """,
+            variables={"clientProfileId": client_profile_id},
+        )
+
 
 class ClientContactBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
