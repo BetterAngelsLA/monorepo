@@ -15,8 +15,6 @@ class AuthorizedPresignedUploadBatch:
     uploads: list[AuthorizedPresignedUpload]
 
 
-
-
 @dataclass(frozen=True)
 class AttachmentUploadConfig:
     """Static configuration for a presigned attachment upload flow.

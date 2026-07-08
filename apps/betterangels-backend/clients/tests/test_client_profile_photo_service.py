@@ -127,7 +127,7 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             presigned_key=self.presigned_key,
-            upload_token=self.upload_token
+            upload_token=self.upload_token,
         )
 
         result.refresh_from_db()
@@ -141,7 +141,7 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             presigned_key=self.presigned_key,
-            upload_token=self.upload_token
+            upload_token=self.upload_token,
         )
 
         self.assertEqual(result.pk, self.client_profile.pk)
@@ -154,7 +154,7 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             presigned_key=self.presigned_key,
-            upload_token=self.upload_token
+            upload_token=self.upload_token,
         )
 
         mock_validate_batch.assert_called_once_with(
@@ -179,7 +179,7 @@ class ResolveUploadTest(TestCase):
                 user=self.user,
                 client_profile=self.client_profile,
                 presigned_key=self.presigned_key,
-                upload_token="bad-token"
+                upload_token="bad-token",
             )
 
     @patch("clients.services.client_profile_photo.validate_upload_batch")
@@ -190,7 +190,7 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             presigned_key="media/some_other_path/photo.png",
-            upload_token=self.upload_token
+            upload_token=self.upload_token,
         )
 
         self.client_profile.refresh_from_db()
@@ -207,7 +207,7 @@ class ResolveUploadTest(TestCase):
                 user=self.user,
                 client_profile=self.client_profile,
                 presigned_key=self.presigned_key,
-                upload_token=self.upload_token
+                upload_token=self.upload_token,
             )
 
         self.client_profile.refresh_from_db()
@@ -224,7 +224,7 @@ class ResolveUploadTest(TestCase):
                 user=self.user,
                 client_profile=self.client_profile,
                 presigned_key=self.presigned_key,
-                upload_token="bad-token"
+                upload_token="bad-token",
             )
 
         self.client_profile.refresh_from_db()

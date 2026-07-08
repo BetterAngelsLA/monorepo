@@ -96,8 +96,6 @@ def create_presigned_uploads(
     return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
 
 
-
-
 def validate_upload_batch(
     *,
     user: User,
