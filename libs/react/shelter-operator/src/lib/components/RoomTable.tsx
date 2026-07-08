@@ -1,7 +1,6 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { BookCheck, CopyPlus, Minus } from 'lucide-react';
+import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Button } from './base-ui/buttons';
 import {
   StatusBadge,
@@ -20,8 +19,6 @@ type RoomTableProps = {
   rooms: Room[];
   getRowKey?: (item: Room, index: number) => string;
   onRowClick?: (room: Room, rowIndex: number) => void;
-  selectedIds?: string[];
-  onSelectedIdsChange?: (ids: string[]) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -63,8 +60,6 @@ export function RoomTable({
   rooms,
   getRowKey,
   onRowClick,
-  selectedIds,
-  onSelectedIdsChange,
   loading,
   loadingState,
   emptyState,
@@ -81,58 +76,8 @@ export function RoomTable({
   onDeleteRooms,
   onReserve,
 }: RoomTableProps) {
-  const selectedSet = useMemo(() => new Set(selectedIds ?? []), [selectedIds]);
-
-  const toggleRowSelection = useCallback(
-    (roomId: string) => {
-      if (!onSelectedIdsChange) return;
-      const next = new Set(selectedSet);
-      if (next.has(roomId)) {
-        next.delete(roomId);
-      } else {
-        next.add(roomId);
-      }
-      onSelectedIdsChange([...next]);
-    },
-    [onSelectedIdsChange, selectedSet]
-  );
-
-  const showCheckboxColumn = !!onSelectedIdsChange;
-
   const columns: TableColumn<Room>[] = useMemo(
     () => [
-      ...(showCheckboxColumn
-        ? [
-            {
-              key: 'selected' as const,
-              label: '',
-              width: '2rem',
-              render: (room: Room) => {
-                const isSelected = selectedSet.has(room.id);
-                return (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    aria-label={isSelected ? 'Deselect room' : 'Select room'}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleRowSelection(room.id);
-                    }}
-                    className={mergeCss([
-                      'inline-flex size-5 items-center justify-center rounded border transition-colors',
-                      isSelected
-                        ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
-                        : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
-                    ])}
-                  >
-                    <Minus size={14} strokeWidth={3} />
-                  </button>
-                );
-              },
-            },
-          ]
-        : []),
       {
         key: 'name',
         label: 'Room',
@@ -154,7 +99,7 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    [selectedSet, toggleRowSelection, showCheckboxColumn]
+    [],
   );
 
   return (
@@ -201,6 +146,7 @@ export function RoomTable({
         </div>
       )}
       trailingColumnWidth="140px"
+      onRowClick={onRowClick}
       loading={loading}
       loadingState={loadingState}
       emptyState={emptyState}
