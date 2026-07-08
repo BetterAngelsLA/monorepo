@@ -36,7 +36,7 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         defaults: dict[str, Any] = {
             "ref_id": "ref-1",
             "filename": "photo.jpg",
-            "content_type": "image/jpeg",
+            "mime_type": "image/jpeg",
             "upload_path": "attachments",
         }
         defaults.update(overrides)
@@ -56,12 +56,12 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         self.mock_client.generate_presigned_post.assert_called_once()
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
         self.assertEqual(call_kwargs["Bucket"], TEST_BUCKET)
-        self.assertEqual(call_kwargs["ExpiresIn"], settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS)
+        self.assertEqual(call_kwargs["ExpiresIn"], settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS)
 
     def test_multiple_uploads(self) -> None:
         uploads = [
-            self._make_upload(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
-            self._make_upload(ref_id="ref-2", filename="b.png", content_type="image/png"),
+            self._make_upload(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
+            self._make_upload(ref_id="ref-2", filename="b.png", mime_type="image/png"),
         ]
         result = generate_s3_presigned_upload_urls(uploads=uploads)
 
@@ -94,11 +94,11 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
         conditions = call_kwargs["Conditions"]
         content_length_conditions = [c for c in conditions if isinstance(c, list) and c[0] == "content-length-range"]
-        self.assertEqual(content_length_conditions[0][2], settings.S3_PRESIGNED_MAX_FILE_SIZE)
+        self.assertEqual(content_length_conditions[0][2], settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE)
 
     def test_content_type_in_conditions(self) -> None:
         generate_s3_presigned_upload_urls(
-            uploads=[self._make_upload(content_type="application/pdf")],
+            uploads=[self._make_upload(mime_type="application/pdf")],
         )
 
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
@@ -145,7 +145,7 @@ class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
         defaults: dict[str, Any] = {
             "ref_id": "ref-1",
             "filename": "photo.jpg",
-            "content_type": "image/jpeg",
+            "mime_type": "image/jpeg",
             "upload_path": "attachments",
         }
         defaults.update(overrides)

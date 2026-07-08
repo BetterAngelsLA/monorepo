@@ -34,7 +34,7 @@ def strip_storage_location(key: str) -> str:
 class PresignedS3UploadInput:
     ref_id: str
     filename: str
-    content_type: str
+    mime_type: str
     upload_path: str
     expires_in: int | None = None
     max_file_size: int | None = None
@@ -105,10 +105,10 @@ def _generate_presigned_post_with_client(
     max_file_size: int | None = None,
 ) -> PresignedS3UploadResult:
     if expires_in is None:
-        expires_in = settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS
+        expires_in = settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS
 
     if max_file_size is None:
-        max_file_size = settings.S3_PRESIGNED_MAX_FILE_SIZE
+        max_file_size = settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE
 
     normalized_path = _normalize_upload_path(upload_path)
     key = _build_s3_key(
@@ -205,7 +205,7 @@ def generate_s3_presigned_upload_urls(
             bucket_name=bucket_name,
             ref_id=upload.ref_id,
             filename=upload.filename,
-            content_type=upload.content_type,
+            content_type=upload.mime_type,
             upload_path=upload_path,
             expires_in=upload.expires_in,
             max_file_size=upload.max_file_size,

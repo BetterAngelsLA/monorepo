@@ -62,13 +62,13 @@ def create_presigned_uploads(
     mapped_uploads: list[PresignedS3UploadInput] = []
 
     for upload in uploads:
-        _validate_content_type(upload.content_type, upload.filename, config.allowed_content_types)
+        _validate_content_type(upload.mime_type, upload.filename, config.allowed_content_types)
 
         mapped_uploads.append(
             PresignedS3UploadInput(
                 ref_id=upload.ref_id,
                 filename=upload.filename,
-                content_type=upload.content_type,
+                mime_type=upload.mime_type,
                 upload_path=config.upload_path,
                 max_file_size=config.max_file_size,
             )
@@ -82,7 +82,7 @@ def create_presigned_uploads(
         upload_token = create_upload_token(
             key=item.key,
             user_id=user.pk,
-            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=config.service_name,
         )
 
@@ -123,7 +123,7 @@ def validate_upload_batch(
     validated: list[ValidatedResolveItem] = []
 
     for item in items:
-        _validate_content_type(item.content_type, item.filename, config.allowed_content_types)
+        _validate_content_type(item.mime_type, item.filename, config.allowed_content_types)
 
         if not validate_upload_token(
             upload_token=item.upload_token,
@@ -141,7 +141,7 @@ def validate_upload_batch(
                 presigned_key=item.presigned_key,
                 upload_token=item.upload_token,
                 filename=item.filename,
-                content_type=item.content_type,
+                mime_type=item.mime_type,
                 namespace=item.namespace,
                 file_path=strip_storage_location(item.presigned_key),
             )
@@ -175,7 +175,7 @@ def create_attachment_records(
         for item in items:
             attachment = Attachment(
                 file=item.file_path,
-                mime_type=item.content_type,
+                mime_type=item.mime_type,
                 original_filename=item.filename,
                 namespace=item.namespace,
                 content_type=content_type,

@@ -40,7 +40,7 @@ class ShelterPhotoResolveItem:
     presigned_key: str
     upload_token: str
     filename: str
-    content_type: str
+    mime_type: str
     photo_type: ShelterPhotoTypeChoices
 
     def to_resolve_item(self) -> ResolveUploadItem:
@@ -49,7 +49,7 @@ class ShelterPhotoResolveItem:
             presigned_key=self.presigned_key,
             upload_token=self.upload_token,
             filename=self.filename,
-            content_type=self.content_type,
+            mime_type=self.mime_type,
         )
 
 

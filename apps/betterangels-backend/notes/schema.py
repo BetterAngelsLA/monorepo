@@ -244,9 +244,7 @@ class Mutation:
         permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(
-            qs, str(data.note_id), error_message="You do not have permission to modify this note."
-        )
+        note = get_object_or_permission_error(qs, str(data.note_id))
 
         service_requests = note_service_request_create(
             user=user,
@@ -399,7 +397,7 @@ class Mutation:
             GenerateUploadItem(
                 ref_id=u.ref_id,
                 filename=u.filename,
-                content_type=u.content_type,
+                mime_type=u.content_type,
             )
             for u in data.uploads
         ]
@@ -429,7 +427,7 @@ class Mutation:
                 presigned_key=a.presigned_key,
                 upload_token=a.upload_token,
                 filename=a.filename,
-                content_type=a.content_type,
+                mime_type=a.content_type,
             )
             for a in data.attachments
         ]

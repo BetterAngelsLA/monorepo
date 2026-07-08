@@ -1045,6 +1045,13 @@ export type GenerateClientProfilePhotoUploadInput = {
 
 export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
 
+export type GenerateNoteAttachmentUploadsInput = {
+  noteId: Scalars['ID']['input'];
+  uploads: Array<NoteAttachmentUploadItemInput>;
+};
+
+export type GenerateNoteAttachmentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
+
 export type GenerateShelterPhotoUploadsInput = {
   shelterId: Scalars['ID']['input'];
   uploads: Array<ShelterPhotoUploadItemInput>;
@@ -1572,6 +1579,7 @@ export type Mutation = {
   deleteTeam: DeleteTeamPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
+  generateNoteAttachmentUploads: GenerateNoteAttachmentUploadsPayload;
   generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
@@ -1582,6 +1590,7 @@ export type Mutation = {
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
+  resolveNoteAttachmentUploads: ResolveNoteAttachmentUploadsPayload;
   resolveShelterPhotoUploads: ResolveShelterPhotoUploadsPayload;
   revertNote: RevertNotePayload;
   updateBed: UpdateBedPayload;
@@ -1830,6 +1839,11 @@ export type MutationGenerateClientProfilePhotoUploadArgs = {
 };
 
 
+export type MutationGenerateNoteAttachmentUploadsArgs = {
+  data: GenerateNoteAttachmentUploadsInput;
+};
+
+
 export type MutationGenerateShelterPhotoUploadsArgs = {
   data: GenerateShelterPhotoUploadsInput;
 };
@@ -1873,6 +1887,11 @@ export type MutationResolveClientDocumentUploadsArgs = {
 
 export type MutationResolveClientProfilePhotoUploadArgs = {
   data: ResolveClientProfilePhotoUploadInput;
+};
+
+
+export type MutationResolveNoteAttachmentUploadsArgs = {
+  data: ResolveNoteAttachmentUploadsInput;
 };
 
 
@@ -2002,6 +2021,35 @@ export type NameCountType = {
   __typename?: 'NameCountType';
   count: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+};
+
+export type NoteAttachmentFromUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NoteAttachmentUploadItemInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type NoteAttachmentUploadsType = {
+  __typename?: 'NoteAttachmentUploadsType';
+  attachments: Array<NoteAttachmentType>;
 };
 
 export type NoteDataImportType = {
@@ -2942,11 +2990,20 @@ export type ResolveClientDocumentUploadsPayload = ClientDocumentUploadsType | Op
 
 export type ResolveClientProfilePhotoUploadInput = {
   clientProfileId: Scalars['ID']['input'];
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
   presignedKey: Scalars['String']['input'];
   uploadToken: Scalars['String']['input'];
 };
 
 export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
+
+export type ResolveNoteAttachmentUploadsInput = {
+  attachments: Array<NoteAttachmentFromUploadInput>;
+  noteId: Scalars['ID']['input'];
+};
+
+export type ResolveNoteAttachmentUploadsPayload = NoteAttachmentUploadsType | OperationInfo;
 
 export type ResolveShelterPhotoUploadsInput = {
   photos: Array<ShelterPhotoFromUploadInput>;
