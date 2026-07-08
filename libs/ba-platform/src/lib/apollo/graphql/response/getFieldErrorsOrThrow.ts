@@ -97,15 +97,15 @@ export function getFieldErrorsOrThrow(
   }
 
   // Top-level errors (non-extension)
-  const errorMessages = response.errors?.map((e) => e.message) ?? [];
-  const composedErrorMessage = composeErrorMessage(errorMessages);
-
   if (response.errors?.length) {
     if (isUnauthenticatedError(response.errors)) {
       throw new BaPermissionError(
         response.errors.find((e) => e.message)?.message || undefined
       );
     }
+
+    const errorMessages = response.errors?.map((e) => e.message) ?? [];
+    const composedErrorMessage = composeErrorMessage(errorMessages);
 
     throw new Error(composedErrorMessage);
   }
@@ -140,20 +140,23 @@ export function getFieldErrorsOrThrow(
     );
   }
 
-  // Partition messages: recoverable → return for form display,
-  // unrecoverable → we can't handle them, must throw.
+  // Partition messages
   const { recoverable, unrecoverable } = filterRecoverableOperationMessages(
     operationInfo?.messages ?? [],
     fields
   );
 
+  // unrecoverable: we can't handle them, must throw.
   if (unrecoverable.length) {
     throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
   }
 
+  // recoverable: return for form display
   if (recoverable.length) {
     return recoverable;
   }
 
-  throw new Error(composedErrorMessage);
+  // Unexpected error
+  // It's not Success, but operationMessages was empty
+  throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
 }
