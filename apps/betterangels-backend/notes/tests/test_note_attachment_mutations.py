@@ -50,14 +50,14 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+                }
+            },
+        )
 
         self.assertIsNone(response.get("errors"))
         uploads = response["data"]["generateNoteAttachmentUploads"]["uploads"]
@@ -89,17 +89,17 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "uploads": [
-                            {"refId": "ref-1", "filename": "a.pdf", "contentType": "application/pdf"},
-                            {"refId": "ref-2", "filename": "b.pdf", "contentType": "application/pdf"},
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "uploads": [
+                        {"refId": "ref-1", "filename": "a.pdf", "contentType": "application/pdf"},
+                        {"refId": "ref-2", "filename": "b.pdf", "contentType": "application/pdf"},
+                    ],
+                }
+            },
+        )
 
         self.assertIsNone(response.get("errors"))
         uploads = response["data"]["generateNoteAttachmentUploads"]["uploads"]
@@ -113,30 +113,33 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.logout()
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+                }
+            },
+        )
 
         self.assertGraphQLUnauthenticated(response)
 
     def test_returns_operation_info_for_nonexistent_note(self) -> None:
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": "999999",
-                        "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": "999999",
+                    "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+                }
+            },
+        )
 
         self.assertGraphQLOperationInfo(
-            response, "generateNoteAttachmentUploads", "You do not have permission to perform this action.", kind="PERMISSION"
+            response,
+            "generateNoteAttachmentUploads",
+            "You do not have permission to perform this action.",
+            kind="PERMISSION",
         )
 
     def test_returns_operation_info_for_unauthorized_note(self) -> None:
@@ -147,14 +150,14 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self._set_active_org(self.org_2)
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "uploads": [{"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}],
+                }
+            },
+        )
 
         self.assertGraphQLOperationInfo(
             response,
@@ -249,21 +252,21 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_generic.return_value = [attachment]
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "valid-token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "valid-token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertIsNone(response.get("errors"))
         attachments = response["data"]["resolveNoteAttachmentUploads"]["attachments"]
@@ -309,27 +312,27 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_generic.return_value = [att1, att2]
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/a.pdf",
-                                "uploadToken": "tok-1",
-                                "filename": "a.pdf",
-                                "contentType": "application/pdf",
-                            },
-                            {
-                                "presignedKey": "media/note_attachments/b.png",
-                                "uploadToken": "tok-2",
-                                "filename": "b.png",
-                                "contentType": "image/png",
-                            },
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/a.pdf",
+                            "uploadToken": "tok-1",
+                            "filename": "a.pdf",
+                            "contentType": "application/pdf",
+                        },
+                        {
+                            "presignedKey": "media/note_attachments/b.png",
+                            "uploadToken": "tok-2",
+                            "filename": "b.png",
+                            "contentType": "image/png",
+                        },
+                    ],
+                }
+            },
+        )
 
         self.assertIsNone(response.get("errors"))
         attachments = response["data"]["resolveNoteAttachmentUploads"]["attachments"]
@@ -339,21 +342,21 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.logout()
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertGraphQLUnauthenticated(response)
 
@@ -365,21 +368,21 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_generic.side_effect = ValueError("Invalid or expired upload signature for 'doc.pdf'")
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "bad-token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "bad-token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertGraphQLError(response, "Invalid or expired upload signature for 'doc.pdf'")
 
@@ -391,44 +394,47 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_generic.side_effect = ValueError("File not found in storage for 'doc.pdf'")
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "valid-token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "valid-token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertGraphQLError(response, "File not found in storage for 'doc.pdf'")
 
     def test_returns_operation_info_for_nonexistent_note(self) -> None:
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": "999999",
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": "999999",
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertGraphQLOperationInfo(
-            response, "resolveNoteAttachmentUploads", "You do not have permission to perform this action.", kind="PERMISSION"
+            response,
+            "resolveNoteAttachmentUploads",
+            "You do not have permission to perform this action.",
+            kind="PERMISSION",
         )
 
     def test_returns_operation_info_for_unauthorized_note(self) -> None:
@@ -438,21 +444,21 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self._set_active_org(self.org_2)
 
         response = self.execute_graphql(
-                self.MUTATION,
-                {
-                    "data": {
-                        "noteId": self.note["id"],
-                        "attachments": [
-                            {
-                                "presignedKey": "media/note_attachments/abc.pdf",
-                                "uploadToken": "token",
-                                "filename": "doc.pdf",
-                                "contentType": "application/pdf",
-                            }
-                        ],
-                    }
-                },
-            )
+            self.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
 
         self.assertGraphQLOperationInfo(
             response,

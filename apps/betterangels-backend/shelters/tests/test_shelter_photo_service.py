@@ -159,9 +159,7 @@ class ResolveUploadsTest(TestCase):
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_saves_correct_file_path_and_type(self, mock_validate: MagicMock) -> None:
-        mock_validate.return_value = [
-            MagicMock(file_path="shelters/42/abc.jpg")
-        ]
+        mock_validate.return_value = [MagicMock(file_path="shelters/42/abc.jpg")]
 
         result = resolve_uploads(
             user=self.user,
@@ -185,9 +183,7 @@ class ResolveUploadsTest(TestCase):
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_associates_photo_with_shelter(self, mock_validate: MagicMock) -> None:
-        mock_validate.return_value = [
-            MagicMock(file_path="shelters/42/abc.jpg")
-        ]
+        mock_validate.return_value = [MagicMock(file_path="shelters/42/abc.jpg")]
 
         result = resolve_uploads(
             user=self.user,

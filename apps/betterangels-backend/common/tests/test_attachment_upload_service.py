@@ -180,7 +180,9 @@ class CreatePresignedUploadsTest(TestCase):
             mime_type="application/zip",
         )
 
-        with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc1.pdf."):
+        with self.assertRaisesMessage(
+            InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc1.pdf."
+        ):
             create_presigned_uploads(user=self.user, uploads=[bad_upload], config=TEST_CONFIG)
 
     @patch("common.services.attachment_upload.create_upload_token")
@@ -290,9 +292,7 @@ class ResolveAttachmentsTest(TestCase):
     @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
     def test_creates_multiple_attachments(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf", filename="a.pdf")
-        item2 = self._make_item(
-            presigned_key="media/test_attachments/b.png", filename="b.png", mime_type="image/png"
-        )
+        item2 = self._make_item(presigned_key="media/test_attachments/b.png", filename="b.png", mime_type="image/png")
 
         result = create_attachment_records(
             user=self.user,
@@ -352,7 +352,9 @@ class ResolveAttachmentsTest(TestCase):
     def test_rejects_invalid_content_type(self) -> None:
         item = self._make_item(mime_type="application/zip")
 
-        with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc.pdf."):
+        with self.assertRaisesMessage(
+            InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc.pdf."
+        ):
             create_attachment_records(
                 user=self.user,
                 content_object=self.content_object,
