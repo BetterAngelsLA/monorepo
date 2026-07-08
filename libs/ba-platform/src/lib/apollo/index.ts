@@ -1,2 +1,1 @@
-export * from './graphql/constants';
-export * from './graphql/response';
+export * from './graphql';

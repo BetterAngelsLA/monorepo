@@ -1,3 +1,5 @@
+import { DEFAULT_GQL_ERROR_MESSAGE } from '../../constants';
+
 /**
  * Compose a loggable error description from one or more message sources.
  *
@@ -15,5 +17,5 @@ export function composeErrorMessage(
     return filtered.join('; ');
   }
 
-  return 'An unknown error occurred.';
+  return DEFAULT_GQL_ERROR_MESSAGE;
 }

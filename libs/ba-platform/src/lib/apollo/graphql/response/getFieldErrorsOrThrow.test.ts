@@ -1,10 +1,9 @@
 import { BaPermissionError } from '../../../errors/BaPermissionError';
+import { DEFAULT_GQL_ERROR_MESSAGE } from '../constants';
 import { getFieldErrorsOrThrow } from './getFieldErrorsOrThrow';
-import type { FieldError } from './types';
+import type { FieldError, GraphQLResponse } from './types';
 
-// ── Helpers ─────────────────────────────────────────────────────────────
-
-function opInfo(
+function responseWithOpInfo(
   ...messages: Array<{
     kind: string;
     field?: string | null;
@@ -13,7 +12,7 @@ function opInfo(
 ) {
   return {
     data: {
-      testOp: {
+      defaultOperationName: {
         __typename: 'OperationInfo',
         messages: messages.map((m) => ({
           __typename: 'OperationMessage',
@@ -26,24 +25,21 @@ function opInfo(
   };
 }
 
-function errors(
-  ...e: Array<{ message?: string; extensions?: Record<string, unknown> }>
+function resonseWithErors(
+  ...errors: Array<{ message?: string; extensions?: Record<string, unknown> }>
 ) {
-  return { data: null, errors: e };
+  return { data: null, errors: errors };
 }
 
-const ok = (...data: Record<string, unknown>[]) => ({
-  data: { testOp: { __typename: 'TestType', ...data[0] } },
-});
-
 const defaultParams = {
-  operationKey: 'testOp',
-  successTypename: 'TestType',
+  operationKey: 'defaultOperationName',
+  successTypename: 'defaultTestType',
+  fields: ['defaultField'],
 };
 
 type TestCase = {
   name: string;
-  response: Record<string, unknown>;
+  response: GraphQLResponse;
   params?: Record<string, unknown>;
   throws?: { type: new (msg: string) => Error; message?: string };
   returns?: FieldError[];
@@ -56,14 +52,14 @@ function runScenarios(cases: TestCase[]) {
     if (tc.throws) {
       expect(() =>
         getFieldErrorsOrThrow({
-          response: tc.response as any,
+          response: tc.response,
           ...mergedParams,
         })
       ).toThrow(tc.throws.type);
 
       try {
         getFieldErrorsOrThrow({
-          response: tc.response as any,
+          response: tc.response,
           ...mergedParams,
         });
       } catch (e) {
@@ -74,7 +70,7 @@ function runScenarios(cases: TestCase[]) {
     } else {
       expect(
         getFieldErrorsOrThrow({
-          response: tc.response as any,
+          response: tc.response,
           ...mergedParams,
         })
       ).toEqual(tc.returns ?? []);
@@ -82,315 +78,488 @@ function runScenarios(cases: TestCase[]) {
   });
 }
 
-// ── Tests ───────────────────────────────────────────────────────────────
-
 describe('getFieldErrorsOrThrow', () => {
-  describe('successful mutation', () => {
-    const testCases: TestCase[] = [
-      { name: 'matching __typename', response: ok() },
-      {
-        name: 'matching __typename with extra data',
-        response: ok({ id: '1', name: 'Test' }),
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('top-level errors', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'UNAUTHENTICATED: throws BaPermissionError',
-        response: errors({
-          message: 'Login required',
-          extensions: { code: 'UNAUTHENTICATED' },
-        }),
-        throws: { type: BaPermissionError, message: 'Login required' },
-      },
-      {
-        name: 'UNAUTHENTICATED missing message: throws BaPermissionError with fallback',
-        response: errors({ extensions: { code: 'UNAUTHENTICATED' } }),
-        throws: { type: BaPermissionError },
-      },
-      {
-        name: 'NOT_FOUND: throws Error',
-        response: errors({
-          message: 'Not Found.',
-          extensions: { code: 'NOT_FOUND' },
-        }),
-        throws: { type: Error, message: 'Not Found.' },
-      },
-      {
-        name: 'generic error (ValueError): throws Error',
-        response: errors({ message: 'Invalid upload token' }),
-        throws: { type: Error, message: 'Invalid upload token' },
-      },
-      {
-        name: 'missing message: throws Error with fallback',
-        response: errors({}),
-        throws: { type: Error },
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('OperationInfo: PERMISSION kind', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'PERMISSION kind: throws BaPermissionError',
-        response: opInfo({
-          kind: 'PERMISSION',
-          message: 'You do not have permission.',
-        }),
-        throws: {
-          type: BaPermissionError,
-          message: 'You do not have permission.',
-        },
-      },
-      {
-        name: 'PERMISSION kind with no message: throws BaPermissionError with default msg',
-        response: opInfo({ kind: 'PERMISSION' }),
-        throws: { type: BaPermissionError, message: 'Permission denied.' },
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('OperationInfo: VALIDATION kind', () => {
-    describe('without field filter', () => {
+  describe('returns []', () => {
+    describe('success', () => {
       const testCases: TestCase[] = [
         {
-          name: 'single VALIDATION message: returns message',
-          response: opInfo({
-            kind: 'VALIDATION',
-            field: 'name',
-            message: 'Required',
-          }),
-          returns: [{ field: 'name', message: 'Required' }],
-        },
-        {
-          name: 'multiple VALIDATION messages: returns all messages',
-          response: opInfo(
-            { kind: 'VALIDATION', field: 'name', message: 'Required' },
-            { kind: 'VALIDATION', field: 'email', message: 'Invalid' }
-          ),
-          returns: [
-            { field: 'name', message: 'Required' },
-            { field: 'email', message: 'Invalid' },
-          ],
-        },
-        {
-          name: 'without field: throws Error',
-          response: opInfo({ kind: 'VALIDATION', message: 'Form invalid' }),
-          throws: { type: Error, message: 'Form invalid' },
-        },
-        {
-          name: 'mixed with ERROR: returns field errors only',
-          response: opInfo(
-            { kind: 'ERROR', message: 'Something failed' },
-            { kind: 'VALIDATION', field: 'name', message: 'Required' }
-          ),
-          returns: [{ field: 'name', message: 'Required' }],
+          name: 'when __typename matches successTypename',
+          response: {
+            data: { defaultOperationName: { __typename: 'HelloSuccessType' } },
+          },
+          params: { fields: ['name'], successTypename: 'HelloSuccessType' },
         },
       ];
 
       runScenarios(testCases);
     });
+  });
 
-    describe('with field filter', () => {
+  describe('returns FieldError[]', () => {
+    describe('with extensions.errors', () => {
+      describe('all errors match fields filter', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'recognized errorCode: returns mapped message',
+            response: resonseWithErors({
+              extensions: {
+                errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
+              },
+            }),
+            params: { fields: ['email', 'other'] },
+            returns: [
+              { field: 'email', message: 'Enter a valid email address' },
+            ],
+          },
+          {
+            name: 'unrecognized errorCode: falls back to server message',
+            response: resonseWithErors({
+              extensions: {
+                errors: [
+                  {
+                    field: 'anyField',
+                    errorCode: 'UNRECOGNIZED_CODE',
+                    message: 'server msg',
+                  },
+                ],
+              },
+            }),
+            params: { fields: ['anyField'] },
+            returns: [{ field: 'anyField', message: 'server msg' }],
+          },
+          {
+            name: 'no errorCode or message: returns "Invalid value"',
+            response: resonseWithErors({
+              extensions: { errors: [{ field: 'anyField' }] },
+            }),
+            params: { fields: ['anyField'] },
+            returns: [{ field: 'anyField', message: 'Invalid value' }],
+          },
+          {
+            name: 'multiple errors: returns all mapped messages',
+            response: resonseWithErors({
+              extensions: {
+                errors: [
+                  { field: 'email', errorCode: 'EMAIL_INVALID' },
+                  {
+                    field: 'name',
+                    errorCode: 'UNRECOGNIZED_CODE',
+                    message: 'server msg',
+                  },
+                ],
+              },
+            }),
+            params: { fields: ['email', 'name'] },
+            returns: [
+              { field: 'email', message: 'Enter a valid email address' },
+              { field: 'name', message: 'server msg' },
+            ],
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+    });
+
+    describe('with OperationInfo', () => {
+      describe('VALIDATION kind: all messages match fields filter', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'single message: returns message',
+            response: responseWithOpInfo({
+              kind: 'VALIDATION',
+              field: 'name',
+              message: 'Required',
+            }),
+            params: { fields: ['name', 'other'] },
+            returns: [{ field: 'name', message: 'Required' }],
+          },
+          {
+            name: 'multiple messages: returns matching messages',
+            response: responseWithOpInfo(
+              { kind: 'VALIDATION', field: 'name', message: 'Required' },
+              { kind: 'VALIDATION', field: 'email', message: 'Invalid' }
+            ),
+            params: { fields: ['name', 'email', 'other'] },
+            returns: [
+              { field: 'name', message: 'Required' },
+              { field: 'email', message: 'Invalid' },
+            ],
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+    });
+  });
+
+  describe('throws BaError', () => {
+    describe('BaPermissionError', () => {
+      describe('with response errors', () => {
+        describe('UNAUTHENTICATED', () => {
+          const testCases: TestCase[] = [
+            {
+              name: 'with message: throws BaPermissionError with server message',
+              response: resonseWithErors({
+                message: 'server msg',
+                extensions: { code: 'UNAUTHENTICATED' },
+              }),
+              params: { fields: ['name'] },
+              throws: { type: BaPermissionError, message: 'server msg' },
+            },
+            {
+              name: 'missing message: throws default BaPermissionError',
+              response: resonseWithErors({
+                extensions: { code: 'UNAUTHENTICATED' },
+              }),
+              params: { fields: ['name'] },
+              throws: {
+                type: BaPermissionError,
+                message: 'You are not authorized to perform this operation',
+              },
+            },
+          ];
+
+          runScenarios(testCases);
+        });
+      });
+
+      describe('with OperationInfo', () => {
+        describe('PERMISSION kind', () => {
+          const testCases: TestCase[] = [
+            {
+              name: 'with message: throws BaPermissionError with server message',
+              response: responseWithOpInfo({
+                kind: 'PERMISSION',
+                message: 'server msg',
+              }),
+              params: { fields: ['name'] },
+              throws: {
+                type: BaPermissionError,
+                message: 'server msg',
+              },
+            },
+            {
+              name: 'with field: throws BaPermissionError with contextual message',
+              response: responseWithOpInfo({
+                kind: 'PERMISSION',
+                field: 'name',
+              }),
+              params: { fields: ['name'] },
+              throws: {
+                type: BaPermissionError,
+                message: 'You do not have permission to edit the "name" field',
+              },
+            },
+            {
+              name: 'missing message: throws BaPermissionError with default msg',
+              response: responseWithOpInfo({ kind: 'PERMISSION' }),
+              params: { fields: ['name'] },
+              throws: {
+                type: BaPermissionError,
+                message: 'You are not authorized to perform this operation',
+              },
+            },
+          ];
+
+          runScenarios(testCases);
+        });
+      });
+    });
+  });
+
+  describe('throws Error', () => {
+    describe('with extensions.errors', () => {
+      describe('with field', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'non-field error present: throws Error',
+            response: resonseWithErors({
+              extensions: {
+                errors: [
+                  { field: 'email', errorCode: 'EMAIL_INVALID' },
+                  { errorCode: 'SOME_CODE', message: 'General error' },
+                ],
+              },
+            }),
+            params: { fields: ['email'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'no fields matching filter: throws Error',
+            response: resonseWithErors({
+              extensions: {
+                errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
+              },
+            }),
+            params: { fields: ['unmatchedField'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('without field', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'throws Error with fallback message',
+            response: resonseWithErors({
+              extensions: {
+                errors: [{ errorCode: 'EMAIL_INVALID' }],
+              },
+            }),
+            params: { fields: ['name'] },
+            throws: { type: Error, message: 'An unexpected error occurred.' },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+    });
+
+    describe('with response errors', () => {
+      describe('NOT_FOUND', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'throws Error with the message',
+            response: resonseWithErors({
+              message: 'Not Found.',
+              extensions: { code: 'NOT_FOUND' },
+            }),
+            params: { fields: ['name'] },
+            throws: { type: Error, message: 'Not Found.' },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('with server message', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'throws Error with server message',
+            response: resonseWithErors({ message: 'Invalid upload token' }),
+            params: { fields: ['name'] },
+            throws: { type: Error, message: 'Invalid upload token' },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('empty', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'throws Error with fallback',
+            response: resonseWithErors({}),
+            params: { fields: ['name'] },
+            throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('with multiple messages', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'joins server error messages',
+            response: resonseWithErors(
+              { message: 'server error 1' },
+              { message: 'server error 2' }
+            ),
+            params: { fields: ['name'] },
+            throws: { type: Error, message: 'server error 1; server error 2' },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+    });
+
+    describe('with OperationInfo', () => {
+      describe('VALIDATION kind', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'non-VALIDATION message present: throws Error',
+            response: responseWithOpInfo(
+              { kind: 'ERROR', message: 'Something failed' },
+              { kind: 'VALIDATION', field: 'name', message: 'Required' }
+            ),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'no fields matching filter: throws Error',
+            response: responseWithOpInfo(
+              {
+                kind: 'VALIDATION',
+                field: 'email',
+                message: 'Invalid format',
+              },
+              { kind: 'VALIDATION', field: 'phone', message: 'Required' }
+            ),
+            params: { fields: ['unmatchedField'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'without field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'VALIDATION',
+              message: 'Form invalid',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('ERROR kind', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'with field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'ERROR',
+              field: 'name',
+              message: 'Name lookup failed',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'without field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'ERROR',
+              message: 'Shelter not found',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('INFO kind', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'with field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'INFO',
+              field: 'name',
+              message: 'Info about name',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'without field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'INFO',
+              message: 'Operation completed with notes',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+
+      describe('WARNING kind', () => {
+        const testCases: TestCase[] = [
+          {
+            name: 'with field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'WARNING',
+              field: 'name',
+              message: 'Name field may be outdated',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+          {
+            name: 'without field: throws Error',
+            response: responseWithOpInfo({
+              kind: 'WARNING',
+              message: 'Some fields may be outdated',
+            }),
+            params: { fields: ['name'] },
+            throws: {
+              type: Error,
+              message: 'An unexpected error occurred.',
+            },
+          },
+        ];
+
+        runScenarios(testCases);
+      });
+    });
+
+    describe('edge cases', () => {
       const testCases: TestCase[] = [
         {
-          name: 'with matching fields: returns fields',
-          response: opInfo(
-            { kind: 'VALIDATION', field: 'name', message: 'Required' },
-            { kind: 'VALIDATION', field: 'email', message: 'Invalid' }
-          ),
+          name: 'empty fields array: throws Error',
+          response: { data: null },
+          params: { fields: [] },
+          throws: { type: Error, message: 'An unexpected error occurred.' },
+        },
+        {
+          name: 'no data: throws Error',
+          response: { data: null },
           params: { fields: ['name'] },
-          returns: [{ field: 'name', message: 'Required' }],
+          throws: { type: Error, message: 'No response data' },
         },
         {
-          name: 'with no matching fields: throws Error',
-          response: opInfo(
-            { kind: 'VALIDATION', field: 'email', message: 'Invalid format' },
-            { kind: 'VALIDATION', field: 'phone', message: 'Required' }
-          ),
-          params: { fields: ['unmatchedField'] },
-          throws: { type: Error, message: 'An unexpected error occurred.' },
+          name: 'unexpected __typename: throws Error',
+          response: {
+            data: { defaultOperationName: { __typename: 'UnknownType' } },
+          },
+          params: { fields: ['name'] },
+          throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
+        },
+        {
+          name: 'OperationInfo with no messages: throws Error with fallback',
+          response: responseWithOpInfo(),
+          params: { fields: ['name'] },
+          throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
         },
       ];
 
       runScenarios(testCases);
     });
-  });
-
-  describe('extensions.errors with field validation', () => {
-    describe('without field filter', () => {
-      const testCases: TestCase[] = [
-        {
-          name: 'known errorCode: returns mapped message',
-          response: errors({
-            extensions: {
-              errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
-            },
-          }),
-          returns: [{ field: 'email', message: 'Enter a valid email address' }],
-        },
-        {
-          name: 'unknown errorCode: falls back to message',
-          response: errors({
-            extensions: {
-              errors: [{ field: 'x', errorCode: 'UNKNOWN', message: 'Oops' }],
-            },
-          }),
-          returns: [{ field: 'x', message: 'Oops' }],
-        },
-        {
-          name: 'no errorCode, no message: returns "Invalid value"',
-          response: errors({
-            extensions: { errors: [{ field: 'y' }] },
-          }),
-          returns: [{ field: 'y', message: 'Invalid value' }],
-        },
-        {
-          name: 'no field: throws Error with fallback message',
-          response: errors({
-            extensions: {
-              errors: [{ errorCode: 'EMAIL_INVALID' }],
-            },
-          }),
-          throws: { type: Error },
-        },
-      ];
-
-      runScenarios(testCases);
-    });
-
-    describe('with field filter', () => {
-      const testCases: TestCase[] = [
-        {
-          name: 'with matching fields: returns fields',
-          response: errors({
-            extensions: {
-              errors: [
-                { field: 'email', errorCode: 'EMAIL_INVALID' },
-                { field: 'phone', errorCode: 'PHONE_NUMBER_INVALID' },
-              ],
-            },
-          }),
-          params: { fields: ['email'] },
-          returns: [{ field: 'email', message: 'Enter a valid email address' }],
-        },
-        {
-          name: 'with no matching fields: throws Error',
-          response: errors({
-            extensions: {
-              errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
-            },
-          }),
-          params: { fields: ['unmatchedField'] },
-          throws: { type: Error, message: 'An unexpected error occurred.' },
-        },
-      ];
-
-      runScenarios(testCases);
-    });
-  });
-
-  describe('OperationInfo: ERROR kind', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'ERROR without field: throws Error',
-        response: opInfo({
-          kind: 'ERROR',
-          message: 'Shelter not found',
-        }),
-        throws: { type: Error, message: 'Shelter not found' },
-      },
-      {
-        name: 'ERROR with field: throws Error',
-        response: opInfo({
-          kind: 'ERROR',
-          field: 'name',
-          message: 'Name lookup failed',
-        }),
-        throws: { type: Error, message: 'Name lookup failed' },
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('OperationInfo: INFO kind', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'INFO without field: throws Error',
-        response: opInfo({
-          kind: 'INFO',
-          message: 'Operation completed with notes',
-        }),
-        throws: { type: Error, message: 'Operation completed with notes' },
-      },
-      {
-        name: 'INFO with field: throws Error',
-        response: opInfo({
-          kind: 'INFO',
-          field: 'name',
-          message: 'Info about name',
-        }),
-        throws: { type: Error, message: 'Info about name' },
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('OperationInfo: WARNING kind', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'WARNING without field: throws Error',
-        response: opInfo({
-          kind: 'WARNING',
-          message: 'Some fields may be outdated',
-        }),
-        throws: { type: Error, message: 'Some fields may be outdated' },
-      },
-      {
-        name: 'WARNING with field: throws Error',
-        response: opInfo({
-          kind: 'WARNING',
-          field: 'name',
-          message: 'Name field may be outdated',
-        }),
-        throws: { type: Error, message: 'Name field may be outdated' },
-      },
-    ];
-
-    runScenarios(testCases);
-  });
-
-  describe('edge cases', () => {
-    const testCases: TestCase[] = [
-      {
-        name: 'no data: throws Error',
-        response: { data: null } as any,
-        throws: { type: Error, message: 'No response data' },
-      },
-      {
-        name: 'unexpected __typename: throws Error',
-        response: {
-          data: { testOp: { __typename: 'UnknownType' } },
-        } as any,
-        throws: { type: Error },
-      },
-      {
-        name: 'OperationInfo with no messages: throws Error with fallback',
-        response: opInfo(),
-        throws: { type: Error },
-      },
-    ];
-
-    runScenarios(testCases);
   });
 });

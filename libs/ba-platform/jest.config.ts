@@ -8,4 +8,5 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/libs/ba-platform',
+  setupFiles: ['./test-setup.ts'],
 };

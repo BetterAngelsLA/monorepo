@@ -1,7 +1,8 @@
 import type { OperationInfo } from '../__generated__/types';
+import type { GraphQLResponse } from './types';
 
 export function getOperationInfo(
-  response: { data?: Record<string, unknown> | null },
+  response: GraphQLResponse,
   operationName: string
 ): OperationInfo | null {
   const result = response.data?.[operationName];

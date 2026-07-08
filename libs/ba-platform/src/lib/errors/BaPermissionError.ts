@@ -6,7 +6,7 @@ import { BaError } from './BaError';
  * Consumers can catch this to redirect to login or show a permission-denied UI.
  */
 export class BaPermissionError extends BaError {
-  constructor(message: string) {
+  constructor(message = 'You are not authorized to perform this operation') {
     super(message);
     this.name = 'BaPermissionError';
   }
