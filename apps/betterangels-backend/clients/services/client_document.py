@@ -52,9 +52,10 @@ def resolve_upload(
     Assigns object-level CHANGE + DELETE permissions to the caseworker
     permission group so the uploader can manage the resulting attachments.
     """
-    # TODO(org-scoping): ClientProfile has no direct organization FK.
-    # When org-scoping is added to the client model, pass organization_id
-    # to resolve_permission_group like notes/services.py does.
+    # TODO(org-scoping): Migrate from resolve_permission_group (first-match org)
+    # to the X-Organization-ID header pattern (HasOrgPerm + get_current_organization)
+    # used by shelters/schema.py.  The client mutations in clients/schema.py already
+    # have a similar TODO about this migration.
     permission_group = resolve_permission_group(user, template=CASEWORKER)
 
     attached = attachment_upload.create_attachment_records(
