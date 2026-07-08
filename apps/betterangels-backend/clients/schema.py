@@ -735,7 +735,7 @@ class Mutation:
         return AuthorizedPresignedS3UploadType(
             ref_id=result.ref_id,
             url=result.url,
-            fields=result.fields,
+            fields=cast(JSON, result.fields),
             presigned_key=result.presigned_key,
             upload_token=result.upload_token,
         )

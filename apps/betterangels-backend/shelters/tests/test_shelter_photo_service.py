@@ -17,6 +17,7 @@ from shelters.services.shelter_photo import (
 )
 from shelters.tests.baker_recipes import shelter_recipe
 from common.services.attachment_upload import GenerateUploadItem
+from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
 from shelters.types.inputs import UpdateShelterPhotoInput
 from strawberry import ID
 
@@ -70,17 +71,17 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
-        expected = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload",
-                    "fields": {"Policy": "xyz"},
-                    "presigned_key": "media/shelters/abc.jpg",
-                    "upload_token": "token-abc",
-                }
+        expected = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload",
+                    fields={"Policy": "xyz"},
+                    presigned_key="media/shelters/abc.jpg",
+                    upload_token="token-abc",
+                )
             ]
-        }
+        )
         mock_generic.return_value = expected
 
         result = create_presigned_uploads(
@@ -94,12 +95,12 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_handles_multiple_uploads(self, mock_generic: MagicMock) -> None:
-        expected = {
-            "uploads": [
-                {"ref_id": "ref-1", "url": "u1", "fields": {}, "presigned_key": "k1", "upload_token": "t1"},
-                {"ref_id": "ref-2", "url": "u2", "fields": {}, "presigned_key": "k2", "upload_token": "t2"},
+        expected = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(ref_id="ref-1", url="u1", fields={}, presigned_key="k1", upload_token="t1"),
+                AuthorizedPresignedUpload(ref_id="ref-2", url="u2", fields={}, presigned_key="k2", upload_token="t2"),
             ]
-        }
+        )
         mock_generic.return_value = expected
 
         result = create_presigned_uploads(
@@ -112,7 +113,7 @@ class CreatePresignedUploadsTest(TestCase):
             ],
         )
 
-        self.assertEqual(len(result["uploads"]), 2)
+        self.assertEqual(len(result.uploads), 2)
 
 
 # ---------------------------------------------------------------------------
