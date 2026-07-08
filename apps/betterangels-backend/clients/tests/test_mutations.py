@@ -566,7 +566,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
         with patch("common.services.attachment_upload.validate_upload_token", return_value=False):
-            expected_query_count = 8
+            expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
