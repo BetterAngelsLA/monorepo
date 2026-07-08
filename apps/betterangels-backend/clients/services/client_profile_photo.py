@@ -39,8 +39,6 @@ def resolve_upload(
     client_profile: ClientProfile,
     presigned_key: str,
     upload_token: str,
-    filename: str = "",
-    content_type: str = "",
 ) -> ClientProfile:
     """Validate tokens + S3 → set client_profile.profile_photo (Phase 3)."""
     validated = validate_upload_batch(
@@ -49,8 +47,6 @@ def resolve_upload(
             ResolveUploadItem(
                 presigned_key=presigned_key,
                 upload_token=upload_token,
-                filename=filename,
-                mime_type=content_type,
             )
         ],
         config=CLIENT_PROFILE_PHOTO_CONFIG,

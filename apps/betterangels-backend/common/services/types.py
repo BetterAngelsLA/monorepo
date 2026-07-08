@@ -48,8 +48,8 @@ class ResolveUploadItem:
 
     presigned_key: str
     upload_token: str
-    filename: str
-    mime_type: str
+    filename: str = ""
+    mime_type: str = ""
     namespace: str | None = None
 
 
