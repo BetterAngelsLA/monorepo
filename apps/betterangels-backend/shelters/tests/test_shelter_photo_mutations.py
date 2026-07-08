@@ -205,9 +205,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.graphql_client.force_login(self.operator)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
-    def test_creates_single_shelter_photo_and_returns_it(
-        self, mock_validate: MagicMock
-    ) -> None:
+    def test_creates_single_shelter_photo_and_returns_it(self, mock_validate: MagicMock) -> None:
         mock_validate.return_value = [
             MagicMock(
                 presigned_key="media/shelters/abc.jpg",
@@ -248,9 +246,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
-    def test_creates_multiple_shelter_photos_and_returns_them(
-        self, mock_validate: MagicMock
-    ) -> None:
+    def test_creates_multiple_shelter_photos_and_returns_them(self, mock_validate: MagicMock) -> None:
         mock_validate.return_value = [
             MagicMock(file_path="shelters/a.jpg"),
             MagicMock(file_path="shelters/b.jpg"),
@@ -377,9 +373,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(ShelterPhoto.objects.filter(shelter=self.shelter).count(), 0)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
-    def test_returns_operation_info_for_nonexistent_shelter(
-        self, mock_validate: MagicMock
-    ) -> None:
+    def test_returns_operation_info_for_nonexistent_shelter(self, mock_validate: MagicMock) -> None:
         mock_validate.return_value = []
         expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -407,9 +401,7 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertEqual(ShelterPhoto.objects.filter(shelter=self.shelter).count(), 0)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
-    def test_returns_operation_info_for_unauthorized_shelter(
-        self, mock_validate: MagicMock
-    ) -> None:
+    def test_returns_operation_info_for_unauthorized_shelter(self, mock_validate: MagicMock) -> None:
         mock_validate.return_value = []
         # Shelter belonging to a different org — the filtered Shelter.objects.get
         # raises DoesNotExist, which Strawberry wraps in the response.

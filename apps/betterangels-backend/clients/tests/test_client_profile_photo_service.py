@@ -16,17 +16,7 @@ from model_bakery import baker
 class ValidateContentTypeTest(TestCase):
     def test_allows_valid_content_types(self) -> None:
         for content_type in CLIENT_PROFILE_PHOTO_CONFIG.allowed_content_types:
-            try:
-                upload = GenerateUploadItem(
-                    ref_id="ref-1",
-                    filename="photo.jpg",
-                    mime_type=content_type,
-                )
-                # This is tested indirectly — the generic pipeline validates
-                # content types. We just verify the config includes image types.
-                self.assertIn(content_type, CLIENT_PROFILE_PHOTO_CONFIG.allowed_content_types)
-            except ValueError:
-                self.fail(f"Unexpected ValueError for allowed type: {content_type}")
+            self.assertIn(content_type, CLIENT_PROFILE_PHOTO_CONFIG.allowed_content_types)
 
     def test_rejects_invalid_content_type(self) -> None:
         # The generic pipeline raises InvalidContentTypeError, tested via
