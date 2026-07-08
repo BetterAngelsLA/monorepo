@@ -1,13 +1,13 @@
-import { DEFAULT_GQL_ERROR_MESSAGE } from '../../constants';
+import { DEFAULT_GENERIC_ERROR_MESSAGE } from '../../constants';
 
 /**
  * Joins non-empty messages with "; " separators into a single error string.
- * Falls back to `DEFAULT_GQL_ERROR_MESSAGE` when all messages are empty.
+ * Falls back to `DEFAULT_GENERIC_ERROR_MESSAGE` when all messages are empty.
  *
  * @param messages - Messages from `response.errors` to join.
  */
 export function composeErrorMessage(
-  messages: (string | null | undefined)[]
+  messages: (string | null | undefined)[] = []
 ): string {
   const filtered = messages
     .map((m) => m?.trim())
@@ -17,5 +17,5 @@ export function composeErrorMessage(
     return filtered.join('; ');
   }
 
-  return DEFAULT_GQL_ERROR_MESSAGE;
+  return DEFAULT_GENERIC_ERROR_MESSAGE;
 }

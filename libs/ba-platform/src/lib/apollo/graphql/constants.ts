@@ -4,7 +4,9 @@ import {
 } from './backendApiCodes';
 import { BaApiErrorCode } from './types';
 
-export const DEFAULT_GQL_ERROR_MESSAGE = 'An unknown error occurred.';
+export const DEFAULT_FIELD_ERROR_MESSAGE = 'Invalid value';
+
+export const DEFAULT_GENERIC_ERROR_MESSAGE = 'An unexpected error occurred.';
 
 export const DEFAULT_API_ERROR_MESSAGE: Record<BaApiErrorCode, string> = {
   // Protocol-level

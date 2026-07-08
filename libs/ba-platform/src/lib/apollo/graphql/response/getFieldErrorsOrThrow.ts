@@ -1,16 +1,18 @@
 import { BaPermissionError } from '../../../errors/BaPermissionError';
 import { OperationMessageKind } from '../__generated__/types';
-import { DEFAULT_API_ERROR_MESSAGE } from '../constants';
+import {
+  DEFAULT_API_ERROR_MESSAGE,
+  DEFAULT_FIELD_ERROR_MESSAGE,
+  DEFAULT_GENERIC_ERROR_MESSAGE,
+} from '../constants';
 import { BaApiErrorCode } from '../types';
 import { getOperationInfo } from './getOperationInfo';
 import { isUnauthenticatedError } from './isUnauthenticatedError';
 import type { FieldError, GraphQLResponse } from './types';
 import { composeErrorMessage } from './utils/composeErrorMessage';
 import { filterExtensionErrors } from './utils/filterExtensionErrors';
-import { filterOperationMessages } from './utils/filterOperationMessages';
+import { filterRecoverableOperationMessages } from './utils/filterRecoverableOperationMessages';
 import { getExtensionErrors } from './utils/getExtensionErrors';
-
-const DEFAULT_ERROR_MESSAGE = 'Invalid value';
 
 type GetFieldErrorsOrThrowParams = {
   response: GraphQLResponse;
@@ -52,7 +54,7 @@ export function getFieldErrorsOrThrow(
       '[getFieldErrorsOrThrow] requires a non-empty fields argument.'
     );
 
-    throw new Error('An unexpected error occurred.');
+    throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
   }
 
   // Extension errors
@@ -67,7 +69,7 @@ export function getFieldErrorsOrThrow(
 
     // Some extension errors didn't match (no field, or field not in filter)
     if (matchedExtensionErrors.length !== extensionErrors.length) {
-      throw new Error('An unexpected error occurred.');
+      throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
     }
 
     const extensionFieldErrors: FieldError[] = matchedExtensionErrors.flatMap(
@@ -82,7 +84,7 @@ export function getFieldErrorsOrThrow(
             message:
               DEFAULT_API_ERROR_MESSAGE[e.errorCode as BaApiErrorCode] ??
               e.message ??
-              DEFAULT_ERROR_MESSAGE,
+              DEFAULT_FIELD_ERROR_MESSAGE,
           },
         ];
       }
@@ -95,17 +97,17 @@ export function getFieldErrorsOrThrow(
   }
 
   // Top-level errors (non-extension)
-  if (response.errors?.length) {
-    const errorMessages = response.errors?.map((e) => e.message) ?? [];
-    const errMesssage = composeErrorMessage(errorMessages);
+  const errorMessages = response.errors?.map((e) => e.message) ?? [];
+  const composedErrorMessage = composeErrorMessage(errorMessages);
 
+  if (response.errors?.length) {
     if (isUnauthenticatedError(response.errors)) {
       throw new BaPermissionError(
         response.errors.find((e) => e.message)?.message || undefined
       );
     }
 
-    throw new Error(errMesssage);
+    throw new Error(composedErrorMessage);
   }
 
   // No data
@@ -133,50 +135,25 @@ export function getFieldErrorsOrThrow(
   if (permissionMsg) {
     throw new BaPermissionError(
       permissionMsg.field
-        ? `You do not have permission to edit the "${permissionMsg.field}" field`
+        ? `You do not have permission to update the "${permissionMsg.field}" field`
         : permissionMsg.message || undefined
     );
   }
 
-  // VALIDATION with field → return for form display
-  const validationErrors: FieldError[] = filterOperationMessages(
-    operationInfo,
-    OperationMessageKind.Validation,
+  // Partition messages: recoverable → return for form display,
+  // unrecoverable → we can't handle them, must throw.
+  const { recoverable, unrecoverable } = filterRecoverableOperationMessages(
+    operationInfo?.messages ?? [],
     fields
-  ).flatMap((m) => {
-    if (!m.field) {
-      return [];
-    }
+  );
 
-    return [{ field: m.field, message: m.message }];
-  });
-
-  if (validationErrors.length) {
-    // If any non-VALIDATION messages exist alongside field errors, throw
-    const hasNonValidationMessages = operationInfo?.messages.some(
-      (m) =>
-        m.kind !== OperationMessageKind.Validation ||
-        !m.field ||
-        (m.field && !fields.includes(m.field))
-    );
-
-    if (hasNonValidationMessages) {
-      throw new Error('An unexpected error occurred.');
-    }
-
-    return validationErrors;
+  if (unrecoverable.length) {
+    throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
   }
 
-  // Everything else → throw
-  // If messages exist but no field errors matched (e.g. fields filter
-  // excluded everything), use a generic fallback rather than leaking an
-  // uncorrelated message from the server.
-  if (fields.length && operationInfo?.messages?.length) {
-    throw new Error('An unexpected error occurred.');
+  if (recoverable.length) {
+    return recoverable;
   }
 
-  const errorMessages = response.errors?.map((e) => e.message) ?? [];
-  const errMessage = composeErrorMessage(errorMessages);
-
-  throw new Error(errMessage);
+  throw new Error(composedErrorMessage);
 }

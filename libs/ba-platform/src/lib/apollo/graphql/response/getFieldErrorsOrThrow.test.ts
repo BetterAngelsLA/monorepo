@@ -1,5 +1,5 @@
 import { BaPermissionError } from '../../../errors/BaPermissionError';
-import { DEFAULT_GQL_ERROR_MESSAGE } from '../constants';
+import { DEFAULT_GENERIC_ERROR_MESSAGE } from '../constants';
 import { getFieldErrorsOrThrow } from './getFieldErrorsOrThrow';
 import type { FieldError, GraphQLResponse } from './types';
 
@@ -25,7 +25,7 @@ function responseWithOpInfo(
   };
 }
 
-function resonseWithErors(
+function responseWithErrors(
   ...errors: Array<{ message?: string; extensions?: Record<string, unknown> }>
 ) {
   return { data: null, errors: errors };
@@ -101,7 +101,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'recognized errorCode: returns mapped message',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
               },
@@ -113,7 +113,7 @@ describe('getFieldErrorsOrThrow', () => {
           },
           {
             name: 'unrecognized errorCode: falls back to server message',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [
                   {
@@ -129,7 +129,7 @@ describe('getFieldErrorsOrThrow', () => {
           },
           {
             name: 'no errorCode or message: returns "Invalid value"',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: { errors: [{ field: 'anyField' }] },
             }),
             params: { fields: ['anyField'] },
@@ -137,7 +137,7 @@ describe('getFieldErrorsOrThrow', () => {
           },
           {
             name: 'multiple errors: returns all mapped messages',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [
                   { field: 'email', errorCode: 'EMAIL_INVALID' },
@@ -200,7 +200,7 @@ describe('getFieldErrorsOrThrow', () => {
           const testCases: TestCase[] = [
             {
               name: 'with message: throws BaPermissionError with server message',
-              response: resonseWithErors({
+              response: responseWithErrors({
                 message: 'server msg',
                 extensions: { code: 'UNAUTHENTICATED' },
               }),
@@ -209,7 +209,7 @@ describe('getFieldErrorsOrThrow', () => {
             },
             {
               name: 'missing message: throws default BaPermissionError',
-              response: resonseWithErors({
+              response: responseWithErrors({
                 extensions: { code: 'UNAUTHENTICATED' },
               }),
               params: { fields: ['name'] },
@@ -248,7 +248,8 @@ describe('getFieldErrorsOrThrow', () => {
               params: { fields: ['name'] },
               throws: {
                 type: BaPermissionError,
-                message: 'You do not have permission to edit the "name" field',
+                message:
+                  'You do not have permission to update the "name" field',
               },
             },
             {
@@ -274,7 +275,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'non-field error present: throws Error',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [
                   { field: 'email', errorCode: 'EMAIL_INVALID' },
@@ -290,7 +291,7 @@ describe('getFieldErrorsOrThrow', () => {
           },
           {
             name: 'no fields matching filter: throws Error',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [{ field: 'email', errorCode: 'EMAIL_INVALID' }],
               },
@@ -310,7 +311,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'throws Error with fallback message',
-            response: resonseWithErors({
+            response: responseWithErrors({
               extensions: {
                 errors: [{ errorCode: 'EMAIL_INVALID' }],
               },
@@ -329,7 +330,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'throws Error with the message',
-            response: resonseWithErors({
+            response: responseWithErrors({
               message: 'Not Found.',
               extensions: { code: 'NOT_FOUND' },
             }),
@@ -345,7 +346,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'throws Error with server message',
-            response: resonseWithErors({ message: 'Invalid upload token' }),
+            response: responseWithErrors({ message: 'Invalid upload token' }),
             params: { fields: ['name'] },
             throws: { type: Error, message: 'Invalid upload token' },
           },
@@ -358,9 +359,9 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'throws Error with fallback',
-            response: resonseWithErors({}),
+            response: responseWithErrors({}),
             params: { fields: ['name'] },
-            throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
+            throws: { type: Error, message: DEFAULT_GENERIC_ERROR_MESSAGE },
           },
         ];
 
@@ -371,7 +372,7 @@ describe('getFieldErrorsOrThrow', () => {
         const testCases: TestCase[] = [
           {
             name: 'joins server error messages',
-            response: resonseWithErors(
+            response: responseWithErrors(
               { message: 'server error 1' },
               { message: 'server error 2' }
             ),
@@ -549,13 +550,13 @@ describe('getFieldErrorsOrThrow', () => {
             data: { defaultOperationName: { __typename: 'UnknownType' } },
           },
           params: { fields: ['name'] },
-          throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
+          throws: { type: Error, message: DEFAULT_GENERIC_ERROR_MESSAGE },
         },
         {
           name: 'OperationInfo with no messages: throws Error with fallback',
           response: responseWithOpInfo(),
           params: { fields: ['name'] },
-          throws: { type: Error, message: DEFAULT_GQL_ERROR_MESSAGE },
+          throws: { type: Error, message: DEFAULT_GENERIC_ERROR_MESSAGE },
         },
       ];
 
