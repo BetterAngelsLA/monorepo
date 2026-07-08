@@ -309,8 +309,6 @@ def note_create(
     return note
 
 
-
-
 NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
     upload_path="note_attachments",
     service_name="note_attachment",
