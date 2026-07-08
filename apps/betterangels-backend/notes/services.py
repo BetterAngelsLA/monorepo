@@ -309,9 +309,7 @@ def note_create(
     return note
 
 
-# ---------------------------------------------------------------------------
-# Note Attachment Presigned S3 Uploads
-# ---------------------------------------------------------------------------
+
 
 NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
     upload_path="note_attachments",

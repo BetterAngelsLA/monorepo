@@ -21,9 +21,6 @@ from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
 
 
-# ── Domain-specific types ───────────────────────────────────────────────────
-
-
 @dataclass(frozen=True)
 class ShelterPhotoResolveItem:
     """Typed input for ``resolve_uploads`` — preserves the ``photo_type`` enum.

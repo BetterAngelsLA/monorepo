@@ -40,9 +40,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
-
 def _validate_content_type(content_type: str, filename: str, allowed: frozenset[str]) -> None:
     if content_type not in allowed:
         raise InvalidContentTypeError(f"Unsupported content_type: {content_type} for filename={filename}.")
@@ -99,7 +96,6 @@ def create_presigned_uploads(
     return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
 
 
-# ── Validate batch ────────────────────────────────────────────────────────────
 
 
 def validate_upload_batch(
