@@ -18,16 +18,10 @@
       }
     },
     "run-ios": {
-      "dependsOn": ["sync-deps"],
-      "options": {
-        "args": []
-      }
+      "dependsOn": ["sync-deps"]
     },
     "run-android": {
-      "dependsOn": ["sync-deps"],
-      "options": {
-        "args": []
-      }
+      "dependsOn": ["sync-deps"]
     },
     "build-list": {
       "executor": "@nx/expo:build-list",
