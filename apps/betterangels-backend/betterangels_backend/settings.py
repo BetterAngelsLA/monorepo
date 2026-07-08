@@ -78,10 +78,10 @@ env = environ.Env(
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
-    SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50_000_000),
-    NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50_000_000),
-    CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50_000_000),
-    S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50_000_000),
+    SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),  # 50 MiB
+    NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
     S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
 )
 
@@ -91,18 +91,14 @@ WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
-# ── Upload size limits (50 MB) ──────────────────────────────────────────
+# ── Upload size limits ─────────────────────────────────────────────────
 #
-# All limits are aligned with S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE — the fallback
-# used by common/services/s3.py when no per-domain value is given.
-# Django's built-in defaults are 2.5 MB — too low for file uploads that
-# arrive via presigned S3 URLs, so we raise them here.
+# File uploads go through presigned S3 POST URLs (client → S3 directly),
+# so Django never sees the file bytes. DATA_UPLOAD_MAX_MEMORY_SIZE and
+# FILE_UPLOAD_MAX_MEMORY_SIZE are left at Django's 2.5 MB defaults.
 #
-# Per-domain overrides are available via environment variables; the env defaults
-# (declared above) are 50_000_000 bytes each.
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max request body size
-FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # max in-memory file before streaming to disk
-# S3 presigned POST max file size — shared default for per-domain limits.
+# Per-domain S3 presigned limits are available via environment variables;
+# the defaults (declared above) are 50 MiB (50 * 1024 * 1024 bytes) each.
 S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE = env("S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE")
 S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")

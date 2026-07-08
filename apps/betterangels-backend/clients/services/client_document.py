@@ -16,6 +16,10 @@ from common.services.types import AuthorizedPresignedUploadBatch
 from django.conf import settings
 from notes.groups import CASEWORKER
 
+# TODO: upload_path="attachments" is too generic — it dates from before the
+# shared pipeline existed.  It should be "client_documents" for consistency
+# with note_attachments / shelters.  Changing it requires a data migration
+# to update existing S3 keys and Attachment.file values in the DB.
 CLIENT_DOCUMENT_CONFIG = AttachmentUploadConfig(
     upload_path="attachments",
     service_name="client_document",
