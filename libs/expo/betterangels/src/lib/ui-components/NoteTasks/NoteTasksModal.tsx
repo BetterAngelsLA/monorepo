@@ -96,14 +96,14 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               summary: formData.summary || '',
               description: formData.description,
               status: cleanStatus,
-              teamId: cleanTeamId || teamId || null,
+              teamId: cleanTeamId ?? teamId ?? undefined,
 
               // FIX: Map IDs correctly based on which props are present
-              clientProfile: clientProfileId || null,
-              hmisClientProfile: hmisClientProfileId || null, // <--- Added this
+              clientProfile: clientProfileId ?? undefined,
+              hmisClientProfile: hmisClientProfileId ?? undefined,
 
-              note: noteId || null,
-              hmisNote: hmisNoteId || null,
+              note: noteId ?? undefined,
+              hmisNote: hmisNoteId ?? undefined,
             },
           },
         });
