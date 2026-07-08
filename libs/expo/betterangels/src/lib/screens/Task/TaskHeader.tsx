@@ -23,7 +23,29 @@ export default function TaskHeader(props: TTaskHeaderProps) {
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
 
-  const [updateTask] = useMutation(UpdateTaskDocument);
+  const [updateTask] = useMutation(UpdateTaskDocument, {
+    update(cache, { data }) {
+      const payload = data?.updateTask;
+      if (!payload || payload.__typename !== 'TaskType') return;
+
+      const entityId = cache.identify({
+        __typename: 'TaskType',
+        id: payload.id,
+      });
+      if (entityId) {
+        cache.modify({
+          id: entityId,
+          fields: {
+            summary: () => payload.summary,
+            description: () => payload.description,
+            status: () => payload.status,
+            currentTeam: () => payload.currentTeam,
+            updatedAt: () => payload.updatedAt,
+          },
+        });
+      }
+    },
+  });
 
   const [deleteTask] = useMutation(DeleteTaskDocument, {
     update(cache, { data }) {
@@ -56,7 +78,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
         variables: {
           data: {
             id,
-            summary: task.summary!,
+            summary: task.summary ?? '',
             description: task.description,
             status: task.status,
             teamId: task.teamId || null,
