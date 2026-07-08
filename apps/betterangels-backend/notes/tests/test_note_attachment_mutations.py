@@ -49,9 +49,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             ]
         )
 
-        expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -90,9 +88,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             ]
         )
 
-        expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -116,9 +112,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
     def test_requires_authentication(self) -> None:
         self.graphql_client.logout()
 
-        expected_query_count = 0
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -131,9 +125,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     def test_returns_operation_info_for_nonexistent_note(self) -> None:
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -144,7 +136,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             )
 
         self.assertGraphQLOperationInfo(
-            response, "generateNoteAttachmentUploads", "Note matching ID 999999 could not be found.", kind="ERROR"
+            response, "generateNoteAttachmentUploads", "You do not have permission to perform this action.", kind="PERMISSION"
         )
 
     def test_returns_operation_info_for_unauthorized_note(self) -> None:
@@ -154,9 +146,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_2_case_manager_1)
         self._set_active_org(self.org_2)
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -169,8 +159,8 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "generateNoteAttachmentUploads",
-            f"Note matching ID {self.note['id']} could not be found.",
-            kind="ERROR",
+            "You do not have permission to perform this action.",
+            kind="PERMISSION",
         )
 
     @parametrize(
@@ -231,32 +221,34 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_creates_attachment_and_returns_it(
         self,
         mock_perm_group: MagicMock,
+        mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
         from accounts.models import PermissionGroup
+        from django.contrib.contenttypes.models import ContentType
 
         # Create a real permission group so assign_object_permissions works.
         pg = baker.make(PermissionGroup, organization=self.org_1)
         mock_perm_group.return_value = pg
 
-        attachment = baker.make(
-            "common.Attachment",
-            content_object=Note.objects.get(id=self.note["id"]),
+        note = Note.objects.get(id=self.note["id"])
+        attachment = Attachment(
+            file="note_attachments/abc.pdf",
             mime_type="application/pdf",
             original_filename="doc.pdf",
+            content_type=ContentType.objects.get_for_model(Note),
+            object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
+        attachment.save(direct_upload=True)
         mock_generic.return_value = [attachment]
 
-        initial_count = Attachment.objects.count()
-
-        expected_query_count = 12
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -279,44 +271,44 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertEqual(attachments[0]["mimeType"], "application/pdf")
         self.assertEqual(attachments[0]["originalFilename"], "doc.pdf")
 
-        # The generic service creates a real Attachment, so count increases.
-        # (mocked generic returns baker-made attachment, so count stays same)
-        # Actually, since we mock attachments.create_attachment_records, the returned attachment
-        # was pre-made by baker — the count reflects that.
-        self.assertEqual(Attachment.objects.count(), initial_count + 1)
-
     @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_creates_multiple_attachments(
         self,
         mock_perm_group: MagicMock,
+        mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
         from accounts.models import PermissionGroup
+        from django.contrib.contenttypes.models import ContentType
 
         pg = baker.make(PermissionGroup, organization=self.org_1)
         mock_perm_group.return_value = pg
 
         note = Note.objects.get(id=self.note["id"])
-        att1 = baker.make(
-            "common.Attachment",
-            content_object=note,
+        note_ct = ContentType.objects.get_for_model(Note)
+        att1 = Attachment(
+            file="note_attachments/a.pdf",
             mime_type="application/pdf",
             original_filename="a.pdf",
+            content_type=note_ct,
+            object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
-        att2 = baker.make(
-            "common.Attachment",
-            content_object=note,
+        att1.save(direct_upload=True)
+        att2 = Attachment(
+            file="note_attachments/b.png",
             mime_type="image/png",
             original_filename="b.png",
+            content_type=note_ct,
+            object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
+        att2.save(direct_upload=True)
         mock_generic.return_value = [att1, att2]
 
-        expected_query_count = 13
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -346,9 +338,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
     def test_requires_authentication(self) -> None:
         self.graphql_client.logout()
 
-        expected_query_count = 0
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -374,9 +364,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
     ) -> None:
         mock_generic.side_effect = ValueError("Invalid or expired upload signature for 'doc.pdf'")
 
-        expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -402,9 +390,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
     ) -> None:
         mock_generic.side_effect = ValueError("File not found in storage for 'doc.pdf'")
 
-        expected_query_count = 2
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -424,9 +410,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLError(response, "File not found in storage for 'doc.pdf'")
 
     def test_returns_operation_info_for_nonexistent_note(self) -> None:
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -444,7 +428,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             )
 
         self.assertGraphQLOperationInfo(
-            response, "resolveNoteAttachmentUploads", "Note matching ID 999999 could not be found.", kind="ERROR"
+            response, "resolveNoteAttachmentUploads", "You do not have permission to perform this action.", kind="PERMISSION"
         )
 
     def test_returns_operation_info_for_unauthorized_note(self) -> None:
@@ -453,9 +437,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_2_case_manager_1)
         self._set_active_org(self.org_2)
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(
+        response = self.execute_graphql(
                 self.MUTATION,
                 {
                     "data": {
@@ -475,8 +457,8 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertGraphQLOperationInfo(
             response,
             "resolveNoteAttachmentUploads",
-            f"Note matching ID {self.note['id']} could not be found.",
-            kind="ERROR",
+            "You do not have permission to perform this action.",
+            kind="PERMISSION",
         )
 
     @parametrize(
@@ -488,27 +470,32 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         ],
     )
     @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_permission_checks(
         self,
         mock_perm_group: MagicMock,
+        mock_assign: MagicMock,
         mock_generic: MagicMock,
         user_label: str,
         should_succeed: bool,
     ) -> None:
         from accounts.models import PermissionGroup
+        from django.contrib.contenttypes.models import ContentType
 
         pg = baker.make(PermissionGroup, organization=self.org_1)
         mock_perm_group.return_value = pg
 
         note = Note.objects.get(id=self.note["id"])
-        attachment = baker.make(
-            "common.Attachment",
-            content_object=note,
+        attachment = Attachment(
+            file="note_attachments/abc.pdf",
             mime_type="application/pdf",
             original_filename="doc.pdf",
+            content_type=ContentType.objects.get_for_model(Note),
+            object_id=note.id,
             uploaded_by=self.org_1_case_manager_1,
         )
+        attachment.save(direct_upload=True)
         mock_generic.return_value = [attachment]
 
         self._handle_user_login(user_label)

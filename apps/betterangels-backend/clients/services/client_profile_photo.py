@@ -5,15 +5,17 @@ from common.services import attachment_upload
 from common.services.attachment_upload import (
     AttachmentUploadConfig,
     GenerateUploadItem,
+    ResolveUploadItem,
+    validate_upload_batch,
 )
-from common.services.s3 import s3_key_exists, strip_storage_location
 from common.services.types import AuthorizedPresignedUpload
-from common.services.upload_token import validate_upload_token
+from django.conf import settings
 
 CLIENT_PROFILE_PHOTO_CONFIG = AttachmentUploadConfig(
     upload_path="client_profile_photos",
     service_name="client_profile_photo",
     allowed_content_types=DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE,
 )
 
 
@@ -37,21 +39,24 @@ def resolve_upload(
     client_profile: ClientProfile,
     presigned_key: str,
     upload_token: str,
+    filename: str,
+    content_type: str,
 ) -> ClientProfile:
-    if not validate_upload_token(
-        upload_token=upload_token,
-        key=presigned_key,
-        user_id=user.pk,
-        scope=CLIENT_PROFILE_PHOTO_CONFIG.service_name,
-    ):
-        raise ValueError("Invalid or expired upload signature")
+    """Validate tokens + S3 → set client_profile.profile_photo (Phase 3)."""
+    validated = validate_upload_batch(
+        user=user,
+        uploads=[
+            ResolveUploadItem(
+                presigned_key=presigned_key,
+                upload_token=upload_token,
+                filename=filename,
+                mime_type=content_type,
+            )
+        ],
+        config=CLIENT_PROFILE_PHOTO_CONFIG,
+    )
 
-    if not s3_key_exists(key=presigned_key):
-        raise ValueError("File not found in storage")
-
-    profile_photo_path = strip_storage_location(presigned_key)
-
-    client_profile.profile_photo = profile_photo_path
+    client_profile.profile_photo = validated[0].file_path
     client_profile.save(update_fields=["profile_photo"])
 
     return client_profile

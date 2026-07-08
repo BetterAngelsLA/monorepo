@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from django.conf import settings
-
 
 @dataclass(frozen=True)
 class AuthorizedPresignedUpload:
@@ -32,7 +30,7 @@ class AttachmentUploadConfig:
     upload_path: str
     service_name: str
     allowed_content_types: frozenset[str]
-    max_file_size: int = settings.S3_PRESIGNED_MAX_FILE_SIZE
+    max_file_size: int
 
 
 @dataclass(frozen=True)
@@ -41,7 +39,7 @@ class GenerateUploadItem:
 
     ref_id: str
     filename: str
-    content_type: str
+    mime_type: str
 
 
 @dataclass(frozen=True)
@@ -51,7 +49,7 @@ class ResolveUploadItem:
     presigned_key: str
     upload_token: str
     filename: str
-    content_type: str
+    mime_type: str
     namespace: str | None = None
 
 
@@ -67,6 +65,6 @@ class ValidatedResolveItem:
     presigned_key: str
     upload_token: str
     filename: str
-    content_type: str
+    mime_type: str
     namespace: str | None
     file_path: str

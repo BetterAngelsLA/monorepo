@@ -89,11 +89,28 @@ class Attachment(BaseModel):
         **kwargs: Any,
     ) -> None:
         """
-        Saves the Attachment instance. If it's a new instance (without an ID),
-        it stores the original file name and determines the file type based on
-        MIME type analysis. This method enhances file handling by preserving
-        the original file name and categorizing the file for easier management.
+        Saves the Attachment instance.
+
+        .. deprecated::
+            This custom ``save()`` override is deprecated. MIME-type detection,
+            attachment type inference, and filename canonicalisation will move
+            to the service layer (see ``create_attachment_records`` in
+            ``common/services/attachment_upload.py``).  The presigned S3 upload
+            pipeline already enforces content types at the S3 level and passes
+            ``mime_type`` explicitly via ``direct_upload=True``.  This override
+            will be removed in a future release — ``Attachment`` will revert to
+            plain Django ``save()``.
         """
+        import warnings
+
+        warnings.warn(
+            "Attachment.save() override is deprecated. "
+            "All file metadata should be set in the service layer "
+            "(see common/services/attachment_upload.py).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         if not self.pk:
             if direct_upload:
                 if not self.mime_type:

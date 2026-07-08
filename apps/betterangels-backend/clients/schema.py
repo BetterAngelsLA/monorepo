@@ -669,7 +669,7 @@ class Mutation:
             GenerateUploadItem(
                 ref_id=u.ref_id,
                 filename=u.filename,
-                content_type=u.content_type,
+                mime_type=u.content_type,
             )
             for u in data.uploads
         ]
@@ -694,7 +694,7 @@ class Mutation:
                 presigned_key=d.presigned_key,
                 upload_token=d.upload_token,
                 filename=d.filename,
-                content_type=d.content_type,
+                mime_type=d.content_type,
                 namespace=d.namespace,
             )
             for d in data.documents
@@ -728,7 +728,7 @@ class Mutation:
             upload=GenerateUploadItem(
                 ref_id=data.ref_id,
                 filename=data.filename,
-                content_type=data.content_type,
+                mime_type=data.content_type,
             ),
         )
 
@@ -762,6 +762,8 @@ class Mutation:
                 client_profile=client_profile,
                 presigned_key=data.presigned_key,
                 upload_token=data.upload_token,
+                filename=data.filename,
+                content_type=data.content_type,
             )
 
             return cast(ClientProfileType, client_profile)

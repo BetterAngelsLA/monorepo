@@ -24,7 +24,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_note_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
+            GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -53,7 +53,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
 
         result = create_note_attachment_presigned_uploads(
             user=self.user,
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf")],
+            uploads=[GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
@@ -93,7 +93,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
                 presigned_key="media/note_attachments/abc.pdf",
                 upload_token="token-1",
                 filename="doc.pdf",
-                content_type="application/pdf",
+                mime_type="application/pdf",
             )
         ]
 
@@ -128,7 +128,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
                     presigned_key="media/note_attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                 )
             ],
         )
@@ -137,7 +137,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         mock_perm_group.assert_called_once_with(
             self.user,
             template=CASEWORKER,
-            organization_id=self.note.organization_id,
+            organization_id=str(self.note.organization_id),
         )
 
     @patch("notes.services.assign_object_permissions")
@@ -163,13 +163,13 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
                     presigned_key="media/note_attachments/a.pdf",
                     upload_token="tok-1",
                     filename="a.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                 ),
                 ResolveUploadItem(
                     presigned_key="media/note_attachments/b.pdf",
                     upload_token="tok-2",
                     filename="b.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                 ),
             ],
         )
@@ -208,7 +208,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
                     presigned_key="media/note_attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                 )
             ],
         )

@@ -234,7 +234,7 @@ class Mutation:
             GenerateUploadItem(
                 ref_id=u.ref_id,
                 filename=u.filename,
-                content_type=u.content_type,
+                mime_type=u.content_type,
             )
             for u in data.uploads
         ]
@@ -264,7 +264,7 @@ class Mutation:
                 presigned_key=p.presigned_key,
                 upload_token=p.upload_token,
                 filename=p.filename,
-                content_type=p.content_type,
+                mime_type=p.content_type,
                 photo_type=p.photo_type,
             )
             for p in data.photos

@@ -34,7 +34,7 @@ class CreatePresignedUploadsTest(TestCase):
     @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_client_document_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", content_type="application/pdf"),
+            GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -63,7 +63,7 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", content_type="application/pdf")],
+            uploads=[GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
@@ -81,8 +81,8 @@ class CreatePresignedUploadsTest(TestCase):
         result = create_presigned_uploads(
             user=self.user,
             uploads=[
-                GenerateUploadItem(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
-                GenerateUploadItem(ref_id="ref-2", filename="b.pdf", content_type="application/pdf"),
+                GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
+                GenerateUploadItem(ref_id="ref-2", filename="b.pdf", mime_type="application/pdf"),
             ],
         )
 
@@ -117,7 +117,7 @@ class ResolveUploadTest(TestCase):
                 presigned_key="media/attachments/abc.pdf",
                 upload_token="token-1",
                 filename="doc.pdf",
-                content_type="application/pdf",
+                mime_type="application/pdf",
                 namespace="OTHER_CLIENT_DOCUMENT",
             )
         ]
@@ -157,14 +157,14 @@ class ResolveUploadTest(TestCase):
                     presigned_key="media/attachments/a.pdf",
                     upload_token="tok-1",
                     filename="a.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                     namespace="OTHER_CLIENT_DOCUMENT",
                 ),
                 ResolveUploadItem(
                     presigned_key="media/attachments/b.pdf",
                     upload_token="tok-2",
                     filename="b.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                     namespace="OTHER_CLIENT_DOCUMENT",
                 ),
             ],
@@ -204,7 +204,7 @@ class ResolveUploadTest(TestCase):
                     presigned_key="media/attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                     namespace="OTHER_CLIENT_DOCUMENT",
                 )
             ],
@@ -233,7 +233,7 @@ class ResolveUploadTest(TestCase):
                         presigned_key="media/attachments/abc.pdf",
                         upload_token="bad-token",
                         filename="doc.pdf",
-                        content_type="application/pdf",
+                        mime_type="application/pdf",
                         namespace="OTHER_CLIENT_DOCUMENT",
                     )
                 ],

@@ -20,7 +20,7 @@ class ValidateContentTypeTest(TestCase):
                 upload = GenerateUploadItem(
                     ref_id="ref-1",
                     filename="photo.jpg",
-                    content_type=content_type,
+                    mime_type=content_type,
                 )
                 # This is tested indirectly — the generic pipeline validates
                 # content types. We just verify the config includes image types.
@@ -34,7 +34,7 @@ class ValidateContentTypeTest(TestCase):
         upload = GenerateUploadItem(
             ref_id="ref-1",
             filename="doc.pdf",
-            content_type="application/pdf",
+            mime_type="application/pdf",
         )
         with self.assertRaises(InvalidContentTypeError):
             create_presigned_upload(user=MagicMock(), upload=upload)
@@ -43,7 +43,7 @@ class ValidateContentTypeTest(TestCase):
         upload = GenerateUploadItem(
             ref_id="ref-1",
             filename="photo.jpg",
-            content_type="",
+            mime_type="",
         )
         with self.assertRaises(InvalidContentTypeError):
             create_presigned_upload(user=MagicMock(), upload=upload)
@@ -55,7 +55,7 @@ class CreatePresignedUploadTest(TestCase):
         self.upload = GenerateUploadItem(
             ref_id="ref-123",
             filename="photo.jpg",
-            content_type="image/jpeg",
+            mime_type="image/jpeg",
         )
 
     @patch("common.services.attachment_upload.create_presigned_uploads")
@@ -98,7 +98,7 @@ class CreatePresignedUploadTest(TestCase):
         bad_upload = GenerateUploadItem(
             ref_id="ref-1",
             filename="doc.pdf",
-            content_type="application/pdf",
+            mime_type="application/pdf",
         )
 
         with self.assertRaises(InvalidContentTypeError):

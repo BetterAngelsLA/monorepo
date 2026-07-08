@@ -52,7 +52,7 @@ class CreatePresignedUploadsTest(TestCase):
 
     @patch("common.services.attachment_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_shelter_photo_config(self, mock_generic: MagicMock) -> None:
-        uploads = [GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", content_type="image/jpeg")]
+        uploads = [GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")]
         mock_generic.return_value = {"uploads": []}
 
         create_presigned_uploads(
@@ -87,7 +87,7 @@ class CreatePresignedUploadsTest(TestCase):
             user=self.user,
             organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", content_type="image/jpeg")],
+            uploads=[GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
         )
 
         self.assertEqual(result, expected)
@@ -107,8 +107,8 @@ class CreatePresignedUploadsTest(TestCase):
             organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[
-                GenerateUploadItem(ref_id="ref-1", filename="a.jpg", content_type="image/jpeg"),
-                GenerateUploadItem(ref_id="ref-2", filename="b.jpg", content_type="image/jpeg"),
+                GenerateUploadItem(ref_id="ref-1", filename="a.jpg", mime_type="image/jpeg"),
+                GenerateUploadItem(ref_id="ref-2", filename="b.jpg", mime_type="image/jpeg"),
             ],
         )
 
@@ -147,7 +147,7 @@ class ResolveUploadsTest(TestCase):
                     presigned_key="media/shelters/42/abc.jpg",
                     upload_token="valid-token",
                     filename="photo.jpg",
-                    content_type="image/jpeg",
+                    mime_type="image/jpeg",
                     photo_type=ShelterPhotoTypeChoices.INTERIOR,
                 )
             ],
@@ -171,7 +171,7 @@ class ResolveUploadsTest(TestCase):
                     presigned_key="media/shelters/42/abc.jpg",
                     upload_token="t",
                     filename="photo.jpg",
-                    content_type="image/jpeg",
+                    mime_type="image/jpeg",
                     photo_type=ShelterPhotoTypeChoices.INTERIOR,
                 )
             ],
@@ -197,7 +197,7 @@ class ResolveUploadsTest(TestCase):
                     presigned_key="media/shelters/42/abc.jpg",
                     upload_token="t",
                     filename="photo.jpg",
-                    content_type="image/jpeg",
+                    mime_type="image/jpeg",
                     photo_type=ShelterPhotoTypeChoices.INTERIOR,
                 )
             ],
@@ -223,14 +223,14 @@ class ResolveUploadsTest(TestCase):
                     presigned_key="media/shelters/42/a.jpg",
                     upload_token="t",
                     filename="a.jpg",
-                    content_type="image/jpeg",
+                    mime_type="image/jpeg",
                     photo_type=ShelterPhotoTypeChoices.INTERIOR,
                 ),
                 ShelterPhotoResolveItem(
                     presigned_key="media/shelters/42/b.jpg",
                     upload_token="t",
                     filename="b.jpg",
-                    content_type="image/jpeg",
+                    mime_type="image/jpeg",
                     photo_type=ShelterPhotoTypeChoices.EXTERIOR,
                 ),
             ],
@@ -252,7 +252,7 @@ class ResolveUploadsTest(TestCase):
                         presigned_key="media/shelters/42/bad.jpg",
                         upload_token="bad",
                         filename="bad.jpg",
-                        content_type="image/jpeg",
+                        mime_type="image/jpeg",
                         photo_type=ShelterPhotoTypeChoices.INTERIOR,
                     )
                 ],

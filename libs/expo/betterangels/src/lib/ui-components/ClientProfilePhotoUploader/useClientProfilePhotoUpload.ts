@@ -76,6 +76,8 @@ export function useClientProfilePhotoUpload() {
               clientProfileId,
               presignedKey: payload.presignedKey,
               uploadToken: payload.uploadToken,
+              filename: file.name,
+              contentType: file.type,
             },
           },
         });

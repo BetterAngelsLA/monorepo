@@ -29,7 +29,7 @@ TEST_CONFIG = AttachmentUploadConfig(
     upload_path="test_attachments",
     service_name="test_service",
     allowed_content_types=frozenset({"application/pdf", "image/png", "image/jpeg"}),
-    max_file_size=settings.S3_PRESIGNED_MAX_FILE_SIZE,
+    max_file_size=settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE,
 )
 
 COMBINED_CONTENT_TYPES = DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES
@@ -38,6 +38,7 @@ COMBINED_CONFIG = AttachmentUploadConfig(
     upload_path="note_attachments",
     service_name="note_attachment",
     allowed_content_types=COMBINED_CONTENT_TYPES,
+    max_file_size=settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE,
 )
 
 
@@ -83,12 +84,12 @@ class CreatePresignedUploadsTest(TestCase):
         self.upload_1 = GenerateUploadItem(
             ref_id="ref-1",
             filename="doc1.pdf",
-            content_type="application/pdf",
+            mime_type="application/pdf",
         )
         self.upload_2 = GenerateUploadItem(
             ref_id="ref-2",
             filename="doc2.png",
-            content_type="image/png",
+            mime_type="image/png",
         )
 
     @patch("common.services.attachment_upload.create_upload_token")
@@ -138,7 +139,7 @@ class CreatePresignedUploadsTest(TestCase):
                 PresignedS3UploadInput(
                     ref_id="ref-1",
                     filename="doc1.pdf",
-                    content_type="application/pdf",
+                    mime_type="application/pdf",
                     upload_path=TEST_CONFIG.upload_path,
                     max_file_size=TEST_CONFIG.max_file_size,
                 )
@@ -162,13 +163,13 @@ class CreatePresignedUploadsTest(TestCase):
         mock_token.assert_any_call(
             key="media/test_attachments/abc.pdf",
             user_id=self.user.pk,
-            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=TEST_CONFIG.service_name,
         )
         mock_token.assert_any_call(
             key="media/test_attachments/def.png",
             user_id=self.user.pk,
-            expires_in_seconds=settings.S3_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
+            expires_in_seconds=settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
             scope=TEST_CONFIG.service_name,
         )
 
@@ -176,7 +177,7 @@ class CreatePresignedUploadsTest(TestCase):
         bad_upload = GenerateUploadItem(
             ref_id="ref-1",
             filename="doc1.pdf",
-            content_type="application/zip",
+            mime_type="application/zip",
         )
 
         with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc1.pdf."):
@@ -237,14 +238,14 @@ class ResolveAttachmentsTest(TestCase):
         presigned_key: str | None = None,
         upload_token: str = "valid-token",
         filename: str = "doc.pdf",
-        content_type: str = "application/pdf",
+        mime_type: str = "application/pdf",
         namespace: str | None = None,
     ) -> ResolveUploadItem:
         return ResolveUploadItem(
             presigned_key=presigned_key or "media/test_attachments/abc.pdf",
             upload_token=upload_token,
             filename=filename,
-            content_type=content_type,
+            mime_type=mime_type,
             namespace=namespace,
         )
 
@@ -290,7 +291,7 @@ class ResolveAttachmentsTest(TestCase):
     def test_creates_multiple_attachments(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf", filename="a.pdf")
         item2 = self._make_item(
-            presigned_key="media/test_attachments/b.png", filename="b.png", content_type="image/png"
+            presigned_key="media/test_attachments/b.png", filename="b.png", mime_type="image/png"
         )
 
         result = create_attachment_records(
@@ -349,7 +350,7 @@ class ResolveAttachmentsTest(TestCase):
         mock_s3_exists.assert_any_call(key="media/test_attachments/b.pdf")
 
     def test_rejects_invalid_content_type(self) -> None:
-        item = self._make_item(content_type="application/zip")
+        item = self._make_item(mime_type="application/zip")
 
         with self.assertRaisesMessage(InvalidContentTypeError, "Unsupported content_type: application/zip for filename=doc.pdf."):
             create_attachment_records(
