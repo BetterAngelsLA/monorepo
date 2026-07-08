@@ -1,1 +1,1 @@
-export * from './graphql/responseUtils';
+export * from './graphql';
