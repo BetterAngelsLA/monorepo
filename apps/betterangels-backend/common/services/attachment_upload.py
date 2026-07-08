@@ -123,7 +123,8 @@ def validate_upload_batch(
     validated: list[ValidatedResolveItem] = []
 
     for item in items:
-        _validate_content_type(item.mime_type, item.filename, config.allowed_content_types)
+        if item.mime_type:
+            _validate_content_type(item.mime_type, item.filename, config.allowed_content_types)
 
         if not validate_upload_token(
             upload_token=item.upload_token,

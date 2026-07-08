@@ -1,5 +1,11 @@
 from typing import Any, Dict
 
+from common.tests.utils import GraphQLBaseTestCase
+from dateutil.relativedelta import relativedelta
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+from django.utils import timezone
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -17,11 +23,6 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from common.tests.utils import GraphQLBaseTestCase
-from dateutil.relativedelta import relativedelta
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings
-from django.utils import timezone
 
 
 # TODO: This is a temporary solution while we refactor the client profile and tests.

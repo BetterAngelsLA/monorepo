@@ -461,5 +461,3 @@ class ResolveClientProfilePhotoUploadInput:
     client_profile_id: ID
     presigned_key: str
     upload_token: str
-    filename: str
-    content_type: str
