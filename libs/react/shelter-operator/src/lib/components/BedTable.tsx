@@ -1,7 +1,6 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { BookCheck, CopyPlus, Minus } from 'lucide-react';
+import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   BedStatusChoices,
   type BedType,
@@ -59,8 +58,6 @@ type BedTableProps = {
   beds: Bed[];
   getRowKey?: (bed: Bed, index: number) => string;
   onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
-  selectedBedIds?: string[];
-  onSelectedBedIdsChange?: (ids: string[]) => void;
   onClone?: (rowObject: BedRowObject) => void;
   onEdit?: (rowObject: BedRowObject) => void;
   onDeleteBeds?: (bedIds: string[]) => void;
@@ -83,8 +80,6 @@ export function BedTable({
   beds,
   getRowKey,
   onRowClick,
-  selectedBedIds,
-  onSelectedBedIdsChange,
   onClone,
   onEdit,
   onDeleteBeds,
@@ -102,67 +97,8 @@ export function BedTable({
   headerStyle,
   rowStyle,
 }: BedTableProps) {
-  const selectedSet = useMemo(
-    () => new Set(selectedBedIds ?? []),
-    [selectedBedIds]
-  );
-
-  const toggleRowSelection = useCallback(
-    (bedId: string) => {
-      if (!onSelectedBedIdsChange) return;
-      const next = new Set(selectedSet);
-      if (next.has(bedId)) {
-        next.delete(bedId);
-      } else {
-        next.add(bedId);
-      }
-      onSelectedBedIdsChange([...next]);
-    },
-    [onSelectedBedIdsChange, selectedSet]
-  );
-
-  const showCheckboxColumn = !!onSelectedBedIdsChange;
-
   const columns: TableColumn<Bed>[] = useMemo(
     () => [
-      ...(showCheckboxColumn
-        ? [
-            {
-              key: 'selected' as const,
-              label: '',
-              width: '2rem',
-              render: (bed: Bed) => {
-                const isSelected = selectedSet.has(bed.id);
-                return (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    aria-label={isSelected ? 'Deselect bed' : 'Select bed'}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleRowSelection(bed.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') {
-                        e.preventDefault();
-                        toggleRowSelection(bed.id);
-                      }
-                    }}
-                    className={mergeCss([
-                      'inline-flex size-5 items-center justify-center rounded border transition-colors',
-                      isSelected
-                        ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
-                        : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
-                    ])}
-                  >
-                    <Minus size={14} strokeWidth={3} />
-                  </button>
-                );
-              },
-            },
-          ]
-        : []),
       {
         key: 'bedId',
         label: 'Bed',
@@ -197,7 +133,7 @@ export function BedTable({
         sortValue: (bed) => bed.roomAssignment || '',
       },
     ],
-    [selectedSet, toggleRowSelection, showCheckboxColumn]
+    [],
   );
 
   return (
