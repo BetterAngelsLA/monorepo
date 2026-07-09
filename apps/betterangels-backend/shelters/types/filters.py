@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, Exists, OuterRef, Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -42,7 +42,7 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
-from shelters.open_at import _time_and_day_condition, shelters_open_at
+from shelters.open_at import _shelter_open_q
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -171,11 +171,19 @@ class ShelterFilter:
         if not value:
             return queryset, Q()
 
+        dt = get_current_shelter_schedule_datetime()
+        day = DayOfWeekChoices.from_date(dt.date())
+        yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
+
         return (
-            shelters_open_at(
-                queryset,
-                dt=get_current_shelter_schedule_datetime(),
-                schedule_type=ScheduleTypeChoices.OPERATING,
+            queryset.filter(
+                _shelter_open_q(
+                    schedule_type=ScheduleTypeChoices.OPERATING,
+                    time=dt.time(),
+                    day=day,
+                    yesterday=yesterday,
+                    date=dt.date(),
+                )
             ),
             Q(),
         )
@@ -199,39 +207,16 @@ class ShelterFilter:
         time = dt.time()
         date = dt.date()
 
-        from shelters.models import Schedule
-
         combined_q = Q()
 
         for schedule_type in value:
-            time_day = _time_and_day_condition(time=time, day=day, yesterday=yesterday)
-
-            is_open = Exists(
-                Schedule.objects.filter(
-                    shelter=OuterRef("pk"),
-                    schedule_type=schedule_type,
-                    is_exception=False,
-                ).filter(
-                    time_day,
-                    Q(start_date=None) | Q(start_date__lte=date),
-                    Q(end_date=None) | Q(end_date__gte=date),
-                )
+            combined_q |= _shelter_open_q(
+                schedule_type=schedule_type,
+                time=time,
+                day=day,
+                yesterday=yesterday,
+                date=date,
             )
-
-            covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
-            has_active_exception = Exists(
-                Schedule.objects.filter(
-                    shelter=OuterRef("pk"),
-                    schedule_type=schedule_type,
-                    is_exception=True,
-                ).filter(
-                    covers_now,
-                    Q(start_date=None) | Q(start_date__lte=date),
-                    Q(end_date=None) | Q(end_date__gte=date),
-                )
-            )
-
-            combined_q |= is_open & ~has_active_exception
 
         return queryset.filter(combined_q), Q()
 

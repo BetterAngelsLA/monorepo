@@ -5,6 +5,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 from django.db.models import Exists, F, OuterRef, Q, QuerySet
+
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 
 if TYPE_CHECKING:
@@ -49,13 +50,19 @@ def _time_and_day_condition(
     return result
 
 
-def shelters_open_at(
-    queryset: "QuerySet[Shelter]",
+def _shelter_open_q(
     *,
-    dt: datetime.datetime,
-    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
-) -> "QuerySet[Shelter]":
-    """Return shelters whose *schedule_type* schedule says they are open at *dt*.
+    schedule_type: ScheduleTypeChoices,
+    time: datetime.time,
+    day: DayOfWeekChoices,
+    yesterday: DayOfWeekChoices,
+    date: datetime.date,
+) -> Q:
+    """Return a Q object that matches shelters open for *schedule_type* at the given datetime.
+
+    Uses Exists subqueries with ``OuterRef("pk")`` so the caller can
+    compose the result with other Q expressions (e.g. OR across multiple
+    schedule types).
 
     The filter:
     1. Finds a non-exception schedule row matching the weekday + time window
@@ -65,16 +72,9 @@ def shelters_open_at(
     """
     from shelters.models import Schedule
 
-    day = DayOfWeekChoices.from_date(dt.date())
-    yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
-    time = dt.time()
-    date = dt.date()
-
     time_day = _time_and_day_condition(time=time, day=day, yesterday=yesterday)
+    covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
 
-    # Step 1: Use an Exists subquery so the join doesn't produce duplicate
-    # shelter rows (avoiding the need for .distinct()).  All conditions bind
-    # to a single Schedule row.
     is_open = Exists(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),
@@ -87,10 +87,6 @@ def shelters_open_at(
         )
     )
 
-    # Step 2: exclude shelters with an active exception covering *dt*.
-    #   - Full-day:  start_time IS NULL  → closed all day, must match the day.
-    #   - Partial:   same time+day logic as above, including overnight.
-    covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
     has_active_exception = Exists(
         Schedule.objects.filter(
             shelter=OuterRef("pk"),
@@ -103,4 +99,28 @@ def shelters_open_at(
         )
     )
 
-    return queryset.filter(is_open).exclude(has_active_exception)
+    return is_open & ~has_active_exception
+
+
+def shelters_open_at(
+    queryset: "QuerySet[Shelter]",
+    *,
+    dt: datetime.datetime,
+    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
+) -> "QuerySet[Shelter]":
+    """Return shelters whose *schedule_type* schedule says they are open at *dt*.
+
+    Delegates to :func:`_shelter_open_q` for the filtering logic.
+    """
+    day = DayOfWeekChoices.from_date(dt.date())
+    yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
+
+    return queryset.filter(
+        _shelter_open_q(
+            schedule_type=schedule_type,
+            time=dt.time(),
+            day=day,
+            yesterday=yesterday,
+            date=dt.date(),
+        )
+    )
