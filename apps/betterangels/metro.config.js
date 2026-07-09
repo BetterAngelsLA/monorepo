@@ -1,15 +1,23 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
 // Remove console.logs in production
 config.transformer.minifierConfig.compress.drop_console = true;
 
-// Expo SDK 52+ auto-configures watchFolders, nodeModulesPaths, and
-// module resolution for monorepos when workspaces are defined in
-// the root package.json.
+// Expo SDK 52+ auto-detects monorepo watchFolders from workspaces,
+// but crawling every app is too slow. Scope to only what we need:
+// the app itself, shared libs, and root node_modules.
+config.watchFolders = [
+  projectRoot,
+  path.join(workspaceRoot, 'libs'),
+  path.join(workspaceRoot, 'node_modules'),
+];
+
 const { transformer, resolver } = config;
 
 config.transformer = {
