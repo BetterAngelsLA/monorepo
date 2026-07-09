@@ -16,7 +16,6 @@ export const paths = {
   signIn: '/operator/sign-in',
   createOrganization: '/operator/create-organization',
   users: '/operator/users',
-  dashboardCreate: '/operator/dashboard/create',
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
   shelterManage: '/operator/shelter/:shelterId/manage',
