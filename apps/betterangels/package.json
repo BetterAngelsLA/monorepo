@@ -13,5 +13,14 @@
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "@monorepo/apollo": "*",
+    "@monorepo/expo/betterangels": "*",
+    "@monorepo/expo/shared/clients": "*",
+    "@monorepo/expo/shared/icons": "*",
+    "@monorepo/expo/shared/static": "*",
+    "@monorepo/expo/shared/ui-components": "*",
+    "@monorepo/expo/shared/utils": "*"
   }
 }
