@@ -10,7 +10,7 @@ from unittest_parametrize import parametrize
 
 class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
     MUTATION = """
-        mutation GenerateNoteFileUploads($data: GenerateNoteFileUploadsInput!) {
+        mutation GenerateNoteFileUploads($data: GenerateNoteAttachmentUploadsInput!) {
             generateNoteFileUploads(data: $data) {
                 ... on AuthorizedPresignedS3UploadsType {
                     uploads {
@@ -196,7 +196,7 @@ class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
 
 class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
     MUTATION = """
-        mutation ResolveNoteFileUploads($data: ResolveNoteFileUploadsInput!) {
+        mutation ResolveNoteFileUploads($data: ResolveNoteAttachmentUploadsInput!) {
             resolveNoteFileUploads(data: $data) {
                 ... on NoteAttachmentUploadsType {
                     attachments {
