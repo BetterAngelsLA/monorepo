@@ -9,6 +9,13 @@
   ],
   "// targets": "to see all targets run: nx show project betterangels --web",
   "targets": {
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels",
+        "command": "expo start --port 8081"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
