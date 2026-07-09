@@ -5,6 +5,13 @@
   "projectType": "application",
   "tags": ["type:app", "scope:betterangels"],
   "targets": {
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/betterangels",
+        "command": "expo start --port 8081"
+      }
+    },
     "build-list": {
       "executor": "@nx/expo:build-list",
       "options": {}
