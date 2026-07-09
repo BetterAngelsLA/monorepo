@@ -6,7 +6,6 @@
   "tags": ["type:app", "scope:betterangels"],
   "targets": {
     "start": {
-      "dependsOn": ["sync-deps"],
       "options": {
         "port": 8081
       }
@@ -17,12 +16,8 @@
         "command": "nx start betterangels"
       }
     },
-    "run-ios": {
-      "dependsOn": ["sync-deps"]
-    },
-    "run-android": {
-      "dependsOn": ["sync-deps"]
-    },
+    "run-ios": {},
+    "run-android": {},
     "build-list": {
       "executor": "@nx/expo:build-list",
       "options": {}
@@ -33,13 +28,8 @@
         "output": "apps/betterangels/dist"
       }
     },
-    "sync-deps": {
-      "executor": "@nx/expo:sync-deps",
-      "options": {}
-    },
-    "prebuild": {
-      "dependsOn": ["sync-deps"]
-    },
+
+    "prebuild": {},
     "eas-update": {
       "executor": "@nx/expo:update",
       "options": {
@@ -59,7 +49,6 @@
       }
     },
     "export": {
-      "dependsOn": ["sync-deps"],
       "outputs": [
         "{projectRoot}/{options.outputDir}",
         "{workspaceRoot}/apps/betterangels/dist"

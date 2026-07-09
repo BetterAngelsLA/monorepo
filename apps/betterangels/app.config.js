@@ -27,7 +27,6 @@ export default {
       ? './src/app/assets/images/icon.png'
       : './src/app/assets/images/preview-icon.png',
     updates: {
-      fallbackToCacheTimeout: 0,
       url: 'https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8',
     },
     assetBundlePatterns: ['**/*'],
@@ -39,9 +38,7 @@ export default {
       config: {
         usesNonExemptEncryption: false,
       },
-      infoPlist: {
-        UIDesignRequiresCompatibility: true,
-      },
+      infoPlist: {},
     },
     android: {
       adaptiveIcon: {
