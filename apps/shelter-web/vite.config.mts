@@ -18,6 +18,8 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 };
 
 export default defineConfig(({ mode }) => {
+  console.log('starting');
+  console.log(mode);
   const isDev = mode === 'development';
   const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
   return {
