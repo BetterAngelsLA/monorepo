@@ -1,26 +1,25 @@
+const { withNxMetro } = require('@nx/expo');
 const { getDefaultConfig } = require('expo/metro-config');
+const { mergeConfig } = require('@expo/metro/metro-config');
 
-const projectRoot = __dirname;
+const defaultConfig = getDefaultConfig(__dirname);
+const { assetExts, sourceExts } = defaultConfig.resolver;
 
-const config = getDefaultConfig(projectRoot);
-
-// Remove console.logs in production
-config.transformer.minifierConfig.compress.drop_console = true;
-
-// Expo SDK 52+ auto-configures watchFolders, nodeModulesPaths, and
-// module resolution for monorepos when workspaces are defined in
-// the root package.json.
-const { transformer, resolver } = config;
-
-config.transformer = {
-  ...transformer,
-  babelTransformerPath: require.resolve('react-native-svg-transformer'),
+const customConfig = {
+  cacheVersion: 'betterangels',
+  transformer: {
+    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+    // Remove console.logs in production
+    minifierConfig: { compress: { drop_console: true } },
+  },
+  resolver: {
+    assetExts: assetExts.filter((ext) => ext !== 'svg'),
+    sourceExts: [...sourceExts, 'cjs', 'mjs', 'svg'],
+  },
 };
 
-config.resolver = {
-  ...resolver,
-  assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
-  sourceExts: [...resolver.sourceExts, 'svg'],
-};
-
-module.exports = config;
+module.exports = withNxMetro(mergeConfig(defaultConfig, customConfig), {
+  debug: false,
+  extensions: [],
+  watchFolders: [],
+});
