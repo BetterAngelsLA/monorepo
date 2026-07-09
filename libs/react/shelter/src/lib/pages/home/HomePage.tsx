@@ -30,7 +30,11 @@ import {
   toGoogleLatLng,
   toMapBounds,
 } from '../../components';
-import { SHELTERS_MAP_ID } from '../../constants';
+import {
+  SESSION_STORAGE_MAP_BOUNDS,
+  SESSION_STORAGE_MAP_CENTER,
+  SHELTERS_MAP_ID,
+} from '../../constants';
 import { MaxWLayout } from '../../layout';
 import { useUser } from '../../providers';
 
@@ -244,20 +248,20 @@ export function HomePage() {
     if (!map || hasInitialized) return;
     setHasInitialized(true);
 
-    const savedBoundsJson = sessionStorage.getItem('savedMapBounds');
+    const savedBoundsJson = sessionStorage.getItem(SESSION_STORAGE_MAP_BOUNDS);
     if (savedBoundsJson) {
       const savedBounds = JSON.parse(savedBoundsJson) as TMapBounds;
       // Consume the saved bounds so they aren't re-applied on subsequent
       // navigations that don't originate from a shelter detail page.
-      sessionStorage.removeItem('savedMapBounds');
-      sessionStorage.removeItem('mapCenter');
+      sessionStorage.removeItem(SESSION_STORAGE_MAP_BOUNDS);
+      sessionStorage.removeItem(SESSION_STORAGE_MAP_CENTER);
       // Restore the exact previous viewport via fitBounds, which triggers
       // onPlaceViewportFitted -> setMapBoundsFilter + search.
       setPlaceViewportToFit(savedBounds);
       return;
     }
 
-    const savedCenter = sessionStorage.getItem('mapCenter');
+    const savedCenter = sessionStorage.getItem(SESSION_STORAGE_MAP_CENTER);
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);

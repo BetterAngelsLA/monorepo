@@ -2,6 +2,10 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  SESSION_STORAGE_MAP_BOUNDS,
+  SESSION_STORAGE_MAP_CENTER,
+} from '../../constants';
 import { TLatLng, toMapBounds } from '../Map';
 import { PrivateBadge } from '../PrivateBadge';
 import { DistanceAway } from './DistanceAway';
@@ -67,7 +71,7 @@ export function ShelterCard(props: TShelterCard) {
   const onNavigate = () => {
     const currentBounds = map?.getBounds();
     sessionStorage.setItem(
-      'mapCenter',
+      SESSION_STORAGE_MAP_CENTER,
       JSON.stringify({
         lat: location?.latitude,
         lng: location?.longitude,
@@ -76,7 +80,7 @@ export function ShelterCard(props: TShelterCard) {
     );
     if (currentBounds) {
       sessionStorage.setItem(
-        'savedMapBounds',
+        SESSION_STORAGE_MAP_BOUNDS,
         JSON.stringify(toMapBounds(currentBounds))
       );
     }
