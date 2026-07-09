@@ -1029,7 +1029,7 @@ input GenerateNoteAttachmentUploadsInput {
   uploads: [NoteAttachmentUploadItemInput!]!
 }
 
-union GenerateNoteAttachmentUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
+union GenerateNoteFileUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
 
 input GenerateShelterPhotoUploadsInput {
   shelterId: ID!
@@ -1572,8 +1572,8 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  generateNoteAttachmentUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteAttachmentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  resolveNoteAttachmentUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteAttachmentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
@@ -2287,7 +2287,7 @@ input ResolveNoteAttachmentUploadsInput {
   attachments: [NoteAttachmentFromUploadInput!]!
 }
 
-union ResolveNoteAttachmentUploadsPayload = NoteAttachmentUploadsType | OperationInfo
+union ResolveNoteFileUploadsPayload = NoteAttachmentUploadsType | OperationInfo
 
 input ResolveShelterPhotoUploadsInput {
   shelterId: ID!

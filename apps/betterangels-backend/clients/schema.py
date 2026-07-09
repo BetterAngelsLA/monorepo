@@ -17,7 +17,7 @@ from clients.models import (
 )
 
 from clients.services import client_document, client_profile_photo
-from common.services.types import GenerateUploadItem, ResolveUploadItem
+from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -690,7 +690,7 @@ class Mutation:
         ).get(id=data.client_profile_id)
 
         uploads = [
-            GenerateUploadItem(
+            UploadRequest(
                 ref_id=u.ref_id,
                 filename=u.filename,
                 mime_type=u.content_type,
@@ -714,7 +714,7 @@ class Mutation:
         ).get(id=data.client_profile_id)
 
         documents = [
-            ResolveUploadItem(
+            UploadConfirmation(
                 presigned_key=d.presigned_key,
                 upload_token=d.upload_token,
                 filename=d.filename,
@@ -749,7 +749,7 @@ class Mutation:
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
-            upload=GenerateUploadItem(
+            upload=UploadRequest(
                 ref_id=data.ref_id,
                 filename=data.filename,
                 mime_type=data.content_type,

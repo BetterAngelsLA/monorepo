@@ -8,11 +8,11 @@ from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
 from common.permissions.utils import assign_object_permissions
-from common.services import attachment_upload
-from common.services.attachment_upload import (
+from common.services import file_upload
+from common.services.file_upload import (
     AttachmentUploadConfig,
-    GenerateUploadItem,
-    ResolveUploadItem,
+    UploadRequest,
+    UploadConfirmation,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
 from django.conf import settings
@@ -320,21 +320,21 @@ NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
 def create_note_attachment_presigned_uploads(
     *,
     user: User,
-    uploads: Iterable[GenerateUploadItem],
+    uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for note attachments (Phase 1)."""
-    return attachment_upload.create_presigned_uploads(
+    return file_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
         config=NOTE_ATTACHMENT_CONFIG,
     )
 
 
-def resolve_note_attachment_uploads(
+def resolve_note_file_uploads(
     *,
     user: User,
     note: Note,
-    attachments: Iterable[ResolveUploadItem],
+    attachments: Iterable[UploadConfirmation],
 ) -> list[Attachment]:
     """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
 
@@ -349,7 +349,7 @@ def resolve_note_attachment_uploads(
     )
 
     with transaction.atomic():
-        attached = attachment_upload.create_attachment_records(
+        attached = file_upload.create_attachment_records(
             user=user,
             content_object=note,
             uploads=attachments,

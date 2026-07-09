@@ -383,7 +383,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         with (
             patch(
-                "common.services.attachment_upload.generate_s3_presigned_upload_urls",
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
                 return_value=PresignedS3UploadBatchResult(
                     uploads=[
                         PresignedS3UploadResult(
@@ -395,7 +395,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                     ]
                 ),
             ),
-            patch("common.services.attachment_upload.create_upload_token", return_value="mock-token"),
+            patch("common.services.file_upload.create_upload_token", return_value="mock-token"),
         ):
             response = self._generate_client_document_uploads_fixture(
                 self.client_profile_1["id"],
@@ -424,11 +424,11 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def test_resolve_client_document_uploads_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         with (
-            patch("common.services.attachment_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
             patch("clients.services.client_document.assign_object_permissions"),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
-                "common.services.attachment_upload.strip_storage_location",
+                "common.services.file_upload.strip_storage_location",
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
@@ -470,7 +470,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         with (
             patch(
-                "common.services.attachment_upload.generate_s3_presigned_upload_urls",
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
                 return_value=PresignedS3UploadBatchResult(
                     uploads=[
                         PresignedS3UploadResult(
@@ -482,7 +482,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                     ]
                 ),
             ),
-            patch("common.services.attachment_upload.create_upload_token", return_value="mock-token"),
+            patch("common.services.file_upload.create_upload_token", return_value="mock-token"),
         ):
             response = self._generate_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
@@ -515,8 +515,8 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
         with (
-            patch("common.services.attachment_upload.validate_upload_token", return_value=True),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
         ):
             response = self._resolve_client_profile_photo_upload_fixture(
                 client_profile_id=self.client_profile_1["id"],
@@ -543,9 +543,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),
         ],
     )
-    def test_delete_client_profile_photo_permission(
-        self, user_label: Optional[str], should_succeed: bool
-    ) -> None:
+    def test_delete_client_profile_photo_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         response = self._delete_client_profile_photo_fixture(
             client_profile_id=self.client_profile_1["id"],
@@ -556,7 +554,10 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             return
 
         result = response.get("data", {}) or {}
-        self.assertEqual("deleteClientProfilePhoto" in result and "id" in (result.get("deleteClientProfilePhoto") or {}), should_succeed)
+        self.assertEqual(
+            "deleteClientProfilePhoto" in result and "id" in (result.get("deleteClientProfilePhoto") or {}),
+            should_succeed,
+        )
 
 
 class ClientContactPermissionTestCase(ClientContactBaseTestCase):

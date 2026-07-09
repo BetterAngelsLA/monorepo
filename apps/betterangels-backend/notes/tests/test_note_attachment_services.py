@@ -10,9 +10,9 @@ from notes.models import Note
 from notes.services import (
     NOTE_ATTACHMENT_CONFIG,
     create_note_attachment_presigned_uploads,
-    resolve_note_attachment_uploads,
+    resolve_note_file_uploads,
 )
-from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.file_upload import UploadRequest, UploadConfirmation
 
 
 class CreateNoteAttachmentPresignedUploadsTest(TestCase):
@@ -21,10 +21,10 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_note_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
+            UploadRequest(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -36,7 +36,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
             config=NOTE_ATTACHMENT_CONFIG,
         )
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = {
             "uploads": [
@@ -53,7 +53,7 @@ class CreateNoteAttachmentPresignedUploadsTest(TestCase):
 
         result = create_note_attachment_presigned_uploads(
             user=self.user,
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf")],
+            uploads=[UploadRequest(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
@@ -76,7 +76,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
@@ -89,7 +89,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         mock_generic.return_value = [attachment]
 
         attachments = [
-            ResolveUploadItem(
+            UploadConfirmation(
                 presigned_key="media/note_attachments/abc.pdf",
                 upload_token="token-1",
                 filename="doc.pdf",
@@ -97,7 +97,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
             )
         ]
 
-        resolve_note_attachment_uploads(user=self.user, note=self.note, attachments=attachments)
+        resolve_note_file_uploads(user=self.user, note=self.note, attachments=attachments)
 
         mock_generic.assert_called_once_with(
             user=self.user,
@@ -108,7 +108,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_scopes_permission_group_to_note_organization(
         self,
         mock_generic: MagicMock,
@@ -120,11 +120,11 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
-        resolve_note_attachment_uploads(
+        resolve_note_file_uploads(
             user=self.user,
             note=self.note,
             attachments=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/note_attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",
@@ -142,7 +142,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_assigns_change_and_delete_permissions_per_attachment(
         self,
         mock_generic: MagicMock,
@@ -155,17 +155,17 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         att2 = MagicMock()
         mock_generic.return_value = [att1, att2]
 
-        resolve_note_attachment_uploads(
+        resolve_note_file_uploads(
             user=self.user,
             note=self.note,
             attachments=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/note_attachments/a.pdf",
                     upload_token="tok-1",
                     filename="a.pdf",
                     mime_type="application/pdf",
                 ),
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/note_attachments/b.pdf",
                     upload_token="tok-2",
                     filename="b.pdf",
@@ -188,7 +188,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
 
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,
@@ -200,11 +200,11 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         attachment = MagicMock()
         mock_generic.return_value = [attachment]
 
-        result = resolve_note_attachment_uploads(
+        result = resolve_note_file_uploads(
             user=self.user,
             note=self.note,
             attachments=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/note_attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",

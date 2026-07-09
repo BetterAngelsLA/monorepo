@@ -3,13 +3,15 @@ from unittest.mock import MagicMock, patch
 
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment
-from common.services.attachment_upload import (
+from common.services.file_upload import (
     AttachmentUploadConfig,
-    GenerateUploadItem,
-    ResolveUploadItem,
+    UploadRequest,
+    UploadConfirmation,
     _validate_content_type,
+    _validate_upload_item,
     create_presigned_uploads,
     create_attachment_records,
+    validate_upload_batch,
 )
 from common.services.exceptions import (
     InvalidContentTypeError,
@@ -81,19 +83,19 @@ class ValidateContentTypeTest(TestCase):
 class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.upload_1 = GenerateUploadItem(
+        self.upload_1 = UploadRequest(
             ref_id="ref-1",
             filename="doc1.pdf",
             mime_type="application/pdf",
         )
-        self.upload_2 = GenerateUploadItem(
+        self.upload_2 = UploadRequest(
             ref_id="ref-2",
             filename="doc2.png",
             mime_type="image/png",
         )
 
-    @patch("common.services.attachment_upload.create_upload_token")
-    @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
+    @patch("common.services.file_upload.create_upload_token")
+    @patch("common.services.file_upload.generate_s3_presigned_upload_urls")
     def test_returns_batch_with_all_uploads(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = PresignedS3UploadBatchResult(
             uploads=[
@@ -124,8 +126,8 @@ class CreatePresignedUploadsTest(TestCase):
         self.assertEqual(result.uploads[1].ref_id, "ref-2")
         self.assertEqual(result.uploads[1].upload_token, "token-2")
 
-    @patch("common.services.attachment_upload.create_upload_token")
-    @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
+    @patch("common.services.file_upload.create_upload_token")
+    @patch("common.services.file_upload.generate_s3_presigned_upload_urls")
     def test_passes_config_to_s3(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = PresignedS3UploadBatchResult(
             uploads=[PresignedS3UploadResult(ref_id="ref-1", key="k", url="u", fields={})]
@@ -146,8 +148,8 @@ class CreatePresignedUploadsTest(TestCase):
             ]
         )
 
-    @patch("common.services.attachment_upload.create_upload_token")
-    @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
+    @patch("common.services.file_upload.create_upload_token")
+    @patch("common.services.file_upload.generate_s3_presigned_upload_urls")
     def test_creates_token_per_upload_with_correct_scope(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = PresignedS3UploadBatchResult(
             uploads=[
@@ -174,7 +176,7 @@ class CreatePresignedUploadsTest(TestCase):
         )
 
     def test_rejects_invalid_content_type(self) -> None:
-        bad_upload = GenerateUploadItem(
+        bad_upload = UploadRequest(
             ref_id="ref-1",
             filename="doc1.pdf",
             mime_type="application/zip",
@@ -185,8 +187,8 @@ class CreatePresignedUploadsTest(TestCase):
         ):
             create_presigned_uploads(user=self.user, uploads=[bad_upload], config=TEST_CONFIG)
 
-    @patch("common.services.attachment_upload.create_upload_token")
-    @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
+    @patch("common.services.file_upload.create_upload_token")
+    @patch("common.services.file_upload.generate_s3_presigned_upload_urls")
     def test_single_upload(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = PresignedS3UploadBatchResult(
             uploads=[
@@ -205,8 +207,8 @@ class CreatePresignedUploadsTest(TestCase):
         self.assertEqual(len(result.uploads), 1)
         self.assertEqual(result.uploads[0].upload_token, "token-single")
 
-    @patch("common.services.attachment_upload.create_upload_token")
-    @patch("common.services.attachment_upload.generate_s3_presigned_upload_urls")
+    @patch("common.services.file_upload.create_upload_token")
+    @patch("common.services.file_upload.generate_s3_presigned_upload_urls")
     def test_empty_uploads_list(self, mock_s3: MagicMock, mock_token: MagicMock) -> None:
         mock_s3.return_value = PresignedS3UploadBatchResult(uploads=[])
 
@@ -229,7 +231,7 @@ class ResolveAttachmentsTest(TestCase):
 
         # Mock strip_storage_location to strip "media/" prefix.
         strip_patcher = patch(
-            "common.services.attachment_upload.strip_storage_location",
+            "common.services.file_upload.strip_storage_location",
             side_effect=lambda key: key.removeprefix("media/"),
         )
         strip_patcher.start()
@@ -242,8 +244,8 @@ class ResolveAttachmentsTest(TestCase):
         filename: str = "doc.pdf",
         mime_type: str = "application/pdf",
         namespace: str | None = None,
-    ) -> ResolveUploadItem:
-        return ResolveUploadItem(
+    ) -> UploadConfirmation:
+        return UploadConfirmation(
             presigned_key=presigned_key or "media/test_attachments/abc.pdf",
             upload_token=upload_token,
             filename=filename,
@@ -251,8 +253,8 @@ class ResolveAttachmentsTest(TestCase):
             namespace=namespace,
         )
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_creates_attachment(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item()
 
@@ -273,8 +275,8 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(attachment.object_id, self.content_object.id)
         self.assertEqual(attachment.uploaded_by, self.user)
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_creates_attachment_with_namespace(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item(namespace="CUSTOM_NAMESPACE")
 
@@ -288,8 +290,8 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].namespace, "CUSTOM_NAMESPACE")
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_creates_multiple_attachments(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf", filename="a.pdf")
         item2 = self._make_item(presigned_key="media/test_attachments/b.png", filename="b.png", mime_type="image/png")
@@ -305,8 +307,8 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(result[0].file.name, "test_attachments/a.pdf")
         self.assertEqual(result[1].file.name, "test_attachments/b.png")
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_validates_each_token(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf", upload_token="tok-1")
         item2 = self._make_item(presigned_key="media/test_attachments/b.pdf", upload_token="tok-2")
@@ -332,8 +334,8 @@ class ResolveAttachmentsTest(TestCase):
             scope=TEST_CONFIG.service_name,
         )
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_validates_each_s3_key_exists(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item1 = self._make_item(presigned_key="media/test_attachments/a.pdf")
         item2 = self._make_item(presigned_key="media/test_attachments/b.pdf")
@@ -362,7 +364,7 @@ class ResolveAttachmentsTest(TestCase):
                 config=TEST_CONFIG,
             )
 
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=False)
+    @patch("common.services.file_upload.validate_upload_token", return_value=False)
     def test_raises_on_invalid_token(self, mock_validate: MagicMock) -> None:
         item = self._make_item(upload_token="bad-token")
 
@@ -374,8 +376,8 @@ class ResolveAttachmentsTest(TestCase):
                 config=TEST_CONFIG,
             )
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=False)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=False)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_raises_when_file_not_in_s3(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item()
 
@@ -387,7 +389,7 @@ class ResolveAttachmentsTest(TestCase):
                 config=TEST_CONFIG,
             )
 
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=False)
+    @patch("common.services.file_upload.validate_upload_token", return_value=False)
     def test_does_not_create_attachment_on_invalid_token(self, mock_validate: MagicMock) -> None:
         initial_count = Attachment.objects.count()
         item = self._make_item(upload_token="bad-token")
@@ -402,8 +404,8 @@ class ResolveAttachmentsTest(TestCase):
 
         self.assertEqual(Attachment.objects.count(), initial_count)
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_batch_rollback_on_second_item_failure(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         """If the second item fails validation, no attachments should be created."""
         # First item is valid, second has an invalid token.
@@ -424,8 +426,8 @@ class ResolveAttachmentsTest(TestCase):
         # Both items should be rolled back — neither persisted.
         self.assertEqual(Attachment.objects.count(), initial_count)
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_strips_storage_dir_prefix(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         item = self._make_item(presigned_key="media/some_path/file.txt")
 
@@ -438,8 +440,8 @@ class ResolveAttachmentsTest(TestCase):
 
         self.assertEqual(result[0].file.name, "some_path/file.txt")
 
-    @patch("common.services.attachment_upload.s3_key_exists", return_value=True)
-    @patch("common.services.attachment_upload.validate_upload_token", return_value=True)
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
     def test_empty_uploads_returns_empty_list(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
         result = create_attachment_records(
             user=self.user,
@@ -451,3 +453,272 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(result, [])
         mock_validate.assert_not_called()
         mock_s3_exists.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _validate_upload_item (per-item validation)
+# ---------------------------------------------------------------------------
+
+
+class ValidateUploadItemTest(TestCase):
+    """Tests for ``_validate_upload_item`` — the single-item validation helper.
+
+    Validation order: content-type → token → S3 key (by cost/diagnostic value).
+    Each error path must be tested individually so the fail-fast ordering
+    is explicit and regressions in precedence are caught.
+    """
+
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.valid_item = UploadConfirmation(
+            presigned_key="media/test/pic.png",
+            upload_token="good-token",
+            filename="pic.png",
+            mime_type="image/png",
+        )
+
+    # ── happy path ────────────────────────────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_passes_for_valid_item(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        _validate_upload_item(self.valid_item, self.user, TEST_CONFIG)
+
+        mock_validate.assert_called_once_with(
+            upload_token="good-token",
+            key="media/test/pic.png",
+            user_id=self.user.pk,
+            scope=TEST_CONFIG.service_name,
+        )
+        mock_s3.assert_called_once_with(key="media/test/pic.png")
+
+    # ── content-type check ────────────────────────────────────────────
+
+    def test_raises_on_bad_content_type(self) -> None:
+        item = UploadConfirmation(
+            presigned_key="k",
+            upload_token="t",
+            filename="bad.zip",
+            mime_type="application/zip",
+        )
+        with self.assertRaisesMessage(
+            InvalidContentTypeError,
+            "Unsupported content_type: application/zip for filename=bad.zip.",
+        ):
+            _validate_upload_item(item, self.user, TEST_CONFIG)
+
+    # ── mime_type skips content-type check ────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_skips_content_type_check_when_mime_empty(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """An empty mime_type must be treated as “accept anything” —
+        no content-type validation should run, but token + S3 checks still fire."""
+        item = UploadConfirmation(
+            presigned_key="media/test/unknown.bin",
+            upload_token="tok",
+            filename="unknown.bin",
+            mime_type="",  # empty → skip content-type guard
+        )
+        _validate_upload_item(item, self.user, TEST_CONFIG)
+
+        mock_validate.assert_called_once()
+        mock_s3.assert_called_once()
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_skips_content_type_check_when_mime_none(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """None mime_type must also skip content-type validation."""
+        item = UploadConfirmation(
+            presigned_key="media/test/unknown.bin",
+            upload_token="tok",
+            filename="unknown.bin",
+            mime_type="",  # falsy → skip
+        )
+        # Override mime_type to None after construction (dataclass field is str).
+        # The guard is ``if item.mime_type:`` so both "" and None are covered.
+        object.__setattr__(item, "mime_type", None)
+
+        _validate_upload_item(item, self.user, TEST_CONFIG)
+
+        mock_validate.assert_called_once()
+        mock_s3.assert_called_once()
+
+    # ── error precedence: content-type before token ───────────────────
+
+    @patch("common.services.file_upload.s3_key_exists")
+    @patch("common.services.file_upload.validate_upload_token")
+    def test_content_type_error_before_token_check(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """A bad content type must short-circuit before the token is even checked."""
+        item = UploadConfirmation(
+            presigned_key="k",
+            upload_token="t",
+            filename="evil.exe",
+            mime_type="application/x-msdownload",
+        )
+        with self.assertRaises(InvalidContentTypeError):
+            _validate_upload_item(item, self.user, TEST_CONFIG)
+
+        mock_validate.assert_not_called()
+        mock_s3.assert_not_called()
+
+    # ── error precedence: token before S3 ─────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists")
+    @patch("common.services.file_upload.validate_upload_token", return_value=False)
+    def test_token_error_before_s3_check(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """A bad token must short-circuit before we hit S3 (I/O)."""
+        item = UploadConfirmation(
+            presigned_key="media/test/pic.png",
+            upload_token="bad-token",
+            filename="pic.png",
+            mime_type="image/png",
+        )
+        with self.assertRaises(InvalidUploadTokenError):
+            _validate_upload_item(item, self.user, TEST_CONFIG)
+
+        mock_s3.assert_not_called()
+
+    # ── S3 key missing ────────────────────────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=False)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_raises_when_s3_key_missing(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        item = self.valid_item
+        with self.assertRaises(S3KeyNotFoundError):
+            _validate_upload_item(item, self.user, TEST_CONFIG)
+
+
+# ---------------------------------------------------------------------------
+# validate_upload_batch (batch behavior)
+# ---------------------------------------------------------------------------
+
+
+class ValidateUploadBatchTest(TestCase):
+    """Tests for ``validate_upload_batch`` — batch-level behavior.
+
+    Per-item validation is tested in ``ValidateUploadItemTest``;
+    these tests cover batch edge cases: empty lists, fail-fast
+    ordering, and duplicate handling.
+    """
+
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+
+    def _item(self, **kwargs: Any) -> UploadConfirmation:
+        defaults: dict[str, Any] = {
+            "presigned_key": "media/test/file.pdf",
+            "upload_token": "valid",
+            "filename": "file.pdf",
+            "mime_type": "application/pdf",
+        }
+        defaults.update(kwargs)
+        return UploadConfirmation(**defaults)
+
+    # ── empty batch ───────────────────────────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists")
+    @patch("common.services.file_upload.validate_upload_token")
+    def test_empty_uploads_returns_empty_list(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        result = validate_upload_batch(user=self.user, uploads=[], config=TEST_CONFIG)
+
+        self.assertEqual(result, [])
+        mock_validate.assert_not_called()
+        mock_s3.assert_not_called()
+
+    # ── fail-fast: first bad item stops batch ─────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists")
+    @patch("common.services.file_upload.validate_upload_token", return_value=False)
+    def test_stops_on_first_bad_item(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """The batch must fail on the first invalid item and never reach
+        subsequent items — this guards against partial-validation bugs."""
+        item_bad = self._item(upload_token="bad", filename="bad.pdf")
+        item_good = self._item(upload_token="good", filename="good.pdf")
+
+        with self.assertRaises(InvalidUploadTokenError):
+            validate_upload_batch(
+                user=self.user,
+                uploads=[item_bad, item_good],
+                config=TEST_CONFIG,
+            )
+
+        # Only the first item should have been validated.
+        mock_validate.assert_called_once_with(
+            upload_token="bad",
+            key="media/test/file.pdf",
+            user_id=self.user.pk,
+            scope=TEST_CONFIG.service_name,
+        )
+
+    # ── duplicate presigned keys ──────────────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_allows_duplicate_presigned_keys(self, mock_validate: MagicMock, mock_s3: MagicMock) -> None:
+        """Two items resolving the same S3 object must each produce a
+        separate ValidatedUpload — there is no de-duplication at this layer."""
+        item = self._item(presigned_key="media/test/same.pdf")
+
+        result = validate_upload_batch(
+            user=self.user,
+            uploads=[item, item],
+            config=TEST_CONFIG,
+        )
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].file_path, "test/same.pdf")
+        self.assertEqual(result[1].file_path, "test/same.pdf")
+
+    # ── returns ValidatedUpload with stripped key ────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    @patch(
+        "common.services.file_upload.strip_storage_location",
+        side_effect=lambda k: k.removeprefix("media/"),
+    )
+    def test_returns_validated_uploads_with_stripped_path(
+        self,
+        mock_strip: MagicMock,
+        mock_validate: MagicMock,
+        mock_s3: MagicMock,
+    ) -> None:
+        item = self._item(presigned_key="media/test/doc.pdf")
+
+        result = validate_upload_batch(
+            user=self.user,
+            uploads=[item],
+            config=TEST_CONFIG,
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertIsInstance(result[0], type(result[0]))  # ValidatedUpload
+        self.assertEqual(result[0].filename, "file.pdf")
+        self.assertEqual(result[0].mime_type, "application/pdf")
+        self.assertEqual(result[0].file_path, "test/doc.pdf")
+        self.assertIsNone(result[0].namespace)
+
+    # ── preserves namespace ───────────────────────────────────────────
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    @patch(
+        "common.services.file_upload.strip_storage_location",
+        side_effect=lambda k: k.removeprefix("media/"),
+    )
+    def test_preserves_namespace(
+        self,
+        mock_strip: MagicMock,
+        mock_validate: MagicMock,
+        mock_s3: MagicMock,
+    ) -> None:
+        item = self._item(namespace="CUSTOM_NS")
+
+        result = validate_upload_batch(
+            user=self.user,
+            uploads=[item],
+            config=TEST_CONFIG,
+        )
+
+        self.assertEqual(result[0].namespace, "CUSTOM_NS")

@@ -104,6 +104,10 @@ if IS_LOCAL_DEV:
 #
 # Per-domain S3 presigned limits are available via environment variables;
 # the defaults (declared above) are 50 MiB (50 * 1024 * 1024 bytes) each.
+#
+# ⚠️  Keep in sync with the canonical ``UPLOAD_MAX_FILE_SIZE`` constant in
+# ``libs/ba-platform/src/lib/constants.ts`` — the frontend relies on that
+# value for client-side file-size validation.
 S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE = env("S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE")
 S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
 SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")

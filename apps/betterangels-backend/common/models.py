@@ -95,7 +95,7 @@ class Attachment(BaseModel):
             This custom ``save()`` override is deprecated. MIME-type detection,
             attachment type inference, and filename canonicalisation will move
             to the service layer (see ``create_attachment_records`` in
-            ``common/services/attachment_upload.py``).  The presigned S3 upload
+            ``common/services/file_upload.py``).  The presigned S3 upload
             pipeline already enforces content types at the S3 level and passes
             ``mime_type`` explicitly via ``direct_upload=True``.  This override
             will be removed in a future release — ``Attachment`` will revert to
@@ -106,7 +106,7 @@ class Attachment(BaseModel):
         warnings.warn(
             "Attachment.save() override is deprecated. "
             "All file metadata should be set in the service layer "
-            "(see common/services/attachment_upload.py).",
+            "(see common/services/file_upload.py).",
             DeprecationWarning,
             stacklevel=2,
         )

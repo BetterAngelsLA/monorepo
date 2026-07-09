@@ -1,11 +1,11 @@
 from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
-from common.services import attachment_upload
-from common.services.attachment_upload import (
+from common.services import file_upload
+from common.services.file_upload import (
     AttachmentUploadConfig,
-    GenerateUploadItem,
-    ResolveUploadItem,
+    UploadRequest,
+    UploadConfirmation,
     validate_upload_batch,
 )
 from common.services.types import AuthorizedPresignedUpload
@@ -22,10 +22,10 @@ CLIENT_PROFILE_PHOTO_CONFIG = AttachmentUploadConfig(
 def create_presigned_upload(
     *,
     user: User,
-    upload: GenerateUploadItem,
+    upload: UploadRequest,
 ) -> AuthorizedPresignedUpload:
     """Generate a presigned S3 URL and upload token for a single profile photo (Phase 1)."""
-    batch = attachment_upload.create_presigned_uploads(
+    batch = file_upload.create_presigned_uploads(
         user=user,
         uploads=[upload],
         config=CLIENT_PROFILE_PHOTO_CONFIG,
@@ -45,7 +45,7 @@ def resolve_upload(
     validated = validate_upload_batch(
         user=user,
         uploads=[
-            ResolveUploadItem(
+            UploadConfirmation(
                 presigned_key=presigned_key,
                 upload_token=upload_token,
             )

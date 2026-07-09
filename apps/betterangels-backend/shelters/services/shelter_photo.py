@@ -3,11 +3,11 @@ from typing import Iterable
 
 from accounts.models import User
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
-from common.services import attachment_upload
-from common.services.attachment_upload import (
+from common.services import file_upload
+from common.services.file_upload import (
     AttachmentUploadConfig,
-    GenerateUploadItem,
-    ResolveUploadItem,
+    UploadRequest,
+    UploadConfirmation,
     validate_upload_batch,
 )
 from common.services.types import AuthorizedPresignedUploadBatch
@@ -19,6 +19,14 @@ from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
+
+
+SHELTER_PHOTO_CONFIG = AttachmentUploadConfig(
+    upload_path="shelters",
+    service_name="shelter_photo",
+    allowed_content_types=DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.SHELTER_PHOTO_MAX_FILE_SIZE,
+)
 
 
 @dataclass(frozen=True)
@@ -40,9 +48,9 @@ class ShelterPhotoResolveItem:
     mime_type: str
     photo_type: ShelterPhotoTypeChoices
 
-    def to_resolve_item(self) -> ResolveUploadItem:
+    def to_resolve_item(self) -> UploadConfirmation:
         """Extract the generic fields for ``validate_upload_batch``."""
-        return ResolveUploadItem(
+        return UploadConfirmation(
             presigned_key=self.presigned_key,
             upload_token=self.upload_token,
             filename=self.filename,
@@ -50,24 +58,16 @@ class ShelterPhotoResolveItem:
         )
 
 
-SHELTER_PHOTO_CONFIG = AttachmentUploadConfig(
-    upload_path="shelters",
-    service_name="shelter_photo",
-    allowed_content_types=DEFAULT_IMAGE_CONTENT_TYPES,
-    max_file_size=settings.SHELTER_PHOTO_MAX_FILE_SIZE,
-)
-
-
 def create_presigned_uploads(
     *,
     user: User,
     organization_id: str,
     shelter_id: int | str,
-    uploads: Iterable[GenerateUploadItem],
+    uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
     shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
-    return attachment_upload.create_presigned_uploads(
+    return file_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
         config=SHELTER_PHOTO_CONFIG,

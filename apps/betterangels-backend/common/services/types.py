@@ -31,7 +31,7 @@ class AttachmentUploadConfig:
 
 
 @dataclass(frozen=True)
-class GenerateUploadItem:
+class UploadRequest:
     """Per-file input for the *generate* phase (Phase 1)."""
 
     ref_id: str
@@ -40,7 +40,7 @@ class GenerateUploadItem:
 
 
 @dataclass(frozen=True)
-class ResolveUploadItem:
+class UploadConfirmation:
     """Per-file input for the *resolve* phase (Phase 3)."""
 
     presigned_key: str
@@ -51,7 +51,7 @@ class ResolveUploadItem:
 
 
 @dataclass(frozen=True)
-class ValidatedResolveItem:
+class ValidatedUpload:
     """Output of ``validate_upload_batch`` — validated + enriched with ``file_path``.
 
     Domain services zip these back with their own typed items to access

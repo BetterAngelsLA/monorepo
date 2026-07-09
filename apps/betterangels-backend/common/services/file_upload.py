@@ -30,9 +30,9 @@ from common.services.types import (
     AttachmentUploadConfig,
     AuthorizedPresignedUpload,
     AuthorizedPresignedUploadBatch,
-    GenerateUploadItem,
-    ResolveUploadItem,
-    ValidatedResolveItem,
+    UploadRequest,
+    UploadConfirmation,
+    ValidatedUpload,
 )
 from common.services.upload_token import create_upload_token, validate_upload_token
 from django.conf import settings
@@ -45,10 +45,46 @@ def _validate_content_type(content_type: str, filename: str, allowed: frozenset[
         raise InvalidContentTypeError(f"Unsupported content_type: {content_type} for filename={filename}.")
 
 
+def _validate_batch_content_types(
+    uploads: Iterable[UploadRequest],
+    config: AttachmentUploadConfig,
+) -> None:
+    """Validate every item's content type against the allowlist (fail-fast)."""
+    for u in uploads:
+        _validate_content_type(u.mime_type, u.filename, config.allowed_content_types)
+
+
+def _validate_upload_item(
+    item: UploadConfirmation,
+    user: User,
+    config: AttachmentUploadConfig,
+) -> None:
+    """Validate a single upload confirmation: content type → token → S3 key.
+
+    Checks are ordered by cost and diagnostic value:
+      1. Content type — cheap, gives clear “wrong kind of file” errors.
+      2. Upload token — cryptographic, catches expired / tampered tokens.
+      3. S3 key existence — I/O-bound, confirms the file was actually uploaded.
+    """
+    if item.mime_type:
+        _validate_content_type(item.mime_type, item.filename, config.allowed_content_types)
+
+    if not validate_upload_token(
+        upload_token=item.upload_token,
+        key=item.presigned_key,
+        user_id=user.pk,
+        scope=config.service_name,
+    ):
+        raise InvalidUploadTokenError(f"Invalid or expired upload signature for '{item.filename}'")
+
+    if not s3_key_exists(key=item.presigned_key):
+        raise S3KeyNotFoundError(f"File not found in storage for '{item.filename}'")
+
+
 def create_presigned_uploads(
     *,
     user: User,
-    uploads: Iterable[GenerateUploadItem],
+    uploads: Iterable[UploadRequest],
     config: AttachmentUploadConfig,
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 POST URLs and signed upload tokens for a batch.
@@ -56,56 +92,53 @@ def create_presigned_uploads(
     Validates content types, generates presigned URLs via S3, and wraps
     each result with a scoped, expiring upload token.
     """
-    mapped_uploads: list[PresignedS3UploadInput] = []
+    uploads = list(uploads)
 
-    for upload in uploads:
-        _validate_content_type(upload.mime_type, upload.filename, config.allowed_content_types)
+    # Validate first — separate side effects from transformation.
+    _validate_batch_content_types(uploads, config)
 
-        mapped_uploads.append(
-            PresignedS3UploadInput(
-                ref_id=upload.ref_id,
-                filename=upload.filename,
-                mime_type=upload.mime_type,
-                upload_path=config.upload_path,
-                max_file_size=config.max_file_size,
-            )
+    s3_inputs = [
+        PresignedS3UploadInput(
+            ref_id=u.ref_id,
+            filename=u.filename,
+            mime_type=u.mime_type,
+            upload_path=config.upload_path,
+            max_file_size=config.max_file_size,
         )
+        for u in uploads
+    ]
 
-    presigned_batch = generate_s3_presigned_upload_urls(uploads=mapped_uploads)
+    batch = generate_s3_presigned_upload_urls(uploads=s3_inputs)
 
-    authorized_uploads: list[AuthorizedPresignedUpload] = []
-
-    for item in presigned_batch.uploads:
-        upload_token = create_upload_token(
-            key=item.key,
-            user_id=user.pk,
-            expires_in_seconds=settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
-            scope=config.service_name,
-        )
-
-        authorized_uploads.append(
+    return AuthorizedPresignedUploadBatch(
+        uploads=[
             AuthorizedPresignedUpload(
-                ref_id=item.ref_id,
-                url=item.url,
-                fields=item.fields,
-                presigned_key=item.key,
-                upload_token=upload_token,
+                ref_id=r.ref_id,
+                url=r.url,
+                fields=r.fields,
+                presigned_key=r.key,
+                upload_token=create_upload_token(
+                    key=r.key,
+                    user_id=user.pk,
+                    expires_in_seconds=settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS,
+                    scope=config.service_name,
+                ),
             )
-        )
-
-    return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
+            for r in batch.uploads
+        ]
+    )
 
 
 def validate_upload_batch(
     *,
     user: User,
-    uploads: Iterable[ResolveUploadItem],
+    uploads: Iterable[UploadConfirmation],
     config: AttachmentUploadConfig,
-) -> list[ValidatedResolveItem]:
+) -> list[ValidatedUpload]:
     """Pre-flight validation: content types, tokens, and S3 keys.
 
     Validates every item in the batch before any database writes occur.
-    Returns typed ``ValidatedResolveItem`` instances with ``file_path``
+    Returns typed ``ValidatedUpload`` instances with ``file_path``
     populated.
 
     Raises:
@@ -113,41 +146,27 @@ def validate_upload_batch(
         InvalidUploadTokenError: If a token is expired, tampered, or mismatched.
         S3KeyNotFoundError: If the file does not exist at the expected S3 key.
     """
-    items = list(uploads)
-    validated: list[ValidatedResolveItem] = []
+    uploads = list(uploads)
 
-    for item in items:
-        if item.mime_type:
-            _validate_content_type(item.mime_type, item.filename, config.allowed_content_types)
+    for item in uploads:
+        _validate_upload_item(item, user, config)
 
-        if not validate_upload_token(
-            upload_token=item.upload_token,
-            key=item.presigned_key,
-            user_id=user.pk,
-            scope=config.service_name,
-        ):
-            raise InvalidUploadTokenError(f"Invalid or expired upload signature for '{item.filename}'")
-
-        if not s3_key_exists(key=item.presigned_key):
-            raise S3KeyNotFoundError(f"File not found in storage for '{item.filename}'")
-
-        validated.append(
-            ValidatedResolveItem(
-                filename=item.filename,
-                mime_type=item.mime_type,
-                namespace=item.namespace,
-                file_path=strip_storage_location(item.presigned_key),
-            )
+    return [
+        ValidatedUpload(
+            filename=item.filename,
+            mime_type=item.mime_type,
+            namespace=item.namespace,
+            file_path=strip_storage_location(item.presigned_key),
         )
-
-    return validated
+        for item in uploads
+    ]
 
 
 def create_attachment_records(
     *,
     user: User,
     content_object: Any,
-    uploads: Iterable[ResolveUploadItem],
+    uploads: Iterable[UploadConfirmation],
     config: AttachmentUploadConfig,
 ) -> list[Attachment]:
     """Validate upload tokens, confirm S3 objects exist, and persist Attachment rows.

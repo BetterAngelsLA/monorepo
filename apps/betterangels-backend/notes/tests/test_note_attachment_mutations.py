@@ -223,7 +223,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_creates_attachment_and_returns_it(
@@ -274,7 +274,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         self.assertEqual(attachments[0]["mimeType"], "application/pdf")
         self.assertEqual(attachments[0]["originalFilename"], "doc.pdf")
 
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_creates_multiple_attachments(
@@ -360,7 +360,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLUnauthenticated(response)
 
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_returns_error_on_invalid_token(
         self,
         mock_generic: MagicMock,
@@ -386,7 +386,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLError(response, "Invalid or expired upload signature for 'doc.pdf'")
 
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_returns_error_when_file_not_in_s3(
         self,
         mock_generic: MagicMock,
@@ -475,7 +475,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
             ("non_case_manager_user", False),
         ],
     )
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     @patch("notes.services.assign_object_permissions")
     @patch("notes.services.resolve_permission_group")
     def test_permission_checks(

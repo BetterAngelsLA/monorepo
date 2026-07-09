@@ -33,7 +33,7 @@ routing bytes through the Django backend. It uses a three-phase flow:
 
 | Layer | File | Role |
 |---|---|---|
-| Generic pipeline | `common/services/attachment_upload.py` | Phase 1 & 3 orchestration |
+| Generic pipeline | `common/services/file_upload.py` | Phase 1 & 3 orchestration |
 | S3 operations | `common/services/s3.py` | Presigned POST generation, key existence checks |
 | Token auth | `common/services/upload_token.py` | Stateless HMAC token create/validate |
 | Types | `common/services/types.py` | Dataclasses: config, input/output items |
@@ -145,7 +145,7 @@ a direct organization FK.
 3. **Implement Phase 1 wrapper:**
    ```python
    def create_presigned_uploads(*, user, uploads):
-       return attachment_upload.create_presigned_uploads(
+       return file_upload.create_presigned_uploads(
            user=user, uploads=uploads, config=MY_CONFIG,
        )
    ```
@@ -154,7 +154,7 @@ a direct organization FK.
    ```python
    def resolve_uploads(*, user, content_object, items):
        permission_group = resolve_permission_group(user, ...)
-       attached = attachment_upload.create_attachment_records(
+       attached = file_upload.create_attachment_records(
            user=user, content_object=content_object,
            uploads=items, config=MY_CONFIG,
        )

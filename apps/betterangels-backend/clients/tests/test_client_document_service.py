@@ -7,7 +7,7 @@ from clients.services.client_document import (
     resolve_upload,
 )
 from common.models import Attachment
-from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidUploadTokenError
 from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
 from django.test import TestCase
@@ -32,10 +32,10 @@ class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_client_document_config(self, mock_generic: MagicMock) -> None:
         uploads = [
-            GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf"),
+            UploadRequest(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf"),
         ]
         mock_generic.return_value = {"uploads": []}
 
@@ -47,7 +47,7 @@ class CreatePresignedUploadsTest(TestCase):
             config=CLIENT_DOCUMENT_CONFIG,
         )
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = AuthorizedPresignedUploadBatch(
             uploads=[
@@ -64,12 +64,12 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf")],
+            uploads=[UploadRequest(ref_id="ref-1", filename="doc1.pdf", mime_type="application/pdf")],
         )
 
         self.assertEqual(result, expected)
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_handles_multiple_uploads(self, mock_generic: MagicMock) -> None:
         expected = AuthorizedPresignedUploadBatch(
             uploads=[
@@ -82,8 +82,8 @@ class CreatePresignedUploadsTest(TestCase):
         result = create_presigned_uploads(
             user=self.user,
             uploads=[
-                GenerateUploadItem(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
-                GenerateUploadItem(ref_id="ref-2", filename="b.pdf", mime_type="application/pdf"),
+                UploadRequest(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
+                UploadRequest(ref_id="ref-2", filename="b.pdf", mime_type="application/pdf"),
             ],
         )
 
@@ -102,7 +102,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_delegates_to_generic_with_correct_params(
         self,
         mock_generic: MagicMock,
@@ -114,7 +114,7 @@ class ResolveUploadTest(TestCase):
         mock_generic.return_value = [attachment]
 
         documents = [
-            ResolveUploadItem(
+            UploadConfirmation(
                 presigned_key="media/attachments/abc.pdf",
                 upload_token="token-1",
                 filename="doc.pdf",
@@ -138,7 +138,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_assigns_permissions_per_attachment(
         self,
         mock_generic: MagicMock,
@@ -154,14 +154,14 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             documents=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/attachments/a.pdf",
                     upload_token="tok-1",
                     filename="a.pdf",
                     mime_type="application/pdf",
                     namespace="OTHER_CLIENT_DOCUMENT",
                 ),
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/attachments/b.pdf",
                     upload_token="tok-2",
                     filename="b.pdf",
@@ -186,7 +186,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_returns_attachments_from_generic(
         self,
         mock_generic: MagicMock,
@@ -201,7 +201,7 @@ class ResolveUploadTest(TestCase):
             user=self.user,
             client_profile=self.client_profile,
             documents=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key="media/attachments/abc.pdf",
                     upload_token="token-1",
                     filename="doc.pdf",
@@ -215,7 +215,7 @@ class ResolveUploadTest(TestCase):
 
     @patch("clients.services.client_document.assign_object_permissions")
     @patch("clients.services.client_document.resolve_permission_group")
-    @patch("common.services.attachment_upload.create_attachment_records")
+    @patch("common.services.file_upload.create_attachment_records")
     def test_raises_on_generic_failure(
         self,
         mock_generic: MagicMock,
@@ -230,7 +230,7 @@ class ResolveUploadTest(TestCase):
                 user=self.user,
                 client_profile=self.client_profile,
                 documents=[
-                    ResolveUploadItem(
+                    UploadConfirmation(
                         presigned_key="media/attachments/abc.pdf",
                         upload_token="bad-token",
                         filename="doc.pdf",

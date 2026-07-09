@@ -16,7 +16,7 @@ from shelters.services.shelter_photo import (
     update_shelter_photo,
 )
 from shelters.tests.baker_recipes import shelter_recipe
-from common.services.attachment_upload import GenerateUploadItem
+from common.services.file_upload import UploadRequest
 from common.services.types import AuthorizedPresignedUploadBatch, AuthorizedPresignedUpload
 from shelters.types.inputs import UpdateShelterPhotoInput
 from strawberry import ID
@@ -51,9 +51,9 @@ class CreatePresignedUploadsTest(TestCase):
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_shelter_photo_config(self, mock_generic: MagicMock) -> None:
-        uploads = [GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")]
+        uploads = [UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")]
         mock_generic.return_value = {"uploads": []}
 
         create_presigned_uploads(
@@ -69,7 +69,7 @@ class CreatePresignedUploadsTest(TestCase):
             config=SHELTER_PHOTO_CONFIG,
         )
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_returns_batch_from_generic(self, mock_generic: MagicMock) -> None:
         expected = AuthorizedPresignedUploadBatch(
             uploads=[
@@ -88,12 +88,12 @@ class CreatePresignedUploadsTest(TestCase):
             user=self.user,
             organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
-            uploads=[GenerateUploadItem(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
+            uploads=[UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
         )
 
         self.assertEqual(result, expected)
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_handles_multiple_uploads(self, mock_generic: MagicMock) -> None:
         expected = AuthorizedPresignedUploadBatch(
             uploads=[
@@ -108,8 +108,8 @@ class CreatePresignedUploadsTest(TestCase):
             organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[
-                GenerateUploadItem(ref_id="ref-1", filename="a.jpg", mime_type="image/jpeg"),
-                GenerateUploadItem(ref_id="ref-2", filename="b.jpg", mime_type="image/jpeg"),
+                UploadRequest(ref_id="ref-1", filename="a.jpg", mime_type="image/jpeg"),
+                UploadRequest(ref_id="ref-2", filename="b.jpg", mime_type="image/jpeg"),
             ],
         )
 

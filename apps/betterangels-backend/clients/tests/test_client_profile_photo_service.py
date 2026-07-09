@@ -6,7 +6,7 @@ from clients.services.client_profile_photo import (
     create_presigned_upload,
     resolve_upload,
 )
-from common.services.attachment_upload import GenerateUploadItem, ResolveUploadItem
+from common.services.file_upload import UploadRequest, UploadConfirmation
 from common.services.exceptions import InvalidContentTypeError
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from django.test import TestCase
@@ -21,7 +21,7 @@ class ValidateContentTypeTest(TestCase):
     def test_rejects_invalid_content_type(self) -> None:
         # The generic pipeline raises InvalidContentTypeError, tested via
         # create_presigned_upload with an invalid type.
-        upload = GenerateUploadItem(
+        upload = UploadRequest(
             ref_id="ref-1",
             filename="doc.pdf",
             mime_type="application/pdf",
@@ -30,7 +30,7 @@ class ValidateContentTypeTest(TestCase):
             create_presigned_upload(user=MagicMock(), upload=upload)
 
     def test_rejects_empty_content_type(self) -> None:
-        upload = GenerateUploadItem(
+        upload = UploadRequest(
             ref_id="ref-1",
             filename="photo.jpg",
             mime_type="",
@@ -42,13 +42,13 @@ class ValidateContentTypeTest(TestCase):
 class CreatePresignedUploadTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.upload = GenerateUploadItem(
+        self.upload = UploadRequest(
             ref_id="ref-123",
             filename="photo.jpg",
             mime_type="image/jpeg",
         )
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_returns_first_item_from_batch(self, mock_generic: MagicMock) -> None:
         mock_generic.return_value = AuthorizedPresignedUploadBatch(
             uploads=[
@@ -70,7 +70,7 @@ class CreatePresignedUploadTest(TestCase):
         self.assertEqual(result.fields, {"Policy": "xyz", "X-Amz-Signature": "sig"})
         self.assertEqual(result.upload_token, "token-abc")
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_config(self, mock_generic: MagicMock) -> None:
         mock_generic.return_value = AuthorizedPresignedUploadBatch(
             uploads=[AuthorizedPresignedUpload(ref_id="x", presigned_key="k", url="u", fields={}, upload_token="t")]
@@ -85,7 +85,7 @@ class CreatePresignedUploadTest(TestCase):
         )
 
     def test_rejects_invalid_content_type(self) -> None:
-        bad_upload = GenerateUploadItem(
+        bad_upload = UploadRequest(
             ref_id="ref-1",
             filename="doc.pdf",
             mime_type="application/pdf",
@@ -94,7 +94,7 @@ class CreatePresignedUploadTest(TestCase):
         with self.assertRaises(InvalidContentTypeError):
             create_presigned_upload(user=self.user, upload=bad_upload)
 
-    @patch("common.services.attachment_upload.create_presigned_uploads")
+    @patch("common.services.file_upload.create_presigned_uploads")
     def test_uses_service_name_as_token_scope(self, mock_generic: MagicMock) -> None:
         mock_generic.return_value = AuthorizedPresignedUploadBatch(
             uploads=[AuthorizedPresignedUpload(ref_id="x", presigned_key="k", url="u", fields={}, upload_token="t")]
@@ -160,7 +160,7 @@ class ResolveUploadTest(TestCase):
         mock_validate_batch.assert_called_once_with(
             user=self.user,
             uploads=[
-                ResolveUploadItem(
+                UploadConfirmation(
                     presigned_key=self.presigned_key,
                     upload_token=self.upload_token,
                 )

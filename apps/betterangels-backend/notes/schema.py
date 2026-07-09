@@ -16,7 +16,7 @@ from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.team_shim import resolve_team_id_from_input
-from common.services.types import GenerateUploadItem, ResolveUploadItem
+from common.services.types import UploadRequest, UploadConfirmation
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from notes.groups import CASEWORKER
@@ -32,7 +32,7 @@ from notes.services import (
     note_service_request_create,
     note_update,
     note_update_location,
-    resolve_note_attachment_uploads,
+    resolve_note_file_uploads,
     service_request_delete,
 )
 from notes.utils import NoteReverter
@@ -383,7 +383,7 @@ class Mutation:
             PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
         ],
     )
-    def generate_note_attachment_uploads(
+    def generate_note_file_uploads(
         self,
         info: Info,
         data: GenerateNoteAttachmentUploadsInput,
@@ -394,7 +394,7 @@ class Mutation:
         get_object_or_permission_error(qs, data.note_id)
 
         uploads = [
-            GenerateUploadItem(
+            UploadRequest(
                 ref_id=u.ref_id,
                 filename=u.filename,
                 mime_type=u.content_type,
@@ -412,7 +412,7 @@ class Mutation:
             PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
         ],
     )
-    def resolve_note_attachment_uploads(
+    def resolve_note_file_uploads(
         self,
         info: Info,
         data: ResolveNoteAttachmentUploadsInput,
@@ -423,7 +423,7 @@ class Mutation:
         note = get_object_or_permission_error(qs, data.note_id)
 
         attachment_list = [
-            ResolveUploadItem(
+            UploadConfirmation(
                 presigned_key=a.presigned_key,
                 upload_token=a.upload_token,
                 filename=a.filename,
@@ -431,6 +431,6 @@ class Mutation:
             )
             for a in data.attachments
         ]
-        attachments = resolve_note_attachment_uploads(user=user, note=note, attachments=attachment_list)
+        attachments = resolve_note_file_uploads(user=user, note=note, attachments=attachment_list)
 
         return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))

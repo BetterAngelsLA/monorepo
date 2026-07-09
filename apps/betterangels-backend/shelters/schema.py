@@ -14,7 +14,7 @@ from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services import shelter_photo
-from shelters.services.shelter_photo import GenerateUploadItem, ShelterPhotoResolveItem
+from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
@@ -231,7 +231,7 @@ class Mutation:
         org_id = get_current_organization(info)
 
         uploads = [
-            GenerateUploadItem(
+            UploadRequest(
                 ref_id=u.ref_id,
                 filename=u.filename,
                 mime_type=u.content_type,

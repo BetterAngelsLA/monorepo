@@ -505,7 +505,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_generate_client_profile_photo_upload(self) -> None:
         with (
             patch(
-                "common.services.attachment_upload.generate_s3_presigned_upload_urls",
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
                 return_value=PresignedS3UploadBatchResult(
                     uploads=[
                         PresignedS3UploadResult(
@@ -518,7 +518,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 ),
             ),
             patch(
-                "common.services.attachment_upload.create_upload_token",
+                "common.services.file_upload.create_upload_token",
                 return_value="photo-token-1",
             ),
         ):
@@ -540,10 +540,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload(self) -> None:
         with (
-            patch("common.services.attachment_upload.validate_upload_token", return_value=True),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
-                "common.services.attachment_upload.strip_storage_location",
+                "common.services.file_upload.strip_storage_location",
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
@@ -565,7 +565,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIn("client_profile_photos/photo.jpg", client_profile.profile_photo.name)
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
-        with patch("common.services.attachment_upload.validate_upload_token", return_value=False):
+        with patch("common.services.file_upload.validate_upload_token", return_value=False):
             expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
@@ -1014,7 +1014,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with (
             patch(
-                "common.services.attachment_upload.generate_s3_presigned_upload_urls",
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
                 return_value=PresignedS3UploadBatchResult(
                     uploads=[
                         PresignedS3UploadResult(
@@ -1032,7 +1032,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
                     ]
                 ),
             ),
-            patch("common.services.attachment_upload.create_upload_token", side_effect=["token-1", "token-2"]),
+            patch("common.services.file_upload.create_upload_token", side_effect=["token-1", "token-2"]),
         ):
             expected_query_count = 5
             with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -1074,10 +1074,10 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with (
-            patch("common.services.attachment_upload.validate_upload_token", return_value=True),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
-                "common.services.attachment_upload.strip_storage_location",
+                "common.services.file_upload.strip_storage_location",
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
@@ -1117,7 +1117,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             },
         ]
 
-        with patch("common.services.attachment_upload.validate_upload_token", return_value=False):
+        with patch("common.services.file_upload.validate_upload_token", return_value=False):
             expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
@@ -1152,8 +1152,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with (
-            patch("common.services.attachment_upload.validate_upload_token", side_effect=[True, False]),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", side_effect=[True, False]),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
         ):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
@@ -1195,8 +1195,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             original_save(self_attachment, *args, **kwargs)
 
         with (
-            patch("common.services.attachment_upload.validate_upload_token", return_value=True),
-            patch("common.services.attachment_upload.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch.object(Attachment, "save", save_side_effect),
         ):
             response = self._resolve_client_document_uploads_fixture(
