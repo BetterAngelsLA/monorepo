@@ -1,5 +1,9 @@
 import { useQuery } from '@apollo/client/react';
-import { Checkbox, CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
+import {
+  Checkbox,
+  CheckboxGroup,
+  ExpandableContainer,
+} from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
@@ -16,6 +20,7 @@ import {
   shelterTypeFilter,
   specialSituationFilter,
   TFilterConfig,
+  UNKNOWN_FILTER_VALUE,
 } from './config';
 
 type IProps = {
@@ -32,6 +37,7 @@ const OPEN_NOW_OPTIONS: {
   { value: ScheduleTypeChoices.Intake, label: 'Intake' },
   { value: ScheduleTypeChoices.MealService, label: 'Meal Services' },
   { value: ScheduleTypeChoices.StaffAvailability, label: 'Staff Availability' },
+  { value: UNKNOWN_FILTER_VALUE, label: 'Include unknown' },
 ];
 
 export function ShelterFilters(props: IProps) {
@@ -61,22 +67,17 @@ export function ShelterFilters(props: IProps) {
   }
 
   function onOpenNowScheduleTypesChange(selected: string[]) {
-    const newTypes = selected as ScheduleTypeChoices[];
+    const includesUnknown = selected.includes(UNKNOWN_FILTER_VALUE);
+    const newTypes = selected.filter(
+      (v): v is ScheduleTypeChoices => v !== UNKNOWN_FILTER_VALUE
+    ) as ScheduleTypeChoices[];
     setOpenNowTypes(newTypes);
 
     onFiltersChange({
       ...filters,
-      openNow:
-        newTypes.length > 0 || !!filters.openNowIncludeNull ? true : undefined,
+      openNowIncludeNull: includesUnknown || undefined,
+      openNow: newTypes.length > 0 || includesUnknown ? true : undefined,
       openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
-    });
-  }
-
-  function onOpenNowIncludeNullChange(checked: boolean) {
-    onFiltersChange({
-      ...filters,
-      openNowIncludeNull: checked || undefined,
-      openNow: openNowTypes.length > 0 || checked ? true : undefined,
     });
   }
 
@@ -130,15 +131,12 @@ export function ShelterFilters(props: IProps) {
           <ExpandableContainer header="Open Now">
             <CheckboxGroup
               options={OPEN_NOW_OPTIONS}
-              values={openNowTypes}
+              values={[
+                ...openNowTypes,
+                ...(filters.openNowIncludeNull ? [UNKNOWN_FILTER_VALUE] : []),
+              ]}
               onChange={onOpenNowScheduleTypesChange}
               selectAll="Select All"
-            />
-            <Checkbox
-              className="w-full flex flex-row justify-end items-center gap-2 border-0 bg-white mt-2"
-              label="Include unknown"
-              checked={!!filters.openNowIncludeNull}
-              onChange={onOpenNowIncludeNullChange}
             />
           </ExpandableContainer>
         </div>
