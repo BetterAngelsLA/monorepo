@@ -17,8 +17,8 @@ import {
 } from './formSchema';
 import {
   SHELTER_PHOTO_MAX_SIZE,
-  useShelterPhotoUpload,
-} from './useShelterPhotoUpload';
+  useShelterPhotoUploads,
+} from './useShelterPhotoUploads';
 
 const PHOTO_TYPE_OPTIONS = toDropdownOptions(
   enumDisplayShelterPhotoTypeChoices
@@ -34,7 +34,7 @@ type TProps = {
 export function ShelterImagesUpload(props: TProps) {
   const { shelterId, onSuccess, onCancel, onError } = props;
 
-  const { uploadPhotos } = useShelterPhotoUpload();
+  const { uploadPhotos } = useShelterPhotoUploads();
   const { showToast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);

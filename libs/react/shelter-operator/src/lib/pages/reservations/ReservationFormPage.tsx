@@ -8,23 +8,42 @@ import {
   mapReservationToFormData,
 } from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
 import { useReservation } from '../../hooks/useReservation';
-import { shelterManageReservationsRoute } from '../../routing';
+import {
+  shelterManageBedsRoute,
+  shelterManageReservationsRoute,
+  shelterManageRoomsRoute,
+} from '../../routing';
 
 export function ReservationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { shelterId, reservationId } = useParams();
-  const { reservation, loading, error } = useReservation(
-    reservationId ? reservationId : ''
-  );
-
-  const reservationsPath = shelterManageReservationsRoute(shelterId ?? '');
+  const { reservation, loading, error } = useReservation(reservationId ?? '');
 
   const rawState = location.state as Record<string, unknown> | null | undefined;
   const bedId =
     typeof rawState?.bedId === 'string' ? rawState.bedId : undefined;
   const roomId =
     typeof rawState?.roomId === 'string' ? rawState.roomId : undefined;
+
+  const { backLinkPath, backLinkLabel } = useMemo(() => {
+    if (bedId) {
+      return {
+        backLinkPath: shelterManageBedsRoute(shelterId ?? ''),
+        backLinkLabel: 'Back to Beds',
+      };
+    }
+    if (roomId) {
+      return {
+        backLinkPath: shelterManageRoomsRoute(shelterId ?? ''),
+        backLinkLabel: 'Back to Rooms',
+      };
+    }
+    return {
+      backLinkPath: shelterManageReservationsRoute(shelterId ?? ''),
+      backLinkLabel: 'Back to Reservations',
+    };
+  }, [bedId, roomId, shelterId]);
 
   const { initialData, readOnlyFields } = useMemo(() => {
     const defaults = createEmptyReservationFormData();
@@ -68,11 +87,11 @@ export function ReservationFormPage() {
   return (
     <ManageFormPageLayout
       shelterId={shelterId}
-      backLinkPath={reservationsPath}
-      backLinkLabel="Back to Reservations"
+      backLinkPath={backLinkPath}
+      backLinkLabel={backLinkLabel}
       entityId={reservationId}
       loading={loading}
-      hasError={!!(error || !reservation)}
+      hasError={!!(reservationId && (error || !reservation))}
       errorMessage={
         error ? 'Unable to load this reservation.' : 'Reservation not found.'
       }
@@ -86,8 +105,8 @@ export function ReservationFormPage() {
         initialData={initialData}
         initialSelectedClients={initialSelectedClients}
         readOnlyFields={readOnlyFields}
-        onSuccess={() => navigate(reservationsPath)}
-        onCancel={() => navigate(reservationsPath)}
+        onSuccess={() => navigate(backLinkPath)}
+        onCancel={() => navigate(backLinkPath)}
       />
     </ManageFormPageLayout>
   );

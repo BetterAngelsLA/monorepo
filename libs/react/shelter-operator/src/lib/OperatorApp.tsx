@@ -91,7 +91,7 @@ export function OperatorApp() {
               />
             </Route>
             <Route path={routePath(paths.shelterManage)}>
-              <Route index element={<ShelterDashboardPage tab="overview" />} />
+              <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
                 path={manageSegments.roomsCreate}
                 element={<EditRoomPage />}

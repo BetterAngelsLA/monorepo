@@ -2237,6 +2237,11 @@ export enum OrgRoleEnum {
   Superuser = 'SUPERUSER'
 }
 
+export enum OrgTypeEnum {
+  Outreach = 'OUTREACH',
+  Shelter = 'SHELTER'
+}
+
 export type OrganizationFilter = {
   AND?: InputMaybe<OrganizationFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2636,8 +2641,10 @@ export type QueryOrganizationMemberArgs = {
 export type QueryOrganizationMembersArgs = {
   filters?: InputMaybe<OrganizationMemberFilter>;
   ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
+  orgType?: InputMaybe<OrgTypeEnum>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
+  permissionTemplate?: InputMaybe<PermissionTemplateEnum>;
 };
 
 

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   displayName: 'expo-betterangels',
   resolver: '@nx/jest/plugins/resolver',
   preset: 'jest-expo',
@@ -8,6 +8,6 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'html', 'tsx', 'jsx'],
   setupFilesAfterEnv: ['<rootDir>/test-setup.ts'],
   moduleNameMapper: {
-    '\\.svg$': '@nx/expo/plugins/jest/svg-mock',
+    '\\.svg$': '<rootDir>/../../../jest-svg-mock.js',
   },
 };

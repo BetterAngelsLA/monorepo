@@ -3,7 +3,7 @@
 // We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
 // NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
 // This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 dotenv.config();
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.1',
+    version: '1.2.2',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.1',
+      buildNumber: '1.2.2',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -70,7 +70,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 75,
+      versionCode: 76,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',

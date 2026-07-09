@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { isMutationSuccess } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
 import { Form } from '../../form/Form';
 import { GetRoomsDocument } from '../api/__generated__/roomQueries.generated';
 import {
@@ -69,6 +70,8 @@ export function RoomForm({
   >(UpdateRoomDocument, { refetchQueries });
 
   const isSubmitting = isCreating || isUpdating;
+
+  const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
 
   async function submitRoom(data: RoomFormData) {
     setSubmissionError(null);
@@ -147,7 +150,11 @@ export function RoomForm({
           data-testid="room-form"
         >
           <BasicInformationSection control={control} errors={errors} />
-          <RoomDetailsSection control={control} errors={errors} />
+          <RoomDetailsSection
+            control={control}
+            errors={errors}
+            filteredPropertyOptions={filteredPropertyOptions}
+          />
 
           <Form.Actions
             onPrimaryClick={() => handleSubmit(submitRoom)()}

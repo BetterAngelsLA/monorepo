@@ -1,5 +1,6 @@
 import fs from 'fs';
 import fetch from 'node-fetch';
+import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
 // Helper: Fetch all comments with pagination
 async function fetchAllComments(owner, repo, issueNumber, token) {
@@ -58,12 +59,13 @@ async function main() {
     NX_TASK_TARGET_PROJECT,
   } = process.env;
 
-  // Process the CLI argument for --url
+  // Process the CLI argument for --url (base URL without path)
   const urlArg = process.argv.find((arg) => arg.startsWith('--url='));
   if (!urlArg) {
     throw new Error('Missing --url argument');
   }
-  const previewUrl = urlArg.split('=')[1].trim();
+  const baseUrl = urlArg.split('=')[1].trim().replace(/\/$/, '');
+  const previewUrl = baseUrl + getBranchBasePath();
   const project = NX_TASK_TARGET_PROJECT || 'default';
 
   // Get the event payload safely

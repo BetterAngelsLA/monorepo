@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, UseFormSetError, useForm } from 'react-hook-form';
 import { LocationPicker } from '../../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
 import {
   Dropdown,
@@ -21,7 +21,10 @@ import {
 
 type TProps = {
   defaultValues?: Partial<BasicInfoFormData>;
-  onSubmit?: (data: BasicInfoFormData) => void;
+  onSubmit?: (
+    data: BasicInfoFormData,
+    setError: UseFormSetError<BasicInfoFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -44,6 +47,7 @@ export function ShelterBasicInfoForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
@@ -217,7 +221,9 @@ export function ShelterBasicInfoForm(props: TProps) {
 
           {!isViewMode && onSubmit && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) =>
+                onSubmit?.(data, setError)
+              )}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}

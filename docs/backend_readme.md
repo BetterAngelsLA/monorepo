@@ -319,27 +319,11 @@ The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
 before creating new ones. This is useful when the schema changes or you want
 a clean slate without resetting the full database.
 
-##### Populating real locations
+---
 
-By default, shelter addresses and coordinates are randomly generated and may
-not match. Pass `--use-places` to reverse-geocode each shelter's coordinates
-via the Google Geocoding API so the displayed address reflects the actual
-street location at those coordinates.
+### Additional Documentation
 
-```bash
-cd apps/betterangels-backend/shelters/scripts/
-uv run python seed_shelters.py 10 --use-places
-```
-
-Both `--clear` and `--use-places` can be combined:
-
-```bash
-cd apps/betterangels-backend/shelters/scripts/
-uv run python seed_shelters.py 20 --clear --use-places
-```
-
-The `--use-places` flag requires `GOOGLE_MAPS_API_KEY` to be set in the
-environment.
+- **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
 
 ### Troubleshooting
 
