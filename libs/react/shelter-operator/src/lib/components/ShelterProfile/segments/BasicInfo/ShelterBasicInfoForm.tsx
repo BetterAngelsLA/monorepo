@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
 import { Controller, UseFormSetError, useForm } from 'react-hook-form';
-import { LocationPicker } from '../../../../pages/dashboard/components/create-shelter-form/components/LocationPicker';
+import { LocationPicker } from '../../../../pages/dashboard/components/LocationPicker';
 import {
   Dropdown,
   DropdownChip,

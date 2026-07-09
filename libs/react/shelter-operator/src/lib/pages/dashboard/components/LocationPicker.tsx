@@ -4,8 +4,8 @@ import { mergeCss } from '@monorepo/react/shared';
 import { AdvancedMarker, Map as GoogleMap } from '@vis.gl/react-google-maps';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { Button } from '../../../../../components/base-ui/buttons/buttons';
-import { Label } from '../../../../../components/base-ui/label';
+import { Button } from '../../../components/base-ui/buttons/buttons';
+import { Label } from '../../../components/base-ui/label';
 
 interface LocationPickerProps {
   value: {
