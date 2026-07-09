@@ -5,6 +5,5 @@
   "description": "resource finder app for LA wildfires",
   "main": "src/index.tsx",
   "author": "",
-  "license": "MIT",
-  "dependencies": {}
+  "license": "MIT"
 }

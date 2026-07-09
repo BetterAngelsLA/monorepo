@@ -9,7 +9,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/betterangels",
-        "command": "EXPO_NO_METRO_WORKSPACE_ROOT=1 expo start --port 8081"
+        "command": "expo start --port 8081"
       }
     },
     "build-list": {
