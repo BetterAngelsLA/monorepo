@@ -95,7 +95,8 @@
     "@jest/globals": "*",
     "@types/geojson": "*",
     "@storybook/react-native-web-vite": "*",
-    "@types/google.maps": "*"
+    "@types/google.maps": "*",
+    "expo-modules-core": "*"
   },
   "devDependencies": {},
   "expo": {
