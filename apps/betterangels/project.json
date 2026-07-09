@@ -5,19 +5,6 @@
   "projectType": "application",
   "tags": ["type:app", "scope:betterangels"],
   "targets": {
-    "start": {
-      "options": {
-        "port": 8081
-      }
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nx start betterangels"
-      }
-    },
-    "run-ios": {},
-    "run-android": {},
     "build-list": {
       "executor": "@nx/expo:build-list",
       "options": {}
@@ -29,7 +16,6 @@
       }
     },
 
-    "prebuild": {},
     "eas-update": {
       "executor": "@nx/expo:update",
       "options": {
