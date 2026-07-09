@@ -8,10 +8,10 @@ from notes.tests.utils import NoteGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
-class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
+class GenerateNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
     MUTATION = """
-        mutation GenerateNoteAttachmentUploads($data: GenerateNoteAttachmentUploadsInput!) {
-            generateNoteAttachmentUploads(data: $data) {
+        mutation GenerateNoteFileUploads($data: GenerateNoteFileUploadsInput!) {
+            generateNoteFileUploads(data: $data) {
                 ... on AuthorizedPresignedS3UploadsType {
                     uploads {
                         refId
@@ -60,7 +60,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        uploads = response["data"]["generateNoteAttachmentUploads"]["uploads"]
+        uploads = response["data"]["generateNoteFileUploads"]["uploads"]
         self.assertEqual(len(uploads), 1)
         self.assertEqual(uploads[0]["refId"], "ref-1")
         self.assertEqual(uploads[0]["url"], "https://s3.example.com/upload")
@@ -102,7 +102,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        uploads = response["data"]["generateNoteAttachmentUploads"]["uploads"]
+        uploads = response["data"]["generateNoteFileUploads"]["uploads"]
         self.assertEqual(len(uploads), 2)
         self.assertEqual(uploads[0]["refId"], "ref-1")
         self.assertEqual(uploads[0]["presignedKey"], "media/note_attachments/a.pdf")
@@ -137,7 +137,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLOperationInfo(
             response,
-            "generateNoteAttachmentUploads",
+            "generateNoteFileUploads",
             "You do not have permission to perform this action.",
             kind="PERMISSION",
         )
@@ -161,7 +161,7 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLOperationInfo(
             response,
-            "generateNoteAttachmentUploads",
+            "generateNoteFileUploads",
             "You do not have permission to perform this action.",
             kind="PERMISSION",
         )
@@ -189,15 +189,15 @@ class GenerateNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNone(response.get("errors"))
-            self.assertIn("uploads", response["data"]["generateNoteAttachmentUploads"])
+            self.assertIn("uploads", response["data"]["generateNoteFileUploads"])
         else:
-            self.assertIn("messages", response["data"]["generateNoteAttachmentUploads"])
+            self.assertIn("messages", response["data"]["generateNoteFileUploads"])
 
 
-class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
+class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
     MUTATION = """
-        mutation ResolveNoteAttachmentUploads($data: ResolveNoteAttachmentUploadsInput!) {
-            resolveNoteAttachmentUploads(data: $data) {
+        mutation ResolveNoteFileUploads($data: ResolveNoteFileUploadsInput!) {
+            resolveNoteFileUploads(data: $data) {
                 ... on NoteAttachmentUploadsType {
                     attachments {
                         id
@@ -269,7 +269,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        attachments = response["data"]["resolveNoteAttachmentUploads"]["attachments"]
+        attachments = response["data"]["resolveNoteFileUploads"]["attachments"]
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments[0]["mimeType"], "application/pdf")
         self.assertEqual(attachments[0]["originalFilename"], "doc.pdf")
@@ -335,7 +335,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        attachments = response["data"]["resolveNoteAttachmentUploads"]["attachments"]
+        attachments = response["data"]["resolveNoteFileUploads"]["attachments"]
         self.assertEqual(len(attachments), 2)
 
     def test_requires_authentication(self) -> None:
@@ -432,7 +432,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLOperationInfo(
             response,
-            "resolveNoteAttachmentUploads",
+            "resolveNoteFileUploads",
             "You do not have permission to perform this action.",
             kind="PERMISSION",
         )
@@ -462,7 +462,7 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         self.assertGraphQLOperationInfo(
             response,
-            "resolveNoteAttachmentUploads",
+            "resolveNoteFileUploads",
             "You do not have permission to perform this action.",
             kind="PERMISSION",
         )
@@ -525,6 +525,6 @@ class ResolveNoteAttachmentUploadsMutationTest(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNone(response.get("errors"))
-            self.assertIn("attachments", response["data"]["resolveNoteAttachmentUploads"])
+            self.assertIn("attachments", response["data"]["resolveNoteFileUploads"])
         else:
-            self.assertIn("messages", response["data"]["resolveNoteAttachmentUploads"])
+            self.assertIn("messages", response["data"]["resolveNoteFileUploads"])
