@@ -21,7 +21,7 @@ import {
 
 type TProps = {
   defaultValues?: Partial<BasicInfoFormData>;
-  onSubmit?: (
+  onSubmit: (
     data: BasicInfoFormData,
     setError: UseFormSetError<BasicInfoFormData>
   ) => void;
@@ -69,7 +69,7 @@ export function ShelterBasicInfoForm(props: TProps) {
           className="pl-5"
         />
 
-        <form className="flex flex-col gap-10 mt-8">
+        <Form.Content>
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
@@ -219,18 +219,16 @@ export function ShelterBasicInfoForm(props: TProps) {
             />
           </Form.Block>
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit((data) =>
-                onSubmit?.(data, setError)
-              )}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
               className="z-99"
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

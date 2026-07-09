@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ShelterChoices } from '@monorepo/react/shelter';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
@@ -20,7 +21,10 @@ import { defaultFormValues, DetailsFormData, formSchema } from './formSchema';
 
 type TProps = {
   defaultValues?: Partial<DetailsFormData>;
-  onSubmit?: (data: DetailsFormData) => void;
+  onSubmit: (
+    data: DetailsFormData,
+    setError: UseFormSetError<DetailsFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -43,6 +47,7 @@ export function ShelterDetailsForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<DetailsFormData>({
     resolver: zodResolver(formSchema),
@@ -57,17 +62,14 @@ export function ShelterDetailsForm(props: TProps) {
 
   return (
     <div className={mergeCss(['px-6 flex-col flex-1 pb-48', className])}>
-      <Form className="flex-1">
+      <Form>
         <Form.Header
           title="Shelter Details"
           onEditClick={isViewMode ? onEditClick : undefined}
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <Form.Content>
           <Form.Block>
             <Controller
               name="demographics"
@@ -220,15 +222,15 @@ export function ShelterDetailsForm(props: TProps) {
             )}
           />
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

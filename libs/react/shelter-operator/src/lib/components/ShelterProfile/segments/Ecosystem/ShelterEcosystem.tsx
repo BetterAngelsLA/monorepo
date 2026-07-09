@@ -1,12 +1,20 @@
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import {
+  updateShelterProfileMeta,
   useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
 import { ShelterEcosystemForm } from './ShelterEcosystemForm';
-import { type EcosystemFormData, toFormData } from './formSchema';
+import {
+  type EcosystemFormData,
+  formFieldNames,
+  toFormData,
+} from './formSchema';
 
 function toUpdateInput(
   shelterId: string,
@@ -39,37 +47,46 @@ export function ShelterEcosystem(props: TProps) {
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
-  async function onSubmit(data: EcosystemFormData) {
+  async function onSubmit(
+    data: EcosystemFormData,
+    setError: UseFormSetError<EcosystemFormData>
+  ) {
     try {
       const response = await updateShelter({
         variables: { data: toUpdateInput(shelterId, data) },
       });
 
-      const result = response.data?.updateShelter;
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        ...updateShelterProfileMeta,
+        fields: formFieldNames,
+      });
 
-      // success
-      if (result?.__typename === 'ShelterType') {
-        setEditMode(false);
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
 
-        showToast({
-          status: 'success',
-          title: 'Shelter updated.',
-        });
-
-        return;
+        throw new BaError('Please see validation messages.');
       }
 
-      // error
-      // TODO: handle specific OperationInfo field errors via SDB-241
+      setEditMode(false);
 
-      throw new Error('unexpected query error');
+      showToast({
+        status: 'success',
+        title: 'Shelter updated.',
+      });
     } catch (e) {
+      let userMessage = 'An unexpected error occurred.';
+
+      if (e instanceof BaError) {
+        userMessage = e.message;
+      }
+
       console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
         title: 'Update failed',
-        description: 'An unexpected error occurred.',
+        description: userMessage,
       });
     }
   }

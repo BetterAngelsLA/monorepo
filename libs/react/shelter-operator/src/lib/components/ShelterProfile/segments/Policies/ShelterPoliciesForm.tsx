@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
@@ -15,7 +16,10 @@ import { defaultFormValues, formSchema, PoliciesFormData } from './formSchema';
 
 type TProps = {
   defaultValues?: Partial<PoliciesFormData>;
-  onSubmit?: (data: PoliciesFormData) => void;
+  onSubmit: (
+    data: PoliciesFormData,
+    setError: UseFormSetError<PoliciesFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -38,6 +42,7 @@ export function ShelterPoliciesForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<PoliciesFormData>({
     resolver: zodResolver(formSchema),
@@ -59,10 +64,7 @@ export function ShelterPoliciesForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <Form.Content className="mt-8">
           <Form.Block columns={3}>
             <Controller
               name="maxStay"
@@ -220,15 +222,15 @@ export function ShelterPoliciesForm(props: TProps) {
             )}
           />
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

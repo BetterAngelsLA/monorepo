@@ -35,6 +35,8 @@ export const formSchema = z.object({
 
 export type BasicInfoFormData = z.infer<typeof formSchema>;
 
+export const formFieldNames = Object.keys(formSchema.shape);
+
 export const defaultFormValues: BasicInfoFormData = {
   name: '',
   status: StatusChoices.Draft,

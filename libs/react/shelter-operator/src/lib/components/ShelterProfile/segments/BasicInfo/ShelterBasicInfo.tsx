@@ -9,7 +9,11 @@ import {
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
-import { type BasicInfoFormData, formSchema, toFormData } from './formSchema';
+import {
+  type BasicInfoFormData,
+  formFieldNames,
+  toFormData,
+} from './formSchema';
 import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 function toUpdateInput(
@@ -60,7 +64,7 @@ export function ShelterBasicInfo(props: TProps) {
       const fieldErrors = getFieldErrorsOrThrow({
         response,
         ...updateShelterProfileMeta,
-        fields: Object.keys(formSchema.shape),
+        fields: formFieldNames,
       });
 
       if (fieldErrors.length) {
