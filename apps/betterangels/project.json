@@ -16,6 +16,14 @@
         "command": "expo start --port 8081"
       }
     },
+    "build-list": {
+      "executor": "@nx/expo:build-list",
+      "options": {}
+    },
+    "eas-update": {
+      "executor": "@nx/expo:update",
+      "options": { "auto": true }
+    },
     "build": {
       "executor": "nx:run-commands",
       "defaultConfiguration": "preview",
