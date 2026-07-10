@@ -96,7 +96,10 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       const errorMsg = 'Unable to clone bed. Please try again.';
       try {
         const response = await cloneBed({ variables: { id: rowObject.id } });
-        const errorMessage = extractOperationInfoMessage(response, cloneBedOperationKey);
+        const errorMessage = extractOperationInfoMessage(
+          response,
+          cloneBedOperationKey
+        );
         if (errorMessage) {
           console.error(`error cloning bed: ${errorMessage}`);
           showToast({ status: 'error', title: errorMsg, persistent: true });
@@ -163,7 +166,10 @@ export function BedsView({ shelterId }: { shelterId: string }) {
             data: { lastCleaned: new Date().toISOString() },
           },
         });
-        const errorMessage = extractOperationInfoMessage(response, updateBedOperationKey);
+        const errorMessage = extractOperationInfoMessage(
+          response,
+          updateBedOperationKey
+        );
         if (errorMessage) {
           console.error(`error updating bed: ${errorMessage}`);
           showToast({ status: 'error', title: errorMsg, persistent: true });
@@ -220,26 +226,24 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         />
       </div>
 
-      {deleteConfirmation.bedIds.length > 0 && (
-        <ConfirmationModal
-          isOpen={deleteConfirmation.isOpen}
-          onClose={closeDeleteConfirmation}
-          variant="danger"
-          title={deleteConfirmationTitle}
-          description="This action cannot be undone."
-          primaryAction={{
-            label: 'Delete',
-            onClick: () => {
-              handleDelete(deleteConfirmation.bedIds);
-              closeDeleteConfirmation();
-            },
-          }}
-          secondaryAction={{
-            label: 'Cancel',
-            onClick: closeDeleteConfirmation,
-          }}
-        />
-      )}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        variant="danger"
+        title={deleteConfirmationTitle}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: () => {
+            handleDelete(deleteConfirmation.bedIds);
+            closeDeleteConfirmation();
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: closeDeleteConfirmation,
+        }}
+      />
 
       {readyRowObject && (
         <ConfirmationModal
