@@ -107,6 +107,11 @@ export function BedForm({
           return;
         }
       }
+
+      if (!isEditMode) {
+        reset();
+      }
+      onSuccess?.();
     } catch (err) {
       const error = toError(err);
       console.error(
@@ -117,11 +122,6 @@ export function BedForm({
       );
       return;
     }
-
-    if (!isEditMode) {
-      reset();
-    }
-    onSuccess?.();
   }
 
   function handleCancel() {

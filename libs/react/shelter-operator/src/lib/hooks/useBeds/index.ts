@@ -1,1 +1,5 @@
-export { useBeds, type UseBedsResultType } from './useBeds';
+export {
+  useBeds,
+  type UseBedsResultItemType,
+  type UseBedsResultType,
+} from './useBeds';

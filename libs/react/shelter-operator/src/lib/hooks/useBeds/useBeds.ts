@@ -5,7 +5,11 @@ import {
   type BedsQueryVariables,
 } from './__generated__/useBeds.generated';
 
-export type UseBedsResultType = NonNullable<BedsQuery['beds']['results']>;
+export type UseBedsResultItemType = NonNullable<
+  BedsQuery['beds']['results']
+>[number];
+
+export type UseBedsResultType = UseBedsResultItemType[];
 
 export function useBeds(shelterId: string) {
   const { data, loading, error, refetch } = useQuery<

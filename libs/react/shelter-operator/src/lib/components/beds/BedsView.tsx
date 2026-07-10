@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OperatorShelterType } from '../../apollo/graphql/__generated__/types';
-import { useBeds, type UseBedsResultType } from '../../hooks/useBeds';
+import { useBeds, type UseBedsResultItemType } from '../../hooks/useBeds';
 import { useCloneBed } from '../../hooks/useCloneBed';
 import { useDeleteBeds } from '../../hooks/useDeleteBeds';
 import { deleteBedsOperationKey } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
@@ -15,13 +15,14 @@ import {
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
+import { useToast } from '../base-ui/toast';
 import { BedTable, type Bed, type BedRowObject } from '../BedTable';
 
 const UNASSIGNED_ROOM_ID = 'unassigned-room';
 const UNASSIGNED_ROOM_LABEL = 'Unassigned';
 
 function toBedRow(
-  bedData: UseBedsResultType[number],
+  bedData: UseBedsResultItemType,
   roomId: string,
   roomAssignment: string
 ): Bed {
@@ -67,13 +68,12 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   }, [bedsData]);
 
   const { cloneBed } = useCloneBed();
-  const [cloneError, setCloneError] = useState<string | null>(null);
 
   const { deleteBeds } = useDeleteBeds();
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { updateBed } = useUpdateBed();
-  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const { showToast } = useToast();
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
@@ -92,13 +92,12 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const handleClone = useCallback(
     async (rowObject: BedRowObject) => {
       const errorMsg = 'Unable to clone bed. Please try again.';
-      setCloneError(null);
       try {
         const response = await cloneBed({ variables: { id: rowObject.id } });
         const errorMessage = extractOperationInfoMessage(response, 'cloneBed');
         if (errorMessage) {
           console.error(`error cloning bed: ${errorMessage}`);
-          setCloneError(errorMsg);
+          showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
         await refetch();
@@ -106,10 +105,10 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         const error = toError(err);
 
         console.error(`error cloning bed: ${error.message}`);
-        setCloneError(errorMsg);
+        showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [cloneBed, refetch]
+    [cloneBed, refetch, showToast]
   );
 
   const handleEdit = useCallback(
@@ -128,7 +127,6 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       const plural = ids.length > 1 ? 's' : '';
       const errorMsg = `Unable to delete bed${plural}. Please try again.`;
 
-      setDeleteError(null);
       try {
         const response = await deleteBeds({
           variables: { data: { ids: ids } },
@@ -139,7 +137,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         );
         if (errorMessage) {
           console.error(`error deleting bed${plural}: ${errorMessage}`);
-          setDeleteError(errorMsg);
+          showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
         await refetch();
@@ -147,16 +145,15 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         const error = toError(err);
 
         console.error(`error deleting bed${plural}: ${error.message}`);
-        setDeleteError(errorMsg);
+        showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [deleteBeds, refetch]
+    [deleteBeds, refetch, showToast]
   );
 
   const handleMarkReady = useCallback(
     async (rowObject: BedRowObject) => {
       const errorMsg = 'Unable to update bed. Please try again.';
-      setUpdateError(null);
       try {
         const response = await updateBed({
           variables: {
@@ -167,7 +164,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         const errorMessage = extractOperationInfoMessage(response, 'updateBed');
         if (errorMessage) {
           console.error(`error updating bed: ${errorMessage}`);
-          setUpdateError(errorMsg);
+          showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
         await refetch();
@@ -175,10 +172,10 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         const error = toError(err);
 
         console.error(`error updating bed: ${error.message}`);
-        setUpdateError(errorMsg);
+        showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [updateBed, refetch]
+    [updateBed, refetch, showToast]
   );
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
@@ -205,31 +202,10 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     },
     [navigate, shelterId]
   );
+  const readyRowObject = readyConfirmation.rowObject;
 
   return (
     <>
-      {(cloneError || deleteError || updateError) && (
-        <div
-          className="mx-4 mt-4 flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-        >
-          <span className="flex-1">
-            {cloneError || deleteError || updateError}
-          </span>
-          <button
-            onClick={() => {
-              setCloneError(null);
-              setDeleteError(null);
-              setUpdateError(null);
-            }}
-            className="ml-3 text-red-400 hover:text-red-600"
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
       <div>
         <BedTable
           beds={beds}
@@ -242,47 +218,47 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         />
       </div>
 
-      <ConfirmationModal
-        isOpen={deleteConfirmation.isOpen}
-        onClose={closeDeleteConfirmation}
-        variant="danger"
-        title={deleteConfirmationTitle}
-        description="This action cannot be undone."
-        primaryAction={{
-          label: 'Delete',
-          onClick: () => {
-            if (deleteConfirmation.bedIds.length > 0) {
+      {deleteConfirmation.bedIds.length > 0 && (
+        <ConfirmationModal
+          isOpen={deleteConfirmation.isOpen}
+          onClose={closeDeleteConfirmation}
+          variant="danger"
+          title={deleteConfirmationTitle}
+          description="This action cannot be undone."
+          primaryAction={{
+            label: 'Delete',
+            onClick: () => {
               handleDelete(deleteConfirmation.bedIds);
-            }
-            closeDeleteConfirmation();
-          },
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeDeleteConfirmation,
-        }}
-      />
+              closeDeleteConfirmation();
+            },
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeDeleteConfirmation,
+          }}
+        />
+      )}
 
-      <ConfirmationModal
-        isOpen={readyConfirmation.isOpen}
-        onClose={closeReadyConfirmation}
-        variant="success"
-        title="Mark bed as ready?"
-        description="This will mark the bed as cleaned and ready for use."
-        primaryAction={{
-          label: 'Mark Ready',
-          onClick: () => {
-            if (readyConfirmation.rowObject) {
-              handleMarkReady(readyConfirmation.rowObject);
-            }
-            closeReadyConfirmation();
-          },
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeReadyConfirmation,
-        }}
-      />
+      {readyRowObject && (
+        <ConfirmationModal
+          isOpen={readyConfirmation.isOpen}
+          onClose={closeReadyConfirmation}
+          variant="success"
+          title="Mark bed as ready?"
+          description="This will mark the bed as cleaned and ready for use."
+          primaryAction={{
+            label: 'Mark Ready',
+            onClick: () => {
+              handleMarkReady(readyRowObject);
+              closeReadyConfirmation();
+            },
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeReadyConfirmation,
+          }}
+        />
+      )}
 
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button

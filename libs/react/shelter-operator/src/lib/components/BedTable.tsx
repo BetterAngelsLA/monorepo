@@ -105,9 +105,9 @@ export function BedTable({
         width: '1.1fr',
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (bed) => bed.name ?? bed.id,
-        sortValue: (bed) => bed.name ?? bed.id,
-        filterValue: (bed) => bed.name ?? bed.id,
+        render: (bed) => bed.name ?? `Bed #${bed.id}`,
+        sortValue: (bed) => bed.name ?? `\uFFFF${bed.id}`,
+        filterValue: (bed) => bed.name ?? `Bed #${bed.id}`,
       },
       {
         key: 'status',
