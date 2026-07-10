@@ -1,10 +1,10 @@
 import { useQuery } from '@apollo/client/react';
-import { BookCheck, Settings } from 'lucide-react';
+import { BookCheck, Settings, Share } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
+import { Text } from '../../components/base-ui/text/text';
 import { BedsView } from '../../components/beds/BedsView';
 import { OverviewView } from '../../components/overview/OverviewView';
-import { Text } from '../../components/base-ui/text/text';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterManageRoute } from '../../routing';
@@ -59,6 +59,14 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            leftIcon={<Share size={20} color="black" />}
+            rightIcon={false}
+            className="text-black"
+          >
+            Export Data
+          </Button>
           <Button
             variant="primary"
             leftIcon={<Settings size={20} color="black" />}
