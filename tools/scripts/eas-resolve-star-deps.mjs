@@ -55,11 +55,16 @@ try {
     const extendsPath = resolve(cwd, appTsconfig.extends);
     const baseConfig = JSON.parse(stripComments(readFileSync(extendsPath, 'utf-8')));
 
-    // Merge paths from base into app tsconfig
+    // Merge paths from base into app tsconfig, adjusting to be relative to app dir
     if (baseConfig.compilerOptions?.paths) {
       appTsconfig.compilerOptions = appTsconfig.compilerOptions || {};
+      const adjustedPaths = {};
+      for (const [alias, paths] of Object.entries(baseConfig.compilerOptions.paths)) {
+        // Adjust paths from workspace-root-relative to app-directory-relative
+        adjustedPaths[alias] = paths.map(p => p.startsWith('./') ? '../../' + p.slice(2) : p);
+      }
       appTsconfig.compilerOptions.paths = {
-        ...baseConfig.compilerOptions.paths,
+        ...adjustedPaths,
         ...appTsconfig.compilerOptions.paths,
       };
     }
