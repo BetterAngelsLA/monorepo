@@ -1,18 +1,11 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const { withNxMetro } = require('@nx/expo/plugins/with-nx-metro');
-const path = require('path');
 
-const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-
-let config = getDefaultConfig(projectRoot);
+// Expo SDK 52+ auto-configures monorepos — no need for manual watchFolders or withNxMetro
+// See: https://docs.expo.dev/guides/monorepos/#automatic-configuration-migrating-to-sdk-52
+const config = getDefaultConfig(__dirname);
 
 // Remove console.logs in production
 config.transformer.minifierConfig.compress.drop_console = true;
-
-config = withNxMetro(config, {
-  watchFolders: [workspaceRoot],
-});
 
 const { transformer, resolver } = config;
 
