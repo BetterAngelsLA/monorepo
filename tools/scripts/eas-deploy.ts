@@ -152,6 +152,7 @@ function checkOrTriggerBuild(
       );
     }
     // Copy lockfile and .yarnrc.yml from workspace root before EAS upload (same as old @nx/expo:build executor)
+    const projectDir = resolveProjectDir(project);
     run(`cp ${projectDir}/../../yarn.lock ${projectDir}/yarn.lock && cp ${projectDir}/../../.yarnrc.yml ${projectDir}/.yarnrc.yml`, { silent: true });
     
     buildData = runJson<BuildInfo[]>(
