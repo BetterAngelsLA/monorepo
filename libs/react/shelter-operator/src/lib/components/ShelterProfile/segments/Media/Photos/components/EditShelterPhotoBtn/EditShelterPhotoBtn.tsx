@@ -1,12 +1,18 @@
-import { mergeCss } from '@monorepo/react/shared';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, mergeCss } from '@monorepo/react/shared';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
 import { useUpdateShelterPhoto } from '../../../../../../../hooks/useUpdateShelterPhoto';
+import { updateShelterPhotoMeta } from '../../../../../../../hooks/useUpdateShelterPhoto/__generated__/useUpdateShelterPhoto_meta.generated';
 import { Modal, ModalBody, ModalHeader } from '../../../../../../base-ui/modal';
 import { useToast } from '../../../../../../base-ui/toast';
-import { ShelterPhotoForm } from '../../ShelterPhotoForm/ShelterPhotoForm';
-import type { ShelterPhotoFormData } from '../../ShelterPhotoForm/formSchema';
+import {
+  formFieldNames,
+  ShelterPhotoForm,
+  type ShelterPhotoFormData,
+} from '../../ShelterPhotoForm';
 
 type TProps = {
   photoId: string;
@@ -23,7 +29,10 @@ export function EditShelterPhotoBtn(props: TProps) {
   const { showToast } = useToast();
   const { updateShelterPhoto, loading } = useUpdateShelterPhoto({ shelterId });
 
-  async function onSubmit(data: ShelterPhotoFormData) {
+  async function onSubmit(
+    data: ShelterPhotoFormData,
+    setError: UseFormSetError<ShelterPhotoFormData>
+  ) {
     try {
       const response = await updateShelterPhoto({
         variables: {
@@ -31,21 +40,31 @@ export function EditShelterPhotoBtn(props: TProps) {
         },
       });
 
-      const result = response.data?.updateShelterPhoto;
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        ...updateShelterPhotoMeta,
+        fields: formFieldNames,
+      });
 
-      if (result?.__typename === 'ShelterPhotoType') {
-        setIsOpen(false);
-        showToast({ status: 'success', title: 'Photo updated.' });
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
+
+        throw new BaError('Please see validation messages.');
+      }
+
+      setIsOpen(false);
+      showToast({ status: 'success', title: 'Photo updated.' });
+    } catch (e) {
+      if (e instanceof BaError) {
         return;
       }
 
-      throw new Error('unexpected mutation response');
-    } catch {
+      console.error(`[updateShelterPhoto error]: ${e}.`);
+
       showToast({
         status: 'error',
         title: 'Update failed',
         description: 'An unexpected error occurred.',
-        persistent: true,
       });
     }
   }
