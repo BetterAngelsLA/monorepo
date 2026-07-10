@@ -1,8 +1,11 @@
 /**
- * EAS pre-install hook: resolves tsconfig extends for Metro compatibility.
+ * EAS pre-install hook: resolves "*" deps by replacing app dependencies
+ * with concrete versions from the workspace root, then resolves tsconfig
+ * extends for Metro compatibility.
  *
- * Workspace deps ("*") are resolved natively by Yarn workspaces.
- * The lockfile is managed by Yarn at the workspace root.
+ * Yarn resolves "*" independently from the root's version constraints,
+ * which causes duplicate native modules (fatal for Expo builds).
+ * This matches the old @nx/expo:build executor behavior.
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
@@ -10,7 +13,20 @@ import { resolve } from 'path';
 const stripComments = (json) => json.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? '' : m);
 
 const cwd = process.cwd();
+const rootPkgPath = resolve(cwd, '../../package.json');
+const appPkgPath = resolve(cwd, 'package.json');
 
+// Replace app deps/devDeps with root versions (no "*" entries remain)
+const root = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
+const app = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
+
+app.dependencies = root.dependencies || {};
+app.devDependencies = root.devDependencies || {};
+
+writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
+console.log('Resolved * dependencies from workspace root');
+
+// Resolve tsconfig extends to inline the base config
 try {
   const appTsconfigPath = resolve(cwd, 'tsconfig.json');
   const appTsconfig = JSON.parse(stripComments(readFileSync(appTsconfigPath, 'utf-8')));
