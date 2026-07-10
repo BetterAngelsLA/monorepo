@@ -1,20 +1,15 @@
 /**
- * EAS pre-install hook: copies the root lockfile to the app directory
- * and resolves tsconfig extends for Metro compatibility.
+ * EAS pre-install hook: resolves tsconfig extends for Metro compatibility.
  *
  * Workspace deps ("*") are resolved natively by Yarn workspaces.
+ * The lockfile is managed by Yarn at the workspace root.
  */
-import { copyFileSync, readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 const stripComments = (json) => json.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? '' : m);
 
 const cwd = process.cwd();
-const rootLockPath = resolve(cwd, '../../yarn.lock');
-const appLockPath = resolve(cwd, 'yarn.lock');
-
-copyFileSync(rootLockPath, appLockPath);
-console.log('Copied yarn.lock from workspace root');
 
 try {
   const appTsconfigPath = resolve(cwd, 'tsconfig.json');

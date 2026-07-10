@@ -151,9 +151,7 @@ function checkOrTriggerBuild(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
     }
-    // Copy lockfile from workspace root before EAS upload (same as old @nx/expo:build executor)
     const projectDir = resolveProjectDir(project);
-    run(`cp ${projectDir}/../../yarn.lock ${projectDir}/yarn.lock`, { silent: true });
     
     buildData = runJson<BuildInfo[]>(
       `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
