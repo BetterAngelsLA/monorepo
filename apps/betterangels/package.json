@@ -3,6 +3,7 @@
   "main": "index.ts",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "yarn@4.2.2",
   "dependencies": {
     "@apollo/client": "*",
     "@expo/vector-icons": "*",
