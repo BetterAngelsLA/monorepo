@@ -141,18 +141,19 @@ function checkOrTriggerBuild(
       buildData = [];
     }
 
+    // Always trigger a new build in CI — don't reuse existing builds
     if (buildData.length > 0) {
       console.log(
-        `Found existing ${platform} build for runtime ${runtimeVersion}.`
+        `Found existing ${platform} build for runtime ${runtimeVersion}, but triggering new build for CI.`
       );
     } else {
       console.log(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
-      buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
-      );
     }
+    buildData = runJson<BuildInfo[]>(
+      `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
+    );
 
     const info = buildData[0];
     slug = info.project.slug;
