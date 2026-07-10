@@ -73,7 +73,9 @@ export function BedForm({
 
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
 
-  const { createBed: createBedMutation, loading: isCreating } = useCreateBed();
+  const { createBed: createBedMutation, loading: isCreating } = useCreateBed({
+    shelterId,
+  });
 
   const { updateBed: updateBedMutation, loading: isUpdating } = useUpdateBed();
 
@@ -130,8 +132,6 @@ export function BedForm({
         `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`
       );
 
-      // Field validation errors already applied via applyFieldErrors —
-      // no banner needed. Show banner for permission and unexpected errors.
       if (!(error instanceof BaError)) {
         setSubmissionError(
           error.message ||

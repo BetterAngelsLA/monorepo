@@ -1,5 +1,5 @@
 import { useMutation } from '@apollo/client/react';
-import { BedDocument } from '../useBed/__generated__/useBed.generated';
+import { BedsDocument } from '../useBeds/__generated__/useBeds.generated';
 import {
   CloneBedDocument,
   CloneBedMutation,
@@ -8,11 +8,12 @@ import {
 import { cloneBedSuccessTypename } from './__generated__/useCloneBed_meta.generated';
 
 type TProps = {
+  shelterId: string;
   refetch?: boolean;
 };
 
-export function useCloneBed(props?: TProps) {
-  const { refetch = true } = props || {};
+export function useCloneBed(props: TProps) {
+  const { shelterId, refetch = true } = props;
 
   const [cloneBed, { loading, error }] = useMutation<
     CloneBedMutation,
@@ -26,8 +27,8 @@ export function useCloneBed(props?: TProps) {
           if (payload?.__typename === cloneBedSuccessTypename) {
             return [
               {
-                query: BedDocument,
-                variables: { id: payload.id },
+                query: BedsDocument,
+                variables: { shelterId },
               },
             ];
           }

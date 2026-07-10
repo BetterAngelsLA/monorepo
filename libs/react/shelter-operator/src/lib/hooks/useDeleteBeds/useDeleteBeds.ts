@@ -10,10 +10,11 @@ import { deleteBedsSuccessTypename } from './__generated__/useDeleteBeds_meta.ge
 
 type TProps = {
   refetch?: boolean;
+  shelterId: string;
 };
 
-export function useDeleteBeds(props?: TProps) {
-  const { refetch = true } = props || {};
+export function useDeleteBeds(props: TProps) {
+  const { refetch = true, shelterId } = props || {};
 
   const [deleteBeds, { loading, error }] = useMutation<
     DeleteBedsMutation,
@@ -25,7 +26,7 @@ export function useDeleteBeds(props?: TProps) {
           const payload = result.data?.deleteBeds;
 
           if (payload?.__typename === deleteBedsSuccessTypename) {
-            return [{ query: BedsDocument }];
+            return [{ query: BedsDocument, variables: { shelterId } }];
           }
 
           return [];

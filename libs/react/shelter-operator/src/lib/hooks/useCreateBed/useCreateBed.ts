@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { CreateBedInput } from '../../apollo';
-import { BedDocument } from '../useBed/__generated__/useBed.generated';
+import { BedsDocument } from '../useBeds/__generated__/useBeds.generated';
 import {
   CreateBedDocument,
   CreateBedMutation,
@@ -9,13 +9,14 @@ import {
 import { createBedSuccessTypename } from './__generated__/useCreateBed_meta.generated';
 
 type TProps = {
+  shelterId: string;
   refetch?: boolean;
 };
 
 export type UseCreateBedInput = CreateBedInput;
 
-export function useCreateBed(props?: TProps) {
-  const { refetch = true } = props || {};
+export function useCreateBed(props: TProps) {
+  const { shelterId, refetch = true } = props || {};
 
   const [createBed, { loading, error }] = useMutation<
     CreateBedMutation,
@@ -29,8 +30,8 @@ export function useCreateBed(props?: TProps) {
           if (payload?.__typename === createBedSuccessTypename) {
             return [
               {
-                query: BedDocument,
-                variables: { id: payload.id },
+                query: BedsDocument,
+                variables: { shelterId },
               },
             ];
           }

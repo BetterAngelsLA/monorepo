@@ -5,11 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import { OperatorShelterType } from '../../apollo/graphql/__generated__/types';
 import { useBeds, type UseBedsResultItemType } from '../../hooks/useBeds';
 import { useCloneBed } from '../../hooks/useCloneBed';
-import { cloneBedOperationKey } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
+import {
+  cloneBedOperationKey,
+  cloneBedSuccessTypename,
+} from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
 import { useDeleteBeds } from '../../hooks/useDeleteBeds';
-import { deleteBedsOperationKey } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
+import {
+  deleteBedsOperationKey,
+  deleteBedsSuccessTypename,
+} from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { useUpdateBed } from '../../hooks/useUpdateBed';
-import { updateBedOperationKey } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import {
+  updateBedOperationKey,
+  updateBedSuccessTypename,
+} from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
@@ -51,7 +60,7 @@ function toBedRow(
 export function BedsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
-  const { beds: bedsData, loading, refetch } = useBeds(shelterId);
+  const { beds: bedsData, loading } = useBeds(shelterId);
 
   const beds = useMemo<Bed[]>(() => {
     const grouped = new Map<string, Bed[]>();
@@ -69,9 +78,9 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     return Array.from(grouped.values()).flat();
   }, [bedsData]);
 
-  const { cloneBed } = useCloneBed();
+  const { cloneBed } = useCloneBed({ shelterId });
 
-  const { deleteBeds } = useDeleteBeds();
+  const { deleteBeds } = useDeleteBeds({ shelterId });
 
   const { updateBed } = useUpdateBed();
 
@@ -105,7 +114,11 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
-        await refetch();
+        if (response.data?.cloneBed?.__typename !== cloneBedSuccessTypename) {
+          console.error('error cloning bed: unexpected response');
+          showToast({ status: 'error', title: errorMsg, persistent: true });
+          return;
+        }
       } catch (err) {
         const error = toError(err);
 
@@ -113,7 +126,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [cloneBed, refetch, showToast]
+    [cloneBed, showToast]
   );
 
   const handleEdit = useCallback(
@@ -145,7 +158,13 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
-        await refetch();
+        if (
+          response.data?.deleteBeds?.__typename !== deleteBedsSuccessTypename
+        ) {
+          console.error(`error deleting bed${plural}: unexpected response`);
+          showToast({ status: 'error', title: errorMsg, persistent: true });
+          return;
+        }
       } catch (err) {
         const error = toError(err);
 
@@ -153,7 +172,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [deleteBeds, refetch, showToast]
+    [deleteBeds, showToast]
   );
 
   const handleMarkReady = useCallback(
@@ -175,7 +194,11 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           showToast({ status: 'error', title: errorMsg, persistent: true });
           return;
         }
-        await refetch();
+        if (response.data?.updateBed?.__typename !== updateBedSuccessTypename) {
+          console.error('error updating bed: unexpected response');
+          showToast({ status: 'error', title: errorMsg, persistent: true });
+          return;
+        }
       } catch (err) {
         const error = toError(err);
 
@@ -183,7 +206,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         showToast({ status: 'error', title: errorMsg, persistent: true });
       }
     },
-    [updateBed, refetch, showToast]
+    [updateBed, showToast]
   );
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
