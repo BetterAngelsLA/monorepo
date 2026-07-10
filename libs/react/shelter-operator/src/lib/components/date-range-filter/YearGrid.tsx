@@ -50,7 +50,7 @@ export function YearGrid({
             className={mergeCss([
               'h-10 rounded-full text-sm transition-colors',
               isSelected
-                ? 'bg-[#008CEE] text-white hover:bg-[#0374c4]'
+                ? 'bg-[#008CEE] text-white hover:bg-[#0071C0]'
                 : 'text-[#383B40] hover:bg-[#F2FAFF]',
               // outline the current year, unless it is also the filled selection
               isCurrent && !isSelected && 'ring-1 ring-inset ring-[#008CEE]',
