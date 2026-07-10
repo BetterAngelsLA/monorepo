@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 env:
   AWS_REGION: us-west-2
@@ -23,7 +24,9 @@ jobs:
           ${{ fromJson(
             github.event_name == 'push' && github.ref == 'refs/heads/main'
             && '["preview", "production"]'
-            || '["preview"]'
+            || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'test-production')
+              && '["preview", "production"]'
+              || '["preview"]')
           ) }}
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
