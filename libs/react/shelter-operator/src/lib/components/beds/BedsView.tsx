@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { OperatorShelterType } from '../../apollo/graphql/__generated__/types';
 import { useBeds, type UseBedsResultItemType } from '../../hooks/useBeds';
 import { useCloneBed } from '../../hooks/useCloneBed';
+import { cloneBedOperationKey } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
 import { useDeleteBeds } from '../../hooks/useDeleteBeds';
 import { deleteBedsOperationKey } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { useUpdateBed } from '../../hooks/useUpdateBed';
+import { updateBedOperationKey } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
@@ -94,7 +96,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       const errorMsg = 'Unable to clone bed. Please try again.';
       try {
         const response = await cloneBed({ variables: { id: rowObject.id } });
-        const errorMessage = extractOperationInfoMessage(response, 'cloneBed');
+        const errorMessage = extractOperationInfoMessage(response, cloneBedOperationKey);
         if (errorMessage) {
           console.error(`error cloning bed: ${errorMessage}`);
           showToast({ status: 'error', title: errorMsg, persistent: true });
@@ -161,7 +163,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
             data: { lastCleaned: new Date().toISOString() },
           },
         });
-        const errorMessage = extractOperationInfoMessage(response, 'updateBed');
+        const errorMessage = extractOperationInfoMessage(response, updateBedOperationKey);
         if (errorMessage) {
           console.error(`error updating bed: ${errorMessage}`);
           showToast({ status: 'error', title: errorMsg, persistent: true });

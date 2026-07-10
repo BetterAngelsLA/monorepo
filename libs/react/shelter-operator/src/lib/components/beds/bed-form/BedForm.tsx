@@ -8,6 +8,8 @@ import {
   useFilteredPropertyOptions,
   useUpdateBed,
 } from '../../../hooks';
+import { createBedOperationKey } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
+import { updateBedOperationKey } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
@@ -87,7 +89,7 @@ export function BedForm({
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, 'updateBed');
+        const errorMessage = extractOperationInfoMessage(result, updateBedOperationKey);
         if (errorMessage) {
           console.error(errorMessage);
           setSubmissionError('Unable to update bed. Please try again.');
@@ -100,7 +102,7 @@ export function BedForm({
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, 'createBed');
+        const errorMessage = extractOperationInfoMessage(result, createBedOperationKey);
         if (errorMessage) {
           console.error(errorMessage);
           setSubmissionError('Unable to create bed. Please try again.');
