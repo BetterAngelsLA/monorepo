@@ -106,7 +106,7 @@ export function BedTable({
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
         render: (bed) => bed.name ?? `Bed #${bed.id}`,
-        sortValue: (bed) => bed.name ?? `\uFFFF${bed.id}`,
+        sortValue: (bed) => bed.name ?? `Bed #${bed.id}`,
         filterValue: (bed) => bed.name ?? `Bed #${bed.id}`,
       },
       {
@@ -133,7 +133,7 @@ export function BedTable({
         sortValue: (bed) => bed.roomAssignment || '',
       },
     ],
-    [],
+    []
   );
 
   return (

@@ -1,6 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -8,8 +9,8 @@ import {
   useFilteredPropertyOptions,
   useUpdateBed,
 } from '../../../hooks';
-import { createBedOperationKey } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
-import { updateBedOperationKey } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
+import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
@@ -49,6 +50,7 @@ export function BedForm({
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isValid },
   } = methods;
 
@@ -82,31 +84,39 @@ export function BedForm({
 
     try {
       if (isEditMode && bedId) {
-        const { data: result } = await updateBedMutation({
+        const response = await updateBedMutation({
           variables: {
             id: bedId,
             data: buildUpdateBedInput(data),
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, updateBedOperationKey);
-        if (errorMessage) {
-          console.error(errorMessage);
-          setSubmissionError('Unable to update bed. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateBedMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       } else {
-        const { data: result } = await createBedMutation({
+        const response = await createBedMutation({
           variables: {
             data: buildCreateBedInput(data, shelterId),
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, createBedOperationKey);
-        if (errorMessage) {
-          console.error(errorMessage);
-          setSubmissionError('Unable to create bed. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...createBedMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       }
 
@@ -119,10 +129,15 @@ export function BedForm({
       console.error(
         `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`
       );
-      setSubmissionError(
-        `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
-      );
-      return;
+
+      // Field validation errors already applied via applyFieldErrors —
+      // no banner needed. Show banner for permission and unexpected errors.
+      if (!(error instanceof BaError)) {
+        setSubmissionError(
+          error.message ||
+            `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
+        );
+      }
     }
   }
 
