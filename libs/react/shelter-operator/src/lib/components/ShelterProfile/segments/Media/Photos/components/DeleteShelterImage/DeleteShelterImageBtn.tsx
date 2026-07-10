@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { Pencil } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 type TProps = {
   onClick: () => void;
@@ -7,7 +7,7 @@ type TProps = {
   className?: string;
 };
 
-export function EditShelterPhotoBtn(props: TProps) {
+export function DeleteShelterImageBtn(props: TProps) {
   const { onClick, disabled, className } = props;
 
   return (
@@ -16,16 +16,16 @@ export function EditShelterPhotoBtn(props: TProps) {
       type="button"
       onClick={onClick}
       className={mergeCss([
-        'text-gray-500',
+        'text-red-500',
         'opacity-70 hover:opacity-100',
         'p-2 rounded-full hover:bg-white',
         'hover:shadow-xl',
         'cursor-pointer',
         className,
       ])}
-      aria-label="Edit photo type"
+      aria-label="Delete photo"
     >
-      <Pencil size={16} />
+      <Trash2 size={16} />
     </button>
   );
 }
