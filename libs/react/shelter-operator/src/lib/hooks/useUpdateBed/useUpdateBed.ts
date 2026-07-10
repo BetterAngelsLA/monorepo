@@ -6,6 +6,7 @@ import {
   UpdateBedMutation,
   UpdateBedMutationVariables,
 } from './__generated__/useUpdateBed.generated';
+import { updateBedSuccessTypename } from './__generated__/useUpdateBed_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -25,7 +26,7 @@ export function useUpdateBed(props?: TProps) {
       ? (result) => {
           const payload = result.data?.updateBed;
 
-          if (payload?.__typename === 'BedType') {
+          if (payload?.__typename === updateBedSuccessTypename) {
             return [
               {
                 query: BedDocument,

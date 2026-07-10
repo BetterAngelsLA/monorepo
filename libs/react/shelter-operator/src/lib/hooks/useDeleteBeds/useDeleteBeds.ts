@@ -6,6 +6,7 @@ import {
   DeleteBedsMutation,
   DeleteBedsMutationVariables,
 } from './__generated__/useDeleteBeds.generated';
+import { deleteBedsSuccessTypename } from './__generated__/useDeleteBeds_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -23,7 +24,7 @@ export function useDeleteBeds(props?: TProps) {
       ? (result) => {
           const payload = result.data?.deleteBeds;
 
-          if (payload?.__typename === 'BulkDeleteResult') {
+          if (payload?.__typename === deleteBedsSuccessTypename) {
             return [{ query: BedsDocument }];
           }
 

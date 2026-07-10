@@ -5,6 +5,7 @@ import {
   CloneBedMutation,
   CloneBedMutationVariables,
 } from './__generated__/useCloneBed.generated';
+import { cloneBedSuccessTypename } from './__generated__/useCloneBed_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -22,7 +23,7 @@ export function useCloneBed(props?: TProps) {
       ? (result) => {
           const payload = result.data?.cloneBed;
 
-          if (payload?.__typename === 'BedType') {
+          if (payload?.__typename === cloneBedSuccessTypename) {
             return [
               {
                 query: BedDocument,
