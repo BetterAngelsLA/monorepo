@@ -14,8 +14,7 @@
       "ios": {
         "simulator": true
       },
-      "node": "22.21.1",
-      "yarn": "4.2.2"
+      "node": "22.21.1"
     },
     "preview": {
       "distribution": "internal",
@@ -27,8 +26,7 @@
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
-      "node": "22.21.1",
-      "yarn": "4.2.2"
+      "node": "22.21.1"
     },
     "production": {
       "android": {
@@ -43,8 +41,7 @@
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN"
       },
       "channel": "production",
-      "node": "22.21.1",
-      "yarn": "4.2.2"
+      "node": "22.21.1"
     }
   },
   "submit": {
