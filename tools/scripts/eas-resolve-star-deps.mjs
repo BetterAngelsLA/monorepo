@@ -25,6 +25,8 @@ const merge = (source, dest) => {
 };
 
 merge(root.dependencies, app.dependencies);
+merge(root.devDependencies, app.dependencies);
+merge(root.dependencies, app.devDependencies);
 merge(root.devDependencies, app.devDependencies);
 
 writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
