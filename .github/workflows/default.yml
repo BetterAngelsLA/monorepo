@@ -22,7 +22,7 @@ jobs:
       matrix:
         environment: [production]
     runs-on: ubuntu-latest
-    environment: ${{ matrix.environment }}
+    # environment: ${{ matrix.environment }}
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
