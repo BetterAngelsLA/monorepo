@@ -1,35 +1,37 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { format } from 'date-fns';
-import { CalendarClock } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import {
+  addMonths,
+  format,
+  isSameMonth,
+  isValid,
+  parse,
+  startOfMonth,
+} from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../base-ui/buttons';
 import { MenuPanel } from '../base-ui/dropdown/MenuPanel';
 import { usePortalPosition } from '../base-ui/dropdown/usePortalPosition';
-import { Text } from '../base-ui/text/text';
 import { Calendar, type RdpDateRange } from './Calendar';
 import type { DateRange } from './types';
 import { YearGrid } from './YearGrid';
 
 export interface DateRangeCalendarProps {
-  /** The committed range shown in the field and used as the draft's seed. */
   value?: DateRange;
-  /** Fired only on Save, with the committed range. */
   onCommit: (range: DateRange) => void;
-  /**
-   * Fired when the user first edits the draft (clicks a day in the grid),
-   * before Save. Lets the toolbar preview "Custom" while editing. The edit is
-   * still discarded if the popover closes without Save.
-   */
   onDirty?: () => void;
-  /** Controlled open state (optional); falls back to internal state. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
-const EMPTY_LABEL = 'MM/DD/YYYY – MM/DD/YYYY';
-const fmt = (date: Date) => format(date, 'MM/dd/yyyy');
+type Side = 'left' | 'right';
+
+const DATE_FORMAT = 'MM/dd/yyyy';
+const FIELD_PATTERN = /^\d{2}\/\d{2}\/\d{4}$/;
+const MIN_YEAR = 1900;
+const fmt = (date: Date) => format(date, DATE_FORMAT);
 
 function toRdp(range?: DateRange): RdpDateRange | undefined {
   if (!range?.from) return undefined;
@@ -40,16 +42,62 @@ function toDomain(range?: RdpDateRange): DateRange {
   return { from: range?.from ?? null, to: range?.to ?? null };
 }
 
-function formatRange(range?: RdpDateRange): string {
-  if (!range?.from) return EMPTY_LABEL;
-  return range.to ? `${fmt(range.from)} – ${fmt(range.to)}` : fmt(range.from);
+function parseField(text: string): Date | null {
+  const trimmed = text.trim();
+  if (!FIELD_PATTERN.test(trimmed)) return null;
+  const parsed = parse(trimmed, DATE_FORMAT, new Date());
+  if (!isValid(parsed) || parsed.getFullYear() < MIN_YEAR) return null;
+  return parsed;
 }
 
-/**
- * Custom-range popover: an input field that opens a two-month calendar. The
- * month/year caption swaps to a year grid. The range is held as a local draft
- * and only committed on Save — Cancel discards it.
- */
+function defaultMonths(range?: RdpDateRange): [Date, Date] {
+  const left = startOfMonth(range?.from ?? new Date());
+  const right =
+    range?.to && !isSameMonth(range.to, left)
+      ? startOfMonth(range.to)
+      : addMonths(left, 1);
+  return [left, right];
+}
+
+interface DateFieldProps {
+  label: string;
+  value: string;
+  invalid: boolean;
+  onChange: (value: string) => void;
+  onCommit: () => void;
+  onOpen: () => void;
+}
+
+function DateField({
+  label,
+  value,
+  invalid,
+  onChange,
+  onCommit,
+  onOpen,
+}: DateFieldProps) {
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={label}
+      aria-invalid={invalid}
+      placeholder="MM/DD/YYYY"
+      value={value}
+      onFocus={onOpen}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onCommit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onCommit();
+      }}
+      className={mergeCss([
+        'w-[6.5rem] border-0 bg-transparent p-0 text-center text-sm outline-none placeholder:text-gray-400',
+        invalid ? 'text-red-600' : 'text-gray-900',
+      ])}
+    />
+  );
+}
+
 export function DateRangeCalendar({
   value,
   onCommit,
@@ -65,14 +113,29 @@ export function DateRangeCalendar({
   const [draft, setDraft] = useState<RdpDateRange | undefined>(() =>
     toRdp(value)
   );
-  const [displayMonth, setDisplayMonth] = useState<Date>(
-    () => value?.from ?? new Date()
+  const [leftMonth, setLeftMonth] = useState<Date>(
+    () => defaultMonths(toRdp(value))[0]
   );
-  const [showYearGrid, setShowYearGrid] = useState(false);
-  const openYearGrid = useCallback(() => setShowYearGrid(true), []);
+  const [rightMonth, setRightMonth] = useState<Date>(
+    () => defaultMonths(toRdp(value))[1]
+  );
+  const [yearGridSide, setYearGridSide] = useState<Side | null>(null);
+
+  const [fromText, setFromText] = useState('');
+  const [toText, setToText] = useState('');
+  const [fromError, setFromError] = useState(false);
+  const [toError, setToError] = useState(false);
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const src = open ? draft : toRdp(value);
+    setFromText(src?.from ? fmt(src.from) : '');
+    setToText(src?.to ? fmt(src.to) : '');
+    setFromError(false);
+    setToError(false);
+  }, [open, draft, value]);
 
   function setOpen(next: boolean) {
     if (!isControlled) setInternalOpen(next);
@@ -80,61 +143,151 @@ export function DateRangeCalendar({
   }
 
   function openPopover() {
-    // Seed the draft from the committed value each time the popover opens.
-    setDraft(toRdp(value));
-    setDisplayMonth(value?.from ?? new Date());
-    setShowYearGrid(false);
+    const seeded = toRdp(value);
+    const [left, right] = defaultMonths(seeded);
+    setDraft(seeded);
+    setLeftMonth(left);
+    setRightMonth(right);
+    setYearGridSide(null);
     setOpen(true);
   }
 
   function close() {
-    setShowYearGrid(false);
+    setYearGridSide(null);
     setOpen(false);
   }
 
-  function handleSelect(range: RdpDateRange | undefined) {
-    setDraft(range);
-    // Any day click means the user is hand-picking a range → preview "Custom".
-    onDirty?.();
-  }
+  const handleSelect = useCallback(
+    (range: RdpDateRange | undefined) => {
+      setDraft(range);
+      onDirty?.();
+    },
+    [onDirty]
+  );
+
+  const commitTyped = useCallback(() => {
+    const from = parseField(fromText);
+    const to = parseField(toText);
+    const fromBad = fromText.trim() !== '' && !from;
+    const toBad = toText.trim() !== '' && !to;
+    const orderBad = !!from && !!to && from > to;
+
+    setFromError(fromBad || orderBad);
+    setToError(toBad || orderBad);
+    if (fromBad || toBad || orderBad) return;
+
+    let next: RdpDateRange | undefined;
+    if (from && to) next = { from, to };
+    else if (from) next = { from, to: undefined };
+    else if (to) next = { from: to, to: undefined };
+    else next = undefined;
+
+    const committed = toRdp(value);
+    const unchanged =
+      (next?.from?.getTime() ?? null) === (committed?.from?.getTime() ?? null) &&
+      (next?.to?.getTime() ?? null) === (committed?.to?.getTime() ?? null);
+
+    setDraft(next);
+    if (from) setLeftMonth(startOfMonth(from));
+    if (to) setRightMonth(startOfMonth(to));
+    if (!unchanged) onDirty?.();
+  }, [fromText, toText, value, onDirty]);
 
   function handleSave() {
     onCommit(toDomain(draft));
     close();
   }
 
-  function handleYearSelect(year: number) {
-    setDisplayMonth((current) => new Date(year, current.getMonth(), 1));
-    setShowYearGrid(false);
-  }
+  const openOnFocus = () => {
+    if (!open) openPopover();
+  };
+
+  const openLeftYear = useCallback(() => setYearGridSide('left'), []);
+  const openRightYear = useCallback(() => setYearGridSide('right'), []);
+  const selectLeftYear = useCallback((year: number) => {
+    setLeftMonth((current) => new Date(year, current.getMonth(), 1));
+    setYearGridSide(null);
+  }, []);
+  const selectRightYear = useCallback((year: number) => {
+    setRightMonth((current) => new Date(year, current.getMonth(), 1));
+    setYearGridSide(null);
+  }, []);
 
   const menuPos = usePortalPosition(anchorRef, open, close, menuRef);
 
-  // While open, the field tracks the live draft; when closed, it reflects the
-  // committed value (so a cancelled draft never lingers in the field).
-  const fieldRange = open ? draft : toRdp(value);
+  const hasError = fromError || toError;
+
+  const panes = {
+    left: {
+      month: leftMonth,
+      onMonthChange: setLeftMonth,
+      openYear: openLeftYear,
+      selectYear: selectLeftYear,
+    },
+    right: {
+      month: rightMonth,
+      onMonthChange: setRightMonth,
+      openYear: openRightYear,
+      selectYear: selectRightYear,
+    },
+  } as const;
+
+  const renderPane = (side: Side) => {
+    const pane = panes[side];
+    return yearGridSide === side ? (
+      <YearGrid
+        selectedYear={pane.month.getFullYear()}
+        onSelect={pane.selectYear}
+        className="w-[18rem]"
+      />
+    ) : (
+      <Calendar
+        selected={draft}
+        onSelect={handleSelect}
+        month={pane.month}
+        onMonthChange={pane.onMonthChange}
+        onMonthLabelClick={pane.openYear}
+      />
+    );
+  };
 
   return (
     <div className={mergeCss(['relative font-sans', className])}>
-      <div ref={anchorRef}>
+      <div
+        ref={anchorRef}
+        className={mergeCss([
+          'flex h-12 w-full items-center gap-1 rounded-full border bg-white px-4 transition-colors',
+          hasError
+            ? 'border-red-500'
+            : open
+              ? 'border-[#008CEE]'
+              : 'border-gray-200',
+        ])}
+      >
+        <DateField
+          label="Start date"
+          value={fromText}
+          invalid={fromError}
+          onChange={setFromText}
+          onCommit={commitTyped}
+          onOpen={openOnFocus}
+        />
+        <span className="shrink-0 text-gray-400">–</span>
+        <DateField
+          label="End date"
+          value={toText}
+          invalid={toError}
+          onChange={setToText}
+          onCommit={commitTyped}
+          onOpen={openOnFocus}
+        />
         <button
           type="button"
+          aria-label="Toggle calendar"
           onClick={() => (open ? close() : openPopover())}
-          className={mergeCss([
-            'flex h-12 w-full items-center justify-between gap-2 rounded-full border bg-white px-4 transition-colors',
-            open ? 'border-[#008CEE]' : 'border-gray-200',
-          ])}
+          className="ml-auto shrink-0"
         >
-          <Text
-            variant="body"
-            className={mergeCss([
-              'text-sm',
-              fieldRange?.from ? 'text-gray-900' : 'text-gray-400',
-            ])}
-          >
-            {formatRange(fieldRange)}
-          </Text>
-          <CalendarClock className="h-4 w-4 shrink-0 text-gray-400" />
+          <CalendarIcon className="h-4 w-4 text-gray-400" />
         </button>
       </div>
 
@@ -147,21 +300,10 @@ export function DateRangeCalendar({
             align="right"
           >
             <div className="flex flex-col gap-4 p-4">
-              {showYearGrid ? (
-                <YearGrid
-                  selectedYear={displayMonth.getFullYear()}
-                  onSelect={handleYearSelect}
-                  className="w-[18rem]"
-                />
-              ) : (
-                <Calendar
-                  selected={draft}
-                  onSelect={handleSelect}
-                  month={displayMonth}
-                  onMonthChange={setDisplayMonth}
-                  onMonthLabelClick={openYearGrid}
-                />
-              )}
+              <div className="flex gap-8">
+                {renderPane('left')}
+                {renderPane('right')}
+              </div>
 
               <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
                 <Button variant="primary" onClick={close}>
