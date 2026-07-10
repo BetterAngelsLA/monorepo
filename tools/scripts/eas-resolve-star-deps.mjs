@@ -9,7 +9,9 @@
  */
 import { copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
-import JSON5 from 'json5';
+
+// Strip JSON comments for tsconfig parsing (no deps available at pre-install time)
+const stripComments = (json) => json.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? '' : m);
 
 const cwd = process.cwd();
 const rootPkgPath = resolve(cwd, '../../package.json');
@@ -47,11 +49,11 @@ console.log('Copied yarn.lock from workspace root');
 // Metro's file map can't resolve extends that cross project boundaries on EAS.
 try {
   const appTsconfigPath = resolve(cwd, 'tsconfig.json');
-  const appTsconfig = JSON5.parse(readFileSync(appTsconfigPath, 'utf-8'));
+  const appTsconfig = JSON.parse(stripComments(readFileSync(appTsconfigPath, 'utf-8')));
 
   if (appTsconfig.extends) {
     const extendsPath = resolve(cwd, appTsconfig.extends);
-    const baseConfig = JSON5.parse(readFileSync(extendsPath, 'utf-8'));
+    const baseConfig = JSON.parse(stripComments(readFileSync(extendsPath, 'utf-8')));
 
     // Merge paths from base into app tsconfig
     if (baseConfig.compilerOptions?.paths) {
