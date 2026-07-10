@@ -33,8 +33,10 @@
       }
     },
     "build-list": {
-      "executor": "@nx/expo:build-list",
-      "options": {}
+      "command": "eas build:list",
+      "options": {
+        "cwd": "apps/betterangels"
+      }
     },
     "eas-build": {
       "dependsOn": ["sync-deps"],

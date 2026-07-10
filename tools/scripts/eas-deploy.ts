@@ -135,7 +135,7 @@ function checkOrTriggerBuild(
     let buildData: BuildInfo[];
     try {
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
+        `yarn nx run ${project}:build-list --platform ${platform} --build-profile ${profile} --runtime-version ${runtimeVersion} --limit 1 --json --non-interactive`
       );
     } catch {
       buildData = [];
