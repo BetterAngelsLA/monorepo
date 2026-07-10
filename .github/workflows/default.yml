@@ -177,7 +177,7 @@ jobs:
       - name: 🛠️ Build and Push Artifacts
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t build --configuration ${{ matrix.environment }}
+          yarn nx run betterangels:build --configuration ${{ matrix.environment }}
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -213,7 +213,7 @@ jobs:
       - name: 🚀 Deploy Changes
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --configuration ${{ matrix.environment }}
+          yarn nx run betterangels:deploy --configuration ${{ matrix.environment }}
           EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
