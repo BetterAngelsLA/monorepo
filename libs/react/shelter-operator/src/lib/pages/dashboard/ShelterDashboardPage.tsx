@@ -1,5 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { BookCheck, Settings, Share } from 'lucide-react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
@@ -8,6 +9,7 @@ import { OverviewView } from '../../components/overview/OverviewView';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterManageRoute } from '../../routing';
+import { ExportShelterModal } from './components/ExportShelterModal';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -29,6 +31,7 @@ const TAB_ITEMS: SliderTabItem[] = [
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { shelterId } = useParams();
   const id = shelterId ?? '';
 
@@ -64,6 +67,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
             leftIcon={<Share size={20} color="black" />}
             rightIcon={false}
             className="text-black"
+            onClick={() => setIsExportModalOpen(true)}
           >
             Export Data
           </Button>
@@ -99,6 +103,12 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
       {tab === 'beds' && <BedsView shelterId={id} />}
       {tab === 'occupancy' && null}
       {tab === 'label' && null}
+
+      <ExportShelterModal
+        isOpen={isExportModalOpen}
+        shelterId={shelterId}
+        onClose={() => setIsExportModalOpen(false)}
+      />
     </div>
   );
 }
