@@ -37,6 +37,7 @@
       "options": {}
     },
     "eas-build": {
+      "dependsOn": ["sync-deps"],
       "command": "eas build",
       "options": {
         "cwd": "apps/betterangels"
@@ -54,6 +55,7 @@
       }
     },
     "eas-update": {
+      "dependsOn": ["sync-deps"],
       "command": "eas update",
       "options": {
         "cwd": "apps/betterangels"
