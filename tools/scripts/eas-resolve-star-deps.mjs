@@ -1,13 +1,15 @@
 /**
  * Resolves "*" dependency versions in the app's package.json
  * by copying them from the workspace root package.json,
- * and copies the root lockfile to the app directory.
+ * copies the root lockfile to the app directory,
+ * and resolves tsconfig extends for Metro compatibility.
  *
  * This runs as an EAS pre-install hook to ensure EAS can resolve
  * all dependencies without needing Yarn workspace support.
  */
 import { copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import JSON5 from 'json5';
 
 const cwd = process.cwd();
 const rootPkgPath = resolve(cwd, '../../package.json');
@@ -40,3 +42,31 @@ console.log('Resolved * dependencies from root package.json');
 // Copy lockfile from root to app directory (same as old @nx/expo:build executor)
 copyFileSync(rootLockPath, appLockPath);
 console.log('Copied yarn.lock from workspace root');
+
+// Resolve tsconfig extends to inline the base config.
+// Metro's file map can't resolve extends that cross project boundaries on EAS.
+try {
+  const appTsconfigPath = resolve(cwd, 'tsconfig.json');
+  const appTsconfig = JSON5.parse(readFileSync(appTsconfigPath, 'utf-8'));
+
+  if (appTsconfig.extends) {
+    const extendsPath = resolve(cwd, appTsconfig.extends);
+    const baseConfig = JSON5.parse(readFileSync(extendsPath, 'utf-8'));
+
+    // Merge paths from base into app tsconfig
+    if (baseConfig.compilerOptions?.paths) {
+      appTsconfig.compilerOptions = appTsconfig.compilerOptions || {};
+      appTsconfig.compilerOptions.paths = {
+        ...baseConfig.compilerOptions.paths,
+        ...appTsconfig.compilerOptions.paths,
+      };
+    }
+
+    // Remove extends so Metro doesn't need to resolve cross-project paths
+    delete appTsconfig.extends;
+    writeFileSync(appTsconfigPath, JSON.stringify(appTsconfig, null, 2) + '\n');
+    console.log('Resolved tsconfig extends for EAS build');
+  }
+} catch (e) {
+  console.log('Skipped tsconfig resolution:', e.message);
+}
