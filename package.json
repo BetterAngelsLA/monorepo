@@ -3,10 +3,6 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "libs/*/*"
-  ],
   "scripts": {
     "sb": "nx run storybook-react:storybook",
     "sb-build": "nx run storybook-react:build",
