@@ -54,7 +54,7 @@
       }
     },
     "eas-update": {
-      "command": "eas update --auto",
+      "command": "eas update",
       "options": {
         "cwd": "apps/betterangels"
       }

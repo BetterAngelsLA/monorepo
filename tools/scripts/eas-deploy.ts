@@ -150,7 +150,7 @@ function checkOrTriggerBuild(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
+        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
       );
     }
 
@@ -191,7 +191,7 @@ function performEasUpdate(
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
   const updateData = runJson<UpdateResult[]>(
-    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
