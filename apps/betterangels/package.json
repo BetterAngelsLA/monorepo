@@ -6,7 +6,6 @@
   "packageManager": "yarn@4.2.2",
   "dependencies": {
     "@apollo/client": "*",
-    "@expo/vector-icons": "*",
     "@gorhom/bottom-sheet": "*",
     "@graphql-codegen/cli": "*",
     "@graphql-typed-document-node/core": "*",
