@@ -22,21 +22,10 @@ const appLockPath = resolve(cwd, 'yarn.lock');
 const root = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const app = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
 
-const merge = (source, dest) => {
-  if (!source) return;
-  if (!dest) dest = {};
-  for (const [key, value] of Object.entries(source)) {
-    if (!dest[key] || dest[key] === '*') {
-      dest[key] = value;
-    }
-  }
-  return dest;
-};
-
-app.dependencies = merge(root.dependencies, app.dependencies) || {};
-app.dependencies = merge(root.devDependencies, app.dependencies) || {};
-app.devDependencies = merge(root.dependencies, app.devDependencies) || {};
-app.devDependencies = merge(root.devDependencies, app.devDependencies) || {};
+// Match old @nx/expo:build executor behavior:
+// Replace app deps/devDeps entirely with root versions (no * entries remain)
+app.dependencies = root.dependencies || {};
+app.devDependencies = root.devDependencies || {};
 
 writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
 console.log('Resolved * dependencies from root package.json');
