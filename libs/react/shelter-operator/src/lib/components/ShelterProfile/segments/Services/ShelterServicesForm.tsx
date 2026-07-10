@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, type FieldPathValue, useForm } from 'react-hook-form';
 import { type DropdownOption } from '../../../base-ui/dropdown';
@@ -11,7 +11,7 @@ import ServiceCategoryRow from './ServiceCategoryRow';
 import { defaultFormValues, formSchema, ServicesFormData } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<ServicesFormData>;
+  values?: Partial<ServicesFormData>;
   onSubmit: (
     data: ServicesFormData,
     setError: UseFormSetError<ServicesFormData>
@@ -25,7 +25,7 @@ type TProps = {
 
 export function ShelterServicesForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -40,14 +40,19 @@ export function ShelterServicesForm(props: TProps) {
   const [createdOtherOptionsByCategory, setCreatedOtherOptionsByCategory] =
     useState<Record<string, DropdownOption<string>[]>>({});
 
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
+
   const { control, handleSubmit, setError, reset } = useForm<ServicesFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 

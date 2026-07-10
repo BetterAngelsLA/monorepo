@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
@@ -15,7 +16,7 @@ import {
 import { defaultFormValues, formSchema, PoliciesFormData } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<PoliciesFormData>;
+  values?: Partial<PoliciesFormData>;
   onSubmit: (
     data: PoliciesFormData,
     setError: UseFormSetError<PoliciesFormData>
@@ -29,7 +30,7 @@ type TProps = {
 
 export function ShelterPoliciesForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -37,6 +38,11 @@ export function ShelterPoliciesForm(props: TProps) {
     disabled = false,
     className,
   } = props;
+
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
 
   const {
     control,
@@ -46,12 +52,12 @@ export function ShelterPoliciesForm(props: TProps) {
     reset,
   } = useForm<PoliciesFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
 import { Controller, UseFormSetError, useForm } from 'react-hook-form';
 import { LocationPicker } from '../../../../pages/dashboard/components/LocationPicker';
 import {
@@ -20,7 +21,7 @@ import {
 } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<BasicInfoFormData>;
+  values?: Partial<BasicInfoFormData>;
   onSubmit: (
     data: BasicInfoFormData,
     setError: UseFormSetError<BasicInfoFormData>
@@ -34,7 +35,7 @@ type TProps = {
 
 export function ShelterBasicInfoForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -42,6 +43,11 @@ export function ShelterBasicInfoForm(props: TProps) {
     disabled = false,
     className,
   } = props;
+
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
 
   const {
     control,
@@ -51,12 +57,12 @@ export function ShelterBasicInfoForm(props: TProps) {
     reset,
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 

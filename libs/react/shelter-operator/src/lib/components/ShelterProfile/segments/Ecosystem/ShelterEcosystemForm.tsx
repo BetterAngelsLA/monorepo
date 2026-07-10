@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { FunderChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { useShelterCities } from '../../../../hooks';
@@ -18,7 +19,7 @@ import {
 import { defaultFormValues, EcosystemFormData, formSchema } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<EcosystemFormData>;
+  values?: Partial<EcosystemFormData>;
   onSubmit: (
     data: EcosystemFormData,
     setError: UseFormSetError<EcosystemFormData>
@@ -32,7 +33,7 @@ type TProps = {
 
 export function ShelterEcosystemForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -44,6 +45,11 @@ export function ShelterEcosystemForm(props: TProps) {
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
 
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
+
   const {
     control,
     handleSubmit,
@@ -52,12 +58,12 @@ export function ShelterEcosystemForm(props: TProps) {
     reset,
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 

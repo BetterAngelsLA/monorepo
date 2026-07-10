@@ -101,7 +101,7 @@ export function ShelterEcosystem(props: TProps) {
 
   return (
     <ShelterEcosystemForm
-      defaultValues={toFormData(shelter)}
+      values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}

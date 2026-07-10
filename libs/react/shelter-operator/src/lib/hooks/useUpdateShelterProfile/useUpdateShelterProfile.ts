@@ -28,6 +28,7 @@ export function useUpdateShelterProfile(props?: TProps) {
     UpdateShelterProfileMutation,
     UpdateShelterProfileMutationVariables
   >(UpdateShelterProfileDocument, {
+    awaitRefetchQueries: true,
     refetchQueries: refetch
       ? (result) => {
           const payload = result.data?.updateShelter;

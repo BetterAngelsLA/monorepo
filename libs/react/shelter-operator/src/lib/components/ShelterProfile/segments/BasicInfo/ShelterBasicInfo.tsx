@@ -106,7 +106,7 @@ export function ShelterBasicInfo(props: TProps) {
 
   return (
     <ShelterBasicInfoForm
-      defaultValues={toFormData(shelter)}
+      values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}
