@@ -1,8 +1,14 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
-// Expo SDK 52+ auto-configures monorepos — no need for manual watchFolders or withNxMetro
-// See: https://docs.expo.dev/guides/monorepos/#automatic-configuration-migrating-to-sdk-52
-const config = getDefaultConfig(__dirname);
+// Expo SDK 52+ auto-configures monorepos, but tsconfig extends that cross
+// project boundaries need explicit watchFolders for EAS build environments.
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '../..');
+
+const config = getDefaultConfig(__dirname, {
+  watchFolders: [workspaceRoot],
+});
 
 // Remove console.logs in production
 config.transformer.minifierConfig.compress.drop_console = true;
