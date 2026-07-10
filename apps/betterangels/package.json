@@ -8,8 +8,10 @@
     "@apollo/client": "*",
     "@expo/vector-icons": "*",
     "@gorhom/bottom-sheet": "*",
+    "@graphql-codegen/cli": "*",
     "@graphql-typed-document-node/core": "*",
     "@hookform/resolvers": "*",
+    "@jest/globals": "*",
     "@likashefqet/react-native-image-zoom": "*",
     "@preeternal/react-native-cookie-manager": "*",
     "@react-native-async-storage/async-storage": "*",
@@ -17,8 +19,13 @@
     "@react-native-picker/picker": "*",
     "@react-native-vector-icons/ant-design": "*",
     "@shopify/flash-list": "*",
+    "@storybook/react-native-web-vite": "*",
     "@tanstack/react-query": "*",
     "@teovilla/react-native-web-maps": "*",
+    "@testing-library/react": "*",
+    "@testing-library/react-native": "*",
+    "@types/geojson": "*",
+    "@types/google.maps": "*",
     "apollo-link-rest": "*",
     "apollo-upload-client": "*",
     "clsx": "*",
@@ -39,6 +46,7 @@
     "expo-image-manipulator": "*",
     "expo-image-picker": "*",
     "expo-location": "*",
+    "expo-modules-core": "*",
     "expo-router": "*",
     "expo-secure-store": "*",
     "expo-sharing": "*",
@@ -86,27 +94,18 @@
     "tsconfig-paths": "*",
     "use-deep-compare-effect": "*",
     "validator": "*",
-    "zod": "*",
-    "@graphql-codegen/cli": "*",
-    "vitest": "*",
-    "@testing-library/react": "*",
     "vite": "*",
     "vite-plugin-static-copy": "*",
-    "@testing-library/react-native": "*",
-    "@jest/globals": "*",
-    "@types/geojson": "*",
-    "@storybook/react-native-web-vite": "*",
-    "@types/google.maps": "*",
-    "expo-modules-core": "*"
+    "vitest": "*",
+    "zod": "*"
   },
-  "devDependencies": {},
   "expo": {
     "autolinking": {
       "nativeModulesDir": "../../libs/expo/modules"
     }
   },
   "scripts": {
-    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
+    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || : && node -e \"const{readFileSync,writeFileSync}=require('fs');const root=JSON.parse(readFileSync('../../package.json'));const app=JSON.parse(readFileSync('./package.json'));const merge=(s,d)=>{for(const[k,v]of Object.entries(s||{})){if(d[k]==='*')d[k]=v}};merge(root.dependencies,app.dependencies);merge(root.devDependencies,app.devDependencies);writeFileSync('./package.json',JSON.stringify(app,null,2)+'\\\\n')\"",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
