@@ -12,8 +12,10 @@ import { resolve } from 'path';
 const cwd = process.cwd();
 const rootPkgPath = resolve(cwd, '../../package.json');
 const rootLockPath = resolve(cwd, '../../yarn.lock');
+const rootYarnrcPath = resolve(cwd, '../../.yarnrc.yml');
 const appPkgPath = resolve(cwd, 'package.json');
 const appLockPath = resolve(cwd, 'yarn.lock');
+const appYarnrcPath = resolve(cwd, '.yarnrc.yml');
 
 const root = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const app = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
@@ -35,6 +37,7 @@ merge(root.devDependencies, app.devDependencies);
 writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
 console.log('Resolved * dependencies from root package.json');
 
-// Copy lockfile from root to app directory (same as old @nx/expo:build executor)
+// Copy lockfile and .yarnrc.yml from root to app directory (same as old @nx/expo:build executor)
 copyFileSync(rootLockPath, appLockPath);
-console.log('Copied yarn.lock from workspace root');
+copyFileSync(rootYarnrcPath, appYarnrcPath);
+console.log('Copied yarn.lock and .yarnrc.yml from workspace root');
