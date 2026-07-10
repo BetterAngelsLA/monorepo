@@ -19,18 +19,20 @@ const root = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const app = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
 
 const merge = (source, dest) => {
-  if (!source || !dest) return;
+  if (!source) return;
+  if (!dest) dest = {};
   for (const [key, value] of Object.entries(source)) {
-    if (dest[key] === '*') {
+    if (!dest[key] || dest[key] === '*') {
       dest[key] = value;
     }
   }
+  return dest;
 };
 
-merge(root.dependencies, app.dependencies);
-merge(root.devDependencies, app.dependencies);
-merge(root.dependencies, app.devDependencies);
-merge(root.devDependencies, app.devDependencies);
+app.dependencies = merge(root.dependencies, app.dependencies) || {};
+app.dependencies = merge(root.devDependencies, app.dependencies) || {};
+app.devDependencies = merge(root.dependencies, app.devDependencies) || {};
+app.devDependencies = merge(root.devDependencies, app.devDependencies) || {};
 
 writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
 console.log('Resolved * dependencies from root package.json');
