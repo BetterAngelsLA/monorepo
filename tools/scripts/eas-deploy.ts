@@ -151,7 +151,7 @@ function checkOrTriggerBuild(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
+        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`
       );
     }
 
