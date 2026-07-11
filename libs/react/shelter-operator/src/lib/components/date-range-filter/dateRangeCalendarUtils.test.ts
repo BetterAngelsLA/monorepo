@@ -1,4 +1,5 @@
 import {
+  computeFieldCommit,
   defaultMonths,
   formatDate,
   parseField,
@@ -95,5 +96,84 @@ describe('toRdp / toDomain', () => {
 describe('formatDate', () => {
   it('formats to MM/dd/yyyy', () => {
     expect(formatDate(new Date(2026, 4, 8))).toBe('05/08/2026');
+  });
+});
+
+describe('computeFieldCommit', () => {
+  it('commits a valid ordered range', () => {
+    const r = computeFieldCommit('05/18/2026', '06/20/2026');
+    expect(r.valid).toBe(true);
+    expect(r.fromError).toBe(false);
+    expect(r.toError).toBe(false);
+    expect(r.next).toEqual({
+      from: new Date(2026, 4, 18),
+      to: new Date(2026, 5, 20),
+    });
+    expect(r.changed).toBe(true);
+  });
+
+  it('commits a start-only range (to left undefined)', () => {
+    const r = computeFieldCommit('05/18/2026', '');
+    expect(r.valid).toBe(true);
+    expect(r.next).toEqual({ from: new Date(2026, 4, 18), to: undefined });
+  });
+
+  it('promotes an end-only value to the start', () => {
+    const r = computeFieldCommit('', '06/20/2026');
+    expect(r.valid).toBe(true);
+    expect(r.next).toEqual({ from: new Date(2026, 5, 20), to: undefined });
+  });
+
+  it('flags an invalid start and does not commit', () => {
+    const r = computeFieldCommit('05/1', '06/20/2026');
+    expect(r.valid).toBe(false);
+    expect(r.fromError).toBe(true);
+    expect(r.toError).toBe(false);
+  });
+
+  it('flags an impossible end date and does not commit', () => {
+    const r = computeFieldCommit('05/18/2026', '02/30/2026');
+    expect(r.valid).toBe(false);
+    expect(r.toError).toBe(true);
+  });
+
+  it('flags an out-of-order range on both fields and does not commit', () => {
+    const r = computeFieldCommit('07/15/2026', '06/20/2026');
+    expect(r.valid).toBe(false);
+    expect(r.fromError).toBe(true);
+    expect(r.toError).toBe(true);
+    expect(r.next).toBeUndefined();
+  });
+
+  it('rejects a 0000 year', () => {
+    const r = computeFieldCommit('05/20/0000', '06/20/2026');
+    expect(r.valid).toBe(false);
+    expect(r.fromError).toBe(true);
+  });
+
+  it('treats two empty fields as a valid empty selection', () => {
+    const r = computeFieldCommit('', '');
+    expect(r.valid).toBe(true);
+    expect(r.next).toBeUndefined();
+    expect(r.changed).toBe(false);
+  });
+
+  it('reports unchanged when the typed range equals the committed value', () => {
+    const committed = {
+      from: new Date(2026, 4, 18),
+      to: new Date(2026, 5, 20),
+    };
+    const r = computeFieldCommit('05/18/2026', '06/20/2026', committed);
+    expect(r.valid).toBe(true);
+    expect(r.changed).toBe(false);
+  });
+
+  it('reports changed when the typed range differs from the committed value', () => {
+    const committed = {
+      from: new Date(2026, 4, 18),
+      to: new Date(2026, 5, 20),
+    };
+    const r = computeFieldCommit('05/18/2026', '06/21/2026', committed);
+    expect(r.changed).toBe(true);
   });
 });

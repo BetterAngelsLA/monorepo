@@ -8,9 +8,9 @@ import { MenuPanel } from '../base-ui/dropdown/MenuPanel';
 import { usePortalPosition } from '../base-ui/dropdown/usePortalPosition';
 import { Calendar, type RdpDateRange } from './Calendar';
 import {
+  computeFieldCommit,
   defaultMonths,
   formatDate,
-  parseField,
   toDomain,
   toRdp,
 } from './dateRangeCalendarUtils';
@@ -135,31 +135,15 @@ export function DateRangeCalendar({
   );
 
   const commitTyped = useCallback(() => {
-    const from = parseField(fromText);
-    const to = parseField(toText);
-    const fromBad = fromText.trim() !== '' && !from;
-    const toBad = toText.trim() !== '' && !to;
-    const orderBad = !!from && !!to && from > to;
+    const result = computeFieldCommit(fromText, toText, value);
+    setFromError(result.fromError);
+    setToError(result.toError);
+    if (!result.valid) return;
 
-    setFromError(fromBad || orderBad);
-    setToError(toBad || orderBad);
-    if (fromBad || toBad || orderBad) return;
-
-    let next: RdpDateRange | undefined;
-    if (from && to) next = { from, to };
-    else if (from) next = { from, to: undefined };
-    else if (to) next = { from: to, to: undefined };
-    else next = undefined;
-
-    const committed = toRdp(value);
-    const unchanged =
-      (next?.from?.getTime() ?? null) === (committed?.from?.getTime() ?? null) &&
-      (next?.to?.getTime() ?? null) === (committed?.to?.getTime() ?? null);
-
-    setDraft(next);
-    if (from) setLeftMonth(startOfMonth(from));
-    if (to) setRightMonth(startOfMonth(to));
-    if (!unchanged) onDirty?.();
+    setDraft(result.next);
+    if (result.from) setLeftMonth(startOfMonth(result.from));
+    if (result.to) setRightMonth(startOfMonth(result.to));
+    if (result.changed) onDirty?.();
   }, [fromText, toText, value, onDirty]);
 
   function handleSave() {
