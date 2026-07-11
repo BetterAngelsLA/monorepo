@@ -1,12 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import {
-  addMonths,
-  format,
-  isSameMonth,
-  isValid,
-  parse,
-  startOfMonth,
-} from 'date-fns';
+import { startOfMonth } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -14,6 +7,13 @@ import { Button } from '../base-ui/buttons';
 import { MenuPanel } from '../base-ui/dropdown/MenuPanel';
 import { usePortalPosition } from '../base-ui/dropdown/usePortalPosition';
 import { Calendar, type RdpDateRange } from './Calendar';
+import {
+  defaultMonths,
+  formatDate,
+  parseField,
+  toDomain,
+  toRdp,
+} from './dateRangeCalendarUtils';
 import type { DateRange } from './types';
 import { YearGrid } from './YearGrid';
 
@@ -27,37 +27,6 @@ export interface DateRangeCalendarProps {
 }
 
 type Side = 'left' | 'right';
-
-const DATE_FORMAT = 'MM/dd/yyyy';
-const FIELD_PATTERN = /^\d{2}\/\d{2}\/\d{4}$/;
-const MIN_YEAR = 1900;
-const fmt = (date: Date) => format(date, DATE_FORMAT);
-
-function toRdp(range?: DateRange): RdpDateRange | undefined {
-  if (!range?.from) return undefined;
-  return { from: range.from, to: range.to ?? undefined };
-}
-
-function toDomain(range?: RdpDateRange): DateRange {
-  return { from: range?.from ?? null, to: range?.to ?? null };
-}
-
-function parseField(text: string): Date | null {
-  const trimmed = text.trim();
-  if (!FIELD_PATTERN.test(trimmed)) return null;
-  const parsed = parse(trimmed, DATE_FORMAT, new Date());
-  if (!isValid(parsed) || parsed.getFullYear() < MIN_YEAR) return null;
-  return parsed;
-}
-
-function defaultMonths(range?: RdpDateRange): [Date, Date] {
-  const left = startOfMonth(range?.from ?? new Date());
-  const right =
-    range?.to && !isSameMonth(range.to, left)
-      ? startOfMonth(range.to)
-      : addMonths(left, 1);
-  return [left, right];
-}
 
 interface DateFieldProps {
   label: string;
@@ -131,8 +100,8 @@ export function DateRangeCalendar({
 
   useEffect(() => {
     const src = open ? draft : toRdp(value);
-    setFromText(src?.from ? fmt(src.from) : '');
-    setToText(src?.to ? fmt(src.to) : '');
+    setFromText(src?.from ? formatDate(src.from) : '');
+    setToText(src?.to ? formatDate(src.to) : '');
     setFromError(false);
     setToError(false);
   }, [open, draft, value]);
