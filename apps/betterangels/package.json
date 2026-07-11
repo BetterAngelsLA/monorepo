@@ -103,7 +103,7 @@
     }
   },
   "scripts": {
-    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || : && node ../../tools/scripts/eas-resolve-star-deps.mjs",
+    "eas-build-pre-install": "corepack enable && node ../../tools/scripts/eas-resolve-star-deps.mjs",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
