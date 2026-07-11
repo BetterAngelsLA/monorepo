@@ -1,7 +1,6 @@
 import { resolvePreset } from './presets';
 import type { DateRange, DateRangePreset } from './types';
 
-// Fixed reference point so the resolver is deterministic: Sat 27 Jun 2026.
 const TODAY = new Date(2026, 5, 27);
 const d = (year: number, monthIndex: number, day: number) =>
   new Date(year, monthIndex, day);
@@ -13,12 +12,10 @@ describe('resolvePreset', () => {
   }> = [
     {
       preset: 'LAST_7_DAYS',
-      // inclusive 7-day window ending today
       expected: { from: d(2026, 5, 21), to: TODAY },
     },
     {
       preset: 'LAST_30_DAYS',
-      // inclusive 30-day window ending today
       expected: { from: d(2026, 4, 29), to: TODAY },
     },
     {
