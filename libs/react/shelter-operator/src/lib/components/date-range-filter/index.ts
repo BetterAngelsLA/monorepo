@@ -15,3 +15,5 @@ export { DateRangePresetDropdown } from './DateRangePresetDropdown';
 export type { DateRangePresetDropdownProps } from './DateRangePresetDropdown';
 export { DateRangeCalendar } from './DateRangeCalendar';
 export type { DateRangeCalendarProps } from './DateRangeCalendar';
+export { DateRangeFilterBar } from './DateRangeFilterBar';
+export type { DateRangeFilterBarProps } from './DateRangeFilterBar';
