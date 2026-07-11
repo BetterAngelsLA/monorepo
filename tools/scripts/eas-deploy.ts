@@ -154,7 +154,7 @@ function checkOrTriggerBuild(
     const projectDir = resolveProjectDir(project);
     
     buildData = runJson<BuildInfo[]>(
-      `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json`
+      `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --wait false`
     );
 
     const info = buildData[0];

@@ -87,7 +87,10 @@
       }
     },
     "test": {
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "passWithNoTests": true
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",
