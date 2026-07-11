@@ -103,7 +103,6 @@ export function Calendar({
       onSelect={onSelect}
       month={month}
       onMonthChange={onMonthChange}
-      resetOnSelect
       showOutsideDays
       className={mergeCss(['font-sans', className])}
       classNames={classNames}
