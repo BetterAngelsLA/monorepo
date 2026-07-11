@@ -5,10 +5,6 @@
  * Yarn resolves "*" independently from the root's version constraints,
  * which causes duplicate native modules (fatal for Expo builds).
  * This matches the old @nx/expo:build executor behavior.
- *
- * Tsconfig extends resolution is no longer needed — Expo SDK 52+
- * auto-configures Metro for monorepos, including watchFolders and
- * module resolution across project boundaries.
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
