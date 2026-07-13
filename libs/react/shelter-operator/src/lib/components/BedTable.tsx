@@ -17,6 +17,28 @@ export type Bed = {
   room?: { id: string; name: string } | null;
 };
 
+type BedTableProps = {
+  beds: Bed[];
+  getRowKey?: (bed: Bed, index: number) => string;
+  onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
+  onClone?: (rowObject: BedRowObject) => void;
+  onEdit?: (rowObject: BedRowObject) => void;
+  onDeleteBeds?: (bedIds: string[]) => void;
+  onMarkReady?: (rowObject: BedRowObject) => void;
+  onReserve?: (rowObject: BedRowObject) => void;
+  loading?: boolean;
+  loadingState?: ReactNode;
+  emptyState?: ReactNode;
+  wrapperClassName?: string;
+  headerClassName?: string;
+  headerInsetClassName?: string;
+  rowClassName?: string;
+  rowInsetClassName?: string;
+  tableStyle?: CSSProperties;
+  headerStyle?: CSSProperties;
+  rowStyle?: CSSProperties;
+};
+
 export type BedRowObject = {
   id: string;
   bed: Bed;
@@ -51,28 +73,6 @@ function bedStatusInfo(
       return { label: 'Unknown', variant: 'unknown' };
   }
 }
-
-type BedTableProps = {
-  beds: Bed[];
-  getRowKey?: (bed: Bed, index: number) => string;
-  onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
-  onClone?: (rowObject: BedRowObject) => void;
-  onEdit?: (rowObject: BedRowObject) => void;
-  onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (rowObject: BedRowObject) => void;
-  onReserve?: (rowObject: BedRowObject) => void;
-  loading?: boolean;
-  loadingState?: ReactNode;
-  emptyState?: ReactNode;
-  wrapperClassName?: string;
-  headerClassName?: string;
-  headerInsetClassName?: string;
-  rowClassName?: string;
-  rowInsetClassName?: string;
-  tableStyle?: CSSProperties;
-  headerStyle?: CSSProperties;
-  rowStyle?: CSSProperties;
-};
 
 export function BedTable({
   beds,
