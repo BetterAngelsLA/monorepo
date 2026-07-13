@@ -35,7 +35,11 @@ const R = require('remeda');
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(__dirname, '../..');
 
-const project = process.argv[2] || 'betterangels';
+const project = process.argv[2];
+if (!project) {
+  console.error('Usage: node eas-resolve-deps.mjs <project-name>');
+  process.exit(1);
+}
 const pkgPath = resolve(workspaceRoot, 'apps', project, 'package.json');
 const rootPkgPath = resolve(workspaceRoot, 'package.json');
 
