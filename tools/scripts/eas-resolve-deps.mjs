@@ -80,15 +80,19 @@ const starEntries = R.pipe(
   )
 );
 
-// Apply fixes: replace "*" with root's version, or flag as unresolved
-const unresolved = [];
-for (const { section, name } of starEntries) {
-  if (rootDeps[name]) {
-    resolved[section][name] = rootDeps[name];
-  } else {
-    unresolved.push(`${section}.${name}`);
-  }
+// Split into deps we can resolve (in root) vs app-specific (not in root)
+const [resolvable, unresolvable] = R.pipe(
+  starEntries,
+  R.partition(({ name }) => rootDeps[name] !== undefined)
+);
+
+// Apply root's concrete versions
+for (const { section, name } of resolvable) {
+  resolved[section][name] = rootDeps[name];
 }
+
+// Collect unresolved for the warning
+const unresolved = unresolvable.map(({ section, name }) => `${section}.${name}`);
 
 writeFileSync(pkgPath, JSON.stringify(resolved, null, 2) + '\n');
 
