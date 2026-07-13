@@ -96,7 +96,8 @@
     "vite": "*",
     "vite-plugin-static-copy": "*",
     "vitest": "*",
-    "zod": "*"
+    "zod": "*",
+    "expo-splash-screen": "~56.0.12"
   },
   "expo": {
     "autolinking": {
