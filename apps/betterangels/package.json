@@ -105,7 +105,6 @@
     }
   },
   "scripts": {
-    "eas-build-pre-install": "node eas-build-pre-install.js",
     "android": "expo run:android",
     "ios": "expo run:ios"
   }
