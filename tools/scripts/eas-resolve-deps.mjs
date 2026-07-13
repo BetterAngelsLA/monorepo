@@ -1,9 +1,28 @@
 /**
- * Resolves package.json for EAS builds by combining:
- * 1. Nx's createPackageJson — correct peerDependencies & categorization
- * 2. Root-based * resolution — replaces "*" with concrete versions from root
+ * ============================================================================
+ * WHY THIS FILE EXISTS
+ * ============================================================================
  *
- * Run before `eas build` in CI (where Nx and node_modules are available).
+ * In this Nx monorepo, Expo apps declare dependencies as "*" (managed by
+ * @nx/expo:sync-deps). Yarn resolves "*" independently from the root's version
+ * constraints, which can install different versions of native modules than the
+ * rest of the workspace — causing duplicate native libraries fatal to Expo
+ * builds (e.g. two copies of react-native-reanimated).
+ *
+ * The old @nx/expo:build executor handled this by running Nx's internal
+ * createPackageJson before EAS build. In Nx 23.x, @nx/expo:build is deprecated
+ * and replaced with a plain `eas build` command — the * resolution is gone.
+ *
+ * This script replaces that missing piece. It runs in CI before `eas build`
+ * (where Nx and node_modules are available) and:
+ *
+ *   1. Calls Nx's createPackageJson — adds peerDependencies and correctly
+ *      categorizes deps vs devDeps based on the project graph.
+ *   2. Resolves remaining "*" versions to concrete versions from root
+ *      package.json — closing the gap createPackageJson leaves for apps.
+ *
+ * The output is identical to what the old @nx/expo:build executor produced.
+ * ============================================================================
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -32,25 +51,36 @@ const { readCachedProjectGraph } = require(
 const graph = readCachedProjectGraph();
 const resolved = createPackageJson(project, graph, { isProduction: false });
 
-// Step 2: Resolve "*" versions from root, collect unresolved
-// (Nx's createPackageJson only checks project's own package.json for apps)
+// Step 2: Resolve "*" versions from root package.json.
+// Nx's createPackageJson only looks at the project's own package.json for
+// versions (which has "*"), so it leaves 92+ deps unresolved for apps.
+// We fill that gap by checking root's concrete versions.
 const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const rootDeps = { ...rootPkg.devDependencies, ...rootPkg.dependencies };
 
 const SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies'];
 
+/**
+ * Pipeline: find every "*" dependency across all sections.
+ *
+ *   sections → filter to existing → for each, get entries →
+ *   keep only * versions → shape as { section, name }
+ *
+ * This separates "finding what needs fixing" from "applying the fix."
+ */
 const starEntries = R.pipe(
-  SECTIONS,
-  R.filter(s => resolved[s]),
-  R.flatMap(s =>
+  SECTIONS,                                       // ['dependencies', 'devDependencies', 'peerDependencies']
+  R.filter(s => resolved[s]),                     // skip sections the app doesn't have
+  R.flatMap(s =>                                   // for each section, flatten into a single list
     R.pipe(
-      Object.entries(resolved[s]),
-      R.filter(([, v]) => v === '*'),
-      R.map(([name]) => ({ section: s, name }))
+      Object.entries(resolved[s]),                 //   [['react', '*'], ['expo', '*'], ...]
+      R.filter(([, v]) => v === '*'),              //   keep only unresolved deps
+      R.map(([name]) => ({ section: s, name }))    //   shape: { section: 'dependencies', name: 'react' }
     )
   )
 );
 
+// Apply fixes: replace "*" with root's version, or flag as unresolved
 const unresolved = [];
 for (const { section, name } of starEntries) {
   if (rootDeps[name]) {
