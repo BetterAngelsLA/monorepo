@@ -31,25 +31,21 @@ const { readCachedProjectGraph } = require(
 const graph = readCachedProjectGraph();
 const resolved = createPackageJson(project, graph, { isProduction: false });
 
-// Step 2: Resolve remaining "*" versions from root package.json
+// Step 2: Resolve "*" versions from root, collect unresolved
 // (Nx's createPackageJson only checks project's own package.json for apps)
 const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const rootDeps = { ...rootPkg.devDependencies, ...rootPkg.dependencies };
-
-for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
-  if (!resolved[section]) continue;
-  for (const [name, version] of Object.entries(resolved[section])) {
-    if (version === '*' && rootDeps[name]) {
-      resolved[section][name] = rootDeps[name];
-    }
-  }
-}
 
 const unresolved = [];
 for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
   if (!resolved[section]) continue;
   for (const [name, version] of Object.entries(resolved[section])) {
-    if (version === '*') unresolved.push(`${section}.${name}`);
+    if (version !== '*') continue;
+    if (rootDeps[name]) {
+      resolved[section][name] = rootDeps[name];
+    } else {
+      unresolved.push(`${section}.${name}`);
+    }
   }
 }
 
