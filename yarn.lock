@@ -6646,6 +6646,7 @@ __metadata:
     expo-router: "npm:*"
     expo-secure-store: "npm:*"
     expo-sharing: "npm:*"
+    expo-splash-screen: "npm:~56.0.12"
     expo-status-bar: "npm:*"
     expo-updates: "npm:*"
     expo-web-browser: "npm:*"

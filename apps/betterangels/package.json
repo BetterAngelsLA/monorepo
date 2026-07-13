@@ -49,6 +49,7 @@
     "expo-router": "*",
     "expo-secure-store": "*",
     "expo-sharing": "*",
+    "expo-splash-screen": "~56.0.12",
     "expo-status-bar": "*",
     "expo-updates": "*",
     "expo-web-browser": "*",
@@ -96,8 +97,7 @@
     "vite": "*",
     "vite-plugin-static-copy": "*",
     "vitest": "*",
-    "zod": "*",
-    "expo-splash-screen": "~56.0.12"
+    "zod": "*"
   },
   "expo": {
     "autolinking": {

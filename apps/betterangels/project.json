@@ -3,10 +3,15 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": ["type:app", "scope:betterangels"],
+  "tags": [
+    "type:app",
+    "scope:betterangels"
+  ],
   "targets": {
     "start": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "expo start --port 8081",
       "options": {
         "cwd": "apps/betterangels"
@@ -19,14 +24,18 @@
       }
     },
     "run-ios": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "expo run:ios",
       "options": {
         "cwd": "apps/betterangels"
       }
     },
     "run-android": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "expo run:android",
       "options": {
         "cwd": "apps/betterangels"
@@ -39,14 +48,10 @@
       }
     },
     "eas-build": {
-      "dependsOn": ["sync-deps", "resolve-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "eas build",
-      "options": {
-        "cwd": "apps/betterangels"
-      }
-    },
-    "resolve-deps": {
-      "command": "node ../../tools/scripts/eas-resolve-deps.mjs betterangels",
       "options": {
         "cwd": "apps/betterangels"
       }
@@ -56,14 +61,18 @@
       "options": {}
     },
     "prebuild": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "expo prebuild --no-install",
       "options": {
         "cwd": "apps/betterangels"
       }
     },
     "eas-update": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "command": "eas update",
       "options": {
         "cwd": "apps/betterangels"
@@ -82,7 +91,9 @@
       }
     },
     "export": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": [
+        "sync-deps"
+      ],
       "outputs": [
         "{projectRoot}/{options.outputDir}",
         "{workspaceRoot}/apps/betterangels/dist"
@@ -93,7 +104,9 @@
       }
     },
     "test": {
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "passWithNoTests": true
       }
