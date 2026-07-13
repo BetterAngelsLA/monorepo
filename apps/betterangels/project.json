@@ -46,7 +46,7 @@
       }
     },
     "resolve-deps": {
-      "command": "node tools/scripts/eas-resolve-deps.mjs betterangels",
+      "command": "node ../../tools/scripts/eas-resolve-deps.mjs betterangels",
       "options": {
         "cwd": "apps/betterangels"
       }
