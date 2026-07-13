@@ -30,7 +30,7 @@
     "react-fast-compare": "*",
     "react-ga4": "*",
     "react-mailchimp-subscribe": "*",
-    "react-native": "*",
+    "react-native": "0.86.0",
     "react-native-svg": "*",
     "react-router-dom": "*",
     "remeda": "*",
