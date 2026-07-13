@@ -20,13 +20,26 @@ const app = JSON.parse(readFileSync(appPkgPath, 'utf-8'));
 // App-specific deps (not in root) are kept as-is.
 const rootDeps = { ...root.dependencies, ...root.devDependencies };
 
+const unresolved = [];
+
 for (const depType of ['dependencies', 'devDependencies']) {
   if (!app[depType]) continue;
   for (const [name, version] of Object.entries(app[depType])) {
     if (version === '*' && rootDeps[name]) {
       app[depType][name] = rootDeps[name];
+    } else if (version === '*') {
+      unresolved.push(name);
     }
   }
+}
+
+if (unresolved.length) {
+  console.warn(
+    `\n⚠ ${unresolved.length} package(s) with "*" version not found in root:\n` +
+    unresolved.map(d => `  - ${d}`).join('\n') +
+    '\n  These may be stale dependencies no longer imported by the project.\n' +
+    '  Remove them manually from package.json if unused.\n'
+  );
 }
 
 writeFileSync(appPkgPath, JSON.stringify(app, null, 2) + '\n');
