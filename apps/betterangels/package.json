@@ -10,8 +10,7 @@
   },
   "scripts": {
     "android": "expo run:android",
-    "ios": "expo run:ios",
-    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels"
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "dotenv": "*",
