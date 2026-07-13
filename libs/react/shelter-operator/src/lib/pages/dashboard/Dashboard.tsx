@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { useDebounce } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
 import { Search, Settings2 } from 'lucide-react';
@@ -20,7 +21,6 @@ import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
@@ -38,7 +38,7 @@ const loadingState = (
 const emptyState = (
   <div className="px-6 py-8 text-center text-sm text-gray-500">
     No shelters yet.{' '}
-    <Link to={paths.dashboardCreate} className="text-blue-600 hover:underline">
+    <Link to={paths.shelterCreate} className="text-blue-600 hover:underline">
       Create your first shelter
     </Link>
     .
