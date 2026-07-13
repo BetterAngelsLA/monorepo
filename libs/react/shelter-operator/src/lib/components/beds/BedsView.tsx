@@ -147,7 +147,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
       try {
         const response = await deleteBeds({
-          variables: { data: { ids: ids } },
+          variables: { data: { ids } },
         });
         const errorMessage = extractOperationInfoMessage(
           response,
@@ -257,8 +257,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         description="This action cannot be undone."
         primaryAction={{
           label: 'Delete',
-          onClick: () => {
-            handleDelete(deleteConfirmation.bedIds);
+          onClick: async () => {
+            await handleDelete(deleteConfirmation.bedIds);
             closeDeleteConfirmation();
           },
         }}
@@ -277,8 +277,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           description="This will mark the bed as cleaned and ready for use."
           primaryAction={{
             label: 'Mark Ready',
-            onClick: () => {
-              handleMarkReady(readyRowObject);
+            onClick: async () => {
+              await handleMarkReady(readyRowObject);
               closeReadyConfirmation();
             },
           }}
