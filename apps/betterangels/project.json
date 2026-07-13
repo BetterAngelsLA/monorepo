@@ -39,8 +39,14 @@
       }
     },
     "eas-build": {
-      "dependsOn": ["sync-deps"],
+      "dependsOn": ["sync-deps", "resolve-deps"],
       "command": "eas build",
+      "options": {
+        "cwd": "apps/betterangels"
+      }
+    },
+    "resolve-deps": {
+      "command": "node tools/scripts/eas-resolve-deps.mjs betterangels",
       "options": {
         "cwd": "apps/betterangels"
       }
