@@ -47,8 +47,9 @@ export function RoomForm({
     formState: { errors, isValid },
   } = methods;
 
-  const { createRoom: createRoomMutation, loading: isCreating } =
-    useCreateRoom();
+  const { createRoom: createRoomMutation, loading: isCreating } = useCreateRoom(
+    { shelterId }
+  );
 
   const { updateRoom: updateRoomMutation, loading: isUpdating } =
     useUpdateRoom();

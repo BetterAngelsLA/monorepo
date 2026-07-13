@@ -6,6 +6,7 @@ import {
   UpdateRoomMutation,
   UpdateRoomMutationVariables,
 } from './__generated__/useUpdateRoom.generated';
+import { updateRoomSuccessTypename } from './__generated__/useUpdateRoom_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -25,7 +26,7 @@ export function useUpdateRoom(props?: TProps) {
       ? (result) => {
           const payload = result.data?.updateRoom;
 
-          if (payload?.__typename === 'RoomType') {
+          if (payload?.__typename === updateRoomSuccessTypename) {
             return [
               {
                 query: RoomDocument,

@@ -1,20 +1,22 @@
 import { useMutation } from '@apollo/client/react';
 import { CreateRoomInput } from '../../apollo';
-import { RoomDocument } from '../useRoom/__generated__/useRoom.generated';
+import { RoomsDocument } from '../useRooms/__generated__/useRooms.generated';
 import {
   CreateRoomDocument,
   CreateRoomMutation,
   CreateRoomMutationVariables,
 } from './__generated__/useCreateRoom.generated';
+import { createRoomSuccessTypename } from './__generated__/useCreateRoom_meta.generated';
 
 type TProps = {
+  shelterId: string;
   refetch?: boolean;
 };
 
 export type UseCreateRoomInput = CreateRoomInput;
 
-export function useCreateRoom(props?: TProps) {
-  const { refetch = true } = props || {};
+export function useCreateRoom(props: TProps) {
+  const { shelterId, refetch = true } = props || {};
 
   const [createRoom, { loading, error }] = useMutation<
     CreateRoomMutation,
@@ -25,11 +27,11 @@ export function useCreateRoom(props?: TProps) {
       ? (result) => {
           const payload = result.data?.createRoom;
 
-          if (payload?.__typename === 'RoomType') {
+          if (payload?.__typename === createRoomSuccessTypename) {
             return [
               {
-                query: RoomDocument,
-                variables: { id: payload.id },
+                query: RoomsDocument,
+                variables: { shelterId },
               },
             ];
           }

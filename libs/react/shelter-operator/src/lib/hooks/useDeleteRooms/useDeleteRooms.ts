@@ -7,6 +7,7 @@ import {
   DeleteRoomsMutation,
   DeleteRoomsMutationVariables,
 } from './__generated__/useDeleteRooms.generated';
+import { deleteRoomsSuccessTypename } from './__generated__/useDeleteRooms_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -25,7 +26,7 @@ export function useDeleteRooms(props: TProps) {
       ? (result) => {
           const payload = result.data?.deleteRooms;
 
-          if (payload?.__typename === 'BulkDeleteResult') {
+          if (payload?.__typename === deleteRoomsSuccessTypename) {
             return [
               { query: BedsDocument, variables: { shelterId } },
               { query: RoomsDocument, variables: { shelterId } },

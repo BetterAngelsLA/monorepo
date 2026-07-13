@@ -17,6 +17,7 @@ import {
   deleteRoomsOperationKey,
   deleteRoomsSuccessTypename,
 } from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
+import { roomSuccessTypename } from '../../hooks/useRoom/__generated__/useRoom_meta.generated';
 import { useRooms } from '../../hooks/useRooms';
 import {
   shelterCreateReservationRoute,
@@ -31,7 +32,7 @@ import { RoomTable, type Room } from '../RoomTable';
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
-  const { rooms: roomsData, loading, refetch } = useRooms(shelterId);
+  const { rooms: roomsData, loading } = useRooms(shelterId);
 
   const rooms: RoomType[] = roomsData.map((room) => ({
     id: room.id,
@@ -39,7 +40,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     status: room.status ?? RoomStatusChoices.Available,
     amenities: room.amenities ?? '',
     medicalRespite: room.medicalRespite,
-    __typename: 'RoomType',
+    __typename: roomSuccessTypename,
     accessibility: [],
     beds: [],
     demographics: [],
@@ -51,7 +52,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     storage: false,
   }));
 
-  const { cloneRoom } = useCloneRoom();
+  const { cloneRoom } = useCloneRoom({ shelterId });
   const { deleteRooms } = useDeleteRooms({ shelterId });
   const { showToast } = useToast();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{

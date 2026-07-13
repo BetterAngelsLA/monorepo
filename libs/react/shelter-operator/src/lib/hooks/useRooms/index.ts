@@ -1,1 +1,5 @@
-export { useRooms, type UseRoomsResultType } from './useRooms';
+export {
+  useRooms,
+  type UseRoomsResultItemType,
+  type UseRoomsResultType,
+} from './useRooms';

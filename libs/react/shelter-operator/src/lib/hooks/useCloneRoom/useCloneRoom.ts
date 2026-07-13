@@ -1,17 +1,19 @@
 import { useMutation } from '@apollo/client/react';
-import { RoomDocument } from '../useRoom/__generated__/useRoom.generated';
+import { RoomsDocument } from '../useRooms/__generated__/useRooms.generated';
 import {
   CloneRoomDocument,
   CloneRoomMutation,
   CloneRoomMutationVariables,
 } from './__generated__/useCloneRoom.generated';
+import { cloneRoomSuccessTypename } from './__generated__/useCloneRoom_meta.generated';
 
 type TProps = {
+  shelterId: string;
   refetch?: boolean;
 };
 
-export function useCloneRoom(props?: TProps) {
-  const { refetch = true } = props || {};
+export function useCloneRoom(props: TProps) {
+  const { shelterId, refetch = true } = props || {};
 
   const [cloneRoom, { loading, error }] = useMutation<
     CloneRoomMutation,
@@ -22,11 +24,11 @@ export function useCloneRoom(props?: TProps) {
       ? (result) => {
           const payload = result.data?.cloneRoom;
 
-          if (payload?.__typename === 'RoomType') {
+          if (payload?.__typename === cloneRoomSuccessTypename) {
             return [
               {
-                query: RoomDocument,
-                variables: { id: payload.id },
+                query: RoomsDocument,
+                variables: { shelterId },
               },
             ];
           }
