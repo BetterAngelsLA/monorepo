@@ -2,8 +2,7 @@ import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OperatorShelterType } from '../../apollo/graphql/__generated__/types';
-import { useBeds, type UseBedsResultItemType } from '../../hooks/useBeds';
+import { useBeds } from '../../hooks/useBeds';
 import { useCloneBed } from '../../hooks/useCloneBed';
 import {
   cloneBedOperationKey,
@@ -29,34 +28,6 @@ import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { useToast } from '../base-ui/toast';
 import { BedTable, type Bed, type BedRowObject } from '../BedTable';
 
-const UNASSIGNED_ROOM_ID = 'unassigned-room';
-const UNASSIGNED_ROOM_LABEL = 'Unassigned';
-
-function toBedRow(
-  bedData: UseBedsResultItemType,
-  roomId: string,
-  roomAssignment: string
-): Bed {
-  return {
-    __typename: 'BedType',
-    id: bedData.id,
-    name: bedData.name,
-    status: bedData.status,
-    maintenanceFlag: bedData.maintenanceFlag,
-    type: bedData.type ?? null,
-    accessibility: [],
-    b7: false,
-    demographics: [],
-    funders: [],
-    medicalNeeds: [],
-    pets: [],
-    shelter: {} as OperatorShelterType,
-    storage: false,
-    roomId,
-    roomAssignment,
-  };
-}
-
 export function BedsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
@@ -66,12 +37,9 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     const grouped = new Map<string, Bed[]>();
 
     for (const bed of bedsData) {
-      const roomId = bed.room?.id ?? UNASSIGNED_ROOM_ID;
-      const roomAssignment = bed.room?.name ?? UNASSIGNED_ROOM_LABEL;
+      const roomId = bed.room?.id ?? 'unassigned';
       const roomGroup = grouped.get(roomId) ?? [];
-
-      roomGroup.push(toBedRow(bed, roomId, roomAssignment));
-
+      roomGroup.push(bed);
       grouped.set(roomId, roomGroup);
     }
 
@@ -226,8 +194,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     (rowObject: BedRowObject) => {
       const state: Record<string, string | null> = {
         bedId: rowObject.id,
-        roomId:
-          rowObject.roomId !== UNASSIGNED_ROOM_ID ? rowObject.roomId : null,
+        roomId: rowObject.bed.room?.id ?? null,
       };
       navigate(shelterCreateReservationRoute(shelterId), { state });
     },

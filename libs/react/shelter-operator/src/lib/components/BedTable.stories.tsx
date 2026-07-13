@@ -7,23 +7,17 @@ const bed = (
   name: string,
   status: BedStatusChoices,
   roomId: string,
-  roomAssignment: string,
+  roomName: string,
   maintenanceFlag = false
 ): Bed => ({
   id,
-  accessibility: [],
-  b7: false,
-  demographics: [],
-  funders: [],
   maintenanceFlag,
-  medicalNeeds: [],
   name,
-  pets: [],
-  shelter: {} as never,
   status,
-  storage: false,
-  roomId,
-  roomAssignment,
+  room: {
+    id: roomId,
+    name: roomName,
+  },
 });
 
 const mockBeds: Bed[] = [

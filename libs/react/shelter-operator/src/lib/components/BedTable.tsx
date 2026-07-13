@@ -1,10 +1,7 @@
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  BedStatusChoices,
-  type BedType,
-} from '../apollo/graphql/__generated__/types';
+import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
 import { Button } from './base-ui/buttons';
 import {
   StatusBadge,
@@ -12,16 +9,17 @@ import {
 } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
 
-export type Bed = BedType & {
-  roomId: string;
-  roomAssignment: string;
+export type Bed = {
+  id: string;
+  name?: string | null;
+  status: BedStatusChoices;
+  maintenanceFlag: boolean;
+  room?: { id: string; name: string } | null;
 };
 
 export type BedRowObject = {
   id: string;
   bed: Bed;
-  roomId: string;
-  roomAssignment: string;
 };
 
 function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
@@ -129,8 +127,8 @@ export function BedTable({
         width: '1fr',
         cellClassName:
           'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (bed) => bed.roomAssignment || '—',
-        sortValue: (bed) => bed.roomAssignment || '',
+        render: (bed) => bed.room?.name ?? '—',
+        sortValue: (bed) => bed.room?.name ?? '',
       },
     ],
     []
@@ -144,8 +142,6 @@ export function BedTable({
       getRowObject={(bed) => ({
         id: bed.id,
         bed,
-        roomId: bed.roomId,
-        roomAssignment: bed.roomAssignment,
       })}
       getRowSlot={(rowObject) => (
         <div
