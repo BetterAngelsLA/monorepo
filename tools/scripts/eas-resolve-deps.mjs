@@ -34,7 +34,7 @@ const resolved = createPackageJson(project, graph, { isProduction: false });
 // Step 2: Resolve remaining "*" versions from root package.json
 // (Nx's createPackageJson only checks project's own package.json for apps)
 const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
-const rootDeps = { ...rootPkg.dependencies, ...rootPkg.devDependencies };
+const rootDeps = { ...rootPkg.devDependencies, ...rootPkg.dependencies };
 
 for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
   if (!resolved[section]) continue;
@@ -45,11 +45,19 @@ for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
   }
 }
 
+const unresolved = [];
+for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
+  if (!resolved[section]) continue;
+  for (const [name, version] of Object.entries(resolved[section])) {
+    if (version === '*') unresolved.push(`${section}.${name}`);
+  }
+}
+
 writeFileSync(pkgPath, JSON.stringify(resolved, null, 2) + '\n');
 
-const starLeft = Object.values(resolved.dependencies || {}).filter(v => v === '*').length;
+const totalDeps = Object.keys(resolved.dependencies || {}).length;
+const totalPeer = Object.keys(resolved.peerDependencies || {}).length;
 console.log(
-  `Resolved ${Object.keys(resolved.dependencies || {}).length} deps` +
-  (starLeft ? ` (${starLeft} still *, app-specific)` : '') +
-  `, ${Object.keys(resolved.peerDependencies || {}).length} peerDeps`
+  `Resolved ${totalDeps} deps, ${totalPeer} peerDeps` +
+  (unresolved.length ? ` (${unresolved.length} still *, app-specific)` : '')
 );
