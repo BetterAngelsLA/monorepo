@@ -9,9 +9,6 @@
   ],
   "targets": {
     "start": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "expo start --port 8081",
       "options": {
         "cwd": "apps/betterangels"
@@ -24,18 +21,12 @@
       }
     },
     "run-ios": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "expo run:ios",
       "options": {
         "cwd": "apps/betterangels"
       }
     },
     "run-android": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "expo run:android",
       "options": {
         "cwd": "apps/betterangels"
@@ -48,31 +39,18 @@
       }
     },
     "eas-build": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "eas build",
       "options": {
         "cwd": "apps/betterangels"
       }
     },
-    "sync-deps": {
-      "executor": "@nx/expo:sync-deps",
-      "options": {}
-    },
     "prebuild": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "expo prebuild --no-install",
       "options": {
         "cwd": "apps/betterangels"
       }
     },
     "eas-update": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "command": "eas update",
       "options": {
         "cwd": "apps/betterangels"
@@ -91,9 +69,6 @@
       }
     },
     "export": {
-      "dependsOn": [
-        "sync-deps"
-      ],
       "outputs": [
         "{projectRoot}/{options.outputDir}",
         "{workspaceRoot}/apps/betterangels/dist"
