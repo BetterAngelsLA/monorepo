@@ -134,8 +134,7 @@ export function BedForm({
 
       if (!(error instanceof BaError)) {
         setSubmissionError(
-          error.message ||
-            `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
+          `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
         );
       }
     }
