@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -7,6 +8,8 @@ import {
   useFilteredPropertyOptions,
   useUpdateRoom,
 } from '../../../hooks';
+import { createRoomMeta } from '../../../hooks/useCreateRoom/__generated__/useCreateRoom_meta.generated';
+import { updateRoomMeta } from '../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
 import { Form } from '../../form/Form';
 import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
 import { formSchema } from './constants/formSchema';
@@ -14,7 +17,6 @@ import type { RoomFormData } from './formTypes';
 import { buildCreateRoomInput, buildUpdateRoomInput } from './roomFormInput';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { RoomDetailsSection } from './sections/RoomDetailsSection';
-
 export type RoomFormProps = {
   shelterId: string;
   roomId?: string;
@@ -30,7 +32,6 @@ export function RoomForm({
   onSuccess,
   onCancel,
 }: RoomFormProps) {
-  const isEditMode = Boolean(roomId);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const methods = useForm<RoomFormData>({
@@ -42,12 +43,15 @@ export function RoomForm({
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isValid },
   } = methods;
 
-  const { createRoom, loading: isCreating } = useCreateRoom();
+  const { createRoom: createRoomMutation, loading: isCreating } =
+    useCreateRoom();
 
-  const { updateRoom, loading: isUpdating } = useUpdateRoom();
+  const { updateRoom: updateRoomMutation, loading: isUpdating } =
+    useUpdateRoom();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -57,49 +61,58 @@ export function RoomForm({
     setSubmissionError(null);
 
     try {
-      if (isEditMode && roomId) {
-        const { data: result } = await updateRoom({
+      if (roomId) {
+        const response = await updateRoomMutation({
           variables: {
             id: roomId,
             data: buildUpdateRoomInput(data),
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, 'updateRoom');
-        if (errorMessage) {
-          console.error(errorMessage);
-          setSubmissionError('Unable to update room. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateRoomMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       } else {
-        const { data: result } = await createRoom({
+        const response = await createRoomMutation({
           variables: {
             data: buildCreateRoomInput(data, shelterId),
           },
         });
 
-        const errorMessage = extractOperationInfoMessage(result, 'createRoom');
-        if (errorMessage) {
-          console.error(errorMessage);
-          setSubmissionError('Unable to create room. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...createRoomMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       }
+      if (!roomId) {
+        reset();
+      }
+      onSuccess?.();
     } catch (err) {
       const error = toError(err);
       console.error(
         `error ${roomId ? 'updating' : 'creating'} room: ${error.message}`
       );
-      setSubmissionError(
-        `Unable to ${roomId ? 'update' : 'create'} room. Please try again.`
-      );
-      return;
-    }
 
-    if (!isEditMode) {
-      reset();
+      if (!(error instanceof BaError)) {
+        setSubmissionError(
+          `Unable to ${roomId ? 'update' : 'create'} room. Please try again.`
+        );
+      }
     }
-    onSuccess?.();
   }
 
   function handleCancel() {
@@ -146,7 +159,7 @@ export function RoomForm({
             primaryLabel={
               isSubmitting
                 ? 'Submitting…'
-                : isEditMode
+                : roomId
                 ? 'Save Room'
                 : 'Create Room'
             }
