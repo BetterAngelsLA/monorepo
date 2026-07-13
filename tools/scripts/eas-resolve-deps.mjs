@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
+const R = require('remeda');
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(__dirname, '../..');
 
@@ -36,16 +37,26 @@ const resolved = createPackageJson(project, graph, { isProduction: false });
 const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
 const rootDeps = { ...rootPkg.devDependencies, ...rootPkg.dependencies };
 
+const SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies'];
+
+const starEntries = R.pipe(
+  SECTIONS,
+  R.filter(s => resolved[s]),
+  R.flatMap(s =>
+    R.pipe(
+      Object.entries(resolved[s]),
+      R.filter(([, v]) => v === '*'),
+      R.map(([name]) => ({ section: s, name }))
+    )
+  )
+);
+
 const unresolved = [];
-for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
-  if (!resolved[section]) continue;
-  for (const [name, version] of Object.entries(resolved[section])) {
-    if (version !== '*') continue;
-    if (rootDeps[name]) {
-      resolved[section][name] = rootDeps[name];
-    } else {
-      unresolved.push(`${section}.${name}`);
-    }
+for (const { section, name } of starEntries) {
+  if (rootDeps[name]) {
+    resolved[section][name] = rootDeps[name];
+  } else {
+    unresolved.push(`${section}.${name}`);
   }
 }
 
