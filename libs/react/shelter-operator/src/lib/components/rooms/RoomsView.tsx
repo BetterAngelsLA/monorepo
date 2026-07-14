@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,11 @@ import {
   RoomStatusChoices,
   type RoomType,
 } from '@monorepo/ba-platform/types';
+import { useCloneRoom } from '../../hooks/useCloneRoom';
+import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
+import { useDeleteRooms } from '../../hooks/useDeleteRooms';
+import { deleteRoomsMeta } from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
+import { useRooms } from '../../hooks/useRooms';
 import {
   shelterCreateReservationRoute,
   shelterCreateRoomRoute,
@@ -14,66 +20,72 @@ import {
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { RoomTable, type RoomRowObject } from '../RoomTable';
-import {
-  CloneRoomDocument,
-  DeleteRoomsDocument,
-  type CloneRoomMutation,
-  type CloneRoomMutationVariables,
-  type DeleteRoomsMutation,
-  type DeleteRoomsMutationVariables,
-} from './api/__generated__/roomMutations.generated';
-import {
-  GetRoomsDocument,
-  type GetRoomsQuery,
-  type GetRoomsQueryVariables,
-} from './api/__generated__/roomQueries.generated';
+import { useToast } from '../base-ui/toast';
+import { RoomTable, type Room } from '../RoomTable';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
-  const [actionError, setActionError] = useState<string | null>(null);
+
+  const { rooms: roomsData, loading } = useRooms(shelterId);
+
+  const rooms: Room[] = roomsData.map((room) => ({
+    id: room.id,
+    name: room.name,
+    status: room.status ?? RoomStatusChoices.Available,
+  }));
+
+  const { cloneRoom } = useCloneRoom({ shelterId });
+  const { deleteRooms } = useDeleteRooms({ shelterId });
+  const { showToast } = useToast();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     roomIds: string[];
     roomName?: string;
-  }>({ isOpen: false, roomIds: [] });
+  }>({ isOpen: false, roomIds: [], roomName: '' });
 
-  const { data, loading, refetch } = useQuery<
-    GetRoomsQuery,
-    GetRoomsQueryVariables
-  >(GetRoomsDocument, {
-    variables: { shelterId },
-    skip: !shelterId,
-  });
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeleteConfirmation({ isOpen: false, roomIds: [], roomName: '' });
+  }, []);
 
-  const [cloneRoom] = useMutation<
-    CloneRoomMutation,
-    CloneRoomMutationVariables
-  >(CloneRoomDocument);
+  const deleteConfirmationTitle =
+    deleteConfirmation.roomIds.length === 1
+      ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
+      : `Are you sure you want to delete the ${deleteConfirmation.roomIds.length} selected rooms?`;
 
-  const [deleteRooms] = useMutation<
-    DeleteRoomsMutation,
-    DeleteRoomsMutationVariables
-  >(DeleteRoomsDocument);
+  const handleClone = useCallback(
+    async (room: Room) => {
+      const errorMessage = 'Unable to clone room. Please try again.';
 
-  const rows: RoomType[] = (data?.rooms.results ?? []).map((room) => ({
-    id: room.id,
-    name: room.name,
-    status: room.status ?? RoomStatusChoices.Available,
-    amenities: room.amenities ?? '',
-    medicalRespite: room.medicalRespite,
-    __typename: 'RoomType',
-    accessibility: [],
-    beds: [],
-    demographics: [],
-    funders: [],
-    maintenanceFlag: false,
-    occupantIds: [],
-    pets: [],
-    shelter: {} as OperatorShelterType,
-    storage: false,
-  }));
+      try {
+        const response = await cloneRoom({ variables: { id: room.id } });
 
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...cloneRoomMeta,
+          fields: ['id'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error cloning room: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
+      }
+    },
+    [cloneRoom, showToast]
+  );
+
+  const handleEdit = useCallback(
+    (room: Room) => {
+      navigate(shelterEditRoomRoute(shelterId, room.id));
+    },
+    [navigate, shelterId]
+  );
   const handleDeleteRequest = useCallback(
     (roomIds: string[], roomName?: string) => {
       setDeleteConfirmation({ isOpen: true, roomIds, roomName });
@@ -81,73 +93,39 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
     []
   );
 
-  const closeDeleteConfirmation = useCallback(() => {
-    setDeleteConfirmation({ isOpen: false, roomIds: [] });
-  }, []);
+  const handleDelete = useCallback(
+    async (ids: string[]) => {
+      const plural = ids.length > 1 ? 's' : '';
+      const errorMessage = `Unable to delete room${plural}. Please try again.`;
 
-  const confirmDelete = useCallback(async () => {
-    setActionError(null);
-    try {
-      await deleteRooms({
-        variables: { data: { ids: deleteConfirmation.roomIds } },
-      });
-      await refetch();
-    } catch (e) {
-      setActionError(
-        e instanceof Error
-          ? e.message
-          : 'Unable to delete room(s). Please try again.'
-      );
-    }
-    closeDeleteConfirmation();
-  }, [
-    deleteConfirmation.roomIds,
-    deleteRooms,
-    refetch,
-    closeDeleteConfirmation,
-  ]);
-
-  const deleteConfirmationTitle = deleteConfirmation.roomName
-    ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
-    : 'Are you sure you want to delete the selected room?';
-
-  const handleEdit = useCallback(
-    (rowObject: RoomRowObject) => {
-      navigate(shelterEditRoomRoute(shelterId, rowObject.id));
-    },
-    [navigate, shelterId]
-  );
-
-  const handleClone = useCallback(
-    async (rowObject: RoomRowObject) => {
-      setActionError(null);
       try {
-        const { data: result } = await cloneRoom({
-          variables: { id: rowObject.id },
-          errorPolicy: 'all',
+        const response = await deleteRooms({ variables: { data: { ids } } });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...deleteRoomsMeta,
+          fields: ['ids'],
         });
-
-        const payload = result?.cloneRoom;
-        if (payload?.__typename === 'OperationInfo') {
-          setActionError(
-            payload.messages?.[0]?.message ||
-              'Unable to clone room. Please try again.'
-          );
-          return;
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
         }
-
-        await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error deleting room${plural}: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
       }
     },
-    [cloneRoom, refetch]
+    [deleteRooms, showToast]
   );
 
   const handleReserve = useCallback(
-    (rowObject: RoomRowObject) => {
+    (room: Room) => {
       navigate(shelterCreateReservationRoute(shelterId), {
-        state: { roomId: rowObject.id },
+        state: { roomId: room.id },
       });
     },
     [navigate, shelterId]
@@ -155,21 +133,14 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
 
   return (
     <>
-      {actionError && (
-        <div
-          className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-        >
-          {actionError}
-        </div>
-      )}
-
       <div>
         <RoomTable
-          rows={rows}
-          onRowClick={handleEdit}
+          rooms={rooms}
+          onEdit={handleEdit}
           onClone={handleClone}
-          onDeleteRooms={(roomIds) => handleDeleteRequest(roomIds)}
+          onDeleteRooms={(roomIds, roomName) =>
+            handleDeleteRequest(roomIds, roomName)
+          }
           onReserve={handleReserve}
           loading={loading}
         />
@@ -183,7 +154,10 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         description="This action cannot be undone."
         primaryAction={{
           label: 'Delete',
-          onClick: confirmDelete,
+          onClick: async () => {
+            await handleDelete(deleteConfirmation.roomIds);
+            closeDeleteConfirmation();
+          },
         }}
         secondaryAction={{
           label: 'Cancel',

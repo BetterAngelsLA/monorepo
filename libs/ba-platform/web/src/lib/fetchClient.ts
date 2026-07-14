@@ -18,7 +18,7 @@ import { readCsrfToken } from './csrfTokenProvider';
  * localStorage and cookie APIs.  Returns a ``fetch``-compatible function.
  *
  * Pass the result to ``ApiConfigProvider`` (as ``fetch``) and to Apollo's
- * ``UploadHttpLink`` (as the ``fetch`` option).
+ * ``HttpLink`` (as the ``fetch`` option).
  */
 export const createWebFetchClient = () =>
   composeFetchInterceptors(

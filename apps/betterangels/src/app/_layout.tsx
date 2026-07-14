@@ -14,8 +14,7 @@ import {
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
-import { ApolloLink } from '@apollo/client';
-import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import { ApolloLink, HttpLink } from '@apollo/client';
 import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import {
   createRefererInterceptor,
@@ -24,7 +23,6 @@ import {
   interceptorHmis,
   createErrorLink,
   loggerLink,
-  isReactNativeFileInstance,
 } from '@monorepo/expo/shared/clients';
 import {
   EnvironmentSwitcherProvider,
@@ -65,10 +63,9 @@ const fetchClient = createExpoFetchClient(apiUrl, [
   interceptorHmis,
 ]);
 
-const httpLink = new UploadHttpLink({
+const httpLink = new HttpLink({
   uri: getGraphqlUrl(apiUrl),
   fetch: fetchClient,
-  isExtractableFile: isReactNativeFileInstance,
 });
 
 const apolloLinks = [createErrorLink({ authPath: '/auth' }), httpLink];

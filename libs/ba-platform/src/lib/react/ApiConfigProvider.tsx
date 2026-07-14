@@ -19,7 +19,7 @@ export interface ApiConfigContextType {
  *
  * - **``fetch`` prop** — the composed interceptor chain (already injects
  *   ``X-Organization-ID`` and ``X-CSRFToken``).  Passed directly to
- *   Apollo's ``UploadHttpLink`` as its ``fetch`` option.  No extra
+ *   Apollo's ``HttpLink`` as its ``fetch`` option.  No extra
  *   headers or URL manipulation.
  *
  * - **``fetchClient`` (from ``useApiConfig()``)** — wraps the composed
@@ -32,7 +32,7 @@ export interface ApiConfigProviderProps {
   apiUrl: string;
   /**
    * Composed interceptor chain (org + CSRF headers pre-injected).
-   * Passed to Apollo ``UploadHttpLink`` as its ``fetch`` option.
+   * Passed to Apollo ``HttpLink`` as its ``fetch`` option.
    */
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }

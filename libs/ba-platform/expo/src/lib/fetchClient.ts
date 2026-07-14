@@ -34,7 +34,7 @@ import { createNativeTokenReader } from './csrfTokenProvider';
  *
  * Returns a ``fetch``-compatible function.  Pass it to
  * ``EnvironmentSwitcherProvider`` (as ``fetch``) and to Apollo's
- * ``UploadHttpLink`` (as the ``fetch`` option).
+ * ``HttpLink`` (as the ``fetch`` option).
  */
 export const createExpoFetchClient = (
   apiUrl: string,

@@ -1,6 +1,0 @@
-import type * as Types from '@monorepo/ba-platform/types';
-
-import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type NewShelterPhotoFragment = { __typename?: 'ShelterPhotoType', id: string, type: Types.ShelterPhotoTypeChoices, createdAt: any, file: { __typename?: 'DjangoImageType', name: string, url: string } };
-
-export const NewShelterPhotoFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"NewShelterPhoto"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ShelterPhotoType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}}]} as unknown as DocumentNode<NewShelterPhotoFragment, unknown>;

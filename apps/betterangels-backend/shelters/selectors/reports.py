@@ -3,12 +3,45 @@
 import datetime
 from collections import Counter
 from itertools import takewhile
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
+from zoneinfo import ZoneInfo
 
 import pghistory
 from django.db.models import Count, OuterRef, Q, Subquery, TextField
 from django.db.models.functions import Cast
 from shelters.enums import BedStatusChoices
+
+if TYPE_CHECKING:
+    from shelters.models import Shelter
+    from shelters.types.reporting import ReservationMetricsType
+
+
+# ── Shared date-range helpers ─────────────────────────────────────────────────
+# Reporting selectors take calendar dates and read them as LA-local days (all BA
+# shelters are in LA), then convert to a UTC window to query pgh_created_at.
+# New selectors should call report_date_range_to_utc rather than convert inline.
+
+LA_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def report_date_range_to_utc(
+    start_date: datetime.date, end_date: datetime.date
+) -> tuple[datetime.datetime, datetime.datetime]:
+    """Convert an inclusive LA-local date range to a ``[start, end)`` UTC window.
+
+    ``end`` is the UTC instant at the start of the day *after* ``end_date`` in
+    Los Angeles, so the returned half-open interval covers all of ``end_date``
+    locally. Ranges are unbounded; the natural limit is how far back data exists.
+
+    Raises:
+        ValueError: if ``end_date`` is before ``start_date``.
+    """
+    if end_date < start_date:
+        raise ValueError("end_date must be on or after start_date")
+
+    start_local = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=LA_TZ)
+    end_local = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ)
+    return start_local.astimezone(datetime.timezone.utc), end_local.astimezone(datetime.timezone.utc)
 
 
 class DailyBedCounts(TypedDict):
@@ -95,37 +128,76 @@ def report_bed_status_counts(
 
 
 def reservation_status_change_counts(
-    shelter_id: int,
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
-) -> dict[str, int]:
-    """
-    Count how many reservations changed to given statuses for a shelter in a date range.
+    *,
+    shelter: "Shelter",
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> "ReservationMetricsType":
+    """Count reservation status-change events for *shelter* within an inclusive window.
 
-    Each reservation is counted once per status.
+    Both endpoints are inclusive at the day level and interpreted in
+    America/Los_Angeles (via ``report_date_range_to_utc``): internally the end of
+    ``end_date`` is widened to the start of the next LA day so any event on
+    ``end_date`` (LA-local) is captured.
+
+    Returns a :class:`~shelters.types.reporting.ReservationMetricsType` with:
+
+    - ``check_in_overdue`` — reservations that became overdue
+    - ``cancelled`` — reservations that were cancelled
+    - ``checked_in`` — reservations that were checked in
+    - ``check_in_overdue_to_checked_in`` — overdue reservations that were
+      subsequently checked in within the window (sourced from ``pgh_diff``)
+
+    Each reservation is counted at most once per bucket (``distinct=True``).
+
+    Args:
+        shelter: ``Shelter`` whose reservations are aggregated.
+        start_date: Inclusive lower bound of the date range.
+        end_date: Inclusive upper bound of the date range.  Must be on or
+            after ``start_date``.
+
+    Raises:
+        ValueError: If ``end_date`` is before ``start_date``.
     """
+    # Local imports avoid a circular dependency: ``shelters.types`` imports
+    # from ``shelters.selectors``, so this module must not import them at load time.
     from shelters.models import Reservation
+    from shelters.types.reporting import ReservationMetricsType
 
-    events = pghistory.models.Events.objects.filter(
-        pgh_obj_id__in=Reservation.objects.filter(Q(bed__shelter_id=shelter_id) | Q(room__shelter_id=shelter_id))
+    start_dt, end_dt = report_date_range_to_utc(start_date, end_date)
+
+    # pghistory.models.Events.pgh_obj_id is a text column; cast Reservation.pk to text for the IN.
+    reservation_ids = (
+        Reservation.objects.filter(Q(bed__shelter_id=shelter.pk) | Q(room__shelter_id=shelter.pk))
         .annotate(pk_text=Cast("pk", TextField()))
-        .values("pk_text"),
-        pgh_label="reservation.status_change",
-        pgh_created_at__gte=start_date,
-        pgh_created_at__lt=end_date,
+        .values("pk_text")
     )
 
-    return events.aggregate(
-        STATUS_TO_CHECK_IN_OVERDUE=Count(
+    events = pghistory.models.Events.objects.filter(
+        pgh_obj_id__in=reservation_ids,
+        pgh_label="reservation.status_change",
+        pgh_created_at__gte=start_dt,
+        pgh_created_at__lt=end_dt,
+    )
+
+    # ``Count(..., filter=...)`` returns ``None`` on empty rowsets; coerce to 0.
+    aggregated = events.aggregate(
+        check_in_overdue=Count(
             "pgh_obj_id",
             distinct=True,
             filter=Q(pgh_data__status="check_in_overdue"),
         ),
-        STATUS_TO_CANCELLED=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
-        STATUS_TO_CHECKED_IN=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
-        STATUS_OVERDUE_TO_CHECKED_IN=Count(
+        cancelled=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="cancelled")),
+        checked_in=Count("pgh_obj_id", distinct=True, filter=Q(pgh_data__status="checked_in")),
+        check_in_overdue_to_checked_in=Count(
             "pgh_obj_id",
             distinct=True,
             filter=Q(pgh_diff__status__0="check_in_overdue", pgh_diff__status__1="checked_in"),
         ),
+    )
+    return ReservationMetricsType(
+        check_in_overdue=aggregated["check_in_overdue"] or 0,
+        cancelled=aggregated["cancelled"] or 0,
+        checked_in=aggregated["checked_in"] or 0,
+        check_in_overdue_to_checked_in=aggregated["check_in_overdue_to_checked_in"] or 0,
     )

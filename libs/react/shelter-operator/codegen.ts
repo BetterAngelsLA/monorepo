@@ -11,8 +11,13 @@ const config: CodegenConfig = {
   generates: {
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
+      plugins: [
+        'typescript-operations',
+        'typed-document-node',
+        '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
+      ],
       config: {
+        nonOptionalTypename: true,
         scalars: {
           NonBlankString: 'string',
         },

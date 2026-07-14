@@ -9,4 +9,5 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'html'],
   coverageDirectory: '../../coverage/libs/ba-platform',
   testPathIgnorePatterns: ['/web/', '/expo/'],
+  setupFiles: ['./test-setup.ts'],
 };

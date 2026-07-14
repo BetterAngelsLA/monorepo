@@ -1,6 +1,13 @@
 from typing import Any
 from unittest.mock import ANY, patch
 
+from common.imgproxy import IMGPROXY_SWITCH
+from common.models import Attachment
+from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
+from deepdiff import DeepDiff
+from unittest_parametrize import parametrize
+from waffle.testutils import override_switch
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -27,11 +34,6 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from common.imgproxy import IMGPROXY_SWITCH
-from common.models import Attachment
-from deepdiff import DeepDiff
-from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 
 @override_switch(IMGPROXY_SWITCH, active=False)
@@ -503,20 +505,20 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_generate_client_profile_photo_upload(self) -> None:
         with (
             patch(
-                "clients.services.client_profile_photo.generate_s3_presigned_upload_urls",
-                return_value={
-                    "uploads": [
-                        {
-                            "ref_id": "photo-ref-1",
-                            "key": "media/client_profile_photos/photo.jpg",
-                            "url": "https://s3.example.com/upload-photo",
-                            "fields": {"Policy": "abc", "X-Amz-Signature": "sig1"},
-                        },
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
+                return_value=PresignedS3UploadBatchResult(
+                    uploads=[
+                        PresignedS3UploadResult(
+                            ref_id="photo-ref-1",
+                            key="media/client_profile_photos/photo.jpg",
+                            url="https://s3.example.com/upload-photo",
+                            fields={"Policy": "abc", "X-Amz-Signature": "sig1"},
+                        ),
                     ]
-                },
+                ),
             ),
             patch(
-                "clients.services.client_profile_photo.create_upload_token",
+                "common.services.file_upload.create_upload_token",
                 return_value="photo-token-1",
             ),
         ):
@@ -538,10 +540,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload(self) -> None:
         with (
-            patch("clients.services.client_profile_photo.validate_upload_token", return_value=True),
-            patch("clients.services.client_profile_photo.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
-                "clients.services.client_profile_photo.strip_storage_location",
+                "common.services.file_upload.strip_storage_location",
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
@@ -563,7 +565,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIn("client_profile_photos/photo.jpg", client_profile.profile_photo.name)
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
-        with patch("clients.services.client_profile_photo.validate_upload_token", return_value=False):
+        with patch("common.services.file_upload.validate_upload_token", return_value=False):
             expected_query_count = 6
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
@@ -573,6 +575,55 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 )
 
         self.assertIsNotNone(response.get("errors"))
+
+    def test_delete_client_profile_photo(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+
+        # First, set a profile photo via the existing upload fixture.
+        photo_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
+        self._update_client_profile_photo_fixture(
+            client_profile_id,
+            photo_content,
+            "profile_photo.jpg",
+        )
+
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertIsNotNone(client_profile.profile_photo)
+        self.assertTrue(client_profile.profile_photo.name)
+
+        # Now delete the photo.
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_client_profile_photo_fixture(client_profile_id)
+
+        result = response["data"]["deleteClientProfilePhoto"]
+        self.assertEqual(result["id"], client_profile_id)
+        self.assertIsNone(result["profilePhoto"])
+
+        # Verify the database row was updated.
+        client_profile.refresh_from_db()
+        self.assertEqual(client_profile.profile_photo.name, "")
+
+    def test_delete_client_profile_photo_no_photo(self) -> None:
+        """Deleting when there is no photo should not error."""
+        # Create a fresh profile that has no photo.
+        client_profile = self._create_client_profile_fixture({"firstName": "NoPhoto"})
+        client_profile_id = client_profile["data"]["createClientProfile"]["id"]
+
+        # Verify it has no photo.
+        db_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertEqual(db_profile.profile_photo.name, "")
+
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_client_profile_photo_fixture(client_profile_id)
+
+        result = response["data"]["deleteClientProfilePhoto"]
+        self.assertEqual(result["id"], client_profile_id)
+        self.assertIsNone(result["profilePhoto"])
 
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):
@@ -963,25 +1014,25 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with (
             patch(
-                "clients.services.client_document.generate_s3_presigned_upload_urls",
-                return_value={
-                    "uploads": [
-                        {
-                            "ref_id": "ref-1",
-                            "key": "media/attachments/doc1.pdf",
-                            "url": "https://s3.example.com/upload1",
-                            "fields": {"Policy": "abc", "X-Amz-Signature": "sig1"},
-                        },
-                        {
-                            "ref_id": "ref-2",
-                            "key": "media/attachments/doc2.jpg",
-                            "url": "https://s3.example.com/upload2",
-                            "fields": {"Policy": "def", "X-Amz-Signature": "sig2"},
-                        },
+                "common.services.file_upload.generate_s3_presigned_upload_urls",
+                return_value=PresignedS3UploadBatchResult(
+                    uploads=[
+                        PresignedS3UploadResult(
+                            ref_id="ref-1",
+                            key="media/attachments/doc1.pdf",
+                            url="https://s3.example.com/upload1",
+                            fields={"Policy": "abc", "X-Amz-Signature": "sig1"},
+                        ),
+                        PresignedS3UploadResult(
+                            ref_id="ref-2",
+                            key="media/attachments/doc2.jpg",
+                            url="https://s3.example.com/upload2",
+                            fields={"Policy": "def", "X-Amz-Signature": "sig2"},
+                        ),
                     ]
-                },
+                ),
             ),
-            patch("clients.services.client_document.create_upload_token", side_effect=["token-1", "token-2"]),
+            patch("common.services.file_upload.create_upload_token", side_effect=["token-1", "token-2"]),
         ):
             expected_query_count = 5
             with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -1023,14 +1074,14 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with (
-            patch("clients.services.client_document.validate_upload_token", return_value=True),
-            patch("clients.services.client_document.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch(
-                "clients.services.client_document.strip_storage_location",
+                "common.services.file_upload.strip_storage_location",
                 side_effect=lambda key: key.removeprefix("media/"),
             ),
         ):
-            expected_query_count = 35
+            expected_query_count = 37
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1066,8 +1117,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             },
         ]
 
-        with patch("clients.services.client_document.validate_upload_token", return_value=False):
-            expected_query_count = 6
+        with patch("common.services.file_upload.validate_upload_token", return_value=False):
+            expected_query_count = 9
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_document_uploads_fixture(
                     self.client_profile_1["id"],
@@ -1101,8 +1152,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         with (
-            patch("clients.services.client_document.validate_upload_token", side_effect=[True, False]),
-            patch("clients.services.client_document.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", side_effect=[True, False]),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
         ):
             response = self._resolve_client_document_uploads_fixture(
                 self.client_profile_1["id"],
@@ -1144,8 +1195,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             original_save(self_attachment, *args, **kwargs)
 
         with (
-            patch("clients.services.client_document.validate_upload_token", return_value=True),
-            patch("clients.services.client_document.s3_key_exists", return_value=True),
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
             patch.object(Attachment, "save", save_side_effect),
         ):
             response = self._resolve_client_document_uploads_fixture(

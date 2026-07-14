@@ -6,9 +6,9 @@ export type DeleteShelterPhotosMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteShelterPhotosMutation = { __typename?: 'Mutation', deleteShelterPhotos:
-    | { __typename?: 'BulkDeleteResult', ids: Array<string> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteShelterPhotosMutation = { __typename: 'Mutation', deleteShelterPhotos:
+    | { __typename: 'BulkDeleteResult', ids: Array<string> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

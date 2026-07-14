@@ -1,7 +1,6 @@
-import { mergeCss } from '@monorepo/react/shared';
-import { BookCheck, CopyPlus, Minus } from 'lucide-react';
+import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Button } from './base-ui/buttons';
 import {
   StatusBadge,
@@ -14,19 +13,16 @@ import {
   type RoomType,
 } from '@monorepo/ba-platform/types';
 
-export type Room = RoomType;
-
-export type RoomRowObject = {
+export type Room = {
   id: string;
-  room: Room;
+  name: string;
+  status: RoomStatusChoices;
 };
 
 type RoomTableProps = {
-  rows: Room[];
+  rooms: Room[];
   getRowKey?: (item: Room, index: number) => string;
-  onRowClick?: (rowObject: RoomRowObject, rowIndex: number) => void;
-  selectedIds?: string[];
-  onSelectedIdsChange?: (ids: string[]) => void;
+  onRowClick?: (room: Room, rowIndex: number) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -38,9 +34,10 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onClone?: (rowObject: RoomRowObject) => void;
-  onDeleteRooms?: (roomIds: string[]) => void;
-  onReserve?: (rowObject: RoomRowObject) => void;
+  onEdit?: (room: Room) => void;
+  onClone?: (room: Room) => void;
+  onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
+  onReserve?: (room: Room) => void;
 };
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
@@ -64,11 +61,9 @@ function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
 }
 
 export function RoomTable({
-  rows,
+  rooms,
   getRowKey,
   onRowClick,
-  selectedIds,
-  onSelectedIdsChange,
   loading,
   loadingState,
   emptyState,
@@ -80,62 +75,13 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
+  onEdit,
   onClone,
   onDeleteRooms,
   onReserve,
 }: RoomTableProps) {
-  const selectedSet = useMemo(() => new Set(selectedIds ?? []), [selectedIds]);
-
-  const toggleRowSelection = useCallback(
-    (roomId: string) => {
-      if (!onSelectedIdsChange) return;
-      const next = new Set(selectedSet);
-      if (next.has(roomId)) {
-        next.delete(roomId);
-      } else {
-        next.add(roomId);
-      }
-      onSelectedIdsChange([...next]);
-    },
-    [onSelectedIdsChange, selectedSet]
-  );
-
-  const showCheckboxColumn = !!onSelectedIdsChange;
-
   const columns: TableColumn<Room>[] = useMemo(
     () => [
-      ...(showCheckboxColumn
-        ? [
-            {
-              key: 'selected' as const,
-              label: '',
-              width: '2rem',
-              render: (room: Room) => {
-                const isSelected = selectedSet.has(room.id);
-                return (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    aria-label={isSelected ? 'Deselect room' : 'Select room'}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleRowSelection(room.id);
-                    }}
-                    className={mergeCss([
-                      'inline-flex size-5 items-center justify-center rounded border transition-colors',
-                      isSelected
-                        ? 'border-[#4A90E2] bg-[#4A90E2] text-white'
-                        : 'border-[#808080] bg-white text-transparent hover:border-[#4A90E2]',
-                    ])}
-                  >
-                    <Minus size={14} strokeWidth={3} />
-                  </button>
-                );
-              },
-            },
-          ]
-        : []),
       {
         key: 'name',
         label: 'Room',
@@ -157,16 +103,15 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    [selectedSet, toggleRowSelection, showCheckboxColumn]
+    []
   );
 
   return (
-    <Table<Room, RoomRowObject>
+    <Table<Room>
       columns={columns}
-      rows={rows}
+      rows={rooms}
       getRowKey={getRowKey ?? ((room) => room.id)}
-      getRowObject={(room) => ({ id: room.id, room })}
-      getRowSlot={(rowObject) => (
+      getRowSlot={(room) => (
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
@@ -180,7 +125,7 @@ export function RoomTable({
               className="text-[#747A82]"
               aria-label="Reserve room"
               leftIcon={<BookCheck size={22} stroke="black" />}
-              onClick={() => onReserve(rowObject)}
+              onClick={() => onReserve(room)}
             />
           )}
           <Button
@@ -189,22 +134,23 @@ export function RoomTable({
             className="text-[#747A82]"
             aria-label="Clone room"
             leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone?.(rowObject)}
+            onClick={() => onClone?.(room)}
           />
           <Button
             type="button"
             variant="edit"
             className="text-[#747A82]"
-            onClick={() => onRowClick?.(rowObject, 0)}
+            onClick={() => onEdit?.(room)}
           />
           <Button
             type="button"
             variant="trash"
-            onClick={() => onDeleteRooms?.([rowObject.id])}
+            onClick={() => onDeleteRooms?.([room.id], room.name)}
           />
         </div>
       )}
       trailingColumnWidth="140px"
+      onRowClick={onRowClick}
       loading={loading}
       loadingState={loadingState}
       emptyState={emptyState}
