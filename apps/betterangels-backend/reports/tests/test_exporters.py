@@ -19,6 +19,10 @@ from shelters.types.reporting import (
 from strawberry import ID
 
 from reports.export_to_csv import (
+    AVG_DAYS_TO_OCCUPANCY,
+    DAILY_BED_STATUS_METRICS,
+    DAILY_OCCUPANCY_METRICS,
+    RESERVATION_METRICS,
     avg_days_to_occupancy_to_csv,
     csv_files_to_zip,
     daily_bed_status_metrics_to_csv,
@@ -28,13 +32,11 @@ from reports.export_to_csv import (
     rows_to_csv,
 )
 from reports.export_to_xlsx import (
-    AVG_DAYS_TO_OCCUPANCY,
-    DAILY_BED_STATUS_METRICS,
-    DAILY_OCCUPANCY_METRICS,
-    RESERVATION_METRICS,
-    metrics_to_zip as xlsx_metrics_to_zip,
     rows_to_xlsx,
     xlsx_files_to_zip,
+)
+from reports.export_to_xlsx import (
+    metrics_to_zip as xlsx_metrics_to_zip,
 )
 
 
@@ -42,9 +44,47 @@ def _xlsx_rows(xlsx_content: bytes, worksheet_name: str = "Sheet1") -> list[list
     workbook = load_workbook(BytesIO(xlsx_content))
     worksheet = workbook[worksheet_name]
 
+    return [[value if value is not None else "" for value in row] for row in worksheet.iter_rows(values_only=True)]
+
+
+def _shelter_occupancy_metrics() -> ShelterOccupancyMetricsType:
+    return ShelterOccupancyMetricsType(
+        shelter_id=ID("shelter-1"),
+        start_date=date(2026, 6, 1),
+        end_date=date(2026, 6, 30),
+        daily_occupancy=[
+            DailyOccupancyMetricsType(
+                date=date(2026, 6, 1),
+                occupied_count=8,
+                total_beds=10,
+                occupancy_pct=80.0,
+            )
+        ],
+        daily_bed_status=[
+            DailyBedStatusMetricsType(
+                date=date(2026, 6, 1),
+                available=2,
+                occupied=8,
+                reserved=1,
+                out_of_service=0,
+            )
+        ],
+        reservation_metrics=ReservationMetricsType(
+            check_in_overdue=3,
+            cancelled=2,
+            checked_in=11,
+            check_in_overdue_to_checked_in=1,
+        ),
+        avg_days_to_occupancy=4.5,
+    )
+
+
+def _all_metric_export_options() -> list[str]:
     return [
-        [value if value is not None else "" for value in row]
-        for row in worksheet.iter_rows(values_only=True)
+        DAILY_OCCUPANCY_METRICS,
+        DAILY_BED_STATUS_METRICS,
+        RESERVATION_METRICS,
+        AVG_DAYS_TO_OCCUPANCY,
     ]
 
 
@@ -287,35 +327,8 @@ class TestShelterMetricsExport:
 
     def test_metrics_to_zip_exports_all_metric_files(self) -> None:
         zip_content = metrics_to_zip(
-            ShelterOccupancyMetricsType(
-                shelter_id=ID("shelter-1"),
-                start_date=date(2026, 6, 1),
-                end_date=date(2026, 6, 30),
-                daily_occupancy=[
-                    DailyOccupancyMetricsType(
-                        date=date(2026, 6, 1),
-                        occupied_count=8,
-                        total_beds=10,
-                        occupancy_pct=80.0,
-                    )
-                ],
-                daily_bed_status=[
-                    DailyBedStatusMetricsType(
-                        date=date(2026, 6, 1),
-                        available=2,
-                        occupied=8,
-                        reserved=1,
-                        out_of_service=0,
-                    )
-                ],
-                reservation_metrics=ReservationMetricsType(
-                    check_in_overdue=3,
-                    cancelled=2,
-                    checked_in=11,
-                    check_in_overdue_to_checked_in=1,
-                ),
-                avg_days_to_occupancy=4.5,
-            )
+            _shelter_occupancy_metrics(),
+            _all_metric_export_options(),
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
@@ -349,45 +362,38 @@ class TestShelterMetricsExport:
             ["2026-06-01", "2026-06-30", "shelter-1", "3", "2", "11", "1"],
         ]
 
-    def test_metrics_to_xlsx_zip_exports_all_metric_files(self) -> None:
-        options = [
-            DAILY_OCCUPANCY_METRICS,
-            DAILY_BED_STATUS_METRICS,
-            RESERVATION_METRICS,
-            AVG_DAYS_TO_OCCUPANCY,
-        ]
+    def test_metrics_to_zip_exports_only_selected_metric_files(self) -> None:
+        zip_content = metrics_to_zip(
+            _shelter_occupancy_metrics(),
+            [DAILY_OCCUPANCY_METRICS, RESERVATION_METRICS],
+        )
 
+        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
+            assert sorted(zip_file.namelist()) == [
+                "20260601_20260630_daily_occupancy_metrics.csv",
+                "20260601_20260630_reservation_metrics.csv",
+            ]
+
+    def test_metrics_to_zip_exports_no_files_for_empty_options(self) -> None:
+        zip_content = metrics_to_zip(
+            _shelter_occupancy_metrics(),
+            [],
+        )
+
+        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
+            assert zip_file.namelist() == []
+
+    def test_metrics_to_zip_rejects_unknown_options(self) -> None:
+        with pytest.raises(ValueError, match="unknown_metric"):
+            metrics_to_zip(
+                _shelter_occupancy_metrics(),
+                [DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+            )
+
+    def test_metrics_to_xlsx_zip_exports_all_metric_files(self) -> None:
         zip_content = xlsx_metrics_to_zip(
-            ShelterOccupancyMetricsType(
-                shelter_id=ID("shelter-1"),
-                start_date=date(2026, 6, 1),
-                end_date=date(2026, 6, 30),
-                daily_occupancy=[
-                    DailyOccupancyMetricsType(
-                        date=date(2026, 6, 1),
-                        occupied_count=8,
-                        total_beds=10,
-                        occupancy_pct=80.0,
-                    )
-                ],
-                daily_bed_status=[
-                    DailyBedStatusMetricsType(
-                        date=date(2026, 6, 1),
-                        available=2,
-                        occupied=8,
-                        reserved=1,
-                        out_of_service=0,
-                    )
-                ],
-                reservation_metrics=ReservationMetricsType(
-                    check_in_overdue=3,
-                    cancelled=2,
-                    checked_in=11,
-                    check_in_overdue_to_checked_in=1,
-                ),
-                avg_days_to_occupancy=4.5,
-            ),
-            options,
+            _shelter_occupancy_metrics(),
+            _all_metric_export_options(),
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
@@ -425,35 +431,7 @@ class TestShelterMetricsExport:
 
     def test_metrics_to_xlsx_zip_exports_only_selected_metric_files(self) -> None:
         zip_content = xlsx_metrics_to_zip(
-            ShelterOccupancyMetricsType(
-                shelter_id=ID("shelter-1"),
-                start_date=date(2026, 6, 1),
-                end_date=date(2026, 6, 30),
-                daily_occupancy=[
-                    DailyOccupancyMetricsType(
-                        date=date(2026, 6, 1),
-                        occupied_count=8,
-                        total_beds=10,
-                        occupancy_pct=80.0,
-                    )
-                ],
-                daily_bed_status=[
-                    DailyBedStatusMetricsType(
-                        date=date(2026, 6, 1),
-                        available=2,
-                        occupied=8,
-                        reserved=1,
-                        out_of_service=0,
-                    )
-                ],
-                reservation_metrics=ReservationMetricsType(
-                    check_in_overdue=3,
-                    cancelled=2,
-                    checked_in=11,
-                    check_in_overdue_to_checked_in=1,
-                ),
-                avg_days_to_occupancy=4.5,
-            ),
+            _shelter_occupancy_metrics(),
             [DAILY_OCCUPANCY_METRICS, RESERVATION_METRICS],
         )
 
@@ -465,25 +443,19 @@ class TestShelterMetricsExport:
 
     def test_metrics_to_xlsx_zip_exports_no_files_for_empty_options(self) -> None:
         zip_content = xlsx_metrics_to_zip(
-            ShelterOccupancyMetricsType(
-                shelter_id=ID("shelter-1"),
-                start_date=date(2026, 6, 1),
-                end_date=date(2026, 6, 30),
-                daily_occupancy=[],
-                daily_bed_status=[],
-                reservation_metrics=ReservationMetricsType(
-                    check_in_overdue=0,
-                    cancelled=0,
-                    checked_in=0,
-                    check_in_overdue_to_checked_in=0,
-                ),
-                avg_days_to_occupancy=None,
-            ),
+            _shelter_occupancy_metrics(),
             [],
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
             assert zip_file.namelist() == []
+
+    def test_metrics_to_xlsx_zip_rejects_unknown_options(self) -> None:
+        with pytest.raises(ValueError, match="unknown_metric"):
+            xlsx_metrics_to_zip(
+                _shelter_occupancy_metrics(),
+                [DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+            )
 
 
 class TestNoteResourceExport:
