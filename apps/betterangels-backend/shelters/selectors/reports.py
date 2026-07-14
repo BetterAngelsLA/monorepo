@@ -1,9 +1,9 @@
 """Report-gathering selectors — historical data aggregation."""
 
 import datetime
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, Iterable, TypedDict
 from zoneinfo import ZoneInfo
 
 import pghistory
@@ -13,7 +13,7 @@ from shelters.enums import BedStatusChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
-    from shelters.types.reporting import ReservationMetricsType
+    from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType
 
 
 # ── Shared date-range helpers ─────────────────────────────────────────────────
@@ -42,6 +42,86 @@ def report_date_range_to_utc(
     start_local = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=LA_TZ)
     end_local = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ)
     return start_local.astimezone(datetime.timezone.utc), end_local.astimezone(datetime.timezone.utc)
+
+
+def report_day_bounds_utc(day: datetime.date) -> tuple[datetime.datetime, datetime.datetime]:
+    """Return the ``[start, end)`` UTC instants bounding one LA-local day."""
+    start = datetime.datetime.combine(day, datetime.time.min, tzinfo=LA_TZ).astimezone(datetime.timezone.utc)
+    end = datetime.datetime.combine(day + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ).astimezone(
+        datetime.timezone.utc
+    )
+    return start, end
+
+
+def iter_report_days(start_date: datetime.date, end_date: datetime.date) -> list[datetime.date]:
+    """Return every LA-local date from ``start_date`` to ``end_date`` inclusive."""
+    days = []
+    day = start_date
+    while day <= end_date:
+        days.append(day)
+        day += datetime.timedelta(days=1)
+    return days
+
+
+def _reservation_occupancy_intervals(
+    *, bed_ids: Iterable[int], end_utc: datetime.datetime
+) -> dict[int, list[tuple[datetime.datetime, datetime.datetime | None, int]]]:
+    """Reconstruct per-bed ``CHECKED_IN`` occupancy intervals from the reservation event stream.
+
+    Reads every ``ReservationEvent`` (any label) with ``pgh_created_at < end_utc``
+    whose snapshotted ``bed_id`` is in ``bed_ids``, groups by reservation, and
+    walks each chronologically. An interval opens when a reservation becomes
+    ``CHECKED_IN`` and closes at its next transition out of ``CHECKED_IN``; one
+    still open at the reservation's last event is returned with ``freed=None``.
+    Each interval is attributed to the bed snapshotted at check-in, so bed
+    reassignment and since-deleted beds are handled (event rows keep the
+    historical ``bed_id``).
+
+    Returns ``{bed_id: [(check_in, freed_or_None, reservation_id), ...]}`` with
+    each list sorted by ``check_in``.
+    """
+    from shelters.enums import ReservationStatusChoices
+    from shelters.models import Reservation
+
+    bed_ids = set(bed_ids)
+    if not bed_ids:
+        return {}
+
+    reservation_event_model = Reservation.pgh_event_model  # type: ignore[attr-defined]
+    rows = (
+        reservation_event_model.objects.filter(bed_id__in=bed_ids, pgh_created_at__lt=end_utc)
+        .order_by("pgh_obj_id", "pgh_created_at", "pgh_id")
+        .values_list("pgh_obj_id", "bed_id", "status", "pgh_created_at")
+    )
+
+    events_by_reservation: dict[int, list[tuple[int, str, datetime.datetime]]] = defaultdict(list)
+    for reservation_id, bed_id, status, created_at in rows:
+        events_by_reservation[reservation_id].append((bed_id, status, created_at))
+
+    checked_in = ReservationStatusChoices.CHECKED_IN
+    intervals_by_bed: dict[int, list[tuple[datetime.datetime, datetime.datetime | None, int]]] = defaultdict(list)
+
+    for reservation_id, events in events_by_reservation.items():
+        # (check_in_time, bed_id) of the currently-open interval, or None.
+        open_interval: tuple[datetime.datetime, int] | None = None
+        prev_status: str | None = None
+        for bed_id, status, created_at in events:
+            is_in = status == checked_in
+            was_in = prev_status == checked_in
+            if is_in and not was_in:
+                open_interval = (created_at, bed_id)
+            elif was_in and not is_in and open_interval is not None:
+                open_start, open_bed = open_interval
+                intervals_by_bed[open_bed].append((open_start, created_at, reservation_id))
+                open_interval = None
+            prev_status = status
+        if open_interval is not None:
+            open_start, open_bed = open_interval
+            intervals_by_bed[open_bed].append((open_start, None, reservation_id))
+
+    for intervals in intervals_by_bed.values():
+        intervals.sort(key=lambda interval: interval[0])
+    return dict(intervals_by_bed)
 
 
 class DailyBedCounts(TypedDict):
@@ -201,3 +281,82 @@ def reservation_status_change_counts(
         checked_in=aggregated["checked_in"] or 0,
         check_in_overdue_to_checked_in=aggregated["check_in_overdue_to_checked_in"] or 0,
     )
+
+
+def daily_occupancy(
+    *,
+    shelter: "Shelter",
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> "list[DailyOccupancyMetricsType]":
+    """Daily occupied-bed counts and occupancy percentage for a shelter.
+
+    A bed is occupied on an LA-local day when a reconstructed ``CHECKED_IN``
+    interval (see ``_reservation_occupancy_intervals``) overlaps that day.
+    ``total_beds`` is the number of beds that existed that day, from ``bed.add`` /
+    ``bed.remove``. ``occupancy_pct`` is ``occupied / total * 100`` rounded to two
+    places (``0.0`` when no beds existed).
+
+    Both endpoints are inclusive and interpreted in America/Los_Angeles.
+
+    Raises:
+        ValueError: if ``end_date`` is before ``start_date``.
+    """
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
+    from shelters.types.reporting import DailyOccupancyMetricsType
+
+    _, end_utc = report_date_range_to_utc(start_date, end_date)
+    days = iter_report_days(start_date, end_date)
+
+    def _row(day: datetime.date, occupied: int, total: int) -> DailyOccupancyMetricsType:
+        pct = round(occupied / total * 100, 2) if total else 0.0
+        return DailyOccupancyMetricsType(date=day, occupied_count=occupied, total_beds=total, occupancy_pct=pct)
+
+    # Beds that existed each day, reconstructed from bed.add / bed.remove.
+    next_event_subq = (
+        BedEvent.objects.filter(
+            pgh_obj_id=OuterRef("pgh_obj_id"),
+            pgh_created_at__gt=OuterRef("pgh_created_at"),
+        )
+        .order_by("pgh_created_at")
+        .values("pgh_created_at")[:1]
+    )
+    bed_events = list(
+        BedEvent.objects.filter(shelter_id=shelter.pk, pgh_created_at__lt=end_utc)
+        .exclude(pgh_label="bed.remove")
+        .annotate(next_event_at=Subquery(next_event_subq))
+        .order_by("pgh_created_at")
+        .values("pgh_obj_id", "pgh_created_at", "next_event_at")
+    )
+
+    # Every non-remove event belongs to a bed that was added, so these obj ids are
+    # the shelter's full bed history, including beds later deleted.
+    scope_bed_ids = {event["pgh_obj_id"] for event in bed_events}
+    if not scope_bed_ids:
+        return [_row(day, 0, 0) for day in days]
+
+    intervals_by_bed = _reservation_occupancy_intervals(bed_ids=scope_bed_ids, end_utc=end_utc)
+
+    results: list[DailyOccupancyMetricsType] = []
+    for day in days:
+        day_start, day_end = report_day_bounds_utc(day)
+
+        existing_bed_ids = {
+            event["pgh_obj_id"]
+            for event in bed_events
+            if event["pgh_created_at"] < day_end
+            and (event["next_event_at"] is None or event["next_event_at"] >= day_end)
+        }
+
+        occupied_bed_ids: set[int] = set()
+        for bed_id in existing_bed_ids:
+            for check_in, freed, _reservation_id in intervals_by_bed.get(bed_id, ()):
+                if check_in >= day_end:
+                    break  # intervals sorted by check-in; the rest start even later
+                if freed is not None and freed <= day_start:
+                    continue  # interval ended before the day began
+                occupied_bed_ids.add(bed_id)
+                break
+
+        results.append(_row(day, len(occupied_bed_ids), len(existing_bed_ids)))
+    return results
