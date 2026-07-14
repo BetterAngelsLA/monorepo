@@ -921,7 +921,7 @@ class BedStatusCountsTestCase(TestCase):
         bed_a = self._make_bed(name="A", added_at=self._utc(2025, 12, 1))
         self._stay(bed_a, events=[(self.CI, self._utc(2026, 1, 5))])
 
-        bed_b = self._make_bed(name="B", added_at=self._utc(2025, 12, 1))
+        self._make_bed(name="B", added_at=self._utc(2025, 12, 1))
 
         bed_c = self._make_bed(name="C", added_at=self._utc(2025, 12, 1))
         self._set_maintenance(bed_c, True, at=self._utc(2026, 1, 1))

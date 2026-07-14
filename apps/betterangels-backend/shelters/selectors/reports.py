@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 import pghistory
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
-from shelters.enums import BedStatusChoices
+
+from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
@@ -48,7 +49,7 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
 
     Expected index: ``(shelter_id, pgh_label, pgh_created_at)`` on BedEvent.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]
+    from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
 
     add_rows = (
         BedEvent.objects.filter(
@@ -140,7 +141,7 @@ def _reservation_status_intervals(
     Returns ``{bed_id: [OccupancyInterval, ...]}`` with each list sorted by
     ``check_in``.
     """
-    from shelters.models import Reservation
+    from shelters.models import Reservation  # inline to avoid circular import
 
     if not bed_ids:
         return {}
@@ -202,8 +203,7 @@ def _checkout_times_by_bed(
     Only returns checkouts where ``checked_out_at < before``.
     *before* must be timezone-aware; Django converts it to UTC automatically.
     """
-    from shelters.enums import ReservationStatusChoices
-    from shelters.models import Reservation
+    from shelters.models import Reservation  # inline to avoid circular import
 
     if not bed_ids:
         return {}
@@ -308,7 +308,7 @@ def report_bed_status_counts(
     Raises:
         ValueError: if *end* is before *start*, or if either is naive.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]
+    from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
 
     if end < start:
         raise ValueError("end must be on or after start")
@@ -445,8 +445,8 @@ def reservation_status_change_counts(
     Raises:
         ValueError: If ``end`` is before ``start``.
     """
-    from shelters.models import Reservation
-    from shelters.types.reporting import ReservationMetricsType
+    from shelters.models import Reservation  # inline to avoid circular import
+    from shelters.types.reporting import ReservationMetricsType  # inline to avoid circular import
 
     if end < start:
         raise ValueError("end must be on or after start")
@@ -508,7 +508,7 @@ def daily_occupancy(
     Raises:
         ValueError: if ``end`` is before ``start``.
     """
-    from shelters.types.reporting import DailyOccupancyMetricsType
+    from shelters.types.reporting import DailyOccupancyMetricsType  # inline to avoid circular import
 
     if end < start:
         raise ValueError("end must be on or after start")
