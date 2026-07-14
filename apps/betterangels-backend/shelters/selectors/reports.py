@@ -370,22 +370,32 @@ def avg_days_to_occupancy(
 ) -> float | None:
     """Average number of days a bed sat unoccupied before becoming occupied.
 
-    For every check-in event (status changed TO checked_in) whose timestamp
-    falls in the LA-local range, the vacancy is the gap in days from the most
-    recent free event (any exit from CHECKED_IN, including cancellations) on the
-    same bed from a *different* reservation.  Beds occupied from creation (no
-    preceding free event) and reverts on the same reservation are excluded.
-    Returns the mean rounded to two places, or None when there are no qualifying
-    pairs.
+    For each check-in event (status changed TO checked_in) whose timestamp
+    falls in the date range, the vacancy is the gap between that check-in and
+    the most recent time the same bed was freed by a *different* reservation.
+    A bed is freed on any exit from CHECKED_IN — checkout or cancellation.
 
-    Both endpoints are inclusive and interpreted in America/Los_Angeles.
+    Returns the mean rounded to two decimal places.  Returns ``None`` when
+    there are no gaps to measure — for example when every bed was occupied
+    from creation, every check-in fell outside the range, or all gaps are
+    same-reservation reverts.
+
+    Both endpoints are inclusive and treated as UTC calendar dates
+    (start-of-day to start-of-next-day).
 
     Raises:
         ValueError: if end_date is before start_date.
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
-    start_utc, end_utc = report_date_range_to_utc(start_date, end_date)
+    if end_date < start_date:
+        raise ValueError("end_date must be on or after start_date")
+
+    # Convert inclusive date range to a UTC half-open interval.
+    start_utc = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=datetime.timezone.utc)
+    end_utc = datetime.datetime.combine(
+        end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=datetime.timezone.utc
+    )
     Events = pghistory.models.Events
 
     scope_bed_ids = list(
@@ -435,7 +445,7 @@ def avg_days_to_occupancy(
                 Extract(F("pgh_created_at"), "epoch")
                 - Extract(F("prev_freed"), "epoch")
             )
-            / 86400.0,
+            / 86400.0,  # seconds per day → fractional days
         )
         .aggregate(avg=Avg("gap_days"))
     )
