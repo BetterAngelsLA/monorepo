@@ -50,7 +50,8 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
 
   const handleClone = useCallback(
     async (room: Room) => {
-      const errorMsg = 'Unable to clone room. Please try again.';
+      const errorMessage = 'Unable to clone room. Please try again.';
+
       try {
         const response = await cloneRoom({ variables: { id: room.id } });
 
@@ -60,14 +61,14 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
           fields: ['id'],
         });
         if (fieldErrors.length) {
-          throw new Error('Unable to clone room. Please try again.');
+          throw new Error(errorMessage);
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error cloning room: ${error.message}`);
         showToast({
           status: 'error',
-          title: 'Unable to clone room. Please try again.',
+          title: errorMessage,
           persistent: true,
         });
       }
@@ -91,6 +92,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
   const handleDelete = useCallback(
     async (ids: string[]) => {
       const plural = ids.length > 1 ? 's' : '';
+      const errorMessage = `Unable to delete room${plural}. Please try again.`;
 
       try {
         const response = await deleteRooms({ variables: { data: { ids } } });
@@ -101,14 +103,14 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
           fields: ['ids'],
         });
         if (fieldErrors.length) {
-          throw new Error(`Unable to delete room${plural}. Please try again.`);
+          throw new Error(errorMessage);
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error deleting room${plural}: ${error.message}`);
         showToast({
           status: 'error',
-          title: `Unable to delete room${plural}. Please try again.`,
+          title: errorMessage,
           persistent: true,
         });
       }
