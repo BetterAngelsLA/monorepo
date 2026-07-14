@@ -18,6 +18,20 @@ from shelters.types.reporting import (
     ShelterOccupancyMetricsType,
 )
 
+DAILY_OCCUPANCY_METRICS = "daily_occupancy_metrics"
+DAILY_BED_STATUS_METRICS = "daily_bed_status_metrics"
+RESERVATION_METRICS = "reservation_metrics"
+AVG_DAYS_TO_OCCUPANCY = "avg_days_to_occupancy"
+
+METRIC_EXPORT_OPTIONS = frozenset(
+    {
+        DAILY_OCCUPANCY_METRICS,
+        DAILY_BED_STATUS_METRICS,
+        RESERVATION_METRICS,
+        AVG_DAYS_TO_OCCUPANCY,
+    }
+)
+
 
 def csv_files_to_zip(files: dict[str, str]) -> bytes:
     output = BytesIO()
@@ -119,27 +133,38 @@ def avg_days_to_occupancy_to_csv(shelter_id: str, start_date: date, end_date: da
     return rows_to_csv(rows, headers)
 
 
-def metrics_to_zip(metrics: ShelterOccupancyMetricsType) -> bytes:
+def metrics_to_zip(metrics: ShelterOccupancyMetricsType, options: list[str]) -> bytes:
     shelter_id = str(metrics.shelter_id)
     start_date = metrics.start_date
     end_date = metrics.end_date
+    selected_options = set(options)
+    unknown_options = selected_options - METRIC_EXPORT_OPTIONS
+
+    if unknown_options:
+        raise ValueError(f"Unknown CSV export options: {', '.join(sorted(unknown_options))}")
 
     start_str = start_date.strftime("%Y%m%d")
     end_str = end_date.strftime("%Y%m%d")
+    files = {}
 
-    files = {
-        f"{start_str}_{end_str}_daily_occupancy_metrics.csv": daily_occupancy_metrics_to_csv(
+    if DAILY_OCCUPANCY_METRICS in selected_options:
+        files[f"{start_str}_{end_str}_daily_occupancy_metrics.csv"] = daily_occupancy_metrics_to_csv(
             shelter_id, metrics.daily_occupancy
-        ),
-        f"{start_str}_{end_str}_daily_bed_status_metrics.csv": daily_bed_status_metrics_to_csv(
+        )
+
+    if DAILY_BED_STATUS_METRICS in selected_options:
+        files[f"{start_str}_{end_str}_daily_bed_status_metrics.csv"] = daily_bed_status_metrics_to_csv(
             shelter_id, metrics.daily_bed_status
-        ),
-        f"{start_str}_{end_str}_reservation_metrics.csv": reservation_metrics_to_csv(
+        )
+
+    if RESERVATION_METRICS in selected_options:
+        files[f"{start_str}_{end_str}_reservation_metrics.csv"] = reservation_metrics_to_csv(
             shelter_id, start_date, end_date, metrics.reservation_metrics
-        ),
-        f"{start_str}_{end_str}_avg_days_to_occupancy.csv": avg_days_to_occupancy_to_csv(
+        )
+
+    if AVG_DAYS_TO_OCCUPANCY in selected_options:
+        files[f"{start_str}_{end_str}_avg_days_to_occupancy.csv"] = avg_days_to_occupancy_to_csv(
             shelter_id, start_date, end_date, metrics.avg_days_to_occupancy
-        ),
-    }
+        )
 
     return csv_files_to_zip(files)
