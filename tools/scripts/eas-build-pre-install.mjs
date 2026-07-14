@@ -1,18 +1,24 @@
 /**
- * EAS pre-install hook — exact replica of @nx/expo:build's `copyPackageJsonAndLock`
- * for non-workspace setups.
+ * EAS pre-install hook — CI-only replica of @nx/expo:build's `copyPackageJsonAndLock`.
+ * Resolves * deps from root, copies lockfile, configures Yarn workspace.
+ * No-op outside CI — sync-deps handles local resolution.
  */
 import { readFileSync, writeFileSync, copyFileSync } from 'fs';
 import { join, resolve } from 'path';
+
+if (!process.env.CI) {
+  console.log('[eas-build-pre-install] Skipping — not in CI.');
+  process.exit(0);
+}
 
 const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
 
 const rootPkg = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'));
 
-// If workspaces are already enabled on root, Yarn resolves * deps natively — skip copy
+// If workspaces are already enabled, Yarn resolves * deps natively — skip
 if (rootPkg.workspaces && rootPkg.workspaces.length > 0) {
-  console.log('[eas-build-pre-install] Workspaces already configured, skipping copy.');
+  console.log('[eas-build-pre-install] Workspaces already configured, skipping.');
   process.exit(0);
 }
 
