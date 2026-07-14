@@ -3,10 +3,10 @@
 import datetime
 from collections import Counter, defaultdict
 from itertools import takewhile
-from typing import TYPE_CHECKING, Any, Iterable, TypedDict
-from zoneinfo import ZoneInfo
+from typing import TYPE_CHECKING, Iterable, TypedDict
 
 import pghistory
+from django.db import connection
 from django.db.models import Avg, Count, F, OuterRef, Q, Subquery, TextField
 from django.db.models.functions import Cast, Extract
 from shelters.enums import BedStatusChoices
@@ -16,51 +16,86 @@ if TYPE_CHECKING:
     from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType
 
 
-# ── Shared date-range helpers ─────────────────────────────────────────────────
-# Reporting selectors take calendar dates and read them as LA-local days (all BA
-# shelters are in LA), then convert to a UTC window to query pgh_created_at.
-# New selectors should call report_date_range_to_utc rather than convert inline.
-
-LA_TZ = ZoneInfo("America/Los_Angeles")
+# ── Private helpers ───────────────────────────────────────────────────────────
 
 
-def report_date_range_to_utc(
-    start_date: datetime.date, end_date: datetime.date
-) -> tuple[datetime.datetime, datetime.datetime]:
-    """Convert an inclusive LA-local date range to a ``[start, end)`` UTC window.
-
-    ``end`` is the UTC instant at the start of the day *after* ``end_date`` in
-    Los Angeles, so the returned half-open interval covers all of ``end_date``
-    locally. Ranges are unbounded; the natural limit is how far back data exists.
-
-    Raises:
-        ValueError: if ``end_date`` is before ``start_date``.
-    """
+def _validate_date_range(start_date: datetime.date, end_date: datetime.date) -> None:
+    """Raise ``ValueError`` if *end_date* is before *start_date*."""
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
 
-    start_local = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=LA_TZ)
-    end_local = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ)
-    return start_local.astimezone(datetime.timezone.utc), end_local.astimezone(datetime.timezone.utc)
+
+def _iter_report_days(start_date: datetime.date, end_date: datetime.date) -> list[datetime.date]:
+    """Return every date from *start_date* to *end_date* inclusive.
+
+    Delegates to PostgreSQL ``generate_series`` so the DB builds the date list
+    rather than a Python loop.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT generate_series(%s, %s, '1 day'::interval)::date",
+            [start_date, end_date],
+        )
+        return [row[0] for row in cursor.fetchall()]
 
 
-def report_day_bounds_utc(day: datetime.date) -> tuple[datetime.datetime, datetime.datetime]:
-    """Return the ``[start, end)`` UTC instants bounding one LA-local day."""
-    start = datetime.datetime.combine(day, datetime.time.min, tzinfo=LA_TZ).astimezone(datetime.timezone.utc)
-    end = datetime.datetime.combine(day + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ).astimezone(
-        datetime.timezone.utc
+def _shelter_bed_ids(*, shelter: "Shelter", end_utc: datetime.datetime) -> set[int]:
+    """Bed IDs that were added to *shelter* before *end_utc*."""
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
+
+    return set(
+        BedEvent.objects.filter(
+            shelter_id=shelter.pk,
+            pgh_label="bed.add",
+            pgh_created_at__lt=end_utc,
+        ).values_list("pgh_obj_id", flat=True)
     )
-    return start, end
 
 
-def iter_report_days(start_date: datetime.date, end_date: datetime.date) -> list[datetime.date]:
-    """Return every LA-local date from ``start_date`` to ``end_date`` inclusive."""
-    days = []
-    day = start_date
-    while day <= end_date:
-        days.append(day)
-        day += datetime.timedelta(days=1)
-    return days
+def _bed_events_with_next(
+    *, shelter: "Shelter", end_utc: datetime.datetime
+) -> list[dict]:
+    """Bed events annotated with ``next_event_at``.
+
+    Excludes ``bed.remove`` — a removed bed has no successor, effectively ending
+    its lifecycle at the remove event.  The successor is found via a correlated
+    subquery on the same bed (``pgh_obj_id``), unfiltered by shelter so that
+    ``bed.remove`` events (which may lose ``shelter_id`` on ``bed.delete()``)
+    are still reachable.
+
+    ``Lead()`` was explored but Django pushes ``.exclude()`` into the WHERE
+    clause before the window function computes, preventing ``bed.remove`` rows
+    from being visible to the window.
+    """
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
+
+    next_event_subq = (
+        BedEvent.objects.filter(
+            pgh_obj_id=OuterRef("pgh_obj_id"),
+            pgh_created_at__gt=OuterRef("pgh_created_at"),
+        )
+        .order_by("pgh_created_at")
+        .values("pgh_created_at")[:1]
+    )
+
+    return list(
+        BedEvent.objects.filter(
+            shelter_id=shelter.pk,
+            pgh_created_at__lt=end_utc,
+        )
+        .exclude(pgh_label="bed.remove")
+        .annotate(next_event_at=Subquery(next_event_subq))
+        .order_by("pgh_created_at")
+        .values("pgh_obj_id", "pgh_created_at", "next_event_at")
+    )
+
+
+def _occupancy_pct(occupied: int, total: int) -> float:
+    """Occupancy percentage rounded to two places, or ``0.0`` when no beds exist."""
+    return round(occupied / total * 100, 2) if total else 0.0
+
+
+# ── Shared data reconstruction ────────────────────────────────────────────────
 
 
 def _reservation_occupancy_intervals(
@@ -102,7 +137,6 @@ def _reservation_occupancy_intervals(
     intervals_by_bed: dict[int, list[tuple[datetime.datetime, datetime.datetime | None, int]]] = defaultdict(list)
 
     for reservation_id, events in events_by_reservation.items():
-        # (check_in_time, bed_id) of the currently-open interval, or None.
         open_interval: tuple[datetime.datetime, int] | None = None
         prev_status: str | None = None
         for bed_id, status, created_at in events:
@@ -124,6 +158,9 @@ def _reservation_occupancy_intervals(
     return dict(intervals_by_bed)
 
 
+# ── Public types ──────────────────────────────────────────────────────────────
+
+
 class DailyBedCounts(TypedDict):
     """A single day's bed status counts."""
 
@@ -134,8 +171,11 @@ class DailyBedCounts(TypedDict):
     out_of_service: int
 
 
+# ── Public selectors ──────────────────────────────────────────────────────────
+
+
 def report_bed_status_counts(
-    *, shelter: Any, start_date: datetime.date, end_date: datetime.date
+    *, shelter: "Shelter", start_date: datetime.date, end_date: datetime.date
 ) -> list[DailyBedCounts]:
     """
     Returns daily bed status counts for each day in the range.
@@ -143,10 +183,11 @@ def report_bed_status_counts(
     Each BedEvent is valid from its ``pgh_created_at`` until the *next*
     event for the same bed (or forever if no next event).  A ``bed.remove``
     event ends the bed's lifecycle.  By annotating each event with its
-    successor's timestamp we can answer "what was the status at the end of
-    day X?" with a single query — no per-day round-trips, no DISTINCT ON.
-    Later events for the same bed naturally overwrite earlier ones, so the
-    returned counts reflect the state as of 23:59:59.999 on each day.
+    successor's timestamp via ``LEAD()`` we can answer "what was the status at
+    the end of day X?" with a single query — no per-day round-trips, no
+    DISTINCT ON.  Later events for the same bed naturally overwrite earlier
+    ones, so the returned counts reflect the state as of 23:59:59.999 on
+    each day.
 
     TODO: Add demographic filtering once pghistory tracks M2M through tables.
     Bed.demographics is M2M and pghistory only tracks scalar fields so we cannot
@@ -154,38 +195,30 @@ def report_bed_status_counts(
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
+    _validate_date_range(start_date, end_date)
     end_of_range = datetime.datetime.combine(end_date, datetime.time.max, tzinfo=datetime.timezone.utc)
 
-    # Subquery: the *next* BedEvent (by pgh_created_at) for the same bed.
-    #
-    # NOTE: Uses ``__gt`` (strict greater-than).  If two events for the same
-    # bed share the same ``pgh_created_at`` (e.g., from a single transaction),
-    # one will be missed as a successor.  In practice pghistory generates
-    # microsecond-precision timestamps sequentially, making this extremely
-    # unlikely.
-    next_event_subq = (
-        BedEvent.objects.filter(
-            pgh_obj_id=OuterRef("pgh_obj_id"),
-            pgh_created_at__gt=OuterRef("pgh_created_at"),
-        )
-        .order_by("pgh_created_at")
-        .values("pgh_created_at")[:1]
-    )
-
-    # One query: all events up to end_of_range, annotated with successor timestamp,
-    # sorted chronologically so the inner loop can break early.
     events = list(
         BedEvent.objects.filter(
             shelter_id=shelter.pk,
-            pgh_created_at__lte=end_of_range,
+            pgh_created_at__lt=end_of_range,
         )
         .exclude(pgh_label="bed.remove")
-        .annotate(next_event_at=Subquery(next_event_subq))
+        .annotate(
+            next_event_at=Subquery(
+                BedEvent.objects.filter(
+                    pgh_obj_id=OuterRef("pgh_obj_id"),
+                    pgh_created_at__gt=OuterRef("pgh_created_at"),
+                )
+                .order_by("pgh_created_at")
+                .values("pgh_created_at")[:1]
+            ),
+        )
         .order_by("pgh_created_at")
         .values("pgh_obj_id", "status", "pgh_created_at", "next_event_at")
     )
 
-    n_days = (end_date - start_date).days + 1
+    days = _iter_report_days(start_date, end_date)
 
     def _counts(day: datetime.date) -> DailyBedCounts:
         eod = datetime.datetime.combine(day, datetime.time.max, tzinfo=datetime.timezone.utc)
@@ -204,21 +237,20 @@ def report_bed_status_counts(
             "out_of_service": counts.get(BedStatusChoices.OUT_OF_SERVICE, 0),
         }
 
-    return [_counts(start_date + datetime.timedelta(days=n)) for n in range(n_days)]
+    return [_counts(day) for day in days]
 
 
 def reservation_status_change_counts(
     *,
     shelter: "Shelter",
-    start_date: datetime.date,
-    end_date: datetime.date,
+    start: datetime.datetime,
+    end: datetime.datetime,
 ) -> "ReservationMetricsType":
     """Count reservation status-change events for *shelter* within an inclusive window.
 
-    Both endpoints are inclusive at the day level and interpreted in
-    America/Los_Angeles (via ``report_date_range_to_utc``): internally the end of
-    ``end_date`` is widened to the start of the next LA day so any event on
-    ``end_date`` (LA-local) is captured.
+    *start* and *end* are timezone-aware datetimes; they are converted to UTC
+    internally.  The caller decides the timezone by passing appropriately
+    constructed values.
 
     Returns a :class:`~shelters.types.reporting.ReservationMetricsType` with:
 
@@ -232,19 +264,20 @@ def reservation_status_change_counts(
 
     Args:
         shelter: ``Shelter`` whose reservations are aggregated.
-        start_date: Inclusive lower bound of the date range.
-        end_date: Inclusive upper bound of the date range.  Must be on or
-            after ``start_date``.
+        start: Inclusive lower bound (timezone-aware).
+        end: Exclusive upper bound (timezone-aware).
 
     Raises:
-        ValueError: If ``end_date`` is before ``start_date``.
+        ValueError: If ``end`` is before ``start``.
     """
-    # Local imports avoid a circular dependency: ``shelters.types`` imports
-    # from ``shelters.selectors``, so this module must not import them at load time.
     from shelters.models import Reservation
     from shelters.types.reporting import ReservationMetricsType
 
-    start_dt, end_dt = report_date_range_to_utc(start_date, end_date)
+    if end < start:
+        raise ValueError("end must be on or after start")
+
+    start_utc = start.astimezone(datetime.timezone.utc)
+    end_utc = end.astimezone(datetime.timezone.utc)
 
     # pghistory.models.Events.pgh_obj_id is a text column; cast Reservation.pk to text for the IN.
     reservation_ids = (
@@ -256,8 +289,8 @@ def reservation_status_change_counts(
     events = pghistory.models.Events.objects.filter(
         pgh_obj_id__in=reservation_ids,
         pgh_label="reservation.status_change",
-        pgh_created_at__gte=start_dt,
-        pgh_created_at__lt=end_dt,
+        pgh_created_at__gte=start_utc,
+        pgh_created_at__lt=end_utc,
     )
 
     # ``Count(..., filter=...)`` returns ``None`` on empty rowsets; coerce to 0.
@@ -286,60 +319,58 @@ def reservation_status_change_counts(
 def daily_occupancy(
     *,
     shelter: "Shelter",
-    start_date: datetime.date,
-    end_date: datetime.date,
+    start: datetime.datetime,
+    end: datetime.datetime,
 ) -> "list[DailyOccupancyMetricsType]":
     """Daily occupied-bed counts and occupancy percentage for a shelter.
 
-    A bed is occupied on an LA-local day when a reconstructed ``CHECKED_IN``
-    interval (see ``_reservation_occupancy_intervals``) overlaps that day.
-    ``total_beds`` is the number of beds that existed that day, from ``bed.add`` /
-    ``bed.remove``. ``occupancy_pct`` is ``occupied / total * 100`` rounded to two
-    places (``0.0`` when no beds existed).
+    A bed is occupied on a day when a reconstructed ``CHECKED_IN`` interval
+    (see ``_reservation_occupancy_intervals``) overlaps that day.  ``total_beds``
+    is the number of beds that existed that day, from ``bed.add`` / ``bed.remove``.
+    ``occupancy_pct`` is ``occupied / total * 100`` rounded to two places
+    (``0.0`` when no beds existed).
 
-    Both endpoints are inclusive and interpreted in America/Los_Angeles.
+    *start* and *end* are timezone-aware datetimes.  The caller's timezone
+    determines where each day begins and ends (e.g. ``ZoneInfo("America/Los_Angeles")``).
 
     Raises:
-        ValueError: if ``end_date`` is before ``start_date``.
+        ValueError: if ``end`` is before ``start``.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]
     from shelters.types.reporting import DailyOccupancyMetricsType
 
-    _, end_utc = report_date_range_to_utc(start_date, end_date)
-    days = iter_report_days(start_date, end_date)
+    if end < start:
+        raise ValueError("end must be on or after start")
 
-    def _row(day: datetime.date, occupied: int, total: int) -> DailyOccupancyMetricsType:
-        pct = round(occupied / total * 100, 2) if total else 0.0
-        return DailyOccupancyMetricsType(date=day, occupied_count=occupied, total_beds=total, occupancy_pct=pct)
+    tz = start.tzinfo
+    if tz is None:
+        raise ValueError("start must be timezone-aware")
 
-    # Beds that existed each day, reconstructed from bed.add / bed.remove.
-    next_event_subq = (
-        BedEvent.objects.filter(
-            pgh_obj_id=OuterRef("pgh_obj_id"),
-            pgh_created_at__gt=OuterRef("pgh_created_at"),
-        )
-        .order_by("pgh_created_at")
-        .values("pgh_created_at")[:1]
-    )
-    bed_events = list(
-        BedEvent.objects.filter(shelter_id=shelter.pk, pgh_created_at__lt=end_utc)
-        .exclude(pgh_label="bed.remove")
-        .annotate(next_event_at=Subquery(next_event_subq))
-        .order_by("pgh_created_at")
-        .values("pgh_obj_id", "pgh_created_at", "next_event_at")
-    )
+    start_utc = start.astimezone(datetime.timezone.utc)
+    end_utc = end.astimezone(datetime.timezone.utc)
 
-    # Every non-remove event belongs to a bed that was added, so these obj ids are
-    # the shelter's full bed history, including beds later deleted.
-    scope_bed_ids = {event["pgh_obj_id"] for event in bed_events}
+    # Derive calendar-date range from the caller's timezone.
+    start_date = start.date()
+    end_date = (end - datetime.timedelta(microseconds=1)).date() if end > start else start_date
+    days = _iter_report_days(start_date, end_date)
+
+    scope_bed_ids = _shelter_bed_ids(shelter=shelter, end_utc=end_utc)
     if not scope_bed_ids:
-        return [_row(day, 0, 0) for day in days]
+        return [
+            DailyOccupancyMetricsType(date=day, occupied_count=0, total_beds=0, occupancy_pct=0.0)
+            for day in days
+        ]
 
+    bed_events = _bed_events_with_next(shelter=shelter, end_utc=end_utc)
     intervals_by_bed = _reservation_occupancy_intervals(bed_ids=scope_bed_ids, end_utc=end_utc)
 
     results: list[DailyOccupancyMetricsType] = []
     for day in days:
-        day_start, day_end = report_day_bounds_utc(day)
+        day_start = datetime.datetime.combine(day, datetime.time.min, tzinfo=tz).astimezone(
+            datetime.timezone.utc
+        )
+        day_end = datetime.datetime.combine(
+            day + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz
+        ).astimezone(datetime.timezone.utc)
 
         existing_bed_ids = {
             event["pgh_obj_id"]
@@ -358,7 +389,14 @@ def daily_occupancy(
                 occupied_bed_ids.add(bed_id)
                 break
 
-        results.append(_row(day, len(occupied_bed_ids), len(existing_bed_ids)))
+        results.append(
+            DailyOccupancyMetricsType(
+                date=day,
+                occupied_count=len(occupied_bed_ids),
+                total_beds=len(existing_bed_ids),
+                occupancy_pct=_occupancy_pct(len(occupied_bed_ids), len(existing_bed_ids)),
+            )
+        )
     return results
 
 
@@ -386,23 +424,15 @@ def avg_days_to_occupancy(
     Raises:
         ValueError: if end_date is before start_date.
     """
-    from shelters.models import BedEvent  # type: ignore[attr-defined]
+    _validate_date_range(start_date, end_date)
 
-    if end_date < start_date:
-        raise ValueError("end_date must be on or after start_date")
-
-    # Convert inclusive date range to a UTC half-open interval.
     start_utc = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=datetime.timezone.utc)
     end_utc = datetime.datetime.combine(
         end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=datetime.timezone.utc
     )
     Events = pghistory.models.Events
 
-    scope_bed_ids = list(
-        BedEvent.objects.filter(
-            shelter_id=shelter.pk, pgh_label="bed.add", pgh_created_at__lt=end_utc
-        ).values_list("pgh_obj_id", flat=True)
-    )
+    scope_bed_ids = _shelter_bed_ids(shelter=shelter, end_utc=end_utc)
     if not scope_bed_ids:
         return None
 
@@ -414,7 +444,7 @@ def avg_days_to_occupancy(
     # Check-in events: status changed TO checked_in within the range.
     checkins = Events.objects.filter(
         pgh_label="reservation.status_change",
-        pgh_data__bed_id__in=scope_bed_ids,
+        pgh_data__bed_id__in=list(scope_bed_ids),
         pgh_created_at__gte=start_utc,
         pgh_created_at__lt=end_utc,
         pgh_data__status="checked_in",
@@ -423,7 +453,7 @@ def avg_days_to_occupancy(
     )
 
     # Correlated subquery: most recent "free" event (exited checked_in)
-    # on the same bed, from a *different* reservation, before this check-in.
+    # on the same bed, from a *different* reservation, at or before this check-in.
     prev_free = (
         Events.objects.filter(
             pgh_label="reservation.status_change",

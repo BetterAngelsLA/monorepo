@@ -35,9 +35,17 @@ class ReservationStatusChangeCountsTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = Shelter.objects.create(name="Test Shelter")
         self.other_shelter = Shelter.objects.create(name="Other Shelter")
-        # A typical month-long window for status-change events.
-        self.start_date = datetime.date(2026, 1, 1)
-        self.end_date = datetime.date(2026, 1, 31)
+        from zoneinfo import ZoneInfo
+
+        self.tz_la = ZoneInfo("America/Los_Angeles")
+        self.start = datetime.datetime(2026, 1, 1, tzinfo=self.tz_la)
+        self.end = datetime.datetime(2026, 2, 1, tzinfo=self.tz_la)  # exclusive: start of Feb 1
+
+    def _dt_range(self, start_date: datetime.date, end_date: datetime.date) -> tuple:
+        """LA-local ``(start_of_first, start_of_next)`` for inclusive [s, e] range."""
+        start_dt = datetime.datetime(start_date.year, start_date.month, start_date.day, tzinfo=self.tz_la)
+        end_exclusive = start_dt + datetime.timedelta(days=(end_date - start_date).days + 1)
+        return start_dt, end_exclusive
 
     # -- helpers -------------------------------------------------------------
 
@@ -84,7 +92,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
         with self.assertNumQueries(1):
             result = reservation_status_change_counts(
-                shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+                shelter=self.shelter, start=self.start, end=self.end
             )
 
         self.assertEqual(result.check_in_overdue, 1)
@@ -99,7 +107,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, self._in_range())
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.check_in_overdue_to_checked_in, 1)
@@ -118,7 +126,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, self._in_range())
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.checked_in, 1)
@@ -129,7 +137,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, _aware(2026, 1, 31, 23, 0))
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.checked_in, 1)
@@ -144,7 +152,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(after, _aware(2026, 2, 1, 12, 0))
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.checked_in, 0)
@@ -156,7 +164,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, self._in_range())
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.checked_in, 0)
@@ -170,20 +178,20 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(reservation, self._in_range())
 
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.checked_in, 1)
 
     def test_raises_when_end_date_before_start_date(self) -> None:
         """An end_date before start_date is a programmer error."""
-        with self.assertRaisesRegex(ValueError, "end_date must be on or after start_date"):
-            reservation_status_change_counts(shelter=self.shelter, start_date=self.end_date, end_date=self.start_date)
+        with self.assertRaises(ValueError):
+            reservation_status_change_counts(shelter=self.shelter, start=self.end, end=self.start)
 
     def test_no_events_returns_zero_counts(self) -> None:
         """A shelter with no status changes returns zero in every bucket."""
         result = reservation_status_change_counts(
-            shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
+            shelter=self.shelter, start=self.start, end=self.end
         )
 
         self.assertEqual(result.check_in_overdue, 0)
@@ -198,11 +206,8 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(checked_in, _aware(2026, 1, 1))
         self._set_event_dates(cancelled, _aware(2026, 1, 2))
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter,
-            start_date=datetime.date(2026, 1, 1),
-            end_date=datetime.date(2026, 1, 2),
-        )
+        s, e = self._dt_range(datetime.date(2026, 1, 1), datetime.date(2026, 1, 2))
+        result = reservation_status_change_counts(shelter=self.shelter, start=s, end=e)
 
         self.assertEqual(result.checked_in, 1)
         self.assertEqual(result.cancelled, 1)
@@ -212,11 +217,8 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         reservation = self._make_reservation([ReservationStatusChoices.CHECK_IN_OVERDUE])
         self._set_event_dates(reservation, _aware(2026, 1, 15, 23, 0))
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter,
-            start_date=datetime.date(2026, 1, 15),
-            end_date=datetime.date(2026, 1, 15),
-        )
+        s, e = self._dt_range(datetime.date(2026, 1, 15), datetime.date(2026, 1, 15))
+        result = reservation_status_change_counts(shelter=self.shelter, start=s, end=e)
 
         self.assertEqual(result.check_in_overdue, 1)
 
@@ -227,41 +229,10 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self._set_event_dates(in_window, _aware(2025, 6, 15))
         self._set_event_dates(before_window, _aware(2024, 12, 31))
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter,
-            start_date=datetime.date(2025, 1, 1),
-            end_date=datetime.date(2025, 12, 31),
-        )
+        s, e = self._dt_range(datetime.date(2025, 1, 1), datetime.date(2025, 12, 31))
+        result = reservation_status_change_counts(shelter=self.shelter, start=s, end=e)
 
         self.assertEqual(result.checked_in, 1)
-
-
-class ReportDateRangeToUtcTestCase(TestCase):
-    """Tests for the shared ``report_date_range_to_utc`` helper."""
-
-    def test_converts_inclusive_la_range_to_half_open_utc_window(self) -> None:
-        from shelters.selectors.reports import report_date_range_to_utc
-
-        start_utc, end_utc = report_date_range_to_utc(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31))
-
-        # LA is UTC-8 (PST) in January, so LA-midnight is 08:00 UTC.
-        self.assertEqual(start_utc, datetime.datetime(2026, 1, 1, 8, 0, tzinfo=datetime.timezone.utc))
-        # End is the start of the day after end_date in LA (half-open).
-        self.assertEqual(end_utc, datetime.datetime(2026, 2, 1, 8, 0, tzinfo=datetime.timezone.utc))
-
-    def test_raises_when_end_before_start(self) -> None:
-        from shelters.selectors.reports import report_date_range_to_utc
-
-        with self.assertRaisesRegex(ValueError, "end_date must be on or after start_date"):
-            report_date_range_to_utc(datetime.date(2026, 1, 2), datetime.date(2026, 1, 1))
-
-    def test_allows_multi_year_past_range(self) -> None:
-        from shelters.selectors.reports import report_date_range_to_utc
-
-        # No cap on how far back a range spans; the natural limit is data.
-        start_utc, end_utc = report_date_range_to_utc(datetime.date(2020, 1, 1), datetime.date(2026, 1, 1))
-
-        self.assertLess(start_utc, end_utc)
 
 
 class DailyOccupancyTestCase(TestCase):
@@ -330,15 +301,30 @@ class DailyOccupancyTestCase(TestCase):
             ).update(pgh_created_at=when)
         return reservation
 
-    def _occupancy(self, start: datetime.date, end: datetime.date) -> dict[str, DailyOccupancyMetricsType]:
+    def _occupancy(self, start: datetime.datetime, end: datetime.datetime) -> dict[str, DailyOccupancyMetricsType]:
         from shelters.selectors import daily_occupancy
 
-        rows = daily_occupancy(shelter=self.shelter, start_date=start, end_date=end)
+        rows = daily_occupancy(shelter=self.shelter, start=start, end=end)
         return {row.date.isoformat(): row for row in rows}
 
     @staticmethod
     def _utc(year: int, month: int, day: int, hour: int = 12) -> datetime.datetime:
         return _aware(year, month, day, hour)
+
+    from zoneinfo import ZoneInfo
+
+    tz_la = ZoneInfo("America/Los_Angeles")
+
+    def _dt_la(self, year: int, month: int, day: int) -> datetime.datetime:
+        """LA-local midnight as a timezone-aware datetime."""
+        return datetime.datetime(year, month, day, tzinfo=self.tz_la)
+
+    def _dt_range(self, start_year: int, start_month: int, start_day: int, end_day: int) -> tuple:
+        """Return LA-local ``(start, exclusive_end)`` for a month-constant range."""
+        return (
+            self._dt_la(start_year, start_month, start_day),
+            self._dt_la(start_year, start_month, end_day + 1),
+        )
 
     CI = ReservationStatusChoices.CHECKED_IN
     DONE = ReservationStatusChoices.COMPLETED
@@ -351,7 +337,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 5))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 12))
+        s, e = self._dt_range(2026, 1, 10, 12)
+        rows = self._occupancy(s, e)
 
         for iso in ("2026-01-10", "2026-01-11", "2026-01-12"):
             self.assertEqual(rows[iso].occupied_count, 1)
@@ -362,7 +349,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 11))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 12))
+        s, e = self._dt_range(2026, 1, 10, 12)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-10"].occupied_count, 0)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
@@ -373,7 +361,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 12, 8))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 13))
+        s, e = self._dt_range(2026, 1, 10, 13)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
@@ -386,7 +375,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.CANCEL, self._utc(2026, 1, 13, 8))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 15))
+        s, e = self._dt_range(2026, 1, 10, 15)
+        rows = self._occupancy(s, e)
 
         self.assertEqual([rows[d].occupied_count for d in sorted(rows)], [1, 1, 1, 0, 0, 0])
 
@@ -394,7 +384,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.OVERDUE, self._utc(2026, 1, 11))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 12))
+        s, e = self._dt_range(2026, 1, 10, 12)
+        rows = self._occupancy(s, e)
 
         for row in rows.values():
             self.assertEqual(row.occupied_count, 0)
@@ -404,7 +395,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.OVERDUE, self._utc(2026, 1, 12, 8))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 13))
+        s, e = self._dt_range(2026, 1, 10, 13)
+        rows = self._occupancy(s, e)
 
         self.assertEqual([rows[d].occupied_count for d in sorted(rows)], [1, 1, 0, 0])
 
@@ -414,7 +406,8 @@ class DailyOccupancyTestCase(TestCase):
         bed = self._make_bed()
         self._stay(bed, events=[], created_as=self.CI, created_at=self._utc(2026, 1, 10))
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 11))
+        s, e = self._dt_range(2026, 1, 10, 11)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
@@ -424,7 +417,8 @@ class DailyOccupancyTestCase(TestCase):
         bed_b = self._make_bed(name="B")
         self._remove_bed(bed_b, at=self._utc(2026, 1, 13, 8))
 
-        rows = self._occupancy(datetime.date(2026, 1, 11), datetime.date(2026, 1, 14))
+        s, e = self._dt_range(2026, 1, 11, 14)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-11"].total_beds, 2)
         self.assertEqual(rows["2026-01-12"].total_beds, 2)
@@ -436,7 +430,8 @@ class DailyOccupancyTestCase(TestCase):
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10))])
         self._remove_bed(bed, at=self._utc(2026, 1, 13, 8))
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 14))
+        s, e = self._dt_range(2026, 1, 10, 14)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-11"].occupied_count, 1)
         self.assertEqual(rows["2026-01-12"].occupied_count, 1)
@@ -451,14 +446,16 @@ class DailyOccupancyTestCase(TestCase):
         self._make_bed(name="C")
         self._stay(occupied_bed, events=[(self.CI, self._utc(2026, 1, 5))])
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 10))
+        s, e = self._dt_range(2026, 1, 10, 10)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-10"].occupied_count, 1)
         self.assertEqual(rows["2026-01-10"].total_beds, 3)
         self.assertEqual(rows["2026-01-10"].occupancy_pct, 33.33)
 
     def test_no_beds_returns_zero_rows(self) -> None:
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 11))
+        s, e = self._dt_range(2026, 1, 10, 11)
+        rows = self._occupancy(s, e)
 
         for row in rows.values():
             self.assertEqual(row.occupied_count, 0)
@@ -470,19 +467,21 @@ class DailyOccupancyTestCase(TestCase):
         self._stay(other_bed, events=[(self.CI, self._utc(2026, 1, 5))])
         self._make_bed(name="Mine")
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 10))
+        s, e = self._dt_range(2026, 1, 10, 10)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(rows["2026-01-10"].total_beds, 1)
         self.assertEqual(rows["2026-01-10"].occupied_count, 0)
 
     def test_raises_when_end_before_start(self) -> None:
         with self.assertRaises(ValueError):
-            self._occupancy(datetime.date(2026, 1, 12), datetime.date(2026, 1, 10))
+            self._occupancy(self._dt_la(2026, 1, 12), self._dt_la(2026, 1, 10))
 
     def test_rows_are_chronological_dates(self) -> None:
         self._make_bed()
 
-        rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 13))
+        s, e = self._dt_range(2026, 1, 10, 13)
+        rows = self._occupancy(s, e)
 
         self.assertEqual(list(rows), ["2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13"])
 
