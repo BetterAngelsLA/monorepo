@@ -91,6 +91,9 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && npm --version \
   && rm -rf /tmp/*
 
+# Install EAS CLI globally
+RUN npm install -g eas-cli@20.5.1
+
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
