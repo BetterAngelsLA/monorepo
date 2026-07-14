@@ -99,7 +99,7 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    [],
+    []
   );
 
   return (

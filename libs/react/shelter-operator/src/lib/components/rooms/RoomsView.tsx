@@ -1,4 +1,5 @@
-import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
+import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,15 +9,9 @@ import {
   type RoomType,
 } from '../../apollo/graphql/__generated__/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
-import {
-  cloneRoomOperationKey,
-  cloneRoomSuccessTypename,
-} from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
+import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { useDeleteRooms } from '../../hooks/useDeleteRooms';
-import {
-  deleteRoomsOperationKey,
-  deleteRoomsSuccessTypename,
-} from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
+import { deleteRoomsMeta } from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
 import { roomSuccessTypename } from '../../hooks/useRoom/__generated__/useRoom_meta.generated';
 import { useRooms } from '../../hooks/useRooms';
 import {
@@ -75,25 +70,23 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
       const errorMsg = 'Unable to clone room. Please try again.';
       try {
         const response = await cloneRoom({ variables: { id: room.id } });
-        const errorMessage = extractOperationInfoMessage(
+
+        const fieldErrors = getFieldErrorsOrThrow({
           response,
-          cloneRoomOperationKey
-        );
-        if (errorMessage) {
-          console.error(`error cloning room: ${errorMessage}`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
-        }
-        if (response.data?.cloneRoom?.__typename !== cloneRoomSuccessTypename) {
-          console.error('error cloning room: unexpected response');
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
+          ...cloneRoomMeta,
+          fields: ['id'],
+        });
+        if (fieldErrors.length) {
+          throw new Error('Unable to clone room. Please try again.');
         }
       } catch (err) {
         const error = toError(err);
-
         console.error(`error cloning room: ${error.message}`);
-        showToast({ status: 'error', title: errorMsg, persistent: true });
+        showToast({
+          status: 'error',
+          title: 'Unable to clone room. Please try again.',
+          persistent: true,
+        });
       }
     },
     [cloneRoom, showToast]
@@ -115,33 +108,26 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
   const handleDelete = useCallback(
     async (ids: string[]) => {
       const plural = ids.length > 1 ? 's' : '';
-      const errorMsg = `Unable to delete bed${plural}. Please try again.`;
 
       try {
-        const response = await deleteRooms({
-          variables: { data: { ids } },
-        });
-        const errorMessage = extractOperationInfoMessage(
+        const response = await deleteRooms({ variables: { data: { ids } } });
+
+        const fieldErrors = getFieldErrorsOrThrow({
           response,
-          deleteRoomsOperationKey
-        );
-        if (errorMessage) {
-          console.error(`error deleting bed${plural}: ${errorMessage}`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
-        }
-        if (
-          response.data?.deleteRooms?.__typename !== deleteRoomsSuccessTypename
-        ) {
-          console.error(`error deleting bed${plural}: unexpected response`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
+          ...deleteRoomsMeta,
+          fields: ['ids'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(`Unable to delete room${plural}. Please try again.`);
         }
       } catch (err) {
         const error = toError(err);
-
-        console.error(`error deleting bed${plural}: ${error.message}`);
-        showToast({ status: 'error', title: errorMsg, persistent: true });
+        console.error(`error deleting room${plural}: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: `Unable to delete room${plural}. Please try again.`,
+          persistent: true,
+        });
       }
     },
     [deleteRooms, showToast]
