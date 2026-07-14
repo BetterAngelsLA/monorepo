@@ -78,6 +78,7 @@ export default function Client({
     ClientProfileDocument,
     {
       variables: { id: clientProfileId },
+      fetchPolicy: 'cache-and-network',
     }
   );
 
