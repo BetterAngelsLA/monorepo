@@ -52,14 +52,11 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
     """
     from shelters.models import BedEvent  # type: ignore[attr-defined]  # pghistory event model; inline to avoid circular import
 
-    add_rows = (
-        BedEvent.objects.filter(
-            shelter_id=shelter.pk,
-            pgh_label="bed.add",
-            pgh_created_at__lt=before,
-        )
-        .values_list("pgh_obj_id", "pgh_created_at")
-    )
+    add_rows = BedEvent.objects.filter(
+        shelter_id=shelter.pk,
+        pgh_label="bed.add",
+        pgh_created_at__lt=before,
+    ).values_list("pgh_obj_id", "pgh_created_at")
 
     # Deduplicate add events per bed (keep earliest).  Duplicates shouldn't
     # happen in practice, but pghistory can emit multiple events in a txn.
@@ -86,10 +83,7 @@ def _bed_lifecycles(*, shelter: "Shelter", before: datetime.datetime) -> list[Be
     for bed_id, group in groupby(remove_rows, key=lambda r: r[0]):
         removed[bed_id] = next(group)[1]  # first row in each group is the latest
 
-    return [
-        BedLifecycle(bed_id=bid, added_at=added[bid], removed_at=removed.get(bid))
-        for bid in sorted(added)
-    ]
+    return [BedLifecycle(bed_id=bid, added_at=added[bid], removed_at=removed.get(bid)) for bid in sorted(added)]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -111,9 +105,7 @@ def _day_end(day: datetime.date, tz: datetime.tzinfo) -> datetime.datetime:
 
     This is the exclusive upper bound for events that fall on *day*.
     """
-    return datetime.datetime.combine(
-        day + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz
-    )
+    return datetime.datetime.combine(day + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
 
 
 # ── Shared data reconstruction ────────────────────────────────────────────────
@@ -196,9 +188,7 @@ _CHECKED_IN = frozenset({"checked_in"})
 _CONFIRMED_OR_OVERDUE = frozenset({"confirmed", "check_in_overdue"})
 
 
-def _latest_checkout_by_bed(
-    *, bed_ids: set[int], before: datetime.datetime
-) -> dict[int, datetime.datetime]:
+def _latest_checkout_by_bed(*, bed_ids: set[int], before: datetime.datetime) -> dict[int, datetime.datetime]:
     """Return ``{bed_id: latest_checkout_datetime}`` for COMPLETED reservations with ``checked_out_at`` set.
 
     Only returns checkouts where ``checked_out_at < before``.
@@ -528,10 +518,7 @@ def daily_occupancy(
 
     lifecycles = _bed_lifecycles(shelter=shelter, before=end)
     if not lifecycles:
-        return [
-            DailyOccupancyMetricsType(date=day, occupied_count=0, total_beds=0, occupancy_pct=0.0)
-            for day in days
-        ]
+        return [DailyOccupancyMetricsType(date=day, occupied_count=0, total_beds=0, occupancy_pct=0.0) for day in days]
 
     scope_bed_ids = {lc.bed_id for lc in lifecycles}
     intervals_by_bed = _reservation_status_intervals(bed_ids=scope_bed_ids, before=end, target_statuses=_CHECKED_IN)
@@ -640,20 +627,22 @@ def avg_days_to_occupancy(
         )
         .order_by("pgh_data__bed_id", "pgh_created_at")
         .values_list(
-            "pgh_obj_id", "pgh_data__bed_id",
-            "pgh_diff__status__0", "pgh_diff__status__1",
+            "pgh_obj_id",
+            "pgh_data__bed_id",
+            "pgh_diff__status__0",
+            "pgh_diff__status__1",
             "pgh_created_at",
         )
     )
 
     gaps: list[float] = []
-    last_free: dict[int, datetime.datetime] = {}       # per-bed: when last freed
-    last_free_res: dict[int, int] = {}                  # per-bed: which reservation freed it
+    last_free: dict[int, datetime.datetime] = {}  # per-bed: when last freed
+    last_free_res: dict[int, int] = {}  # per-bed: which reservation freed it
 
     for reservation_id, bed_id, before, after, created_at in rows:
         try:
             bed_id = int(bed_id)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             continue
 
         # "Free" event: exited checked_in → bed available for the next guest.

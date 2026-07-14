@@ -90,9 +90,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
             self._set_event_dates(r, self._in_range())
 
         with self.assertNumQueries(1):
-            result = reservation_status_change_counts(
-                shelter=self.shelter, start=self.start, end=self.end
-            )
+            result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.check_in_overdue, 1)
         self.assertEqual(result.cancelled, 1)
@@ -105,9 +103,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         )
         self._set_event_dates(reservation, self._in_range())
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.check_in_overdue_to_checked_in, 1)
         # The same reservation also landed on checked_in, counted once there too.
@@ -124,9 +120,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         )
         self._set_event_dates(reservation, self._in_range())
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.checked_in, 1)
 
@@ -135,9 +129,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         reservation = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(reservation, _aware(2026, 1, 31, 23, 0))
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.checked_in, 1)
 
@@ -150,9 +142,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         # end date once the range is interpreted LA-local.
         self._set_event_dates(after, _aware(2026, 2, 1, 12, 0))
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.checked_in, 0)
 
@@ -162,9 +152,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         reservation = self._make_reservation([ReservationStatusChoices.CHECKED_IN], bed=other_bed)
         self._set_event_dates(reservation, self._in_range())
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.checked_in, 0)
 
@@ -176,9 +164,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         reservation.save()
         self._set_event_dates(reservation, self._in_range())
 
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.checked_in, 1)
 
@@ -189,9 +175,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
     def test_no_events_returns_zero_counts(self) -> None:
         """A shelter with no status changes returns zero in every bucket."""
-        result = reservation_status_change_counts(
-            shelter=self.shelter, start=self.start, end=self.end
-        )
+        result = reservation_status_change_counts(shelter=self.shelter, start=self.start, end=self.end)
 
         self.assertEqual(result.check_in_overdue, 0)
         self.assertEqual(result.cancelled, 0)
@@ -508,9 +492,7 @@ class AvgDaysToOccupancyTestCase(TestCase):
 
     def _dt_la(self, year: int, month: int, day: int) -> datetime.datetime:
         """LA-local midnight as a timezone-aware datetime."""
-        return datetime.datetime.combine(
-            datetime.date(year, month, day), datetime.time.min, tzinfo=self.tz_la
-        )
+        return datetime.datetime.combine(datetime.date(year, month, day), datetime.time.min, tzinfo=self.tz_la)
 
     def _make_bed(self, *, shelter: Shelter | None = None, name: str = "Bed") -> Bed:
         bed: Bed = baker.make(Bed, shelter=shelter or self.shelter, name=name)
@@ -752,9 +734,9 @@ class BedStatusCountsTestCase(TestCase):
         """Set *maintenance_flag* and pin the resulting ``bed.update`` event."""
         bed.maintenance_flag = flag
         bed.save()
-        evt = BedEvent.objects.filter(
-            pgh_obj_id=bed.pk, pgh_label="bed.update", maintenance_flag=flag
-        ).latest("pgh_created_at")
+        evt = BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.update", maintenance_flag=flag).latest(
+            "pgh_created_at"
+        )
         evt.pgh_created_at = at
         evt.save(update_fields=["pgh_created_at"])
 
@@ -762,9 +744,7 @@ class BedStatusCountsTestCase(TestCase):
         """Set *last_cleaned* and pin the resulting ``bed.update`` event."""
         bed.last_cleaned = dt
         bed.save()
-        evt = BedEvent.objects.filter(
-            pgh_obj_id=bed.pk, pgh_label="bed.update"
-        ).latest("pgh_created_at")
+        evt = BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.update").latest("pgh_created_at")
         evt.pgh_created_at = at
         evt.save(update_fields=["pgh_created_at"])
 
@@ -795,9 +775,7 @@ class BedStatusCountsTestCase(TestCase):
             ).update(pgh_created_at=when)
         return reservation
 
-    def _counts(
-        self, start: datetime.datetime, end: datetime.datetime
-    ) -> dict[datetime.date, DailyBedCounts]:
+    def _counts(self, start: datetime.datetime, end: datetime.datetime) -> dict[datetime.date, DailyBedCounts]:
         rows = report_bed_status_counts(shelter=self.shelter, start=start, end=end)
         return {r.date: r for r in rows}
 
@@ -936,7 +914,13 @@ class BedStatusCountsTestCase(TestCase):
         self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 10)].available, 1)
         self.assertEqual(counts[datetime.date(2026, 1, 10)].out_of_service, 1)
-        total = counts[datetime.date(2026, 1, 10)].available + counts[datetime.date(2026, 1, 10)].occupied + counts[datetime.date(2026, 1, 10)].reserved + counts[datetime.date(2026, 1, 10)].out_of_service + counts[datetime.date(2026, 1, 10)].in_turnaround
+        total = (
+            counts[datetime.date(2026, 1, 10)].available
+            + counts[datetime.date(2026, 1, 10)].occupied
+            + counts[datetime.date(2026, 1, 10)].reserved
+            + counts[datetime.date(2026, 1, 10)].out_of_service
+            + counts[datetime.date(2026, 1, 10)].in_turnaround
+        )
         self.assertEqual(total, 3)
 
     def test_in_turnaround_after_checkout(self) -> None:
@@ -1021,7 +1005,9 @@ class BedStatusCountsTestCase(TestCase):
     def test_dates_in_chronological_order(self) -> None:
         self._make_bed(added_at=self._utc(2025, 12, 1))
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 13))
-        self.assertEqual(list(counts), [datetime.date(2026, 1, 10), datetime.date(2026, 1, 11), datetime.date(2026, 1, 12)])
+        self.assertEqual(
+            list(counts), [datetime.date(2026, 1, 10), datetime.date(2026, 1, 11), datetime.date(2026, 1, 12)]
+        )
 
     def test_overdue_is_reserved(self) -> None:
         """CHECK_IN_OVERDUE is treated as RESERVED (not OCCUPIED)."""
