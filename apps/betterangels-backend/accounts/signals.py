@@ -67,68 +67,25 @@ def _ensure_test_users() -> None:
 
 
 def _ensure_test_org() -> None:
-    """Idempotent: create test_org with presets and owner (no role assignment yet)."""
-    from accounts.models import OrganizationProfile, OrgTypeChoices
-    from accounts.services import reconcile_org_groups
-    from common.org_types import REGISTRY
+    """Idempotent: ensure test_org exists with presets and admin as owner.
+
+    Role assignment is handled later by sync_all_org_permission_groups.
+    Called on every post_migrate because the first signal may fire before
+    all apps' tables/permission templates are ready.
+    """
+    from accounts.services import create_organization_with_presets
 
     admin = User.objects.get(username="admin")
 
-    test_org, _ = Organization.objects.get_or_create(name="test_org")
-
-    # Ensure profile and presets exist on the test organization.
-    # In local development, the first post_migrate signal might create test_org empty
-    # before all apps' tables/permission templates are ready. On subsequent runs,
-    # we need to make sure the presets are updated and reconciled.
-    org_types = []
-    for preset_name in ["shelter", "outreach"]:
-        org_config = REGISTRY.org_type(preset_name)
-        if org_config:
-            org_types.append(org_config.name)
-
-    OrganizationProfile.objects.update_or_create(
-        organization=test_org,
-        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
+    create_organization_with_presets(
+        name="test_org",
+        preset_names=["shelter", "outreach"],
+        owner=admin,
+        owner_roles=(),  # roles assigned by sync_all_org_permission_groups
     )
-    reconcile_org_groups(test_org)
-
-    if not test_org.users.filter(pk=admin.pk).exists():
-        test_org.add_user(admin)
 
 
 # ── Permission sync (all environments) ────────────────────────────────
-
-
-@receiver(post_migrate)
-def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        from notes.groups import CASEWORKER
-        from shelters.groups import SHELTER_OPERATOR
-
-        from accounts.groups import ORG_ADMIN
-
-        from .role_manager import OrgRoleManager
-        from .services import create_organization_with_presets
-
-        test_users = list(User.objects.filter(username__in=["admin", "agent"]))
-
-        if not test_users:
-            logger.warning("test_org not created: admin and agent users do not exist yet.")
-            return
-
-        owner = next((u for u in test_users if u.username == "admin"), test_users[0])
-
-        org = create_organization_with_presets(
-            name="test_org",
-            preset_names=["outreach", "shelter"],
-            owner=owner,
-            owner_roles=(CASEWORKER, SHELTER_OPERATOR, ORG_ADMIN),
-        )
-
-        for test_user in test_users:
-            if test_user.pk != owner.pk:
-                org.add_user(test_user)
-                OrgRoleManager(org).add_roles(test_user, CASEWORKER, SHELTER_OPERATOR)
 
 
 @receiver(post_migrate)
