@@ -124,8 +124,11 @@ describe('Regex', () => {
       ['+1 310 555 1234', true],
       ['+13105551234', true],
       // extensions
+      ['3105551234x123', true],
+      ['3105551234 x 123', true],
       ['3105551234 x123', true],
       ['3105551234 ext 123', true],
+      ['3105551234ext 123', true],
       ['3105551234 ext. 123', true],
       ['3105551234 extension 456', true],
       ['310-555-1234 x123', true],
@@ -137,6 +140,11 @@ describe('Regex', () => {
       ['   ', false],
       ['abc', false],
       ['no digits here', false],
+      // invalid — bad ext
+      ['3105551234 y123', false],
+      ['3105551234 y 123', false],
+      ['3105551234y123', false],
+      ['3105551234 x', false],
     ];
 
     it.each(cases)('%p => %p', (input, expected) => {
