@@ -109,6 +109,7 @@ class TestShelterMetricsExport:
                     occupied=8,
                     reserved=1,
                     out_of_service=0,
+                    in_turnaround=0,
                 )
             ],
         )
@@ -116,8 +117,8 @@ class TestShelterMetricsExport:
         rows = list(csv.reader(StringIO(csv_content)))
 
         assert rows == [
-            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"],
-            ["2026-06-01", "shelter-1", "2", "8", "1", "0"],
+            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service", "in_turnaround"],
+            ["2026-06-01", "shelter-1", "2", "8", "1", "0", "0"],
         ]
 
     def test_reservation_metrics_to_csv(self) -> None:
@@ -214,6 +215,7 @@ class TestShelterMetricsExport:
                         occupied=8,
                         reserved=1,
                         out_of_service=0,
+                        in_turnaround=0,
                     )
                 ],
                 reservation_metrics=ReservationMetricsType(
