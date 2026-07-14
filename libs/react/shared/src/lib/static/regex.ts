@@ -6,7 +6,7 @@ export const Regex = {
   phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
   phoneNumberWithExtensionUS: /^[2-9]\d{2}[2-9]\d{6}(x\d+)?$/,
   /** Accepts common phone formats: digits, spaces, dashes, parens, leading +, and extensions via x/ext/extension. */
-  phoneNumberLoose: /^\+?\d[\d\s\-().]*(\s*(x|ext|extension)\.?\s*\d+)?$/i,
+  phoneNumberLoose: /^\+?[\d(][\d\s\-().]*(\s*(x|ext|extension)\.?\s*\d+)?$/i,
   californiaId: /^[A-Z]\d{7}$/,
   /** Bare domain with optional path/query — no scheme. Accepts google.com, example.org/path?a=1 */
   domain: /^[\w.-]+\.[a-zA-Z]{2,63}(\/\S*)?(\?\S*)?$/i,
