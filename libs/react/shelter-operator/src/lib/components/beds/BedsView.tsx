@@ -1,23 +1,15 @@
-import { extractOperationInfoMessage, toError } from '@monorepo/react/shared';
+import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBeds } from '../../hooks/useBeds';
 import { useCloneBed } from '../../hooks/useCloneBed';
-import {
-  cloneBedOperationKey,
-  cloneBedSuccessTypename,
-} from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
+import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
 import { useDeleteBeds } from '../../hooks/useDeleteBeds';
-import {
-  deleteBedsOperationKey,
-  deleteBedsSuccessTypename,
-} from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
+import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { useUpdateBed } from '../../hooks/useUpdateBed';
-import {
-  updateBedOperationKey,
-  updateBedSuccessTypename,
-} from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
@@ -70,28 +62,25 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   const handleClone = useCallback(
     async (rowObject: BedRowObject) => {
-      const errorMsg = 'Unable to clone bed. Please try again.';
       try {
         const response = await cloneBed({ variables: { id: rowObject.id } });
-        const errorMessage = extractOperationInfoMessage(
+
+        const fieldErrors = getFieldErrorsOrThrow({
           response,
-          cloneBedOperationKey
-        );
-        if (errorMessage) {
-          console.error(`error cloning bed: ${errorMessage}`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
-        }
-        if (response.data?.cloneBed?.__typename !== cloneBedSuccessTypename) {
-          console.error('error cloning bed: unexpected response');
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
+          ...cloneBedMeta,
+          fields: ['id'],
+        });
+        if (fieldErrors.length) {
+          throw new Error('Unable to clone bed. Please try again.');
         }
       } catch (err) {
         const error = toError(err);
-
         console.error(`error cloning bed: ${error.message}`);
-        showToast({ status: 'error', title: errorMsg, persistent: true });
+        showToast({
+          status: 'error',
+          title: 'Unable to clone bed. Please try again.',
+          persistent: true,
+        });
       }
     },
     [cloneBed, showToast]
@@ -111,33 +100,26 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const handleDelete = useCallback(
     async (ids: string[]) => {
       const plural = ids.length > 1 ? 's' : '';
-      const errorMsg = `Unable to delete bed${plural}. Please try again.`;
 
       try {
-        const response = await deleteBeds({
-          variables: { data: { ids } },
-        });
-        const errorMessage = extractOperationInfoMessage(
+        const response = await deleteBeds({ variables: { data: { ids } } });
+
+        const fieldErrors = getFieldErrorsOrThrow({
           response,
-          deleteBedsOperationKey
-        );
-        if (errorMessage) {
-          console.error(`error deleting bed${plural}: ${errorMessage}`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
-        }
-        if (
-          response.data?.deleteBeds?.__typename !== deleteBedsSuccessTypename
-        ) {
-          console.error(`error deleting bed${plural}: unexpected response`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
+          ...deleteBedsMeta,
+          fields: ['ids'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(`Unable to delete bed${plural}. Please try again.`);
         }
       } catch (err) {
         const error = toError(err);
-
         console.error(`error deleting bed${plural}: ${error.message}`);
-        showToast({ status: 'error', title: errorMsg, persistent: true });
+        showToast({
+          status: 'error',
+          title: `Unable to delete bed${plural}. Please try again.`,
+          persistent: true,
+        });
       }
     },
     [deleteBeds, showToast]
@@ -145,7 +127,6 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   const handleMarkReady = useCallback(
     async (rowObject: BedRowObject) => {
-      const errorMsg = 'Unable to update bed. Please try again.';
       try {
         const response = await updateBed({
           variables: {
@@ -153,25 +134,23 @@ export function BedsView({ shelterId }: { shelterId: string }) {
             data: { lastCleaned: new Date().toISOString() },
           },
         });
-        const errorMessage = extractOperationInfoMessage(
+
+        const fieldErrors = getFieldErrorsOrThrow({
           response,
-          updateBedOperationKey
-        );
-        if (errorMessage) {
-          console.error(`error updating bed: ${errorMessage}`);
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
-        }
-        if (response.data?.updateBed?.__typename !== updateBedSuccessTypename) {
-          console.error('error updating bed: unexpected response');
-          showToast({ status: 'error', title: errorMsg, persistent: true });
-          return;
+          ...updateBedMeta,
+          fields: ['lastCleaned'],
+        });
+        if (fieldErrors.length) {
+          throw new Error('Unable to update bed. Please try again.');
         }
       } catch (err) {
         const error = toError(err);
-
         console.error(`error updating bed: ${error.message}`);
-        showToast({ status: 'error', title: errorMsg, persistent: true });
+        showToast({
+          status: 'error',
+          title: 'Unable to update bed. Please try again.',
+          persistent: true,
+        });
       }
     },
     [updateBed, showToast]
