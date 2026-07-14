@@ -396,6 +396,11 @@ def avg_days_to_occupancy(
     if not scope_bed_ids:
         return None
 
+    # pgh_diff is a JSONField storing before/after values as arrays:
+    #   {"status": ["old_value", "new_value"]}
+    #   __0 = index 0 (status *before* the change)
+    #   __1 = index 1 (status *after* the change)
+    #
     # Check-in events: status changed TO checked_in within the range.
     checkins = Events.objects.filter(
         pgh_label="reservation.status_change",
