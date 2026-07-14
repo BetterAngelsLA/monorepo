@@ -6,9 +6,10 @@ from collections import Counter, defaultdict
 from itertools import groupby
 from typing import TYPE_CHECKING
 
-import pghistory
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
+
+import pghistory
 
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
@@ -195,10 +196,10 @@ _CHECKED_IN = frozenset({"checked_in"})
 _CONFIRMED_OR_OVERDUE = frozenset({"confirmed", "check_in_overdue"})
 
 
-def _checkout_times_by_bed(
+def _latest_checkout_by_bed(
     *, bed_ids: set[int], before: datetime.datetime
-) -> dict[int, list[datetime.datetime]]:
-    """Return ``{bed_id: [checkout_datetime, ...]}`` for COMPLETED reservations with ``checked_out_at`` set.
+) -> dict[int, datetime.datetime]:
+    """Return ``{bed_id: latest_checkout_datetime}`` for COMPLETED reservations with ``checked_out_at`` set.
 
     Only returns checkouts where ``checked_out_at < before``.
     *before* must be timezone-aware; Django converts it to UTC automatically.
@@ -224,10 +225,10 @@ def _checkout_times_by_bed(
         .values_list("bed_id", "checked_out_at")
     )
 
-    result: dict[int, list[datetime.datetime]] = defaultdict(list)
+    result: dict[int, datetime.datetime] = {}
     for bed_id, group in groupby(rows, key=lambda r: r[0]):
-        result[bed_id].append(next(group)[1])  # first in group = latest checkout
-    return dict(result)
+        result[bed_id] = next(group)[1]  # first in group = latest checkout
+    return result
 
 
 def _interval_active_at(
@@ -247,19 +248,17 @@ def _in_turnaround_at(
     bed_id: int,
     at: datetime.datetime,
     last_cleaned: datetime.datetime | None,
-    checkout_times: dict[int, list[datetime.datetime]],
+    checkout_times: dict[int, datetime.datetime],
 ) -> bool:
     """Return ``True`` if *bed_id* is IN_TURNAROUND at *at*.
 
-    A bed is in turnaround when a completed checkout exists after *last_cleaned*
-    (i.e. the bed was used and hasn't been cleaned since).
+    A bed is in turnaround when a completed checkout exists after
+    ``last_cleaned`` (or the bed was never cleaned at all).
     """
-    if last_cleaned is None:
+    co = checkout_times.get(bed_id)
+    if co is None:
         return False
-    for co in checkout_times.get(bed_id, ()):
-        if co > last_cleaned and co < at:
-            return True
-    return False
+    return (last_cleaned is None or co > last_cleaned) and co < at
 
 
 # ── Public types ──────────────────────────────────────────────────────────────
@@ -269,7 +268,7 @@ def _in_turnaround_at(
 class DailyBedCounts:
     """A single day's bed status counts."""
 
-    date: str
+    date: datetime.date
     available: int = 0
     occupied: int = 0
     reserved: int = 0
@@ -312,9 +311,12 @@ def report_bed_status_counts(
 
     if end < start:
         raise ValueError("end must be on or after start")
-    tz = start.tzinfo
-    if tz is None:
+    if start.tzinfo is None:
         raise ValueError("start must be timezone-aware")
+    if end.tzinfo is None:
+        raise ValueError("end must be timezone-aware")
+
+    tz = start.tzinfo
 
     start_date = start.date()
     end_date = (end - datetime.timedelta(microseconds=1)).date() if end > start else start_date
@@ -323,7 +325,7 @@ def report_bed_status_counts(
     # 1. Bed existence windows.
     lifecycles = _bed_lifecycles(shelter=shelter, before=end)
     if not lifecycles:
-        return [DailyBedCounts(date=day.isoformat()) for day in days]
+        return [DailyBedCounts(date=day) for day in days]
 
     scope_bed_ids = {lc.bed_id for lc in lifecycles}
 
@@ -349,7 +351,7 @@ def report_bed_status_counts(
     reserved = _reservation_status_intervals(bed_ids=scope_bed_ids, before=end, target_statuses=_CONFIRMED_OR_OVERDUE)
 
     # 5. Completed checkout times (for IN_TURNAROUND).
-    checkout_times = _checkout_times_by_bed(bed_ids=scope_bed_ids, before=end)
+    checkout_times = _latest_checkout_by_bed(bed_ids=scope_bed_ids, before=end)
 
     # 6. Per-day status computation — point-in-time at end-of-day.
     #    The priority chain is applied per bed: each bed gets exactly one
@@ -405,7 +407,7 @@ def report_bed_status_counts(
 
         results.append(
             DailyBedCounts(
-                date=day.isoformat(),
+                date=day,
                 available=counts.get(BedStatusChoices.AVAILABLE, 0),
                 occupied=counts.get(BedStatusChoices.OCCUPIED, 0),
                 reserved=counts.get(BedStatusChoices.RESERVED, 0),
@@ -450,8 +452,10 @@ def reservation_status_change_counts(
 
     if end < start:
         raise ValueError("end must be on or after start")
+    if start.tzinfo is None:
+        raise ValueError("start must be timezone-aware")
 
-    # pghistory.models.Events.pgh_obj_id is a text column; cast Reservation.pk to text for the IN.
+    # pgh_obj_id is a text column; cast Reservation.pk to text for the IN.
     reservation_ids = (
         Reservation.objects.filter(Q(bed__shelter_id=shelter.pk) | Q(room__shelter_id=shelter.pk))
         .annotate(pk_text=Cast("pk", TextField()))

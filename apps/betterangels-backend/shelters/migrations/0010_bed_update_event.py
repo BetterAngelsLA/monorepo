@@ -14,6 +14,12 @@ and ``last_cleaned`` state at arbitrary points in time.
     This increases the ``BedEvent`` table write volume — every ``Bed.save()``
     that changes any field now produces a row.  The condition still prevents
     no-op saves from emitting spurious events.
+
+.. warning::
+
+    The trigger SQL hardcodes every Bed column.  Run ``makemigrations`` after
+    any Bed schema change (add, remove, or rename a column) to regenerate this
+    trigger with the updated column list.
 """
 
 import pgtrigger.compiler

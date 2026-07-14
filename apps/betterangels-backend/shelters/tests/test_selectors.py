@@ -285,6 +285,8 @@ class DailyOccupancyTestCase(TestCase):
             )
             return reservation
 
+        assert events, "events must not be empty when created_as is None"
+
         reservation = Reservation.objects.create(bed=bed)
         for status, _when in events:
             reservation.status = status
@@ -522,6 +524,8 @@ class AvgDaysToOccupancyTestCase(TestCase):
         reservation must not be left active while a later stay on the same bed is
         created (unique-active-reservation-per-bed).
         """
+        assert events, "events must not be empty"
+
         reservation = Reservation.objects.create(bed=bed)
         for status, _when in events:
             reservation.status = status
@@ -774,6 +778,8 @@ class BedStatusCountsTestCase(TestCase):
 
         Each listed status must be unique within the reservation.
         """
+        assert events, "events must not be empty"
+
         reservation = Reservation.objects.create(bed=bed)
         for status, _when in events:
             reservation.status = status
@@ -791,7 +797,7 @@ class BedStatusCountsTestCase(TestCase):
 
     def _counts(
         self, start: datetime.datetime, end: datetime.datetime
-    ) -> dict[str, DailyBedCounts]:
+    ) -> dict[datetime.date, DailyBedCounts]:
         rows = report_bed_status_counts(shelter=self.shelter, start=start, end=end)
         return {r.date: r for r in rows}
 
@@ -837,10 +843,10 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 11))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 13))
-        self.assertEqual(counts["2026-01-10"].available, 1)
-        self.assertEqual(counts["2026-01-10"].occupied, 0)
-        self.assertEqual(counts["2026-01-11"].occupied, 1)
-        self.assertEqual(counts["2026-01-12"].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].occupied, 1)
 
     def test_checkout_frees_bed(self) -> None:
         """After checkout, the bed returns to AVAILABLE."""
@@ -848,10 +854,10 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10)), (self.DONE, self._utc(2026, 1, 12, 8))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-10"].occupied, 1)
-        self.assertEqual(counts["2026-01-11"].occupied, 1)
-        self.assertEqual(counts["2026-01-12"].available, 1)
-        self.assertEqual(counts["2026-01-13"].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_out_of_service_overrides_occupied(self) -> None:
         """OUT_OF_SERVICE beats OCCUPIED in the priority chain."""
@@ -860,10 +866,10 @@ class BedStatusCountsTestCase(TestCase):
         self._set_maintenance(bed, True, at=self._utc(2026, 1, 11))
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 13))
-        self.assertEqual(counts["2026-01-10"].occupied, 1)
-        self.assertEqual(counts["2026-01-10"].out_of_service, 0)
-        self.assertEqual(counts["2026-01-11"].occupied, 0)
-        self.assertEqual(counts["2026-01-11"].out_of_service, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].out_of_service, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].out_of_service, 1)
 
     def test_out_of_service_cleared_returns_to_occupied(self) -> None:
         """When maintenance_flag is unset, OCCUPIED resumes."""
@@ -873,9 +879,9 @@ class BedStatusCountsTestCase(TestCase):
         self._set_maintenance(bed, False, at=self._utc(2026, 1, 12))
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-10"].occupied, 1)
-        self.assertEqual(counts["2026-01-11"].out_of_service, 1)
-        self.assertEqual(counts["2026-01-12"].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].out_of_service, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].occupied, 1)
 
     def test_reserved_before_checkin(self) -> None:
         """A bed is RESERVED when a CONFIRMED reservation exists before check-in."""
@@ -883,11 +889,11 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.CONFIRMED, self._utc(2026, 1, 10)), (self.CI, self._utc(2026, 1, 12))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-10"].reserved, 1)
-        self.assertEqual(counts["2026-01-10"].occupied, 0)
-        self.assertEqual(counts["2026-01-11"].reserved, 1)
-        self.assertEqual(counts["2026-01-12"].reserved, 0)
-        self.assertEqual(counts["2026-01-12"].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].reserved, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].occupied, 1)
 
     def test_occupied_beats_reserved(self) -> None:
         """OCCUPIED takes priority over RESERVED.
@@ -900,10 +906,10 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.CONFIRMED, self._utc(2026, 1, 10)), (self.CI, self._utc(2026, 1, 11))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 13))
-        self.assertEqual(counts["2026-01-10"].reserved, 1)
-        self.assertEqual(counts["2026-01-10"].occupied, 0)
-        self.assertEqual(counts["2026-01-11"].reserved, 0)
-        self.assertEqual(counts["2026-01-11"].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].reserved, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].occupied, 1)
 
     def test_cancelled_reservation_frees_bed(self) -> None:
         """Cancelling a RESERVED reservation returns the bed to AVAILABLE."""
@@ -911,10 +917,10 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.CONFIRMED, self._utc(2026, 1, 10)), (self.CANCEL, self._utc(2026, 1, 12))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-10"].reserved, 1)
-        self.assertEqual(counts["2026-01-11"].reserved, 1)
-        self.assertEqual(counts["2026-01-12"].available, 1)
-        self.assertEqual(counts["2026-01-13"].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_multiple_beds_mixed_statuses(self) -> None:
         """Three beds: one occupied, one available, one out of service."""
@@ -927,10 +933,10 @@ class BedStatusCountsTestCase(TestCase):
         self._set_maintenance(bed_c, True, at=self._utc(2026, 1, 1))
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 11))
-        self.assertEqual(counts["2026-01-10"].occupied, 1)
-        self.assertEqual(counts["2026-01-10"].available, 1)
-        self.assertEqual(counts["2026-01-10"].out_of_service, 1)
-        total = counts["2026-01-10"].available + counts["2026-01-10"].occupied + counts["2026-01-10"].reserved + counts["2026-01-10"].out_of_service + counts["2026-01-10"].in_turnaround
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].out_of_service, 1)
+        total = counts[datetime.date(2026, 1, 10)].available + counts[datetime.date(2026, 1, 10)].occupied + counts[datetime.date(2026, 1, 10)].reserved + counts[datetime.date(2026, 1, 10)].out_of_service + counts[datetime.date(2026, 1, 10)].in_turnaround
         self.assertEqual(total, 3)
 
     def test_in_turnaround_after_checkout(self) -> None:
@@ -951,11 +957,31 @@ class BedStatusCountsTestCase(TestCase):
         ).update(checked_out_at=self._utc(2026, 1, 11))
 
         counts = self._counts(self._dt_la(2026, 1, 9), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-09"].occupied, 1)
-        self.assertEqual(counts["2026-01-10"].occupied, 1)
-        self.assertEqual(counts["2026-01-11"].in_turnaround, 1)
-        self.assertEqual(counts["2026-01-12"].in_turnaround, 1)
-        self.assertEqual(counts["2026-01-13"].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 9)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].in_turnaround, 1)
+
+    def test_in_turnaround_never_cleaned(self) -> None:
+        """A bed with a completed checkout but no last_cleaned is still IN_TURNAROUND."""
+        bed = self._make_bed(added_at=self._utc(2025, 12, 1))
+        # Create a completed stay without ever setting last_cleaned.
+        self._stay(
+            bed,
+            events=[(self.CI, self._utc(2026, 1, 9)), (self.DONE, self._utc(2026, 1, 11))],
+        )
+        ReservationEvent.objects.filter(
+            pgh_obj_id__in=Reservation.objects.filter(bed=bed).values_list("pk", flat=True),
+            pgh_label="reservation.status_change",
+            status=self.DONE,
+        ).update(checked_out_at=self._utc(2026, 1, 11))
+
+        counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].occupied, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].in_turnaround, 1)
 
     def test_in_turnaround_cleared_by_last_cleaned(self) -> None:
         """Setting last_cleaned after the checkout clears IN_TURNAROUND."""
@@ -974,19 +1000,19 @@ class BedStatusCountsTestCase(TestCase):
         self._set_last_cleaned(bed, self._utc(2026, 1, 12, 0), at=self._utc(2026, 1, 12, 0))
 
         counts = self._counts(self._dt_la(2026, 1, 11), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-11"].in_turnaround, 1)
-        self.assertEqual(counts["2026-01-12"].available, 1)
-        self.assertEqual(counts["2026-01-13"].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].in_turnaround, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_no_bed_added_yet_zero_counts(self) -> None:
         """A bed added after the range start appears only from its first day."""
         self._make_bed(added_at=self._utc(2026, 1, 12))
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 14))
-        self.assertEqual(counts["2026-01-10"].available, 0)
-        self.assertEqual(counts["2026-01-11"].available, 0)
-        self.assertEqual(counts["2026-01-12"].available, 1)
-        self.assertEqual(counts["2026-01-13"].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].available, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].available, 0)
+        self.assertEqual(counts[datetime.date(2026, 1, 12)].available, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 13)].available, 1)
 
     def test_raises_when_end_before_start(self) -> None:
         with self.assertRaises(ValueError):
@@ -995,7 +1021,7 @@ class BedStatusCountsTestCase(TestCase):
     def test_dates_in_chronological_order(self) -> None:
         self._make_bed(added_at=self._utc(2025, 12, 1))
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 13))
-        self.assertEqual(list(counts), ["2026-01-10", "2026-01-11", "2026-01-12"])
+        self.assertEqual(list(counts), [datetime.date(2026, 1, 10), datetime.date(2026, 1, 11), datetime.date(2026, 1, 12)])
 
     def test_overdue_is_reserved(self) -> None:
         """CHECK_IN_OVERDUE is treated as RESERVED (not OCCUPIED)."""
@@ -1003,8 +1029,8 @@ class BedStatusCountsTestCase(TestCase):
         self._stay(bed, events=[(self.OVERDUE, self._utc(2026, 1, 10))])
 
         counts = self._counts(self._dt_la(2026, 1, 10), self._dt_la(2026, 1, 12))
-        self.assertEqual(counts["2026-01-10"].reserved, 1)
-        self.assertEqual(counts["2026-01-11"].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 10)].reserved, 1)
+        self.assertEqual(counts[datetime.date(2026, 1, 11)].reserved, 1)
 
     def test_other_shelter_excluded(self) -> None:
         """Beds and reservations from other shelters are not counted."""
