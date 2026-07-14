@@ -1,5 +1,7 @@
+import { useApolloClient } from '@apollo/client/react';
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
+import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
@@ -52,7 +54,9 @@ export function ShelterServices(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [formKey, setFormKey] = useState(0);
 
+  const client = useApolloClient();
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
@@ -78,7 +82,14 @@ export function ShelterServices(props: TProps) {
         throw new BaError('Please see validation messages.');
       }
 
+      // Refetch service categories in the background so the "Other"
+      // dropdown picks up newly-created services on the next edit.
+      client.refetchQueries({
+        include: [ShelterServiceCategoriesDocument],
+      });
+
       setEditMode(false);
+      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -111,6 +122,7 @@ export function ShelterServices(props: TProps) {
 
   return (
     <ShelterServicesForm
+      key={formKey}
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}

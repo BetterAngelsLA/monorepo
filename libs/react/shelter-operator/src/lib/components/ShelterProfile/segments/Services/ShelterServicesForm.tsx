@@ -53,6 +53,7 @@ export function ShelterServicesForm(props: TProps) {
 
   function handleCancel() {
     reset(initialValues);
+    setCreatedOtherOptionsByCategory({});
     onCancel?.();
   }
 
