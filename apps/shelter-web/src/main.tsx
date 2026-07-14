@@ -24,7 +24,7 @@ const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const fetchClient = createWebFetchClient();
-const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient, credentials: 'include' });
+const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient });
 const typePolicies = createShelterTypePolicies({
   isDevEnv,
   extraPolicies: createOperatorTypePolicies(),
@@ -36,7 +36,7 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
+    <ApiConfigProvider apiUrl={apiUrl} createFetch={() => fetchClient}>
       <ApolloClientProvider link={link} typePolicies={typePolicies}>
         <ShelterFeatureControlProvider>
           <BrowserRouter basename={basename}>

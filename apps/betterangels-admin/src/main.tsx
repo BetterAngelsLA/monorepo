@@ -14,7 +14,7 @@ import App from './app/app';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const fetchClient = createWebFetchClient();
-const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient, credentials: 'include' });
+const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient });
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -22,7 +22,7 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider apiUrl={apiUrl} fetch={fetchClient}>
+    <ApiConfigProvider apiUrl={apiUrl} createFetch={() => fetchClient}>
       <ApolloClientProvider link={link}>
         <BrowserRouter basename={basename}>
           <UserProvider>

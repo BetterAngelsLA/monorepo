@@ -24,7 +24,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
 
-  const { fetchClient } = useApiConfig();
+  const { apiUrl, fetch: authFetch } = useApiConfig();
   const { refetchUser } = useUser();
 
   const { isValidEmail, isPasswordLogin } = useEmailEnvironment(email);
@@ -40,7 +40,8 @@ export default function LoginForm() {
     handlePasswordLogin,
     resetStep,
   } = useAllauthLogin({
-    fetchClient,
+    apiUrl,
+    fetch: authFetch,
     onLoginSuccess: async () => {
       await persistOnSuccessfulSignIn(email);
       await refetchUser();

@@ -44,11 +44,11 @@ const CHART_COLORS = {
 } as const;
 
 export default function Reports({ className = '' }: IProps) {
-  const { fetchClient } = useApiConfig();
+  const { apiUrl, fetch: authFetch } = useApiConfig();
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
   const { download, isDownloading, error, clearError } =
-    useCSVDownload(fetchClient);
+    useCSVDownload(apiUrl, authFetch);
 
   const [startDate, endDate] = dateRange;
   const startStr = formatDate(startDate);

@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 
 export default function useCSVDownload(
-  fetchClient: (url: string) => Promise<Response>
+  apiUrl: string,
+  authFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 ) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export default function useCSVDownload(
         if (orgId) {
           url += `&org_id=${orgId}`;
         }
-        const response = await fetchClient(url);
+        const response = await authFetch(`${apiUrl}${url}`);
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error ?? `Export failed (${response.status})`);
@@ -38,7 +39,7 @@ export default function useCSVDownload(
         setIsDownloading(false);
       }
     },
-    [fetchClient]
+    [apiUrl, authFetch]
   );
 
   return { download, isDownloading, error, clearError: () => setError(null) };

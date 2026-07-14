@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiConfigProvider } from './ApiConfigProvider';
 
 // ---------------------------------------------------------------------------
@@ -43,8 +43,15 @@ export interface EnvironmentSwitcherProviderProps {
   storage: ApiConfigStorage;
   /** Storage key (default: ``'ba_environment'``). */
   storageKey?: string;
-  /** CSRF + Org-ID pre-wired fetch function. */
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  /**
+   * Factory that builds a CSRF + Org-ID pre-wired fetch function for a
+   * given ``apiUrl``. Called whenever the environment changes so the
+   * interceptor chain always targets the correct backend.
+   *
+   * For single-environment web apps that don't need the URL parameter,
+   * pass ``() => createWebFetchClient()``.
+   */
+  createFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,9 +69,23 @@ export const EnvironmentSwitcherProvider = ({
   environments,
   storage,
   storageKey = 'ba_environment',
-  fetch: fetchWithAuth,
+  createFetch,
 }: EnvironmentSwitcherProviderProps) => {
   const [envName, setEnvName] = useState<string | null>(null);
+
+  // ---- Dev-mode guard: warn if environments is not a stable reference ----
+  const prevEnvsRef = useRef(environments);
+  if (
+    process.env['NODE_ENV'] !== 'production' &&
+    prevEnvsRef.current !== environments
+  ) {
+    console.warn(
+      'EnvironmentSwitcherProvider: `environments` array changed between renders. ' +
+      'This can cause stale environment state because the init effect intentionally ' +
+      'omits `environments` from its dependency array. Define the array at module scope.',
+    );
+  }
+  prevEnvsRef.current = environments;
 
   // ---- Resolve saved environment ----
   useEffect(() => {
@@ -93,6 +114,9 @@ export const EnvironmentSwitcherProvider = ({
     return env?.url ?? environments[0].url;
   }, [envName, environments]);
 
+  // ---- Build env-aware fetch chain ----
+  // (delegated to ApiConfigProvider via createFetch)
+
   // ---- Environment context value ----
   const envValue = useMemo<ApiEnvironmentContextType | undefined>(
     () => (envName ? { environment: envName, switchEnvironment } : undefined),
@@ -104,7 +128,7 @@ export const EnvironmentSwitcherProvider = ({
 
   return (
     <ApiEnvironmentContext.Provider value={envValue}>
-      <ApiConfigProvider apiUrl={apiUrl} fetch={fetchWithAuth}>
+      <ApiConfigProvider apiUrl={apiUrl} createFetch={createFetch}>
         {children}
       </ApiConfigProvider>
     </ApiEnvironmentContext.Provider>

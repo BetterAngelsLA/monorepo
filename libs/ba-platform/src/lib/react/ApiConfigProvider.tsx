@@ -6,35 +6,30 @@ import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 export interface ApiConfigContextType {
   apiUrl: string;
-  /** Legacy fetch — prepends ``apiUrl`` + sets ``Content-Type: application/json``. */
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
+  /**
+   * Raw interceptor chain (CSRF + Org-ID headers pre-injected).
+   * Pass directly to Apollo ``HttpLink`` as its ``fetch`` option.
+   * Rebuilt by ``EnvironmentSwitcherProvider`` when the environment changes.
+   */
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
 // Provider props
 // ---------------------------------------------------------------------------
 
-/**
- * Two fetch patterns are available, serving different consumers:
- *
- * - **``fetch`` prop** — the composed interceptor chain (already injects
- *   ``X-Organization-ID`` and ``X-CSRFToken``).  Passed directly to
- *   Apollo's ``HttpLink`` as its ``fetch`` option.  No extra
- *   headers or URL manipulation.
- *
- * - **``fetchClient`` (from ``useApiConfig()``)** — wraps the composed
- *   fetch: prepends ``apiUrl`` and sets ``Content-Type: application/json``.
- *   Used by legacy REST callers (sign-in forms, report downloads, etc.).
- */
 export interface ApiConfigProviderProps {
   children: ReactNode;
   /** Base API URL. */
   apiUrl: string;
   /**
-   * Composed interceptor chain (org + CSRF headers pre-injected).
-   * Passed to Apollo ``HttpLink`` as its ``fetch`` option.
+   * Factory that builds an auth-wired fetch function for the given
+   * ``apiUrl``.  Called once on mount (and whenever ``apiUrl`` changes
+   * when wrapped by ``EnvironmentSwitcherProvider``).
+   *
+   * Single-environment apps pass ``() => createWebFetchClient()``.
    */
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  createFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,24 +45,18 @@ const ApiConfigContext = createContext<ApiConfigContextType | undefined>(undefin
 export const ApiConfigProvider = ({
   children,
   apiUrl,
-  fetch: fetchWithAuth,
+  createFetch,
 }: ApiConfigProviderProps) => {
-  // ---- Fetch client ----
-  const fetchClient = useMemo(() => {
-    return async (path: string, options: RequestInit = {}) => {
-      const headers = new Headers(options.headers);
-      headers.set('Content-Type', 'application/json');
-      return fetchWithAuth(`${apiUrl}${path}`, {
-        ...options,
-        headers,
-      });
-    };
-  }, [apiUrl, fetchWithAuth]);
+  // ---- Build auth-wired fetch for the current apiUrl ----
+  const fetchWithAuth = useMemo(
+    () => createFetch(apiUrl),
+    [apiUrl, createFetch]
+  );
 
   // ---- Context value ----
   const value = useMemo<ApiConfigContextType>(
-    () => ({ apiUrl, fetchClient }),
-    [apiUrl, fetchClient]
+    () => ({ apiUrl, fetch: fetchWithAuth }),
+    [apiUrl, fetchWithAuth]
   );
 
   return (
