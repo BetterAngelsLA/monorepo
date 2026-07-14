@@ -1,4 +1,3 @@
-import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors, toError } from '@monorepo/react/shared';
@@ -7,22 +6,19 @@ import { FormProvider, useForm } from 'react-hook-form';
 import {
   useCreateBed,
   useFilteredPropertyOptions,
+  useRooms,
   useUpdateBed,
 } from '../../../hooks';
 import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
 import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
-import {
-  GetRoomsDocument,
-  type GetRoomsQuery,
-  type GetRoomsQueryVariables,
-} from '../../rooms/api/__generated__/roomQueries.generated';
 import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
+
 export type BedFormProps = {
   shelterId: string;
   bedId?: string;
@@ -38,7 +34,6 @@ export function BedForm({
   onSuccess,
   onCancel,
 }: BedFormProps) {
-  const isEditMode = Boolean(bedId);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const methods = useForm<BedFormData>({
@@ -54,21 +49,14 @@ export function BedForm({
     formState: { errors, isValid },
   } = methods;
 
-  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
-    GetRoomsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
-
+  const { rooms } = useRooms(shelterId);
   const roomOptions = useMemo(
     () =>
-      (roomsData?.rooms.results ?? []).map((room) => ({
+      (rooms ?? []).map((room) => ({
         value: room.id,
         label: room.name,
       })),
-    [roomsData?.rooms.results]
+    [rooms]
   );
 
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
@@ -85,7 +73,7 @@ export function BedForm({
     setSubmissionError(null);
 
     try {
-      if (isEditMode && bedId) {
+      if (bedId) {
         const response = await updateBedMutation({
           variables: {
             id: bedId,
@@ -122,7 +110,7 @@ export function BedForm({
         }
       }
 
-      if (!isEditMode) {
+      if (!bedId) {
         reset();
       }
       onSuccess?.();
@@ -186,11 +174,7 @@ export function BedForm({
             primaryDisabled={isSubmitting || !isValid}
             secondaryDisabled={isSubmitting}
             primaryLabel={
-              isSubmitting
-                ? 'Submitting…'
-                : isEditMode
-                ? 'Save Bed'
-                : 'Create Bed'
+              isSubmitting ? 'Submitting…' : bedId ? 'Save Bed' : 'Create Bed'
             }
           />
         </form>

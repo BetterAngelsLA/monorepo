@@ -1,4 +1,4 @@
-query GetRoom($id: ID!) {
+query Room($id: ID!) {
   room(pk: $id) {
     id
     amenities
@@ -25,18 +25,6 @@ query GetRoom($id: ID!) {
     }
     pets {
       name
-    }
-  }
-}
-
-query GetRooms($shelterId: ID!) {
-  rooms(filters: { shelterId: $shelterId }) {
-    results {
-      id
-      name
-      status
-      amenities
-      medicalRespite
     }
   }
 }

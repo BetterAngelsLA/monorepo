@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
-import { useBed } from '../../hooks/';
+import { useBed, useRoom } from '../../hooks/';
 
 import {
   GetReservationDocument,
@@ -15,11 +15,6 @@ import {
   type GetShelterOperatorOverviewQuery,
   type GetShelterOperatorOverviewQueryVariables,
 } from '../overview/__generated__/overview.generated';
-import {
-  GetRoomDocument,
-  type GetRoomQuery,
-  type GetRoomQueryVariables,
-} from '../rooms/api/__generated__/roomQueries.generated';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -357,15 +352,8 @@ export function useBreadcrumbNames(
     skip: !shelterId,
   });
 
-  const { data: roomData } = useQuery<GetRoomQuery, GetRoomQueryVariables>(
-    GetRoomDocument,
-    {
-      variables: { id: roomId ?? '' },
-      skip: !roomId,
-    }
-  );
-
   const { bed } = useBed(bedId ?? '');
+  const { room } = useRoom(roomId ?? '');
 
   const { data: reservationData } = useQuery<
     GetReservationQuery,
@@ -383,8 +371,8 @@ export function useBreadcrumbNames(
       map[`__shelterId__:${shelterData.operatorShelter.id}`] =
         shelterData.operatorShelter.name;
     }
-    if (roomData?.room?.id && roomData.room.name) {
-      map[`__roomId__:${roomData.room.id}`] = roomData.room.name;
+    if (room?.id && room.name) {
+      map[`__roomId__:${room.id}`] = room.name;
     }
     if (bed?.id) {
       map[`__bedId__:${bed.id}`] = bed.name ?? bed.id;
@@ -405,7 +393,7 @@ export function useBreadcrumbNames(
     }
 
     return map;
-  }, [shelterData, roomData, bed, reservationData]);
+  }, [shelterData, room, bed, reservationData]);
 
   // Resolve items
   const items = useMemo(() => {

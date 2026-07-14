@@ -3,12 +3,9 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBeds } from '../../hooks/useBeds';
-import { useCloneBed } from '../../hooks/useCloneBed';
+import { useBeds, useCloneBed, useDeleteBeds, useUpdateBed } from '../../hooks';
 import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
-import { useDeleteBeds } from '../../hooks/useDeleteBeds';
 import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
-import { useUpdateBed } from '../../hooks/useUpdateBed';
 import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
@@ -62,6 +59,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   const handleClone = useCallback(
     async (rowObject: BedRowObject) => {
+      const errorMessage = 'Unable to clone bed. Please try again.';
+
       try {
         const response = await cloneBed({ variables: { id: rowObject.id } });
 
@@ -71,14 +70,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['id'],
         });
         if (fieldErrors.length) {
-          throw new Error('Unable to clone bed. Please try again.');
+          throw new Error(errorMessage);
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error cloning bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: 'Unable to clone bed. Please try again.',
+          title: errorMessage,
           persistent: true,
         });
       }
@@ -100,6 +99,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const handleDelete = useCallback(
     async (ids: string[]) => {
       const plural = ids.length > 1 ? 's' : '';
+      const errorMessage = `Unable to delete bed${plural}. Please try again.`;
 
       try {
         const response = await deleteBeds({ variables: { data: { ids } } });
@@ -110,14 +110,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['ids'],
         });
         if (fieldErrors.length) {
-          throw new Error(`Unable to delete bed${plural}. Please try again.`);
+          throw new Error(errorMessage);
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error deleting bed${plural}: ${error.message}`);
         showToast({
           status: 'error',
-          title: `Unable to delete bed${plural}. Please try again.`,
+          title: errorMessage,
           persistent: true,
         });
       }
@@ -127,6 +127,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   const handleMarkReady = useCallback(
     async (rowObject: BedRowObject) => {
+      const errorMessage = 'Unable to update bed. Please try again.';
+
       try {
         const response = await updateBed({
           variables: {
@@ -141,14 +143,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['lastCleaned'],
         });
         if (fieldErrors.length) {
-          throw new Error('Unable to update bed. Please try again.');
+          throw new Error(errorMessage);
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error updating bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: 'Unable to update bed. Please try again.',
+          title: errorMessage,
           persistent: true,
         });
       }
