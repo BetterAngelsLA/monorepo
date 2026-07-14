@@ -78,6 +78,21 @@ export function FilterPills(props: IProps) {
       });
       continue;
     }
+    if (key === 'openNowIncludeNull') {
+      if (value) {
+        pills.push({
+          id: 'openNowIncludeNull',
+          label: 'Open now: Include unknown',
+          clear: (prev) => ({
+            ...prev,
+            openNowIncludeNull: undefined,
+            openNow:
+              (prev.openNowScheduleTypes ?? []).length > 0 ? true : undefined,
+          }),
+        });
+      }
+      continue;
+    }
     if (key === 'isAccessCenter') {
       if (value) {
         pills.push({
