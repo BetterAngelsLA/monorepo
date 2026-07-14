@@ -9,6 +9,13 @@ const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
 
 const rootPkg = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'));
+
+// If workspaces are already enabled on root, Yarn resolves * deps natively — skip copy
+if (rootPkg.workspaces && rootPkg.workspaces.length > 0) {
+  console.log('[eas-build-pre-install] Workspaces already configured, skipping copy.');
+  process.exit(0);
+}
+
 const appPkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf-8'));
 
 appPkg.dependencies = rootPkg.dependencies;
