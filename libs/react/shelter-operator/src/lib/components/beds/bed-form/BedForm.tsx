@@ -6,10 +6,10 @@ import { FormProvider, useForm } from 'react-hook-form';
 import {
   useCreateBed,
   useFilteredPropertyOptions,
+  useRooms,
   useUpdateBed,
 } from '../../../hooks';
 import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
-import { useRooms } from '../../../hooks/useRooms';
 import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
 import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';

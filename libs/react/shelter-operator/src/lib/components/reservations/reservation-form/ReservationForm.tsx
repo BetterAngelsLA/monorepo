@@ -1,19 +1,9 @@
-import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
-import {
-  BedsDocument,
-  type BedsQuery,
-  type BedsQueryVariables,
-} from '../../../hooks/useBeds/__generated__/useBeds.generated';
+import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
-import {
-  RoomsDocument,
-  type RoomsQuery,
-  type RoomsQueryVariables,
-} from '../../../hooks/useRooms/__generated__/useRooms.generated';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import { Form } from '../../form/Form';
 import type { SelectedClient } from '../components/ClientSearchInput';
@@ -113,41 +103,27 @@ export function ReservationForm({
     [setValue]
   );
 
-  const { data: bedsData } = useQuery<BedsQuery, BedsQueryVariables>(
-    BedsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { beds } = useBeds(shelterId);
 
-  const allBeds = useMemo(() => bedsData?.beds.results ?? [], [bedsData]);
-
-  const allBedOptions = useMemo(
+  const allBeds = useMemo(
     () =>
-      allBeds.map((bed) => ({
+      beds.map((bed) => ({
         value: bed.id,
         label: `${bed.name ?? ''}${bed.room ? ` (${bed.room.name})` : ''}`,
         roomId: bed.room?.id ?? null,
       })),
-    [allBeds]
+    [beds]
   );
 
-  const { data: roomsData } = useQuery<RoomsQuery, RoomsQueryVariables>(
-    RoomsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { rooms } = useRooms(shelterId);
 
-  const allRoomOptions = useMemo(
+  const roomOptions = useMemo(
     () =>
-      (roomsData?.rooms.results ?? []).map((room) => ({
+      (rooms ?? []).map((room) => ({
         value: room.id,
         label: room.name,
       })),
-    [roomsData?.rooms.results]
+    [rooms]
   );
 
   // ─── Dynamic read-only & filtering ──────────────────────────────────────
@@ -166,20 +142,20 @@ export function ReservationForm({
   // Free-form only: auto-populate room when a bed with a room is selected.
   useEffect(() => {
     if (!openedFromRes || !watchedBedId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId) {
       setValue('roomId', bed.roomId);
     }
-  }, [openedFromRes, watchedBedId, allBedOptions, setValue]);
+  }, [openedFromRes, watchedBedId, allBeds, setValue]);
 
   // When the room changes, clear bedId if the current bed doesn't belong to the new room.
   useEffect(() => {
     if (!watchedBedId || !watchedRoomId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId && bed.roomId !== watchedRoomId) {
       setValue('bedId', null);
     }
-  }, [watchedRoomId, watchedBedId, allBedOptions, setValue]);
+  }, [watchedRoomId, watchedBedId, allBeds, setValue]);
 
   // Filter bed options: only show available beds, and when a room is selected,
   // show only beds in that room. In edit mode, always include the currently
@@ -279,7 +255,7 @@ export function ReservationForm({
               value,
               label,
             }))}
-            roomOptions={allRoomOptions}
+            roomOptions={roomOptions}
             bedRoomError={bedRoomError}
             readOnlyFields={effectiveReadOnlyFields}
             selectedClients={selectedClients}
