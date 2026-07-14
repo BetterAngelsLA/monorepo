@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, Iterable, TypedDict
 from zoneinfo import ZoneInfo
 
 import pghistory
-from django.db.models import Count, OuterRef, Q, Subquery, TextField
-from django.db.models.functions import Cast
+from django.db.models import Avg, Count, F, OuterRef, Q, Subquery, TextField
+from django.db.models.functions import Cast, Extract
 from shelters.enums import BedStatusChoices
 
 if TYPE_CHECKING:
@@ -370,13 +370,13 @@ def avg_days_to_occupancy(
 ) -> float | None:
     """Average number of days a bed sat unoccupied before becoming occupied.
 
-    For every occupancy interval whose check-in falls in the LA-local range and
-    that is not the bed's first interval, the vacancy is the gap in days from the
-    previous interval's freed instant to this check-in. A bed becomes free on any
-    exit from CHECKED_IN (checkout or cancellation), so cancelled stays are
-    measured correctly. Beds occupied from creation (no prior interval) and
-    reverts on the same reservation are excluded. Returns the mean rounded to two
-    places, or None when there are no qualifying pairs.
+    For every check-in event (status changed TO checked_in) whose timestamp
+    falls in the LA-local range, the vacancy is the gap in days from the most
+    recent free event (any exit from CHECKED_IN, including cancellations) on the
+    same bed from a *different* reservation.  Beds occupied from creation (no
+    preceding free event) and reverts on the same reservation are excluded.
+    Returns the mean rounded to two places, or None when there are no qualifying
+    pairs.
 
     Both endpoints are inclusive and interpreted in America/Los_Angeles.
 
@@ -386,30 +386,54 @@ def avg_days_to_occupancy(
     from shelters.models import BedEvent  # type: ignore[attr-defined]
 
     start_utc, end_utc = report_date_range_to_utc(start_date, end_date)
+    Events = pghistory.models.Events
 
-    scope_bed_ids = set(
-        BedEvent.objects.filter(shelter_id=shelter.pk, pgh_label="bed.add", pgh_created_at__lt=end_utc).values_list(
-            "pgh_obj_id", flat=True
-        )
+    scope_bed_ids = list(
+        BedEvent.objects.filter(
+            shelter_id=shelter.pk, pgh_label="bed.add", pgh_created_at__lt=end_utc
+        ).values_list("pgh_obj_id", flat=True)
     )
     if not scope_bed_ids:
         return None
 
-    intervals_by_bed = _reservation_occupancy_intervals(bed_ids=scope_bed_ids, end_utc=end_utc)
+    # Check-in events: status changed TO checked_in within the range.
+    checkins = Events.objects.filter(
+        pgh_label="reservation.status_change",
+        pgh_data__bed_id__in=scope_bed_ids,
+        pgh_created_at__gte=start_utc,
+        pgh_created_at__lt=end_utc,
+        pgh_data__status="checked_in",
+    ).exclude(
+        pgh_diff__status__0="checked_in",
+    )
 
-    gaps: list[float] = []
-    for intervals in intervals_by_bed.values():
-        for index in range(1, len(intervals)):
-            check_in, _freed, reservation_id = intervals[index]
-            if not (start_utc <= check_in < end_utc):
-                continue
-            _prev_check_in, prev_freed, prev_reservation_id = intervals[index - 1]
-            if prev_freed is None:
-                continue  # previous interval never closed; can't overlap, guard
-            if prev_reservation_id == reservation_id:
-                continue  # revert on the same reservation, not a new occupancy
-            gaps.append((check_in - prev_freed).total_seconds() / 86400.0)
+    # Correlated subquery: most recent "free" event (exited checked_in)
+    # on the same bed, from a *different* reservation, before this check-in.
+    prev_free = (
+        Events.objects.filter(
+            pgh_label="reservation.status_change",
+            pgh_data__bed_id=OuterRef("pgh_data__bed_id"),
+            pgh_created_at__lte=OuterRef("pgh_created_at"),
+            pgh_diff__status__0="checked_in",
+        )
+        .exclude(pgh_diff__status__1="checked_in")
+        .exclude(pgh_obj_id=OuterRef("pgh_obj_id"))
+        .order_by("-pgh_created_at")
+        .values("pgh_created_at")[:1]
+    )
 
-    if not gaps:
-        return None
-    return round(sum(gaps) / len(gaps), 2)
+    result = (
+        checkins.annotate(prev_freed=Subquery(prev_free))
+        .filter(prev_freed__isnull=False)
+        .annotate(
+            gap_days=(
+                Extract(F("pgh_created_at"), "epoch")
+                - Extract(F("prev_freed"), "epoch")
+            )
+            / 86400.0,
+        )
+        .aggregate(avg=Avg("gap_days"))
+    )
+
+    avg_val = result["avg"]
+    return round(avg_val, 2) if avg_val is not None else None

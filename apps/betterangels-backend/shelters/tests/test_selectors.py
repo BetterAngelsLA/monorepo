@@ -651,3 +651,49 @@ class AvgDaysToOccupancyTestCase(TestCase):
     def test_raises_when_end_before_start(self) -> None:
         with self.assertRaises(ValueError):
             self._avg(datetime.date(2026, 1, 12), datetime.date(2026, 1, 10))
+
+    def test_checkin_at_range_start_boundary(self) -> None:
+        """A check-in at the very start of the LA-local range is included."""
+        bed = self._make_bed()
+        # Stay 1: Jan 1–2 (noon UTC = ~4am LA, well inside LA day)
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 1)), (self.DONE, self._utc(2026, 1, 2))])
+        # Stay 2: noon UTC Jan 5. LA Jan 5 00:00 = UTC 08:00, so noon UTC is
+        # well within the LA day. We narrow the range to [Jan 5, Jan 5] — the
+        # check-in at noon UTC falls in this single-day window.
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 5))])
+
+        result = self._avg(datetime.date(2026, 1, 5), datetime.date(2026, 1, 5))
+        self.assertIsNotNone(result, "check-in at noon UTC within single LA day should contribute")
+
+    def test_checkin_before_range_start_excluded(self) -> None:
+        """A check-in whose UTC time falls before the LA-local range start is excluded."""
+        bed = self._make_bed()
+        # Stay 1: before range
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 1)), (self.DONE, self._utc(2026, 1, 3))])
+        # Stay 2: check-in at Jan 4 00:00 UTC. LA Jan 5 starts at UTC 08:00
+        # (PST), so this check-in is on LA Jan 4 — outside [Jan 5, Jan 31].
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 4, 0))])
+
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 5), datetime.date(2026, 1, 31)))
+
+    def test_mixed_in_range_single_bed(self) -> None:
+        """Only gaps whose check-in falls in-range contribute; others are ignored."""
+        bed = self._make_bed()
+        # Interval 1: before range, gap of 2 days to interval 2
+        self._stay(bed, events=[(self.CI, self._utc(2025, 12, 28)), (self.DONE, self._utc(2025, 12, 30))])
+        # Interval 2: check-in Jan 5 (in range), gap from Dec 30 = 6 days
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 5)), (self.DONE, self._utc(2026, 1, 7))])
+        # Interval 3: check-in Feb 5 (outside range), ignored
+        self._stay(bed, events=[(self.CI, self._utc(2026, 2, 5))])
+
+        # Range only covers interval 2's check-in → one gap of 6 days.
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 6.0)
+
+    def test_zero_gap(self) -> None:
+        """A checkout and check-in at the same instant produce a zero-day gap."""
+        bed = self._make_bed()
+        same_moment = self._utc(2026, 1, 10, 12)
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.DONE, same_moment)])
+        self._stay(bed, events=[(self.CI, same_moment)])
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 0.0)
