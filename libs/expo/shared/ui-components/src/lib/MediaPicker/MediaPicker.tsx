@@ -14,6 +14,7 @@ type MediaPickerModalProps = {
   onClose: () => void;
   onCameraCapture: (file: ReactNativeFile) => void;
   onFilesSelected: (files: ReactNativeFile[]) => void;
+  onSelectionComplete?: () => void;
   allowMultiple: boolean;
   labels?: {
     image?: string;
@@ -26,6 +27,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
   const {
     isOpen: mediaPickerActive,
     onClose: onMediaPickerClose,
+    onSelectionComplete,
     onCameraCapture,
     onFilesSelected,
     allowMultiple,
@@ -69,7 +71,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
     }
 
     onFilesSelected(result.files);
-    onMediaPickerClose();
+    onSelectionComplete?.();
   }
 
   async function handlePickDocuments() {
@@ -84,7 +86,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
     }
 
     onFilesSelected(result.files);
-    onMediaPickerClose();
+    onSelectionComplete?.();
   }
 
   const handleMenuSheetClose = useCallback(() => {
@@ -123,7 +125,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
           onClose={() => setCurrentMode('menu')}
           onCapture={(file) => {
             onCameraCapture(file);
-            onMediaPickerClose();
+            onSelectionComplete?.();
           }}
         />
       )}
