@@ -137,7 +137,9 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         before = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         after = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(before, _aware(2025, 12, 31, 23, 0))
-        self._set_event_dates(after, _aware(2026, 2, 1, 0, 0))
+        # 2026-02-01 12:00 UTC is 2026-02-01 04:00 in LA, i.e. after the Jan-31
+        # end date once the range is interpreted LA-local.
+        self._set_event_dates(after, _aware(2026, 2, 1, 12, 0))
 
         result = reservation_status_change_counts(
             shelter=self.shelter, start_date=self.start_date, end_date=self.end_date
@@ -230,3 +232,31 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         )
 
         self.assertEqual(result.checked_in, 1)
+
+
+class ReportDateRangeToUtcTestCase(TestCase):
+    """Tests for the shared ``report_date_range_to_utc`` helper."""
+
+    def test_converts_inclusive_la_range_to_half_open_utc_window(self) -> None:
+        from shelters.selectors.reports import report_date_range_to_utc
+
+        start_utc, end_utc = report_date_range_to_utc(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31))
+
+        # LA is UTC-8 (PST) in January, so LA-midnight is 08:00 UTC.
+        self.assertEqual(start_utc, datetime.datetime(2026, 1, 1, 8, 0, tzinfo=datetime.timezone.utc))
+        # End is the start of the day after end_date in LA (half-open).
+        self.assertEqual(end_utc, datetime.datetime(2026, 2, 1, 8, 0, tzinfo=datetime.timezone.utc))
+
+    def test_raises_when_end_before_start(self) -> None:
+        from shelters.selectors.reports import report_date_range_to_utc
+
+        with self.assertRaisesRegex(ValueError, "end_date must be on or after start_date"):
+            report_date_range_to_utc(datetime.date(2026, 1, 2), datetime.date(2026, 1, 1))
+
+    def test_allows_multi_year_past_range(self) -> None:
+        from shelters.selectors.reports import report_date_range_to_utc
+
+        # No cap on how far back a range spans; the natural limit is data.
+        start_utc, end_utc = report_date_range_to_utc(datetime.date(2020, 1, 1), datetime.date(2026, 1, 1))
+
+        self.assertLess(start_utc, end_utc)

@@ -4,6 +4,7 @@ import datetime
 from collections import Counter
 from itertools import takewhile
 from typing import TYPE_CHECKING, Any, TypedDict
+from zoneinfo import ZoneInfo
 
 import pghistory
 from django.db.models import Count, OuterRef, Q, Subquery, TextField
@@ -13,6 +14,34 @@ from shelters.enums import BedStatusChoices
 if TYPE_CHECKING:
     from shelters.models import Shelter
     from shelters.types.reporting import ReservationMetricsType
+
+
+# ── Shared date-range helpers ─────────────────────────────────────────────────
+# Reporting selectors take calendar dates and read them as LA-local days (all BA
+# shelters are in LA), then convert to a UTC window to query pgh_created_at.
+# New selectors should call report_date_range_to_utc rather than convert inline.
+
+LA_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def report_date_range_to_utc(
+    start_date: datetime.date, end_date: datetime.date
+) -> tuple[datetime.datetime, datetime.datetime]:
+    """Convert an inclusive LA-local date range to a ``[start, end)`` UTC window.
+
+    ``end`` is the UTC instant at the start of the day *after* ``end_date`` in
+    Los Angeles, so the returned half-open interval covers all of ``end_date``
+    locally. Ranges are unbounded; the natural limit is how far back data exists.
+
+    Raises:
+        ValueError: if ``end_date`` is before ``start_date``.
+    """
+    if end_date < start_date:
+        raise ValueError("end_date must be on or after start_date")
+
+    start_local = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=LA_TZ)
+    end_local = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=LA_TZ)
+    return start_local.astimezone(datetime.timezone.utc), end_local.astimezone(datetime.timezone.utc)
 
 
 class DailyBedCounts(TypedDict):
@@ -106,9 +135,10 @@ def reservation_status_change_counts(
 ) -> "ReservationMetricsType":
     """Count reservation status-change events for *shelter* within an inclusive window.
 
-    Both endpoints are inclusive at the day level: internally the end of
-    ``end_date`` is widened to the start of the next day so any event on
-    ``end_date`` is captured.
+    Both endpoints are inclusive at the day level and interpreted in
+    America/Los_Angeles (via ``report_date_range_to_utc``): internally the end of
+    ``end_date`` is widened to the start of the next LA day so any event on
+    ``end_date`` (LA-local) is captured.
 
     Returns a :class:`~shelters.types.reporting.ReservationMetricsType` with:
 
@@ -134,15 +164,7 @@ def reservation_status_change_counts(
     from shelters.models import Reservation
     from shelters.types.reporting import ReservationMetricsType
 
-    if end_date < start_date:
-        raise ValueError("end_date must be on or after start_date.")
-
-    start_dt = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=datetime.timezone.utc)
-    end_dt = datetime.datetime.combine(
-        end_date + datetime.timedelta(days=1),
-        datetime.time.min,
-        tzinfo=datetime.timezone.utc,
-    )
+    start_dt, end_dt = report_date_range_to_utc(start_date, end_date)
 
     # pghistory.models.Events.pgh_obj_id is a text column; cast Reservation.pk to text for the IN.
     reservation_ids = (
