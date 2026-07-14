@@ -161,7 +161,7 @@ export function ReservationForm({
   // show only beds in that room. In edit mode, always include the currently
   // selected bed and the originally assigned bed so they remain visible.
   const bedOptions = useMemo(() => {
-    const availableBeds = allBeds.filter((bed) => {
+    const availableBeds = beds.filter((bed) => {
       if (bed.status === BedStatusChoices.Available) return true;
       if (
         isEditMode &&
@@ -179,7 +179,7 @@ export function ReservationForm({
       return availableOptions.filter((b) => b.roomId === watchedRoomId);
     }
     return availableOptions;
-  }, [allBeds, watchedRoomId, isEditMode, watchedBedId]);
+  }, [beds, watchedRoomId, isEditMode, watchedBedId]);
 
   // ─── Mutations ──────────────────────────────────────────────────────────
 
