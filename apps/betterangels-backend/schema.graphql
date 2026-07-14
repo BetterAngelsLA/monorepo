@@ -863,6 +863,8 @@ union DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | Operation
 
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
+union DeleteClientProfilePhotoPayload = ClientProfileType | OperationInfo
+
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
 
 input DeleteDjangoObjectInput {
@@ -1021,6 +1023,13 @@ input GenerateClientProfilePhotoUploadInput {
 }
 
 union GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo
+
+input GenerateNoteAttachmentUploadsInput {
+  noteId: ID!
+  uploads: [NoteAttachmentUploadItemInput!]!
+}
+
+union GenerateNoteFileUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo
 
 input GenerateShelterPhotoUploadsInput {
   shelterId: ID!
@@ -1536,7 +1545,8 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true) @deprecated(reason: "Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.")
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1562,6 +1572,8 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
+  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
@@ -1602,6 +1614,33 @@ scalar NonBlankString
 
 """Rejects blank input. Use for required string fields."""
 scalar NonEmptyString
+
+input NoteAttachmentFromUploadInput {
+  presignedKey: String!
+  uploadToken: String!
+  filename: String!
+  contentType: String!
+}
+
+type NoteAttachmentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  mimeType: String!
+  originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input NoteAttachmentUploadItemInput {
+  refId: String!
+  filename: String!
+  contentType: String!
+}
+
+type NoteAttachmentUploadsType {
+  attachments: [NoteAttachmentType!]!
+}
 
 type NoteDataImportType {
   id: UUID!
@@ -2242,6 +2281,13 @@ input ResolveClientProfilePhotoUploadInput {
 }
 
 union ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo
+
+input ResolveNoteAttachmentUploadsInput {
+  noteId: ID!
+  attachments: [NoteAttachmentFromUploadInput!]!
+}
+
+union ResolveNoteFileUploadsPayload = NoteAttachmentUploadsType | OperationInfo
 
 input ResolveShelterPhotoUploadsInput {
   shelterId: ID!

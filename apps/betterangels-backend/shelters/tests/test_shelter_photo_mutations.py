@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import waffle
 from common.imgproxy import IMGPROXY_SWITCH
+from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
@@ -41,17 +42,17 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     @patch("shelters.schema.shelter_photo.create_presigned_uploads")
     def test_returns_presigned_upload_data(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload",
-                    "fields": {"Policy": "xyz"},
-                    "presigned_key": "media/shelters/abc.jpg",
-                    "upload_token": "token-abc",
-                }
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload",
+                    fields={"Policy": "xyz"},
+                    presigned_key="media/shelters/abc.jpg",
+                    upload_token="token-abc",
+                )
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -75,24 +76,24 @@ class GenerateShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
     @patch("shelters.schema.shelter_photo.create_presigned_uploads")
     def test_returns_presigned_upload_data_for_multiple_uploads(self, mock_create: MagicMock) -> None:
-        mock_create.return_value = {
-            "uploads": [
-                {
-                    "ref_id": "ref-1",
-                    "url": "https://s3.example.com/upload-1",
-                    "fields": {"Policy": "abc"},
-                    "presigned_key": "media/shelters/a.jpg",
-                    "upload_token": "token-1",
-                },
-                {
-                    "ref_id": "ref-2",
-                    "url": "https://s3.example.com/upload-2",
-                    "fields": {"Policy": "def"},
-                    "presigned_key": "media/shelters/b.jpg",
-                    "upload_token": "token-2",
-                },
+        mock_create.return_value = AuthorizedPresignedUploadBatch(
+            uploads=[
+                AuthorizedPresignedUpload(
+                    ref_id="ref-1",
+                    url="https://s3.example.com/upload-1",
+                    fields={"Policy": "abc"},
+                    presigned_key="media/shelters/a.jpg",
+                    upload_token="token-1",
+                ),
+                AuthorizedPresignedUpload(
+                    ref_id="ref-2",
+                    url="https://s3.example.com/upload-2",
+                    fields={"Policy": "def"},
+                    presigned_key="media/shelters/b.jpg",
+                    upload_token="token-2",
+                ),
             ]
-        }
+        )
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -203,12 +204,14 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.graphql_client.force_login(self.operator)
 
-    @patch("shelters.services.shelter_photo.s3_key_exists", return_value=True)
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
-    @patch("shelters.services.shelter_photo.strip_storage_location", side_effect=lambda key: key.removeprefix("media/"))
-    def test_creates_single_shelter_photo_and_returns_it(
-        self, mock_strip: MagicMock, mock_validate: MagicMock, mock_s3_exists: MagicMock
-    ) -> None:
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_creates_single_shelter_photo_and_returns_it(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = [
+            MagicMock(
+                presigned_key="media/shelters/abc.jpg",
+                file_path="shelters/abc.jpg",
+            )
+        ]
         initial_count = ShelterPhoto.objects.count()
 
         expected_query_count = 6
@@ -242,12 +245,12 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertIn("shelters/abc.jpg", photo.file.name)
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
 
-    @patch("shelters.services.shelter_photo.s3_key_exists", return_value=True)
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
-    @patch("shelters.services.shelter_photo.strip_storage_location", side_effect=lambda key: key.removeprefix("media/"))
-    def test_creates_multiple_shelter_photos_and_returns_them(
-        self, mock_strip: MagicMock, mock_validate: MagicMock, mock_s3_exists: MagicMock
-    ) -> None:
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_creates_multiple_shelter_photos_and_returns_them(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = [
+            MagicMock(file_path="shelters/a.jpg"),
+            MagicMock(file_path="shelters/b.jpg"),
+        ]
         initial_count = ShelterPhoto.objects.count()
 
         # Warm waffle cache so is_imgproxy_enabled() doesn't add a flaky extra query
@@ -317,8 +320,9 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
 
         self.assertGraphQLUnauthenticated(response)
 
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=False)
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_returns_error_on_invalid_token(self, mock_validate: MagicMock) -> None:
+        mock_validate.side_effect = ValueError("Invalid or expired upload token for 'photo.jpg'")
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
@@ -342,9 +346,9 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertGraphQLError(response, "Invalid or expired upload token for 'photo.jpg'")
         self.assertEqual(ShelterPhoto.objects.filter(shelter=self.shelter).count(), 0)
 
-    @patch("shelters.services.shelter_photo.s3_key_exists", return_value=False)
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
-    def test_returns_error_when_file_not_in_s3(self, mock_validate: MagicMock, mock_s3_exists: MagicMock) -> None:
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_returns_error_when_file_not_in_s3(self, mock_validate: MagicMock) -> None:
+        mock_validate.side_effect = ValueError("File not found in storage for 'photo.jpg'")
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
@@ -368,11 +372,9 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         self.assertGraphQLError(response, "File not found in storage for 'photo.jpg'")
         self.assertEqual(ShelterPhoto.objects.filter(shelter=self.shelter).count(), 0)
 
-    @patch("shelters.services.shelter_photo.s3_key_exists", return_value=True)
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
-    def test_returns_operation_info_for_nonexistent_shelter(
-        self, mock_validate: MagicMock, mock_s3_exists: MagicMock
-    ) -> None:
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_returns_operation_info_for_nonexistent_shelter(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = []
         expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
@@ -398,11 +400,9 @@ class ResolveShelterPhotoUploadsMutationTest(ShelterTestCase, TestCase):
         )
         self.assertEqual(ShelterPhoto.objects.filter(shelter=self.shelter).count(), 0)
 
-    @patch("shelters.services.shelter_photo.s3_key_exists", return_value=True)
-    @patch("shelters.services.shelter_photo.validate_upload_token", return_value=True)
-    def test_returns_operation_info_for_unauthorized_shelter(
-        self, mock_validate: MagicMock, mock_s3_exists: MagicMock
-    ) -> None:
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_returns_operation_info_for_unauthorized_shelter(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = []
         # Shelter belonging to a different org — the filtered Shelter.objects.get
         # raises DoesNotExist, which Strawberry wraps in the response.
         other_shelter: Any = shelter_recipe.make()
