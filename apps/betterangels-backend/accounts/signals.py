@@ -67,54 +67,25 @@ def _ensure_test_users() -> None:
 
 
 def _ensure_test_org() -> None:
-    """Idempotent: create test_org with presets and owner (no role assignment yet)."""
+    """Idempotent: ensure test_org exists with presets and admin as owner.
+
+    Role assignment is handled later by sync_all_org_permission_groups.
+    Called on every post_migrate because the first signal may fire before
+    all apps' tables/permission templates are ready.
+    """
     from accounts.services import create_organization_with_presets
 
     admin = User.objects.get(username="admin")
 
-    test_org, created = Organization.objects.get_or_create(name="test_org")
-    if created:
-        create_organization_with_presets(
-            name="test_org",
-            preset_names=["shelter", "outreach"],
-            owner=admin,
-            owner_roles=(),  # roles assigned by sync_all_org_permission_groups
-        )
+    create_organization_with_presets(
+        name="test_org",
+        preset_names=["shelter", "outreach"],
+        owner=admin,
+        owner_roles=(),  # roles assigned by sync_all_org_permission_groups
+    )
 
 
 # ── Permission sync (all environments) ────────────────────────────────
-
-
-@receiver(post_migrate)
-def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        from notes.groups import CASEWORKER
-        from shelters.groups import SHELTER_OPERATOR
-
-        from accounts.groups import ORG_ADMIN
-
-        from .role_manager import OrgRoleManager
-        from .services import create_organization_with_presets
-
-        test_users = list(User.objects.filter(username__in=["admin", "agent"]))
-
-        if not test_users:
-            logger.warning("test_org not created: admin and agent users do not exist yet.")
-            return
-
-        owner = next((u for u in test_users if u.username == "admin"), test_users[0])
-
-        org = create_organization_with_presets(
-            name="test_org",
-            preset_names=["outreach", "shelter"],
-            owner=owner,
-            owner_roles=(CASEWORKER, SHELTER_OPERATOR, ORG_ADMIN),
-        )
-
-        for test_user in test_users:
-            if test_user.pk != owner.pk:
-                org.add_user(test_user)
-                OrgRoleManager(org).add_roles(test_user, CASEWORKER, SHELTER_OPERATOR)
 
 
 @receiver(post_migrate)
