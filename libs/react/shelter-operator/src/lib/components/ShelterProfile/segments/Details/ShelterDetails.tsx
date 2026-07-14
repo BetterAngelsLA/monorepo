@@ -19,8 +19,10 @@ function toUpdateInput(
   return {
     id: shelterId,
     demographics: data.demographics,
+    demographicsOther: data.demographicsOther,
     specialSituationRestrictions: data.specialSituationRestrictions,
     shelterTypes: data.shelterTypes,
+    shelterTypesOther: data.shelterTypesOther,
     accessibility: data.accessibility,
     storage: data.storage,
     pets: data.pets,

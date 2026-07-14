@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { ShelterChoices } from '@monorepo/react/shelter';
+import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
@@ -77,23 +77,20 @@ export function ShelterDetailsForm(props: TProps) {
 
         <Form.Content>
           <Form.Block>
-            <Controller
-              name="demographics"
+            <ComboBox
               control={control}
-              render={({ field }) => (
-                <Dropdown
-                  label="Demographics Served"
-                  isMulti={true}
-                  value={DEMOGRAPHICS_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
-                  )}
-                  options={DEMOGRAPHICS_OPTIONS}
-                  onChange={(options) => {
-                    field.onChange(options ? options.map((o) => o.value) : []);
-                  }}
-                  isViewMode={isViewMode}
-                />
-              )}
+              name="demographics"
+              inputName="demographicsOther"
+              label="Demographics Served"
+              inputLabel="Other Demographic"
+              options={DEMOGRAPHICS_OPTIONS}
+              isSearchable={
+                DEMOGRAPHICS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
+              triggerValue={DemographicChoices.Other}
+              inputError={errors.demographicsOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
             />
 
             <Controller
