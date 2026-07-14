@@ -3,16 +3,11 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  OperatorShelterType,
-  RoomStatusChoices,
-  type RoomType,
-} from '../../apollo/graphql/__generated__/types';
+import { RoomStatusChoices } from '../../apollo/graphql/__generated__/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
 import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { useDeleteRooms } from '../../hooks/useDeleteRooms';
 import { deleteRoomsMeta } from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
-import { roomSuccessTypename } from '../../hooks/useRoom/__generated__/useRoom_meta.generated';
 import { useRooms } from '../../hooks/useRooms';
 import {
   shelterCreateReservationRoute,
@@ -29,22 +24,10 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
 
   const { rooms: roomsData, loading } = useRooms(shelterId);
 
-  const rooms: RoomType[] = roomsData.map((room) => ({
+  const rooms: Room[] = roomsData.map((room) => ({
     id: room.id,
     name: room.name,
     status: room.status ?? RoomStatusChoices.Available,
-    amenities: room.amenities ?? '',
-    medicalRespite: room.medicalRespite,
-    __typename: roomSuccessTypename,
-    accessibility: [],
-    beds: [],
-    demographics: [],
-    funders: [],
-    maintenanceFlag: false,
-    occupantIds: [],
-    pets: [],
-    shelter: {} as OperatorShelterType,
-    storage: false,
   }));
 
   const { cloneRoom } = useCloneRoom({ shelterId });

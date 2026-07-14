@@ -8,12 +8,13 @@ import {
 } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
 
-import {
-  RoomStatusChoices,
-  type RoomType,
-} from '../apollo/graphql/__generated__/types';
+import { RoomStatusChoices } from '../apollo/graphql/__generated__/types';
 
-export type Room = RoomType;
+export type Room = {
+  id: string;
+  name: string;
+  status: RoomStatusChoices;
+};
 
 type RoomTableProps = {
   rooms: Room[];
