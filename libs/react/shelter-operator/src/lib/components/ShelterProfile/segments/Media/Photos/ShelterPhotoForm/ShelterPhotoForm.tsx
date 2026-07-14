@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumDisplayShelterPhotoTypeChoices } from '@monorepo/react/shelter';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { Dropdown, toDropdownOptions } from '../../../../../base-ui/dropdown';
 import { Form } from '../../../../../form/Form';
@@ -12,7 +13,10 @@ const PHOTO_TYPE_OPTIONS = toDropdownOptions(
 
 type TProps = {
   defaultValues: ShelterPhotoFormData;
-  onSubmit: (data: ShelterPhotoFormData) => void;
+  onSubmit: (
+    data: ShelterPhotoFormData,
+    setError: UseFormSetError<ShelterPhotoFormData>
+  ) => void;
   onCancel?: () => void;
   disabled?: boolean;
   className?: string;
@@ -31,6 +35,7 @@ export function ShelterPhotoForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<ShelterPhotoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -67,7 +72,7 @@ export function ShelterPhotoForm(props: TProps) {
           variant="relative"
           primaryLabel={disabled ? 'Saving...' : 'Save'}
           primaryDisabled={disabled}
-          onPrimaryClick={handleSubmit(onSubmit)}
+          onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
           secondaryLabel="Cancel"
           onSecondaryClick={onCancel}
           secondaryDisabled={disabled}

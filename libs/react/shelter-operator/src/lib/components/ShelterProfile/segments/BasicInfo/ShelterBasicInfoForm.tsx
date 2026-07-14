@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
 import { Controller, UseFormSetError, useForm } from 'react-hook-form';
 import { LocationPicker } from '../../../../pages/dashboard/components/LocationPicker';
 import {
@@ -20,8 +21,8 @@ import {
 } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<BasicInfoFormData>;
-  onSubmit?: (
+  values?: Partial<BasicInfoFormData>;
+  onSubmit: (
     data: BasicInfoFormData,
     setError: UseFormSetError<BasicInfoFormData>
   ) => void;
@@ -34,7 +35,7 @@ type TProps = {
 
 export function ShelterBasicInfoForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -42,6 +43,11 @@ export function ShelterBasicInfoForm(props: TProps) {
     disabled = false,
     className,
   } = props;
+
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
 
   const {
     control,
@@ -51,12 +57,12 @@ export function ShelterBasicInfoForm(props: TProps) {
     reset,
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 
@@ -69,7 +75,7 @@ export function ShelterBasicInfoForm(props: TProps) {
           className="pl-5"
         />
 
-        <form className="flex flex-col gap-10 mt-8">
+        <Form.Content>
           <Form.Block columns={2} className="md:gap-18 md:grid-cols-[1fr_auto]">
             <Controller
               name="name"
@@ -219,18 +225,16 @@ export function ShelterBasicInfoForm(props: TProps) {
             />
           </Form.Block>
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit((data) =>
-                onSubmit?.(data, setError)
-              )}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
               className="z-99"
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );
