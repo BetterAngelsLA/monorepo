@@ -13,5 +13,8 @@ from shelters.selectors.operator import (
     shelter_queryset,
     user_shelter_list,
 )
-from shelters.selectors.reports import report_bed_status_counts  # noqa: F401
-from shelters.selectors.reports import reservation_status_change_counts
+from shelters.selectors.reports import (
+    bed_status_metric,  # noqa: F401
+    report_bed_status_counts,  # noqa: F401
+    reservation_status_change_counts,  # noqa: F401
+)
