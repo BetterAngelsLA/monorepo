@@ -18,19 +18,7 @@ from shelters.types.reporting import (
     ShelterOccupancyMetricsType,
 )
 
-DAILY_OCCUPANCY_METRICS = "daily_occupancy_metrics"
-DAILY_BED_STATUS_METRICS = "daily_bed_status_metrics"
-RESERVATION_METRICS = "reservation_metrics"
-AVG_DAYS_TO_OCCUPANCY = "avg_days_to_occupancy"
-
-METRIC_EXPORT_OPTIONS = frozenset(
-    {
-        DAILY_OCCUPANCY_METRICS,
-        DAILY_BED_STATUS_METRICS,
-        RESERVATION_METRICS,
-        AVG_DAYS_TO_OCCUPANCY,
-    }
-)
+from .export_options import MetricsExportOptions
 
 
 def csv_files_to_zip(files: dict[str, str]) -> bytes:
@@ -133,36 +121,32 @@ def avg_days_to_occupancy_to_csv(shelter_id: str, start_date: date, end_date: da
     return rows_to_csv(rows, headers)
 
 
-def metrics_to_zip(metrics: ShelterOccupancyMetricsType, options: list[str]) -> bytes:
+def metrics_to_zip(metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]) -> bytes:
     shelter_id = str(metrics.shelter_id)
     start_date = metrics.start_date
     end_date = metrics.end_date
     selected_options = set(options)
-    unknown_options = selected_options - METRIC_EXPORT_OPTIONS
-
-    if unknown_options:
-        raise ValueError(f"Unknown CSV export options: {', '.join(sorted(unknown_options))}")
 
     start_str = start_date.strftime("%Y%m%d")
     end_str = end_date.strftime("%Y%m%d")
     files = {}
 
-    if DAILY_OCCUPANCY_METRICS in selected_options:
+    if MetricsExportOptions.DAILY_OCCUPANCY_METRICS in selected_options:
         files[f"{start_str}_{end_str}_daily_occupancy_metrics.csv"] = daily_occupancy_metrics_to_csv(
             shelter_id, metrics.daily_occupancy
         )
 
-    if DAILY_BED_STATUS_METRICS in selected_options:
+    if MetricsExportOptions.DAILY_BED_STATUS_METRICS in selected_options:
         files[f"{start_str}_{end_str}_daily_bed_status_metrics.csv"] = daily_bed_status_metrics_to_csv(
             shelter_id, metrics.daily_bed_status
         )
 
-    if RESERVATION_METRICS in selected_options:
+    if MetricsExportOptions.RESERVATION_METRICS in selected_options:
         files[f"{start_str}_{end_str}_reservation_metrics.csv"] = reservation_metrics_to_csv(
             shelter_id, start_date, end_date, metrics.reservation_metrics
         )
 
-    if AVG_DAYS_TO_OCCUPANCY in selected_options:
+    if MetricsExportOptions.AVG_DAYS_TO_OCCUPANCY in selected_options:
         files[f"{start_str}_{end_str}_avg_days_to_occupancy.csv"] = avg_days_to_occupancy_to_csv(
             shelter_id, start_date, end_date, metrics.avg_days_to_occupancy
         )
