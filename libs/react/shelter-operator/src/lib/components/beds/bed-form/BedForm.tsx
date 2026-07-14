@@ -1,34 +1,28 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isMutationSuccess } from '@monorepo/react/shared';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useFilteredPropertyOptions } from '../../../hooks/useFilteredPropertyOptions';
+import {
+  useCreateBed,
+  useFilteredPropertyOptions,
+  useUpdateBed,
+} from '../../../hooks';
+import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
+import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import { Form } from '../../form/Form';
 import {
   GetRoomsDocument,
   type GetRoomsQuery,
   type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
-import { GetBedsDocument } from '../api/__generated__/bedQueries.generated';
-import {
-  CreateBedDocument,
-  buildCreateBedInput,
-  buildUpdateBedInput,
-  type CreateBedMutation,
-  type CreateBedMutationVariables,
-} from '../api/createBedMutation';
-import {
-  UpdateBedDocument,
-  type UpdateBedMutation,
-  type UpdateBedMutationVariables,
-} from '../api/updateBedMutation';
+import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';
 import { createEmptyBedFormData } from './constants/defaultBedFormData';
 import { formSchema } from './constants/formSchema';
 import type { BedFormData } from './formTypes';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BedDetailsSection } from './sections/BedDetailsSection';
-
 export type BedFormProps = {
   shelterId: string;
   bedId?: string;
@@ -56,6 +50,7 @@ export function BedForm({
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isValid },
   } = methods;
 
@@ -78,20 +73,11 @@ export function BedForm({
 
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
 
-  const refetchQueries = useMemo(
-    () => [{ query: GetBedsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
+  const { createBed: createBedMutation, loading: isCreating } = useCreateBed({
+    shelterId,
+  });
 
-  const [createBed, { loading: isCreating }] = useMutation<
-    CreateBedMutation,
-    CreateBedMutationVariables
-  >(CreateBedDocument, { refetchQueries });
-
-  const [updateBed, { loading: isUpdating }] = useMutation<
-    UpdateBedMutation,
-    UpdateBedMutationVariables
-  >(UpdateBedDocument, { refetchQueries });
+  const { updateBed: updateBedMutation, loading: isUpdating } = useUpdateBed();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -100,43 +86,39 @@ export function BedForm({
 
     try {
       if (isEditMode && bedId) {
-        const { data: result } = await updateBed({
+        const response = await updateBedMutation({
           variables: {
             id: bedId,
             data: buildUpdateBedInput(data),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.updateBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateBed.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to update bed. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateBedMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       } else {
-        const { data: result } = await createBed({
+        const response = await createBedMutation({
           variables: {
             data: buildCreateBedInput(data, shelterId),
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.createBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.createBed.messages?.[0]?.message;
-          setSubmissionError(
-            firstMessage || 'Unable to create bed. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.createBed, 'BedType')) {
-          setSubmissionError('An unexpected error occurred. Please try again.');
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...createBedMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
         }
       }
 
@@ -144,8 +126,17 @@ export function BedForm({
         reset();
       }
       onSuccess?.();
-    } catch {
-      setSubmissionError('A network error occurred. Please try again.');
+    } catch (err) {
+      const error = toError(err);
+      console.error(
+        `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`
+      );
+
+      if (!(error instanceof BaError)) {
+        setSubmissionError(
+          `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
+        );
+      }
     }
   }
 
@@ -159,10 +150,17 @@ export function BedForm({
       <div className="space-y-4 pb-48">
         {submissionError && (
           <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
-            {submissionError}
+            <span className="flex-1">{submissionError}</span>
+            <button
+              onClick={() => setSubmissionError(null)}
+              className="ml-3 text-red-400 hover:text-red-600"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 

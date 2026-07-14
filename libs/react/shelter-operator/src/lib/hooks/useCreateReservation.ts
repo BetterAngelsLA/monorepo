@@ -1,8 +1,8 @@
-import { useMutation } from '@apollo/client/react';
 import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useCallback, useMemo, useState } from 'react';
-import { GetBedsDocument } from '../components/beds/api/__generated__/bedQueries.generated';
 import { GetRoomsDocument } from '../components/rooms/api/__generated__/roomQueries.generated';
+import { BedsDocument } from './useBeds/__generated__/useBeds.generated';
 import { GetReservationsDocument } from './useReservations/__generated__/useReservations.generated';
 
 const CREATE_RESERVATION_MUTATION = gql`
@@ -45,7 +45,7 @@ export function useCreateReservation(
 ): UseCreateReservationReturn {
   const refetchQueries = useMemo(
     () => [
-      { query: GetBedsDocument, variables: { shelterId } },
+      { query: BedsDocument, variables: { shelterId } },
       { query: GetRoomsDocument, variables: { shelterId } },
       { query: GetReservationsDocument, variables: { shelterId } },
     ],

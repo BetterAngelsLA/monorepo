@@ -2,22 +2,19 @@ import { useQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
-import { manageSegments, paths, shelterProfileSegments } from '../../routing';
-import {
-  GetBedDocument,
-  type GetBedQuery,
-  type GetBedQueryVariables,
-} from '../beds/api/__generated__/bedQueries.generated';
-import {
-  GetShelterOperatorOverviewDocument,
-  type GetShelterOperatorOverviewQuery,
-  type GetShelterOperatorOverviewQueryVariables,
-} from '../overview/__generated__/overview.generated';
+import { useBed } from '../../hooks/';
+
 import {
   GetReservationDocument,
   type GetReservationQuery,
   type GetReservationQueryVariables,
 } from '../../hooks/useReservation/__generated__/useReservation.generated';
+import { manageSegments, paths, shelterProfileSegments } from '../../routing';
+import {
+  GetShelterOperatorOverviewDocument,
+  type GetShelterOperatorOverviewQuery,
+  type GetShelterOperatorOverviewQueryVariables,
+} from '../overview/__generated__/overview.generated';
 import {
   GetRoomDocument,
   type GetRoomQuery,
@@ -368,13 +365,7 @@ export function useBreadcrumbNames(
     }
   );
 
-  const { data: bedData } = useQuery<GetBedQuery, GetBedQueryVariables>(
-    GetBedDocument,
-    {
-      variables: { id: bedId ?? '' },
-      skip: !bedId,
-    }
-  );
+  const { bed } = useBed(bedId ?? '');
 
   const { data: reservationData } = useQuery<
     GetReservationQuery,
@@ -395,8 +386,7 @@ export function useBreadcrumbNames(
     if (roomData?.room?.id && roomData.room.name) {
       map[`__roomId__:${roomData.room.id}`] = roomData.room.name;
     }
-    if (bedData?.beds?.results?.[0]?.id) {
-      const bed = bedData.beds.results[0];
+    if (bed?.id) {
       map[`__bedId__:${bed.id}`] = bed.name ?? bed.id;
     }
     if (reservationData?.reservation?.id) {
@@ -415,7 +405,7 @@ export function useBreadcrumbNames(
     }
 
     return map;
-  }, [shelterData, roomData, bedData, reservationData]);
+  }, [shelterData, roomData, bed, reservationData]);
 
   // Resolve items
   const items = useMemo(() => {

@@ -1,0 +1,31 @@
+query Bed($id: ID!) {
+  bed(pk: $id) {
+    id
+    name
+    status
+    statusNotes
+    type
+    storage
+    maintenanceFlag
+    b7
+    fees
+    room {
+      id
+    }
+    accessibility {
+      name
+    }
+    demographics {
+      name
+    }
+    funders {
+      name
+    }
+    medicalNeeds {
+      name
+    }
+    pets {
+      name
+    }
+  }
+}

@@ -3,18 +3,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import {
+  BedsDocument,
+  type BedsQuery,
+  type BedsQueryVariables,
+} from '../../../hooks/useBeds/__generated__/useBeds.generated';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
-import {
-    GetBedsDocument,
-    type GetBedsQuery,
-    type GetBedsQueryVariables,
-} from '../../beds/api/__generated__/bedQueries.generated';
 import { Form } from '../../form/Form';
 import {
-    GetRoomsDocument,
-    type GetRoomsQuery,
-    type GetRoomsQueryVariables,
+  GetRoomsDocument,
+  type GetRoomsQuery,
+  type GetRoomsQueryVariables,
 } from '../../rooms/api/__generated__/roomQueries.generated';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
@@ -22,8 +22,8 @@ import { formSchema } from './constants/formSchema';
 import type { ReservationFormData } from './formTypes';
 import { ReservationFormSection } from './sections/ReservationFormSection';
 import {
-    buildCreateReservationInput,
-    buildUpdateReservationInput,
+  buildCreateReservationInput,
+  buildUpdateReservationInput,
 } from './utils/reservationFormInput';
 
 export type ReservationFormProps = {
@@ -113,8 +113,8 @@ export function ReservationForm({
     [setValue]
   );
 
-  const { data: bedsData } = useQuery<GetBedsQuery, GetBedsQueryVariables>(
-    GetBedsDocument,
+  const { data: bedsData } = useQuery<BedsQuery, BedsQueryVariables>(
+    BedsDocument,
     {
       variables: { shelterId },
       skip: !shelterId,
