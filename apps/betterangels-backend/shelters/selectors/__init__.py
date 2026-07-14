@@ -13,6 +13,7 @@ from shelters.selectors.operator import (
     shelter_queryset,
     user_shelter_list,
 )
+from shelters.selectors.reports import avg_days_to_occupancy  # noqa: F401
 from shelters.selectors.reports import daily_occupancy  # noqa: F401
 from shelters.selectors.reports import report_bed_status_counts  # noqa: F401
 from shelters.selectors.reports import reservation_status_change_counts

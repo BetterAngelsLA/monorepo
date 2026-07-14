@@ -360,3 +360,56 @@ def daily_occupancy(
 
         results.append(_row(day, len(occupied_bed_ids), len(existing_bed_ids)))
     return results
+
+
+def avg_days_to_occupancy(
+    *,
+    shelter: "Shelter",
+    start_date: datetime.date,
+    end_date: datetime.date,
+) -> float | None:
+    """Average number of days a bed sat unoccupied before becoming occupied.
+
+    For every occupancy interval whose check-in falls in the LA-local range and
+    that is not the bed's first interval, the vacancy is the gap in days from the
+    previous interval's freed instant to this check-in. A bed becomes free on any
+    exit from CHECKED_IN (checkout or cancellation), so cancelled stays are
+    measured correctly. Beds occupied from creation (no prior interval) and
+    reverts on the same reservation are excluded. Returns the mean rounded to two
+    places, or None when there are no qualifying pairs.
+
+    Both endpoints are inclusive and interpreted in America/Los_Angeles.
+
+    Raises:
+        ValueError: if end_date is before start_date.
+    """
+    from shelters.models import BedEvent  # type: ignore[attr-defined]
+
+    start_utc, end_utc = report_date_range_to_utc(start_date, end_date)
+
+    scope_bed_ids = set(
+        BedEvent.objects.filter(shelter_id=shelter.pk, pgh_label="bed.add", pgh_created_at__lt=end_utc).values_list(
+            "pgh_obj_id", flat=True
+        )
+    )
+    if not scope_bed_ids:
+        return None
+
+    intervals_by_bed = _reservation_occupancy_intervals(bed_ids=scope_bed_ids, end_utc=end_utc)
+
+    gaps: list[float] = []
+    for intervals in intervals_by_bed.values():
+        for index in range(1, len(intervals)):
+            check_in, _freed, reservation_id = intervals[index]
+            if not (start_utc <= check_in < end_utc):
+                continue
+            _prev_check_in, prev_freed, prev_reservation_id = intervals[index - 1]
+            if prev_freed is None:
+                continue  # previous interval never closed; can't overlap, guard
+            if prev_reservation_id == reservation_id:
+                continue  # revert on the same reservation, not a new occupancy
+            gaps.append((check_in - prev_freed).total_seconds() / 86400.0)
+
+    if not gaps:
+        return None
+    return round(sum(gaps) / len(gaps), 2)

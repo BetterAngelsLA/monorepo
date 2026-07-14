@@ -485,3 +485,169 @@ class DailyOccupancyTestCase(TestCase):
         rows = self._occupancy(datetime.date(2026, 1, 10), datetime.date(2026, 1, 13))
 
         self.assertEqual(list(rows), ["2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13"])
+
+
+class AvgDaysToOccupancyTestCase(TestCase):
+    """Tests for ``avg_days_to_occupancy``.
+
+    Vacancy gaps are reconstructed from the reservation event stream, so fixtures
+    create reservations, drive them through statuses and pin each event's
+    ``pgh_created_at``. Beds are pinned via ``bed.add`` so they fall in scope.
+    """
+
+    CI = ReservationStatusChoices.CHECKED_IN
+    DONE = ReservationStatusChoices.COMPLETED
+    CANCEL = ReservationStatusChoices.CANCELLED
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Test Shelter")
+        self.other_shelter = Shelter.objects.create(name="Other Shelter")
+        self.bed_added_at = _aware(2025, 11, 1)
+
+    # -- fixture helpers -----------------------------------------------------
+
+    def _make_bed(self, *, shelter: Shelter | None = None, name: str = "Bed") -> Bed:
+        bed: Bed = baker.make(Bed, shelter=shelter or self.shelter, name=name)
+        BedEvent.objects.filter(pgh_obj_id=bed.pk, pgh_label="bed.add").update(pgh_created_at=self.bed_added_at)
+        return bed
+
+    def _stay(self, bed: Bed, *, events: list[tuple[ReservationStatusChoices, datetime.datetime]]) -> Reservation:
+        """Create a reservation on ``bed`` and pin its event timeline.
+
+        Each listed status must be unique within the reservation, and the
+        reservation must not be left active while a later stay on the same bed is
+        created (unique-active-reservation-per-bed).
+        """
+        reservation = Reservation.objects.create(bed=bed)
+        for status, _when in events:
+            reservation.status = status
+            reservation.save()
+
+        first_when = events[0][1]
+        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
+            pgh_created_at=first_when - datetime.timedelta(seconds=1)
+        )
+        for status, when in events:
+            ReservationEvent.objects.filter(
+                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=status
+            ).update(pgh_created_at=when)
+        return reservation
+
+    def _avg(self, start: datetime.date, end: datetime.date) -> float | None:
+        from shelters.selectors import avg_days_to_occupancy
+
+        return avg_days_to_occupancy(shelter=self.shelter, start_date=start, end_date=end)
+
+    @staticmethod
+    def _utc(year: int, month: int, day: int, hour: int = 12) -> datetime.datetime:
+        return _aware(year, month, day, hour)
+
+    # -- tests ---------------------------------------------------------------
+
+    def test_single_gap(self) -> None:
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.DONE, self._utc(2026, 1, 10))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 13))])
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 3.0)
+
+    def test_multiple_gaps_averaged(self) -> None:
+        bed_a = self._make_bed(name="A")
+        self._stay(bed_a, events=[(self.CI, self._utc(2026, 1, 1)), (self.DONE, self._utc(2026, 1, 5))])
+        self._stay(bed_a, events=[(self.CI, self._utc(2026, 1, 7))])  # gap 2
+
+        bed_b = self._make_bed(name="B")
+        self._stay(bed_b, events=[(self.CI, self._utc(2026, 1, 1)), (self.DONE, self._utc(2026, 1, 5))])
+        self._stay(bed_b, events=[(self.CI, self._utc(2026, 1, 9))])  # gap 4
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 3.0)
+
+    def test_fractional_gap_rounds(self) -> None:
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.DONE, self._utc(2026, 1, 10, 0))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10, 12))])  # 12h gap
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 0.5)
+
+    def test_occupied_from_creation_excluded(self) -> None:
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 10))])
+
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)))
+
+    def test_prior_vacancy_before_range_is_measured(self) -> None:
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2025, 12, 15)), (self.DONE, self._utc(2025, 12, 20))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 5))])  # gap 16 days, spans range start
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 16.0)
+
+    def test_cancellation_opens_vacancy(self) -> None:
+        # A stay ended by CANCELLED still frees the bed, so the next check-in has
+        # a measurable gap.
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.CANCEL, self._utc(2026, 1, 10))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 13))])
+
+        self.assertEqual(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)), 3.0)
+
+    def test_cancelled_occupancy_not_absorbed(self) -> None:
+        # The gap anchors to the most recent free (a cancellation), not an older
+        # completed checkout.
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 1)), (self.DONE, self._utc(2026, 1, 2))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 3)), (self.CANCEL, self._utc(2026, 1, 5))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8))])
+
+        # Range covers only the third check-in: gap is 2026-01-08 - 2026-01-05.
+        self.assertEqual(self._avg(datetime.date(2026, 1, 7), datetime.date(2026, 1, 9)), 3.0)
+
+    def test_same_reservation_revert_skipped(self) -> None:
+        bed = self._make_bed()
+        reservation = Reservation.objects.create(bed=bed)
+        for status, _when in [
+            (self.CI, self._utc(2026, 1, 8)),
+            (self.DONE, self._utc(2026, 1, 10)),
+            (self.CI, self._utc(2026, 1, 13)),
+        ]:
+            reservation.status = status
+            reservation.save()
+        ReservationEvent.objects.filter(pgh_obj_id=reservation.pk, pgh_label="reservation.add").update(
+            pgh_created_at=self._utc(2026, 1, 8) - datetime.timedelta(seconds=1)
+        )
+        checkins = list(
+            ReservationEvent.objects.filter(
+                pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=self.CI
+            ).order_by("pgh_id")
+        )
+        checkins[0].pgh_created_at = self._utc(2026, 1, 8)
+        checkins[0].save(update_fields=["pgh_created_at"])
+        checkins[1].pgh_created_at = self._utc(2026, 1, 13)
+        checkins[1].save(update_fields=["pgh_created_at"])
+        ReservationEvent.objects.filter(
+            pgh_obj_id=reservation.pk, pgh_label="reservation.status_change", status=self.DONE
+        ).update(pgh_created_at=self._utc(2026, 1, 10))
+
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)))
+
+    def test_no_events_returns_none(self) -> None:
+        self._make_bed()
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)))
+
+    def test_other_shelter_excluded(self) -> None:
+        bed = self._make_bed(shelter=self.other_shelter, name="Other")
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.DONE, self._utc(2026, 1, 10))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 13))])
+
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)))
+
+    def test_checkin_outside_range_excluded(self) -> None:
+        bed = self._make_bed()
+        self._stay(bed, events=[(self.CI, self._utc(2026, 1, 8)), (self.DONE, self._utc(2026, 1, 10))])
+        self._stay(bed, events=[(self.CI, self._utc(2026, 2, 13))])  # after range
+
+        self.assertIsNone(self._avg(datetime.date(2026, 1, 1), datetime.date(2026, 1, 31)))
+
+    def test_raises_when_end_before_start(self) -> None:
+        with self.assertRaises(ValueError):
+            self._avg(datetime.date(2026, 1, 12), datetime.date(2026, 1, 10))
