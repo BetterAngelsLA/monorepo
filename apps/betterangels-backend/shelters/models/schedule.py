@@ -173,11 +173,7 @@ class Schedule(BaseModel):
                 name="schedule_times_both_or_neither",
             ),
             models.CheckConstraint(
-                condition=(
-                    Q(start_date__isnull=True)
-                    | Q(end_date__isnull=True)
-                    | Q(start_date__lte=F("end_date"))
-                ),
+                condition=(Q(start_date__isnull=True) | Q(end_date__isnull=True) | Q(start_date__lte=F("end_date"))),
                 name="schedule_start_date_lte_end_date",
             ),
         ]
