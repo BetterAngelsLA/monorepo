@@ -69,12 +69,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
     }
   };
 
-  const handleUpload = async () => {
-    if (!clientProfileId) return;
-
-    await uploadSelectedFiles(files);
-  };
-
   const onRemoveFile = (index: number) => {
     onFilesChange(files.filter((_, i) => i !== index));
   };
@@ -114,7 +108,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
         loading={processing}
         disabled={!files.length || !allDocsValid}
         title={title}
-        onSubmit={handleUpload}
+        onSubmit={() => uploadSelectedFiles(files)}
         onCancel={() => {
           onFilesChange([]);
           onClose();
