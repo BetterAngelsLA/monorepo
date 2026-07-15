@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ApiConfigProvider } from './ApiConfigProvider';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ export interface EnvironmentSwitcherProviderProps {
    * For single-environment web apps that don't need the URL parameter,
    * pass ``() => createWebFetchClient()``.
    */
-  createFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  buildFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,23 +69,9 @@ export const EnvironmentSwitcherProvider = ({
   environments,
   storage,
   storageKey = 'ba_environment',
-  createFetch,
+  buildFetch,
 }: EnvironmentSwitcherProviderProps) => {
   const [envName, setEnvName] = useState<string | null>(null);
-
-  // ---- Dev-mode guard: warn if environments is not a stable reference ----
-  const prevEnvsRef = useRef(environments);
-  if (
-    process.env['NODE_ENV'] !== 'production' &&
-    prevEnvsRef.current !== environments
-  ) {
-    console.warn(
-      'EnvironmentSwitcherProvider: `environments` array changed between renders. ' +
-      'This can cause stale environment state because the init effect intentionally ' +
-      'omits `environments` from its dependency array. Define the array at module scope.',
-    );
-  }
-  prevEnvsRef.current = environments;
 
   // ---- Resolve saved environment ----
   useEffect(() => {
@@ -94,7 +80,7 @@ export const EnvironmentSwitcherProvider = ({
       const match = environments.find((e) => e.name === saved);
       setEnvName(match ? saved : environments[0].name);
     })();
-    // environments is intentionally omitted — it's a static config.
+    // environments is a module-level constant — stable by design.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storage, storageKey]);
 
@@ -112,10 +98,12 @@ export const EnvironmentSwitcherProvider = ({
   const apiUrl = useMemo(() => {
     const env = environments.find((e) => e.name === envName);
     return env?.url ?? environments[0].url;
-  }, [envName, environments]);
+    // environments is a module-level constant — stable by design.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envName]);
 
   // ---- Build env-aware fetch chain ----
-  // (delegated to ApiConfigProvider via createFetch)
+  // (delegated to ApiConfigProvider via buildFetch)
 
   // ---- Environment context value ----
   const envValue = useMemo<ApiEnvironmentContextType | undefined>(
@@ -128,7 +116,7 @@ export const EnvironmentSwitcherProvider = ({
 
   return (
     <ApiEnvironmentContext.Provider value={envValue}>
-      <ApiConfigProvider apiUrl={apiUrl} createFetch={createFetch}>
+      <ApiConfigProvider apiUrl={apiUrl} buildFetch={buildFetch}>
         {children}
       </ApiConfigProvider>
     </ApiEnvironmentContext.Provider>

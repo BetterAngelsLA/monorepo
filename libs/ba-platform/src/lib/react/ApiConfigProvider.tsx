@@ -24,12 +24,14 @@ export interface ApiConfigProviderProps {
   apiUrl: string;
   /**
    * Factory that builds an auth-wired fetch function for the given
-   * ``apiUrl``.  Called once on mount (and whenever ``apiUrl`` changes
-   * when wrapped by ``EnvironmentSwitcherProvider``).
+   * ``apiUrl``.  Called on mount and whenever ``apiUrl`` changes
+   * (e.g. when wrapped by ``EnvironmentSwitcherProvider``).
    *
-   * Single-environment apps pass ``() => createWebFetchClient()``.
+   * Single-environment web apps pass ``() => createWebFetchClient()`` —
+   * the factory ignores ``apiUrl`` because browser cookies are
+   * origin-scoped and the CSRF token is domain-relative.
    */
-  createFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  buildFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,12 +47,12 @@ const ApiConfigContext = createContext<ApiConfigContextType | undefined>(undefin
 export const ApiConfigProvider = ({
   children,
   apiUrl,
-  createFetch,
+  buildFetch,
 }: ApiConfigProviderProps) => {
   // ---- Build auth-wired fetch for the current apiUrl ----
   const fetchWithAuth = useMemo(
-    () => createFetch(apiUrl),
-    [apiUrl, createFetch]
+    () => buildFetch(apiUrl),
+    [apiUrl, buildFetch]
   );
 
   // ---- Context value ----
