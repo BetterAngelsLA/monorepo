@@ -1,15 +1,13 @@
-import { useQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
-import { useBed, useReservation, useRoom } from '../../hooks/';
-
-import { manageSegments, paths, shelterProfileSegments } from '../../routing';
 import {
-  GetShelterOperatorOverviewDocument,
-  type GetShelterOperatorOverviewQuery,
-  type GetShelterOperatorOverviewQueryVariables,
-} from '../overview/__generated__/overview.generated';
+  useBed,
+  useReservation,
+  useRoom,
+  useShelterOperatorProfile,
+} from '../../hooks';
+import { manageSegments, paths, shelterProfileSegments } from '../../routing';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -298,8 +296,10 @@ export function parseBreadcrumbs(pathname: string): BreadcrumbItem[] {
 // ─── Name resolution hook ────────────────────────────────────────────────────
 
 interface UseBreadcrumbNamesResult {
-  /** Breadcrumb items with resolved names (or raw ID as fallback while loading). */
+  /** Breadcrumb items with resolved names (or "..." while placeholder names are loading). */
   items: BreadcrumbItem[];
+  /** True while any dynamic ID placeholder names are still being fetched. */
+  loading: boolean;
 }
 
 /**
@@ -338,28 +338,26 @@ export function useBreadcrumbNames(
     return ids;
   }, [rawItems]);
 
-  // Conditionally fetch names
-  const { data: shelterData } = useQuery<
-    GetShelterOperatorOverviewQuery,
-    GetShelterOperatorOverviewQueryVariables
-  >(GetShelterOperatorOverviewDocument, {
-    variables: { shelterId: shelterId ?? '' },
-    skip: !shelterId,
-  });
+  // Conditionally fetch names (destructure loading flags for aggregation)
+  const { shelter: operatorShelter, loading: shelterLoading } =
+    useShelterOperatorProfile(shelterId ?? '');
+  const { bed, loading: bedLoading } = useBed(bedId ?? '');
+  const { reservation, loading: reservationLoading } = useReservation(
+    reservationId ?? ''
+  );
+  const { room, loading: roomLoading } = useRoom(roomId ?? '');
 
-  const { bed } = useBed(bedId ?? '');
-  const { room } = useRoom(roomId ?? '');
-  const { reservation } = useReservation(reservationId ?? '');
+  // True if any dynamic placeholder is still being fetched
+  const loading = shelterLoading || bedLoading || reservationLoading || roomLoading;
 
   // Build name lookup
   const nameMap = useMemo(() => {
     const map: Record<string, string> = {};
 
-    if (shelterData?.operatorShelter?.id && shelterData.operatorShelter.name) {
-      map[`__shelterId__:${shelterData.operatorShelter.id}`] =
-        shelterData.operatorShelter.name;
+    if (operatorShelter?.id && operatorShelter.name) {
+      map[`__shelterId__:${operatorShelter.id}`] = operatorShelter.name;
     }
-    if (room?.id && room.name) {
+    if (room?.id && room?.name) {
       map[`__roomId__:${room.id}`] = room.name;
     }
     if (bed?.id) {
@@ -381,15 +379,19 @@ export function useBreadcrumbNames(
     }
 
     return map;
-  }, [shelterData, room, bed, reservation]);
+  }, [operatorShelter, room, bed, reservation]);
 
-  // Resolve items
+  // Resolve items — show "..." for placeholder IDs while still loading
   const items = useMemo(() => {
-    return rawItems.map((item) => ({
-      ...item,
-      label: nameMap[item.label] ?? item.label,
-    }));
-  }, [rawItems, nameMap]);
+    return rawItems.map((item) => {
+      const resolvedLabel = nameMap[item.label] ?? item.label;
+      const isPlaceholder = parseIdPlaceholder(item.label) !== null;
+      return {
+        ...item,
+        label: isPlaceholder && loading ? '...' : resolvedLabel,
+      };
+    });
+  }, [rawItems, nameMap, loading]);
 
-  return { items };
+  return { items, loading };
 }
