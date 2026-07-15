@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
 from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
-from shelters.constants import DAILY_MINUTES, WEEK_MINUTES
+from shelters.constants import DAILY_MINUTES
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
 from .lookups import Demographic
@@ -39,7 +39,7 @@ def _time_to_minutes(time_field: str) -> ExpressionWrapper:
 # Generated-column expressions -----------------------------------------------
 
 
-def _start_cycle_minutes_expression():
+def _start_cycle_minutes_expression() -> Case:
     """``GENERATED ALWAYS`` expression for ``start_cycle_minutes``.
 
     For day-specific schedules the value is a week-minute offset
@@ -64,7 +64,7 @@ def _start_cycle_minutes_expression():
     )
 
 
-def _duration_minutes_expression():
+def _duration_minutes_expression() -> Case:
     """``GENERATED ALWAYS`` expression for ``duration_minutes``.
 
     ``COALESCE(NULLIF((end_m − start_m + 1440) % 1440, 0), 1440)``
