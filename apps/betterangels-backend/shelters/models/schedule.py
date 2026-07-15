@@ -22,6 +22,12 @@ def _time_to_minutes(time_field: str) -> ExpressionWrapper:
     PostgreSQL ``EXTRACT`` returns double precision, so every call is
     wrapped with ``Cast(..., IntegerField())`` and the final arithmetic
     is wrapped with ``ExpressionWrapper(output_field=IntegerField())``.
+
+    .. note::
+
+        Seconds and microseconds are **not** extracted — all schedule
+        times are assumed to have zero seconds.  This is a model-level
+        invariant that callers must uphold.
     """
     return ExpressionWrapper(
         Cast(Extract(F(time_field), "hour"), output_field=models.IntegerField()) * 60
@@ -33,12 +39,13 @@ def _time_to_minutes(time_field: str) -> ExpressionWrapper:
 # ── Generated-column expressions ──────────────────────────────────────────
 
 
-def _start_week_minutes_expression():
-    """``GENERATED ALWAYS`` expression for ``start_week_minutes``.
+def _start_cycle_minutes_expression():
+    """``GENERATED ALWAYS`` expression for ``start_cycle_minutes``.
 
-    Week-minute offset for day-specific schedules (day_index * 1440 +
-    start_minutes), or daily-minute offset for every-day (day=None)
-    schedules.  NULL when ``start_time`` is NULL.
+    For day-specific schedules the value is a week-minute offset
+    (``day_index * 1440 + start_minutes``, range 0–10079).
+    For every-day schedules (``day=None``) the value is a daily-minute
+    offset (range 0–1439).  NULL when ``start_time`` is NULL.
     """
     day_offset = Case(
         When(day="monday", then=Value(0 * DAILY_MINUTES)),
@@ -110,8 +117,19 @@ class Schedule(BaseModel):
     # active at a given datetime?" queries using modular arithmetic.
     # Both are STORED generated columns — the database keeps them in sync
     # with ``day``, ``start_time``, and ``end_time`` automatically.
-    start_week_minutes = models.GeneratedField(
-        expression=_start_week_minutes_expression(),
+    #
+    # ``start_cycle_minutes`` is the offset in minutes from the start of
+    # the cycle (midnight for every-day schedules, Monday 00:00 for
+    # day-specific schedules).
+    #
+    # ``duration_minutes`` is the positive duration computed via
+    # ``(end − start + 1440) % 1440``, handling overnight naturally.
+    # Falls back to 1440 (24 h) when start == end.
+    #
+    # Both are NULL when the relevant time fields are NULL
+    # (full-day schedule with no time window).
+    start_cycle_minutes = models.GeneratedField(
+        expression=_start_cycle_minutes_expression(),
         output_field=models.IntegerField(null=True),
         db_persist=True,
     )

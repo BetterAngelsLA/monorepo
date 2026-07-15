@@ -30,7 +30,7 @@ def shelters_open_at(
     2. Excludes shelters that have an active exception covering *dt*
        (full-day or partial-day).
 
-    Uses precomputed ``start_week_minutes`` / ``duration_minutes`` columns
+    Uses precomputed ``start_cycle_minutes`` / ``duration_minutes`` columns
     with modular arithmetic so that overnight schedules (e.g. 6 PM – 2 AM)
     and normal schedules (9 AM – 5 PM) are handled by the same branchless
     condition — no is_normal / is_overnight distinction needed.
@@ -38,7 +38,7 @@ def shelters_open_at(
     **How the modulo check works**
 
     Every schedule is represented as a cyclic interval
-    ``[start_week_minutes, start_week_minutes + duration_minutes)`` on a
+    ``[start_cycle_minutes, start_cycle_minutes + duration_minutes)`` on a
     10080-minute clock (Monday 00:00 = 0, Sunday 23:59 = 10079).  For a
     query at week-minute *q*, the condition
 
@@ -49,6 +49,11 @@ def shelters_open_at(
 
     For every-day schedules (``day=None``) the interval is stored on a
     1440-minute daily clock instead.
+
+    .. note::
+
+        Start time is **inclusive**, end time is **exclusive**.
+        A close time of 15:00 means the shelter is closed *at* 15:00.
     """
     from shelters.models import Schedule
 
@@ -67,7 +72,7 @@ def shelters_open_at(
         day__isnull=True,
     ) & Q(
         LessThan(
-            Mod(Value(query_dm) - F("start_week_minutes") + DAILY_MINUTES, DAILY_MINUTES),
+            Mod(Value(query_dm) - F("start_cycle_minutes") + DAILY_MINUTES, DAILY_MINUTES),
             F("duration_minutes"),
         ),
     )
@@ -75,7 +80,7 @@ def shelters_open_at(
         day__isnull=False,
     ) & Q(
         LessThan(
-            Mod(Value(query_wm) - F("start_week_minutes") + WEEK_MINUTES, WEEK_MINUTES),
+            Mod(Value(query_wm) - F("start_cycle_minutes") + WEEK_MINUTES, WEEK_MINUTES),
             F("duration_minutes"),
         ),
     )

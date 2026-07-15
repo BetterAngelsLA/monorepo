@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shelters', '0007_add_shelteravailability_group_permissions'),
+        ('shelters', '0010_bed_update_event'),
     ]
 
     operations = [
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='schedule',
-            name='start_week_minutes',
+            name='start_cycle_minutes',
             field=models.GeneratedField(db_persist=True, expression=models.Case(models.When(models.Q(('start_time__isnull', False)), then=models.ExpressionWrapper(django.db.models.expressions.CombinedExpression(models.Case(models.When(day='monday', then=models.Value(0)), models.When(day='tuesday', then=models.Value(1440)), models.When(day='wednesday', then=models.Value(2880)), models.When(day='thursday', then=models.Value(4320)), models.When(day='friday', then=models.Value(5760)), models.When(day='saturday', then=models.Value(7200)), models.When(day='sunday', then=models.Value(8640)), default=models.Value(0)), '+', models.ExpressionWrapper(django.db.models.expressions.CombinedExpression(django.db.models.expressions.CombinedExpression(django.db.models.functions.comparison.Cast(django.db.models.functions.datetime.Extract(models.F('start_time'), 'hour'), output_field=models.IntegerField()), '*', models.Value(60)), '+', django.db.models.functions.comparison.Cast(django.db.models.functions.datetime.Extract(models.F('start_time'), 'minute'), output_field=models.IntegerField())), output_field=models.IntegerField())), output_field=models.IntegerField())), default=None), output_field=models.IntegerField(null=True)),
         ),
         migrations.AddField(
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='scheduleevent',
-            name='start_week_minutes',
+            name='start_cycle_minutes',
             field=models.GeneratedField(db_persist=True, expression=models.Case(models.When(models.Q(('start_time__isnull', False)), then=models.ExpressionWrapper(django.db.models.expressions.CombinedExpression(models.Case(models.When(day='monday', then=models.Value(0)), models.When(day='tuesday', then=models.Value(1440)), models.When(day='wednesday', then=models.Value(2880)), models.When(day='thursday', then=models.Value(4320)), models.When(day='friday', then=models.Value(5760)), models.When(day='saturday', then=models.Value(7200)), models.When(day='sunday', then=models.Value(8640)), default=models.Value(0)), '+', models.ExpressionWrapper(django.db.models.expressions.CombinedExpression(django.db.models.expressions.CombinedExpression(django.db.models.functions.comparison.Cast(django.db.models.functions.datetime.Extract(models.F('start_time'), 'hour'), output_field=models.IntegerField()), '*', models.Value(60)), '+', django.db.models.functions.comparison.Cast(django.db.models.functions.datetime.Extract(models.F('start_time'), 'minute'), output_field=models.IntegerField())), output_field=models.IntegerField())), output_field=models.IntegerField())), default=None), output_field=models.IntegerField(null=True)),
         ),
     ]
