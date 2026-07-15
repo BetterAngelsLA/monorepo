@@ -24,6 +24,12 @@ export const isGqlDebug =
   process.env['NODE_ENV'] !== 'production';
 
 // ---- One-time side effects ----
+
+// Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
+// (overlaps `nav-menu-btn`). No-op in production / store builds and on
+// Android. See helper for details.
+// TODO: Remove once on SDK 56+ — expo-dev-launcher gains a build-time
+// plugin option to hide the FAB on both platforms (PR expo/expo#44251).
 hideDevMenuFab();
 initApolloRuntimeConfig({ isDevEnv: false });
 
@@ -31,7 +37,9 @@ initApolloRuntimeConfig({ isDevEnv: false });
 export const baTypePolicies = createBaTypePolicies(isDevEnv);
 
 export const reactQueryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: { refetchOnWindowFocus: false }, // need custom implementation for React Native
+  },
 });
 
 // ---- Interceptor factory (consumed by EnvironmentSwitcherProvider) ----

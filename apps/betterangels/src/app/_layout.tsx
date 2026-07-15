@@ -22,10 +22,12 @@ import { BaUiProviders } from './BaUiProviders';
 // Static config
 // ---------------------------------------------------------------------------
 
+// Ensure that reloading on `/modal` keeps a back button present.
 export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
+// Render Error page on uncaught error
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
