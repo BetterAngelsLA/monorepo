@@ -1,7 +1,9 @@
 import {
   computeFieldCommit,
+  coupleMonths,
   defaultMonths,
   formatDate,
+  maskDateInput,
   parseField,
   toDomain,
   toRdp,
@@ -90,6 +92,53 @@ describe('toRdp / toDomain', () => {
   it('toRdp and toDomain round-trip a full range', () => {
     const range = { from: new Date(2026, 4, 18), to: new Date(2026, 5, 20) };
     expect(toDomain(toRdp(range))).toEqual(range);
+  });
+});
+
+describe('maskDateInput', () => {
+  it('inserts slashes as digits are typed', () => {
+    expect(maskDateInput('0')).toBe('0');
+    expect(maskDateInput('06')).toBe('06');
+    expect(maskDateInput('060')).toBe('06/0');
+    expect(maskDateInput('0601')).toBe('06/01');
+    expect(maskDateInput('06012026')).toBe('06/01/2026');
+  });
+
+  it('ignores non-digits the user types and re-masks', () => {
+    expect(maskDateInput('06/01/2026')).toBe('06/01/2026');
+    expect(maskDateInput('ab06cd01')).toBe('06/01');
+  });
+
+  it('caps at eight digits (MMDDYYYY)', () => {
+    expect(maskDateInput('060120261234')).toBe('06/01/2026');
+  });
+});
+
+describe('coupleMonths', () => {
+  it('pushes the end month to start+1 when start reaches or passes end', () => {
+    const may = new Date(2026, 4, 1);
+    const april = new Date(2026, 3, 1);
+    expect(coupleMonths(may, april, 'left')).toEqual(new Date(2026, 5, 1));
+    expect(coupleMonths(may, may, 'left')).toEqual(new Date(2026, 5, 1));
+  });
+
+  it('leaves the end month alone when start stays before it', () => {
+    const march = new Date(2026, 2, 1);
+    const june = new Date(2026, 5, 1);
+    expect(coupleMonths(march, june, 'left')).toEqual(june);
+  });
+
+  it('pulls the start month to end-1 when end reaches or passes start', () => {
+    const may = new Date(2026, 4, 1);
+    const june = new Date(2026, 5, 1);
+    expect(coupleMonths(may, june, 'right')).toEqual(new Date(2026, 3, 1));
+    expect(coupleMonths(may, may, 'right')).toEqual(new Date(2026, 3, 1));
+  });
+
+  it('leaves the start month alone when end stays after it', () => {
+    const august = new Date(2026, 7, 1);
+    const march = new Date(2026, 2, 1);
+    expect(coupleMonths(august, march, 'right')).toEqual(march);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   isValid,
   parse,
   startOfMonth,
+  subMonths,
 } from 'date-fns';
 import type { RdpDateRange } from './Calendar';
 import type { DateRange } from './types';
@@ -14,6 +15,30 @@ const FIELD_PATTERN = /^\d{2}\/\d{2}\/\d{4}$/;
 const MIN_YEAR = 1900;
 
 export const formatDate = (date: Date) => format(date, DATE_FORMAT);
+
+export function maskDateInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length > 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  }
+  if (digits.length > 2) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+  return digits;
+}
+
+export function coupleMonths(
+  anchor: Date,
+  other: Date,
+  edge: 'left' | 'right'
+): Date {
+  const a = startOfMonth(anchor);
+  const o = startOfMonth(other);
+  if (edge === 'left') {
+    return a.getTime() >= o.getTime() ? addMonths(a, 1) : o;
+  }
+  return a.getTime() <= o.getTime() ? subMonths(a, 1) : o;
+}
 
 export function toRdp(range?: DateRange): RdpDateRange | undefined {
   if (!range?.from) return undefined;
