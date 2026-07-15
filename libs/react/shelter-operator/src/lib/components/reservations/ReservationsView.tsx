@@ -89,7 +89,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
         const fieldErrors = getFieldErrorsOrThrow({
           response,
           ...updateReservationMeta,
-          fields: ['ids'],
+          fields: ['status'],
         });
         if (fieldErrors.length) {
           throw new Error(errorMessage);
