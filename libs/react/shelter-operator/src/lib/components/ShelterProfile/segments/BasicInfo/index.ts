@@ -1,5 +1,6 @@
 export {
   defaultFormValues,
+  formFieldNames,
   formSchema,
   type BasicInfoFormData,
 } from './formSchema';
