@@ -157,17 +157,22 @@ export function ReservationTable({
         },
       },
       {
-        key: 'startDate',
-        label: 'Sched. Check-In',
+        key: 'checkedInAt',
+        label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (reservation) => reservation.startDate ?? '',
-        filterValue: (reservation) => reservation.startDate ?? '',
+        sortValue: (reservation) => reservation.checkedInAt ?? '',
+        filterValue: (reservation) => reservation.checkedInAt ?? '',
         render: (reservation) =>
-          reservation.startDate ? (
-            <span>{new Date(reservation.startDate).toLocaleDateString()}</span>
+          reservation.status === ReservationStatusChoices.Completed ||
+          reservation.status === ReservationStatusChoices.CheckedIn ? (
+            <span>
+              {new Date(reservation.checkedInAt).toLocaleDateString()}
+            </span>
           ) : (
-            <span className="text-gray-400">—</span>
+            <span>
+              {new Date(reservation.startDate).toLocaleDateString()} (sched.)
+            </span>
           ),
       },
       {
