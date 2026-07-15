@@ -12,6 +12,7 @@ type PickerMode = 'menu' | 'imageCapture' | 'pickingImage' | 'pickingFile';
 type MediaPickerModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onDismiss?: () => void;
   onCameraCapture: (file: ReactNativeFile) => void;
   onFilesSelected: (files: ReactNativeFile[]) => void;
   onSelectionComplete?: () => void;
@@ -27,6 +28,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
   const {
     isOpen: mediaPickerActive,
     onClose: onMediaPickerClose,
+    onDismiss,
     onSelectionComplete,
     onCameraCapture,
     onFilesSelected,
@@ -102,6 +104,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
       <BottomSheetModalControlled
         isOpen={mediaPickerActive && currentMode === 'menu'}
         onClose={handleMenuSheetClose}
+        onDismiss={onDismiss}
         options={{
           variant: 'bare',
           contentStyle: {

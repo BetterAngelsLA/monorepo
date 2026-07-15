@@ -45,10 +45,6 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
 
   const handleMediaPickerClose = () => {
     setIsModalVisible(false);
-
-    setTimeout(() => {
-      onClose();
-    }, 250);
   };
 
   const uploadSelectedFiles = async (selectedFiles: ReactNativeFile[]) => {
@@ -174,6 +170,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
         allowMultiple={allowMultiple}
         isOpen={isModalVisible}
         onClose={handleMediaPickerClose}
+        onDismiss={onClose}
         onSelectionComplete={() => setIsModalVisible(false)}
         onCameraCapture={(file) => {
           const updatedFiles = allowMultiple ? [...files, file] : [file];

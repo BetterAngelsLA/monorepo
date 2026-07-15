@@ -113,7 +113,8 @@
     "haversine-distance": "*",
     "expo-modules-core": "*",
     "react-native-screens": "*",
-    "@expo/vector-icons": "*"
+    "@expo/vector-icons": "*",
+    "@react-native-vector-icons/ant-design": "*"
   },
   "expo": {
     "autolinking": {
