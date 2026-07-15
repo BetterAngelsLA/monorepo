@@ -165,6 +165,21 @@ class Schedule(BaseModel):
                 name="unique_schedule_per_shelter_type_day_time_date",
                 nulls_distinct=False,
             ),
+            models.CheckConstraint(
+                condition=(
+                    Q(start_time__isnull=True, end_time__isnull=True)
+                    | Q(start_time__isnull=False, end_time__isnull=False)
+                ),
+                name="schedule_times_both_or_neither",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(start_date__isnull=True)
+                    | Q(end_date__isnull=True)
+                    | Q(start_date__lte=F("end_date"))
+                ),
+                name="schedule_start_date_lte_end_date",
+            ),
         ]
         ordering = ["is_exception", "schedule_type", "day", "start_time"]
 
