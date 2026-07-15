@@ -11,11 +11,11 @@ export default function useCSVDownload() {
       setIsDownloading(true);
       setError(null);
       try {
-        let url = `/reports/export/?start_date=${startDate}&end_date=${endDate}`;
+        let path = `/reports/export/?start_date=${startDate}&end_date=${endDate}`;
         if (orgId) {
-          url += `&org_id=${orgId}`;
+          path += `&org_id=${orgId}`;
         }
-        const response = await fetch(url);
+        const response = await fetch(path);
         if (!response.ok) {
           const body = await response.json().catch(() => null);
           throw new Error(body?.error ?? `Export failed (${response.status})`);

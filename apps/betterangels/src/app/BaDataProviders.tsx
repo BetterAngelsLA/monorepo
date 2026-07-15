@@ -23,22 +23,22 @@ import { baTypePolicies, isGqlDebug, reactQueryClient } from '../init';
 
 /**
  * Data + auth providers — lives inside ``EnvironmentSwitcherProvider``
- * so it has access to the env-aware ``apiUrl`` and ``fetch`` via
+ * so it has access to the env-aware ``apiUrl`` and ``rawFetch`` via
  * ``useApiConfig()``.  Rebuilds the Apollo link chain when the
  * environment changes.
  */
 export function BaDataProviders({ children }: { children: ReactNode }) {
-  const { apiUrl, rawFetch: authFetch } = useApiConfig();
+  const { apiUrl, rawFetch } = useApiConfig();
 
   const link = useMemo(() => {
     const httpLink = new HttpLink({
       uri: getGraphqlUrl(apiUrl),
-      fetch: authFetch,
+      fetch: rawFetch,
     });
     const links = [createErrorLink({ authPath: '/auth' }), httpLink];
     if (isGqlDebug) links.unshift(loggerLink);
     return ApolloLink.from(links);
-  }, [apiUrl, authFetch]);
+  }, [apiUrl, rawFetch]);
 
   return (
     <QueryClientProvider client={reactQueryClient}>
