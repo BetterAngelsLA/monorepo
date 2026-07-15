@@ -1,14 +1,15 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { mergeCss, useDebounce, usePlacesClient } from '@monorepo/react/shared';
+import { mergeCss, useDebounce } from '@monorepo/react/shared';
 import {
   placeViewportToEdges,
   TPlacePrediction,
 } from '@monorepo/shared/places';
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Input } from '../Input';
 import { LA_COUNTY_CENTER } from '../Map/constants.maps';
 import { TMapBounds } from '../Map/types.maps';
 import { useKeyboardListNav } from './hooks/useKeyboardListNav';
+import { usePlacesClient } from './hooks/usePlacesClient';
 import { ISO3166Alpha2 } from './types/isoCodes';
 
 const DEBOUNCE_MS = 150;
@@ -32,6 +33,7 @@ type TProps = {
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
   leftIcon?: React.ReactElement;
   inputClassname?: string;
+  placeholderClassname?: string;
 };
 
 export function AddressAutocomplete(props: TProps) {
@@ -43,6 +45,7 @@ export function AddressAutocomplete(props: TProps) {
     className,
     leftIcon,
     inputClassname,
+    placeholderClassname,
   } = props;
 
   const places = usePlacesClient();
@@ -104,9 +107,7 @@ export function AddressAutocomplete(props: TProps) {
     fetchPredictions(debouncedInput);
   }, [debouncedInput, fetchPredictions]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-
+  const handleInputChange = (value: string) => {
     setInputValue(value);
     resetActiveOption();
 
@@ -164,9 +165,14 @@ export function AddressAutocomplete(props: TProps) {
       <Input
         value={inputValue}
         placeholder={placeholder}
-        className={mergeCss(['w-full', inputClassname])}
+        className="w-full"
+        inputClassname={inputClassname}
+        placeholderClassname={placeholderClassname}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         iconBefore={
           leftIcon || <SearchIcon className="text-neutral-70 w-4 h-4" />
         }

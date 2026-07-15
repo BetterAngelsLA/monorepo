@@ -1,4 +1,4 @@
-import { Button } from '@monorepo/react/components';
+import { AddressAutocomplete, Button } from '@monorepo/react/components';
 import { CloseIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
@@ -9,7 +9,6 @@ import {
   shelterSearchPendingLocationAtom,
   shelterSearchRequestAtom,
 } from '../../atoms';
-import { AddressAutocomplete } from '../../components/AddressAutocomplete';
 import { Input } from '../../components/Input';
 import { shelterHomePath } from '../../constants';
 
@@ -20,7 +19,7 @@ export function SearchPage() {
   const setLocationInput = useSetAtom(shelterLocationSearchInputAtom);
   const setSearchRequest = useSetAtom(shelterSearchRequestAtom);
   const [pendingLocation, setPendingLocation] = useAtom(
-    shelterSearchPendingLocationAtom
+    shelterSearchPendingLocationAtom,
   );
 
   const [nameInput, setNameInput] = useState(initialNameInput);
@@ -68,9 +67,11 @@ export function SearchPage() {
           onKeyDown={handleSearchKeyDown}
           leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
         />
+
         <AddressAutocomplete
           className="w-full"
-          inputClassname="rounded-t-none"
+          inputClassname="bg-white border border-neutral-90 rounded-t-none"
+          placeholderClassname="placeholder:text-sm placeholder:text-neutral-40"
           placeholder="Search by location"
           initialValue={locationInput}
           onPlaceSelect={(place) => {
