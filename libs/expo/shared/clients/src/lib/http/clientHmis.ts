@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { composeFetchInterceptors } from '@monorepo/fetch';
 import {
   bodyInterceptor,
-  composeFetchInterceptors,
   HMIS_API_URL_STORAGE_KEY,
   includeCredentialsInterceptor,
   interceptorHmis,

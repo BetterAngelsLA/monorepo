@@ -2,7 +2,7 @@ import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
-import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { useUpdateShelterPhoto } from '../../../../../../../hooks/useUpdateShelterPhoto';
 import { updateShelterPhotoMeta } from '../../../../../../../hooks/useUpdateShelterPhoto/__generated__/useUpdateShelterPhoto_meta.generated';
 import { Modal, ModalBody, ModalHeader } from '../../../../../../base-ui/modal';

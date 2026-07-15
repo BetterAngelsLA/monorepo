@@ -7,7 +7,7 @@
  * transitively resolved through this entry point.
  *
  * Framework-specific code has its own entry points:
- * - ``@monorepo/ba-platform/react`` — web-only (CSRF, cookies, etc.)
+ * - ``@monorepo/ba-platform/web``  — web-only (CSRF, cookies, etc.)
  * - ``@monorepo/ba-platform/expo``  — RN-only (AsyncStorage, native fetch, etc.)
  */
 export * from './lib';

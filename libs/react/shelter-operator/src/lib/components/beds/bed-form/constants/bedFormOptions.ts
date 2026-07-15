@@ -2,7 +2,7 @@ import {
   BedStatusChoices,
   BedTypeChoices,
   MedicalNeedChoices,
-} from '../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { toDropdownOptions } from '../../../base-ui/dropdown';
 
 const BED_STATUS_LABELS: Record<BedStatusChoices, string> = {

@@ -19,7 +19,6 @@
     "@testing-library/react": "*",
     "@vitejs/plugin-react": "*",
     "apollo-link-rest": "*",
-    "apollo-upload-client": "*",
     "clsx": "*",
     "embla-carousel-react": "*",
     "graphql": "*",

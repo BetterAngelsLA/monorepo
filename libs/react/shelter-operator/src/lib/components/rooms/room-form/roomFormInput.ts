@@ -1,7 +1,7 @@
 import type {
   CreateRoomInput,
   UpdateRoomInput,
-} from '../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import type { RoomFormData } from './formTypes';
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>

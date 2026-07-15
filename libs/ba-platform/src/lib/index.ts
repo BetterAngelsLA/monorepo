@@ -4,4 +4,5 @@
 export * from './apollo';
 export * from './constants';
 export * from './errors';
+export * from './interceptors';
 export * from './react';

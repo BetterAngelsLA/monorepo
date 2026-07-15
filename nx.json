@@ -128,6 +128,8 @@
         "libs/expo/shared/clients/**/*",
         "libs/expo/shared/ui-components/**/*",
         "libs/expo/shared/utils/**/*",
+        "libs/ba-platform/**/*",
+        "libs/fetch/**/*",
         "libs/react/components/**/*",
         "libs/react/shelter-operator/**/*"
       ]
@@ -150,6 +152,7 @@
         "libs/expo/shared/static/**/*",
         "libs/expo/shared/ui-components/**/*",
         "libs/expo/shared/utils/**/*",
+        "libs/fetch/**/*",
         "libs/react/betterangels-admin/**/*",
         "libs/react/components/**/*",
         "libs/react/icons/**/*",

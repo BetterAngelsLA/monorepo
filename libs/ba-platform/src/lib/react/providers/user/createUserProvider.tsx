@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
@@ -32,12 +33,10 @@ export interface UserState<TUser> {
  * @typeParam TUser   App-specific user type (the value stored in context).
  * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
- * @typeParam TExtra  Extra fields merged into the context (e.g. ``isHmisUser``).
  */
 export interface UserProviderConfig<
   TUser,
   TQuery,
-  TExtra extends Record<string, unknown> = Record<string, unknown>
 > {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
@@ -55,15 +54,30 @@ export interface UserProviderConfig<
   isUnauthenticated: (
     errors:
       | readonly { message: string; extensions?: Record<string, unknown> }[]
-      | undefined
+      | undefined,
   ) => boolean;
 
   /**
-   * Optional extra context to merge into the context value exposed by
-   * ``useUser``. Useful for app-specific fields like ``isHmisUser``.
+   * Default storage adapter for the embedded :component:`ActiveOrgProvider`.
+   *
+   * If provided, consumers do not need to pass ``storage`` as a prop -
+   * the provider uses this default. Individual apps can still override
+   * via the ``storage`` prop when needed.
    */
-  extraContextValue?: (user?: TUser) => TExtra;
+  defaultStorage?: StorageAdapter;
+
+  /**
+   * Optional custom mapping from user organizations to the
+   * :type:`Org` shape expected by :component:`ActiveOrgProvider`.
+   *
+   * Defaults to spreading ``permissions`` into a new array.
+   */
+  mapOrganizations?: (
+    orgs: readonly OrgLike[],
+  ) => { id: string; name: string; permissions: readonly PermissionEnum[] }[];
 }
+
+type OrgLike = { id: string; name: string; permissions?: readonly string[] };
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -94,18 +108,31 @@ export function createUserProvider<
       | null;
   },
   TQuery extends { currentUser?: unknown },
-  TExtra extends Record<string, unknown> = Record<string, unknown>
->(config: UserProviderConfig<TUser, TQuery, TExtra>) {
+>(config: UserProviderConfig<TUser, TQuery>) {
   const {
     document,
     parseUser,
     isUnauthenticated,
-    extraContextValue = () => ({}),
+    defaultStorage,
+    mapOrganizations: customMapOrganizations,
   } = config;
+
+  // ---- Helpers -------------------------------------------------------
+
+  const defaultMapOrganizations = (
+    orgs: readonly OrgLike[],
+  ) =>
+    orgs.map((org) => ({
+      id: org.id,
+      name: org.name,
+      permissions: [...(org.permissions ?? [])] as PermissionEnum[],
+    }));
+
+  const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
 
   // ---- Context -------------------------------------------------------
 
-  type ContextValue = UserState<TUser> & TExtra;
+  type ContextValue = UserState<TUser>;
 
   const UserContext = createContext<ContextValue | undefined>(undefined);
 
@@ -119,9 +146,20 @@ export function createUserProvider<
     return ctx;
   }
 
-  // ---- Provider ------------------------------------------------------
-
-  function UserProvider({ children, storage }: { children: ReactNode; storage?: StorageAdapter }) {
+  function UserProvider({
+    children,
+    storage,
+  }: {
+    children: ReactNode;
+    /** Storage adapter — defaults to :attr:`defaultStorage` from config. */
+    storage?: StorageAdapter;
+  }) {
+    const resolvedStorage = storage ?? defaultStorage;
+    if (!resolvedStorage) {
+      throw new Error(
+        'UserProvider requires a storage adapter. Pass it as a prop or set defaultStorage in createUserProvider config.',
+      );
+    }
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -143,13 +181,22 @@ export function createUserProvider<
           setUser(parseUser(res.data?.currentUser));
         }
       },
+      // parseUser and isUnauthenticated are factory-level params — they're
+      // stable references captured once at module init, so omitting them from
+      // the dep array is intentional and safe.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      [],
     );
 
     useEffect(() => {
       if (!loading) {
-        updateUser({ data, errors: error ? [error] : undefined });
+        // error is typed as ErrorLike but is an ApolloError at runtime
+        // with graphQLErrors — narrow via runtime check.
+        const gqlErrors =
+          error && 'graphQLErrors' in error
+            ? (error.graphQLErrors as readonly { message: string; extensions?: Record<string, unknown> }[])
+            : undefined;
+        updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
     }, [loading, data, error, updateUser]);
 
@@ -163,26 +210,20 @@ export function createUserProvider<
     }, [refetch, updateUser]);
 
     const contextValue = useMemo<ContextValue>(
-      () =>
-        ({
-          user,
-          setUser,
-          isLoading: loading,
-          refetchUser,
-          ...extraContextValue(user),
-        } as ContextValue),
-      [user, loading, refetchUser]
+      () => ({
+        user,
+        setUser,
+        isLoading: loading,
+        refetchUser,
+      }),
+      [user, loading, refetchUser],
     );
 
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          storage={storage}
-          organizations={(user?.organizations ?? []).map((org) => ({
-            id: org.id,
-            name: org.name,
-            permissions: [...(org.permissions ?? [])],
-          }))}
+          storage={resolvedStorage}
+          organizations={user?.organizations ? mapOrganizations(user.organizations) : []}
         >
           {children}
         </ActiveOrgProvider>
