@@ -13,5 +13,9 @@ from shelters.selectors.operator import (
     shelter_queryset,
     user_shelter_list,
 )
-from shelters.selectors.reports import report_bed_status_counts  # noqa: F401
-from shelters.selectors.reports import reservation_status_change_counts
+from shelters.selectors.reports import (
+    avg_days_to_occupancy,
+    daily_occupancy,
+    report_bed_status_counts,
+    reservation_status_change_counts,
+)
