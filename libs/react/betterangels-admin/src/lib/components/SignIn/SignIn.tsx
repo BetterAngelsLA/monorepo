@@ -12,7 +12,7 @@ export interface SignInProps {
 }
 
 export function SignIn({ onSuccessRedirect, description }: SignInProps) {
-  const { fetch } = useApiConfig();
+  const { apiUrl, fetch } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
