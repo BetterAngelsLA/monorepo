@@ -1,7 +1,7 @@
 import { SearchIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
 import { TPlacePrediction } from '@monorepo/shared/places';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Input } from '../Input';
 import { LA_COUNTY_CENTER } from '../Map/constants.maps';
 import { usePlacesClient } from './hooks/usePlacesClient';
@@ -36,6 +36,7 @@ export function AddressAutocomplete(props: TProps) {
   const [inputValue, setInputValue] = useState('');
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debouncedInput = useDebounce(inputValue, DEBOUNCE_MS);
+  const justSelectedRef = useRef(false);
 
   const fetchPredictions = useCallback(
     async (input: string) => {
@@ -67,6 +68,10 @@ export function AddressAutocomplete(props: TProps) {
   );
 
   useEffect(() => {
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
     fetchPredictions(debouncedInput);
   }, [debouncedInput, fetchPredictions]);
 
@@ -92,6 +97,7 @@ export function AddressAutocomplete(props: TProps) {
 
         setInputValue(result.formattedAddress || '');
         setPredictions([]);
+        justSelectedRef.current = true;
       } catch (error) {
         console.error('Error fetching place details:', error);
       }
