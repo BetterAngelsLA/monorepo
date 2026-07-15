@@ -40,7 +40,7 @@ export function YearGrid({
               'h-10 rounded-full text-sm transition-colors',
               isSelected
                 ? 'bg-[#008CEE] text-white hover:bg-[#0071C0]'
-                : 'text-[#383B40] hover:bg-[#F2FAFF]',
+                : 'text-[#383B40] hover:bg-[#F4F6FD]',
               isCurrent && !isSelected && 'ring-1 ring-inset ring-[#008CEE]',
             ])}
           >
