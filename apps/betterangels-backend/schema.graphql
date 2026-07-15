@@ -3077,6 +3077,7 @@ input UpdateRoomInput {
   amenities: String
   demographics: [DemographicChoices!]
   funders: [FunderChoices!]
+  lastCleaned: DateTime
   lastCleanedInspected: DateTime
   maintenanceFlag: Boolean
   medicalRespite: Boolean
