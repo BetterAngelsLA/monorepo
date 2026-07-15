@@ -9,8 +9,10 @@ import { usePortalPosition } from '../base-ui/dropdown/usePortalPosition';
 import { Calendar, type RdpDateRange } from './Calendar';
 import {
   computeFieldCommit,
+  coupleMonths,
   defaultMonths,
   formatDate,
+  maskDateInput,
   toDomain,
   toRdp,
 } from './dateRangeCalendarUtils';
@@ -54,14 +56,14 @@ function DateField({
       placeholder="MM/DD/YYYY"
       value={value}
       onFocus={onOpen}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange(maskDateInput(e.target.value))}
       onBlur={onCommit}
       onKeyDown={(e) => {
         if (e.key === 'Enter') onCommit();
       }}
       className={mergeCss([
-        'w-[6.5rem] border-0 bg-transparent p-0 text-center text-sm outline-none placeholder:text-gray-400',
-        invalid ? 'text-red-600' : 'text-gray-900',
+        'w-[6rem] border-0 bg-transparent p-0 text-center text-sm tracking-[-0.02em] outline-none placeholder:text-[#676767]',
+        invalid ? 'text-red-600' : 'text-[#676767]',
       ])}
     />
   );
@@ -155,16 +157,31 @@ export function DateRangeCalendar({
     if (!open) openPopover();
   };
 
+  const changeLeftMonth = useCallback((next: Date) => {
+    setLeftMonth(next);
+    setRightMonth((right) => coupleMonths(next, right, 'left'));
+  }, []);
+  const changeRightMonth = useCallback((next: Date) => {
+    setRightMonth(next);
+    setLeftMonth((left) => coupleMonths(next, left, 'right'));
+  }, []);
+
   const openLeftYear = useCallback(() => setYearGridSide('left'), []);
   const openRightYear = useCallback(() => setYearGridSide('right'), []);
-  const selectLeftYear = useCallback((year: number) => {
-    setLeftMonth((current) => new Date(year, current.getMonth(), 1));
-    setYearGridSide(null);
-  }, []);
-  const selectRightYear = useCallback((year: number) => {
-    setRightMonth((current) => new Date(year, current.getMonth(), 1));
-    setYearGridSide(null);
-  }, []);
+  const selectLeftYear = useCallback(
+    (year: number) => {
+      changeLeftMonth(new Date(year, leftMonth.getMonth(), 1));
+      setYearGridSide(null);
+    },
+    [changeLeftMonth, leftMonth]
+  );
+  const selectRightYear = useCallback(
+    (year: number) => {
+      changeRightMonth(new Date(year, rightMonth.getMonth(), 1));
+      setYearGridSide(null);
+    },
+    [changeRightMonth, rightMonth]
+  );
 
   const menuPos = usePortalPosition(anchorRef, open, close, menuRef);
 
@@ -173,13 +190,13 @@ export function DateRangeCalendar({
   const panes = {
     left: {
       month: leftMonth,
-      onMonthChange: setLeftMonth,
+      onMonthChange: changeLeftMonth,
       openYear: openLeftYear,
       selectYear: selectLeftYear,
     },
     right: {
       month: rightMonth,
-      onMonthChange: setRightMonth,
+      onMonthChange: changeRightMonth,
       openYear: openRightYear,
       selectYear: selectRightYear,
     },
@@ -209,12 +226,12 @@ export function DateRangeCalendar({
       <div
         ref={anchorRef}
         className={mergeCss([
-          'flex h-12 w-full items-center gap-1 rounded-full border bg-white px-4 transition-colors',
+          'flex h-[45px] w-full items-center gap-2 rounded-[20px] border bg-white px-5 transition-colors',
           hasError
             ? 'border-red-500'
             : open
               ? 'border-[#008CEE]'
-              : 'border-gray-200',
+              : 'border-[#E7E7E7]',
         ])}
       >
         <DateField
@@ -225,7 +242,7 @@ export function DateRangeCalendar({
           onCommit={commitTyped}
           onOpen={openOnFocus}
         />
-        <span className="shrink-0 text-gray-400">–</span>
+        <span className="shrink-0 text-[#676767]">–</span>
         <DateField
           label="End date"
           value={toText}
@@ -240,7 +257,7 @@ export function DateRangeCalendar({
           onClick={() => (open ? close() : openPopover())}
           className="ml-auto shrink-0"
         >
-          <CalendarIcon className="h-4 w-4 text-gray-400" />
+          <CalendarIcon className="h-6 w-6 text-[#676767]" />
         </button>
       </div>
 
@@ -253,16 +270,29 @@ export function DateRangeCalendar({
             align="right"
           >
             <div className="flex flex-col gap-4 p-4">
-              <div className="flex gap-8">
-                {renderPane('left')}
-                {renderPane('right')}
-              </div>
+              {yearGridSide ? (
+                renderPane(yearGridSide)
+              ) : (
+                <div className="flex gap-4">
+                  {renderPane('left')}
+                  {renderPane('right')}
+                </div>
+              )}
 
-              <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
-                <Button variant="primary" onClick={close}>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="primary"
+                  onClick={close}
+                  className="rounded-lg border-transparent bg-[#EBECEF] text-[#747A82] hover:bg-[#DEE0E4]"
+                >
                   Cancel
                 </Button>
-                <Button variant="primary" color="blue" onClick={handleSave}>
+                <Button
+                  variant="primary"
+                  color="blue"
+                  onClick={handleSave}
+                  className="rounded-lg"
+                >
                   Save
                 </Button>
               </div>
