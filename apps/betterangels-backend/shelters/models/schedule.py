@@ -6,14 +6,14 @@ from django.db import models
 from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
 from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
+from shelters.constants import DAILY_MINUTES, WEEK_MINUTES
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
 from .lookups import Demographic
 from .shelter import Shelter
 
-DAILY_MINUTES = 24 * 60  # 1440
 
-# ── Helpers ───────────────────────────────────────────────────────────────
+# Helpers -------------------------------------------------------------------
 
 
 def _time_to_minutes(time_field: str) -> ExpressionWrapper:
@@ -36,7 +36,7 @@ def _time_to_minutes(time_field: str) -> ExpressionWrapper:
     )
 
 
-# ── Generated-column expressions ──────────────────────────────────────────
+# Generated-column expressions -----------------------------------------------
 
 
 def _start_cycle_minutes_expression():
@@ -93,7 +93,7 @@ def _duration_minutes_expression():
     )
 
 
-# ── Model ─────────────────────────────────────────────────────────────────
+# Model ---------------------------------------------------------------------
 
 
 @pghistory.track(

@@ -1,5 +1,4 @@
-"""Zero-cycle ``shelters_open_at`` query — importable by models, managers,
-selectors, and filters without creating circular imports."""
+"""Shelter open-at query — determines which shelters are open at a given datetime."""
 
 import datetime
 from typing import TYPE_CHECKING
@@ -7,13 +6,11 @@ from typing import TYPE_CHECKING
 from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
 from django.db.models.functions import Mod
 from django.db.models.lookups import LessThan
+from shelters.constants import DAILY_MINUTES, WEEK_MINUTES
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
-
-WEEK_MINUTES = 7 * 24 * 60  # 10080
-DAILY_MINUTES = 24 * 60  # 1440
 
 
 def shelters_open_at(
@@ -57,6 +54,8 @@ def shelters_open_at(
     """
     from shelters.models import Schedule
 
+    # Python's weekday() returns Monday=0, matching the model's day_offset
+    # Case (Monday=0, …, Sunday=6).
     query_wm = dt.weekday() * DAILY_MINUTES + dt.hour * 60 + dt.minute
     query_dm = dt.hour * 60 + dt.minute
     date = dt.date()
@@ -65,9 +64,6 @@ def shelters_open_at(
     # Branchless time-window cover for both normal and overnight schedules.
     # Every-day schedules (day=None) use the daily clock; day-specific
     # schedules use the weekly clock.
-    #
-    # Start time is inclusive, end time is exclusive: a close time of
-    # 15:00 means the shelter is closed at exactly 15:00.
     every_day_window = Q(
         day__isnull=True,
     ) & Q(
