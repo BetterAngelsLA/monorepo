@@ -1,26 +1,37 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useDebounce, usePlacesClient } from '@monorepo/react/shared';
-import { TPlacePrediction } from '@monorepo/shared/places';
+import { mergeCss, useDebounce, usePlacesClient } from '@monorepo/react/shared';
+import {
+  placeViewportToEdges,
+  TPlacePrediction,
+} from '@monorepo/shared/places';
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Input } from '../Input';
 import { LA_COUNTY_CENTER } from '../Map/constants.maps';
+import { TMapBounds } from '../Map/types.maps';
+import { useKeyboardListNav } from './hooks/useKeyboardListNav';
 import { ISO3166Alpha2 } from './types/isoCodes';
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 150;
 const BOUNDS_RADIUS_MILES = 25;
+const MIN_INPUT_LEN = 3;
 
 export type TPlaceResult = {
   id: string;
   displayName: string | null;
   formattedAddress: string | null;
   location: { lat: number; lng: number } | null;
+  /** Recommended map viewport from Places; used to fit zip codes, cities, states, etc. */
+  viewport?: TMapBounds;
 };
 
 type TProps = {
   className?: string;
   placeholder?: string;
+  initialValue?: string;
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
+  leftIcon?: React.ReactElement;
+  inputClassname?: string;
 };
 
 export function AddressAutocomplete(props: TProps) {
@@ -28,19 +39,36 @@ export function AddressAutocomplete(props: TProps) {
     onPlaceSelect,
     countryRestrictions = 'us',
     placeholder,
-    className = '',
+    initialValue = '',
+    className,
+    leftIcon,
+    inputClassname,
   } = props;
 
   const places = usePlacesClient();
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(initialValue);
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debouncedInput = useDebounce(inputValue, DEBOUNCE_MS);
   const justSelectedRef = useRef(false);
 
+  const {
+    activeIndex: activeOptionIndex,
+    handleKeyDown,
+    reset: resetActiveOption,
+  } = useKeyboardListNav({
+    items: predictions,
+    onSelect: (p) => handleSelect(p.placeId),
+  });
+
+  useEffect(() => {
+    setInputValue(initialValue);
+  }, [initialValue]);
+
   const fetchPredictions = useCallback(
     async (input: string) => {
-      if (!input || input.length < 3) {
+      if (input.length < MIN_INPUT_LEN) {
         setPredictions([]);
+
         return;
       }
 
@@ -69,20 +97,30 @@ export function AddressAutocomplete(props: TProps) {
   useEffect(() => {
     if (justSelectedRef.current) {
       justSelectedRef.current = false;
+
       return;
     }
+
     fetchPredictions(debouncedInput);
   }, [debouncedInput, fetchPredictions]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const value = e.target.value;
+
+    setInputValue(value);
+    resetActiveOption();
+
+    if (!value.trim()) {
+      onPlaceSelect(null);
+      setPredictions([]);
+    }
   };
 
   const handleSelect = useCallback(
     async (placeId: string) => {
       try {
         const result = await places.getDetails(placeId, {
-          fields: 'displayName,formattedAddress,location',
+          fields: 'displayName,formattedAddress,location,viewport',
         });
 
         onPlaceSelect({
@@ -92,10 +130,14 @@ export function AddressAutocomplete(props: TProps) {
           location: result.location
             ? { lat: result.location.latitude, lng: result.location.longitude }
             : null,
+          viewport: result.viewport
+            ? placeViewportToEdges(result.viewport)
+            : undefined,
         });
 
         setInputValue(result.formattedAddress || '');
         setPredictions([]);
+        resetActiveOption();
         justSelectedRef.current = true;
       } catch (error) {
         console.error('Error fetching place details:', error);
@@ -104,27 +146,46 @@ export function AddressAutocomplete(props: TProps) {
     [onPlaceSelect, places],
   );
 
+  const predictionItemCss = [
+    'flex',
+    'flex-col',
+    'py-3',
+    'px-4',
+    'border-b',
+    'border-neutral-90',
+    'cursor-pointer',
+    'hover:bg-neutral-99',
+    'focus:bg-neutral-99',
+    'focus:outline-hidden',
+  ];
+
   return (
     <div className={className}>
       <Input
         value={inputValue}
         placeholder={placeholder}
-        className="w-full"
+        className={mergeCss(['w-full', inputClassname])}
         onChange={handleInputChange}
-        iconBefore={<SearchIcon className="text-neutral-70 w-4 h-4" />}
+        onKeyDown={handleKeyDown}
+        iconBefore={
+          leftIcon || <SearchIcon className="text-neutral-70 w-4 h-4" />
+        }
       />
 
       {predictions.length > 0 && (
         <ul className="mt-4" role="listbox">
-          {predictions.map(({ placeId, mainText, secondaryText }) => (
+          {predictions.map(({ placeId, mainText, secondaryText }, idx) => (
             <li
               key={placeId}
               role="option"
-              aria-selected={false}
+              aria-selected={idx === activeOptionIndex}
               tabIndex={0}
               onClick={() => handleSelect(placeId)}
               onKeyDown={(e) => e.key === 'Enter' && handleSelect(placeId)}
-              className="flex flex-col py-3 px-4 border-b border-neutral-90 cursor-pointer hover:bg-neutral-95 focus:bg-neutral-95 focus:outline-hidden"
+              className={mergeCss([
+                predictionItemCss,
+                idx === activeOptionIndex && 'bg-neutral-98',
+              ])}
             >
               <span className="text-sm font-medium">{mainText}</span>
               <span className="text-xs text-neutral-60">
