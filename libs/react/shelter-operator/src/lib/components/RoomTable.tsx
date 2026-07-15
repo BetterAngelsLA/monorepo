@@ -10,7 +10,6 @@ import { Table, type TableColumn } from './base-ui/table';
 
 import {
   RoomStatusChoices,
-  type RoomType,
 } from '@monorepo/ba-platform/types';
 
 export type Room = {

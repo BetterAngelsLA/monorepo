@@ -4,9 +4,7 @@ import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  OperatorShelterType,
   RoomStatusChoices,
-  type RoomType,
 } from '@monorepo/ba-platform/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
 import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';

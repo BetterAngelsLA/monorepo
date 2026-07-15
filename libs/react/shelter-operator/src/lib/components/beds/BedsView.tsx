@@ -3,7 +3,6 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type BedType } from '@monorepo/ba-platform/types';
 import { useBeds, useCloneBed, useDeleteBeds, useUpdateBed } from '../../hooks';
 import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
 import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
