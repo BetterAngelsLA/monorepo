@@ -36,8 +36,15 @@ type RoomTableProps = {
   onEdit?: (room: Room) => void;
   onClone?: (room: Room) => void;
   onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
+  onMarkReady?: (room: Room) => void;
   onReserve?: (room: Room) => void;
 };
+
+function isRoomAvailable(
+  status: RoomStatusChoices | null | undefined,
+): boolean {
+  return status === RoomStatusChoices.Available;
+}
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
   label: string;
@@ -77,6 +84,7 @@ export function RoomTable({
   onEdit,
   onClone,
   onDeleteRooms,
+  onMarkReady,
   onReserve,
 }: RoomTableProps) {
   const columns: TableColumn<Room>[] = useMemo(
@@ -102,7 +110,7 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -117,13 +125,26 @@ export function RoomTable({
           role="group"
           aria-label="Room actions"
         >
-          {onReserve && (
+          {room.status === RoomStatusChoices.InTurnaround && onMarkReady && (
+            <Button
+              type="button"
+              variant="confirm"
+              aria-label="Mark ready"
+              onClick={() => onMarkReady(room)}
+            />
+          )}
+          {room.status === RoomStatusChoices.Available && onReserve && (
             <Button
               type="button"
               variant="edit"
-              className="text-[#747A82]"
               aria-label="Reserve room"
-              leftIcon={<BookCheck size={22} stroke="black" />}
+              disabled={!isRoomAvailable(room.status)}
+              leftIcon={
+                <BookCheck
+                  size={22}
+                  stroke={!isRoomAvailable(room.status) ? 'gray' : 'black'}
+                />
+              }
               onClick={() => onReserve(room)}
             />
           )}
