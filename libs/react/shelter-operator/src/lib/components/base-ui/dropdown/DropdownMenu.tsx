@@ -13,6 +13,7 @@ interface DropdownMenuProps<T extends string | number> {
   isMulti: boolean;
   hasSelection: boolean;
   searchQuery: string;
+  noResultsText?: string;
   onSearchChange: (query: string) => void;
   filteredOptions: DropdownOption<T>[];
   selectedSet: Set<T>;
@@ -33,6 +34,7 @@ export function DropdownMenu<T extends string | number>({
   isMulti,
   hasSelection,
   searchQuery,
+  noResultsText,
   onSearchChange,
   filteredOptions,
   selectedSet,
@@ -95,7 +97,7 @@ export function DropdownMenu<T extends string | number>({
         ) : (
           <div className="px-3 py-3">
             <Text variant="body" className="text-center text-gray-400">
-              No results found
+              {noResultsText}
             </Text>
           </div>
         )}
