@@ -21,9 +21,9 @@ export interface CalendarProps {
 
 const dayCell = 'relative h-9 w-9 p-0 text-center';
 const dayButton =
-  'h-9 w-9 rounded-full text-sm text-[#383B40] transition-colors hover:bg-[#F2FAFF]';
+  'h-9 w-9 rounded-full text-sm text-[#383B40] transition-colors hover:bg-[#F4F6FD]';
 const navButton =
-  'flex h-7 w-7 items-center justify-center rounded-full text-[#747A82] hover:bg-[#F2FAFF] disabled:opacity-40';
+  'flex h-7 w-7 items-center justify-center rounded-full text-[#747A82] hover:bg-[#F4F6FD] disabled:opacity-40';
 const rangeEndpoint =
   'bg-[#DCF1FF] [&>button]:bg-[#008CEE] [&>button]:text-white [&>button]:ring-0 [&>button]:hover:bg-[#0071C0]';
 
@@ -62,7 +62,7 @@ export function Calendar({
           <button
             type="button"
             onClick={() => onMonthLabelClick?.(date)}
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#383B40] hover:bg-[#F2FAFF]"
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#383B40] hover:bg-[#F4F6FD]"
           >
             {format(date, 'MMMM yyyy')}
             <ChevronDown className="h-4 w-4 text-[#747A82]" />
