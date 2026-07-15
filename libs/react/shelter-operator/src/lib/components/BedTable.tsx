@@ -52,7 +52,7 @@ function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
 
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
-  maintenanceFlag?: boolean
+  maintenanceFlag?: boolean,
 ): { label: string; variant: StatusBadgeVariant } {
   if (status === BedStatusChoices.OutOfService && maintenanceFlag) {
     return {
@@ -133,7 +133,7 @@ export function BedTable({
         sortValue: (bed) => bed.room?.name ?? '',
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -161,7 +161,7 @@ export function BedTable({
                 onClick={() => onMarkReady(rowObject)}
               />
             )}
-          {onReserve && (
+          {rowObject.bed.status === BedStatusChoices.Available && onReserve && (
             <Button
               type="button"
               variant="edit"
