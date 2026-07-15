@@ -1,6 +1,7 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { useUser } from '@monorepo/react/shelter';
+import { localStorageAdapter } from '@monorepo/react/shared';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
@@ -34,6 +35,7 @@ export function OperatorApp() {
 
   return (
     <ActiveOrgProvider
+      storage={localStorageAdapter}
       organizations={(user?.organizations ?? []).map((org) => ({
         id: org.id,
         name: org.name,
