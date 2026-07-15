@@ -1,7 +1,6 @@
 import datetime
 
 from django.test import TestCase
-from django.utils import timezone
 from model_bakery import baker
 
 # isort: split
@@ -22,9 +21,9 @@ class ReservationStatusChangeCountsTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = Shelter.objects.create(name="Test Shelter")
         self.other_shelter = Shelter.objects.create(name="Other Shelter")
-        # A range comfortably inside the one-year look-back window.
-        self.start = timezone.make_aware(datetime.datetime(2026, 1, 1))
-        self.end = timezone.make_aware(datetime.datetime(2026, 2, 1))
+        # An inclusive calendar-date range: Jan 1 through Feb 1, 2026.
+        self.start = datetime.date(2026, 1, 1)
+        self.end = datetime.date(2026, 2, 1)
 
     # -- helpers -------------------------------------------------------------
 
@@ -52,7 +51,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         ).update(pgh_created_at=dt)
 
     def _in_range(self) -> datetime.datetime:
-        return timezone.make_aware(datetime.datetime(2026, 1, 15, 12, 0))
+        return datetime.datetime(2026, 1, 15, 12, 0, tzinfo=datetime.timezone.utc)
 
     # -- tests ---------------------------------------------------------------
 
@@ -99,12 +98,12 @@ class ReservationStatusChangeCountsTestCase(TestCase):
 
         self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
 
-    def test_events_before_end_datetime_are_included(self) -> None:
-        """An event before the exclusive end datetime is counted."""
+    def test_events_within_end_date_are_included(self) -> None:
+        """An event late on the inclusive end date is counted."""
         reservation = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(
             reservation,
-            timezone.make_aware(datetime.datetime(2026, 1, 31, 23, 0)),
+            datetime.datetime(2026, 2, 1, 23, 0, tzinfo=datetime.timezone.utc),
         )
 
         result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
@@ -112,16 +111,16 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
 
     def test_events_outside_range_excluded(self) -> None:
-        """Events before start or at the exclusive end datetime are not counted."""
+        """Events before start or after the inclusive end date are not counted."""
         before = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         after = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         self._set_event_dates(
             before,
-            timezone.make_aware(datetime.datetime(2025, 12, 31, 12, 0)),
+            datetime.datetime(2025, 12, 31, 12, 0, tzinfo=datetime.timezone.utc),
         )
         self._set_event_dates(
             after,
-            timezone.make_aware(datetime.datetime(2026, 2, 1, 0, 0)),
+            datetime.datetime(2026, 2, 2, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
         result = reservation_status_change_counts(self.shelter.pk, self.start, self.end)
@@ -139,7 +138,7 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         self.assertEqual(result["STATUS_TO_CHECKED_IN"], 0)
 
     def test_returns_zero_when_end_date_before_start_date(self) -> None:
-        """An end_datetime before start_datetime returns zero in every bucket."""
+        """An end_date before start_date returns zero in every bucket."""
         result = reservation_status_change_counts(self.shelter.pk, self.end, self.start)
 
         self.assertEqual(
@@ -167,39 +166,39 @@ class ReservationStatusChangeCountsTestCase(TestCase):
         )
 
     def test_counts_across_date_range(self) -> None:
-        """Counts are aggregated across the whole datetime range."""
+        """Counts are aggregated across the whole date range."""
         checked_in = self._make_reservation([ReservationStatusChoices.CHECKED_IN])
         cancelled = self._make_reservation([ReservationStatusChoices.CANCELLED])
         self._set_event_dates(
             checked_in,
-            timezone.make_aware(datetime.datetime(2026, 1, 1, 12, 0)),
+            datetime.datetime(2026, 1, 1, 12, 0, tzinfo=datetime.timezone.utc),
         )
         self._set_event_dates(
             cancelled,
-            timezone.make_aware(datetime.datetime(2026, 1, 2, 12, 0)),
+            datetime.datetime(2026, 1, 2, 12, 0, tzinfo=datetime.timezone.utc),
         )
 
         result = reservation_status_change_counts(
             self.shelter.pk,
-            timezone.make_aware(datetime.datetime(2026, 1, 1)),
-            timezone.make_aware(datetime.datetime(2026, 1, 3)),
+            datetime.date(2026, 1, 1),
+            datetime.date(2026, 1, 3),
         )
 
         self.assertEqual(result["STATUS_TO_CHECKED_IN"], 1)
         self.assertEqual(result["STATUS_TO_CANCELLED"], 1)
 
-    def test_counts_support_one_day_datetime_range(self) -> None:
-        """A one-day datetime range includes events on that date."""
+    def test_counts_support_one_day_range(self) -> None:
+        """A single-day range (start == end) includes events on that date."""
         reservation = self._make_reservation([ReservationStatusChoices.CHECK_IN_OVERDUE])
         self._set_event_dates(
             reservation,
-            timezone.make_aware(datetime.datetime(2026, 1, 15, 23, 0)),
+            datetime.datetime(2026, 1, 15, 23, 0, tzinfo=datetime.timezone.utc),
         )
 
         result = reservation_status_change_counts(
             self.shelter.pk,
-            timezone.make_aware(datetime.datetime(2026, 1, 15)),
-            timezone.make_aware(datetime.datetime(2026, 1, 16)),
+            datetime.date(2026, 1, 15),
+            datetime.date(2026, 1, 15),
         )
         self.assertEqual(result["STATUS_TO_CHECK_IN_OVERDUE"], 1)
 

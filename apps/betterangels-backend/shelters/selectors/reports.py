@@ -96,23 +96,29 @@ def report_bed_status_counts(
 
 def reservation_status_change_counts(
     shelter_id: int,
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
+    start_date: datetime.date,
+    end_date: datetime.date,
 ) -> dict[str, int]:
     """
     Count how many reservations changed to given statuses for a shelter in a date range.
 
+    ``start_date`` and ``end_date`` are calendar dates read as an inclusive
+    window: the whole of ``start_date`` through the whole of ``end_date`` in UTC.
+
     Each reservation is counted once per status.
     """
     from shelters.models import Reservation
+
+    start_of_range = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=datetime.timezone.utc)
+    end_of_range = datetime.datetime.combine(end_date, datetime.time.max, tzinfo=datetime.timezone.utc)
 
     events = pghistory.models.Events.objects.filter(
         pgh_obj_id__in=Reservation.objects.filter(Q(bed__shelter_id=shelter_id) | Q(room__shelter_id=shelter_id))
         .annotate(pk_text=Cast("pk", TextField()))
         .values("pk_text"),
         pgh_label="reservation.status_change",
-        pgh_created_at__gte=start_date,
-        pgh_created_at__lt=end_date,
+        pgh_created_at__gte=start_of_range,
+        pgh_created_at__lte=end_of_range,
     )
 
     return events.aggregate(
