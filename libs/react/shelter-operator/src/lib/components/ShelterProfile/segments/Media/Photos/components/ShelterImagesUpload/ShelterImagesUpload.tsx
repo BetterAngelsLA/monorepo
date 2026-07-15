@@ -57,6 +57,7 @@ export function ShelterImagesUpload(props: TProps) {
       onSuccess?.();
     } catch (err) {
       console.error(`[ShelterImagesUpload error]: ${err}.`);
+
       onError?.(err instanceof Error ? err : new Error('Upload failed'));
     } finally {
       setIsSubmitting(false);

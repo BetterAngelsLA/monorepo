@@ -1,9 +1,12 @@
-import { useMutation, useQuery } from '@apollo/client/react';
-import { isMutationSuccess } from '@monorepo/react/shared';
+import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type BedType } from '../../apollo/graphql/__generated__/types';
+import { useBeds, useCloneBed, useDeleteBeds, useUpdateBed } from '../../hooks';
+import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
+import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
+import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
@@ -11,47 +14,34 @@ import {
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { BedTable, type BedRoomForList, type BedRowObject } from '../BedTable';
-import {
-  CloneBedDocument,
-  DeleteBedsDocument,
-  UpdateBedDocument,
-  UpdateBedMutation,
-  UpdateBedMutationVariables,
-  type CloneBedMutation,
-  type CloneBedMutationVariables,
-  type DeleteBedsMutation,
-  type DeleteBedsMutationVariables,
-} from './api/__generated__/bedMutations.generated';
-import {
-  GetBedsDocument,
-  type GetBedsQuery,
-  type GetBedsQueryVariables,
-} from './api/__generated__/bedQueries.generated';
-
-const UNASSIGNED_ROOM_ID = 'unassigned-room';
-const UNASSIGNED_ROOM_LABEL = 'Unassigned';
+import { useToast } from '../base-ui/toast';
+import { BedTable, type Bed, type BedRowObject } from '../BedTable';
 
 export function BedsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  const { data, loading, refetch } = useQuery<
-    GetBedsQuery,
-    GetBedsQueryVariables
-  >(GetBedsDocument, {
-    variables: { shelterId },
-    skip: !shelterId,
-  });
+  const { beds: bedsData, loading } = useBeds(shelterId);
 
-  const [cloneBed] = useMutation<CloneBedMutation, CloneBedMutationVariables>(
-    CloneBedDocument
-  );
+  const beds = useMemo<Bed[]>(() => {
+    const grouped = new Map<string, Bed[]>();
 
-  const [deleteBeds] = useMutation<
-    DeleteBedsMutation,
-    DeleteBedsMutationVariables
-  >(DeleteBedsDocument);
+    for (const bed of bedsData) {
+      const roomId = bed.room?.id ?? 'unassigned';
+      const roomGroup = grouped.get(roomId) ?? [];
+      roomGroup.push(bed);
+      grouped.set(roomId, roomGroup);
+    }
+
+    return Array.from(grouped.values()).flat();
+  }, [bedsData]);
+
+  const { cloneBed } = useCloneBed({ shelterId });
+
+  const { deleteBeds } = useDeleteBeds({ shelterId });
+
+  const { updateBed } = useUpdateBed();
+
+  const { showToast } = useToast();
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
@@ -67,149 +57,105 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       ? 'Are you sure you want to delete the selected bed?'
       : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
 
-  const rooms = useMemo<BedRoomForList[]>(() => {
-    const grouped = new Map<string, BedRoomForList>();
+  const handleClone = useCallback(
+    async (rowObject: BedRowObject) => {
+      const errorMessage = 'Unable to clone bed. Please try again.';
 
-    for (const bed of data?.beds.results ?? []) {
-      const roomId = bed.room?.id ?? UNASSIGNED_ROOM_ID;
-      const roomLabel = bed.room?.name ?? UNASSIGNED_ROOM_LABEL;
-      const roomGroup = grouped.get(roomId) ?? {
-        id: roomId,
-        roomLabel,
-        beds: [],
-      };
+      try {
+        const response = await cloneBed({ variables: { id: rowObject.id } });
 
-      roomGroup.beds.push({
-        __typename: 'BedType',
-        id: bed.id,
-        accessibility: [],
-        b7: false,
-        demographics: [],
-        funders: [],
-        maintenanceFlag: bed.maintenanceFlag,
-        medicalNeeds: [],
-        name: bed.name,
-        pets: [],
-        shelter: {} as never,
-        status: bed.status,
-        storage: false,
-        type: bed.type ?? null,
-      } as unknown as BedType);
-
-      grouped.set(roomId, roomGroup);
-    }
-
-    return Array.from(grouped.values());
-  }, [data?.beds.results]);
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...cloneBedMeta,
+          fields: ['id'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error cloning bed: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
+      }
+    },
+    [cloneBed, showToast]
+  );
 
   const handleEdit = useCallback(
     (rowObject: BedRowObject) => {
-      navigate(shelterEditBedRoute(shelterId, rowObject.bedId));
+      navigate(shelterEditBedRoute(shelterId, rowObject.id));
     },
     [navigate, shelterId]
   );
 
-  const handleClone = useCallback(
-    async (rowObject: BedRowObject) => {
-      setActionError(null);
-      try {
-        const { data: result } = await cloneBed({
-          variables: { id: rowObject.bedId },
-          errorPolicy: 'all',
-        });
-
-        if (result?.cloneBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.cloneBed.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to clone bed. Please try again.'
-          );
-          return;
-        }
-        if (!isMutationSuccess(result?.cloneBed, 'BedType')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
-        await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
-      }
-    },
-    [cloneBed, refetch]
-  );
-
-  const handleDeleteBedsRequest = useCallback((bedIds: string[]) => {
+  const handleDeleteRequest = useCallback((bedIds: string[]) => {
     setDeleteConfirmation({ isOpen: true, bedIds });
   }, []);
 
-  const handleDeleteBeds = useCallback(
-    async (bedIds: string[]) => {
-      setActionError(null);
+  const handleDelete = useCallback(
+    async (ids: string[]) => {
+      const plural = ids.length > 1 ? 's' : '';
+      const errorMessage = `Unable to delete bed${plural}. Please try again.`;
+
       try {
-        const { data: result } = await deleteBeds({
-          variables: { data: { ids: bedIds } },
-          errorPolicy: 'all',
+        const response = await deleteBeds({ variables: { data: { ids } } });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...deleteBedsMeta,
+          fields: ['ids'],
         });
-
-        if (result?.deleteBeds?.__typename === 'OperationInfo') {
-          const firstMessage = result.deleteBeds.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to delete bed(s). Please try again.'
-          );
-          return;
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
         }
-        if (!isMutationSuccess(result?.deleteBeds, 'BulkDeleteResult')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
-        await refetch();
-      } catch {
-        setActionError('Unable to delete bed(s). Please try again.');
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error deleting bed${plural}: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
       }
     },
-    [deleteBeds, refetch]
+    [deleteBeds, showToast]
   );
-  const refetchQueries = useMemo(
-    () => [{ query: GetBedsDocument, variables: { shelterId } }],
-    [shelterId]
-  );
-  const [updateBed] = useMutation<
-    UpdateBedMutation,
-    UpdateBedMutationVariables
-  >(UpdateBedDocument, { refetchQueries });
+
   const handleMarkReady = useCallback(
     async (rowObject: BedRowObject) => {
-      setActionError(null);
+      const errorMessage = 'Unable to update bed. Please try again.';
+
       try {
-        const { data: result } = await updateBed({
+        const response = await updateBed({
           variables: {
-            id: rowObject.bedId,
-            data: {
-              lastCleaned: new Date().toISOString(),
-            },
+            id: rowObject.id,
+            data: { lastCleaned: new Date().toISOString() },
           },
-          errorPolicy: 'all',
         });
 
-        if (result?.updateBed?.__typename === 'OperationInfo') {
-          const firstMessage = result.updateBed.messages?.[0]?.message;
-          setActionError(
-            firstMessage || 'Unable to update bed. Please try again.'
-          );
-          return;
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateBedMeta,
+          fields: ['lastCleaned'],
+        });
+        if (fieldErrors.length) {
+          throw new Error(errorMessage);
         }
-        if (!isMutationSuccess(result?.updateBed, 'BedType')) {
-          setActionError('An unexpected error occurred. Please try again.');
-          return;
-        }
-
-        await refetch();
-      } catch {
-        setActionError('A network error occurred. Please try again.');
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error updating bed: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: errorMessage,
+          persistent: true,
+        });
       }
     },
-    [updateBed, refetch]
+    [updateBed, showToast]
   );
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
@@ -228,33 +174,24 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   const handleReserve = useCallback(
     (rowObject: BedRowObject) => {
       const state: Record<string, string | null> = {
-        bedId: rowObject.bedId,
-        roomId:
-          rowObject.roomId !== UNASSIGNED_ROOM_ID ? rowObject.roomId : null,
+        bedId: rowObject.id,
+        roomId: rowObject.bed.room?.id ?? null,
       };
       navigate(shelterCreateReservationRoute(shelterId), { state });
     },
     [navigate, shelterId]
   );
+  const readyRowObject = readyConfirmation.rowObject;
 
   return (
     <>
-      {actionError && (
-        <div
-          className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-        >
-          {actionError}
-        </div>
-      )}
-
       <div>
         <BedTable
-          rooms={rooms}
+          beds={beds}
           loading={loading}
           onEdit={handleEdit}
           onClone={handleClone}
-          onDeleteBeds={handleDeleteBedsRequest}
+          onDeleteBeds={handleDeleteRequest}
           onMarkReady={handleMarkReadyRequest}
           onReserve={handleReserve}
         />
@@ -268,10 +205,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         description="This action cannot be undone."
         primaryAction={{
           label: 'Delete',
-          onClick: () => {
-            if (deleteConfirmation.bedIds.length > 0) {
-              handleDeleteBeds(deleteConfirmation.bedIds);
-            }
+          onClick: async () => {
+            await handleDelete(deleteConfirmation.bedIds);
             closeDeleteConfirmation();
           },
         }}
@@ -281,26 +216,26 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         }}
       />
 
-      <ConfirmationModal
-        isOpen={readyConfirmation.isOpen}
-        onClose={closeReadyConfirmation}
-        variant="success"
-        title="Mark bed as ready?"
-        description="This will mark the bed as cleaned and ready for use."
-        primaryAction={{
-          label: 'Mark Ready',
-          onClick: () => {
-            if (readyConfirmation.rowObject) {
-              handleMarkReady(readyConfirmation.rowObject);
-            }
-            closeReadyConfirmation();
-          },
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeReadyConfirmation,
-        }}
-      />
+      {readyRowObject && (
+        <ConfirmationModal
+          isOpen={readyConfirmation.isOpen}
+          onClose={closeReadyConfirmation}
+          variant="success"
+          title="Mark bed as ready?"
+          description="This will mark the bed as cleaned and ready for use."
+          primaryAction={{
+            label: 'Mark Ready',
+            onClick: async () => {
+              await handleMarkReady(readyRowObject);
+              closeReadyConfirmation();
+            },
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeReadyConfirmation,
+          }}
+        />
+      )}
 
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button

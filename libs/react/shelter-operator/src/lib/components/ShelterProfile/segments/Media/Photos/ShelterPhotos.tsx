@@ -5,8 +5,8 @@ import { Table, type TableColumn } from '../../../../base-ui/table';
 import { useToast } from '../../../../base-ui/toast';
 import { Form } from '../../../../form/Form';
 import { ShelterProfilePhotoType } from '../../../types';
-import { DeleteShelterImageBtn } from './components/DeleteShelterImageBtn';
-import { EditShelterPhotoBtn } from './components/EditShelterPhotoBtn/EditShelterPhotoBtn';
+import { DeleteShelterImage } from './components/DeleteShelterImage';
+import { EditShelterPhoto } from './components/EditShelterPhoto';
 import { ShelterImagesUpload } from './components/ShelterImagesUpload';
 import { ThumbImg } from './components/ThumbImg';
 import { ToggleHeroShelterImageBtn } from './components/ToggleHeroShelterImageBtn';
@@ -63,12 +63,12 @@ function buildColumns(
             shelterId={shelterId}
             heroImageId={heroImageId}
           />
-          <EditShelterPhotoBtn
+          <EditShelterPhoto
             photoId={photo.id}
             photoType={photo.type}
             shelterId={shelterId}
           />
-          <DeleteShelterImageBtn photoId={photo.id} shelterId={shelterId} />
+          <DeleteShelterImage photoId={photo.id} shelterId={shelterId} />
         </div>
       ),
     },

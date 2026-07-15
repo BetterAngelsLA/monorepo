@@ -1,46 +1,42 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
 import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
-import { BedTable, type BedRoomForList } from './BedTable';
+import { BedTable, type Bed, type BedRowObject } from './BedTable';
 
 const bed = (
   id: string,
   name: string,
   status: BedStatusChoices,
+  roomId: string,
+  roomName: string,
   maintenanceFlag = false
-) => ({
+): Bed => ({
   id,
-  accessibility: [],
-  b7: false,
-  demographics: [],
-  funders: [],
   maintenanceFlag,
-  medicalNeeds: [],
   name,
-  pets: [],
-  shelter: {} as never,
   status,
-  storage: false,
+  room: {
+    id: roomId,
+    name: roomName,
+  },
 });
 
-const mockRooms: BedRoomForList[] = [
-  {
-    id: 'room-1',
-    roomLabel: 'Room 1',
-    beds: [
-      bed('bed-1', 'North bunk', BedStatusChoices.Available),
-      bed('bed-2', 'South bunk', BedStatusChoices.Occupied),
-    ],
-  },
-  {
-    id: 'room-2',
-    roomLabel: 'Room 2',
-    beds: [
-      bed('bed-3', 'Rollaway 1', BedStatusChoices.Reserved),
-      bed('bed-4', 'Twin 2', BedStatusChoices.OutOfService, true),
-    ],
-  },
+const mockBeds: Bed[] = [
+  bed('bed-1', 'North bunk', BedStatusChoices.Available, 'room-1', 'Room 1'),
+  bed('bed-2', 'South bunk', BedStatusChoices.Occupied, 'room-1', 'Room 1'),
+  bed('bed-3', 'Rollaway 1', BedStatusChoices.Reserved, 'room-2', 'Room 2'),
+  bed(
+    'bed-4',
+    'Twin 2',
+    BedStatusChoices.OutOfService,
+    'room-2',
+    'Room 2',
+    true
+  ),
 ];
+
+const noopClone = (_rowObject: BedRowObject) => undefined;
+const noopEdit = (_rowObject: BedRowObject) => undefined;
+const noopDelete = (_bedIds: string[]) => undefined;
 
 const meta: Meta<typeof BedTable> = {
   component: BedTable,
@@ -60,27 +56,40 @@ type Story = StoryObj<typeof BedTable>;
 
 export const Default: Story = {
   render: function BedTableStory() {
-    const [selected, setSelected] = useState<string[]>([]);
     return (
       <BedTable
-        rooms={mockRooms}
-        selectedBedIds={selected}
-        onSelectedBedIdsChange={setSelected}
-        onClone={() => undefined}
-        onEdit={() => undefined}
-        onDeleteBeds={() => undefined}
+        beds={mockBeds}
+        onClone={noopClone}
+        onEdit={noopEdit}
+        onDeleteBeds={noopDelete}
       />
     );
   },
 };
 
+export const WithAllActions: Story = {
+  render: () => (
+    <BedTable
+      beds={mockBeds.map((b) => ({
+        ...b,
+        status: b.id === 'bed-4' ? BedStatusChoices.InTurnaround : b.status,
+      }))}
+      onClone={noopClone}
+      onEdit={noopEdit}
+      onDeleteBeds={noopDelete}
+      onMarkReady={(_rowObject: BedRowObject) => undefined}
+      onReserve={(_rowObject: BedRowObject) => undefined}
+    />
+  ),
+};
+
 export const WithoutRowSelection: Story = {
   render: () => (
     <BedTable
-      rooms={mockRooms}
-      onClone={() => undefined}
-      onEdit={() => undefined}
-      onDeleteBeds={() => undefined}
+      beds={mockBeds}
+      onClone={noopClone}
+      onEdit={noopEdit}
+      onDeleteBeds={noopDelete}
     />
   ),
 };

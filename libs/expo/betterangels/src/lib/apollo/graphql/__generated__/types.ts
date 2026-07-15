@@ -870,6 +870,8 @@ export type DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | Ope
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
+export type DeleteClientProfilePhotoPayload = ClientProfileType | OperationInfo;
+
 export type DeleteCurrentUserPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteDjangoObjectInput = {
@@ -1044,6 +1046,13 @@ export type GenerateClientProfilePhotoUploadInput = {
 };
 
 export type GenerateClientProfilePhotoUploadPayload = AuthorizedPresignedS3UploadType | OperationInfo;
+
+export type GenerateNoteAttachmentUploadsInput = {
+  noteId: Scalars['ID']['input'];
+  uploads: Array<NoteAttachmentUploadItemInput>;
+};
+
+export type GenerateNoteFileUploadsPayload = AuthorizedPresignedS3UploadsType | OperationInfo;
 
 export type GenerateShelterPhotoUploadsInput = {
   shelterId: Scalars['ID']['input'];
@@ -1558,6 +1567,7 @@ export type Mutation = {
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
   deleteClientProfile: DeleteClientProfilePayload;
+  deleteClientProfilePhoto: DeleteClientProfilePhotoPayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
@@ -1572,6 +1582,7 @@ export type Mutation = {
   deleteTeam: DeleteTeamPayload;
   generateClientDocumentUploads: GenerateClientDocumentUploadsPayload;
   generateClientProfilePhotoUpload: GenerateClientProfilePhotoUploadPayload;
+  generateNoteFileUploads: GenerateNoteFileUploadsPayload;
   generateShelterPhotoUploads: GenerateShelterPhotoUploadsPayload;
   hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
@@ -1582,6 +1593,7 @@ export type Mutation = {
   removeOrganizationMember: RemoveOrganizationMemberPayload;
   resolveClientDocumentUploads: ResolveClientDocumentUploadsPayload;
   resolveClientProfilePhotoUpload: ResolveClientProfilePhotoUploadPayload;
+  resolveNoteFileUploads: ResolveNoteFileUploadsPayload;
   resolveShelterPhotoUploads: ResolveShelterPhotoUploadsPayload;
   revertNote: RevertNotePayload;
   updateBed: UpdateBedPayload;
@@ -1589,6 +1601,7 @@ export type Mutation = {
   updateClientDocument: UpdateClientDocumentPayload;
   updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
+  /** @deprecated Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal. */
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
@@ -1765,6 +1778,11 @@ export type MutationDeleteClientProfileArgs = {
 };
 
 
+export type MutationDeleteClientProfilePhotoArgs = {
+  clientProfileId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteHmisNoteArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1830,6 +1848,11 @@ export type MutationGenerateClientProfilePhotoUploadArgs = {
 };
 
 
+export type MutationGenerateNoteFileUploadsArgs = {
+  data: GenerateNoteAttachmentUploadsInput;
+};
+
+
 export type MutationGenerateShelterPhotoUploadsArgs = {
   data: GenerateShelterPhotoUploadsInput;
 };
@@ -1873,6 +1896,11 @@ export type MutationResolveClientDocumentUploadsArgs = {
 
 export type MutationResolveClientProfilePhotoUploadArgs = {
   data: ResolveClientProfilePhotoUploadInput;
+};
+
+
+export type MutationResolveNoteFileUploadsArgs = {
+  data: ResolveNoteAttachmentUploadsInput;
 };
 
 
@@ -2002,6 +2030,35 @@ export type NameCountType = {
   __typename?: 'NameCountType';
   count: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+};
+
+export type NoteAttachmentFromUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  presignedKey: Scalars['String']['input'];
+  uploadToken: Scalars['String']['input'];
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NoteAttachmentUploadItemInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  refId: Scalars['String']['input'];
+};
+
+export type NoteAttachmentUploadsType = {
+  __typename?: 'NoteAttachmentUploadsType';
+  attachments: Array<NoteAttachmentType>;
 };
 
 export type NoteDataImportType = {
@@ -2947,6 +3004,13 @@ export type ResolveClientProfilePhotoUploadInput = {
 };
 
 export type ResolveClientProfilePhotoUploadPayload = ClientProfileType | OperationInfo;
+
+export type ResolveNoteAttachmentUploadsInput = {
+  attachments: Array<NoteAttachmentFromUploadInput>;
+  noteId: Scalars['ID']['input'];
+};
+
+export type ResolveNoteFileUploadsPayload = NoteAttachmentUploadsType | OperationInfo;
 
 export type ResolveShelterPhotoUploadsInput = {
   photos: Array<ShelterPhotoFromUploadInput>;

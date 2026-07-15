@@ -1,29 +1,19 @@
-import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
-import {
-    GetBedsDocument,
-    type GetBedsQuery,
-    type GetBedsQueryVariables,
-} from '../../beds/api/__generated__/bedQueries.generated';
 import { Form } from '../../form/Form';
-import {
-    GetRoomsDocument,
-    type GetRoomsQuery,
-    type GetRoomsQueryVariables,
-} from '../../rooms/api/__generated__/roomQueries.generated';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
 import type { ReservationFormData } from './formTypes';
 import { ReservationFormSection } from './sections/ReservationFormSection';
 import {
-    buildCreateReservationInput,
-    buildUpdateReservationInput,
+  buildCreateReservationInput,
+  buildUpdateReservationInput,
 } from './utils/reservationFormInput';
 
 export type ReservationFormProps = {
@@ -113,41 +103,27 @@ export function ReservationForm({
     [setValue]
   );
 
-  const { data: bedsData } = useQuery<GetBedsQuery, GetBedsQueryVariables>(
-    GetBedsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { beds } = useBeds(shelterId);
 
-  const allBeds = useMemo(() => bedsData?.beds.results ?? [], [bedsData]);
-
-  const allBedOptions = useMemo(
+  const allBeds = useMemo(
     () =>
-      allBeds.map((bed) => ({
+      beds.map((bed) => ({
         value: bed.id,
         label: `${bed.name ?? ''}${bed.room ? ` (${bed.room.name})` : ''}`,
         roomId: bed.room?.id ?? null,
       })),
-    [allBeds]
+    [beds]
   );
 
-  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
-    GetRoomsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { rooms } = useRooms(shelterId);
 
-  const allRoomOptions = useMemo(
+  const roomOptions = useMemo(
     () =>
-      (roomsData?.rooms.results ?? []).map((room) => ({
+      (rooms ?? []).map((room) => ({
         value: room.id,
         label: room.name,
       })),
-    [roomsData?.rooms.results]
+    [rooms]
   );
 
   // ─── Dynamic read-only & filtering ──────────────────────────────────────
@@ -166,26 +142,26 @@ export function ReservationForm({
   // Free-form only: auto-populate room when a bed with a room is selected.
   useEffect(() => {
     if (!openedFromRes || !watchedBedId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId) {
       setValue('roomId', bed.roomId);
     }
-  }, [openedFromRes, watchedBedId, allBedOptions, setValue]);
+  }, [openedFromRes, watchedBedId, allBeds, setValue]);
 
   // When the room changes, clear bedId if the current bed doesn't belong to the new room.
   useEffect(() => {
     if (!watchedBedId || !watchedRoomId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId && bed.roomId !== watchedRoomId) {
       setValue('bedId', null);
     }
-  }, [watchedRoomId, watchedBedId, allBedOptions, setValue]);
+  }, [watchedRoomId, watchedBedId, allBeds, setValue]);
 
   // Filter bed options: only show available beds, and when a room is selected,
   // show only beds in that room. In edit mode, always include the currently
   // selected bed and the originally assigned bed so they remain visible.
   const bedOptions = useMemo(() => {
-    const availableBeds = allBeds.filter((bed) => {
+    const availableBeds = beds.filter((bed) => {
       if (bed.status === BedStatusChoices.Available) return true;
       if (
         isEditMode &&
@@ -203,7 +179,7 @@ export function ReservationForm({
       return availableOptions.filter((b) => b.roomId === watchedRoomId);
     }
     return availableOptions;
-  }, [allBeds, watchedRoomId, isEditMode, watchedBedId]);
+  }, [beds, watchedRoomId, isEditMode, watchedBedId]);
 
   // ─── Mutations ──────────────────────────────────────────────────────────
 
@@ -279,7 +255,7 @@ export function ReservationForm({
               value,
               label,
             }))}
-            roomOptions={allRoomOptions}
+            roomOptions={roomOptions}
             bedRoomError={bedRoomError}
             readOnlyFields={effectiveReadOnlyFields}
             selectedClients={selectedClients}

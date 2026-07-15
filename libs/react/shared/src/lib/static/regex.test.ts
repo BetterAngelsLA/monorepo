@@ -110,6 +110,48 @@ describe('Regex', () => {
     });
   });
 
+  describe('phoneNumberLoose', () => {
+    const cases: [string, boolean][] = [
+      // bare digits
+      ['3105551234', true],
+      ['2125551234', true],
+      // with formatting
+      ['310-555-1234', true],
+      ['(310) 555-1234', true],
+      ['310 555 1234', true],
+      ['310.555.1234', true],
+      // international prefix
+      ['+1 310 555 1234', true],
+      ['+13105551234', true],
+      // extensions
+      ['3105551234x123', true],
+      ['3105551234 x 123', true],
+      ['3105551234 x123', true],
+      ['3105551234 ext 123', true],
+      ['3105551234ext 123', true],
+      ['3105551234 ext. 123', true],
+      ['3105551234 extension 456', true],
+      ['310-555-1234 x123', true],
+      ['(310) 555-1234 ext 789', true],
+      // invalid — no main number
+      ['ext 123', false],
+      ['x123', false],
+      ['', false],
+      ['   ', false],
+      ['abc', false],
+      ['no digits here', false],
+      // invalid — bad ext
+      ['3105551234 y123', false],
+      ['3105551234 y 123', false],
+      ['3105551234y123', false],
+      ['3105551234 x', false],
+    ];
+
+    it.each(cases)('%p => %p', (input, expected) => {
+      expect(Regex.phoneNumberLoose.test(input)).toBe(expected);
+    });
+  });
+
   describe('californiaId', () => {
     const cases: [string, boolean][] = [
       ['A1234567', true],

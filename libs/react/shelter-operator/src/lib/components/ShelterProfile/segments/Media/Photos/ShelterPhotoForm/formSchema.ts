@@ -11,3 +11,5 @@ export const formSchema = z.object({
 });
 
 export type ShelterPhotoFormData = z.infer<typeof formSchema>;
+
+export const formFieldNames = Object.keys(formSchema.shape);
