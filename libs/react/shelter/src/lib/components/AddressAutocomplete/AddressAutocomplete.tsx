@@ -1,8 +1,10 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useDebounce } from '@monorepo/react/shared';
-import { placeViewportToEdges, TPlacePrediction } from '@monorepo/shared/places';
+import { useDebounce, usePlacesClient } from '@monorepo/react/shared';
+import {
+  placeViewportToEdges,
+  TPlacePrediction,
+} from '@monorepo/shared/places';
 import { useCallback, useEffect, useState } from 'react';
-import { usePlacesClient } from '../../places';
 import { Input } from '../Input';
 import { LA_COUNTY_CENTER } from '../Map';
 import { ISO3166Alpha2 } from './isoCodes';
@@ -52,8 +54,8 @@ export function AddressAutocomplete(props: TProps) {
         const regionCodes = Array.isArray(countryRestrictions)
           ? countryRestrictions
           : countryRestrictions
-          ? [countryRestrictions]
-          : ['us'];
+            ? [countryRestrictions]
+            : ['us'];
 
         const results = await places.autocomplete(input, {
           boundsCenter: LA_COUNTY_CENTER,
@@ -67,7 +69,7 @@ export function AddressAutocomplete(props: TProps) {
         setPredictions([]);
       }
     },
-    [countryRestrictions, places]
+    [countryRestrictions, places],
   );
 
   useEffect(() => {
@@ -112,7 +114,7 @@ export function AddressAutocomplete(props: TProps) {
         console.error('Error fetching place details:', error);
       }
     },
-    [onPlaceSelect, places]
+    [onPlaceSelect, places],
   );
 
   return (
