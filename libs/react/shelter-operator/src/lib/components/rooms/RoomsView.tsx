@@ -217,8 +217,8 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
           isOpen={readyConfirmation.isOpen}
           onClose={closeReadyConfirmation}
           variant="success"
-          title="Mark bed as ready?"
-          description="This will mark the bed as cleaned and ready for use."
+          title="Mark room as ready?"
+          description="This will mark the room as cleaned and ready for use."
           primaryAction={{
             label: 'Mark Ready',
             onClick: async () => {

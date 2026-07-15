@@ -60,7 +60,7 @@ export const ReservationFormSection = memo(function ReservationFormSection({
               disabled={readOnlyFields.includes('roomId')}
               value={
                 field.value
-                  ? roomOptions.find((o) => o.value === field.value) ?? null
+                  ? (roomOptions.find((o) => o.value === field.value) ?? null)
                   : null
               }
               onChange={(option) => {
@@ -79,11 +79,12 @@ export const ReservationFormSection = memo(function ReservationFormSection({
             <Dropdown
               label="Bed"
               placeholder="Select a bed"
+              noResultsText="This room has no assigned beds"
               options={bedOptions}
               disabled={readOnlyFields.includes('bedId')}
               value={
                 field.value
-                  ? bedOptions.find((o) => o.value === field.value) ?? null
+                  ? (bedOptions.find((o) => o.value === field.value) ?? null)
                   : null
               }
               onChange={(option) => {

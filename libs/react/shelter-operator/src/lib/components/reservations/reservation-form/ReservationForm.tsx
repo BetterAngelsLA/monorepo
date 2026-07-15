@@ -1,9 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import {
+  BedStatusChoices,
+  RoomStatusChoices,
+} from '@monorepo/ba-platform/types';
 import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
@@ -41,6 +44,7 @@ export function ReservationForm({
   onCancel,
 }: ReservationFormProps) {
   const initialBedIdRef = useRef(initialData?.bedId ?? null);
+  const initialRoomIdRef = useRef(initialData?.roomId ?? null);
 
   const defaults = createEmptyReservationFormData();
 
@@ -122,14 +126,23 @@ export function ReservationForm({
 
   const { rooms } = useRooms(shelterId);
 
-  const roomOptions = useMemo(
-    () =>
-      (rooms ?? []).map((room) => ({
-        value: room.id,
-        label: room.name,
-      })),
-    [rooms],
-  );
+  // Filter room options: only show available rooms. In edit mode, always
+  // include the currently selected room and the originally assigned room.
+  const roomOptions = useMemo(() => {
+    const availableRooms = (rooms ?? []).filter((room) => {
+      if (room.status === RoomStatusChoices.Available) return true;
+      if (
+        reservationId &&
+        (room.id === watchedRoomId || room.id === initialRoomIdRef.current)
+      )
+        return true;
+      return false;
+    });
+    return availableRooms.map((room) => ({
+      value: room.id,
+      label: room.name,
+    }));
+  }, [rooms, reservationId, watchedRoomId]);
 
   // ─── Dynamic read-only & filtering ──────────────────────────────────────
 
@@ -167,6 +180,12 @@ export function ReservationForm({
   // selected bed and the originally assigned bed so they remain visible.
   const bedOptions = useMemo(() => {
     const availableBeds = beds.filter((bed) => {
+      if (
+        bed.room &&
+        bed.room.status &&
+        bed.room?.status !== RoomStatusChoices.Available
+      )
+        return false;
       if (bed.status === BedStatusChoices.Available) return true;
       if (
         reservationId &&
