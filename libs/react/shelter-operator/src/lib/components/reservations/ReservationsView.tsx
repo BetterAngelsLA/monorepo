@@ -14,6 +14,40 @@ import { useToast } from '../base-ui/toast';
 import { ReservationTable } from '../ReservationTable';
 
 type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
+type ReservationAction = NonNullable<LoadingAction>;
+
+const ACTION_CONFIG: Record<
+  ReservationAction,
+  {
+    variant: 'success' | 'danger';
+    title: string;
+    primaryLabel: string;
+    loadingLabel: string;
+    status: ReservationStatusChoices;
+  }
+> = {
+  checkin: {
+    variant: 'success',
+    title: 'Are you sure you want to mark this reservation as checked in?',
+    primaryLabel: 'Check In',
+    loadingLabel: 'Checking In…',
+    status: ReservationStatusChoices.CheckedIn,
+  },
+  complete: {
+    variant: 'success',
+    title: 'Are you sure you want to mark this reservation as completed?',
+    primaryLabel: 'Complete',
+    loadingLabel: 'Completing…',
+    status: ReservationStatusChoices.Completed,
+  },
+  cancel: {
+    variant: 'danger',
+    title: 'Are you sure you want to cancel this reservation?',
+    primaryLabel: 'Cancel Reservation',
+    loadingLabel: 'Cancelling…',
+    status: ReservationStatusChoices.Cancelled,
+  },
+};
 
 export function ReservationsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
@@ -25,17 +59,16 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
-  const isCheckingIn = loadingAction === 'checkin';
-  const isCompleting = loadingAction === 'complete';
-  const isCancelling = loadingAction === 'cancel';
 
-  const [checkinConfirmation, setCheckinConfirmation] = useState<{
+  const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
     reservationId: string | null;
-  }>({ isOpen: false, reservationId: null });
+    action: ReservationAction | null;
+  }>({ isOpen: false, reservationId: null, action: null });
+  const confirmationAction = confirmation.action;
 
-  const closeCheckinConfirmation = useCallback(() => {
-    setCheckinConfirmation({ isOpen: false, reservationId: null });
+  const closeConfirmation = useCallback(() => {
+    setConfirmation({ isOpen: false, reservationId: null, action: null });
   }, []);
   const { showToast } = useToast();
 
@@ -74,26 +107,8 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
       }
       onClose();
     },
-    [updateReservation],
+    [updateReservation, showToast],
   );
-
-  const [completeConfirmation, setCompleteConfirmation] = useState<{
-    isOpen: boolean;
-    reservationId: string | null;
-  }>({ isOpen: false, reservationId: null });
-
-  const closeCompleteConfirmation = useCallback(() => {
-    setCompleteConfirmation({ isOpen: false, reservationId: null });
-  }, []);
-
-  const [cancelConfirmation, setCancelConfirmation] = useState<{
-    isOpen: boolean;
-    reservationId: string | null;
-  }>({ isOpen: false, reservationId: null });
-
-  const closeCancelConfirmation = useCallback(() => {
-    setCancelConfirmation({ isOpen: false, reservationId: null });
-  }, []);
 
   return (
     <div>
@@ -117,96 +132,63 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
           reservations={reservations}
           shelterId={shelterId}
           loading={loading}
-          isConfirmActionLoading={isCheckingIn || isCompleting}
-          isCancelActionLoading={isCancelling}
+          isConfirmActionLoading={
+            loadingAction === 'checkin' || loadingAction === 'complete'
+          }
+          isCancelActionLoading={loadingAction === 'cancel'}
           onCheckIn={(id) =>
-            setCheckinConfirmation({ isOpen: true, reservationId: id })
+            setConfirmation({
+              isOpen: true,
+              reservationId: id,
+              action: 'checkin',
+            })
           }
           onComplete={(id) =>
-            setCompleteConfirmation({ isOpen: true, reservationId: id })
+            setConfirmation({
+              isOpen: true,
+              reservationId: id,
+              action: 'complete',
+            })
           }
           onCancel={(id) =>
-            setCancelConfirmation({ isOpen: true, reservationId: id })
+            setConfirmation({
+              isOpen: true,
+              reservationId: id,
+              action: 'cancel',
+            })
           }
         />
       </div>
-      <ConfirmationModal
-        isOpen={checkinConfirmation.isOpen}
-        onClose={closeCheckinConfirmation}
-        variant="success"
-        title="Are you sure you want to mark this reservation as checked in?"
-        description=""
-        primaryAction={{
-          label: isCheckingIn ? 'Checking In…' : 'Check In',
-          onClick: () => {
-            if (checkinConfirmation.reservationId) {
-              handleStatusUpdate(
-                checkinConfirmation.reservationId,
-                ReservationStatusChoices.CheckedIn,
-                'checkin',
-                closeCheckinConfirmation,
-              );
-            }
-          },
-          isLoading: isCheckingIn,
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeCheckinConfirmation,
-        }}
-      />
-
-      <ConfirmationModal
-        isOpen={completeConfirmation.isOpen}
-        onClose={closeCompleteConfirmation}
-        variant="success"
-        title="Are you sure you want to mark this reservation as completed?"
-        description=""
-        primaryAction={{
-          label: isCompleting ? 'Completing…' : 'Complete',
-          onClick: () => {
-            if (completeConfirmation.reservationId) {
-              handleStatusUpdate(
-                completeConfirmation.reservationId,
-                ReservationStatusChoices.Completed,
-                'complete',
-                closeCompleteConfirmation,
-              );
-            }
-          },
-          isLoading: isCompleting,
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeCompleteConfirmation,
-        }}
-      />
-
-      <ConfirmationModal
-        isOpen={cancelConfirmation.isOpen}
-        onClose={closeCancelConfirmation}
-        variant="danger"
-        title="Are you sure you want to cancel this reservation?"
-        description=""
-        primaryAction={{
-          label: isCancelling ? 'Cancelling…' : 'Cancel Reservation',
-          onClick: () => {
-            if (cancelConfirmation.reservationId) {
-              handleStatusUpdate(
-                cancelConfirmation.reservationId,
-                ReservationStatusChoices.Cancelled,
-                'cancel',
-                closeCancelConfirmation,
-              );
-            }
-          },
-          isLoading: isCancelling,
-        }}
-        secondaryAction={{
-          label: 'Cancel',
-          onClick: closeCancelConfirmation,
-        }}
-      />
+      {confirmationAction && (
+        <ConfirmationModal
+          isOpen={confirmation.isOpen}
+          onClose={closeConfirmation}
+          variant={ACTION_CONFIG[confirmationAction].variant}
+          title={ACTION_CONFIG[confirmationAction].title}
+          description=""
+          primaryAction={{
+            label:
+              loadingAction === confirmationAction
+                ? ACTION_CONFIG[confirmationAction].loadingLabel
+                : ACTION_CONFIG[confirmationAction].primaryLabel,
+            onClick: () => {
+              if (confirmation.reservationId) {
+                handleStatusUpdate(
+                  confirmation.reservationId,
+                  ACTION_CONFIG[confirmationAction].status,
+                  confirmationAction,
+                  closeConfirmation,
+                );
+              }
+            },
+            isLoading: loadingAction === confirmationAction,
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeConfirmation,
+          }}
+        />
+      )}
 
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button
