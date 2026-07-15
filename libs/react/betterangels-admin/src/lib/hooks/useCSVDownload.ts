@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
+import { useApiConfig } from '../providers';
 
-export default function useCSVDownload(
-  apiUrl: string,
-  authFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
-) {
+export default function useCSVDownload() {
+  const { apiUrl, fetch: authFetch } = useApiConfig();
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

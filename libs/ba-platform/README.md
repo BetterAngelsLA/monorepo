@@ -164,13 +164,13 @@ code.
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `createWebFetchClient()` | Fetch | Returns a ``fetch``-compatible function — pre-composed web fetch (org-id injection + CSRF token refresh via browser localStorage / cookies). Pass to ``ApiConfigProvider`` (as ``fetch``) and to ``new HttpLink({ fetch })``. |
+| `createWebFetchClient()` | Fetch | Returns a ``fetch``-compatible function — pre-composed web fetch (org-id injection + CSRF token refresh via browser localStorage / cookies). Pass to ``ApiConfigProvider`` (as ``buildFetch``) and to ``new HttpLink({ fetch })``. |
 
 ### Expo-only (`@monorepo/ba-platform/expo`)
 
 | Module | Layer | Purpose |
 |---|---|---|
-| `createExpoFetchClient(apiUrl, extraInterceptors?)` | Fetch | Returns a ``fetch``-compatible function — pre-composed Expo fetch (org-id + CSRF via CookieManager / AsyncStorage, body, credentials). App-specific interceptors passed via ``extraInterceptors``. Pass to ``EnvironmentSwitcherProvider`` (as ``fetch``) and to ``new HttpLink({ fetch })``. |
+| `createExpoFetchClient(apiUrl, extraInterceptors?)` | Fetch | Returns a ``fetch``-compatible function — pre-composed Expo fetch (org-id + CSRF via CookieManager / AsyncStorage, body, credentials). App-specific interceptors passed via ``extraInterceptors``. Pass to ``EnvironmentSwitcherProvider`` (as ``buildFetch``) and to ``new HttpLink({ fetch })``. |
 | `createNativeTokenReader(baseUrl)` | Fetch | React Native `TokenReader` — reads cookies via `CookieManager` for CSRF token detection. |
 
 ### Types only (`@monorepo/ba-platform/types`)
