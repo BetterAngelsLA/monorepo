@@ -4,7 +4,7 @@ import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { useAppState } from '../../hooks';
+import useAppState from '../../hooks/appState/useAppState';
 import {
   CurrentUserDocument,
   CurrentUserQuery,

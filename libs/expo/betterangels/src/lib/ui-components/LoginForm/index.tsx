@@ -9,8 +9,8 @@ import { useAllauthLogin } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEmailEnvironment } from '../../hooks';
-import { useUser } from '../../providers/user/UserProvider';
 import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
+import { useUser } from '../../providers/user/UserProvider';
 
 export default function LoginForm() {
   const {
@@ -24,7 +24,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
 
-  const { apiUrl, fetch: authFetch } = useApiConfig();
+  const { fetch } = useApiConfig();
   const { refetchUser } = useUser();
 
   const { isValidEmail, isPasswordLogin } = useEmailEnvironment(email);
@@ -40,8 +40,7 @@ export default function LoginForm() {
     handlePasswordLogin,
     resetStep,
   } = useAllauthLogin({
-    apiUrl,
-    fetch: authFetch,
+    fetch,
     onLoginSuccess: async () => {
       await persistOnSuccessfulSignIn(email);
       await refetchUser();

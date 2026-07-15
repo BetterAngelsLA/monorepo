@@ -12,7 +12,7 @@ export interface SignInProps {
 }
 
 export function SignIn({ onSuccessRedirect, description }: SignInProps) {
-  const { apiUrl, fetch: authFetch } = useApiConfig();
+  const { fetch } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
@@ -29,8 +29,7 @@ export function SignIn({ onSuccessRedirect, description }: SignInProps) {
     handlePasswordLogin,
     resetStep,
   } = useAllauthLogin({
-    apiUrl,
-    fetch: authFetch,
+    fetch,
     onLoginSuccess: async () => {
       await refetchUser();
       navigate(onSuccessRedirect);

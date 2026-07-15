@@ -28,7 +28,7 @@ import { baTypePolicies, isGqlDebug, reactQueryClient } from '../init';
  * environment changes.
  */
 export function BaDataProviders({ children }: { children: ReactNode }) {
-  const { apiUrl, fetch: authFetch } = useApiConfig();
+  const { apiUrl, rawFetch: authFetch } = useApiConfig();
 
   const link = useMemo(() => {
     const httpLink = new HttpLink({

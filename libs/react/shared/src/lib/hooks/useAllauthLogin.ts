@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 
 export type FetchFn = (
   input: RequestInfo | URL,
-  init?: RequestInit
+  init?: RequestInit,
 ) => Promise<Response>;
 
 export type LoginStep = 'initial' | 'otp';
 
 interface UseAllauthLoginOptions {
-  apiUrl: string;
+  /** URL-baked fetch — paths only, base URL is pre-appended. */
   fetch: FetchFn;
   onLoginSuccess: () => void | Promise<void>;
   onCodeSent?: () => void;
@@ -50,8 +50,7 @@ function stripDemoTag(email: string): string {
 }
 
 export function useAllauthLogin({
-  apiUrl,
-  fetch: authFetch,
+  fetch,
   onLoginSuccess,
   onCodeSent,
 }: UseAllauthLoginOptions): UseAllauthLoginReturn {
@@ -72,12 +71,12 @@ export function useAllauthLogin({
 
   const post = useCallback(
     (path: string, body: unknown) =>
-      authFetch(`${apiUrl}${path}`, {
+      fetch(path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       }),
-    [apiUrl, authFetch]
+    [fetch],
   );
 
   const handleSendCode = useCallback(
@@ -104,7 +103,7 @@ export function useAllauthLogin({
         setSendingCode(false);
       }
     },
-    [post, onCodeSent]
+    [post, onCodeSent],
   );
 
   const handleConfirmCode = useCallback(
@@ -124,7 +123,7 @@ export function useAllauthLogin({
         } catch (parseError) {
           console.error(
             'Confirm code: failed to parse response as JSON',
-            parseError
+            parseError,
           );
           setErrorMsg('Unexpected server response. Please try again.');
           return;
@@ -143,7 +142,7 @@ export function useAllauthLogin({
         setConfirmingCode(false);
       }
     },
-    [post, onLoginSuccess]
+    [post, onLoginSuccess],
   );
 
   const handlePasswordLogin = useCallback(
@@ -180,7 +179,7 @@ export function useAllauthLogin({
         setLoggingIn(false);
       }
     },
-    [post, onLoginSuccess]
+    [post, onLoginSuccess],
   );
 
   return {

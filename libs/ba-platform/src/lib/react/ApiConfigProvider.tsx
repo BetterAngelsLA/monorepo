@@ -11,6 +11,12 @@ export interface ApiConfigContextType {
    * Pass directly to Apollo ``HttpLink`` as its ``fetch`` option.
    * Rebuilt by ``EnvironmentSwitcherProvider`` when the environment changes.
    */
+  rawFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  /**
+   * URL-baked interceptor chain — pre-appends ``apiUrl`` to every
+   * request.  Use for REST calls (allauth login, CSV downloads, etc.)
+   * so consumers only pass paths, never the full URL.
+   */
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
@@ -55,10 +61,18 @@ export const ApiConfigProvider = ({
     [apiUrl, buildFetch]
   );
 
+  // ---- URL-baked variant — auto-prepends apiUrl for REST consumers ----
+  const fetchUrl = useMemo(
+    () =>
+      (input: RequestInfo | URL, init?: RequestInit) =>
+        fetchWithAuth(`${apiUrl}${input}`, init),
+    [apiUrl, fetchWithAuth]
+  );
+
   // ---- Context value ----
   const value = useMemo<ApiConfigContextType>(
-    () => ({ apiUrl, fetch: fetchWithAuth }),
-    [apiUrl, fetchWithAuth]
+    () => ({ apiUrl, rawFetch: fetchWithAuth, fetch: fetchUrl }),
+    [apiUrl, fetchWithAuth, fetchUrl]
   );
 
   return (

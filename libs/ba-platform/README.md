@@ -154,7 +154,7 @@ code.
 | `interceptors.ts` | TS | Re-exports from `@monorepo/fetch` + BA-specific constants for convenience |
 | `apollo/graphql/__generated__/` | Apollo | Generated TypeScript types from the BA GraphQL schema (codegen output) |
 | `apollo/user/` | Apollo | `CurrentOrgUser` query + generated `useCurrentOrgUserQuery` hook + `logout` mutation |
-| `react/ApiConfigProvider` | React | `ApiConfigProvider` + `useApiConfig` — provides base `apiUrl` and pre-wired `fetchClient` |
+| `react/ApiConfigProvider` | React | `ApiConfigProvider` + `useApiConfig` — provides base `apiUrl`, `rawFetch` (for Apollo `HttpLink`), and `fetch` (URL-baked, for REST calls) |
 | `react/ApolloClientProvider` | React | Thin `ApolloProvider` wrapper — accepts an `ApolloLink`, `TypePolicies`, and optional cache |
 | `react/EnvironmentSwitcherProvider` | React | `EnvironmentSwitcherProvider` + `useEnvironment` — wraps `ApiConfigProvider` with environment switching (persisted via storage). Only needed by apps that toggle API environments. |
 | `react/providers/activeOrg/` | React | `ActiveOrgContext`, `ActiveOrgProvider`, `useActiveOrg`, `useActiveOrgState` — shared org management. Factory exports (`createActiveOrgContext<T>()`, etc.) for custom org types. |
