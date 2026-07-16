@@ -58,7 +58,7 @@ console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 function findBuildId(platform: string, profile: string): string | undefined {
   try {
     const builds = runJson<Array<{ id: string; status: string }>>(
-      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --interactive false`
+      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --non-interactive`
     );
     if (builds.length > 0) {
       console.log(
@@ -81,7 +81,7 @@ if (!androidBuildId) {
     `\nTriggering android build (profile: ${androidProfile}, --wait false)...`
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --interactive false --wait false --json`
+    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`
   );
   androidBuildId = newBuilds[0]?.id;
   console.log(`Triggered android build: ${androidBuildId}`);
@@ -91,7 +91,7 @@ if (!iosBuildId) {
     `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --interactive false --wait false --json`
+    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`
   );
   iosBuildId = newBuilds[0]?.id;
   console.log(`Triggered ios build: ${iosBuildId}`);
@@ -112,7 +112,7 @@ console.log(`\nPublishing update on branch: ${branch}`);
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`
 );
 const groupId = updates[0]?.group;
 if (!groupId) {
