@@ -4,6 +4,8 @@ mutation CreateReservation($data: CreateReservationInput!) {
       id
       status
       startDate
+      checkedInAt
+      checkedOutAt
       notes
       bed {
         id
@@ -12,6 +14,17 @@ mutation CreateReservation($data: CreateReservationInput!) {
       room {
         id
         name
+      }
+      clients {
+        id
+        isPrimary
+        clientProfile {
+          id
+          firstName
+          middleName
+          lastName
+          nickname
+        }
       }
     }
     ... on OperationInfo {

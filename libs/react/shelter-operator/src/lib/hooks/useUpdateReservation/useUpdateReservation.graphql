@@ -4,6 +4,8 @@ mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
       id
       status
       startDate
+      checkedInAt
+      checkedOutAt
       notes
       bed {
         id
@@ -12,6 +14,17 @@ mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
       room {
         id
         name
+      }
+      clients {
+        id
+        isPrimary
+        clientProfile {
+          id
+          firstName
+          middleName
+          lastName
+          nickname
+        }
       }
     }
     ... on OperationInfo {

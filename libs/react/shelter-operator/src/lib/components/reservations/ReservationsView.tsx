@@ -43,7 +43,7 @@ const ACTION_CONFIG: Record<
   cancel: {
     variant: 'danger',
     title: 'Are you sure you want to cancel this reservation?',
-    primaryLabel: 'Cancel Reservation',
+    primaryLabel: 'Cancel Res',
     loadingLabel: 'Cancelling…',
     status: ReservationStatusChoices.Cancelled,
   },
@@ -166,7 +166,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
             isLoading: loadingAction === confirmationAction,
           }}
           secondaryAction={{
-            label: 'Cancel',
+            label: confirmationAction === 'cancel' ? 'Keep Res' : 'Cancel Res',
             onClick: closeConfirmation,
           }}
         />

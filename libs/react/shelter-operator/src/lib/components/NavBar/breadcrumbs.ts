@@ -347,8 +347,19 @@ export function useBreadcrumbNames(
   );
   const { room, loading: roomLoading } = useRoom(roomId ?? '');
 
+  const loadingByKind: Record<string, boolean> = useMemo(
+    () => ({
+      shelterId: shelterLoading,
+      bedId: bedLoading,
+      reservationId: reservationLoading,
+      roomId: roomLoading,
+    }),
+    [shelterLoading, bedLoading, reservationLoading, roomLoading]
+  );
+
   // True if any dynamic placeholder is still being fetched
-  const loading = shelterLoading || bedLoading || reservationLoading || roomLoading;
+  const loading =
+    shelterLoading || bedLoading || reservationLoading || roomLoading;
 
   // Build name lookup
   const nameMap = useMemo(() => {
@@ -366,7 +377,7 @@ export function useBreadcrumbNames(
     if (reservation?.id) {
       const clients = reservation.clients;
       const primary = clients.find((c) => c.isPrimary) ?? clients[0];
-      const primaryName = primary.clientProfile
+      const primaryName = primary?.clientProfile
         ? formatClientDisplayName(primary.clientProfile)
         : '';
       const truncatedName =
@@ -381,17 +392,21 @@ export function useBreadcrumbNames(
     return map;
   }, [operatorShelter, room, bed, reservation]);
 
-  // Resolve items — show "..." for placeholder IDs while still loading
+  // Resolve progressively: show resolved names immediately; "..." only while
+  // that specific placeholder's fetch is still in flight.
   const items = useMemo(() => {
     return rawItems.map((item) => {
-      const resolvedLabel = nameMap[item.label] ?? item.label;
-      const isPlaceholder = parseIdPlaceholder(item.label) !== null;
-      return {
-        ...item,
-        label: isPlaceholder && loading ? '...' : resolvedLabel,
-      };
+      const resolved = nameMap[item.label];
+      if (resolved) {
+        return { ...item, label: resolved };
+      }
+      const placeholder = parseIdPlaceholder(item.label);
+      if (placeholder && loadingByKind[placeholder.type]) {
+        return { ...item, label: '...' };
+      }
+      return item;
     });
-  }, [rawItems, nameMap, loading]);
+  }, [rawItems, nameMap, loadingByKind]);
 
   return { items, loading };
 }
