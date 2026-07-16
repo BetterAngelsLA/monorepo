@@ -161,19 +161,43 @@ export function ReservationTable({
         label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (reservation) => reservation.checkedInAt ?? '',
-        filterValue: (reservation) => reservation.checkedInAt ?? '',
-        render: (reservation) =>
-          reservation.status === ReservationStatusChoices.Completed ||
-          reservation.status === ReservationStatusChoices.CheckedIn ? (
-            <span>
-              {new Date(reservation.checkedInAt).toLocaleDateString()}
-            </span>
-          ) : (
+        sortValue: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          return showCheckedInAt
+            ? (reservation.checkedInAt ?? '')
+            : (reservation.startDate ?? '');
+        },
+        filterValue: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          return showCheckedInAt
+            ? (reservation.checkedInAt ?? '')
+            : (reservation.startDate ?? '');
+        },
+        render: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          if (showCheckedInAt) {
+            return reservation.checkedInAt ? (
+              <span>
+                {new Date(reservation.checkedInAt).toLocaleDateString()}
+              </span>
+            ) : (
+              <span className="text-gray-400">—</span>
+            );
+          }
+          return reservation.startDate ? (
             <span>
               {new Date(reservation.startDate).toLocaleDateString()} (sched.)
             </span>
-          ),
+          ) : (
+            <span className="text-gray-400">—</span>
+          );
+        },
       },
       {
         key: 'checkedOutAt',
