@@ -31,6 +31,8 @@ type TProps = {
   initialValue?: string;
   onPlaceSelect: (place: TPlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
+  /** When true, searches immediately on mount / when initialValue changes. Default false. */
+  searchOnMount?: boolean;
   leftIcon?: React.ReactElement;
   inputClassname?: string;
   placeholderClassname?: string;
@@ -42,6 +44,7 @@ export function AddressAutocomplete(props: TProps) {
     countryRestrictions = 'us',
     placeholder,
     initialValue = '',
+    searchOnMount = false,
     className,
     leftIcon,
     inputClassname,
@@ -52,7 +55,7 @@ export function AddressAutocomplete(props: TProps) {
   const [inputValue, setInputValue] = useState(initialValue);
   const [predictions, setPredictions] = useState<TPlacePrediction[]>([]);
   const debouncedInput = useDebounce(inputValue, DEBOUNCE_MS);
-  const justSelectedRef = useRef(false);
+  const fetchEnabledRef = useRef(false);
 
   const { activeIndex: activeOptionIndex, handleKeyDown } = useKeyboardListNav({
     items: predictions,
@@ -60,8 +63,9 @@ export function AddressAutocomplete(props: TProps) {
   });
 
   useEffect(() => {
+    fetchEnabledRef.current = searchOnMount;
     setInputValue(initialValue);
-  }, [initialValue]);
+  }, [initialValue, searchOnMount]);
 
   const fetchPredictions = useCallback(
     async (input: string) => {
@@ -94,9 +98,7 @@ export function AddressAutocomplete(props: TProps) {
   );
 
   useEffect(() => {
-    if (justSelectedRef.current) {
-      justSelectedRef.current = false;
-
+    if (!fetchEnabledRef.current) {
       return;
     }
 
@@ -104,6 +106,7 @@ export function AddressAutocomplete(props: TProps) {
   }, [debouncedInput, fetchPredictions]);
 
   const handleInputChange = (value: string) => {
+    fetchEnabledRef.current = true;
     setInputValue(value);
 
     if (!value.trim()) {
@@ -131,9 +134,9 @@ export function AddressAutocomplete(props: TProps) {
             : undefined,
         });
 
+        fetchEnabledRef.current = false;
         setInputValue(result.formattedAddress || '');
         setPredictions([]);
-        justSelectedRef.current = true;
       } catch (error) {
         console.error('Error fetching place details:', error);
       }
