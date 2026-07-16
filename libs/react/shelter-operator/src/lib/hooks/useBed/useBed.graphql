@@ -11,6 +11,8 @@ query Bed($id: ID!) {
     fees
     room {
       id
+      name
+      status
     }
     accessibility {
       name

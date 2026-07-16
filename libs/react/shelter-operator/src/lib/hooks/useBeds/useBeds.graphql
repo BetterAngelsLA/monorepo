@@ -10,6 +10,7 @@ query Beds($shelterId: ID!) {
       room {
         id
         name
+        status
       }
     }
   }
