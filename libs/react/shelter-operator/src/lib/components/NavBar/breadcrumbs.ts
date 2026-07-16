@@ -1,20 +1,13 @@
-import { useQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
-import { useBed, useRoom } from '../../hooks/';
-
 import {
-  GetReservationDocument,
-  type GetReservationQuery,
-  type GetReservationQueryVariables,
-} from '../../hooks/useReservation/__generated__/useReservation.generated';
+  useBed,
+  useReservation,
+  useRoom,
+  useShelterOperatorProfile,
+} from '../../hooks';
 import { manageSegments, paths, shelterProfileSegments } from '../../routing';
-import {
-  GetShelterOperatorOverviewDocument,
-  type GetShelterOperatorOverviewQuery,
-  type GetShelterOperatorOverviewQueryVariables,
-} from '../overview/__generated__/overview.generated';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -303,8 +296,10 @@ export function parseBreadcrumbs(pathname: string): BreadcrumbItem[] {
 // ─── Name resolution hook ────────────────────────────────────────────────────
 
 interface UseBreadcrumbNamesResult {
-  /** Breadcrumb items with resolved names (or raw ID as fallback while loading). */
+  /** Breadcrumb items with resolved names (or "..." while placeholder names are loading). */
   items: BreadcrumbItem[];
+  /** True while any dynamic ID placeholder names are still being fetched. */
+  loading: boolean;
 }
 
 /**
@@ -343,44 +338,46 @@ export function useBreadcrumbNames(
     return ids;
   }, [rawItems]);
 
-  // Conditionally fetch names
-  const { data: shelterData } = useQuery<
-    GetShelterOperatorOverviewQuery,
-    GetShelterOperatorOverviewQueryVariables
-  >(GetShelterOperatorOverviewDocument, {
-    variables: { shelterId: shelterId ?? '' },
-    skip: !shelterId,
-  });
+  // Conditionally fetch names (destructure loading flags for aggregation)
+  const { shelter: operatorShelter, loading: shelterLoading } =
+    useShelterOperatorProfile(shelterId ?? '');
+  const { bed, loading: bedLoading } = useBed(bedId ?? '');
+  const { reservation, loading: reservationLoading } = useReservation(
+    reservationId ?? ''
+  );
+  const { room, loading: roomLoading } = useRoom(roomId ?? '');
 
-  const { bed } = useBed(bedId ?? '');
-  const { room } = useRoom(roomId ?? '');
+  const loadingByKind: Record<string, boolean> = useMemo(
+    () => ({
+      shelterId: shelterLoading,
+      bedId: bedLoading,
+      reservationId: reservationLoading,
+      roomId: roomLoading,
+    }),
+    [shelterLoading, bedLoading, reservationLoading, roomLoading]
+  );
 
-  const { data: reservationData } = useQuery<
-    GetReservationQuery,
-    GetReservationQueryVariables
-  >(GetReservationDocument, {
-    variables: { pk: reservationId ?? '' },
-    skip: !reservationId,
-  });
+  // True if any dynamic placeholder is still being fetched
+  const loading =
+    shelterLoading || bedLoading || reservationLoading || roomLoading;
 
   // Build name lookup
   const nameMap = useMemo(() => {
     const map: Record<string, string> = {};
 
-    if (shelterData?.operatorShelter?.id && shelterData.operatorShelter.name) {
-      map[`__shelterId__:${shelterData.operatorShelter.id}`] =
-        shelterData.operatorShelter.name;
+    if (operatorShelter?.id && operatorShelter.name) {
+      map[`__shelterId__:${operatorShelter.id}`] = operatorShelter.name;
     }
-    if (room?.id && room.name) {
+    if (room?.id && room?.name) {
       map[`__roomId__:${room.id}`] = room.name;
     }
     if (bed?.id) {
       map[`__bedId__:${bed.id}`] = bed.name ?? bed.id;
     }
-    if (reservationData?.reservation?.id) {
-      const clients = reservationData.reservation.clients;
+    if (reservation?.id) {
+      const clients = reservation.clients;
       const primary = clients.find((c) => c.isPrimary) ?? clients[0];
-      const primaryName = primary.clientProfile
+      const primaryName = primary?.clientProfile
         ? formatClientDisplayName(primary.clientProfile)
         : '';
       const truncatedName =
@@ -388,20 +385,28 @@ export function useBreadcrumbNames(
           ? primaryName.slice(0, 15) + '...'
           : primaryName;
       const suffix = clients.length > 1 ? ` +${clients.length - 1}` : '';
-      map[`__reservationId__:${reservationData.reservation.id}`] =
+      map[`__reservationId__:${reservation.id}`] =
         `${truncatedName}${suffix}` || 'Reservation';
     }
 
     return map;
-  }, [shelterData, room, bed, reservationData]);
+  }, [operatorShelter, room, bed, reservation]);
 
-  // Resolve items
+  // Resolve progressively: show resolved names immediately; "..." only while
+  // that specific placeholder's fetch is still in flight.
   const items = useMemo(() => {
-    return rawItems.map((item) => ({
-      ...item,
-      label: nameMap[item.label] ?? item.label,
-    }));
-  }, [rawItems, nameMap]);
+    return rawItems.map((item) => {
+      const resolved = nameMap[item.label];
+      if (resolved) {
+        return { ...item, label: resolved };
+      }
+      const placeholder = parseIdPlaceholder(item.label);
+      if (placeholder && loadingByKind[placeholder.type]) {
+        return { ...item, label: '...' };
+      }
+      return item;
+    });
+  }, [rawItems, nameMap, loadingByKind]);
 
-  return { items };
+  return { items, loading };
 }

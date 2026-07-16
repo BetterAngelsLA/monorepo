@@ -1,4 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { BedStatusChoices } from '@monorepo/ba-platform/types';
@@ -6,6 +8,9 @@ import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
 import { Form } from '../../form/Form';
+
+import { createReservationMeta } from '../../../hooks/useCreateReservation/__generated__/useCreateReservation_meta.generated';
+import { updateReservationMeta } from '../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
@@ -35,7 +40,6 @@ export function ReservationForm({
   onSuccess,
   onCancel,
 }: ReservationFormProps) {
-  const isEditMode = Boolean(reservationId);
   const initialBedIdRef = useRef(initialData?.bedId ?? null);
 
   const defaults = createEmptyReservationFormData();
@@ -49,6 +53,7 @@ export function ReservationForm({
     control,
     handleSubmit,
     reset,
+    setError,
     setValue,
     formState: { errors, isValid },
   } = methods;
@@ -62,7 +67,7 @@ export function ReservationForm({
   });
 
   const [selectedClients, setSelectedClients] = useState<SelectedClient[]>(
-    () => initialSelectedClients ?? []
+    () => initialSelectedClients ?? [],
   );
 
   const handleAddClient = useCallback(
@@ -80,7 +85,7 @@ export function ReservationForm({
         setValue('primaryClientId', client.id);
       }
     },
-    [watchedClientIds, watchedPrimaryClientId, setValue]
+    [watchedClientIds, watchedPrimaryClientId, setValue],
   );
 
   const handleRemoveClient = useCallback(
@@ -93,14 +98,14 @@ export function ReservationForm({
         setValue('primaryClientId', newIds.length > 0 ? newIds[0] : null);
       }
     },
-    [watchedClientIds, watchedPrimaryClientId, setValue]
+    [watchedClientIds, watchedPrimaryClientId, setValue],
   );
 
   const handleSetPrimary = useCallback(
     (clientId: string) => {
       setValue('primaryClientId', clientId);
     },
-    [setValue]
+    [setValue],
   );
 
   const { beds } = useBeds(shelterId);
@@ -112,7 +117,7 @@ export function ReservationForm({
         label: `${bed.name ?? ''}${bed.room ? ` (${bed.room.name})` : ''}`,
         roomId: bed.room?.id ?? null,
       })),
-    [beds]
+    [beds],
   );
 
   const { rooms } = useRooms(shelterId);
@@ -123,7 +128,7 @@ export function ReservationForm({
         value: room.id,
         label: room.name,
       })),
-    [rooms]
+    [rooms],
   );
 
   // ─── Dynamic read-only & filtering ──────────────────────────────────────
@@ -164,7 +169,7 @@ export function ReservationForm({
     const availableBeds = beds.filter((bed) => {
       if (bed.status === BedStatusChoices.Available) return true;
       if (
-        isEditMode &&
+        reservationId &&
         (bed.id === watchedBedId || bed.id === initialBedIdRef.current)
       )
         return true;
@@ -179,53 +184,83 @@ export function ReservationForm({
       return availableOptions.filter((b) => b.roomId === watchedRoomId);
     }
     return availableOptions;
-  }, [beds, watchedRoomId, isEditMode, watchedBedId]);
+  }, [beds, watchedRoomId, reservationId, watchedBedId]);
 
   // ─── Mutations ──────────────────────────────────────────────────────────
 
-  const {
-    createReservation,
-    submitting: isCreating,
-    error: createError,
-    clearError: clearCreateError,
-  } = useCreateReservation(shelterId);
+  const { createReservation, loading: isCreating } = useCreateReservation({
+    shelterId,
+  });
 
-  const {
-    updateReservation,
-    submitting: isUpdating,
-    error: updateError,
-    clearError: clearUpdateError,
-  } = useUpdateReservation(shelterId);
+  const { updateReservation, loading: isUpdating } = useUpdateReservation({
+    shelterId,
+  });
 
-  const submissionError = createError || updateError;
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const isSubmitting = isCreating || isUpdating;
 
   async function submitReservation(data: ReservationFormData) {
-    if (isEditMode && reservationId) {
-      const success = await updateReservation(
-        reservationId,
-        buildUpdateReservationInput(data)
-      );
-      if (!success) return;
-    } else {
-      const success = await createReservation(
-        buildCreateReservationInput(data)
-      );
-      if (!success) return;
-    }
+    setSubmissionError(null);
 
-    if (!isEditMode) {
-      reset();
-      setSelectedClients([]);
+    try {
+      if (reservationId) {
+        const response = await updateReservation({
+          variables: {
+            id: reservationId,
+            data: buildUpdateReservationInput(data),
+          },
+        });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateReservationMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
+        }
+      } else {
+        const response = await createReservation({
+          variables: {
+            data: buildCreateReservationInput(data),
+          },
+        });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...createReservationMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
+        }
+      }
+      if (!reservationId) {
+        reset();
+        setSelectedClients([]);
+      }
+      onSuccess?.();
+    } catch (err) {
+      const error = toError(err);
+      console.error(
+        `error ${reservationId ? 'updating' : 'creating'} reservation: ${error.message}`,
+      );
+
+      if (!(error instanceof BaError)) {
+        setSubmissionError(
+          `Unable to ${reservationId ? 'update' : 'create'} reservation. Please try again.`,
+        );
+      }
     }
-    onSuccess?.();
   }
 
   function handleCancel() {
     reset();
     setSelectedClients([]);
-    clearCreateError();
-    clearUpdateError();
     onCancel?.();
   }
 
@@ -236,10 +271,17 @@ export function ReservationForm({
       <div className="space-y-4 pb-48">
         {submissionError && (
           <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
-            {submissionError}
+            <span className="flex-1">{submissionError}</span>
+            <button
+              onClick={() => setSubmissionError(null)}
+              className="ml-3 text-red-400 hover:text-red-600"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -273,9 +315,9 @@ export function ReservationForm({
             primaryLabel={
               isSubmitting
                 ? 'Submitting…'
-                : isEditMode
-                ? 'Save Reservation'
-                : 'Create Reservation'
+                : reservationId
+                  ? 'Save Reservation'
+                  : 'Create Reservation'
             }
           />
         </form>
