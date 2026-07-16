@@ -54,11 +54,7 @@ export function AddressAutocomplete(props: TProps) {
   const debouncedInput = useDebounce(inputValue, DEBOUNCE_MS);
   const justSelectedRef = useRef(false);
 
-  const {
-    activeIndex: activeOptionIndex,
-    handleKeyDown,
-    reset: resetActiveOption,
-  } = useKeyboardListNav({
+  const { activeIndex: activeOptionIndex, handleKeyDown } = useKeyboardListNav({
     items: predictions,
     onSelect: (p) => handleSelect(p.placeId),
   });
@@ -109,7 +105,6 @@ export function AddressAutocomplete(props: TProps) {
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    resetActiveOption();
 
     if (!value.trim()) {
       onPlaceSelect(null);
@@ -138,7 +133,6 @@ export function AddressAutocomplete(props: TProps) {
 
         setInputValue(result.formattedAddress || '');
         setPredictions([]);
-        resetActiveOption();
         justSelectedRef.current = true;
       } catch (error) {
         console.error('Error fetching place details:', error);

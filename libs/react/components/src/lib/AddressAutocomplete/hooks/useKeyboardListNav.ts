@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type TUseKeyboardListNavOptions<T> = {
   items: T[];
@@ -17,7 +17,8 @@ type TUseKeyboardListNavReturn = {
  *
  * - ArrowDown / ArrowUp wraps around at edges.
  * - Enter fires `onSelect` for the active item.
- * - Call `reset()` to reset the index back to -1.
+ * - `activeIndex` automatically resets to -1 when `items` changes.
+ * - Call `reset()` to manually reset the index to -1.
  * - `onSelect` is read from a ref so inline callbacks don't
  *   cause unnecessary re-creations of `handleKeyDown`.
  */
@@ -30,10 +31,18 @@ export function useKeyboardListNav<T>(
   onSelectRef.current = options.onSelect;
 
   const [activeIndex, setActiveIndex] = useState(-1);
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [items]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (!items.length) return;
+      if (!items.length) {
+        return;
+      }
 
       switch (e.key) {
         case 'ArrowDown':
@@ -46,15 +55,19 @@ export function useKeyboardListNav<T>(
           setActiveIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
           break;
 
-        case 'Enter':
-          if (activeIndex >= 0) {
+        case 'Enter': {
+          const item = items[activeIndexRef.current];
+
+          if (item !== undefined) {
             e.preventDefault();
-            onSelectRef.current(items[activeIndex]);
+            onSelectRef.current(item);
           }
+
           break;
+        }
       }
     },
-    [items, activeIndex],
+    [items],
   );
 
   const reset = useCallback(() => {
