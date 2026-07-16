@@ -15,7 +15,7 @@
         "jestConfig": "libs/ba-platform/jest.config.ts"
       }
     },
-    "generate": {
+    "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "libs/ba-platform",

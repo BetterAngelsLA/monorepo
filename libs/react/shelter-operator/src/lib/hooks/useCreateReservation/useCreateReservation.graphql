@@ -1,0 +1,38 @@
+mutation CreateReservation($data: CreateReservationInput!) {
+  createReservation(data: $data) {
+    ... on ReservationType {
+      id
+      status
+      startDate
+      checkedInAt
+      checkedOutAt
+      notes
+      bed {
+        id
+        name
+      }
+      room {
+        id
+        name
+      }
+      clients {
+        id
+        isPrimary
+        clientProfile {
+          id
+          firstName
+          middleName
+          lastName
+          nickname
+        }
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

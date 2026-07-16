@@ -15,7 +15,7 @@ export type OccupantRow = {
 };
 
 type OccupantTableProps = {
-  rows: OccupantRow[];
+  occupants: OccupantRow[];
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -31,12 +31,12 @@ type OccupantTableProps = {
 };
 
 export function OccupantTable({
-  rows,
+  occupants,
   loading,
   loadingState,
   emptyState = (
     <div className="px-6 py-8 text-center text-sm text-gray-500">
-      No occupants yet.
+      No current occupants.
     </div>
   ),
   wrapperClassName,
@@ -117,7 +117,7 @@ export function OccupantTable({
   return (
     <Table
       columns={columns}
-      rows={rows}
+      rows={occupants}
       getRowKey={(row) => row.id}
       loading={loading}
       loadingState={loadingState}
