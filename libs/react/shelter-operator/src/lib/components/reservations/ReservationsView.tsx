@@ -56,8 +56,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
 
   const { updateReservation } = useUpdateReservation({ shelterId });
 
-  const [actionError, setActionError] = useState<string | null>(null);
-
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
 
   const [confirmation, setConfirmation] = useState<{
@@ -80,7 +78,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
       onClose: () => void,
     ) => {
       const errorMessage = 'Unable to update reservation. Please try again.';
-      setActionError(null);
       setLoadingAction(action);
       try {
         const response = await updateReservation({
@@ -112,21 +109,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
 
   return (
     <div>
-      {actionError && (
-        <div
-          className="mb-4 flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-        >
-          <span className="flex-1">{actionError}</span>
-          <button
-            onClick={() => setActionError(null)}
-            className="ml-3 text-red-400 hover:text-red-600"
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
       <div>
         <ReservationTable
           reservations={reservations}
