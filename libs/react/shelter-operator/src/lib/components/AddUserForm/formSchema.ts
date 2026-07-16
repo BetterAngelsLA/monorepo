@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PermissionTemplateEnum } from '../../apollo/graphql/__generated__/types';
+import { PermissionTemplateEnum } from '@monorepo/ba-platform/types';
 
 export type TFormSchema = z.infer<typeof FormSchema>;
 

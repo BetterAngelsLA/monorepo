@@ -1,0 +1,15 @@
+mutation CloneBed($id: ID!) {
+  cloneBed(id: $id) {
+    ... on BedType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { StatusBadge } from '../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../base-ui/table';
 import { reservationStatusInfo } from '../reservations/reservation-form/constants/reservationFormOptions';

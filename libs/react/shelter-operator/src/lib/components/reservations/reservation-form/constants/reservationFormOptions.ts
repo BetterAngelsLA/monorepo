@@ -1,4 +1,4 @@
-import { ReservationStatusChoices } from '../../../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { toDropdownOptions } from '../../../base-ui/dropdown';
 import type { StatusBadgeVariant } from '../../../base-ui/status-badge/StatusBadge';
 

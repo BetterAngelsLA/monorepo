@@ -6,7 +6,7 @@ import {
 import { mapMediaLinksToVideos, mergeCss } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { groupBy } from 'remeda';
-import { ShelterPhotoTypeChoices } from '../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 import { ImagePlaceholder, MediaLightbox } from '../../../../components';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 

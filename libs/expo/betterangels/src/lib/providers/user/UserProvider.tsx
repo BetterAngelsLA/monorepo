@@ -1,8 +1,7 @@
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { createUserProvider } from '@monorepo/ba-platform';
-import {
-  API_ERROR_CODES,
-  asyncStorageAdapter,
-} from '@monorepo/expo/shared/clients';
+import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
+import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import useAppState from '../../hooks/appState/useAppState';
@@ -21,7 +20,7 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: { id: string; name: string; permissions: string[] }[];
+  organizations: { id: string; name: string; permissions: readonly PermissionEnum[] }[];
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
@@ -34,7 +33,10 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  parseUser: (data: unknown): TUser | undefined => {
+  defaultStorage: asyncStorageAdapter,
+  parseUser: (
+    data: unknown
+  ): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {
@@ -46,7 +48,7 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
           organizations: (userData.organizations ?? []).map((org) => ({
             id: org.id,
             name: org.name,
-            permissions: org.permissions ?? [],
+            permissions: (org.permissions ?? []) as PermissionEnum[],
           })),
           isOutreachAuthorized: userData.isOutreachAuthorized ?? false,
           hasAcceptedTos: userData.hasAcceptedTos ?? false,
@@ -59,7 +61,6 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
     errors?.some(
       (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED,
     ) ?? false,
-  extraContextValue: (user) => ({ isHmisUser: user?.isHmisUser }),
 });
 
 // ---------------------------------------------------------------------------
@@ -105,7 +106,7 @@ function ExpoShell({ children }: ExpoShellProps) {
 
 export default function UserProvider({ children }: { children: ReactNode }) {
   return (
-    <BaseUserProvider storage={asyncStorageAdapter}>
+    <BaseUserProvider>
       <ExpoShell>{children}</ExpoShell>
     </BaseUserProvider>
   );

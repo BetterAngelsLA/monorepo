@@ -3,7 +3,7 @@ import { Check, X } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReservationStatusChoices } from '../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { GetReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
 import { shelterEditReservationRoute } from '../routing';
 import { Button } from './base-ui/buttons';
