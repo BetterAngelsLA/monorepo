@@ -11,6 +11,7 @@ export {
   createCsrfInterceptor,
   createOrgInterceptor,
   createCsrfTokenRefresher,
+  includeCredentialsInterceptor,
 } from '@monorepo/fetch';
 
 // Re-export for convenience so consumers don't need both imports.

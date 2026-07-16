@@ -40,6 +40,96 @@ describe('createCsrfInterceptor', () => {
     const interceptor = createCsrfInterceptor(read, refresh, 'csrftoken', 'x-csrf');
     await expect(interceptor('/api', {}, next)).rejects.toThrow('offline');
   });
+
+  describe('CSRF refresh URL derivation', () => {
+    it('uses absolute URL with API origin for cross-origin requests (string)', async () => {
+      const read = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('fresh');
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(read, refresh);
+      await interceptor('https://api.dev.example.com/graphql', {}, next);
+
+      expect(refresh).toHaveBeenCalledWith(
+        'https://api.dev.example.com/admin/login/'
+      );
+      expect(new Headers((next.mock.calls[0][1] as RequestInit).headers).get('x-csrftoken')).toBe('fresh');
+    });
+
+    it('uses relative path for same-origin requests (local dev)', async () => {
+      const read = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('fresh');
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(read, refresh);
+      await interceptor('/graphql', {}, next);
+
+      expect(refresh).toHaveBeenCalledWith('/admin/login/');
+    });
+
+    it('derives origin from a URL object', async () => {
+      const read = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('fresh');
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(read, refresh);
+      await interceptor(new URL('https://api.example.com/graphql'), {}, next);
+
+      expect(refresh).toHaveBeenCalledWith(
+        'https://api.example.com/admin/login/'
+      );
+    });
+
+    it('derives origin from a Request object', async () => {
+      const read = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('fresh');
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(read, refresh);
+      await interceptor(new Request('https://api.example.com/graphql'), {}, next);
+
+      expect(refresh).toHaveBeenCalledWith(
+        'https://api.example.com/admin/login/'
+      );
+    });
+
+    it('respects custom loginPath', async () => {
+      const read = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce('fresh');
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(
+        read, refresh, 'csrftoken', 'x-csrftoken', '/custom/login/'
+      );
+      await interceptor('https://api.example.com/graphql', {}, next);
+
+      expect(refresh).toHaveBeenCalledWith(
+        'https://api.example.com/custom/login/'
+      );
+    });
+
+    it('skips refresh when token is already present', async () => {
+      const read = jest.fn().mockResolvedValue('existing');
+      const refresh = jest.fn();
+      const next = jest.fn().mockResolvedValue(new Response());
+
+      const interceptor = createCsrfInterceptor(read, refresh);
+      await interceptor('https://api.example.com/graphql', {}, next);
+
+      expect(refresh).not.toHaveBeenCalled();
+      expect(new Headers((next.mock.calls[0][1] as RequestInit).headers).get('x-csrftoken')).toBe('existing');
+    });
+  });
 });
 
 describe('createOrgInterceptor', () => {

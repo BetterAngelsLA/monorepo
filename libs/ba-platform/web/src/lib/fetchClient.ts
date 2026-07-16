@@ -4,6 +4,7 @@ import {
   createCsrfInterceptor,
   createCsrfTokenRefresher,
   createOrgInterceptor,
+  includeCredentialsInterceptor,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
@@ -30,4 +31,5 @@ export const createWebFetchClient = () =>
       CSRF_HEADER_NAME,
       CSRF_LOGIN_PATH,
     ),
+    includeCredentialsInterceptor,
   );
