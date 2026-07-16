@@ -180,11 +180,7 @@ export function ReservationForm({
   // selected bed and the originally assigned bed so they remain visible.
   const bedOptions = useMemo(() => {
     const availableBeds = beds.filter((bed) => {
-      if (
-        bed.room &&
-        bed.room.status &&
-        bed.room?.status !== RoomStatusChoices.Available
-      )
+      if (bed.room && bed.room.status !== RoomStatusChoices.Available)
         return false;
       if (bed.status === BedStatusChoices.Available) return true;
       if (
