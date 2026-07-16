@@ -2496,8 +2496,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
-  openNow: Boolean
-  openNowScheduleTypes: [ScheduleTypeChoices!]
+  openNow: [ScheduleTypeChoices!]
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
   hasAvailableBeds: Boolean

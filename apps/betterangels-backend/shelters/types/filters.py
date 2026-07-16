@@ -167,29 +167,7 @@ class ShelterFilter:
         return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
-    def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
-        if not value:
-            return queryset, Q()
-
-        dt = get_current_shelter_schedule_datetime()
-        day = DayOfWeekChoices.from_date(dt.date())
-        yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
-
-        return (
-            queryset.filter(
-                _shelter_open_q(
-                    schedule_type=ScheduleTypeChoices.OPERATING,
-                    time=dt.time(),
-                    day=day,
-                    yesterday=yesterday,
-                    date=dt.date(),
-                )
-            ),
-            Q(),
-        )
-
-    @strawberry_django.filter_field
-    def open_now_schedule_types(
+    def open_now(
         self, queryset: QuerySet, value: Optional[List[ScheduleTypeChoices]], prefix: str
     ) -> Tuple[QuerySet[models.Shelter], Q]:
         """Filter shelters that are open now for ANY of the given schedule types.
