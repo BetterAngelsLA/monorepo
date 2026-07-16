@@ -3,7 +3,9 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomStatusChoices } from '../../apollo/graphql/__generated__/types';
+import {
+  RoomStatusChoices,
+} from '@monorepo/ba-platform/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
 import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { useDeleteRooms } from '../../hooks/useDeleteRooms';

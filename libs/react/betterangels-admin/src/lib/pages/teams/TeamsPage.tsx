@@ -12,7 +12,7 @@ import { JSX, useRef, useState } from 'react';
 import {
   Ordering,
   TeamType,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';

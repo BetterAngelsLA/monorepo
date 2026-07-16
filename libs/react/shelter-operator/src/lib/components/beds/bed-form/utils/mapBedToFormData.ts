@@ -4,7 +4,7 @@ import type {
   FunderChoices,
   MedicalNeedChoices,
   PetChoices,
-} from '../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import type { UseBedResultType } from '../../../../hooks/useBed';
 import { createEmptyBedFormData } from '../constants/defaultBedFormData';
 import type { BedFormData } from '../formTypes';

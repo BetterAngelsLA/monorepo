@@ -2,7 +2,7 @@ import type {
   CreateReservationInput,
   ReservationClientInput,
   UpdateReservationInput,
-} from '../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import type { ReservationFormData } from '../formTypes';
 
 const toInputString = (value?: string | null): string | undefined => {

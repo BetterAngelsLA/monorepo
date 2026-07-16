@@ -8,7 +8,9 @@ import {
 } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
 
-import { RoomStatusChoices } from '../apollo/graphql/__generated__/types';
+import {
+  RoomStatusChoices,
+} from '@monorepo/ba-platform/types';
 
 export type Room = {
   id: string;

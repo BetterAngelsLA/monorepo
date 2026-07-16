@@ -11,6 +11,16 @@ jest.mock('@preeternal/react-native-cookie-manager', () => ({
   },
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+    clear: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 jest.mock('react-native-mmkv', () => ({
   MMKV: jest.fn(() => ({
     getString: jest.fn(),

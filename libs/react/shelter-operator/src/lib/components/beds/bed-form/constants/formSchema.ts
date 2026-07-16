@@ -6,7 +6,7 @@ import {
   FunderChoices,
   MedicalNeedChoices,
   PetChoices
-} from '../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 
 export const formSchema = z.object({
   accessibility: z.array(z.enum(AccessibilityChoices)),

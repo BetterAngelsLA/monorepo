@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ShelterPhotoTypeChoices } from '../../../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 
 export const formSchema = z.object({
   photoType: z.enum(

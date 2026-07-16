@@ -3,7 +3,7 @@ import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';

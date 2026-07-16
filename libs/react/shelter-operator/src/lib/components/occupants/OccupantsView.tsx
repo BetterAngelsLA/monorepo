@@ -1,6 +1,6 @@
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { useReservations } from '../../hooks/useReservations';
 import type { ReservationsQuery } from '../../hooks/useReservations/__generated__/useReservations.generated';
 import { OccupantTable, type OccupantRow } from './OccupantTable';

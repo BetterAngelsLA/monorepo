@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { BedTable, type Bed, type BedRowObject } from './BedTable';
 
 const bed = (

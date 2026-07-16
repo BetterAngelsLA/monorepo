@@ -1,5 +1,5 @@
 import { ApolloLink } from '@apollo/client';
-import { OperationMessage, OperationMessageKind } from '../__generated__/types';
+import { OperationMessage, OperationMessageKind } from '@monorepo/ba-platform/types';
 import { extractOperationInfo } from './extractOperationInfo';
 
 export function extractOperationInfoMessages(

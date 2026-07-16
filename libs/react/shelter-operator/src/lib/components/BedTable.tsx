@@ -1,7 +1,9 @@
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { BedStatusChoices } from '../apollo/graphql/__generated__/types';
+import {
+  BedStatusChoices,
+} from '@monorepo/ba-platform/types';
 import { Button } from './base-ui/buttons';
 import {
   StatusBadge,
