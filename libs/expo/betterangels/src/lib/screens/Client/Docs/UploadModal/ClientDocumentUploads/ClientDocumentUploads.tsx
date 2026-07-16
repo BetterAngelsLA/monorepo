@@ -1,9 +1,13 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
+import {
+  LoadingView,
+  MediaPicker,
+  TextBold,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import { UploadSection } from '../UploadSection';
 import UploadsPreview from '../UploadsPreview';
@@ -84,22 +88,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
   });
 
   if (processing) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: Colors.WHITE,
-        }}
-      >
-        <ActivityIndicator
-          size="large"
-          color={Colors.PRIMARY}
-          style={{ transform: [{ translateY: -40 }] }}
-        />
-      </View>
-    );
+    return <LoadingView />;
   }
 
   return (
