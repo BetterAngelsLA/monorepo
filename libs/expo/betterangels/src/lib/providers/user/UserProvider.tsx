@@ -1,8 +1,11 @@
 import { createUserProvider } from '@monorepo/ba-platform';
-import { API_ERROR_CODES, asyncStorageAdapter } from '@monorepo/expo/shared/clients';
+import {
+  API_ERROR_CODES,
+  asyncStorageAdapter,
+} from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { useAppState } from '../../hooks';
+import useAppState from '../../hooks/appState/useAppState';
 import {
   CurrentUserDocument,
   CurrentUserQuery,
@@ -29,14 +32,9 @@ export type TUser = {
 // Base provider (Apollo + ActiveOrg + context)
 // ---------------------------------------------------------------------------
 
-const {
-  UserProvider: BaseUserProvider,
-  useUser,
-} = createUserProvider({
+const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  parseUser: (
-    data: unknown
-  ): TUser | undefined => {
+  parseUser: (data: unknown): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {
@@ -59,7 +57,7 @@ const {
   },
   isUnauthenticated: (errors) =>
     errors?.some(
-      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
+      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED,
     ) ?? false,
   extraContextValue: (user) => ({ isHmisUser: user?.isHmisUser }),
 });
@@ -91,8 +89,8 @@ function ExpoShell({ children }: ExpoShellProps) {
         !settled
           ? 'authorized-pending'
           : user
-          ? 'authorized-root'
-          : 'unauthorized-root'
+            ? 'authorized-root'
+            : 'unauthorized-root'
       }
       style={{ flex: 1 }}
     >
