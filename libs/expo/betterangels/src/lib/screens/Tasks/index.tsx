@@ -17,7 +17,7 @@ import {
 import { getInitialTaskFilters } from './getInitialTaskFilters';
 
 export default function Tasks() {
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
@@ -73,7 +73,7 @@ export default function Tasks() {
         onChange={onFilterChange}
         style={styles.filters}
         filters={[
-          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
+          user?.isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
           'teamIds',
           'taskStatus',
           'authors',

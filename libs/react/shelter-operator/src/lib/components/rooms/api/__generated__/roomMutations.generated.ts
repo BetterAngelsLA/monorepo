@@ -1,4 +1,4 @@
-import type * as Types from '../../../../apollo/graphql/__generated__/types';
+import type * as Types from '@monorepo/ba-platform/types';
 
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateRoomMutationVariables = Types.Exact<{
@@ -6,9 +6,9 @@ export type CreateRoomMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateRoomMutation = { __typename?: 'Mutation', createRoom:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
+export type CreateRoomMutation = { __typename: 'Mutation', createRoom:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
    };
 
 export type UpdateRoomMutationVariables = Types.Exact<{
@@ -17,9 +17,9 @@ export type UpdateRoomMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateRoomMutation = { __typename?: 'Mutation', updateRoom:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
+export type UpdateRoomMutation = { __typename: 'Mutation', updateRoom:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'RoomType', id: string, name: string, status: Types.RoomStatusChoices, type?: Types.RoomStyleChoices | null, typeOther?: string | null }
    };
 
 export type DeleteRoomsMutationVariables = Types.Exact<{
@@ -27,9 +27,9 @@ export type DeleteRoomsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteRoomsMutation = { __typename?: 'Mutation', deleteRooms:
-    | { __typename?: 'BulkDeleteResult', ids: Array<string> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteRoomsMutation = { __typename: 'Mutation', deleteRooms:
+    | { __typename: 'BulkDeleteResult', ids: Array<string> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CloneRoomMutationVariables = Types.Exact<{
@@ -37,9 +37,9 @@ export type CloneRoomMutationVariables = Types.Exact<{
 }>;
 
 
-export type CloneRoomMutation = { __typename?: 'Mutation', cloneRoom:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'RoomType', id: string, name: string }
+export type CloneRoomMutation = { __typename: 'Mutation', cloneRoom:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'RoomType', id: string, name: string }
    };
 
 

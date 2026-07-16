@@ -1,64 +1,24 @@
-"""Zero-cycle ``shelters_open_at`` query — importable by models, managers,
-selectors, and filters without creating circular imports."""
+"""Shelter open-at query — determines which shelters are open at a given datetime."""
 
 import datetime
 from typing import TYPE_CHECKING
 
-from django.db.models import Exists, F, OuterRef, Q, QuerySet
-
+from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
+from django.db.models.functions import Mod
+from django.db.models.lookups import LessThan
+from shelters.constants import DAILY_MINUTES, WEEK_MINUTES
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
 
 
-def _time_and_day_condition(
-    *, time: datetime.time, day: DayOfWeekChoices, yesterday: DayOfWeekChoices, include_full_day: bool = False
-) -> Q:
-    """Build a Q object matching schedules whose time window covers *time*.
-
-    Handles both normal schedules (``start_time <= end_time``) and overnight
-    schedules (``start_time > end_time``, e.g. 6 PM – 2 AM).
-
-    Normal schedules:
-        ``start_time <= time <= end_time`` on the matching day.
-
-    Overnight schedules:
-        - ``time >= start_time`` on the schedule's ``day`` (same calendar day), or
-        - ``time <= end_time`` on the next calendar day (``yesterday`` matches).
-
-    When *include_full_day* is True, schedules with no times
-    (``start_time IS NULL``) also match, which is useful for
-    full-day exception checks.
-    """
-    is_normal = Q(start_time__lte=F("end_time"))
-    is_overnight = Q(start_time__gt=F("end_time"))
-
-    day_match = Q(day=None) | Q(day=day)
-    yesterday_match = Q(day=None) | Q(day=yesterday)
-
-    normal_window = is_normal & Q(start_time__lte=time, end_time__gte=time) & day_match
-
-    overnight_same_day = is_overnight & Q(start_time__lte=time) & day_match
-    overnight_next_day = is_overnight & Q(end_time__gte=time) & yesterday_match
-
-    result = normal_window | overnight_same_day | overnight_next_day
-
-    if include_full_day:
-        result |= Q(start_time__isnull=True) & day_match
-
-    return result
-
-
 def _shelter_open_q(
     *,
     schedule_type: ScheduleTypeChoices,
-    time: datetime.time,
-    day: DayOfWeekChoices,
-    yesterday: DayOfWeekChoices,
-    date: datetime.date,
+    dt: datetime.datetime,
 ) -> Q:
-    """Return a Q object that matches shelters open for *schedule_type* at the given datetime.
+    """Return a Q object that matches shelters open for *schedule_type* at *dt*.
 
     Uses Exists subqueries with ``OuterRef("pk")`` so the caller can
     compose the result with other Q expressions (e.g. OR across multiple
@@ -69,11 +29,66 @@ def _shelter_open_q(
        (respecting optional seasonal date bounds and overnight schedules).
     2. Excludes shelters that have an active exception covering *dt*
        (full-day or partial-day).
+
+    Uses precomputed ``start_cycle_minutes`` / ``duration_minutes`` columns
+    with modular arithmetic so that overnight schedules (e.g. 6 PM – 2 AM)
+    and normal schedules (9 AM – 5 PM) are handled by the same branchless
+    condition — no is_normal / is_overnight distinction needed.
+
+    **How the modulo check works**
+
+    Every schedule is represented as a cyclic interval
+    ``[start_cycle_minutes, start_cycle_minutes + duration_minutes)`` on a
+    10080-minute clock (Monday 00:00 = 0, Sunday 23:59 = 10079).  For a
+    query at week-minute *q*, the condition
+
+        ``(q − start + 10080) % 10080 < duration``
+
+    is true exactly when *q* falls inside the interval.  Adding 10080
+    before the modulo ensures the dividend is never negative.
+
+    For every-day schedules (``day=None``) the interval is stored on a
+    1440-minute daily clock instead.
+
+    .. note::
+
+        Start time is **inclusive**, end time is **exclusive**.
+        A close time of 15:00 means the shelter is closed *at* 15:00.
     """
     from shelters.models import Schedule
 
-    time_day = _time_and_day_condition(time=time, day=day, yesterday=yesterday)
-    covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
+    # Python's weekday() returns Monday=0, matching the model's day_offset
+    # Case (Monday=0, …, Sunday=6).
+    query_wm = dt.weekday() * DAILY_MINUTES + dt.hour * 60 + dt.minute
+    query_dm = dt.hour * 60 + dt.minute
+    date = dt.date()
+    day_enum = DayOfWeekChoices.from_date(date)
+
+    # Branchless time-window cover for both normal and overnight schedules.
+    # Every-day schedules (day=None) use the daily clock; day-specific
+    # schedules use the weekly clock.
+    every_day_window = Q(
+        day__isnull=True,
+    ) & Q(
+        LessThan(
+            Mod(Value(query_dm) - F("start_cycle_minutes") + DAILY_MINUTES, DAILY_MINUTES),
+            F("duration_minutes"),
+        ),
+    )
+    day_specific_window = Q(
+        day__isnull=False,
+    ) & Q(
+        LessThan(
+            Mod(Value(query_wm) - F("start_cycle_minutes") + WEEK_MINUTES, WEEK_MINUTES),
+            F("duration_minutes"),
+        ),
+    )
+    timed_covers = every_day_window | day_specific_window
+
+    # Full-day schedules (start_time IS NULL) match purely by day.
+    full_day_covers = Q(start_time__isnull=True) & (Q(day__isnull=True) | Q(day=day_enum))
+
+    covers = timed_covers | full_day_covers
 
     is_open = Exists(
         Schedule.objects.filter(
@@ -81,7 +96,7 @@ def _shelter_open_q(
             schedule_type=schedule_type,
             is_exception=False,
         ).filter(
-            time_day,
+            covers,
             Q(start_date=None) | Q(start_date__lte=date),
             Q(end_date=None) | Q(end_date__gte=date),
         )
@@ -93,7 +108,7 @@ def _shelter_open_q(
             schedule_type=schedule_type,
             is_exception=True,
         ).filter(
-            covers_now,
+            covers,
             Q(start_date=None) | Q(start_date__lte=date),
             Q(end_date=None) | Q(end_date__gte=date),
         )
@@ -112,15 +127,4 @@ def shelters_open_at(
 
     Delegates to :func:`_shelter_open_q` for the filtering logic.
     """
-    day = DayOfWeekChoices.from_date(dt.date())
-    yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
-
-    return queryset.filter(
-        _shelter_open_q(
-            schedule_type=schedule_type,
-            time=dt.time(),
-            day=day,
-            yesterday=yesterday,
-            date=dt.date(),
-        )
-    )
+    return queryset.filter(_shelter_open_q(schedule_type=schedule_type, dt=dt))

@@ -1,19 +1,26 @@
 import { useMutation } from '@apollo/client/react';
 import {
+  BaError,
+  getFieldErrorsOrThrow,
+  useActiveOrg,
+} from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
+import {
   CreateShelterDocument,
   type CreateShelterInput,
   type CreateShelterMutation,
   type CreateShelterMutationVariables,
 } from '@monorepo/react/shelter';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   shelterProfileRoute,
   shelterProfileSegments,
 } from '../../../routing/routePaths';
 import { useToast } from '../../base-ui/toast/state/useToast';
 import {
+  formFieldNames,
   ShelterBasicInfoForm,
   type BasicInfoFormData,
 } from '../segments/BasicInfo';
@@ -48,7 +55,10 @@ export function CreateShelterProfile(props: TProps) {
     CreateShelterMutationVariables
   >(CreateShelterDocument);
 
-  async function handleSubmit(formData: BasicInfoFormData) {
+  async function handleSubmit(
+    formData: BasicInfoFormData,
+    setError: UseFormSetError<BasicInfoFormData>,
+  ) {
     if (!activeOrg?.id) {
       return;
     }
@@ -59,41 +69,45 @@ export function CreateShelterProfile(props: TProps) {
 
     try {
       const response = await createShelter({ variables: { data } });
-      const result = response.data?.createShelter;
 
-      if (result?.__typename === 'ShelterType') {
-        showToast({
-          status: 'success',
-          title: 'Shelter created!',
-        });
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        operationKey: 'createShelter',
+        successTypename: 'ShelterType',
+        fields: formFieldNames,
+      });
 
-        navigate(shelterProfileRoute(result.id, shelterProfileSegments.basic));
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
 
-        return;
+        throw new BaError('Please see validation messages.');
       }
 
-      // error state
-      // TODO: wire up OperationInfo field messages
-      //   if (result?.__typename === 'OperationInfo') {
-      //     const message = result.messages?.[0]?.message ?? 'An error occurred';
-      //     console.error('Create shelter error:', message);
-      //     return;
-      //   }
+      const result = response.data?.createShelter;
 
-      console.error(result);
+      if (result?.__typename !== 'ShelterType') {
+        throw new Error('Failed to create shelter');
+      }
 
       showToast({
-        status: 'error',
-        title: 'Failed to create shelter',
-        description: 'An unexpected error occurred.',
+        status: 'success',
+        title: 'Shelter created!',
       });
+
+      navigate(shelterProfileRoute(result.id, shelterProfileSegments.basic));
     } catch (err) {
+      let userMessage = 'An unexpected error occurred.';
+
+      if (err instanceof BaError) {
+        userMessage = err.message;
+      }
+
       console.error('Create shelter error:', err);
 
       showToast({
         status: 'error',
         title: 'Sorry, Failed to create shelter',
-        description: 'An unexpected error occurred.',
+        description: userMessage,
       });
     } finally {
       setDisabled(false);

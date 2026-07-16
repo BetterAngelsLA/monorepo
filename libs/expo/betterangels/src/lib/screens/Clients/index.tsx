@@ -26,7 +26,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     null
   );
   const [search, setSearch] = useState('');
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
@@ -73,7 +73,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           />
         </HorizontalContainer>
 
-        {isHmisUser ? (
+        {user?.isHmisUser ? (
           <ListClientsHmis
             filters={{ search }}
             renderItem={renderClientItemHmis}

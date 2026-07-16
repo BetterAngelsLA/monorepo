@@ -6,7 +6,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
   OrganizationMemberType,
   PermissionTemplateEnum,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { Button } from '../base-ui/buttons/buttons';
 import { Dropdown } from '../base-ui/dropdown';
 import { Input } from '../base-ui/input';

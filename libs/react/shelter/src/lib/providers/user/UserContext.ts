@@ -1,5 +1,5 @@
-import { createContext, Dispatch, SetStateAction } from 'react';
-import { CurrentOrgUserQuery } from './__generated__/UserProvider.generated';
+import type { Dispatch, SetStateAction } from 'react';
+import type { CurrentOrgUserQuery } from '@monorepo/ba-platform';
 
 type OrganizationsArray = NonNullable<
   CurrentOrgUserQuery['currentUser']['organizations']
@@ -20,9 +20,5 @@ export interface IUserProviderValue {
   user: TUser | undefined;
   setUser: Dispatch<SetStateAction<TUser | undefined>>;
   isLoading: boolean;
-  refetchUser: () => Promise<TUser | undefined>;
+  refetchUser: () => Promise<void>;
 }
-
-const UserContext = createContext<IUserProviderValue | undefined>(undefined);
-
-export default UserContext;

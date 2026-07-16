@@ -1,5 +1,5 @@
 import { TFieldError } from '../../../errors';
-import { OperationMessageKind } from '../__generated__/types';
+import { OperationMessageKind } from '@monorepo/ba-platform/types';
 import { extractOperationInfo } from './extractOperationInfo';
 
 type TProps<TData, TDataKey> = {

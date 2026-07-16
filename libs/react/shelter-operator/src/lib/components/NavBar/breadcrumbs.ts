@@ -2,27 +2,19 @@ import { useQuery } from '@apollo/client/react';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
-import { manageSegments, paths, shelterProfileSegments } from '../../routing';
-import {
-  GetBedDocument,
-  type GetBedQuery,
-  type GetBedQueryVariables,
-} from '../beds/api/__generated__/bedQueries.generated';
-import {
-  GetShelterOperatorOverviewDocument,
-  type GetShelterOperatorOverviewQuery,
-  type GetShelterOperatorOverviewQueryVariables,
-} from '../overview/__generated__/overview.generated';
+import { useBed, useRoom } from '../../hooks/';
+
 import {
   GetReservationDocument,
   type GetReservationQuery,
   type GetReservationQueryVariables,
 } from '../../hooks/useReservation/__generated__/useReservation.generated';
+import { manageSegments, paths, shelterProfileSegments } from '../../routing';
 import {
-  GetRoomDocument,
-  type GetRoomQuery,
-  type GetRoomQueryVariables,
-} from '../rooms/api/__generated__/roomQueries.generated';
+  GetShelterOperatorOverviewDocument,
+  type GetShelterOperatorOverviewQuery,
+  type GetShelterOperatorOverviewQueryVariables,
+} from '../overview/__generated__/overview.generated';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -360,21 +352,8 @@ export function useBreadcrumbNames(
     skip: !shelterId,
   });
 
-  const { data: roomData } = useQuery<GetRoomQuery, GetRoomQueryVariables>(
-    GetRoomDocument,
-    {
-      variables: { id: roomId ?? '' },
-      skip: !roomId,
-    }
-  );
-
-  const { data: bedData } = useQuery<GetBedQuery, GetBedQueryVariables>(
-    GetBedDocument,
-    {
-      variables: { id: bedId ?? '' },
-      skip: !bedId,
-    }
-  );
+  const { bed } = useBed(bedId ?? '');
+  const { room } = useRoom(roomId ?? '');
 
   const { data: reservationData } = useQuery<
     GetReservationQuery,
@@ -392,11 +371,10 @@ export function useBreadcrumbNames(
       map[`__shelterId__:${shelterData.operatorShelter.id}`] =
         shelterData.operatorShelter.name;
     }
-    if (roomData?.room?.id && roomData.room.name) {
-      map[`__roomId__:${roomData.room.id}`] = roomData.room.name;
+    if (room?.id && room.name) {
+      map[`__roomId__:${room.id}`] = room.name;
     }
-    if (bedData?.beds?.results?.[0]?.id) {
-      const bed = bedData.beds.results[0];
+    if (bed?.id) {
       map[`__bedId__:${bed.id}`] = bed.name ?? bed.id;
     }
     if (reservationData?.reservation?.id) {
@@ -415,7 +393,7 @@ export function useBreadcrumbNames(
     }
 
     return map;
-  }, [shelterData, roomData, bedData, reservationData]);
+  }, [shelterData, room, bed, reservationData]);
 
   // Resolve items
   const items = useMemo(() => {

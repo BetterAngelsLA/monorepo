@@ -1,14 +1,25 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import pghistory
 from accounts.models import PermissionGroup, User
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
-from common.models import Location
+from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
+from common.models import Attachment, Location
 from common.permissions.utils import assign_object_permissions
+from common.services import file_upload
+from common.services.file_upload import (
+    AttachmentUploadConfig,
+    UploadRequest,
+    UploadConfirmation,
+)
+from common.services.types import AuthorizedPresignedUploadBatch
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.permissions import (
     NotePermissions,
@@ -296,3 +307,63 @@ def note_create(
         )
 
     return note
+
+
+NOTE_ATTACHMENT_CONFIG = AttachmentUploadConfig(
+    upload_path="note_attachments",
+    service_name="note_attachment",
+    allowed_content_types=DEFAULT_DOCUMENT_CONTENT_TYPES | DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.NOTE_ATTACHMENT_MAX_FILE_SIZE,
+)
+
+
+def create_note_attachment_presigned_uploads(
+    *,
+    user: User,
+    uploads: Iterable[UploadRequest],
+) -> AuthorizedPresignedUploadBatch:
+    """Generate presigned S3 URLs and upload tokens for note attachments (Phase 1)."""
+    return file_upload.create_presigned_uploads(
+        user=user,
+        uploads=uploads,
+        config=NOTE_ATTACHMENT_CONFIG,
+    )
+
+
+def resolve_note_file_uploads(
+    *,
+    user: User,
+    note: Note,
+    attachments: Iterable[UploadConfirmation],
+) -> list[Attachment]:
+    """Validate tokens + S3 → create Attachment rows for a note (Phase 3).
+
+    Uses the note's organization to resolve the permission group, so
+    object-level permissions are scoped to the correct org even when
+    the user belongs to multiple organizations.
+    """
+    permission_group = resolve_permission_group(
+        user,
+        template=CASEWORKER,
+        organization_id=str(note.organization_id),
+    )
+
+    with transaction.atomic():
+        attached = file_upload.create_attachment_records(
+            user=user,
+            content_object=note,
+            uploads=attachments,
+            config=NOTE_ATTACHMENT_CONFIG,
+        )
+
+        for att in attached:
+            assign_object_permissions(
+                permission_group.group,
+                att,
+                [
+                    Attachment.perms.DELETE,
+                    Attachment.perms.CHANGE,
+                ],
+            )
+
+    return attached

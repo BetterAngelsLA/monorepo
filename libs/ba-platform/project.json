@@ -3,16 +3,18 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/ba-platform/src",
   "projectType": "library",
-  "tags": [
-    "type:data-access",
-    "scope:ba-platform"
-  ],
+  "tags": ["type:data-access", "scope:ba-platform"],
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*"
-    ]
+    "default": ["{projectRoot}/**/*"]
   },
   "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/ba-platform/jest.config.ts"
+      }
+    },
     "generate": {
       "executor": "nx:run-commands",
       "options": {

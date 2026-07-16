@@ -26,7 +26,6 @@ from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
     BedTypeChoices,
-    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -180,20 +179,13 @@ class ShelterFilter:
             return queryset, Q()
 
         dt = get_current_shelter_schedule_datetime()
-        day = DayOfWeekChoices.from_date(dt.date())
-        yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
-        time = dt.time()
-        date = dt.date()
 
         combined_q = Q()
 
         for schedule_type in value:
             combined_q |= _shelter_open_q(
                 schedule_type=schedule_type,
-                time=time,
-                day=day,
-                yesterday=yesterday,
-                date=date,
+                dt=dt,
             )
 
         return queryset.filter(combined_q), Q()

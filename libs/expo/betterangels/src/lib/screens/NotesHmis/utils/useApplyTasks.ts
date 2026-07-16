@@ -24,7 +24,7 @@ export function useApplyTasks() {
           variables: {
             data: {
               summary: s.summary || '',
-              teamId: s.teamId || null,
+              teamId: s.teamId ?? undefined,
               description: s.description,
               status: s.status,
               hmisClientProfile: hmisClientProfileId,
@@ -46,7 +46,7 @@ export function useApplyTasks() {
             data: {
               id: s.id!,
               summary: s.summary,
-              teamId: s.teamId || null,
+              teamId: s.teamId ?? undefined,
               description: s.description,
               status: s.status,
             },

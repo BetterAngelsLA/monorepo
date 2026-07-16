@@ -1,12 +1,22 @@
+import { useApolloClient } from '@apollo/client/react';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
+import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import {
+  updateShelterProfileMeta,
   useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
 import { ShelterServicesForm } from './ShelterServicesForm';
-import { type ServicesFormData, toFormData } from './formSchema';
+import {
+  type ServicesFormData,
+  formFieldNames,
+  toFormData,
+} from './formSchema';
 
 /**
  * Converts a service ID to a `ServiceInput` object.
@@ -44,42 +54,60 @@ export function ShelterServices(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [formKey, setFormKey] = useState(0);
 
+  const client = useApolloClient();
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
-  async function onSubmit(data: ServicesFormData) {
+  async function onSubmit(
+    data: ServicesFormData,
+    setError: UseFormSetError<ServicesFormData>
+  ) {
     try {
       const response = await updateShelter({
         variables: { data: toUpdateInput(shelterId, data) },
       });
 
-      const result = response.data?.updateShelter;
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        ...updateShelterProfileMeta,
+        fields: formFieldNames,
+      });
 
-      // success
-      if (result?.__typename === 'ShelterType') {
-        setEditMode(false);
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
 
-        showToast({
-          status: 'success',
-          title: 'Shelter updated.',
-        });
-
-        return;
+        throw new BaError('Please see validation messages.');
       }
 
-      // error
-      // TODO: handle specific OperationInfo field errors via SDB-241
+      // Refetch service categories in the background so the "Other"
+      // dropdown picks up newly-created services on the next edit.
+      client.refetchQueries({
+        include: [ShelterServiceCategoriesDocument],
+      });
 
-      throw new Error('unexpected query error');
+      setEditMode(false);
+      setFormKey((k) => k + 1);
+
+      showToast({
+        status: 'success',
+        title: 'Shelter updated.',
+      });
     } catch (e) {
+      let userMessage = 'An unexpected error occurred.';
+
+      if (e instanceof BaError) {
+        userMessage = e.message;
+      }
+
       console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
         title: 'Update failed',
-        description: 'An unexpected error occurred.',
+        description: userMessage,
       });
     }
   }
@@ -94,7 +122,8 @@ export function ShelterServices(props: TProps) {
 
   return (
     <ShelterServicesForm
-      defaultValues={toFormData(shelter)}
+      key={formKey}
+      values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}

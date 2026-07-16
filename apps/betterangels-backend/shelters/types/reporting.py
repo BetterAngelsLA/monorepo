@@ -22,6 +22,7 @@ class DailyBedStatusMetricsType:
     occupied: int
     reserved: int
     out_of_service: int
+    in_turnaround: int
 
 
 @strawberry.type
