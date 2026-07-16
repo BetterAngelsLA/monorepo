@@ -8,6 +8,7 @@ import {
   CreateReservationMutation,
   CreateReservationMutationVariables,
 } from './__generated__/useCreateReservation.generated';
+import { createReservationSuccessTypename } from './__generated__/useCreateReservation_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -28,7 +29,7 @@ export function useCreateReservation(props: TProps) {
       ? (result) => {
           const payload = result.data?.createReservation;
 
-          if (payload?.__typename === 'ReservationType') {
+          if (payload?.__typename === createReservationSuccessTypename) {
             return [
               { query: BedsDocument, variables: { shelterId } },
               { query: RoomsDocument, variables: { shelterId } },

@@ -8,6 +8,7 @@ import {
   DeleteReservationsMutation,
   DeleteReservationsMutationVariables,
 } from './__generated__/useDeleteReservations.generated';
+import { deleteReservationsSuccessTypename } from './__generated__/useDeleteReservations_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -26,7 +27,7 @@ export function useDeleteReservations(props: TProps) {
       ? (result) => {
           const payload = result.data?.deleteReservations;
 
-          if (payload?.__typename === 'BulkDeleteResult') {
+          if (payload?.__typename === deleteReservationsSuccessTypename) {
             return [
               { query: BedsDocument, variables: { shelterId } },
               { query: RoomsDocument, variables: { shelterId } },

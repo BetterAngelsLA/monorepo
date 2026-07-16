@@ -8,6 +8,7 @@ import {
   UpdateReservationMutation,
   UpdateReservationMutationVariables,
 } from './__generated__/useUpdateReservation.generated';
+import { updateReservationSuccessTypename } from './__generated__/useUpdateReservation_meta.generated';
 
 type TProps = {
   refetch?: boolean;
@@ -28,7 +29,7 @@ export function useUpdateReservation(props: TProps) {
       ? (result) => {
           const payload = result.data?.updateReservation;
 
-          if (payload?.__typename === 'ReservationType') {
+          if (payload?.__typename === updateReservationSuccessTypename) {
             return [
               { query: BedsDocument, variables: { shelterId } },
               { query: RoomsDocument, variables: { shelterId } },
