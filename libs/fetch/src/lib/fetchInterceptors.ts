@@ -9,7 +9,7 @@ export type FetchInterceptor = (
 ) => Promise<Response>;
 
 export type TokenReader = (name: string) => Promise<string | null>;
-export type TokenRefresher = (loginPath: string) => Promise<void>;
+export type TokenRefresher = (url: string) => Promise<void>;
 export type StorageReader = { getItem: (key: string) => string | null | Promise<string | null> };
 
 /**
@@ -57,10 +57,26 @@ export const composeFetchInterceptors = (
 // ---------------------------------------------------------------------------
 
 /**
+ * Resolve a ``RequestInfo | URL`` to a plain string URL.
+ */
+const resolveRequestUrl = (input: RequestInfo | URL): string => {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  if (input instanceof Request) return input.url;
+  return String(input);
+};
+
+/**
  * Inject a CSRF header into outgoing requests (proactive strategy).
  *
  * Reads the token via ``readToken``, refreshes from the server if missing,
  * and sets the ``X-CSRFToken`` header (or a custom header name).
+ *
+ * The CSRF refresh URL is derived from the **request origin** — for
+ * absolute URLs (cross-origin deployments) the refresh targets the API
+ * domain; for relative URLs (local dev / same-origin) the relative
+ * ``loginPath`` is used as-is.  This avoids baking a ``baseUrl`` into
+ * the fetch client factory.
  *
  * Unlike the legacy reactive approach (send request → catch 403 → refresh
  * → retry), this interceptor resolves the token **before** the first
@@ -87,7 +103,14 @@ export const createCsrfInterceptor = (
   async (_input, init, next) => {
     let token = await readToken(cookieName);
     if (!token) {
-      await refreshToken(loginPath);
+      const requestUrl = resolveRequestUrl(_input);
+      // Derive the API origin from the request URL so the CSRF refresh
+      // targets the correct domain in cross-origin deployments.
+      // Falls back to relative path for same-origin (local dev).
+      const baseUrl = requestUrl.startsWith('http')
+        ? new URL(requestUrl).origin
+        : '';
+      await refreshToken(`${baseUrl}${loginPath}`);
       token = await readToken(cookieName);
     }
     const headers = new Headers(init.headers);
@@ -115,24 +138,34 @@ export const createOrgInterceptor = (
   };
 
 // ---------------------------------------------------------------------------
-// CSRF Token Refresher (unified)
+// Credentials Interceptor
 // ---------------------------------------------------------------------------
+
+/**
+ * Sets ``credentials: 'include'`` on every request so the browser sends
+ * cookies (including the CSRF cookie) with cross-origin requests.
+ */
+export const includeCredentialsInterceptor: FetchInterceptor = async (
+  input,
+  init,
+  next,
+) => next(input, { ...init, credentials: 'include' });
 
 /**
  * Create a ``TokenRefresher`` that fetches a fresh CSRF token from the
  * Django admin login endpoint.
  *
- * @param baseUrl        Base URL of the Django backend (default ``''``).
+ * The interceptor passes the full refresh URL (derived from the request
+ * origin), so this function just fetches it with cache-busting.
+ *
  * @param persistCookies  Optional — on React Native pass a function that
  *                        calls ``CookieManager.setFromResponse``.
  */
 export const createCsrfTokenRefresher = (
-  baseUrl = '',
   persistCookies?: CookiePersister,
 ): TokenRefresher =>
-  async (loginPath: string) => {
-    const url = `${baseUrl}${loginPath}?t=${Date.now()}`;
-    const response = await fetch(url, { credentials: 'include' });
+  async (url: string) => {
+    const response = await fetch(`${url}?t=${Date.now()}`, { credentials: 'include' });
 
     if (persistCookies) {
       const setCookie = response.headers.get('set-cookie');
