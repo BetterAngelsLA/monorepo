@@ -1,5 +1,6 @@
 import { createGlobPatternsForDependencies } from '@nx/react/tailwind';
 import { join } from 'path';
+import defaultTheme from 'tailwindcss/defaultTheme';
 import tailwindBase from '../../libs/tailwind/src/index';
 
 const config = {
@@ -24,6 +25,11 @@ const config = {
       },
       fontFamily: {
         primary: ['Poppins', 'sans-serif'],
+        // Poppins is the brand font (loaded via @font-face, set on <body>). Map the
+        // default `font-sans` utility onto it too so design-system components — which
+        // style themselves with `font-sans` — render Poppins in the app, matching how
+        // they already render in the shelter-operator lib's own Tailwind config/Storybook.
+        sans: ['Poppins', ...defaultTheme.fontFamily.sans],
       },
       colors: {
         'brand-yellow': 'var(--color-brand-yellow)',
