@@ -1,4 +1,11 @@
 from django.apps import AppConfig
+from django.db.models.signals import post_migrate
+
+
+def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
+    from accounts.seed import seed_permission_templates
+
+    seed_permission_templates()
 
 
 class AccountsConfig(AppConfig):
@@ -15,3 +22,5 @@ class AccountsConfig(AppConfig):
         if get_celery_enabled():
             email_queued.receivers.clear()
             email_queued.connect(queued_mail_handler)
+
+        post_migrate.connect(_seed_on_migrate, sender=self)
