@@ -3,8 +3,8 @@
 Replaces RunPython data migrations. Called by:
 
 * ``post_migrate`` signal (production & local dev)
-* ``conftest.py`` session fixture (CI with ``--no-migrations``)
-* ``manage.py seed_permission_templates`` management command (manual)
+* ``conftest.py`` session fixture (CI / ``--no-migrations``)
+* ``manage.py seed_data`` management command (manual)
 
 Uses ``get_or_create`` throughout — idempotent, safe to re-run.
 """

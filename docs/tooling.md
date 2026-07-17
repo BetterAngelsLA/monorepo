@@ -12,7 +12,7 @@ yarn nx start betterangels-backend
 # Backend (via uv)
 uv sync                          # install/sync Python dependencies
 uv run python script.py          # run a script within the venv
-uv run python manage.py test     # run Django tests directly
+uv run pytest                    # run Django tests directly
 
 # Frontend (Expo)
 yarn nx test betterangels
