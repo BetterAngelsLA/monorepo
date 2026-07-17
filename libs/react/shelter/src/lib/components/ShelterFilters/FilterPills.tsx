@@ -65,7 +65,7 @@ export function FilterPills(props: IProps) {
             label,
             clear: (prev) => {
               const nextTypes = (prev.openNowScheduleTypes ?? []).filter(
-                (t) => t !== scheduleType
+                (t) => t !== scheduleType,
               );
               return {
                 ...prev,
@@ -104,7 +104,7 @@ export function FilterPills(props: IProps) {
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(
         key as keyof TShelterPropertyFilters,
-        val as never
+        val as never,
       );
 
       if (label) {
@@ -147,7 +147,7 @@ export function FilterPills(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      {pills.map((pill) => {
+      {/* {pills.map((pill) => {
         return (
           <div className={mergeCss(labelCss)} key={pill.id}>
             <span>{pill.label}</span>
@@ -174,7 +174,7 @@ export function FilterPills(props: IProps) {
             </button>
           </div>
         );
-      })}
+      })} */}
     </div>
   );
 }
