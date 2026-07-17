@@ -267,13 +267,13 @@ export function DateRangeCalendar({
             menuRef={menuRef}
             menuPos={menuPos}
             onClose={close}
-            align="right"
+            align="left-auto"
           >
-            <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-3 p-3">
               {yearGridSide ? (
                 renderPane(yearGridSide)
               ) : (
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   {renderPane('left')}
                   {renderPane('right')}
                 </div>
