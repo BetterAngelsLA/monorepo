@@ -11,6 +11,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
+    replaces = [
+        ("notes", "0001_squash_through_0020"),
+    ]
 
     dependencies = [
         ('clients', '0002_initial'),

@@ -11,6 +11,40 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
+    replaces = [
+        ("clients", "0002_clientprofile_contact_info"),
+        ("clients", "0003_clientprofile_gender_other"),
+        ("clients", "0004_clienthouseholdmember_gender_other"),
+        ("clients", "0005_clientprofile_ada_accommodation"),
+        ("clients", "0006_alter_clientprofile_preferred_communication"),
+        ("clients", "0007_clientprofile_important_notes"),
+        ("clients", "0008_clientprofile_california_id"),
+        ("clients", "0009_clientprofile_caseworker_crud_permissions"),
+        ("clients", "0010_alter_hmisprofile_agency"),
+        ("clients", "0011_remove_clientprofile_hmis_id"),
+        ("clients", "0012_alter_clientprofile_veteran_status"),
+        ("clients", "0013_profiledataimport_profileimportrecord"),
+        ("clients", "0014_rename_profiledataimport_clientprofiledataimport_and_more"),
+        ("clients", "0015_remove_clientprofileimportrecord_clients_cli_import__774cc6_idx_and_more"),
+        ("clients", "0016_alter_clientprofile_california_id_regex"),
+        ("clients", "0017_clientcontactevent_clienthouseholdmemberevent_and_more"),
+        ("clients", "0018_clientdocument_proxy"),
+        ("clients", "0019_hmisprofile_permissions"),
+        ("clients", "0020_clientprofile_name_email_fields"),
+        ("clients", "0021_clientprofile_ordering_make_user_optional"),
+        ("clients", "0022_clientprofile_name_email_fields_data"),
+        ("clients", "0023_clientprofile_user_required"),
+        ("clients", "0024_clientcontact_permissions"),
+        ("clients", "0025_alter_clientprofile_user_and_more"),
+        ("clients", "0026_clienthouseholdmember_permissions"),
+        ("clients", "0027_socialmediaprofile_permissions"),
+        ("clients", "0028_hmisprofile_case_insensitive_unique_constraint"),
+        ("clients", "0029_clientprofile_residence_geolocation"),
+        ("clients", "0030_remove_clientprofile_client_profile_add_insert_and_more"),
+        ("clients", "0031_remove_clientprofile_client_profile_add_insert_and_more"),
+        ("clients", "0032_unhoused_start_date"),
+        ("clients", "0033_add_client_merge_fields"),
+    ]
 
     dependencies = [
         ('clients', '0001_initial'),

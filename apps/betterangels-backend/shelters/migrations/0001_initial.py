@@ -24,6 +24,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
+    replaces = [
+        ("shelters", "0001_squashed_initial"),
+        ("shelters", "0002_add_shelter_availability"),
+        ("shelters", "0003_populate_shelter_availability"),
+        ("shelters", "0004_bedevent_reservationevent_bed_bed_add_insert_and_more"),
+        ("shelters", "0005_medicalneed_m2m_rename_fields"),
+        ("shelters", "0006_alter_shelter_description_and_more"),
+        ("shelters", "0007_add_shelteravailability_group_permissions"),
+        ("shelters", "0008_clean_up_models"),
+        ("shelters", "0009_remove_reservation_unique_active_reservation_per_bed_and_more"),
+        ("shelters", "0010_bed_update_event"),
+        ("shelters", "0011_add_schedule_cyclic_columns"),
+        ("shelters", "0012_add_schedule_check_constraints"),
+    ]
 
     dependencies = [
         ('clients', '0002_initial'),

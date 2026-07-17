@@ -11,6 +11,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
+    replaces = [
+        ("tasks", "0002_create_task_permissions"),
+        ("tasks", "0003_remove_task_task_add_insert_and_more"),
+        ("tasks", "0004_remove_task_task_add_insert_and_more"),
+        ("tasks", "0005_remove_task_task_add_insert_and_more"),
+        ("tasks", "0006_alter_task_team_alter_taskevent_team_and_more"),
+    ]
 
     dependencies = [
         ('clients', '0002_initial'),
