@@ -83,9 +83,17 @@ def _get_shared_permissions() -> list[Permission]:
 def _get_shelter_crud_permissions() -> list[Permission]:
     """Return ADD/CHANGE/DELETE/VIEW permissions for Shelter."""
     ct = ContentType.objects.get(app_label="shelters", model="shelter")
-    return list(Permission.objects.filter(content_type=ct, codename__in=[
-        "add_shelter", "change_shelter", "delete_shelter", "view_shelter",
-    ]))
+    return list(
+        Permission.objects.filter(
+            content_type=ct,
+            codename__in=[
+                "add_shelter",
+                "change_shelter",
+                "delete_shelter",
+                "view_shelter",
+            ],
+        )
+    )
 
 
 def seed_shelter_groups() -> None:
@@ -96,7 +104,9 @@ def seed_shelter_groups() -> None:
     """
     shared_perms = _get_shared_permissions()
     shelter_crud = _get_shelter_crud_permissions()
-    all_shelter_perms = list(Permission.objects.filter(content_type__app_label="shelters", content_type__model="shelter"))
+    all_shelter_perms = list(
+        Permission.objects.filter(content_type__app_label="shelters", content_type__model="shelter")
+    )
 
     # Shelter Data Entry
     data_entry, _ = Group.objects.get_or_create(name="Shelter Data Entry")

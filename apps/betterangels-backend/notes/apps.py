@@ -14,4 +14,3 @@ class NotesConfig(AppConfig):
 
     def ready(self) -> None:
         post_migrate.connect(_seed_on_migrate, sender=self)
-
