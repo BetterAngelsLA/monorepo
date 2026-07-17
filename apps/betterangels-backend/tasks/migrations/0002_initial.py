@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from django.conf import settings
+from django.contrib.postgres.operations import CreateExtension
 from django.db import migrations, models
 
 
@@ -31,6 +32,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        CreateExtension("pg_trgm"),
         migrations.AddField(
             model_name='task',
             name='team',
