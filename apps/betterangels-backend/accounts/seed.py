@@ -16,6 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import PermissionGroupTemplate
+from common.permissions.config import TemplateConfig
 from notes.groups import CASEWORKER
 from shelters.groups import SHELTER_OPERATOR
 
@@ -50,7 +51,7 @@ def _resolve_permissions(
     return resolved
 
 
-def _seed_template(template_config: object) -> None:
+def _seed_template(template_config: TemplateConfig) -> None:
     """Create or update a PermissionGroupTemplate with its configured permissions."""
     name = template_config.name
     permissions = template_config.permissions

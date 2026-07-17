@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = "Seed all required data (PermissionGroupTemplates, SPAs, services, etc.)"
 
-    def handle(self, **options):
+    def handle(self, **options: object) -> None:
         from accounts.seed import seed_permission_templates
         from shelters.seed import seed_shelter_lookups
         from notes.seed import seed_organization_services

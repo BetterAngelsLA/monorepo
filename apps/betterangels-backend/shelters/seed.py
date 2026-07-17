@@ -68,7 +68,7 @@ def seed_spas() -> None:
 
 def _get_shared_permissions() -> list[Permission]:
     """Return all CRUD permissions for shared shelter models."""
-    perms = []
+    perms: list[Permission] = []
     for model_name in _SHARED_PERMISSION_MODELS:
         app_label = "common" if model_name == "address" else "shelters"
         perms.extend(
@@ -110,13 +110,13 @@ def seed_shelter_groups() -> None:
 
     # Shelter Data Entry
     data_entry, _ = Group.objects.get_or_create(name="Shelter Data Entry")
-    data_entry.perms = set(shared_perms) | set(shelter_crud)
-    data_entry.permissions.set(data_entry.perms)
+    data_entry_perms = set(shared_perms) | set(shelter_crud)
+    data_entry.permissions.set(data_entry_perms)
 
     # Shelter Administration (CRUD + custom perms on Shelter)
     admin, _ = Group.objects.get_or_create(name="Shelter Administration")
-    admin.perms = set(shared_perms) | set(all_shelter_perms)
-    admin.permissions.set(admin.perms)
+    admin_perms = set(shared_perms) | set(all_shelter_perms)
+    admin.permissions.set(admin_perms)
 
 
 def seed_shelter_lookups() -> None:
