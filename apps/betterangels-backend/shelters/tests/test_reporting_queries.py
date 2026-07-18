@@ -1,5 +1,6 @@
 import datetime
 
+import time_machine
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from model_bakery import baker
@@ -8,11 +9,26 @@ from organizations.models import Organization
 from shelters.models import Bed, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 
+# A fixed instant comfortably mid-afternoon in LA (the resolver's reporting
+# timezone), so "today" is unambiguous regardless of when the suite runs.
+_FROZEN_NOW = datetime.datetime(2026, 3, 15, 20, 0, tzinfo=datetime.timezone.utc)
+_FROZEN_LA_TODAY = datetime.date(2026, 3, 15)
+
 
 class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
     SHELTER_OCCUPANCY_METRICS_QUERY = """
-        query ShelterOccupancyMetrics($shelterId: ID!, $startDate: Date, $endDate: Date) {
-            shelterOccupancyMetrics(shelterId: $shelterId, startDate: $startDate, endDate: $endDate) {
+        query ShelterOccupancyMetrics(
+            $shelterId: ID!
+            $startDate: Date
+            $endDate: Date
+            $demographics: [DemographicChoices!]
+        ) {
+            shelterOccupancyMetrics(
+                shelterId: $shelterId
+                startDate: $startDate
+                endDate: $endDate
+                demographics: $demographics
+            ) {
                 shelterId
                 startDate
                 endDate
@@ -129,3 +145,67 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             },
         )
         self.assertIsNone(payload["avgDaysToOccupancy"])
+
+    def test_accepts_demographics_argument(self) -> None:
+        """demographics is accepted without error, even though it isn't applied yet.
+
+        Guards against a regression/removal of the argument while the actual
+        filtering support (blocked on pghistory M2M tracking) is pending.
+        """
+        self._add_shelter_view_permission(self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        baker.make(Bed, shelter=self.shelter, name="Bed 1")
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={
+                "shelterId": str(self.shelter.pk),
+                "startDate": "2026-01-01",
+                "endDate": "2026-01-03",
+                "demographics": ["SINGLE_MEN"],
+            },
+        )
+
+        self.assertNotIn("errors", response)
+        payload = response["data"]["shelterOccupancyMetrics"]
+        self.assertEqual(payload["shelterId"], str(self.shelter.pk))
+        self.assertEqual(len(payload["dailyBedStatus"]), 3)
+
+    @time_machine.travel(_FROZEN_NOW, tick=False)
+    def test_only_start_date_defaults_end_to_today(self) -> None:
+        self._add_shelter_view_permission(self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        baker.make(Bed, shelter=self.shelter, name="Bed 1")
+
+        start_date = _FROZEN_LA_TODAY - datetime.timedelta(days=10)
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": str(self.shelter.pk), "startDate": start_date.isoformat()},
+        )
+
+        payload = response["data"]["shelterOccupancyMetrics"]
+        self.assertEqual(payload["startDate"], start_date.isoformat())
+        self.assertEqual(payload["endDate"], _FROZEN_LA_TODAY.isoformat())
+        self.assertEqual(len(payload["dailyOccupancy"]), 11)
+        self.assertEqual(len(payload["dailyBedStatus"]), 11)
+
+    @time_machine.travel(_FROZEN_NOW, tick=False)
+    def test_only_end_date_defaults_start_to_30_days_prior(self) -> None:
+        self._add_shelter_view_permission(self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        baker.make(Bed, shelter=self.shelter, name="Bed 1")
+
+        end_date = _FROZEN_LA_TODAY - datetime.timedelta(days=5)
+        expected_start = end_date - datetime.timedelta(days=29)
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": str(self.shelter.pk), "endDate": end_date.isoformat()},
+        )
+
+        payload = response["data"]["shelterOccupancyMetrics"]
+        self.assertEqual(payload["startDate"], expected_start.isoformat())
+        self.assertEqual(payload["endDate"], end_date.isoformat())
+        self.assertEqual(len(payload["dailyOccupancy"]), 30)
+        self.assertEqual(len(payload["dailyBedStatus"]), 30)
