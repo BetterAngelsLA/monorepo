@@ -44,9 +44,6 @@ export const manageSegments = {
   rooms: 'rooms',
   roomsCreate: 'rooms/create',
   roomsEdit: 'rooms/:roomId/edit',
-  beds: 'beds',
-  bedsCreate: 'beds/create',
-  bedsEdit: 'beds/:bedId/edit',
   reservations: 'reservations',
   reservationsCreate: 'reservations/create',
   reservationsEdit: 'reservations/:reservationId/edit',
@@ -86,14 +83,6 @@ export function shelterEditRoomRoute(
   });
 }
 
-export function shelterManageBedsRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.beds}`;
-}
-
-export function shelterCreateBedRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.bedsCreate}`;
-}
-
 export function shelterOperationsCreateBedRoute(shelterId: string): string {
   return `${shelterOperationsRoute(shelterId)}/${shelterOperationsSegments.bedsCreate}`;
 }
@@ -109,13 +98,6 @@ export function shelterOperationsEditBedRoute(
       bedId,
     },
   );
-}
-
-export function shelterEditBedRoute(shelterId: string, bedId: string): string {
-  return generatePath(`${paths.shelterManage}/${manageSegments.bedsEdit}`, {
-    shelterId,
-    bedId,
-  });
 }
 
 export function shelterManageReservationsRoute(shelterId: string): string {
@@ -185,7 +167,10 @@ export function isShelterOperationsRoute(
 ): boolean {
   const { strict, segment } = opts ?? {};
   if (segment) {
-    return Boolean(matchPath(`${paths.shelterOperations}/${segment}`, path));
+    return (
+      Boolean(matchPath(`${paths.shelterOperations}/${segment}`, path)) ||
+      Boolean(matchPath(`${paths.shelterOperations}/${segment}/*`, path))
+    );
   }
 
   if (strict) {

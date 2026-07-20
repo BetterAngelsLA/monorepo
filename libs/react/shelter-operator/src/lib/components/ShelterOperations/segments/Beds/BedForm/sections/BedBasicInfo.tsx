@@ -8,7 +8,7 @@ import { TextField } from '../../../../../form/TextField';
 import { BED_TYPE_OPTIONS } from '../formSchema';
 import type { SectionProps } from '../types';
 
-export type TProps = SectionProps & {
+export type BedBasicInfoProps = SectionProps & {
   roomOptions: DropdownOption<string>[];
 };
 
@@ -16,7 +16,7 @@ export const BedBasicInfo = memo(function BedBasicInfo({
   control,
   errors,
   roomOptions,
-}: TProps) {
+}: BedBasicInfoProps) {
   return (
     <FormSection title="Basic Information">
       <Controller

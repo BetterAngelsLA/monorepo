@@ -6,13 +6,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
-import { BedsPage } from './pages/beds/BedsPage';
-import { EditBedPage } from './pages/beds/EditBedPage';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
+import { BedsPage, EditBedPage } from './pages/shelterOperations';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -59,6 +58,12 @@ export function OperatorApp() {
               element={<CreateShelterProfile />}
             />
             <Route path={routePath(paths.shelterOperations)}>
+              <Route
+                index
+                element={
+                  <Navigate to={shelterOperationsSegments.beds} replace />
+                }
+              />
               <Route
                 path={shelterOperationsSegments.bedsCreate}
                 element={<EditBedPage />}
@@ -119,15 +124,6 @@ export function OperatorApp() {
               <Route
                 path={manageSegments.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
-              />
-              <Route
-                path={manageSegments.bedsCreate}
-                element={<EditBedPage />}
-              />
-              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
-              <Route
-                path={manageSegments.beds}
-                element={<ShelterDashboardPage tab="beds" />}
               />
               <Route
                 path={manageSegments.reservationsCreate}

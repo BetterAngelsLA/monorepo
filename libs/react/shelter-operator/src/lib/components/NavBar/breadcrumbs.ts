@@ -7,7 +7,12 @@ import {
   useRoom,
   useShelterOperatorProfile,
 } from '../../hooks';
-import { manageSegments, paths, shelterProfileSegments } from '../../routing';
+import {
+  manageSegments,
+  paths,
+  shelterOperationsSegments,
+  shelterProfileSegments,
+} from '../../routing';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,7 +26,6 @@ export type BreadcrumbItem = {
 const segmentLabels: Record<string, string> = {
   manage: 'Manage',
   rooms: 'Rooms',
-  beds: 'Beds',
   reservations: 'Reservations',
   occupants: 'Occupants',
   profile: 'Profile',
@@ -29,6 +33,7 @@ const segmentLabels: Record<string, string> = {
   edit: 'Edit',
   signIn: 'Sign In',
   users: 'Users',
+  [shelterOperationsSegments.beds]: 'Beds',
   [shelterProfileSegments.basic]: 'Basic Info',
   [shelterProfileSegments.operatingHours]: 'Hours',
   [shelterProfileSegments.policies]: 'Policies',
@@ -75,7 +80,7 @@ const routePatterns: RoutePattern[] = [
         label: 'Reservations',
         path: buildPath(
           `${paths.shelterManage}/${manageSegments.reservations}`,
-          params
+          params,
         ),
       },
       { label: `__reservationId__:${params.reservationId}`, path: '#' },
@@ -94,7 +99,7 @@ const routePatterns: RoutePattern[] = [
         label: 'Reservations',
         path: buildPath(
           `${paths.shelterManage}/${manageSegments.reservations}`,
-          params
+          params,
         ),
       },
       { label: 'Create', path: '#' },
@@ -113,18 +118,18 @@ const routePatterns: RoutePattern[] = [
   },
   // ── Beds ─────────────────────────────────────────────────────────────────
   {
-    pattern: `${paths.shelterManage}/${manageSegments.bedsEdit}`,
+    pattern: `${paths.shelterOperations}/${shelterOperationsSegments.bedsEdit}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(paths.shelterManage, params),
+        path: buildPath(paths.shelterOperations, params),
       },
-      { label: 'Manage', path: buildPath(paths.shelterManage, params) },
+      { label: 'Operations', path: buildPath(paths.shelterOperations, params) },
       {
         label: 'Beds',
         path: buildPath(
-          `${paths.shelterManage}/${manageSegments.beds}`,
-          params
+          `${paths.shelterOperations}/${shelterOperationsSegments.beds}`,
+          params,
         ),
       },
       { label: `__bedId__:${params.bedId}`, path: '#' },
@@ -132,31 +137,31 @@ const routePatterns: RoutePattern[] = [
     ],
   },
   {
-    pattern: `${paths.shelterManage}/${manageSegments.bedsCreate}`,
+    pattern: `${paths.shelterOperations}/${shelterOperationsSegments.bedsCreate}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(paths.shelterManage, params),
+        path: buildPath(paths.shelterOperations, params),
       },
-      { label: 'Manage', path: buildPath(paths.shelterManage, params) },
+      { label: 'Operations', path: buildPath(paths.shelterOperations, params) },
       {
         label: 'Beds',
         path: buildPath(
-          `${paths.shelterManage}/${manageSegments.beds}`,
-          params
+          `${paths.shelterOperations}/${shelterOperationsSegments.beds}`,
+          params,
         ),
       },
       { label: 'Create', path: '#' },
     ],
   },
   {
-    pattern: `${paths.shelterManage}/${manageSegments.beds}`,
+    pattern: `${paths.shelterOperations}/${shelterOperationsSegments.beds}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(paths.shelterManage, params),
+        path: buildPath(paths.shelterOperations, params),
       },
-      { label: 'Manage', path: buildPath(paths.shelterManage, params) },
+      { label: 'Operations', path: buildPath(paths.shelterOperations, params) },
       { label: 'Beds', path: '#' },
     ],
   },
@@ -173,7 +178,7 @@ const routePatterns: RoutePattern[] = [
         label: 'Rooms',
         path: buildPath(
           `${paths.shelterManage}/${manageSegments.rooms}`,
-          params
+          params,
         ),
       },
       { label: `__roomId__:${params.roomId}`, path: '#' },
@@ -192,7 +197,7 @@ const routePatterns: RoutePattern[] = [
         label: 'Rooms',
         path: buildPath(
           `${paths.shelterManage}/${manageSegments.rooms}`,
-          params
+          params,
         ),
       },
       { label: 'Create', path: '#' },
@@ -232,15 +237,26 @@ const routePatterns: RoutePattern[] = [
       { label: 'Manage', path: '#' },
     ],
   },
-  // ── Profile sub-segments ─────────────────────────────────────────────────
-  ...Object.values(shelterProfileSegments).map((segment) => ({
-    pattern: `${paths.shelterProfile}/${segment}`,
+  // ── Operations (root) ────────────────────────────────────────────────────────
+  {
+    pattern: paths.shelterOperations,
+    build: (params) => [
+      {
+        label: `__shelterId__:${params.shelterId}`,
+        path: buildPath(paths.shelterOperations, params),
+      },
+      { label: 'Operations', path: '#' },
+    ],
+  },
+  // ── Operations sub-segments ─────────────────────────────────────────────────
+  ...Object.values(shelterOperationsSegments).map((segment) => ({
+    pattern: `${paths.shelterOperations}/${segment}`,
     build: (params: Record<string, string>) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(paths.shelterManage, params),
+        path: buildPath(paths.shelterOperations, params),
       },
-      { label: 'Profile', path: buildPath(paths.shelterProfile, params) },
+      { label: 'Operations', path: buildPath(paths.shelterOperations, params) },
       { label: segmentLabels[segment] ?? segment, path: '#' },
     ],
   })),
@@ -255,6 +271,18 @@ const routePatterns: RoutePattern[] = [
       { label: 'Profile', path: '#' },
     ],
   },
+  // ── Profile sub-segments ─────────────────────────────────────────────────
+  ...Object.values(shelterProfileSegments).map((segment) => ({
+    pattern: `${paths.shelterProfile}/${segment}`,
+    build: (params: Record<string, string>) => [
+      {
+        label: `__shelterId__:${params.shelterId}`,
+        path: buildPath(paths.shelterManage, params),
+      },
+      { label: 'Profile', path: buildPath(paths.shelterProfile, params) },
+      { label: segmentLabels[segment] ?? segment, path: '#' },
+    ],
+  })),
   // ── Users ────────────────────────────────────────────────────────────────
   {
     pattern: paths.users,
@@ -267,7 +295,7 @@ const routePatterns: RoutePattern[] = [
 const ID_SEPARATOR = '__:';
 
 function parseIdPlaceholder(
-  label: string
+  label: string,
 ): { type: string; id: string } | null {
   const idx = label.indexOf(ID_SEPARATOR);
   if (idx === -1) return null;
@@ -307,7 +335,7 @@ interface UseBreadcrumbNamesResult {
  * to human-readable names via GraphQL queries.
  */
 export function useBreadcrumbNames(
-  rawItems: BreadcrumbItem[]
+  rawItems: BreadcrumbItem[],
 ): UseBreadcrumbNamesResult {
   // Extract dynamic IDs from raw breadcrumb items
   const { shelterId, roomId, bedId, reservationId } = useMemo(() => {
@@ -343,7 +371,7 @@ export function useBreadcrumbNames(
     useShelterOperatorProfile(shelterId ?? '');
   const { bed, loading: bedLoading } = useBed(bedId ?? '');
   const { reservation, loading: reservationLoading } = useReservation(
-    reservationId ?? ''
+    reservationId ?? '',
   );
   const { room, loading: roomLoading } = useRoom(roomId ?? '');
 
@@ -354,7 +382,7 @@ export function useBreadcrumbNames(
       reservationId: reservationLoading,
       roomId: roomLoading,
     }),
-    [shelterLoading, bedLoading, reservationLoading, roomLoading]
+    [shelterLoading, bedLoading, reservationLoading, roomLoading],
   );
 
   // True if any dynamic placeholder is still being fetched
