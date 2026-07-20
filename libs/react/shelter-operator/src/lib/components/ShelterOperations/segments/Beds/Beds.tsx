@@ -20,7 +20,7 @@ import {
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
 import { useToast } from '../../../base-ui/toast';
-import { BedTable, type Bed, type BedRowObject } from '../../../BedTable';
+import { BedTable, type Bed, type BedRowObject } from './BedTable';
 
 export function Beds({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();

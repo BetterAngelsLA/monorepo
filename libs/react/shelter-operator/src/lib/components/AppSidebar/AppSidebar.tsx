@@ -1,16 +1,17 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { Divider, Sidebar } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   isShelterManageRoute,
   isShelterRoute,
   paths,
   shelterManageRoute,
 } from '../../routing';
+import { ShelterOperationsLinks } from './ShelterOperationsLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
@@ -27,7 +28,7 @@ export function AppSidebar(props: IProps) {
   const { shelterId } = useParams<{ shelterId: string }>();
   const { hasPermission } = useActiveOrg();
   const canViewMembers = hasPermission(
-    UserOrganizationPermissions.ViewOrgMembers
+    UserOrganizationPermissions.ViewOrgMembers,
   );
 
   const parentCss = ['bg-[#FAFAFA]', className];
@@ -79,6 +80,11 @@ export function AppSidebar(props: IProps) {
             </Sidebar.Link>
 
             <ShelterProfileLinks
+              pathname={location.pathname}
+              shelterId={shelterId}
+              isOpen={isOpen}
+            />
+            <ShelterOperationsLinks
               pathname={location.pathname}
               shelterId={shelterId}
               isOpen={isOpen}
