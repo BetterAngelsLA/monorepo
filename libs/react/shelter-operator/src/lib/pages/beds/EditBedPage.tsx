@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { BedForm } from '../../components/beds/bed-form/BedForm';
-import { mapBedToFormData } from '../../components/beds/bed-form/utils/mapBedToFormData';
+import { BedForm } from '../../components/ShelterInventory/segments/Beds/BedForm/BedForm';
+import { toFormData } from '../../components/ShelterInventory/segments/Beds/BedForm/formSchema';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
 import { shelterManageBedsRoute } from '../../routing';
@@ -29,7 +29,7 @@ export function EditBedPage() {
         key={bedId}
         shelterId={shelterId ?? ''}
         bedId={bedId}
-        initialData={bed ? mapBedToFormData(bed) : undefined}
+        initialData={bed ? toFormData(bed) : undefined}
         onSuccess={() => navigate(bedsPath)}
         onCancel={() => navigate(bedsPath)}
       />

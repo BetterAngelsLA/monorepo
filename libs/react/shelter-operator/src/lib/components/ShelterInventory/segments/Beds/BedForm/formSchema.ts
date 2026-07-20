@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import {
   AccessibilityChoices,
   BedTypeChoices,
@@ -6,7 +5,8 @@ import {
   FunderChoices,
   MedicalNeedChoices,
   PetChoices,
-} from '../../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
+import { z } from 'zod';
 import type { UseBedResultType } from '../../../../../hooks';
 import { toDropdownOptions } from '../../../../base-ui/dropdown';
 

@@ -1,8 +1,8 @@
 import type {
   CreateBedInput,
   UpdateBedInput,
-} from '../../../../../apollo/graphql/__generated__/types';
-import type { BedFormData } from '../../../Beds/bed-form./../segments/Beds/BedForm/formSchema';
+} from '@monorepo/ba-platform/types';
+import type { BedFormData } from './formSchema';
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));

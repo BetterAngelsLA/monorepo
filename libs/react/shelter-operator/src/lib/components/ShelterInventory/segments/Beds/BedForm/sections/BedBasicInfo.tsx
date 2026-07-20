@@ -1,11 +1,11 @@
 import { memo } from 'react';
 import { Controller } from 'react-hook-form';
-import type { DropdownOption } from '../../../base-ui/dropdown';
-import { Dropdown } from '../../../base-ui/dropdown';
-import { FormSection } from '../../../form/FormSection';
-import { TextAreaField } from '../../../form/TextAreaField';
-import { TextField } from '../../../form/TextField';
-import { BED_TYPE_OPTIONS } from '../constants/bedFormOptions';
+import type { DropdownOption } from '../../../../../base-ui/dropdown';
+import { Dropdown } from '../../../../../base-ui/dropdown';
+import { FormSection } from '../../../../../form/FormSection';
+import { TextAreaField } from '../../../../../form/TextAreaField';
+import { TextField } from '../../../../../form/TextField';
+import { BED_TYPE_OPTIONS } from '../formSchema';
 import type { SectionProps } from '../types';
 
 export type TProps = SectionProps & {

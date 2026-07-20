@@ -3,7 +3,7 @@ import { Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
-import { BedsView } from '../../components/beds/BedsView';
+import { Beds } from '../../components/ShelterInventory/segments/Beds';
 import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { ReportsView } from '../../components/reports/ReportsView';
 import { ReservationsView } from '../../components/reservations/ReservationsView';
@@ -82,7 +82,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
 
       {tab === 'rooms' && <RoomsView shelterId={id} />}
       {tab === 'reports' && <ReportsView shelterId={id} />}
-      {tab === 'beds' && <BedsView shelterId={id} />}
+      {tab === 'beds' && <Beds shelterId={id} />}
       {tab === 'occupants' && <OccupantsView shelterId={id} />}
       {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>
