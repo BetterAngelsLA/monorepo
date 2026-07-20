@@ -1,21 +1,29 @@
+import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { InputHTMLAttributes, ReactNode, useId } from 'react';
 
-export interface IInputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface IInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   label?: string;
   inputClassname?: string;
+  placeholderClassname?: string;
   error?: string;
   iconBefore?: ReactNode;
+  noClearBtn?: boolean;
+  onChange?: (value: string) => void;
 }
 
 export function Input(props: IInputProps) {
   const {
     label,
     id: propId,
+    onChange,
     error,
     className,
     inputClassname,
+    placeholderClassname,
     iconBefore,
+    noClearBtn,
     ...rest
   } = props;
   const generatedId = useId();
@@ -27,6 +35,14 @@ export function Input(props: IInputProps) {
   const errorCss = ['text-sm', 'text-alert-60', 'mt-2'];
   const labelCss = ['text-sm', 'ml-1', 'mb-2', 'flex', 'flex-row'];
   const requiredCss = ['ml-1', 'text-alert-60'];
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    onChange?.(e.target.value);
+  }
+
+  function onClear() {
+    onChange?.('');
+  }
 
   const inputWrapperCss = [
     'flex',
@@ -43,6 +59,7 @@ export function Input(props: IInputProps) {
     'px-2',
     'py-4',
     'w-full',
+    placeholderClassname,
   ];
 
   return (
@@ -56,9 +73,25 @@ export function Input(props: IInputProps) {
       )}
 
       <div className={mergeCss(inputWrapperCss)}>
-        {iconBefore && <div>{iconBefore}</div>}
+        {iconBefore && <div className="mr-2">{iconBefore}</div>}
 
-        <input className={mergeCss(inputCss)} id={id} {...rest} />
+        <input
+          className={mergeCss(inputCss)}
+          id={id}
+          onChange={handleChange}
+          {...rest}
+        />
+
+        {!noClearBtn && (
+          <div className="ml-2">
+            <div
+              className="bg-neutral-90 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer"
+              onClick={onClear}
+            >
+              <CloseIcon className="w-2 h-2" />
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <div className={mergeCss(errorCss)}>{error}</div>}
