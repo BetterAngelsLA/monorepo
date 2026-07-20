@@ -8,15 +8,15 @@ import { TextField } from '../../../form/TextField';
 import { BED_TYPE_OPTIONS } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
-export type BasicInformationSectionProps = SectionProps & {
+export type TProps = SectionProps & {
   roomOptions: DropdownOption<string>[];
 };
 
-export const BasicInformationSection = memo(function BasicInformationSection({
+export const BedBasicInfo = memo(function BedBasicInfo({
   control,
   errors,
   roomOptions,
-}: BasicInformationSectionProps) {
+}: TProps) {
   return (
     <FormSection title="Basic Information">
       <Controller
@@ -44,7 +44,7 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             options={roomOptions}
             value={
               field.value
-                ? roomOptions.find((o) => o.value === field.value) ?? null
+                ? (roomOptions.find((o) => o.value === field.value) ?? null)
                 : null
             }
             onChange={(option) => {
@@ -67,7 +67,8 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             options={BED_TYPE_OPTIONS}
             value={
               field.value
-                ? BED_TYPE_OPTIONS.find((o) => o.value === field.value) ?? null
+                ? (BED_TYPE_OPTIONS.find((o) => o.value === field.value) ??
+                  null)
                 : null
             }
             onChange={(option) => {

@@ -10,7 +10,7 @@ import {
 } from '../constants/bedFormOptions';
 import type { SectionProps } from '../types';
 
-export const BedDetailsSection = memo(function BedDetailsSection({
+export const BedDetails = memo(function BedDetails({
   control,
   errors,
   filteredPropertyOptions,
