@@ -13,9 +13,9 @@ import { cloneBedMeta } from '../../../../hooks/useCloneBed/__generated__/useClo
 import { deleteBedsMeta } from '../../../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
-  shelterCreateBedRoute,
   shelterCreateReservationRoute,
-  shelterEditBedRoute,
+  shelterOperationsCreateBedRoute,
+  shelterOperationsEditBedRoute,
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
@@ -92,7 +92,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const handleEdit = useCallback(
     (rowObject: BedRowObject) => {
-      navigate(shelterEditBedRoute(shelterId, rowObject.id));
+      navigate(shelterOperationsEditBedRoute(shelterId, rowObject.id));
     },
     [navigate, shelterId],
   );
@@ -247,7 +247,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterCreateBedRoute(shelterId))}
+          onClick={() => navigate(shelterOperationsCreateBedRoute(shelterId))}
         >
           Create Bed
         </Button>

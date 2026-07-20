@@ -1,5 +1,5 @@
 import { generatePath, matchPath } from 'react-router-dom';
-import { TShelterProfileSegment } from './types';
+import { TShelterOperationsSegment, TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';
 
@@ -19,6 +19,7 @@ export const paths = {
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
   shelterManage: '/operator/shelter/:shelterId/manage',
+  shelterOperations: '/operator/shelter/:shelterId/operations',
   shelterProfile: '/operator/shelter/:shelterId/profile',
 } as const;
 
@@ -31,6 +32,12 @@ export const shelterProfileSegments = {
   services: 'services',
   ecosystem: 'ecosystem',
   media: 'media',
+} as const;
+
+export const shelterOperationsSegments = {
+  beds: 'beds',
+  bedsCreate: 'beds/create',
+  bedsEdit: 'beds/:bedId/edit',
 } as const;
 
 export const manageSegments = {
@@ -52,6 +59,15 @@ export function shelterManageRoute(shelterId: string): string {
   return generatePath(paths.shelterManage, { shelterId });
 }
 
+export function shelterOperationsRoute(
+  shelterId: string,
+  segment?: TShelterOperationsSegment,
+): string {
+  const base = generatePath(paths.shelterOperations, { shelterId });
+
+  return segment ? `${base}/${segment}` : base;
+}
+
 export function shelterManageRoomsRoute(shelterId: string): string {
   return `${shelterManageRoute(shelterId)}/${manageSegments.rooms}`;
 }
@@ -62,7 +78,7 @@ export function shelterCreateRoomRoute(shelterId: string): string {
 
 export function shelterEditRoomRoute(
   shelterId: string,
-  roomId: string
+  roomId: string,
 ): string {
   return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
     shelterId,
@@ -76,6 +92,23 @@ export function shelterManageBedsRoute(shelterId: string): string {
 
 export function shelterCreateBedRoute(shelterId: string): string {
   return `${shelterManageRoute(shelterId)}/${manageSegments.bedsCreate}`;
+}
+
+export function shelterOperationsCreateBedRoute(shelterId: string): string {
+  return `${shelterOperationsRoute(shelterId)}/${shelterOperationsSegments.bedsCreate}`;
+}
+
+export function shelterOperationsEditBedRoute(
+  shelterId: string,
+  bedId: string,
+): string {
+  return generatePath(
+    `${paths.shelterOperations}/${shelterOperationsSegments.bedsEdit}`,
+    {
+      shelterId,
+      bedId,
+    },
+  );
 }
 
 export function shelterEditBedRoute(shelterId: string, bedId: string): string {
@@ -97,17 +130,17 @@ export function shelterCreateReservationRoute(shelterId: string): string {
 
 export function shelterEditReservationRoute(
   shelterId: string,
-  reservationId: string
+  reservationId: string,
 ): string {
   return generatePath(
     `${paths.shelterManage}/${manageSegments.reservationsEdit}`,
-    { shelterId, reservationId }
+    { shelterId, reservationId },
   );
 }
 
 export function shelterProfileRoute(
   shelterId: string,
-  segment?: TShelterProfileSegment
+  segment?: TShelterProfileSegment,
 ): string {
   const base = generatePath(paths.shelterProfile, { shelterId });
 
@@ -132,7 +165,7 @@ export function isShelterManageRoute(path: string, strict?: boolean): boolean {
 
 export function isShelterProfileRoute(
   path: string,
-  opts?: { strict?: boolean; segment?: TShelterProfileSegment }
+  opts?: { strict?: boolean; segment?: TShelterProfileSegment },
 ): boolean {
   const { strict, segment } = opts ?? {};
   if (segment) {
@@ -144,4 +177,20 @@ export function isShelterProfileRoute(
   }
 
   return Boolean(matchPath(`${paths.shelterProfile}/*`, path));
+}
+
+export function isShelterOperationsRoute(
+  path: string,
+  opts?: { strict?: boolean; segment?: TShelterOperationsSegment },
+): boolean {
+  const { strict, segment } = opts ?? {};
+  if (segment) {
+    return Boolean(matchPath(`${paths.shelterOperations}/${segment}`, path));
+  }
+
+  if (strict) {
+    return Boolean(matchPath(paths.shelterOperations, path));
+  }
+
+  return Boolean(matchPath(`${paths.shelterOperations}/*`, path));
 }

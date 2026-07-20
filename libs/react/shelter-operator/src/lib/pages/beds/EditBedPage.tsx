@@ -1,16 +1,26 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { BedForm } from '../../components/ShelterInventory/segments/Beds/BedForm/BedForm';
-import { toFormData } from '../../components/ShelterInventory/segments/Beds/BedForm/formSchema';
+import { BedForm } from '../../components/ShelterOperations/segments/Beds/BedForm/BedForm';
+import { toFormData } from '../../components/ShelterOperations/segments/Beds/BedForm/formSchema';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
-import { shelterManageBedsRoute } from '../../routing';
+import {
+  shelterOperationsRoute,
+  shelterOperationsSegments,
+} from '../../routing';
 
 export function EditBedPage() {
   const navigate = useNavigate();
   const { shelterId, bedId } = useParams();
   const { bed, loading, error } = useBed(bedId ?? '');
 
-  const bedsPath = shelterManageBedsRoute(shelterId ?? '');
+  if (!shelterId) {
+    return;
+  }
+
+  const bedsPath = shelterOperationsRoute(
+    shelterId,
+    shelterOperationsSegments.beds,
+  );
 
   return (
     <ManageFormPageLayout

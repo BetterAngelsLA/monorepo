@@ -1,11 +1,12 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { useUser } from '@monorepo/react/shelter';
 import { localStorageAdapter } from '@monorepo/react/shared';
+import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import { UsersPage } from './pages';
+import { BedsPage } from './pages/beds/BedsPage';
 import { EditBedPage } from './pages/beds/EditBedPage';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -27,6 +28,7 @@ import {
   manageSegments,
   paths,
   routePath,
+  shelterOperationsSegments,
   shelterProfileSegments,
 } from './routing';
 
@@ -56,6 +58,20 @@ export function OperatorApp() {
               path={routePath(paths.shelterCreate)}
               element={<CreateShelterProfile />}
             />
+            <Route path={routePath(paths.shelterOperations)}>
+              <Route
+                path={shelterOperationsSegments.bedsCreate}
+                element={<EditBedPage />}
+              />
+              <Route
+                path={shelterOperationsSegments.bedsEdit}
+                element={<EditBedPage />}
+              />
+              <Route
+                path={shelterOperationsSegments.beds}
+                element={<BedsPage />}
+              />
+            </Route>
             <Route path={routePath(paths.shelterProfile)}>
               <Route
                 index
