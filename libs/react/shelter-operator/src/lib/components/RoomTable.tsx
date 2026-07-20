@@ -1,3 +1,4 @@
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
@@ -7,10 +8,6 @@ import {
   type StatusBadgeVariant,
 } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
-
-import {
-  RoomStatusChoices,
-} from '@monorepo/ba-platform/types';
 
 export type Room = {
   id: string;
@@ -39,12 +36,6 @@ type RoomTableProps = {
   onMarkReady?: (room: Room) => void;
   onReserve?: (room: Room) => void;
 };
-
-function isRoomAvailable(
-  status: RoomStatusChoices | null | undefined,
-): boolean {
-  return status === RoomStatusChoices.Available;
-}
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
   label: string;
@@ -138,13 +129,7 @@ export function RoomTable({
               type="button"
               variant="edit"
               aria-label="Reserve room"
-              disabled={!isRoomAvailable(room.status)}
-              leftIcon={
-                <BookCheck
-                  size={22}
-                  stroke={!isRoomAvailable(room.status) ? 'gray' : 'black'}
-                />
-              }
+              leftIcon={<BookCheck size={22} stroke="black" />}
               onClick={() => onReserve(room)}
             />
           )}

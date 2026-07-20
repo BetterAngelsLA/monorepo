@@ -79,7 +79,7 @@ export const ReservationFormSection = memo(function ReservationFormSection({
             <Dropdown
               label="Bed"
               placeholder="Select a bed"
-              noResultsText="This room has no assigned beds"
+              noResultsText="No available beds"
               options={bedOptions}
               disabled={readOnlyFields.includes('bedId')}
               value={

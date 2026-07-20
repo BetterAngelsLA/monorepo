@@ -46,10 +46,6 @@ export type BedRowObject = {
   bed: Bed;
 };
 
-function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
-  return status === BedStatusChoices.Available;
-}
-
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
   maintenanceFlag?: boolean,
@@ -166,15 +162,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Reserve bed"
-              disabled={!isBedAvailable(rowObject.bed.status)}
-              leftIcon={
-                <BookCheck
-                  size={22}
-                  stroke={
-                    !isBedAvailable(rowObject.bed.status) ? 'gray' : 'black'
-                  }
-                />
-              }
+              leftIcon={<BookCheck size={22} stroke="black" />}
               onClick={() => onReserve(rowObject)}
             />
           )}

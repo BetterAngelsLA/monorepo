@@ -175,20 +175,20 @@ export function ReservationForm({
     }
   }, [watchedRoomId, watchedBedId, allBeds, setValue]);
 
-  // Filter bed options: only show available beds, and when a room is selected,
-  // show only beds in that room. In edit mode, always include the currently
-  // selected bed and the originally assigned bed so they remain visible.
+  // Filter bed options: only show available beds in available rooms, and when a
+  // room is selected, show only beds in that room. In edit mode, always include
+  // the currently selected bed and the originally assigned bed so they remain
+  // visible even if the parent room is no longer Available.
   const bedOptions = useMemo(() => {
     const availableBeds = beds.filter((bed) => {
-      if (bed.room && bed.room.status !== RoomStatusChoices.Available)
-        return false;
-      if (bed.status === BedStatusChoices.Available) return true;
       if (
         reservationId &&
         (bed.id === watchedBedId || bed.id === initialBedIdRef.current)
       )
         return true;
-      return false;
+      if (bed.room && bed.room.status !== RoomStatusChoices.Available)
+        return false;
+      return bed.status === BedStatusChoices.Available;
     });
     const availableOptions = availableBeds.map((bed) => ({
       value: bed.id,

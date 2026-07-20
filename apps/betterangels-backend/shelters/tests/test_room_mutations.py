@@ -1,15 +1,20 @@
+from datetime import timedelta
+
 from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
+from django.utils import timezone
 from model_bakery import baker
+
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
     FunderChoices,
     PetChoices,
+    ReservationStatusChoices,
     RoomStatusChoices,
     RoomStyleChoices,
 )
-from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
+from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Reservation, Room, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
@@ -208,6 +213,40 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)
         self.assertEqual(data["type"], RoomStyleChoices.SINGLE_ROOM.name)
         self.assertEqual(data["notes"], "New notes")
+
+    def test_update_room_last_cleaned_clears_turnaround(self) -> None:
+        last_cleaned = timezone.now() - timedelta(days=2)
+        checkout = timezone.now() - timedelta(days=1)
+        room = baker.make(
+            Room,
+            shelter=self.shelter,
+            name="Room-101",
+            last_cleaned=last_cleaned,
+        )
+        baker.make(
+            Reservation,
+            room=room,
+            bed=None,
+            status=ReservationStatusChoices.COMPLETED,
+            checked_out_at=checkout,
+        )
+        self.assertEqual(room.computed_status, RoomStatusChoices.IN_TURNAROUND)
+
+        mark_ready_at = timezone.now().isoformat().replace("+00:00", "Z")
+        variables = {
+            "id": str(room.pk),
+            "data": {"lastCleaned": mark_ready_at},
+        }
+
+        response = self.execute_graphql(self.mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["updateRoom"]
+        self.assertEqual(data["status"], RoomStatusChoices.AVAILABLE.name)
+        room.refresh_from_db()
+        assert room.last_cleaned
+        self.assertGreater(room.last_cleaned, checkout)
+        self.assertEqual(room.computed_status, RoomStatusChoices.AVAILABLE)
 
     def test_update_room_m2m_fields(self) -> None:
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
