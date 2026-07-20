@@ -3,21 +3,26 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBeds, useCloneBed, useDeleteBeds, useUpdateBed } from '../../hooks';
-import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
-import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
-import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import {
+  useBeds,
+  useCloneBed,
+  useDeleteBeds,
+  useUpdateBed,
+} from '../../../../hooks';
+import { cloneBedMeta } from '../../../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
+import { deleteBedsMeta } from '../../../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
+import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateBedRoute,
   shelterCreateReservationRoute,
   shelterEditBedRoute,
-} from '../../routing';
-import { Button } from '../base-ui/buttons';
-import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { useToast } from '../base-ui/toast';
-import { BedTable, type Bed, type BedRowObject } from '../BedTable';
+} from '../../../../routing';
+import { Button } from '../../../base-ui/buttons';
+import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
+import { useToast } from '../../../base-ui/toast';
+import { BedTable, type Bed, type BedRowObject } from '../../../BedTable';
 
-export function BedsView({ shelterId }: { shelterId: string }) {
+export function Beds({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
   const { beds: bedsData, loading } = useBeds(shelterId);
@@ -82,14 +87,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [cloneBed, showToast]
+    [cloneBed, showToast],
   );
 
   const handleEdit = useCallback(
     (rowObject: BedRowObject) => {
       navigate(shelterEditBedRoute(shelterId, rowObject.id));
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
 
   const handleDeleteRequest = useCallback((bedIds: string[]) => {
@@ -122,7 +127,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [deleteBeds, showToast]
+    [deleteBeds, showToast],
   );
 
   const handleMarkReady = useCallback(
@@ -155,7 +160,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [updateBed, showToast]
+    [updateBed, showToast],
   );
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
@@ -179,7 +184,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       };
       navigate(shelterCreateReservationRoute(shelterId), { state });
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
   const readyRowObject = readyConfirmation.rowObject;
 
