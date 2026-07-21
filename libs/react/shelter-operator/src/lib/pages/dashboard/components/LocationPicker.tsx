@@ -14,7 +14,7 @@ interface LocationPickerProps {
     longitude?: number;
   } | null;
   onChange: (
-    value: { place: string; latitude: number; longitude: number } | null
+    value: { place: string; latitude: number; longitude: number } | null,
   ) => void;
   error?: string;
   label?: string;
@@ -58,7 +58,7 @@ export function LocationPicker({
         longitude: place.location.lng,
       });
     },
-    [onChange]
+    [onChange],
   );
 
   const collapsed = !!expandable && !mapExpanded;
@@ -73,14 +73,13 @@ export function LocationPicker({
       {(!isViewEditMode || !isViewMode) && (
         <AddressAutocomplete
           placeholder="Search address"
+          initialValue={value?.place || ''}
           onPlaceSelect={handlePlaceSelect}
         />
       )}
 
       {isViewMode && (
-        <div className="text-sm text-gray-600">
-          <span className="font-medium">{value?.place ?? ''}</span>
-        </div>
+        <div className="text-sm text-gray-900">{value?.place ?? ''}</div>
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
