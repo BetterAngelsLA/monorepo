@@ -57,9 +57,7 @@ def avg_days_to_occupancy_to_xlsx(shelter_id: str, start_date: date, end_date: d
     return rows_to_xlsx(rows, headers, worksheet_name="Avg Days To Occupancy")
 
 
-def metrics_to_xlsx(
-    metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]
-) -> tuple[str, bytes]:
+def metrics_to_xlsx(metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]) -> tuple[str, bytes]:
     shelter_id = str(metrics.shelter_id)
     start_date = metrics.start_date
     end_date = metrics.end_date
@@ -73,14 +71,10 @@ def metrics_to_xlsx(
     sheets: list[tuple[str, SheetData]] = []
 
     if MetricsExportOptions.DAILY_OCCUPANCY_METRICS in selected_options:
-        sheets.append(
-            ("Daily Occupancy", _daily_occupancy_sheet_data(shelter_id, metrics.daily_occupancy))
-        )
+        sheets.append(("Daily Occupancy", _daily_occupancy_sheet_data(shelter_id, metrics.daily_occupancy)))
 
     if MetricsExportOptions.DAILY_BED_STATUS_METRICS in selected_options:
-        sheets.append(
-            ("Daily Bed Status", _daily_bed_status_sheet_data(shelter_id, metrics.daily_bed_status))
-        )
+        sheets.append(("Daily Bed Status", _daily_bed_status_sheet_data(shelter_id, metrics.daily_bed_status)))
 
     if MetricsExportOptions.RESERVATION_METRICS in selected_options:
         sheets.append(

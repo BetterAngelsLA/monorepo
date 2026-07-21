@@ -29,10 +29,7 @@ from reports.export_to_csv import (
     reservation_metrics_to_csv,
     rows_to_csv,
 )
-from reports.export_to_xlsx import (
-    metrics_to_xlsx,
-    rows_to_xlsx,
-)
+from reports.export_to_xlsx import metrics_to_xlsx, rows_to_xlsx
 
 
 def _xlsx_rows(xlsx_content: bytes, worksheet_name: str = "Sheet1") -> list[list[Any]]:
@@ -168,6 +165,7 @@ class TestRowsToXlsx:
         rows = _xlsx_rows(xlsx_content)
 
         assert rows == [["date", "available"]]
+
 
 class TestShelterMetricsExport:
     def test_daily_occupancy_metrics_to_csv(self) -> None:
