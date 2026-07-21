@@ -1,8 +1,10 @@
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
+import { localStorageAdapter } from '@monorepo/react/shared';
 import { createUserProvider } from './createUserProvider';
 import {
   CurrentOrgUserDocument,
   type CurrentOrgUserQuery,
-} from '../../apollo';
+} from '../../../apollo';
 
 // ---------------------------------------------------------------------------
 // Standard user type for admin / dashboard apps
@@ -17,7 +19,7 @@ export type CurrentUser = {
   organizations: readonly {
     id: string;
     name: string;
-    permissions: readonly string[];
+    permissions: readonly PermissionEnum[];
   }[] | null;
 };
 
@@ -25,8 +27,9 @@ export type CurrentUser = {
 // Pre-configured provider for the standard CurrentOrgUser query
 // ---------------------------------------------------------------------------
 
-export const { UserProvider, useUser } = createUserProvider({
+const { UserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
+  defaultStorage: localStorageAdapter,
   parseUser: (data): CurrentUser | undefined => {
     const user = data as CurrentOrgUserQuery['currentUser'] | undefined;
     if (!user) return undefined;
@@ -35,10 +38,12 @@ export const { UserProvider, useUser } = createUserProvider({
       username: user.username ?? undefined,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
-      email: user.email,
-      organizations: user.organizations ?? [],
+      email: user.email ?? undefined,
+      organizations: (user.organizations ?? []) as CurrentUser['organizations'],
     };
   },
   isUnauthenticated: (errors) =>
     errors?.some((e) => e.message.includes('User is not logged in.')) ?? false,
 });
+
+export { UserProvider, useUser };

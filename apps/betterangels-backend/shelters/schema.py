@@ -6,7 +6,6 @@ from accounts.extensions import HasOrgPerm
 from accounts.models import User
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
-    AuthorizedPresignedS3UploadType,
     BulkDeleteInput,
     BulkDeleteResult,
 )
@@ -15,6 +14,7 @@ from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.services import shelter_photo
+from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
@@ -43,7 +43,6 @@ from shelters.types import (
     UpdateShelterPhotoInput,
 )
 from strawberry import ID
-from strawberry.scalars import JSON
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -231,25 +230,22 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
 
-        presigned_uploads = shelter_photo.create_presigned_uploads(
+        uploads = [
+            UploadRequest(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                mime_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = shelter_photo.create_presigned_uploads(
             user=user,
             organization_id=org_id,
             shelter_id=data.shelter_id,
-            uploads=data.uploads,
+            uploads=uploads,
         )
 
-        return AuthorizedPresignedS3UploadsType(
-            uploads=[
-                AuthorizedPresignedS3UploadType(
-                    ref_id=item["ref_id"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    presigned_key=item["presigned_key"],
-                    upload_token=item["upload_token"],
-                )
-                for item in presigned_uploads["uploads"]
-            ]
-        )
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -263,11 +259,21 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
 
+        items = [
+            ShelterPhotoResolveItem(
+                presigned_key=p.presigned_key,
+                upload_token=p.upload_token,
+                filename=p.filename,
+                mime_type=p.content_type,
+                photo_type=p.photo_type,
+            )
+            for p in data.photos
+        ]
         photos = shelter_photo.resolve_uploads(
             user=user,
             organization_id=org_id,
             shelter_id=data.shelter_id,
-            photos=data.photos,
+            photos=items,
         )
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))

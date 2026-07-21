@@ -1,0 +1,21 @@
+mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
+  updateBed(id: $id, data: $data) {
+    ... on BedType {
+      id
+      name
+      status
+      type
+      room {
+        id
+        name
+      }
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

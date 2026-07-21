@@ -3,8 +3,8 @@ import { Check, X } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReservationStatusChoices } from '../apollo/graphql/__generated__/types';
-import { GetReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
+import { ReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
 import { shelterEditReservationRoute } from '../routing';
 import { Button } from './base-ui/buttons';
 import { StatusBadge } from './base-ui/status-badge/StatusBadge';
@@ -23,11 +23,11 @@ const CANCEL_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
 ]);
 
 type ReservationRow = NonNullable<
-  GetReservationsQuery['reservations']['results'][number]
+  ReservationsQuery['reservations']['results'][number]
 >;
 
 type ReservationTableProps = {
-  rows: ReservationRow[];
+  reservations: ReservationRow[];
   shelterId: string;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -49,7 +49,7 @@ type ReservationTableProps = {
 };
 
 export function ReservationTable({
-  rows,
+  reservations,
   shelterId,
   loading,
   loadingState,
@@ -81,24 +81,24 @@ export function ReservationTable({
         key: 'client',
         label: 'Client',
         width: '1.5fr',
-        sortValue: (row) => {
-          const clients = row.clients ?? [];
+        sortValue: (reservation) => {
+          const clients = reservation.clients ?? [];
           if (clients.length === 0) return '';
           const primary = clients.find((c) => c.isPrimary) ?? clients[0];
           return primary.clientProfile
             ? formatClientDisplayName(primary.clientProfile)
             : '';
         },
-        filterValue: (row) => {
-          const clients = row.clients ?? [];
+        filterValue: (reservation) => {
+          const clients = reservation.clients ?? [];
           if (clients.length === 0) return '';
           const primary = clients.find((c) => c.isPrimary) ?? clients[0];
           return primary.clientProfile
             ? formatClientDisplayName(primary.clientProfile)
             : '';
         },
-        render: (row) => {
-          const clients = row.clients ?? [];
+        render: (reservation) => {
+          const clients = reservation.clients ?? [];
           if (clients.length === 0)
             return <span className="text-gray-400">—</span>;
           const primary = clients.find((c) => c.isPrimary) ?? clients[0];
@@ -122,11 +122,13 @@ export function ReservationTable({
         key: 'status',
         label: 'Status',
         width: '1fr',
-        sortValue: (row) => reservationStatusInfo(row.status).label,
-        filterValue: (row) => reservationStatusInfo(row.status).label,
+        sortValue: (reservation) =>
+          reservationStatusInfo(reservation.status).label,
+        filterValue: (reservation) =>
+          reservationStatusInfo(reservation.status).label,
         autoFilterOptions: true,
-        render: (row) => {
-          const info = reservationStatusInfo(row.status);
+        render: (reservation) => {
+          const info = reservationStatusInfo(reservation.status);
           return <StatusBadge label={info.label} variant={info.variant} />;
         },
       },
@@ -135,11 +137,13 @@ export function ReservationTable({
         label: 'Room / Bed',
         width: '1.5fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (row) => (row.room?.name ?? '') + (row.bed?.name ?? ''),
-        filterValue: (row) => (row.room?.name ?? '') + (row.bed?.name ?? ''),
-        render: (row) => {
-          const roomName = row.room?.name;
-          const bedName = row.bed?.name;
+        sortValue: (reservation) =>
+          (reservation.room?.name ?? '') + (reservation.bed?.name ?? ''),
+        filterValue: (reservation) =>
+          (reservation.room?.name ?? '') + (reservation.bed?.name ?? ''),
+        render: (reservation) => {
+          const roomName = reservation.room?.name;
+          const bedName = reservation.bed?.name;
           if (roomName && bedName) {
             return (
               <>
@@ -153,42 +157,73 @@ export function ReservationTable({
         },
       },
       {
-        key: 'startDate',
-        label: 'Sched. Check-In',
+        key: 'checkedInAt',
+        label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (row) => row.startDate ?? '',
-        filterValue: (row) => row.startDate ?? '',
-        render: (row) =>
-          row.startDate ? (
-            <span>{new Date(row.startDate).toLocaleDateString()}</span>
+        sortValue: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          return showCheckedInAt
+            ? (reservation.checkedInAt ?? '')
+            : (reservation.startDate ?? '');
+        },
+        filterValue: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          return showCheckedInAt
+            ? (reservation.checkedInAt ?? '')
+            : (reservation.startDate ?? '');
+        },
+        render: (reservation) => {
+          const showCheckedInAt =
+            reservation.status === ReservationStatusChoices.CheckedIn ||
+            reservation.status === ReservationStatusChoices.Completed;
+          if (showCheckedInAt) {
+            return reservation.checkedInAt ? (
+              <span>
+                {new Date(reservation.checkedInAt).toLocaleDateString()}
+              </span>
+            ) : (
+              <span className="text-gray-400">—</span>
+            );
+          }
+          return reservation.startDate ? (
+            <span>
+              {new Date(reservation.startDate).toLocaleDateString()} (sched.)
+            </span>
           ) : (
             <span className="text-gray-400">—</span>
-          ),
+          );
+        },
       },
       {
         key: 'checkedOutAt',
         label: 'Check-Out',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (row) => row.checkedOutAt ?? '',
-        filterValue: (row) => row.checkedOutAt ?? '',
-        render: (row) =>
-          row.checkedOutAt ? (
-            <span>{new Date(row.checkedOutAt).toLocaleDateString()}</span>
+        sortValue: (reservation) => reservation.checkedOutAt ?? '',
+        filterValue: (reservation) => reservation.checkedOutAt ?? '',
+        render: (reservation) =>
+          reservation.checkedOutAt ? (
+            <span>
+              {new Date(reservation.checkedOutAt).toLocaleDateString()}
+            </span>
           ) : (
             <span className="text-gray-400">—</span>
           ),
       },
     ],
-    []
+    [],
   );
 
   return (
     <Table
       columns={columns}
-      rows={rows}
-      getRowKey={(row) => row.id}
+      rows={reservations}
+      getRowKey={(reservation) => reservation.id}
       getRowSlot={(rowObject) => (
         <div
           className="flex items-center justify-end gap-1"

@@ -553,7 +553,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^4.0.0, @apollo/client@npm:^4.0.9":
+"@apollo/client@npm:^4.0.9":
   version: 4.1.7
   resolution: "@apollo/client@npm:4.1.7"
   dependencies:
@@ -5629,7 +5629,6 @@ __metadata:
     "@tiptap/extension-placeholder": "npm:^3.26.0"
     "@tiptap/react": "npm:^3.26.0"
     "@tiptap/starter-kit": "npm:^3.26.0"
-    "@types/apollo-upload-client": "npm:^19.0.0"
     "@types/geojson": "npm:^7946.0.16"
     "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:29.5.14"
@@ -5652,7 +5651,6 @@ __metadata:
     "@vitest/ui": "npm:^4.1.4"
     "@yarnpkg/sdks": "npm:^3.1.1"
     antd: "npm:^6.3.1"
-    apollo-upload-client: "npm:^19.0.0"
     babel-jest: "npm:30.2.0"
     babel-loader: "npm:^10.0.0"
     babel-plugin-react-native-web: "npm:^0.19.8"
@@ -10665,17 +10663,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/apollo-upload-client@npm:^19.0.0":
-  version: 19.0.0
-  resolution: "@types/apollo-upload-client@npm:19.0.0"
-  dependencies:
-    "@apollo/client": "npm:^4.0.0"
-    "@types/extract-files": "npm:*"
-    graphql: "npm:14 - 16"
-  checksum: 10/ff3be0c31bb48aa51bcd74b2c340fb333c6fccfe9f5215d0c5e665b2745992c8b642a4cabcf1dec3f77ab2cc1feeedd0e41ce8c4b6feef2f4e1e925ff73eac55
-  languageName: node
-  linkType: hard
-
 "@types/aria-query@npm:^5.0.1":
   version: 5.0.4
   resolution: "@types/aria-query@npm:5.0.4"
@@ -10957,13 +10944,6 @@ __metadata:
   version: 1.1.15
   resolution: "@types/eventsource@npm:1.1.15"
   checksum: 10/52e024f5aebfd6bc166f2162d6e408cf788886007e571519c75f8c3623feaa3c5a74681fd3a128de6d21b28ef88dd683421264f10d5c98728959b99b1229b85e
-  languageName: node
-  linkType: hard
-
-"@types/extract-files@npm:*":
-  version: 13.0.2
-  resolution: "@types/extract-files@npm:13.0.2"
-  checksum: 10/62c4d5c73250cf88c5c138a4008d099ce2732c86c0de298281e0630ffb889d3420d2a92a18b3120127c3d603106f6a9a11e3c5252b5ab76fbc59c662a2f37d1d
   languageName: node
   linkType: hard
 
@@ -12749,19 +12729,6 @@ __metadata:
     normalize-path: "npm:^3.0.0"
     picomatch: "npm:^2.0.4"
   checksum: 10/3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
-  languageName: node
-  linkType: hard
-
-"apollo-upload-client@npm:^19.0.0":
-  version: 19.0.0
-  resolution: "apollo-upload-client@npm:19.0.0"
-  dependencies:
-    extract-files: "npm:^13.0.0"
-  peerDependencies:
-    "@apollo/client": ^4.0.0
-    graphql: 14 - 16
-    rxjs: ^7.3.0
-  checksum: 10/d1b23fb55d1d74ee16950686dd0d7cde3cf2ded9ad1a8a01d66e40d58c4e3f533351137bcf3b4fd568e6d76195d26ca73cbbabce527ba2ace17fe0328f51cf92
   languageName: node
   linkType: hard
 
@@ -17838,15 +17805,6 @@ __metadata:
     ext-list: "npm:^2.0.0"
     sort-keys-length: "npm:^1.0.0"
   checksum: 10/f598269bd5de4295540ea7d6f8f6a01d82a7508f148b7700a05628ef6121648d26e6e5e942049e953b3051863df6b54bd8fe951e7877f185e34ace5d44370b33
-  languageName: node
-  linkType: hard
-
-"extract-files@npm:^13.0.0":
-  version: 13.0.0
-  resolution: "extract-files@npm:13.0.0"
-  dependencies:
-    is-plain-obj: "npm:^4.1.0"
-  checksum: 10/b6fa0eb69115416808b4e92bfdaf69895a50daf3b28320a1dd99bc8a3c9163ac0fa1c1f5494bff00c16bdc029f2b8a89b1b0b879e9a06d6148f6f6ec50305b7a
   languageName: node
   linkType: hard
 

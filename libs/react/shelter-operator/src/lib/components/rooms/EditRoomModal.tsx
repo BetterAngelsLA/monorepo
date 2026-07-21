@@ -1,4 +1,4 @@
-import type { RoomType as Room } from '../../apollo/graphql/__generated__/types';
+import type { RoomType as Room } from '@monorepo/ba-platform/types';
 import { Button } from '../base-ui/buttons/buttons';
 import { Modal } from '../base-ui/modal/Modal';
 import { ModalFooter } from '../base-ui/modal/ModalFooter';

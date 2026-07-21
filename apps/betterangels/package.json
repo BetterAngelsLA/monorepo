@@ -31,7 +31,6 @@
     "vite": "*",
     "vite-plugin-static-copy": "*",
     "@graphql-typed-document-node/core": "*",
-    "apollo-upload-client": "*",
     "@react-native-async-storage/async-storage": "*",
     "react-router-dom": "*",
     "clsx": "*",

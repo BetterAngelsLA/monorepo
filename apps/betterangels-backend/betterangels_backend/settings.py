@@ -78,6 +78,11 @@ env = environ.Env(
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
+    SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),  # 50 MiB
+    NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -85,10 +90,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
+
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
     environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
+
+# ── Upload size limits ─────────────────────────────────────────────────
+#
+# File uploads go through presigned S3 POST URLs (client → S3 directly),
+# so Django never sees the file bytes. DATA_UPLOAD_MAX_MEMORY_SIZE and
+# FILE_UPLOAD_MAX_MEMORY_SIZE are left at Django's 2.5 MB defaults.
+#
+# Per-domain S3 presigned limits are available via environment variables;
+# the defaults (declared above) are 50 MiB (50 * 1024 * 1024 bytes) each.
+#
+# ⚠️  Keep in sync with the canonical ``UPLOAD_MAX_FILE_SIZE`` constant in
+# ``libs/ba-platform/src/lib/constants.ts`` — the frontend relies on that
+# value for client-side file-size validation.
+S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE = env("S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE")
+S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
+SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
+NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
+CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
 
 
 # Quick-start development settings - unsuitable for production

@@ -8,7 +8,7 @@ export interface PresignedPostPayload {
 
 export interface UploadFileToS3Input {
   presignedPost: PresignedPostPayload;
-  file: File;
+  file: Blob;
 }
 
 /**
@@ -16,6 +16,8 @@ export interface UploadFileToS3Input {
  *
  * Appends all presigned fields to a FormData payload, then appends
  * the file last (required by S3). Returns the S3 object key on success.
+ *
+ * Accepts any Blob (web File, expo-file-system File, etc.).
  */
 export async function uploadFileToS3WithPresignedPost(
   input: UploadFileToS3Input
@@ -24,6 +26,11 @@ export async function uploadFileToS3WithPresignedPost(
 
   const presignedFields = presignedPost.fields;
   const presignedFieldsKey = presignedFields['key'];
+  const contentType = presignedFields['Content-Type'];
+
+  if (!contentType) {
+    throw new Error('Missing Content-Type in presigned fields');
+  }
 
   if (!presignedPost.key) {
     throw new Error('presignedPost.key missing.');

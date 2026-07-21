@@ -61,7 +61,7 @@ def daily_occupancy_metrics_to_csv(shelter_id: str, metrics: list[DailyOccupancy
 
 
 def daily_bed_status_metrics_to_csv(shelter_id: str, metrics: list[DailyBedStatusMetricsType]) -> str:
-    headers = ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"]
+    headers = ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service", "in_turnaround"]
 
     rows = [
         {
@@ -71,6 +71,7 @@ def daily_bed_status_metrics_to_csv(shelter_id: str, metrics: list[DailyBedStatu
             "occupied": metric.occupied,
             "reserved": metric.reserved,
             "out_of_service": metric.out_of_service,
+            "in_turnaround": metric.in_turnaround,
         }
         for metric in metrics
     ]

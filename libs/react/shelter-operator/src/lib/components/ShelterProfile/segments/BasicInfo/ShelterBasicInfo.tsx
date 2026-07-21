@@ -9,7 +9,11 @@ import {
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
-import { type BasicInfoFormData, formSchema, toFormData } from './formSchema';
+import {
+  type BasicInfoFormData,
+  formFieldNames,
+  toFormData,
+} from './formSchema';
 import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 function toUpdateInput(
@@ -43,6 +47,7 @@ export function ShelterBasicInfo(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -60,7 +65,7 @@ export function ShelterBasicInfo(props: TProps) {
       const fieldErrors = getFieldErrorsOrThrow({
         response,
         ...updateShelterProfileMeta,
-        fields: Object.keys(formSchema.shape),
+        fields: formFieldNames,
       });
 
       if (fieldErrors.length) {
@@ -70,6 +75,7 @@ export function ShelterBasicInfo(props: TProps) {
       }
 
       setEditMode(false);
+      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -102,7 +108,8 @@ export function ShelterBasicInfo(props: TProps) {
 
   return (
     <ShelterBasicInfoForm
-      defaultValues={toFormData(shelter)}
+      key={formKey}
+      values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}

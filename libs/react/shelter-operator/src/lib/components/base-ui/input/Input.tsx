@@ -10,7 +10,6 @@ import { Label } from '../label';
 import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
 import { normalizeUrlScheme } from './utils/normalizeUrlScheme';
-import { resolveErrorMessage } from './utils/resolveErrorMessage';
 
 const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
   string: 'text',
@@ -59,13 +58,7 @@ export const Input = forwardRef<
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
 
-  const errorMessage = resolveErrorMessage({
-    error,
-    required,
-    dataType,
-    value,
-  });
-  const shouldShowError = Boolean(errorMessage) && !isFocused;
+  const shouldShowError = Boolean(error) && !isFocused;
 
   const handleFocus = (
     e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -175,7 +168,7 @@ export const Input = forwardRef<
 
       {shouldShowError && (
         <Text id={messageId} variant="caption" className="text-red-500">
-          {errorMessage}
+          {error}
         </Text>
       )}
     </div>

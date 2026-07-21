@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ShelterPhotoTypeChoices } from '../../../../../../../apollo/graphql/__generated__/types';
+import { ShelterPhotoTypeChoices } from '@monorepo/ba-platform/types';
 
 export const formSchema = z.object({
   files: z.array(z.instanceof(File)).min(1, 'At least one file is required'),

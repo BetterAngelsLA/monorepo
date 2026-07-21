@@ -22,6 +22,8 @@ export const formSchema = z.object({
 
 export type EcosystemFormData = z.infer<typeof formSchema>;
 
+export const formFieldNames = Object.keys(formSchema.shape);
+
 export const defaultFormValues: EcosystemFormData = {
   city: null,
   spa: null,

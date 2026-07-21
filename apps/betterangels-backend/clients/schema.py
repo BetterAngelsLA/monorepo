@@ -17,6 +17,7 @@ from clients.models import (
 )
 
 from clients.services import client_document, client_profile_photo
+from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -631,6 +632,7 @@ class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+        deprecation_reason="Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.",
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
         with transaction.atomic():
@@ -650,6 +652,29 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+    )
+    def delete_client_profile_photo(self, info: Info, client_profile_id: strawberry.ID) -> ClientProfileType:
+        """Remove a client's profile photo."""
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfile.perms.CHANGE],
+                ).get(id=client_profile_id)
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            client_profile.profile_photo = None
+            client_profile.save(update_fields=["profile_photo"])
+
+            return cast(ClientProfileType, client_profile)
+
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def generate_client_document_uploads(
         self,
@@ -664,20 +689,17 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
+        uploads = [
+            UploadRequest(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                mime_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = client_document.create_presigned_uploads(user=user, uploads=uploads)
 
-        return AuthorizedPresignedS3UploadsType(
-            uploads=[
-                AuthorizedPresignedS3UploadType(
-                    ref_id=item["ref_id"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    presigned_key=item["presigned_key"],
-                    upload_token=item["upload_token"],
-                )
-                for item in presigned_uploads["uploads"]
-            ]
-        )
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def resolve_client_document_uploads(
@@ -691,13 +713,23 @@ class Mutation:
             [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        documents = client_document.resolve_upload(
+        documents = [
+            UploadConfirmation(
+                presigned_key=d.presigned_key,
+                upload_token=d.upload_token,
+                filename=d.filename,
+                mime_type=d.content_type,
+                namespace=d.namespace,
+            )
+            for d in data.documents
+        ]
+        attachments = client_document.resolve_upload(
             user=user,
             client_profile=client_profile,
-            documents=data.documents,
+            documents=documents,
         )
 
-        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
+        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], attachments))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE])]
@@ -717,15 +749,19 @@ class Mutation:
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
-            upload=data,
+            upload=UploadRequest(
+                ref_id=data.ref_id,
+                filename=data.filename,
+                mime_type=data.content_type,
+            ),
         )
 
         return AuthorizedPresignedS3UploadType(
-            ref_id=result["ref_id"],
-            url=result["url"],
-            fields=cast(JSON, result["fields"]),
-            presigned_key=result["presigned_key"],
-            upload_token=result["upload_token"],
+            ref_id=result.ref_id,
+            url=result.url,
+            fields=cast(JSON, result.fields),
+            presigned_key=result.presigned_key,
+            upload_token=result.upload_token,
         )
 
     @strawberry_django.mutation(

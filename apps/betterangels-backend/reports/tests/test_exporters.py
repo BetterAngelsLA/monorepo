@@ -238,6 +238,7 @@ class TestShelterMetricsExport:
                     occupied=8,
                     reserved=1,
                     out_of_service=0,
+                    in_turnaround=0,
                 )
             ],
         )
@@ -245,8 +246,8 @@ class TestShelterMetricsExport:
         rows = list(csv.reader(StringIO(csv_content)))
 
         assert rows == [
-            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"],
-            ["2026-06-01", "shelter-1", "2", "8", "1", "0"],
+            ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service", "in_turnaround"],
+            ["2026-06-01", "shelter-1", "2", "8", "1", "0", "0"],
         ]
 
     def test_reservation_metrics_to_csv(self) -> None:
@@ -324,8 +325,36 @@ class TestShelterMetricsExport:
 
     def test_metrics_to_zip_exports_all_metric_files(self) -> None:
         zip_content = metrics_to_zip(
-            _shelter_occupancy_metrics(),
-            _all_metric_export_options(),
+            ShelterOccupancyMetricsType(
+                shelter_id=ID("shelter-1"),
+                start_date=date(2026, 6, 1),
+                end_date=date(2026, 6, 30),
+                daily_occupancy=[
+                    DailyOccupancyMetricsType(
+                        date=date(2026, 6, 1),
+                        occupied_count=8,
+                        total_beds=10,
+                        occupancy_pct=80.0,
+                    )
+                ],
+                daily_bed_status=[
+                    DailyBedStatusMetricsType(
+                        date=date(2026, 6, 1),
+                        available=2,
+                        occupied=8,
+                        reserved=1,
+                        out_of_service=0,
+                        in_turnaround=0,
+                    )
+                ],
+                reservation_metrics=ReservationMetricsType(
+                    check_in_overdue=3,
+                    cancelled=2,
+                    checked_in=11,
+                    check_in_overdue_to_checked_in=1,
+                ),
+                avg_days_to_occupancy=4.5,
+            )
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:

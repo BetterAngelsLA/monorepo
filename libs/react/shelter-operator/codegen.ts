@@ -9,14 +9,6 @@ const config: CodegenConfig = {
   ],
   ignoreNoDocuments: true,
   generates: {
-    'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-      },
-    },
     'src/': {
       preset: 'near-operation-file',
       plugins: [
@@ -32,7 +24,7 @@ const config: CodegenConfig = {
         useTypeImports: true,
       },
       presetConfig: {
-        baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
+        baseTypesPath: '~@monorepo/ba-platform/types',
         folder: '__generated__',
         importTypes: true,
       },

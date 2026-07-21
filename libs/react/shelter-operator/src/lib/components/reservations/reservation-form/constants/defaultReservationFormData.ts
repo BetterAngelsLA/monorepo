@@ -1,4 +1,4 @@
-import { ReservationStatusChoices } from '../../../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import type { ReservationFormData } from '../formTypes';
 
 /** Fresh copy of reservation form defaults to avoid shared mutable state. */
