@@ -5,7 +5,6 @@ These adapters intentionally accept the Strawberry reporting DTOs from
 GraphQL-facing types change.
 """
 
-import zipfile
 from datetime import date
 from io import BytesIO
 from typing import Any
@@ -24,19 +23,12 @@ from .export_options import MetricsExportOptions
 SheetData = tuple[list[str], list[dict[str, Any]]]
 
 
-def xlsx_files_to_zip(files: dict[str, bytes]) -> bytes:
-    output = BytesIO()
-
-    with zipfile.ZipFile(output, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-        for filename, xlsx_content in files.items():
-            zip_file.writestr(filename, xlsx_content)
-
-    return output.getvalue()
-
-
 def rows_to_xlsx(rows: list[dict[str, Any]], headers: list[str], worksheet_name: str = "Sheet1") -> bytes:
     workbook = Workbook()
     worksheet = workbook.active
+    if not isinstance(worksheet, Worksheet):
+        raise RuntimeError("Workbook does not have an active worksheet")
+
     worksheet.title = worksheet_name
     _append_rows(worksheet, rows, headers)
 
@@ -65,37 +57,63 @@ def avg_days_to_occupancy_to_xlsx(shelter_id: str, start_date: date, end_date: d
     return rows_to_xlsx(rows, headers, worksheet_name="Avg Days To Occupancy")
 
 
-def metrics_to_zip(metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]) -> bytes:
+def metrics_to_xlsx(
+    metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]
+) -> tuple[str, bytes]:
     shelter_id = str(metrics.shelter_id)
     start_date = metrics.start_date
     end_date = metrics.end_date
     selected_options = set(options)
+    invalid_options = selected_options - set(MetricsExportOptions)
+    if invalid_options:
+        raise ValueError(f"Unknown metric export options: {', '.join(sorted(map(str, invalid_options)))}")
 
     start_str = start_date.strftime("%Y%m%d")
     end_str = end_date.strftime("%Y%m%d")
-    files = {}
+    sheets: list[tuple[str, SheetData]] = []
 
     if MetricsExportOptions.DAILY_OCCUPANCY_METRICS in selected_options:
-        files[f"{start_str}_{end_str}_daily_occupancy_metrics.xlsx"] = daily_occupancy_metrics_to_xlsx(
-            shelter_id, metrics.daily_occupancy
+        sheets.append(
+            ("Daily Occupancy", _daily_occupancy_sheet_data(shelter_id, metrics.daily_occupancy))
         )
 
     if MetricsExportOptions.DAILY_BED_STATUS_METRICS in selected_options:
-        files[f"{start_str}_{end_str}_daily_bed_status_metrics.xlsx"] = daily_bed_status_metrics_to_xlsx(
-            shelter_id, metrics.daily_bed_status
+        sheets.append(
+            ("Daily Bed Status", _daily_bed_status_sheet_data(shelter_id, metrics.daily_bed_status))
         )
 
     if MetricsExportOptions.RESERVATION_METRICS in selected_options:
-        files[f"{start_str}_{end_str}_reservation_metrics.xlsx"] = reservation_metrics_to_xlsx(
-            shelter_id, start_date, end_date, metrics.reservation_metrics
+        sheets.append(
+            (
+                "Reservation Metrics",
+                _reservation_metrics_sheet_data(shelter_id, start_date, end_date, metrics.reservation_metrics),
+            )
         )
 
     if MetricsExportOptions.AVG_DAYS_TO_OCCUPANCY in selected_options:
-        files[f"{start_str}_{end_str}_avg_days_to_occupancy.xlsx"] = avg_days_to_occupancy_to_xlsx(
-            shelter_id, start_date, end_date, metrics.avg_days_to_occupancy
+        sheets.append(
+            (
+                "Avg Days To Occupancy",
+                _avg_days_to_occupancy_sheet_data(shelter_id, start_date, end_date, metrics.avg_days_to_occupancy),
+            )
         )
 
-    return xlsx_files_to_zip(files)
+    if not sheets:
+        raise ValueError("At least one metric export option must be selected")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    if not isinstance(worksheet, Worksheet):
+        raise RuntimeError("Workbook does not have an active worksheet")
+
+    for index, (worksheet_name, (headers, rows)) in enumerate(sheets):
+        if index:
+            worksheet = workbook.create_sheet()
+
+        worksheet.title = worksheet_name
+        _append_rows(worksheet, rows, headers)
+
+    return f"{start_str}_{end_str}_shelter_report.xlsx", _workbook_to_bytes(workbook)
 
 
 def _daily_occupancy_sheet_data(shelter_id: str, metrics: list[DailyOccupancyMetricsType]) -> SheetData:

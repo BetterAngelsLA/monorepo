@@ -127,6 +127,9 @@ def metrics_to_zip(metrics: ShelterOccupancyMetricsType, options: list[MetricsEx
     start_date = metrics.start_date
     end_date = metrics.end_date
     selected_options = set(options)
+    invalid_options = selected_options - set(MetricsExportOptions)
+    if invalid_options:
+        raise ValueError(f"Unknown metric export options: {', '.join(sorted(map(str, invalid_options)))}")
 
     start_str = start_date.strftime("%Y%m%d")
     end_str = end_date.strftime("%Y%m%d")

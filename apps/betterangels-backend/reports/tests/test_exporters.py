@@ -4,7 +4,7 @@ import csv
 import zipfile
 from datetime import date
 from io import BytesIO, StringIO
-from typing import cast
+from typing import Any, cast
 
 import pytest
 from model_bakery import baker
@@ -30,15 +30,12 @@ from reports.export_to_csv import (
     rows_to_csv,
 )
 from reports.export_to_xlsx import (
+    metrics_to_xlsx,
     rows_to_xlsx,
-    xlsx_files_to_zip,
-)
-from reports.export_to_xlsx import (
-    metrics_to_zip as xlsx_metrics_to_zip,
 )
 
 
-def _xlsx_rows(xlsx_content: bytes, worksheet_name: str = "Sheet1") -> list[list[str | int | float]]:
+def _xlsx_rows(xlsx_content: bytes, worksheet_name: str = "Sheet1") -> list[list[Any]]:
     workbook = load_workbook(BytesIO(xlsx_content))
     worksheet = workbook[worksheet_name]
 
@@ -171,36 +168,6 @@ class TestRowsToXlsx:
         rows = _xlsx_rows(xlsx_content)
 
         assert rows == [["date", "available"]]
-
-    def test_xlsx_files_to_zip_includes_each_xlsx_file(self) -> None:
-        daily_occupancy_xlsx = rows_to_xlsx(
-            rows=[{"date": date(2026, 6, 1), "total_beds": 10}],
-            headers=["date", "total_beds"],
-        )
-        reservation_xlsx = rows_to_xlsx(
-            rows=[{"start_date": date(2026, 6, 1), "checked_in": 11}],
-            headers=["start_date", "checked_in"],
-        )
-
-        zip_content = xlsx_files_to_zip(
-            {
-                "daily_occupancy_metrics.xlsx": daily_occupancy_xlsx,
-                "reservation_metrics.xlsx": reservation_xlsx,
-            }
-        )
-
-        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
-            assert sorted(zip_file.namelist()) == [
-                "daily_occupancy_metrics.xlsx",
-                "reservation_metrics.xlsx",
-            ]
-            daily_occupancy_rows = _xlsx_rows(zip_file.read("daily_occupancy_metrics.xlsx"))
-
-        assert daily_occupancy_rows == [
-            ["date", "total_beds"],
-            ["2026-06-01", 10],
-        ]
-
 
 class TestShelterMetricsExport:
     def test_daily_occupancy_metrics_to_csv(self) -> None:
@@ -419,27 +386,23 @@ class TestShelterMetricsExport:
                 [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
             )
 
-    def test_metrics_to_xlsx_zip_exports_all_metric_files(self) -> None:
-        zip_content = xlsx_metrics_to_zip(
+    def test_metrics_to_xlsx_exports_selected_metrics_as_worksheets(self) -> None:
+        filename, xlsx_content = metrics_to_xlsx(
             _shelter_occupancy_metrics(),
             _all_metric_export_options(),
         )
 
-        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
-            assert sorted(zip_file.namelist()) == [
-                "20260601_20260630_avg_days_to_occupancy.xlsx",
-                "20260601_20260630_daily_bed_status_metrics.xlsx",
-                "20260601_20260630_daily_occupancy_metrics.xlsx",
-                "20260601_20260630_reservation_metrics.xlsx",
-            ]
-            daily_occupancy_rows = _xlsx_rows(
-                zip_file.read("20260601_20260630_daily_occupancy_metrics.xlsx"),
-                "Daily Occupancy",
-            )
-            reservation_rows = _xlsx_rows(
-                zip_file.read("20260601_20260630_reservation_metrics.xlsx"),
-                "Reservation Metrics",
-            )
+        workbook = load_workbook(BytesIO(xlsx_content))
+        assert filename == "20260601_20260630_shelter_report.xlsx"
+        assert workbook.sheetnames == [
+            "Daily Occupancy",
+            "Daily Bed Status",
+            "Reservation Metrics",
+            "Avg Days To Occupancy",
+        ]
+
+        daily_occupancy_rows = _xlsx_rows(xlsx_content, "Daily Occupancy")
+        reservation_rows = _xlsx_rows(xlsx_content, "Reservation Metrics")
 
         assert daily_occupancy_rows == [
             ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"],
@@ -458,30 +421,23 @@ class TestShelterMetricsExport:
             ["2026-06-01", "2026-06-30", "shelter-1", 3, 2, 11, 1],
         ]
 
-    def test_metrics_to_xlsx_zip_exports_only_selected_metric_files(self) -> None:
-        zip_content = xlsx_metrics_to_zip(
+    def test_metrics_to_xlsx_exports_only_selected_metric_worksheets(self) -> None:
+        filename, xlsx_content = metrics_to_xlsx(
             _shelter_occupancy_metrics(),
             [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
         )
 
-        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
-            assert sorted(zip_file.namelist()) == [
-                "20260601_20260630_daily_occupancy_metrics.xlsx",
-                "20260601_20260630_reservation_metrics.xlsx",
-            ]
+        workbook = load_workbook(BytesIO(xlsx_content))
+        assert filename == "20260601_20260630_shelter_report.xlsx"
+        assert workbook.sheetnames == ["Daily Occupancy", "Reservation Metrics"]
 
-    def test_metrics_to_xlsx_zip_exports_no_files_for_empty_options(self) -> None:
-        zip_content = xlsx_metrics_to_zip(
-            _shelter_occupancy_metrics(),
-            [],
-        )
+    def test_metrics_to_xlsx_rejects_empty_options(self) -> None:
+        with pytest.raises(ValueError, match="At least one"):
+            metrics_to_xlsx(_shelter_occupancy_metrics(), [])
 
-        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
-            assert zip_file.namelist() == []
-
-    def test_metrics_to_xlsx_zip_rejects_unknown_options(self) -> None:
+    def test_metrics_to_xlsx_rejects_unknown_options(self) -> None:
         with pytest.raises(ValueError, match="unknown_metric"):
-            xlsx_metrics_to_zip(
+            metrics_to_xlsx(
                 _shelter_occupancy_metrics(),
                 [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
             )
