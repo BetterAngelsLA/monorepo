@@ -1,10 +1,12 @@
 @import 'tailwindcss';
+@import '../../../libs/tailwind/src/css/base.css';
 
 @theme {
   --animate-*: initial;
-  --animate-slideInUp: slideInUp 250ms ease-in-out 0ms;
-  --animate-expandInOut: expandInOut 200ms ease-in-out 0ms;
   --animate-nav: nav 250ms ease-out 0ms;
+  /* Speed overrides for shared animations */
+  --animate-slide-in-up: slideInUp 250ms ease-in-out 0ms;
+  --animate-expand-in-out: expandInOut 200ms ease-in-out 0ms;
 
   --breakpoint-sm: 375px;
   --breakpoint-md: 768px;
@@ -31,22 +33,6 @@
   --color-success-30: #007934;
   --color-success-90: #ddf8e8;
 
-  @keyframes slideInUp {
-    0% {
-      transform: translate3d(0, 10%, 0);
-    }
-    100% {
-      transform: translate3d(0, 0, 0);
-    }
-  }
-  @keyframes expandInOut {
-    0% {
-      transform: scale(0.85, 0.5);
-    }
-    100% {
-      transform: scale(1, 1);
-    }
-  }
   @keyframes nav {
     0% {
       opacity: 0.7;

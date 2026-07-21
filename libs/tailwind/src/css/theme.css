@@ -52,6 +52,10 @@
   --animate-slide-out-to-top: slideOutToTop var(--animation-duration)
     ease-in-out forwards;
   --animate-fade-collapse: fadeOutScaleOut 200ms ease-in-out forwards;
+  --animate-slide-in-up: slideInUp var(--animation-duration) ease-in-out 0ms;
+  --animate-expand-in-out: expandInOut var(--animation-duration) ease-in-out 0ms;
+  --animate-slide-right-to-left: slideInRightToLeft var(--animation-duration)
+    ease-out forwards;
 
   @keyframes fadeIn {
     from {
@@ -133,6 +137,33 @@
     to {
       opacity: 0;
       transform: scale(0.95);
+    }
+  }
+
+  @keyframes slideInUp {
+    0% {
+      transform: translate3d(0, 10%, 0);
+    }
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes expandInOut {
+    0% {
+      transform: scale(0.85, 0.5);
+    }
+    100% {
+      transform: scale(1, 1);
+    }
+  }
+
+  @keyframes slideInRightToLeft {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(0);
     }
   }
 }
