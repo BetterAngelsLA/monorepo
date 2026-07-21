@@ -8,9 +8,8 @@ import { useCloneRoom, useDeleteRooms, useRooms } from '../../../../hooks';
 import { cloneRoomMeta } from '../../../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { deleteRoomsMeta } from '../../../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
 import {
-  shelterCreateReservationRoute,
-  shelterCreateRoomRoute,
-  shelterEditRoomRoute,
+  shelterCreateResourceRoute,
+  shelterEditResourceRoute,
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
@@ -76,7 +75,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
 
   const handleEdit = useCallback(
     (room: Room) => {
-      navigate(shelterEditRoomRoute(shelterId, room.id));
+      navigate(shelterEditResourceRoute(shelterId, 'room', room.id));
     },
     [navigate, shelterId],
   );
@@ -118,7 +117,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
 
   const handleReserve = useCallback(
     (room: Room) => {
-      navigate(shelterCreateReservationRoute(shelterId), {
+      navigate(shelterCreateResourceRoute(shelterId, 'reservation'), {
         state: { roomId: room.id },
       });
     },
@@ -164,7 +163,9 @@ export function Rooms({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterCreateRoomRoute(shelterId))}
+          onClick={() =>
+            navigate(shelterCreateResourceRoute(shelterId, 'room'))
+          }
         >
           Create Room
         </Button>
