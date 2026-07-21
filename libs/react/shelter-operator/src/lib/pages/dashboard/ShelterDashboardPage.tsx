@@ -6,7 +6,7 @@ import { Text } from '../../components/base-ui/text/text';
 import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { ReportsView } from '../../components/reports/ReportsView';
 import { ReservationsView } from '../../components/reservations/ReservationsView';
-import { Rooms } from '../../components/ShelterOperations/segments/Rooms/Rooms';
+import { Rooms } from '../../components/ShelterManagement/segments/Rooms/Rooms';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';

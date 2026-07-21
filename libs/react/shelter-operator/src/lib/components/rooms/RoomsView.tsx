@@ -1,25 +1,25 @@
 import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
 import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { useDeleteRooms } from '../../hooks/useDeleteRooms';
 import { deleteRoomsMeta } from '../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
 import { useRooms } from '../../hooks/useRooms';
 import {
-  shelterCreateResourceRoute,
-  shelterEditResourceRoute,
+    shelterCreateResourceRoute,
+    shelterEditResourceRoute,
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { useToast } from '../base-ui/toast';
 import {
-  RoomTable,
-  type Room,
-} from '../ShelterOperations/segments/Rooms/RoomTable';
+    RoomTable,
+    type Room,
+} from '../ShelterManagement/segments/Rooms/RoomTable';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
