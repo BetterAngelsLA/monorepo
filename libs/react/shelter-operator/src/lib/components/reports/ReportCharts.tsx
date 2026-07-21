@@ -1,5 +1,45 @@
 import { BarChart, type ViewMode } from '../BarChart/BarChart';
 
+/**
+ * Mirrors the backend DailyBedStatusMetricsType. Replace with the generated
+ * GraphQL type once the reporting query is wired up.
+ */
+export type DailyBedStatusMetricsType = {
+  date: string;
+  occupied: number;
+  available: number;
+  reserved: number;
+  out_of_service: number;
+  in_turnaround: number;
+};
+
+/** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */
+function toBedStatusCountData(metrics: DailyBedStatusMetricsType[]) {
+  return metrics.flatMap((d) => [
+    { date: d.date, status: 'Occupied', count: d.occupied },
+    { date: d.date, status: 'Available', count: d.available },
+    { date: d.date, status: 'Reserved', count: d.reserved },
+    { date: d.date, status: 'Out of Service', count: d.out_of_service },
+  ]);
+}
+
+/** Same pivot but each count is expressed as a percentage of the daily total. */
+function toBedStatusPercentData(metrics: DailyBedStatusMetricsType[]) {
+  return metrics.flatMap((d) => {
+    const total = d.occupied + d.available + d.reserved + d.out_of_service;
+    const pct = (n: number) => {
+      if (!total) return 0;
+      return Math.round((n / total) * 1000) / 10;
+    };
+    return [
+      { date: d.date, status: 'Occupied', count: pct(d.occupied) },
+      { date: d.date, status: 'Available', count: pct(d.available) },
+      { date: d.date, status: 'Reserved', count: pct(d.reserved) },
+      { date: d.date, status: 'Out of Service', count: pct(d.out_of_service) },
+    ];
+  });
+}
+
 const cardClassName =
   'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
 // BarChart uses autoFit, so the card needs an explicit height for the plot to fill.
@@ -39,8 +79,22 @@ const dailyOccupancyPercentageData = DAYS.map((date, i) => ({
 /**
  * "Bed Status" report chart — stacked bars of bed statuses per day. BarChart
  * (#2162) owns the title, the Count/Percentage toggle, and the legend.
+ *
+ * Pass `data` once the reporting query is wired up; falls back to sample data
+ * so the layout renders stably in the meantime.
  */
-export function BedStatusChart() {
+export function BedStatusChart({
+  data,
+}: {
+  data?: DailyBedStatusMetricsType[];
+}) {
+  let countData = bedStatusData;
+  let percentData = bedStatusPercentageData;
+  if (data) {
+    countData = toBedStatusCountData(data);
+    percentData = toBedStatusPercentData(data);
+  }
+
   return (
     <section className={chartCardClassName} data-testid="bed-status-chart">
       <BarChart
@@ -49,13 +103,13 @@ export function BedStatusChart() {
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
-                data: bedStatusPercentageData,
+                data: percentData,
                 axis: { y: { title: 'Status by %', tickCount: 6 } },
                 scale: { y: { nice: false, domain: [0, 100] } },
               }
             : {}
         }
-        data={bedStatusData}
+        data={countData}
         xField="date"
         yField="count"
         colorField="status"
