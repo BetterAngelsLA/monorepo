@@ -9,9 +9,7 @@ import {
 } from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
 import { useReservation } from '../../hooks/useReservation';
 import {
-  shelterManageBedsRoute,
-  shelterManageReservationsRoute,
-  shelterManageRoomsRoute,
+  shelterManageResourceRoute,
 } from '../../routing';
 
 export function ReservationFormPage() {
@@ -29,18 +27,18 @@ export function ReservationFormPage() {
   const { backLinkPath, backLinkLabel } = useMemo(() => {
     if (bedId) {
       return {
-        backLinkPath: shelterManageBedsRoute(shelterId ?? ''),
+        backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'bed'),
         backLinkLabel: 'Back to Beds',
       };
     }
     if (roomId) {
       return {
-        backLinkPath: shelterManageRoomsRoute(shelterId ?? ''),
+        backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'room'),
         backLinkLabel: 'Back to Rooms',
       };
     }
     return {
-      backLinkPath: shelterManageReservationsRoute(shelterId ?? ''),
+      backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'reservation'),
       backLinkLabel: 'Back to Reservations',
     };
   }, [bedId, roomId, shelterId]);

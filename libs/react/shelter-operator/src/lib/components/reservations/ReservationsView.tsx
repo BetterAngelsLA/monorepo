@@ -7,7 +7,7 @@ import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { useReservations } from '../../hooks/useReservations';
 import { useUpdateReservation } from '../../hooks/useUpdateReservation';
 import { updateReservationMeta } from '../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
-import { shelterCreateReservationRoute } from '../../routing';
+import { shelterCreateResourceRoute } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { useToast } from '../base-ui/toast';
@@ -177,7 +177,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterCreateReservationRoute(shelterId))}
+          onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'reservation'))}
         >
           Create Reservation
         </Button>

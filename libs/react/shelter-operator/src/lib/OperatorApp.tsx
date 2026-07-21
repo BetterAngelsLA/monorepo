@@ -24,10 +24,10 @@ import {
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
 import {
-  manageSegments,
+  manageRouteConfig,
   paths,
+  profileRouteConfig,
   routePath,
-  shelterProfileSegments,
 } from './routing';
 
 export function OperatorApp() {
@@ -56,77 +56,77 @@ export function OperatorApp() {
               path={routePath(paths.shelterCreate)}
               element={<CreateShelterProfile />}
             />
-            <Route path={routePath(paths.shelterProfile)}>
+            <Route path={routePath(profileRouteConfig.root)}>
               <Route
                 index
-                element={<Navigate to={shelterProfileSegments.basic} replace />}
+                element={<Navigate to={profileRouteConfig.children.basic} replace />}
               />
               <Route
-                path={shelterProfileSegments.basic}
+                path={profileRouteConfig.children.basic}
                 element={<ShelterBasicInfoPage />}
               />
               <Route
-                path={shelterProfileSegments.operatingHours}
+                path={profileRouteConfig.children.operatingHours}
                 element={<ShelterOperatingHoursPage />}
               />
               <Route
-                path={shelterProfileSegments.policies}
+                path={profileRouteConfig.children.policies}
                 element={<ShelterPoliciesPage />}
               />
               <Route
-                path={shelterProfileSegments.details}
+                path={profileRouteConfig.children.details}
                 element={<ShelterDetailsPage />}
               />
               <Route
-                path={shelterProfileSegments.services}
+                path={profileRouteConfig.children.services}
                 element={<ShelterServicesPage />}
               />
               <Route
-                path={shelterProfileSegments.ecosystem}
+                path={profileRouteConfig.children.ecosystem}
                 element={<ShelterEcosystemPage />}
               />
               <Route
-                path={shelterProfileSegments.media}
+                path={profileRouteConfig.children.media}
                 element={<ShelterMediaPage />}
               />
             </Route>
-            <Route path={routePath(paths.shelterManage)}>
+            <Route path={routePath(manageRouteConfig.root)}>
               <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
-                path={manageSegments.roomsCreate}
+                path={`${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.create}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={manageSegments.roomsEdit}
+                path={`${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.edit}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={manageSegments.rooms}
+                path={manageRouteConfig.children.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
               />
               <Route
-                path={manageSegments.bedsCreate}
+                path={`${manageRouteConfig.children.beds}/${manageRouteConfig.actions.create}`}
                 element={<EditBedPage />}
               />
-              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
+              <Route path={`${manageRouteConfig.children.beds}/${manageRouteConfig.actions.edit}`} element={<EditBedPage />} />
               <Route
-                path={manageSegments.beds}
+                path={manageRouteConfig.children.beds}
                 element={<ShelterDashboardPage tab="beds" />}
               />
               <Route
-                path={manageSegments.reservationsCreate}
+                path={`${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.create}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={manageSegments.reservationsEdit}
+                path={`${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.edit}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={manageSegments.occupants}
+                path={manageRouteConfig.children.occupants}
                 element={<ShelterDashboardPage tab="occupants" />}
               />
               <Route
-                path={manageSegments.reservations}
+                path={manageRouteConfig.children.reservations}
                 element={<ShelterDashboardPage tab="reservations" />}
               />
             </Route>
