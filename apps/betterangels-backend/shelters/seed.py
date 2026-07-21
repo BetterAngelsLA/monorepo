@@ -7,6 +7,7 @@ from logging import getLogger
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Model
 
 from shelters.models.lookups import SPA
 
@@ -183,35 +184,9 @@ SERVICE_CATALOG = [
 
 # Models that both Shelter Data Entry and Shelter Administration groups
 # get full CRUD permissions on (matching the original migration).
-_SHARED_PERMISSION_MODELS = (
-    "accessibility",
-    "city",
-    "contactinfo",
-    "demographic",
-    "entryrequirement",
-    "exitpolicy",
-    "funder",
-    "medialink",
-    "parking",
-    "pet",
-    "referralrequirement",
-    "roomstyle",
-    "schedule",
-    "service",
-    "servicecategory",
-    "shelterphoto",
-    "shelterprogram",
-    "sheltertype",
-    "spa",
-    "specialsituationrestriction",
-    "storage",
-    "vaccinationrequirement",
-    "video",
-    "exteriorshelterphoto",
-    "interiorshelterphoto",
-    "address",  # from common app
-    "shelteravailability",
-)
+# Using model classes instead of strings — a typo here fails at import time,
+# not silently at runtime when Permission.objects.filter returns empty.
+# The actual model list lives in _get_shared_permissions() to avoid circular imports.
 
 
 def seed_spas() -> None:
@@ -235,16 +210,77 @@ def seed_cities() -> None:
 
 
 def _get_shared_permissions() -> list[Permission]:
-    """Return all CRUD permissions for shared shelter models."""
+    """Return all CRUD permissions for shared shelter models.
+
+    Uses model classes (not strings) — a typo fails at import time.
+    """
+    from common.models import Address
+    from shelters.models.availability import ShelterAvailability
+    from shelters.models.lookups import (
+        Accessibility,
+        City,
+        Demographic,
+        EntryRequirement,
+        ExitPolicy,
+        Funder,
+        Parking,
+        Pet,
+        ReferralRequirement,
+        RoomStyle,
+        ShelterProgram,
+        ShelterType,
+        SPA,
+        SpecialSituationRestriction,
+        Storage,
+        VaccinationRequirement,
+    )
+    from shelters.models.media import (
+        ExteriorShelterPhoto,
+        InteriorShelterPhoto,
+        MediaLink,
+        ShelterPhoto,
+        Video,
+    )
+    from shelters.models.schedule import Schedule
+    from shelters.models.service import Service, ServiceCategory
+    from shelters.models.shelter import Bed, ContactInfo, Room
+
+    models: list[type[Model]] = [
+        Accessibility,
+        Address,
+        Bed,
+        City,
+        ContactInfo,
+        Demographic,
+        EntryRequirement,
+        ExitPolicy,
+        ExteriorShelterPhoto,
+        Funder,
+        InteriorShelterPhoto,
+        MediaLink,
+        Parking,
+        Pet,
+        ReferralRequirement,
+        Room,
+        RoomStyle,
+        Schedule,
+        Service,
+        ServiceCategory,
+        ShelterAvailability,
+        ShelterPhoto,
+        ShelterProgram,
+        ShelterType,
+        SPA,
+        SpecialSituationRestriction,
+        Storage,
+        VaccinationRequirement,
+        Video,
+    ]
+
     perms: list[Permission] = []
-    for model_name in _SHARED_PERMISSION_MODELS:
-        app_label = "common" if model_name == "address" else "shelters"
-        perms.extend(
-            Permission.objects.filter(
-                content_type__app_label=app_label,
-                content_type__model=model_name,
-            )
-        )
+    for model in models:
+        ct = ContentType.objects.get_for_model(model)
+        perms.extend(Permission.objects.filter(content_type=ct))
     return perms
 
 
