@@ -18,11 +18,8 @@ from shelters.types.reporting import (
 )
 from strawberry import ID
 
+from reports.export_options import MetricsExportOptions
 from reports.export_to_csv import (
-    AVG_DAYS_TO_OCCUPANCY,
-    DAILY_BED_STATUS_METRICS,
-    DAILY_OCCUPANCY_METRICS,
-    RESERVATION_METRICS,
     avg_days_to_occupancy_to_csv,
     csv_files_to_zip,
     daily_bed_status_metrics_to_csv,
@@ -79,12 +76,12 @@ def _shelter_occupancy_metrics() -> ShelterOccupancyMetricsType:
     )
 
 
-def _all_metric_export_options() -> list[str]:
+def _all_metric_export_options() -> list[MetricsExportOptions]:
     return [
-        DAILY_OCCUPANCY_METRICS,
-        DAILY_BED_STATUS_METRICS,
-        RESERVATION_METRICS,
-        AVG_DAYS_TO_OCCUPANCY,
+        MetricsExportOptions.DAILY_OCCUPANCY_METRICS,
+        MetricsExportOptions.DAILY_BED_STATUS_METRICS,
+        MetricsExportOptions.RESERVATION_METRICS,
+        MetricsExportOptions.AVG_DAYS_TO_OCCUPANCY,
     ]
 
 
@@ -365,7 +362,7 @@ class TestShelterMetricsExport:
     def test_metrics_to_zip_exports_only_selected_metric_files(self) -> None:
         zip_content = metrics_to_zip(
             _shelter_occupancy_metrics(),
-            [DAILY_OCCUPANCY_METRICS, RESERVATION_METRICS],
+            [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
@@ -387,7 +384,7 @@ class TestShelterMetricsExport:
         with pytest.raises(ValueError, match="unknown_metric"):
             metrics_to_zip(
                 _shelter_occupancy_metrics(),
-                [DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, "unknown_metric"],
             )
 
     def test_metrics_to_xlsx_zip_exports_all_metric_files(self) -> None:
@@ -432,7 +429,7 @@ class TestShelterMetricsExport:
     def test_metrics_to_xlsx_zip_exports_only_selected_metric_files(self) -> None:
         zip_content = xlsx_metrics_to_zip(
             _shelter_occupancy_metrics(),
-            [DAILY_OCCUPANCY_METRICS, RESERVATION_METRICS],
+            [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
@@ -454,7 +451,7 @@ class TestShelterMetricsExport:
         with pytest.raises(ValueError, match="unknown_metric"):
             xlsx_metrics_to_zip(
                 _shelter_occupancy_metrics(),
-                [DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, "unknown_metric"],
             )
 
 
