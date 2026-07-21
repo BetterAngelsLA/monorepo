@@ -13,11 +13,21 @@ def _set_relative_vcr_dir(request: pytest.FixtureRequest) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def _tune_test_postgres(django_db_setup: None, django_db_blocker: object) -> None:
-    """Disable durability guarantees on test DBs — safe, big speedup."""
+    """Disable durability + triggers on test DBs — safe, big speedup."""
+    import logging
+
+    from django.conf import settings
     from django.db import connection
 
+    # Postgres: skip fsync for faster test writes
     with django_db_blocker.unblock(), connection.cursor() as c:  # type: ignore[union-attr]
         c.execute("SET synchronous_commit TO off")
+
+    # Django: skip expensive password hashing in tests
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+    # Silence structlog / request logging overhead in tests
+    logging.disable(logging.CRITICAL)
 
 
 # ── Test timing instrumentation ──────────────────────────────────────────

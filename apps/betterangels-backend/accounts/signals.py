@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ── Local dev data setup ──────────────────────────────────────────────
 
 
-@receiver(post_migrate)
+@receiver(post_migrate, dispatch_uid="setup_local_dev_data")
 def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
     """Create test users and org — local dev only.
 
@@ -88,7 +88,7 @@ def _ensure_test_org() -> None:
 # ── Permission sync (all environments) ────────────────────────────────
 
 
-@receiver(post_migrate)
+@receiver(post_migrate, dispatch_uid="sync_all_org_permission_groups")
 def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
     """Reconcile every org's PermissionGroups against current presets.
 
