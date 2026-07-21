@@ -3,9 +3,7 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  RoomStatusChoices,
-} from '@monorepo/ba-platform/types';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { useCloneRoom } from '../../hooks/useCloneRoom';
 import { cloneRoomMeta } from '../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
 import { useDeleteRooms } from '../../hooks/useDeleteRooms';
@@ -18,7 +16,10 @@ import {
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
 import { useToast } from '../base-ui/toast';
-import { RoomTable, type Room } from '../RoomTable';
+import {
+  RoomTable,
+  type Room,
+} from '../ShelterOperations/segments/Rooms/RoomTable';
 
 export function RoomsView({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
@@ -74,20 +75,20 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [cloneRoom, showToast]
+    [cloneRoom, showToast],
   );
 
   const handleEdit = useCallback(
     (room: Room) => {
       navigate(shelterEditResourceRoute(shelterId, 'room', room.id));
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
   const handleDeleteRequest = useCallback(
     (roomIds: string[], roomName?: string) => {
       setDeleteConfirmation({ isOpen: true, roomIds, roomName });
     },
-    []
+    [],
   );
 
   const handleDelete = useCallback(
@@ -116,7 +117,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [deleteRooms, showToast]
+    [deleteRooms, showToast],
   );
 
   const handleReserve = useCallback(
@@ -125,7 +126,7 @@ export function RoomsView({ shelterId }: { shelterId: string }) {
         state: { roomId: room.id },
       });
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
 
   return (

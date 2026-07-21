@@ -1,9 +1,9 @@
 import type { RoomType as Room } from '@monorepo/ba-platform/types';
-import { Button } from '../base-ui/buttons/buttons';
-import { Modal } from '../base-ui/modal/Modal';
-import { ModalFooter } from '../base-ui/modal/ModalFooter';
-import { ModalHeader } from '../base-ui/modal/ModalHeader';
-import { Text } from '../base-ui/text/text';
+import { Button } from '../../../base-ui/buttons/buttons';
+import { Modal } from '../../../base-ui/modal/Modal';
+import { ModalFooter } from '../../../base-ui/modal/ModalFooter';
+import { ModalHeader } from '../../../base-ui/modal/ModalHeader';
+import { Text } from '../../../base-ui/text/text';
 
 export type EditRoomFormProps = {
   room: Room;

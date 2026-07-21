@@ -6,7 +6,7 @@ import { Text } from '../../components/base-ui/text/text';
 import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { ReportsView } from '../../components/reports/ReportsView';
 import { ReservationsView } from '../../components/reservations/ReservationsView';
-import { RoomsView } from '../../components/rooms/RoomsView';
+import { Rooms } from '../../components/ShelterOperations/segments/Rooms/Rooms';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
@@ -77,7 +77,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         items={TAB_ITEMS}
       />
 
-      {tab === 'rooms' && <RoomsView shelterId={id} />}
+      {tab === 'rooms' && <Rooms shelterId={id} />}
       {tab === 'reports' && <ReportsView shelterId={id} />}
       {tab === 'occupants' && <OccupantsView shelterId={id} />}
       {tab === 'reservations' && <ReservationsView shelterId={id} />}

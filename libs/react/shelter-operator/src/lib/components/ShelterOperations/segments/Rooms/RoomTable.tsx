@@ -1,16 +1,14 @@
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Button } from './base-ui/buttons';
+import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
   type StatusBadgeVariant,
-} from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
+} from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
 
-import {
-  RoomStatusChoices,
-} from '@monorepo/ba-platform/types';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 
 export type Room = {
   id: string;
@@ -102,7 +100,7 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    []
+    [],
   );
 
   return (
