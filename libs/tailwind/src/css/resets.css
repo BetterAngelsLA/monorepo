@@ -1,0 +1,13 @@
+/* Base element resets */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-family-primary);
+  margin: 0;
+  padding: 0;
+}
