@@ -1,2 +1,2 @@
 export { AddressAutocomplete } from './AddressAutocomplete';
-export * from './types';
+export type { TPlaceResult } from './AddressAutocomplete';
