@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Controller } from 'react-hook-form';
 import { CheckboxGroup } from '../../../../../form/CheckboxGroup';
 import { FormSection } from '../../../../../form/FormSection';
@@ -7,7 +6,7 @@ import { RadioGroup } from '../../../../../form/RadioGroup';
 import { BOOLEAN_OPTIONS, MEDICAL_NEED_OPTIONS } from '../formSchema';
 import type { SectionProps } from '../types';
 
-export const BedDetails = memo(function BedDetails({
+export function BedDetails({
   control,
   errors,
   filteredPropertyOptions,
@@ -141,4 +140,4 @@ export const BedDetails = memo(function BedDetails({
       />
     </FormSection>
   );
-});
+}

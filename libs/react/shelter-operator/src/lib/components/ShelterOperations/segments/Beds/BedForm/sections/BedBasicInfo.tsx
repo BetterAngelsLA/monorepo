@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Controller } from 'react-hook-form';
 import type { DropdownOption } from '../../../../../base-ui/dropdown';
 import { Dropdown } from '../../../../../base-ui/dropdown';
@@ -12,7 +11,7 @@ export type BedBasicInfoProps = SectionProps & {
   roomOptions: DropdownOption<string>[];
 };
 
-export const BedBasicInfo = memo(function BedBasicInfo({
+export function BedBasicInfo({
   control,
   errors,
   roomOptions,
@@ -97,4 +96,4 @@ export const BedBasicInfo = memo(function BedBasicInfo({
       />
     </FormSection>
   );
-});
+}
