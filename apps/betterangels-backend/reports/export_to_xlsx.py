@@ -102,7 +102,7 @@ def _daily_occupancy_sheet_data(shelter_id: str, metrics: list[DailyOccupancyMet
     headers = ["date", "shelter_id", "occupied_count", "total_beds", "occupancy_pct"]
     rows = [
         {
-            "date": metric.date.isoformat(),
+            "date": metric.date,
             "shelter_id": shelter_id,
             "occupied_count": metric.occupied_count,
             "total_beds": metric.total_beds,
@@ -118,7 +118,7 @@ def _daily_bed_status_sheet_data(shelter_id: str, metrics: list[DailyBedStatusMe
     headers = ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"]
     rows = [
         {
-            "date": metric.date.isoformat(),
+            "date": metric.date,
             "shelter_id": shelter_id,
             "available": metric.available,
             "occupied": metric.occupied,
@@ -145,8 +145,8 @@ def _reservation_metrics_sheet_data(
     ]
     rows = [
         {
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
+            "start_date": start_date,
+            "end_date": end_date,
             "shelter_id": shelter_id,
             "check_in_overdue": metrics.check_in_overdue,
             "cancelled": metrics.cancelled,
@@ -164,8 +164,8 @@ def _avg_days_to_occupancy_sheet_data(
     headers = ["start_date", "end_date", "shelter_id", "avg_days_to_occupancy"]
     rows = [
         {
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
+            "start_date": start_date,
+            "end_date": end_date,
             "shelter_id": shelter_id,
             "avg_days_to_occupancy": "" if avg_days is None else avg_days,
         }
