@@ -1,4 +1,4 @@
-"""Seed data for shelter lookups (SPAs) and legacy auth groups.
+"""Seed data for shelter lookups (SPAs), service catalog, and legacy auth groups.
 
 Replaces RunPython data migrations. Called by post_migrate signal.
 """
@@ -21,6 +21,69 @@ SPA_DATA = [
     (6, "6", "6 - South"),
     (7, "7", "7 - East"),
     (8, "8", "8 - South Bay/Harbor"),
+]
+
+SERVICE_CATALOG = [
+    (
+        "immediate_need",
+        "Immediate Needs",
+        0,
+        [
+            ("clothing", "Clothing", 0),
+            ("food", "Food", 1),
+            ("showers", "Showers", 2),
+        ],
+    ),
+    (
+        "general",
+        "General Services",
+        1,
+        [
+            ("case_management", "Case Management", 0),
+            ("childcare", "Childcare", 1),
+            ("computer_access", "Computer Access", 2),
+            ("employment_services", "Employment Services", 3),
+            ("financial_literacy_assistance", "Financial Literacy/Assistance", 4),
+            ("housing_navigation", "Housing Navigation", 5),
+            ("legal_assistance", "Legal Assistance", 6),
+            ("mail", "Mail", 7),
+            ("phone", "Phone", 8),
+            ("transportation", "Transportation", 9),
+            ("laundry", "Laundry Services", 10),
+            ("tls", "TLS (Time Limited Subsidies)", 11),
+        ],
+    ),
+    (
+        "health",
+        "Health Services",
+        2,
+        [
+            ("dental", "Dental", 0),
+            ("medical", "Medical", 1),
+            ("mental_health", "Mental Health", 2),
+            ("substance_use_treatment", "Substance Use Treatment", 3),
+        ],
+    ),
+    (
+        "training",
+        "Training Services",
+        3,
+        [
+            ("job_training", "Job Training", 0),
+            ("life_skills_training", "Life Skills Training", 1),
+            ("tutoring", "Tutoring", 2),
+        ],
+    ),
+    (
+        "meal",
+        "Meal Services",
+        4,
+        [
+            ("breakfast", "Breakfast", 0),
+            ("lunch", "Lunch", 1),
+            ("dinner", "Dinner", 2),
+        ],
+    ),
 ]
 
 # Models that both Shelter Data Entry and Shelter Administration groups
@@ -96,6 +159,31 @@ def _get_shelter_crud_permissions() -> list[Permission]:
     )
 
 
+def seed_services() -> None:
+    """Seed ServiceCategory and Service catalog (matching original migration)."""
+    from shelters.models.service import Service, ServiceCategory
+
+    for cat_name, cat_display, cat_order, services in SERVICE_CATALOG:
+        category, created = ServiceCategory.objects.get_or_create(
+            name=cat_name,
+            defaults={"display_name": cat_display, "priority": cat_order},
+        )
+        if created:
+            logger.info("Created ServiceCategory: %s", cat_display)
+        for svc_name, svc_display, svc_order in services:
+            _, created = Service.objects.get_or_create(
+                category=category,
+                name=svc_name,
+                defaults={
+                    "display_name": svc_display,
+                    "priority": svc_order,
+                    "is_other": False,
+                },
+            )
+            if created:
+                logger.info("Created Service: %s", svc_display)
+
+
 def seed_shelter_groups() -> None:
     """Create legacy auth groups matching the original migration.
 
@@ -121,4 +209,5 @@ def seed_shelter_groups() -> None:
 
 def seed_shelter_lookups() -> None:
     seed_spas()
+    seed_services()
     seed_shelter_groups()
