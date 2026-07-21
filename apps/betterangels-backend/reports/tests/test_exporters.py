@@ -4,6 +4,7 @@ import csv
 import zipfile
 from datetime import date
 from io import BytesIO, StringIO
+from typing import cast
 
 import pytest
 from model_bakery import baker
@@ -64,6 +65,7 @@ def _shelter_occupancy_metrics() -> ShelterOccupancyMetricsType:
                 occupied=8,
                 reserved=1,
                 out_of_service=0,
+                in_turnaround=0,
             )
         ],
         reservation_metrics=ReservationMetricsType(
@@ -354,7 +356,8 @@ class TestShelterMetricsExport:
                     check_in_overdue_to_checked_in=1,
                 ),
                 avg_days_to_occupancy=4.5,
-            )
+            ),
+            _all_metric_export_options(),
         )
 
         with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
@@ -413,7 +416,7 @@ class TestShelterMetricsExport:
         with pytest.raises(ValueError, match="unknown_metric"):
             metrics_to_zip(
                 _shelter_occupancy_metrics(),
-                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
             )
 
     def test_metrics_to_xlsx_zip_exports_all_metric_files(self) -> None:
@@ -480,7 +483,7 @@ class TestShelterMetricsExport:
         with pytest.raises(ValueError, match="unknown_metric"):
             xlsx_metrics_to_zip(
                 _shelter_occupancy_metrics(),
-                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, "unknown_metric"],
+                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
             )
 
 

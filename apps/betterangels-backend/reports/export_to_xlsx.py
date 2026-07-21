@@ -115,7 +115,7 @@ def _daily_occupancy_sheet_data(shelter_id: str, metrics: list[DailyOccupancyMet
 
 
 def _daily_bed_status_sheet_data(shelter_id: str, metrics: list[DailyBedStatusMetricsType]) -> SheetData:
-    headers = ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service"]
+    headers = ["date", "shelter_id", "available", "occupied", "reserved", "out_of_service", "in_turnaround"]
     rows = [
         {
             "date": metric.date,
@@ -124,6 +124,7 @@ def _daily_bed_status_sheet_data(shelter_id: str, metrics: list[DailyBedStatusMe
             "occupied": metric.occupied,
             "reserved": metric.reserved,
             "out_of_service": metric.out_of_service,
+            "in_turnaround": metric.in_turnaround,
         }
         for metric in metrics
     ]
