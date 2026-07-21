@@ -1,12 +1,11 @@
-import { memo } from 'react';
 import { Controller } from 'react-hook-form';
-import { CheckboxGroup } from '../../../form/CheckboxGroup';
-import { FormSection } from '../../../form/FormSection';
-import { RadioGroup } from '../../../form/RadioGroup';
-import { BOOLEAN_OPTIONS } from '../constants/roomFormOptions';
+import { CheckboxGroup } from '../../../../../form/CheckboxGroup';
+import { FormSection } from '../../../../../form/FormSection';
+import { RadioGroup } from '../../../../../form/RadioGroup';
+import { BOOLEAN_OPTIONS } from '../formSchema';
 import type { SectionProps } from '../types';
 
-export const RoomDetailsSection = memo(function RoomDetailsSection({
+export function RoomDetails({
   control,
   errors,
   filteredPropertyOptions,
@@ -102,4 +101,4 @@ export const RoomDetailsSection = memo(function RoomDetailsSection({
       />
     </FormSection>
   );
-});
+}

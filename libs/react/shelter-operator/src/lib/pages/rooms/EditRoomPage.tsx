@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { RoomForm } from '../../components/rooms/room-form/RoomForm';
-import { mapRoomToFormData } from '../../components/rooms/room-form/utils/mapRoomToFormData';
+import { toFormData } from '../../components/rooms/room-form/utils/toFormData';
 import { useRoom } from '../../hooks/useRoom';
 import { shelterMgmtResourceRoute } from '../../routing';
 
@@ -29,7 +29,7 @@ export function EditRoomPage() {
         key={roomId}
         shelterId={shelterId ?? ''}
         roomId={roomId}
-        initialData={room ? mapRoomToFormData(room) : undefined}
+        initialData={room ? toFormData(room) : undefined}
         onSuccess={() => navigate(roomsPath)}
         onCancel={() => navigate(roomsPath)}
       />
