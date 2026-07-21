@@ -1,13 +1,9 @@
-"""Seed data for shelter lookups (SPAs), service catalog, and legacy auth groups.
+"""Seed data for shelter lookups (SPAs), city names, and service catalog.
 
 Replaces RunPython data migrations. Called by post_migrate signal.
 """
 
 from logging import getLogger
-
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.db.models import Model
 
 from shelters.models.lookups import SPA
 
@@ -182,13 +178,6 @@ SERVICE_CATALOG = [
     ),
 ]
 
-# Models that both Shelter Data Entry and Shelter Administration groups
-# get full CRUD permissions on (matching the original migration).
-# Using model classes instead of strings — a typo here fails at import time,
-# not silently at runtime when Permission.objects.filter returns empty.
-# The actual model list lives in _get_shared_permissions() to avoid circular imports.
-
-
 def seed_spas() -> None:
     for name, short_name, long_name in SPA_DATA:
         _, created = SPA.objects.get_or_create(
@@ -207,97 +196,6 @@ def seed_cities() -> None:
         _, created = City.objects.get_or_create(name=name)
         if created:
             logger.info("Created City: %s", name)
-
-
-def _get_shared_permissions() -> list[Permission]:
-    """Return all CRUD permissions for shared shelter models.
-
-    Uses model classes (not strings) — a typo fails at import time.
-    """
-    from common.models import Address
-    from shelters.models.availability import ShelterAvailability
-    from shelters.models.lookups import (
-        Accessibility,
-        City,
-        Demographic,
-        EntryRequirement,
-        ExitPolicy,
-        Funder,
-        Parking,
-        Pet,
-        ReferralRequirement,
-        RoomStyle,
-        ShelterProgram,
-        ShelterType,
-        SPA,
-        SpecialSituationRestriction,
-        Storage,
-        VaccinationRequirement,
-    )
-    from shelters.models.media import (
-        ExteriorShelterPhoto,
-        InteriorShelterPhoto,
-        MediaLink,
-        ShelterPhoto,
-        Video,
-    )
-    from shelters.models.schedule import Schedule
-    from shelters.models.service import Service, ServiceCategory
-    from shelters.models.shelter import Bed, ContactInfo, Room
-
-    models: list[type[Model]] = [
-        Accessibility,
-        Address,
-        Bed,
-        City,
-        ContactInfo,
-        Demographic,
-        EntryRequirement,
-        ExitPolicy,
-        ExteriorShelterPhoto,
-        Funder,
-        InteriorShelterPhoto,
-        MediaLink,
-        Parking,
-        Pet,
-        ReferralRequirement,
-        Room,
-        RoomStyle,
-        Schedule,
-        Service,
-        ServiceCategory,
-        ShelterAvailability,
-        ShelterPhoto,
-        ShelterProgram,
-        ShelterType,
-        SPA,
-        SpecialSituationRestriction,
-        Storage,
-        VaccinationRequirement,
-        Video,
-    ]
-
-    perms: list[Permission] = []
-    for model in models:
-        ct = ContentType.objects.get_for_model(model)
-        perms.extend(Permission.objects.filter(content_type=ct))
-    return perms
-
-
-def _get_shelter_crud_permissions() -> list[Permission]:
-    """Return ADD/CHANGE/DELETE/VIEW permissions for Shelter."""
-    ct = ContentType.objects.get(app_label="shelters", model="shelter")
-    return list(
-        Permission.objects.filter(
-            content_type=ct,
-            codename__in=[
-                "add_shelter",
-                "change_shelter",
-                "delete_shelter",
-                "view_shelter",
-            ],
-        )
-    )
 
 
 def seed_services() -> None:
@@ -325,31 +223,7 @@ def seed_services() -> None:
                 logger.info("Created Service: %s", svc_display)
 
 
-def seed_shelter_groups() -> None:
-    """Create legacy auth groups matching the original migration.
-
-    Shelter Data Entry: CRUD on shared models + Shelter CRUD only (no custom perms).
-    Shelter Administration: CRUD on shared models + ALL Shelter perms (including custom).
-    """
-    shared_perms = _get_shared_permissions()
-    shelter_crud = _get_shelter_crud_permissions()
-    all_shelter_perms = list(
-        Permission.objects.filter(content_type__app_label="shelters", content_type__model="shelter")
-    )
-
-    # Shelter Data Entry
-    data_entry, _ = Group.objects.get_or_create(name="Shelter Data Entry")
-    data_entry_perms = set(shared_perms) | set(shelter_crud)
-    data_entry.permissions.set(data_entry_perms)
-
-    # Shelter Administration (CRUD + custom perms on Shelter)
-    admin, _ = Group.objects.get_or_create(name="Shelter Administration")
-    admin_perms = set(shared_perms) | set(all_shelter_perms)
-    admin.permissions.set(admin_perms)
-
-
 def seed_shelter_lookups() -> None:
     seed_spas()
     seed_cities()
     seed_services()
-    seed_shelter_groups()
