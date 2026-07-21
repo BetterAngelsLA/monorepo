@@ -178,6 +178,7 @@ SERVICE_CATALOG = [
     ),
 ]
 
+
 def seed_spas() -> None:
     for name, short_name, long_name in SPA_DATA:
         _, created = SPA.objects.get_or_create(
