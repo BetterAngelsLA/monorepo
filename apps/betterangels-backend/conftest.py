@@ -20,7 +20,7 @@ def _tune_test_postgres(django_db_setup: None, django_db_blocker: object) -> Non
     from django.db import connection
 
     # Postgres: skip fsync for faster test writes
-    with django_db_blocker.unblock(), connection.cursor() as c:  # type: ignore[union-attr]
+    with django_db_blocker.unblock(), connection.cursor() as c:  # type: ignore[union-attr,attr-defined]
         c.execute("SET synchronous_commit TO off")
 
     # Django: skip expensive password hashing in tests
