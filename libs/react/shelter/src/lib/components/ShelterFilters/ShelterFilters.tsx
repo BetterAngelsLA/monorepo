@@ -7,7 +7,7 @@ import { TShelterPropertyFilters } from '../ShelterSearch';
 import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
-  demographicFilter,
+  // demographicFilter,
   entryRequirementFilter,
   parkingFilter,
   petsFilter,
