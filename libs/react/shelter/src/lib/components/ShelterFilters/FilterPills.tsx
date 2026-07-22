@@ -150,7 +150,7 @@ export function FilterPills(props: IProps) {
       {pills.map((pill) => {
         return (
           <div className={mergeCss(labelCss)} key={pill.id}>
-            <span>{'testing'}</span>
+            <span>{pill.label}</span>
             <button
               type="button"
               className="

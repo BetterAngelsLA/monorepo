@@ -140,12 +140,12 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        <FilterSelector
+        {/* <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
           values={filters[demographicFilter.name]}
           {...demographicFilter}
-        />
+        /> */}
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
