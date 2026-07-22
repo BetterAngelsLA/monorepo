@@ -5,38 +5,40 @@ import importPlugin from 'eslint-plugin-import';
 import a11yPlugin from 'eslint-plugin-react-native-a11y';
 
 export default [
-  // Global ignores (replaces .eslintignore)
+  // Global ignores — prevents ESLint from even traversing these directories
   {
     ignores: [
       '**/dist',
-      'node_modules',
+      '**/node_modules/**',
       '**/coverage',
       '**/.expo',
-      '**/generated',
+      '**/__generated__/**',
       '**/*.d.ts',
       '.yarn',
+      '.nx',
     ],
   },
 
   // Registers the @nx plugin so @nx/enforce-module-boundaries can resolve
   ...nxPlugin.configs['flat/base'],
-  // Enables import resolution rules (no-unresolved, named, etc.)
-  importPlugin.flatConfigs.recommended,
-  // Teaches the resolver to understand .ts/.tsx extensions
-  importPlugin.flatConfigs.typescript,
   // Sets up @typescript-eslint parser + TS-specific nx rules
   ...nxPlugin.configs['flat/typescript'],
   // Sets up JS-specific nx rules (no TS parser needed)
   ...nxPlugin.configs['flat/javascript'],
 
-  // Module boundaries (all JS/TS)
+  // Module boundaries + import validation (all JS/TS)
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    plugins: { import: importPlugin },
     rules: {
       // Reports conflicting named/default exports from the same module
       // good: export const foo = 1; export default bar;
       // bad:  export { foo }; export default foo;
       'import/export': 'error',
+      // Reports duplicate imports from the same module
+      // good: import { a, b } from './foo';
+      // bad:  import { a } from './foo'; import { b } from './foo';
+      'import/no-duplicates': 'warn',
       // Prevents projects from importing libs with incompatible tags
       // good: type:feature importing from type:ui (allowed per depConstraints)
       // bad:  type:util importing from type:feature (util → feature is blocked)
