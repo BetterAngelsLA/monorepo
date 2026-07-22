@@ -7,7 +7,7 @@ import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditRoomPage() {
   const navigate = useNavigate();
-  const { shelterId, roomId } = useParams();
+  const { shelterId, id: roomId } = useParams();
   const { room, loading, error } = useRoom(roomId ?? '');
 
   const roomsPath = shelterMgmtResourceRoute(shelterId ?? '', 'room');

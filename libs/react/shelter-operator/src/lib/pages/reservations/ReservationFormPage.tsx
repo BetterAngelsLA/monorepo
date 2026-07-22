@@ -13,7 +13,7 @@ import { shelterMgmtResourceRoute } from '../../routing';
 export function ReservationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { shelterId, reservationId } = useParams();
+  const { shelterId, id: reservationId } = useParams();
   const { reservation, loading, error } = useReservation(reservationId ?? '');
 
   const rawState = location.state as Record<string, unknown> | null | undefined;
