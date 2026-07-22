@@ -45,7 +45,7 @@ def migrate_to_global_shelter_operator(apps, schema_editor):
     for old_group in old_groups:
         for user in old_group.user_set.all():
             # Find orgs this user belongs to.
-            org_users = OrganizationUser.objects.filter(user=user).select_related("organization")
+            org_users = OrganizationUser.objects.filter(user_id=user.pk).select_related("organization")
             for ou in org_users:
                 org = ou.organization
                 group_name = f"{org.name}_{new_template.name}"
