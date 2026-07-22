@@ -1,9 +1,12 @@
 import { StarIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { PhoneNumberBtn } from '@monorepo/expo/shared/ui-components';
+import { Colors } from '@monorepo/expo/shared/static';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { View } from 'react-native';
+import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
+import { getPhoneActions } from './contactActions';
+import { ContactInfoRow } from './ContactInfoRow';
 
 type TPhoneNumber = {
   number?: string;
@@ -49,25 +52,37 @@ export function PhoneNumberRows(props: TPhoneNumbers) {
 
 function PhoneNumberRow(props: TPhoneNumber) {
   const { number, isPrimary } = props;
+  const { showSnackbar } = useSnackbar();
 
-  const formattedNumber = number && formatPhoneNumber(number);
-
-  if (!formattedNumber) {
+  if (!number) {
     return null;
   }
 
-  return (
-    <View
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        gap: Spacings.xs,
-        alignItems: 'center',
-      }}
-    >
-      <PhoneNumberBtn number={formattedNumber} />
+  const [formatted, extension] = formatPhoneNumber(number);
 
-      {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
-    </View>
+  if (!formatted) {
+    return null;
+  }
+
+  const displayText = extension ? `${formatted} ext.${extension}` : formatted;
+  const dialNumber = extension ? `${formatted},${extension}` : formatted;
+
+  return (
+    <ContactInfoRow
+      menuTitle="Phone number"
+      triggerAccessibilityLabel={`Phone number ${displayText} actions`}
+      actions={getPhoneActions(displayText, dialNumber, { showSnackbar })}
+      suffix={
+        isPrimary ? (
+          <View>
+            <StarIcon color={Colors.WARNING} size="md" />
+          </View>
+        ) : null
+      }
+    >
+      <TextBold selectable size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
+        {displayText}
+      </TextBold>
+    </ContactInfoRow>
   );
 }
