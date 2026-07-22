@@ -21,40 +21,74 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='referral',
-            name='shelter',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='referrals', to='shelters.shelter'),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='client_profile',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='clients.clientprofile'),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='created_by',
-            field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to=settings.AUTH_USER_MODEL),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='organization',
-            field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='organizations.organization'),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='pgh_context',
-            field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context'),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='events', to='referrals.referral'),
-        ),
-        migrations.AddField(
-            model_name='referralevent',
-            name='shelter',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='shelters.shelter'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referral ADD COLUMN IF NOT EXISTS shelter_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referral DROP COLUMN IF EXISTS shelter_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS client_profile_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS client_profile_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS created_by_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS created_by_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS organization_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS organization_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS pgh_context_id uuid NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS pgh_context_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS pgh_obj_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS pgh_obj_id",
+                ),
+                migrations.RunSQL(
+                    sql="ALTER TABLE referrals_referralevent ADD COLUMN IF NOT EXISTS shelter_id bigint NULL",
+                    reverse_sql="ALTER TABLE referrals_referralevent DROP COLUMN IF EXISTS shelter_id",
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='referral',
+                    name='shelter',
+                    field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='referrals', to='shelters.shelter'),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='client_profile',
+                    field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='clients.clientprofile'),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='created_by',
+                    field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to=settings.AUTH_USER_MODEL),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='organization',
+                    field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='organizations.organization'),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='pgh_context',
+                    field=models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context'),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='pgh_obj',
+                    field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='events', to='referrals.referral'),
+                ),
+                migrations.AddField(
+                    model_name='referralevent',
+                    name='shelter',
+                    field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='shelters.shelter'),
+                ),
+            ],
         ),
         pgtrigger.migrations.AddTrigger(
             model_name='referral',
