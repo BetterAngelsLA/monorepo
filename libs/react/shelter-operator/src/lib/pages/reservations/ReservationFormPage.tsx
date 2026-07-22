@@ -8,9 +8,7 @@ import {
   mapReservationToFormData,
 } from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
 import { useReservation } from '../../hooks/useReservation';
-import {
-  shelterManageResourceRoute,
-} from '../../routing';
+import { shelterMgmtResourceRoute } from '../../routing';
 
 export function ReservationFormPage() {
   const navigate = useNavigate();
@@ -27,18 +25,18 @@ export function ReservationFormPage() {
   const { backLinkPath, backLinkLabel } = useMemo(() => {
     if (bedId) {
       return {
-        backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'bed'),
+        backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'bed'),
         backLinkLabel: 'Back to Beds',
       };
     }
     if (roomId) {
       return {
-        backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'room'),
+        backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'room'),
         backLinkLabel: 'Back to Rooms',
       };
     }
     return {
-      backLinkPath: shelterManageResourceRoute(shelterId ?? '', 'reservation'),
+      backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'reservation'),
       backLinkLabel: 'Back to Reservations',
     };
   }, [bedId, roomId, shelterId]);

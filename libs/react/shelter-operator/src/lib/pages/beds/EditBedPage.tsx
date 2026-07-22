@@ -3,14 +3,14 @@ import { BedForm } from '../../components/beds/bed-form/BedForm';
 import { mapBedToFormData } from '../../components/beds/bed-form/utils/mapBedToFormData';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
-import { shelterManageResourceRoute } from '../../routing';
+import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditBedPage() {
   const navigate = useNavigate();
   const { shelterId, bedId } = useParams();
   const { bed, loading, error } = useBed(bedId ?? '');
 
-  const bedsPath = shelterManageResourceRoute(shelterId ?? '', 'bed');
+  const bedsPath = shelterMgmtResourceRoute(shelterId ?? '', 'bed');
 
   return (
     <ManageFormPageLayout

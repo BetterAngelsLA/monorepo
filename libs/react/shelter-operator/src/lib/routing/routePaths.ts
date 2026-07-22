@@ -30,14 +30,14 @@ type ResourceConfig = {
   param?: string;
 };
 
-export const manageResources = {
+export const mgmtResources = {
   room: { path: 'rooms', param: 'roomId' },
   bed: { path: 'beds', param: 'bedId' },
   reservation: { path: 'reservations', param: 'reservationId' },
   occupant: { path: 'occupants' },
 } as const satisfies Record<string, ResourceConfig>;
 
-export type TManageResource = keyof typeof manageResources;
+export type TMgmtResource = keyof typeof mgmtResources;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROUTE CONFIGS
@@ -65,13 +65,13 @@ export const profileRouteConfig = {
   },
 } as const satisfies StaticRouteConfig;
 
-export const manageRouteConfig = {
+export const mgmtRouteConfig = {
   root: '/operator/shelter/:shelterId/manage',
   children: {
-    rooms: manageResources.room.path,
-    beds: manageResources.bed.path,
-    reservations: manageResources.reservation.path,
-    occupants: manageResources.occupant.path,
+    rooms: mgmtResources.room.path,
+    beds: mgmtResources.bed.path,
+    reservations: mgmtResources.reservation.path,
+    occupants: mgmtResources.occupant.path,
   },
   actions: {
     create: 'create',
@@ -85,34 +85,34 @@ export const manageRouteConfig = {
 
 // ── Manage ────────────────────────────────────────────────────────────────────
 
-export function shelterManageRoute(shelterId: string): string {
-  return generatePath(manageRouteConfig.root, { shelterId });
+export function shelterMgmtRoute(shelterId: string): string {
+  return generatePath(mgmtRouteConfig.root, { shelterId });
 }
 
 /** /operator/shelter/5/manage/beds */
-export function shelterManageResourceRoute(
+export function shelterMgmtResourceRoute(
   shelterId: string,
-  resource: TManageResource,
+  resource: TMgmtResource,
 ): string {
-  return `${shelterManageRoute(shelterId)}/${manageResources[resource].path}`;
+  return `${shelterMgmtRoute(shelterId)}/${mgmtResources[resource].path}`;
 }
 
 /** /operator/shelter/5/manage/beds/create */
 export function shelterCreateResourceRoute(
   shelterId: string,
-  resource: TManageResource,
+  resource: TMgmtResource,
 ): string {
-  return `${shelterManageResourceRoute(shelterId, resource)}/${manageRouteConfig.actions.create}`;
+  return `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.create}`;
 }
 
 /** /operator/shelter/5/manage/beds/12/edit */
 export function shelterEditResourceRoute(
   shelterId: string,
-  resource: TManageResource,
+  resource: TMgmtResource,
   resourceId: string,
 ): string {
   return generatePath(
-    `${shelterManageResourceRoute(shelterId, resource)}/${manageRouteConfig.actions.edit}`,
+    `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.edit}`,
     { id: resourceId },
   );
 }
@@ -142,10 +142,10 @@ export function isShelterRoute(path: string, strict?: boolean): boolean {
 
 export function isShelterManageRoute(path: string, strict?: boolean): boolean {
   if (strict) {
-    return Boolean(matchPath(manageRouteConfig.root, path));
+    return Boolean(matchPath(mgmtRouteConfig.root, path));
   }
 
-  return Boolean(matchPath(`${manageRouteConfig.root}/*`, path));
+  return Boolean(matchPath(`${mgmtRouteConfig.root}/*`, path));
 }
 
 export function isShelterProfileRoute(

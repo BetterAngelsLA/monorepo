@@ -7,7 +7,7 @@ import {
   useRoom,
   useShelterOperatorProfile,
 } from '../../hooks';
-import { manageRouteConfig, paths, profileRouteConfig } from '../../routing';
+import { mgmtRouteConfig, paths, profileRouteConfig } from '../../routing';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -64,18 +64,18 @@ interface RoutePattern {
 const routePatterns: RoutePattern[] = [
   // ── Reservations ─────────────────────────────────────────────────────────
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.edit}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Reservations',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.reservations}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.reservations}`,
+          params,
         ),
       },
       { label: `__reservationId__:${params.id}`, path: '#' },
@@ -83,48 +83,48 @@ const routePatterns: RoutePattern[] = [
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.create}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Reservations',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.reservations}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.reservations}`,
+          params,
         ),
       },
       { label: 'Create', path: '#' },
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.reservations}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.reservations}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       { label: 'Reservations', path: '#' },
     ],
   },
   // ── Beds ─────────────────────────────────────────────────────────────────
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.beds}/${manageRouteConfig.actions.edit}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Beds',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.beds}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.beds}`,
+          params,
         ),
       },
       { label: `__bedId__:${params.id}`, path: '#' },
@@ -132,48 +132,48 @@ const routePatterns: RoutePattern[] = [
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.beds}/${manageRouteConfig.actions.create}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Beds',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.beds}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.beds}`,
+          params,
         ),
       },
       { label: 'Create', path: '#' },
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.beds}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.beds}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       { label: 'Beds', path: '#' },
     ],
   },
   // ── Rooms ────────────────────────────────────────────────────────────────
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.edit}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Rooms',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.rooms}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.rooms}`,
+          params,
         ),
       },
       { label: `__roomId__:${params.id}`, path: '#' },
@@ -181,53 +181,53 @@ const routePatterns: RoutePattern[] = [
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.create}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       {
         label: 'Rooms',
         path: buildPath(
-          `${manageRouteConfig.root}/${manageRouteConfig.children.rooms}`,
-          params
+          `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.rooms}`,
+          params,
         ),
       },
       { label: 'Create', path: '#' },
     ],
   },
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.rooms}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.rooms}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       { label: 'Rooms', path: '#' },
     ],
   },
   // ── Occupants ────────────────────────────────────────────────────────────
   {
-    pattern: `${manageRouteConfig.root}/${manageRouteConfig.children.occupants}`,
+    pattern: `${mgmtRouteConfig.root}/${mgmtRouteConfig.children.occupants}`,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
-      { label: 'Manage', path: buildPath(manageRouteConfig.root, params) },
+      { label: 'Manage', path: buildPath(mgmtRouteConfig.root, params) },
       { label: 'Occupants', path: '#' },
     ],
   },
   // ── Manage (root) ────────────────────────────────────────────────────────
   {
-    pattern: manageRouteConfig.root,
+    pattern: mgmtRouteConfig.root,
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
       { label: 'Manage', path: '#' },
     ],
@@ -238,7 +238,7 @@ const routePatterns: RoutePattern[] = [
     build: (params: Record<string, string>) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
       { label: 'Profile', path: buildPath(profileRouteConfig.root, params) },
       { label: segmentLabels[segment] ?? segment, path: '#' },
@@ -250,7 +250,7 @@ const routePatterns: RoutePattern[] = [
     build: (params) => [
       {
         label: `__shelterId__:${params.shelterId}`,
-        path: buildPath(manageRouteConfig.root, params),
+        path: buildPath(mgmtRouteConfig.root, params),
       },
       { label: 'Profile', path: '#' },
     ],
@@ -267,7 +267,7 @@ const routePatterns: RoutePattern[] = [
 const ID_SEPARATOR = '__:';
 
 function parseIdPlaceholder(
-  label: string
+  label: string,
 ): { type: string; id: string } | null {
   const idx = label.indexOf(ID_SEPARATOR);
   if (idx === -1) return null;
@@ -307,7 +307,7 @@ interface UseBreadcrumbNamesResult {
  * to human-readable names via GraphQL queries.
  */
 export function useBreadcrumbNames(
-  rawItems: BreadcrumbItem[]
+  rawItems: BreadcrumbItem[],
 ): UseBreadcrumbNamesResult {
   // Extract dynamic IDs from raw breadcrumb items
   const { shelterId, roomId, bedId, reservationId } = useMemo(() => {
@@ -343,7 +343,7 @@ export function useBreadcrumbNames(
     useShelterOperatorProfile(shelterId ?? '');
   const { bed, loading: bedLoading } = useBed(bedId ?? '');
   const { reservation, loading: reservationLoading } = useReservation(
-    reservationId ?? ''
+    reservationId ?? '',
   );
   const { room, loading: roomLoading } = useRoom(roomId ?? '');
 
@@ -354,7 +354,7 @@ export function useBreadcrumbNames(
       reservationId: reservationLoading,
       roomId: roomLoading,
     }),
-    [shelterLoading, bedLoading, reservationLoading, roomLoading]
+    [shelterLoading, bedLoading, reservationLoading, roomLoading],
   );
 
   // True if any dynamic placeholder is still being fetched

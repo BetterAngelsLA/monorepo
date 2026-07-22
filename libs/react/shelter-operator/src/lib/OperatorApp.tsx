@@ -1,7 +1,7 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { useUser } from '@monorepo/react/shelter';
 import { localStorageAdapter } from '@monorepo/react/shared';
+import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
@@ -24,7 +24,7 @@ import {
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
 import {
-  manageRouteConfig,
+  mgmtRouteConfig,
   paths,
   profileRouteConfig,
   routePath,
@@ -59,7 +59,9 @@ export function OperatorApp() {
             <Route path={routePath(profileRouteConfig.root)}>
               <Route
                 index
-                element={<Navigate to={profileRouteConfig.children.basic} replace />}
+                element={
+                  <Navigate to={profileRouteConfig.children.basic} replace />
+                }
               />
               <Route
                 path={profileRouteConfig.children.basic}
@@ -90,43 +92,46 @@ export function OperatorApp() {
                 element={<ShelterMediaPage />}
               />
             </Route>
-            <Route path={routePath(manageRouteConfig.root)}>
+            <Route path={routePath(mgmtRouteConfig.root)}>
               <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
-                path={`${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.create}`}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={`${manageRouteConfig.children.rooms}/${manageRouteConfig.actions.edit}`}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={manageRouteConfig.children.rooms}
+                path={mgmtRouteConfig.children.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
               />
               <Route
-                path={`${manageRouteConfig.children.beds}/${manageRouteConfig.actions.create}`}
+                path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
                 element={<EditBedPage />}
               />
-              <Route path={`${manageRouteConfig.children.beds}/${manageRouteConfig.actions.edit}`} element={<EditBedPage />} />
               <Route
-                path={manageRouteConfig.children.beds}
+                path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
+                element={<EditBedPage />}
+              />
+              <Route
+                path={mgmtRouteConfig.children.beds}
                 element={<ShelterDashboardPage tab="beds" />}
               />
               <Route
-                path={`${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.create}`}
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={`${manageRouteConfig.children.reservations}/${manageRouteConfig.actions.edit}`}
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={manageRouteConfig.children.occupants}
+                path={mgmtRouteConfig.children.occupants}
                 element={<ShelterDashboardPage tab="occupants" />}
               />
               <Route
-                path={manageRouteConfig.children.reservations}
+                path={mgmtRouteConfig.children.reservations}
                 element={<ShelterDashboardPage tab="reservations" />}
               />
             </Route>
