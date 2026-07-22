@@ -1,5 +1,5 @@
 from datetime import date, datetime, time, timedelta
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -13,7 +13,7 @@ from common.graphql.types import (
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
 from django.utils import timezone
-from shelters.enums import DemographicChoices, StatusChoices
+from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.selectors import shelter_get, shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
@@ -116,11 +116,7 @@ class Query:
         shelter_id: ID,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        demographics: Optional[List[DemographicChoices]] = None,
     ) -> ShelterOccupancyMetricsType:
-        # NOTE: demographics is accepted for forward-compatibility but not yet
-        # applied — none of the underlying selectors support per-demographic
-        # filtering (pghistory doesn't track M2M fields).
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
 

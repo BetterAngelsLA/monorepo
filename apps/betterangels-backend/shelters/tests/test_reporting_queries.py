@@ -21,13 +21,11 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             $shelterId: ID!
             $startDate: Date
             $endDate: Date
-            $demographics: [DemographicChoices!]
         ) {
             shelterOccupancyMetrics(
                 shelterId: $shelterId
                 startDate: $startDate
                 endDate: $endDate
-                demographics: $demographics
             ) {
                 shelterId
                 startDate
@@ -145,31 +143,6 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             },
         )
         self.assertIsNone(payload["avgDaysToOccupancy"])
-
-    def test_accepts_demographics_argument(self) -> None:
-        """demographics is accepted without error, even though it isn't applied yet.
-
-        Guards against a regression/removal of the argument while the actual
-        filtering support (blocked on pghistory M2M tracking) is pending.
-        """
-        self._add_shelter_view_permission(self.org_1)
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        baker.make(Bed, shelter=self.shelter, name="Bed 1")
-
-        response = self.execute_graphql(
-            self.SHELTER_OCCUPANCY_METRICS_QUERY,
-            variables={
-                "shelterId": str(self.shelter.pk),
-                "startDate": "2026-01-01",
-                "endDate": "2026-01-03",
-                "demographics": ["SINGLE_MEN"],
-            },
-        )
-
-        self.assertNotIn("errors", response)
-        payload = response["data"]["shelterOccupancyMetrics"]
-        self.assertEqual(payload["shelterId"], str(self.shelter.pk))
-        self.assertEqual(len(payload["dailyBedStatus"]), 3)
 
     @time_machine.travel(_FROZEN_NOW, tick=False)
     def test_only_start_date_defaults_end_to_today(self) -> None:

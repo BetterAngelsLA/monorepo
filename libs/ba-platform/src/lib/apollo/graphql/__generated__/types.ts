@@ -2789,7 +2789,6 @@ export type QueryShelterCitiesArgs = {
 
 
 export type QueryShelterOccupancyMetricsArgs = {
-  demographics?: InputMaybe<Array<DemographicChoices>>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   shelterId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
