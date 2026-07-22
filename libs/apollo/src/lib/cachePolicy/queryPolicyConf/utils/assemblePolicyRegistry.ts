@@ -50,12 +50,12 @@
  */
 
 export function assemblePolicyRegistry<
-  const T extends readonly { key: string; buildFn: () => any }[]
+  const T extends readonly { key: string; buildFn: () => unknown }[],
 >(
   opts: T,
   options?: {
     isDevEnv?: boolean;
-  }
+  },
 ) {
   // (Optional) dev-time duplicate-key warning
   if (options?.isDevEnv) {
@@ -65,7 +65,7 @@ export function assemblePolicyRegistry<
       if (seen.has(key)) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`
+          `[apollo assemblePolicyRegistry] Duplicate key "${key}" – later one will override.`,
         );
       }
       seen.add(key);
