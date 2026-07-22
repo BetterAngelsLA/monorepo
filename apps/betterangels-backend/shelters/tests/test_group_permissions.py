@@ -5,8 +5,8 @@ from accounts.models import PermissionGroupTemplate
 
 
 class ShelterGroupPermissionsTestCase(TestCase):
-    def test_shelter_data_entry_template_has_schedule_permissions(self) -> None:
-        template = PermissionGroupTemplate.objects.get(name="Shelter Data Entry")
+    def test_global_shelter_operator_has_schedule_permissions(self) -> None:
+        template = PermissionGroupTemplate.objects.get(name="Global Shelter Operator")
         schedule_permissions = set(
             Permission.objects.filter(
                 content_type__app_label="shelters",
@@ -24,27 +24,8 @@ class ShelterGroupPermissionsTestCase(TestCase):
             schedule_permissions,
         )
 
-    def test_shelter_administration_template_has_schedule_permissions(self) -> None:
-        template = PermissionGroupTemplate.objects.get(name="Shelter Administration")
-        schedule_permissions = set(
-            Permission.objects.filter(
-                content_type__app_label="shelters",
-                content_type__model="schedule",
-            ).values_list("codename", flat=True)
-        )
-
-        self.assertSetEqual(
-            set(
-                template.permissions.filter(
-                    content_type__app_label="shelters",
-                    content_type__model="schedule",
-                ).values_list("codename", flat=True)
-            ),
-            schedule_permissions,
-        )
-
-    def test_shelter_data_entry_template_has_availability_permissions(self) -> None:
-        template = PermissionGroupTemplate.objects.get(name="Shelter Data Entry")
+    def test_global_shelter_operator_has_availability_permissions(self) -> None:
+        template = PermissionGroupTemplate.objects.get(name="Global Shelter Operator")
         availability_permissions = set(
             Permission.objects.filter(
                 content_type__app_label="shelters",
@@ -62,21 +43,11 @@ class ShelterGroupPermissionsTestCase(TestCase):
             availability_permissions,
         )
 
-    def test_shelter_administration_template_has_availability_permissions(self) -> None:
-        template = PermissionGroupTemplate.objects.get(name="Shelter Administration")
-        availability_permissions = set(
-            Permission.objects.filter(
+    def test_global_shelter_operator_has_view_private_permission(self) -> None:
+        template = PermissionGroupTemplate.objects.get(name="Global Shelter Operator")
+        self.assertTrue(
+            template.permissions.filter(
                 content_type__app_label="shelters",
-                content_type__model="shelteravailability",
-            ).values_list("codename", flat=True)
-        )
-
-        self.assertSetEqual(
-            set(
-                template.permissions.filter(
-                    content_type__app_label="shelters",
-                    content_type__model="shelteravailability",
-                ).values_list("codename", flat=True)
-            ),
-            availability_permissions,
+                codename="view_private_shelter",
+            ).exists()
         )

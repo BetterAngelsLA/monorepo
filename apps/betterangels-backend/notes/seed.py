@@ -124,12 +124,6 @@ SERVICE_CATEGORIES = [
             "Notary",
         ],
     ),
-    (
-        "Other",
-        [
-            "Other",
-        ],
-    ),
 ]
 
 

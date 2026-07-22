@@ -18,11 +18,11 @@ from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import PermissionGroupTemplate
 from common.permissions.config import TemplateConfig
 from notes.groups import CASEWORKER
-from shelters.groups import SHELTER_ADMINISTRATION, SHELTER_DATA_ENTRY, SHELTER_OPERATOR
+from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 
 logger = getLogger(__name__)
 
-ALL_TEMPLATES = (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER, SHELTER_ADMINISTRATION, SHELTER_DATA_ENTRY, SHELTER_OPERATOR)
+ALL_TEMPLATES = (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER, GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR)
 
 
 def _resolve_permissions(
