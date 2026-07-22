@@ -1,4 +1,7 @@
+import { ActiveOrgProvider } from '@monorepo/ba-platform';
+import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { useUser } from '@monorepo/react/shelter';
+import { localStorageAdapter } from '@monorepo/react/shared';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
@@ -7,7 +10,6 @@ import { EditBedPage } from './pages/beds/EditBedPage';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { CreateShelterForm } from './pages/dashboard/components/create-shelter-form';
 import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import {
@@ -27,17 +29,19 @@ import {
   routePath,
   shelterProfileSegments,
 } from './routing';
-import { ActiveOrgProvider } from '@monorepo/ba-platform';
 
 export function OperatorApp() {
   const { user } = useUser();
 
   return (
-    <ActiveOrgProvider organizations={(user?.organizations ?? []).map(org => ({
-      id: org.id,
-      name: org.name,
-      permissions: Object.values(org.permissions).flat(),
-    }))}>
+    <ActiveOrgProvider
+      storage={localStorageAdapter}
+      organizations={(user?.organizations ?? []).map((org) => ({
+        id: org.id,
+        name: org.name,
+        permissions: Object.values(org.permissions).flat() as PermissionEnum[],
+      }))}
+    >
       <OperatorAuthProvider>
         <Routes>
           <Route path={routePath(paths.signIn)} element={<SignIn />} />
@@ -48,10 +52,6 @@ export function OperatorApp() {
           <Route element={<OperatorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path={routePath(paths.users)} element={<UsersPage />} />
-            <Route
-              path={routePath(paths.dashboardCreate)}
-              element={<CreateShelterForm />}
-            />
             <Route
               path={routePath(paths.shelterCreate)}
               element={<CreateShelterProfile />}

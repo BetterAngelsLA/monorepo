@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { ShelterChoices } from '@monorepo/react/shelter';
+import { DemographicChoices, ShelterChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
@@ -19,8 +21,11 @@ import {
 import { defaultFormValues, DetailsFormData, formSchema } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<DetailsFormData>;
-  onSubmit?: (data: DetailsFormData) => void;
+  values?: Partial<DetailsFormData>;
+  onSubmit: (
+    data: DetailsFormData,
+    setError: UseFormSetError<DetailsFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -30,7 +35,7 @@ type TProps = {
 
 export function ShelterDetailsForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -39,53 +44,53 @@ export function ShelterDetailsForm(props: TProps) {
     className,
   } = props;
 
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
+
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<DetailsFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 
   return (
     <div className={mergeCss(['px-6 flex-col flex-1 pb-48', className])}>
-      <Form className="flex-1">
+      <Form>
         <Form.Header
           title="Shelter Details"
           onEditClick={isViewMode ? onEditClick : undefined}
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <Form.Content>
           <Form.Block>
-            <Controller
-              name="demographics"
+            <ComboBox
               control={control}
-              render={({ field }) => (
-                <Dropdown
-                  label="Demographics Served"
-                  isMulti={true}
-                  value={DEMOGRAPHICS_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
-                  )}
-                  options={DEMOGRAPHICS_OPTIONS}
-                  onChange={(options) => {
-                    field.onChange(options ? options.map((o) => o.value) : []);
-                  }}
-                  isViewMode={isViewMode}
-                />
-              )}
+              name="demographics"
+              inputName="demographicsOther"
+              label="Demographics Served"
+              inputLabel="Other Demographic"
+              options={DEMOGRAPHICS_OPTIONS}
+              isSearchable={
+                DEMOGRAPHICS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
+              triggerValue={DemographicChoices.Other}
+              inputError={errors.demographicsOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
             />
 
             <Controller
@@ -220,15 +225,15 @@ export function ShelterDetailsForm(props: TProps) {
             )}
           />
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

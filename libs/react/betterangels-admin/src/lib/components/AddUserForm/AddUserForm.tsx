@@ -7,7 +7,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import {
   OrganizationMemberType,
   PermissionTemplateEnum,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';

@@ -9,10 +9,10 @@ import Logo from '../assets/images/logo.svg';
 
 export default function HomeScreen() {
   const { createInteraction } = useLocalSearchParams();
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
   if (createInteraction) {
-    if (isHmisUser) {
+    if (user?.isHmisUser) {
       return <ClientsAddNoteHmis Logo={Logo} />;
     }
 

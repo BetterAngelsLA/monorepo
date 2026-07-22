@@ -5,7 +5,7 @@ import CookieManager from '@preeternal/react-native-cookie-manager';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import Logo from './assets/images/logo.svg';

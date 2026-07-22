@@ -1,14 +1,13 @@
-from typing import Any, cast
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 from common.services.s3 import (
-    DEFAULT_MAX_FILE_SIZE,
-    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
     PresignedS3UploadInput,
     generate_s3_presigned_upload_urls,
     s3_key_exists,
 )
+from django.conf import settings
 from django.test import TestCase
 from storages.backends.s3 import S3Storage
 
@@ -34,48 +33,48 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         self.addCleanup(storage_patcher.stop)
 
     def _make_upload(self, **overrides: Any) -> PresignedS3UploadInput:
-        base: dict[str, Any] = {
+        defaults: dict[str, Any] = {
             "ref_id": "ref-1",
             "filename": "photo.jpg",
-            "content_type": "image/jpeg",
+            "mime_type": "image/jpeg",
             "upload_path": "attachments",
         }
-        base.update(overrides)
-        return cast(PresignedS3UploadInput, base)
+        defaults.update(overrides)
+        return PresignedS3UploadInput(**defaults)
 
     def test_single_upload(self) -> None:
         result = generate_s3_presigned_upload_urls(uploads=[self._make_upload()])
 
-        self.assertEqual(len(result["uploads"]), 1)
-        upload = result["uploads"][0]
-        self.assertEqual(upload["ref_id"], "ref-1")
-        self.assertIn(f"https://s3.amazonaws.com/{TEST_BUCKET}", upload["url"])
-        self.assertTrue(upload["key"].startswith("media/attachments/"))
-        self.assertTrue(upload["key"].endswith(".jpg"))
-        self.assertIn("key", upload["fields"])
+        self.assertEqual(len(result.uploads), 1)
+        upload = result.uploads[0]
+        self.assertEqual(upload.ref_id, "ref-1")
+        self.assertIn(f"https://s3.amazonaws.com/{TEST_BUCKET}", upload.url)
+        self.assertTrue(upload.key.startswith("media/attachments/"))
+        self.assertTrue(upload.key.endswith(".jpg"))
+        self.assertIn("key", upload.fields)
 
         self.mock_client.generate_presigned_post.assert_called_once()
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
         self.assertEqual(call_kwargs["Bucket"], TEST_BUCKET)
-        self.assertEqual(call_kwargs["ExpiresIn"], DEFAULT_UPLOAD_EXPIRATION_SECONDS)
+        self.assertEqual(call_kwargs["ExpiresIn"], settings.S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS)
 
     def test_multiple_uploads(self) -> None:
         uploads = [
-            self._make_upload(ref_id="ref-1", filename="a.pdf", content_type="application/pdf"),
-            self._make_upload(ref_id="ref-2", filename="b.png", content_type="image/png"),
+            self._make_upload(ref_id="ref-1", filename="a.pdf", mime_type="application/pdf"),
+            self._make_upload(ref_id="ref-2", filename="b.png", mime_type="image/png"),
         ]
         result = generate_s3_presigned_upload_urls(uploads=uploads)
 
-        self.assertEqual(len(result["uploads"]), 2)
-        self.assertEqual(result["uploads"][0]["ref_id"], "ref-1")
-        self.assertEqual(result["uploads"][1]["ref_id"], "ref-2")
-        self.assertTrue(result["uploads"][0]["key"].endswith(".pdf"))
-        self.assertTrue(result["uploads"][1]["key"].endswith(".png"))
+        self.assertEqual(len(result.uploads), 2)
+        self.assertEqual(result.uploads[0].ref_id, "ref-1")
+        self.assertEqual(result.uploads[1].ref_id, "ref-2")
+        self.assertTrue(result.uploads[0].key.endswith(".pdf"))
+        self.assertTrue(result.uploads[1].key.endswith(".png"))
 
     def test_empty_uploads(self) -> None:
         result = generate_s3_presigned_upload_urls(uploads=[])
 
-        self.assertEqual(result["uploads"], [])
+        self.assertEqual(result.uploads, [])
 
     def test_custom_expires_in_and_max_file_size(self) -> None:
         upload = self._make_upload(expires_in=600, max_file_size=5_000_000)
@@ -95,11 +94,11 @@ class GenerateS3PresignedUploadUrlsTestCase(TestCase):
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
         conditions = call_kwargs["Conditions"]
         content_length_conditions = [c for c in conditions if isinstance(c, list) and c[0] == "content-length-range"]
-        self.assertEqual(content_length_conditions[0][2], DEFAULT_MAX_FILE_SIZE)
+        self.assertEqual(content_length_conditions[0][2], settings.S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE)
 
     def test_content_type_in_conditions(self) -> None:
         generate_s3_presigned_upload_urls(
-            uploads=[self._make_upload(content_type="application/pdf")],
+            uploads=[self._make_upload(mime_type="application/pdf")],
         )
 
         call_kwargs = self.mock_client.generate_presigned_post.call_args.kwargs
@@ -143,14 +142,14 @@ class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
     """Tests the local dev path where storage exposes get_external_client."""
 
     def _make_upload(self, **overrides: Any) -> PresignedS3UploadInput:
-        base: dict[str, Any] = {
+        defaults: dict[str, Any] = {
             "ref_id": "ref-1",
             "filename": "photo.jpg",
-            "content_type": "image/jpeg",
+            "mime_type": "image/jpeg",
             "upload_path": "attachments",
         }
-        base.update(overrides)
-        return cast(PresignedS3UploadInput, base)
+        defaults.update(overrides)
+        return PresignedS3UploadInput(**defaults)
 
     @patch("common.services.s3.default_storage")
     def test_uses_storage_client_when_available(self, mock_storage: MagicMock) -> None:
@@ -166,9 +165,9 @@ class GenerateS3PresignedUploadUrlsLocalDevTestCase(TestCase):
         result = generate_s3_presigned_upload_urls(uploads=[self._make_upload()])
 
         mock_storage.get_external_client.assert_called_once()
-        self.assertEqual(len(result["uploads"]), 1)
-        upload = result["uploads"][0]
-        self.assertIn("http://localhost:9000/", upload["url"])
+        self.assertEqual(len(result.uploads), 1)
+        upload = result.uploads[0]
+        self.assertIn("http://localhost:9000/", upload.url)
 
 
 class S3KeyExistsTestCase(TestCase):

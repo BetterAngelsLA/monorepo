@@ -135,22 +135,23 @@ function checkOrTriggerBuild(
     let buildData: BuildInfo[];
     try {
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${runtimeVersion} --limit 1 --json --interactive false`
+        `yarn nx run ${project}:build-list --platform ${platform} --build-profile ${profile} --runtime-version ${runtimeVersion} --limit 1 --json --non-interactive`
       );
     } catch {
       buildData = [];
     }
 
+    // Skip if existing build found — avoid redundant CI builds
     if (buildData.length > 0) {
       console.log(
-        `Found existing ${platform} build for runtime ${runtimeVersion}.`
+        `Found existing ${platform} build for runtime ${runtimeVersion}, skipping.`
       );
     } else {
       console.log(
         `No existing ${platform} build for runtime ${runtimeVersion}. Starting new build.`
       );
       buildData = runJson<BuildInfo[]>(
-        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --interactive false --wait false --json`
+        `yarn nx run ${project}:eas-build --profile ${profile} --platform ${platform} --freeze-credentials --non-interactive --json --no-wait`
       );
     }
 
@@ -191,7 +192,7 @@ function performEasUpdate(
   console.log(`\n=== Performing EAS Update on branch: ${branch} ===`);
 
   const updateData = runJson<UpdateResult[]>(
-    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --interactive false`
+    `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`
   );
   const updates: DeployResults['updates'] = {};
   let groupId = '';
