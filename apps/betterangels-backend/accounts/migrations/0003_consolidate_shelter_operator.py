@@ -8,7 +8,6 @@ org(s) via OrganizationUser and add them to the corresponding
 
 import logging
 
-from django.contrib.auth.models import Group
 from django.db import migrations
 from django.db.models import Count
 
@@ -19,6 +18,7 @@ OLD_GROUP_NAMES = ["Shelter Data Entry", "Shelter Administration"]
 
 def migrate_to_global_shelter_operator(apps, schema_editor):
     """Move users from legacy global auth groups → org-scoped PermissionGroups."""
+    Group = apps.get_model("auth", "Group")
     OrganizationUser = apps.get_model("organizations", "OrganizationUser")
     PermissionGroup = apps.get_model("accounts", "PermissionGroup")
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
