@@ -2,6 +2,7 @@
 import graphqlPlugin from '@graphql-eslint/eslint-plugin';
 import nxPlugin from '@nx/eslint-plugin';
 import importPlugin from 'eslint-plugin-import';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import a11yPlugin from 'eslint-plugin-react-native-a11y';
 
 export default [
@@ -25,6 +26,26 @@ export default [
   ...nxPlugin.configs['flat/typescript'],
   // Sets up JS-specific nx rules (no TS parser needed)
   ...nxPlugin.configs['flat/javascript'],
+
+  // React / React Native base rules (core JS quality rules: no-throw-literal, eqeqeq, etc.)
+  // Previously provided by plugin:@nx/react. Uses only eslint-plugin-import + core ESLint — no
+  // incompatible plugins.
+  ...nxPlugin.configs['flat/react-base'],
+  // TS-aware React overrides (no-unused-expressions with shortCircuit/ternary support)
+  ...nxPlugin.configs['flat/react-typescript'],
+
+  // React Hooks rules (eslint-plugin-react-hooks supports ESLint 10)
+  // NOTE: eslint-plugin-react and eslint-plugin-jsx-a11y do NOT support ESLint 10 yet
+  // (peerDeps cap at ^9). Their rules are skipped until compatible versions are available.
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    plugins: { 'react-hooks': reactHooksPlugin },
+    rules: {
+      ...reactHooksPlugin.configs.recommended.rules,
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/refs': 'warn',
+    },
+  },
 
   // Module boundaries + import validation (all JS/TS)
   {
@@ -180,6 +201,7 @@ export default [
           destructuredArrayIgnorePattern: '^_',
           varsIgnorePattern: '^_',
           argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
           ignoreRestSiblings: true,
         },
       ],

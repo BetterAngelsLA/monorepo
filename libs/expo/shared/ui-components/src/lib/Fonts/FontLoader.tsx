@@ -14,6 +14,5 @@ export default function FontLoader({ children }: { children: ReactNode }) {
 
   if (!loaded) return null;
 
-  // eslint-disable-next-line react/jsx-no-useless-fragment
   return <Fragment>{children}</Fragment>;
 }
