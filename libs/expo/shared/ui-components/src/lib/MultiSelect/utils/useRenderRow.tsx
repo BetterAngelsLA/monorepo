@@ -5,7 +5,6 @@ import {
 } from '../components/MultiSelectItem';
 
 type TProps<T> = {
-  isLocalSearch: boolean;
   isSelectAllOption: (item: T) => boolean;
   allAreSelected: () => boolean;
   isSelected: (item: T) => boolean;

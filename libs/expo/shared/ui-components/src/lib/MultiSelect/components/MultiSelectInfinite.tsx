@@ -84,7 +84,6 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
   });
 
   const renderRow = useRenderRow<T>({
-    isLocalSearch: hasLocalFilter,
     isSelectAllOption,
     allAreSelected,
     isSelected,
