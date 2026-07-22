@@ -1,10 +1,17 @@
 import type { FieldFunctionOptions } from '@apollo/client';
+import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
 import { Kind, type FieldNode } from 'graphql';
 
 export type TItem = { id: number; name: string };
 
+export type TMergedPayload = {
+  results: (TItem | undefined)[];
+  totalCount?: number;
+  pageInfo?: Record<string, unknown>;
+};
+
 export const adaptPagination = (
-  vars: { pagination?: { offset?: number; limit?: number } } | undefined
+  vars: { pagination?: { offset?: number; limit?: number } } | undefined,
 ) => vars?.pagination ?? {};
 
 export const paginationKeys = {
@@ -19,18 +26,18 @@ type TestReadField = FieldFunctionOptions<
   Record<string, unknown>
 >['readField'];
 
-const readFieldFn: TestReadField = (fieldNameOrOpts: any, from?: any) => {
+const readFieldFn = ((fieldNameOrOpts: unknown, from?: unknown) => {
   const fieldName =
     typeof fieldNameOrOpts === 'string'
       ? fieldNameOrOpts
-      : fieldNameOrOpts?.fieldName;
+      : (fieldNameOrOpts as { fieldName?: string })?.fieldName;
 
   if (!fieldName) {
     return undefined;
   }
 
-  return from?.[fieldName];
-};
+  return (from as Record<string, unknown>)?.[fieldName];
+}) as TestReadField;
 
 // Minimal FieldNode
 export const testFieldNode: FieldNode = {
@@ -39,8 +46,8 @@ export const testFieldNode: FieldNode = {
 };
 
 export function makeOptions(
-  args: any
-): FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>> {
+  args: Record<string, unknown>,
+): FieldMergeFunctionOptions<Record<string, unknown>, Record<string, unknown>> {
   return {
     args,
     readField: readFieldFn,
@@ -48,18 +55,28 @@ export function makeOptions(
     field: testFieldNode,
     storeFieldName: 'testField',
     variables: undefined,
-    toReference: ((v: any) => v) as any,
-    canRead: (() => true) as any,
-    isReference: ((v: any) => !!v && typeof v.__ref === 'string') as any,
-    mergeObjects: ((a: any, b: any) => ({ ...a, ...b })) as any,
-    cache: {} as any,
-    storage: {} as any,
-  };
+    toReference: ((v: unknown) =>
+      v) as unknown as FieldFunctionOptions['toReference'],
+    canRead: (() => true) as unknown as FieldFunctionOptions['canRead'],
+    isReference: ((v: Record<string, unknown> | null) =>
+      !!v &&
+      typeof v['__ref'] ===
+        'string') as unknown as FieldFunctionOptions['isReference'],
+    mergeObjects: ((
+      a: Record<string, unknown>,
+      b: Record<string, unknown>,
+    ) => ({ ...a, ...b })) as unknown as FieldFunctionOptions['mergeObjects'],
+    cache: {} as unknown as FieldFunctionOptions['cache'],
+    storage: {} as unknown as FieldFunctionOptions['storage'],
+  } as unknown as FieldMergeFunctionOptions<
+    Record<string, unknown>,
+    Record<string, unknown>
+  >;
 }
 
 export const generateIncoming = (
   items: TItem[],
-  meta?: Partial<{ totalCount: number; pageInfo: any }>
+  meta?: Partial<{ totalCount: number; pageInfo: Record<string, unknown> }>,
 ) => ({
   results: items,
   ...(meta?.totalCount !== undefined ? { totalCount: meta.totalCount } : {}),
