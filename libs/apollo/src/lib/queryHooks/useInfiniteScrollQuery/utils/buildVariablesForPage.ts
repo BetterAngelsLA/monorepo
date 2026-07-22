@@ -23,11 +23,13 @@ type TNextPagePerPage<TVars> = {
 type TNextPageProps<TVars> = TNextPageOffset<TVars> | TNextPagePerPage<TVars>;
 
 export function buildVariablesForPage<TVars extends OperationVariables>(
-  args: TNextPageProps<TVars>
+  args: TNextPageProps<TVars>,
 ): TVars {
   const { previousVariables, paginationMode, incrementBy } = args;
 
-  const nextVars: any = previousVariables ? { ...previousVariables } : {};
+  const nextVars: Record<string, unknown> = previousVariables
+    ? { ...previousVariables }
+    : {};
 
   // offset/limit
   if (paginationMode === PaginationModeEnum.Offset) {
