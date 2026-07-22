@@ -42,8 +42,12 @@ export function SearchListBar<T>(props: TProps<T>) {
     onChangeRef.current = onChange;
   }, [onChange]);
 
+  // signature captures meaningful changes to filtered;
+  // filtered itself is intentionally omitted to avoid re-running
+  // on reference-only changes.
   useEffect(() => {
     onChangeRef.current(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 
   return (

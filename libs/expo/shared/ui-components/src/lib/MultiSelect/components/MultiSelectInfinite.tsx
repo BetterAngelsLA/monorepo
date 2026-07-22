@@ -53,7 +53,7 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
   // Base list: local filter layered over current options when enabled
   const baseOptions = useMemo(
     () => (withLocalFilter ? filtered : options),
-    [withLocalFilter, filtered, options]
+    [withLocalFilter, filtered, options],
   );
 
   const visibleOptions = useWithSelectAllOption<T>({
@@ -100,9 +100,9 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
       }
 
       // default
-      return String(item[valueKey!]);
+      return String(item[valueKey as keyof T]);
     },
-    [keyExtractor, valueKey]
+    [keyExtractor, valueKey],
   );
 
   return (
@@ -127,7 +127,7 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
       {hasServerSearch && (
         <SearchBar
           value={''} // UI-only; not controlling from here
-          onChange={onSearch!}
+          onChange={onSearch as NonNullable<typeof onSearch>}
           placeholder={searchPlaceholder}
           debounceMs={searchDebounceMs}
           style={{ marginBottom: DEFAULT_MARGIN_BOTTOM }}

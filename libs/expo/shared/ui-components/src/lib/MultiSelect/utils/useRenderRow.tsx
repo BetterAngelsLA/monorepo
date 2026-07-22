@@ -14,13 +14,12 @@ type TProps<T> = {
   renderOption?: (
     item: T,
     props: TMultiSelectItem,
-    index: number
+    index: number,
   ) => React.ReactElement;
 };
 
 export function useRenderRow<T>(args: TProps<T>) {
   const {
-    isLocalSearch,
     isSelectAllOption,
     allAreSelected,
     isSelected,
@@ -55,13 +54,12 @@ export function useRenderRow<T>(args: TProps<T>) {
       );
     },
     [
-      isLocalSearch,
       isSelectAllOption,
       allAreSelected,
       isSelected,
       getLabel,
       toggleSelected,
       renderOption,
-    ]
+    ],
   );
 }
