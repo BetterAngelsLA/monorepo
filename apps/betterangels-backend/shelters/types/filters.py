@@ -166,7 +166,12 @@ class ShelterFilter:
         return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
-    def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+    def open_now(
+        self,
+        queryset: QuerySet,
+        value: Optional[List[ScheduleTypeChoices]],
+        prefix: str,
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
 
@@ -174,7 +179,7 @@ class ShelterFilter:
             shelters_open_at(
                 queryset,
                 dt=get_current_shelter_schedule_datetime(),
-                schedule_type=ScheduleTypeChoices.OPERATING,
+                schedule_types=value,
             ),
             Q(),
         )

@@ -202,7 +202,7 @@ class Shelter(BaseModel):
         return shelters_open_at(
             type(self).objects.filter(pk=self.pk),
             dt=dt,
-            schedule_type=schedule_type,
+            schedule_types=[schedule_type],
         ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:

@@ -45,7 +45,7 @@ const unknownOption: TShelterFilterOption = {
 
 type TSelectableFilterName = Exclude<
   keyof TShelterPropertyFilters,
-  'openNow' | 'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
+  'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
 >;
 
 export type TFilterConfig = {
@@ -64,8 +64,6 @@ export function getFilterLabel(
   }
 
   switch (category) {
-    case 'openNow':
-      return 'Open now';
     case 'maxStay':
       return 'Max stay';
     case 'demographics':

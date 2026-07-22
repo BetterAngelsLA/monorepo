@@ -51,9 +51,6 @@ export function FilterPills(props: IProps) {
   const pills: TPill[] = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (key === 'openNow') {
-      continue;
-    }
     if (key === 'openNowScheduleTypes') {
       const scheduleTypes = value as ScheduleTypeChoices[] | undefined;
       scheduleTypes?.forEach((scheduleType) => {
@@ -70,7 +67,6 @@ export function FilterPills(props: IProps) {
                 ...prev,
                 openNowScheduleTypes:
                   nextTypes.length > 0 ? nextTypes : undefined,
-                openNow: nextTypes.length > 0 ? true : undefined,
               };
             },
           });
