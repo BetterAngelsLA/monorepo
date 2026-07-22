@@ -56,7 +56,7 @@ export function assemblePolicyRegistry<
   options?: {
     isDevEnv?: boolean;
   },
-) {
+): { [K in T[number] as K['key']]: ReturnType<K['buildFn']> } {
   // (Optional) dev-time duplicate-key warning
   if (options?.isDevEnv) {
     const seen = new Set<string>();
@@ -72,5 +72,9 @@ export function assemblePolicyRegistry<
     }
   }
 
-  return Object.fromEntries(opts.map(({ key, buildFn }) => [key, buildFn()]));
+  return Object.fromEntries(
+    opts.map(({ key, buildFn }) => [key, buildFn()]),
+  ) as {
+    [K in T[number] as K['key']]: ReturnType<K['buildFn']>;
+  };
 }
