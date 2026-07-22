@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
 
     initial = True
     replaces = [
-        ("teams", "0001_initial"),
         ("teams", "0002_remove_team_is_active"),
     ]
 

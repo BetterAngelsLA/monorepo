@@ -15,7 +15,6 @@ class Migration(migrations.Migration):
 
     initial = True
     replaces = [
-        ("hmis", "0001_initial"),
         ("hmis", "0002_add_hmis_id_update_fields"),
         ("hmis", "0003_hmisnote"),
         ("hmis", "0005_hmisnote_location"),

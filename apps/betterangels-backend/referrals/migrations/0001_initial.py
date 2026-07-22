@@ -9,9 +9,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("referrals", "0001_initial"),
-    ]
 
     dependencies = [
         ('clients', '0002_initial'),
