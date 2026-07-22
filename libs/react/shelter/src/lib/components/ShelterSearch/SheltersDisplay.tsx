@@ -64,13 +64,17 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, openNowScheduleTypes, isAccessCenter, maxStay, ...propertyOnlyFilters } =
-        propertyFilters;
+      const {
+        openNowScheduleTypes,
+        isAccessCenter,
+        maxStay,
+        ...propertyOnlyFilters
+      } = propertyFilters;
 
-      if (openNow) {
+      if (openNowScheduleTypes && openNowScheduleTypes.length > 0) {
         vars = vars || {};
         vars.filters = vars.filters || {};
-        vars.filters.openNow = true;
+        vars.filters.openNow = openNowScheduleTypes;
       }
 
       if (isAccessCenter) {
@@ -110,7 +114,7 @@ export function SheltersDisplay(props: TProps) {
   // settles) never fire a premature query.
   const lastTriggerRef = useRef(-1);
   const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(
-    undefined
+    undefined,
   );
 
   if (searchTrigger !== lastTriggerRef.current) {
@@ -132,7 +136,7 @@ export function SheltersDisplay(props: TProps) {
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
   const sheltersForList = useMemo(
     () => shelters.map(viewShelterToCardShelter),
-    [shelters]
+    [shelters],
   );
   const total = data?.shelters.totalCount;
 
@@ -203,13 +207,13 @@ export function SheltersDisplay(props: TProps) {
           <ResultsSource
             nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
-            openNowFilter={propertyFilters?.openNow}
+            openNowScheduleTypesFilter={propertyFilters?.openNowScheduleTypes}
             propertyFilters={pruneFilters(propertyFilters)}
           />
         </div>
       );
     },
-    [nameSearch, mapBoundsFilter, propertyFilters]
+    [nameSearch, mapBoundsFilter, propertyFilters],
   );
 
   return (
@@ -247,7 +251,7 @@ function shelterListToPinLatLng(shelters: TShelter[]): TLatLng[] {
 }
 
 function isMaxStayFilterSpecified(
-  maxStay: TShelterPropertyFilters['maxStay']
+  maxStay: TShelterPropertyFilters['maxStay'],
 ): maxStay is NonNullable<TShelterPropertyFilters['maxStay']> {
   if (maxStay == null) {
     return false;
@@ -257,7 +261,7 @@ function isMaxStayFilterSpecified(
 }
 
 function maxStayToGraphQLInput(
-  maxStay: NonNullable<TShelterPropertyFilters['maxStay']>
+  maxStay: NonNullable<TShelterPropertyFilters['maxStay']>,
 ): MaxStayInput {
   return {
     days: maxStay.days,
@@ -266,7 +270,7 @@ function maxStayToGraphQLInput(
 }
 
 function pruneFilters(
-  filters?: TShelterPropertyFilters | null
+  filters?: TShelterPropertyFilters | null,
 ): TShelterPropertyFilters | null {
   if (!filters) {
     return null;
@@ -275,7 +279,7 @@ function pruneFilters(
   const result = Object.fromEntries(
     Object.entries(filters).filter(([_, value]) => {
       return value != null && (!Array.isArray(value) || value.length > 0);
-    })
+    }),
   );
 
   return Object.keys(result).length > 0 ? result : null;
@@ -295,8 +299,8 @@ const INCLUDE_NULL_KEY_MAP: Record<string, keyof ShelterPropertyInput> = {
 function propertyFiltersToGraphQLInput(
   filters: Omit<
     TShelterPropertyFilters,
-    'openNow' | 'isAccessCenter' | 'maxStay'
-  >
+    'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
+  >,
 ): ShelterPropertyInput | null {
   const result: ShelterPropertyInput = {};
   let hasAny = false;

@@ -1,11 +1,12 @@
 """Shelter open-at query — determines which shelters are open at a given datetime."""
 
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Sequence
 
 from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
 from django.db.models.functions import Mod
 from django.db.models.lookups import LessThan
+
 from shelters.constants import DAILY_MINUTES, WEEK_MINUTES
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 
@@ -17,15 +18,19 @@ def shelters_open_at(
     queryset: "QuerySet[Shelter]",
     *,
     dt: datetime.datetime,
-    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
+    schedule_types: Iterable[ScheduleTypeChoices] = (ScheduleTypeChoices.OPERATING,),
 ) -> "QuerySet[Shelter]":
-    """Return shelters whose *schedule_type* schedule says they are open at *dt*.
+    """Return shelters whose schedule says they are open at *dt* in ANY of *schedule_types*.
 
     The filter:
     1. Finds a non-exception schedule row matching the weekday + time window
        (respecting optional seasonal date bounds and overnight schedules).
     2. Excludes shelters that have an active exception covering *dt*
        (full-day or partial-day).
+
+    When multiple ``schedule_types`` are supplied, the shelter is included if it
+    is open under **any** of the given types (union). Exceptions apply per-type:
+    a partial-day exception for INTAKE does not affect the OPERATING window.
 
     Uses precomputed ``start_cycle_minutes`` / ``duration_minutes`` columns
     with modular arithmetic so that overnight schedules (e.g. 6 PM – 2 AM)
@@ -87,32 +92,45 @@ def shelters_open_at(
 
     covers = timed_covers | full_day_covers
 
-    # Step 1: Use an Exists subquery so the join doesn't produce duplicate
-    # shelter rows (avoiding the need for .distinct()).  All conditions bind
-    # to a single Schedule row.
-    is_open = Exists(
-        Schedule.objects.filter(
-            shelter=OuterRef("pk"),
-            schedule_type=schedule_type,
-            is_exception=False,
-        ).filter(
-            covers,
-            Q(start_date=None) | Q(start_date__lte=date),
-            Q(end_date=None) | Q(end_date__gte=date),
-        )
-    )
+    # Deduplicate schedule_types while preserving order.  An empty iterable
+    # means "no filter" and returns the queryset unchanged.
+    unique_types: Sequence[ScheduleTypeChoices] = list(dict.fromkeys(schedule_types))
+    if not unique_types:
+        return queryset
 
-    # Step 2: exclude shelters with an active exception covering *dt*.
-    has_active_exception = Exists(
-        Schedule.objects.filter(
-            shelter=OuterRef("pk"),
-            schedule_type=schedule_type,
-            is_exception=True,
-        ).filter(
-            covers,
-            Q(start_date=None) | Q(start_date__lte=date),
-            Q(end_date=None) | Q(end_date__gte=date),
+    # For each requested schedule type independently:
+    #   - The shelter must have a non-exception schedule row of that type
+    #     covering *dt*.
+    #   - The shelter must NOT have an active exception of that type
+    #     covering *dt*.
+    # The shelter is included in the final result if it is "open" under ANY
+    # of the requested schedule types (union / OR).
+    open_condition = Q()
+    for schedule_type in unique_types:
+        is_open = Exists(
+            Schedule.objects.filter(
+                shelter=OuterRef("pk"),
+                schedule_type=schedule_type,
+                is_exception=False,
+            ).filter(
+                covers,
+                Q(start_date=None) | Q(start_date__lte=date),
+                Q(end_date=None) | Q(end_date__gte=date),
+            )
         )
-    )
 
-    return queryset.filter(is_open).exclude(has_active_exception)
+        has_active_exception = Exists(
+            Schedule.objects.filter(
+                shelter=OuterRef("pk"),
+                schedule_type=schedule_type,
+                is_exception=True,
+            ).filter(
+                covers,
+                Q(start_date=None) | Q(start_date__lte=date),
+                Q(end_date=None) | Q(end_date__gte=date),
+            )
+        )
+
+        open_condition |= is_open & ~has_active_exception
+
+    return queryset.filter(open_condition)

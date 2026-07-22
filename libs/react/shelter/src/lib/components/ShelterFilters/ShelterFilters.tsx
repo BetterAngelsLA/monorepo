@@ -72,7 +72,6 @@ export function ShelterFilters(props: IProps) {
 
     onFiltersChange({
       ...filters,
-      openNow: newTypes.length > 0 ? true : undefined,
       openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
     });
   }

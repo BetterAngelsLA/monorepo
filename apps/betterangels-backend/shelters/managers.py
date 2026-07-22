@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Self, cast
 
 from django.db import models
 from django.db.models import Manager, Q, QuerySet
+
 from shelters.enums import BedStatusChoices, RoomStatusChoices, ScheduleTypeChoices
 from shelters.open_at import shelters_open_at
 from shelters.selectors import shelter_list
@@ -15,8 +16,11 @@ from shelters.selectors.computed_status import (
 )
 
 if TYPE_CHECKING:
-    from shelters.models import Bed, Room  # noqa: F401
-    from shelters.models import Shelter  # noqa: F401
+    from shelters.models import (  # noqa: F401
+        Bed,
+        Room,
+        Shelter,  # noqa: F401
+    )
 
 
 class ShelterQuerySet(QuerySet["Shelter"]):
@@ -29,7 +33,7 @@ class ShelterQuerySet(QuerySet["Shelter"]):
         schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING,
     ) -> "ShelterQuerySet":
         """Shelters whose *schedule_type* schedule says they are open at *dt*."""
-        return shelters_open_at(self, dt=dt, schedule_type=schedule_type)  # type: ignore[return-value]
+        return shelters_open_at(self, dt=dt, schedule_types=[schedule_type])  # type: ignore[return-value]
 
 
 class ShelterManager(models.Manager["Shelter"]):
