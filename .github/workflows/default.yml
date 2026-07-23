@@ -79,12 +79,6 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🧹 Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-
-          df -h /
-
       # Build Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
