@@ -199,6 +199,17 @@ class RoomStatusChoices(models.TextChoices):
     RESERVED = "reserved", _("Reserved")
 
 
+class SPAChoices(models.IntegerChoices):
+    ONE = 1, _("1 - Antelope Valley")
+    TWO = 2, _("2 - San Fernando")
+    THREE = 3, _("3 - San Gabriel")
+    FOUR = 4, _("4 - Metro")
+    FIVE = 5, _("5 - West")
+    SIX = 6, _("6 - South")
+    SEVEN = 7, _("7 - East")
+    EIGHT = 8, _("8 - South Bay/Harbor")
+
+
 @strawberry.enum
 class BedTypeChoices(models.TextChoices):
     TWIN = "twin", _("Twin")
