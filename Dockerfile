@@ -107,6 +107,7 @@ RUN --mount=type=cache,target=/var/cache/nodejs \
 RUN npm install -g eas-cli@20.5.1
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 # Python - uv (pinned version)
 COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
