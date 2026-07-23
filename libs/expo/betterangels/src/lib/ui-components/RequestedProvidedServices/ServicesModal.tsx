@@ -255,11 +255,6 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   // ---------- Submit ----------
   const submitServices = useCallback(async () => {
-    if (!noteId) {
-      console.error('[ServicesModal] submitServices called without noteId');
-      return;
-    }
-
     setIsSubmitLoading(true);
     try {
       if (isLocalMode && onServicesChange) {
@@ -283,6 +278,11 @@ export default function ServicesModal(props: IServicesModalProps) {
         onServicesChange(selectedServices);
         close();
         return;
+      }
+
+      // Server mode requires a noteId
+      if (!noteId) {
+        throw new Error('[ServicesModal] submitServices called without noteId');
       }
 
       // Server mode: create/delete via mutations
