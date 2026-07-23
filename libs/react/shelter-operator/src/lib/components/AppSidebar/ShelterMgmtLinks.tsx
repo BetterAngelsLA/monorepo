@@ -1,8 +1,8 @@
 import { Sidebar } from '@monorepo/react/components';
 import {
-  isShelterOperationsRoute,
-  shelterOperationsRoute,
-  shelterOperationsSegments,
+  isShelterMgmtRoute,
+  mgmtRouteConfig,
+  shelterMgmtRoute,
 } from '../../routing';
 
 type IProps = {
@@ -12,7 +12,7 @@ type IProps = {
   isOpen: boolean;
 };
 
-export function ShelterOperationsLinks(props: IProps) {
+export function ShelterMgmtLinks(props: IProps) {
   const { className, pathname, shelterId, isOpen } = props;
 
   return (
@@ -25,9 +25,9 @@ export function ShelterOperationsLinks(props: IProps) {
     >
       <Sidebar.Content>
         <Sidebar.Link
-          to={shelterOperationsRoute(shelterId, shelterOperationsSegments.beds)}
-          isActive={isShelterOperationsRoute(pathname, {
-            segment: shelterOperationsSegments.beds,
+          to={shelterMgmtRoute(shelterId, mgmtRouteConfig.children.beds)}
+          isActive={isShelterMgmtRoute(pathname, {
+            segment: mgmtRouteConfig.children.beds,
           })}
           collapsed={!isOpen}
           replace

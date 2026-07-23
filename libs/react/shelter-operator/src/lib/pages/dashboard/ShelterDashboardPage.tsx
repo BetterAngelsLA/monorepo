@@ -8,7 +8,7 @@ import { ReportsView } from '../../components/reports/ReportsView';
 import { ReservationsView } from '../../components/reservations/ReservationsView';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
-import { shelterManageRoute } from '../../routing';
+import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'reports' | 'rooms' | 'reservations' | 'occupants';
@@ -73,7 +73,7 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
 
       <SliderTabs
         activePathSuffix={TAB_CONFIG[tab].pathSuffix}
-        basePath={shelterManageRoute(shelterId ?? '')}
+        basePath={shelterMgmtRoute(shelterId ?? '')}
         items={TAB_ITEMS}
       />
 

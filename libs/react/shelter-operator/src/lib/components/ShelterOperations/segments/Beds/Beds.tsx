@@ -13,9 +13,8 @@ import { cloneBedMeta } from '../../../../hooks/useCloneBed/__generated__/useClo
 import { deleteBedsMeta } from '../../../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
-  shelterCreateReservationRoute,
-  shelterOperationsCreateBedRoute,
-  shelterOperationsEditBedRoute,
+  shelterCreateResourceRoute,
+  shelterEditResourceRoute
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
@@ -92,7 +91,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const handleEdit = useCallback(
     (rowObject: BedRowObject) => {
-      navigate(shelterOperationsEditBedRoute(shelterId, rowObject.id));
+      navigate(shelterEditResourceRoute(shelterId, 'bed', rowObject.id));
     },
     [navigate, shelterId],
   );
@@ -182,7 +181,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
         bedId: rowObject.id,
         roomId: rowObject.bed.room?.id ?? null,
       };
-      navigate(shelterCreateReservationRoute(shelterId), { state });
+      navigate(shelterCreateResourceRoute(shelterId, 'reservation'), { state });
     },
     [navigate, shelterId],
   );
@@ -247,7 +246,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterOperationsCreateBedRoute(shelterId))}
+          onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'bed'))}
         >
           Create Bed
         </Button>

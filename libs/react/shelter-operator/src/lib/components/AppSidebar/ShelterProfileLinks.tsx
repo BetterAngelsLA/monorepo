@@ -2,7 +2,7 @@ import { Sidebar } from '@monorepo/react/components';
 import {
   isShelterProfileRoute,
   shelterProfileRoute,
-  shelterProfileSegments,
+  profileRouteConfig,
 } from '../../routing';
 
 type IProps = {
@@ -25,9 +25,9 @@ export function ShelterProfileLinks(props: IProps) {
     >
       <Sidebar.Content>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.basic)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.basic)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.basic,
+            segment: profileRouteConfig.children.basic,
           })}
           collapsed={!isOpen}
           replace
@@ -35,9 +35,9 @@ export function ShelterProfileLinks(props: IProps) {
           Basic Info
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.details)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.details)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.details,
+            segment: profileRouteConfig.children.details,
           })}
           collapsed={!isOpen}
           replace
@@ -47,10 +47,10 @@ export function ShelterProfileLinks(props: IProps) {
         <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
-            shelterProfileSegments.operatingHours
+            profileRouteConfig.children.operatingHours
           )}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.operatingHours,
+            segment: profileRouteConfig.children.operatingHours,
           })}
           collapsed={!isOpen}
           replace
@@ -58,9 +58,9 @@ export function ShelterProfileLinks(props: IProps) {
           Operating Hours
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.policies)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.policies)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.policies,
+            segment: profileRouteConfig.children.policies,
           })}
           collapsed={!isOpen}
           replace
@@ -68,9 +68,9 @@ export function ShelterProfileLinks(props: IProps) {
           Policies
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.services)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.services)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.services,
+            segment: profileRouteConfig.children.services,
           })}
           collapsed={!isOpen}
           replace
@@ -78,9 +78,9 @@ export function ShelterProfileLinks(props: IProps) {
           Services
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.ecosystem)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.ecosystem)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.ecosystem,
+            segment: profileRouteConfig.children.ecosystem,
           })}
           collapsed={!isOpen}
           replace
@@ -88,9 +88,9 @@ export function ShelterProfileLinks(props: IProps) {
           Ecosystem
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, shelterProfileSegments.media)}
+          to={shelterProfileRoute(shelterId, profileRouteConfig.children.media)}
           isActive={isShelterProfileRoute(pathname, {
-            segment: shelterProfileSegments.media,
+            segment: profileRouteConfig.children.media,
           })}
           collapsed={!isOpen}
           replace

@@ -9,9 +9,9 @@ import {
   isShelterManageRoute,
   isShelterRoute,
   paths,
-  shelterManageRoute,
+  shelterMgmtRoute,
 } from '../../routing';
-import { ShelterOperationsLinks } from './ShelterOperationsLinks';
+import { ShelterMgmtLinks } from './ShelterMgmtLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
@@ -72,7 +72,7 @@ export function AppSidebar(props: IProps) {
             />
 
             <Sidebar.Link
-              to={shelterManageRoute(shelterId)}
+              to={shelterMgmtRoute(shelterId)}
               isActive={isShelterManageRoute(location.pathname)}
               collapsed={!isOpen}
             >
@@ -84,7 +84,7 @@ export function AppSidebar(props: IProps) {
               shelterId={shelterId}
               isOpen={isOpen}
             />
-            <ShelterOperationsLinks
+            <ShelterMgmtLinks
               pathname={location.pathname}
               shelterId={shelterId}
               isOpen={isOpen}

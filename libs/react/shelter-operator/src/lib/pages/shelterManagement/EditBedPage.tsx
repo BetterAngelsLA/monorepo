@@ -5,24 +5,14 @@ import {
 } from '../../components/ShelterOperations/segments/Beds';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
-import {
-  shelterOperationsRoute,
-  shelterOperationsSegments,
-} from '../../routing';
+import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditBedPage() {
   const navigate = useNavigate();
-  const { shelterId, bedId } = useParams();
+  const { shelterId = '', id: bedId } = useParams();
   const { bed, loading, error } = useBed(bedId ?? '');
 
-  if (!shelterId) {
-    throw new Error('Something went wrong. Please try again.');
-  }
-
-  const bedsPath = shelterOperationsRoute(
-    shelterId,
-    shelterOperationsSegments.beds,
-  );
+  const bedsPath = shelterMgmtResourceRoute(shelterId, 'bed');
 
   return (
     <ManageFormPageLayout
