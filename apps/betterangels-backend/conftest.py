@@ -12,19 +12,11 @@ def _set_relative_vcr_dir(request: pytest.FixtureRequest) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _tune_test_postgres(django_db_setup: None, django_db_blocker: object) -> None:
-    """Disable durability + triggers on test DBs — safe, big speedup."""
+def _tune_test_settings(django_db_setup: None) -> None:
+    """Optimize Django settings for test speed (PG tuning is handled by docker-compose)."""
     import logging
 
     from django.conf import settings
-    from django.db import connection
-
-    # Postgres: aggressive test-only tuning (data loss is fine for tests)
-    with django_db_blocker.unblock(), connection.cursor() as c:  # type: ignore[union-attr,attr-defined]
-        c.execute("SET synchronous_commit TO off")
-        c.execute("SET work_mem TO '64MB'")
-        c.execute("SET maintenance_work_mem TO '256MB'")
-        c.execute("SET temp_buffers TO '32MB'")
 
     # Django: skip expensive password hashing in tests
     settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
