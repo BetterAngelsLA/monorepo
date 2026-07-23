@@ -6,8 +6,9 @@ import { operatorPath, useSignOut } from '@monorepo/react/shelter';
 import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { paths } from '../routing';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useShelterOperatorProfile } from '../hooks';
+import { isShelterRoute, paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
 
@@ -67,8 +68,17 @@ export function NavBar(props: TNavProps) {
 
   const showCreateButton = isDashboardPage;
 
-  const displayTitle =
+  const orgName =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';
+
+  // ── Shelter name ─────────────────────────────────────────────────────────
+
+  const { shelterId } = useParams<{ shelterId: string }>();
+  const { shelter: operatorShelter } = useShelterOperatorProfile(
+    shelterId ?? '',
+  );
+  const shelterName = operatorShelter?.name;
+  const showShelterName = isShelterRoute(location.pathname) && !!shelterName;
 
   const selectedOption = useMemo(() => {
     const org = organizations.find((o) => o.id === selectedOrganizationId);
@@ -97,8 +107,14 @@ export function NavBar(props: TNavProps) {
             <BetterAngelsLogoIcon fill="#1E3342" className="h-9 w-auto" />
           </Link>
           <p className="truncate text-xl font-medium text-[#5A616B] md:text-2xl">
-            {displayTitle}
+            {orgName}
           </p>
+
+          {showShelterName && (
+            <p className="truncate text-xl text-[#5A616B] md:text-2xl">
+              {shelterName}
+            </p>
+          )}
 
           {organizations.length > 1 && (
             <div className="ml-1 min-w-52">
