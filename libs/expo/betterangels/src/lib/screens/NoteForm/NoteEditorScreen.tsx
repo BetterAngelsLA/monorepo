@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DiscardModal, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   DeleteNoteDocument,
@@ -31,7 +31,13 @@ type NoteEditorScreenProps = {
 };
 
 export default function NoteEditorScreen(props: NoteEditorScreenProps) {
-  const { mode, noteId, arrivedFrom, clientProfileId, teamId: routeTeamId } = props;
+  const {
+    mode,
+    noteId,
+    arrivedFrom,
+    clientProfileId,
+    teamId: routeTeamId,
+  } = props;
   const [teamPreference] = useUserTeamPreference();
   const teamId = routeTeamId || teamPreference || undefined;
 
@@ -84,13 +90,13 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
     ? `/client/${resolvedClientProfileId}`
     : '/';
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (isCreateMode) {
       arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } else {
       router.back();
     }
-  };
+  }, [isCreateMode, arrivedFrom, router]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -116,7 +122,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
         />
       ),
     });
-  }, [arrivedFrom, isCreateMode, navigation, router]);
+  }, [arrivedFrom, isCreateMode, navigation, router, goBack]);
 
   async function saveNote(isSubmitted?: boolean) {
     const dirty = isCreateMode ? undefined : formState.dirtyFields;

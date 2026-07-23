@@ -45,7 +45,7 @@ export function ClientProfileRelatedModelList(props: TProps) {
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: `${titlePlural}` });
-  }, [navigation, clientProfile]);
+  }, [navigation, clientProfile, titlePlural]);
 
   if (loading) {
     return <LoadingView />;
