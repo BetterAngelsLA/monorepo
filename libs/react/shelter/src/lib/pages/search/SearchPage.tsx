@@ -50,7 +50,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 bottom-0 z-modal bg-white flex flex-col animate-slideInUp overflow-x-hidden overflow-y-auto">
+    <div className="absolute top-0 left-0 right-0 bottom-0 z-modal bg-white flex flex-col animate-slide-in-up overflow-x-hidden overflow-y-auto">
       <div className="md:pt-8 p-6 md:p-10 flex-1">
         <div className="flex justify-between items-center mt-0 mb-4">
           <h2 className="text-xl font-semibold">Search</h2>
