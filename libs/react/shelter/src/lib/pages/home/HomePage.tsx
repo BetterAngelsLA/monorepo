@@ -30,7 +30,7 @@ import {
   toGoogleLatLng,
   toMapBounds,
 } from '../../components';
-import { SHELTERS_MAP_ID } from '../../constants';
+import { SESSION_STORAGE_MAP_CENTER, SHELTERS_MAP_ID } from '../../constants';
 import { MaxWLayout } from '../../layout';
 import { useUser } from '../../providers';
 
@@ -244,10 +244,18 @@ export function HomePage() {
     if (!map || hasInitialized) return;
     setHasInitialized(true);
 
-    const savedCenter = sessionStorage.getItem('mapCenter');
+    const savedCenter = sessionStorage.getItem(SESSION_STORAGE_MAP_CENTER);
 
     if (savedCenter) {
-      const { lat, lng } = JSON.parse(savedCenter);
+      // Consume the saved center so it isn't re-applied on subsequent
+      // navigations that don't originate from a shelter detail page.
+      sessionStorage.removeItem(SESSION_STORAGE_MAP_CENTER);
+      const { lat, lng, zoom } = JSON.parse(savedCenter);
+      // Restore the exact zoom the user had (avoids fitBounds recalculating it)
+      // and re-center on the selected shelter so it's clear which one was chosen.
+      if (typeof zoom === 'number') {
+        map.setZoom(zoom);
+      }
       applyMapCenter(lat, lng);
       return;
     }

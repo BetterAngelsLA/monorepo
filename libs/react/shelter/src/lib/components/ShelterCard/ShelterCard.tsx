@@ -2,6 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SESSION_STORAGE_MAP_CENTER } from '../../constants';
 import { TLatLng } from '../Map';
 import { PrivateBadge } from '../PrivateBadge';
 import { DistanceAway } from './DistanceAway';
@@ -65,8 +66,10 @@ export function ShelterCard(props: TShelterCard) {
   const footerCss = ['mt-4', 'md:mt-10', footerClassName];
 
   const onNavigate = () => {
+    // Persist the selected shelter's location and the current zoom so we can
+    // re-center on it at the same zoom level when the user navigates back.
     sessionStorage.setItem(
-      'mapCenter',
+      SESSION_STORAGE_MAP_CENTER,
       JSON.stringify({
         lat: location?.latitude,
         lng: location?.longitude,
