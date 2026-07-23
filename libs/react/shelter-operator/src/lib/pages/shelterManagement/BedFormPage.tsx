@@ -7,10 +7,18 @@ import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
 import { shelterMgmtResourceRoute } from '../../routing';
 
-export function EditBedPage() {
+export function BedFormPage() {
   const navigate = useNavigate();
-  const { shelterId = '', id: bedId } = useParams();
-  const { bed, loading, error } = useBed(bedId ?? '');
+  const { shelterId, id: bedId } = useParams<{
+    shelterId: string;
+    id?: string;
+  }>();
+
+  if (!shelterId || !bedId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  const { bed, loading, error } = useBed(bedId);
 
   const bedsPath = shelterMgmtResourceRoute(shelterId, 'bed');
 
@@ -21,7 +29,7 @@ export function EditBedPage() {
       backLinkLabel="Back to Beds"
       entityId={bedId}
       loading={loading}
-      hasError={!!(error || !bed)}
+      hasError={!!(error || (bedId && !bed))}
       errorMessage={error ? 'Unable to load this bed.' : 'Bed not found.'}
       entityName="bed"
       entityLabel="Bed"

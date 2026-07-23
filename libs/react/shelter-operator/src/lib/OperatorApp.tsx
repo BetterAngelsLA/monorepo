@@ -5,13 +5,13 @@ import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { UsersPage } from './pages';
+import { BedsPage, UsersPage } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
-import { BedsPage, EditBedPage } from './pages/shelterManagement';
+import { BedFormPage } from './pages/shelterManagement';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -114,11 +114,11 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
-                element={<EditBedPage />}
+                element={<BedFormPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditBedPage />}
+                element={<BedFormPage />}
               />
               <Route
                 path={mgmtRouteConfig.children.beds}
