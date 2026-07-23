@@ -92,9 +92,9 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       # Build Monorepo Image with ECR layer caching
-      # - Pull from main's cache (shared) + branch-specific cache
-      # - Always push to branch cache (low egress, incremental)
-      # - Additionally push to main cache on main branch pushes
+      # - Pull from main cache (shared) + branch cache for incremental builds.
+      #   On main these are the same ref, which is harmless for cache imports.
+      # - Push to main cache on main pushes, branch cache otherwise.
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v7
         with:
@@ -104,7 +104,7 @@ jobs:
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: |
             type=registry,ref=${{ env.CACHE_IMAGE }}-main
-            ${{ github.ref_name != 'main' && format('type=registry,ref={0}', env.BRANCH_CACHE) || '' }}
+            type=registry,ref=${{ env.BRANCH_CACHE }}
           cache-to: |
             ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
 
