@@ -115,6 +115,8 @@ export default [
       '**/*.d.ts',
       '.yarn',
       '.nx',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*',
     ],
   },
 
