@@ -9,11 +9,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("reports", "0002_add_view_reports_permission"),
-        ("reports", "0003_move_view_reports_to_reports_namespace"),
-    ]
-
     dependencies = [
         ('organizations', '0001_initial'),
     ]
