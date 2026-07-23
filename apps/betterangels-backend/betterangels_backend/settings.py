@@ -519,10 +519,10 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
-SITE_ID = 1
+# Test Runner
+TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
 
-# Use pytest via manage.py test (pytest-django's runner)
-TEST_RUNNER = "pytest_django.runner.TestRunner"
+SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
 ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
