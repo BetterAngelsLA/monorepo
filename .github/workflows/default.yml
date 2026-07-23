@@ -83,7 +83,8 @@ jobs:
 
       # Build Monorepo Image with ECR layer caching
       # - Pull from main's cache (shared) + branch-specific cache
-      # - Only push cache on main to minimize egress costs
+      # - Always push to branch cache (low egress, incremental)
+      # - Additionally push to main cache on main branch pushes
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v7
         with:
@@ -94,7 +95,9 @@ jobs:
           cache-from: |
             type=registry,ref=${{ env.CACHE_IMAGE }}-main
             type=registry,ref=${{ env.BRANCH_CACHE }}
-          cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || '' }}
+          cache-to: |
+            type=registry,ref=${{ env.BRANCH_CACHE }},mode=max
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || '' }}
 
       - name: 🔑 Prep Container Permissions
         run: |
