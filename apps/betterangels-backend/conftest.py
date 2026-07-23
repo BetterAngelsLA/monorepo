@@ -14,8 +14,6 @@ def _set_relative_vcr_dir(request: pytest.FixtureRequest) -> None:
 @pytest.fixture(scope="session", autouse=True)
 def _tune_test_settings(django_db_setup: None) -> None:
     """Optimize Django settings for test speed (PG tuning is handled by docker-compose)."""
-    import logging
-
     from django.conf import settings
 
     # Django: skip expensive password hashing in tests
@@ -28,10 +26,6 @@ def _tune_test_settings(django_db_setup: None) -> None:
         }
     }
 
-    # Silence noisy loggers in tests — keep ERROR/CRITICAL visible for debugging
-    logging.getLogger("django.request").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("vcr").setLevel(logging.WARNING)
 
 
 
