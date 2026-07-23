@@ -1,5 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, RefObject, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useCallback, useEffect, useState } from 'react';
 import {
   DimensionValue,
   Pressable,
@@ -54,7 +54,7 @@ export function FieldCard(props: IFieldCardProps) {
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
-  const scrollToElement = () => {
+  const scrollToElement = useCallback(() => {
     if (!place || !scrollRef) return;
 
     scrollRef.current?.scrollTo({
@@ -62,12 +62,12 @@ export function FieldCard(props: IFieldCardProps) {
       y: place,
       animated: true,
     });
-  };
+  }, [place, scrollRef]);
 
   useEffect(() => {
     if (!place) return;
     scrollToElement();
-  }, [place]);
+  }, [place, scrollToElement]);
 
   return (
     <Pressable

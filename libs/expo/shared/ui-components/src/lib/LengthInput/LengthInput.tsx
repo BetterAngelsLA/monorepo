@@ -24,7 +24,9 @@ export function LengthInput(props: LengthInputProps) {
   const [internalValue, setInternalValue] =
     useState<TFeetInchesValue>(EMPTY_VALUE);
 
-  const currentValue = isControlled ? value! : internalValue;
+  const currentValue = isControlled
+    ? (value as TFeetInchesValue)
+    : internalValue;
 
   function normalizeInches(next: TFeetInchesValue): TFeetInchesValue {
     const inchesText = next.inches.trim();

@@ -71,10 +71,13 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
       updateClusters();
     },
-    [updateClusters]
+    [updateClusters],
   );
 
   // Load features whenever pointFeaturesHash changes
+  // pointFeaturesHash captures meaningful content changes;
+  // pointFeatures itself is intentionally omitted to avoid
+  // re-running on reference-only changes.
   useEffect(() => {
     if (!pointFeatures.length) {
       return;
@@ -84,12 +87,13 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
     // refresh clusters on map
     updateClusters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pointFeaturesHash, clusterManager, updateClusters]);
 
   const zoomToCluster = useCallback(
     (c: TClusterPoint, mapRef: RefObject<TMapView | null>) =>
       clusterManager.fitToCluster(c.properties.cluster_id, mapRef),
-    [clusterManager]
+    [clusterManager],
   );
 
   // cleanup

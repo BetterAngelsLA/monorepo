@@ -14,27 +14,28 @@ import { TCachePolicyConfig } from './types';
 function fp(partial: Partial<FieldPolicy>): FieldPolicy {
   return {
     ...(partial.read ? { read: partial.read } : {}),
-    ...(partial.merge ? { merge: partial.merge as any } : {}),
+    ...(partial.merge ? { merge: partial.merge as FieldPolicy['merge'] } : {}),
     ...(partial.keyArgs !== undefined ? { keyArgs: partial.keyArgs } : {}),
   };
 }
 
 const getType = (p: TypePolicies, name: string) =>
-  p[name] as unknown as { keyFields?: any };
+  p[name] as unknown as { keyFields?: unknown };
 
 const getQueryFields = (p: TypePolicies) =>
   (p['Query'] as unknown as { fields: Record<string, FieldPolicy> }).fields;
 
 describe('generateCachePolicies', () => {
-  let warnSpy: MockInstance<[message?: any, ...optionalParams: any[]], void>;
+  let warnSpy: MockInstance<
+    (message?: unknown, ...optionalParams: unknown[]) => void
+  >;
 
   beforeEach(() => {
     warnSpy = vi
       .spyOn(console, 'warn')
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       .mockImplementation(() => {}) as unknown as MockInstance<
-      [message?: any, ...optionalParams: any[]],
-      void
+      (message?: unknown, ...optionalParams: unknown[]) => void
     >;
   });
 
@@ -100,7 +101,7 @@ describe('generateCachePolicies', () => {
 
     expect(getType(policies, 'Thing').keyFields).toEqual(['id']);
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Conflicting keyFields for Thing')
+      expect.stringContaining('Conflicting keyFields for Thing'),
     );
   });
 });

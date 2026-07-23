@@ -16,13 +16,13 @@ export function parseToDate(props: TProps): Date | null {
     const parsed = parse(date, inputFormat, new Date());
 
     if (!isValid(parsed)) {
-      throw '';
+      throw new Error('Invalid date');
     }
 
     return parsed;
   } catch {
     console.error(
-      `[parseToDate]: failed to parse date: [${date}] with inputFormat [${inputFormat}]`
+      `[parseToDate]: failed to parse date: [${date}] with inputFormat [${inputFormat}]`,
     );
 
     return null;
