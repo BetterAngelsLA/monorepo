@@ -23,6 +23,10 @@ export function useInteractionsMapRegion({ interaction, delta }: TProps) {
     ? `${latitude},${longitude},${latitudeDelta},${longitudeDelta}`
     : null;
 
+  const deltaKey = delta
+    ? `${delta.latitudeDelta},${delta.longitudeDelta}`
+    : null;
+
   return useMemo(() => {
     if (!interaction) {
       return null;
@@ -47,5 +51,8 @@ export function useInteractionsMapRegion({ interaction, delta }: TProps) {
       longitude,
       ...latLngDeltas,
     });
-  }, [regionKey, interaction?.id]);
+    // interaction?.id, regionKey, and deltaKey are stable keys that avoid
+    // recomputation on reference-only changes of the raw objects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regionKey, deltaKey, interaction?.id]);
 }

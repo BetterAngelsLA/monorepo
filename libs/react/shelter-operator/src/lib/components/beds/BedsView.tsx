@@ -8,9 +8,8 @@ import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_
 import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
 import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
-  shelterCreateBedRoute,
-  shelterCreateReservationRoute,
-  shelterEditBedRoute,
+  shelterCreateResourceRoute,
+  shelterEditResourceRoute,
 } from '../../routing';
 import { Button } from '../base-ui/buttons';
 import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
@@ -82,14 +81,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [cloneBed, showToast]
+    [cloneBed, showToast],
   );
 
   const handleEdit = useCallback(
     (rowObject: BedRowObject) => {
-      navigate(shelterEditBedRoute(shelterId, rowObject.id));
+      navigate(shelterEditResourceRoute(shelterId, 'bed', rowObject.id));
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
 
   const handleDeleteRequest = useCallback((bedIds: string[]) => {
@@ -122,7 +121,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [deleteBeds, showToast]
+    [deleteBeds, showToast],
   );
 
   const handleMarkReady = useCallback(
@@ -155,7 +154,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         });
       }
     },
-    [updateBed, showToast]
+    [updateBed, showToast],
   );
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
@@ -177,9 +176,9 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         bedId: rowObject.id,
         roomId: rowObject.bed.room?.id ?? null,
       };
-      navigate(shelterCreateReservationRoute(shelterId), { state });
+      navigate(shelterCreateResourceRoute(shelterId, 'reservation'), { state });
     },
-    [navigate, shelterId]
+    [navigate, shelterId],
   );
   const readyRowObject = readyConfirmation.rowObject;
 
@@ -242,7 +241,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterCreateBedRoute(shelterId))}
+          onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'bed'))}
         >
           Create Bed
         </Button>

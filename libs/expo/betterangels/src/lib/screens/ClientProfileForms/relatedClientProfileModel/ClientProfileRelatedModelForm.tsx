@@ -49,7 +49,7 @@ export function ClientProfileRelatedModelForm(props: TProps) {
       : `Edit ${titleSingular}`;
 
     navigation.setOptions({ title: navTitle });
-  }, [navigation, clientProfile, section]);
+  }, [navigation, clientProfile, section, createMode, titleSingular]);
 
   if (loading) {
     return <LoadingView />;

@@ -3,9 +3,9 @@ import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
-import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 import { normalizeService } from '../../helpers';
 import { useModalScreen } from '../../providers';
+import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
@@ -22,7 +22,7 @@ interface IRequestedServicesProps {
 }
 
 export default function RequestedProvidedServices(
-  props: IRequestedServicesProps
+  props: IRequestedServicesProps,
 ) {
   const {
     noteId,
@@ -64,9 +64,9 @@ export default function RequestedProvidedServices(
 
   // For ServicesModal in local mode, we need normalized initial service requests
   const normalizedServiceRequests = !isLocalMode
-    ? (initialServices as ViewNoteQuery['note']['providedServices'])?.map(
-        normalizeService
-      ) ?? []
+    ? ((initialServices as ViewNoteQuery['note']['providedServices'])?.map(
+        normalizeService,
+      ) ?? [])
     : [];
 
   return (
@@ -138,6 +138,8 @@ export default function RequestedProvidedServices(
         })
       }
     >
+      {/* FieldCard requires children */}
+      {/* eslint-disable-next-line react/jsx-no-useless-fragment */}
       <></>
     </FieldCard>
   );
