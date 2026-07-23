@@ -82,7 +82,7 @@ jobs:
       - name: 🧹 Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          sudo docker system prune -af --volumes 2>/dev/null || true
+
           df -h /
 
       # Build Monorepo Image for each commit using GitHub Actions cache
