@@ -1,9 +1,107 @@
+/**
+ * ESLint 10 flat config — monorepo root.
+ *
+ * ## Known ESLint 10 type gaps (as of 2026-07)
+ * `defineConfig()` and `// @ts-check` are not usable yet because three plugins
+ * export types that don't match ESLint 10's tightened type system. These are
+ * **type-level only** — all plugins and rules run correctly at runtime.
+ *
+ *   @nx/eslint-plugin 23.1.0           — languageOptions type mismatch
+ *   eslint-plugin-react-hooks 7.1.1    — configs.flat incompatible with Plugin
+ *   eslint-plugin-react-native-a11y 3.5.1 — fixable: string instead of RuleFixType
+ *
+ * Runtime linting of source code is fully functional. These gaps only prevent
+ * type-checking the config file itself with `defineConfig([...])`.
+ * Once plugins update, wrap the exported array and re-enable type checking.
+ */
+
 // @ts-check
 import graphqlPlugin from '@graphql-eslint/eslint-plugin';
 import nxPlugin from '@nx/eslint-plugin';
 import importPlugin from 'eslint-plugin-import';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import a11yPlugin from 'eslint-plugin-react-native-a11y';
+
+// Shared depConstraints — single source of truth for @nx/enforce-module-boundaries
+export const depConstraints = [
+  // ── TYPE constraints ──────────────────────────
+  {
+    sourceTag: 'type:feature',
+    onlyDependOnLibsWithTags: [
+      'type:feature',
+      'type:data-access',
+      'type:ui',
+      'type:util',
+    ],
+  },
+  {
+    sourceTag: 'type:data-access',
+    onlyDependOnLibsWithTags: ['type:data-access', 'type:util'],
+  },
+  {
+    sourceTag: 'type:ui',
+    onlyDependOnLibsWithTags: ['type:ui', 'type:util'],
+  },
+  {
+    sourceTag: 'type:util',
+    onlyDependOnLibsWithTags: ['type:util'],
+  },
+  // ── SCOPE constraints ─────────────────────────
+  {
+    sourceTag: 'scope:shared',
+    onlyDependOnLibsWithTags: ['scope:shared'],
+  },
+  {
+    sourceTag: 'scope:ba-platform',
+    onlyDependOnLibsWithTags: ['scope:ba-platform', 'scope:shared'],
+  },
+  // Liberal: app scopes can import from each other while migrating
+  // TODO: tighten to own scope + ba-platform + shared
+  {
+    sourceTag: 'scope:betterangels',
+    onlyDependOnLibsWithTags: [
+      'scope:betterangels',
+      'scope:betterangels-admin',
+      'scope:shelter-web',
+      'scope:shelter-operator',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
+  {
+    sourceTag: 'scope:betterangels-admin',
+    onlyDependOnLibsWithTags: [
+      'scope:betterangels',
+      'scope:betterangels-admin',
+      'scope:shelter-web',
+      'scope:shelter-operator',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
+  {
+    sourceTag: 'scope:shelter-web',
+    onlyDependOnLibsWithTags: [
+      'scope:betterangels',
+      'scope:betterangels-admin',
+      'scope:shelter-web',
+      'scope:shelter-operator',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
+  {
+    sourceTag: 'scope:shelter-operator',
+    onlyDependOnLibsWithTags: [
+      'scope:betterangels',
+      'scope:betterangels-admin',
+      'scope:shelter-web',
+      'scope:shelter-operator',
+      'scope:ba-platform',
+      'scope:shared',
+    ],
+  },
+];
 
 export default [
   // Global ignores — prevents ESLint from even traversing these directories
@@ -68,85 +166,7 @@ export default [
         {
           enforceBuildableLibDependency: true,
           allow: ['.*libs/tailwind.*'],
-          depConstraints: [
-            // ── TYPE constraints ──────────────────────────
-            {
-              sourceTag: 'type:feature',
-              onlyDependOnLibsWithTags: [
-                'type:feature',
-                'type:data-access',
-                'type:ui',
-                'type:util',
-              ],
-            },
-            {
-              sourceTag: 'type:data-access',
-              onlyDependOnLibsWithTags: ['type:data-access', 'type:util'],
-            },
-            {
-              sourceTag: 'type:ui',
-              onlyDependOnLibsWithTags: ['type:ui', 'type:util'],
-            },
-            {
-              sourceTag: 'type:util',
-              onlyDependOnLibsWithTags: ['type:util'],
-            },
-            // ── SCOPE constraints ─────────────────────────
-            {
-              sourceTag: 'scope:shared',
-              onlyDependOnLibsWithTags: ['scope:shared'],
-            },
-            {
-              sourceTag: 'scope:ba-platform',
-              onlyDependOnLibsWithTags: ['scope:ba-platform', 'scope:shared'],
-            },
-            // Liberal: app scopes can import from each other while migrating
-            // TODO: tighten to own scope + ba-platform + shared
-            {
-              sourceTag: 'scope:betterangels',
-              onlyDependOnLibsWithTags: [
-                'scope:betterangels',
-                'scope:betterangels-admin',
-                'scope:shelter-web',
-                'scope:shelter-operator',
-                'scope:ba-platform',
-                'scope:shared',
-              ],
-            },
-            {
-              sourceTag: 'scope:betterangels-admin',
-              onlyDependOnLibsWithTags: [
-                'scope:betterangels',
-                'scope:betterangels-admin',
-                'scope:shelter-web',
-                'scope:shelter-operator',
-                'scope:ba-platform',
-                'scope:shared',
-              ],
-            },
-            {
-              sourceTag: 'scope:shelter-web',
-              onlyDependOnLibsWithTags: [
-                'scope:betterangels',
-                'scope:betterangels-admin',
-                'scope:shelter-web',
-                'scope:shelter-operator',
-                'scope:ba-platform',
-                'scope:shared',
-              ],
-            },
-            {
-              sourceTag: 'scope:shelter-operator',
-              onlyDependOnLibsWithTags: [
-                'scope:betterangels',
-                'scope:betterangels-admin',
-                'scope:shelter-web',
-                'scope:shelter-operator',
-                'scope:ba-platform',
-                'scope:shared',
-              ],
-            },
-          ],
+          depConstraints,
         },
       ],
     },
