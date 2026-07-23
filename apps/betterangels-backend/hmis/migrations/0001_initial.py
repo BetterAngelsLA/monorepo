@@ -14,14 +14,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("hmis", "0002_add_hmis_id_update_fields"),
-        ("hmis", "0003_hmisnote"),
-        ("hmis", "0005_hmisnote_location"),
-        ("hmis", "0006_alter_hmisnote_location"),
-        ("hmis", "0007_unhoused_start_date"),
-    ]
-
+    replaces = []
     dependencies = [
         ('common', '0001_initial'),
         ('pghistory', '0007_auto_20250421_0444'),

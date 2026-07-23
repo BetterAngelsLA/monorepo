@@ -10,41 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("notes", "0002_remove_note_note_add_insert_and_more"),
-        ("notes", "0003_remove_note_note_add_insert_and_more"),
-        ("notes", "0004_alter_note_interacted_at"),
-        ("notes", "0005_servicerequest_service_request_update_update_and_more"),
-        ("notes", "0006_fix_caseworker_template_servicerequest_permissions"),
-        ("notes", "0007_alter_note_options_alter_servicerequest_options_and_more"),
-        ("notes", "0008_alter_moodevent_id_alter_noteevent_id_and_more"),
-        ("notes", "0009_remove_note_note_add_insert_and_more"),
-        ("notes", "0010_alter_note_title_alter_noteevent_title"),
-        ("notes", "0011_remove_servicerequest_service_request_add_insert_and_more"),
-        ("notes", "0012_alter_note_purpose_alter_noteevent_purpose"),
-        ("notes", "0013_add_note_team"),
-        ("notes", "0014_notedataimport_noteimportrecord_and_more"),
-        ("notes", "0015_add_client_profile_field"),
-        ("notes", "0016_note_client_profile_data"),
-        ("notes", "0017_remove_note_note_add_insert_and_more"),
-        ("notes", "0018_delete_task_permissions"),
-        ("notes", "0019_remove_notenextstepsevent_note_and_more"),
-        ("notes", "0020_remove_note_next_steps_remove_note_purposes_and_more"),
-        ("notes", "0021_organizationservicecategory_organizationservice_and_more"),
-        ("notes", "0022_seed_services"),
-        ("notes", "0023_add_service_enum_field"),
-        ("notes", "0024_copy_service_to_service_enum"),
-        ("notes", "0025_servicerequest_service_use_fk"),
-        ("notes", "0026_rename_service_to_label"),
-        ("notes", "0027_data_copy_service_enum_to_service"),
-        ("notes", "0028_alter_organizationservicecategory_options"),
-        ("notes", "0029_remove_servicerequest_enum_fields"),
-        ("notes", "0030_remove_mood_model"),
-        ("notes", "0031_alter_note_location"),
-        ("notes", "0032_remove_note_note_add_insert_and_more"),
-        ("notes", "0033_alter_note_team_alter_noteevent_team_and_more"),
-    ]
-
+    replaces = []
     dependencies = [
         ('auth', '0012_alter_user_first_name_max_length'),
         ('clients', '0002_initial'),
