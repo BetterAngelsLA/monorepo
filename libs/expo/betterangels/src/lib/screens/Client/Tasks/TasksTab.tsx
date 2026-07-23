@@ -55,7 +55,7 @@ export function TasksTab(props: TProps) {
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters()
+    getInitialTaskFilters(),
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -102,21 +102,24 @@ export function TasksTab(props: TProps) {
   };
 
   const currentPath = client
-    ? `/client/${client?.clientProfile.id}?newTab=Tasks`
+    ? `/client/${client.clientProfile.id}?newTab=Tasks`
     : undefined;
 
-  const handleTaskPress = useCallback((task: TaskType) => {
-    router.navigate({
-      pathname: `/task/${task.id}`,
-      params: { arrivedFrom: currentPath },
-    });
-  }, []);
+  const handleTaskPress = useCallback(
+    (task: TaskType) => {
+      router.navigate({
+        pathname: `/task/${task.id}`,
+        params: { arrivedFrom: currentPath },
+      });
+    },
+    [currentPath],
+  );
 
   const renderTaskItem = useCallback(
     (task: TaskType) => (
       <TaskCard task={task} onPress={handleTaskPress} variant="withoutClient" />
     ),
-    [handleTaskPress]
+    [handleTaskPress],
   );
 
   function renderListHeaderText(visible: number, total: number | undefined) {

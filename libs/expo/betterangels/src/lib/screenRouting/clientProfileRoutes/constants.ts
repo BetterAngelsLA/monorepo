@@ -12,7 +12,7 @@ export enum ClientProfileSectionEnum {
 }
 
 export function isValidClientProfileSectionEnum(
-  value: any
+  value: unknown,
 ): value is ClientProfileSectionEnum {
   return validateAsEnum(value, ClientProfileSectionEnum);
 }

@@ -25,9 +25,9 @@ export function FilterTeamsOptions(props: TProps) {
 
   const options = useMemo<TFilterOption[]>(() => {
     return teams.map((t) => ({
-        id: t.id,
-        label: t.name,
-      }));
+      id: t.id,
+      label: t.name,
+    }));
   }, [teams]);
 
   if (error) {
@@ -41,6 +41,7 @@ export function FilterTeamsOptions(props: TProps) {
 
   return (
     <Filters.Screen onDone={handleDone} onClear={() => setLocalSelected([])}>
+      {/* eslint-disable-next-line react/jsx-pascal-case */}
       <MultiSelect_V2<TFilterOption>
         options={options}
         selected={localSelected}

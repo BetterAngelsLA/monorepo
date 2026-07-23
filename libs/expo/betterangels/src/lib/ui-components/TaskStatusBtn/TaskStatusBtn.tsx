@@ -42,13 +42,16 @@ export function TaskStatusBtn(props: TaskStatusBtnProps) {
   const client = useApolloClient();
 
   const [value, setValue] = useState<TaskStatusEnum>(
-    status || TaskStatusEnum.ToDo
+    status || TaskStatusEnum.ToDo,
   );
 
+  // Sync external status prop to local state.
+  // value intentionally omitted to avoid infinite loop.
   useEffect(() => {
     if (status && status !== value) {
       setValue(status);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, status]);
 
   const onUpdateTask = async (newStatus: TaskStatusEnum) => {
