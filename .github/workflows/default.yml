@@ -82,6 +82,12 @@ jobs:
           echo "MONOREPO_IMAGE=localhost:5000/monorepo" >> $GITHUB_ENV
           echo "ECR_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
 
+      - name: 🧹 Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo docker system prune -af --volumes 2>/dev/null || true
+          df -h /
+
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
