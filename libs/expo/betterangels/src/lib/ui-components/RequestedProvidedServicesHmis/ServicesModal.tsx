@@ -13,7 +13,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import { ServiceRequestTypeEnum } from '../../apollo';
-import { useSnackbar } from '../../hooks';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
@@ -57,7 +56,6 @@ export default function ServicesModal(props: IServicesModalProps) {
   const { selectedServices, type, onSelect, close } = props;
 
   const { data: availableCategories } = useQuery(ServiceCategoriesHmisDocument);
-  const { showSnackbar } = useSnackbar();
   const { bottom: bottomInset } = useSafeAreaInsets();
 
   const [rows, setRows] = useState<SelectedService[]>([]);
@@ -71,14 +69,14 @@ export default function ServicesModal(props: IServicesModalProps) {
     [...arr].sort(
       (a, b) =>
         (a.priority ?? 0) - (b.priority ?? 0) ||
-        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
     );
 
   const sortServices = (arr: ApiService[]) =>
     [...arr].sort(
       (a, b) =>
         (a.priority ?? 0) - (b.priority ?? 0) ||
-        a.label.toLowerCase().localeCompare(b.label.toLowerCase())
+        a.label.toLowerCase().localeCompare(b.label.toLowerCase()),
     );
 
   const toServicesByCategory = useCallback(
@@ -90,12 +88,12 @@ export default function ServicesModal(props: IServicesModalProps) {
             title: cat.name,
             items: pipe(
               sortServices((cat.services ?? []) as ApiService[]),
-              rmap((s: ApiService): TItem => ({ id: s.id, label: s.label }))
+              rmap((s: ApiService): TItem => ({ id: s.id, label: s.label })),
             ),
-          })
-        )
+          }),
+        ),
       ),
-    []
+    [],
   );
 
   const filterServicesByText = useCallback(
@@ -108,28 +106,28 @@ export default function ServicesModal(props: IServicesModalProps) {
           (cat: TCategory): TCategory => ({
             ...cat,
             items: (cat.items || []).filter((i) =>
-              i.label.toLowerCase().includes(q)
+              i.label.toLowerCase().includes(q),
             ),
-          })
+          }),
         ),
-        rfilter((cat: TCategory) => cat.items.length > 0)
+        rfilter((cat: TCategory) => cat.items.length > 0),
       );
     },
-    []
+    [],
   );
 
   const hasService = useCallback(
     (
-      it: SelectedService
+      it: SelectedService,
     ): it is SelectedService & { service: { id: string; label?: string } } =>
       !!it.service?.id,
-    []
+    [],
   );
 
   const hasOther = useCallback(
     (it: SelectedService): it is SelectedService & { serviceOther: string } =>
       typeof it.serviceOther === 'string' && it.serviceOther.length > 0,
-    []
+    [],
   );
 
   const computeInitial = useCallback(() => {
@@ -139,9 +137,9 @@ export default function ServicesModal(props: IServicesModalProps) {
       rfilter((it) => !it.serviceOther || it.serviceOther.trim().length === 0),
       rmap((it) => ({
         id: it.id,
-        service: { id: it.service!.id, label: it.service!.label ?? '' },
+        service: { id: it.service.id, label: it.service.label ?? '' },
         markedForDeletion: it.markedForDeletion ?? false,
-      }))
+      })),
     );
 
     const others = pipe(
@@ -151,7 +149,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         id: it.id,
         serviceOther: it.serviceOther,
         markedForDeletion: it.markedForDeletion ?? false,
-      }))
+      })),
     );
 
     return [...std, ...others];
@@ -181,14 +179,15 @@ export default function ServicesModal(props: IServicesModalProps) {
   const categories = useMemo(
     () =>
       toServicesByCategory(
-        (availableCategories?.serviceCategories?.results ?? []) as ApiCategory[]
+        (availableCategories?.serviceCategories?.results ??
+          []) as ApiCategory[],
       ),
-    [availableCategories, toServicesByCategory]
+    [availableCategories, toServicesByCategory],
   );
 
   const filteredServices = useMemo(
     () => filterServicesByText(categories, searchText),
-    [categories, filterServicesByText, searchText]
+    [categories, filterServicesByText, searchText],
   );
 
   const hasResults = filteredServices.some((c) => c.items.length > 0);
@@ -198,11 +197,11 @@ export default function ServicesModal(props: IServicesModalProps) {
       rows
         .filter((r) => r.serviceOther)
         .map((r) => ({
-          serviceOther: r.serviceOther!,
+          serviceOther: r.serviceOther as string,
           serviceRequestId: r.id,
           markedForDeletion: r.markedForDeletion ?? false,
         })),
-    [rows]
+    [rows],
   );
 
   const setOtherCategoryRows = useCallback(
@@ -211,7 +210,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceOther: string | null;
         serviceRequestId?: string;
         markedForDeletion?: boolean;
-      }[]
+      }[],
     ) => {
       setRows((prev) => {
         const nonOther = prev.filter((r) => !r.serviceOther);
@@ -224,7 +223,7 @@ export default function ServicesModal(props: IServicesModalProps) {
               (r) =>
                 !!r.serviceOther &&
                 r.serviceOther === o.serviceOther &&
-                !r.service
+                !r.service,
             );
 
           const isServerId =
@@ -232,8 +231,10 @@ export default function ServicesModal(props: IServicesModalProps) {
             !o.serviceRequestId.startsWith('tmp-other-');
 
           const id = isServerId
-            ? o.serviceRequestId!
-            : existing?.id ?? makeTmpId();
+            ? // safe: guarded by isServerId
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              o.serviceRequestId!
+            : (existing?.id ?? makeTmpId());
 
           return {
             id,
@@ -245,7 +246,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         return [...nonOther, ...merged];
       });
     },
-    [makeTmpId]
+    [makeTmpId],
   );
 
   // ---------- Submit ----------
@@ -255,7 +256,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     });
 
     close();
-  }, [rows, type, close, showSnackbar]);
+  }, [rows, type, close, onSelect]);
 
   // ---------- Close (revert) ----------
   const clearAll = useCallback(() => {
@@ -263,10 +264,10 @@ export default function ServicesModal(props: IServicesModalProps) {
       pipe(
         prev,
         rfilter((r) => Boolean(r.id) || Boolean(r.serviceOther)),
-        rmap((r) => ({ ...r, markedForDeletion: true }))
-      )
+        rmap((r) => ({ ...r, markedForDeletion: true })),
+      ),
     );
-  }, [computeInitial]);
+  }, []);
 
   useEffect(() => {
     setRows(computeInitial());
@@ -315,7 +316,7 @@ export default function ServicesModal(props: IServicesModalProps) {
                     );
                   })}
                 </View>
-              ) : null
+              ) : null,
             )
           ) : (
             <View style={{ alignItems: 'center' }}>
