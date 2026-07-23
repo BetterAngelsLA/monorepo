@@ -4,18 +4,18 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
-import { FilterSelector } from './FilterSelector';
+// import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   // demographicFilter,
-  entryRequirementFilter,
-  parkingFilter,
-  petsFilter,
-  referralRequirementFilter,
-  roomStyleFilter,
-  shelterTypeFilter,
-  specialSituationFilter,
-  TFilterConfig,
+  // entryRequirementFilter,
+  // parkingFilter,
+  // petsFilter,
+  // referralRequirementFilter,
+  // roomStyleFilter,
+  // shelterTypeFilter,
+  // specialSituationFilter,
+  // TFilterConfig,
 } from './config';
 
 type IProps = {
@@ -50,15 +50,15 @@ export function ShelterFilters(props: IProps) {
 
   const parentCss = ['pb-24', className];
 
-  function onFilterChange(
-    filterName: TFilterConfig['name'],
-    selected: string[]
-  ) {
-    onFiltersChange({
-      ...filters,
-      [filterName]: selected,
-    });
-  }
+  // function onFilterChange(
+  //   filterName: TFilterConfig['name'],
+  //   selected: string[]
+  // ) {
+  //   onFiltersChange({
+  //     ...filters,
+  //     [filterName]: selected,
+  //   });
+  // }
 
   function onOpenNowScheduleTypeChange(
     scheduleType: ScheduleTypeChoices,
@@ -145,7 +145,7 @@ export function ShelterFilters(props: IProps) {
           onChange={onFilterChange}
           values={filters[demographicFilter.name]}
           {...demographicFilter}
-        /> */}
+        />
         <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
@@ -187,7 +187,7 @@ export function ShelterFilters(props: IProps) {
           onChange={onFilterChange}
           values={filters[shelterTypeFilter.name]}
           {...shelterTypeFilter}
-        />
+        /> */}
 
         <div className="mt-8">
           <div className="flex justify-between items-center">Max Stay</div>
