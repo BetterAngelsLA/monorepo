@@ -18,7 +18,7 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    command: postgres -c fsync=off -c full_page_writes=off -c wal_level=minimal -c max_wal_senders=0 -c shared_buffers=512MB -c work_mem=32MB -c maintenance_work_mem=128MB -c effective_cache_size=1GB -c checkpoint_timeout=30min -c max_wal_size=4GB
+    command: postgres -c log_statement=all -c log_destination=stderr
     volumes:
       - pgdata:/var/lib/postgresql/data
 
