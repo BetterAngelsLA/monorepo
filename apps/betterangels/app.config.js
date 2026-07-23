@@ -85,6 +85,13 @@ export default {
         {
           ios: {
             deploymentTarget: '16.4',
+            // Weak-link WidgetKit and ActivityKit to prevent dyld crash at launch
+            // on macOS < 14.2 when running as "Designed for iPad" (Catalyst).
+            // The activityBackgroundTint symbol from WidgetKit is pulled in
+            // transitively by Expo native dependencies but doesn't exist in the
+            // iOSSupport WidgetKit on macOS 14.1 and earlier. Weak-linking tells
+            // dyld to treat missing symbols as NULL instead of aborting.
+            // See: https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WeakLinking.html
             extraIosProps: {
               OTHER_LDFLAGS:
                 '$(inherited) -weak_framework WidgetKit -weak_framework ActivityKit',
