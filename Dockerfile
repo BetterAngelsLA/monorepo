@@ -127,7 +127,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       zip \
       libpq5 \
       gdal-bin
-ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
+ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
 RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
     && chown -R betterangels:betterangels /workspace /home/betterangels
 WORKDIR /workspace
