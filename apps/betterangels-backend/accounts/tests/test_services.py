@@ -96,7 +96,12 @@ def test_create_org_with_owner_roles() -> None:
 
 @pytest.mark.django_db(transaction=True)
 def test_create_org_atomic() -> None:
-    """If a preset throws mid-creation, nothing is persisted."""
+    """If a preset throws mid-creation, nothing is persisted.
+
+    Uses ``transaction=True`` because this test intentionally triggers a
+    ``ValidationError`` inside an atomic block — without a real transaction
+    the DB state would leak between rollback attempts.
+    """
     from organizations.models import Organization as OrgModel
 
     with pytest.raises(ValidationError):

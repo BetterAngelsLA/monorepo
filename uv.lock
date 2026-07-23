@@ -85,6 +85,12 @@ dependencies = [
     { name = "whitenoise" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-django" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "celery", extras = ["redis"], specifier = ">=5.6.2,<6" },
@@ -127,6 +133,12 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.5,<3" },
     { name = "strawberry-graphql-django", specifier = ">=0.86.1,<1" },
     { name = "whitenoise", specifier = ">=6.9.0,<7" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9,<10" },
+    { name = "pytest-django", specifier = ">=4,<5" },
 ]
 
 [[package]]

@@ -180,48 +180,61 @@ SERVICE_CATALOG = [
 
 
 def seed_spas() -> None:
-    for name, short_name, long_name in SPA_DATA:
-        _, created = SPA.objects.get_or_create(
-            name=name,
-            defaults={"short_name": short_name, "long_name": long_name},
-        )
-        if created:
-            logger.info("Created SPA: %s", long_name)
+    # Skip if already seeded — avoids 8 queries when DB is warm.
+    if SPA.objects.exists():
+        return
+    SPA.objects.bulk_create(
+        [SPA(name=name, short_name=short_name, long_name=long_name) for name, short_name, long_name in SPA_DATA],
+        ignore_conflicts=True,
+    )
+    logger.info("Seeded %d SPAs", len(SPA_DATA))
 
 
 def seed_cities() -> None:
     """Seed LA County cities (matching original migration)."""
     from shelters.models.lookups import City
 
-    for name in CITY_NAMES:
-        _, created = City.objects.get_or_create(name=name)
-        if created:
-            logger.info("Created City: %s", name)
+    # Skip if already seeded — avoids 90+ queries when DB is warm.
+    if City.objects.exists():
+        return
+    City.objects.bulk_create(
+        [City(name=name) for name in CITY_NAMES],
+        ignore_conflicts=True,
+    )
+    logger.info("Seeded %d cities", len(CITY_NAMES))
 
 
 def seed_services() -> None:
     """Seed ServiceCategory and Service catalog (matching original migration)."""
     from shelters.models.service import Service, ServiceCategory
 
-    for cat_name, cat_display, cat_order, services in SERVICE_CATALOG:
-        category, created = ServiceCategory.objects.get_or_create(
-            name=cat_name,
-            defaults={"display_name": cat_display, "priority": cat_order},
-        )
-        if created:
-            logger.info("Created ServiceCategory: %s", cat_display)
-        for svc_name, svc_display, svc_order in services:
-            _, created = Service.objects.get_or_create(
-                category=category,
-                name=svc_name,
-                defaults={
-                    "display_name": svc_display,
-                    "priority": svc_order,
-                    "is_other": False,
-                },
+    # Skip if already seeded.
+    if ServiceCategory.objects.exists():
+        return
+
+    categories = []
+    services = []
+    for cat_name, cat_display, cat_order, svc_list in SERVICE_CATALOG:
+        categories.append(ServiceCategory(name=cat_name, display_name=cat_display, priority=cat_order))
+        for svc_name, svc_display, svc_order in svc_list:
+            services.append(
+                Service(
+                    category=ServiceCategory(name=cat_name),  # FK resolved by name
+                    name=svc_name,
+                    display_name=svc_display,
+                    priority=svc_order,
+                    is_other=False,
+                )
             )
-            if created:
-                logger.info("Created Service: %s", svc_display)
+
+    # Bulk-insert categories first so FK references resolve.
+    ServiceCategory.objects.bulk_create(categories, ignore_conflicts=True)
+    # Resolve category FKs from DB so bulk_create can reference them.
+    cat_map = {c.name: c for c in ServiceCategory.objects.filter(name__in=[c.name for c in categories])}
+    for svc in services:
+        svc.category = cat_map[svc.category.name]
+    Service.objects.bulk_create(services, ignore_conflicts=True)
+    logger.info("Seeded %d categories, %d services", len(categories), len(services))
 
 
 def seed_shelter_lookups() -> None:

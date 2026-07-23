@@ -16,7 +16,7 @@ class AccountsConfig(AppConfig):
         from post_office.settings import get_celery_enabled
         from post_office.signals import email_queued
 
-        from . import signals  # noqa: F401
+        from .signals import setup_local_dev_data, sync_all_org_permission_groups
         from .tasks import queued_mail_handler
 
         if get_celery_enabled():
@@ -24,3 +24,16 @@ class AccountsConfig(AppConfig):
             email_queued.connect(queued_mail_handler)
 
         post_migrate.connect(_seed_on_migrate, sender=self)
+
+        # Connect with sender=self so handlers fire exactly once (not per-app).
+        # dispatch_uid prevents duplicate registration if ready() is re-called.
+        post_migrate.connect(
+            setup_local_dev_data,
+            sender=self,
+            dispatch_uid="setup_local_dev_data",
+        )
+        post_migrate.connect(
+            sync_all_org_permission_groups,
+            sender=self,
+            dispatch_uid="sync_all_org_permission_groups",
+        )

@@ -131,6 +131,10 @@ SERVICE_CATEGORIES = [
 def seed_organization_services() -> None:
     """Ensure all OrganizationService rows exist with correct categories."""
 
+    # Skip if already seeded — avoids ~60 queries when DB is warm.
+    if OrganizationService.objects.exists():
+        return
+
     org, _ = Organization.objects.get_or_create(name=DEFAULT_ORG_NAME)
 
     for cat_idx, (cat_name, service_labels) in enumerate(SERVICE_CATEGORIES):

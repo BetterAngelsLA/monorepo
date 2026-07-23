@@ -61,6 +61,17 @@ dependencies = [
 newrelic = { git = "https://github.com/newrelic/newrelic-python-agent.git", rev = "825d7bd3dd56b86576324d6e3f07dd2e7008e6cf" }
 django-admin-async-upload = { git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd" }
 
+[dependency-groups]
+dev = [
+    "pytest>=9,<10",
+    "pytest-django>=4,<5",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "betterangels_backend.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--reuse-db"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -77,5 +77,11 @@ def seed_permission_templates() -> None:
 
     Idempotent — safe to call on every ``migrate`` / test session start.
     """
+    # Skip if already seeded — avoids individual permission resolution queries.
+    expected_names = {t.name for t in ALL_TEMPLATES}
+    existing_names = set(PermissionGroupTemplate.objects.filter(name__in=expected_names).values_list("name", flat=True))
+    if existing_names == expected_names:
+        return
+
     for template_config in ALL_TEMPLATES:
         _seed_template(template_config)

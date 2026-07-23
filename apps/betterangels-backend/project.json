@@ -132,7 +132,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "uv run pytest -n auto --dist loadfile",
+        "command": "uv run pytest",
         "cwd": "apps/betterangels-backend"
       }
     },

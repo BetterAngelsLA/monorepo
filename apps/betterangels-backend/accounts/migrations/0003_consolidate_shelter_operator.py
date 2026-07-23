@@ -42,24 +42,29 @@ def migrate_to_global_shelter_operator(apps, schema_editor):
     if created:
         logger.info("Created PermissionGroupTemplate: Global Shelter Operator")
 
+    # Collect unique users across both old groups to avoid double-processing
+    # users who belong to both "Shelter Data Entry" and "Shelter Administration".
+    all_users = set()
     for old_group in old_groups:
-        for user in old_group.user_set.all():
-            # Find orgs this user belongs to.
-            org_users = OrganizationUser.objects.filter(user_id=user.pk).select_related("organization")
-            for ou in org_users:
-                org = ou.organization
-                group_name = f"{org.name}_{new_template.name}"
-                new_auth_group, _ = Group.objects.get_or_create(name=group_name)
-                new_pg, created = PermissionGroup.objects.get_or_create(
-                    organization=org,
-                    template=new_template,
-                    defaults={"group": new_auth_group, "name": new_template.name},
-                )
-                if created:
-                    logger.info("Created PermissionGroup for org %s", org.name)
-                new_pg.group.user_set.add(user)
+        all_users.update(old_group.user_set.all())
 
-        logger.info("Migrated %d users from %s", old_group.user_set.count(), old_group.name)
+    for user in all_users:
+        # Find orgs this user belongs to.
+        org_users = OrganizationUser.objects.filter(user_id=user.pk).select_related("organization")
+        for ou in org_users:
+            org = ou.organization
+            group_name = f"{org.name}_{new_template.name}"
+            new_auth_group, _ = Group.objects.get_or_create(name=group_name)
+            new_pg, created = PermissionGroup.objects.get_or_create(
+                organization=org,
+                template=new_template,
+                defaults={"group": new_auth_group, "name": new_template.name},
+            )
+            if created:
+                logger.info("Created PermissionGroup for org %s", org.name)
+            new_pg.group.user_set.add(user)
+
+    logger.info("Migrated %d unique users from legacy groups %s", len(all_users), OLD_GROUP_NAMES)
 
     # Cleanup old global groups.
     old_groups.delete()

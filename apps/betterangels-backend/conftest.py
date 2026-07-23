@@ -19,15 +19,27 @@ def _tune_test_postgres(django_db_setup: None, django_db_blocker: object) -> Non
     from django.conf import settings
     from django.db import connection
 
-    # Postgres: skip fsync for faster test writes
+    # Postgres: aggressive test-only tuning (data loss is fine for tests)
     with django_db_blocker.unblock(), connection.cursor() as c:  # type: ignore[union-attr,attr-defined]
         c.execute("SET synchronous_commit TO off")
+        c.execute("SET work_mem TO '64MB'")
+        c.execute("SET maintenance_work_mem TO '256MB'")
+        c.execute("SET temp_buffers TO '32MB'")
 
     # Django: skip expensive password hashing in tests
     settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-    # Silence structlog / request logging overhead in tests
-    logging.disable(logging.CRITICAL)
+    # Use in-memory cache in tests — removes Redis dependency, eliminates network round-trips
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+
+    # Silence noisy loggers in tests — keep ERROR/CRITICAL visible for debugging
+    logging.getLogger("django.request").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("vcr").setLevel(logging.WARNING)
 
 
 # ── Test timing instrumentation ──────────────────────────────────────────
