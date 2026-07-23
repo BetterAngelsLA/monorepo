@@ -40,6 +40,7 @@ type IProps = {
 };
 
 export function FilterPills(props: IProps) {
+  console.log('hello');
   const { className, filters, onPillClear } = props;
   const setFilters = useSetAtom(shelterPropertyFiltersAtom);
   const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
@@ -64,7 +65,7 @@ export function FilterPills(props: IProps) {
             label,
             clear: (prev) => {
               const nextTypes = (prev.openNowScheduleTypes ?? []).filter(
-                (t) => t !== scheduleType
+                (t) => t !== scheduleType,
               );
               return {
                 ...prev,
@@ -103,7 +104,7 @@ export function FilterPills(props: IProps) {
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(
         key as keyof TShelterPropertyFilters,
-        val as never
+        val as never,
       );
 
       if (label) {
