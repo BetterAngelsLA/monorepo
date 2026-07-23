@@ -34,30 +34,4 @@ def _tune_test_settings(django_db_setup: None) -> None:
     logging.getLogger("vcr").setLevel(logging.WARNING)
 
 
-# ── Test timing instrumentation ──────────────────────────────────────────
 
-_TIMING_LOG = Path(__file__).resolve().parent.parent.parent / "logs" / "test_timing.log"
-_TIMING_LOG.parent.mkdir(parents=True, exist_ok=True)
-
-
-def pytest_sessionstart(session: pytest.Session) -> None:
-    """Record session start time."""
-    import time
-
-    session.config._timing_start = time.monotonic()  # type: ignore[attr-defined]
-
-
-def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    """Log session duration."""
-    import time
-
-    start: float = getattr(session.config, "_timing_start", 0)
-    elapsed = time.monotonic() - start
-    worker = getattr(session.config, "workerinput", {}).get("workerid", "master")
-    msg = f"[{worker}] session: {elapsed:.1f}s (exit={exitstatus})\n"
-    with open(_TIMING_LOG, "a") as f:
-        f.write(msg)
-
-    if worker == "master":
-        # Print a summary line so it appears in CI logs.
-        print(f"\n⏱  Test session duration: {elapsed:.1f}s")
