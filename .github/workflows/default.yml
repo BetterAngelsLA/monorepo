@@ -104,10 +104,9 @@ jobs:
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: |
             type=registry,ref=${{ env.CACHE_IMAGE }}-main
-            type=registry,ref=${{ env.BRANCH_CACHE }}
+            ${{ github.ref_name != 'main' && format('type=registry,ref={0}', env.BRANCH_CACHE) || '' }}
           cache-to: |
             type=registry,ref=${{ env.BRANCH_CACHE }},mode=max
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || '' }}
 
       - name: 🔑 Prep Container Permissions
         run: |
