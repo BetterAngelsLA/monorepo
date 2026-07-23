@@ -186,7 +186,10 @@ def seed_spas() -> None:
     from shelters.enums import SPAChoices
 
     SPA.objects.bulk_create(
-        [SPA(name=SPAChoices(name), short_name=short_name, long_name=long_name) for name, short_name, long_name in SPA_DATA],
+        [
+            SPA(name=SPAChoices(name), short_name=short_name, long_name=long_name)
+            for name, short_name, long_name in SPA_DATA
+        ],
         ignore_conflicts=True,
     )
     logger.info("Seeded %d SPAs", len(SPA_DATA))
