@@ -183,8 +183,10 @@ def seed_spas() -> None:
     # Skip if already seeded — avoids 8 queries when DB is warm.
     if SPA.objects.exists():
         return
+    from shelters.enums import SPAChoices
+
     SPA.objects.bulk_create(
-        [SPA(name=name, short_name=short_name, long_name=long_name) for name, short_name, long_name in SPA_DATA],
+        [SPA(name=SPAChoices(name), short_name=short_name, long_name=long_name) for name, short_name, long_name in SPA_DATA],
         ignore_conflicts=True,
     )
     logger.info("Seeded %d SPAs", len(SPA_DATA))
