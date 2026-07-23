@@ -521,6 +521,9 @@ CKEDITOR_5_CONFIGS = {
 
 SITE_ID = 1
 
+# Use pytest via manage.py test (pytest-django's runner)
+TEST_RUNNER = "pytest_django.runner.TestRunner"
+
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
 ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
 CORS_ALLOW_CREDENTIALS = True
