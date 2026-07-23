@@ -44,7 +44,7 @@ RUN ARCH=$(uname -m) && \
   fi && \
   unzip awscliv2.zip && \
   ./aws/install && \
-  rm awscliv2.zip
+  rm -rf awscliv2.zip aws
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/3ac814a0a3470b195cb15530adcc3793c8268730/22/bullseye/Dockerfile
