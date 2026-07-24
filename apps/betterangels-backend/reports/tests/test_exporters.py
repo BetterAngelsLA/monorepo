@@ -368,14 +368,9 @@ class TestShelterMetricsExport:
                 "20260601_20260630_reservation_metrics.csv",
             ]
 
-    def test_metrics_to_zip_exports_no_files_for_empty_options(self) -> None:
-        zip_content = metrics_to_zip(
-            _shelter_occupancy_metrics(),
-            [],
-        )
-
-        with zipfile.ZipFile(BytesIO(zip_content)) as zip_file:
-            assert zip_file.namelist() == []
+    def test_metrics_to_zip_rejects_empty_options(self) -> None:
+        with pytest.raises(ValueError, match="At least one"):
+            metrics_to_zip(_shelter_occupancy_metrics(), [])
 
     def test_metrics_to_zip_rejects_unknown_options(self) -> None:
         with pytest.raises(ValueError, match="unknown_metric"):
