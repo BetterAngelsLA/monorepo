@@ -74,7 +74,9 @@ export function NavBar(props: TNavProps) {
   // ── Shelter name ─────────────────────────────────────────────────────────
 
   const { shelterId } = useParams<{ shelterId: string }>();
-  const { shelter: operatorShelter } = useShelterOperatorProfile(shelterId);
+  const { shelter: operatorShelter } = useShelterOperatorProfile(
+    shelterId ?? '',
+  );
   const shelterName = operatorShelter?.name;
   const showShelterName = isShelterRoute(location.pathname) && !!shelterName;
 

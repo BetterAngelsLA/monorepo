@@ -18,7 +18,7 @@ export function ShelterMgmtLinks(props: IProps) {
   return (
     <Sidebar.NestedLinks
       className={className}
-      label="Shelter Operations"
+      label="Shelter Management"
       isActive={false} // style only child links as active/inactive
       collapsed={!isOpen}
       defaultExpanded={true}
