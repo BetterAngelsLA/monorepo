@@ -1,13 +1,3 @@
-declare module 'eslint-plugin-react-native' {
-  const plugin: {
-    configs: {
-      all: Record<string, number>;
-    };
-    rules: Record<string, unknown>;
-  };
-  export default plugin;
-}
-
 declare module 'eslint-plugin-react-native-a11y' {
   const plugin: {
     configs: {

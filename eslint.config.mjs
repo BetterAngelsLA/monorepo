@@ -20,7 +20,6 @@ import nxPlugin from '@nx/eslint-plugin';
 import importPlugin from 'eslint-plugin-import';
 import webA11yPlugin from 'eslint-plugin-jsx-a11y';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import reactNativePlugin from 'eslint-plugin-react-native';
 import rnA11yPlugin from 'eslint-plugin-react-native-a11y';
 
 // Shared depConstraints — single source of truth for @nx/enforce-module-boundaries
@@ -207,23 +206,6 @@ export default [
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: { 'react-native-a11y': rnA11yPlugin },
     rules: rnA11yPlugin.configs.all.rules,
-  },
-
-  // React Native best practices (no-raw-text, no-inline-styles, no-color-literals, etc.)
-  // good: <Text>Hello</Text>
-  // bad:  <View>Hello</View> (raw text outside <Text>)
-  {
-    files: ['apps/betterangels/**/*.{ts,tsx}', 'libs/expo/**/*.{ts,tsx}'],
-    plugins: { 'react-native': reactNativePlugin },
-    rules: {
-      'react-native/no-unused-styles': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-color-literals': 'warn',
-      'react-native/sort-styles': 'warn',
-      'react-native/split-platform-components': 'warn',
-      'react-native/no-raw-text': 'warn',
-      'react-native/no-single-element-style-arrays': 'warn',
-    },
   },
 
   // Formatting & code quality
