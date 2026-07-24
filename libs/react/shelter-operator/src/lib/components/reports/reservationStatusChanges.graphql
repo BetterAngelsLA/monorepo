@@ -1,0 +1,11 @@
+query GetShelterOccupancyMetrics($shelterId: ID!) {
+  shelterOccupancyMetrics(shelterId: $shelterId) {
+    reservationMetrics {
+      checkInOverdue
+      cancelled
+      checkedIn
+      checkInOverdueToCheckedIn
+    }
+    avgDaysToOccupancy
+  }
+}
