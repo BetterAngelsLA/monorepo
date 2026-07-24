@@ -1,10 +1,7 @@
 import logging
-from typing import Any
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_migrate
-from django.dispatch import receiver
 from organizations.models import Organization
 
 from .models import PermissionGroupTemplate, User
@@ -12,10 +9,10 @@ from .models import PermissionGroupTemplate, User
 logger = logging.getLogger(__name__)
 
 # ── Local dev data setup ──────────────────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
 
-@receiver(post_migrate)
-def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
+def setup_local_dev_data(sender: object, **kwargs: object) -> None:
     """Create test users and org — local dev only.
 
     Role assignment is deferred to ``sync_all_org_permission_groups``
@@ -86,10 +83,10 @@ def _ensure_test_org() -> None:
 
 
 # ── Permission sync (all environments) ────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
 
-@receiver(post_migrate)
-def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
+def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     """Reconcile every org's PermissionGroups against current presets.
 
     Also assigns test-agent roles on local dev (safe to call repeatedly

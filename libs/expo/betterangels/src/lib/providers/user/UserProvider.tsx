@@ -59,7 +59,7 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   },
   isUnauthenticated: (errors) =>
     errors?.some(
-      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
+      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED,
     ) ?? false,
 });
 
@@ -90,8 +90,8 @@ function ExpoShell({ children }: ExpoShellProps) {
         !settled
           ? 'authorized-pending'
           : user
-          ? 'authorized-root'
-          : 'unauthorized-root'
+            ? 'authorized-root'
+            : 'unauthorized-root'
       }
       style={{ flex: 1 }}
     >

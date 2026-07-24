@@ -45,7 +45,7 @@ export function MultiSelectStatic<T>(props: MultiSelectStaticProps<T>) {
   // Base list: local filtered or options
   const baseList = useMemo(
     () => (withLocalFilter ? filtered : options),
-    [withLocalFilter, filtered, options]
+    [withLocalFilter, filtered, options],
   );
 
   const visibleOptions = useWithSelectAllOption<T>({
@@ -76,7 +76,6 @@ export function MultiSelectStatic<T>(props: MultiSelectStaticProps<T>) {
   });
 
   const renderRow = useRenderRow<T>({
-    isLocalSearch: !!withLocalFilter,
     isSelectAllOption,
     allAreSelected,
     isSelected,

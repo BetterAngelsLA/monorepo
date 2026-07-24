@@ -12,7 +12,9 @@ import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
 
 // Mock useQuery
 vi.mock('@apollo/client/react', async () => {
-  const actual = await vi.importActual<any>('@apollo/client/react');
+  const actual = await vi.importActual<Record<string, unknown>>(
+    '@apollo/client/react',
+  );
   return {
     ...actual,
     useQuery: vi.fn(),
@@ -44,7 +46,7 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
       }
 
       throw new Error(
-        `[test] no queryPolicyConfig mock for Query.${fieldName}`
+        `[test] no queryPolicyConfig mock for Query.${fieldName}`,
       );
     },
   };
@@ -83,7 +85,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           pagination: { offset: 0, limit: 25 },
         },
         networkStatus: NetworkStatus.ready,
-      })
+      }),
     );
 
     renderHookWithApollo(() =>
@@ -95,7 +97,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           pagination: { offset: 0, limit: 25 },
         },
         pageSize: 25,
-      })
+      }),
     );
 
     expect(useQuery).toHaveBeenCalledWith(
@@ -105,7 +107,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           filters: { q: 'hello' },
           pagination: { offset: 0, limit: 25 },
         },
-      })
+      }),
     );
   });
 
@@ -120,7 +122,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         variables: { pagination: { offset: 0, limit: 3 } },
         fetchMore,
         networkStatus: NetworkStatus.ready,
-      })
+      }),
     );
 
     const { result } = renderHookWithApollo(() =>
@@ -129,7 +131,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         queryFieldName: 'tasks',
         variables: { pagination: { offset: 0, limit: 3 } },
         pageSize: 3,
-      })
+      }),
     );
 
     await act(async () => {
@@ -147,7 +149,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         data: { tasks: { results: [{ id: 1 }], totalCount: 2 } },
         variables: { pagination: { offset: 0, limit: 1 } },
         networkStatus: NetworkStatus.ready,
-      })
+      }),
     );
 
     const { result } = renderHookWithApollo(() =>
@@ -156,7 +158,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         queryFieldName: 'tasks',
         variables: { pagination: { offset: 0, limit: 1 } },
         pageSize: 1,
-      })
+      }),
     );
 
     expect(result.current.items).toEqual([{ id: 1 }]);
@@ -173,7 +175,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         variables: { pagination: { page: 1, perPage: 2 } },
         fetchMore,
         networkStatus: NetworkStatus.ready,
-      })
+      }),
     );
 
     const { result } = renderHookWithApollo(() =>
@@ -181,7 +183,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         document: RecordsDocument,
         queryFieldName: 'records',
         variables: { pagination: { page: 1, perPage: 2 } },
-      })
+      }),
     );
 
     await act(async () => {
@@ -199,7 +201,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         data: { tasks: { results: [{ id: 1 }], totalCount: 10 } },
         variables: { pagination: { offset: 0, limit: 1 } },
         networkStatus: NetworkStatus.fetchMore,
-      })
+      }),
     );
 
     const { result } = renderHookWithApollo(() =>
@@ -208,7 +210,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
         queryFieldName: 'tasks',
         variables: { pagination: { offset: 0, limit: 1 } },
         pageSize: 1,
-      })
+      }),
     );
 
     expect(result.current.loadingMore).toBe(true);
@@ -223,7 +225,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           pagination: { offset: 0, limit: 1 },
         },
         networkStatus: NetworkStatus.setVariables,
-      })
+      }),
     );
 
     const { result } = renderHookWithApollo(() =>
@@ -235,7 +237,7 @@ describe('useInfiniteScrollQuery (Apollo v4)', () => {
           pagination: { offset: 0, limit: 1 },
         },
         pageSize: 1,
-      })
+      }),
     );
 
     expect(result.current.loading).toBe(true);

@@ -24,6 +24,7 @@ export { default as CheckIcon } from './components/CheckIcon';
 export { default as ChevronLeftIcon } from './components/ChevronLeftIcon';
 export { default as CircleSolidIcon } from './components/CircleSolidIcon';
 export { default as ClockIcon } from './components/ClockIcon';
+export { default as CopyIcon } from './components/CopyIcon';
 export { default as DeleteIcon } from './components/DeleteIcon';
 export { default as DownloadIcon } from './components/DownloadIcon';
 export { default as EmailIcon } from './components/EmailIcon';

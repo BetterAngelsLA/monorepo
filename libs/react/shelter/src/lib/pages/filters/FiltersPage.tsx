@@ -34,7 +34,7 @@ export function FiltersPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-modal bg-white flex flex-col animate-slideInUp overflow-x-hidden overflow-y-auto">
+    <div className="fixed inset-0 z-modal bg-white flex flex-col animate-slide-in-up overflow-x-hidden overflow-y-auto">
       <div className="md:pt-8 p-6 md:p-10 max-h-[calc(100vh-88px)] overflow-hidden overflow-y-auto">
         <div className="flex justify-between align-center mt-0 mb-4">
           <button

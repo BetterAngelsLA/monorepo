@@ -30,11 +30,11 @@ type InfiniteListBaseProps<T> = {
   renderResultsHeader?: TRenderListResultsHeader | null;
   loadingViewOptions?: TLoadingListView;
   showScrollIndicator?: boolean;
-  ItemSeparatorComponent?: ComponentType<any> | null;
+  ItemSeparatorComponent?: ComponentType<unknown> | null;
   error?: boolean; // determines whether to show ErrorView
   errorTitle?: string;
   errorMessage?: string;
-  ErrorViewComponent?: ComponentType<any> | ReactElement | null;
+  ErrorViewComponent?: ComponentType<unknown> | ReactElement | null;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &
