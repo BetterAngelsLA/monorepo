@@ -1,0 +1,36 @@
+query ShelterOccupancyMetrics(
+  $shelterId: ID!
+  $startDate: Date!
+  $endDate: Date!
+) {
+  shelterOccupancyMetrics(
+    shelterId: $shelterId
+    startDate: $startDate
+    endDate: $endDate
+  ) {
+    shelterId
+    startDate
+    endDate
+    avgDaysToOccupancy
+    dailyOccupancy {
+      date
+      occupiedCount
+      totalBeds
+      occupancyPct
+    }
+    dailyBedStatus {
+      date
+      available
+      occupied
+      reserved
+      outOfService
+      inTurnaround
+    }
+    reservationMetrics {
+      checkInOverdue
+      cancelled
+      checkedIn
+      checkInOverdueToCheckedIn
+    }
+  }
+}
