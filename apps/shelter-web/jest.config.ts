@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'shelter-web',
   testEnvironment: 'jest-environment-jsdom',
