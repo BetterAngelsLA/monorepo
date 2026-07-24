@@ -11,7 +11,7 @@ import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
-import { BedFormPage } from './pages/shelterManagement';
+import { CreateBedPage, EditBedPage } from './pages/shelterManagement';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -114,11 +114,11 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
-                element={<BedFormPage />}
+                element={<CreateBedPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
-                element={<BedFormPage />}
+                element={<EditBedPage />}
               />
               <Route
                 path={mgmtRouteConfig.children.beds}

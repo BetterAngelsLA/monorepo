@@ -1,2 +1,3 @@
-export { BedFormPage } from './BedFormPage';
 export { BedsPage } from './BedsPage';
+export { CreateBedPage } from './CreateBedPage';
+export { EditBedPage } from './EditBedPage';
