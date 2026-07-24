@@ -3,7 +3,6 @@ import { Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
-import { BedsView } from '../../components/beds/BedsView';
 import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { ReportsView } from '../../components/reports/ReportsView';
 import { ReservationsView } from '../../components/reservations/ReservationsView';
@@ -12,12 +11,11 @@ import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.
 import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
-type ShelterTab = 'reports' | 'rooms' | 'beds' | 'reservations' | 'occupants';
+type ShelterTab = 'reports' | 'rooms' | 'reservations' | 'occupants';
 
 const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
   reports: { label: 'Reports', pathSuffix: '' },
   rooms: { label: 'Rooms', pathSuffix: 'rooms' },
-  beds: { label: 'Beds', pathSuffix: 'beds' },
   reservations: { label: 'Reservations', pathSuffix: 'reservations' },
   occupants: { label: 'Occupants', pathSuffix: 'occupants' },
 };
@@ -25,7 +23,6 @@ const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
 const TAB_ITEMS: SliderTabItem[] = [
   TAB_CONFIG.reports,
   TAB_CONFIG.rooms,
-  TAB_CONFIG.beds,
   TAB_CONFIG.reservations,
   TAB_CONFIG.occupants,
 ];
@@ -82,7 +79,6 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
 
       {tab === 'rooms' && <RoomsView shelterId={id} />}
       {tab === 'reports' && <ReportsView shelterId={id} />}
-      {tab === 'beds' && <BedsView shelterId={id} />}
       {tab === 'occupants' && <OccupantsView shelterId={id} />}
       {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>

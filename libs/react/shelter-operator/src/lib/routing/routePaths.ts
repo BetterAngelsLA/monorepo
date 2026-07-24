@@ -1,5 +1,5 @@
 import { generatePath, matchPath } from 'react-router-dom';
-import { TShelterProfileSegment } from './types';
+import { TShelterMgmtSegment, TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';
 
@@ -85,8 +85,13 @@ export const mgmtRouteConfig = {
 
 // ── Manage ────────────────────────────────────────────────────────────────────
 
-export function shelterMgmtRoute(shelterId: string): string {
-  return generatePath(mgmtRouteConfig.root, { shelterId });
+export function shelterMgmtRoute(
+  shelterId: string,
+  segment?: TShelterMgmtSegment,
+): string {
+  const base = generatePath(mgmtRouteConfig.root, { shelterId });
+
+  return segment ? `${base}/${segment}` : base;
 }
 
 /** /operator/shelter/5/manage/beds */
@@ -162,4 +167,20 @@ export function isShelterProfileRoute(
   }
 
   return Boolean(matchPath(`${profileRouteConfig.root}/*`, path));
+}
+
+export function isShelterMgmtRoute(
+  path: string,
+  opts?: { strict?: boolean; segment?: TShelterMgmtSegment },
+): boolean {
+  const { strict, segment } = opts ?? {};
+  if (segment) {
+    return Boolean(matchPath(`${mgmtRouteConfig.root}/${segment}`, path));
+  }
+
+  if (strict) {
+    return Boolean(matchPath(mgmtRouteConfig.root, path));
+  }
+
+  return Boolean(matchPath(`${mgmtRouteConfig.root}/*`, path));
 }

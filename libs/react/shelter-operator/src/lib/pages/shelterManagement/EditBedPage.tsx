@@ -1,16 +1,25 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { BedForm } from '../../components/beds/bed-form/BedForm';
-import { mapBedToFormData } from '../../components/beds/bed-form/utils/mapBedToFormData';
+import {
+  BedForm,
+  toFormData,
+} from '../../components/ShelterManagement/segments/Beds';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { useBed } from '../../hooks/useBed';
 import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditBedPage() {
   const navigate = useNavigate();
-  const { shelterId, id: bedId } = useParams();
-  const { bed, loading, error } = useBed(bedId ?? '');
+  const { shelterId, id: bedId } = useParams<{
+    shelterId: string;
+    id: string;
+  }>();
 
-  const bedsPath = shelterMgmtResourceRoute(shelterId ?? '', 'bed');
+  if (!shelterId || !bedId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  const { bed, loading, error } = useBed(bedId);
+  const bedsPath = shelterMgmtResourceRoute(shelterId, 'bed');
 
   return (
     <ManageFormPageLayout
@@ -23,13 +32,12 @@ export function EditBedPage() {
       errorMessage={error ? 'Unable to load this bed.' : 'Bed not found.'}
       entityName="bed"
       entityLabel="Bed"
-      createSubtitle="Fields left blank will use defaults where applicable."
     >
       <BedForm
         key={bedId}
-        shelterId={shelterId ?? ''}
+        shelterId={shelterId}
         bedId={bedId}
-        initialData={bed ? mapBedToFormData(bed) : undefined}
+        initialData={bed ? toFormData(bed) : undefined}
         onSuccess={() => navigate(bedsPath)}
         onCancel={() => navigate(bedsPath)}
       />

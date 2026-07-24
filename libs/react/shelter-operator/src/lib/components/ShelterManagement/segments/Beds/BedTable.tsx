@@ -1,15 +1,13 @@
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  BedStatusChoices,
-} from '@monorepo/ba-platform/types';
-import { Button } from './base-ui/buttons';
+import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
   type StatusBadgeVariant,
-} from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
+} from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
 
 export type Bed = {
   id: string;
@@ -52,7 +50,7 @@ function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
 
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
-  maintenanceFlag?: boolean
+  maintenanceFlag?: boolean,
 ): { label: string; variant: StatusBadgeVariant } {
   if (status === BedStatusChoices.OutOfService && maintenanceFlag) {
     return {
@@ -133,7 +131,7 @@ export function BedTable({
         sortValue: (bed) => bed.room?.name ?? '',
       },
     ],
-    []
+    [],
   );
 
   return (
