@@ -89,10 +89,7 @@
     "format": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "commands": [
-          "uv run ruff check --fix .",
-          "uv run ruff format ."
-        ],
+        "commands": ["uv run ruff check --fix .", "uv run ruff format ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
@@ -123,10 +120,7 @@
     "lint": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "commands": [
-          "uv run ruff check .",
-          "uv run ruff format --check ."
-        ],
+        "commands": ["uv run ruff check .", "uv run ruff format --check ."],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
@@ -138,7 +132,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "uv run python manage.py test",
+        "command": "uv run pytest",
         "cwd": "apps/betterangels-backend"
       }
     },

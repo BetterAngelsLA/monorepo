@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from typing import Optional, cast
 
 import strawberry
@@ -11,13 +11,13 @@ from common.graphql.types import (
     BulkDeleteResult,
 )
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.core.exceptions import ValidationError
 from django.db.models import Max
+from django.utils import timezone
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors import shelter_get
-from shelters.selectors.reports import shelter_occupancy_metrics as get_shelter_occupancy_metrics
+from shelters.selectors import shelter_get, shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
+from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
 from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
@@ -109,34 +109,32 @@ class Query:
     def shelter_max_stay(self, info: Info) -> Optional[int]:
         return Shelter.objects.filter(status=StatusChoices.APPROVED).aggregate(Max("max_stay"))["max_stay__max"] or None
 
-    @strawberry_django.field(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
-    )
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
     def shelter_occupancy_metrics(
         self,
         info: Info,
         shelter_id: ID,
-        start_date: date,
-        end_date: date,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> ShelterOccupancyMetricsType:
-        """Return occupancy/reporting metrics for a shelter in an inclusive date range."""
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
+
         shelter = shelter_get(
             user=user,
             shelter_id=shelter_id,
             organization_id=org_id,
             permission=Shelter.perms.VIEW,
         )
-        try:
-            return get_shelter_occupancy_metrics(
-                shelter=shelter,
-                start_date=start_date,
-                end_date=end_date,
-            )
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
+
+        tz = SHELTER_SCHEDULE_TIME_ZONE
+        end_date = end_date or timezone.now().astimezone(tz).date()
+        start_date = start_date or (end_date - timedelta(days=29))
+
+        start = datetime.combine(start_date, time.min, tzinfo=tz)
+        end = datetime.combine(end_date, time.min, tzinfo=tz) + timedelta(days=1)
+
+        return shelter_occupancy_metrics_selector(shelter=shelter, start=start, end=end)
 
 
 @strawberry.type

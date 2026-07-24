@@ -20,7 +20,7 @@ type TProps<TVars> = {
 };
 
 export function buildInitialVariables<TVars extends OperationVariables>(
-  args: TProps<TVars>
+  args: TProps<TVars>,
 ): TVars {
   const {
     baseVariables,
@@ -33,7 +33,9 @@ export function buildInitialVariables<TVars extends OperationVariables>(
   } = args;
 
   // clone incoming vars
-  const variables: any = baseVariables ? { ...baseVariables } : {};
+  const variables: Record<string, unknown> = baseVariables
+    ? { ...baseVariables }
+    : {};
 
   // page/perPage shape
   if (paginationMode === PaginationModeEnum.PerPage) {
@@ -54,7 +56,7 @@ export function buildInitialVariables<TVars extends OperationVariables>(
     writeAtPath(variables, paginationPagePath, pageToUse);
     writeAtPath(variables, paginationPerPagePath, perPageToUse);
 
-    return variables;
+    return variables as TVars;
   }
 
   // offset/limit (default)
@@ -75,5 +77,5 @@ export function buildInitialVariables<TVars extends OperationVariables>(
   writeAtPath(variables, paginationOffsetPath, offsetToUse);
   writeAtPath(variables, paginationLimitPath, limitToUse);
 
-  return variables;
+  return variables as TVars;
 }

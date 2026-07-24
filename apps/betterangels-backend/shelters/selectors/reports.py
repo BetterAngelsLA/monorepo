@@ -4,27 +4,19 @@ import dataclasses
 import datetime
 from collections import Counter, defaultdict
 from itertools import groupby
-from typing import TYPE_CHECKING
-from zoneinfo import ZoneInfo
+from typing import TYPE_CHECKING, cast
 
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
 
 import pghistory
+from strawberry import ID
 
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
-    from shelters.types.reporting import (
-        DailyOccupancyMetricsType,
-        ReservationMetricsType,
-        ShelterOccupancyMetricsType,
-    )
-
-# Shelter reporting calendars use Pacific time (matches schedule TZ).
-REPORT_TIME_ZONE = ZoneInfo("America/Los_Angeles")
-MAX_REPORT_RANGE_DAYS = 366  # one (leap) year, inclusive of both endpoints
+    from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType, ShelterOccupancyMetricsType
 
 
 # ── Private helpers ───────────────────────────────────────────────────────────
@@ -670,64 +662,34 @@ def avg_days_to_occupancy(
     return round(sum(gaps) / len(gaps), 2)
 
 
-def _inclusive_date_range_to_window(
-    start_date: datetime.date,
-    end_date: datetime.date,
-    *,
-    tz: datetime.tzinfo = REPORT_TIME_ZONE,
-) -> tuple[datetime.datetime, datetime.datetime]:
-    """Convert an inclusive calendar-date range to a half-open datetime window.
-
-    Returns ``[start_of_start_date, start_of_day_after_end_date)`` in *tz*.
-    """
-    if end_date < start_date:
-        raise ValueError("end_date must be on or after start_date")
-    span_days = (end_date - start_date).days + 1
-    if span_days > MAX_REPORT_RANGE_DAYS:
-        raise ValueError(f"date range must be at most {MAX_REPORT_RANGE_DAYS} days")
-
-    start = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=tz)
-    end = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=tz)
-    return start, end
-
-
 def shelter_occupancy_metrics(
-    *,
-    shelter: "Shelter",
-    start_date: datetime.date,
-    end_date: datetime.date,
+    *, shelter: "Shelter", start: datetime.datetime, end: datetime.datetime
 ) -> "ShelterOccupancyMetricsType":
-    """Assemble all shelter occupancy reporting metrics for a date range.
+    """Invoke the individual metric selectors for *shelter* and assemble a ``ShelterOccupancyMetricsType``.
 
-    *start_date* and *end_date* are inclusive calendar dates interpreted in
-    :data:`REPORT_TIME_ZONE` (America/Los_Angeles).
+    *start* and *end* are timezone-aware datetimes; *end* is exclusive, matching
+    the other selectors in this module.
     """
-    from strawberry import ID
+    from shelters.types.reporting import DailyBedStatusMetricsType, ShelterOccupancyMetricsType
 
-    from shelters.types.reporting import (  # inline to avoid circular import
-        DailyBedStatusMetricsType,
-        ShelterOccupancyMetricsType,
-    )
-
-    start, end = _inclusive_date_range_to_window(start_date, end_date)
-
-    bed_counts = report_bed_status_counts(shelter=shelter, start=start, end=end)
+    bed_status_counts = report_bed_status_counts(shelter=shelter, start=start, end=end)
+    end_date = (end - datetime.timedelta(microseconds=1)).date() if end > start else start.date()
 
     return ShelterOccupancyMetricsType(
-        shelter_id=ID(str(shelter.pk)),
-        start_date=start_date,
+        shelter_id=cast(ID, shelter.pk),
+        start_date=start.date(),
         end_date=end_date,
         daily_occupancy=daily_occupancy(shelter=shelter, start=start, end=end),
         daily_bed_status=[
             DailyBedStatusMetricsType(
-                date=counts.date,
-                available=counts.available,
-                occupied=counts.occupied,
-                reserved=counts.reserved,
-                out_of_service=counts.out_of_service,
-                in_turnaround=counts.in_turnaround,
+                date=d.date,
+                available=d.available,
+                occupied=d.occupied,
+                reserved=d.reserved,
+                out_of_service=d.out_of_service,
+                in_turnaround=d.in_turnaround,
             )
-            for counts in bed_counts
+            for d in bed_status_counts
         ],
         reservation_metrics=reservation_status_change_counts(shelter=shelter, start=start, end=end),
         avg_days_to_occupancy=avg_days_to_occupancy(shelter=shelter, start=start, end=end),

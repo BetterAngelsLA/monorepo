@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { ReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
-import { shelterEditReservationRoute } from '../routing';
+import { shelterEditResourceRoute } from '../routing';
 import { Button } from './base-ui/buttons';
 import { StatusBadge } from './base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from './base-ui/table';
@@ -269,7 +269,7 @@ export function ReservationTable({
             className="text-[#747A82]"
             aria-label="Edit reservation"
             onClick={() =>
-              navigate(shelterEditReservationRoute(shelterId, rowObject.id))
+              navigate(shelterEditResourceRoute(shelterId, 'reservation', rowObject.id))
             }
           />
         </div>

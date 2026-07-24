@@ -19,6 +19,7 @@ export default function AuthContainer({
 
   return (
     <>
+      {/* eslint-disable-next-line react/style-prop-object -- Expo StatusBar style accepts string */}
       <StatusBar style="dark" />
       <View style={[styles.container, { paddingBottom: insets.bottom }, style]}>
         <View style={styles.headerContainer}>{header}</View>

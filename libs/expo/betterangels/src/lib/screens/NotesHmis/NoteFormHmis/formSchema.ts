@@ -1,9 +1,6 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
-import {
-  ServiceRequestTypeEnum,
-  TaskStatusEnum,
-} from '../../../apollo';
+import { ServiceRequestTypeEnum, TaskStatusEnum } from '../../../apollo';
 
 // ----------------------------------------------------------------------
 // 1. Local Draft Task Type
@@ -68,7 +65,7 @@ export const NoteFormSchemaHmis = z.object({
     .optional()
     .refine(
       (val) => val instanceof Date && !Number.isNaN(val.getTime()),
-      'Date is required.'
+      'Date is required.',
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
@@ -109,7 +106,7 @@ export const noteFormEmptyStateHmis: TNoteFormInputsHmis = {
   date: undefined,
   refClientProgram: '',
   note: '',
-  location: undefined as any,
+  location: undefined as unknown as TNoteFormInputsHmis['location'], // TODO: see if can update schema to accept undefined
   tasks: [],
   services: {},
 };
@@ -126,5 +123,5 @@ export const getNoteFormEmptyStateHmis = (): TNoteFormInputsHmis => ({
 type NoteFormFieldNameHmis = keyof typeof NoteFormSchemaHmis.shape;
 
 export const NoteFormFieldNamesHmis = Object.keys(
-  NoteFormSchemaHmis.shape
+  NoteFormSchemaHmis.shape,
 ) as NoteFormFieldNameHmis[];
