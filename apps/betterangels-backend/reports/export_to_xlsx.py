@@ -23,40 +23,6 @@ from .export_options import MetricsExportOptions
 SheetData = tuple[list[str], list[dict[str, Any]]]
 
 
-def rows_to_xlsx(rows: list[dict[str, Any]], headers: list[str], worksheet_name: str = "Sheet1") -> bytes:
-    workbook = Workbook()
-    worksheet = workbook.active
-    if not isinstance(worksheet, Worksheet):
-        raise RuntimeError("Workbook does not have an active worksheet")
-
-    worksheet.title = worksheet_name
-    _append_rows(worksheet, rows, headers)
-
-    return _workbook_to_bytes(workbook)
-
-
-def daily_occupancy_metrics_to_xlsx(shelter_id: str, metrics: list[DailyOccupancyMetricsType]) -> bytes:
-    headers, rows = _daily_occupancy_sheet_data(shelter_id, metrics)
-    return rows_to_xlsx(rows, headers, worksheet_name="Daily Occupancy")
-
-
-def daily_bed_status_metrics_to_xlsx(shelter_id: str, metrics: list[DailyBedStatusMetricsType]) -> bytes:
-    headers, rows = _daily_bed_status_sheet_data(shelter_id, metrics)
-    return rows_to_xlsx(rows, headers, worksheet_name="Daily Bed Status")
-
-
-def reservation_metrics_to_xlsx(
-    shelter_id: str, start_date: date, end_date: date, metrics: ReservationMetricsType
-) -> bytes:
-    headers, rows = _reservation_metrics_sheet_data(shelter_id, start_date, end_date, metrics)
-    return rows_to_xlsx(rows, headers, worksheet_name="Reservation Metrics")
-
-
-def avg_days_to_occupancy_to_xlsx(shelter_id: str, start_date: date, end_date: date, avg_days: float | None) -> bytes:
-    headers, rows = _avg_days_to_occupancy_sheet_data(shelter_id, start_date, end_date, avg_days)
-    return rows_to_xlsx(rows, headers, worksheet_name="Avg Days To Occupancy")
-
-
 def metrics_to_xlsx(metrics: ShelterOccupancyMetricsType, options: list[MetricsExportOptions]) -> tuple[str, bytes]:
     shelter_id = str(metrics.shelter_id)
     start_date = metrics.start_date
