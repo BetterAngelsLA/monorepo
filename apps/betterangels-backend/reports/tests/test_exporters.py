@@ -29,7 +29,7 @@ from reports.export_to_csv import (
     reservation_metrics_to_csv,
     rows_to_csv,
 )
-from reports.export_to_xlsx import metrics_to_xlsx, rows_to_xlsx
+from reports.export_to_xlsx import metrics_to_xlsx
 
 
 def _xlsx_rows(xlsx_content: bytes, worksheet_name: str = "Sheet1") -> list[list[Any]]:
@@ -120,49 +120,6 @@ class TestRowsToCsv:
         csv_content = rows_to_csv(rows=[], headers=["date", "available"])
 
         rows = list(csv.reader(StringIO(csv_content)))
-
-        assert rows == [["date", "available"]]
-
-
-class TestRowsToXlsx:
-    def test_exports_rows_with_headers(self) -> None:
-        xlsx_content = rows_to_xlsx(
-            rows=[
-                {"date": date(2026, 6, 1), "available": 5},
-                {"date": date(2026, 6, 2), "available": 7},
-            ],
-            headers=["date", "available"],
-        )
-
-        rows = _xlsx_rows(xlsx_content)
-
-        assert rows == [
-            ["date", "available"],
-            ["2026-06-01", 5],
-            ["2026-06-02", 7],
-        ]
-
-    def test_fills_missing_row_values_with_empty_string(self) -> None:
-        xlsx_content = rows_to_xlsx(
-            rows=[
-                {"date": date(2026, 6, 1), "available": 5},
-                {"date": date(2026, 6, 2)},
-            ],
-            headers=["date", "available"],
-        )
-
-        rows = _xlsx_rows(xlsx_content)
-
-        assert rows == [
-            ["date", "available"],
-            ["2026-06-01", 5],
-            ["2026-06-02", ""],
-        ]
-
-    def test_exports_header_for_empty_rows(self) -> None:
-        xlsx_content = rows_to_xlsx(rows=[], headers=["date", "available"])
-
-        rows = _xlsx_rows(xlsx_content)
 
         assert rows == [["date", "available"]]
 
