@@ -5,17 +5,19 @@ import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { BedsPage, UsersPage } from './pages';
-import { CreateOrganizationPage } from './pages/createOrganization';
-import { Dashboard } from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import {
+  BedsPage,
   CreateBedPage,
   CreateRoomPage,
   EditBedPage,
   EditRoomPage,
-} from './pages/shelterManagement';
+  RoomsPage,
+  UsersPage,
+} from './pages';
+import { CreateOrganizationPage } from './pages/createOrganization';
+import { Dashboard } from './pages/dashboard/Dashboard';
+import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
+import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -99,22 +101,14 @@ export function OperatorApp() {
             <Route path={routePath(mgmtRouteConfig.root)}>
               <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
-                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
-                element={<CreateRoomPage />}
-              />
-              <Route
-                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditRoomPage />}
-              />
-              <Route
-                path={mgmtRouteConfig.children.rooms}
-                element={<ShelterDashboardPage tab="rooms" />}
-              />
-              <Route
                 index
                 element={
                   <Navigate to={mgmtRouteConfig.children.beds} replace />
                 }
+              />
+              <Route
+                path={mgmtRouteConfig.children.beds}
+                element={<BedsPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
@@ -125,8 +119,16 @@ export function OperatorApp() {
                 element={<EditBedPage />}
               />
               <Route
-                path={mgmtRouteConfig.children.beds}
-                element={<BedsPage />}
+                path={mgmtRouteConfig.children.rooms}
+                element={<RoomsPage />}
+              />
+              <Route
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
+                element={<CreateRoomPage />}
+              />
+              <Route
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
+                element={<EditRoomPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
