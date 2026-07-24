@@ -832,6 +832,22 @@ type CurrentUserType {
   isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }
 
+type DailyBedStatusMetricsType {
+  date: Date!
+  available: Int!
+  occupied: Int!
+  reserved: Int!
+  outOfService: Int!
+  inTurnaround: Int!
+}
+
+type DailyOccupancyMetricsType {
+  date: Date!
+  occupiedCount: Int!
+  totalBeds: Int!
+  occupancyPct: Float!
+}
+
 """Date (isoformat)"""
 scalar Date
 
@@ -2088,6 +2104,7 @@ type Query {
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
   shelterMaxStay: Int
+  shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
   referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
   referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
 }
@@ -2224,6 +2241,13 @@ input ReservationFilter {
   DISTINCT: Boolean
   status: [ReservationStatusChoices!]
   shelterId: ID
+}
+
+type ReservationMetricsType {
+  checkInOverdue: Int!
+  cancelled: Int!
+  checkedIn: Int!
+  checkInOverdueToCheckedIn: Int!
 }
 
 input ReservationOrder {
@@ -2564,6 +2588,16 @@ type ShelterLocationType {
   place: String!
   latitude: Float!
   longitude: Float!
+}
+
+type ShelterOccupancyMetricsType {
+  shelterId: ID!
+  startDate: Date!
+  endDate: Date!
+  dailyOccupancy: [DailyOccupancyMetricsType!]!
+  dailyBedStatus: [DailyBedStatusMetricsType!]!
+  reservationMetrics: ReservationMetricsType!
+  avgDaysToOccupancy: Float
 }
 
 input ShelterOrder {
