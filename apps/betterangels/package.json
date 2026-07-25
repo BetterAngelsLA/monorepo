@@ -92,7 +92,8 @@
     "expo-web-browser": "*",
     "expo-dev-client": "*",
     "@types/google.maps": "*",
-    "@jest/globals": "*"
+    "@jest/globals": "*",
+    "expo-modules-core": "*"
   },
   "devDependencies": {}
 }
