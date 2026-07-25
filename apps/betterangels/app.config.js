@@ -41,6 +41,11 @@ export default {
       },
       infoPlist: {
         UIDesignRequiresCompatibility: true,
+        // Prevent install on macOS < 14.2 via Catalyst ("Designed for iPad").
+        // The iOSSupport WidgetKit on older macOS lacks activityBackgroundTint,
+        // causing a dyld crash at launch. Bumping LSMinimumSystemVersion avoids
+        // the crash without needing fragile weak-linking flags.
+        LSMinimumSystemVersion: '14.2',
       },
     },
     android: {
