@@ -9,6 +9,9 @@ import {
 export type ShelterOccupancyMetrics =
   ShelterOccupancyMetricsQuery['shelterOccupancyMetrics'];
 
+export type ReservationMetrics =
+  ShelterOccupancyMetrics['reservationMetrics'];
+
 type UseShelterOccupancyMetricsArgs = {
   shelterId?: string;
   startDate?: Date | null;

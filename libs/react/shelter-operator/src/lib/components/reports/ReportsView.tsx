@@ -35,7 +35,10 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
     <div className="mt-6 flex flex-col gap-6 px-6">
       <ReportFilterBar />
 
-      <ReservationStatusChanges />
+      <ReservationStatusChanges
+        metrics={metrics?.reservationMetrics}
+        avgDaysToOccupancy={metrics?.avgDaysToOccupancy}
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <BedStatusChart />
