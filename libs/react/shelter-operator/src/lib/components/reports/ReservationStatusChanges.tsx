@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import {
   ArrowRight,
   CalendarCheck2,
@@ -5,10 +6,9 @@ import {
   CalendarX2,
   Clock,
 } from 'lucide-react';
-import { mergeCss } from '@monorepo/react/shared';
 import type { ReactNode } from 'react';
+import type { ReservationMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { Text } from '../base-ui/text/text';
-import { ReservationMetricsType } from './types';
 
 const ICON_SIZE = 18;
 const iconClass = 'shrink-0 text-[#747A82]';
@@ -72,8 +72,8 @@ export function ConjoinedStatCard({ left, right }: IConjoinedStatCardProps) {
 }
 
 export interface IReservationStatusChangesProps {
-  metrics: ReservationMetricsType;
-  avgDaysToOccupancy: number | null;
+  metrics?: ReservationMetrics | null;
+  avgDaysToOccupancy?: number | null;
 }
 
 /**
@@ -98,7 +98,7 @@ export function ReservationStatusChanges({
             left={{
               icon: <CalendarCheck2 size={ICON_SIZE} className={iconClass} />,
               title: 'Newly Checked In',
-              value: String(metrics.checkedIn),
+              value: metrics?.checkedIn != null ? String(metrics.checkedIn) : '—',
               testId: 'stat-newly-checked-in',
             }}
             right={{
@@ -113,21 +113,24 @@ export function ReservationStatusChanges({
                   Checked In
                 </>
               ),
-              value: String(metrics.checkInOverdueToCheckedIn),
+              value:
+                metrics?.checkInOverdueToCheckedIn != null
+                  ? String(metrics.checkInOverdueToCheckedIn)
+                  : '—',
               testId: 'stat-overdue-to-checked-in',
             }}
           />
           <StatCard
             icon={<CalendarX2 size={ICON_SIZE} className={iconClass} />}
             title="Newly Canceled"
-            value={String(metrics.cancelled)}
+            value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'},
             testId="stat-newly-canceled"
             className="min-w-[140px] grow-[268] basis-0"
           />
           <StatCard
             icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
             title="Newly Overdue"
-            value={String(metrics.checkInOverdue)}
+            value={metrics?.checkInOverdue != null ? String(metrics.checkInOverdue) : '—'},
             testId="stat-newly-overdue"
             className="min-w-[140px] grow-[268] basis-0"
           />

@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.4',
+    version: '1.2.6',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.4',
+      buildNumber: '1.2.6',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -70,7 +70,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 78,
+      versionCode: 80,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -78,7 +78,6 @@ export default {
     },
     plugins: [
       'newrelic-react-native-agent',
-      '@config-plugins/react-native-blob-util',
       '@config-plugins/react-native-pdf',
       [
         'expo-build-properties',
