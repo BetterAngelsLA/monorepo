@@ -52,6 +52,7 @@ dependencies = [
     "requests>=2.32.5,<3",
     "strawberry-graphql-django>=0.86.1,<1",
     "whitenoise>=6.9.0,<7",
+    "openpyxl>=3.1.5",
 ]
 
 # Pinned to merge commit of PR #1760 (ExecutionContext.errors -> collected_errors).
