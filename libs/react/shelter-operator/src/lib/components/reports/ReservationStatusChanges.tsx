@@ -123,14 +123,14 @@ export function ReservationStatusChanges({
           <StatCard
             icon={<CalendarX2 size={ICON_SIZE} className={iconClass} />}
             title="Newly Canceled"
-            value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'},
+            value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'}
             testId="stat-newly-canceled"
             className="min-w-[140px] grow-[268] basis-0"
           />
           <StatCard
             icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
             title="Newly Overdue"
-            value={metrics?.checkInOverdue != null ? String(metrics.checkInOverdue) : '—'},
+            value={metrics?.checkInOverdue != null ? String(metrics.checkInOverdue) : '—'}
             testId="stat-newly-overdue"
             className="min-w-[140px] grow-[268] basis-0"
           />
