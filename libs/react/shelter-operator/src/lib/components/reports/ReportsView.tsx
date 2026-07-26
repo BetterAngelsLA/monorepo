@@ -1,5 +1,4 @@
 import { useAtomValue } from 'jotai';
-import { useEffect } from 'react';
 import { useShelterOccupancyMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { dateRangeFilterAtom } from '../date-range-filter';
 import { BedStatusChart, DailyOccupancyChart } from './ReportCharts';
@@ -20,23 +19,17 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
     endDate: range.to,
   });
 
-  useEffect(() => {
-    if (loading) {
-      console.log('[reporting] loading shelter occupancy metrics…', {
-        shelterId,
-        startDate: range.from,
-        endDate: range.to,
-      });
-      return;
-    }
-    if (error) {
-      console.error('[reporting] failed to load shelter occupancy metrics', error);
-      return;
-    }
-    if (metrics) {
-      console.log('[reporting] shelter occupancy metrics', metrics);
-    }
-  }, [error, loading, metrics, range.from, range.to, shelterId]);
+  if (loading) {
+    console.log('[reporting] loading shelter occupancy metrics…', {
+      shelterId,
+      startDate: range.from,
+      endDate: range.to,
+    });
+  } else if (error) {
+    console.error('[reporting] failed to load shelter occupancy metrics', error);
+  } else if (metrics) {
+    console.log('[reporting] shelter occupancy metrics', metrics);
+  }
 
   return (
     <div className="mt-6 flex flex-col gap-6 px-6">
