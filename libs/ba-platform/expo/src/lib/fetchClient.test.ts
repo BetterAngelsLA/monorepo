@@ -1,5 +1,5 @@
 /**
- * @jest-environment node
+
  */
 
 /* eslint-disable import/first */

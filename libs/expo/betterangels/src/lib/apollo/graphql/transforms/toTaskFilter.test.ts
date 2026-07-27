@@ -1,5 +1,4 @@
 /**
- * @jest-environment node
  */
 
 import type { IdFilterLookup, TaskFilter } from '@monorepo/ba-platform/types';

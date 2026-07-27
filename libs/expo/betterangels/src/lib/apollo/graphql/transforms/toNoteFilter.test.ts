@@ -1,5 +1,4 @@
 /**
- * @jest-environment node
  */
 
 import { toNoteFilter } from './toNoteFilter';

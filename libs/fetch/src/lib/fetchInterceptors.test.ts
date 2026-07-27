@@ -1,5 +1,4 @@
 /**
- * @jest-environment node
  */
 import { createCsrfInterceptor, createOrgInterceptor } from './fetchInterceptors';
 

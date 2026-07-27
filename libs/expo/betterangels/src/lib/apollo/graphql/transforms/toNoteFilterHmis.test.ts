@@ -1,5 +1,4 @@
 /**
- * @jest-environment node
  */
 
 import { toNoteFilterHmis } from './toNoteFilterHmis';

@@ -4,8 +4,8 @@ import * as path from 'path';
 import { setupEnvAndFingerprint } from './eas-utils';
 
 // Mock execSync (used by `run`) to return a fake fingerprint
-jest.mock('child_process', () => ({
-  execSync: jest.fn(() => JSON.stringify({ hash: 'abc123' })),
+vi.mock('child_process', () => ({
+  execSync: vi.fn(() => JSON.stringify({ hash: 'abc123' })),
 }));
 
 describe('setupEnvAndFingerprint', () => {

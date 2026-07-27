@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+
  */
 
 /* eslint-disable import/first */
