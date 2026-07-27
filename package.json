@@ -25,7 +25,6 @@
     "@gorhom/bottom-sheet": "^5",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.1",
-    "@jest/globals": "^30.4.1",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
     "@portabletext/react": "^3.2.0",
     "@preeternal/react-native-cookie-manager": "^6.3.0",

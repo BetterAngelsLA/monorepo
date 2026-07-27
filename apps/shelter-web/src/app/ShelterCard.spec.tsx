@@ -11,7 +11,7 @@
  * If either is removed, the card blows out again.
  */
 import { ShelterCard, TShelter } from '@monorepo/react/shelter';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 
 vi.mock('react-router-dom', () => ({
