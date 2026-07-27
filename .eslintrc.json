@@ -12,6 +12,7 @@
           {
             "enforceBuildableLibDependency": true,
             "allow": [".*libs/tailwind.*"],
+            "checkDynamicDependenciesExceptions": ["@monorepo/ba-platform"],
             "depConstraints": [
               // ── TYPE constraints (what kind of code) ──
               // Dependency flow: feature → data-access → util
