@@ -17,7 +17,7 @@ const baseOptions: TOption[] = [
 type TTestCase = {
   title: string;
   inputs: TGetVisibleOptions<TOption>;
-  result: any;
+  result: unknown;
 };
 
 const baseOptionsTestParams: TGetVisibleOptions<TOption> = {
@@ -103,7 +103,9 @@ describe('getVisibleOptions for MultiSelect', () => {
     it(`should handle ${testCase.title}`, () => {
       const result = getVisibleOptions(testCase.inputs);
 
-      expect(result).toEqual(expect.arrayContaining(testCase.result));
+      expect(result).toEqual(
+        expect.arrayContaining(testCase.result as readonly unknown[]),
+      );
     });
   });
 });

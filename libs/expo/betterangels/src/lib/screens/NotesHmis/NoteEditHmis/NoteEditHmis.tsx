@@ -37,7 +37,7 @@ import {
   TNoteFormOutputsHmis,
   noteFormEmptyStateHmis,
 } from '../NoteFormHmis';
-import splitBucket from '../utils/splitBucket';
+import splitBucket, { TBucket } from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/getClientNoteHmis.generated';
 import {
@@ -83,7 +83,7 @@ export function NoteEditHmis(props: TProps) {
         },
       });
       router.dismissTo(
-        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`,
       );
     } catch (err) {
       console.error(err);
@@ -98,7 +98,7 @@ export function NoteEditHmis(props: TProps) {
   async function applyBucket(
     id: string,
     type: ServiceRequestTypeEnum,
-    bucket: any
+    bucket: TBucket | undefined,
   ) {
     const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
       splitBucket(bucket);
@@ -109,7 +109,7 @@ export function NoteEditHmis(props: TProps) {
           data: {
             hmisNoteId: id,
             serviceRequestType: type,
-            serviceId: s.serviceId!,
+            serviceId: s.serviceId,
           },
         },
       });
@@ -120,7 +120,7 @@ export function NoteEditHmis(props: TProps) {
       await deleteService({
         variables: {
           data: {
-            serviceRequestId: s.serviceRequestId!,
+            serviceRequestId: s.serviceRequestId,
             hmisNoteId: id,
             serviceRequestType: type,
           },
@@ -135,7 +135,7 @@ export function NoteEditHmis(props: TProps) {
           data: {
             hmisNoteId: id,
             serviceRequestType: type,
-            serviceOther: o.serviceOther!.trim(),
+            serviceOther: o.serviceOther.trim(),
           },
         },
       });
@@ -146,7 +146,7 @@ export function NoteEditHmis(props: TProps) {
       await deleteService({
         variables: {
           data: {
-            serviceRequestId: o.serviceRequestId!,
+            serviceRequestId: o.serviceRequestId,
             hmisNoteId: id,
             serviceRequestType: type,
           },
@@ -245,7 +245,7 @@ export function NoteEditHmis(props: TProps) {
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(
           error,
-          NoteFormFieldNamesHmis
+          NoteFormFieldNamesHmis,
         );
 
         if (fieldErrors.length) {
@@ -288,19 +288,19 @@ export function NoteEditHmis(props: TProps) {
       await applyBucket(
         id,
         ServiceRequestTypeEnum.Provided,
-        draftServices[ServiceRequestTypeEnum.Provided]
+        draftServices[ServiceRequestTypeEnum.Provided],
       );
 
       await applyBucket(
         id,
         ServiceRequestTypeEnum.Requested,
-        draftServices[ServiceRequestTypeEnum.Requested]
+        draftServices[ServiceRequestTypeEnum.Requested],
       );
 
       await refetch();
 
       router.replace(
-        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`,
       );
     } catch (error) {
       console.error('[updateHmisNoteMutation] error:', error);

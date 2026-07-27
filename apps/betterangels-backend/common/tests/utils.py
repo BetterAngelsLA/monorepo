@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Tuple, Un
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
-from common.constants import HMIS_SESSION_KEY_NAME
-from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
@@ -17,6 +15,9 @@ from model_bakery import baker
 from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
+
+from common.constants import HMIS_SESSION_KEY_NAME
+from common.models import Address, Location
 
 if TYPE_CHECKING:
     from organizations.models import Organization
@@ -192,9 +193,10 @@ class GraphQLBaseTestCase(
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
-        from common.enums import SelahTeamEnum
         from notes.groups import CASEWORKER
         from teams.models import Team
+
+        from common.enums import SelahTeamEnum
 
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")

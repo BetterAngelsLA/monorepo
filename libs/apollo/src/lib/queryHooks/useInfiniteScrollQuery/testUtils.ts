@@ -7,8 +7,8 @@ import {
 } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { renderHook } from '@testing-library/react';
-import { vi } from 'vitest';
 import * as React from 'react';
+import { vi } from 'vitest';
 
 /**
  * Minimal useQuery result shape for mocking in tests.
@@ -46,7 +46,7 @@ export interface MockUseQueryResult<TData, TVars> {
  * `refetch` and `fetchMore` are Promise-based by default.
  */
 export function createUseQueryReturn<TData, TVars>(
-  partial: Partial<MockUseQueryResult<TData, TVars>>
+  partial: Partial<MockUseQueryResult<TData, TVars>>,
 ): MockUseQueryResult<TData, TVars> {
   const refetch =
     partial.refetch ?? vi.fn().mockResolvedValue({ data: partial.data });
@@ -95,7 +95,11 @@ export function createTestApolloClient() {
 export function renderHookWithApollo<T>(callback: () => T) {
   const client = createTestApolloClient();
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
-    React.createElement(ApolloProvider as any, { client }, children);
+    React.createElement(
+      ApolloProvider as unknown as React.ComponentType<Record<string, unknown>>,
+      { client },
+      children,
+    );
 
   return renderHook(callback, { wrapper: Wrapper });
 }

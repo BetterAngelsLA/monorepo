@@ -75,26 +75,8 @@ jobs:
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
-
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Build Monorepo Image for each commit using GitHub Actions cache
-      - name: 🏗️ Build Monorepo Docker image
-        uses: docker/build-push-action@v6
-        with:
-          file: Dockerfile
-          load: true
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: 🔑 Prep Container Permissions
-        run: |
-          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
-          sudo setfacl --modify user:1000:rw /var/run/docker.sock
-          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+          echo "CACHE_IMAGE=${{ env.ECR_REGISTRY }}/monorepo:buildcache" >> $GITHUB_ENV
+          echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -106,7 +88,33 @@ jobs:
       - name: 🐳 Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 🔄 Spin up monorepo environment
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build Monorepo Image with ECR layer caching
+      # - Pull from main cache (shared) + branch cache for incremental builds.
+      #   On main these are the same ref, which is harmless for cache imports.
+      # - Push to main cache on main pushes, branch cache otherwise.
+      - name: 🏗️ Build Monorepo Docker image
+        uses: docker/build-push-action@v7
+        with:
+          file: Dockerfile
+          load: true
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_IMAGE }}-main
+            type=registry,ref=${{ env.BRANCH_CACHE }}
+          cache-to: |
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('type=registry,ref={0}-main,mode=max', env.CACHE_IMAGE) || format('type=registry,ref={0},mode=max', env.BRANCH_CACHE) }}
+
+      - name: 🔑 Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+
+      - name:  Spin up monorepo environment
         run: |
           docker compose up -d
 

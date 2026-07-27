@@ -21,12 +21,15 @@ export function useInteractionPointFeatures(clientProfileId: string) {
     return interactions.map((i, index) =>
       toPointFeature({
         id: String(i.id),
+        // useGetClientInteractionsWithLocationHmis filters for location.point
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         latitude: i.location!.point[1],
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         longitude: i.location!.point[0],
         interactedAt: new Date(i.date),
         // mostRecent prop is dependent on interactions NotesQuery sort order
         mostRecent: index === 0,
-      })
+      }),
     );
   }, [interactions]);
 
