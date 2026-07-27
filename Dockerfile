@@ -157,7 +157,7 @@ COPY --chown=betterangels --parents \
   apps/betterangels-backend/pyproject.toml \
   /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
-    uv sync --no-install-project --dev
+    uv sync --no-install-project
 
 FROM base AS yarn
 COPY --chown=betterangels --parents \
