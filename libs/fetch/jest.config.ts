@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'fetch',
   preset: '../../jest.preset.js',
