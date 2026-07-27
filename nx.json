@@ -115,18 +115,6 @@
       }
     },
     {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
-      "include": [
-        "apps/betterangels/**/*",
-        "libs/expo/betterangels/**/*",
-        "libs/expo/shared/ui-components/**/*",
-        "libs/expo/shared/ui-components/**/*"
-      ]
-    },
-    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"
