@@ -3,10 +3,6 @@ services:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
       - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
-      # Named volumes preserve .venv & node_modules from the Docker image —
-      # the bind mount above hides them, these "punch through".
-      - venv:/workspace/.venv
-      - node_modules:/workspace/node_modules
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
     # Pass in GitHub Actions Envs into the container
