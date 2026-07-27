@@ -14,24 +14,11 @@ import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 
-vi.mock('react-router-dom', () => ({
-  ...require('react-router-dom'),
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => vi.fn(),
 }));
 vi.mock('@vis.gl/react-google-maps', () => ({ useMap: () => null }));
-vi.mock(
-  '@monorepo/react/icons',
-  () =>
-    new Proxy(
-      {},
-      {
-        get: (_t, p) =>
-          p === '__esModule'
-            ? true
-            : (props: Record<string, unknown>) => <span {...props} />,
-      }
-    )
-);
 
 const LONG_NAME = 'AbcdefghijNoSpacesHere'.repeat(20); // ~440 chars, no breaks
 

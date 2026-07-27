@@ -13,7 +13,9 @@ import type { FetchInterceptor } from '@monorepo/fetch';
 const mockAsyncStorage: Record<string, string> = {};
 
 vi.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: vi.fn((key: string) => Promise.resolve(mockAsyncStorage[key] ?? null)),
+  getItem: vi.fn((key: string) =>
+    Promise.resolve(mockAsyncStorage[key] ?? null),
+  ),
   setItem: vi.fn((key: string, value: string) => {
     mockAsyncStorage[key] = value;
     return Promise.resolve();
@@ -36,10 +38,18 @@ vi.mock('@monorepo/expo/shared/utils', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/clients', () => ({
-  bodyInterceptor: (async (_input: RequestInfo | URL, init: RequestInit, next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>) => {
+  bodyInterceptor: (async (
+    _input: RequestInfo | URL,
+    init: RequestInit,
+    next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>,
+  ) => {
     return next(_input, init);
   }) as FetchInterceptor,
-  includeCredentialsInterceptor: (async (_input: RequestInfo | URL, init: RequestInit, next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>) => {
+  includeCredentialsInterceptor: (async (
+    _input: RequestInfo | URL,
+    init: RequestInit,
+    next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>,
+  ) => {
     return next(_input, { ...init, credentials: 'include' });
   }) as FetchInterceptor,
 }));
@@ -70,8 +80,8 @@ describe('createExpoFetchClient', () => {
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'POST' });
 
-    const fetchMock = global.fetch as vi.Mock;
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
     const headers = new Headers(init.headers);
 
     expect(headers.get('X-Organization-ID')).toBe('org-expo');
@@ -81,8 +91,8 @@ describe('createExpoFetchClient', () => {
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'GET' });
 
-    const fetchMock = global.fetch as vi.Mock;
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
     const headers = new Headers(init.headers);
 
     expect(headers.get('X-Organization-ID')).toBeNull();
@@ -95,11 +105,13 @@ describe('createExpoFetchClient', () => {
       return next(_input, { ...init, headers });
     };
 
-    const fetchClient = createExpoFetchClient('https://api.example.com', [extraInterceptor]);
+    const fetchClient = createExpoFetchClient('https://api.example.com', [
+      extraInterceptor,
+    ]);
     await fetchClient('/graphql', { method: 'POST' });
 
-    const fetchMock = global.fetch as vi.Mock;
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+    const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
     const headers = new Headers(init.headers);
 
     expect(headers.get('X-Custom')).toBe('extra-value');

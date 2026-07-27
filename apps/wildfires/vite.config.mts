@@ -47,7 +47,12 @@ export default defineConfig(({ mode }) => {
     baseHrefPlugin(basePath),
   ],
 
-  resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
+  resolve: {
+    alias: [
+      { find: '@monorepo/react/icons', replacement: path.resolve(__dirname, 'src/__mocks__/react-icons.ts') },
+      ...monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
+    ],
+  },
 
   css: {
     postcss: {
@@ -71,6 +76,15 @@ export default defineConfig(({ mode }) => {
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
+    },
+  },
+
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    server: {
+      fs: { allow: [path.resolve(__dirname, '../..')] },
     },
   },
 };

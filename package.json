@@ -155,6 +155,7 @@
     "@nx/workspace": "23.1.0",
     "@nxlv/python": "22.1.1",
     "@playwright/test": "^1.36.0",
+    "@react-native/babel-preset": "0.86.0",
     "@react-native/jest-preset": "~0.85.0",
     "@storybook/addon-docs": "^10.1.1",
     "@storybook/addon-react-native-web": "^0.0.29",

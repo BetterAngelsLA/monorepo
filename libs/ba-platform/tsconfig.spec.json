@@ -5,7 +5,7 @@
     "composite": true,
     "declaration": true,
     "module": "commonjs",
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   },
   "include": [
     "src/**/*.test.ts",

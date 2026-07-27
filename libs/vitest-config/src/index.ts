@@ -5,6 +5,7 @@ export const baseVitestConfig = defineConfig({
     globals: true,
     environment: 'node' as const,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    passWithNoTests: true,
   },
 });
 export { monorepoTsconfigAliases } from './monorepo-aliases';

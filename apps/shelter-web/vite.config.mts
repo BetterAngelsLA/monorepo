@@ -53,7 +53,10 @@ export default defineConfig(({ mode }) => {
     ],
 
     resolve: {
-      alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
+      alias: [
+        { find: '@monorepo/react/icons', replacement: path.resolve(__dirname, 'src/__mocks__/react-icons.ts') },
+        ...monorepoTsconfigAliases(WORKSPACE_ROOT),
+      ],
     },
 
     css: {
@@ -73,6 +76,15 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: true,
       commonjsOptions: {
         transformMixedEsModules: true,
+      },
+    },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      server: {
+        fs: { strict: false },
       },
     },
   };
