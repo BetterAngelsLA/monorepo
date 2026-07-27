@@ -10,10 +10,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("hmis", "0004_hmisnote_services"),
-    ]
-
     dependencies = [
         ('common', '0001_initial'),
         ('hmis', '0001_initial'),
