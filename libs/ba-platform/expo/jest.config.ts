@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'ba-platform-expo',
   preset: '../../../jest.preset.js',
