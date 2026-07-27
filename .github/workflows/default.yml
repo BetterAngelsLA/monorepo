@@ -118,6 +118,12 @@ jobs:
         run: |
           docker compose up -d
 
+      - name: 🔧 Install Python dev dependencies
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          uv sync --dev
+          EOF
+
       - name: 🧹 Lint
         run: |
           docker compose run better-angels bash <<'EOF'
