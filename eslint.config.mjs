@@ -204,10 +204,13 @@ export default [
     rules: {
       'jsx-a11y/click-events-have-key-events': 'off',
       'jsx-a11y/interactive-supports-focus': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'jsx-a11y/no-noninteractive-element-interactions': 'off',
       '@eslint-react/no-use-context': 'off',
       '@eslint-react/no-context-provider': 'off',
       'react-hooks/set-state-in-effect': 'off',
       '@eslint-react/set-state-in-effect': 'off',
+      '@eslint-react/no-array-index-key': 'off',
     },
   },
 
