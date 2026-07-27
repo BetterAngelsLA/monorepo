@@ -46,11 +46,11 @@ export function Rooms({ shelterId }: { shelterId: string }) {
       : `Are you sure you want to delete the ${deleteConfirmation.roomIds.length} selected rooms?`;
 
   const handleClone = useCallback(
-    async (room: Room) => {
+    async (roomId: string) => {
       const errorMessage = 'Unable to clone room. Please try again.';
 
       try {
-        const response = await cloneRoom({ variables: { id: room.id } });
+        const response = await cloneRoom({ variables: { id: roomId } });
 
         const fieldErrors = getFieldErrorsOrThrow({
           response,
@@ -74,8 +74,8 @@ export function Rooms({ shelterId }: { shelterId: string }) {
   );
 
   const handleEdit = useCallback(
-    (room: Room) => {
-      navigate(shelterEditResourceRoute(shelterId, 'room', room.id));
+    (roomId: string) => {
+      navigate(shelterEditResourceRoute(shelterId, 'room', roomId));
     },
     [navigate, shelterId],
   );
@@ -116,9 +116,9 @@ export function Rooms({ shelterId }: { shelterId: string }) {
   );
 
   const handleReserve = useCallback(
-    (room: Room) => {
+    (roomId: string) => {
       navigate(shelterCreateResourceRoute(shelterId, 'reservation'), {
-        state: { roomId: room.id },
+        state: { roomId },
       });
     },
     [navigate, shelterId],

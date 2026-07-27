@@ -31,10 +31,10 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onEdit?: (room: Room) => void;
-  onClone?: (room: Room) => void;
+  onEdit?: (roomId: string) => void;
+  onClone?: (roomId: string) => void;
   onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
-  onReserve?: (room: Room) => void;
+  onReserve?: (roomId: string) => void;
 };
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
@@ -122,7 +122,7 @@ export function RoomTable({
               className="text-[#747A82]"
               aria-label="Reserve room"
               leftIcon={<BookCheck size={22} stroke="black" />}
-              onClick={() => onReserve(room)}
+              onClick={() => onReserve(room.id)}
             />
           )}
           <Button
@@ -131,13 +131,13 @@ export function RoomTable({
             className="text-[#747A82]"
             aria-label="Clone room"
             leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone?.(room)}
+            onClick={() => onClone?.(room.id)}
           />
           <Button
             type="button"
             variant="edit"
             className="text-[#747A82]"
-            onClick={() => onEdit?.(room)}
+            onClick={() => onEdit?.(room.id)}
           />
           <Button
             type="button"
