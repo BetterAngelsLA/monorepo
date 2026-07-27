@@ -3,7 +3,6 @@
 // NOT from this file directly.
 export * from './apollo';
 export * from './branded-types';
-export * from './codegen-scalars';
 export * from './constants';
 export * from './errors';
 export * from './interceptors';
