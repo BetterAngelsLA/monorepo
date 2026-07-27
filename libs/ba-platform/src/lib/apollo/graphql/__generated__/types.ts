@@ -844,6 +844,24 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type DailyBedStatusMetricsType = {
+  __typename?: 'DailyBedStatusMetricsType';
+  available: Scalars['Int']['output'];
+  date: Scalars['Date']['output'];
+  inTurnaround: Scalars['Int']['output'];
+  occupied: Scalars['Int']['output'];
+  outOfService: Scalars['Int']['output'];
+  reserved: Scalars['Int']['output'];
+};
+
+export type DailyOccupancyMetricsType = {
+  __typename?: 'DailyOccupancyMetricsType';
+  date: Scalars['Date']['output'];
+  occupancyPct: Scalars['Float']['output'];
+  occupiedCount: Scalars['Int']['output'];
+  totalBeds: Scalars['Int']['output'];
+};
+
 export type DateCountType = {
   __typename?: 'DateCountType';
   count: Scalars['Int']['output'];
@@ -2539,6 +2557,7 @@ export type Query = {
   shelter: ShelterType;
   shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
+  shelterOccupancyMetrics: ShelterOccupancyMetricsType;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
@@ -2769,6 +2788,13 @@ export type QueryShelterCitiesArgs = {
 };
 
 
+export type QueryShelterOccupancyMetricsArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  shelterId: Scalars['ID']['input'];
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
 export type QueryShelterServiceCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2947,6 +2973,14 @@ export type ReservationFilter = {
   roomId?: InputMaybe<Scalars['ID']['input']>;
   shelterId?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Array<ReservationStatusChoices>>;
+};
+
+export type ReservationMetricsType = {
+  __typename?: 'ReservationMetricsType';
+  cancelled: Scalars['Int']['output'];
+  checkInOverdue: Scalars['Int']['output'];
+  checkInOverdueToCheckedIn: Scalars['Int']['output'];
+  checkedIn: Scalars['Int']['output'];
 };
 
 export type ReservationOrder = {
@@ -3302,6 +3336,17 @@ export type ShelterLocationType = {
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
   place: Scalars['String']['output'];
+};
+
+export type ShelterOccupancyMetricsType = {
+  __typename?: 'ShelterOccupancyMetricsType';
+  avgDaysToOccupancy?: Maybe<Scalars['Float']['output']>;
+  dailyBedStatus: Array<DailyBedStatusMetricsType>;
+  dailyOccupancy: Array<DailyOccupancyMetricsType>;
+  endDate: Scalars['Date']['output'];
+  reservationMetrics: ReservationMetricsType;
+  shelterId: Scalars['ID']['output'];
+  startDate: Scalars['Date']['output'];
 };
 
 export type ShelterOrder = {
