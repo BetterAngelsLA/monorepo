@@ -62,11 +62,11 @@ export function Beds({ shelterId }: { shelterId: string }) {
       : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
 
   const handleClone = useCallback(
-    async (bed: Bed) => {
+    async (bedId: string) => {
       const errorMessage = 'Unable to clone bed. Please try again.';
 
       try {
-        const response = await cloneBed({ variables: { id: bed.id } });
+        const response = await cloneBed({ variables: { id: bedId } });
 
         const fieldErrors = getFieldErrorsOrThrow({
           response,
@@ -90,8 +90,8 @@ export function Beds({ shelterId }: { shelterId: string }) {
   );
 
   const handleEdit = useCallback(
-    (bed: Bed) => {
-      navigate(shelterEditResourceRoute(shelterId, 'bed', bed.id));
+    (bedId: string) => {
+      navigate(shelterEditResourceRoute(shelterId, 'bed', bedId));
     },
     [navigate, shelterId],
   );
@@ -130,13 +130,13 @@ export function Beds({ shelterId }: { shelterId: string }) {
   );
 
   const handleMarkReady = useCallback(
-    async (bed: Bed) => {
+    async (bedId: string) => {
       const errorMessage = 'Unable to update bed. Please try again.';
 
       try {
         const response = await updateBed({
           variables: {
-            id: bed.id,
+            id: bedId,
             data: { lastCleaned: new Date().toISOString() },
           },
         });
@@ -164,15 +164,15 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
     isOpen: boolean;
-    bed: Bed | null;
-  }>({ isOpen: false, bed: null });
+    bedId: string | null;
+  }>({ isOpen: false, bedId: null });
 
   const closeReadyConfirmation = useCallback(() => {
-    setReadyConfirmation({ isOpen: false, bed: null });
+    setReadyConfirmation({ isOpen: false, bedId: null });
   }, []);
 
-  const handleMarkReadyRequest = useCallback((bed: Bed) => {
-    setReadyConfirmation({ isOpen: true, bed });
+  const handleMarkReadyRequest = useCallback((bedId: string) => {
+    setReadyConfirmation({ isOpen: true, bedId });
   }, []);
 
   const handleReserve = useCallback(
@@ -185,7 +185,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
     },
     [navigate, shelterId],
   );
-  const readyBed = readyConfirmation.bed;
+  const readyBed = readyConfirmation.bedId;
 
   return (
     <>

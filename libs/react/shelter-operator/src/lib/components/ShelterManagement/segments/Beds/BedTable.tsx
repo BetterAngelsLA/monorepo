@@ -21,10 +21,10 @@ type BedTableProps = {
   beds: Bed[];
   getRowKey?: (bed: Bed, index: number) => string;
   onRowClick?: (bed: Bed, rowIndex: number) => void;
-  onClone?: (bed: Bed) => void;
-  onEdit?: (bed: Bed) => void;
+  onClone?: (bedId: string) => void;
+  onEdit?: (bedId: string) => void;
   onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (bed: Bed) => void;
+  onMarkReady?: (bedId: string) => void;
   onReserve?: (bed: Bed) => void;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -146,7 +146,7 @@ export function BedTable({
               type="button"
               variant="confirm"
               aria-label="Mark ready"
-              onClick={() => onMarkReady(bed)}
+              onClick={() => onMarkReady(bed.id)}
             />
           )}
           {onReserve && (
@@ -170,7 +170,7 @@ export function BedTable({
               variant="edit"
               aria-label="Clone bed"
               leftIcon={<CopyPlus size={22} stroke="black" />}
-              onClick={() => onClone(bed)}
+              onClick={() => onClone(bed.id)}
             />
           )}
           {onEdit && (
@@ -178,7 +178,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Edit bed"
-              onClick={() => onEdit(bed)}
+              onClick={() => onEdit(bed.id)}
             />
           )}
           {onDeleteBeds && (
