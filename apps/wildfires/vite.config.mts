@@ -27,11 +27,7 @@ export default defineConfig(({ mode }) => {
     host: 'localhost',
     fs: {
       allow: [
-        // TODO: confirm if this configuration is needed.
-        // Did not need this with shelter-web
-        path.resolve(__dirname, '../../libs/assets/src'), // Allow assets from libs
-        path.resolve(__dirname, 'src'), // Allow app source directory (relative to the app folder)
-        path.resolve(__dirname, '../../apps/wildfires/src'), // Ensure this allows
+        path.resolve(__dirname, '../..'), // Allow entire workspace for SVG imports
       ],
     },
   },
@@ -45,13 +41,20 @@ export default defineConfig(({ mode }) => {
     react(),
     rawSvgPlugin(),
     baseHrefPlugin(basePath),
+    {
+      name: 'vitest-svg-resolver',
+      enforce: 'pre',
+      resolveId(id: string) {
+        if (id.endsWith('.svg')) {
+          return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+        }
+        return null;
+      },
+    },
   ],
 
   resolve: {
-    alias: [
-      { find: '@monorepo/react/icons', replacement: path.resolve(__dirname, 'src/__mocks__/react-icons.ts') },
-      ...monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
-    ],
+    alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
   },
 
   css: {
@@ -83,9 +86,6 @@ export default defineConfig(({ mode }) => {
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    server: {
-      fs: { allow: [path.resolve(__dirname, '../..')] },
-    },
   },
 };
 });

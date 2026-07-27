@@ -50,13 +50,26 @@ export default defineConfig(({ mode }) => {
       react(),
       rawSvgPlugin(),
       baseHrefPlugin(basePath),
+      {
+        name: 'vitest-svg-resolver',
+        enforce: 'pre',
+        resolveId(id) {
+          // Capture any SVG import (including cross-package) before
+          // vite:import-analysis runs and triggers a Denied ID error.
+          if (id.endsWith('.svg')) {
+            return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+          }
+          return null;
+        },
+      },
     ],
 
     resolve: {
-      alias: [
-        { find: '@monorepo/react/icons', replacement: path.resolve(__dirname, 'src/__mocks__/react-icons.ts') },
-        ...monorepoTsconfigAliases(WORKSPACE_ROOT),
-      ],
+      alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
+    },
+
+    server: {
+      fs: { allow: [WORKSPACE_ROOT] },
     },
 
     css: {
@@ -84,7 +97,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
       server: {
-        fs: { strict: false },
+        fs: { allow: [WORKSPACE_ROOT] },
       },
     },
   };
