@@ -68,10 +68,6 @@ export default defineConfig(({ mode }) => {
       alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
     },
 
-    server: {
-      fs: { allow: [WORKSPACE_ROOT] },
-    },
-
     css: {
       postcss: {
         plugins: [

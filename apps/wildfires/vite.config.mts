@@ -25,11 +25,6 @@ export default defineConfig(({ mode }) => {
   server: {
     port: SERVER_PORT,
     host: 'localhost',
-    fs: {
-      allow: [
-        path.resolve(__dirname, '../..'), // Allow entire workspace for SVG imports
-      ],
-    },
   },
 
   preview: {
