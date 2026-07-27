@@ -30,7 +30,7 @@ export default function SliderTabs({
     const updateSlider = () => {
       const activeIndex = Math.max(
         0,
-        items.findIndex((item) => item.pathSuffix === activePathSuffix)
+        items.findIndex((item) => item.pathSuffix === activePathSuffix),
       );
       const activeTab = tabRefs.current[activeIndex];
 
@@ -79,7 +79,7 @@ export default function SliderTabs({
                     'border border-neutral-90 rounded-t-lg -mr-px',
                     isActive
                       ? 'text-[#008CEE] bg-white border-b-white border-t-2 border-t-[#008CEE] -mb-px'
-                      : 'text-[#6B7280] hover:text-[#4B5563] bg-neutral-97',
+                      : 'text-[#6B7280] hover:text-[#4B5563] bg-neutral-99',
                   ])}
                 >
                   <Text variant="subheading-regular" textColor="text-inherit">

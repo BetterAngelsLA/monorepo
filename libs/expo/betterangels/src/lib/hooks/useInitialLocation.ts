@@ -15,7 +15,7 @@ const INITIAL_LOCATION = {
 export function useInitialLocation(
   editing: boolean | undefined,
   location: LocationDraft | undefined,
-  setValue?: (name: 'location', value: LocationDraft) => void
+  setValue?: (name: 'location', value: LocationDraft) => void,
 ) {
   const places = useGooglePlaces();
   const [userLocation, setUserLocation] = useState<LocationObject | null>(null);
@@ -80,7 +80,7 @@ export function useInitialLocation(
         } else {
           const geocodeResult = await places.reverseGeocode(
             INITIAL_LOCATION.latitude,
-            INITIAL_LOCATION.longitude
+            INITIAL_LOCATION.longitude,
           );
           setValueRef.current?.('location', {
             ...locationRef.current,
@@ -97,7 +97,7 @@ export function useInitialLocation(
     };
 
     void autoSetInitialLocation();
-  }, [places]);
+  }, [places, defaultLocation]);
 
   return [userLocation];
 }

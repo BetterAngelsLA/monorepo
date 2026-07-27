@@ -16,20 +16,22 @@ type TProps = { client?: HmisClientProfileType };
 export function ClientInteractionsViewHmis(props: TProps) {
   const { client } = props;
 
+  const clientId = client?.id;
+
   const renderItemFn = useCallback(
     (item: HmisNoteType) => (
       <NoteCardHmis
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
-            params: { clientId: client?.id },
+            params: { clientId },
           });
         }}
         variant="clientProfile"
         hmisNote={item}
       />
     ),
-    []
+    [clientId],
   );
 
   const renderHeader = useCallback(
@@ -55,7 +57,7 @@ export function ClientInteractionsViewHmis(props: TProps) {
             accessibilityLabel="create an interaction"
             accessibilityHint="create new interaction"
             onPress={() => {
-              router.navigate(`/notes-hmis/create?clientId=${client!.id}`);
+              router.navigate(`/notes-hmis/create?clientId=${clientId}`);
             }}
           >
             <PlusIcon />
@@ -63,7 +65,7 @@ export function ClientInteractionsViewHmis(props: TProps) {
         </View>
       );
     },
-    [client!.id]
+    [clientId],
   );
 
   if (!client) {

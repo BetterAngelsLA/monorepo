@@ -55,7 +55,7 @@ export function useClientContactForm(props: TProps) {
     setValue('phoneNumber', phoneNumber);
     setValue('mailingAddress', mailingAddress);
     setValue('relationshipToClient', relationshipToClient);
-  }, [clientProfile, relationId, setValue, toFormState]);
+  }, [clientProfile, relationId, setValue]);
 
   const [email, phoneNumber, mailingAddress, relationshipToClient] = useWatch({
     control,
@@ -108,7 +108,7 @@ export function useClientContactForm(props: TProps) {
       const errorsApplied = applyValidationErrors(
         response,
         mutationKey,
-        setError
+        setError,
       );
 
       if (errorsApplied) {
@@ -125,7 +125,7 @@ export function useClientContactForm(props: TProps) {
         getViewClientProfileRoute({
           id: clientProfileId,
           openCard: ClientProfileSectionEnum.RelevantContacts,
-        })
+        }),
       );
 
       return true;
@@ -161,7 +161,7 @@ export function useClientContactForm(props: TProps) {
 function isSuccessMutationResponse(
   response: ApolloClient.MutateResult<
     UpdateClientContactMutation | CreateClientContactMutation
-  >
+  >,
 ): boolean {
   const responseData = response.data;
 
@@ -195,7 +195,7 @@ function applyValidationErrors(
     CreateClientContactMutation | UpdateClientContactMutation
   >,
   key: 'updateClientContact' | 'createClientContact',
-  setError: UseFormSetError<TClientContactFormState>
+  setError: UseFormSetError<TClientContactFormState>,
 ): boolean {
   let hasErrors = false;
 

@@ -8,16 +8,12 @@ import {
   mapReservationToFormData,
 } from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
 import { useReservation } from '../../hooks/useReservation';
-import {
-  shelterManageBedsRoute,
-  shelterManageReservationsRoute,
-  shelterManageRoomsRoute,
-} from '../../routing';
+import { shelterMgmtResourceRoute } from '../../routing';
 
 export function ReservationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { shelterId, reservationId } = useParams();
+  const { shelterId, id: reservationId } = useParams();
   const { reservation, loading, error } = useReservation(reservationId ?? '');
 
   const rawState = location.state as Record<string, unknown> | null | undefined;
@@ -29,18 +25,18 @@ export function ReservationFormPage() {
   const { backLinkPath, backLinkLabel } = useMemo(() => {
     if (bedId) {
       return {
-        backLinkPath: shelterManageBedsRoute(shelterId ?? ''),
+        backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'bed'),
         backLinkLabel: 'Back to Beds',
       };
     }
     if (roomId) {
       return {
-        backLinkPath: shelterManageRoomsRoute(shelterId ?? ''),
+        backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'room'),
         backLinkLabel: 'Back to Rooms',
       };
     }
     return {
-      backLinkPath: shelterManageReservationsRoute(shelterId ?? ''),
+      backLinkPath: shelterMgmtResourceRoute(shelterId ?? '', 'reservation'),
       backLinkLabel: 'Back to Reservations',
     };
   }, [bedId, roomId, shelterId]);

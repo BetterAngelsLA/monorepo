@@ -1,10 +1,12 @@
-import { EmailBtn } from '@monorepo/expo/shared/ui-components';
+import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
+import { getAddressActions, getEmailActions } from './contactActions';
+import { ContactInfoRow } from './ContactInfoRow';
 import { PhoneNumberRows } from './PhoneNumberRows';
 import { PreferredCommunicationRow } from './PreferredCommunicationRow';
 import { SocialMediaRows } from './SocialMediaRows';
@@ -15,6 +17,7 @@ type TProps = {
 
 export default function ContactInfoCard(props: TProps) {
   const { clientProfile } = props;
+  const { showSnackbar } = useSnackbar();
 
   const {
     email,
@@ -28,11 +31,33 @@ export default function ContactInfoCard(props: TProps) {
   const content: TClientProfileCardItem[] = [
     {
       header: ['Residence Address'],
-      rows: [[residenceAddress]],
+      rows: [
+        [
+          residenceAddress ? (
+            <ContactInfoRow
+              menuTitle="Address"
+              triggerAccessibilityLabel="Residence address actions"
+              value={residenceAddress}
+              actions={getAddressActions(residenceAddress, { showSnackbar })}
+            />
+          ) : null,
+        ],
+      ],
     },
     {
       header: ['Personal Mailing Address'],
-      rows: [[mailingAddress]],
+      rows: [
+        [
+          mailingAddress ? (
+            <ContactInfoRow
+              menuTitle="Address"
+              triggerAccessibilityLabel="Personal mailing address actions"
+              value={mailingAddress}
+              actions={getAddressActions(mailingAddress, { showSnackbar })}
+            />
+          ) : null,
+        ],
+      ],
     },
     {
       header: ['Phone Number(s)'],
@@ -40,7 +65,18 @@ export default function ContactInfoCard(props: TProps) {
     },
     {
       header: ['Email Address'],
-      rows: [[email ? <EmailBtn text={email} /> : null]],
+      rows: [
+        [
+          email ? (
+            <ContactInfoRow
+              menuTitle="Email address"
+              triggerAccessibilityLabel="Email address actions"
+              value={email}
+              actions={getEmailActions(email, { showSnackbar })}
+            />
+          ) : null,
+        ],
+      ],
     },
     {
       header: ['Social Media'],

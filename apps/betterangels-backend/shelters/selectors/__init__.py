@@ -18,4 +18,5 @@ from shelters.selectors.reports import (
     daily_occupancy,
     report_bed_status_counts,
     reservation_status_change_counts,
+    shelter_occupancy_metrics,
 )

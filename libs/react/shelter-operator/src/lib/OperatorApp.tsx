@@ -1,7 +1,7 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { useUser } from '@monorepo/react/shelter';
 import { localStorageAdapter } from '@monorepo/react/shared';
+import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
@@ -24,10 +24,10 @@ import {
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
 import {
-  manageSegments,
+  mgmtRouteConfig,
   paths,
+  profileRouteConfig,
   routePath,
-  shelterProfileSegments,
 } from './routing';
 
 export function OperatorApp() {
@@ -56,77 +56,82 @@ export function OperatorApp() {
               path={routePath(paths.shelterCreate)}
               element={<CreateShelterProfile />}
             />
-            <Route path={routePath(paths.shelterProfile)}>
+            <Route path={routePath(profileRouteConfig.root)}>
               <Route
                 index
-                element={<Navigate to={shelterProfileSegments.basic} replace />}
+                element={
+                  <Navigate to={profileRouteConfig.children.basic} replace />
+                }
               />
               <Route
-                path={shelterProfileSegments.basic}
+                path={profileRouteConfig.children.basic}
                 element={<ShelterBasicInfoPage />}
               />
               <Route
-                path={shelterProfileSegments.operatingHours}
+                path={profileRouteConfig.children.operatingHours}
                 element={<ShelterOperatingHoursPage />}
               />
               <Route
-                path={shelterProfileSegments.policies}
+                path={profileRouteConfig.children.policies}
                 element={<ShelterPoliciesPage />}
               />
               <Route
-                path={shelterProfileSegments.details}
+                path={profileRouteConfig.children.details}
                 element={<ShelterDetailsPage />}
               />
               <Route
-                path={shelterProfileSegments.services}
+                path={profileRouteConfig.children.services}
                 element={<ShelterServicesPage />}
               />
               <Route
-                path={shelterProfileSegments.ecosystem}
+                path={profileRouteConfig.children.ecosystem}
                 element={<ShelterEcosystemPage />}
               />
               <Route
-                path={shelterProfileSegments.media}
+                path={profileRouteConfig.children.media}
                 element={<ShelterMediaPage />}
               />
             </Route>
-            <Route path={routePath(paths.shelterManage)}>
+            <Route path={routePath(mgmtRouteConfig.root)}>
               <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
-                path={manageSegments.roomsCreate}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={manageSegments.roomsEdit}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
                 element={<EditRoomPage />}
               />
               <Route
-                path={manageSegments.rooms}
+                path={mgmtRouteConfig.children.rooms}
                 element={<ShelterDashboardPage tab="rooms" />}
               />
               <Route
-                path={manageSegments.bedsCreate}
+                path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
                 element={<EditBedPage />}
               />
-              <Route path={manageSegments.bedsEdit} element={<EditBedPage />} />
               <Route
-                path={manageSegments.beds}
+                path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
+                element={<EditBedPage />}
+              />
+              <Route
+                path={mgmtRouteConfig.children.beds}
                 element={<ShelterDashboardPage tab="beds" />}
               />
               <Route
-                path={manageSegments.reservationsCreate}
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={manageSegments.reservationsEdit}
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
                 element={<ReservationFormPage />}
               />
               <Route
-                path={manageSegments.occupants}
+                path={mgmtRouteConfig.children.occupants}
                 element={<ShelterDashboardPage tab="occupants" />}
               />
               <Route
-                path={manageSegments.reservations}
+                path={mgmtRouteConfig.children.reservations}
                 element={<ShelterDashboardPage tab="reservations" />}
               />
             </Route>

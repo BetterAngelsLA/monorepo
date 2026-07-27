@@ -79,6 +79,7 @@ export function FilterClientOptions(props: TProps) {
 
   return (
     <Filters.Screen onDone={handleDone} onClear={() => setLocalSelected([])}>
+      {/* eslint-disable-next-line react/jsx-pascal-case */}
       <MultiSelect_V2<TFilterOption>
         infinite
         options={options}

@@ -4,11 +4,11 @@ import { getTypeFieldPolicyFromCache } from './getTypeFieldPolicyFromCache';
 
 export function getQueryPolicyConfigFromCache(
   cache: ApolloCache,
-  fieldName: string
+  fieldName: string,
 ): QueryPolicyConfig | undefined {
   const fieldPolicy = getTypeFieldPolicyFromCache(cache, 'Query', fieldName);
 
-  return (fieldPolicy as any)?.__queryPolicyConfig as
+  return (fieldPolicy as Record<string, unknown>)?.['__queryPolicyConfig'] as
     | QueryPolicyConfig
     | undefined;
 }
