@@ -1,6 +1,6 @@
 export {
   RoomForm,
-  toFormData,
+  toFormData as toRoomFormData,
   type RoomFormData,
   type RoomFormProps,
 } from './RoomForm';

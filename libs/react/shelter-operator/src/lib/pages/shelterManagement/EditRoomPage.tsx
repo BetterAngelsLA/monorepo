@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   RoomForm,
-  toFormData,
-} from '../../components/ShelterManagement/segments/Rooms';
+  toRoomFormData as toFormData,
+} from '../../components/ShelterManagement';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { useRoom } from '../../hooks/useRoom';
+import { useRoom } from '../../hooks';
 import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditRoomPage() {

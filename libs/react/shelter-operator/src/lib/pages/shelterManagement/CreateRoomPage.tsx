@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { RoomForm } from '../../components/ShelterManagement/segments/Rooms';
+import { RoomForm } from '../../components/ShelterManagement';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { shelterMgmtResourceRoute } from '../../routing';
 
