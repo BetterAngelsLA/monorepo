@@ -1,7 +1,3 @@
-/**
-
- */
-
 /* eslint-disable import/first */
 
 // jsdom does not provide the ``Response`` global (it is a Node built-in).

@@ -1,6 +1,3 @@
-/**
- */
-
 import { toNoteFilterHmis } from './toNoteFilterHmis';
 
 describe('toNoteFilterHmis', () => {
