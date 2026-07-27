@@ -12,20 +12,20 @@ import type { FetchInterceptor } from '@monorepo/fetch';
 
 const mockAsyncStorage: Record<string, string> = {};
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage[key] ?? null)),
-  setItem: jest.fn((key: string, value: string) => {
+vi.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: vi.fn((key: string) => Promise.resolve(mockAsyncStorage[key] ?? null)),
+  setItem: vi.fn((key: string, value: string) => {
     mockAsyncStorage[key] = value;
     return Promise.resolve();
   }),
 }));
 
-jest.mock('@preeternal/react-native-cookie-manager', () => ({
-  get: jest.fn(() => Promise.resolve({ csrftoken: { value: 'csrf-native' } })),
-  setFromResponse: jest.fn(() => Promise.resolve()),
+vi.mock('@preeternal/react-native-cookie-manager', () => ({
+  get: vi.fn(() => Promise.resolve({ csrftoken: { value: 'csrf-native' } })),
+  setFromResponse: vi.fn(() => Promise.resolve()),
 }));
 
-jest.mock('@monorepo/expo/shared/utils', () => ({
+vi.mock('@monorepo/expo/shared/utils', () => ({
   asyncStorageAdapter: {
     getItem: (key: string) => Promise.resolve(mockAsyncStorage[key] ?? null),
     setItem: (key: string, value: string) => {
@@ -35,7 +35,7 @@ jest.mock('@monorepo/expo/shared/utils', () => ({
   },
 }));
 
-jest.mock('@monorepo/expo/shared/clients', () => ({
+vi.mock('@monorepo/expo/shared/clients', () => ({
   bodyInterceptor: (async (_input: RequestInfo | URL, init: RequestInit, next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>) => {
     return next(_input, init);
   }) as FetchInterceptor,
@@ -55,7 +55,7 @@ describe('createExpoFetchClient', () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue(new Response());
+    global.fetch = vi.fn().mockResolvedValue(new Response());
     // Clear mock storage
     Object.keys(mockAsyncStorage).forEach((k) => delete mockAsyncStorage[k]);
   });
@@ -70,7 +70,7 @@ describe('createExpoFetchClient', () => {
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'POST' });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 
@@ -81,7 +81,7 @@ describe('createExpoFetchClient', () => {
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'GET' });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 
@@ -98,7 +98,7 @@ describe('createExpoFetchClient', () => {
     const fetchClient = createExpoFetchClient('https://api.example.com', [extraInterceptor]);
     await fetchClient('/graphql', { method: 'POST' });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 

@@ -5,9 +5,9 @@ import { createCsrfInterceptor, createOrgInterceptor } from './fetchInterceptors
 
 describe('createCsrfInterceptor', () => {
   it('injects CSRF header when token is available', async () => {
-    const read = jest.fn().mockResolvedValue('tok');
-    const refresh = jest.fn();
-    const next = jest.fn().mockResolvedValue(new Response());
+    const read = vi.fn().mockResolvedValue('tok');
+    const refresh = vi.fn();
+    const next = vi.fn().mockResolvedValue(new Response());
 
     const interceptor = createCsrfInterceptor(read, refresh, 'csrftoken', 'x-csrftoken');
     await interceptor('/api', {}, next);
@@ -18,11 +18,11 @@ describe('createCsrfInterceptor', () => {
   });
 
   it('refreshes token when missing, then injects', async () => {
-    const read = jest.fn()
+    const read = vi.fn()
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce('fresh');
-    const refresh = jest.fn().mockResolvedValue(undefined);
-    const next = jest.fn().mockResolvedValue(new Response());
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const next = vi.fn().mockResolvedValue(new Response());
 
     const interceptor = createCsrfInterceptor(read, refresh, 'csrftoken', 'x-csrf');
     await interceptor('/api', {}, next);
@@ -33,9 +33,9 @@ describe('createCsrfInterceptor', () => {
   });
 
   it('omits header when token is null and refresh fails', async () => {
-    const read = jest.fn().mockResolvedValue(null);
-    const refresh = jest.fn().mockRejectedValue(new Error('offline'));
-    const next = jest.fn().mockResolvedValue(new Response());
+    const read = vi.fn().mockResolvedValue(null);
+    const refresh = vi.fn().mockRejectedValue(new Error('offline'));
+    const next = vi.fn().mockResolvedValue(new Response());
 
     const interceptor = createCsrfInterceptor(read, refresh, 'csrftoken', 'x-csrf');
     await expect(interceptor('/api', {}, next)).rejects.toThrow('offline');
@@ -43,11 +43,11 @@ describe('createCsrfInterceptor', () => {
 
   describe('CSRF refresh URL derivation', () => {
     it('uses absolute URL with API origin for cross-origin requests (string)', async () => {
-      const read = jest.fn()
+      const read = vi.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('fresh');
-      const refresh = jest.fn().mockResolvedValue(undefined);
-      const next = jest.fn().mockResolvedValue(new Response());
+      const refresh = vi.fn().mockResolvedValue(undefined);
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(read, refresh);
       await interceptor('https://api.dev.example.com/graphql', {}, next);
@@ -59,11 +59,11 @@ describe('createCsrfInterceptor', () => {
     });
 
     it('uses relative path for same-origin requests (local dev)', async () => {
-      const read = jest.fn()
+      const read = vi.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('fresh');
-      const refresh = jest.fn().mockResolvedValue(undefined);
-      const next = jest.fn().mockResolvedValue(new Response());
+      const refresh = vi.fn().mockResolvedValue(undefined);
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(read, refresh);
       await interceptor('/graphql', {}, next);
@@ -72,11 +72,11 @@ describe('createCsrfInterceptor', () => {
     });
 
     it('derives origin from a URL object', async () => {
-      const read = jest.fn()
+      const read = vi.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('fresh');
-      const refresh = jest.fn().mockResolvedValue(undefined);
-      const next = jest.fn().mockResolvedValue(new Response());
+      const refresh = vi.fn().mockResolvedValue(undefined);
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(read, refresh);
       await interceptor(new URL('https://api.example.com/graphql'), {}, next);
@@ -87,11 +87,11 @@ describe('createCsrfInterceptor', () => {
     });
 
     it('derives origin from a Request object', async () => {
-      const read = jest.fn()
+      const read = vi.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('fresh');
-      const refresh = jest.fn().mockResolvedValue(undefined);
-      const next = jest.fn().mockResolvedValue(new Response());
+      const refresh = vi.fn().mockResolvedValue(undefined);
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(read, refresh);
       await interceptor(new Request('https://api.example.com/graphql'), {}, next);
@@ -102,11 +102,11 @@ describe('createCsrfInterceptor', () => {
     });
 
     it('respects custom loginPath', async () => {
-      const read = jest.fn()
+      const read = vi.fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('fresh');
-      const refresh = jest.fn().mockResolvedValue(undefined);
-      const next = jest.fn().mockResolvedValue(new Response());
+      const refresh = vi.fn().mockResolvedValue(undefined);
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(
         read, refresh, 'csrftoken', 'x-csrftoken', '/custom/login/'
@@ -119,9 +119,9 @@ describe('createCsrfInterceptor', () => {
     });
 
     it('skips refresh when token is already present', async () => {
-      const read = jest.fn().mockResolvedValue('existing');
-      const refresh = jest.fn();
-      const next = jest.fn().mockResolvedValue(new Response());
+      const read = vi.fn().mockResolvedValue('existing');
+      const refresh = vi.fn();
+      const next = vi.fn().mockResolvedValue(new Response());
 
       const interceptor = createCsrfInterceptor(read, refresh);
       await interceptor('https://api.example.com/graphql', {}, next);
@@ -134,8 +134,8 @@ describe('createCsrfInterceptor', () => {
 
 describe('createOrgInterceptor', () => {
   it('injects Org header when stored', async () => {
-    const storage = { getItem: jest.fn().mockResolvedValue('org-1') };
-    const next = jest.fn().mockResolvedValue(new Response());
+    const storage = { getItem: vi.fn().mockResolvedValue('org-1') };
+    const next = vi.fn().mockResolvedValue(new Response());
 
     const interceptor = createOrgInterceptor(storage, 'org_key');
     await interceptor('/api', {}, next);
@@ -145,8 +145,8 @@ describe('createOrgInterceptor', () => {
   });
 
   it('passes through when no org stored', async () => {
-    const storage = { getItem: jest.fn().mockResolvedValue(null) };
-    const next = jest.fn().mockResolvedValue(new Response());
+    const storage = { getItem: vi.fn().mockResolvedValue(null) };
+    const next = vi.fn().mockResolvedValue(new Response());
 
     const interceptor = createOrgInterceptor(storage, 'org_key');
     await interceptor('/api', { headers: { Authorization: 'Bearer x' } }, next);

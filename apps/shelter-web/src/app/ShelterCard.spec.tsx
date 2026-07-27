@@ -14,12 +14,12 @@ import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
+vi.mock('react-router-dom', () => ({
+  ...require('react-router-dom'),
+  useNavigate: () => vi.fn(),
 }));
-jest.mock('@vis.gl/react-google-maps', () => ({ useMap: () => null }));
-jest.mock(
+vi.mock('@vis.gl/react-google-maps', () => ({ useMap: () => null }));
+vi.mock(
   '@monorepo/react/icons',
   () =>
     new Proxy(

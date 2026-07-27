@@ -3,7 +3,7 @@ import { Select } from './Select';
 
 describe('Select Component', () => {
   const mockData = ['Option 1', 'Option 2', 'Option 3'];
-  const mockSetExternalValue = jest.fn();
+  const mockSetExternalValue = vi.fn();
 
   it('renders correctly with placeholder', () => {
     const { getByText } = render(

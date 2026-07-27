@@ -6,7 +6,7 @@ import { toNoteFilter } from './toNoteFilter';
 
 describe('toNoteFilter', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns {} when called with an empty object', () => {
