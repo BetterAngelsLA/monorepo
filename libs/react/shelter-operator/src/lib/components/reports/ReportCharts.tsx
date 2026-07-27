@@ -1,43 +1,65 @@
+import { format, parseISO } from 'date-fns';
+import type {
+  DailyBedStatusMetrics,
+  DailyOccupancyMetrics,
+} from '../../hooks/useShelterOccupancyMetrics';
 import { BarChart, type ViewMode } from '../BarChart/BarChart';
 
-/**
- * Mirrors the backend DailyBedStatusMetricsType. Replace with the generated
- * GraphQL type once the reporting query is wired up.
- */
-export type DailyBedStatusMetricsType = {
-  date: string;
-  occupied: number;
-  available: number;
-  reserved: number;
-  out_of_service: number;
-  in_turnaround: number;
-};
+/** Format YYYY-MM-DD date strings into short labels (e.g. "Jun 1") for clean x-axis rendering. */
+function formatDateLabel(dateStr: string): string {
+  try {
+    return format(parseISO(String(dateStr)), 'MMM d');
+  } catch {
+    return String(dateStr);
+  }
+}
 
 /** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */
-function toBedStatusCountData(metrics: DailyBedStatusMetricsType[]) {
-  return metrics.flatMap((d) => [
-    { date: d.date, status: 'Occupied', count: d.occupied },
-    { date: d.date, status: 'Available', count: d.available },
-    { date: d.date, status: 'Reserved', count: d.reserved },
-    { date: d.date, status: 'Out of Service', count: d.out_of_service },
-  ]);
+function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
+  return metrics.flatMap((d) => {
+    const date = formatDateLabel(String(d.date));
+    return [
+      { date, status: 'Occupied', count: d.occupied },
+      { date, status: 'Available', count: d.available },
+      { date, status: 'Reserved', count: d.reserved },
+      { date, status: 'Out of Service', count: d.outOfService },
+      { date, status: 'In Turnaround', count: d.inTurnaround },
+    ];
+  });
 }
 
 /** Same pivot but each count is expressed as a percentage of the daily total. */
-function toBedStatusPercentData(metrics: DailyBedStatusMetricsType[]) {
+function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const total = d.occupied + d.available + d.reserved + d.out_of_service;
+    const date = formatDateLabel(String(d.date));
+    const total =
+      d.occupied + d.available + d.reserved + d.outOfService + d.inTurnaround;
     const pct = (n: number) => {
       if (!total) return 0;
       return Math.round((n / total) * 1000) / 10;
     };
     return [
-      { date: d.date, status: 'Occupied', count: pct(d.occupied) },
-      { date: d.date, status: 'Available', count: pct(d.available) },
-      { date: d.date, status: 'Reserved', count: pct(d.reserved) },
-      { date: d.date, status: 'Out of Service', count: pct(d.out_of_service) },
+      { date, status: 'Occupied', count: pct(d.occupied) },
+      { date, status: 'Available', count: pct(d.available) },
+      { date, status: 'Reserved', count: pct(d.reserved) },
+      { date, status: 'Out of Service', count: pct(d.outOfService) },
+      { date, status: 'In Turnaround', count: pct(d.inTurnaround) },
     ];
   });
+}
+
+function toDailyOccupancyCountData(metrics: DailyOccupancyMetrics[]) {
+  return metrics.map((d) => ({
+    date: formatDateLabel(String(d.date)),
+    count: d.occupiedCount,
+  }));
+}
+
+function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
+  return metrics.map((d) => ({
+    date: formatDateLabel(String(d.date)),
+    count: Math.round(d.occupancyPct * 10) / 10,
+  }));
 }
 
 const cardClassName =
@@ -45,55 +67,24 @@ const cardClassName =
 // BarChart uses autoFit, so the card needs an explicit height for the plot to fill.
 const chartCardClassName = `flex flex-col ${cardClassName} h-[560px]`;
 
-// TODO(data-wiring): replace this sample data with real ShelterOccupancyMetrics
-// once the reporting query lands. Deterministic so the layout renders stably.
-const DAYS = Array.from({ length: 28 }, (_, i) => `Jun ${i + 1}`);
-
-const STATUSES = ['Occupied', 'Available', 'Reserved', 'Out of Service'];
-const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949'];
-
-const bedStatusData = DAYS.flatMap((date, i) => [
-  { date, status: 'Occupied', count: 12 + (i % 6) },
-  { date, status: 'Available', count: 8 + (i % 4) },
-  { date, status: 'Reserved', count: 10 - (i % 3) },
-  { date, status: 'Out of Service', count: 5 + (i % 3) },
-]);
-
-const bedStatusPercentageData = DAYS.flatMap((date, i) => [
-  { date, status: 'Occupied', count: 28 + (i % 5) },
-  { date, status: 'Available', count: 18 + (i % 4) },
-  { date, status: 'Reserved', count: 20 - (i % 3) },
-  { date, status: 'Out of Service', count: 12 - (i % 4) },
-]);
-
-const dailyOccupancyData = DAYS.map((date, i) => ({
-  date,
-  count: 45 + Math.round(Math.sin(i * 0.4) * 12),
-}));
-
-const dailyOccupancyPercentageData = DAYS.map((date, i) => ({
-  date,
-  count: Math.min(100, Math.max(0, 60 + Math.round(Math.sin(i * 0.4) * 20))),
-}));
+const STATUSES = [
+  'Occupied',
+  'Available',
+  'Reserved',
+  'Out of Service',
+  'In Turnaround',
+];
+const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
 
 /**
  * "Bed Status" report chart — stacked bars of bed statuses per day. BarChart
  * (#2162) owns the title, the Count/Percentage toggle, and the legend.
  *
- * Pass `data` once the reporting query is wired up; falls back to sample data
- * so the layout renders stably in the meantime.
+ * Renders empty (no data) until `data` is provided.
  */
-export function BedStatusChart({
-  data,
-}: {
-  data?: DailyBedStatusMetricsType[];
-}) {
-  let countData = bedStatusData;
-  let percentData = bedStatusPercentageData;
-  if (data) {
-    countData = toBedStatusCountData(data);
-    percentData = toBedStatusPercentData(data);
-  }
+export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
+  const countData = data ? toBedStatusCountData(data) : [];
+  const percentData = data ? toBedStatusPercentData(data) : [];
 
   return (
     <section className={chartCardClassName} data-testid="bed-status-chart">
@@ -135,7 +126,14 @@ export function BedStatusChart({
  * "Daily Occupancy" report chart — single-series bars of occupancy per day.
  * BarChart (#2162) owns the title and the Count/Percentage toggle.
  */
-export function DailyOccupancyChart() {
+export function DailyOccupancyChart({
+  data,
+}: {
+  data?: DailyOccupancyMetrics[];
+}) {
+  const countData = data ? toDailyOccupancyCountData(data) : [];
+  const percentData = data ? toDailyOccupancyPercentData(data) : [];
+
   return (
     <section className={chartCardClassName} data-testid="daily-occupancy-chart">
       <BarChart
@@ -144,13 +142,13 @@ export function DailyOccupancyChart() {
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
-                data: dailyOccupancyPercentageData,
+                data: percentData,
                 axis: { y: { title: 'Occupancy by %', tickCount: 6 } },
                 scale: { y: { nice: false, domain: [0, 100] } },
               }
             : {}
         }
-        data={dailyOccupancyData}
+        data={countData}
         xField="date"
         yField="count"
         axis={{
