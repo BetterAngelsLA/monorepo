@@ -13,7 +13,7 @@ import {
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
 import { useToast } from '../../../base-ui/toast';
-import { ReservationTable, type Reservation } from './ReservationTable';
+import { ReservationTable } from './ReservationTable';
 
 type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
 type ReservationAction = NonNullable<LoadingAction>;
@@ -177,7 +177,7 @@ export function Reservations({ shelterId }: { shelterId: string }) {
             isLoading: loadingAction === confirmationAction,
           }}
           secondaryAction={{
-            label: confirmationAction === 'cancel' ? 'Keep Res' : 'Cancel Res',
+            label: confirmationAction === 'cancel' ? 'Keep Res' : 'Cancel',
             onClick: closeConfirmation,
           }}
         />
