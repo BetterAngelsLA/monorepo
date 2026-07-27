@@ -1,17 +1,19 @@
 import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
-import { useReservations } from '../../hooks/useReservations';
-import { useUpdateReservation } from '../../hooks/useUpdateReservation';
-import { updateReservationMeta } from '../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
-import { shelterCreateResourceRoute } from '../../routing';
-import { Button } from '../base-ui/buttons';
-import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { useToast } from '../base-ui/toast';
-import { ReservationTable } from '../ReservationTable';
+import { useReservations, useUpdateReservation } from '../../../../hooks';
+import { updateReservationMeta } from '../../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
+import {
+  shelterCreateResourceRoute,
+  shelterEditResourceRoute,
+} from '../../../../routing';
+import { Button } from '../../../base-ui/buttons';
+import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
+import { useToast } from '../../../base-ui/toast';
+import { ReservationTable, type Reservation } from './ReservationTable';
 
 type LoadingAction = 'checkin' | 'complete' | 'cancel' | null;
 type ReservationAction = NonNullable<LoadingAction>;
@@ -49,7 +51,7 @@ const ACTION_CONFIG: Record<
   },
 };
 
-export function ReservationsView({ shelterId }: { shelterId: string }) {
+export function Reservations({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
   const { reservations, loading } = useReservations(shelterId);
@@ -69,6 +71,15 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
     setConfirmation({ isOpen: false, reservationId: null, action: null });
   }, []);
   const { showToast } = useToast();
+
+  const handleEdit = useCallback(
+    (reservationId: string) => {
+      navigate(
+        shelterEditResourceRoute(shelterId, 'reservation', reservationId),
+      );
+    },
+    [navigate, shelterId],
+  );
 
   const handleStatusUpdate = useCallback(
     async (
@@ -112,7 +123,6 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
       <div>
         <ReservationTable
           reservations={reservations}
-          shelterId={shelterId}
           loading={loading}
           isConfirmActionLoading={
             loadingAction === 'checkin' || loadingAction === 'complete'
@@ -125,6 +135,7 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
               action: 'checkin',
             })
           }
+          onEdit={handleEdit}
           onComplete={(id) =>
             setConfirmation({
               isOpen: true,
@@ -177,7 +188,9 @@ export function ReservationsView({ shelterId }: { shelterId: string }) {
           leftIcon={<Plus />}
           rightIcon={false}
           variant="floating"
-          onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'reservation'))}
+          onClick={() =>
+            navigate(shelterCreateResourceRoute(shelterId, 'reservation'))
+          }
         >
           Create Reservation
         </Button>

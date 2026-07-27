@@ -1,9 +1,9 @@
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { StatusBadge } from '../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../base-ui/table';
-import { reservationStatusInfo } from '../reservations/reservation-form/constants/reservationFormOptions';
+import { reservationStatusInfo } from '../ShelterManagement/segments/Reservations/ReservationForm';
 
 export type OccupantRow = {
   id: string;
@@ -111,7 +111,7 @@ export function OccupantTable({
           ),
       },
     ],
-    []
+    [],
   );
 
   return (

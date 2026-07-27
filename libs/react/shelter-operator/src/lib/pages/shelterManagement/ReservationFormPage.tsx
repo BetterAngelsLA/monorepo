@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { ReservationForm } from '../../components/reservations/reservation-form/ReservationForm';
-import { createEmptyReservationFormData } from '../../components/reservations/reservation-form/constants/defaultReservationFormData';
+import { ReservationForm } from '../../components/ShelterManagement/segments/Reservations';
 import {
-  mapReservationClientsToSelectedClients,
-  mapReservationToFormData,
-} from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
+  createEmptyReservationFormData,
+  toFormData,
+  toSelectedClients,
+} from '../../components/ShelterManagement/segments/Reservations/ReservationForm/formSchema';
 import { useReservation } from '../../hooks/useReservation';
 import { shelterMgmtResourceRoute } from '../../routing';
 
@@ -47,7 +47,7 @@ export function ReservationFormPage() {
 
     if (reservationId && reservation) {
       return {
-        initialData: mapReservationToFormData(reservation),
+        initialData: toFormData(reservation),
         readOnlyFields,
       };
     }
@@ -76,9 +76,7 @@ export function ReservationFormPage() {
   }, [reservationId, reservation, bedId, roomId]);
 
   const initialSelectedClients =
-    reservationId && reservation
-      ? mapReservationClientsToSelectedClients(reservation)
-      : undefined;
+    reservationId && reservation ? toSelectedClients(reservation) : undefined;
 
   return (
     <ManageFormPageLayout

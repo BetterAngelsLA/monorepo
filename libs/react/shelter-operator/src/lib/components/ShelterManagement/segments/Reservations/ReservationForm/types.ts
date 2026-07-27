@@ -1,5 +1,5 @@
 import type { Control, FieldErrors } from 'react-hook-form';
-import type { ReservationFormData } from './formTypes';
+import type { ReservationFormData } from './formSchema';
 
 export interface SectionProps {
   control: Control<ReservationFormData>;

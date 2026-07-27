@@ -3,7 +3,7 @@ import type {
   ReservationClientInput,
   UpdateReservationInput,
 } from '@monorepo/ba-platform/types';
-import type { ReservationFormData } from '../formTypes';
+import type { ReservationFormData } from './formSchema';
 
 const toInputString = (value?: string | null): string | undefined => {
   if (!value) return undefined;
@@ -13,7 +13,7 @@ const toInputString = (value?: string | null): string | undefined => {
 
 const buildClientsInput = (
   clientIds: string[],
-  primaryClientId: string | null
+  primaryClientId: string | null,
 ): ReservationClientInput[] =>
   clientIds.map((id) => ({
     clientProfileId: id,
@@ -21,7 +21,7 @@ const buildClientsInput = (
   }));
 
 export const buildCreateReservationInput = (
-  formData: ReservationFormData
+  formData: ReservationFormData,
 ): CreateReservationInput => ({
   bedId: formData.bedId ?? undefined,
   roomId: formData.roomId ?? undefined,
@@ -32,7 +32,7 @@ export const buildCreateReservationInput = (
 });
 
 export const buildUpdateReservationInput = (
-  formData: ReservationFormData
+  formData: ReservationFormData,
 ): UpdateReservationInput =>
   ({
     bedId: formData.bedId ?? undefined,
@@ -40,4 +40,4 @@ export const buildUpdateReservationInput = (
     startDate: formData.startDate || undefined,
     notes: toInputString(formData.notes),
     clients: buildClientsInput(formData.clientIds, formData.primaryClientId),
-  } as UpdateReservationInput);
+  }) as UpdateReservationInput;

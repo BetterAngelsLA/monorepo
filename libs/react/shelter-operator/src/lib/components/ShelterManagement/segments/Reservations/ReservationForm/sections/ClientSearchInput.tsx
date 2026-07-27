@@ -1,7 +1,7 @@
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { Star, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchClient } from '../../../hooks/useSearchClient';
+import { useSearchClient } from '../../../../../../hooks';
 
 const DEBOUNCE_MS = 150;
 const MIN_QUERY_LENGTH = 2;

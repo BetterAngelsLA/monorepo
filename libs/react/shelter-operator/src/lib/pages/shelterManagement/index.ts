@@ -3,4 +3,5 @@ export { CreateBedPage } from './CreateBedPage';
 export { CreateRoomPage } from './CreateRoomPage';
 export { EditBedPage } from './EditBedPage';
 export { EditRoomPage } from './EditRoomPage';
+export { ReservationsPage } from './ReservationsPage';
 export { RoomsPage } from './RoomsPage';

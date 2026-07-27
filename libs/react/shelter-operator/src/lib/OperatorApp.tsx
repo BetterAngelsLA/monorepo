@@ -11,13 +11,14 @@ import {
   CreateRoomPage,
   EditBedPage,
   EditRoomPage,
+  ReservationsPage,
   RoomsPage,
   UsersPage,
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
+import { ReservationFormPage } from './pages/shelterManagement/ReservationFormPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -131,6 +132,10 @@ export function OperatorApp() {
                 element={<EditRoomPage />}
               />
               <Route
+                path={mgmtRouteConfig.children.reservations}
+                element={<ReservationsPage />}
+              />
+              <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
                 element={<ReservationFormPage />}
               />
@@ -141,10 +146,6 @@ export function OperatorApp() {
               <Route
                 path={mgmtRouteConfig.children.occupants}
                 element={<ShelterDashboardPage tab="occupants" />}
-              />
-              <Route
-                path={mgmtRouteConfig.children.reservations}
-                element={<ShelterDashboardPage tab="reservations" />}
               />
             </Route>
           </Route>
