@@ -131,7 +131,8 @@
         "libs/ba-platform/**/*",
         "libs/fetch/**/*",
         "libs/react/components/**/*",
-        "libs/react/shelter-operator/**/*"
+        "libs/react/shelter-operator/**/*",
+        "libs/react/shared/**/*"
       ]
     },
     {
