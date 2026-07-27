@@ -2,6 +2,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
+// eslint-disable-next-line @eslint-react/no-unnecessary-use-prefix
 export default function useAppVersion() {
   return {
     version: Constants.expoConfig?.version,

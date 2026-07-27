@@ -207,11 +207,16 @@ export default [
       'jsx-a11y/no-static-element-interactions': 'off',
       'jsx-a11y/no-noninteractive-element-interactions': 'off',
       'jsx-a11y/no-autofocus': 'off',
+      'react-hooks/set-state-in-effect': 'off',
       '@eslint-react/no-use-context': 'off',
       '@eslint-react/no-context-provider': 'off',
-      'react-hooks/set-state-in-effect': 'off',
+      '@eslint-react/naming-convention-ref-name': 'off',
       '@eslint-react/set-state-in-effect': 'off',
       '@eslint-react/no-array-index-key': 'off',
+      // warnings
+      '@eslint-react/no-missing-key': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
     },
   },
 
