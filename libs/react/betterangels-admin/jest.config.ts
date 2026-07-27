@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'react-betterangels-admin',
   preset: '../../../jest.preset.js',
