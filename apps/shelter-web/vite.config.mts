@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;

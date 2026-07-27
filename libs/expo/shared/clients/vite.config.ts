@@ -1,7 +1,7 @@
 import path from 'path';
 import { mergeConfig } from 'vitest/config';
-import { baseVitestConfig } from '../../../../tools/vite/vitest-base';
-import { monorepoTsconfigAliases } from '../../../../tools/vite/monorepo-aliases';
+import { baseVitestConfig } from '@monorepo/vitest-config';
+import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
 
 const workspaceRoot = path.resolve(__dirname, '../../../..');
 

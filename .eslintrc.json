@@ -11,7 +11,7 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [".*libs/tailwind.*", "tools/.*"],
+            "allow": [".*libs/tailwind.*"],
             "depConstraints": [
               // ── TYPE constraints (what kind of code) ──
               // Dependency flow: feature → data-access → util

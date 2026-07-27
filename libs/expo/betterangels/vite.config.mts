@@ -3,7 +3,7 @@ import path from 'path';
 import { reactNative } from 'vitest-native';
 import { jestCompatAliases } from 'vitest-native/jest-compat';
 import { defineConfig } from 'vitest/config';
-import { monorepoTsconfigAliases } from '../../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
 
 const workspaceRoot = path.resolve(__dirname, '../../..');
 

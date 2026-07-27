@@ -5,7 +5,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;

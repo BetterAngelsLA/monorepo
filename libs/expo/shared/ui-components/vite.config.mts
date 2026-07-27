@@ -2,7 +2,7 @@
 import path from 'path';
 import { reactNative } from 'vitest-native';
 import { defineConfig } from 'vitest/config';
-import { monorepoTsconfigAliases } from '../../../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
 
 const workspaceRoot = path.resolve(__dirname, '../../../..');
 
