@@ -8,7 +8,7 @@ export type CreateServiceRequestHmisMutationVariables = Types.Exact<{
 
 export type CreateServiceRequestHmisMutation = { __typename?: 'Mutation', createHmisNoteServiceRequest:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: import('@monorepo/ba-platform').DateTimeString | null, completedOn?: import('@monorepo/ba-platform').DateTimeString | null, createdAt: import('@monorepo/ba-platform').DateTimeString, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
+    | { __typename?: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: import('@monorepo/ba-platform/types').DateTimeString | null, completedOn?: import('@monorepo/ba-platform/types').DateTimeString | null, createdAt: import('@monorepo/ba-platform/types').DateTimeString, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
    };
 
 export type RemoveServiceRequestHmisMutationVariables = Types.Exact<{

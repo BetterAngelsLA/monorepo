@@ -8,11 +8,11 @@
  */
 export const SHARED_SCALARS: Record<string, string> = {
     // --- Branded string scalars ---
-    Date: "import('@monorepo/ba-platform').DateString",
-    DateTime: "import('@monorepo/ba-platform').DateTimeString",
-    Time: "import('@monorepo/ba-platform').TimeString",
-    UUID: "import('@monorepo/ba-platform').UUIDString",
-    PhoneNumber: "import('@monorepo/ba-platform').PhoneNumberString",
+    Date: "import('@monorepo/ba-platform/types').DateString",
+    DateTime: "import('@monorepo/ba-platform/types').DateTimeString",
+    Time: "import('@monorepo/ba-platform/types').TimeString",
+    UUID: "import('@monorepo/ba-platform/types').UUIDString",
+    PhoneNumber: "import('@monorepo/ba-platform/types').PhoneNumberString",
 
     // --- Plain string scalars ---
     NonBlankString: 'string',
