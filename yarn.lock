@@ -5748,6 +5748,7 @@ __metadata:
     vite-plugin-static-copy: "npm:^4.1.1"
     vite-plugin-svgr: "npm:^4.5.0"
     vitest: "npm:4.1.4"
+    vitest-native: "npm:^0.9.0"
     webpack: "npm:^5.105.4"
     zod: "npm:^4.0.14"
   languageName: unknown
@@ -18106,6 +18107,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"flow-remove-types@npm:^2.322.0":
+  version: 2.324.0
+  resolution: "flow-remove-types@npm:2.324.0"
+  dependencies:
+    hermes-parser: "npm:0.36.1"
+    pirates: "npm:^3.0.2"
+    vlq: "npm:^0.2.1"
+  bin:
+    flow-node: flow-node
+    flow-remove-types: flow-remove-types
+  checksum: 10/05d49475196b126aefb88ce85fe541082b7adac0c2cd04666629b9275b8a804bf9088d72ef4dc020675574ef215c6717fc7d999317bb3d3dbab4dc19079d7f60
+  languageName: node
+  linkType: hard
+
 "flru@npm:^1.0.2":
   version: 1.0.2
   resolution: "flru@npm:1.0.2"
@@ -29283,6 +29298,32 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10/bb7e33568bdd9b139d2e69425a953d74f2efe8e9a64febe6ea95fb2c7a86080cd4928019f3e844d4df081dafd1267781a3f7e4e7701dbcf125e4fff82c816f0e
+  languageName: node
+  linkType: hard
+
+"vitest-native@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "vitest-native@npm:0.9.0"
+  dependencies:
+    flow-remove-types: "npm:^2.322.0"
+    magic-string: "npm:^0.30.21"
+  peerDependencies:
+    "@babel/core": "*"
+    "@react-native/babel-preset": "*"
+    "@testing-library/react-native": ">=12 <15"
+    react: ">=18"
+    vite: ^6.4.2 || ^7.3.2 || ^8.0.5
+    vitest: ">=4 <6"
+  peerDependenciesMeta:
+    "@babel/core":
+      optional: true
+    "@react-native/babel-preset":
+      optional: true
+    "@testing-library/react-native":
+      optional: true
+  bin:
+    vitest-native: dist/cli.mjs
+  checksum: 10/37fcde888cbe8c4e65d2ab54882a67aeefa8d52f76ee018636c759f4cb53f2dce33a0563cc34cbe98d5e5208d1e2347a59345b4d6b83977212d1d7c3497216e3
   languageName: node
   linkType: hard
 
