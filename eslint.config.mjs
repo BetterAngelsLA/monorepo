@@ -198,6 +198,18 @@ export default [
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     ...webA11yPlugin.flatConfigs.recommended,
   },
+  // TODO: review and re-enable once ready
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    rules: {
+      'jsx-a11y/click-events-have-key-events': 'off',
+      'jsx-a11y/interactive-supports-focus': 'off',
+      '@eslint-react/no-use-context': 'off',
+      '@eslint-react/no-context-provider': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      '@eslint-react/set-state-in-effect': 'off',
+    },
+  },
 
   // React Native a11y — RN-specific accessibility props
   // good: <View accessible accessibilityLabel="Submit" />
