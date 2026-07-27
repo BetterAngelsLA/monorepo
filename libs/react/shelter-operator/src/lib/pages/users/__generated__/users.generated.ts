@@ -10,7 +10,7 @@ export type OrganizationMembersQueryVariables = Types.Exact<{
 }>;
 
 
-export type OrganizationMembersQuery = { __typename: 'Query', organizationMembers: { __typename: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, lastLogin?: any | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: any, isOrgOwner: boolean, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
+export type OrganizationMembersQuery = { __typename: 'Query', organizationMembers: { __typename: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, lastLogin?: import('@monorepo/ba-platform').DateTimeString | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: import('@monorepo/ba-platform').DateTimeString, isOrgOwner: boolean, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
 
 export type RemoveOrganizationMemberMutationVariables = Types.Exact<{
   data: Types.RemoveOrganizationMemberInput;

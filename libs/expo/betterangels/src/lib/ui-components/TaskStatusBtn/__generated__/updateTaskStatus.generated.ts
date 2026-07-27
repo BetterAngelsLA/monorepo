@@ -8,7 +8,7 @@ export type UpdateTaskStatusMutationVariables = Types.Exact<{
 
 export type UpdateTaskStatusMutation = { __typename?: 'Mutation', updateTask:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TaskType', id: string, status?: Types.TaskStatusEnum | null, updatedAt: any }
+    | { __typename?: 'TaskType', id: string, status?: Types.TaskStatusEnum | null, updatedAt: import('@monorepo/ba-platform').DateTimeString }
    };
 
 

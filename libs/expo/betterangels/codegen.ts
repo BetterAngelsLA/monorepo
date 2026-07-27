@@ -1,4 +1,5 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
+import { SHARED_SCALARS } from '../../../ba-platform/src/lib/codegen-scalars';
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -12,9 +13,7 @@ const config: CodegenConfig = {
       preset: 'near-operation-file',
       plugins: ['typescript-operations', 'typed-document-node'],
       config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
+        scalars: SHARED_SCALARS,
         useTypeImports: true,
       },
       presetConfig: {

@@ -1,4 +1,5 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
+import { SHARED_SCALARS } from '../../../ba-platform/src/lib/codegen-scalars';
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -18,9 +19,7 @@ const config: CodegenConfig = {
       ],
       config: {
         nonOptionalTypename: true,
-        scalars: {
-          NonBlankString: 'string',
-        },
+        scalars: SHARED_SCALARS,
         useTypeImports: true,
       },
       presetConfig: {
