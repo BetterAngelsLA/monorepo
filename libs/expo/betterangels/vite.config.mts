@@ -1,5 +1,5 @@
 /// <reference types='vitest' />
-import { monorepoTsconfigAliases } from '@monorepo/vitest-config';
+import { monorepoTsconfigAliases } from '../../../libs/vitest-config/src/index';
 import path from 'path';
 import { reactNative } from 'vitest-native';
 import { defineConfig } from 'vitest/config';
