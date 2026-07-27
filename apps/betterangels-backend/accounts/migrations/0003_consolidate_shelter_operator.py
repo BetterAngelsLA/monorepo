@@ -23,6 +23,14 @@ def migrate_to_global_shelter_operator(apps, schema_editor):
     PermissionGroup = apps.get_model("accounts", "PermissionGroup")
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
 
+    # Always ensure the template exists — needed even on fresh installs
+    # (seed_permission_templates fills its permissions on post_migrate).
+    new_template, created = PermissionGroupTemplate.objects.get_or_create(
+        name="Global Shelter Operator",
+    )
+    if created:
+        logger.info("Created PermissionGroupTemplate: Global Shelter Operator")
+
     old_groups = Group.objects.filter(name__in=OLD_GROUP_NAMES)
     if not old_groups.exists():
         return
@@ -35,12 +43,6 @@ def migrate_to_global_shelter_operator(apps, schema_editor):
     if not users_in_old:
         old_groups.delete()
         return
-
-    new_template, created = PermissionGroupTemplate.objects.get_or_create(
-        name="Global Shelter Operator",
-    )
-    if created:
-        logger.info("Created PermissionGroupTemplate: Global Shelter Operator")
 
     # Collect unique users across both old groups to avoid double-processing
     # users who belong to both "Shelter Data Entry" and "Shelter Administration".
