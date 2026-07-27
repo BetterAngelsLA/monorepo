@@ -206,6 +206,7 @@ export default [
       'jsx-a11y/interactive-supports-focus': 'off',
       'jsx-a11y/no-static-element-interactions': 'off',
       'jsx-a11y/no-noninteractive-element-interactions': 'off',
+      'jsx-a11y/no-autofocus': 'off',
       '@eslint-react/no-use-context': 'off',
       '@eslint-react/no-context-provider': 'off',
       'react-hooks/set-state-in-effect': 'off',

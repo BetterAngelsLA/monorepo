@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
   displayName: 'react-shelter-operator',
   preset: '../../../jest.preset.js',
