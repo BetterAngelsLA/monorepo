@@ -121,17 +121,9 @@
       },
       "include": [
         "apps/betterangels/**/*",
-        "apps/betterangels-admin/**/*",
-        "apps/shelter-web/**/*",
-        "apps/wildfires/**/*",
         "libs/expo/betterangels/**/*",
-        "libs/expo/shared/clients/**/*",
         "libs/expo/shared/ui-components/**/*",
-        "libs/expo/shared/utils/**/*",
-        "libs/ba-platform/**/*",
-        "libs/fetch/**/*",
-        "libs/react/components/**/*",
-        "libs/react/shelter-operator/**/*"
+        "libs/expo/shared/utils/**/*"
       ]
     },
     {
