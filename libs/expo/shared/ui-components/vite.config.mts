@@ -11,6 +11,6 @@ export default defineConfig({
   resolve: { alias: monorepoTsconfigAliases(workspaceRoot) },
   test: {
     globals: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 });

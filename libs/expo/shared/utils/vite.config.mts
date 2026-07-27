@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [reactNative()],
   test: {
     globals: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 });
