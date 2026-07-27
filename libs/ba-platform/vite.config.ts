@@ -1,2 +1,3 @@
-import { vitestConfig } from '../../tools/vite/vitest-base';
-export default vitestConfig({ test: { testPathIgnorePatterns: ['/web/', '/expo/'] } });
+import { mergeConfig } from 'vitest/config';
+import { baseVitestConfig } from '../../tools/vite/vitest-base';
+export default mergeConfig(baseVitestConfig, { test: { testPathIgnorePatterns: ['/web/', '/expo/'] } });
