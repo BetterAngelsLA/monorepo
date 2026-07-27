@@ -14,12 +14,12 @@ import { deleteBedsMeta } from '../../../../hooks/useDeleteBeds/__generated__/us
 import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateResourceRoute,
-  shelterEditResourceRoute
+  shelterEditResourceRoute,
 } from '../../../../routing';
 import { Button } from '../../../base-ui/buttons';
 import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
 import { useToast } from '../../../base-ui/toast';
-import { BedTable, type Bed, type BedRowObject } from './BedTable';
+import { BedTable, type Bed } from './BedTable';
 
 export function Beds({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
@@ -62,11 +62,11 @@ export function Beds({ shelterId }: { shelterId: string }) {
       : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
 
   const handleClone = useCallback(
-    async (rowObject: BedRowObject) => {
+    async (bed: Bed) => {
       const errorMessage = 'Unable to clone bed. Please try again.';
 
       try {
-        const response = await cloneBed({ variables: { id: rowObject.id } });
+        const response = await cloneBed({ variables: { id: bed.id } });
 
         const fieldErrors = getFieldErrorsOrThrow({
           response,
@@ -90,8 +90,8 @@ export function Beds({ shelterId }: { shelterId: string }) {
   );
 
   const handleEdit = useCallback(
-    (rowObject: BedRowObject) => {
-      navigate(shelterEditResourceRoute(shelterId, 'bed', rowObject.id));
+    (bed: Bed) => {
+      navigate(shelterEditResourceRoute(shelterId, 'bed', bed.id));
     },
     [navigate, shelterId],
   );
@@ -130,13 +130,13 @@ export function Beds({ shelterId }: { shelterId: string }) {
   );
 
   const handleMarkReady = useCallback(
-    async (rowObject: BedRowObject) => {
+    async (bed: Bed) => {
       const errorMessage = 'Unable to update bed. Please try again.';
 
       try {
         const response = await updateBed({
           variables: {
-            id: rowObject.id,
+            id: bed.id,
             data: { lastCleaned: new Date().toISOString() },
           },
         });
@@ -164,28 +164,28 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const [readyConfirmation, setReadyConfirmation] = useState<{
     isOpen: boolean;
-    rowObject: BedRowObject | null;
-  }>({ isOpen: false, rowObject: null });
+    bed: Bed | null;
+  }>({ isOpen: false, bed: null });
 
   const closeReadyConfirmation = useCallback(() => {
-    setReadyConfirmation({ isOpen: false, rowObject: null });
+    setReadyConfirmation({ isOpen: false, bed: null });
   }, []);
 
-  const handleMarkReadyRequest = useCallback((rowObject: BedRowObject) => {
-    setReadyConfirmation({ isOpen: true, rowObject });
+  const handleMarkReadyRequest = useCallback((bed: Bed) => {
+    setReadyConfirmation({ isOpen: true, bed });
   }, []);
 
   const handleReserve = useCallback(
-    (rowObject: BedRowObject) => {
+    (bed: Bed) => {
       const state: Record<string, string | null> = {
-        bedId: rowObject.id,
-        roomId: rowObject.bed.room?.id ?? null,
+        bedId: bed.id,
+        roomId: bed.room?.id ?? null,
       };
       navigate(shelterCreateResourceRoute(shelterId, 'reservation'), { state });
     },
     [navigate, shelterId],
   );
-  const readyRowObject = readyConfirmation.rowObject;
+  const readyBed = readyConfirmation.bed;
 
   return (
     <>
@@ -220,7 +220,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
         }}
       />
 
-      {readyRowObject && (
+      {readyBed && (
         <ConfirmationModal
           isOpen={readyConfirmation.isOpen}
           onClose={closeReadyConfirmation}
@@ -230,7 +230,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
           primaryAction={{
             label: 'Mark Ready',
             onClick: async () => {
-              await handleMarkReady(readyRowObject);
+              await handleMarkReady(readyBed);
               closeReadyConfirmation();
             },
           }}

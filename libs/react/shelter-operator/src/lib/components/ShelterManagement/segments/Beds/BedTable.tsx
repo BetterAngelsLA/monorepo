@@ -20,12 +20,12 @@ export type Bed = {
 type BedTableProps = {
   beds: Bed[];
   getRowKey?: (bed: Bed, index: number) => string;
-  onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
-  onClone?: (rowObject: BedRowObject) => void;
-  onEdit?: (rowObject: BedRowObject) => void;
+  onRowClick?: (bed: Bed, rowIndex: number) => void;
+  onClone?: (bed: Bed) => void;
+  onEdit?: (bed: Bed) => void;
   onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (rowObject: BedRowObject) => void;
-  onReserve?: (rowObject: BedRowObject) => void;
+  onMarkReady?: (bed: Bed) => void;
+  onReserve?: (bed: Bed) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -37,11 +37,6 @@ type BedTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-};
-
-export type BedRowObject = {
-  id: string;
-  bed: Bed;
 };
 
 function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
@@ -135,45 +130,38 @@ export function BedTable({
   );
 
   return (
-    <Table<Bed, BedRowObject>
+    <Table<Bed, Bed>
       columns={columns}
       rows={beds}
       getRowKey={getRowKey ?? ((bed) => bed.id)}
-      getRowObject={(bed) => ({
-        id: bed.id,
-        bed,
-      })}
-      getRowSlot={(rowObject) => (
+      getRowSlot={(bed) => (
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
           role="group"
           aria-label="Bed actions"
         >
-          {rowObject.bed.status === BedStatusChoices.InTurnaround &&
-            onMarkReady && (
-              <Button
-                type="button"
-                variant="confirm"
-                aria-label="Mark ready"
-                onClick={() => onMarkReady(rowObject)}
-              />
-            )}
+          {bed.status === BedStatusChoices.InTurnaround && onMarkReady && (
+            <Button
+              type="button"
+              variant="confirm"
+              aria-label="Mark ready"
+              onClick={() => onMarkReady(bed)}
+            />
+          )}
           {onReserve && (
             <Button
               type="button"
               variant="edit"
               aria-label="Reserve bed"
-              disabled={!isBedAvailable(rowObject.bed.status)}
+              disabled={!isBedAvailable(bed.status)}
               leftIcon={
                 <BookCheck
                   size={22}
-                  stroke={
-                    !isBedAvailable(rowObject.bed.status) ? 'gray' : 'black'
-                  }
+                  stroke={!isBedAvailable(bed.status) ? 'gray' : 'black'}
                 />
               }
-              onClick={() => onReserve(rowObject)}
+              onClick={() => onReserve(bed)}
             />
           )}
           {onClone && (
@@ -182,7 +170,7 @@ export function BedTable({
               variant="edit"
               aria-label="Clone bed"
               leftIcon={<CopyPlus size={22} stroke="black" />}
-              onClick={() => onClone(rowObject)}
+              onClick={() => onClone(bed)}
             />
           )}
           {onEdit && (
@@ -190,7 +178,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Edit bed"
-              onClick={() => onEdit(rowObject)}
+              onClick={() => onEdit(bed)}
             />
           )}
           {onDeleteBeds && (
@@ -198,7 +186,7 @@ export function BedTable({
               type="button"
               variant="trash"
               aria-label="Delete bed"
-              onClick={() => onDeleteBeds([rowObject.id])}
+              onClick={() => onDeleteBeds([bed.id])}
             />
           )}
         </div>
