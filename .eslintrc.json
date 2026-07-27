@@ -4,6 +4,12 @@
   "extends": ["plugin:react-native-a11y/all"],
   "overrides": [
     {
+      "files": ["**/__generated__/**"],
+      "rules": {
+        "@nx/enforce-module-boundaries": "off"
+      }
+    },
+    {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
         "import/export": "error",
