@@ -3,9 +3,14 @@
 // provide safe defaults.  This is only loaded by vitest via resolve.alias.
 
 // Stub the ErrorUtils global that expo-modules-core internals expect.
+// These are intentionally no-ops — they only exist to satisfy module loading.
 (globalThis as Record<string, unknown>).ErrorUtils ??= {
-  setGlobalHandler: () => {},
-  getGlobalHandler: () => () => {},
+  setGlobalHandler: () => {
+    // no-op: satisfies expo-modules-core's import-time side effects
+  },
+  getGlobalHandler: () => () => {
+    // no-op: returns a no-op handler
+  },
   reportFatalError: (e: Error) => {
     throw e;
   },
