@@ -26,19 +26,6 @@
       ],
       "cache": true
     },
-    "@nx/jest:jest": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": true,
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
-    },
     "@nx/eslint:lint": {
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "cache": true
@@ -105,26 +92,6 @@
       "options": {
         "testTargetName": "test"
       }
-    },
-    {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
-      "include": [
-        "apps/betterangels/**/*",
-        "apps/betterangels-admin/**/*",
-        "apps/shelter-web/**/*",
-        "apps/wildfires/**/*",
-        "libs/expo/betterangels/**/*",
-        "libs/expo/shared/clients/**/*",
-        "libs/expo/shared/ui-components/**/*",
-        "libs/expo/shared/utils/**/*",
-        "libs/ba-platform/**/*",
-        "libs/fetch/**/*",
-        "libs/react/components/**/*",
-        "libs/react/shelter-operator/**/*"
-      ]
     },
     {
       "plugin": "@nx/eslint/plugin",

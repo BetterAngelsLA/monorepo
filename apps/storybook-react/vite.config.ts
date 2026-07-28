@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-      reporters: ['default'],
       passWithNoTests: true,
+      reporters: ['default'],
       coverage: {
         include: ['src/**/*.{ts,tsx}'],
         reportsDirectory: '../../coverage/apps/storybook-react',
