@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
-import { rawSvgPlugin, monorepoTsconfigAliases, svgTestResolverIfVitest } from '../../libs/vitest-config/src/index';
+import { rawSvgPlugin, monorepoTsconfigAliases, svgTestResolverIfVitest } from '../../libs/vite-utils/src/index';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8200;

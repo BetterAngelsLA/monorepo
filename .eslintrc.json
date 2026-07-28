@@ -11,7 +11,7 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [".*libs/tailwind.*", "libs/vitest-config/.*"],
+            "allow": [".*libs/tailwind.*", "libs/vite-utils/.*"],
             "depConstraints": [
               // ── TYPE constraints (what kind of code) ──
               // Dependency flow: feature → data-access → util
