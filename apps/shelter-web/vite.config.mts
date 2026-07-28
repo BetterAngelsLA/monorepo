@@ -81,9 +81,6 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
-      server: {
-        fs: { allow: [WORKSPACE_ROOT] },
-      },
     },
   };
 });
