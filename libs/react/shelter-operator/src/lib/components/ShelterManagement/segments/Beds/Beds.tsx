@@ -162,17 +162,14 @@ export function Beds({ shelterId }: { shelterId: string }) {
     [updateBed, showToast],
   );
 
-  const [readyConfirmation, setReadyConfirmation] = useState<{
-    isOpen: boolean;
-    bedId: string | null;
-  }>({ isOpen: false, bedId: null });
+  const [readyBedId, setReadyBedId] = useState<string | null>(null);
 
   const closeReadyConfirmation = useCallback(() => {
-    setReadyConfirmation({ isOpen: false, bedId: null });
+    setReadyBedId(null);
   }, []);
 
   const handleMarkReadyRequest = useCallback((bedId: string) => {
-    setReadyConfirmation({ isOpen: true, bedId });
+    setReadyBedId(bedId);
   }, []);
 
   const handleReserve = useCallback(
@@ -185,8 +182,6 @@ export function Beds({ shelterId }: { shelterId: string }) {
     },
     [navigate, shelterId],
   );
-  const readyBed = readyConfirmation.bedId;
-
   return (
     <>
       <div>
@@ -220,9 +215,9 @@ export function Beds({ shelterId }: { shelterId: string }) {
         }}
       />
 
-      {readyBed && (
+      {readyBedId && (
         <ConfirmationModal
-          isOpen={readyConfirmation.isOpen}
+          isOpen={true}
           onClose={closeReadyConfirmation}
           variant="success"
           title="Mark bed as ready?"
@@ -230,7 +225,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
           primaryAction={{
             label: 'Mark Ready',
             onClick: async () => {
-              await handleMarkReady(readyBed);
+              await handleMarkReady(readyBedId);
               closeReadyConfirmation();
             },
           }}
