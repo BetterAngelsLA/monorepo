@@ -9,5 +9,4 @@ export const baseVitestConfig = defineConfig({
   },
 });
 export { monorepoTsconfigAliases } from './monorepo-aliases';
-export { rawSvgPlugin } from './raw-svg-plugin';
-export { svgTestResolverIfVitest } from './svg-test-resolver';
+export { svgTestResolver } from './svg-test-resolver';

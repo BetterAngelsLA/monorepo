@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { monorepoTsconfigAliases, rawSvgPlugin } from '../../libs/vite-utils/src/index';
+import { monorepoTsconfigAliases } from '../../libs/vite-utils/src/index';
 import {
   baseHrefPlugin,
   getBranchBasePath,
@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin(), baseHrefPlugin(basePath)],
+    plugins: [react(), baseHrefPlugin(basePath)],
 
     css: {
       postcss: {

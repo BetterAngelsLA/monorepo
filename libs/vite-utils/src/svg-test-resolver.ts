@@ -6,20 +6,25 @@
  * resolveId (not load) because the Denied ID check happens during
  * module resolution, before the load hook.
  *
- * Only activates when process.env.VITEST is set (Vitest runtime).
+ * SVG loading during dev/build is handled by Vite's native ?raw import
+ * support — no plugin needed.
  */
 import path from 'path';
 import type { Plugin } from 'vite';
 
 /**
  * Returns a Vite plugin that redirects all .svg imports to a local
- * stub file during test runs. During dev/build this is a no-op.
+ * stub file. Only meant to be used during Vitest runs.
  *
- * @param appDir - absolute path to the app directory (e.g. __dirname from vite.config)
+ * Usage (only include during tests):
+ *   plugins: [
+ *     react(),
+ *     ...(process.env.VITEST ? [svgTestResolver(__dirname)] : []),
+ *   ],
  */
-export function svgTestResolverPlugin(appDir: string): Plugin {
+export function svgTestResolver(appDir: string): Plugin {
   return {
-    name: 'vitest-svg-resolver',
+    name: 'svg-test-resolver',
     enforce: 'pre' as const,
     resolveId(id: string) {
       if (id.endsWith('.svg')) {
@@ -28,16 +33,4 @@ export function svgTestResolverPlugin(appDir: string): Plugin {
       return null;
     },
   };
-}
-
-/**
- * Conditionally includes the SVG test resolver plugin.
- * Returns an array containing the plugin during Vitest runs,
- * or an empty array during dev/build.
- *
- * Usage:
- *   plugins: [react(), rawSvgPlugin(), ...svgTestResolverIfVitest(__dirname)]
- */
-export function svgTestResolverIfVitest(appDir: string): Plugin[] {
-  return process.env.VITEST ? [svgTestResolverPlugin(appDir)] : [];
 }
