@@ -5,7 +5,7 @@
     "composite": true,
     "declaration": true,
     "module": "commonjs",
-    "types": ["jest", "node"]
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
 }

@@ -13,23 +13,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     initial = True
-    replaces = [
-        ("common", "0001_squashed_0010_location_and_location_permissions"),
-        ("common", "0011_remove_caseworker_location_permissions"),
-        ("common", "0012_alter_locationuserobjectpermission_unique_together_and_more"),
-        ("common", "0013_alter_location_point"),
-        ("common", "0014_address_confidential_attachment_mime_type_and_more"),
-        ("common", "0015_phonenumber"),
-        ("common", "0016_auto_20241121_1844"),
-        ("common", "0017_remove_attachment_associated_with"),
-        ("common", "0018_fix_file_extensions"),
-        ("common", "0019_remove_address_components_improve_dedup"),
-        ("common", "0020_address_functional_index"),
-        ("common", "0021_remove_address_components_add_unique_formatted_address"),
-        ("common", "0022_add_unique_formatted_address_constraint"),
-        ("common", "0023_add_gfk_indexes"),
-    ]
-
     dependencies = [
         ('auth', '0012_alter_user_first_name_max_length'),
         ('contenttypes', '0002_remove_content_type_name'),

@@ -8,13 +8,6 @@
     "default": ["{projectRoot}/**/*"]
   },
   "targets": {
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
-      "options": {
-        "jestConfig": "libs/ba-platform/jest.config.ts"
-      }
-    },
     "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {

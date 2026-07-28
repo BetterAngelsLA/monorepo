@@ -5,7 +5,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '../../libs/vitest-config/src/index';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
@@ -25,15 +25,6 @@ export default defineConfig(({ mode }) => {
   server: {
     port: SERVER_PORT,
     host: 'localhost',
-    fs: {
-      allow: [
-        // TODO: confirm if this configuration is needed.
-        // Did not need this with shelter-web
-        path.resolve(__dirname, '../../libs/assets/src'), // Allow assets from libs
-        path.resolve(__dirname, 'src'), // Allow app source directory (relative to the app folder)
-        path.resolve(__dirname, '../../apps/wildfires/src'), // Ensure this allows
-      ],
-    },
   },
 
   preview: {
@@ -45,9 +36,21 @@ export default defineConfig(({ mode }) => {
     react(),
     rawSvgPlugin(),
     baseHrefPlugin(basePath),
+    {
+      name: 'vitest-svg-resolver',
+      enforce: 'pre',
+      resolveId(id: string) {
+        if (id.endsWith('.svg')) {
+          return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+        }
+        return null;
+      },
+    },
   ],
 
-  resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
+  resolve: {
+    alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
+  },
 
   css: {
     postcss: {
@@ -72,6 +75,12 @@ export default defineConfig(({ mode }) => {
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+  },
+
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 };
 });

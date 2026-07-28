@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '../../libs/vitest-config/src/index';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
@@ -50,6 +50,18 @@ export default defineConfig(({ mode }) => {
       react(),
       rawSvgPlugin(),
       baseHrefPlugin(basePath),
+      {
+        name: 'vitest-svg-resolver',
+        enforce: 'pre',
+        resolveId(id) {
+          // Capture any SVG import (including cross-package) before
+          // vite:import-analysis runs and triggers a Denied ID error.
+          if (id.endsWith('.svg')) {
+            return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+          }
+          return null;
+        },
+      },
     ],
 
     resolve: {
@@ -73,6 +85,15 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: true,
       commonjsOptions: {
         transformMixedEsModules: true,
+      },
+    },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      server: {
+        fs: { allow: [WORKSPACE_ROOT] },
       },
     },
   };
