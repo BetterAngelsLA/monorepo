@@ -1,6 +1,7 @@
 """Tests for report data export."""
 
 import csv
+import json
 import zipfile
 from datetime import date
 from io import BytesIO, StringIO
@@ -29,6 +30,7 @@ from reports.export_to_csv import (
     reservation_metrics_to_csv,
     rows_to_csv,
 )
+from reports.export_to_json import metrics_to_json
 from reports.export_to_xlsx import metrics_to_xlsx
 
 
@@ -388,6 +390,73 @@ class TestShelterMetricsExport:
     def test_metrics_to_xlsx_rejects_unknown_options(self) -> None:
         with pytest.raises(ValueError, match="unknown_metric"):
             metrics_to_xlsx(
+                _shelter_occupancy_metrics(),
+                [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
+            )
+
+    def test_metrics_to_json_exports_selected_metrics_as_date_keyed_report(self) -> None:
+        filename, json_content = metrics_to_json(
+            _shelter_occupancy_metrics(),
+            _all_metric_export_options(),
+        )
+
+        assert filename == "20260601_20260630_shelter_report.json"
+        assert json.loads(json_content) == {
+            "report": {
+                "daily_occupancy_metrics": {
+                    "2026-06-01": {
+                        "shelter_id": "shelter-1",
+                        "occupied_count": 8,
+                        "total_beds": 10,
+                        "occupancy_pct": 80.0,
+                    }
+                },
+                "daily_bed_status_metrics": {
+                    "2026-06-01": {
+                        "shelter_id": "shelter-1",
+                        "available": 2,
+                        "occupied": 8,
+                        "reserved": 1,
+                        "out_of_service": 0,
+                        "in_turnaround": 0,
+                    }
+                },
+                "reservation_metrics": {
+                    "2026-06-01_2026-06-30": {
+                        "shelter_id": "shelter-1",
+                        "check_in_overdue": 3,
+                        "cancelled": 2,
+                        "checked_in": 11,
+                        "check_in_overdue_to_checked_in": 1,
+                    }
+                },
+                "avg_days_to_occupancy": {
+                    "2026-06-01_2026-06-30": {
+                        "shelter_id": "shelter-1",
+                        "avg_days_to_occupancy": 4.5,
+                    }
+                },
+            }
+        }
+
+    def test_metrics_to_json_exports_only_selected_metrics(self) -> None:
+        _, json_content = metrics_to_json(
+            _shelter_occupancy_metrics(),
+            [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
+        )
+
+        assert json.loads(json_content)["report"].keys() == {
+            "daily_occupancy_metrics",
+            "reservation_metrics",
+        }
+
+    def test_metrics_to_json_rejects_empty_options(self) -> None:
+        with pytest.raises(ValueError, match="At least one"):
+            metrics_to_json(_shelter_occupancy_metrics(), [])
+
+    def test_metrics_to_json_rejects_unknown_options(self) -> None:
+        with pytest.raises(ValueError, match="unknown_metric"):
+            metrics_to_json(
                 _shelter_occupancy_metrics(),
                 [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, cast(MetricsExportOptions, "unknown_metric")],
             )
