@@ -1,8 +1,9 @@
 /**
- * stringifies content from raw .svg files
+ * Vite plugin that loads raw .svg files as string exports.
+ * Used by all Vite-based apps to import SVG content for React icon components.
  */
 import fs from 'fs';
-import { Plugin } from 'vite';
+import type { Plugin } from 'vite';
 
 export function rawSvgPlugin(): Plugin {
   return {
@@ -12,10 +13,8 @@ export function rawSvgPlugin(): Plugin {
       if (id.endsWith('.svg')) {
         // Read the content of the SVG file and return it as a raw string
         const svgContent = fs.readFileSync(id, 'utf-8');
-
         return `export default ${JSON.stringify(svgContent)}`;
       }
-
       return null; // Ensure non-SVG files are handled normally
     },
   };

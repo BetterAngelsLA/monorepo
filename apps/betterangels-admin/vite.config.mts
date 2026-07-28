@@ -3,12 +3,11 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { monorepoTsconfigAliases } from '../../libs/vitest-config/src/index';
+import { monorepoTsconfigAliases, rawSvgPlugin } from '../../libs/vitest-config/src/index';
 import {
   baseHrefPlugin,
   getBranchBasePath,
 } from '../../tools/shared/get-base-path.mjs';
-import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 
 const SERVER_PORT = 8084;
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
