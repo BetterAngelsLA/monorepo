@@ -7,8 +7,8 @@
     "composite": true,
     "jsx": "react-jsx",
     "types": [
-      ,
       "node",
+      "vitest/globals",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts"
     ]

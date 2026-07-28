@@ -16,12 +16,9 @@
   },
 };
 
-const docDir = '/mock/documentDirectory/';
-const cacheDir = '/mock/cacheDirectory/';
-
 const FileSystem = {
-  documentDirectory: docDir,
-  cacheDirectory: cacheDir,
+  documentDirectory: '/mock/documentDirectory/',
+  cacheDirectory: '/mock/cacheDirectory/',
   bundleDirectory: '/mock/bundleDirectory/',
   readAsStringAsync: () => Promise.resolve(''),
   writeAsStringAsync: () => Promise.resolve(),
