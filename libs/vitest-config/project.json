@@ -1,0 +1,7 @@
+{
+  "name": "vitest-config",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/vitest-config/src",
+  "projectType": "library",
+  "tags": ["type:util", "scope:shared"]
+}

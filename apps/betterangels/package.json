@@ -92,8 +92,7 @@
     "@react-native-vector-icons/ant-design": "*",
     "expo-web-browser": "*",
     "expo-dev-client": "*",
-    "@types/google.maps": "*",
-    "@jest/globals": "*"
+    "@types/google.maps": "*"
   },
   "devDependencies": {}
 }

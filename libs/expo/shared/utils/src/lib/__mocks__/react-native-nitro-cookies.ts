@@ -1,6 +1,6 @@
 export default {
-  get: jest.fn(),
-  set: jest.fn(),
-  setFromResponse: jest.fn(() => Promise.resolve()),
-  clearAll: jest.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
+  setFromResponse: vi.fn(() => Promise.resolve()),
+  clearAll: vi.fn(),
 };

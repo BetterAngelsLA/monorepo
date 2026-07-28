@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 /* eslint-disable import/first */
 
 // jsdom does not provide the ``Response`` global (it is a Node built-in).
@@ -24,14 +20,14 @@ describe('createWebFetchClient', () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue(new Response());
+    global.fetch = vi.fn().mockResolvedValue(new Response());
 
     // Reset localStorage mock
     const storage: Record<string, string> = {};
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: jest.fn((key: string) => storage[key] ?? null),
-        setItem: jest.fn((key: string, value: string) => { storage[key] = value; }),
+        getItem: vi.fn((key: string) => storage[key] ?? null),
+        setItem: vi.fn((key: string, value: string) => { storage[key] = value; }),
       },
       writable: true,
     });
@@ -54,7 +50,7 @@ describe('createWebFetchClient', () => {
     const fetchClient = createWebFetchClient();
     await fetchClient('/api/test', { method: 'POST' });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 
@@ -68,7 +64,7 @@ describe('createWebFetchClient', () => {
     const fetchClient = createWebFetchClient();
     await fetchClient('/api/test', { method: 'GET' });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 
@@ -84,7 +80,7 @@ describe('createWebFetchClient', () => {
       headers: { Authorization: 'Bearer token' },
     });
 
-    const fetchMock = global.fetch as jest.Mock;
+    const fetchMock = global.fetch as vi.Mock;
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
 

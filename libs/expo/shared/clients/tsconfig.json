@@ -10,7 +10,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "jsx": "react-jsx",
-    "types": ["jest", "node"]
+    "types": ["node"]
   },
   "files": [],
   "include": [],
