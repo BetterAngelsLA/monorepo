@@ -36,6 +36,22 @@ export default defineConfig(({ mode }) => {
     react(),
     rawSvgPlugin(),
     baseHrefPlugin(basePath),
+    // Stub SVG imports during Vitest runs to avoid cross-package
+    // "Denied ID" errors. process.env.VITEST is only set by Vitest.
+    ...(process.env.VITEST
+      ? [
+          {
+            name: 'vitest-svg-resolver',
+            enforce: 'pre' as const,
+            resolveId(id: string) {
+              if (id.endsWith('.svg')) {
+                return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+              }
+              return null;
+            },
+          },
+        ]
+      : []),
   ],
 
   resolve: {
@@ -71,18 +87,6 @@ export default defineConfig(({ mode }) => {
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    plugins: [
-      {
-        name: 'vitest-svg-resolver',
-        enforce: 'pre',
-        resolveId(id: string) {
-          if (id.endsWith('.svg')) {
-            return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
-          }
-          return null;
-        },
-      },
-    ],
   },
 };
 });
