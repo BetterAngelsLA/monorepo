@@ -12,7 +12,7 @@
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "allow": ["^.*\\.svg$"]
+            "allow": ["^.*\\.svg(\\?raw)?$"]
           }
         ]
       }
