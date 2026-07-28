@@ -27,7 +27,8 @@ export function svgTestResolver(appDir: string): Plugin {
     name: 'svg-test-resolver',
     enforce: 'pre' as const,
     resolveId(id: string) {
-      if (id.endsWith('.svg')) {
+      // Match .svg and .svg?raw (query params are part of the resolved ID)
+      if (id.includes('.svg')) {
         return path.resolve(appDir, 'src/__mocks__/svgStub.ts');
       }
       return null;
