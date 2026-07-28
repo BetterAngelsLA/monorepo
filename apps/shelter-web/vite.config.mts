@@ -50,18 +50,6 @@ export default defineConfig(({ mode }) => {
       react(),
       rawSvgPlugin(),
       baseHrefPlugin(basePath),
-      {
-        name: 'vitest-svg-resolver',
-        enforce: 'pre',
-        resolveId(id) {
-          // Capture any SVG import (including cross-package) before
-          // vite:import-analysis runs and triggers a Denied ID error.
-          if (id.endsWith('.svg')) {
-            return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
-          }
-          return null;
-        },
-      },
     ],
 
     resolve: {
@@ -95,6 +83,20 @@ export default defineConfig(({ mode }) => {
       server: {
         fs: { allow: [WORKSPACE_ROOT] },
       },
+      plugins: [
+        {
+          name: 'vitest-svg-resolver',
+          enforce: 'pre' as const,
+          resolveId(id: string) {
+            // Capture any SVG import (including cross-package) before
+            // vite:import-analysis runs and triggers a Denied ID error.
+            if (id.endsWith('.svg')) {
+              return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
+            }
+            return null;
+          },
+        },
+      ],
     },
   };
 });
