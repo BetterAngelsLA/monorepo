@@ -5353,7 +5353,7 @@ __metadata:
     sanitize-html: "npm:^2.17.4"
     set-cookie-parser: "npm:^2.4.3"
     storybook: "npm:10.5.3"
-    storybook-addon-pseudo-states: "npm:^9.1.17"
+    storybook-addon-pseudo-states: "npm:^10.5.5"
     stylus: "github:stylus/stylus#0.54.4"
     supercluster: "npm:^8.0.1"
     swc-loader: "npm:0.1.15"
@@ -26404,12 +26404,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook-addon-pseudo-states@npm:^9.1.17":
-  version: 9.1.20
-  resolution: "storybook-addon-pseudo-states@npm:9.1.20"
+"storybook-addon-pseudo-states@npm:^10.5.5":
+  version: 10.5.5
+  resolution: "storybook-addon-pseudo-states@npm:10.5.5"
   peerDependencies:
-    storybook: ^9.1.20
-  checksum: 10/33f7f30fb0397d5cb75884c8576d65eeb221e9608c9d76e983316dd9f830191d9995f321df00297b6839bfb0e2ade943073049405f58e1aec625f866acf17689
+    storybook: ^10.5.5
+  checksum: 10/47849ccf830b43d275065d750c98eb5d946480b70c4ce0530ae5397321bab58280e3ed75b3f2cdc2c23a2551dd28214e4f72e6ce90166084ff2a3d49c31d6976
   languageName: node
   linkType: hard
 
