@@ -1,5 +1,4 @@
-import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
-import { toError } from '@monorepo/react/shared';
+import { isMutationSuccess, toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -40,9 +39,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
   }, [bedsData]);
 
   const { cloneBed } = useCloneBed({ shelterId });
-
   const { deleteBeds } = useDeleteBeds({ shelterId });
-
   const { updateBed } = useUpdateBed();
 
   const { showToast } = useToast();
@@ -66,17 +63,18 @@ export function Beds({ shelterId }: { shelterId: string }) {
       try {
         const response = await cloneBed({ variables: { id: bedId } });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...cloneBedMeta,
-          fields: ['id'],
-        });
-        if (fieldErrors.length) {
-          throw new Error('Field validation failed');
+        if (
+          !isMutationSuccess(
+            response.data?.[cloneBedMeta.operationKey],
+            cloneBedMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error cloning bed: ${error.message}`);
+        console.error(`[cloneBed error]: ${error.message}`);
+
         showToast({
           status: 'error',
           title: 'Unable to clone bed. Please try again.',
@@ -103,17 +101,18 @@ export function Beds({ shelterId }: { shelterId: string }) {
       try {
         const response = await deleteBeds({ variables: { data: { ids } } });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...deleteBedsMeta,
-          fields: ['ids'],
-        });
-        if (fieldErrors.length) {
-          throw new Error('Field validation failed');
+        if (
+          !isMutationSuccess(
+            response.data?.[deleteBedsMeta.operationKey],
+            deleteBedsMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error deleting beds: ${error.message}`);
+        console.error(`[deleteBeds error]: ${error.message}`);
+
         showToast({
           status: 'error',
           title: `Unable to delete bed${ids.length > 1 ? 's' : ''}. Please try again.`,
@@ -134,17 +133,18 @@ export function Beds({ shelterId }: { shelterId: string }) {
           },
         });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...updateBedMeta,
-          fields: ['lastCleaned'],
-        });
-        if (fieldErrors.length) {
-          throw new Error('Field validation failed');
+        if (
+          !isMutationSuccess(
+            response.data?.[updateBedMeta.operationKey],
+            updateBedMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error updating bed: ${error.message}`);
+        console.error(`[updateBed error]: ${error.message}`);
+
         showToast({
           status: 'error',
           title: 'Unable to update bed. Please try again.',

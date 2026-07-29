@@ -1,18 +1,17 @@
-import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { RoomStatusChoices } from '@monorepo/ba-platform/types';
-import { toError } from '@monorepo/react/shared';
+import { isMutationSuccess, toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useCloneRoom,
   useDeleteRooms,
-  useUpdateRoom,
   useRooms,
+  useUpdateRoom,
 } from '../../../../hooks';
 import { cloneRoomMeta } from '../../../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
-import { updateRoomMeta } from '../../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
 import { deleteRoomsMeta } from '../../../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
+import { updateRoomMeta } from '../../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
 import {
   shelterCreateResourceRoute,
   shelterEditResourceRoute,
@@ -55,25 +54,24 @@ export function Rooms({ shelterId }: { shelterId: string }) {
 
   const handleClone = useCallback(
     async (roomId: string) => {
-      const errorMessage = 'Unable to clone room. Please try again.';
-
       try {
         const response = await cloneRoom({ variables: { id: roomId } });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...cloneRoomMeta,
-          fields: ['id'],
-        });
-        if (fieldErrors.length) {
-          throw new Error(errorMessage);
+        if (
+          !isMutationSuccess(
+            response.data?.[cloneRoomMeta.operationKey],
+            cloneRoomMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error cloning room: ${error.message}`);
+        console.error(`[cloneRoom error]: ${error.message}`);
+
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to clone room. Please try again.',
           persistent: true,
         });
       }
@@ -96,26 +94,24 @@ export function Rooms({ shelterId }: { shelterId: string }) {
 
   const handleDelete = useCallback(
     async (ids: string[]) => {
-      const plural = ids.length > 1 ? 's' : '';
-      const errorMessage = `Unable to delete room${plural}. Please try again.`;
-
       try {
         const response = await deleteRooms({ variables: { data: { ids } } });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...deleteRoomsMeta,
-          fields: ['ids'],
-        });
-        if (fieldErrors.length) {
-          throw new Error(errorMessage);
+        if (
+          !isMutationSuccess(
+            response.data?.[deleteRoomsMeta.operationKey],
+            deleteRoomsMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error deleting room${plural}: ${error.message}`);
+        console.error(`[deleteRooms error]: ${error.message}`);
+
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: `Unable to delete room${ids.length > 1 ? 's' : ''}. Please try again.`,
           persistent: true,
         });
       }
@@ -133,17 +129,18 @@ export function Rooms({ shelterId }: { shelterId: string }) {
           },
         });
 
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...updateRoomMeta,
-          fields: ['lastCleaned'],
-        });
-        if (fieldErrors.length) {
-          throw new Error('Field validation failed');
+        if (
+          !isMutationSuccess(
+            response.data?.[updateRoomMeta.operationKey],
+            updateRoomMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error updating room: ${error.message}`);
+        console.error(`[updateRoom error]: ${error.message}`);
+
         showToast({
           status: 'error',
           title: 'Unable to update room. Please try again.',
