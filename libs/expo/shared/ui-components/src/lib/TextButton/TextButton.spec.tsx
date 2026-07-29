@@ -10,7 +10,7 @@ describe('TextButton Component', () => {
   });
 
   it('calls onPress when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <TextButton
         accessibilityHint={''}
@@ -25,7 +25,7 @@ describe('TextButton Component', () => {
   });
 
   it('does not call onPress when disabled and pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <TextButton
         title="Disabled Button"

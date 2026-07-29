@@ -5,13 +5,13 @@ import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { UsersPage } from './pages';
-import { EditBedPage } from './pages/beds/EditBedPage';
+import { BedsPage, UsersPage } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import { EditRoomPage } from './pages/rooms/EditRoomPage';
+import { CreateBedPage, EditBedPage } from './pages/shelterManagement';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -107,8 +107,14 @@ export function OperatorApp() {
                 element={<ShelterDashboardPage tab="rooms" />}
               />
               <Route
+                index
+                element={
+                  <Navigate to={mgmtRouteConfig.children.beds} replace />
+                }
+              />
+              <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
-                element={<EditBedPage />}
+                element={<CreateBedPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
@@ -116,7 +122,7 @@ export function OperatorApp() {
               />
               <Route
                 path={mgmtRouteConfig.children.beds}
-                element={<ShelterDashboardPage tab="beds" />}
+                element={<BedsPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}

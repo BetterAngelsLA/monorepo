@@ -7,7 +7,7 @@ import {
 import { ALLOWED_FILE_TYPES } from './typesHmis';
 
 // Mock the utils module to avoid expo dependencies in tests
-jest.mock('@monorepo/expo/shared/utils', () => ({
+vi.mock('@monorepo/expo/shared/utils', () => ({
   CSRF_COOKIE_NAME: 'csrftoken',
   CSRF_HEADER_NAME: 'X-CSRFToken',
   CSRF_LOGIN_PATH: '/api/login/',
@@ -16,10 +16,10 @@ jest.mock('@monorepo/expo/shared/utils', () => ({
 }));
 
 // Mock AsyncStorage before importing any modules that use it
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
+const mockGetItem = vi.fn();
+const mockSetItem = vi.fn();
 
-jest.mock('@react-native-async-storage/async-storage', () => {
+vi.mock('@react-native-async-storage/async-storage', () => {
   return {
     __esModule: true,
     default: {
@@ -30,10 +30,10 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 });
 
 // Mock CookieManager
-const mockGet = jest.fn();
-const mockSetFromResponse = jest.fn();
+const mockGet = vi.fn();
+const mockSetFromResponse = vi.fn();
 
-jest.mock('@preeternal/react-native-cookie-manager', () => {
+vi.mock('@preeternal/react-native-cookie-manager', () => {
   return {
     __esModule: true,
     default: {
@@ -44,7 +44,7 @@ jest.mock('@preeternal/react-native-cookie-manager', () => {
   };
 });
 
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 
 // Provide a global fetch mock
 (global as typeof globalThis).fetch = mockFetch;
@@ -53,7 +53,7 @@ const jsonHeaders = new Headers({ 'content-type': 'application/json' });
 
 describe('HmisClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock AsyncStorage to return the HMIS API URL and Auth Domain
     mockGetItem.mockImplementation((key) => {

@@ -8,17 +8,7 @@
     "default": ["{projectRoot}/**/*"]
   },
   "targets": {
-    "test": {
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "coverage": true
-        }
-      }
-    },
+
     "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {

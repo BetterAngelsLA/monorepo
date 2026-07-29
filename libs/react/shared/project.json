@@ -7,17 +7,5 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*"]
   },
-  "targets": {
-    "test": {
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "coverage": true
-        }
-      }
-    }
-  }
+  "targets": {}
 }
