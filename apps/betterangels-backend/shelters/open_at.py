@@ -1,7 +1,7 @@
 """Shelter open-at query — determines which shelters are open at a given datetime."""
 
 import datetime
-from typing import TYPE_CHECKING, Iterable, Sequence
+from typing import TYPE_CHECKING, Iterable
 
 from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
 from django.db.models.functions import Mod
@@ -18,7 +18,7 @@ def shelters_open_at(
     queryset: "QuerySet[Shelter]",
     *,
     dt: datetime.datetime,
-    schedule_types: Iterable[ScheduleTypeChoices] = (ScheduleTypeChoices.OPERATING,),
+    schedule_types: Iterable[ScheduleTypeChoices],
 ) -> "QuerySet[Shelter]":
     """Return shelters whose schedule says they are open at *dt* in ANY of *schedule_types*.
 
@@ -92,21 +92,16 @@ def shelters_open_at(
 
     covers = timed_covers | full_day_covers
 
-    # Deduplicate schedule_types while preserving order.  An empty iterable
-    # means "no filter" and returns the queryset unchanged.
-    unique_types: Sequence[ScheduleTypeChoices] = list(dict.fromkeys(schedule_types))
-    if not unique_types:
-        return queryset
-
     # For each requested schedule type independently:
     #   - The shelter must have a non-exception schedule row of that type
     #     covering *dt*.
     #   - The shelter must NOT have an active exception of that type
     #     covering *dt*.
     # The shelter is included in the final result if it is "open" under ANY
-    # of the requested schedule types (union / OR).
+    # of the requested schedule types (union / OR).  An empty iterable
+    # results in ``Q()``, which is a no-op filter.
     open_condition = Q()
-    for schedule_type in unique_types:
+    for schedule_type in schedule_types:
         is_open = Exists(
             Schedule.objects.filter(
                 shelter=OuterRef("pk"),
