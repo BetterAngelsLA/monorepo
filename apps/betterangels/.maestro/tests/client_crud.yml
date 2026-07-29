@@ -1,0 +1,36 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../steps/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# visit create client profile page
+- tapOn:
+    id: 'main-plus-tab-btn'
+
+- tapOn: 'Add client'
+
+- assertVisible: 'Create Client Profile'
+
+# fill out form
+- tapOn:
+    id: 'firstName'
+- inputText: 'Test-fName'
+- hideKeyboard
+
+- tapOn:
+    id: 'lastName'
+- inputText: 'Test-lName'
+- hideKeyboard
+
+# submit
+- tapOn:
+    id: 'action-btn-primary'
+
+- assertVisible: 'Test-fName Test-lName'
+- assertVisible: 'Full Name'
+- assertVisible: 'Profile'
+# Edit

@@ -121,6 +121,7 @@ export default function CreateClientProfile() {
           {FORM_FIELDS.map((item) => (
             <ControlledInput
               key={item.name}
+              testID={item.name}
               label={item.label}
               name={item.name}
               placeholder={item.placeholder}
