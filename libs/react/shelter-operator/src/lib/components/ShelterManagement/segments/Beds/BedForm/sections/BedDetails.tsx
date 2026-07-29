@@ -1,16 +1,12 @@
-import { memo } from 'react';
 import { Controller } from 'react-hook-form';
-import { CheckboxGroup } from '../../../form/CheckboxGroup';
-import { FormSection } from '../../../form/FormSection';
-import { NumberField } from '../../../form/NumberField';
-import { RadioGroup } from '../../../form/RadioGroup';
-import {
-  BOOLEAN_OPTIONS,
-  MEDICAL_NEED_OPTIONS,
-} from '../constants/bedFormOptions';
+import { CheckboxGroup } from '../../../../../form/CheckboxGroup';
+import { FormSection } from '../../../../../form/FormSection';
+import { NumberField } from '../../../../../form/NumberField';
+import { RadioGroup } from '../../../../../form/RadioGroup';
+import { BOOLEAN_OPTIONS, MEDICAL_NEED_OPTIONS } from '../formSchema';
 import type { SectionProps } from '../types';
 
-export const BedDetailsSection = memo(function BedDetailsSection({
+export function BedDetails({
   control,
   errors,
   filteredPropertyOptions,
@@ -144,4 +140,4 @@ export const BedDetailsSection = memo(function BedDetailsSection({
       />
     </FormSection>
   );
-});
+}

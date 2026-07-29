@@ -1,15 +1,13 @@
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import {
-  BedStatusChoices,
-} from '@monorepo/ba-platform/types';
-import { Button } from './base-ui/buttons';
+import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
   type StatusBadgeVariant,
-} from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
+} from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
 
 export type Bed = {
   id: string;
@@ -22,12 +20,12 @@ export type Bed = {
 type BedTableProps = {
   beds: Bed[];
   getRowKey?: (bed: Bed, index: number) => string;
-  onRowClick?: (rowObject: BedRowObject, rowIndex: number) => void;
-  onClone?: (rowObject: BedRowObject) => void;
-  onEdit?: (rowObject: BedRowObject) => void;
+  onRowClick?: (bed: Bed, rowIndex: number) => void;
+  onClone?: (bedId: string) => void;
+  onEdit?: (bedId: string) => void;
   onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (rowObject: BedRowObject) => void;
-  onReserve?: (rowObject: BedRowObject) => void;
+  onMarkReady?: (bedId: string) => void;
+  onReserve?: (bed: Bed) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -41,18 +39,13 @@ type BedTableProps = {
   rowStyle?: CSSProperties;
 };
 
-export type BedRowObject = {
-  id: string;
-  bed: Bed;
-};
-
 function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
   return status === BedStatusChoices.Available;
 }
 
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
-  maintenanceFlag?: boolean
+  maintenanceFlag?: boolean,
 ): { label: string; variant: StatusBadgeVariant } {
   if (status === BedStatusChoices.OutOfService && maintenanceFlag) {
     return {
@@ -133,49 +126,42 @@ export function BedTable({
         sortValue: (bed) => bed.room?.name ?? '',
       },
     ],
-    []
+    [],
   );
 
   return (
-    <Table<Bed, BedRowObject>
+    <Table<Bed, Bed>
       columns={columns}
       rows={beds}
       getRowKey={getRowKey ?? ((bed) => bed.id)}
-      getRowObject={(bed) => ({
-        id: bed.id,
-        bed,
-      })}
-      getRowSlot={(rowObject) => (
+      getRowSlot={(bed) => (
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
           role="group"
           aria-label="Bed actions"
         >
-          {rowObject.bed.status === BedStatusChoices.InTurnaround &&
-            onMarkReady && (
-              <Button
-                type="button"
-                variant="confirm"
-                aria-label="Mark ready"
-                onClick={() => onMarkReady(rowObject)}
-              />
-            )}
+          {bed.status === BedStatusChoices.InTurnaround && onMarkReady && (
+            <Button
+              type="button"
+              variant="confirm"
+              aria-label="Mark ready"
+              onClick={() => onMarkReady(bed.id)}
+            />
+          )}
           {onReserve && (
             <Button
               type="button"
               variant="edit"
               aria-label="Reserve bed"
-              disabled={!isBedAvailable(rowObject.bed.status)}
+              disabled={!isBedAvailable(bed.status)}
               leftIcon={
                 <BookCheck
                   size={22}
-                  stroke={
-                    !isBedAvailable(rowObject.bed.status) ? 'gray' : 'black'
-                  }
+                  stroke={!isBedAvailable(bed.status) ? 'gray' : 'black'}
                 />
               }
-              onClick={() => onReserve(rowObject)}
+              onClick={() => onReserve(bed)}
             />
           )}
           {onClone && (
@@ -184,7 +170,7 @@ export function BedTable({
               variant="edit"
               aria-label="Clone bed"
               leftIcon={<CopyPlus size={22} stroke="black" />}
-              onClick={() => onClone(rowObject)}
+              onClick={() => onClone(bed.id)}
             />
           )}
           {onEdit && (
@@ -192,7 +178,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Edit bed"
-              onClick={() => onEdit(rowObject)}
+              onClick={() => onEdit(bed.id)}
             />
           )}
           {onDeleteBeds && (
@@ -200,7 +186,7 @@ export function BedTable({
               type="button"
               variant="trash"
               aria-label="Delete bed"
-              onClick={() => onDeleteBeds([rowObject.id])}
+              onClick={() => onDeleteBeds([bed.id])}
             />
           )}
         </div>
