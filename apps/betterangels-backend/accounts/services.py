@@ -139,7 +139,9 @@ def create_organization_with_presets(
     reconcile_org_groups(org)
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
-    org.add_user(owner)
+    # Guarded so the function is safe to call repeatedly (idempotent).
+    if not org.users.filter(pk=owner.pk).exists():
+        org.add_user(owner)
 
     if owner_roles:
         OrgRoleManager(org).add_roles(owner, *owner_roles)

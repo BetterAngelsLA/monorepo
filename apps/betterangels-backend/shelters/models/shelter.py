@@ -220,7 +220,7 @@ class Shelter(BaseModel):
 @pghistory.track(
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
-    pghistory.UpdateEvent("bed.maintenance_flag_change", condition=pghistory.AnyChange("maintenance_flag")),
+    pghistory.UpdateEvent("bed.update"),
 )
 class Bed(CloneMixin, BaseModel):
     objects = BedManager()

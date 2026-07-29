@@ -1,29 +1,24 @@
-import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import { BedStatusChoices } from '../../../apollo/graphql/__generated__/types';
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
+import { useBeds, useRooms } from '../../../hooks';
 import { useCreateReservation } from '../../../hooks/useCreateReservation';
 import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
-import {
-    GetBedsDocument,
-    type GetBedsQuery,
-    type GetBedsQueryVariables,
-} from '../../beds/api/__generated__/bedQueries.generated';
 import { Form } from '../../form/Form';
-import {
-    GetRoomsDocument,
-    type GetRoomsQuery,
-    type GetRoomsQueryVariables,
-} from '../../rooms/api/__generated__/roomQueries.generated';
+
+import { createReservationMeta } from '../../../hooks/useCreateReservation/__generated__/useCreateReservation_meta.generated';
+import { updateReservationMeta } from '../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
 import type { SelectedClient } from '../components/ClientSearchInput';
 import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
 import { formSchema } from './constants/formSchema';
 import type { ReservationFormData } from './formTypes';
 import { ReservationFormSection } from './sections/ReservationFormSection';
 import {
-    buildCreateReservationInput,
-    buildUpdateReservationInput,
+  buildCreateReservationInput,
+  buildUpdateReservationInput,
 } from './utils/reservationFormInput';
 
 export type ReservationFormProps = {
@@ -45,7 +40,6 @@ export function ReservationForm({
   onSuccess,
   onCancel,
 }: ReservationFormProps) {
-  const isEditMode = Boolean(reservationId);
   const initialBedIdRef = useRef(initialData?.bedId ?? null);
 
   const defaults = createEmptyReservationFormData();
@@ -59,6 +53,7 @@ export function ReservationForm({
     control,
     handleSubmit,
     reset,
+    setError,
     setValue,
     formState: { errors, isValid },
   } = methods;
@@ -72,7 +67,7 @@ export function ReservationForm({
   });
 
   const [selectedClients, setSelectedClients] = useState<SelectedClient[]>(
-    () => initialSelectedClients ?? []
+    () => initialSelectedClients ?? [],
   );
 
   const handleAddClient = useCallback(
@@ -90,7 +85,7 @@ export function ReservationForm({
         setValue('primaryClientId', client.id);
       }
     },
-    [watchedClientIds, watchedPrimaryClientId, setValue]
+    [watchedClientIds, watchedPrimaryClientId, setValue],
   );
 
   const handleRemoveClient = useCallback(
@@ -103,51 +98,37 @@ export function ReservationForm({
         setValue('primaryClientId', newIds.length > 0 ? newIds[0] : null);
       }
     },
-    [watchedClientIds, watchedPrimaryClientId, setValue]
+    [watchedClientIds, watchedPrimaryClientId, setValue],
   );
 
   const handleSetPrimary = useCallback(
     (clientId: string) => {
       setValue('primaryClientId', clientId);
     },
-    [setValue]
+    [setValue],
   );
 
-  const { data: bedsData } = useQuery<GetBedsQuery, GetBedsQueryVariables>(
-    GetBedsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { beds } = useBeds(shelterId);
 
-  const allBeds = useMemo(() => bedsData?.beds.results ?? [], [bedsData]);
-
-  const allBedOptions = useMemo(
+  const allBeds = useMemo(
     () =>
-      allBeds.map((bed) => ({
+      beds.map((bed) => ({
         value: bed.id,
         label: `${bed.name ?? ''}${bed.room ? ` (${bed.room.name})` : ''}`,
         roomId: bed.room?.id ?? null,
       })),
-    [allBeds]
+    [beds],
   );
 
-  const { data: roomsData } = useQuery<GetRoomsQuery, GetRoomsQueryVariables>(
-    GetRoomsDocument,
-    {
-      variables: { shelterId },
-      skip: !shelterId,
-    }
-  );
+  const { rooms } = useRooms(shelterId);
 
-  const allRoomOptions = useMemo(
+  const roomOptions = useMemo(
     () =>
-      (roomsData?.rooms.results ?? []).map((room) => ({
+      (rooms ?? []).map((room) => ({
         value: room.id,
         label: room.name,
       })),
-    [roomsData?.rooms.results]
+    [rooms],
   );
 
   // ─── Dynamic read-only & filtering ──────────────────────────────────────
@@ -166,29 +147,29 @@ export function ReservationForm({
   // Free-form only: auto-populate room when a bed with a room is selected.
   useEffect(() => {
     if (!openedFromRes || !watchedBedId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId) {
       setValue('roomId', bed.roomId);
     }
-  }, [openedFromRes, watchedBedId, allBedOptions, setValue]);
+  }, [openedFromRes, watchedBedId, allBeds, setValue]);
 
   // When the room changes, clear bedId if the current bed doesn't belong to the new room.
   useEffect(() => {
     if (!watchedBedId || !watchedRoomId) return;
-    const bed = allBedOptions.find((b) => b.value === watchedBedId);
+    const bed = allBeds.find((b) => b.value === watchedBedId);
     if (bed?.roomId && bed.roomId !== watchedRoomId) {
       setValue('bedId', null);
     }
-  }, [watchedRoomId, watchedBedId, allBedOptions, setValue]);
+  }, [watchedRoomId, watchedBedId, allBeds, setValue]);
 
   // Filter bed options: only show available beds, and when a room is selected,
   // show only beds in that room. In edit mode, always include the currently
   // selected bed and the originally assigned bed so they remain visible.
   const bedOptions = useMemo(() => {
-    const availableBeds = allBeds.filter((bed) => {
+    const availableBeds = beds.filter((bed) => {
       if (bed.status === BedStatusChoices.Available) return true;
       if (
-        isEditMode &&
+        reservationId &&
         (bed.id === watchedBedId || bed.id === initialBedIdRef.current)
       )
         return true;
@@ -203,53 +184,83 @@ export function ReservationForm({
       return availableOptions.filter((b) => b.roomId === watchedRoomId);
     }
     return availableOptions;
-  }, [allBeds, watchedRoomId, isEditMode, watchedBedId]);
+  }, [beds, watchedRoomId, reservationId, watchedBedId]);
 
   // ─── Mutations ──────────────────────────────────────────────────────────
 
-  const {
-    createReservation,
-    submitting: isCreating,
-    error: createError,
-    clearError: clearCreateError,
-  } = useCreateReservation(shelterId);
+  const { createReservation, loading: isCreating } = useCreateReservation({
+    shelterId,
+  });
 
-  const {
-    updateReservation,
-    submitting: isUpdating,
-    error: updateError,
-    clearError: clearUpdateError,
-  } = useUpdateReservation(shelterId);
+  const { updateReservation, loading: isUpdating } = useUpdateReservation({
+    shelterId,
+  });
 
-  const submissionError = createError || updateError;
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const isSubmitting = isCreating || isUpdating;
 
   async function submitReservation(data: ReservationFormData) {
-    if (isEditMode && reservationId) {
-      const success = await updateReservation(
-        reservationId,
-        buildUpdateReservationInput(data)
-      );
-      if (!success) return;
-    } else {
-      const success = await createReservation(
-        buildCreateReservationInput(data)
-      );
-      if (!success) return;
-    }
+    setSubmissionError(null);
 
-    if (!isEditMode) {
-      reset();
-      setSelectedClients([]);
+    try {
+      if (reservationId) {
+        const response = await updateReservation({
+          variables: {
+            id: reservationId,
+            data: buildUpdateReservationInput(data),
+          },
+        });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateReservationMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
+        }
+      } else {
+        const response = await createReservation({
+          variables: {
+            data: buildCreateReservationInput(data),
+          },
+        });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...createReservationMeta,
+          fields: Object.keys(formSchema.shape),
+        });
+
+        if (fieldErrors.length) {
+          applyFieldErrors(fieldErrors, setError);
+          throw new BaError('Please see validation messages.');
+        }
+      }
+      if (!reservationId) {
+        reset();
+        setSelectedClients([]);
+      }
+      onSuccess?.();
+    } catch (err) {
+      const error = toError(err);
+      console.error(
+        `error ${reservationId ? 'updating' : 'creating'} reservation: ${error.message}`,
+      );
+
+      if (!(error instanceof BaError)) {
+        setSubmissionError(
+          `Unable to ${reservationId ? 'update' : 'create'} reservation. Please try again.`,
+        );
+      }
     }
-    onSuccess?.();
   }
 
   function handleCancel() {
     reset();
     setSelectedClients([]);
-    clearCreateError();
-    clearUpdateError();
     onCancel?.();
   }
 
@@ -260,10 +271,17 @@ export function ReservationForm({
       <div className="space-y-4 pb-48">
         {submissionError && (
           <div
-            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="flex items-start rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             role="alert"
           >
-            {submissionError}
+            <span className="flex-1">{submissionError}</span>
+            <button
+              onClick={() => setSubmissionError(null)}
+              className="ml-3 text-red-400 hover:text-red-600"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -279,7 +297,7 @@ export function ReservationForm({
               value,
               label,
             }))}
-            roomOptions={allRoomOptions}
+            roomOptions={roomOptions}
             bedRoomError={bedRoomError}
             readOnlyFields={effectiveReadOnlyFields}
             selectedClients={selectedClients}
@@ -297,9 +315,9 @@ export function ReservationForm({
             primaryLabel={
               isSubmitting
                 ? 'Submitting…'
-                : isEditMode
-                ? 'Save Reservation'
-                : 'Create Reservation'
+                : reservationId
+                  ? 'Save Reservation'
+                  : 'Create Reservation'
             }
           />
         </form>

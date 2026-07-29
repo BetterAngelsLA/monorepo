@@ -5,21 +5,12 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
       "cache": true
     },
     "test": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
       "cache": true
     },
     "lint": {
@@ -39,23 +30,6 @@
       ],
       "cache": true
     },
-    "@nx/jest:jest": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
-      "cache": true,
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
-    },
     "@nx/eslint:lint": {
       "inputs": [
         "default",
@@ -66,20 +40,12 @@
     },
     "@nx/js:swc": {
       "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
@@ -136,24 +102,6 @@
       }
     },
     {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
-      "include": [
-        "apps/betterangels/**/*",
-        "apps/betterangels-admin/**/*",
-        "apps/shelter-web/**/*",
-        "apps/wildfires/**/*",
-        "libs/expo/betterangels/**/*",
-        "libs/expo/shared/clients/**/*",
-        "libs/expo/shared/ui-components/**/*",
-        "libs/expo/shared/utils/**/*",
-        "libs/react/components/**/*",
-        "libs/react/shelter-operator/**/*"
-      ]
-    },
-    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"
@@ -171,6 +119,7 @@
         "libs/expo/shared/static/**/*",
         "libs/expo/shared/ui-components/**/*",
         "libs/expo/shared/utils/**/*",
+        "libs/fetch/**/*",
         "libs/react/betterangels-admin/**/*",
         "libs/react/components/**/*",
         "libs/react/icons/**/*",
@@ -197,6 +146,20 @@
         "apps/shelter-web/**/*",
         "apps/wildfires/**/*"
       ]
+    },
+    {
+      "plugin": "@nx/expo/plugin",
+      "options": {
+        "buildTargetName": "eas-build",
+        "exportTargetName": "export",
+        "installTargetName": "install",
+        "prebuildTargetName": "prebuild",
+        "runAndroidTargetName": "run-android",
+        "runIosTargetName": "run-ios",
+        "serveTargetName": "serve",
+        "startTargetName": "start",
+        "submitTargetName": "submit"
+      }
     }
   ],
   "generators": {

@@ -23,7 +23,12 @@ export const formSchema = z.object({
     .regex(Regex.email, 'Please enter a valid email address')
     .optional()
     .or(z.literal('')),
-  phone: z.string().trim().optional().or(z.literal('')), // Input dataType="phone-number" forces own message
+  phone: z
+    .string()
+    .trim()
+    .regex(Regex.phoneNumberLoose, 'Please enter a valid phone number')
+    .optional()
+    .or(z.literal('')),
   website: z
     .string()
     .trim()
@@ -34,6 +39,8 @@ export const formSchema = z.object({
 });
 
 export type BasicInfoFormData = z.infer<typeof formSchema>;
+
+export const formFieldNames = Object.keys(formSchema.shape);
 
 export const defaultFormValues: BasicInfoFormData = {
   name: '',

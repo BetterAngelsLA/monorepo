@@ -8,7 +8,7 @@
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["jest", "node"]
+    "types": ["node"]
   },
   "files": [],
   "include": [],

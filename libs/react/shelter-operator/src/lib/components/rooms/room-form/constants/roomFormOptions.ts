@@ -1,4 +1,4 @@
-import { RoomStatusChoices } from '../../../../apollo/graphql/__generated__/types';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { toDropdownOptions } from '../../../base-ui/dropdown';
 
 const ROOM_STATUS_LABELS: Record<RoomStatusChoices, string> = {

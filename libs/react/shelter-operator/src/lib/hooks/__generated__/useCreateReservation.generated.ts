@@ -1,4 +1,4 @@
-import type * as Types from '../../apollo/graphql/__generated__/types';
+import type * as Types from '@monorepo/ba-platform/types';
 
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateReservationMutationVariables = Types.Exact<{
@@ -6,9 +6,9 @@ export type CreateReservationMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateReservationMutation = { __typename?: 'Mutation', createReservation:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ReservationType', id: string, status: Types.ReservationStatusChoices, startDate?: any | null, notes?: string | null, bed?: { __typename?: 'BedType', id: string, name?: string | null } | null, room?: { __typename?: 'RoomType', id: string, name: string } | null }
+export type CreateReservationMutation = { __typename: 'Mutation', createReservation:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ReservationType', id: string, status: Types.ReservationStatusChoices, startDate?: any | null, notes?: string | null, bed?: { __typename: 'BedType', id: string, name?: string | null } | null, room?: { __typename: 'RoomType', id: string, name: string } | null }
    };
 
 

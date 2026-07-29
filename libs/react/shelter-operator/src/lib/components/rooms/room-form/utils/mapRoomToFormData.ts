@@ -3,7 +3,7 @@ import type {
   DemographicChoices,
   FunderChoices,
   PetChoices,
-} from '../../../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import type { UseRoomResultType } from '../../../../hooks/useRoom';
 import { createEmptyRoomFormData } from '../constants/defaultRoomFormData';
 import type { RoomFormData } from '../formTypes';

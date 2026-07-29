@@ -68,6 +68,10 @@ cache/
 !.yarn/sdks
 !.yarn/versions
 
+# EAS build pre-install hook copies yarn.lock into app directories
+apps/*/yarn.lock
+libs/*/*/yarn.lock
+
 # iOS build files
 apps/betterangels/ios/
 

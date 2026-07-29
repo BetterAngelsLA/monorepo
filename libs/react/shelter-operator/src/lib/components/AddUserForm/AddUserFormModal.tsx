@@ -1,4 +1,4 @@
-import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
+import { OrganizationMemberType } from '@monorepo/ba-platform/types';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import { Modal, ModalBody, ModalHeader } from '../base-ui/modal';
 import { Text } from '../base-ui/text/text';

@@ -1,2 +1,4 @@
-export type { UseReservationResultType } from './types';
-export { useReservation } from './useReservation';
+export {
+  useReservation,
+  type UseReservationResultType,
+} from './useReservation';

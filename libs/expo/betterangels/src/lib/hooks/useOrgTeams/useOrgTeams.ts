@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import type { OffsetPaginationInput } from '../../apollo/graphql/__generated__/types';
+import type { OffsetPaginationInput } from '@monorepo/ba-platform/types';
 import { TeamsDocument, TeamsQuery } from './__generated__/teams.generated';
 
 type UseOrgTeamsOptions = {

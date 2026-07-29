@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { FunderChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { useShelterCities } from '../../../../hooks';
 import { useShelterSpas } from '../../../../hooks/useShelterSpas/useShelterSpas';
@@ -17,8 +19,11 @@ import {
 import { defaultFormValues, EcosystemFormData, formSchema } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<EcosystemFormData>;
-  onSubmit?: (data: EcosystemFormData) => void;
+  values?: Partial<EcosystemFormData>;
+  onSubmit: (
+    data: EcosystemFormData,
+    setError: UseFormSetError<EcosystemFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -28,7 +33,7 @@ type TProps = {
 
 export function ShelterEcosystemForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -40,19 +45,25 @@ export function ShelterEcosystemForm(props: TProps) {
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
 
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
+
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<EcosystemFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 
@@ -65,10 +76,7 @@ export function ShelterEcosystemForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <Form.Content className="mt-8">
           <Form.Block columns={2}>
             <Controller
               name="city"
@@ -273,15 +281,15 @@ export function ShelterEcosystemForm(props: TProps) {
             />
           </Form.Block>
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

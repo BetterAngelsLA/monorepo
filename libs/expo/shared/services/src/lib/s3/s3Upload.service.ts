@@ -1,16 +1,18 @@
 /**
  * S3 upload utilities for direct client-to-S3 file uploads via presigned POSTs.
+ *
+ * Thin Expo wrapper around the shared platform-agnostic implementation.
+ * Converts a file URI to an expo-file-system File (which implements Blob)
+ * and delegates to the shared upload function.
  */
 
-import { parseS3Error } from './s3Errors';
+import { File } from 'expo-file-system';
+import {
+  uploadFileToS3WithPresignedPost as uploadBlob,
+  type PresignedPostPayload,
+} from '@monorepo/react/shared';
 
-export type PresignedPostFields = Record<string, string>;
-
-export interface PresignedPostPayload {
-  url: string;
-  fields: PresignedPostFields;
-  key: string;
-}
+export type { PresignedPostPayload } from '@monorepo/react/shared';
 
 export interface UploadFileToS3Input {
   presignedPost: PresignedPostPayload;
@@ -20,55 +22,14 @@ export interface UploadFileToS3Input {
 /**
  * Uploads a file directly to S3 using a presigned POST.
  *
- * Appends all presigned fields to a FormData payload, then appends
- * the file blob last (required by S3). Returns the S3 object key on success.
+ * Converts the file URI to an expo-file-system File (compatible with
+ * Expo's winter fetch) and delegates to the shared implementation.
  */
 export async function uploadFileToS3WithPresignedPost(
   input: UploadFileToS3Input
 ): Promise<{ key: string }> {
-  const { presignedPost, fileUri } = input;
-
-  const formData = new FormData();
-
-  const presignedFields = presignedPost.fields;
-  const presignedFieldsKey = presignedFields['key'];
-  const contentType = presignedFields['Content-Type'];
-
-  if (!contentType) {
-    throw new Error('Missing Content-Type in presigned fields');
-  }
-
-  if (!presignedPost.key) {
-    throw new Error('presignedPost.key missing.');
-  }
-
-  if (!presignedFieldsKey) {
-    throw new Error('presignedPost.fields.key missing');
-  }
-
-  if (presignedPost.key !== presignedFieldsKey) {
-    throw new Error('Presigned key mismatch between payload and fields');
-  }
-
-  // 1. append all presigned fields EXACTLY
-  for (const [fieldName, fieldValue] of Object.entries(presignedPost.fields)) {
-    formData.append(fieldName, fieldValue);
-  }
-
-  // 2. append file LAST
-  formData.append('file', {
-    uri: fileUri,
-    type: contentType,
-  } as unknown as Blob);
-
-  const response = await fetch(presignedPost.url, {
-    method: 'POST',
-    body: formData,
+  return uploadBlob({
+    presignedPost: input.presignedPost,
+    file: new File(input.fileUri),
   });
-
-  if (response.ok) {
-    return { key: presignedPost.key };
-  }
-
-  throw new Error(parseS3Error(new Error(await response.text())));
 }

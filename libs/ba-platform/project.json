@@ -3,17 +3,12 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/ba-platform/src",
   "projectType": "library",
-  "tags": [
-    "type:data-access",
-    "scope:ba-platform"
-  ],
+  "tags": ["type:data-access", "scope:ba-platform"],
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*"
-    ]
+    "default": ["{projectRoot}/**/*"]
   },
   "targets": {
-    "generate": {
+    "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {
         "cwd": "libs/ba-platform",

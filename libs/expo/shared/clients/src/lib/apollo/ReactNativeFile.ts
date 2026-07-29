@@ -19,9 +19,3 @@ export class ReactNativeFile {
     this.type = type;
   }
 }
-
-export function isReactNativeFileInstance(
-  value: unknown
-): value is ReactNativeFile {
-  return value instanceof ReactNativeFile;
-}

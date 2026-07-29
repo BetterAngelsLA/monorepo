@@ -1,9 +1,10 @@
 import type { ColumnConfig } from '@ant-design/plots';
 import { Column } from '@ant-design/plots';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { mergeDeep } from 'remeda';
 const FONT_FAMILY = "'Poppins', ui-sans-serif, system-ui, sans-serif";
+const RESIZE_DEBOUNCE_MS = 150;
 function darkenHex(hex: string, amount = 0.18): string {
   const h = hex.replace('#', '');
   const full =
@@ -38,6 +39,24 @@ export function BarChart({
   ...config
 }: BarChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('count');
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [_resizeKey, setResizeKey] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = chartContainerRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const observer = new ResizeObserver((entries) => {
+      const width = Math.round(entries[0]?.contentRect.width ?? 0);
+      clearTimeout(timer);
+      timer = setTimeout(() => setResizeKey(width), RESIZE_DEBOUNCE_MS);
+    });
+    observer.observe(el);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
 
   const defaultConfig: Partial<ColumnConfig> = {
     autoFit: true,
@@ -226,7 +245,8 @@ export function BarChart({
           )}
         </div>
       )}
-      <div className="flex-1 min-h-0">
+      <div ref={chartContainerRef} className="flex-1 min-h-0">
+        {/* Remount only when viewMode changes; rely on autoFit for resize instead of resizeKey */}
         <Column key={viewMode} {...withState} />
       </div>
     </div>

@@ -25,7 +25,7 @@ export function NavMenu(props: INavModalProps) {
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
   const { signOut } = useSignOut();
   const [teamPreference] = useUserTeamPreference();
 
@@ -51,7 +51,7 @@ export function NavMenu(props: INavModalProps) {
       <View>
         <ProfileButton
           onPress={() => onNavigate('/profile')}
-          isHmisUser={isHmisUser}
+          isHmisUser={user?.isHmisUser}
         />
 
         <BaseButton onPress={() => onNavigate('/tasks')}>

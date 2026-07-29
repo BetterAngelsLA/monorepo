@@ -37,7 +37,7 @@ const cfPath = BASE_PATH.replace(/\/$/, '');
 const s3Dest = `s3://${S3_BUCKET}/${s3Path}`;
 
 const { root } = JSON.parse(
-  execSync(`yarn nx show project "${NX_TASK_TARGET_PROJECT}" --json`, { encoding: 'utf8' })
+  execSync(`yarn nx show project "${NX_TASK_TARGET_PROJECT}" --json 2>/dev/null | sed -n '/^{/,$p'`, { encoding: 'utf8' })
 );
 const distPath = `dist/${root}`;
 

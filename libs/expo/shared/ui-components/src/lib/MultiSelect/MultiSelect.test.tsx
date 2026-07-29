@@ -7,7 +7,7 @@ interface TTestItem {
   label: string;
 }
 
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 const mockOptions: TTestItem[] = [
   { id: '1', label: 'Option A' },

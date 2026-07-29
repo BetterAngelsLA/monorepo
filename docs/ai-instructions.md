@@ -6,17 +6,18 @@ which points here.
 
 **Read the following files for full conventions:**
 
-| File                         | Contents                    |
-| ---------------------------- | --------------------------- |
-| `docs/styleguides/python.md` | Python / Django styleguide  |
-| `docs/styleguides/react.md`  | React / Frontend styleguide |
-| `docs/tooling.md`            | Commands, MCP bootstrap     |
+| File                                               | Contents                       |
+| -------------------------------------------------- | ------------------------------ |
+| `docs/styleguides/python.md`                       | Python / Django styleguide     |
+| `docs/styleguides/react.md`                        | React / Frontend styleguide    |
+| `docs/tooling.md`                                  | Commands, MCP bootstrap        |
+| `apps/betterangels-backend/docs/graphql_errors.md` | Backend GraphQL error handling |
 
 ## Iterative Learning
 
 During a session, if you identify a recurring pattern, convention, or lesson that is not
 yet in the styleguides, **proactively suggest it to the developer** as a candidate for
-addition. Frame it as: *"I've noticed [pattern]. Should I add this to the styleguide?"*
+addition. Frame it as: _"I've noticed [pattern]. Should I add this to the styleguide?"_
 This keeps the styleguides living documents that improve with every PR review.
 
 ---

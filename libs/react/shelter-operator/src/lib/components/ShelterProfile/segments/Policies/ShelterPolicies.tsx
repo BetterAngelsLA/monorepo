@@ -1,12 +1,20 @@
+import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { applyFieldErrors } from '@monorepo/react/shared';
 import { useState } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import {
+  updateShelterProfileMeta,
   useShelterOperatorProfile,
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
 import { useToast } from '../../../base-ui/toast';
 import { ShelterPoliciesForm } from './ShelterPoliciesForm';
-import { type PoliciesFormData, toFormData } from './formSchema';
+import {
+  type PoliciesFormData,
+  formFieldNames,
+  toFormData,
+} from './formSchema';
 
 function toUpdateInput(
   shelterId: string,
@@ -32,42 +40,53 @@ export function ShelterPolicies(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
+  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
 
-  async function onSubmit(data: PoliciesFormData) {
+  async function onSubmit(
+    data: PoliciesFormData,
+    setError: UseFormSetError<PoliciesFormData>
+  ) {
     try {
       const response = await updateShelter({
         variables: { data: toUpdateInput(shelterId, data) },
       });
 
-      const result = response.data?.updateShelter;
+      const fieldErrors = getFieldErrorsOrThrow({
+        response,
+        ...updateShelterProfileMeta,
+        fields: formFieldNames,
+      });
 
-      // success
-      if (result?.__typename === 'ShelterType') {
-        setEditMode(false);
+      if (fieldErrors.length) {
+        applyFieldErrors(fieldErrors, setError);
 
-        showToast({
-          status: 'success',
-          title: 'Shelter updated.',
-        });
-
-        return;
+        throw new BaError('Please see validation messages.');
       }
 
-      // error
-      // TODO: handle specific OperationInfo field errors via SDB-241
+      setEditMode(false);
+      setFormKey((k) => k + 1);
 
-      throw new Error('unexpected query error');
+      showToast({
+        status: 'success',
+        title: 'Shelter updated.',
+      });
     } catch (e) {
+      let userMessage = 'An unexpected error occurred.';
+
+      if (e instanceof BaError) {
+        userMessage = e.message;
+      }
+
       console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
         title: 'Update failed',
-        description: 'An unexpected error occurred.',
+        description: userMessage,
       });
     }
   }
@@ -82,7 +101,8 @@ export function ShelterPolicies(props: TProps) {
 
   return (
     <ShelterPoliciesForm
-      defaultValues={toFormData(shelter)}
+      key={formKey}
+      values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={() => setEditMode(true)}

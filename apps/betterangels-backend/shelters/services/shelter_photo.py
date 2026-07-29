@@ -1,33 +1,61 @@
+from dataclasses import dataclass
 from typing import Iterable
 
 from accounts.models import User
 from common.constants import DEFAULT_IMAGE_CONTENT_TYPES
-from common.services.s3 import (
-    DEFAULT_UPLOAD_EXPIRATION_SECONDS,
-    PresignedS3UploadInput,
-    generate_s3_presigned_upload_urls,
-    s3_key_exists,
-    strip_storage_location,
+from common.services import file_upload
+from common.services.file_upload import (
+    AttachmentUploadConfig,
+    UploadRequest,
+    UploadConfirmation,
+    validate_upload_batch,
 )
-from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
-from common.services.upload_token import create_upload_token, validate_upload_token
+from common.services.types import AuthorizedPresignedUploadBatch
+from common.utils import get_by_pk_or_not_found
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from shelters.enums import ShelterPhotoTypeChoices
 from shelters.models import ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
-from common.utils import get_by_pk_or_not_found
-from shelters.types.inputs import ShelterPhotoFromUploadInput, ShelterPhotoUploadItemInput, UpdateShelterPhotoInput
-
-UPLOAD_PATH = "shelters"
-SERVICE_NAME = "shelter_photo"
-
-ALLOWED_CONTENT_TYPES = DEFAULT_IMAGE_CONTENT_TYPES
-SHELTER_PHOTO_MAX_FILE_SIZE = 10_000_000
+from shelters.types.inputs import UpdateShelterPhotoInput
 
 
-def _validate_content_type(content_type: str, filename: str) -> None:
-    if content_type not in ALLOWED_CONTENT_TYPES:
-        raise ValueError(f"Unsupported content_type: {content_type} for filename={filename}.")
+SHELTER_PHOTO_CONFIG = AttachmentUploadConfig(
+    upload_path="shelters",
+    service_name="shelter_photo",
+    allowed_content_types=DEFAULT_IMAGE_CONTENT_TYPES,
+    max_file_size=settings.SHELTER_PHOTO_MAX_FILE_SIZE,
+)
+
+
+@dataclass(frozen=True)
+class ShelterPhotoResolveItem:
+    """Typed input for ``resolve_uploads`` — preserves the ``photo_type`` enum.
+
+    GraphQL resolvers receive ``photo_type`` as a ``ShelterPhotoTypeChoices``
+    enum member.  If we used ``strawberry.asdict()`` (or a plain Strawberry
+    input type) it would serialize the enum to a string, and the service layer
+    would have to parse it back — losing type safety and risking ``KeyError``.
+
+    This dataclass keeps the typed enum from schema → service so the service
+    never needs to parse strings back into enums.
+    """
+
+    presigned_key: str
+    upload_token: str
+    filename: str
+    mime_type: str
+    photo_type: ShelterPhotoTypeChoices
+
+    def to_resolve_item(self) -> UploadConfirmation:
+        """Extract the generic fields for ``validate_upload_batch``."""
+        return UploadConfirmation(
+            presigned_key=self.presigned_key,
+            upload_token=self.upload_token,
+            filename=self.filename,
+            mime_type=self.mime_type,
+        )
 
 
 def create_presigned_uploads(
@@ -35,48 +63,15 @@ def create_presigned_uploads(
     user: User,
     organization_id: str,
     shelter_id: int | str,
-    uploads: Iterable[ShelterPhotoUploadItemInput],
+    uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
+    """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
     shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
-
-    mapped_uploads: list[PresignedS3UploadInput] = []
-
-    for upload in uploads:
-        _validate_content_type(upload.content_type, upload.filename)
-
-        mapped_uploads.append(
-            {
-                "ref_id": upload.ref_id,
-                "filename": upload.filename,
-                "content_type": upload.content_type,
-                "upload_path": UPLOAD_PATH,
-                "max_file_size": SHELTER_PHOTO_MAX_FILE_SIZE,
-            }
-        )
-
-    presigned_batch = generate_s3_presigned_upload_urls(uploads=mapped_uploads)
-
-    authorized_uploads: list[AuthorizedPresignedUpload] = []
-
-    for item in presigned_batch["uploads"]:
-        upload_token = create_upload_token(
-            key=item["key"],
-            user_id=user.pk,
-            expires_in_seconds=DEFAULT_UPLOAD_EXPIRATION_SECONDS,
-            scope=SERVICE_NAME,
-        )
-
-        authorized_uploads.append(
-            {
-                "ref_id": item["ref_id"],
-                "url": item["url"],
-                "fields": item["fields"],
-                "presigned_key": item["key"],
-                "upload_token": upload_token,
-            }
-        )
-
-    return AuthorizedPresignedUploadBatch(uploads=authorized_uploads)
+    return file_upload.create_presigned_uploads(
+        user=user,
+        uploads=uploads,
+        config=SHELTER_PHOTO_CONFIG,
+    )
 
 
 def resolve_uploads(
@@ -84,40 +79,35 @@ def resolve_uploads(
     user: User,
     organization_id: str,
     shelter_id: int | str,
-    photos: Iterable[ShelterPhotoFromUploadInput],
+    photos: Iterable[ShelterPhotoResolveItem],
 ) -> list[ShelterPhoto]:
-    # Validate the entire batch before any DB writes.
+    """Validate tokens + S3 → create ShelterPhoto rows (Phase 3).
+
+    Accepts typed ``ShelterPhotoResolveItem`` instances so that
+    ``photo_type`` arrives as a ``ShelterPhotoTypeChoices`` enum member
+    — no string parsing, no ``KeyError`` possible.
+    """
     photo_list = list(photos)
 
-    for photo in photo_list:
-        _validate_content_type(photo.content_type, photo.filename)
-
-        if not validate_upload_token(
-            upload_token=photo.upload_token,
-            key=photo.presigned_key,
-            user_id=user.pk,
-            scope=SERVICE_NAME,
-        ):
-            raise ValueError(f"Invalid or expired upload token for '{photo.filename}'")
-
-        if not s3_key_exists(key=photo.presigned_key):
-            raise ValueError(f"File not found in storage for '{photo.filename}'")
-
-    # Validations passed — persist photos.
-    created: list[ShelterPhoto] = []
+    # Validate the generic fields through the shared pipeline.
+    validated = validate_upload_batch(
+        user=user,
+        uploads=(p.to_resolve_item() for p in photo_list),
+        config=SHELTER_PHOTO_CONFIG,
+    )
 
     shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
+    created: list[ShelterPhoto] = []
 
     with transaction.atomic():
-        for photo in photo_list:
-            file_path = strip_storage_location(photo.presigned_key)
-
-            shelter_photo = ShelterPhoto.objects.create(
-                shelter=shelter,
-                file=file_path,
-                type=photo.photo_type,
+        for photo, item in zip(photo_list, validated):
+            created.append(
+                ShelterPhoto.objects.create(
+                    shelter=shelter,
+                    file=item.file_path,
+                    type=photo.photo_type,
+                )
             )
-            created.append(shelter_photo)
 
     return created
 

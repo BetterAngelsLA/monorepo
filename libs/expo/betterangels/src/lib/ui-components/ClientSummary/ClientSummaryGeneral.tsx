@@ -45,7 +45,8 @@ export default function ClientSummaryGeneral(
         limit: 0,
       },
     },
-    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'cache-first',
   });
   const clientPhoneNumber =
     client.phoneNumbers?.find((item) => item.isPrimary)?.number ||

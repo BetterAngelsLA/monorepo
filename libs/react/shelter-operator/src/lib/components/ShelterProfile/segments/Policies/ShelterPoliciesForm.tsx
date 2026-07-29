@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ExitPolicyChoices } from '@monorepo/react/shelter';
+import { useMemo } from 'react';
+import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { ComboBox } from '../../../base-ui/combo-box';
 import { Dropdown } from '../../../base-ui/dropdown';
@@ -14,8 +16,11 @@ import {
 import { defaultFormValues, formSchema, PoliciesFormData } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<PoliciesFormData>;
-  onSubmit?: (data: PoliciesFormData) => void;
+  values?: Partial<PoliciesFormData>;
+  onSubmit: (
+    data: PoliciesFormData,
+    setError: UseFormSetError<PoliciesFormData>
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -25,7 +30,7 @@ type TProps = {
 
 export function ShelterPoliciesForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -34,19 +39,25 @@ export function ShelterPoliciesForm(props: TProps) {
     className,
   } = props;
 
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values]
+  );
+
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
   } = useForm<PoliciesFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
     mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
     onCancel?.();
   }
 
@@ -59,10 +70,7 @@ export function ShelterPoliciesForm(props: TProps) {
           className="pl-5"
         />
 
-        <form
-          className="flex flex-col gap-10 mt-8"
-          onSubmit={onSubmit ? handleSubmit(onSubmit) : undefined}
-        >
+        <Form.Content className="mt-8">
           <Form.Block columns={3}>
             <Controller
               name="maxStay"
@@ -220,15 +228,15 @@ export function ShelterPoliciesForm(props: TProps) {
             )}
           />
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={handleSubmit(onSubmit)}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
               primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

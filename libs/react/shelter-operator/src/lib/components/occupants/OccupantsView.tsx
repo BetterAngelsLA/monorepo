@@ -1,8 +1,8 @@
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '../../apollo/graphql/__generated__/types';
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { useReservations } from '../../hooks/useReservations';
-import type { GetReservationsQuery } from '../../hooks/useReservations/__generated__/useReservations.generated';
+import type { ReservationsQuery } from '../../hooks/useReservations/__generated__/useReservations.generated';
 import { OccupantTable, type OccupantRow } from './OccupantTable';
 
 const ACTIVE_STATUSES: Set<ReservationStatusChoices> = new Set([
@@ -12,13 +12,13 @@ const ACTIVE_STATUSES: Set<ReservationStatusChoices> = new Set([
 ]);
 
 type ReservationResult = NonNullable<
-  GetReservationsQuery['reservations']['results'][number]
+  ReservationsQuery['reservations']['results'][number]
 >;
 
 export function OccupantsView({ shelterId }: { shelterId: string }) {
   const { reservations, loading } = useReservations(shelterId);
 
-  const rows: OccupantRow[] = useMemo(() => {
+  const occupants: OccupantRow[] = useMemo(() => {
     const results: ReservationResult[] = reservations;
     return results
       .filter((r) => ACTIVE_STATUSES.has(r.status))
@@ -38,5 +38,5 @@ export function OccupantsView({ shelterId }: { shelterId: string }) {
       );
   }, [reservations]);
 
-  return <OccupantTable rows={rows} loading={loading} />;
+  return <OccupantTable occupants={occupants} loading={loading} />;
 }

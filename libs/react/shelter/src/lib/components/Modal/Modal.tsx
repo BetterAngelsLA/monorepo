@@ -11,8 +11,8 @@ import {
 import { ModalMask } from './ModalMask';
 
 export enum ModalAnimationEnum {
-  SLIDE_UP = 'animate-slideInUp',
-  EXPAND = 'animate-expandInOut',
+  SLIDE_UP = 'animate-slide-in-up',
+  EXPAND = 'animate-expand-in-out',
 }
 
 export type TModalType = 'drawer' | 'fullscreen' | 'default';

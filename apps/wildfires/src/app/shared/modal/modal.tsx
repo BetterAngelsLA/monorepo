@@ -6,8 +6,8 @@ import { modalAtom } from '../atoms/modalAtom';
 import { ModalMask } from './modalMask';
 
 export enum ModalAnimationEnum {
-  SLIDE_UP = 'animate-slideInUp',
-  EXPAND = 'animate-expandInOut',
+  SLIDE_UP = 'animate-slide-in-up',
+  EXPAND = 'animate-expand-in-out',
   NAV = 'animate-nav',
 }
 

@@ -1,4 +1,4 @@
-import { mergeCss, Regex } from '@monorepo/react/shared';
+import { mergeCss } from '@monorepo/react/shared';
 import { AlertCircle } from 'lucide-react';
 import type {
   FocusEvent,
@@ -11,47 +11,6 @@ import { Text } from '../text/text';
 import type { InputDataType, InputProps } from './types';
 import { normalizeUrlScheme } from './utils/normalizeUrlScheme';
 
-const validationPatterns: Record<InputDataType, RegExp> = {
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  'phone-number': /^[\d\s\-+()]*\d[\d\s\-+()]*$/,
-  number: /^-?\d+(\.\d+)?$/,
-  time: /^([01]\d|2[0-3]):([0-5]\d)$/,
-  date: /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/,
-  url: Regex.url,
-  // Match any non-empty string, including multiline textarea values.
-  string: /[\s\S]+/,
-};
-
-const normalizeValue = (
-  value: string | number | readonly string[] | undefined
-): string => {
-  if (value === undefined) return '';
-  if (Array.isArray(value)) {
-    // For multi-value inputs, treat concatenated trimmed values as the content
-    return value.join('').trim();
-  }
-  return String(value).trim();
-};
-
-/** True when the value is non-empty for validation (treats `0` as present, unlike `!value`). */
-const hasContentForDataTypeCheck = (
-  value: string | number | readonly string[] | undefined
-): boolean => {
-  if (value === undefined) return false;
-  if (typeof value === 'number') return true;
-  return normalizeValue(value) !== '';
-};
-
-const dataTypeLabels: Partial<Record<InputDataType, string>> = {
-  'phone-number': 'phone number',
-  email: 'email',
-  number: 'number',
-  time: 'time',
-  date: 'date',
-  string: 'value',
-  url: 'URL',
-};
-
 const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
   string: 'text',
   number: 'number',
@@ -60,31 +19,6 @@ const inputTypeByDataType: Partial<Record<InputDataType, string>> = {
   time: 'time',
   date: 'date',
   url: 'url',
-};
-
-const isValueValid = (
-  value: string | number | readonly string[] | undefined,
-  dataType?: InputDataType
-): boolean => {
-  if (!dataType || !hasContentForDataTypeCheck(value)) return true;
-  const stringValue = normalizeValue(value);
-  if (!stringValue) return false;
-  const pattern = validationPatterns[dataType];
-  return pattern.test(stringValue);
-};
-
-const getDefaultErrorMessage = (
-  dataType?: InputDataType,
-  isRequiredError?: boolean
-): string | undefined => {
-  if (isRequiredError) {
-    return 'This field is required';
-  }
-  if (dataType) {
-    const label = dataTypeLabels[dataType] ?? dataType;
-    return `Please enter a valid ${label}`;
-  }
-  return undefined;
 };
 
 export const Input = forwardRef<
@@ -106,7 +40,6 @@ export const Input = forwardRef<
     inputClassName,
     isActive = false,
     showErrorIcon = true,
-    isTouched: controlledTouched,
     onFocus: externalOnFocus,
     onBlur: externalOnBlur,
     rightAdornment,
@@ -115,38 +48,17 @@ export const Input = forwardRef<
   },
   ref
 ) {
-  const [internalTouched, setInternalTouched] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const isTouched = controlledTouched ?? internalTouched;
   const isViewEditMode = typeof isViewMode === 'boolean';
   const isParagraph = variant === 'paragraph';
   const paragraphRows = rows ?? 3;
-  const inputType = inputTypeByDataType[dataType as InputDataType] ?? 'text';
+  const inputType = (dataType && inputTypeByDataType[dataType]) ?? 'text';
 
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
 
-  // Determine if there's a required validation error
-  const isRequiredError = required && !normalizeValue(value);
-
-  // Check if value fails dataType validation
-  const isDataTypeError = Boolean(
-    dataType &&
-      hasContentForDataTypeCheck(value) &&
-      !isValueValid(value, dataType)
-  );
-
-  // Generate error message: use custom error if provided, otherwise auto-generate
-  let displayError = error;
-  if (!displayError && isRequiredError) {
-    displayError = getDefaultErrorMessage(dataType, true);
-  } else if (!displayError && isDataTypeError) {
-    displayError = getDefaultErrorMessage(dataType, false);
-  }
-
-  const hasError = Boolean(displayError);
-  const shouldShowError = hasError && isTouched && !isFocused;
+  const shouldShowError = Boolean(error) && !isFocused;
 
   const handleFocus = (
     e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -159,7 +71,6 @@ export const Input = forwardRef<
     e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setIsFocused(false);
-    setInternalTouched(true);
 
     // Auto-prepend https:// for url fields when no scheme is present
     if (dataType === 'url') {
@@ -257,7 +168,7 @@ export const Input = forwardRef<
 
       {shouldShowError && (
         <Text id={messageId} variant="caption" className="text-red-500">
-          {displayError}
+          {error}
         </Text>
       )}
     </div>
