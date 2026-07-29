@@ -63,8 +63,6 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const handleClone = useCallback(
     async (bedId: string) => {
-      const errorMessage = 'Unable to clone bed. Please try again.';
-
       try {
         const response = await cloneBed({ variables: { id: bedId } });
 
@@ -74,14 +72,14 @@ export function Beds({ shelterId }: { shelterId: string }) {
           fields: ['id'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error cloning bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to clone bed. Please try again.',
           persistent: true,
         });
       }
@@ -102,9 +100,6 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const handleDelete = useCallback(
     async (ids: string[]) => {
-      const plural = ids.length > 1 ? 's' : '';
-      const errorMessage = `Unable to delete bed${plural}. Please try again.`;
-
       try {
         const response = await deleteBeds({ variables: { data: { ids } } });
 
@@ -114,14 +109,14 @@ export function Beds({ shelterId }: { shelterId: string }) {
           fields: ['ids'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error deleting bed${plural}: ${error.message}`);
+        console.error(`error deleting beds: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: `Unable to delete bed${ids.length > 1 ? 's' : ''}. Please try again.`,
           persistent: true,
         });
       }
@@ -131,8 +126,6 @@ export function Beds({ shelterId }: { shelterId: string }) {
 
   const handleMarkReady = useCallback(
     async (bedId: string) => {
-      const errorMessage = 'Unable to update bed. Please try again.';
-
       try {
         const response = await updateBed({
           variables: {
@@ -147,14 +140,14 @@ export function Beds({ shelterId }: { shelterId: string }) {
           fields: ['lastCleaned'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error updating bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to update bed. Please try again.',
           persistent: true,
         });
       }
