@@ -3,9 +3,8 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
-import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { monorepoTsconfigAliases, svgTestResolver } from '../../libs/vite-utils/src/index';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../libs/vitest-config/src/index';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
@@ -34,18 +33,10 @@ export default defineConfig(({ mode }) => {
 
   plugins: [
     react(),
-    rawSvgPlugin(),
     baseHrefPlugin(basePath),
-    {
-      name: 'vitest-svg-resolver',
-      enforce: 'pre',
-      resolveId(id: string) {
-        if (id.endsWith('.svg')) {
-          return path.resolve(__dirname, 'src/__mocks__/svgStub.ts');
-        }
-        return null;
-      },
-    },
+    // Vite handles ?raw SVG imports natively.
+    // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
+    ...(process.env.VITEST ? [svgTestResolver(__dirname)] : []),
   ],
 
   resolve: {
