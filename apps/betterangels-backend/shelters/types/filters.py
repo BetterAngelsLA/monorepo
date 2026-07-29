@@ -26,7 +26,6 @@ from shelters.enums import (
     AccessibilityChoices,
     BedStatusChoices,
     BedTypeChoices,
-    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
@@ -42,7 +41,7 @@ from shelters.enums import (
     SpecialSituationRestrictionChoices,
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
-from shelters.open_at import _time_and_day_condition
+from shelters.open_at import shelters_open_at
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -178,42 +177,15 @@ class ShelterFilter:
         if not value:
             return queryset, Q()
 
-        dt = get_current_shelter_schedule_datetime()
-        day = DayOfWeekChoices.from_date(dt.date())
-        yesterday = DayOfWeekChoices.from_date((dt - datetime.timedelta(days=1)).date())
-        time = dt.time()
-        date = dt.date()
-
         from shelters.models import Schedule
 
-        time_day = _time_and_day_condition(time=time, day=day, yesterday=yesterday)
+        open_pks = shelters_open_at(
+            queryset,
+            dt=get_current_shelter_schedule_datetime(),
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        ).values("pk")
 
-        is_open = Exists(
-            Schedule.objects.filter(
-                shelter=OuterRef("pk"),
-                schedule_type=ScheduleTypeChoices.OPERATING,
-                is_exception=False,
-            ).filter(
-                time_day,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
-            )
-        )
-
-        covers_now = _time_and_day_condition(time=time, day=day, yesterday=yesterday, include_full_day=True)
-        has_active_exception = Exists(
-            Schedule.objects.filter(
-                shelter=OuterRef("pk"),
-                schedule_type=ScheduleTypeChoices.OPERATING,
-                is_exception=True,
-            ).filter(
-                covers_now,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
-            )
-        )
-
-        open_condition = is_open & ~has_active_exception
+        open_condition = Q(pk__in=open_pks)
 
         if value.include_null:
             has_no_operating_schedule = ~Exists(
