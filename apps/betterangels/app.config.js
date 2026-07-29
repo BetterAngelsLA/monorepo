@@ -105,7 +105,7 @@ export default {
           toolsButton: false,
           skipOnboarding: true,
           showMenuAtLaunch: false,
-          // Seee: https://github.com/expo/expo/blob/main/packages/expo-dev-launcher/plugin/src/pluginConfig.ts
+          // See: https://github.com/expo/expo/blob/main/packages/expo-dev-launcher/plugin/src/pluginConfig.ts
         },
       ],
       [
