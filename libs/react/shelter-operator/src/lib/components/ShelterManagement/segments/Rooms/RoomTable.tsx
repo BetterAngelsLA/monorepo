@@ -20,6 +20,11 @@ type RoomTableProps = {
   rooms: Room[];
   getRowKey?: (item: Room, index: number) => string;
   onRowClick?: (room: Room, rowIndex: number) => void;
+  onClone?: (roomId: string) => void;
+  onEdit?: (roomId: string) => void;
+  onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
+  onMarkReady?: (bedId: string) => void;
+  onReserve?: (roomId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -31,10 +36,6 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onEdit?: (roomId: string) => void;
-  onClone?: (roomId: string) => void;
-  onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
-  onReserve?: (roomId: string) => void;
 };
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
@@ -61,6 +62,11 @@ export function RoomTable({
   rooms,
   getRowKey,
   onRowClick,
+  onEdit,
+  onClone,
+  onDeleteRooms,
+  onMarkReady,
+  onReserve,
   loading,
   loadingState,
   emptyState,
@@ -72,10 +78,6 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onEdit,
-  onClone,
-  onDeleteRooms,
-  onReserve,
 }: RoomTableProps) {
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -115,7 +117,15 @@ export function RoomTable({
           role="group"
           aria-label="Room actions"
         >
-          {onReserve && (
+          {room.status === RoomStatusChoices.InTurnaround && onMarkReady && (
+            <Button
+              type="button"
+              variant="confirm"
+              aria-label="Mark ready"
+              onClick={() => onMarkReady(room.id)}
+            />
+          )}
+          {room.status === RoomStatusChoices.Available && onReserve && (
             <Button
               type="button"
               variant="edit"

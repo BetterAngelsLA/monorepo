@@ -149,7 +149,7 @@ export function BedTable({
               onClick={() => onMarkReady(bed.id)}
             />
           )}
-          {onReserve && (
+          {bed.status === BedStatusChoices.Available && onReserve && (
             <Button
               type="button"
               variant="edit"

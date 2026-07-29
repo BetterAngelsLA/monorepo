@@ -4,8 +4,14 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCloneRoom, useDeleteRooms, useRooms } from '../../../../hooks';
+import {
+  useCloneRoom,
+  useDeleteRooms,
+  useUpdateRoom,
+  useRooms,
+} from '../../../../hooks';
 import { cloneRoomMeta } from '../../../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
+import { updateRoomMeta } from '../../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
 import { deleteRoomsMeta } from '../../../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
 import {
   shelterCreateResourceRoute,
@@ -29,6 +35,8 @@ export function Rooms({ shelterId }: { shelterId: string }) {
 
   const { cloneRoom } = useCloneRoom({ shelterId });
   const { deleteRooms } = useDeleteRooms({ shelterId });
+  const { updateRoom } = useUpdateRoom();
+
   const { showToast } = useToast();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
@@ -115,6 +123,47 @@ export function Rooms({ shelterId }: { shelterId: string }) {
     [deleteRooms, showToast],
   );
 
+  const handleMarkReady = useCallback(
+    async (roomId: string) => {
+      try {
+        const response = await updateRoom({
+          variables: {
+            id: roomId,
+            data: { lastCleaned: new Date().toISOString() },
+          },
+        });
+
+        const fieldErrors = getFieldErrorsOrThrow({
+          response,
+          ...updateRoomMeta,
+          fields: ['lastCleaned'],
+        });
+        if (fieldErrors.length) {
+          throw new Error('Field validation failed');
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`error updating room: ${error.message}`);
+        showToast({
+          status: 'error',
+          title: 'Unable to update room. Please try again.',
+          persistent: true,
+        });
+      }
+    },
+    [updateRoom, showToast],
+  );
+
+  const [readyRoomId, setReadyRoomId] = useState<string | null>(null);
+
+  const closeReadyConfirmation = useCallback(() => {
+    setReadyRoomId(null);
+  }, []);
+
+  const handleMarkReadyRequest = useCallback((roomId: string) => {
+    setReadyRoomId(roomId);
+  }, []);
+
   const handleReserve = useCallback(
     (roomId: string) => {
       navigate(shelterCreateResourceRoute(shelterId, 'reservation'), {
@@ -134,6 +183,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
           onDeleteRooms={(roomIds, roomName) =>
             handleDeleteRequest(roomIds, roomName)
           }
+          onMarkReady={handleMarkReadyRequest}
           onReserve={handleReserve}
           loading={loading}
         />
@@ -157,6 +207,27 @@ export function Rooms({ shelterId }: { shelterId: string }) {
           onClick: closeDeleteConfirmation,
         }}
       />
+
+      {readyRoomId && (
+        <ConfirmationModal
+          isOpen={true}
+          onClose={closeReadyConfirmation}
+          variant="success"
+          title="Mark room as ready?"
+          description="This will mark the room as cleaned and ready for use."
+          primaryAction={{
+            label: 'Mark Ready',
+            onClick: async () => {
+              await handleMarkReady(readyRoomId);
+              closeReadyConfirmation();
+            },
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeReadyConfirmation,
+          }}
+        />
+      )}
 
       <div className="fixed bottom-6 right-6 text-sm z-20 ">
         <Button
