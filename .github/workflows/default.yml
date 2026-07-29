@@ -118,6 +118,12 @@ jobs:
         run: |
           docker compose up -d
 
+      - name: 🔒 Check uv.lock is in sync
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          uv lock --check
+          EOF
+
       - name: 🧹 Lint
         run: |
           docker compose run better-angels bash <<'EOF'
