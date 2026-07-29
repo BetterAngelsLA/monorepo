@@ -11,6 +11,7 @@ import {
   paths,
   shelterMgmtRoute,
 } from '../../routing';
+import { ShelterMgmtLinks } from './ShelterMgmtLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
@@ -79,6 +80,11 @@ export function AppSidebar(props: IProps) {
             </Sidebar.Link>
 
             <ShelterProfileLinks
+              pathname={location.pathname}
+              shelterId={shelterId}
+              isOpen={isOpen}
+            />
+            <ShelterMgmtLinks
               pathname={location.pathname}
               shelterId={shelterId}
               isOpen={isOpen}

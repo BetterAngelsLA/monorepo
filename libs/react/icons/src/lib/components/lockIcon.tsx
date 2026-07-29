@@ -1,4 +1,4 @@
-import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/lucide_contributors/svg/lucide:lock.svg';
+import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/lucide_contributors/svg/lucide:lock.svg?raw';
 
 import { createSvgComponent } from '../../toComponent';
 

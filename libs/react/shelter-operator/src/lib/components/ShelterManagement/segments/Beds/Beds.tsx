@@ -3,20 +3,25 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBeds, useCloneBed, useDeleteBeds, useUpdateBed } from '../../hooks';
-import { cloneBedMeta } from '../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
-import { deleteBedsMeta } from '../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
-import { updateBedMeta } from '../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import {
+  useBeds,
+  useCloneBed,
+  useDeleteBeds,
+  useUpdateBed,
+} from '../../../../hooks';
+import { cloneBedMeta } from '../../../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
+import { deleteBedsMeta } from '../../../../hooks/useDeleteBeds/__generated__/useDeleteBeds_meta.generated';
+import { updateBedMeta } from '../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
 import {
   shelterCreateResourceRoute,
   shelterEditResourceRoute,
-} from '../../routing';
-import { Button } from '../base-ui/buttons';
-import { ConfirmationModal } from '../base-ui/modal/ConfirmationModal';
-import { useToast } from '../base-ui/toast';
-import { BedTable, type Bed, type BedRowObject } from '../BedTable';
+} from '../../../../routing';
+import { Button } from '../../../base-ui/buttons';
+import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
+import { useToast } from '../../../base-ui/toast';
+import { BedTable, type Bed } from './BedTable';
 
-export function BedsView({ shelterId }: { shelterId: string }) {
+export function Beds({ shelterId }: { shelterId: string }) {
   const navigate = useNavigate();
 
   const { beds: bedsData, loading } = useBeds(shelterId);
@@ -57,11 +62,9 @@ export function BedsView({ shelterId }: { shelterId: string }) {
       : `Are you sure you want to delete the ${deleteConfirmation.bedIds.length} selected beds?`;
 
   const handleClone = useCallback(
-    async (rowObject: BedRowObject) => {
-      const errorMessage = 'Unable to clone bed. Please try again.';
-
+    async (bedId: string) => {
       try {
-        const response = await cloneBed({ variables: { id: rowObject.id } });
+        const response = await cloneBed({ variables: { id: bedId } });
 
         const fieldErrors = getFieldErrorsOrThrow({
           response,
@@ -69,14 +72,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['id'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error cloning bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to clone bed. Please try again.',
           persistent: true,
         });
       }
@@ -85,8 +88,8 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   );
 
   const handleEdit = useCallback(
-    (rowObject: BedRowObject) => {
-      navigate(shelterEditResourceRoute(shelterId, 'bed', rowObject.id));
+    (bedId: string) => {
+      navigate(shelterEditResourceRoute(shelterId, 'bed', bedId));
     },
     [navigate, shelterId],
   );
@@ -97,9 +100,6 @@ export function BedsView({ shelterId }: { shelterId: string }) {
 
   const handleDelete = useCallback(
     async (ids: string[]) => {
-      const plural = ids.length > 1 ? 's' : '';
-      const errorMessage = `Unable to delete bed${plural}. Please try again.`;
-
       try {
         const response = await deleteBeds({ variables: { data: { ids } } });
 
@@ -109,14 +109,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['ids'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error deleting bed${plural}: ${error.message}`);
+        console.error(`error deleting beds: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: `Unable to delete bed${ids.length > 1 ? 's' : ''}. Please try again.`,
           persistent: true,
         });
       }
@@ -125,13 +125,11 @@ export function BedsView({ shelterId }: { shelterId: string }) {
   );
 
   const handleMarkReady = useCallback(
-    async (rowObject: BedRowObject) => {
-      const errorMessage = 'Unable to update bed. Please try again.';
-
+    async (bedId: string) => {
       try {
         const response = await updateBed({
           variables: {
-            id: rowObject.id,
+            id: bedId,
             data: { lastCleaned: new Date().toISOString() },
           },
         });
@@ -142,14 +140,14 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           fields: ['lastCleaned'],
         });
         if (fieldErrors.length) {
-          throw new Error(errorMessage);
+          throw new Error('Field validation failed');
         }
       } catch (err) {
         const error = toError(err);
         console.error(`error updating bed: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to update bed. Please try again.',
           persistent: true,
         });
       }
@@ -157,31 +155,26 @@ export function BedsView({ shelterId }: { shelterId: string }) {
     [updateBed, showToast],
   );
 
-  const [readyConfirmation, setReadyConfirmation] = useState<{
-    isOpen: boolean;
-    rowObject: BedRowObject | null;
-  }>({ isOpen: false, rowObject: null });
+  const [readyBedId, setReadyBedId] = useState<string | null>(null);
 
   const closeReadyConfirmation = useCallback(() => {
-    setReadyConfirmation({ isOpen: false, rowObject: null });
+    setReadyBedId(null);
   }, []);
 
-  const handleMarkReadyRequest = useCallback((rowObject: BedRowObject) => {
-    setReadyConfirmation({ isOpen: true, rowObject });
+  const handleMarkReadyRequest = useCallback((bedId: string) => {
+    setReadyBedId(bedId);
   }, []);
 
   const handleReserve = useCallback(
-    (rowObject: BedRowObject) => {
+    (bed: Bed) => {
       const state: Record<string, string | null> = {
-        bedId: rowObject.id,
-        roomId: rowObject.bed.room?.id ?? null,
+        bedId: bed.id,
+        roomId: bed.room?.id ?? null,
       };
       navigate(shelterCreateResourceRoute(shelterId, 'reservation'), { state });
     },
     [navigate, shelterId],
   );
-  const readyRowObject = readyConfirmation.rowObject;
-
   return (
     <>
       <div>
@@ -215,9 +208,9 @@ export function BedsView({ shelterId }: { shelterId: string }) {
         }}
       />
 
-      {readyRowObject && (
+      {readyBedId && (
         <ConfirmationModal
-          isOpen={readyConfirmation.isOpen}
+          isOpen={true}
           onClose={closeReadyConfirmation}
           variant="success"
           title="Mark bed as ready?"
@@ -225,7 +218,7 @@ export function BedsView({ shelterId }: { shelterId: string }) {
           primaryAction={{
             label: 'Mark Ready',
             onClick: async () => {
-              await handleMarkReady(readyRowObject);
+              await handleMarkReady(readyBedId);
               closeReadyConfirmation();
             },
           }}

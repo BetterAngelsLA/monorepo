@@ -174,11 +174,7 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['.*libs/tailwind.*'],
-          // NX misreads TypeScript import('module').Type expressions in
-          // generated files as JavaScript dynamic import() calls, marking
-          // ba-platform as "lazy-loaded". This suppresses the false positive.
-          checkDynamicDependenciesExceptions: ['@monorepo/ba-platform'],
+          allow: ['.*libs/tailwind.*', 'libs/vite-utils/.*'],
           depConstraints,
         },
       ],

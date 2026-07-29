@@ -33,7 +33,12 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['.*libs/tailwind.*', '^.*\\.svg$'],
+          allow: [
+            // TODO(DEV-2482): Replace relative SVG imports with package-level
+            // paths (e.g. @monorepo/icons/assets/...) so this exemption can
+            // be removed and Nx can properly enforce boundaries.
+            '^.*\\.svg(\\?raw)?$',
+          ],
           depConstraints,
         },
       ],

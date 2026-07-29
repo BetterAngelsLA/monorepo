@@ -8,16 +8,18 @@ import {
   useFilteredPropertyOptions,
   useRooms,
   useUpdateBed,
-} from '../../../hooks';
-import { createBedMeta } from '../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
-import { updateBedMeta } from '../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
-import { Form } from '../../form/Form';
+} from '../../../../../hooks';
+import { createBedMeta } from '../../../../../hooks/useCreateBed/__generated__/useCreateBed_meta.generated';
+import { updateBedMeta } from '../../../../../hooks/useUpdateBed/__generated__/useUpdateBed_meta.generated';
+import { Form } from '../../../../form/Form';
 import { buildCreateBedInput, buildUpdateBedInput } from './bedFormInput';
-import { createEmptyBedFormData } from './constants/defaultBedFormData';
-import { formSchema } from './constants/formSchema';
-import type { BedFormData } from './formTypes';
-import { BasicInformationSection } from './sections/BasicInformationSection';
-import { BedDetailsSection } from './sections/BedDetailsSection';
+import {
+  type BedFormData,
+  createEmptyBedFormData,
+  formSchema,
+} from './formSchema';
+import { BedBasicInfo } from './sections/BedBasicInfo';
+import { BedDetails } from './sections/BedDetails';
 
 export type BedFormProps = {
   shelterId: string;
@@ -56,7 +58,7 @@ export function BedForm({
         value: room.id,
         label: room.name,
       })),
-    [rooms]
+    [rooms],
   );
 
   const filteredPropertyOptions = useFilteredPropertyOptions(shelterId);
@@ -117,12 +119,12 @@ export function BedForm({
     } catch (err) {
       const error = toError(err);
       console.error(
-        `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`
+        `error ${bedId ? 'updating' : 'creating'} bed: ${error.message}`,
       );
 
       if (!(error instanceof BaError)) {
         setSubmissionError(
-          `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`
+          `Unable to ${bedId ? 'update' : 'create'} bed. Please try again.`,
         );
       }
     }
@@ -157,12 +159,12 @@ export function BedForm({
           className="space-y-6"
           data-testid="bed-form"
         >
-          <BasicInformationSection
+          <BedBasicInfo
             control={control}
             errors={errors}
             roomOptions={roomOptions}
           />
-          <BedDetailsSection
+          <BedDetails
             control={control}
             errors={errors}
             filteredPropertyOptions={filteredPropertyOptions}

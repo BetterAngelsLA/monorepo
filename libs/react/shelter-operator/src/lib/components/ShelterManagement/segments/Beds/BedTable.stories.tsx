@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { BedStatusChoices } from '@monorepo/ba-platform/types';
-import { BedTable, type Bed, type BedRowObject } from './BedTable';
+import { BedTable, type Bed } from './BedTable';
 
 const bed = (
   id: string,
@@ -8,7 +8,7 @@ const bed = (
   status: BedStatusChoices,
   roomId: string,
   roomName: string,
-  maintenanceFlag = false
+  maintenanceFlag = false,
 ): Bed => ({
   id,
   maintenanceFlag,
@@ -30,12 +30,12 @@ const mockBeds: Bed[] = [
     BedStatusChoices.OutOfService,
     'room-2',
     'Room 2',
-    true
+    true,
   ),
 ];
 
-const noopClone = (_rowObject: BedRowObject) => undefined;
-const noopEdit = (_rowObject: BedRowObject) => undefined;
+const noopClone = (_rowObject: Bed) => undefined;
+const noopEdit = (_rowObject: Bed) => undefined;
 const noopDelete = (_bedIds: string[]) => undefined;
 
 const meta: Meta<typeof BedTable> = {
@@ -77,8 +77,8 @@ export const WithAllActions: Story = {
       onClone={noopClone}
       onEdit={noopEdit}
       onDeleteBeds={noopDelete}
-      onMarkReady={(_rowObject: BedRowObject) => undefined}
-      onReserve={(_rowObject: BedRowObject) => undefined}
+      onMarkReady={(_rowObject: Bed) => undefined}
+      onReserve={(_rowObject: Bed) => undefined}
     />
   ),
 };
