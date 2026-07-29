@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { BedsView } from '../../components/beds/BedsView';
+import { DateRangeFilterBar } from '../../components/date-range-filter';
 import { OverviewView } from '../../components/overview/OverviewView';
 import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
@@ -78,8 +79,16 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         items={TAB_ITEMS}
       />
 
+      {tab === 'overview' && (
+        <>
+          <div className="px-6 pt-4">
+            <DateRangeFilterBar />
+          </div>
+          <OverviewView shelterId={id} />
+        </>
+      )}
+
       {tab === 'rooms' && <RoomsView shelterId={id} />}
-      {tab === 'overview' && <OverviewView shelterId={id} />}
       {tab === 'beds' && <BedsView shelterId={id} />}
     </div>
   );
