@@ -1,5 +1,6 @@
+import { isMutationSuccess } from '@monorepo/ba-platform';
 import { RoomStatusChoices } from '@monorepo/ba-platform/types';
-import { isMutationSuccess, toError } from '@monorepo/react/shared';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

@@ -21,11 +21,11 @@ type BedTableProps = {
   beds: Bed[];
   getRowKey?: (bed: Bed, index: number) => string;
   onRowClick?: (bed: Bed, rowIndex: number) => void;
-  onClone?: (bedId: string) => void;
-  onEdit?: (bedId: string) => void;
-  onDeleteBeds?: (bedIds: string[]) => void;
-  onMarkReady?: (bedId: string) => void;
-  onReserve?: (bed: Bed) => void;
+  onClone: (bedId: string) => void;
+  onEdit: (bedId: string) => void;
+  onDeleteBeds: (bedIds: string[]) => void;
+  onMarkReady: (bedId: string) => void;
+  onReserve: (bed: Bed) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -141,7 +141,7 @@ export function BedTable({
           role="group"
           aria-label="Bed actions"
         >
-          {bed.status === BedStatusChoices.InTurnaround && onMarkReady && (
+          {bed.status === BedStatusChoices.InTurnaround && (
             <Button
               type="button"
               variant="confirm"
@@ -149,7 +149,7 @@ export function BedTable({
               onClick={() => onMarkReady(bed.id)}
             />
           )}
-          {bed.status === BedStatusChoices.Available && onReserve && (
+          {bed.status === BedStatusChoices.Available && (
             <Button
               type="button"
               variant="edit"
@@ -164,31 +164,25 @@ export function BedTable({
               onClick={() => onReserve(bed)}
             />
           )}
-          {onClone && (
-            <Button
-              type="button"
-              variant="edit"
-              aria-label="Clone bed"
-              leftIcon={<CopyPlus size={22} stroke="black" />}
-              onClick={() => onClone(bed.id)}
-            />
-          )}
-          {onEdit && (
-            <Button
-              type="button"
-              variant="edit"
-              aria-label="Edit bed"
-              onClick={() => onEdit(bed.id)}
-            />
-          )}
-          {onDeleteBeds && (
-            <Button
-              type="button"
-              variant="trash"
-              aria-label="Delete bed"
-              onClick={() => onDeleteBeds([bed.id])}
-            />
-          )}
+          <Button
+            type="button"
+            variant="edit"
+            aria-label="Clone bed"
+            leftIcon={<CopyPlus size={22} stroke="black" />}
+            onClick={() => onClone(bed.id)}
+          />
+          <Button
+            type="button"
+            variant="edit"
+            aria-label="Edit bed"
+            onClick={() => onEdit(bed.id)}
+          />
+          <Button
+            type="button"
+            variant="trash"
+            aria-label="Delete bed"
+            onClick={() => onDeleteBeds([bed.id])}
+          />
         </div>
       )}
       trailingColumnWidth="140px"

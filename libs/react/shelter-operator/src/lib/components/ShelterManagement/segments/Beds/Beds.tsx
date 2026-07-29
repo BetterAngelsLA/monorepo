@@ -1,4 +1,5 @@
-import { isMutationSuccess, toError } from '@monorepo/react/shared';
+import { isMutationSuccess } from '@monorepo/ba-platform';
+import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
