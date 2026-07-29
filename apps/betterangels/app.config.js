@@ -102,6 +102,10 @@ export default {
         'expo-dev-client',
         {
           launchMode: 'launcher',
+          toolsButton: false,
+          skipOnboarding: true,
+          showMenuAtLaunch: false,
+          // Seee: https://github.com/expo/expo/blob/main/packages/expo-dev-launcher/plugin/src/pluginConfig.ts
         },
       ],
       [
