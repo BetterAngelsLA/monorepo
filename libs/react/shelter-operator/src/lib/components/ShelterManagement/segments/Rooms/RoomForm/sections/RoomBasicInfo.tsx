@@ -1,21 +1,16 @@
 import { RoomStyleChoices } from '@monorepo/react/shelter';
-import { memo } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { ROOM_STYLES_OPTIONS } from '../../../../pages/dashboard/formOptions';
-import { Dropdown } from '../../../base-ui/dropdown';
-import { Input } from '../../../base-ui/input';
-import { FormSection } from '../../../form/FormSection';
-import { RadioGroup } from '../../../form/RadioGroup';
-import { TextAreaField } from '../../../form/TextAreaField';
-import { TextField } from '../../../form/TextField';
-import { BOOLEAN_OPTIONS } from '../constants/roomFormOptions';
-import type { RoomFormData } from '../formTypes';
+import { ROOM_STYLES_OPTIONS } from '../../../../../../pages/dashboard/formOptions';
+import { Dropdown } from '../../../../../base-ui/dropdown';
+import { Input } from '../../../../../base-ui/input';
+import { FormSection } from '../../../../../form/FormSection';
+import { RadioGroup } from '../../../../../form/RadioGroup';
+import { TextAreaField } from '../../../../../form/TextAreaField';
+import { TextField } from '../../../../../form/TextField';
+import { BOOLEAN_OPTIONS, type RoomFormData } from '../formSchema';
 import type { SectionProps } from '../types';
 
-export const BasicInformationSection = memo(function BasicInformationSection({
-  control,
-  errors,
-}: SectionProps) {
+export function RoomBasicInfo({ control, errors }: SectionProps) {
   const { setValue } = useFormContext<RoomFormData>();
   const currentType = useWatch({ name: 'type', control });
 
@@ -47,8 +42,8 @@ export const BasicInformationSection = memo(function BasicInformationSection({
             options={ROOM_STYLES_OPTIONS}
             value={
               field.value
-                ? ROOM_STYLES_OPTIONS.find((o) => o.value === field.value) ??
-                  null
+                ? (ROOM_STYLES_OPTIONS.find((o) => o.value === field.value) ??
+                  null)
                 : null
             }
             onChange={(option) => {
@@ -126,4 +121,4 @@ export const BasicInformationSection = memo(function BasicInformationSection({
       />
     </FormSection>
   );
-});
+}

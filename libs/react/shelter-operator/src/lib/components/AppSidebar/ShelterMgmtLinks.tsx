@@ -34,6 +34,16 @@ export function ShelterMgmtLinks(props: IProps) {
         >
           Beds
         </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterMgmtRoute(shelterId, mgmtRouteConfig.children.rooms)}
+          isActive={isShelterMgmtRoute(pathname, {
+            segment: mgmtRouteConfig.children.rooms,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Rooms
+        </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar.NestedLinks>
   );

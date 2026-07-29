@@ -7,16 +7,18 @@ import {
   useCreateRoom,
   useFilteredPropertyOptions,
   useUpdateRoom,
-} from '../../../hooks';
-import { createRoomMeta } from '../../../hooks/useCreateRoom/__generated__/useCreateRoom_meta.generated';
-import { updateRoomMeta } from '../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
-import { Form } from '../../form/Form';
-import { createEmptyRoomFormData } from './constants/defaultRoomFormData';
-import { formSchema } from './constants/formSchema';
-import type { RoomFormData } from './formTypes';
+} from '../../../../../hooks';
+import { createRoomMeta } from '../../../../../hooks/useCreateRoom/__generated__/useCreateRoom_meta.generated';
+import { updateRoomMeta } from '../../../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
+import { Form } from '../../../../form/Form';
+import {
+  createEmptyRoomFormData,
+  formSchema,
+  type RoomFormData,
+} from './formSchema';
 import { buildCreateRoomInput, buildUpdateRoomInput } from './roomFormInput';
-import { BasicInformationSection } from './sections/BasicInformationSection';
-import { RoomDetailsSection } from './sections/RoomDetailsSection';
+import { RoomBasicInfo } from './sections/RoomBasicInfo';
+import { RoomDetails } from './sections/RoomDetails';
 export type RoomFormProps = {
   shelterId: string;
   roomId?: string;
@@ -48,7 +50,7 @@ export function RoomForm({
   } = methods;
 
   const { createRoom: createRoomMutation, loading: isCreating } = useCreateRoom(
-    { shelterId }
+    { shelterId },
   );
 
   const { updateRoom: updateRoomMutation, loading: isUpdating } =
@@ -105,12 +107,12 @@ export function RoomForm({
     } catch (err) {
       const error = toError(err);
       console.error(
-        `error ${roomId ? 'updating' : 'creating'} room: ${error.message}`
+        `error ${roomId ? 'updating' : 'creating'} room: ${error.message}`,
       );
 
       if (!(error instanceof BaError)) {
         setSubmissionError(
-          `Unable to ${roomId ? 'update' : 'create'} room. Please try again.`
+          `Unable to ${roomId ? 'update' : 'create'} room. Please try again.`,
         );
       }
     }
@@ -145,8 +147,8 @@ export function RoomForm({
           className="space-y-6"
           data-testid="room-form"
         >
-          <BasicInformationSection control={control} errors={errors} />
-          <RoomDetailsSection
+          <RoomBasicInfo control={control} errors={errors} />
+          <RoomDetails
             control={control}
             errors={errors}
             filteredPropertyOptions={filteredPropertyOptions}
@@ -161,8 +163,8 @@ export function RoomForm({
               isSubmitting
                 ? 'Submitting…'
                 : roomId
-                ? 'Save Room'
-                : 'Create Room'
+                  ? 'Save Room'
+                  : 'Create Room'
             }
           />
         </form>
