@@ -38,10 +38,6 @@ const OPEN_NOW_OPTIONS: {
   },
 ];
 
-/**
- * These follow the two high-priority ExpandableContainers.
- * Together they make the first seven visible categories.
- */
 const HIGH_PRIORITY_FILTERS = [
   demographicFilter,
   entryRequirementFilter,
@@ -50,12 +46,6 @@ const HIGH_PRIORITY_FILTERS = [
   referralRequirementFilter,
 ];
 
-/**
- * Low-priority FilterSelector categories in alphabetical order.
- *
- * Max Stay is rendered separately before these because it is also
- * alphabetically first in the low-priority group.
- */
 const LOW_PRIORITY_FILTERS = [
   roomStyleFilter,
   shelterTypeFilter,
@@ -160,7 +150,6 @@ export function ShelterFilters(props: IProps) {
       </div>
 
       <div>
-        {/* High priority 1 */}
         <div className="mt-8">
           <ExpandableContainer header="Access Center">
             <Checkbox
@@ -171,7 +160,6 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        {/* High priority 2 */}
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
             <div className="flex flex-col gap-2">
@@ -189,13 +177,10 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        {/* High priority 3–7 */}
         {HIGH_PRIORITY_FILTERS.map(renderFilterSelector)}
 
-        {/* Low-priority categories */}
         {showMoreCategories && (
           <>
-            {/* Alphabetically first low-priority category */}
             <div className="mt-8">
               <div className="flex items-center justify-between">Max Stay</div>
 

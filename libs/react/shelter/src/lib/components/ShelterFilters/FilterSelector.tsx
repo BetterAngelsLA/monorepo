@@ -27,13 +27,6 @@ export function FilterSelector(props: IProps) {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const optionsId = useId();
 
-  /**
-   * Alphabetize all options before dividing them into the initial
-   * and additional option groups.
-   *
-   * Replace `label` below if TShelterFilterOption uses a different
-   * property for its visible text.
-   */
   const sortedOptions = useMemo(
     () =>
       [...options].sort((first, second) =>
