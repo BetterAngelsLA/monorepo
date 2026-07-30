@@ -133,7 +133,7 @@ jobs:
       - name: 🩺 Expo Doctor
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run betterangels:expo-doctor
+          yarn nx affected -t expo-doctor
           EOF
 
       - name: 🕵️ Check for missing Django migrations
