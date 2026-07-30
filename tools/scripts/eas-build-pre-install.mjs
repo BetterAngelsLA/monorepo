@@ -10,7 +10,7 @@
  *
  * No-op outside CI — `sync-deps` handles local resolution.
  */
-import { copyFileSync, readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { resolveStarDeps } from './fill-star-deps.mjs';
 
@@ -31,7 +31,13 @@ if (rootPkg.workspaces && rootPkg.workspaces.length > 0) {
 }
 
 // Resolve * deps using the canonical implementation (shared with expo-doctor)
-resolveStarDeps(workspaceRoot, appDir);
+const { unresolved } = resolveStarDeps(workspaceRoot, appDir);
+
+if (unresolved.length > 0) {
+  console.error(`[eas-build-pre-install] ERROR: ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`);
+  console.error('Add them to root package.json dependencies or devDependencies.');
+  process.exit(1);
+}
 
 // EAS-specific extras: copy packageManager and resolutions so EAS Build
 // uses the same package manager version and dependency resolution as local

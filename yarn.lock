@@ -5124,6 +5124,7 @@ __metadata:
     expo-crypto: "npm:~57.0.1"
     expo-dev-client: "npm:~57.0.10"
     expo-document-picker: "npm:~57.0.1"
+    expo-file-system: "npm:~57.0.1"
     expo-font: "npm:~57.0.1"
     expo-image: "npm:~57.0.1"
     expo-image-manipulator: "npm:~57.0.7"
