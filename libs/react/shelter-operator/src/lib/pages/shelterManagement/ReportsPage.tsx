@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
-import { Reservations } from '../../components/ShelterManagement';
+import { ReportsView } from '../../components/reports/ReportsView';
 
-export function ReservationsPage() {
+export function ReportsPage() {
   const { shelterId } = useParams<{ shelterId: string }>();
 
   if (!shelterId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <Reservations shelterId={shelterId} />;
+  return <ReportsView shelterId={shelterId} />;
 }

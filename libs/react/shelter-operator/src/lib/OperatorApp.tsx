@@ -11,6 +11,8 @@ import {
   CreateRoomPage,
   EditBedPage,
   EditRoomPage,
+  OccupantsPage,
+  ReportsPage,
   ReservationsPage,
   RoomsPage,
   UsersPage,
@@ -145,7 +147,11 @@ export function OperatorApp() {
               />
               <Route
                 path={mgmtRouteConfig.children.occupants}
-                element={<ShelterDashboardPage tab="occupants" />}
+                element={<OccupantsPage />}
+              />
+              <Route
+                path={mgmtRouteConfig.children.reports}
+                element={<ReportsPage />}
               />
             </Route>
           </Route>

@@ -1,8 +1,8 @@
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
-import { useReservations } from '../../hooks/useReservations';
-import type { ReservationsQuery } from '../../hooks/useReservations/__generated__/useReservations.generated';
+import { useReservations } from '../../../../hooks';
+import type { ReservationsQuery } from '../../../../hooks/useReservations/__generated__/useReservations.generated';
 import { OccupantTable, type OccupantRow } from './OccupantTable';
 
 const ACTIVE_STATUSES: Set<ReservationStatusChoices> = new Set([
@@ -15,7 +15,7 @@ type ReservationResult = NonNullable<
   ReservationsQuery['reservations']['results'][number]
 >;
 
-export function OccupantsView({ shelterId }: { shelterId: string }) {
+export function Occupants({ shelterId }: { shelterId: string }) {
   const { reservations, loading } = useReservations(shelterId);
 
   const occupants: OccupantRow[] = useMemo(() => {
@@ -32,9 +32,10 @@ export function OccupantsView({ shelterId }: { shelterId: string }) {
             status: r.status,
             roomName: r.room?.name ?? null,
             bedName: r.bed?.name ?? null,
+            checkedInAt: r.checkedInAt ?? null,
             startDate: r.startDate ?? null,
           };
-        })
+        }),
       );
   }, [reservations]);
 

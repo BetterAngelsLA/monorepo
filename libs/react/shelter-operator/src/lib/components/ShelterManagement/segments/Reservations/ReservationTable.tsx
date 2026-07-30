@@ -7,7 +7,7 @@ import { ReservationsQuery } from '../../../../hooks/useReservations/__generated
 import { Button } from '../../../base-ui/buttons';
 import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
-import { reservationStatusInfo } from './ReservationForm/formSchema';
+import { reservationStatusInfo } from './ReservationForm';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,

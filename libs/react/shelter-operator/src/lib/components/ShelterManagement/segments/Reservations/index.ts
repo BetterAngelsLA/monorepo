@@ -1,6 +1,9 @@
 export {
   ReservationForm,
-  toFormData,
+  createEmptyReservationFormData,
+  reservationStatusInfo,
+  toFormData as toReservationFormData,
+  toSelectedClients,
   type ReservationFormData,
   type ReservationFormProps,
 } from './ReservationForm';

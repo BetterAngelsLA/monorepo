@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { ReservationForm } from '../../components/ShelterManagement/segments/Reservations';
 import {
   createEmptyReservationFormData,
-  toFormData,
+  ReservationForm,
+  toReservationFormData as toFormData,
   toSelectedClients,
-} from '../../components/ShelterManagement/segments/Reservations/ReservationForm/formSchema';
+} from '../../components/ShelterManagement';
 import { useReservation } from '../../hooks/useReservation';
 import { shelterMgmtResourceRoute } from '../../routing';
 

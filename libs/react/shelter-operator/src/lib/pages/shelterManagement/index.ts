@@ -3,5 +3,7 @@ export { CreateBedPage } from './CreateBedPage';
 export { CreateRoomPage } from './CreateRoomPage';
 export { EditBedPage } from './EditBedPage';
 export { EditRoomPage } from './EditRoomPage';
+export { OccupantsPage } from './OccupantsPage';
+export { ReportsPage } from './ReportsPage';
 export { ReservationsPage } from './ReservationsPage';
 export { RoomsPage } from './RoomsPage';
