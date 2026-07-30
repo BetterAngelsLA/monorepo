@@ -1,11 +1,14 @@
-// Ensure React Native globals (ErrorUtils, etc.) are available before any
-// module that imports from 'expo' — expo's Expo.fx.tsx accesses them at import time.
-import 'react-native';
-
-import '@testing-library/react-native/build/matchers/extend-expect';
-import { vi } from 'vitest';
-
-// Mock native modules that crash in Node.js environment
+// Stub ErrorUtils global before any module imports from 'expo'.
+// expo's Expo.fx.tsx accesses this at import time. vitest-native's
+// native engine doesn't expose RN globals during setup file execution,
+// and importing 'react-native' fails because the Flow transform isn't
+// active yet. The stub is intentionally minimal — a no-op that satisfies
+// expo's import-time side effects.
+(globalThis as Record<string, unknown>).ErrorUtils = {
+  setGlobalHandler: () => {},
+  getGlobalHandler: () => () => {},
+  reportFatalError: (e: Error) => { throw e; },
+};
 vi.mock('@preeternal/react-native-cookie-manager', () => ({
   __esModule: true,
   default: {
