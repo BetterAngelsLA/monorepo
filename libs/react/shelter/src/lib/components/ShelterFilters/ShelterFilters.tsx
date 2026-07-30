@@ -1,10 +1,10 @@
 import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
+import { ChevronLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
 import { TShelterPropertyFilters } from '../ShelterSearch';
-import { FilterSelector } from './FilterSelector';
 import { ShelterMaxStayDocument } from './__generated__/shelterMaxStay.generated';
 import {
   demographicFilter,
@@ -17,6 +17,7 @@ import {
   specialSituationFilter,
   TFilterConfig,
 } from './config';
+import { FilterSelector } from './FilterSelector';
 
 type IProps = {
   className?: string;
@@ -232,7 +233,7 @@ export function ShelterFilters(props: IProps) {
 
         <button
           type="button"
-          className="mt-8 flex w-full items-center justify-end gap-3 font-semibold text-primary-60"
+          className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
           aria-expanded={showMoreCategories}
           aria-controls="low-priority-shelter-filters"
           onClick={() => setShowMoreCategories((current) => !current)}
@@ -243,23 +244,14 @@ export function ShelterFilters(props: IProps) {
               : 'Show More Categories'}
           </span>
 
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
+          <ChevronLeftIcon
             className={mergeCss([
-              'h-5 w-5 transition-transform duration-200',
-              showMoreCategories ? 'rotate-180' : '',
+              'w-3',
+              showMoreCategories ? 'rotate-90' : '-rotate-90',
+              'text-primary-20',
+              'transition-transform',
             ])}
-          >
-            <path
-              d="M4 7.5 10 13l6-5.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          />
         </button>
       </div>
     </div>

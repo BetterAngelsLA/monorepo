@@ -1,4 +1,5 @@
 import { CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
+import { ChevronLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useId, useMemo, useState } from 'react';
 import {
@@ -76,7 +77,7 @@ export function FilterSelector(props: IProps) {
         {hasAdditionalOptions && (
           <button
             type="button"
-            className="mt-4 flex w-full items-center justify-end gap-3 font-semibold text-primary-60"
+            className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
             aria-expanded={showMoreOptions}
             aria-controls={optionsId}
             onClick={() => setShowMoreOptions((current) => !current)}
@@ -85,23 +86,14 @@ export function FilterSelector(props: IProps) {
               {showMoreOptions ? 'Show Less Options' : 'Show More Options'}
             </span>
 
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              fill="none"
+            <ChevronLeftIcon
               className={mergeCss([
-                'h-5 w-5 transition-transform duration-200',
-                showMoreOptions ? 'rotate-180' : '',
+                'w-3',
+                showMoreOptions ? 'rotate-90' : '-rotate-90',
+                'text-primary-20',
+                'transition-transform',
               ])}
-            >
-              <path
-                d="M4 7.5 10 13l6-5.5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </button>
         )}
       </ExpandableContainer>
