@@ -1,2 +1,3 @@
 export { BaError } from './BaError';
 export { BaPermissionError } from './BaPermissionError';
+export { isMutationSuccess } from './isMutationSuccess';

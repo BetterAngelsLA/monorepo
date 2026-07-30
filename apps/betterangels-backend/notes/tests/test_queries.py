@@ -502,7 +502,8 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
             {s.label: {"priority": s.priority, "category": s.category.name if s.category else None}} for s in services
         ]
         actual_services = [
-            {s["label"]: {"priority": s["priority"], "category": s["category"]["name"]}} for s in results
+            {s["label"]: {"priority": s["priority"], "category": s["category"]["name"] if s["category"] else None}}
+            for s in results
         ]
         self.assertCountEqual(expected_services, actual_services)
 

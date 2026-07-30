@@ -16,7 +16,7 @@ import type { UseFormSetError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import {
   shelterProfileRoute,
-  shelterProfileSegments,
+  profileRouteConfig,
 } from '../../../routing/routePaths';
 import { useToast } from '../../base-ui/toast/state/useToast';
 import {
@@ -94,7 +94,7 @@ export function CreateShelterProfile(props: TProps) {
         title: 'Shelter created!',
       });
 
-      navigate(shelterProfileRoute(result.id, shelterProfileSegments.basic));
+      navigate(shelterProfileRoute(result.id, profileRouteConfig.children.basic));
     } catch (err) {
       let userMessage = 'An unexpected error occurred.';
 

@@ -25,7 +25,7 @@ const policyFactoryList = [
  * {@code filters} and {@code ordering}.
  */
 export function createShelterApolloCachePolicyRegistry(
-  isDevEnv: boolean
+  isDevEnv: boolean,
 ): TCachePolicyConfig {
   return assemblePolicyRegistry(policyFactoryList, {
     isDevEnv: isDevEnv,

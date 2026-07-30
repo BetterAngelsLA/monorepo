@@ -1,10 +1,7 @@
 import logging
-from typing import Any
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_migrate
-from django.dispatch import receiver
 from organizations.models import Organization
 
 from .models import PermissionGroupTemplate, User
@@ -12,10 +9,10 @@ from .models import PermissionGroupTemplate, User
 logger = logging.getLogger(__name__)
 
 # ── Local dev data setup ──────────────────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
 
-@receiver(post_migrate)
-def setup_local_dev_data(sender: Any, **kwargs: Any) -> None:
+def setup_local_dev_data(sender: object, **kwargs: object) -> None:
     """Create test users and org — local dev only.
 
     Role assignment is deferred to ``sync_all_org_permission_groups``
@@ -86,10 +83,10 @@ def _ensure_test_org() -> None:
 
 
 # ── Permission sync (all environments) ────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
 
-@receiver(post_migrate)
-def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
+def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     """Reconcile every org's PermissionGroups against current presets.
 
     Also assigns test-agent roles on local dev (safe to call repeatedly
@@ -140,28 +137,70 @@ def sync_all_org_permission_groups(sender: Any, **kwargs: Any) -> None:
 
 
 def _sync_template_permissions() -> None:
-    """Sync Django Group.permissions for all registered templates."""
+    """Sync Django Group.permissions for every PermissionGroupTemplate.
+
+    Templates registered in the ``REGISTRY`` are refreshed from their
+    ``TemplateConfig.permissions`` definition.  Non-registry templates
+    (e.g. ``Global Shelter Operator``) are refreshed from the
+    ``ALL_TEMPLATES`` list in ``accounts.seed`` — so that permission
+    changes to ANY template are picked up on the next ``post_migrate``.
+    """
     from common.org_types import REGISTRY
     from django.contrib.auth.models import Permission
-    from django.db.models import Q
 
-    template_names = REGISTRY.template_names()
+    from accounts.seed import ALL_TEMPLATES
+
+    configs: dict[str, list[tuple[str, str]]] = {}
+    app_labels: set[str] = set()
+    codenames: set[str] = set()
+
+    def _add(name: str, perms: list[str]) -> None:
+        parsed = [(ps.split(".", 1)[0], ps.split(".", 1)[1]) for ps in perms]
+        configs[name] = parsed
+        for a, c in parsed:
+            app_labels.add(a)
+            codenames.add(c)
+
+    for name in REGISTRY.template_names():
+        if cfg := REGISTRY.template(name):
+            _add(name, cfg.permissions or [])
+    for tc in ALL_TEMPLATES:
+        if tc.name not in configs:
+            _add(tc.name, tc.permissions or [])
+
+    if not app_labels:
+        return
+
+    # ── Resolve all permissions in one query (no object instantiation) ──
+    all_perm_ids: dict[tuple[str, str], int] = {
+        (a, c): pk
+        for a, c, pk in Permission.objects.filter(
+            content_type__app_label__in=app_labels, codename__in=codenames
+        ).values_list("content_type__app_label", "codename", "pk")
+    }
+
+    # ── Pre-compute wanted IDs per template ──
+    wanted_by_template: dict[str, set[int]] = {
+        name: {all_perm_ids[k] for k in perms if k in all_perm_ids} for name, perms in configs.items()
+    }
+
     with transaction.atomic():
-        templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
-            "permissions", "permissiongroup_set__group"
+        # Prefetch permissions so .all() calls hit the cache, not the DB.
+        templates = PermissionGroupTemplate.objects.prefetch_related(
+            "permissions", "permissiongroup_set__group__permissions"
         )
 
         for template_db in templates:
-            # Sync template permissions from REGISTRY definition → DB.
-            template_config = REGISTRY.template(template_db.name)
-            if template_config and template_config.permissions:
-                perm_filters = Q()
-                for perm_str in template_config.permissions:
-                    app_label, codename = perm_str.split(".", 1)
-                    perm_filters |= Q(codename=codename, content_type__app_label=app_label)
-                template_db.permissions.set(Permission.objects.filter(perm_filters))
+            # Compute existing IDs once (uses prefetch).
+            existing_ids = {p.pk for p in template_db.permissions.all()}
 
-            # Sync group permissions from template → groups.
-            perms = list(template_db.permissions.all())
+            # Sync template perms from config.
+            if (wanted := wanted_by_template.get(template_db.name)) is not None and wanted != existing_ids:
+                template_db.permissions.set(wanted)
+                existing_ids = wanted
+
+            # Sync group perms from template.  All prefetched — no queries.
             for pgt in template_db.permissiongroup_set.all():
-                pgt.group.permissions.set(perms)
+                group_ids = {p.pk for p in pgt.group.permissions.all()}
+                if existing_ids != group_ids:
+                    pgt.group.permissions.set(existing_ids)

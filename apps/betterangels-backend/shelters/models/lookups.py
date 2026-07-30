@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
 from django_choices_field import IntegerChoicesField, TextChoicesField
-from shelters.deprecated.deprecated_enums import SPAChoices
+from shelters.enums import SPAChoices
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,

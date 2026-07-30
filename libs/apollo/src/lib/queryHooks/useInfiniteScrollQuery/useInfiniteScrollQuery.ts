@@ -107,7 +107,7 @@ import { assertValueAtPath } from './utils/assertValueAtPath';
 
 type TProps<
   TData extends Record<string, unknown>,
-  TVars extends OperationVariables
+  TVars extends OperationVariables,
 > = {
   document: TypedDocumentNode<TData, TVars>;
   queryFieldName: Extract<keyof TData, string>;
@@ -120,7 +120,7 @@ type TProps<
 export function useInfiniteScrollQuery<
   TItem,
   TData extends Record<string, unknown>,
-  TVars extends OperationVariables = OperationVariables
+  TVars extends OperationVariables = OperationVariables,
 >(props: TProps<TData, TVars>) {
   const {
     document,
@@ -139,19 +139,19 @@ export function useInfiniteScrollQuery<
 
   // Deep-memoize incoming variables to avoid unnecessary refetches
   const memoizedVariables = useDeepCompareMemoize(
-    (variables ?? {}) as TVars
+    (variables ?? {}) as TVars,
   ) as TVars;
 
   // Retrieve the QueryPolicyConfig from the actual cache
   const queryPolicyConfig = useMemo(() => {
     const cfg = getQueryPolicyConfigFromCache(
       apolloClient.cache,
-      queryFieldName
+      queryFieldName,
     );
 
     if (!cfg) {
       throw new Error(
-        `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. Ensure this field is registered via getQueryPolicyFactory and attached to the cache.`
+        `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. Ensure this field is registered via getQueryPolicyFactory and attached to the cache.`,
       );
     }
 
@@ -186,7 +186,7 @@ export function useInfiniteScrollQuery<
   // Validate structure in DEV env
   if (data) {
     assertValueAtPath({
-      source: (data as any)[queryFieldName],
+      source: (data as Record<string, unknown>)[queryFieldName],
       path: queryPolicyConfig.itemsPath,
       shouldThrow: isDevEnv,
     });

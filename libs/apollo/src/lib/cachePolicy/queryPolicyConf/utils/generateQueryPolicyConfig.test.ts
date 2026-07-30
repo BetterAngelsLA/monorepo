@@ -12,22 +12,24 @@ import { generateQueryPolicyConfig } from './generateQueryPolicyConfig';
 // we want to test OUR logic here, not the pagination util’s logic,
 // so we can mock getPaginationVarsPerMode to return predictable shapes
 vi.mock('./getPaginationVarsPerMode', () => ({
-  getPaginationVarsPerMode: vi.fn((mode: any, vars: any) => {
-    // emulate the real behavior enough for tests
-    if (mode === PaginationModeEnum.Offset) {
+  getPaginationVarsPerMode: vi.fn(
+    (mode: PaginationModeEnum, vars: Record<string, unknown>) => {
+      // emulate the real behavior enough for tests
+      if (mode === PaginationModeEnum.Offset) {
+        return {
+          mode,
+          offsetPath: vars?.['offsetPath'] ?? ['pagination', 'offset'],
+          limitPath: vars?.['limitPath'] ?? ['pagination', 'limit'],
+        };
+      }
+
       return {
         mode,
-        offsetPath: vars?.offsetPath ?? ['pagination', 'offset'],
-        limitPath: vars?.limitPath ?? ['pagination', 'limit'],
+        pagePath: vars?.['pagePath'] ?? ['pagination', 'page'],
+        perPagePath: vars?.['perPagePath'] ?? ['pagination', 'perPage'],
       };
-    }
-
-    return {
-      mode,
-      pagePath: vars?.pagePath ?? ['pagination', 'page'],
-      perPagePath: vars?.perPagePath ?? ['pagination', 'perPage'],
-    };
-  }),
+    },
+  ),
 }));
 
 describe('generateQueryPolicyConfig', () => {
@@ -91,7 +93,7 @@ describe('generateQueryPolicyConfig', () => {
 
   it('throws when itemsPath becomes empty after normalization', () => {
     expect(() => generateQueryPolicyConfig({ itemsPath: '' })).toThrow(
-      '[buildQueryPolicyConfig] itemsPath must be a non-empty string or string[]'
+      '[buildQueryPolicyConfig] itemsPath must be a non-empty string or string[]',
     );
   });
 });
