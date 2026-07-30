@@ -86,6 +86,7 @@
     "jotai-family": "*",
     "expo-status-bar": "*",
     "expo-sharing": "*",
+    "expo-splash-screen": "*",
     "@react-native-vector-icons/ant-design": "*",
     "@react-native-vector-icons/material-design-icons": "*",
     "expo-web-browser": "*",
