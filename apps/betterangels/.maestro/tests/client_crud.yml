@@ -77,6 +77,9 @@ appId: ${MAESTRO_APP_ID}
 
 - assertVisible: ${output.caId}
 - assertVisible: '05/31/1992'
+- scrollUntilVisible:
+    element:
+      text: 'Tent'
 - assertVisible: 'Tent'
 
 # ################################
