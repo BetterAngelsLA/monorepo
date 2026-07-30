@@ -21,6 +21,7 @@ if (!process.env.CI) {
 
 const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
+const rootPkg = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'));
 
 // Resolve * deps using the canonical implementation (shared with expo-doctor)
 const { unresolved } = resolveStarDeps(workspaceRoot, appDir);
