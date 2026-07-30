@@ -1,10 +1,8 @@
-// ClientNavMenu.tsx
 import { DeleteIcon, ThreeDotIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
-import Tooltip from 'react-native-walkthrough-tooltip';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useDeleteClientProfile } from '../ClientProfile/hooks/useDeleteClientProfile';
 import { ClientNavMenuBtn } from './ClientNavMenuBtn';
 
@@ -36,49 +34,46 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
     onDeleted?.();
   };
 
-  return (
-    <>
-      <Tooltip
-        isVisible={menuVisible}
-        backgroundColor="transparent"
-        placement="bottom"
-        disableShadow
-        onClose={() => setMenuVisible(false)}
-        arrowSize={{ width: 0, height: 0 }}
-        displayInsets={{ top: 0, bottom: 0, left: 0, right: 12 }}
-        tooltipStyle={[
-          styles.contentWrapper,
-          {
-            marginTop: Platform.OS === 'android' ? 14 : 8,
-          },
-        ]}
-        contentStyle={styles.content}
-        content={
-          <ClientNavMenuBtn
-            disabled={isDeleting}
-            text="Delete Profile"
-            accessibilityHint="delete client profile"
-            color={Colors.ERROR}
-            icon={<DeleteIcon color={Colors.ERROR} size="sm" />}
-            onPress={handleRequestDelete}
-          />
-        }
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityHint="toggle client profile menu"
-          onPress={() => setMenuVisible((prev) => !prev)}
-        >
-          {({ pressed }) => (
-            <ThreeDotIcon
-              size="lg"
-              color={pressed ? Colors.NEUTRAL_DARK : Colors.WHITE}
-            />
-          )}
-        </Pressable>
-      </Tooltip>
+  const menuBtnTestId = menuVisible
+    ? 'client-nav-menu-close-btn'
+    : 'client-nav-menu-open-btn';
 
-      {/* This modal is now a sibling of the Tooltip, not inside it */}
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="toggle client profile menu"
+        testID={menuBtnTestId}
+        onPress={() => setMenuVisible((prev) => !prev)}
+      >
+        {({ pressed }) => (
+          <ThreeDotIcon
+            size="lg"
+            color={pressed ? Colors.NEUTRAL_DARK : Colors.WHITE}
+          />
+        )}
+      </Pressable>
+
+      {menuVisible && (
+        <>
+          <Pressable
+            style={styles.backdrop}
+            onPress={() => setMenuVisible(false)}
+          />
+          <View style={styles.menuDropdown}>
+            <ClientNavMenuBtn
+              testId="client-nav-menu-delete-profile-btn"
+              disabled={isDeleting}
+              text="Delete Profile"
+              accessibilityHint="delete client profile"
+              color={Colors.ERROR}
+              icon={<DeleteIcon color={Colors.ERROR} size="sm" />}
+              onPress={handleRequestDelete}
+            />
+          </View>
+        </>
+      )}
+
       <DeleteModal
         title="Delete Profile?"
         body="All data associated with this client will be deleted. This action cannot be undone."
@@ -87,12 +82,23 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
         onDelete={handleConfirmDelete}
         deleteableItemName="client profile"
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contentWrapper: {
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  menuDropdown: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? 48 : 40,
+    right: 0,
     backgroundColor: Colors.WHITE,
     shadowColor: Colors.BLACK,
     shadowOffset: { width: 0, height: 0 },
@@ -100,11 +106,7 @@ const styles = StyleSheet.create({
     shadowRadius: 32,
     borderRadius: 12,
     elevation: 12,
-  },
-  content: {
-    padding: 0,
-    borderRadius: 12,
-    height: 'auto',
+    zIndex: 2,
     overflow: 'hidden',
   },
 });
