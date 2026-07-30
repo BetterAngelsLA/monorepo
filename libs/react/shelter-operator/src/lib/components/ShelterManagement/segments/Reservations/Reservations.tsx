@@ -1,4 +1,4 @@
-import { getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { isMutationSuccess } from '@monorepo/ba-platform';
 import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
@@ -88,26 +88,25 @@ export function Reservations({ shelterId }: { shelterId: string }) {
       action: LoadingAction,
       onClose: () => void,
     ) => {
-      const errorMessage = 'Unable to update reservation. Please try again.';
       setLoadingAction(action);
       try {
         const response = await updateReservation({
           variables: { id: reservationId, data: { status } },
         });
-        const fieldErrors = getFieldErrorsOrThrow({
-          response,
-          ...updateReservationMeta,
-          fields: ['status'],
-        });
-        if (fieldErrors.length) {
-          throw new Error(errorMessage);
+        if (
+          !isMutationSuccess(
+            response.data?.[updateReservationMeta.operationKey],
+            updateReservationMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
         }
       } catch (err) {
         const error = toError(err);
-        console.error(`error updating reservation: ${error.message}`);
+        console.error(`[updateReservation error]: ${error.message}`);
         showToast({
           status: 'error',
-          title: errorMessage,
+          title: 'Unable to update reservation. Please try again.',
           persistent: true,
         });
       } finally {

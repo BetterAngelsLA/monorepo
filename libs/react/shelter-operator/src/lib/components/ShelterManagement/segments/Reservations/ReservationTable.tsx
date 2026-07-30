@@ -31,10 +31,10 @@ type ReservationTableProps = {
   emptyState?: ReactNode;
   isConfirmActionLoading?: boolean;
   isCancelActionLoading?: boolean;
-  onEdit?: (reservationId: string) => void;
-  onCheckIn?: (reservationId: string) => void;
-  onComplete?: (reservationId: string) => void;
-  onCancel?: (reservationId: string) => void;
+  onEdit: (reservationId: string) => void;
+  onCheckIn: (reservationId: string) => void;
+  onComplete: (reservationId: string) => void;
+  onCancel: (reservationId: string) => void;
   wrapperClassName?: string;
   headerClassName?: string;
   headerInsetClassName?: string;
@@ -241,9 +241,9 @@ export function ReservationTable({
               disabled={isConfirmActionLoading}
               onClick={() => {
                 if (reservation.status === ReservationStatusChoices.CheckedIn) {
-                  onComplete?.(reservation.id);
+                  onComplete(reservation.id);
                 } else {
-                  onCheckIn?.(reservation.id);
+                  onCheckIn(reservation.id);
                 }
               }}
             />
@@ -256,7 +256,7 @@ export function ReservationTable({
               aria-label="Cancel reservation"
               leftIcon={<X size={24} stroke="black" />}
               disabled={isCancelActionLoading}
-              onClick={() => onCancel?.(reservation.id)}
+              onClick={() => onCancel(reservation.id)}
             />
           )}
           <Button
@@ -264,7 +264,7 @@ export function ReservationTable({
             variant="edit"
             className="text-[#747A82]"
             aria-label="Edit reservation"
-            onClick={() => onEdit?.(reservation.id)}
+            onClick={() => onEdit(reservation.id)}
           />
         </div>
       )}
