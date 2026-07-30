@@ -11,7 +11,14 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [".*libs/tailwind.*", "libs/vite-utils/.*"],
+            "allow": [
+              ".*libs/tailwind.*",
+              "libs/vite-utils/.*",
+              // codegen.ts files import SHARED_SCALARS via relative path
+              // because @monorepo/ba-platform is a tsconfig path alias,
+              // not a real package — jiti can't resolve it without JITI_ALIAS.
+              ".*ba-platform.*codegen-scalars.*"
+            ],
             // NX misreads TypeScript import('module').Type expressions in
             // generated files as JavaScript dynamic import() calls, marking
             // ba-platform as "lazy-loaded". This suppresses the false positive.
