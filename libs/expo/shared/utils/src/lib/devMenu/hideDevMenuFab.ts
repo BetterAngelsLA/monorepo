@@ -1,4 +1,4 @@
-import { requireOptionalNativeModule } from 'expo-modules-core';
+import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 type DevMenuPreferencesModule = {
@@ -35,7 +35,7 @@ type DevMenuPreferencesModule = {
  *     `ExpoModulesCore` — see `node_modules/expo-dev-menu/ios/Modules/
  *     DevMenuPreferences.swift`), NOT a legacy RN bridge module. So
  *     `NativeModules.DevMenuPreferences` is always `undefined`; use
- *     `requireOptionalNativeModule` from `expo-modules-core` instead.
+ *     `requireOptionalNativeModule` from `expo` instead.
  *
  * Call once at app startup, before any UI renders.
  */

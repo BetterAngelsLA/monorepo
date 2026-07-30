@@ -254,7 +254,8 @@
     "axios": ">=1.18.0",
     "brace-expansion": ">=2.1.2",
     "uuid": ">=11.1.1",
-    "fast-xml-parser": ">=5.7.0"
+    "fast-xml-parser": ">=5.7.0",
+    "expo-constants": "57.0.8"
   },
   "expo": {},
   "engines": {

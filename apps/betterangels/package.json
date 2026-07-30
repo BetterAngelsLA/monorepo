@@ -15,7 +15,6 @@
   "dependencies": {
     "dotenv": "*",
     "expo-constants": "*",
-    "expo-modules-core": "*",
     "react-native": "*",
     "expo-router": "*",
     "expo": "*",
