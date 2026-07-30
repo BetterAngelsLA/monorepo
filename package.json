@@ -248,7 +248,6 @@
     "webpack": "^5.105.4"
   },
   "resolutions": {
-    "expo-constants": "57.0.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "ws": ">=8.17.1",

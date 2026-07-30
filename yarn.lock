@@ -16600,7 +16600,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-constants@npm:57.0.8":
+"expo-constants@npm:~57.0.7, expo-constants@npm:~57.0.8":
   version: 57.0.8
   resolution: "expo-constants@npm:57.0.8"
   dependencies:
