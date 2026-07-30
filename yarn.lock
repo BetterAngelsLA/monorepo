@@ -5040,6 +5040,7 @@ __metadata:
     "@react-native-community/datetimepicker": "npm:9.1.0"
     "@react-native-picker/picker": "npm:2.11.4"
     "@react-native-vector-icons/ant-design": "npm:^13.1.2"
+    "@react-native-vector-icons/material-design-icons": "npm:^13.1.2"
     "@react-native/babel-preset": "npm:0.86.0"
     "@react-native/jest-preset": "npm:0.86.0"
     "@react-native/metro-config": "npm:~0.86.0"
@@ -7710,6 +7711,22 @@ __metadata:
   bin:
     rnvi-update-plist: lib/commonjs/scripts/updatePlist.js
   checksum: 10/a12510f72db8edb4dffded7c95ff6fbc8fa6235e0407891082a77acfe71581815969ef26f267c9acd78978c33a9b9148e4e5de7af9dd1215c39202d5b700a121
+  languageName: node
+  linkType: hard
+
+"@react-native-vector-icons/material-design-icons@npm:^13.1.2":
+  version: 13.1.2
+  resolution: "@react-native-vector-icons/material-design-icons@npm:13.1.2"
+  dependencies:
+    "@react-native-vector-icons/common": "npm:^13.0.1"
+  peerDependencies:
+    "@expo/config-plugins": ">=10.0.0"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    "@expo/config-plugins":
+      optional: true
+  checksum: 10/259c97ff8bd3c5a0783b824a3a784d7ddf843c19355aa6ac731cab134f673283745be6c08aa4f082273268f7663f19e156dca1b0c67b7a31eb7abcf4415693dc
   languageName: node
   linkType: hard
 

@@ -90,6 +90,7 @@
     "expo-status-bar": "*",
     "expo-sharing": "*",
     "@react-native-vector-icons/ant-design": "*",
+    "@react-native-vector-icons/material-design-icons": "*",
     "expo-web-browser": "*",
     "expo-dev-client": "*",
     "@types/google.maps": "*"
