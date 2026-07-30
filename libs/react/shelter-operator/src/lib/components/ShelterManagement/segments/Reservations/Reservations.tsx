@@ -101,6 +101,7 @@ export function Reservations({ shelterId }: { shelterId: string }) {
         ) {
           throw new Error('Operation failed');
         }
+        onClose();
       } catch (err) {
         const error = toError(err);
         console.error(`[updateReservation error]: ${error.message}`);
@@ -112,7 +113,6 @@ export function Reservations({ shelterId }: { shelterId: string }) {
       } finally {
         setLoadingAction(null);
       }
-      onClose();
     },
     [updateReservation, showToast],
   );

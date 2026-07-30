@@ -33,11 +33,10 @@ export const buildCreateReservationInput = (
 
 export const buildUpdateReservationInput = (
   formData: ReservationFormData,
-): UpdateReservationInput =>
-  ({
-    bedId: formData.bedId ?? undefined,
-    roomId: formData.roomId ?? undefined,
-    startDate: formData.startDate || undefined,
-    notes: toInputString(formData.notes),
-    clients: buildClientsInput(formData.clientIds, formData.primaryClientId),
-  }) as UpdateReservationInput;
+): UpdateReservationInput => ({
+  bedId: formData.bedId ?? undefined,
+  roomId: formData.roomId ?? undefined,
+  startDate: formData.startDate || undefined,
+  notes: toInputString(formData.notes),
+  clients: buildClientsInput(formData.clientIds, formData.primaryClientId),
+});

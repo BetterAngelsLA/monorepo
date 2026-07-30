@@ -58,16 +58,6 @@ export function ShelterMgmtLinks(props: IProps) {
           Reservations
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterMgmtRoute(shelterId, mgmtRouteConfig.children.occupants)}
-          isActive={isShelterMgmtRoute(pathname, {
-            segment: mgmtRouteConfig.children.occupants,
-          })}
-          collapsed={!isOpen}
-          replace
-        >
-          Occupants
-        </Sidebar.Link>
-        <Sidebar.Link
           to={shelterMgmtRoute(shelterId, mgmtRouteConfig.children.reports)}
           isActive={isShelterMgmtRoute(pathname, {
             segment: mgmtRouteConfig.children.reports,

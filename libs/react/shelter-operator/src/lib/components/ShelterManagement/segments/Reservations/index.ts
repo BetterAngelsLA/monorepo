@@ -8,3 +8,4 @@ export {
   type ReservationFormProps,
 } from './ReservationForm';
 export { Reservations } from './Reservations';
+export type { Reservation } from './ReservationTable';

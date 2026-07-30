@@ -31,6 +31,18 @@ type OccupantTableProps = {
   trailingColumnWidth?: string;
 };
 
+function getEffectiveCheckIn(row: OccupantRow): {
+  date: string | null;
+  isScheduled: boolean;
+} {
+  const isActual =
+    row.status === ReservationStatusChoices.CheckedIn ||
+    row.status === ReservationStatusChoices.Completed;
+  return isActual
+    ? { date: row.checkedInAt, isScheduled: false }
+    : { date: row.startDate, isScheduled: true };
+}
+
 export function OccupantTable({
   occupants,
   loading,
@@ -102,42 +114,13 @@ export function OccupantTable({
         label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          return showCheckedInAt
-            ? (reservation.checkedInAt ?? '')
-            : (reservation.startDate ?? '');
-        },
-        filterValue: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          return showCheckedInAt
-            ? (reservation.checkedInAt ?? '')
-            : (reservation.startDate ?? '');
-        },
-        render: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          if (showCheckedInAt) {
-            return reservation.checkedInAt ? (
-              <span>
-                {new Date(reservation.checkedInAt).toLocaleDateString()}
-              </span>
-            ) : (
-              <span className="text-gray-400">—</span>
-            );
-          }
-          return reservation.startDate ? (
-            <span>
-              {new Date(reservation.startDate).toLocaleDateString()} (sched.)
-            </span>
-          ) : (
-            <span className="text-gray-400">—</span>
-          );
+        sortValue: (row) => getEffectiveCheckIn(row).date ?? '',
+        filterValue: (row) => getEffectiveCheckIn(row).date ?? '',
+        render: (row) => {
+          const { date, isScheduled } = getEffectiveCheckIn(row);
+          if (!date) return <span className="text-gray-400">—</span>;
+          const label = new Date(date).toLocaleDateString();
+          return <span>{isScheduled ? `${label} (sched.)` : label}</span>;
         },
       },
     ],
