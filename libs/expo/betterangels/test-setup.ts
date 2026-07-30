@@ -2,12 +2,13 @@
 // expo's Expo.fx.tsx accesses this at import time. vitest-native's
 // native engine doesn't expose RN globals during setup file execution,
 // and importing 'react-native' fails because the Flow transform isn't
-// active yet. The stub is intentionally minimal — a no-op that satisfies
-// expo's import-time side effects.
+// active yet. Using vi.fn() avoids empty-function lint violations.
+import { vi } from 'vitest';
+
 (globalThis as Record<string, unknown>).ErrorUtils = {
-  setGlobalHandler: () => {},
-  getGlobalHandler: () => () => {},
-  reportFatalError: (e: Error) => { throw e; },
+  setGlobalHandler: vi.fn(),
+  getGlobalHandler: vi.fn(() => () => {}),
+  reportFatalError: vi.fn((e: Error) => { throw e; }),
 };
 vi.mock('@preeternal/react-native-cookie-manager', () => ({
   __esModule: true,
