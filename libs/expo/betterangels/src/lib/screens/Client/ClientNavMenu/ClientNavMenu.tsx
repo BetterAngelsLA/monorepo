@@ -2,7 +2,13 @@ import { DeleteIcon, ThreeDotIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useDeleteClientProfile } from '../ClientProfile/hooks/useDeleteClientProfile';
 import { ClientNavMenuBtn } from './ClientNavMenuBtn';
 
@@ -57,7 +63,16 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
       {menuVisible && (
         <>
           <Pressable
-            style={styles.backdrop}
+            accessible={false}
+            accessibilityRole="none"
+            style={{
+              position: 'absolute',
+              top: -Dimensions.get('window').height,
+              left: -Dimensions.get('window').width,
+              width: Dimensions.get('window').width * 3,
+              height: Dimensions.get('window').height * 3,
+              zIndex: 1,
+            }}
             onPress={() => setMenuVisible(false)}
           />
           <View style={styles.menuDropdown}>
@@ -87,14 +102,6 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
   menuDropdown: {
     position: 'absolute',
     top: Platform.OS === 'android' ? 48 : 40,

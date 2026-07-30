@@ -20,6 +20,7 @@ export default function BasicModal(props: IBasicModalProps) {
         // backdrop being "accessible" breaks e2e tests as nestged buttons become unreachable
         // for accessibility reasons the actual buttons need accessibilityLabel etc...
         accessible={false}
+        accessibilityRole="none"
         onPress={onClose}
         style={{
           flex: 1,
@@ -30,7 +31,7 @@ export default function BasicModal(props: IBasicModalProps) {
           position: 'relative',
         }}
       >
-        <TouchableWithoutFeedback>
+        <TouchableWithoutFeedback accessibilityRole="none">
           <View
             onTouchEnd={(e) => {
               e.preventDefault();

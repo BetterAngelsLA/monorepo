@@ -53,7 +53,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             accessibilityRole="button"
             accessibilityLabel="Clear date"
             accessibilityHint="Clears the selected date"
-            testID="clear-numberic-datepicker"
+            testID="clear-numeric-datepicker"
             hitSlop={8}
             style={styles.clearButton}
             disabled={disabled}
