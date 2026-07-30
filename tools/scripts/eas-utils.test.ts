@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { vi } from 'vitest';
 import { setupEnvAndFingerprint } from './eas-utils';
 
 // Mock execSync (used by `run`) to return a fake fingerprint
@@ -18,6 +19,7 @@ describe('setupEnvAndFingerprint', () => {
     'EXPO_PUBLIC_DEMO_API_URL',
     'EXPO_PUBLIC_APP_ENV',
     'EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL',
+    'EAS_NO_FROZEN_LOCKFILE',
     'APP_VARIANT',
     'RUNTIME_VERSION',
     'EXPO_PUBLIC_OVERRIDE',
@@ -52,7 +54,7 @@ describe('setupEnvAndFingerprint', () => {
   function writeEasJson(config: object) {
     fs.writeFileSync(
       path.join(tmpDir, 'eas.json'),
-      JSON.stringify(config, null, 2)
+      JSON.stringify(config, null, 2),
     );
   }
 
@@ -73,10 +75,10 @@ describe('setupEnvAndFingerprint', () => {
 
     // Verify process.env was set
     expect(process.env.EXPO_PUBLIC_API_URL).toBe(
-      'https://api.prod.example.com'
+      'https://api.prod.example.com',
     );
     expect(process.env.EXPO_PUBLIC_DEMO_API_URL).toBe(
-      'https://api.dev.example.com'
+      'https://api.dev.example.com',
     );
     expect(process.env.EXPO_PUBLIC_APP_ENV).toBe('production');
     expect(process.env.RUNTIME_VERSION).toBe('abc123');
@@ -84,10 +86,10 @@ describe('setupEnvAndFingerprint', () => {
     // Verify .env file contents
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
     expect(envContent).toContain(
-      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com',
     );
     expect(envContent).toContain(
-      'EXPO_PUBLIC_DEMO_API_URL=https://api.dev.example.com'
+      'EXPO_PUBLIC_DEMO_API_URL=https://api.dev.example.com',
     );
     expect(envContent).toContain('RUNTIME_VERSION=abc123');
   });
@@ -110,12 +112,12 @@ describe('setupEnvAndFingerprint', () => {
 
     // eas.json profile value should win
     expect(process.env.EXPO_PUBLIC_API_URL).toBe(
-      'https://api.prod.example.com'
+      'https://api.prod.example.com',
     );
 
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
     expect(envContent).toContain(
-      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com',
     );
   });
 
@@ -137,18 +139,18 @@ describe('setupEnvAndFingerprint', () => {
 
     // eas.json value preserved, CI secret added
     expect(process.env.EXPO_PUBLIC_API_URL).toBe(
-      'https://api.prod.example.com'
+      'https://api.prod.example.com',
     );
     expect(process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY).toBe(
-      'secret-key-123'
+      'secret-key-123',
     );
 
     const envContent = fs.readFileSync(path.join(tmpDir, '.env'), 'utf-8');
     expect(envContent).toContain(
-      'EXPO_PUBLIC_API_URL=https://api.prod.example.com'
+      'EXPO_PUBLIC_API_URL=https://api.prod.example.com',
     );
     expect(envContent).toContain(
-      'EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY=secret-key-123'
+      'EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY=secret-key-123',
     );
   });
 
@@ -196,10 +198,10 @@ describe('setupEnvAndFingerprint', () => {
 
     // After: env vars are in process.env — child processes inherit process.env by default
     expect(process.env.EXPO_PUBLIC_API_URL).toBe(
-      'https://api.prod.example.com'
+      'https://api.prod.example.com',
     );
     expect(process.env.EXPO_PUBLIC_DEMO_API_URL).toBe(
-      'https://api.dev.example.com'
+      'https://api.dev.example.com',
     );
     expect(process.env.RUNTIME_VERSION).toBe('abc123');
   });
