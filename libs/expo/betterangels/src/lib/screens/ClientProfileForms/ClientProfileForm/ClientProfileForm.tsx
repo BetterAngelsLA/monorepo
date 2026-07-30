@@ -209,12 +209,17 @@ function toUpdateClienProfileInputs(
     delete values.profilePhoto;
   }
 
-  const result: UpdateClientProfileInput = {
+  // Build result, then normalize any Date objects from the form state into
+  // DateString for the GraphQL mutation. Use a broad type assertion because
+  // FormValues is a discriminated union and individual fields may not exist
+  // on all union members.
+  const result = {
     ...values,
     ...updatedInputs,
-  };
+  } as Record<string, unknown>;
 
-  // Always send dates as YYYY-MM-DD when present (Date serializes as ISO datetime)
+  // Normalize date fields: form may contain Date objects from pickers,
+  // but UpdateClientProfileInput expects DateString (ISO format).
   if (result.dateOfBirth instanceof Date) {
     result.dateOfBirth = toDateOnlyString(result.dateOfBirth);
   }
@@ -222,5 +227,5 @@ function toUpdateClienProfileInputs(
     result.unhousedStartDate = toDateOnlyString(result.unhousedStartDate);
   }
 
-  return result;
+  return result as UpdateClientProfileInput;
 }

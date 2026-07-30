@@ -29,7 +29,7 @@ export function toFormState(props: TProps): THouseholdMemberFormState {
     householdMember || {};
 
   const dobAsDate = parseToDate({
-    date: dateOfBirth,
+    date: dateOfBirth ?? '',
     inputFormat: 'yyyy-MM-dd',
   });
 

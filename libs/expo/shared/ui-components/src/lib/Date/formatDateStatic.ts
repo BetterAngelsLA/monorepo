@@ -3,7 +3,7 @@ import { format, parse } from 'date-fns';
 const DEFAULT_OUTPUT_FORMAT = 'MM/dd/yyyy';
 
 interface TProps {
-  date: string;
+  date: string | null | undefined;
   inputFormat: string;
   outputFormat?: string;
 }

@@ -17,7 +17,7 @@ interface INoteCardProps {
 
 export default function NoteCardHmis(props: INoteCardProps) {
   const { hmisNote, variant, hasBorder, onPress } = props;
-  const date = startOfDay(parseISO(hmisNote.date));
+  const date = startOfDay(parseISO(hmisNote.date ?? ''));
 
   return (
     <Pressable

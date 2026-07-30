@@ -10,7 +10,7 @@ export default function NoteTitleHmis({
 }) {
   if (hmisNote?.__typename !== 'HmisNoteType') return null;
 
-  const date = startOfDay(parseISO(hmisNote.date));
+  const date = startOfDay(parseISO(hmisNote.date ?? ''));
 
   return (
     <View>

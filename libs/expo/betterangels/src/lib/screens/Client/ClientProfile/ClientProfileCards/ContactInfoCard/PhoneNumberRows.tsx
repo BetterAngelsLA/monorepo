@@ -9,7 +9,7 @@ import { getPhoneActions } from './contactActions';
 import { ContactInfoRow } from './ContactInfoRow';
 
 type TPhoneNumber = {
-  number?: string;
+  number?: string | null;
   isPrimary?: boolean | null;
 };
 
