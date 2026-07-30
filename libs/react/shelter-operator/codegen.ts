@@ -1,5 +1,5 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
-import { SHARED_SCALARS } from '@monorepo/ba-platform';
+import { SHARED_SCALARS } from '../../ba-platform/src/lib/codegen-scalars';
 
 const config: CodegenConfig = {
   overwrite: true,

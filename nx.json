@@ -44,12 +44,7 @@
       "inputs": ["production", "^production"]
     },
     "generate-graphql-types": {
-      "cache": true,
-      "options": {
-        "env": {
-          "JITI_ALIAS": "{\"@monorepo/ba-platform\":\"/workspace/libs/ba-platform/src/lib/codegen-scalars.ts\"}"
-        }
-      }
+      "cache": true
     }
   },
   "namedInputs": {
