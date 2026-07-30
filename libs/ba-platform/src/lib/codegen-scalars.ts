@@ -8,11 +8,13 @@
  */
 export const SHARED_SCALARS: Record<string, string> = {
     // --- Branded string scalars ---
-    Date: "import('@monorepo/ba-platform/types').DateString",
-    DateTime: "import('@monorepo/ba-platform/types').DateTimeString",
-    Time: "import('@monorepo/ba-platform/types').TimeString",
-    UUID: "import('@monorepo/ba-platform/types').UUIDString",
-    PhoneNumber: "import('@monorepo/ba-platform/types').PhoneNumberString",
+    // Paths are relative to the generated types.ts at
+    // libs/ba-platform/src/lib/apollo/graphql/__generated__/types.ts
+    Date: "import('../../../../types').DateString",
+    DateTime: "import('../../../../types').DateTimeString",
+    Time: "import('../../../../types').TimeString",
+    UUID: "import('../../../../types').UUIDString",
+    PhoneNumber: "import('../../../../types').PhoneNumberString",
 
     // --- Plain string scalars ---
     NonBlankString: 'string',

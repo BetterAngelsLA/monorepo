@@ -8,7 +8,7 @@ export type CreateTaskMutationVariables = Types.Exact<{
 
 export type CreateTaskMutation = { __typename?: 'Mutation', createTask:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TaskType', id: string, createdAt: import('@monorepo/ba-platform/types').DateTimeString, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, updatedAt: import('@monorepo/ba-platform/types').DateTimeString, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, currentTeam?: { __typename?: 'TeamType', id: string, slug: string, name: string } | null }
+    | { __typename?: 'TaskType', id: string, createdAt: import('../../../../types').DateTimeString, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, updatedAt: import('../../../../types').DateTimeString, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, currentTeam?: { __typename?: 'TeamType', id: string, slug: string, name: string } | null }
    };
 
 
