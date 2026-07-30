@@ -1,3 +1,7 @@
+// Ensure React Native globals (ErrorUtils, etc.) are available before any
+// module that imports from 'expo' — expo's Expo.fx.tsx accesses them at import time.
+import 'react-native';
+
 import '@testing-library/react-native/build/matchers/extend-expect';
 import { vi } from 'vitest';
 
