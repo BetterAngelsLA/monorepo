@@ -159,6 +159,7 @@
     },
     "expo-doctor": {
       "executor": "nx:run-commands",
+      "dependsOn": ["sync-deps"],
       "options": {
         "command": "npx expo-doctor"
       }
