@@ -179,6 +179,32 @@ export function ShelterFilters(props: IProps) {
 
         {HIGH_PRIORITY_FILTERS.map(renderFilterSelector)}
 
+        <div id="low-priority-shelter-filters">
+          {showMoreCategories &&
+            LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
+        </div>
+
+        <button
+          type="button"
+          className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
+          aria-expanded={showMoreCategories}
+          aria-controls="low-priority-shelter-filters"
+          onClick={() => setShowMoreCategories((current) => !current)}
+        >
+          <span>
+            {showMoreCategories
+              ? 'Show Less Categories'
+              : 'Show More Categories'}
+          </span>
+
+          <ChevronLeftIcon
+            className={mergeCss([
+              'w-3 text-primary-20 transition-transform',
+              showMoreCategories ? 'rotate-90' : '-rotate-90',
+            ])}
+          />
+        </button>
+
         <div className="mt-8">
           <div className="flex items-center justify-between">Max Stay</div>
 
@@ -209,32 +235,6 @@ export function ShelterFilters(props: IProps) {
             />
           </div>
         </div>
-
-        <div id="low-priority-shelter-filters">
-          {showMoreCategories &&
-            LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
-        </div>
-
-        <button
-          type="button"
-          className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
-          aria-expanded={showMoreCategories}
-          aria-controls="low-priority-shelter-filters"
-          onClick={() => setShowMoreCategories((current) => !current)}
-        >
-          <span>
-            {showMoreCategories
-              ? 'Show Less Categories'
-              : 'Show More Categories'}
-          </span>
-
-          <ChevronLeftIcon
-            className={mergeCss([
-              'w-3 text-primary-20 transition-transform',
-              showMoreCategories ? 'rotate-90' : '-rotate-90',
-            ])}
-          />
-        </button>
       </div>
     </div>
   );
