@@ -8,8 +8,10 @@ import { OperatorLayout } from './components/layout/OperatorLayout';
 import {
   BedsPage,
   CreateBedPage,
+  CreateReservationPage,
   CreateRoomPage,
   EditBedPage,
+  EditReservationPage,
   EditRoomPage,
   OccupantsPage,
   ReportsPage,
@@ -20,7 +22,6 @@ import {
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { ReservationFormPage } from './pages/shelterManagement/ReservationFormPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -139,11 +140,11 @@ export function OperatorApp() {
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
-                element={<ReservationFormPage />}
+                element={<CreateReservationPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
-                element={<ReservationFormPage />}
+                element={<EditReservationPage />}
               />
               <Route
                 path={mgmtRouteConfig.children.occupants}

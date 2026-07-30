@@ -1,7 +1,9 @@
 export { BedsPage } from './BedsPage';
 export { CreateBedPage } from './CreateBedPage';
+export { CreateReservationPage } from './CreateReservationPage';
 export { CreateRoomPage } from './CreateRoomPage';
 export { EditBedPage } from './EditBedPage';
+export { EditReservationPage } from './EditReservationPage';
 export { EditRoomPage } from './EditRoomPage';
 export { OccupantsPage } from './OccupantsPage';
 export { ReportsPage } from './ReportsPage';
