@@ -28,23 +28,57 @@ export function resolveStarDeps(workspaceRoot, appDir, { silent = false } = {}) 
 
   const rootPkg = JSON.parse(readFileSync(resolve(workspaceRoot, 'package.json'), 'utf-8'));
   const appPkg = JSON.parse(readFileSync(resolve(appDir, 'package.json'), 'utf-8'));
+  const lockfilePath = resolve(workspaceRoot, 'yarn.lock');
+
+  // Cache lockfile version lookups (parsed lazily)
+  let _lockfileVersions = null;
+  const getVersionFromLockfile = (name) => {
+    if (_lockfileVersions === null) {
+      _lockfileVersions = {};
+      try {
+        const text = readFileSync(lockfilePath, 'utf-8');
+        // Yarn v4 lockfile format: "pkg@npm:range"\n  version: x.y.z
+        const re = /"(@?[^@]+)@npm:[^"]*"[\s\S]*?version: (\S+)/g;
+        let m;
+        while ((m = re.exec(text)) !== null) {
+          _lockfileVersions[m[1]] = m[2];
+        }
+      } catch { /* lockfile not available */ }
+    }
+    return _lockfileVersions[name];
+  };
 
   let resolved = 0;
+  let unresolved = [];
+
+  // Resolve a single star dep — checks root deps, root devDeps, then lockfile
+  const resolveOne = (name, target) => {
+    const fromDeps = rootPkg.dependencies?.[name];
+    const fromDev = rootPkg.devDependencies?.[name];
+    const version = fromDeps ?? fromDev;
+    if (version) {
+      target[name] = version;
+      const from = fromDeps ? 'deps' : 'devDeps';
+      log(`  ✦ ${name}: * → ${version}  (root ${from})`);
+      return 1;
+    }
+    // Fallback: read from lockfile (for transitive deps like expo-file-system)
+    const lockVersion = getVersionFromLockfile(name, lockfilePath);
+    if (lockVersion) {
+      target[name] = lockVersion;
+      log(`  ✦ ${name}: * → ${lockVersion}  (lockfile)`);
+      return 1;
+    }
+    unresolved.push(name);
+    log(`  ⚠ ${name}: * → unresolved (not in root or lockfile)`);
+    return 0;
+  };
 
   for (const [name, version] of Object.entries(appPkg.dependencies ?? {})) {
-    if (version === '*' && rootPkg.dependencies?.[name]) {
-      appPkg.dependencies[name] = rootPkg.dependencies[name];
-      log(`  ✦ ${name}: * → ${rootPkg.dependencies[name]}`);
-      resolved++;
-    }
+    if (version === '*') resolved += resolveOne(name, appPkg.dependencies);
   }
-
   for (const [name, version] of Object.entries(appPkg.devDependencies ?? {})) {
-    if (version === '*' && rootPkg.devDependencies?.[name]) {
-      appPkg.devDependencies[name] = rootPkg.devDependencies[name];
-      log(`  ✦ ${name}: * → ${rootPkg.devDependencies[name]}`);
-      resolved++;
-    }
+    if (version === '*') resolved += resolveOne(name, appPkg.devDependencies);
   }
 
   writeFileSync(resolve(appDir, 'package.json'), JSON.stringify(appPkg, null, 2) + '\n');
@@ -55,6 +89,9 @@ export function resolveStarDeps(workspaceRoot, appDir, { silent = false } = {}) 
 
   if (resolved > 0) {
     log(`  ✓ ${resolved} star dep(s) filled in ${appDir}/package.json`);
+  }
+  if (unresolved.length > 0) {
+    log(`  ⚠ ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`);
   }
   log(`  ✓ Lockfile copied to ${appDir}/yarn.lock`);
 
