@@ -7,25 +7,23 @@
  * @see {@link ./branded-types.ts} for the branded string type definitions.
  */
 export const SHARED_SCALARS: Record<string, string> = {
-    // --- Branded string scalars ---
-    // Paths are relative to the generated types.ts at
-    // libs/ba-platform/src/lib/apollo/graphql/__generated__/types.ts
-    Date: "import('../../../../types').DateString",
-    DateTime: "import('../../../../types').DateTimeString",
-    Time: "import('../../../../types').TimeString",
-    UUID: "import('../../../../types').UUIDString",
-    PhoneNumber: "import('../../../../types').PhoneNumberString",
+  // --- Branded string scalars ---
+  Date: "import('@monorepo/ba-platform/types').DateString",
+  DateTime: "import('@monorepo/ba-platform/types').DateTimeString",
+  Time: "import('@monorepo/ba-platform/types').TimeString",
+  UUID: "import('@monorepo/ba-platform/types').UUIDString",
+  PhoneNumber: "import('@monorepo/ba-platform/types').PhoneNumberString",
 
-    // --- Plain string scalars ---
-    NonBlankString: 'string',
-    NonEmptyString: 'string',
+  // --- Plain string scalars ---
+  NonBlankString: 'string',
+  NonEmptyString: 'string',
 
-    // --- Numeric scalars ---
-    LatitudeScalar: 'number',
-    LongitudeScalar: 'number',
+  // --- Numeric scalars ---
+  LatitudeScalar: 'number',
+  LongitudeScalar: 'number',
 
-    // --- Intentionally untyped scalars ---
-    JSON: 'any',
-    Point: 'any',
-    Upload: 'any',
-  };
+  // --- Intentionally untyped scalars ---
+  JSON: 'any',
+  Point: 'any',
+  Upload: 'any',
+};

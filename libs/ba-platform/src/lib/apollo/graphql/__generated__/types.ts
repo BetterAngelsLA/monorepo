@@ -13,9 +13,9 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   /** Date (isoformat) */
-  Date: { input: import('../../../../types').DateString; output: import('../../../../types').DateString; }
+  Date: { input: import('@monorepo/ba-platform/types').DateString; output: import('@monorepo/ba-platform/types').DateString; }
   /** Date with time (isoformat) */
-  DateTime: { input: import('../../../../types').DateTimeString; output: import('../../../../types').DateTimeString; }
+  DateTime: { input: import('@monorepo/ba-platform/types').DateTimeString; output: import('@monorepo/ba-platform/types').DateTimeString; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   LatitudeScalar: { input: number; output: number; }
@@ -24,12 +24,12 @@ export type Scalars = {
   NonBlankString: { input: string; output: string; }
   /** Rejects blank input. Use for required string fields. */
   NonEmptyString: { input: string; output: string; }
-  PhoneNumber: { input: import('../../../../types').PhoneNumberString; output: import('../../../../types').PhoneNumberString; }
+  PhoneNumber: { input: import('@monorepo/ba-platform/types').PhoneNumberString; output: import('@monorepo/ba-platform/types').PhoneNumberString; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
   /** Time (isoformat) */
-  Time: { input: import('../../../../types').TimeString; output: import('../../../../types').TimeString; }
-  UUID: { input: import('../../../../types').UUIDString; output: import('../../../../types').UUIDString; }
+  Time: { input: import('@monorepo/ba-platform/types').TimeString; output: import('@monorepo/ba-platform/types').TimeString; }
+  UUID: { input: import('@monorepo/ba-platform/types').UUIDString; output: import('@monorepo/ba-platform/types').UUIDString; }
   /** Represents a file upload. */
   Upload: { input: any; output: any; }
 };
