@@ -5131,7 +5131,6 @@ __metadata:
     expo-image-picker: "npm:~57.0.7"
     expo-linking: "npm:~57.0.4"
     expo-location: "npm:~57.0.7"
-    expo-modules-core: "npm:~57.0.8"
     expo-router: "npm:~57.0.9"
     expo-secure-store: "npm:~57.0.1"
     expo-sharing: "npm:~57.0.8"

@@ -155,7 +155,9 @@
     },
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
-      "options": {}
+      "options": {
+        "exclude": ["expo-modules-core"]
+      }
     },
     "expo-doctor": {
       "executor": "nx:run-commands",

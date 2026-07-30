@@ -93,8 +93,7 @@
     "@types/google.maps": "*",
     "vitest-native": "*",
     "react-native-paper": "*",
-    "react-native-paper-dates": "*",
-    "expo-modules-core": "*"
+    "react-native-paper-dates": "*"
   },
   "devDependencies": {}
 }
