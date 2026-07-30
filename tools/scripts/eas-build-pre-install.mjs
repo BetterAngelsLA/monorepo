@@ -22,14 +22,6 @@ if (!process.env.CI) {
 const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
 
-const rootPkg = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'));
-
-// If workspaces are already enabled, Yarn resolves * deps natively — skip
-if (rootPkg.workspaces && rootPkg.workspaces.length > 0) {
-  console.log('[eas-build-pre-install] Workspaces already configured, skipping.');
-  process.exit(0);
-}
-
 // Resolve * deps using the canonical implementation (shared with expo-doctor)
 const { unresolved } = resolveStarDeps(workspaceRoot, appDir);
 

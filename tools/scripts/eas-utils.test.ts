@@ -18,7 +18,6 @@ describe('setupEnvAndFingerprint', () => {
     'EXPO_PUBLIC_DEMO_API_URL',
     'EXPO_PUBLIC_APP_ENV',
     'EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL',
-    'EAS_NO_FROZEN_LOCKFILE',
     'APP_VARIANT',
     'RUNTIME_VERSION',
     'EXPO_PUBLIC_OVERRIDE',
