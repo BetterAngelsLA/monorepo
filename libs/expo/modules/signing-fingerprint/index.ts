@@ -12,7 +12,7 @@ export function getSigningFingerprint(): string | null {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { requireNativeModule } = require('expo-modules-core');
+  const { requireNativeModule } = require('expo');
   const mod = requireNativeModule('SigningFingerprint');
   return mod.getFingerprint();
 }
