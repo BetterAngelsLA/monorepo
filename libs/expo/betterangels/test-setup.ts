@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 
 (globalThis as Record<string, unknown>).ErrorUtils = {
   setGlobalHandler: vi.fn(),
-  getGlobalHandler: vi.fn(() => () => {}),
+  getGlobalHandler: vi.fn(() => vi.fn()),
   reportFatalError: vi.fn((e: Error) => { throw e; }),
 };
 vi.mock('@preeternal/react-native-cookie-manager', () => ({
