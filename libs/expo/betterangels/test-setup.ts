@@ -1,4 +1,5 @@
 import '@testing-library/react-native/build/matchers/extend-expect';
+import { vi } from 'vitest';
 
 // Mock native modules that crash in Node.js environment
 vi.mock('@preeternal/react-native-cookie-manager', () => ({

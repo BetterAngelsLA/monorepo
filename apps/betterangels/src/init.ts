@@ -14,7 +14,7 @@ import {
   interceptorHmis,
   userAgentInterceptor,
 } from '@monorepo/expo/shared/clients';
-import { hideDevMenuFab } from '../../libs/expo/shared/utils/src/lib/devMenu/hideDevMenuFab';
+import { hideDevMenuFab } from '@monorepo/expo/shared/utils';
 
 // ---- Compile-time constants ----
 export const isDevEnv = process.env['NODE_ENV'] === 'development';

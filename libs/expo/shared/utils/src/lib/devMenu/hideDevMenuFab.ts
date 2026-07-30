@@ -1,4 +1,3 @@
-import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 type DevMenuPreferencesModule = {
@@ -8,36 +7,12 @@ type DevMenuPreferencesModule = {
 };
 
 /**
- * Hide the expo-dev-menu floating "Tools" FAB (gear icon) on iOS so it
- * doesn't overlap the in-app `nav-menu-btn` during development and e2e.
+ * Hide the expo-dev-menu floating "Tools" FAB on iOS so it doesn't overlap
+ * the in-app `nav-menu-btn` during development and e2e.
  *
- * Gating (defense in depth — both must be false to reach native code):
- *   - `__DEV__`: true for local Metro dev bundles, false for production
- *     and EAS Update bundles (Metro inlines based on the bundle's
- *     `dev` flag, not the host app).
- *   - `EXPO_PUBLIC_E2E_MODE === '1'`: set by `tools/scripts/eas-e2e.ts`
- *     before invoking `eas update`, so the published e2e bundle has it
- *     statically inlined by Metro. Covers the CI case where the dev
- *     client runs an EAS Update bundle (so `__DEV__` is false even
- *     though expo-dev-menu IS linked natively).
- *
- * Behavior:
- *   - iOS, local dev OR e2e CI: hides the FAB via `DevMenuPreferences`
- *     Expo module.
- *   - iOS production / store builds: no-op (gates fail; module also
- *     not linked, so even without the gate `requireOptionalNativeModule`
- *     would return null).
- *   - Android (any): no-op. expo-dev-menu does not register
- *     `DevMenuPreferences` on Android.
- *
- * Implementation notes:
- *   - `DevMenuPreferences` is an *Expo Module* (extends `Module` from
- *     `ExpoModulesCore` — see `node_modules/expo-dev-menu/ios/Modules/
- *     DevMenuPreferences.swift`), NOT a legacy RN bridge module. So
- *     `NativeModules.DevMenuPreferences` is always `undefined`; use
- *     `requireOptionalNativeModule` from `expo` instead.
- *
- * Call once at app startup, before any UI renders.
+ * The `expo` import is lazy (dynamic require) to avoid pulling React Native
+ * globals (ErrorUtils) into test environments via barrel exports. The function
+ * is a no-op outside of dev/e2e, so the lazy load has no runtime cost in prod.
  */
 export function hideDevMenuFab(): void {
   const enabled = __DEV__ || process.env['EXPO_PUBLIC_E2E_MODE'] === '1';
@@ -49,6 +24,12 @@ export function hideDevMenuFab(): void {
   if (Platform.OS !== 'ios') {
     return;
   }
+
+  // Lazy import: expo's Expo.fx.tsx accesses RN globals (ErrorUtils) that
+  // aren't available in test environments. Loading it dynamically inside the
+  // function body avoids triggering side-effects at module import time.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { requireOptionalNativeModule } = require('expo') as typeof import('expo');
 
   // Returns null in builds where expo-dev-menu is not linked.
   const devMenuPreferences =
