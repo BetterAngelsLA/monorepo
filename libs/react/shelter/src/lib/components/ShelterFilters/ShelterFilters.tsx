@@ -82,7 +82,7 @@ export function ShelterFilters(props: IProps) {
 
   function onFilterChange(
     filterName: TFilterConfig['name'],
-    selected: string[]
+    selected: string[],
   ) {
     onFiltersChange({
       ...filters,
@@ -92,7 +92,7 @@ export function ShelterFilters(props: IProps) {
 
   function onOpenNowScheduleTypeChange(
     scheduleType: ScheduleTypeChoices,
-    checked: boolean
+    checked: boolean,
   ) {
     const newTypes = checked
       ? [...openNowTypes, scheduleType]
@@ -196,9 +196,7 @@ export function ShelterFilters(props: IProps) {
           <>
             {/* Alphabetically first low-priority category */}
             <div className="mt-8">
-              <div className="flex items-center justify-between">
-                Max Stay
-              </div>
+              <div className="flex items-center justify-between">Max Stay</div>
 
               <div className="mt-6 flex flex-col gap-2">
                 <input
@@ -206,9 +204,7 @@ export function ShelterFilters(props: IProps) {
                   min={1}
                   max={maxStayMax}
                   value={filters.maxStay?.days || ''}
-                  onChange={(event) =>
-                    onMaxStayDaysChange(event.target.value)
-                  }
+                  onChange={(event) => onMaxStayDaysChange(event.target.value)}
                   placeholder={
                     maxStayMax
                       ? `Enter number between 1 and ${maxStayMax}`
