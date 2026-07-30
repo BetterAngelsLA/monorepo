@@ -59,8 +59,6 @@
     "react-native-safe-area-context": "*",
     "react-native-reanimated": "*",
     "expo-clipboard": "*",
-    "react-native-paper": "*",
-    "react-native-paper-dates": "*",
     "@react-native-community/datetimepicker": "*",
     "react-native-open-maps": "*",
     "expo-font": "*",
@@ -93,7 +91,9 @@
     "expo-web-browser": "*",
     "expo-dev-client": "*",
     "@types/google.maps": "*",
-    "vitest-native": "*"
+    "vitest-native": "*",
+    "react-native-paper": "*",
+    "react-native-paper-dates": "*"
   },
   "devDependencies": {}
 }
