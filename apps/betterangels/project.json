@@ -160,7 +160,7 @@
     "expo-doctor": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bash ../../tools/scripts/expo-doctor-check.sh apps/betterangels",
+        "command": "node ../../tools/scripts/expo-doctor-check.mjs apps/betterangels",
         "cwd": "apps/betterangels"
       }
     }
