@@ -1,3 +1,4 @@
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Platform } from 'react-native';
 
 type DevMenuPreferencesModule = {
@@ -24,12 +25,6 @@ export function hideDevMenuFab(): void {
   if (Platform.OS !== 'ios') {
     return;
   }
-
-  // Lazy import: expo's Expo.fx.tsx accesses RN globals (ErrorUtils) that
-  // aren't available in test environments. Loading it dynamically inside the
-  // function body avoids triggering side-effects at module import time.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { requireOptionalNativeModule } = require('expo') as typeof import('expo');
 
   // Returns null in builds where expo-dev-menu is not linked.
   const devMenuPreferences =
