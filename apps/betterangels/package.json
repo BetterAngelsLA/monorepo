@@ -15,7 +15,6 @@
   "dependencies": {
     "dotenv": "*",
     "expo-constants": "*",
-    "expo-modules-core": "*",
     "react-native": "*",
     "expo-router": "*",
     "expo": "*",
@@ -60,8 +59,6 @@
     "react-native-safe-area-context": "*",
     "react-native-reanimated": "*",
     "expo-clipboard": "*",
-    "react-native-paper": "*",
-    "react-native-paper-dates": "*",
     "@react-native-community/datetimepicker": "*",
     "react-native-open-maps": "*",
     "expo-font": "*",
@@ -89,10 +86,15 @@
     "jotai-family": "*",
     "expo-status-bar": "*",
     "expo-sharing": "*",
+    "expo-splash-screen": "*",
     "@react-native-vector-icons/ant-design": "*",
+    "@react-native-vector-icons/material-design-icons": "*",
     "expo-web-browser": "*",
     "expo-dev-client": "*",
-    "@types/google.maps": "*"
+    "@types/google.maps": "*",
+    "vitest-native": "*",
+    "react-native-paper": "*",
+    "react-native-paper-dates": "*"
   },
   "devDependencies": {}
 }
