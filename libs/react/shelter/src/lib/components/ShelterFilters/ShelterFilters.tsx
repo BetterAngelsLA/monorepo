@@ -179,42 +179,41 @@ export function ShelterFilters(props: IProps) {
 
         {HIGH_PRIORITY_FILTERS.map(renderFilterSelector)}
 
-        {showMoreCategories && (
-          <>
-            <div className="mt-8">
-              <div className="flex items-center justify-between">Max Stay</div>
+        <div className="mt-8">
+          <div className="flex items-center justify-between">Max Stay</div>
 
-              <div className="mt-6 flex flex-col gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={maxStayMax}
-                  value={filters.maxStay?.days || ''}
-                  onChange={(event) => onMaxStayDaysChange(event.target.value)}
-                  placeholder={
-                    maxStayMax
-                      ? `Enter number between 1 and ${maxStayMax}`
-                      : 'Enter number'
-                  }
-                  className="w-full rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
-                />
+          <div className="mt-6 flex flex-col gap-2">
+            <input
+              type="number"
+              min={1}
+              max={maxStayMax}
+              value={filters.maxStay?.days || ''}
+              onChange={(event) => onMaxStayDaysChange(event.target.value)}
+              placeholder={
+                maxStayMax
+                  ? `Enter number between 1 and ${maxStayMax}`
+                  : 'Enter number'
+              }
+              className="w-full rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
+            />
 
-                <Checkbox
-                  className="flex w-full flex-row items-center justify-end gap-2 border-0 bg-white"
-                  label="Include unknown"
-                  disabled={!filters.maxStay?.days}
-                  checked={
-                    !!filters.maxStay?.includeNull &&
-                    (filters.maxStay?.days ?? 0) > 0
-                  }
-                  onChange={onMaxStayIncludeNullChange}
-                />
-              </div>
-            </div>
+            <Checkbox
+              className="flex w-full flex-row items-center justify-end gap-2 border-0 bg-white"
+              label="Include unknown"
+              disabled={!filters.maxStay?.days}
+              checked={
+                !!filters.maxStay?.includeNull &&
+                (filters.maxStay?.days ?? 0) > 0
+              }
+              onChange={onMaxStayIncludeNullChange}
+            />
+          </div>
+        </div>
 
-            {LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
-          </>
-        )}
+        <div id="low-priority-shelter-filters">
+          {showMoreCategories &&
+            LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
+        </div>
 
         <button
           type="button"
@@ -231,14 +230,12 @@ export function ShelterFilters(props: IProps) {
 
           <ChevronLeftIcon
             className={mergeCss([
-              'w-3',
+              'w-3 text-primary-20 transition-transform',
               showMoreCategories ? 'rotate-90' : '-rotate-90',
-              'text-primary-20',
-              'transition-transform',
             ])}
           />
         </button>
       </div>
     </div>
   );
-}
+}``
