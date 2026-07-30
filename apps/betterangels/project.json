@@ -160,22 +160,8 @@
     "expo-doctor": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "apps/betterangels",
-        "commands": [
-          {
-            "command": "TMPFILE=$(mktemp) && cp package.json \"$TMPFILE\" && (cd ../.. && yarn nx run betterangels:sync-deps) && diff \"$TMPFILE\" package.json || (echo 'ERROR: sync-deps modified package.json in CI! Dependencies are out of sync. Run sync-deps locally and commit the changes.' && exit 1)"
-          },
-          {
-            "command": "cp package.json .app-pkg-orig.json && node ../../tools/scripts/fill-star-deps.mjs ../../. apps/betterangels"
-          },
-          {
-            "command": "npx -y expo-doctor"
-          },
-          {
-            "command": "cp .app-pkg-orig.json package.json && rm -f yarn.lock .app-pkg-orig.json"
-          }
-        ],
-        "parallel": false
+        "command": "bash ../../tools/scripts/expo-doctor-check.sh apps/betterangels",
+        "cwd": "apps/betterangels"
       }
     }
   }
