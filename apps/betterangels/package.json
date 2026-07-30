@@ -93,7 +93,8 @@
     "@react-native-vector-icons/material-design-icons": "*",
     "expo-web-browser": "*",
     "expo-dev-client": "*",
-    "@types/google.maps": "*"
+    "@types/google.maps": "*",
+    "vitest-native": "*"
   },
   "devDependencies": {}
 }
