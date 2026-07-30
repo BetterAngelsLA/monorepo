@@ -45,7 +45,8 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
     : 'client-nav-menu-open-btn';
 
   return (
-    <View>
+    // collapsable={false} set to ensure view exists in e2e env
+    <View collapsable={false}>
       <Pressable
         accessibilityRole="button"
         accessibilityHint="toggle client profile menu"
@@ -75,7 +76,8 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
             }}
             onPress={() => setMenuVisible(false)}
           />
-          <View style={styles.menuDropdown}>
+          {/* collapsable={false} set to ensure view exists in e2e env */}
+          <View collapsable={false} style={styles.menuDropdown}>
             <ClientNavMenuBtn
               testId="client-nav-menu-delete-profile-btn"
               disabled={isDeleting}
