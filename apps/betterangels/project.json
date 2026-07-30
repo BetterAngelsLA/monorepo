@@ -163,13 +163,7 @@
         "cwd": "apps/betterangels",
         "commands": [
           {
-            "command": "cp package.json /tmp/app-pkg-before.json"
-          },
-          {
-            "command": "cd ../.. && yarn nx run betterangels:sync-deps"
-          },
-          {
-            "command": "diff /tmp/app-pkg-before.json package.json || (echo 'ERROR: sync-deps modified package.json in CI! Dependencies are out of sync. Run sync-deps locally and commit the changes.' && exit 1)"
+            "command": "TMPFILE=$(mktemp) && cp package.json \"$TMPFILE\" && (cd ../.. && yarn nx run betterangels:sync-deps) && diff \"$TMPFILE\" package.json || (echo 'ERROR: sync-deps modified package.json in CI! Dependencies are out of sync. Run sync-deps locally and commit the changes.' && exit 1)"
           },
           {
             "command": "node ../../tools/scripts/fill-star-deps.mjs ../../. apps/betterangels"
