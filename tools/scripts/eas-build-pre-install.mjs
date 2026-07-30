@@ -1,10 +1,18 @@
 /**
- * EAS pre-install hook — CI-only replica of @nx/expo:build's `copyPackageJsonAndLock`.
- * Resolves * deps from root, copies lockfile, configures Yarn workspace.
- * No-op outside CI — sync-deps handles local resolution.
+ * EAS pre-install hook — resolves star (*) deps for EAS Build.
+ *
+ * EAS Build runs `yarn install` from the app directory and doesn't
+ * understand Yarn workspaces, so `*` placeholders must be resolved to
+ * real versions. Uses the same canonical star-resolution logic as
+ * expo-doctor (fill-star-deps.mjs), plus copies EAS-required fields
+ * (packageManager, resolutions/overrides) and configures the root
+ * package.json as a single-package workspace.
+ *
+ * No-op outside CI — `sync-deps` handles local resolution.
  */
-import { readFileSync, writeFileSync, copyFileSync } from 'fs';
+import { copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
+import { resolveStarDeps } from './fill-star-deps.mjs';
 
 if (!process.env.CI) {
   console.log('[eas-build-pre-install] Skipping — not in CI.');
@@ -22,18 +30,21 @@ if (rootPkg.workspaces && rootPkg.workspaces.length > 0) {
   process.exit(0);
 }
 
+// Resolve * deps using the canonical implementation (shared with expo-doctor)
+resolveStarDeps(workspaceRoot, appDir);
+
+// EAS-specific extras: copy packageManager and resolutions so EAS Build
+// uses the same package manager version and dependency resolution as local
 const appPkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf-8'));
 
-appPkg.dependencies = rootPkg.dependencies;
-appPkg.devDependencies = rootPkg.devDependencies;
 if (rootPkg.packageManager) appPkg.packageManager = rootPkg.packageManager;
 if (rootPkg.overrides) appPkg.overrides = rootPkg.overrides;
 else if (rootPkg.resolutions) appPkg.resolutions = rootPkg.resolutions;
 
+writeFileSync(join(appDir, 'package.json'), JSON.stringify(appPkg, null, 2) + '\n');
+
 // Tell EAS this is a Yarn workspace so it runs install from root
 rootPkg.workspaces = [projectRoot];
-
-writeFileSync(join(appDir, 'package.json'), JSON.stringify(appPkg, null, 2) + '\n');
 writeFileSync(join(workspaceRoot, 'package.json'), JSON.stringify(rootPkg, null, 2) + '\n');
-copyFileSync(join(workspaceRoot, 'yarn.lock'), join(appDir, 'yarn.lock'));
-console.log('[eas-build-pre-install] Copied root deps + lockfile.');
+
+console.log('[eas-build-pre-install] Star deps resolved + EAS config applied.');
