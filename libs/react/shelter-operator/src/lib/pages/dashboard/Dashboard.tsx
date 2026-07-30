@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { useDebounce } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
 import { Search, Settings2 } from 'lucide-react';
@@ -8,7 +9,7 @@ import type {
   DemographicChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
-} from '../../apollo/graphql/__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { Button } from '../../components/base-ui/buttons';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
@@ -20,7 +21,6 @@ import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
 } from '../../graphql/__generated__/shelters.generated';
-import { useActiveOrg } from '../../providers/activeOrg';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
@@ -38,7 +38,7 @@ const loadingState = (
 const emptyState = (
   <div className="px-6 py-8 text-center text-sm text-gray-500">
     No shelters yet.{' '}
-    <Link to={paths.dashboardCreate} className="text-blue-600 hover:underline">
+    <Link to={paths.shelterCreate} className="text-blue-600 hover:underline">
       Create your first shelter
     </Link>
     .
@@ -115,7 +115,14 @@ export function Dashboard() {
           name: s.name ?? null,
           address: s.location?.place ?? null,
           totalBeds: s.totalBeds ?? null,
-          availableBeds: s.bedsByStatus.available ?? null,
+          bedCounts: {
+            available: s.bedCounts.available ?? 0,
+            inTurnaround: s.bedCounts.inTurnaround ?? 0,
+            occupied: s.bedCounts.occupied ?? 0,
+            outOfService: s.bedCounts.outOfService ?? 0,
+            reserved: s.bedCounts.reserved ?? 0,
+            total: s.bedCounts.total ?? 0,
+          },
           tags: null,
           status: s.status,
         })) ?? []

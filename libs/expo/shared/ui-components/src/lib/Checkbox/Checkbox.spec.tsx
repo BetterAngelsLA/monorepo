@@ -24,7 +24,7 @@ describe('Checkbox Component', () => {
   });
 
   it('calls onCheck when pressed', () => {
-    const mockOnCheck = jest.fn();
+    const mockOnCheck = vi.fn();
     const { getByText } = render(
       <Checkbox
         accessibilityHint=""

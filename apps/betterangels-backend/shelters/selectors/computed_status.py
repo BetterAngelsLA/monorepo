@@ -24,6 +24,7 @@ from django.db.models import (
     Value,
     When,
 )
+
 from shelters.enums import BedStatusChoices, ReservationStatusChoices, RoomStatusChoices
 
 if TYPE_CHECKING:
@@ -153,26 +154,20 @@ def room_computed_status_annotation() -> Case:
     return computed_status_case("room_id", RoomStatusChoices)
 
 
-def _shelter_reservable_status_count_subquery(
+def shelter_count_subquery(
     model_class: type[Bed] | type[Room],
-    status: StatusChoice,
+    status: StatusChoice | None = None,
 ) -> Subquery:
     from shelters.managers import BedQuerySet, RoomQuerySet
 
-    base_qs = cast(BedQuerySet | RoomQuerySet, model_class.objects.filter(shelter_id=OuterRef("pk")))
+    qs = cast(
+        BedQuerySet | RoomQuerySet,
+        model_class.objects.filter(shelter_id=OuterRef("pk")),
+    )
+    if status is not None:
+        qs = cast(BedQuerySet | RoomQuerySet, qs.filter_by_status(status))
+
     return Subquery(
-        base_qs.filter_by_status(status).order_by().values("shelter").annotate(c=Count("pk")).values("c"),
+        qs.order_by().values("shelter").annotate(c=Count("pk")).values("c"),
         output_field=IntegerField(),
     )
-
-
-def shelter_bed_status_count_subquery(status: BedStatusChoices) -> Subquery:
-    from shelters.models import Bed
-
-    return _shelter_reservable_status_count_subquery(Bed, status)
-
-
-def shelter_room_status_count_subquery(status: RoomStatusChoices) -> Subquery:
-    from shelters.models import Room
-
-    return _shelter_reservable_status_count_subquery(Room, status)

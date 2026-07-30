@@ -34,6 +34,9 @@
   "mypy.runUsingActiveInterpreter": false,
   "mypy.dmypyExecutable": "${workspaceFolder}/tools/scripts/dmypy-wrapper.sh",
   "python.analysis.typeCheckingMode": "off",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportInvalidTypeForm": "none"
+  },
   "python.analysis.include": ["apps/betterangels-backend"],
   "python.testing.pytestArgs": ["apps", "libs"],
   "python.testing.unittestEnabled": false,

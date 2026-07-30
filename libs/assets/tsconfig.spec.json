@@ -3,8 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "node",
-    "types": ["vite/client", "jest", "node"]
+    "moduleResolution": "bundler",
+    "types": ["vite/client", "node"]
   },
   "include": [
     "src/**/*.spec.ts",

@@ -98,7 +98,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      teamId: data.teamId || teamId || null,
+      teamId: data.teamId ?? teamId ?? null,
     };
 
     if (existingId) {
@@ -144,10 +144,10 @@ export default function NoteTasks(props: INoteTasksProps) {
               status: cleanStatus,
               clientProfile: clientProfileId,
               hmisClientProfile: hmisClientProfileId,
-              teamId: cleanTeamId || teamId || null,
+              teamId: cleanTeamId ?? teamId ?? undefined,
               // Handle linking to either Note type
-              note: noteId || null,
-              hmisNote: hmisNoteId || null,
+              note: noteId ?? undefined,
+              hmisNote: hmisNoteId ?? undefined,
             },
           },
         });

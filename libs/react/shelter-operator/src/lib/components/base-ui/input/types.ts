@@ -11,7 +11,8 @@ export type InputDataType =
   | 'email'
   | 'phone-number'
   | 'time'
-  | 'date';
+  | 'date'
+  | 'url';
 export type InputVariant = 'default' | 'paragraph';
 
 type NativeAttrsOmit =
@@ -32,7 +33,6 @@ type SharedCustomProps = {
   isActive?: boolean;
   isViewMode?: boolean;
   showErrorIcon?: boolean;
-  isTouched?: boolean;
   /** Only applied when `variant` is `"paragraph"`. */
   rows?: number;
   onFocus?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;

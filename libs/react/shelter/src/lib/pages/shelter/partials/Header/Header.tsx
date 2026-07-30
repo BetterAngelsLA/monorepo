@@ -26,8 +26,24 @@ export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
   return (
     <>
       <div className="bg-steel-blue -mx-4 flex items-center gap-8 py-2">
-        <Link to="/" className="flex items-center justify-center h-10 w-10">
-          <ArrowLeftIcon className="w-5 h-5 text-white" />
+        <Link
+          to="/"
+          className="
+    group
+    flex items-center justify-center
+    h-10 w-10
+    rounded-lg
+    transition-colors
+    active:bg-[#416984]
+  "
+        >
+          <ArrowLeftIcon
+            className="
+      w-5 h-5
+      text-white
+      group-active:text-[#E8ECF2]
+    "
+          />
         </Link>
         <h2 className="font-semibold text-white">{shelter.name}</h2>
       </div>

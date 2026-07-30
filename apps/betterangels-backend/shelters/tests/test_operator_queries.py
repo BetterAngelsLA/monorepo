@@ -4,13 +4,13 @@ from typing import Any, cast
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from model_bakery import baker
-from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices
+from unittest_parametrize import ParametrizedTestCase, parametrize
+
+from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices, SpecialSituationRestrictionChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import SpecialSituationRestrictionChoices
 from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.tests.baker_recipes import shelter_recipe
-from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
 class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
@@ -250,12 +250,13 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
-                        bedsByStatus {
+                        bedCounts {
                             available
                             inTurnaround
                             occupied
                             outOfService
                             reserved
+                            total
                         }
                     }
                 }
@@ -267,8 +268,8 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         results = response["data"]["operatorShelters"]["results"]
         shelter_data = next(r for r in results if r["id"] == str(shelter.id))
         self.assertEqual(
-            shelter_data["bedsByStatus"],
-            {"available": 1, "occupied": 1, "reserved": 2, "outOfService": 1, "inTurnaround": 1},
+            shelter_data["bedCounts"],
+            {"available": 1, "occupied": 1, "reserved": 2, "outOfService": 1, "inTurnaround": 1, "total": 6},
         )
 
     def test_operator_shelters_beds_by_status_no_beds(self) -> None:
@@ -280,12 +281,13 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 operatorShelters(filters: { organizations: $orgIds }) {
                     results {
                         id
-                        bedsByStatus {
+                        bedCounts {
                             available
                             inTurnaround
                             occupied
                             outOfService
                             reserved
+                            total
                         }
                     }
                 }
@@ -297,8 +299,8 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         results = response["data"]["operatorShelters"]["results"]
         for result in results:
             self.assertEqual(
-                result["bedsByStatus"],
-                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0, "inTurnaround": 0},
+                result["bedCounts"],
+                {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0, "inTurnaround": 0, "total": 0},
             )
 
 

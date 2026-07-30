@@ -45,6 +45,8 @@ export function ZoomButton(props: TProps) {
     'justify-center',
     'text-neutral-40',
     'text-2xl',
+    'rounded-lg',
+    'active:bg-[#E8ECF2]',
     className,
   ];
 

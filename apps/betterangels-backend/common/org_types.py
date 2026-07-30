@@ -83,6 +83,10 @@ class Registry:
         """Return the ``TemplateConfig`` for *name* or ``None``."""
         return self._templates_by_name.get(name)
 
+    def org_type_names(self) -> list[str]:
+        """Return all registered org type names (e.g. "outreach", "shelter")."""
+        return sorted(self._by_name.keys())
+
     def template_names(self) -> list[str]:
         """Return all registered template names (e.g. "Caseworker", "Shelter Operator")."""
         return sorted(self._templates_by_name.keys())

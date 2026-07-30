@@ -4,16 +4,18 @@ import { StorageAdapter } from './types';
 export const localStorageAdapter: StorageAdapter = {
   getItem(key: string) {
     try {
-      return localStorage.getItem(key);
+      return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
     } catch {
       return null;
     }
   },
   setItem(key: string, value: string) {
     try {
-      localStorage.setItem(key, value);
-    } catch (err) {
-      console.error('[localStorageAdapter] Failed to setItem:', err);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(key, value);
+      }
+    } catch {
+      // storage may be unavailable
     }
   },
 };

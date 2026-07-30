@@ -1,8 +1,8 @@
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogoutDocument } from './__generated__/logout.generated';
-import { useUser } from './useUser';
+import { LogoutDocument } from '@monorepo/ba-platform';
+import { useUser } from './UserProvider';
 
 export function useSignOut() {
   const client = useApolloClient();

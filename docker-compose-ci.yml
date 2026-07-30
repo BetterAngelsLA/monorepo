@@ -18,6 +18,7 @@ services:
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
       - GITHUB_ACTIONS
+      - CI
       - GITHUB_EVENT_PATH
       - GITHUB_REPOSITORY
       - GITHUB_TOKEN

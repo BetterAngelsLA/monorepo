@@ -7,6 +7,8 @@ export const formSchema = z.object({
 
 export type ServicesFormData = z.infer<typeof formSchema>;
 
+export const formFieldNames = Object.keys(formSchema.shape);
+
 export const defaultFormValues: ServicesFormData = {
   services: [],
 };

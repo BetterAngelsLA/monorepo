@@ -108,10 +108,10 @@ To run tests with breakpoints via the terminal, you'll need to use a `uv shell` 
    from IPython import embed; embed()
    ```
 
-1. Run tests using `python manage.py test`. Example:
+1. Run tests using `uv run pytest`. Example:
 
    ```bash
-   python manage.py test accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
+   uv run pytest accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
    ```
 
 To use VSCode's debugger:
@@ -318,6 +318,12 @@ uv run python seed_shelters.py 20 --clear
 The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
 before creating new ones. This is useful when the schema changes or you want
 a clean slate without resetting the full database.
+
+---
+
+### Additional Documentation
+
+- **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
 
 ### Troubleshooting
 

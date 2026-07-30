@@ -1,12 +1,13 @@
 /// <reference types='vitest' />
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { monorepoTsconfigAliases, svgTestResolver } from '../../libs/vite-utils/src/index';
+import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
+const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
 const devServerProxy: Record<string, string | ProxyOptions> = {
@@ -20,7 +21,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-  const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
+  const basePath = getBranchBasePath();
   return {
     base: basePath,
     root: __dirname,
@@ -35,7 +36,7 @@ export default defineConfig(({ mode }) => {
         port: SERVER_PORT,
         host: true,
         proxy: devServerProxy,
-        fs: { allow: [path.resolve(__dirname, '../..')] },
+        fs: { allow: [WORKSPACE_ROOT] },
       },
     }),
 
@@ -44,7 +45,17 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
+    plugins: [
+      react(),
+      baseHrefPlugin(basePath),
+      // Vite handles ?raw SVG imports natively.
+      // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
+      ...(process.env.VITEST ? [svgTestResolver(__dirname)] : []),
+    ],
+
+    resolve: {
+      alias: monorepoTsconfigAliases(WORKSPACE_ROOT),
+    },
 
     css: {
       postcss: {
@@ -57,8 +68,6 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    resolve: {},
-
     build: {
       outDir: '../../dist/apps/shelter-web',
       emptyOutDir: true,
@@ -66,6 +75,12 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         transformMixedEsModules: true,
       },
+    },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
     },
   };
 });

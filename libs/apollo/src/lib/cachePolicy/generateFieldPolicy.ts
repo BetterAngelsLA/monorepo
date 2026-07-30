@@ -84,14 +84,13 @@
  */
 
 import type { FieldPolicy } from '@apollo/client';
-import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies';
 import { PaginationModeEnum } from './constants';
 import { generateMergeFn } from './merge';
 import type { TCacheMergeOpts } from './merge/types';
 import { KeyArgsFor, QueryPolicyConfig, TPaginationVariables } from './types';
 
 export function generateFieldPolicy<TItem = unknown, TVars = unknown>(opts: {
-  keyArgs: KeyArgsFor<TVars> | KeyArgsFunction | false;
+  keyArgs: KeyArgsFor<TVars> | NonNullable<FieldPolicy['keyArgs']>;
   mergeOpts?: TCacheMergeOpts;
   queryPolicyConfig: QueryPolicyConfig;
 }): FieldPolicy {

@@ -1,3 +1,1 @@
-export type { IUserProviderValue, TUser } from './UserContext';
-export { UserProvider } from './UserProvider';
-export { useUser } from './useUser';
+export { UserProvider, useUser, type CurrentUser as TUser } from '@monorepo/ba-platform';

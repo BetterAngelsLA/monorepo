@@ -1,17 +1,16 @@
 {
-  "name": "shared",
+  "name": "react-shared",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/shared/src",
   "projectType": "library",
-  "tags": ["type:shared"],
-  "// targets": "to see all targets run: nx show project shared --web",
+  "tags": [
+    "type:util",
+    "scope:shared"
+  ],
   "namedInputs": {
-    "default": ["{projectRoot}/**/*"]
+    "default": [
+      "{projectRoot}/**/*"
+    ]
   },
-  "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    }
-  }
+  "targets": {}
 }

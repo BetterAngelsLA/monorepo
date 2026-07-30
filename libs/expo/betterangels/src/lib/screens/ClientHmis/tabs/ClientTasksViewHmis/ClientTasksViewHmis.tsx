@@ -80,10 +80,10 @@ export function ClientTasksViewHmis(props: TProps) {
       const result = await createTask({
         variables: {
           data: {
-            summary: task.summary!,
+            summary: task.summary ?? '',
             description: task.description,
             status: task.status,
-            teamId: task.teamId || null,
+            teamId: task.teamId ?? undefined,
             hmisClientProfile: client.id,
           },
         },

@@ -1,4 +1,4 @@
-import { OperationInfo } from '../__generated__/types';
+import { OperationInfo } from '@monorepo/ba-platform/types';
 
 export function extractOperationInfo(
   responseOrData: unknown,

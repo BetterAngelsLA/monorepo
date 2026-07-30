@@ -3,29 +3,25 @@ import { Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
-import { BedsView } from '../../components/beds/BedsView';
-import { OverviewView } from '../../components/overview/OverviewView';
-import { RoomsView } from '../../components/rooms/RoomsView';
+import { OccupantsView } from '../../components/occupants/OccupantsView';
+import { ReportsView } from '../../components/reports/ReportsView';
+import { ReservationsView } from '../../components/reservations/ReservationsView';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
-import { shelterManageRoute } from '../../routing';
+import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
-type ShelterTab = 'overview' | 'rooms' | 'beds' | 'reservations' | 'occupancy';
+type ShelterTab = 'reports' | 'reservations' | 'occupants';
 
 const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
-  overview: { label: 'Overview', pathSuffix: '' },
-  rooms: { label: 'Rooms', pathSuffix: 'rooms' },
-  beds: { label: 'Beds', pathSuffix: 'beds' },
+  reports: { label: 'Reports', pathSuffix: '' },
   reservations: { label: 'Reservations', pathSuffix: 'reservations' },
-  occupancy: { label: 'Occupants', pathSuffix: 'occupancy' },
+  occupants: { label: 'Occupants', pathSuffix: 'occupants' },
 };
 
 const TAB_ITEMS: SliderTabItem[] = [
-  TAB_CONFIG.overview,
-  TAB_CONFIG.rooms,
-  TAB_CONFIG.beds,
+  TAB_CONFIG.reports,
   TAB_CONFIG.reservations,
-  TAB_CONFIG.occupancy,
+  TAB_CONFIG.occupants,
 ];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
@@ -74,13 +70,13 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
 
       <SliderTabs
         activePathSuffix={TAB_CONFIG[tab].pathSuffix}
-        basePath={shelterManageRoute(shelterId ?? '')}
+        basePath={shelterMgmtRoute(shelterId ?? '')}
         items={TAB_ITEMS}
       />
 
-      {tab === 'rooms' && <RoomsView shelterId={id} />}
-      {tab === 'overview' && <OverviewView shelterId={id} />}
-      {tab === 'beds' && <BedsView shelterId={id} />}
+      {tab === 'reports' && <ReportsView shelterId={id} />}
+      {tab === 'occupants' && <OccupantsView shelterId={id} />}
+      {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>
   );
 }

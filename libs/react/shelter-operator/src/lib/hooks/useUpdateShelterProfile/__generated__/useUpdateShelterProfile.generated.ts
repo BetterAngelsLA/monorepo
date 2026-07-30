@@ -1,4 +1,4 @@
-import type * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '@monorepo/ba-platform/types';
 
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateShelterProfileMutationVariables = Types.Exact<{
@@ -6,9 +6,9 @@ export type UpdateShelterProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateShelterProfileMutation = { __typename?: 'Mutation', updateShelter:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ShelterType', id: string }
+export type UpdateShelterProfileMutation = { __typename: 'Mutation', updateShelter:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ShelterType', id: string }
    };
 
 

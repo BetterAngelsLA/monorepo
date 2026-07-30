@@ -3,7 +3,7 @@ import type { FieldMergeFunctionOptions } from '@apollo/client/cache';
 import type { ResolveMergePagination } from '../types';
 
 export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
-  resolvePagination: ResolveMergePagination<TVars>
+  resolvePagination: ResolveMergePagination<TVars>,
 ): FieldMergeFunction<
   readonly TItem[] | undefined,
   readonly TItem[] | undefined,
@@ -11,7 +11,8 @@ export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
 > {
   return (existing, incoming, options) => {
     const { offset = 0 } =
-      resolvePagination(options.args as TVars) || ({} as any);
+      resolvePagination(options.args as TVars) ||
+      ({} as Record<string, unknown>);
 
     const prev = (existing as readonly TItem[] | undefined) ?? [];
     const next = (incoming as readonly TItem[] | undefined) ?? [];

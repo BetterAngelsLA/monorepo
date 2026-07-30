@@ -1,4 +1,4 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useEnvironment } from '@monorepo/ba-platform';
 import { Regex } from '@monorepo/expo/shared/static';
 import { useEffect, useMemo } from 'react';
 
@@ -17,7 +17,7 @@ export default function useEmailEnvironment(email: string): {
   isValidEmail: boolean;
   isPasswordLogin: boolean;
 } {
-  const { switchEnvironment } = useApiConfig();
+  const { switchEnvironment } = useEnvironment();
 
   const isValidEmail = useMemo(() => Regex.email.test(email), [email]);
 

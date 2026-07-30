@@ -1,4 +1,4 @@
-export * from './AddressAutocomplete/AddressAutocomplete';
+export * from './AddressAutocomplete';
 export * from './Alert';
 export * from './AppDrawer';
 export * from './BetterAngelsLogoBadge';

@@ -38,7 +38,7 @@ export function useToast() {
       const id = `toast-${++toastCounter}`;
       const duration = params.persistent
         ? 0
-        : params.duration ?? AUTO_DISMISS_MS;
+        : params.duration ?? AUTO_DISMISS_MS[params.status];
 
       setToasts((prev) => [
         ...prev,

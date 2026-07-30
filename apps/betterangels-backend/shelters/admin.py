@@ -34,6 +34,7 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
+
 from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (
@@ -1604,7 +1605,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "updated_by")
     fieldsets = (
         (
             None,

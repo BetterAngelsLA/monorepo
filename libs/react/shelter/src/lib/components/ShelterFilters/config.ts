@@ -20,6 +20,8 @@ import {
 } from '../../static';
 import { TShelterPropertyFilters } from '../ShelterSearch';
 
+export const UNKNOWN_FILTER_VALUE = 'UNKNOWN';
+
 export type TFilterOptionType =
   | DemographicChoices
   | EntryRequirementChoices
@@ -28,16 +30,22 @@ export type TFilterOptionType =
   | ReferralRequirementChoices
   | RoomStyleChoices
   | ShelterChoices
-  | SpecialSituationRestrictionChoices;
+  | SpecialSituationRestrictionChoices
+  | typeof UNKNOWN_FILTER_VALUE;
 
 export type TShelterFilterOption = {
   label: string;
   value: TFilterOptionType;
 };
 
+const unknownOption: TShelterFilterOption = {
+  label: 'Include Unknown',
+  value: UNKNOWN_FILTER_VALUE,
+};
+
 type TSelectableFilterName = Exclude<
   keyof TShelterPropertyFilters,
-  'openNow' | 'isAccessCenter' | 'maxStay'
+  'openNow' | 'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
 >;
 
 export type TFilterConfig = {
@@ -50,6 +58,11 @@ export function getFilterLabel(
   category: keyof TShelterPropertyFilters,
   value: TFilterOptionType
 ): string | null {
+  if (value === UNKNOWN_FILTER_VALUE) {
+    const config = filterConfigs.find((c) => c.name === category);
+    return config ? `${config.header}: Include unknown` : 'Include unknown';
+  }
+
   switch (category) {
     case 'openNow':
       return 'Open now';
@@ -112,7 +125,7 @@ const demographicOptionList: TShelterFilterOption[] = demographicOptions.map(
 export const demographicFilter: TFilterConfig = {
   name: 'demographics',
   header: 'Demographic',
-  options: demographicOptionList,
+  options: [...demographicOptionList, unknownOption],
 };
 
 const entryRequirementOptions = [
@@ -137,7 +150,7 @@ const entryRequirementOptionList: TShelterFilterOption[] =
 export const entryRequirementFilter: TFilterConfig = {
   name: 'entryRequirements',
   header: 'Entry Requirement',
-  options: entryRequirementOptionList,
+  options: [...entryRequirementOptionList, unknownOption],
 };
 // Parking
 const parkingOptions = [
@@ -161,7 +174,7 @@ const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
 export const parkingFilter: TFilterConfig = {
   name: 'parking',
   header: 'Parking',
-  options: parkingOptionsList,
+  options: [...parkingOptionsList, unknownOption],
 };
 
 // Pets
@@ -184,7 +197,7 @@ const petsOptionsList: TShelterFilterOption[] = petsOptions.map((option) => {
 export const petsFilter: TFilterConfig = {
   name: 'pets',
   header: 'Pets',
-  options: petsOptionsList,
+  options: [...petsOptionsList, unknownOption],
 };
 
 // Referral Requirement
@@ -208,7 +221,7 @@ const referralRequirementOptionList: TShelterFilterOption[] =
 export const referralRequirementFilter: TFilterConfig = {
   name: 'referralRequirement',
   header: 'Referral Requirement',
-  options: referralRequirementOptionList,
+  options: [...referralRequirementOptionList, unknownOption],
 };
 
 // Room Style
@@ -234,7 +247,7 @@ const roomStyleOptionsList: TShelterFilterOption[] = roomStyleOptions.map(
 export const roomStyleFilter: TFilterConfig = {
   name: 'roomStyles',
   header: 'Room Style',
-  options: roomStyleOptionsList,
+  options: [...roomStyleOptionsList, unknownOption],
 };
 
 // Shelter Type
@@ -260,7 +273,7 @@ const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
 export const shelterTypeFilter: TFilterConfig = {
   name: 'shelterTypes',
   header: 'Shelter Type',
-  options: shelterTypeOptionsList,
+  options: [...shelterTypeOptionsList, unknownOption],
 };
 
 // Special Situation
@@ -284,5 +297,16 @@ const specialSituationOptionsOptionList: TShelterFilterOption[] =
 export const specialSituationFilter: TFilterConfig = {
   name: 'specialSituationRestrictions',
   header: 'Special Situation Restriction',
-  options: specialSituationOptionsOptionList,
+  options: [...specialSituationOptionsOptionList, unknownOption],
 };
+
+export const filterConfigs: TFilterConfig[] = [
+  demographicFilter,
+  entryRequirementFilter,
+  parkingFilter,
+  petsFilter,
+  referralRequirementFilter,
+  roomStyleFilter,
+  shelterTypeFilter,
+  specialSituationFilter,
+];

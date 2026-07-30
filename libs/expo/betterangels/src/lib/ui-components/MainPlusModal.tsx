@@ -17,7 +17,7 @@ interface IMainPlusModalProps {
 export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
 
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
   const ACTIONS: TMainModalAction[] = [
     {
@@ -26,7 +26,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       route: '/clients/create',
     },
     {
-      title: `Add ${isHmisUser ? 'note' : 'interaction'}`,
+      title: `Add ${user?.isHmisUser ? 'note' : 'interaction'}`,
       Icon: FilePlusIcon,
       route: '/',
       params: {

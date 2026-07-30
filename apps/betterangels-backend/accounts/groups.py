@@ -1,5 +1,6 @@
-from accounts.permissions import ReportOrgPermissions, UserOrganizationPermissions
+from accounts.permissions import UserOrganizationPermissions
 from common.permissions.config import TemplateConfig
+from reports.permissions import ReportPermissions
 from teams.models import Team
 
 ORG_ADMIN = TemplateConfig(
@@ -9,7 +10,7 @@ ORG_ADMIN = TemplateConfig(
         UserOrganizationPermissions.ADD_ORG_MEMBER,
         UserOrganizationPermissions.REMOVE_ORG_MEMBER,
         UserOrganizationPermissions.VIEW_ORG_MEMBERS,
-        ReportOrgPermissions.VIEW_REPORTS,
+        ReportPermissions.VIEW_REPORTS,
         Team.perms.ADD,
         Team.perms.CHANGE,
         Team.perms.DELETE,
