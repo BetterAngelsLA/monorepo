@@ -40,7 +40,6 @@ type IProps = {
 };
 
 export function FilterPills(props: IProps) {
-  console.log('hello');
   const { className, filters, onPillClear } = props;
   const setFilters = useSetAtom(shelterPropertyFiltersAtom);
   const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
