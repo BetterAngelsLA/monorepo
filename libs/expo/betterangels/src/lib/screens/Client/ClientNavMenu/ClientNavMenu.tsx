@@ -1,9 +1,10 @@
 import { DeleteIcon, ThreeDotIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Dimensions,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -20,10 +21,22 @@ type TProps = {
 export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<View>(null);
 
   const { deleteProfile, loading: isDeleting } = useDeleteClientProfile({
     clientProfileId,
   });
+
+  const handleOpenMenu = () => {
+    btnRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
+      setMenuPosition({
+        top: pageY + (Platform.OS === 'android' ? 38 : 32),
+        right: Dimensions.get('window').width - pageX - 24, // 24 = button width
+      });
+      setMenuVisible(true);
+    });
+  };
 
   const handleRequestDelete = () => {
     // close tooltip first
@@ -45,13 +58,13 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
     : 'client-nav-menu-open-btn';
 
   return (
-    // collapsable={false} set to ensure view exists in e2e env
-    <View collapsable={false}>
+    <View>
       <Pressable
+        ref={btnRef}
         accessibilityRole="button"
         accessibilityHint="toggle client profile menu"
         testID={menuBtnTestId}
-        onPress={() => setMenuVisible((prev) => !prev)}
+        onPress={handleOpenMenu}
       >
         {({ pressed }) => (
           <ThreeDotIcon
@@ -61,23 +74,25 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
         )}
       </Pressable>
 
-      {menuVisible && (
-        <>
-          <Pressable
-            accessible={false}
-            accessibilityRole="none"
-            style={{
-              position: 'absolute',
-              top: -Dimensions.get('window').height,
-              left: -Dimensions.get('window').width,
-              width: Dimensions.get('window').width * 3,
-              height: Dimensions.get('window').height * 3,
-              zIndex: 1,
-            }}
-            onPress={() => setMenuVisible(false)}
-          />
-          {/* collapsable={false} set to ensure view exists in e2e env */}
-          <View collapsable={false} style={styles.menuDropdown}>
+      <Modal
+        transparent
+        visible={menuVisible}
+        animationType="none"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable
+          accessible={false}
+          accessibilityRole="none"
+          style={styles.backdrop}
+          onPress={() => setMenuVisible(false)}
+        />
+        <View
+          style={[
+            styles.menuDropdown,
+            { top: menuPosition.top, right: menuPosition.right },
+          ]}
+        >
+          <View style={styles.menuDropdownInner}>
             <ClientNavMenuBtn
               testId="client-nav-menu-delete-profile-btn"
               disabled={isDeleting}
@@ -88,8 +103,8 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
               onPress={handleRequestDelete}
             />
           </View>
-        </>
-      )}
+        </View>
+      </Modal>
 
       <DeleteModal
         title="Delete Profile?"
@@ -104,10 +119,15 @@ export function ClientNavMenu({ clientProfileId, onDeleted }: TProps) {
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   menuDropdown: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? 48 : 40,
-    right: 0,
     backgroundColor: Colors.WHITE,
     shadowColor: Colors.BLACK,
     shadowOffset: { width: 0, height: 0 },
@@ -115,7 +135,9 @@ const styles = StyleSheet.create({
     shadowRadius: 32,
     borderRadius: 12,
     elevation: 12,
-    zIndex: 2,
+  },
+  menuDropdownInner: {
     overflow: 'hidden',
+    borderRadius: 12,
   },
 });
