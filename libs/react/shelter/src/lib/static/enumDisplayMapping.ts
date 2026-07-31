@@ -9,11 +9,20 @@ import {
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
+  ShelterPhotoTypeChoices,
   ShelterProgramChoices,
-  SpaChoices,
   SpecialSituationRestrictionChoices,
+  StatusChoices,
   StorageChoices,
+  VaccinationRequirementChoices,
 } from '../apollo';
+
+export const enumStatusChoices: Record<StatusChoices, string> = {
+  [StatusChoices.Draft]: 'Draft',
+  [StatusChoices.Pending]: 'Pending',
+  [StatusChoices.Approved]: 'Approved',
+  [StatusChoices.Inactive]: 'Inactive',
+};
 
 export const enumDisplayAccessibilityChoices: {
   [key in AccessibilityChoices]: string;
@@ -152,17 +161,6 @@ export const enumDisplayShelterProgramChoices: {
   [ShelterProgramChoices.WinterShelter]: 'Winter Shelter',
 };
 
-export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {
-  [SpaChoices.Eight]: '8',
-  [SpaChoices.Five]: '5',
-  [SpaChoices.Four]: '4',
-  [SpaChoices.One]: '1',
-  [SpaChoices.Seven]: '7',
-  [SpaChoices.Six]: '6',
-  [SpaChoices.Three]: '3',
-  [SpaChoices.Two]: '2',
-};
-
 export const enumDisplaySpecialSituationRestrictionChoices: {
   [key in SpecialSituationRestrictionChoices]: string;
 } = {
@@ -182,6 +180,21 @@ export const enumDisplayStorageChoices: { [key in StorageChoices]: string } = {
   [StorageChoices.StandardLockers]: 'Standard Lockers',
   [StorageChoices.UnitStorage]: 'Unit-level Storage',
   [StorageChoices.PersonalBin]: 'Personal Storage Bin',
+};
+
+export const enumDisplayVaccinationRequirementChoices: {
+  [key in VaccinationRequirementChoices]: string;
+} = {
+  [VaccinationRequirementChoices.Tb]: 'TB',
+  [VaccinationRequirementChoices.Flu]: 'Flu',
+  [VaccinationRequirementChoices.Covid_19]: 'COVID-19',
+};
+
+export const enumDisplayShelterPhotoTypeChoices: {
+  [key in ShelterPhotoTypeChoices]: string;
+} = {
+  [ShelterPhotoTypeChoices.Interior]: 'Interior',
+  [ShelterPhotoTypeChoices.Exterior]: 'Exterior',
 };
 
 /*

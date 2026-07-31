@@ -1,6 +1,7 @@
 import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services';
+import { randomUUID } from 'expo-crypto';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import { ClientProfileDocument } from '../../../__generated__/Client.generated';
 import {
@@ -29,8 +30,8 @@ export function useClientDocumentUpload() {
     // refId is to correlate server response back to original file
     const documentUploadMap = new Map<string, ReactNativeFile>();
 
-    const uploadInputs = documents.map((doc, index) => {
-      const refId = `${Date.now()}-${index}`;
+    const uploadInputs = documents.map((doc) => {
+      const refId = randomUUID();
 
       documentUploadMap.set(refId, doc);
 

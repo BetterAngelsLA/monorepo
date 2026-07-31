@@ -1,10 +1,10 @@
-import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { useEnvironment } from '@monorepo/ba-platform';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFeatureControls } from '@monorepo/react/shared';
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useUser } from '../../hooks';
 
@@ -20,7 +20,7 @@ export default function SignInContainer({
   privacyPolicyUrl,
 }: AuthLayoutProps) {
   const { user } = useUser();
-  const { switchEnvironment, environment } = useApiConfig();
+  const { switchEnvironment, environment } = useEnvironment();
   const { refetchFeatureFlags } = useFeatureControls();
 
   // On mount, optionally switch env when unauthenticated.
@@ -37,6 +37,9 @@ export default function SignInContainer({
       refetchFeatureFlags();
       router.replace(user.isOutreachAuthorized ? '/' : '/welcome');
     }
+    // refetchFeatureFlags is called only when user just became truthy (login).
+    // Adding it to deps could cause spurious refetches if not memoized upstream.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
@@ -51,38 +54,40 @@ export default function SignInContainer({
       extraKeyboardSpace={20}
       keyboardShouldPersistTaps="handled"
     >
-      <TextBold mb="xs" size="xl">
-        Welcome!
-      </TextBold>
-      <TextRegular size="sm" mb="xl">
-        Log in for Better Angels and start making a difference in the LA
-        community.
-      </TextRegular>
-      {children}
-      {termsOfServiceUrl && privacyPolicyUrl ? (
-        <Text style={styles.legalWrapper}>
-          <TextRegular
-            textAlign="center"
-            color={Colors.PRIMARY_EXTRA_DARK}
-            size="xs"
-          >
-            By continuing, you agree to our{' '}
-            <Link
-              style={{ textDecorationLine: 'underline' }}
-              href={termsOfServiceUrl}
+      <View testID="sign-in-screen">
+        <TextBold mb="xs" size="xl">
+          Welcome!
+        </TextBold>
+        <TextRegular size="sm" mb="xl">
+          Log in for Better Angels and start making a difference in the LA
+          community.
+        </TextRegular>
+        {children}
+        {termsOfServiceUrl && privacyPolicyUrl ? (
+          <Text style={styles.legalWrapper}>
+            <TextRegular
+              textAlign="center"
+              color={Colors.PRIMARY_EXTRA_DARK}
+              size="xs"
             >
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link
-              style={{ textDecorationLine: 'underline' }}
-              href={privacyPolicyUrl}
-            >
-              Privacy Policy.
-            </Link>
-          </TextRegular>
-        </Text>
-      ) : null}
+              By continuing, you agree to our{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={termsOfServiceUrl}
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={privacyPolicyUrl}
+              >
+                Privacy Policy.
+              </Link>
+            </TextRegular>
+          </Text>
+        ) : null}
+      </View>
     </KeyboardAwareScrollView>
   );
 }

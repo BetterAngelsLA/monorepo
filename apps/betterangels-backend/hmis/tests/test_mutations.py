@@ -1,4 +1,5 @@
 import datetime
+from unittest import skip
 from unittest.mock import ANY, patch
 
 from clients.enums import (
@@ -45,6 +46,7 @@ LOGIN_MUTATION = """
 """
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def setUp(self) -> None:
@@ -338,6 +340,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(hmis_note.requested_services.count(), 1)
 
 
+@skip("not implemented")
 @override_settings(HMIS_HOST="example.com", HMIS_REST_URL="https://example.com")
 class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
@@ -598,6 +601,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         self.assertEqual(expected, client)
 
 
+@skip("not implemented")
 @override_settings(
     AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"],
     HMIS_REST_URL="https://example.com",

@@ -1,0 +1,4 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ./bootstrap/launch_app.yml
+- runFlow: ./auth/ensure_logged_in_ba.yml

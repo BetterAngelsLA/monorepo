@@ -8,13 +8,12 @@ import places
 import requests
 from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from betterangels_backend import settings
-from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
+from common.images import build_img_url
 from common.models import Location
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -35,7 +34,8 @@ from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
-from shelters.permissions import ShelterFieldPermissions
+
+from shelters.managers import BedQuerySet, RoomQuerySet
 
 from .enums import (
     AccessibilityChoices,
@@ -49,11 +49,12 @@ from .enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
+    ShelterPhotoTypeChoices,
     ShelterProgramChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
+    VaccinationRequirementChoices,
 )
 from .models import (
     SPA,
@@ -63,9 +64,9 @@ from .models import (
     ContactInfo,
     Demographic,
     EntryRequirement,
-    ExteriorPhoto,
+    ExteriorShelterPhoto,
     Funder,
-    InteriorPhoto,
+    InteriorShelterPhoto,
     MediaLink,
     Parking,
     Pet,
@@ -77,10 +78,13 @@ from .models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
+    ShelterPhoto,
     ShelterProgram,
     ShelterType,
     SpecialSituationRestriction,
     Storage,
+    VaccinationRequirement,
     Video,
     get_fields_with_other_option,
 )
@@ -229,24 +233,35 @@ class ShelterForm(forms.ModelForm):
 
     # Entry Requirements
     entry_requirements = create_select2_multiple_field(EntryRequirementChoices, "Select entry requirements...")
+    vaccination_requirement = create_select2_multiple_field(VaccinationRequirementChoices, "Select vaccinations...")
 
     # Ecosystem Information
-    spa = create_select2_multiple_field(SPAChoices, "Select SPA...")
+    spas_served = forms.ModelMultipleChoiceField(
+        queryset=SPA.objects.all(),
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPAs served...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+        label="SPAs Served",
+    )
     shelter_programs = create_select2_multiple_field(ShelterProgramChoices, "Select shelter programs...")
     shelter_programs_other = create_other_text_field()
     funders = create_select2_multiple_field(FunderChoices, "Select funders...")
     funders_other = create_other_text_field()
 
-    # Cities field with Select2 widget for inline display
-    cities = forms.ModelMultipleChoiceField(
+    cities_served = forms.ModelMultipleChoiceField(
         queryset=City.objects.all(),
         widget=Select2MultipleWidget(
             attrs={
-                "data-placeholder": "Select cities...",
+                "data-placeholder": "Select cities served...",
                 "data-allow-clear": "true",
             }
         ),
         required=False,
+        label="Cities Served",
     )
 
     exit_policy = create_select2_multiple_field(ExitPolicyChoices, "Select exit policies...")
@@ -312,9 +327,14 @@ class ShelterForm(forms.ModelForm):
         """
         cleaned_data = super().clean() or {}
 
-        # Process only ManyToMany fields where the related model uses TextChoices
+        # Process only ManyToMany fields backed by MultipleChoiceField (enum tags).
+        # Skip ModelMultipleChoiceField (e.g. spas_served, cities_served, services).
         for field in self._meta.model._meta.get_fields():
             if not isinstance(field, models.ManyToManyField) or not isinstance(field.related_model, type):
+                continue
+
+            form_field = self.fields.get(field.name)
+            if form_field is None or isinstance(form_field, forms.ModelMultipleChoiceField):
                 continue
 
             model_class = field.related_model
@@ -383,7 +403,7 @@ class ShelterForm(forms.ModelForm):
         if not self._pending_service_entries:
             return
 
-        from shelters.services import resolve_pending_service_entries
+        from shelters.services.shelter import resolve_pending_service_entries
 
         resolved = resolve_pending_service_entries(self._pending_service_entries)
         if resolved:
@@ -416,21 +436,17 @@ class PhotoForm(forms.ModelForm):
     )
 
     class Meta:
-        fields = "__all__"
+        # ``type`` is set automatically by the proxy model's ``save`` and
+        # therefore must not be exposed in (or required by) the inline form.
+        exclude = ("type",)
 
 
-class ExteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = ExteriorPhoto
+class BaseShelterPhotoInline(admin.TabularInline):
+    """Base inline for shelter photo sections with imgproxy thumbnail preview."""
 
-
-class InteriorPhotoForm(PhotoForm):
-    class Meta(PhotoForm.Meta):
-        model = InteriorPhoto
-
-
-class PhotoInlineImgproxyMixin:
-    """Mixin for photo inlines: adds a readonly thumbnail column via imgproxy when enabled."""
+    form = PhotoForm
+    max_num = 0
+    photo_type: ShelterPhotoTypeChoices
 
     def get_readonly_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview",)
@@ -438,31 +454,27 @@ class PhotoInlineImgproxyMixin:
     def get_fields(self, request: HttpRequest, obj: Optional[models.Model] = None) -> tuple[str, ...]:
         return ("photo_preview", "file", "make_hero_image")
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterPhoto]:
+        return super().get_queryset(request).filter(type=self.photo_type)
+
     @admin.display(description="Preview")
-    def photo_preview(self, obj: Union[ExteriorPhoto, InteriorPhoto]) -> str:
+    def photo_preview(self, obj: ShelterPhoto) -> str:
         if not obj or not obj.file or not obj.file.name:
             return "—"
-        if is_imgproxy_enabled():
-            url = build_imgproxy_url(obj.file, preset=None, processing_options="f:jpg") or getattr(
-                obj.file, "url", None
-            )
-        else:
-            url = getattr(obj.file, "url", None)
+        url = build_img_url(obj.file, processing_options="f:jpg")
         if not url:
             return "—"
         return format_html('<img src="{}" alt="" style="max-height: 200px;" />', url)
 
 
-class ExteriorPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = ExteriorPhoto
-    form = ExteriorPhotoForm
-    max_num = 0
+class ExteriorPhotoInline(BaseShelterPhotoInline):
+    model = ExteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.EXTERIOR
 
 
-class InterPhotoInline(PhotoInlineImgproxyMixin, admin.TabularInline):
-    model = InteriorPhoto
-    form = InteriorPhotoForm
-    max_num = 0
+class InteriorPhotoInline(BaseShelterPhotoInline):
+    model = InteriorShelterPhoto
+    photo_type = ShelterPhotoTypeChoices.INTERIOR
 
 
 class VideoInline(admin.TabularInline):
@@ -592,11 +604,16 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
-
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
-    spa = Field(column_name="spa", attribute="spa", widget=ManyToManyWidget(SPA, separator=",", field="name"))
+    spas_served = Field(
+        column_name="spas_served",
+        attribute="spas_served",
+        widget=ManyToManyWidget(SPA, separator=",", field="short_name"),
+    )
+    spa = Field(column_name="spa", attribute="spa", widget=ForeignKeyWidget(SPA, "short_name"))
+    city = Field(column_name="city", attribute="city", widget=ForeignKeyWidget(City, "name"))
     demographics = Field(
         column_name="demographics",
         attribute="demographics",
@@ -637,10 +654,10 @@ class ShelterResource(resources.ModelResource):
         attribute="parking",
         widget=ManyToManyWidget(Parking, separator=",", field="name"),
     )
-    cities = Field(
-        column_name="cities",
-        attribute="cities",
-        widget=ManyToManyWidget(City, separator=",", field="display_name"),
+    cities_served = Field(
+        column_name="cities_served",
+        attribute="cities_served",
+        widget=ManyToManyWidget(City, separator=",", field="name"),
     )
     funders = Field(
         column_name="funders",
@@ -651,6 +668,11 @@ class ShelterResource(resources.ModelResource):
         column_name="entry_requirements",
         attribute="entry_requirements",
         widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
+    )
+    vaccination_requirement = Field(
+        column_name="vaccination_requirement",
+        attribute="vaccination_requirement",
+        widget=ManyToManyWidget(VaccinationRequirement, separator=",", field="name"),
     )
     storage = Field(
         column_name="storage",
@@ -676,17 +698,20 @@ class ShelterResource(resources.ModelResource):
         else:
             raise ValidationError(f"Row {self.count}: Bad {col_of_choice} value")
 
-    def process_spa_import(self, row: Any, spa_row: str) -> None:
-        spa_names = [v.strip() for v in spa_row.split(",")]
-        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
-        for spa_name in spa_names:
+    def process_spas_served_import(self, row: Any, spas_served_row: str) -> None:
+        spa_short_names = [v.strip() for v in spas_served_row.split(",")]
+        available_spas = SPA.objects.all().values_list("short_name", flat=True)
+        spas_served: list[str] = []
+        for name in spa_short_names:
             try:
-                if int(spa_name) in spa_choices:
-                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                if str(name) in available_spas:
+                    sp, _ = SPA.objects.get_or_create(short_name=name)
+                    spas_served.append(str(sp.pk))
                 else:
                     raise ValueError
             except ValueError:
-                self.skip_or_raise(row, "spa")
+                self.skip_or_raise(row, "spas_served")
+        row["spas_served"] = ",".join(spas_served)
 
     def process_address_import(self, row: Any, address_row: str) -> None:
         addy_data = requests.get(
@@ -778,9 +803,10 @@ class ShelterResource(resources.ModelResource):
             "room_styles",
             "funders",
             "entry_requirements",
+            "vaccination_requirement",
             "storage",
             "pets",
-            "cities",
+            "cities_served",
             "accessibility",
             "parking",
         ]  # in this case, the many to many fields
@@ -793,8 +819,8 @@ class ShelterResource(resources.ModelResource):
             # Gets existing object or makes it if one doesn't exist
             if rowInDict["status"] and rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
                 self.skip_or_raise(row, "status")
-            if rowInDict["spa"]:
-                self.process_spa_import(row, rowInDict["spa"])
+            if rowInDict.get("spas_served"):
+                self.process_spas_served_import(row, rowInDict["spas_served"])
             # Same idea as the handling for SPA, but uses existing get_or_create_address method in Location class to handle Address creation
             if rowInDict["location"]:
                 self.process_address_import(row, rowInDict["location"])
@@ -890,12 +916,12 @@ class PhotoCountFilter(admin.ListFilter):
             if min_val is not None and min_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__gte": int(str(min_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             if max_val is not None and max_val != "":
                 try:
                     queryset = queryset.filter(**{f"{count_field}__lte": int(str(max_val))})
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
         return queryset
 
@@ -925,7 +951,14 @@ class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
     list_select_related = ("organization",)
 
-    inlines = [ContactInfoInline, ScheduleInline, ExteriorPhotoInline, InterPhotoInline, VideoInline, MediaLinkInline]
+    inlines = [
+        ContactInfoInline,
+        ScheduleInline,
+        ExteriorPhotoInline,
+        InteriorPhotoInline,
+        VideoInline,
+        MediaLinkInline,
+    ]
     fieldsets = (
         (
             "Basic Information",
@@ -1007,6 +1040,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_requirements",
                     "referral_requirement",
+                    "vaccination_requirement",
                     "bed_fees",
                     "program_fees",
                     "entry_info",
@@ -1017,8 +1051,10 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Ecosystem Information",
             {
                 "fields": (
-                    "cities",
+                    "city",
+                    "cities_served",
                     "spa",
+                    "spas_served",
                     "city_council_district",
                     "supervisorial_district",
                     "shelter_programs",
@@ -1053,6 +1089,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     )
 
     list_display = (
+        "id",
         "name",
         "organization",
         "location",
@@ -1090,9 +1127,12 @@ class ShelterAdmin(ImportExportModelAdmin):
         "services",
         # Entry Requirements
         "entry_requirements",
+        "vaccination_requirement",
         # Ecosystem Information
-        "cities",
+        "city",
+        "cities_served",
         "spa",
+        "spas_served",
         "city_council_district",
         "supervisorial_district",
         "shelter_programs",
@@ -1152,7 +1192,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
         readonly_fields = (*readonly_fields, "updated_at", "updated_by")
-        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+        if not request.user.has_perm(Shelter.perms.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
         all_permissions = request.user.get_all_permissions()
@@ -1186,14 +1226,14 @@ class ShelterAdmin(ImportExportModelAdmin):
         )
 
         interior_count = Subquery(
-            InteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.INTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
             .values("c")
         )
         exterior_count = Subquery(
-            ExteriorPhoto.objects.filter(shelter=OuterRef("pk"))
+            ShelterPhoto.objects.filter(shelter=OuterRef("pk"), type=ShelterPhotoTypeChoices.EXTERIOR)
             .order_by()
             .values("shelter")
             .annotate(c=Count("pk"))
@@ -1272,26 +1312,17 @@ class ShelterAdmin(ImportExportModelAdmin):
         form.save_pending_service_entries()
 
         if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
+            form.instance.hero_image = None
             form.instance.save()
 
         if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
+            form.instance.hero_image = hero
             form.instance.save()
 
     @admin.display(description="Current Hero Image")
     def display_hero_image(self, obj: Shelter) -> str:
         if obj.hero_image and obj.hero_image.file:
-            if is_imgproxy_enabled():
-                url = (
-                    build_imgproxy_url(obj.hero_image.file, preset=None, processing_options="f:jpg")
-                    or obj.hero_image.file.url
-                )
-            else:
-                url = obj.hero_image.file.url
+            url = build_img_url(obj.hero_image.file, processing_options="f:jpg")
             return mark_safe(f'<img src="{url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
@@ -1313,7 +1344,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
@@ -1343,9 +1374,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         original_file.seek(0)
         return ContentFile(original_file.read(), name=new_name)
 
-    def _clone_objects_with_files(
-        self, queryset: QuerySet[Union[ExteriorPhoto, InteriorPhoto, Video]], copy: Shelter
-    ) -> None:
+    def _clone_objects_with_files(self, queryset: QuerySet[Union[ShelterPhoto, Video]], copy: Shelter) -> None:
         """Clone objects with shelter and file fields, duplicating files."""
         for obj in queryset:
             obj.pk = None
@@ -1357,7 +1386,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     def _clone_related_photos_and_videos(self, original: Shelter, copy: Shelter) -> None:
         """Clone photos and videos with file duplication and metadata preservation."""
-        for model_class in (ExteriorPhoto, InteriorPhoto, Video):
+        for model_class in (ShelterPhoto, Video):
             self._clone_objects_with_files(model_class.objects.filter(shelter=original), copy)
 
     def _clone_related_contacts(self, original: Shelter, copy: Shelter) -> None:
@@ -1411,21 +1440,19 @@ class ShelterAdmin(ImportExportModelAdmin):
 
 @admin.register(Bed)
 class BedAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "bed_name", "status", "bed_type", "occupant", "created_at", "updated_at")
-    list_filter = ("status", "bed_type", "maintenance_flag")
-    search_fields = ("shelter__name", "occupant__first_name", "occupant__last_name")
-    autocomplete_fields = ["shelter", "occupant"]
+    list_display = ("id", "shelter", "name", "display_status", "type", "created_at", "updated_at")
+    list_filter = ("type", "maintenance_flag")
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
     fieldsets = (
         (
             "Basic Information",
             {
                 "fields": (
                     "shelter",
-                    "bed_name",
-                    "status",
+                    "name",
                     "status_notes",
-                    "occupant",
-                    "bed_type",
+                    "type",
                 )
             },
         ),
@@ -1455,20 +1482,27 @@ class BedAdmin(admin.ModelAdmin):
         ),
     )
 
+    def get_queryset(self, request: HttpRequest) -> BedQuerySet:
+        qs = cast(BedQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Bed) -> str:
+        return obj.computed_status
+
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "shelter",
-        "room_identifier",
-        "room_type",
-        "status",
+        "name",
+        "type",
+        "display_status",
         "medical_respite",
         "last_cleaned_inspected",
     )
-    list_filter = ("status", "room_type", "medical_respite")
-    search_fields = ("room_identifier", "shelter__name", "notes")
+    list_filter = ("type", "medical_respite")
+    search_fields = ("name", "shelter__name", "notes")
     autocomplete_fields = ["shelter"]
     fieldsets = (
         (
@@ -1476,10 +1510,9 @@ class RoomAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "shelter",
-                    "room_identifier",
-                    "room_type",
-                    "room_type_other",
-                    "status",
+                    "name",
+                    "type",
+                    "type_other",
                 )
             },
         ),
@@ -1495,6 +1528,13 @@ class RoomAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request: HttpRequest) -> RoomQuerySet:
+        qs = cast(RoomQuerySet, super().get_queryset(request))
+        return qs.with_computed_status()
+
+    def display_status(self, obj: Room) -> str:
+        return obj.computed_status
 
 
 @admin.register(City)
@@ -1515,17 +1555,17 @@ class ReservationClientInline(admin.TabularInline):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("id", "shelter", "status", "start_date", "duration", "created_by", "created_at")
+    list_display = ("id", "display_shelter", "status", "start_date", "duration", "created_by", "created_at")
     list_filter = ("status",)
     search_fields = ("shelter__name",)
-    autocomplete_fields = ["shelter", "room", "bed", "created_by"]
+    autocomplete_fields = ["room", "bed", "created_by"]
     inlines = [ReservationClientInline]
     fieldsets = (
         (
             "Reservation Details",
             {
                 "fields": (
-                    "shelter",
+                    "display_shelter",
                     "room",
                     "bed",
                     "status",
@@ -1549,3 +1589,75 @@ class ReservationAdmin(admin.ModelAdmin):
             {"fields": ("notes",)},
         ),
     )
+
+    def display_shelter(self, obj: Reservation) -> Optional[str]:
+        shelter = obj.bed.shelter if obj.bed else (obj.room.shelter if obj.room else None)
+
+        if shelter:
+            return f"{shelter.name} ({shelter.pk})"
+
+        return None
+
+
+@admin.register(ShelterAvailability)
+class ShelterAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
+    list_filter = ("updated_at",)
+    search_fields = ("shelter__name",)
+    autocomplete_fields = ["shelter"]
+    readonly_fields = ("created_at", "updated_at", "updated_by")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "shelter",
+                    "non_restricted_beds",
+                    "restricted_beds",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterAvailability]:
+        qs: QuerySet[ShelterAvailability] = super().get_queryset(request)
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
+            )
+        )
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            ),
+        )
+
+    def updated_by(self, obj: ShelterAvailability) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f"{(data.get('first') or '').strip()} {(data.get('last') or '').strip()}".strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)

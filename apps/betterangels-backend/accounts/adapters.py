@@ -7,7 +7,7 @@ from django.http import HttpRequest
 
 class AccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
-        return False
+        return True
 
     def send_mail(
         self,

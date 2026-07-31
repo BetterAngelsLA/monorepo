@@ -70,7 +70,7 @@
 
 export function deepCloneWeak<T extends object>(
   input: T,
-  cloneMap = new WeakMap<object, object>()
+  cloneMap = new WeakMap<object, object>(),
 ): T {
   // Handle primitives and null/undefined
   if (input === null || typeof input !== 'object') {
@@ -93,7 +93,7 @@ export function deepCloneWeak<T extends object>(
   for (const key of Object.keys(input) as (keyof T)[]) {
     const value = input[key];
 
-    (clone as any)[key] =
+    (clone as Record<PropertyKey, unknown>)[key] =
       typeof value === 'object' && value !== null
         ? deepCloneWeak(value as object, cloneMap)
         : value;

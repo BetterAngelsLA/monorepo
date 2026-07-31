@@ -11,7 +11,8 @@ import {
   SubmitHandler,
   useForm,
 } from 'react-hook-form';
-import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
+import { useOrgTeams } from '../../hooks';
+import { enumDisplayTaskStatus } from '../../static';
 
 import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
@@ -36,6 +37,8 @@ export function TaskForm(props: TProps) {
     defaultValues: { ...emptyState, ...initialValues },
     mode: 'onChange',
   });
+
+  const { teams } = useOrgTeams();
 
   const {
     control,
@@ -86,20 +89,22 @@ export function TaskForm(props: TProps) {
             />
 
             <Controller
-              name="team"
+              name="teamId"
               control={control}
               render={({ field }) => (
                 <SingleSelect
                   allowSelectNone={true}
                   label="Team"
+                  maxRadioItems={0}
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={Object.entries(enumDisplaySelahTeam).map(
-                    ([value, displayValue]) => ({ value, displayValue })
-                  )}
+                  items={teams.map((t) => ({
+                    value: t.id,
+                    displayValue: t.name,
+                  }))}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
-                  error={errors.team?.message}
+                  error={errors.teamId?.message}
                 />
               )}
             />

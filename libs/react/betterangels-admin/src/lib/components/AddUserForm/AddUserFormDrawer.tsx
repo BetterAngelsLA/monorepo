@@ -1,20 +1,23 @@
 import { AppDrawer, useAlert, useAppDrawer } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
+import { OrganizationMemberType } from '@monorepo/ba-platform/types';
 import { AddUserForm } from './AddUserForm';
 
 type TProps = {
   className?: string;
+  /** Called after a user is successfully added so the parent can refresh its data. */
+  onSuccess?: () => void;
 };
 
 export function AddUserFormDrawer(props: TProps) {
-  const { className } = props;
+  const { className, onSuccess } = props;
 
   const { closeDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
 
   function handleOnComplete(invitedUser: OrganizationMemberType) {
     closeDrawer();
+    onSuccess?.();
 
     const { firstName, lastName } = invitedUser;
 

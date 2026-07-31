@@ -5,16 +5,28 @@ import { ReactNode } from 'react';
 export interface IModalHeaderProps {
   showCloseButton?: boolean;
   onClose?: () => void;
+  className?: string;
   children?: ReactNode;
 }
 
 export function ModalHeader({
   showCloseButton = true,
   onClose,
+  className,
   children,
 }: IModalHeaderProps) {
   return (
-    <div className={mergeCss(['flex', 'items-start', 'justify-between', 'p-6', 'pb-2', 'shrink-0'])}>
+    <div
+      className={mergeCss([
+        'flex',
+        'items-start',
+        'justify-between',
+        'p-6',
+        'pb-2',
+        'shrink-0',
+        className,
+      ])}
+    >
       <div className="flex items-center gap-3 flex-1">{children}</div>
       {showCloseButton && onClose && (
         <button

@@ -9,25 +9,22 @@ const config: CodegenConfig = {
   ],
   ignoreNoDocuments: true,
   generates: {
-    'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
-      config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
-      },
-    },
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
+      plugins: [
+        'typescript-operations',
+        'typed-document-node',
+        '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
+      ],
       config: {
+        nonOptionalTypename: true,
         scalars: {
           NonBlankString: 'string',
         },
         useTypeImports: true,
       },
       presetConfig: {
-        baseTypesPath: 'lib/apollo/graphql/__generated__/types.ts',
+        baseTypesPath: '~@monorepo/ba-platform/types',
         folder: '__generated__',
         importTypes: true,
       },

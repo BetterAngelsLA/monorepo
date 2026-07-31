@@ -13,6 +13,7 @@ from django.conf import settings
 IMGPROXY_SWITCH = "imgproxy_enabled"
 IMGPROXY_PRESETS: dict[ImagePresetEnum, str] = {
     ImagePresetEnum.ORIGINAL: "rs:force:0:0",
+    ImagePresetEnum.SHELTER_HERO: "rs:fit:800:800/g:ce/q:80/sm:1",
     ImagePresetEnum.SM: "rs:fill:100:100",
     ImagePresetEnum.MD: "rs:fill:400:400",
     ImagePresetEnum.LG: "rs:fill:800:800",
@@ -110,6 +111,9 @@ def build_imgproxy_url(
 ) -> Optional[str]:
     """Return a signed imgproxy URL, CloudFront-signed in production.
 
+    Returns None when imgproxy is disabled (waffle switch / missing keys)
+    or when the URL cannot be built for any other reason.
+
     Args:
         file: The Django file field value to build the URL for.
         preset: The image preset to use.
@@ -118,6 +122,8 @@ def build_imgproxy_url(
     Returns:
         The complete imgproxy URL, or None if the URL cannot be built.
     """
+    if not is_imgproxy_enabled():
+        return None
 
     source_url = _get_image_source_url(file)
     if not source_url:

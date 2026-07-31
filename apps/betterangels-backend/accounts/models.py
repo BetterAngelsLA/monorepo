@@ -1,8 +1,9 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from annoying.fields import AutoOneToOneField
+from common.models import BaseModel
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -10,8 +11,11 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
+from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
@@ -45,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("active"),
         default=True,
         help_text=(
-            "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
+            "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
         ),
     )
     is_staff = models.BooleanField(
@@ -70,22 +74,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self: "User") -> str:
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
-
-    @model_property
-    def is_outreach_authorized(self: "User") -> bool:
-        user_organizations = self.organizations_organization.all()
-
-        if not user_organizations:
-            return False
-
-        # TODO: This is a temporary approach while we have just one permission group.
-        # Once this list grows, we'll need to create an actual list of authorized groups.
-        authorized_permission_groups = [template.value for template in GroupTemplateNames]
-
-        # TODO: we can actually make this a permission check vs having to check if they are in a permission group.
-        return PermissionGroup.objects.filter(
-            organization__in=user_organizations, template__name__in=authorized_permission_groups
-        ).exists()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
@@ -172,7 +160,7 @@ class PermissionGroup(models.Model):
     objects = models.Manager()
 
     class Meta:
-        unique_together = ("organization", "group")
+        unique_together = (("organization", "group"), ("organization", "template"))
 
     def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
         self.group.delete()
@@ -197,3 +185,30 @@ class PermissionGroup(models.Model):
             self.group.permissions.set(permissions_to_apply)
 
         super().save(*args, **kwargs)
+
+
+class OrgTypeChoices(models.TextChoices):
+    OUTREACH = "outreach", "Outreach"
+    SHELTER = "shelter", "Shelter"
+
+
+class OrganizationProfile(BaseModel):
+    organization = AutoOneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    org_types = ArrayField(
+        base_field=TextChoicesField(choices_enum=OrgTypeChoices),
+        blank=True,
+        default=list,
+    )
+
+    objects = models.Manager()
+
+    class Meta:
+        indexes = [GinIndex(fields=["org_types"])]
+
+    def __str__(self) -> str:
+        types = ", ".join(t.label for t in self.org_types)
+        return f"{self.organization.name} ({types or 'no type'})"

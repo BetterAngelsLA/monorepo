@@ -1,0 +1,1 @@
+export { useDeleteShelterPhotos } from './useDeleteShelterPhotos';

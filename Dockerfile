@@ -1,4 +1,5 @@
-FROM python:3.14.2-trixie AS base
+# syntax=docker/dockerfile:1
+FROM python:3.14.6-trixie AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -17,10 +18,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && chmod a+r /etc/apt/keyrings/docker.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt-get update \
-    && apt-get install -y \
-      docker-ce \
+    && apt-get install -y --no-install-recommends \
       docker-ce-cli \
-      containerd.io \
       docker-buildx-plugin \
     && docker --version
 
@@ -33,23 +32,30 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
 ENV AWS_CLI_VERSION=2.33.14
-RUN ARCH=$(uname -m) && \
-  if [ "$ARCH" = "x86_64" ]; then \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
-  elif [ "$ARCH" = "aarch64" ]; then \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
-  else \
-    echo "Unsupported architecture: $ARCH" && exit 1; \
-  fi && \
-  unzip awscliv2.zip && \
-  ./aws/install && \
-  rm awscliv2.zip
+RUN --mount=type=cache,target=/var/cache/awscli \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      aws_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip"; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      aws_url="https://awscli.amazonaws.com/awscli-exe-linux-aarch64-${AWS_CLI_VERSION}.zip"; \
+    else \
+      echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi && \
+    cache_zip="/var/cache/awscli/awscliv2-${AWS_CLI_VERSION}.zip" && \
+    if [ ! -f "$cache_zip" ]; then \
+      curl -fsSL "$aws_url" -o "$cache_zip"; \
+    fi && \
+    cp "$cache_zip" awscliv2.zip && \
+    unzip -q awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/3ac814a0a3470b195cb15530adcc3793c8268730/22/bullseye/Dockerfile
 ENV NODE_VERSION=22.21.1
 
-RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
+RUN --mount=type=cache,target=/var/cache/nodejs \
+    ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
     amd64) ARCH='x64';; \
     ppc64el) ARCH='ppc64le';; \
@@ -76,25 +82,36 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
       { gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" && gpg --batch --fingerprint "$key"; } || \
       { gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" && gpg --batch --fingerprint "$key"; } ; \
   done \
-  && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
+  && tarball="node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
+  && cache_tar="/var/cache/nodejs/$tarball" \
+  && if [ ! -f "$cache_tar" ]; then \
+       curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/$tarball" \
+       && cp "$tarball" "$cache_tar"; \
+     else \
+       cp "$cache_tar" "$tarball"; \
+     fi \
   && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
   && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
   && gpgconf --kill all \
   && rm -rf "$GNUPGHOME" \
-  && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-  && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
-  && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
+  && grep " $tarball\$" SHASUMS256.txt | sha256sum -c - \
+  && tar -xJf "$tarball" -C /usr/local --strip-components=1 --no-same-owner \
+  && rm "$tarball" SHASUMS256.txt.asc SHASUMS256.txt \
   && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
   # smoke tests
   && node --version \
   && npm --version \
   && rm -rf /tmp/*
 
+# Install EAS CLI globally
+RUN npm install -g eas-cli@20.5.1
+
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
-# Python
-RUN pip install poetry==2.3.2
+# Python - uv (pinned version)
+COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /uvx /usr/local/bin/
+ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -106,13 +123,11 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       jq \
       wget \
       zip \
-    # Install Python Lib Requirements
-    && apt-get install -y \
-    libpq5 \
-    gdal-bin
-ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
-RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
-    && chown -R betterangels:betterangels /workspace
+      libpq5 \
+      gdal-bin
+ENV PATH=/workspace/.venv/bin:$PATH:/home/betterangels/.local/bin
+RUN mkdir -p /workspace/.venv && mkdir -p /workspace/node_modules /home/betterangels \
+    && chown -R betterangels:betterangels /workspace /home/betterangels
 WORKDIR /workspace
 USER betterangels
 
@@ -130,27 +145,32 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     fi \
     && dpkg -i session-manager-plugin.deb \
     && rm session-manager-plugin.deb \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 USER betterangels
 RUN git config --global --add safe.directory "*"
 
-FROM base AS poetry
-# Need to create bare Python Packages otherwise poetry will explode (sadpanda)
-COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
-COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
-RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
-    poetry install --no-interaction --no-ansi
+FROM base AS uv-stage
+COPY --chown=betterangels --parents \
+  pyproject.toml \
+  uv.lock \
+  apps/betterangels-backend/pyproject.toml \
+  /workspace/
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
+    uv sync --no-install-project
 
 FROM base AS yarn
-COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
-COPY --chown=betterangels .yarn /workspace/.yarn
+COPY --chown=betterangels --parents \
+  .yarnrc.yml \
+  yarn.lock \
+  package.json \
+  .yarn \
+  /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
 
 # Production Build
 FROM base AS production
-COPY --from=poetry /workspace /workspace
-COPY --from=yarn /workspace /workspace
+COPY --from=uv-stage --link /workspace /workspace
+COPY --from=yarn --link /workspace /workspace
 COPY --chown=betterangels . /workspace

@@ -1,16 +1,25 @@
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
+from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.types import (
+    AuthorizedPresignedS3UploadsType,
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+)
 from common.graphql.utils import get_object_or_permission_error
+from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
+from common.team_shim import resolve_team_id_from_input
+from common.services.types import UploadRequest, UploadConfirmation
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
+from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
@@ -18,13 +27,16 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from notes.services import (
+    create_note_attachment_presigned_uploads,
     note_create,
     note_service_request_create,
     note_update,
     note_update_location,
+    resolve_note_file_uploads,
     service_request_delete,
 )
 from notes.utils import NoteReverter
+from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -36,14 +48,18 @@ from .types import (
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteServiceRequestInput,
+    GenerateNoteAttachmentUploadsInput,
     ImportNoteInput,
     InteractionAuthorType,
+    NoteAttachmentType,
+    NoteAttachmentUploadsType,
     NoteDataImportType,
     NoteFilter,
     NoteImportRecordType,
     NoteType,
     OrganizationServiceCategoryType,
     OrganizationServiceType,
+    ResolveNoteAttachmentUploadsInput,
     RevertNoteInput,
     ServiceRequestType,
     UpdateNoteInput,
@@ -77,9 +93,41 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+    )
+    def caseworker_organizations(
+        self,
+        info: Info,
+        ordering: Optional[list[OrganizationOrder]] = None,
+        filters: Optional[OrganizationFilter] = None,
+    ) -> QuerySet[Organization]:
+        """Return organizations where the current user is a caseworker."""
+        user = cast(User, get_current_user(info))
+        from accounts.models import PermissionGroup
+
+        has_caseworker_group = Exists(
+            PermissionGroup.objects.filter(
+                organization=OuterRef("pk"),
+                template__name=CASEWORKER.name,
+                group__user=user,
+            )
+        )
+        queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
+        return queryset
+
 
 @strawberry.type
 class Mutation:
+    # TODO(org-scoping): Migrate from resolve_permission_group() (first-match org)
+    # + PermissionedQuerySet to HasOrgPerm + get_current_organization(info),
+    # matching shelters/schema.py.  Affects create_note, update_note,
+    # update_note_location, revert_note, delete_note, create_note_service_request,
+    # and import_note.  The new note attachment mutations are already safe —
+    # their service layer passes organization_id=note.organization_id.
+    # Defer to a dedicated PR — touches 7 mutations + their tests.
+
     # Notes
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
@@ -89,18 +137,20 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
+        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+
         note = note_create(
             user=user,
             permission_group=permission_group,
             purpose=data.purpose,
-            team=data.team,
+            team_id=team_id,
             public_details=data.public_details or "",
             private_details=data.private_details or "",
             client_profile_id=str(data.client_profile) if data.client_profile else None,
@@ -122,10 +172,18 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
+
+        # Resolve deprecated team enum / new teamId → FK before asdict.
+        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+
         clean = asdict(data)
+        # Pop Maybe-wrapped team fields so setattr doesn't choke on them.
+        clean.pop("team", None)
+        clean.pop("team_id", None)
+        clean["team_id"] = team_id
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -183,12 +241,10 @@ class Mutation:
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(
-            qs, str(data.note_id), error_message="You do not have permission to modify this note."
-        )
+        note = get_object_or_permission_error(qs, str(data.note_id))
 
         service_requests = note_service_request_create(
             user=user,
@@ -275,14 +331,14 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(user)
+        permission_group = resolve_permission_group(user, template=CASEWORKER)
         try:
             with transaction.atomic():
                 note = note_create(
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team=data.note.team if data.note.team is not strawberry.UNSET else None,
+                    team_id=resolve_team_id_from_input(data.note, organization_id=permission_group.organization_id),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""
@@ -317,3 +373,64 @@ class Mutation:
                 error_message=str(e),
             )
         return cast(NoteImportRecordType, record)
+
+    # ── Note Attachment Presigned S3 Uploads ────────────────────────────
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(Attachment.perms.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
+    )
+    def generate_note_file_uploads(
+        self,
+        info: Info,
+        data: GenerateNoteAttachmentUploadsInput,
+    ) -> AuthorizedPresignedS3UploadsType:
+        user = cast(User, get_current_user(info))
+
+        qs: QuerySet[Note] = info.context.qs
+        get_object_or_permission_error(qs, data.note_id)
+
+        uploads = [
+            UploadRequest(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                mime_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = create_note_attachment_presigned_uploads(user=user, uploads=uploads)
+
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
+
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(Attachment.perms.ADD),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+        ],
+    )
+    def resolve_note_file_uploads(
+        self,
+        info: Info,
+        data: ResolveNoteAttachmentUploadsInput,
+    ) -> NoteAttachmentUploadsType:
+        user = cast(User, get_current_user(info))
+
+        qs: QuerySet[Note] = info.context.qs
+        note = get_object_or_permission_error(qs, data.note_id)
+
+        attachment_list = [
+            UploadConfirmation(
+                presigned_key=a.presigned_key,
+                upload_token=a.upload_token,
+                filename=a.filename,
+                mime_type=a.content_type,
+            )
+            for a in data.attachments
+        ]
+        attachments = resolve_note_file_uploads(user=user, note=note, attachments=attachment_list)
+
+        return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))

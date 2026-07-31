@@ -111,21 +111,16 @@ class EntryRequirementChoices(models.TextChoices):
     IN_SPA_ONLY = "in_spa_only", _("In-SPA Only")
 
 
+@strawberry.enum
+class VaccinationRequirementChoices(models.TextChoices):
+    TB = "tb", _("TB")
+    FLU = "flu", _("Flu")
+    COVID_19 = "covid_19", _("COVID-19")
+
+
 # Ecosystem Information
 CITY_COUNCIL_DISTRICT_CHOICES = [(0, "Unincorporated")] + [(i, str(i)) for i in range(1, 16)]
 SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
-
-
-@strawberry.enum
-class SPAChoices(models.IntegerChoices):
-    ONE = 1, _("1 - Antelope Valley")
-    TWO = 2, _("2 - San Fernando")
-    THREE = 3, _("3 - San Gabriel")
-    FOUR = 4, _("4 - Metro")
-    FIVE = 5, _("5 - West")
-    SIX = 6, _("6 - South")
-    SEVEN = 7, _("7 - East")
-    EIGHT = 8, _("8 - South Bay/Harbor")
 
 
 @strawberry.enum
@@ -189,16 +184,30 @@ class ReferralRequirementChoices(models.TextChoices):
 @strawberry.enum
 class BedStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    IN_TURNAROUND = "in_turnaround", _("In Turnaround")
     OCCUPIED = "occupied", _("Occupied")
-    RESERVED = "reserved", _("Reserved")
     OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
+    RESERVED = "reserved", _("Reserved")
 
 
 @strawberry.enum
 class RoomStatusChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
+    IN_TURNAROUND = "in_turnaround", _("In Turnaround")
+    OCCUPIED = "occupied", _("Occupied")
+    OUT_OF_SERVICE = "out_of_service", _("Out-of-Service")
     RESERVED = "reserved", _("Reserved")
-    NEEDS_MAINTENANCE = "needs_maintenance", _("Needs Maintenance")
+
+
+class SPAChoices(models.IntegerChoices):
+    ONE = 1, _("1 - Antelope Valley")
+    TWO = 2, _("2 - San Fernando")
+    THREE = 3, _("3 - San Gabriel")
+    FOUR = 4, _("4 - Metro")
+    FIVE = 5, _("5 - West")
+    SIX = 6, _("6 - South")
+    SEVEN = 7, _("7 - East")
+    EIGHT = 8, _("8 - South Bay/Harbor")
 
 
 @strawberry.enum
@@ -219,7 +228,6 @@ class MedicalNeedChoices(models.TextChoices):
 
 @strawberry.enum
 class ReservationStatusChoices(models.TextChoices):
-    OPEN = "open", _("Open")
     CONFIRMED = "confirmed", _("Confirmed")
     CHECKED_IN = "checked_in", _("Checked In")
     COMPLETED = "completed", _("Completed")
@@ -265,3 +273,9 @@ class ConditionChoices(models.TextChoices):
 @strawberry.enum
 class MediaLinkTypeChoices(models.TextChoices):
     YOUTUBE = "youtube", _("YouTube")
+
+
+@strawberry.enum
+class ShelterPhotoTypeChoices(models.TextChoices):
+    INTERIOR = "interior", _("Interior")
+    EXTERIOR = "exterior", _("Exterior")

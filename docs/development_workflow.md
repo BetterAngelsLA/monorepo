@@ -1,5 +1,8 @@
 ### Development workflow
 
+> [!IMPORTANT]
+> Set up the dev container first: see [devcontainer.md](./devcontainer.md).
+
 1. Check out a new branch from `main` with the name format `<ticket_id>/<description>` - e.g., `DEV-60/revert-note-on-cancel`
 1. When ready, open a Pull Request (PR)
    1. Title: brief description + ticket ID - e.g. _Revert saved note on cancel (DEV-142)_

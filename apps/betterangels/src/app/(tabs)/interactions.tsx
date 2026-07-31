@@ -6,9 +6,9 @@ import {
 import Logo from '../assets/images/logo.svg';
 
 export default function InteractionsScreen() {
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
-  return isHmisUser ? (
+  return user?.isHmisUser ? (
     <InteractionsHmis Logo={Logo} />
   ) : (
     <Interactions Logo={Logo} />

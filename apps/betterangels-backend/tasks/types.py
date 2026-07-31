@@ -7,8 +7,9 @@ from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
-from strawberry import ID, UNSET, Info, auto
+from strawberry import ID, UNSET, Info, Maybe, auto
 from tasks.enums import TaskStatusEnum
+from teams.types import TeamType
 
 from . import models
 
@@ -28,7 +29,10 @@ class TaskFilter:
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
-    teams = make_in_filter("team", SelahTeamEnum)
+    teams = make_in_filter(
+        "team", SelahTeamEnum
+    )  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
+    team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
     def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -112,7 +116,19 @@ class TaskType:
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
-    team: Optional[SelahTeamEnum]
+
+    # TEMPORARY — @deprecated, use currentTeam instead.
+    # Remove this resolver and the `team` field after the deprecation window.
+    @strawberry_django.field(field_name="team", deprecation_reason="Use currentTeam instead")
+    def team(self, root: models.Task) -> Optional[SelahTeamEnum]:
+        if root.team is None:
+            return None
+        try:
+            return SelahTeamEnum(root.team.slug)
+        except KeyError, ValueError:
+            return None
+
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
     updated_at: auto
 
 
@@ -124,7 +140,8 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team: Optional[SelahTeamEnum]
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     status: Optional[TaskStatusEnum]
 
 
@@ -133,5 +150,6 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team: Optional[SelahTeamEnum]
+    team: Optional[SelahTeamEnum]  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
+    team_id: Maybe[ID]  # new FK-based field
     status: Optional[TaskStatusEnum]

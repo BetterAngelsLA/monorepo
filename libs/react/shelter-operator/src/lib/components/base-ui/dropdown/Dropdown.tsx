@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { ChevronDown } from 'lucide-react';
 import {
   useCallback,
@@ -8,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { mergeCss } from '@monorepo/react/shared';
+import { Label } from '../label';
 import { Text } from '../text/text';
 import { DropdownChips } from './DropdownChips';
 import { DropdownMenu } from './DropdownMenu';
@@ -19,23 +20,32 @@ import type {
 } from './types';
 import { usePortalPosition } from './usePortalPosition';
 
+const CREATE_OPTION_VALUE = '__dropdown_create__';
+const OTHER_OPTION_VALUE = '__dropdown_other__';
+
 export function Dropdown<T extends string | number = string | number>(
   props: DropdownProps<T>
 ) {
   const {
     label,
+    labelVariant,
+    labelClassname,
     placeholder = 'Please select',
     options,
     value,
     onChange,
     isMulti = false,
     isSearchable = false,
+    onCreateOption,
+    createOptionLabel,
+    isViewMode,
     required = false,
     disabled = false,
     className,
     onOtherTextChange,
+    renderValue,
+    error,
   } = props as DropdownInternalProps<T>;
-
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -54,6 +64,8 @@ export function Dropdown<T extends string | number = string | number>(
 
   const menuRef = useRef<HTMLDivElement>(null);
   const menuPos = usePortalPosition(menuAnchorRef, isOpen, close, menuRef);
+
+  const isViewEditMode = typeof isViewMode === 'boolean';
 
   // Scroll focused option into view
   useEffect(() => {
@@ -84,7 +96,7 @@ export function Dropdown<T extends string | number = string | number>(
   const hasSelection = selectedValues.length > 0;
 
   const otherSelected = useMemo(
-    () => selectedValues.some((v) => String(v.value) === '__dropdown_other__'),
+    () => selectedValues.some((v) => String(v.value) === OTHER_OPTION_VALUE),
     [selectedValues]
   );
 
@@ -109,8 +121,30 @@ export function Dropdown<T extends string | number = string | number>(
     [selectedValues]
   );
 
+  const selectedLabelSet = useMemo(
+    () => new Set(selectedValues.map((v) => v.label.trim().toLowerCase())),
+    [selectedValues]
+  );
+
+  const trimmedSearchQuery = searchQuery.trim();
+  const normalizedSearchQuery = trimmedSearchQuery.toLowerCase();
+
+  const hasExactOptionLabel = useMemo(
+    () =>
+      options.some(
+        (option) => option.label.trim().toLowerCase() === normalizedSearchQuery
+      ),
+    [options, normalizedSearchQuery]
+  );
+
+  const showCreateOption =
+    Boolean(onCreateOption) &&
+    Boolean(trimmedSearchQuery) &&
+    !hasExactOptionLabel &&
+    !selectedLabelSet.has(normalizedSearchQuery);
+
   const menuOptionsWithoutOther = useMemo(
-    () => options.filter((o) => String(o.value) !== '__dropdown_other__'),
+    () => options.filter((o) => String(o.value) !== OTHER_OPTION_VALUE),
     [options]
   );
 
@@ -119,12 +153,38 @@ export function Dropdown<T extends string | number = string | number>(
     const main = menuOptionsWithoutOther.filter((o) =>
       o.label.toLowerCase().includes(query)
     );
-    const otherOption: DropdownOption<T> = {
-      label: 'Other',
-      value: '__dropdown_other__' as T,
-    };
-    return [...main, otherOption];
-  }, [menuOptionsWithoutOther, searchQuery]);
+
+    const withOther = onOtherTextChange
+      ? [
+          ...main,
+          {
+            label: 'Other',
+            value: OTHER_OPTION_VALUE as T,
+          } as DropdownOption<T>,
+        ]
+      : main;
+
+    if (!showCreateOption) {
+      return withOther;
+    }
+
+    return [
+      {
+        label:
+          createOptionLabel?.(trimmedSearchQuery) ??
+          `Add "${trimmedSearchQuery}"`,
+        value: CREATE_OPTION_VALUE as T,
+      },
+      ...withOther,
+    ];
+  }, [
+    menuOptionsWithoutOther,
+    searchQuery,
+    onOtherTextChange,
+    showCreateOption,
+    createOptionLabel,
+    trimmedSearchQuery,
+  ]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────
 
@@ -137,19 +197,45 @@ export function Dropdown<T extends string | number = string | number>(
     [onChange, isMulti]
   );
 
+  const handleCreateOption = useCallback(() => {
+    if (!showCreateOption || !onCreateOption) {
+      return;
+    }
+
+    void onCreateOption(trimmedSearchQuery);
+    setSearchQuery('');
+    setFocusedIndex(-1);
+  }, [showCreateOption, onCreateOption, trimmedSearchQuery]);
+
   const handleOptionClick = useCallback(
     (option: DropdownOption<T>) => {
+      if (String(option.value) === CREATE_OPTION_VALUE) {
+        handleCreateOption();
+        return;
+      }
+
       if (isMulti) {
         const next = selectedSet.has(option.value)
           ? selectedValues.filter((v) => v.value !== option.value)
           : [...selectedValues, option];
         emitChange(next);
       } else {
-        emitChange([option]);
+        if (selectedSet.has(option.value)) {
+          emitChange([]);
+        } else {
+          emitChange([option]);
+        }
         close();
       }
     },
-    [isMulti, selectedSet, selectedValues, emitChange, close]
+    [
+      isMulti,
+      selectedSet,
+      selectedValues,
+      emitChange,
+      close,
+      handleCreateOption,
+    ]
   );
 
   const handleRemoveChip = useCallback(
@@ -192,7 +278,11 @@ export function Dropdown<T extends string | number = string | number>(
             setIsOpen(true);
           } else {
             setFocusedIndex((i) =>
-              i < filteredOptions.length - 1 ? i + 1 : 0
+              filteredOptions.length === 0
+                ? -1
+                : i < filteredOptions.length - 1
+                ? i + 1
+                : 0
             );
           }
           break;
@@ -200,7 +290,11 @@ export function Dropdown<T extends string | number = string | number>(
           e.preventDefault();
           if (isOpen) {
             setFocusedIndex((i) =>
-              i > 0 ? i - 1 : filteredOptions.length - 1
+              filteredOptions.length === 0
+                ? -1
+                : i > 0
+                ? i - 1
+                : filteredOptions.length - 1
             );
           }
           break;
@@ -211,22 +305,57 @@ export function Dropdown<T extends string | number = string | number>(
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  function renderSelectionContent() {
+    if (!hasSelection) {
+      return (
+        <span className="text-sm flex-1 truncate">
+          <Text
+            variant="body"
+            className="text-sm flex-1 truncate text-gray-400"
+          >
+            {placeholder}
+          </Text>
+        </span>
+      );
+    }
+
+    if (renderValue) {
+      return renderValue(selectedValues);
+    }
+
+    if (isMulti) {
+      return (
+        <DropdownChips
+          selectedValues={selectedValues}
+          onRemove={isViewMode ? undefined : handleRemoveChip}
+        />
+      );
+    }
+
+    return (
+      <span className="text-sm flex-1 truncate">
+        <Text variant="body" className="text-sm flex-1 truncate text-gray-900">
+          {selectedValues[0].label}
+        </Text>
+      </span>
+    );
+  }
+
   return (
     <div
-      className={mergeCss(['relative flex w-full flex-col gap-1 font-sans', className])}
+      className={mergeCss([
+        'relative flex w-full flex-col gap-1 font-sans',
+        className,
+      ])}
     >
       {label && (
-        <label id={labelId} className="text-sm text-gray-900">
-          <Text variant="body" className="text-gray-900">
-            {label}
-          </Text>
-          {required && (
-            <Text variant="body" className="text-red-500">
-              {' '}
-              *
-            </Text>
-          )}
-        </label>
+        <Label
+          label={label}
+          className={labelClassname}
+          inputId={labelId}
+          variant={labelVariant || (isViewEditMode ? 'offset' : undefined)}
+          required={required}
+        />
       )}
 
       <div ref={menuAnchorRef} className="flex w-full flex-col gap-1">
@@ -244,38 +373,28 @@ export function Dropdown<T extends string | number = string | number>(
               ? 'min-h-12 items-start rounded-2xl px-4 py-3'
               : 'h-12 items-center rounded-full px-4 overflow-hidden',
             isOpen ? 'border-[#008CEE]' : 'border-gray-200',
+            !!error && 'border-red-500',
+            isViewMode && 'border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
           ])}
           onClick={() => {
-            if (!disabled) setIsOpen((o) => !o);
+            if (!disabled && !isViewMode) {
+              setIsOpen((o) => !o);
+            }
           }}
-          onKeyDown={handleKeyDown}
+          onKeyDown={isViewMode ? undefined : handleKeyDown}
         >
-          {isMulti && hasSelection ? (
-            <DropdownChips
-              selectedValues={selectedValues}
-              onRemove={handleRemoveChip}
+          {renderSelectionContent()}
+
+          {!isViewMode && (
+            <ChevronDown
+              className={mergeCss([
+                'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
+                isOpen && 'rotate-180',
+                isStackedMultiSelect && 'self-start mt-1.5',
+              ])}
             />
-          ) : (
-            <span className="text-sm flex-1 truncate">
-              <Text
-                variant="body"
-                className={mergeCss([
-                  'text-sm flex-1 truncate',
-                  hasSelection ? 'text-gray-900' : 'text-gray-400',
-                ])}
-              >
-                {hasSelection ? selectedValues[0].label : placeholder}
-              </Text>
-            </span>
           )}
-          <ChevronDown
-            className={mergeCss([
-              'w-4 h-4 shrink-0 transition-transform duration-200 text-gray-400 z-10',
-              isOpen && 'rotate-180',
-              isStackedMultiSelect && 'self-start mt-1.5',
-            ])}
-          />
         </div>
 
         {otherSelected && (
@@ -321,8 +440,16 @@ export function Dropdown<T extends string | number = string | number>(
             listRef={listRef}
             menuRef={menuRef}
           />,
-          document.body
+          // When inside a <dialog> (showModal top-layer), portal into the dialog
+          // so the menu isn't clipped behind the top-layer stacking context.
+          menuAnchorRef.current?.closest('dialog') ?? document.body
         )}
+
+      {!!error && (
+        <Text variant="caption" className="text-red-500">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

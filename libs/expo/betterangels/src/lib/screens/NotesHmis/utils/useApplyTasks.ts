@@ -15,7 +15,7 @@ export function useApplyTasks() {
     async (
       tasks: DraftTask[] | undefined,
       hmisNoteId: string,
-      hmisClientProfileId: string
+      hmisClientProfileId: string,
     ) => {
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
 
@@ -24,7 +24,7 @@ export function useApplyTasks() {
           variables: {
             data: {
               summary: s.summary || '',
-              team: s.team || null,
+              teamId: s.teamId ?? undefined,
               description: s.description,
               status: s.status,
               hmisClientProfile: hmisClientProfileId,
@@ -44,9 +44,11 @@ export function useApplyTasks() {
         await updateTask({
           variables: {
             data: {
+              // safe: splitTasks guarantees id for update tasks
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               id: s.id!,
               summary: s.summary,
-              team: s.team || null,
+              teamId: s.teamId ?? undefined,
               description: s.description,
               status: s.status,
             },
@@ -54,7 +56,7 @@ export function useApplyTasks() {
         });
       }
     },
-    [createTask, deleteTask, updateTask]
+    [createTask, deleteTask, updateTask],
   );
 
   return { applyTasks };

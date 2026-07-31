@@ -1,107 +1,206 @@
 import logging
-from typing import Any
 
-from accounts.groups import GroupTemplateNames
-from accounts.utils import (
-    add_default_org_permissions_to_user,
-    create_default_org_permission_groups,
-    remove_org_group_permissions_from_user,
-    remove_organization_permission_group,
-)
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_delete, post_migrate, post_save, pre_delete
-from django.dispatch import receiver
-from organizations.models import Organization, OrganizationUser
+from organizations.models import Organization
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
-
-@receiver(post_migrate)
-def create_superuser(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(username="admin", email="admin@example.com", password="password")
+# ── Local dev data setup ──────────────────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
 
-@receiver(post_migrate)
-def create_test_agent(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="agent").exists():
-        User.objects.create_user(
-            username="agent",
-            email="agent@example.com",
-            password="password",
-            first_name="Carolyn",
-        )
+def setup_local_dev_data(sender: object, **kwargs: object) -> None:
+    """Create test users and org — local dev only.
 
-
-@receiver(post_migrate)
-def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
-        test_usernames = ["admin", "agent"]
-        test_users = User.objects.filter(username__in=test_usernames)
-        test_org = Organization.objects.create(name="test_org")
-        for test_user in test_users:
-            test_org.add_user(test_user)
-
-
-@receiver(pre_delete, sender=Organization)
-def handle_organization_removed(sender: Any, instance: Organization, **kwargs: Any) -> None:
-    remove_organization_permission_group(instance)
-    logger.info(f"Organization {instance.name} was removed.")
-
-
-@receiver(post_save, sender=OrganizationUser)
-def handle_organization_user_added(sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any) -> None:
-    user: User = instance.user
-    organization: Organization = instance.organization
-    if created:
-        add_default_org_permissions_to_user(user, organization)
-    logger.info(f"User {user.username} was added to organization {organization.name}.")
-
-
-@receiver(post_save, sender=PermissionGroup)
-def handle_caseworker_perm_group_created(sender: Any, instance: PermissionGroup, created: bool, **kwargs: Any) -> None:
-    """Creates default Group and PermissionGroup for a Caseworker organization.
-
-    A "Caseworker organization" is any org that has an associated
-    PermissionGroup based on the Caseworker PermissionGroupTemplate.
-
-    Caseworker organizations need "Admin" and "Superuser" Groups. This facilitates the creation of those Groups.
-
-    NOTE: This is a temporary solution until organization tags are implemented.
-          Currently, the only way to distinguish between a cw and non-cw org is
-          via the presence of an associated PermissionGroup.
+    Role assignment is deferred to ``sync_all_org_permission_groups``
+    which runs after all migration app tables exist.  This avoids
+    ``PermissionGroup.DoesNotExist`` when the signal fires before
+    the accounts app is fully migrated.
     """
-    organization: Organization = instance.organization
+    if not settings.IS_LOCAL_DEV:
+        return
 
-    if created and instance.template == PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER):
-        create_default_org_permission_groups(organization)
-
-
-@receiver(post_delete, sender=OrganizationUser)
-def handle_organization_user_removed(sender: Any, instance: OrganizationUser, **kwargs: Any) -> None:
-    user: User = instance.user
-    organization: Organization = instance.organization
-    remove_org_group_permissions_from_user(user, organization)
-    logger.info(f"User {user.username} was removed from organization {organization.name}.")
+    _ensure_test_users()
+    _ensure_test_org()
 
 
-@receiver(post_migrate)
-def update_group_permissions(sender: Any, **kwargs: Any) -> None:
-    template_names = [
-        GroupTemplateNames.CASEWORKER,
-        GroupTemplateNames.ORG_ADMIN,
-        GroupTemplateNames.ORG_SUPERUSER,
-    ]
+def _ensure_test_users() -> None:
+    """Idempotent: create admin + agent with known passwords."""
+    admin, _ = User.objects.get_or_create(
+        username="admin",
+        defaults={
+            "email": "admin@example.com",
+            "password": "password",
+            "first_name": "Admin",
+            "has_accepted_privacy_policy": True,
+            "has_accepted_tos": True,
+        },
+    )
+    User.objects.filter(username="admin").update(
+        is_superuser=True,
+        is_staff=True,
+        first_name="Admin",
+        has_accepted_privacy_policy=True,
+        has_accepted_tos=True,
+    )
+    if not admin.check_password("password"):
+        admin.set_password("password")
+        admin.save(update_fields=["password"])
+
+    agent, _ = User.objects.get_or_create(
+        username="agent",
+        defaults={
+            "email": "agent@example.com",
+            "password": "password",
+            "first_name": "Carolyn",
+        },
+    )
+    if not agent.check_password("password"):
+        agent.set_password("password")
+        agent.save(update_fields=["password"])
+
+
+def _ensure_test_org() -> None:
+    """Idempotent: ensure test_org exists with presets and admin as owner.
+
+    Role assignment is handled later by sync_all_org_permission_groups.
+    Called on every post_migrate because the first signal may fire before
+    all apps' tables/permission templates are ready.
+    """
+    from accounts.services import create_organization_with_presets
+
+    admin = User.objects.get(username="admin")
+
+    create_organization_with_presets(
+        name="test_org",
+        preset_names=["shelter", "outreach"],
+        owner=admin,
+        owner_roles=(),  # roles assigned by sync_all_org_permission_groups
+    )
+
+
+# ── Permission sync (all environments) ────────────────────────────────
+# Connected via AppConfig.ready() with sender=self — fires once, not per-app.
+
+
+def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
+    """Reconcile every org's PermissionGroups against current presets.
+
+    Also assigns test-agent roles on local dev (safe to call repeatedly
+    — ``member_add`` is idempotent).
+    """
+    from accounts.services import member_add, reconcile_org_groups as reconcile
+    from notes.groups import CASEWORKER
+    from shelters.groups import SHELTER_OPERATOR
+
+    # The accounts app tables may not be ready when this fires for other
+    # apps; skip gracefully until the final post_migrate run.
+    try:
+        for org in Organization.objects.all():
+            reconcile(org)
+    except Exception:
+        return
+
+    _sync_template_permissions()
+
+    if not settings.IS_LOCAL_DEV:
+        return
+
+    try:
+        from accounts.groups import ORG_ADMIN
+
+        test_org = Organization.objects.get(name="test_org")
+        admin = User.objects.get(username="admin")
+        agent = User.objects.get(username="agent")
+
+        member_add(
+            email=admin.email or "admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(ORG_ADMIN, SHELTER_OPERATOR, CASEWORKER),
+        )
+        member_add(
+            email=agent.email or "agent@example.com",
+            first_name=agent.first_name or "",
+            last_name=agent.last_name or "",
+            middle_name=None,
+            organization=test_org,
+            permission_templates=(SHELTER_OPERATOR, CASEWORKER),
+        )
+    except Exception:
+        pass
+
+
+def _sync_template_permissions() -> None:
+    """Sync Django Group.permissions for every PermissionGroupTemplate.
+
+    Templates registered in the ``REGISTRY`` are refreshed from their
+    ``TemplateConfig.permissions`` definition.  Non-registry templates
+    (e.g. ``Global Shelter Operator``) are refreshed from the
+    ``ALL_TEMPLATES`` list in ``accounts.seed`` — so that permission
+    changes to ANY template are picked up on the next ``post_migrate``.
+    """
+    from common.org_types import REGISTRY
+    from django.contrib.auth.models import Permission
+
+    from accounts.seed import ALL_TEMPLATES
+
+    configs: dict[str, list[tuple[str, str]]] = {}
+    app_labels: set[str] = set()
+    codenames: set[str] = set()
+
+    def _add(name: str, perms: list[str]) -> None:
+        parsed = [(ps.split(".", 1)[0], ps.split(".", 1)[1]) for ps in perms]
+        configs[name] = parsed
+        for a, c in parsed:
+            app_labels.add(a)
+            codenames.add(c)
+
+    for name in REGISTRY.template_names():
+        if cfg := REGISTRY.template(name):
+            _add(name, cfg.permissions or [])
+    for tc in ALL_TEMPLATES:
+        if tc.name not in configs:
+            _add(tc.name, tc.permissions or [])
+
+    if not app_labels:
+        return
+
+    # ── Resolve all permissions in one query (no object instantiation) ──
+    all_perm_ids: dict[tuple[str, str], int] = {
+        (a, c): pk
+        for a, c, pk in Permission.objects.filter(
+            content_type__app_label__in=app_labels, codename__in=codenames
+        ).values_list("content_type__app_label", "codename", "pk")
+    }
+
+    # ── Pre-compute wanted IDs per template ──
+    wanted_by_template: dict[str, set[int]] = {
+        name: {all_perm_ids[k] for k in perms if k in all_perm_ids} for name, perms in configs.items()
+    }
 
     with transaction.atomic():
-        templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
-            "permissions", "permissiongroup_set__group"
+        # Prefetch permissions so .all() calls hit the cache, not the DB.
+        templates = PermissionGroupTemplate.objects.prefetch_related(
+            "permissions", "permissiongroup_set__group__permissions"
         )
 
-        for template in templates:
-            perms = list(template.permissions.all())
-            for pgt in template.permissiongroup_set.all():
-                pgt.group.permissions.set(perms)
+        for template_db in templates:
+            # Compute existing IDs once (uses prefetch).
+            existing_ids = {p.pk for p in template_db.permissions.all()}
+
+            # Sync template perms from config.
+            if (wanted := wanted_by_template.get(template_db.name)) is not None and wanted != existing_ids:
+                template_db.permissions.set(wanted)
+                existing_ids = wanted
+
+            # Sync group perms from template.  All prefetched — no queries.
+            for pgt in template_db.permissiongroup_set.all():
+                group_ids = {p.pk for p in pgt.group.permissions.all()}
+                if existing_ids != group_ids:
+                    pgt.group.permissions.set(existing_ids)

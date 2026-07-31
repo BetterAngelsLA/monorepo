@@ -179,16 +179,28 @@ export class GooglePlacesClient {
 
     const data = await response.json();
 
-    return {
-      displayName: data.displayName?.text || undefined,
-      formattedAddress: data.formattedAddress || undefined,
-      location: data.location
-        ? {
-            latitude: data.location.latitude,
-            longitude: data.location.longitude,
-          }
-        : undefined,
-      addressComponents: data.addressComponents?.map(
+      return {
+        displayName: data.displayName?.text || undefined,
+        formattedAddress: data.formattedAddress || undefined,
+        location: data.location
+          ? {
+              latitude: data.location.latitude,
+              longitude: data.location.longitude,
+            }
+          : undefined,
+        viewport: data.viewport
+          ? {
+              low: {
+                latitude: data.viewport.low.latitude,
+                longitude: data.viewport.low.longitude,
+              },
+              high: {
+                latitude: data.viewport.high.latitude,
+                longitude: data.viewport.high.longitude,
+              },
+            }
+          : undefined,
+        addressComponents: data.addressComponents?.map(
         (c: { longText: string; shortText: string; types: string[] }) => ({
           longText: c.longText,
           shortText: c.shortText,

@@ -5,17 +5,16 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { enumDisplaySelahTeam } from '../../static';
 import { TaskQuery } from './__generated__/Task.generated';
 
 type TaskCreatedByProps = {
   createdBy: TaskQuery['task']['createdBy'];
-  team?: TaskQuery['task']['team'];
+  currentTeam?: TaskQuery['task']['currentTeam'];
   organization?: TaskQuery['task']['organization'];
 };
 
 export default function TaskCreatedBy(props: TaskCreatedByProps) {
-  const { createdBy, team, organization } = props;
+  const { createdBy, currentTeam, organization } = props;
 
   return (
     <View
@@ -35,7 +34,7 @@ export default function TaskCreatedBy(props: TaskCreatedByProps) {
           {createdBy?.firstName} {createdBy?.lastName}
         </TextBold>
         <TextRegular size="sm">
-          {organization?.name} {team && ` - ${enumDisplaySelahTeam[team]}`}
+          {organization?.name} {currentTeam?.name && ` - ${currentTeam.name}`}
         </TextRegular>
       </View>
     </View>

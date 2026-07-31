@@ -1,4 +1,7 @@
+import { operatorPath } from '@monorepo/react/shelter';
+import { paths } from '../../routing';
+
 export const routeAccess = {
-  '/operator': 'safe',
-  '/operator/sign-in': 'unsafe',
+  [operatorPath]: 'safe',
+  [paths.signIn]: 'unsafe',
 } as const;

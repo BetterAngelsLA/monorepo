@@ -1,21 +1,32 @@
-from typing import Any
 from unittest.mock import ANY, patch
 
 import time_machine
-from accounts.enums import OrgRoleEnum
-from accounts.groups import GroupTemplateNames
-from accounts.models import User
-from accounts.permissions import UserOrganizationPermissions
-from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.test import ignore_warnings, override_settings
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
-from organizations.models import Organization, OrganizationUser
+from notes.groups import CASEWORKER
+from organizations.models import OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
+from accounts.enums import OrgRoleEnum
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
+from accounts.role_manager import OrgRoleManager
+
 from .baker_recipes import organization_recipe, permission_group_recipe
+
+
+def _perm_value(p: str) -> str:
+    """Extract the ``"app_label.codename"`` string from a permission item.
+
+    :class:`~django.db.models.TextChoices` members carry their value in
+    ``.value``; plain strings (from model ``PermissionSet``-backed perms)
+    are returned as-is.
+    """
+    return p.value if hasattr(p, "value") else p  # type: ignore[union-attr,return-value]
 
 
 @ignore_warnings(category=UserWarning)
@@ -43,8 +54,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
             (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (1, False, 3),
+            (2, False, 3),
         ],
     )
     def test_logged_in_user_query(
@@ -72,9 +83,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
-            expected_organizations.append(
-                {"id": str(organization.pk), "name": organization.name, "userPermissions": ANY}
-            )
+            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
 
         query = """
             query {
@@ -91,7 +100,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     organizations: organizationsOrganization {
                         id
                         name
-                        userPermissions
                     }
                 }
             }
@@ -179,42 +187,21 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
-        ("user_role, expected_permissions"),
+        ("user_role", "templates"),
         [
             (OrgRoleEnum.MEMBER, []),
-            (
-                OrgRoleEnum.ADMIN,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
-                ],
-            ),
-            (
-                OrgRoleEnum.SUPERUSER,
-                [
-                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
-                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
-                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
-                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
-                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
-                    UserOrganizationPermissions.VIEW_REPORTS.name,
-                ],
-            ),
+            (OrgRoleEnum.ADMIN, [CASEWORKER, ORG_ADMIN]),
+            (OrgRoleEnum.SUPERUSER, [CASEWORKER, ORG_SUPERUSER]),
         ],
     )
-    def test_logged_in_user_org_permissions_query(
-        self, user_role: OrgRoleEnum, expected_permissions: list[str]
-    ) -> None:
+    def test_logged_in_user_org_permissions_query(self, user_role: OrgRoleEnum, templates: list) -> None:
         user = baker.make(User)
         org_1 = organization_recipe.make(name="o1")
         org_2 = organization_recipe.make(name="o2")
         org_1.add_user(user)
         org_2.add_user(user)
 
-        omb = OrgPermissionManager(org_1)
+        omb = OrgRoleManager(org_1)
 
         self.graphql_client.force_login(user)
 
@@ -224,7 +211,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     firstName
                     organizations: organizationsOrganization {
                         name
-                        userPermissions
+                        permissions
                     }
                 }
             }
@@ -232,108 +219,45 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         expected_query_count = 2
 
-        omb.set_role(user, user_role)
+        if templates:
+            omb.add_roles(user, *templates)
+
+        # This test verifies org-scoped permissions specifically.  We compute
+        # the expected set from the same templates passed to add_roles(),
+        # filtering to the UserOrganizationPermissions namespace so the
+        # assertion stays exact without being polluted by model-level or
+        # non-DB-backed permissions.
+        org_perm_values = {p.value for p in UserOrganizationPermissions}
+        expected_org_perms = sorted(
+            _perm_value(p) for t in templates for p in t.permissions if _perm_value(p) in org_perm_values
+        )
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
-        self.assertCountEqual(user_perms["o1"], expected_permissions)
-        self.assertEqual(user_perms["o2"], [])
-
-
-class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
-    def test_caseworker_organizations_query(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        non_cw_org = organization_recipe.make()
-
-        query = """
-            query ($pagination: OffsetPaginationInput) {
-                caseworkerOrganizations(pagination: $pagination) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-        variables = {"pagination": {"offset": 0, "limit": 10}}
-        response = self.execute_graphql(query, variables=variables)
-
-        caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
-        expected_caseworker_org_ids = list(
-            Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER).values_list(
-                "id", flat=True
-            )
+        org_perms = {o["name"]: sorted(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
+        self.assertEqual(
+            sorted(p for p in org_perms["o1"] if p in org_perm_values),
+            expected_org_perms,
         )
-        actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
-
-        self.assertCountEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
-        self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
-
-    @parametrize(
-        "search_term, expected_orgs",
-        [
-            (None, ["org_1", "org_2", "test_org"]),
-            ("org_", ["org_1", "org_2"]),
-            ("org_1", ["org_1"]),
-            ("org 2", ["org_2"]),
-            ("nonexistent org", []),
-        ],
-    )
-    def test_caseworker_organizations_query_filter(self, search_term: str | None, expected_orgs: list[str]) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        query = """
-            query ($pagination: OffsetPaginationInput, $filters: OrganizationFilter) {
-                caseworkerOrganizations(pagination: $pagination, filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        offset
-                        limit
-                    }
-                }
-            }
-        """
-
-        filters: dict[str, Any] = {"search": search_term}
-
-        response = self.execute_graphql(query, variables={"filters": filters})
-
-        actual_orgs = [org["name"] for org in response["data"]["caseworkerOrganizations"]["results"]]
-        self.assertCountEqual(actual_orgs, expected_orgs)
+        self.assertEqual(org_perms["o2"], [])
 
 
 class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.org = organization_recipe.make(name="org")
         self.org_member = baker.make(User, first_name="member")
         self.org_admin = baker.make(User, first_name="ad", last_name="min", email="ad@org.co")
         self.org_superuser = baker.make(User, first_name="superuser")
 
+        self.org = organization_recipe.make(name="org", owner=self.org_admin)
+
         self.org.add_user(self.org_member)
-        self.org.add_user(self.org_admin)
         self.org.add_user(self.org_superuser)
 
-        omb = OrgPermissionManager(self.org)
-        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
-        omb.set_role(self.org_superuser, OrgRoleEnum.SUPERUSER)
+        omb = OrgRoleManager(self.org)
+        omb.add_roles(self.org_superuser, CASEWORKER, ORG_SUPERUSER)
 
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))
@@ -363,7 +287,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(6):
+        with self.assertNumQueriesWithoutCache(5):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -397,7 +321,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(
@@ -470,3 +394,109 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         self.assertTrue(
             all(member["dateJoined"] is not None for member in response["data"]["organizationMembers"]["results"])
         )
+
+    def test_organization_members_org_type_filter(self) -> None:
+        """Filtering by orgType returns only users with templates from that org type."""
+        self.graphql_client.force_login(self.org_admin)
+
+        # Create a dedicated user with CASEWORKER (outreach) template
+        caseworker_user = baker.make(User, first_name="Caseworker")
+        self.org.add_user(caseworker_user)
+        OrgRoleManager(self.org).add_roles(caseworker_user, CASEWORKER)
+
+        query = """
+            query ($organizationId: String!, $orgType: OrgTypeEnum) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    orgType: $orgType
+                ) {
+                    totalCount
+                    results {
+                        id
+                        memberRole
+                        permissionTemplates
+                    }
+                }
+            }
+        """
+
+        # Filter by OUTREACH — should return org_admin (CASEWORKER + ORG_ADMIN),
+        # org_superuser (CASEWORKER + ORG_SUPERUSER), and the new caseworker_user.
+        # org_member (no templates) should be excluded.
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "orgType": "OUTREACH",
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        result_ids = {r["id"] for r in results}
+        self.assertIn(str(caseworker_user.pk), result_ids)
+        self.assertIn(str(self.org_admin.pk), result_ids)
+        self.assertIn(str(self.org_superuser.pk), result_ids)
+        self.assertNotIn(str(self.org_member.pk), result_ids)
+
+        # Without filter — all 4 members should be returned
+        response_all = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+            },
+        )
+        self.assertEqual(response_all["data"]["organizationMembers"]["totalCount"], 4)
+
+    def test_organization_members_permission_template_filter(self) -> None:
+        """Filtering by permissionTemplate returns only users with that specific template."""
+        self.graphql_client.force_login(self.org_admin)
+
+        # Create a dedicated user with CASEWORKER template
+        caseworker_user = baker.make(User, first_name="Caseworker")
+        self.org.add_user(caseworker_user)
+        OrgRoleManager(self.org).add_roles(caseworker_user, CASEWORKER)
+
+        query = """
+            query ($organizationId: String!, $permissionTemplate: PermissionTemplateEnum) {
+                organizationMembers(
+                    organizationId: $organizationId,
+                    permissionTemplate: $permissionTemplate
+                ) {
+                    totalCount
+                    results {
+                        id
+                        memberRole
+                        permissionTemplates
+                    }
+                }
+            }
+        """
+
+        # Filter by CASEWORKER — should return org_admin, org_superuser, and caseworker_user.
+        # org_member (no templates) should be excluded.
+        response = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "permissionTemplate": "CASEWORKER",
+            },
+        )
+
+        results = response["data"]["organizationMembers"]["results"]
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        result_ids = {r["id"] for r in results}
+        self.assertIn(str(caseworker_user.pk), result_ids)
+        self.assertIn(str(self.org_admin.pk), result_ids)
+        self.assertIn(str(self.org_superuser.pk), result_ids)
+        self.assertNotIn(str(self.org_member.pk), result_ids)
+
+        # Filter by SHELTER_OPERATOR — no one in this org has it
+        response_empty = self.execute_graphql(
+            query,
+            variables={
+                "organizationId": str(self.org.pk),
+                "permissionTemplate": "SHELTER_OPERATOR",
+            },
+        )
+        self.assertEqual(response_empty["data"]["organizationMembers"]["totalCount"], 0)

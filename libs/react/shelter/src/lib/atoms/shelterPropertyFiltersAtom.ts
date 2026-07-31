@@ -2,8 +2,9 @@ import { atomWithReset } from 'jotai/utils';
 import { TShelterPropertyFilters } from '../components/ShelterSearch';
 
 export const nullShelterPropertyFilters: TShelterPropertyFilters = {
-  openNow: false,
-  isAccessCenter: false,
+  openNow: undefined,
+  openNowScheduleTypes: undefined,
+  isAccessCenter: undefined,
   pets: [],
   demographics: [],
   specialSituationRestrictions: [],

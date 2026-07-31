@@ -1,6 +1,5 @@
 import { atom } from 'jotai';
 import { atomFamily } from 'jotai-family';
-import { SelahTeamEnum } from '../../../apollo';
 import { userPreferencesAtomFamily } from './userPreferencesAtomFamily';
 
 export const userPreferencesTeamAtomFamily = atomFamily((userId: string) => {
@@ -8,12 +7,12 @@ export const userPreferencesTeamAtomFamily = atomFamily((userId: string) => {
 
   return atom(
     (get) => {
-      return get(preferencesAtom).team;
+      return get(preferencesAtom).teamId;
     },
-    (_get, set, nextTeam: SelahTeamEnum | null) => {
+    (_get, set, nextTeamId: string | null) => {
       set(preferencesAtom, (prev) => ({
         ...prev,
-        team: nextTeam,
+        teamId: nextTeamId,
       }));
     }
   );

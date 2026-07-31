@@ -16,7 +16,7 @@ function propertyFiltersAffectQuery(
     return false;
   }
 
-  const { openNow, ...propertyOnly } = propertyFilters;
+  const { openNow, openNowScheduleTypes, ...propertyOnly } = propertyFilters;
 
   return Object.keys(propertyOnly).length > 0;
 }

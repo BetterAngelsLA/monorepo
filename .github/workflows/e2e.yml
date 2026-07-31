@@ -116,6 +116,9 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
+      - name: 📱 Install EAS CLI
+        run: npm install -g eas-cli@20.5.1
+
       - name: 🧪 Run E2E orchestration
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

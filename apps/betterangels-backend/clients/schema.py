@@ -4,18 +4,20 @@ from typing import Any, Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.enums import ErrorCodeEnum
-from clients.models import ClientContact, ClientProfile, ClientProfileDataImport, ClientProfileImportRecord, HmisProfile
-from clients.permissions import (
-    ClientContactPermissions,
-    ClientHouseholdMemberPermissions,
-    ClientProfileImportRecordPermissions,
-    ClientProfilePermissions,
-    HmisProfilePermissions,
-    SocialMediaProfilePermissions,
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+    SocialMediaProfile,
 )
+
 from clients.services import client_document, client_profile_photo
+from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
@@ -24,7 +26,6 @@ from common.graphql.types import (
     DeletedObjectType,
 )
 from common.models import Attachment, PhoneNumber
-from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated, assign_object_permissions
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
@@ -32,6 +33,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
+from notes.groups import CASEWORKER
 from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.scalars import JSON
 from strawberry.types import Info
@@ -325,7 +327,7 @@ def upsert_or_delete_client_related_object(
 @strawberry.type
 class Query:
     @strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfile.perms.VIEW])]
     )
     def client_profile(self, info: Info, pk: strawberry.ID) -> ClientProfileType:
         client_profile = ClientProfile.objects.prefetch_related(
@@ -342,16 +344,16 @@ class Query:
 
     client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.VIEW])],
     )
 
     client_document: ClientDocumentType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+        extensions=[HasRetvalPerm(Attachment.perms.VIEW)],
     )
 
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Attachment.perms.VIEW)]
     )
     def client_documents(self, info: Info, client_id: str) -> OffsetPaginated[ClientDocumentType]:
         content_type = ContentType.objects.get_for_model(ClientProfile)
@@ -362,47 +364,47 @@ class Query:
 
     client_contact: ClientContactType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+        extensions=[HasRetvalPerm(ClientContact.perms.VIEW)],
     )
 
     client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+        extensions=[HasRetvalPerm(ClientContact.perms.VIEW)],
     )
 
     client_household_member: ClientHouseholdMemberType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+        extensions=[HasRetvalPerm(ClientHouseholdMember.perms.VIEW)],
     )
 
     client_household_members: OffsetPaginated[ClientHouseholdMemberType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+        extensions=[HasRetvalPerm(ClientHouseholdMember.perms.VIEW)],
     )
 
     hmis_profile: HmisProfileType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+        extensions=[HasRetvalPerm(HmisProfile.perms.VIEW)],
     )
 
     hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+        extensions=[HasRetvalPerm(HmisProfile.perms.VIEW)],
     )
 
     social_media_profile: SocialMediaProfileType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
+        extensions=[HasRetvalPerm(SocialMediaProfile.perms.VIEW)],
     )
 
     social_media_profiles: OffsetPaginated[SocialMediaProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
+        extensions=[HasRetvalPerm(SocialMediaProfile.perms.VIEW)],
     )
 
     # Data Import
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.VIEW)]
     )
     def bulk_client_profile_import_records(
         self, info: Info, data: ClientProfileImportRecordsBulkInput
@@ -424,7 +426,7 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfile.perms.ADD])]
     )
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
@@ -452,7 +454,7 @@ class Mutation:
             return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])]
     )
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
@@ -461,7 +463,7 @@ class Mutation:
                 client_profile = filter_for_user(
                     ClientProfile.objects.all(),
                     user,
-                    [ClientProfilePermissions.CHANGE],
+                    [ClientProfile.perms.CHANGE],
                 ).get(id=data.id)
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
@@ -506,7 +508,7 @@ class Mutation:
                 client_profile = filter_for_user(
                     ClientProfile.objects.all(),
                     user,
-                    [ClientProfilePermissions.DELETE],
+                    [ClientProfile.perms.DELETE],
                 ).get(id=data.id)
 
                 client_profile_id = client_profile.pk
@@ -521,86 +523,86 @@ class Mutation:
     create_client_contact: ClientContactType = mutations.create(
         ClientContactInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+        extensions=[HasPerm(perms=ClientContact.perms.ADD)],
     )
 
     update_client_contact: ClientContactType = mutations.update(
         ClientContactInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=ClientContact.perms.CHANGE)],
     )
 
     delete_client_contact: ClientContactType = mutations.delete(
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
+        extensions=[HasRetvalPerm(perms=ClientContact.perms.DELETE)],
     )
 
     create_client_household_member: ClientHouseholdMemberType = mutations.create(
         ClientHouseholdMemberInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(perms=ClientHouseholdMemberPermissions.ADD)],
+        extensions=[HasPerm(perms=ClientHouseholdMember.perms.ADD)],
     )
 
     update_client_household_member: ClientHouseholdMemberType = mutations.update(
         ClientHouseholdMemberInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMember.perms.CHANGE)],
     )
 
     delete_client_household_member: ClientHouseholdMemberType = mutations.delete(
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.DELETE)],
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMember.perms.DELETE)],
     )
 
     create_hmis_profile: HmisProfileType = mutations.create(
         HmisProfileInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(perms=HmisProfilePermissions.ADD)],
+        extensions=[HasPerm(perms=HmisProfile.perms.ADD)],
     )
 
     update_hmis_profile: HmisProfileType = mutations.update(
         HmisProfileInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=HmisProfilePermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=HmisProfile.perms.CHANGE)],
     )
 
     delete_hmis_profile: HmisProfileType = mutations.delete(
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
+        extensions=[HasRetvalPerm(perms=HmisProfile.perms.DELETE)],
     )
 
     create_social_media_profile: SocialMediaProfileType = mutations.create(
         SocialMediaProfileInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(perms=SocialMediaProfilePermissions.ADD)],
+        extensions=[HasPerm(perms=SocialMediaProfile.perms.ADD)],
     )
 
     update_social_media_profile: SocialMediaProfileType = mutations.update(
         SocialMediaProfileInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=SocialMediaProfile.perms.CHANGE)],
     )
 
     delete_social_media_profile: SocialMediaProfileType = mutations.delete(
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.DELETE)],
+        extensions=[HasRetvalPerm(perms=SocialMediaProfile.perms.DELETE)],
     )
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
             client_profile = filter_for_user(
                 ClientProfile.objects.all(),
                 user,
-                [ClientProfilePermissions.CHANGE],
+                [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile)
 
-            permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user, template=CASEWORKER)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(
@@ -612,8 +614,8 @@ class Mutation:
             )
 
             permissions = [
-                AttachmentPermissions.DELETE,
-                AttachmentPermissions.CHANGE,
+                Attachment.perms.DELETE,
+                Attachment.perms.CHANGE,
             ]
             assign_object_permissions(permission_group.group, client_document, permissions)
 
@@ -623,13 +625,14 @@ class Mutation:
         DeleteDjangoObjectInput,
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+            HasRetvalPerm(perms=Attachment.perms.DELETE),
         ],
     )
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])],
+        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+        deprecation_reason="Use generateClientProfilePhotoUpload/resolveClientProfilePhotoUpload for uploads and deleteClientProfilePhoto for removal.",
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
         with transaction.atomic():
@@ -639,7 +642,7 @@ class Mutation:
                 client_profile = filter_for_user(
                     ClientProfile.objects.all(),
                     user,
-                    [ClientProfilePermissions.CHANGE],
+                    [ClientProfile.perms.CHANGE],
                 ).get(id=data.client_profile)
 
                 client_profile.profile_photo = data.photo
@@ -649,7 +652,30 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])],
+    )
+    def delete_client_profile_photo(self, info: Info, client_profile_id: strawberry.ID) -> ClientProfileType:
+        """Remove a client's profile photo."""
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfile.perms.CHANGE],
+                ).get(id=client_profile_id)
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            client_profile.profile_photo = None
+            client_profile.save(update_fields=["profile_photo"])
+
+            return cast(ClientProfileType, client_profile)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def generate_client_document_uploads(
         self,
         info: Info,
@@ -660,25 +686,22 @@ class Mutation:
         _ = filter_for_user(
             ClientProfile.objects.all(),
             user,
-            [ClientProfilePermissions.CHANGE],
+            [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        presigned_uploads = client_document.create_presigned_uploads(user=user, uploads=data.uploads)
+        uploads = [
+            UploadRequest(
+                ref_id=u.ref_id,
+                filename=u.filename,
+                mime_type=u.content_type,
+            )
+            for u in data.uploads
+        ]
+        presigned = client_document.create_presigned_uploads(user=user, uploads=uploads)
 
-        return AuthorizedPresignedS3UploadsType(
-            uploads=[
-                AuthorizedPresignedS3UploadType(
-                    ref_id=item["ref_id"],
-                    url=item["url"],
-                    fields=cast(JSON, item["fields"]),
-                    presigned_key=item["presigned_key"],
-                    upload_token=item["upload_token"],
-                )
-                for item in presigned_uploads["uploads"]
-            ]
-        )
+        return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(AttachmentPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Attachment.perms.ADD)])
     def resolve_client_document_uploads(
         self, info: Info, data: ResolveClientDocumentUploadsInput
     ) -> ClientDocumentUploadsType:
@@ -687,19 +710,29 @@ class Mutation:
         client_profile = filter_for_user(
             ClientProfile.objects.all(),
             user,
-            [ClientProfilePermissions.CHANGE],
+            [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
-        documents = client_document.resolve_upload(
+        documents = [
+            UploadConfirmation(
+                presigned_key=d.presigned_key,
+                upload_token=d.upload_token,
+                filename=d.filename,
+                mime_type=d.content_type,
+                namespace=d.namespace,
+            )
+            for d in data.documents
+        ]
+        attachments = client_document.resolve_upload(
             user=user,
             client_profile=client_profile,
-            documents=data.documents,
+            documents=documents,
         )
 
-        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], documents))
+        return ClientDocumentUploadsType(documents=cast(list[ClientDocumentType], attachments))
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfilePermissions.CHANGE])]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(perms=[ClientProfile.perms.CHANGE])]
     )
     def generate_client_profile_photo_upload(
         self,
@@ -711,24 +744,28 @@ class Mutation:
         _ = filter_for_user(
             ClientProfile.objects.all(),
             user,
-            [ClientProfilePermissions.CHANGE],
+            [ClientProfile.perms.CHANGE],
         ).get(id=data.client_profile_id)
 
         result = client_profile_photo.create_presigned_upload(
             user=user,
-            upload=data,
+            upload=UploadRequest(
+                ref_id=data.ref_id,
+                filename=data.filename,
+                mime_type=data.content_type,
+            ),
         )
 
         return AuthorizedPresignedS3UploadType(
-            ref_id=result["ref_id"],
-            url=result["url"],
-            fields=cast(JSON, result["fields"]),
-            presigned_key=result["presigned_key"],
-            upload_token=result["upload_token"],
+            ref_id=result.ref_id,
+            url=result.url,
+            fields=cast(JSON, result.fields),
+            presigned_key=result.presigned_key,
+            upload_token=result.upload_token,
         )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfile.perms.CHANGE])]
     )
     def resolve_client_profile_photo_upload(
         self,
@@ -741,7 +778,7 @@ class Mutation:
             client_profile = filter_for_user(
                 ClientProfile.objects.all(),
                 user,
-                [ClientProfilePermissions.CHANGE],
+                [ClientProfile.perms.CHANGE],
             ).get(id=data.client_profile_id)
 
             client_profile = client_profile_photo.resolve_upload(
@@ -755,7 +792,7 @@ class Mutation:
 
     # Data Import
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.ADD)]
     )
     def create_client_profile_data_import(
         self, info: Info, data: CreateProfileDataImportInput
@@ -775,7 +812,7 @@ class Mutation:
         )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)]
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ClientProfileImportRecord.perms.ADD)]
     )
     def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
         existing = ClientProfileImportRecord.objects.filter(
@@ -812,5 +849,5 @@ class Mutation:
     update_client_document: ClientDocumentType = mutations.update(
         UpdateClientDocumentInput,
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
+        extensions=[HasRetvalPerm(perms=Attachment.perms.CHANGE)],
     )

@@ -96,11 +96,21 @@ class TrackedEntryRequirement(Shelter.entry_requirements.through):  # type: igno
 
 
 @pghistory.track(
+    pghistory.InsertEvent("shelter.vaccination_requirement.add"),
+    pghistory.DeleteEvent("shelter.vaccination_requirement.remove"),
+    obj_field=None,
+)
+class TrackedVaccinationRequirement(Shelter.vaccination_requirement.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
     pghistory.InsertEvent("shelter.city.add"),
     pghistory.DeleteEvent("shelter.city.remove"),
     obj_field=None,
 )
-class TrackedCity(Shelter.cities.through):  # type: ignore[name-defined]
+class TrackedCity(Shelter.cities_served.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -110,7 +120,7 @@ class TrackedCity(Shelter.cities.through):  # type: ignore[name-defined]
     pghistory.DeleteEvent("shelter.spa.remove"),
     obj_field=None,
 )
-class TrackedSPA(Shelter.spa.through):  # type: ignore[name-defined]
+class TrackedSPA(Shelter.spas_served.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 

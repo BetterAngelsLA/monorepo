@@ -3,8 +3,7 @@ import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteType, toNoteFilter } from '../../apollo';
-import useUser from '../../hooks/user/useUser';
-import { TUser } from '../../providers/user/UserContext';
+import { TUser, useUser } from '../../providers/user/UserProvider';
 import {
   Header,
   HorizontalContainer,
@@ -81,7 +80,7 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
           key={filtersKey}
           selected={currentFilters}
           onChange={onFilterChange}
-          filters={['teams', 'authors', 'organizations']}
+          filters={['teamIds', 'authors', 'organizations']}
           style={styles.filters}
         />
 

@@ -32,7 +32,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   });
 
   const [updateClientProfile, { loading: isUpdating }] = useMutation(
-    UpdateClientProfileDocument
+    UpdateClientProfileDocument,
   );
 
   const methods = useForm<FormValues>({
@@ -68,7 +68,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
       const inputs = toUpdateClienProfileInputs(
         id,
         values,
-        methods.formState.dirtyFields
+        methods.formState.dirtyFields,
       );
 
       if (!inputs) {
@@ -131,11 +131,11 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
     const formData = extractClientFormData(
       validComponentName,
-      fetchProfileData.clientProfile
+      fetchProfileData.clientProfile,
     );
 
     methods.reset(formData);
-  }, [fetchProfileData, id]);
+  }, [fetchProfileData, id, methods, validComponentName]);
 
   if (isFetchingProfile) {
     return <LoadingView />;
@@ -173,7 +173,7 @@ function toDateOnlyString(date: Date): string {
 function toUpdateClienProfileInputs(
   id: string,
   values: FormValues,
-  dirtyFields?: Partial<Record<keyof FormValues, boolean>>
+  dirtyFields?: Partial<Record<keyof FormValues, boolean>>,
 ): UpdateClientProfileInput | null {
   if (!values || !id) {
     return null;
@@ -198,7 +198,7 @@ function toUpdateClienProfileInputs(
   ) {
     if (values.unhousedStartDate instanceof Date) {
       updatedInputs.unhousedStartDate = toDateOnlyString(
-        values.unhousedStartDate
+        values.unhousedStartDate,
       );
     } else if (values.unhousedStartDate === null) {
       updatedInputs.unhousedStartDate = null;

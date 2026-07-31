@@ -3,6 +3,12 @@ export type TPlaceLatLng = {
   longitude: number;
 };
 
+/** Diagonal corners of the recommended map viewport for a place (Places API). */
+export type TPlaceViewport = {
+  low: TPlaceLatLng;
+  high: TPlaceLatLng;
+};
+
 export type TPlacePrediction = {
   placeId: string;
   description: string;
@@ -20,5 +26,7 @@ export type TPlaceDetails = {
   displayName?: string;
   formattedAddress?: string;
   location?: TPlaceLatLng;
+  /** Recommended bounds for displaying this place on a map; may be absent. */
+  viewport?: TPlaceViewport;
   addressComponents?: TAddressComponent[];
 };

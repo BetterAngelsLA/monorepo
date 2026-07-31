@@ -1,7 +1,6 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
-import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteTitle({
@@ -21,11 +20,11 @@ export default function NoteTitle({
         {' @ '}
         {format(new Date(note?.interactedAt), 'hh:mm a')}
       </TextRegular>
-      {!!note?.team && (
+      {!!note?.currentTeam?.name && (
         <>
           <TextBold size="sm">Team</TextBold>
           <TextRegular selectable size="sm">
-            {enumDisplaySelahTeam[note.team]}
+            {note.currentTeam.name}
           </TextRegular>
         </>
       )}

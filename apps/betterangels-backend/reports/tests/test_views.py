@@ -4,15 +4,31 @@ from datetime import datetime
 
 import pytest
 import time_machine
-from accounts.models import User
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import ignore_warnings
 from django.utils import timezone
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import Organization
+from reports.models import ScheduledReport
 from rest_framework.test import APIClient
+from teams.models import Team
+
+
+def grant_view_reports(user: User, org: Organization) -> None:
+    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    ct = ContentType.objects.get_for_model(ScheduledReport)
+    perm, _ = Permission.objects.get_or_create(
+        codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
+    )
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
+    template.permissions.add(perm)
+    pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
+    pg.group.permissions.add(perm)
+    user.groups.add(pg.group)
 
 
 @pytest.fixture
@@ -32,7 +48,7 @@ def user_with_access(org: Organization) -> User:
     user.set_password("testpass")
     user.save()
     org.add_user(user)
-    assign_perm("view_reports", user, org)
+    grant_view_reports(user, org)
     return user
 
 
@@ -87,7 +103,7 @@ class TestExportInteractionDataView:
             _quantity=3,
         )
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?month=1&year=2025")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=1&year=2025")
         assert response.status_code == 200
         assert response["Content-Type"] == "text/csv"
         assert "attachment" in response["Content-Disposition"]
@@ -118,7 +134,7 @@ class TestExportInteractionDataView:
             interacted_at=timezone.make_aware(datetime(2025, 2, 5, 12, 0, 0)),
         )
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
         assert response.status_code == 200
         assert response["Content-Type"] == "text/csv"
         assert "interaction_data_20250101_20250131.csv" in response["Content-Disposition"]
@@ -144,62 +160,68 @@ class TestExportInteractionDataView:
             interacted_at=timezone.make_aware(datetime(2025, 3, 15, 12, 0, 0)),
         )
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-03-31")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-03-31")
         assert response.status_code == 200
         content = response.content.decode("utf-8")
         lines = [line for line in content.strip().split("\n") if line.strip()]
         assert len(lines) == 4  # header + 3 notes
 
-    def test_invalid_date_format_returns_400(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_invalid_date_format_returns_400(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
         """Invalid date format returns 400."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?start_date=01-01-2025&end_date=01-31-2025")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=01-01-2025&end_date=01-31-2025")
         assert response.status_code == 400
 
-    def test_start_after_end_returns_400(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_start_after_end_returns_400(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
         """start_date after end_date returns 400."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?start_date=2025-02-01&end_date=2025-01-01")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-02-01&end_date=2025-01-01")
         assert response.status_code == 400
 
     def test_default_month_is_previous(self, api_client: APIClient, user_with_access: User, org: Organization) -> None:
         """When no params given, defaults to previous month."""
         with time_machine.travel("2025-03-15 10:00:00", tick=False):
             api_client.force_authenticate(user=user_with_access)
-            response = api_client.get("/reports/export/")
+            response = api_client.get(f"/reports/export/?org_id={org.id}")
             assert response.status_code == 200
 
-    def test_invalid_month_returns_400(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_invalid_month_returns_400(self, api_client: APIClient, user_with_access: User, org: Organization) -> None:
         """Invalid month parameter returns 400."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?month=13&year=2025")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=13&year=2025")
         assert response.status_code == 400
 
-    def test_invalid_year_returns_400(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_invalid_year_returns_400(self, api_client: APIClient, user_with_access: User, org: Organization) -> None:
         """Invalid year parameter returns 400."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?month=1&year=1999")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=1&year=1999")
         assert response.status_code == 400
 
-    def test_non_numeric_params_return_400(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_non_numeric_params_return_400(
+        self, api_client: APIClient, user_with_access: User, org: Organization
+    ) -> None:
         """Non-numeric params return 400."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?month=abc&year=2025")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=abc&year=2025")
         assert response.status_code == 400
 
     def test_empty_month_returns_csv(self, api_client: APIClient, user_with_access: User, org: Organization) -> None:
         """A month with no notes returns a CSV with just the header."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?month=6&year=2024")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=6&year=2024")
         assert response.status_code == 200
         content = response.content.decode("utf-8")
         lines = [line for line in content.strip().split("\n") if line.strip()]
         assert len(lines) == 1  # header only
 
-    def test_post_method_not_allowed(self, api_client: APIClient, user_with_access: User) -> None:
+    def test_post_method_not_allowed(self, api_client: APIClient, user_with_access: User, org: Organization) -> None:
         """POST method should return 405."""
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.post("/reports/export/")
+        response = api_client.post(f"/reports/export/?org_id={org.id}")
         assert response.status_code == 405
 
     def test_notes_filtered_by_organization(
@@ -222,7 +244,7 @@ class TestExportInteractionDataView:
         )
 
         api_client.force_authenticate(user=user_with_access)
-        response = api_client.get("/reports/export/?start_date=2025-01-01&end_date=2025-01-31")
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
         assert response.status_code == 200
         content = response.content.decode("utf-8")
         lines = [line for line in content.strip().split("\n") if line.strip()]
@@ -236,7 +258,7 @@ class TestExportInteractionDataView:
         user.save()
         org.add_user(user)
         other_org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         # No permission on other_org
 
         api_client.force_authenticate(user=user)
@@ -251,7 +273,7 @@ class TestExportInteractionDataView:
         user.save()
         org.add_user(user)
         other_org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         # No permission on other_org
 
         api_client.force_authenticate(user=user)
@@ -306,10 +328,12 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        assign_perm("view_reports", user, org)
+        grant_view_reports(user, org)
         return org, user
 
     def test_unauthenticated_returns_error(self) -> None:
+        org = baker.make(Organization, name="Test Org")
+        self._set_active_org(org)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
             {
@@ -325,6 +349,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         user.set_password("testpass")
         user.save()
         org.add_user(user)
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
@@ -337,12 +362,14 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_returns_correct_data(self) -> None:
         org, user = self._setup_org_user_with_access()
+        team_echo = baker.make(Team, slug="echo_park_outreach", name="Echo Park Outreach", organization=org)
+        team_hollywood = baker.make(Team, slug="hollywood_outreach", name="Hollywood Outreach", organization=org)
         baker.make(
             Note,
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 10, 12, 0, 0)),
             purpose="Outreach",
-            team="echo_park_outreach",
+            team=team_echo,
             _quantity=3,
         )
         baker.make(
@@ -350,9 +377,10 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 20, 12, 0, 0)),
             purpose="Follow-up",
-            team="hollywood_outreach",
+            team=team_hollywood,
             _quantity=2,
         )
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
@@ -376,6 +404,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
@@ -407,6 +436,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
             _quantity=5,
         )
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(
             REPORT_SUMMARY_QUERY,
@@ -421,6 +451,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_defaults_when_no_dates(self) -> None:
         org, user = self._setup_org_user_with_access()
+        self._set_active_org(org)
         self.graphql_client.force_login(user)
         response = self.execute_graphql(REPORT_SUMMARY_QUERY, {})
         self.assertIsNone(response.get("errors"))
@@ -428,3 +459,27 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsNotNone(data["startDate"])
         self.assertIsNotNone(data["endDate"])
         self.assertIsInstance(data["totalNotes"], int)
+
+    def test_user_targets_org_without_view_reports_gets_error(self) -> None:
+        """User belongs to two orgs but only has view_reports on one; HasOrgPerm rejects the other."""
+        org_with_access = baker.make(Organization, name="Authorized Org")
+        org_without_access = baker.make(Organization, name="Unauthorized Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org_with_access.add_user(user)
+        org_without_access.add_user(user)
+        grant_view_reports(user, org_with_access)
+        # No view_reports on org_without_access
+
+        self._set_active_org(org_without_access)
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-31",
+            },
+        )
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)

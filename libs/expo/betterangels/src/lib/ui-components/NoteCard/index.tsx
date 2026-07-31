@@ -48,7 +48,7 @@ export default function NoteCard(props: INoteCardProps) {
       <NoteCardByline
         createdBy={note.createdBy}
         organization={note.organization}
-        team={note.team}
+        currentTeam={note.currentTeam}
       />
 
       {(!!note.providedServices.length || !!note.requestedServices.length) && (

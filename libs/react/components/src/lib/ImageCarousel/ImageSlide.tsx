@@ -5,6 +5,7 @@ type TProps = {
   className?: string;
   altText?: string;
   imgClassName?: string;
+  onClick?: () => void;
 };
 
 export function ImageSlide(props: TProps) {
@@ -13,14 +14,21 @@ export function ImageSlide(props: TProps) {
     className,
     imgClassName,
     altText = 'carousel image',
+    onClick,
   } = props;
 
-  const parentCss = ['flex-none', 'w-full', 'h-full', className];
+  const parentCss = [
+    'flex-none',
+    'w-full',
+    'h-full',
+    onClick && 'cursor-pointer',
+    className,
+  ];
 
   const imageCss = ['block', 'w-full', 'h-full', 'object-cover', imgClassName];
 
   return (
-    <div className={mergeCss(parentCss)}>
+    <div className={mergeCss(parentCss)} onClick={onClick}>
       <img
         src={imageSrc}
         className={mergeCss(imageCss)}

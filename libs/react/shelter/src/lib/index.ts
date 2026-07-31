@@ -5,6 +5,5 @@ export * from './constants';
 export * from './featureControls';
 export * from './layout';
 export * from './pages';
-export * from './places';
 export * from './providers';
 export * from './static';

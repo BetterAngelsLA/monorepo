@@ -1,0 +1,244 @@
+import { isMutationSuccess } from '@monorepo/ba-platform';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
+import { toError } from '@monorepo/react/shared';
+import { Plus } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  useCloneRoom,
+  useDeleteRooms,
+  useRooms,
+  useUpdateRoom,
+} from '../../../../hooks';
+import { cloneRoomMeta } from '../../../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
+import { deleteRoomsMeta } from '../../../../hooks/useDeleteRooms/__generated__/useDeleteRooms_meta.generated';
+import { updateRoomMeta } from '../../../../hooks/useUpdateRoom/__generated__/useUpdateRoom_meta.generated';
+import {
+  shelterCreateResourceRoute,
+  shelterEditResourceRoute,
+} from '../../../../routing';
+import { Button } from '../../../base-ui/buttons';
+import { ConfirmationModal } from '../../../base-ui/modal/ConfirmationModal';
+import { useToast } from '../../../base-ui/toast';
+import { RoomTable, type Room } from './RoomTable';
+
+export function Rooms({ shelterId }: { shelterId: string }) {
+  const navigate = useNavigate();
+
+  const { rooms: roomsData, loading } = useRooms(shelterId);
+
+  const rooms: Room[] = roomsData.map((room) => ({
+    id: room.id,
+    name: room.name,
+    status: room.status ?? RoomStatusChoices.Available,
+  }));
+
+  const { cloneRoom } = useCloneRoom({ shelterId });
+  const { deleteRooms } = useDeleteRooms({ shelterId });
+  const { updateRoom } = useUpdateRoom();
+
+  const { showToast } = useToast();
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    roomIds: string[];
+    roomName?: string;
+  }>({ isOpen: false, roomIds: [], roomName: '' });
+
+  const closeDeleteConfirmation = useCallback(() => {
+    setDeleteConfirmation({ isOpen: false, roomIds: [], roomName: '' });
+  }, []);
+
+  const deleteConfirmationTitle =
+    deleteConfirmation.roomIds.length === 1
+      ? `Are you sure you want to delete ${deleteConfirmation.roomName}?`
+      : `Are you sure you want to delete the ${deleteConfirmation.roomIds.length} selected rooms?`;
+
+  const handleClone = useCallback(
+    async (roomId: string) => {
+      try {
+        const response = await cloneRoom({ variables: { id: roomId } });
+
+        if (
+          !isMutationSuccess(
+            response.data?.[cloneRoomMeta.operationKey],
+            cloneRoomMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`[cloneRoom error]: ${error.message}`);
+
+        showToast({
+          status: 'error',
+          title: 'Unable to clone room. Please try again.',
+          persistent: true,
+        });
+      }
+    },
+    [cloneRoom, showToast],
+  );
+
+  const handleEdit = useCallback(
+    (roomId: string) => {
+      navigate(shelterEditResourceRoute(shelterId, 'room', roomId));
+    },
+    [navigate, shelterId],
+  );
+  const handleDeleteRequest = useCallback(
+    (roomIds: string[], roomName?: string) => {
+      setDeleteConfirmation({ isOpen: true, roomIds, roomName });
+    },
+    [],
+  );
+
+  const handleDelete = useCallback(
+    async (ids: string[]) => {
+      try {
+        const response = await deleteRooms({ variables: { data: { ids } } });
+
+        if (
+          !isMutationSuccess(
+            response.data?.[deleteRoomsMeta.operationKey],
+            deleteRoomsMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`[deleteRooms error]: ${error.message}`);
+
+        showToast({
+          status: 'error',
+          title: `Unable to delete room${ids.length > 1 ? 's' : ''}. Please try again.`,
+          persistent: true,
+        });
+      }
+    },
+    [deleteRooms, showToast],
+  );
+
+  const handleMarkReady = useCallback(
+    async (roomId: string) => {
+      try {
+        const response = await updateRoom({
+          variables: {
+            id: roomId,
+            data: { lastCleaned: new Date().toISOString() },
+          },
+        });
+
+        if (
+          !isMutationSuccess(
+            response.data?.[updateRoomMeta.operationKey],
+            updateRoomMeta.successTypename,
+          )
+        ) {
+          throw new Error('Operation failed');
+        }
+      } catch (err) {
+        const error = toError(err);
+        console.error(`[updateRoom error]: ${error.message}`);
+
+        showToast({
+          status: 'error',
+          title: 'Unable to update room. Please try again.',
+          persistent: true,
+        });
+      }
+    },
+    [updateRoom, showToast],
+  );
+
+  const [readyRoomId, setReadyRoomId] = useState<string | null>(null);
+
+  const closeReadyConfirmation = useCallback(() => {
+    setReadyRoomId(null);
+  }, []);
+
+  const handleMarkReadyRequest = useCallback((roomId: string) => {
+    setReadyRoomId(roomId);
+  }, []);
+
+  const handleReserve = useCallback(
+    (roomId: string) => {
+      navigate(shelterCreateResourceRoute(shelterId, 'reservation'), {
+        state: { roomId },
+      });
+    },
+    [navigate, shelterId],
+  );
+
+  return (
+    <>
+      <div>
+        <RoomTable
+          rooms={rooms}
+          onEdit={handleEdit}
+          onClone={handleClone}
+          onDeleteRooms={(roomIds, roomName) =>
+            handleDeleteRequest(roomIds, roomName)
+          }
+          onMarkReady={handleMarkReadyRequest}
+          onReserve={handleReserve}
+          loading={loading}
+        />
+      </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        variant="danger"
+        title={deleteConfirmationTitle}
+        description="This action cannot be undone."
+        primaryAction={{
+          label: 'Delete',
+          onClick: async () => {
+            await handleDelete(deleteConfirmation.roomIds);
+            closeDeleteConfirmation();
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: closeDeleteConfirmation,
+        }}
+      />
+
+      {readyRoomId && (
+        <ConfirmationModal
+          isOpen={true}
+          onClose={closeReadyConfirmation}
+          variant="success"
+          title="Mark room as ready?"
+          description="This will mark the room as cleaned and ready for use."
+          primaryAction={{
+            label: 'Mark Ready',
+            onClick: async () => {
+              await handleMarkReady(readyRoomId);
+              closeReadyConfirmation();
+            },
+          }}
+          secondaryAction={{
+            label: 'Cancel',
+            onClick: closeReadyConfirmation,
+          }}
+        />
+      )}
+
+      <div className="fixed bottom-6 right-6 text-sm z-20 ">
+        <Button
+          leftIcon={<Plus />}
+          rightIcon={false}
+          variant="floating"
+          onClick={() =>
+            navigate(shelterCreateResourceRoute(shelterId, 'room'))
+          }
+        >
+          Create Room
+        </Button>
+      </div>
+    </>
+  );
+}

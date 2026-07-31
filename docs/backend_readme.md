@@ -30,7 +30,7 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
 1. Install dependencies (if you just built the container, this step might already be done)
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 1. Add/Update `.env.local` file in the `apps/betterangels-backend` project to manage `local-only` environment variables.
@@ -62,10 +62,10 @@ Once started, you can access the Django development server at
 
 #### Starting a Django Shell
 
-1. Activate a poetry shell
+1. Activate a uv shell
 
    ```bash
-   poetry shell
+   uv shell
    ```
 
 1. Navigate to `betterangels-backend` app directory
@@ -98,7 +98,7 @@ yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_
 
 #### Debugging Tests
 
-To run tests with breakpoints via the terminal, you'll need to use a `poetry shell` as described in the section above, then:
+To run tests with breakpoints via the terminal, you'll need to use a `uv shell` as described in the section above, then:
 
 1. Add any breakpoint to your code/tests:
 
@@ -108,10 +108,10 @@ To run tests with breakpoints via the terminal, you'll need to use a `poetry she
    from IPython import embed; embed()
    ```
 
-1. Run tests using `python manage.py test`. Example:
+1. Run tests using `uv run pytest`. Example:
 
    ```bash
-   python manage.py test accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
+   uv run pytest accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
    ```
 
 To use VSCode's debugger:
@@ -303,7 +303,7 @@ randomized multi-select values, 1–10 photos, varied schedules, contacts, etc.)
 
 ```bash
 cd apps/betterangels-backend/shelters/scripts/
-poetry run python seed_shelters.py 10
+uv run python seed_shelters.py 10
 ```
 
 ##### Reseeding from scratch
@@ -312,12 +312,18 @@ To clear all existing shelters and reseed:
 
 ```bash
 cd apps/betterangels-backend/shelters/scripts/
-poetry run python seed_shelters.py 20 --clear
+uv run python seed_shelters.py 20 --clear
 ```
 
 The `--clear` flag deletes every existing `Shelter` (and cascaded relations)
 before creating new ones. This is useful when the schema changes or you want
 a clean slate without resetting the full database.
+
+---
+
+### Additional Documentation
+
+- **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
 
 ### Troubleshooting
 

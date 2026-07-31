@@ -3,15 +3,17 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
+from common.team_shim import resolve_team_id_from_input
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
+from notes.groups import CASEWORKER
 from notes.models import Note
 from strawberry import asdict
 from strawberry.types import Info
@@ -20,7 +22,6 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
-from tasks.permissions import TaskPermissions
 from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
@@ -29,11 +30,11 @@ from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
 @strawberry.type
 class Query:
     task: TaskType = strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
     )
 
     @strawberry_django.offset_paginated(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
     )
     def tasks(self, info: Info, ordering: Optional[list[TaskOrder]] = None) -> OffsetPaginated[TaskType]:
         request = info.context["request"]
@@ -45,12 +46,16 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(TaskPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = get_user_permission_group(current_user)
+        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
 
         task_data = asdict(data)
+
+        # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
+        task_data["team_id"] = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+        task_data.pop("team", None)
 
         # Resolve FK references
         note = None
@@ -83,13 +88,20 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[TaskPermissions.CHANGE])],
+        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
-        clean = asdict(data)
 
-        task = qs.get(pk=data.id)
+        # Resolve team before asdict.
+        task: Task = qs.get(pk=data.id)
+        team_id = resolve_team_id_from_input(data, organization_id=task.organization_id or 0)
+
+        clean = asdict(data)
+        clean.pop("team", None)
+        clean.pop("team_id", None)
+        clean["team_id"] = team_id
+
         task = task_update(task=task, data=clean)
 
         return cast(TaskType, task)
@@ -102,7 +114,7 @@ class Mutation:
             task = filter_for_user(
                 Task.objects.all(),
                 current_user,
-                [TaskPermissions.DELETE],
+                [Task.perms.DELETE],
             ).get(id=data.id)
         except Task.DoesNotExist:
             raise PermissionDenied("You do not have permission to delete this task.")

@@ -2,8 +2,8 @@ from typing import Any, Dict, Iterable, cast
 
 import strawberry
 import strawberry_django
+from accounts.selectors import resolve_permission_group
 from accounts.types import CurrentUserType
-from accounts.utils import get_user_permission_group
 from betterangels_backend import settings
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
@@ -20,6 +20,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.groups import CASEWORKER
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from notes.utils.note_utils import get_service_args
@@ -379,7 +380,7 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
+            permission_group = resolve_permission_group(user, template=CASEWORKER)
 
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))

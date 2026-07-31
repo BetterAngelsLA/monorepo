@@ -28,7 +28,7 @@ export default function TasksHmis(props: TasksHmisProps) {
           summary: taskToEdit.summary,
           description: taskToEdit.description || '',
           status: taskToEdit.status,
-          team: taskToEdit.team,
+          teamId: taskToEdit.teamId,
           markedForDeletion: taskToEdit.markedForDeletion,
         } as DraftTask)
       : undefined;

@@ -80,10 +80,10 @@ export function ClientTasksViewHmis(props: TProps) {
       const result = await createTask({
         variables: {
           data: {
-            summary: task.summary!,
+            summary: task.summary ?? '',
             description: task.description,
             status: task.status,
-            team: task.team || null,
+            teamId: task.teamId ?? undefined,
             hmisClientProfile: client.id,
           },
         },
@@ -178,7 +178,7 @@ export function ClientTasksViewHmis(props: TProps) {
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
-        filters={['teams', 'taskStatus', 'authors', 'organizations']}
+        filters={['teamIds', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList

@@ -1,0 +1,19 @@
+{
+  "name": "ba-platform",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-platform/src",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:ba-platform"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {
+    "generate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/ba-platform",
+        "command": "graphql-codegen --config codegen.ts"
+      }
+    }
+  }
+}

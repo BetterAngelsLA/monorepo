@@ -80,7 +80,7 @@ class NoteResource(resources.ModelResource):
         return str(note.location) if note.location else None
 
     def dehydrate_team(self, note: Note) -> Optional[str]:
-        return note.get_team_display()
+        return note.team.name if note.team else None
 
     def dehydrate_notes(self, note: Note) -> Optional[str]:
         return note.public_details or None

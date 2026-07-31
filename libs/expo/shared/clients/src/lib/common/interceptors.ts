@@ -2,10 +2,8 @@
  * Fetch interceptor system for composable request/response handling
  */
 
+import type { FetchInterceptor } from '@monorepo/fetch';
 import {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-  CSRF_LOGIN_PATH,
   HMIS_AUTH_COOKIE_NAME,
   HMIS_TOKEN_HEADER_NAME,
 } from '@monorepo/expo/shared/utils';
@@ -16,16 +14,9 @@ import {
   HEADER_NAMES,
   HEADER_VALUES,
   MODERN_BROWSER_USER_AGENT,
-  MUTATING_METHODS,
 } from './constants';
 
 export type HeadersObject = Record<string, string>;
-
-export type FetchInterceptor = (
-  input: RequestInfo | URL,
-  init: RequestInit,
-  next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
-) => Promise<Response>;
 
 export const HMIS_API_URL_STORAGE_KEY = 'hmis_api_url';
 export const HMIS_AUTH_DOMAIN_STORAGE_KEY = 'hmis_auth_domain';
@@ -112,25 +103,6 @@ export const loadFileHeadersHmis =
     }
   };
 
-/**
- * Composes multiple interceptors into a single fetch function
- */
-export const composeFetchInterceptors = (
-  ...interceptors: FetchInterceptor[]
-): ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) => {
-  return (input: RequestInfo | URL, init: RequestInit = {}) => {
-    // Build the chain from right to left, ending with actual fetch
-    const chain = interceptors.reduceRight<
-      (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
-    >(
-      (next, interceptor) => (input, init) => interceptor(input, init, next),
-      (input: RequestInfo | URL, init: RequestInit) => fetch(input, init)
-    );
-
-    return chain(input, init);
-  };
-};
-
 // ============================================================================
 // INTERCEPTORS
 // ============================================================================
@@ -150,13 +122,14 @@ export const userAgentInterceptor: FetchInterceptor = async (
 };
 
 /**
- * Adds Referer header
+ * Adds Referer header.  When ``referer`` is omitted the header is not sent
+ * (the browser / runtime default applies).
  */
-export const createRefererInterceptor = (referer: string): FetchInterceptor => {
+export const createRefererInterceptor = (referer?: string): FetchInterceptor => {
   return async (input, init, next) => {
+    if (referer === undefined) return next(input, init);
     const headers = new Headers(init.headers);
     headers.set(HEADER_NAMES.REFERER, referer);
-
     return next(input, { ...init, headers });
   };
 };
@@ -184,77 +157,22 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
 };
 
 /**
- * Adds backend authentication headers (CSRF token, HMIS token)
- * Cookies are automatically handled by nitro-cookies
+ * Injects the HMIS token header for authenticated HMIS API requests.
+ *
+ * CSRF header injection is handled separately by the ba-platform
+ * ``createCsrfInterceptor`` (proactive).
  */
-export const backendAuthInterceptor: FetchInterceptor = async (
-  input,
+export const hmisAuthInterceptor: FetchInterceptor = async (
+  _input,
   init,
   next
 ) => {
-  const headers = new Headers(init.headers);
-  const url = getUrl(input);
-
-  // Add CSRF token header
-  const cookiesForUrl = await CookieManager.get(url);
-  const csrfCookie = cookiesForUrl[CSRF_COOKIE_NAME];
-  if (csrfCookie?.value) {
-    headers.set(CSRF_HEADER_NAME, csrfCookie.value);
-  }
-
-  // Add HMIS token header (retrieved from stored HMIS domain)
   const tokenHmis = await getAuthTokenHmis();
-  if (tokenHmis) {
-    headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
-  }
+  if (!tokenHmis) return next(_input, init);
 
-  return next(input, { ...init, headers });
-};
-
-/**
- * Helper to fetch fresh CSRF token from Django
- */
-const fetchFreshCsrf = async (referer: string): Promise<void> => {
-  const csrfResponse = await fetch(
-    `${referer}${CSRF_LOGIN_PATH}?t=${Date.now()}`,
-    {
-      headers: {
-        [HEADER_NAMES.ACCEPT]: HEADER_VALUES.ACCEPT_HTML,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      },
-      credentials: 'include',
-      cache: 'no-store',
-    }
-  );
-
-  const setCookie = csrfResponse.headers.get('set-cookie');
-  if (setCookie) {
-    await CookieManager.setFromResponse(referer, setCookie);
-  }
-};
-
-/**
- * CSRF interceptor that handles Django CSRF protection
- * Uses retry strategy: attempt request, if 403 fetch CSRF and retry once
- */
-export const createCsrfInterceptor = (referer: string): FetchInterceptor => {
-  return async (input, init, next) => {
-    let response = await next(input, init);
-
-    if (response.status === 403) {
-      const method = (init.method || 'GET').toUpperCase();
-      const isMutating = MUTATING_METHODS.includes(
-        method as (typeof MUTATING_METHODS)[number]
-      );
-
-      if (isMutating) {
-        await fetchFreshCsrf(referer);
-        response = await next(input, init);
-      }
-    }
-
-    return response;
-  };
+  const headers = new Headers(init.headers);
+  headers.set(HMIS_TOKEN_HEADER_NAME, tokenHmis);
+  return next(_input, { ...init, headers });
 };
 
 /**

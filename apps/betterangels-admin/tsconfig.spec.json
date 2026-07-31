@@ -3,17 +3,17 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
-    "moduleResolution": "node10",
+    "moduleResolution": "bundler",
+    "composite": true,
     "jsx": "react-jsx",
     "types": [
-      "jest",
       "node",
+      "vitest/globals",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts"
     ]
   },
   "include": [
-    "jest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.tsx",

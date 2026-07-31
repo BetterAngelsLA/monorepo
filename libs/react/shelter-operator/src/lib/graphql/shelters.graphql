@@ -5,7 +5,7 @@ query ViewSheltersByOrganization(
   $limit: Int
   $properties: ShelterPropertyInput
 ) {
-  adminShelters(
+  operatorShelters(
     filters: {
       organizations: [$organizationId]
       name: $name
@@ -21,12 +21,15 @@ query ViewSheltersByOrganization(
       location {
         place
       }
+      status
       totalBeds
-      bedsByStatus {
+      bedCounts {
         available
+        inTurnaround
         occupied
-        reserved
         outOfService
+        reserved
+        total
       }
       demographics {
         name
@@ -37,16 +40,23 @@ query ViewSheltersByOrganization(
       shelterTypes {
         name
       }
+      city {
+        name
+      }
       spa {
+        id
         name
       }
     }
   }
 }
 
-query GetShelterName($id: ID!) {
-  shelter(pk: $id) {
+query GetShelterSummary($id: ID!) {
+  operatorShelter(pk: $id) {
     id
     name
+    location {
+      place
+    }
   }
 }

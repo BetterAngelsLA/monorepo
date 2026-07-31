@@ -48,7 +48,7 @@ export function TaskCard(props: TaskCardProps) {
         <TaskCardCreatedBy
           organization={task.organization}
           createdBy={task.createdBy}
-          team={task.team}
+          currentTeam={task.currentTeam}
         />
         <TaskCardBody
           description={task.description}

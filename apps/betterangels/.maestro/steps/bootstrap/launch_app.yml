@@ -1,0 +1,98 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Launches the app via Expo deep link.
+# Handles the "Reload" overlay that can appear on first launch
+# by killing and re-opening the app (up to 10 attempts).
+#
+# Note on the Expo dev-client onboarding screen (with a "Continue" button):
+# This screen normally appears once on the very first app launch after
+# install. The `disableOnboarding=1` query param in MAESTRO_DEEPLINK (set in
+# setup-maestro.sh) suppresses it so tests can run on a fresh install
+# without manual intervention. If you need to see the onboarding flow
+# locally, drop `disableOnboarding=1` from the deep link AND reinstall the
+# app (the onboarding "seen" flag is stored in app data):
+#   xcrun simctl uninstall booted la.betterangels.dev.app   # iOS
+#   adb shell pm clear la.betterangels.dev.app              # Android
+
+- openLink: ${MAESTRO_DEEPLINK}
+
+# Skip the loop entirely if already authorized (e.g. subsequent tests)
+- runFlow:
+    when:
+      visible:
+        id: authorized-root
+    commands:
+      - evalScript: ${output.counter = 999}
+
+# Loop until landing-screen is visible, or max 10 attempts.
+# Each iteration handles at most one transient/recovery state (onboarding,
+# dev menu overlay, RN error, iOS install prompt, dev launcher home),
+# then the next iteration handles whatever appears next.
+- evalScript: ${output.counter = output.counter || 0}
+- repeat:
+    while:
+      true: ${output.counter < 10}
+    commands:
+      # Expo dev-client onboarding screen ("Continue" button). Normally
+      # suppressed by `disableOnboarding=1` in MAESTRO_DEEPLINK, but appears
+      # on first launch after install if the deep link doesn't bypass it
+      # (or if the EXDevMenuIsOnboardingFinished flag was cleared).
+      # Tapping Continue dismisses onboarding and typically lands on the
+      # dev menu overlay — handled by the next iteration's "Go Home" block.
+      - runFlow:
+          when:
+            visible: 'Continue'
+          commands:
+            - tapOn: 'Continue'
+
+      # Dismiss the dev launcher screen if it's showing a recently opened app
+      - runFlow:
+          when:
+            visible: 'BetterAngels (Dev)'
+          commands:
+            - tapOn:
+                text: 'Close'
+                optional: true
+
+      # EDGE CASE: "Reload" button visible without "Go Home" or "Continue".
+      # (Only fires when the dev menu overlay block above didn't match —
+      # Maestro's `when:` doesn't support negative conditions, so we rely
+      # on block ordering to disambiguate.)
+      # This is NOT the dev menu overlay (caught above) — it's a hard error
+      # screen, typically one of:
+      #   - RN LogBox / RedBox: JS error during bundle init or render.
+      #   - "Could not connect to development server": Metro unreachable.
+      #   - expo-updates fallback: a stored update failed to load.
+      # In all cases the JS runtime is in a bad state, so tapping Reload
+      # would likely loop into the same error. Kill the app and re-open via
+      # the deep link instead — cold restart with a fresh bundle fetch.
+      - runFlow:
+          when:
+            visible: 'Reload'
+          commands:
+            - takeScreenshot: error-restart-kill
+            - killApp
+            - openLink: ${MAESTRO_DEEPLINK}
+
+      - runFlow:
+          when:
+            platform: ios
+            visible: 'Open'
+          commands:
+            - tapOn: 'Open'
+
+      # if see `landing-screen: break out of loop
+      - runFlow:
+          when:
+            visible:
+              id: landing-screen
+          commands:
+            - evalScript: ${output.counter = 999}
+
+      # otherwise increment counter
+      - runFlow:
+          when:
+            notVisible:
+              id: landing-screen
+          commands:
+            - evalScript: ${output.counter = output.counter + 1}

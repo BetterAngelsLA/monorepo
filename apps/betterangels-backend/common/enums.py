@@ -13,6 +13,12 @@ class AttachmentType(models.TextChoices):
 
 @strawberry.enum
 class SelahTeamEnum(models.TextChoices):
+    """@deprecated — Replaced by the dynamic ``teams.Team`` model.
+
+    Kept for GraphQL backward compatibility.  New code should use
+    ``TeamType`` / ``teamId`` fields and the ``teams`` query.
+    """
+
     BOWTIE_RIVERSIDE_OUTREACH = "bowtie_riverside_outreach", _("Bowtie & Riverside Outreach")
     ECHO_PARK_ON_SITE = "echo_park_on_site", _("Echo Park On-site")
     ECHO_PARK_OUTREACH = "echo_park_outreach", _("Echo Park Outreach")
@@ -33,6 +39,7 @@ class SelahTeamEnum(models.TextChoices):
 @strawberry.enum
 class ImagePresetEnum(models.TextChoices):
     ORIGINAL = "original", _("Original")
+    SHELTER_HERO = "shelter_hero", _("Shelter Hero")
     SM = "sm", _("Small")
     MD = "md", _("Medium")
     LG = "lg", _("Large")

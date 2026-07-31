@@ -10,4 +10,6 @@ export type {
   TPlaceDetails,
   TPlaceLatLng,
   TPlacePrediction,
+  TPlaceViewport,
 } from './lib/types';
+export { placeViewportToEdges } from './lib/viewport';

@@ -78,6 +78,11 @@ env = environ.Env(
     IMGPROXY_PATH_PREFIX=(str, ""),
     IMGPROXY_LOCAL_URL=(str, "http://localhost:8080"),
     IMGPROXY_LOCAL_MEDIA_URL=(str, "http://better-angels:8000/media/"),
+    SHELTER_PHOTO_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),  # 50 MiB
+    NOTE_ATTACHMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    CLIENT_DOCUMENT_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE=(int, 50 * 1024 * 1024),
+    S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS=(int, 300),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -85,10 +90,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 WORKSPACE_DIR = BASE_DIR.parent.parent
 
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
+
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
     environ.Env.read_env(env_file=os.path.join(WORKSPACE_DIR, ".compose", "local.shared.env"), overwrite=True)
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
+
+# ── Upload size limits ─────────────────────────────────────────────────
+#
+# File uploads go through presigned S3 POST URLs (client → S3 directly),
+# so Django never sees the file bytes. DATA_UPLOAD_MAX_MEMORY_SIZE and
+# FILE_UPLOAD_MAX_MEMORY_SIZE are left at Django's 2.5 MB defaults.
+#
+# Per-domain S3 presigned limits are available via environment variables;
+# the defaults (declared above) are 50 MiB (50 * 1024 * 1024 bytes) each.
+#
+# ⚠️  Keep in sync with the canonical ``UPLOAD_MAX_FILE_SIZE`` constant in
+# ``libs/ba-platform/src/lib/constants.ts`` — the frontend relies on that
+# value for client-side file-size validation.
+S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE = env("S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE")
+S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS = env("S3_DEFAULT_PRESIGNED_UPLOAD_EXPIRATION_SECONDS")
+SHELTER_PHOTO_MAX_FILE_SIZE = env("SHELTER_PHOTO_MAX_FILE_SIZE")
+NOTE_ATTACHMENT_MAX_FILE_SIZE = env("NOTE_ATTACHMENT_MAX_FILE_SIZE")
+CLIENT_DOCUMENT_MAX_FILE_SIZE = env("CLIENT_DOCUMENT_MAX_FILE_SIZE")
 
 
 # Quick-start development settings - unsuitable for production
@@ -121,6 +145,7 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "django_structlog",
     "guardian",
+    "model_clone",
     "places",
     "post_office",
     "rest_framework",
@@ -144,7 +169,9 @@ INSTALLED_APPS = [
     "proxy",
     "reports",
     "shelters",
+    "referrals",
     "tasks",
+    "teams",
     # Must be at the end
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -164,12 +191,19 @@ MIDDLEWARE = [
     "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
+    "common.middleware.organization.OrganizationMiddleware",
 ]
 
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
 ACCOUNT_LOGIN_BY_CODE_TIMEOUT = env.int("ACCOUNT_LOGIN_BY_CODE_TIMEOUT", default=300)
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_LOGIN_METHODS = ["email"]
+ACCOUNT_PREVENT_ENUMERATION = True
+ACCOUNT_SIGNUP_FIELDS = ["email*"]
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
@@ -402,6 +436,11 @@ POST_OFFICE = {
 EMAIL_FILE_PATH = str(BASE_DIR / "tmp" / "app-emails")
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
+# Base URLs for frontend apps, used by send_welcome_email to build
+# absolute dashboard links.  Each TemplateConfig references one of these
+# via its base_url_setting field.
+SHELTER_WEB_BASE_URL = env("SHELTER_WEB_BASE_URL", default="http://localhost:4200")
+
 # Django Guardian
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
@@ -494,6 +533,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
     *default_headers,
     "x-goog-fieldmask",
+    "x-organization-id",
 ]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")

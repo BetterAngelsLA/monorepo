@@ -7,7 +7,14 @@ query ViewShelter($id: ID!) {
     description
     email
     entryInfo
-    heroImage
+    heroImage(preset: SHELTER_HERO) {
+      id
+      url
+    }
+    heroImageFull: heroImage(processingOptions: "rs:fit:1400:1400/q:85") {
+      id
+      url
+    }
     id
     instagram
     isPrivate
@@ -46,7 +53,8 @@ query ViewShelter($id: ID!) {
       contactName
       contactNumber
     }
-    cities {
+    city {
+      id
       name
     }
     demographics {
@@ -55,20 +63,20 @@ query ViewShelter($id: ID!) {
     entryRequirements {
       name
     }
-    exteriorPhotos {
+    photos {
+      id
+      type
       file {
         name
-        url
+        url(preset: SHELTER_HERO)
+        fullUrl: url(processingOptions: "rs:fit:1400:1400/q:85")
       }
+    }
+    vaccinationRequirement {
+      name
     }
     funders {
       name
-    }
-    interiorPhotos {
-      file {
-        name
-        url
-      }
     }
     location {
       latitude
@@ -119,6 +127,7 @@ query ViewShelter($id: ID!) {
       name
     }
     spa {
+      id
       name
     }
     specialSituationRestrictions {

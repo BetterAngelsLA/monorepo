@@ -1,15 +1,21 @@
-import datetime
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-from django.contrib.contenttypes.models import ContentType
+import datetime
+from typing import TYPE_CHECKING, Iterable, Self, cast
+
 from django.db import models
-from django.db.models import Case, OuterRef, QuerySet, Subquery, When
-from django.db.models.functions import Coalesce
-from shelters.enums import ScheduleTypeChoices
-from shelters.selectors import admin_shelter_list, shelter_list, shelters_open_at
+from django.db.models import Manager, Q, QuerySet
+from shelters.enums import BedStatusChoices, RoomStatusChoices, ScheduleTypeChoices
+from shelters.open_at import shelters_open_at
+from shelters.selectors import shelter_list
+from shelters.selectors.computed_status import (
+    StatusChoice,
+    computed_status_case,
+    status_filter_q,
+)
 
 if TYPE_CHECKING:
-    from accounts.models import User
+    from shelters.models import Bed, Room  # noqa: F401
     from shelters.models import Shelter  # noqa: F401
 
 
@@ -24,67 +30,6 @@ class ShelterQuerySet(QuerySet["Shelter"]):
     ) -> "ShelterQuerySet":
         """Shelters whose *schedule_type* schedule says they are open at *dt*."""
         return shelters_open_at(self, dt=dt, schedule_type=schedule_type)  # type: ignore[return-value]
-
-    def with_hero_image_file(self) -> "ShelterQuerySet":
-        """Annotate each shelter with ``_hero_image_file`` — the file path
-        of the hero image resolved entirely in SQL.
-
-        Priority:
-        1. The explicitly chosen hero image (GFK → ExteriorPhoto or
-           InteriorPhoto).
-        2. First exterior photo (by pk).
-        3. First interior photo (by pk).
-        """
-        from shelters.models import ExteriorPhoto, InteriorPhoto
-
-        exterior_ct = ContentType.objects.get_for_model(ExteriorPhoto)
-        interior_ct = ContentType.objects.get_for_model(InteriorPhoto)
-
-        # GFK target: resolve hero_image_object_id against the correct
-        # photo table based on hero_image_content_type.
-        gfk_file = Case(
-            When(
-                hero_image_content_type=exterior_ct,
-                then=Subquery(
-                    ExteriorPhoto.objects.filter(
-                        pk=OuterRef("hero_image_object_id"),
-                    ).values(
-                        "file"
-                    )[:1]
-                ),
-            ),
-            When(
-                hero_image_content_type=interior_ct,
-                then=Subquery(
-                    InteriorPhoto.objects.filter(
-                        pk=OuterRef("hero_image_object_id"),
-                    ).values(
-                        "file"
-                    )[:1]
-                ),
-            ),
-        )
-
-        # Fallback: first photo by pk
-        first_exterior = Subquery(
-            ExteriorPhoto.objects.filter(
-                shelter=OuterRef("pk"),
-            )
-            .order_by("pk")
-            .values("file")[:1]
-        )
-        first_interior = Subquery(
-            InteriorPhoto.objects.filter(
-                shelter=OuterRef("pk"),
-            )
-            .order_by("pk")
-            .values("file")[:1]
-        )
-
-        # Coalesce: GFK target → first exterior → first interior
-        hero_file = Coalesce(gfk_file, first_exterior, first_interior)
-
-        return self.annotate(_hero_image_file=hero_file)
 
 
 class ShelterManager(models.Manager["Shelter"]):
@@ -102,14 +47,74 @@ class ShelterManager(models.Manager["Shelter"]):
         return self.get_queryset().open_at(dt, schedule_type)
 
 
-class AdminShelterQuerySet(ShelterQuerySet):
-    def for_user(self, user: "User") -> "AdminShelterQuerySet":
-        return admin_shelter_list(self, user=user)  # type: ignore[return-value]
+class ReservableStatusQuerySetMixin:
+    """Shared status filtering/annotation for Bed and Room querysets.
+
+    Delegates to query-building functions in
+    ``shelters.selectors.computed_status`` per HackSoft style guide.
+    """
+
+    reservable_fk: str = "bed_id"
+    status_enum: type[BedStatusChoices] | type[RoomStatusChoices] = BedStatusChoices
+
+    def with_computed_status(self) -> Self:
+        qs = cast(QuerySet, self)
+        return cast(
+            Self,
+            qs.annotate(_computed_status=computed_status_case(self.reservable_fk, self.status_enum)),
+        )
+
+    def filter_by_status(self, status: StatusChoice) -> QuerySet:
+        return cast(QuerySet, self).filter(self.status_filter_q(status))
+
+    def filter_by_statuses(self, statuses: Iterable[StatusChoice]) -> QuerySet:
+        # Empty statuses is treated as "no filter" -- return the full queryset unchanged.
+        combined = Q()
+        for status in statuses:
+            combined |= self.status_filter_q(status)
+        qs = cast(QuerySet, self)
+        if not combined:
+            return qs
+        return qs.filter(combined)
+
+    @classmethod
+    def status_filter_q(cls, status: StatusChoice) -> Q:
+        return status_filter_q(status, fk_field=cls.reservable_fk, status_enum=cls.status_enum)
 
 
-class AdminShelterManager(models.Manager["Shelter"]):
-    def get_queryset(self) -> AdminShelterQuerySet:
-        return AdminShelterQuerySet(self.model, using=self._db)
+class BedQuerySet(ReservableStatusQuerySetMixin, QuerySet):
+    reservable_fk = "bed_id"
+    status_enum = BedStatusChoices
 
-    def for_user(self, user: "User") -> AdminShelterQuerySet:
-        return self.get_queryset().for_user(user)
+
+class RoomQuerySet(ReservableStatusQuerySetMixin, QuerySet):
+    reservable_fk = "room_id"
+    status_enum = RoomStatusChoices
+
+
+class BedManager(Manager["Bed"]):
+    def get_queryset(self) -> BedQuerySet:
+        return BedQuerySet(self.model, using=self._db)
+
+    def with_computed_status(self) -> BedQuerySet:
+        return self.get_queryset().with_computed_status()
+
+    def filter_by_status(self, status: BedStatusChoices) -> BedQuerySet:
+        return cast(BedQuerySet, self.get_queryset().filter_by_status(status))
+
+    def filter_by_statuses(self, statuses: Iterable[BedStatusChoices]) -> BedQuerySet:
+        return cast(BedQuerySet, self.get_queryset().filter_by_statuses(statuses))
+
+
+class RoomManager(Manager["Room"]):
+    def get_queryset(self) -> RoomQuerySet:
+        return RoomQuerySet(self.model, using=self._db)
+
+    def with_computed_status(self) -> RoomQuerySet:
+        return self.get_queryset().with_computed_status()
+
+    def filter_by_status(self, status: RoomStatusChoices) -> RoomQuerySet:
+        return cast(RoomQuerySet, self.get_queryset().filter_by_status(status))
+
+    def filter_by_statuses(self, statuses: Iterable[RoomStatusChoices]) -> RoomQuerySet:
+        return cast(RoomQuerySet, self.get_queryset().filter_by_statuses(statuses))

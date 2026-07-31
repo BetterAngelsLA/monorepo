@@ -17,11 +17,11 @@ import {
 import { getInitialTaskFilters } from './getInitialTaskFilters';
 
 export default function Tasks() {
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters({ teamPreference })
+    getInitialTaskFilters({ teamId: teamPreference })
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -43,7 +43,7 @@ export default function Tasks() {
 
   function onFilterReset() {
     setSearch('');
-    setCurrentFilters(getInitialTaskFilters({ teamPreference }));
+    setCurrentFilters(getInitialTaskFilters({ teamId: teamPreference }));
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
@@ -53,7 +53,7 @@ export default function Tasks() {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="tasks-screen">
       <SearchBar
         style={styles.searchRow}
         value={search}
@@ -73,8 +73,8 @@ export default function Tasks() {
         onChange={onFilterChange}
         style={styles.filters}
         filters={[
-          isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
-          'teams',
+          user?.isHmisUser ? 'hmisClientProfiles' : 'clientProfiles',
+          'teamIds',
           'taskStatus',
           'authors',
           'organizations',

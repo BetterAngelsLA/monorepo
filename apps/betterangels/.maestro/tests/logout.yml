@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../steps/start_test.yml
+
+- assertVisible:
+    id: authorized-root
+
+- runFlow:
+    file: ../steps/app_menu/navigate_via_menu.yml
+    env:
+      MENU_ITEM: 'Log Out'
+
+- assertVisible:
+    id: unauthorized-root

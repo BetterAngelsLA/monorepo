@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   CreateNoteServiceInput,
   LocationInput,
-  SelahTeamEnum,
 } from '../../apollo';
 import { TaskFormSchema } from '../../ui-components/TaskForm';
 
@@ -16,7 +15,7 @@ const LocationSchema = z.custom<LocationInput>().nullable();
 export const NoteFormSchema = z.object({
   purpose: z.string().nullable().optional(),
   interactedAt: z.string().nullable().optional(),
-  team: z.enum(SelahTeamEnum).nullable().optional(),
+  teamId: z.string().nullable().optional(),
   location: LocationSchema,
   providedServices: z.array(ServiceInputSchema),
   requestedServices: z.array(ServiceInputSchema),
@@ -31,7 +30,7 @@ export type TNoteFormInputs = z.input<typeof NoteFormSchema>;
 export const NOTE_FORM_EMPTY_STATE: TNoteFormInputs = {
   purpose: undefined,
   interactedAt: undefined,
-  team: undefined,
+  teamId: undefined,
   location: null,
   providedServices: [],
   requestedServices: [],

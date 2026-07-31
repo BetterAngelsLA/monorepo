@@ -5,6 +5,7 @@ from urllib.parse import unquote
 import magic
 from common.enums import AttachmentType
 from common.files.utils import canonicalise_filename, get_unique_file_path, infer_attachment_type
+from common.permissions.utils import PermissionSet
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -18,6 +19,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class BaseModel(models.Model):
+    class perms(PermissionSet):
+        pass
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,7 +63,7 @@ class Attachment(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
+        return f"{self.content_object} {self.object_id} - {self.attachment_type} - {self.original_filename}"
 
     class Meta:
         indexes = [
@@ -71,7 +75,11 @@ class Attachment(BaseModel):
                     "attachment_type",
                 ],
                 name="attachment_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="attachment_gfk_idx",
+            ),
         ]
 
     def save(
@@ -81,11 +89,28 @@ class Attachment(BaseModel):
         **kwargs: Any,
     ) -> None:
         """
-        Saves the Attachment instance. If it's a new instance (without an ID),
-        it stores the original file name and determines the file type based on
-        MIME type analysis. This method enhances file handling by preserving
-        the original file name and categorizing the file for easier management.
+        Saves the Attachment instance.
+
+        .. deprecated::
+            This custom ``save()`` override is deprecated. MIME-type detection,
+            attachment type inference, and filename canonicalisation will move
+            to the service layer (see ``create_attachment_records`` in
+            ``common/services/file_upload.py``).  The presigned S3 upload
+            pipeline already enforces content types at the S3 level and passes
+            ``mime_type`` explicitly via ``direct_upload=True``.  This override
+            will be removed in a future release — ``Attachment`` will revert to
+            plain Django ``save()``.
         """
+        import warnings
+
+        warnings.warn(
+            "Attachment.save() override is deprecated. "
+            "All file metadata should be set in the service layer "
+            "(see common/services/file_upload.py).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         if not self.pk:
             if direct_upload:
                 if not self.mime_type:
@@ -327,7 +352,11 @@ class PhoneNumber(models.Model):
                     "content_type_id",
                 ],
                 name="phonenumber_comp_idx",
-            )
+            ),
+            models.Index(
+                fields=["content_type", "object_id"],
+                name="phonenumber_gfk_idx",
+            ),
         ]
 
     def save(self, *args: Any, **kwargs: Any) -> None:

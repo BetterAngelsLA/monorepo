@@ -7,27 +7,41 @@ from zoneinfo import ZoneInfo
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import LatitudeScalar, LongitudeScalar
+from common.graphql.types import (
+    LatitudeScalar,
+    LongitudeScalar,
+    make_icontains_filter,
+    make_in_filter,
+    make_m2m_in_filter,
+)
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
+from strawberry import ID, Info, asdict, auto
+from strawberry_django.auth.utils import get_current_user
+
 from shelters import models
 from shelters.enums import (
+    AccessibilityChoices,
+    BedStatusChoices,
+    BedTypeChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    FunderChoices,
+    MedicalNeedChoices,
     ParkingChoices,
     PetChoices,
     ReferralRequirementChoices,
+    ReservationStatusChoices,
+    RoomStatusChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
-    SPAChoices,
     SpecialSituationRestrictionChoices,
 )
-from shelters.selectors import shelters_open_at
-from strawberry import ID, Info, asdict, auto
-from strawberry_django.auth.utils import get_current_user
+from shelters.managers import BedQuerySet, RoomQuerySet
+from shelters.open_at import shelters_open_at
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -54,14 +68,21 @@ class MapBoundsInput:
 @strawberry.input
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
+    pets_include_null: Optional[bool] = False
     demographics: Optional[List[DemographicChoices]] = None
+    demographics_include_null: Optional[bool] = False
     entry_requirements: Optional[List[EntryRequirementChoices]] = None
+    entry_requirements_include_null: Optional[bool] = False
     referral_requirement: Optional[List[ReferralRequirementChoices]] = None
+    referral_requirement_include_null: Optional[bool] = False
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
+    special_situation_restrictions_include_null: Optional[bool] = False
     shelter_types: Optional[List[ShelterChoices]] = None
+    shelter_types_include_null: Optional[bool] = False
     room_styles: Optional[List[RoomStyleChoices]] = None
+    room_styles_include_null: Optional[bool] = False
     parking: Optional[List[ParkingChoices]] = None
-    spa: Optional[List[SPAChoices]] = None
+    parking_include_null: Optional[bool] = False
 
 
 @strawberry.input
@@ -90,12 +111,7 @@ class ShelterFilter:
 
         return conditions
 
-    @strawberry_django.filter_field
-    def name(self, info: Info, value: Optional[str], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(**{f"{prefix}name__icontains": value})
+    name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
@@ -121,10 +137,33 @@ class ShelterFilter:
         if value is None:
             return queryset, Q()
 
-        value_dict = asdict(value)
-        filters = {f"{k}__name__in": v for k, v in value_dict.items() if v is not None}
+        # Fields that have corresponding include_null flags
+        property_fields = [
+            "pets",
+            "demographics",
+            "entry_requirements",
+            "referral_requirement",
+            "special_situation_restrictions",
+            "shelter_types",
+            "room_styles",
+            "parking",
+        ]
 
-        return queryset.filter(**filters).distinct(), Q()
+        value_dict = asdict(value)
+        combined_q = Q()
+
+        for field in property_fields:
+            values = value_dict.get(field)
+            include_null = value_dict.get(f"{field}_include_null", False)
+
+            if values and include_null:
+                combined_q &= Q(**{f"{field}__name__in": values}) | Q(**{f"{field}__isnull": True})
+            elif values:
+                combined_q &= Q(**{f"{field}__name__in": values})
+            elif include_null:
+                combined_q &= Q(**{f"{field}__isnull": True})
+
+        return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
     def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
@@ -178,8 +217,122 @@ class ShelterFilter:
 
     is_private: auto
 
+    @strawberry_django.filter_field
+    def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
+            **{f"{prefix}availability__restricted_beds__gt": 0}
+        )
+        return has_beds if value else ~has_beds
+
+    @strawberry_django.filter_field
+    def spa(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(spa_id__in=value).select_related("spa"), Q()
+
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
     created_at: auto
+
+
+@strawberry_django.order_type(models.Bed, one_of=False)
+class BedOrder:
+    name: auto
+    created_at: auto
+    updated_at: auto
+
+
+@strawberry_django.order_type(models.Room, one_of=False)
+class RoomOrder:
+    name: auto
+    created_at: auto
+    updated_at: auto
+
+
+class CommonBedRoomFilterMixin:
+    accessibility = make_m2m_in_filter("accessibility", "name", AccessibilityChoices)
+    demographics = make_m2m_in_filter("demographics", "name", DemographicChoices)
+    funders = make_m2m_in_filter("funders", "name", FunderChoices)
+    maintenance_flag: Optional[bool]
+    pets = make_m2m_in_filter("pets", "name", PetChoices)
+    shelter_id: Optional[ID]
+    storage: Optional[bool]
+
+
+@strawberry_django.filter_type(models.Bed)
+class BedFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
+    type = make_in_filter("type", BedTypeChoices)
+    medical_needs = make_m2m_in_filter("medical_needs", "name", MedicalNeedChoices)
+    maintenance_flag: Optional[bool]
+    shelter_id: Optional[ID]
+
+    @strawberry_django.filter_field
+    def status(
+        self, queryset: QuerySet, value: Optional[List[BedStatusChoices]], prefix: str
+    ) -> Tuple[QuerySet[models.Bed], Q]:
+        """Filter beds by their computed status."""
+        if not value:
+            return queryset, Q()
+
+        q = Q()
+        for choice in value:
+            q |= BedQuerySet.status_filter_q(choice)
+        return queryset, q
+
+
+@strawberry_django.filter_type(models.Room)
+class RoomFilter(CommonBedRoomFilterMixin):
+    id: Optional[ID]
+    amenities = make_icontains_filter("amenities")
+    medical_respite: Optional[bool]
+    type = make_in_filter("type", RoomStyleChoices)
+    shelter_id: Optional[ID]
+
+    @strawberry_django.filter_field
+    def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:
+        if value is None:
+            return queryset, Q()
+        return queryset.annotate(num_beds=Count("beds")).filter(num_beds=value), Q()
+
+    @strawberry_django.filter_field
+    def status(
+        self, queryset: QuerySet, value: Optional[List[RoomStatusChoices]], prefix: str
+    ) -> Tuple[QuerySet[models.Room], Q]:
+        """Filter rooms by their computed status."""
+        if not value:
+            return queryset, Q()
+
+        q = Q()
+        for choice in value:
+            q |= RoomQuerySet.status_filter_q(choice)
+        return queryset, q
+
+
+@strawberry_django.filter_type(models.Reservation)
+class ReservationFilter:
+    id: Optional[ID]
+    room_id: Optional[ID]
+    bed_id: Optional[ID]
+    status = make_in_filter("status", ReservationStatusChoices)
+
+    @strawberry_django.filter_field
+    def shelter_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}bed__shelter_id": value}) | Q(**{f"{prefix}room__shelter_id": value})
+
+
+@strawberry_django.order_type(models.Reservation, one_of=False)
+class ReservationOrder:
+    start_date: auto
+    checked_in_at: auto
+    checked_out_at: auto
+    created_at: auto
+    updated_at: auto

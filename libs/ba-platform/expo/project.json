@@ -1,0 +1,11 @@
+{
+  "name": "ba-platform-expo",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ba-platform/expo/src",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:ba-platform"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"]
+  },
+  "targets": {}
+}

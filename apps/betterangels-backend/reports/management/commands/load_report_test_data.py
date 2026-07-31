@@ -16,7 +16,6 @@ from typing import Any
 
 from accounts.models import User
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from django.core.management.base import BaseCommand, CommandParser
 from django.utils import timezone
 from notes.enums import ServiceRequestStatusEnum
@@ -27,6 +26,7 @@ from notes.models import (
     ServiceRequest,
 )
 from organizations.models import Organization
+from teams.models import Team
 
 PURPOSES = [
     "Outreach",
@@ -150,7 +150,26 @@ LAST_NAMES = [
     "Martin",
 ]
 
-TEAMS = list(SelahTeamEnum)
+# Seed teams mapped from the deprecated SelahTeamEnum.
+# (slug, display_name) — created via get_or_create so the command is
+# self-contained for local dev.
+SEED_TEAMS = [
+    ("bowtie_riverside_outreach", "Bowtie & Riverside Outreach"),
+    ("echo_park_on_site", "Echo Park On-site"),
+    ("echo_park_outreach", "Echo Park Outreach"),
+    ("hollywood_on_site", "Hollywood On-site"),
+    ("hollywood_outreach", "Hollywood Outreach"),
+    ("la_river_outreach", "LA River Outreach"),
+    ("los_feliz_outreach", "Los Feliz Outreach"),
+    ("northeast_hollywood_outreach", "Northeast Hollywood Outreach"),
+    ("selah_staff", "SELAH Staff"),
+    ("silver_lake_outreach", "Silver Lake Outreach"),
+    ("slcc_on_site", "SLCC On-site"),
+    ("sunday_social_atwater_on_site", "Sunday Social / Atwater On-site"),
+    ("sunday_social_atwater_outreach", "Sunday Social / Atwater Outreach"),
+    ("wdi_on_site", "WDI On-site"),
+    ("wdi_outreach", "WDI Outreach"),
+]
 
 
 class Command(BaseCommand):
@@ -191,6 +210,13 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
+        # Seed teams (replaces old SelahTeamEnum).  get_or_create so the
+        # fixture is self-contained — no pre-existing teams required.
+        teams = []
+        for slug, name in SEED_TEAMS:
+            team, _ = Team.objects.get_or_create(slug=slug, organization=org, defaults={"name": name})
+            teams.append(team)
+
         num_notes = options["notes"]
 
         # 1. Create service categories and services
@@ -218,7 +244,7 @@ class Command(BaseCommand):
             random_hours = random.randint(8, 20)  # business hours
             interaction_date = three_months_ago + timedelta(days=random_days, hours=random_hours)
 
-            team = random.choice(TEAMS)
+            team = random.choice(teams)
             purpose = random.choice(PURPOSES)
 
             note = Note.objects.create(
@@ -228,7 +254,7 @@ class Command(BaseCommand):
                 team=team,
                 purpose=purpose,
                 is_submitted=True,
-                public_details=f"Test interaction #{i + 1} - {purpose} by {team.label}",
+                public_details=f"Test interaction #{i + 1} - {purpose} by {team.name}",
                 client_profile=random.choice(clients),
             )
 
@@ -266,7 +292,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"\nDone! Created {notes_created} notes for test_org spanning the last 90 days.")
         )
         self.stdout.write(f"  Date range: {three_months_ago.date()} to {now.date()}")
-        self.stdout.write(f"  Teams used: {len(TEAMS)}")
+        self.stdout.write(f"  Teams used: {len(teams)}")
         self.stdout.write(f"  Purposes used: {len(PURPOSES)}")
         self.stdout.write(f"  Services available: {len(services)}")
         self.stdout.write(f"  Unique clients: {len(clients)}")

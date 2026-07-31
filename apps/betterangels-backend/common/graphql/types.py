@@ -1,14 +1,16 @@
 import re
 from datetime import datetime
-from typing import Any, Mapping, NewType, Optional, cast
+from typing import Any, Mapping, NewType, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.enums import ImagePresetEnum
-from common.imgproxy import build_imgproxy_url, is_imgproxy_enabled
+from common.images import build_img_url
 from common.models import Address, Attachment, Location, PhoneNumber
-from django.db.models import Q
+from common.services.types import AuthorizedPresignedUploadBatch
+from django.db.models import Q, QuerySet, Subquery
+from django.db.models.fields.files import FieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, Info, auto
@@ -26,6 +28,35 @@ def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
 
         return Q(**{f"{prefix}{field_name}__in": normalized_value})
+
+    return _filter
+
+
+def make_icontains_filter(field_name: str) -> StrawberryField:
+    @strawberry_django.filter_field
+    def _filter(info: Info, value: Optional[str], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        return Q(**{f"{prefix}{field_name}__icontains": value})
+
+    return _filter
+
+
+def make_m2m_in_filter(related_object: str, field_name: str, value_type: Any) -> StrawberryField:
+    """Filter rows whose M2M ``related_object`` relates to any lookup row with ``field_name`` in the given values."""
+
+    @strawberry_django.filter_field
+    def _filter(
+        self: Any, queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str
+    ) -> Tuple[QuerySet[Any], Q]:
+        if not value:
+            return queryset, Q()
+
+        normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
+        lookup = f"{prefix}{related_object}__{field_name}__in"
+        matching_pks = queryset.filter(**{lookup: normalized_value}).values("pk")
+        return queryset.filter(pk__in=Subquery(matching_pks)), Q()
 
     return _filter
 
@@ -179,11 +210,12 @@ class TransformableImageType:
                 ``"rs:fill:200:200"`` or ``"rs:fit:800:600/q:80"``.
                 Takes precedence over ``preset``.
         """
-        if is_imgproxy_enabled():
-            if imgproxy_url := build_imgproxy_url(self, preset, processing_options):
-                return imgproxy_url
+        file_obj: object = self
 
-        return cast(str, self.url)
+        if not isinstance(file_obj, FieldFile):
+            raise TypeError("TransformableImageType.url expects a Django FieldFile instance")
+
+        return build_img_url(file_obj, preset, processing_options)
 
 
 @strawberry_django.type(Location)
@@ -266,3 +298,28 @@ class AuthorizedPresignedS3UploadType(PresignedS3UploadType):
 @strawberry.type
 class AuthorizedPresignedS3UploadsType:
     uploads: list[AuthorizedPresignedS3UploadType]
+
+    @classmethod
+    def from_batch(cls, batch: AuthorizedPresignedUploadBatch) -> "AuthorizedPresignedS3UploadsType":
+        return cls(
+            uploads=[
+                AuthorizedPresignedS3UploadType(
+                    ref_id=item.ref_id,
+                    url=item.url,
+                    fields=cast(JSON, item.fields),
+                    presigned_key=item.presigned_key,
+                    upload_token=item.upload_token,
+                )
+                for item in batch.uploads
+            ]
+        )
+
+
+@strawberry.input
+class BulkDeleteInput:
+    ids: list[ID]
+
+
+@strawberry.type
+class BulkDeleteResult:
+    ids: list[ID]

@@ -1,25 +1,41 @@
 import { useQuery } from '@apollo/client/react';
 import { InfiniteList } from '@monorepo/react/components';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { MaxStayInput } from '../../apollo';
-import { sheltersAtom } from '../../atoms';
+import { MaxStayInput, ShelterPropertyInput } from '../../apollo';
+import {
+  shelterNameSearchAtom,
+  sheltersAtom,
+  shelterSearchTriggerAtom,
+} from '../../atoms';
 import {
   ViewSheltersDocument,
   ViewSheltersQuery,
   ViewSheltersQueryVariables,
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
-import { ShelterCard } from '../ShelterCard';
+import { ShelterCard, TShelter } from '../ShelterCard';
+import { UNKNOWN_FILTER_VALUE } from '../ShelterFilters/config';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
-type TShelter = ViewSheltersQuery['shelters']['results'][number];
+type TViewShelter = ViewSheltersQuery['shelters']['results'][number];
+
+function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
+  return {
+    id: shelter.id,
+    name: shelter.name,
+    distanceInMiles: shelter.distanceInMiles,
+    isPrivate: shelter.isPrivate,
+    location: shelter.location,
+    shelterTypes: shelter.shelterTypes,
+    heroImage: shelter.heroImage?.url ?? null,
+  };
+}
 type TProps = {
   className?: string;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
-  nameFilter?: string;
   /** Incremented on each name search submit; used to fit the map after fresh query results. */
   nameSearchPinFitRequestId?: number;
   onShelterPinsReadyForMapFit?: (pinLocations: TLatLng[]) => void;
@@ -30,11 +46,12 @@ export function SheltersDisplay(props: TProps) {
     mapBoundsFilter,
     propertyFilters,
     className = '',
-    nameFilter,
     nameSearchPinFitRequestId = 0,
     onShelterPinsReadyForMapFit,
   } = props;
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
+  const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
+  const nameSearch = useAtomValue(shelterNameSearchAtom);
 
   const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
     let vars: ViewSheltersQueryVariables | undefined;
@@ -47,7 +64,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNow, isAccessCenter, maxStay, ...propertyOnlyFilters } =
+      const { openNow, openNowScheduleTypes, isAccessCenter, maxStay, ...propertyOnlyFilters } =
         propertyFilters;
 
       if (openNow) {
@@ -68,37 +85,55 @@ export function SheltersDisplay(props: TProps) {
         vars.filters.maxStay = maxStayToGraphQLInput(maxStay);
       }
 
-      const prunedFilters = pruneFilters(propertyOnlyFilters);
+      const prunedProperties =
+        propertyFiltersToGraphQLInput(propertyOnlyFilters);
 
-      if (prunedFilters) {
+      if (prunedProperties) {
         vars = vars || {};
         vars.filters = vars.filters || {};
 
-        vars.filters.properties = prunedFilters;
+        vars.filters.properties = prunedProperties;
       }
     }
 
-    if (nameFilter) {
+    if (nameSearch) {
       vars = vars || {};
       vars.filters = vars.filters || {};
-      vars.filters.name = nameFilter;
+      vars.filters.name = nameSearch;
     }
 
     return vars;
-  }, [mapBoundsFilter, nameFilter, propertyFilters]);
+  }, [mapBoundsFilter, nameSearch, propertyFilters]);
+
+  // Freeze query variables at the moment searchTrigger changes so that
+  // intermediate filter-state updates (e.g. name search set before the map
+  // settles) never fire a premature query.
+  const lastTriggerRef = useRef(-1);
+  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(
+    undefined
+  );
+
+  if (searchTrigger !== lastTriggerRef.current) {
+    lastTriggerRef.current = searchTrigger;
+    activeVarsRef.current = queryVariables;
+  }
 
   const { data, loading, error } = useQuery<
     ViewSheltersQuery,
     ViewSheltersQueryVariables
   >(ViewSheltersDocument, {
     variables: {
-      ...queryVariables,
+      ...activeVarsRef.current,
       pagination: { limit: 5000, offset: 0 },
     },
-    skip: !queryVariables,
+    skip: !activeVarsRef.current,
   });
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
+  const sheltersForList = useMemo(
+    () => shelters.map(viewShelterToCardShelter),
+    [shelters]
+  );
   const total = data?.shelters.totalCount;
 
   const prevLoadingRef = useRef(loading);
@@ -129,7 +164,7 @@ export function SheltersDisplay(props: TProps) {
         return;
       }
       lastPinFitRequestHandledRef.current = nameSearchPinFitRequestId;
-      onShelterPinsReadyForMapFit(shelterListToPinLatLng(shelters ?? []));
+      onShelterPinsReadyForMapFit(shelterListToPinLatLng(sheltersForList));
     };
 
     if (loadingJustFinished) {
@@ -145,13 +180,13 @@ export function SheltersDisplay(props: TProps) {
   }, [
     loading,
     nameSearchPinFitRequestId,
-    shelters,
+    sheltersForList,
     onShelterPinsReadyForMapFit,
   ]);
 
   useEffect(() => {
-    setSheltersData(shelters);
-  }, [shelters, setSheltersData]);
+    setSheltersData(sheltersForList);
+  }, [sheltersForList, setSheltersData]);
 
   const renderListHeader = useCallback(
     (visible: number, total: number | undefined) => {
@@ -166,7 +201,7 @@ export function SheltersDisplay(props: TProps) {
         <div className="mb-4">
           <div className="text-xl font-semibold">{text}</div>
           <ResultsSource
-            nameFilter={nameFilter}
+            nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
             openNowFilter={propertyFilters?.openNow}
             propertyFilters={pruneFilters(propertyFilters)}
@@ -174,13 +209,13 @@ export function SheltersDisplay(props: TProps) {
         </div>
       );
     },
-    [queryVariables?.filters]
+    [nameSearch, mapBoundsFilter, propertyFilters]
   );
 
   return (
     <div className={className}>
       <InfiniteList<TShelter>
-        data={shelters}
+        data={sheltersForList}
         totalItems={total}
         loading={loading}
         error={error}
@@ -244,4 +279,48 @@ function pruneFilters(
   );
 
   return Object.keys(result).length > 0 ? result : null;
+}
+
+const INCLUDE_NULL_KEY_MAP: Record<string, keyof ShelterPropertyInput> = {
+  demographics: 'demographicsIncludeNull',
+  entryRequirements: 'entryRequirementsIncludeNull',
+  parking: 'parkingIncludeNull',
+  pets: 'petsIncludeNull',
+  referralRequirement: 'referralRequirementIncludeNull',
+  roomStyles: 'roomStylesIncludeNull',
+  shelterTypes: 'shelterTypesIncludeNull',
+  specialSituationRestrictions: 'specialSituationRestrictionsIncludeNull',
+};
+
+function propertyFiltersToGraphQLInput(
+  filters: Omit<
+    TShelterPropertyFilters,
+    'openNow' | 'isAccessCenter' | 'maxStay'
+  >
+): ShelterPropertyInput | null {
+  const result: ShelterPropertyInput = {};
+  let hasAny = false;
+
+  for (const [key, values] of Object.entries(filters)) {
+    if (!Array.isArray(values) || values.length === 0) {
+      continue;
+    }
+
+    const includeNullKey = INCLUDE_NULL_KEY_MAP[key];
+    const stringValues = values as string[];
+    const hasUnknown = stringValues.includes(UNKNOWN_FILTER_VALUE);
+    const enumValues = stringValues.filter((v) => v !== UNKNOWN_FILTER_VALUE);
+
+    if (hasUnknown && includeNullKey) {
+      (result as Record<string, unknown>)[includeNullKey] = true;
+      hasAny = true;
+    }
+
+    if (enumValues.length > 0) {
+      (result as Record<string, unknown>)[key] = enumValues;
+      hasAny = true;
+    }
+  }
+
+  return hasAny ? result : null;
 }

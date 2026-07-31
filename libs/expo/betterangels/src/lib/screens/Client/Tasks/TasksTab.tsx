@@ -12,6 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
+import { useUserTeamPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
 import {
   ModelFilters,
@@ -23,6 +24,7 @@ import {
 } from '../../../ui-components';
 import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TasksDocument } from '../../../ui-components/TaskList/__generated__/Tasks.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
 function getInitialTaskFilters(): TModelFilters {
@@ -49,10 +51,11 @@ export function TasksTab(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+  const [teamPreference] = useUserTeamPreference();
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters()
+    getInitialTaskFilters(),
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -73,13 +76,15 @@ export function TasksTab(props: TProps) {
       const result = await createTask({
         variables: {
           data: {
-            summary: task.summary!,
+            summary: task.summary ?? '',
             description: task.description,
             status: task.status,
-            team: task.team || null,
+            teamId: task.teamId ?? undefined,
             clientProfile: client.clientProfile.id,
           },
         },
+        refetchQueries: [TasksDocument],
+        awaitRefetchQueries: true,
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
@@ -97,21 +102,24 @@ export function TasksTab(props: TProps) {
   };
 
   const currentPath = client
-    ? `/client/${client?.clientProfile.id}?newTab=Tasks`
+    ? `/client/${client.clientProfile.id}?newTab=Tasks`
     : undefined;
 
-  const handleTaskPress = useCallback((task: TaskType) => {
-    router.navigate({
-      pathname: `/task/${task.id}`,
-      params: { arrivedFrom: currentPath },
-    });
-  }, []);
+  const handleTaskPress = useCallback(
+    (task: TaskType) => {
+      router.navigate({
+        pathname: `/task/${task.id}`,
+        params: { arrivedFrom: currentPath },
+      });
+    },
+    [currentPath],
+  );
 
   const renderTaskItem = useCallback(
     (task: TaskType) => (
       <TaskCard task={task} onPress={handleTaskPress} variant="withoutClient" />
     ),
-    [handleTaskPress]
+    [handleTaskPress],
   );
 
   function renderListHeaderText(visible: number, total: number | undefined) {
@@ -142,7 +150,11 @@ export function TasksTab(props: TProps) {
     showModalScreen({
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
-        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
+        <TaskForm
+          onCancel={close}
+          onSubmit={(task) => onSubmit(task, close)}
+          initialValues={{ teamId: teamPreference }}
+        />
       ),
       title: 'Follow-Up Task',
     });
@@ -174,7 +186,7 @@ export function TasksTab(props: TProps) {
         key={filtersKey}
         selected={currentFilters}
         onChange={onFilterChange}
-        filters={['teams', 'taskStatus', 'authors', 'organizations']}
+        filters={['teamIds', 'taskStatus', 'authors', 'organizations']}
       />
 
       <TaskList

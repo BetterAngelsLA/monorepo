@@ -1,0 +1,14 @@
+mutation UpdateShelterPhoto($data: UpdateShelterPhotoInput!) {
+  updateShelterPhoto(data: $data) {
+    __typename
+    ... on ShelterPhotoType {
+      id
+      type
+    }
+    ... on OperationInfo {
+      messages {
+        message
+      }
+    }
+  }
+}

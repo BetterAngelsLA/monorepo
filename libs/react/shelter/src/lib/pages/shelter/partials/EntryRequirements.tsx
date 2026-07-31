@@ -2,11 +2,13 @@ import { Card, ExpandableContainer } from '@monorepo/react/components';
 import {
   EntryRequirementChoices,
   ReferralRequirementChoices,
+  VaccinationRequirementChoices,
 } from '../../../apollo';
 import { WysiwygContainer } from '../../../components';
 import {
   enumDisplayEntryRequirementChoices,
   enumDisplayReferralRequirementChoices,
+  enumDisplayVaccinationRequirementChoices,
 } from '../../../static';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import { InlineList, WysiwygSection } from '../common';
@@ -46,6 +48,15 @@ export function EntryRequirements({
             (requirement) =>
               enumDisplayReferralRequirementChoices[
                 requirement.name as ReferralRequirementChoices
+              ]
+          )}
+        />
+        <InlineList
+          title="Vaccinations:"
+          items={shelter?.vaccinationRequirement.map(
+            (vaccination) =>
+              enumDisplayVaccinationRequirementChoices[
+                vaccination.name as VaccinationRequirementChoices
               ]
           )}
         />

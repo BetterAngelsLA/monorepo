@@ -73,7 +73,7 @@ export default function Note({
         <NoteByline
           createdBy={note.createdBy}
           organization={note.organization}
-          team={note.team}
+          currentTeam={note.currentTeam}
         />
         {note.location?.point && <NoteLocation note={note} />}
         {(note.providedServices.length > 0 ||

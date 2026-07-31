@@ -1,8 +1,12 @@
-import { SignIn as SharedSignIn, SignInProps } from '@monorepo/react/shelter';
+import {
+  operatorPath,
+  SignIn as SharedSignIn,
+  SignInProps,
+} from '@monorepo/react/shelter';
 
 export function SignIn() {
   const sharedProps: SignInProps = {
-    onSuccessRedirect: '/operator',
+    onSuccessRedirect: operatorPath,
     description:
       'Welcome! Sign in for Better Angels and start making a difference in the LA Community.',
   };

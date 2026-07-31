@@ -12,7 +12,11 @@ query Interactions(
     results {
       id
       purpose
-      team
+      currentTeam {
+        id
+        slug
+        name
+      }
       organization {
         id
         name

@@ -25,7 +25,7 @@ export function NavMenu(props: INavModalProps) {
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
   const { signOut } = useSignOut();
   const [teamPreference] = useUserTeamPreference();
 
@@ -37,6 +37,7 @@ export function NavMenu(props: INavModalProps) {
 
   return (
     <View
+      testID="nav-menu"
       style={{
         flex: 1,
         paddingHorizontal: Spacings.md,
@@ -50,7 +51,7 @@ export function NavMenu(props: INavModalProps) {
       <View>
         <ProfileButton
           onPress={() => onNavigate('/profile')}
-          isHmisUser={isHmisUser}
+          isHmisUser={user?.isHmisUser}
         />
 
         <BaseButton onPress={() => onNavigate('/tasks')}>
@@ -59,7 +60,7 @@ export function NavMenu(props: INavModalProps) {
           </BaseButton.Slot>
 
           <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>Tasks</TextRegular>
-          <TaskIndicator team={teamPreference} />
+          <TaskIndicator teamId={teamPreference} />
         </BaseButton>
 
         <BaseButton onPress={() => onNavigate('/settings')}>

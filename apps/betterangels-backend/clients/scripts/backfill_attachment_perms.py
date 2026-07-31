@@ -7,12 +7,11 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betterangels_backend.settings")
 django.setup()
 
-from accounts.groups import GroupTemplateNames
 from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
 from django.contrib.auth.models import Group
 from django.db import transaction
 from guardian.shortcuts import assign_perm
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 
 ORG_NAME = "SELAH Neighborhood Coalition"
@@ -25,7 +24,7 @@ def grant_missing_perms(dry_run: bool = True) -> None:
         org = Organization.objects.get(name=ORG_NAME)
         group = Group.objects.get(
             permissiongroup__organization=org,
-            permissiongroup__template__name=GroupTemplateNames.CASEWORKER,
+            permissiongroup__template__name=CASEWORKER.name,
         )
         uploader_ids = org.users.values_list("id", flat=True)
         docs = (
@@ -38,14 +37,14 @@ def grant_missing_perms(dry_run: bool = True) -> None:
         )
 
         print(
-            f"{'[DRY RUN] Would assign' if dry_run else 'Assigning'} {AttachmentPermissions.CHANGE}"
+            f"{'[DRY RUN] Would assign' if dry_run else 'Assigning'} {Attachment.perms.CHANGE}"
             f"to group {group.name} on {docs.count()} documents uploaded on or before {CUTOFF_DATE}."
         )
 
         for doc in docs:
             print(f" - Attachment ID {doc.id}")
             if not dry_run:
-                assign_perm(AttachmentPermissions.CHANGE, group, doc)
+                assign_perm(Attachment.perms.CHANGE, group, doc)
 
 
 grant_missing_perms(dry_run=True)

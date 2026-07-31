@@ -1,0 +1,10 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Opens the app menu and taps a menu item.
+# Requires env: MENU_ITEM (e.g. 'Tasks', 'Settings', 'Log Out')
+
+- runFlow: open_app_menu.yml
+
+- assertVisible: ${MENU_ITEM}
+
+- tapOn: ${MENU_ITEM}

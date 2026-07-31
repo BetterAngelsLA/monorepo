@@ -1,10 +1,11 @@
 import { CloseIcon } from '@monorepo/react/icons';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   nullShelterPropertyFilters,
   shelterPropertyFiltersAtom,
+  shelterSearchTriggerAtom,
 } from '../../atoms';
 import {
   FiltersActions,
@@ -16,6 +17,7 @@ export function FiltersPage() {
   const navigate = useNavigate();
   const [atomFilters, setAtomFilters] = useAtom(shelterPropertyFiltersAtom);
   const [draftFilters, setDraftFilters] = useState(() => atomFilters);
+  const setSearchTrigger = useSetAtom(shelterSearchTriggerAtom);
 
   function handleClose() {
     navigate(shelterHomePath);
@@ -23,6 +25,7 @@ export function FiltersPage() {
 
   function handleDone() {
     setAtomFilters(draftFilters);
+    setSearchTrigger((n) => n + 1);
     navigate(shelterHomePath);
   }
 
@@ -31,11 +34,11 @@ export function FiltersPage() {
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 bottom-0 z-modal bg-white flex flex-col animate-slideInUp overflow-x-hidden overflow-y-auto">
+    <div className="fixed inset-0 z-modal bg-white flex flex-col animate-slide-in-up overflow-x-hidden overflow-y-auto">
       <div className="md:pt-8 p-6 md:p-10 max-h-[calc(100vh-88px)] overflow-hidden overflow-y-auto">
         <div className="flex justify-between align-center mt-0 mb-4">
           <button
-            className="ml-auto"
+            className="ml-auto p-2 rounded-lg transition-colors active:bg-[#E8ECF2]"
             onClick={handleClose}
             aria-label="Close filters"
           >

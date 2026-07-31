@@ -1,11 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { TModalPresentationType } from '../../providers';
 
-export const defaultModalNavOpts: Record<
-  TModalPresentationType,
-  NativeStackNavigationOptions
-> = {
+export const defaultModalNavOpts = {
   card: {
     headerTitleAlign: 'center',
     headerStyle: {
@@ -35,4 +30,4 @@ export const defaultModalNavOpts: Record<
     },
     headerBackVisible: false,
   },
-};
+} as const;
