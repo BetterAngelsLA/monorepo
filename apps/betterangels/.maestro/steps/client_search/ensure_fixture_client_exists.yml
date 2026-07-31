@@ -1,0 +1,51 @@
+# Finds or creates a fixture client for e2e tests.
+# Requires: already on the clients screen.
+# Input env vars:
+#   FIXTURE_CLIENT_NAME — name to search/create (default: "e2e-test-client")
+# Output:
+#   output.fixtureClientName — the client name
+
+appId: ${MAESTRO_APP_ID}
+---
+- evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-client'}
+
+# Search and try to select the client
+- runFlow:
+    file: search_and_select_client.yml
+    env:
+      CLIENT_NAME: ${output.fixtureClientName}
+      # X1234567
+
+# If not found, create it
+- runFlow:
+    when:
+      visible: 'No results'
+    commands:
+      # Open create client modal
+      - tapOn:
+          id: 'main-plus-tab-btn'
+      - tapOn: 'Add client'
+      - assertVisible: 'Create Client Profile'
+
+      # Fill in first name
+      - tapOn:
+          id: 'firstName'
+      - inputText: ${output.fixtureClientName}
+      - hideKeyboard
+
+      # Submit — navigates to profile
+      - tapOn:
+          id: 'action-btn-primary'
+      - waitForAnimationToEnd
+      - assertVisible: ${output.fixtureClientName}
+
+      # Go back to clients list and re-select
+      - tapOn:
+          id: 'tab-clients'
+      - runFlow:
+          file: search_and_select_client.yml
+          env:
+            CLIENT_NAME: ${output.fixtureClientName}
+
+# Assert we're on the profile
+- assertVisible: ${output.fixtureClientName}

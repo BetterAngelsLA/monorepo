@@ -36,6 +36,9 @@ function ClientCardRaw(props: IClientCardProps) {
     return (
       <Pressable
         accessibilityRole="button"
+        testID={['client-card', client.firstName, client.lastName]
+          .filter(Boolean)
+          .join('-')}
         onPress={() =>
           showModalScreen({
             presentation: 'modal',
