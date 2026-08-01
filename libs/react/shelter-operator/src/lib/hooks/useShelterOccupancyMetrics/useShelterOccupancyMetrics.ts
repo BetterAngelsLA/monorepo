@@ -12,6 +12,12 @@ export type ShelterOccupancyMetrics =
 export type ReservationMetrics =
   ShelterOccupancyMetrics['reservationMetrics'];
 
+export type DailyBedStatusMetrics =
+  ShelterOccupancyMetrics['dailyBedStatus'][number];
+
+export type DailyOccupancyMetrics =
+  ShelterOccupancyMetrics['dailyOccupancy'][number];
+
 type UseShelterOccupancyMetricsArgs = {
   shelterId?: string;
   startDate?: Date | null;
