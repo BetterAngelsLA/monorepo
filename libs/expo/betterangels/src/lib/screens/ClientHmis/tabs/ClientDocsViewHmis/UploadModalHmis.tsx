@@ -11,14 +11,12 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import { randomUUID } from 'expo-crypto';
 import { useState } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
-import {
-  useClientHmis,
-  useFileCategoryAndNamesHmis,
-  useSnackbar,
-} from '../../../../hooks';
+import { useClientHmis, useFileCategoryAndNamesHmis } from '../../../../hooks';
 import { getClientFilesQueryKey } from '../../../../hooks/fileMetadataHmis/useClientFiles';
+import { useUploadProgress } from '../../../../providers';
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 
@@ -59,7 +57,6 @@ type TProps = {
 export default function UploadModalHmis(props: TProps) {
   const { client, closeModal } = props;
 
-  const { showSnackbar } = useSnackbar();
   const [document, setDocument] = useState<ReactNativeFile | undefined>();
   const [fileSelection, setFileSelection] =
     useState<TFileCategorySelection | null>(null);
@@ -67,6 +64,8 @@ export default function UploadModalHmis(props: TProps) {
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const { startUpload, updateUpload, failUpload, endUpload } =
+    useUploadProgress();
   const { uploadClientFile } = useClientHmis();
   const queryClient = useQueryClient();
 
@@ -92,18 +91,9 @@ export default function UploadModalHmis(props: TProps) {
     closeModal();
   }
 
-  function onUploadSuccess() {
-    if (client?.id && client?.hmisId) {
-      queryClient.invalidateQueries({
-        queryKey: getClientFilesQueryKey(client.id, client.hmisId),
-      });
-    }
-
-    closeModal();
-  }
-
   async function onSubmit() {
     const clientHmisId = client?.uniqueIdentifier;
+    let sessionId: string | undefined;
 
     try {
       setIsUploading(true);
@@ -129,6 +119,14 @@ export default function UploadModalHmis(props: TProps) {
         throw new Error('No filename entered for subcategory_id [0]');
       }
 
+      sessionId = randomUUID();
+      startUpload(sessionId, [name.trim()]);
+      updateUpload(sessionId, {
+        stage: 'UPLOADING',
+        completed: 0,
+        total: 1,
+      });
+
       const fileBase64 = await readFileAsBase64(uri);
 
       await uploadClientFile({
@@ -144,15 +142,23 @@ export default function UploadModalHmis(props: TProps) {
         isPrivate: false,
       });
 
-      onUploadSuccess();
+      endUpload(sessionId);
+
+      if (client?.id && client?.hmisId) {
+        queryClient.invalidateQueries({
+          queryKey: getClientFilesQueryKey(client.id, client.hmisId),
+        });
+      }
+
+      closeModal();
     } catch (err) {
       console.error('[UploadModalHmis onSubmit]', err);
 
-      showSnackbar({
-        message: toErrorMessage(err),
-        type: 'error',
-        persist: true,
-      });
+      // Keep the session so the drawer shows the failure with the specific
+      // message; the modal stays open so the user can retry or cancel.
+      if (sessionId) {
+        failUpload(sessionId, toErrorMessage(err));
+      }
     } finally {
       setIsUploading(false);
     }

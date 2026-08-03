@@ -16,9 +16,17 @@ vi.mock('./UploadProgressDrawer', () => ({
     <View>
       <Text testID="drawer-count">{sessions.length}</Text>
       {sessions.map((session) => (
-        <Text key={session.id} testID={`session-${session.id}`}>
-          {session.completed}/{session.total}
-        </Text>
+        <View key={session.id}>
+          <Text testID={`session-${session.id}`}>
+            {session.completed}/{session.total}
+          </Text>
+          <Text testID={`session-${session.id}-failed`}>
+            {session.failed ? 'failed' : 'ok'}
+          </Text>
+          <Text testID={`session-${session.id}-error`}>
+            {session.errorMessage ?? 'none'}
+          </Text>
+        </View>
       ))}
     </View>
   ),
@@ -29,6 +37,7 @@ function Harness() {
     startUpload,
     setUploadManifest,
     updateUpload,
+    failUpload,
     endUpload,
     cancelUpload,
   } = useUploadProgress();
@@ -98,6 +107,14 @@ function Harness() {
       </Text>
       <Text
         accessibilityRole="button"
+        accessibilityLabel="fail"
+        accessibilityHint="mark the upload failed"
+        onPress={() => failUpload('a', 'Something went wrong.')}
+      >
+        fail
+      </Text>
+      <Text
+        accessibilityRole="button"
         accessibilityLabel="end"
         accessibilityHint="end the upload"
         onPress={() => endUpload('a')}
@@ -143,6 +160,27 @@ describe('UploadProgressProvider', () => {
     fireEvent.press(getByLabelText('update error'));
 
     expect(getByTestId('session-a').props.children).toEqual([1, '/', 2]);
+  });
+
+  it('failUpload keeps the session and records the error message', () => {
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <Harness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    fireEvent.press(getByLabelText('fail'));
+
+    // Session stays open so the drawer can show the failure + Close action.
+    expect(getByTestId('drawer-count').props.children).toBe(1);
+    expect(getByTestId('session-a-failed').props.children).toBe('failed');
+    expect(getByTestId('session-a-error').props.children).toBe(
+      'Something went wrong.',
+    );
+
+    fireEvent.press(getByLabelText('end'));
+    expect(queryByTestId('session-a')).toBeNull();
   });
 
   it('cancels a session and invokes its onCancel handler', () => {

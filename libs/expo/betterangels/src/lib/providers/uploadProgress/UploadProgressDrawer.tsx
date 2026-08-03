@@ -68,6 +68,16 @@ export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
           </TextRegular>
         </View>
 
+        {failed && session.errorMessage ? (
+          <TextRegular
+            size="xs"
+            color={Colors.ERROR}
+            style={styles.errorMessage}
+          >
+            {session.errorMessage}
+          </TextRegular>
+        ) : null}
+
         <View style={styles.bar}>
           <View style={[styles.barFill, { width: `${percent}%` }]} />
         </View>
@@ -125,13 +135,13 @@ export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
               onPress={() => endUpload(session.id)}
               accessibilityHint="Closes the upload progress panel"
             />
-          ) : (
+          ) : session.onCancel ? (
             <TextButton
               title="Cancel upload"
               onPress={() => cancelUpload(session.id)}
               accessibilityHint="Cancels the current upload"
             />
-          )}
+          ) : null}
         </View>
       </View>
     </View>
@@ -213,5 +223,8 @@ const styles = StyleSheet.create({
   cancelRow: {
     marginTop: Spacings.md,
     alignItems: 'flex-end',
+  },
+  errorMessage: {
+    marginTop: Spacings.xxs,
   },
 });

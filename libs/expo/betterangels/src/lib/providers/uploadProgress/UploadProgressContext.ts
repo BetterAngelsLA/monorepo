@@ -18,6 +18,8 @@ export type TUploadSession = {
   completed: number;
   total: number;
   failed: boolean;
+  /** Optional, flow-specific failure detail shown in the drawer's failed state. */
+  errorMessage?: string;
   /** Aborts the underlying upload. Invoked by `cancelUpload`. */
   onCancel?: () => void;
 };
@@ -35,6 +37,8 @@ export type TUploadProgressContextValue = {
   setUploadManifest: (id: string, manifest: TUploadManifestEntry[]) => void;
   /** Applies a pipeline progress event to a session. */
   updateUpload: (id: string, progress: TUploadProgress) => void;
+  /** Marks a session as failed (optionally with a flow-specific message). */
+  failUpload: (id: string, errorMessage?: string) => void;
   /** Removes a session (upload finished, success or failure). */
   endUpload: (id: string) => void;
   /** Aborts and removes a session. */

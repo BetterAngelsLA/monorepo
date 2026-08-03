@@ -116,6 +116,26 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
     );
   }, []);
 
+  const failUpload = useCallback((id: string, errorMessage?: string) => {
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id !== id
+          ? session
+          : {
+              ...session,
+              stage: 'UPLOADING',
+              failed: true,
+              errorMessage,
+              items: session.items.map((item) =>
+                item.status === 'done'
+                  ? item
+                  : { ...item, status: 'error' as TUploadItemStatus },
+              ),
+            },
+      ),
+    );
+  }, []);
+
   const endUpload = useCallback((id: string) => {
     setSessions((prev) => prev.filter((session) => session.id !== id));
   }, []);
@@ -131,6 +151,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       startUpload,
       setUploadManifest,
       updateUpload,
+      failUpload,
       endUpload,
       cancelUpload,
     }),
@@ -139,6 +160,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       startUpload,
       setUploadManifest,
       updateUpload,
+      failUpload,
       endUpload,
       cancelUpload,
     ],
