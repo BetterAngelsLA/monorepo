@@ -126,12 +126,13 @@ export function HomePage() {
   /** Skips one location-effect map sync when viewport fit handles center/zoom. */
   const skipNextLocationMapSyncRef = useRef(false);
 
-  /** Keeps the controlled camera in sync with user pan/zoom and fitBounds. */
-  const handleCameraChange = useCallback(
-    (next: TMapCamera) => {
-      setCamera(next);
+  /** Fires a search for the given rendered bounds (single map-area search primitive). */
+  const fireSearchForBounds = useCallback(
+    (bounds: TMapBounds) => {
+      setMapBoundsFilter(bounds);
+      setSearchTrigger((n) => n + 1);
     },
-    [setCamera]
+    [setSearchTrigger]
   );
 
   /**
@@ -145,12 +146,11 @@ export function HomePage() {
       if (pendingLocationSearchRef.current) {
         pendingLocationSearchRef.current = false;
         if (bounds) {
-          setMapBoundsFilter(bounds);
-          setSearchTrigger((n) => n + 1);
+          fireSearchForBounds(bounds);
         }
       }
     },
-    [setSearchTrigger]
+    [fireSearchForBounds]
   );
 
   const handleClick = useCallback(
@@ -179,11 +179,10 @@ export function HomePage() {
     (actualBounds: TMapBounds) => {
       // Use actual post-fit map bounds (not the Place's viewport) so the query
       // covers everything visible on screen, then fire the search.
-      setMapBoundsFilter(actualBounds);
       setPlaceViewportToFit(null);
-      setSearchTrigger((n) => n + 1);
+      fireSearchForBounds(actualBounds);
     },
-    [setSearchTrigger]
+    [fireSearchForBounds]
   );
 
   const onShelterPinsReadyForMapFit = useCallback(
@@ -234,9 +233,8 @@ export function HomePage() {
     setPendingLocation(null);
     setAppliedLocation(null);
     setLocationSearchInput('');
-    setMapBoundsFilter(toMapBounds(bounds));
+    fireSearchForBounds(toMapBounds(bounds));
     setShowSearchButton(false);
-    setSearchTrigger((n) => n + 1);
   }
 
   const applyMapCenter = useCallback(
@@ -266,8 +264,7 @@ export function HomePage() {
       // repeat). Search immediately with the current rendered bounds.
       const bounds = map.getBounds();
       if (bounds) {
-        setMapBoundsFilter(toMapBounds(bounds));
-        setSearchTrigger((n) => n + 1);
+        fireSearchForBounds(toMapBounds(bounds));
       }
       return;
     }
@@ -276,7 +273,7 @@ export function HomePage() {
     // map settles (see handleMapIdle) with the actual rendered bounds.
     setCamera({ ...cameraRef.current, center: location });
     pendingLocationSearchRef.current = true;
-  }, [map, location, setSearchTrigger, setCamera]);
+  }, [map, location, fireSearchForBounds, setCamera]);
 
   useEffect(() => {
     if (!map || hasInitialized) return;
@@ -347,10 +344,9 @@ export function HomePage() {
       // so results return to the map-area view instead of staying blank.
       const currentBounds = map?.getBounds();
       if (currentBounds) {
-        setMapBoundsFilter(toMapBounds(currentBounds));
+        fireSearchForBounds(toMapBounds(currentBounds));
       }
       setShowSearchButton(false);
-      setSearchTrigger((n) => n + 1);
       return;
     }
 
@@ -368,7 +364,7 @@ export function HomePage() {
         <Map
           center={camera.center}
           zoom={camera.zoom}
-          onCameraChange={handleCameraChange}
+          onCameraChange={setCamera}
           onMapIdle={handleMapIdle}
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
