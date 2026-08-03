@@ -1,6 +1,6 @@
 import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { Button, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { DocUploads } from './types';
 
@@ -14,44 +14,53 @@ export interface IFileUploadTabProps {
 
 /** Size of the circular status badge (plus/check) before each row. */
 const ICON_BADGE_SIZE = 20;
+/** Matches Button height="lg" so completed rows line up with active rows. */
+const ROW_HEIGHT = 44;
 
 const FileUploadTab = (props: IFileUploadTabProps) => {
   const { docs, tabKey, title, allowMultiple = false, onPress } = props;
-  const disabled = !allowMultiple && docs[tabKey].length > 0;
+  const isComplete = !allowMultiple && docs[tabKey].length > 0;
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}
-    >
-      <View
-        style={[
-          styles.tabIcon,
-          disabled && {
-            backgroundColor: Colors.SUCCESS,
-            borderWidth: 0,
-          },
-        ]}
-      >
-        {(disabled && <CheckIcon size="sm" color={Colors.WHITE} />) || (
+    <View style={styles.row}>
+      <View style={[styles.tabIcon, isComplete && styles.tabIconComplete]}>
+        {isComplete ? (
+          <CheckIcon size="sm" color={Colors.WHITE} />
+        ) : (
           <PlusIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
         )}
       </View>
 
-      <Button
-        disabled={disabled}
-        containerStyle={{ flex: 1 }}
-        onPress={onPress}
-        height="lg"
-        align="flex-start"
-        weight="regular"
-        size="full"
-        variant="secondary"
-        title={title}
-        accessibilityHint={`opens the file picker for ${title}`}
-      />
+      {isComplete ? (
+        <View
+          style={styles.completeRow}
+          accessible
+          accessibilityLabel={`${title} — uploaded`}
+        >
+          <TextRegular
+            size="sm"
+            color={Colors.NEUTRAL_EXTRA_DARK}
+            style={styles.completeTitle}
+          >
+            {title}
+          </TextRegular>
+          <TextRegular size="xs" color={Colors.SUCCESS}>
+            Uploaded
+          </TextRegular>
+        </View>
+      ) : (
+        <Button
+          containerStyle={{ flex: 1 }}
+          onPress={onPress}
+          height="lg"
+          align="flex-start"
+          weight="regular"
+          size="full"
+          variant="secondary"
+          title={title}
+          accessibilityHint={`opens the file picker for ${title}`}
+        />
+      )}
     </View>
   );
 };
@@ -59,6 +68,10 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
 export default FileUploadTab;
 
 const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   tabIcon: {
     alignItems: 'center',
     backgroundColor: Colors.WHITE,
@@ -69,5 +82,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: Spacings.xs,
     width: ICON_BADGE_SIZE,
+  },
+  tabIconComplete: {
+    backgroundColor: Colors.SUCCESS,
+    borderWidth: 0,
+  },
+  completeRow: {
+    flex: 1,
+    minHeight: ROW_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacings.xs,
+  },
+  completeTitle: {
+    flex: 1,
   },
 });
