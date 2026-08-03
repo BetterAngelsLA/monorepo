@@ -1,17 +1,16 @@
 import { useQuery } from '@apollo/client/react';
 import { useActiveOrg } from '@monorepo/ba-platform';
-import { useDebounce } from '@monorepo/react/shared';
-import { useAtomValue } from 'jotai';
-import { Search, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
 import type {
   DemographicChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
 } from '@monorepo/ba-platform/types';
+import { useDebounce } from '@monorepo/react/shared';
+import { useAtomValue } from 'jotai';
+import { Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { Button } from '../../components/base-ui/buttons';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import {
   ShelterTable,
@@ -172,14 +171,6 @@ export function Dashboard() {
           <div className="text-sm text-gray-600">{totalCount} Results</div>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <ShelterFilterPanel />
-
-            <Button
-              variant="primary"
-              leftIcon={<Settings2 size={20} />}
-              rightIcon={false}
-            >
-              Sort
-            </Button>
           </div>
         </div>
       </form>

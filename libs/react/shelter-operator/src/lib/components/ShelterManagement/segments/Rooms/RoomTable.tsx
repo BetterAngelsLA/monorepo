@@ -7,6 +7,7 @@ import {
   type StatusBadgeVariant,
 } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
+import { tableEmptyState } from '../tableEmptyState';
 
 import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 
@@ -23,7 +24,7 @@ type RoomTableProps = {
   onClone: (roomId: string) => void;
   onEdit: (roomId: string) => void;
   onDeleteRooms: (roomIds: string[], roomName?: string) => void;
-  onMarkReady: (bedId: string) => void;
+  onMarkReady: (roomId: string) => void;
   onReserve: (roomId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -69,7 +70,7 @@ export function RoomTable({
   onReserve,
   loading,
   loadingState,
-  emptyState,
+  emptyState = tableEmptyState('No rooms yet.'),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,
@@ -147,11 +148,13 @@ export function RoomTable({
             type="button"
             variant="edit"
             className="text-[#747A82]"
+            aria-label="Edit room"
             onClick={() => onEdit(room.id)}
           />
           <Button
             type="button"
             variant="trash"
+            aria-label="Delete room"
             onClick={() => onDeleteRooms([room.id], room.name)}
           />
         </div>

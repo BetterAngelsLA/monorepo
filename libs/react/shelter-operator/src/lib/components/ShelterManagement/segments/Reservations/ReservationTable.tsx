@@ -7,6 +7,7 @@ import { ReservationsQuery } from '../../../../hooks/useReservations/__generated
 import { Button } from '../../../base-ui/buttons';
 import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
+import { tableEmptyState } from '../tableEmptyState';
 import { reservationStatusInfo } from './ReservationForm';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
@@ -62,11 +63,7 @@ export function ReservationTable({
   reservations,
   loading,
   loadingState,
-  emptyState = (
-    <div className="px-6 py-8 text-center text-sm text-gray-500">
-      No reservations yet.
-    </div>
-  ),
+  emptyState = tableEmptyState('No reservations yet.'),
   isConfirmActionLoading,
   isCancelActionLoading,
   onEdit,
