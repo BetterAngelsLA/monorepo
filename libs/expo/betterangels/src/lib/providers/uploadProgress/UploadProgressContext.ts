@@ -18,6 +18,8 @@ export type TUploadSession = {
   completed: number;
   total: number;
   failed: boolean;
+  /** Aborts the underlying upload. Invoked by `cancelUpload`. */
+  onCancel?: () => void;
 };
 
 export type TUploadManifestEntry = {
@@ -28,13 +30,15 @@ export type TUploadManifestEntry = {
 export type TUploadProgressContextValue = {
   sessions: TUploadSession[];
   /** Registers a new upload session with the display names of its files. */
-  startUpload: (id: string, names: string[]) => void;
+  startUpload: (id: string, names: string[], onCancel?: () => void) => void;
   /** Pairs pipeline refIds with file names once the manifest is built. */
   setUploadManifest: (id: string, manifest: TUploadManifestEntry[]) => void;
   /** Applies a pipeline progress event to a session. */
   updateUpload: (id: string, progress: TUploadProgress) => void;
   /** Removes a session (upload finished, success or failure). */
   endUpload: (id: string) => void;
+  /** Aborts and removes a session. */
+  cancelUpload: (id: string) => void;
 };
 
 export const UploadProgressContext =

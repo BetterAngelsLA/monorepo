@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { uploadFileToS3WithPresignedPost } from '../s3';
-import { PresignedUploadError, S3UploadError } from './errors';
+import { PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
 import {
   TPresignedUpload,
   TUploadFile,
@@ -92,7 +92,7 @@ export async function runPresignedUpload<TResolve>(
 
   const throwIfAborted = () => {
     if (signal?.aborted) {
-      throw new PresignedUploadError('Upload aborted');
+      throw new UploadAbortedError();
     }
   };
 
@@ -175,7 +175,15 @@ export async function runPresignedUpload<TResolve>(
 
       return upload;
     } catch (err) {
-      emit('UPLOADING', { refId: upload.refId, status: 'error', error: err });
+      emit('UPLOADING', {
+        refId: upload.refId,
+        status: 'error',
+        error: err,
+      });
+
+      if (signal?.aborted) {
+        throw new UploadAbortedError();
+      }
 
       throw new S3UploadError(`Failed to upload ${file.name}`, err);
     }

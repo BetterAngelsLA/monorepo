@@ -1,4 +1,4 @@
-import { OperationInfoError, PresignedUploadError, S3UploadError } from './errors';
+import { OperationInfoError, PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
 import { runPresignedUpload } from './runPresignedUpload';
 import { unwrapPayload } from './unwrapPayload';
 import {
@@ -166,6 +166,21 @@ describe('runPresignedUpload', () => {
         resolveUpload: async () => undefined,
       }),
     ).rejects.toBeInstanceOf(PresignedUploadError);
+  });
+
+  it('throws UploadAbortedError when the signal is aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      runPresignedUpload({
+        files: [file('a.pdf')],
+        signal: controller.signal,
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload: async () => undefined,
+      }),
+    ).rejects.toBeInstanceOf(UploadAbortedError);
   });
 
   it('reports the refId/file manifest before generating', async () => {

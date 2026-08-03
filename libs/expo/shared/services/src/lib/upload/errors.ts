@@ -27,3 +27,12 @@ export class S3UploadError extends Error {
     this.details = details;
   }
 }
+
+/** Thrown when the upload is cancelled via `signal`. */
+export class UploadAbortedError extends Error {
+  readonly name = 'UploadAbortedError';
+
+  constructor() {
+    super('Upload aborted');
+  }
+}

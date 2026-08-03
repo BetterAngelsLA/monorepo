@@ -1,16 +1,11 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  LoadingView,
-  MediaPicker,
-  TextBold,
-} from '@monorepo/expo/shared/ui-components';
+import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { randomUUID } from 'expo-crypto';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useUploadProgress } from '../../../../providers';
+import { useUploadSession } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
@@ -27,7 +22,6 @@ export default function UploadModal(props: IUploadModalProps) {
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
     null
   );
-  const [uploading, setUploading] = useState(false);
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
     ConsentForm: [],
@@ -41,12 +35,8 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const {
-    startUpload,
-    setUploadManifest,
-    updateUpload,
-    endUpload,
-  } = useUploadProgress();
+  const { begin, setUploadManifest, updateUpload, endUpload } =
+    useUploadSession();
 
   const clientProfileId = client?.clientProfile.id;
 
@@ -90,50 +80,36 @@ export default function UploadModal(props: IUploadModalProps) {
     const namespace = selectedUpload.namespace;
 
     setSelectedUpload(null);
-    setUploading(true);
 
-    const sessionId = randomUUID();
-    startUpload(sessionId, selectedFiles.map((file) => file.name));
+    const session = begin(selectedFiles.map((file) => file.name));
 
     try {
       await uploadDocuments({
         clientProfileId,
         documents: selectedFiles,
         namespace,
-        onManifest: (manifest) => setUploadManifest(sessionId, manifest),
-        onProgress: (progress) => updateUpload(sessionId, progress),
+        signal: session.signal,
+        onManifest: (manifest) => setUploadManifest(session.id, manifest),
+        onProgress: (progress) => updateUpload(session.id, progress),
       });
 
-      setUploading(false);
-      endUpload(sessionId);
+      endUpload(session.id);
       onUploadSuccess?.();
       closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
-      setUploading(false);
-      endUpload(sessionId);
-      onUploadError?.();
+      endUpload(session.id);
+
+      if (!session.isAborted()) {
+        onUploadError?.();
+      }
     }
   };
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
-
-  if (uploading) {
-    return (
-      <View
-        style={{
-          paddingTop: topOffset + Spacings.xs,
-          backgroundColor: Colors.WHITE,
-          flex: 1,
-        }}
-      >
-        <LoadingView />
-      </View>
-    );
-  }
 
   return (
     <View

@@ -19,17 +19,18 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-vi.mock('expo-crypto', () => ({
-  randomUUID: () => '00000000-0000-0000-0000-000000000000',
-}));
-
 vi.mock('./useClientDocumentUpload', () => ({
   useClientDocumentUpload: () => ({ uploadDocuments: mocks.uploadDocuments }),
 }));
 
 vi.mock('../../../../providers', () => ({
-  useUploadProgress: () => ({
-    startUpload: vi.fn(),
+  useUploadSession: () => ({
+    begin: vi.fn(() => ({
+      id: 'session-1',
+      signal: new AbortController().signal,
+      isAborted: () => false,
+    })),
+    cancel: vi.fn(),
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
     endUpload: vi.fn(),
@@ -37,7 +38,6 @@ vi.mock('../../../../providers', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
-  LoadingView: () => null,
   MediaPicker: (props: {
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;

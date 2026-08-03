@@ -1,7 +1,11 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
-import { TUploadItemStatus, TUploadSession } from './UploadProgressContext';
+import {
+  TUploadItemStatus,
+  TUploadSession,
+  useUploadProgress,
+} from './UploadProgressContext';
 
 const STAGE_LABELS: Record<TUploadSession['stage'], string> = {
   GENERATING: 'Preparing upload…',
@@ -34,6 +38,7 @@ type TUploadProgressDrawerProps = {
  */
 export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
   const { sessions } = props;
+  const { cancelUpload } = useUploadProgress();
 
   if (!sessions.length) {
     return null;
@@ -108,6 +113,14 @@ export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
             ))}
           </View>
         )}
+
+        <View style={styles.cancelRow}>
+          <TextButton
+            title="Cancel upload"
+            onPress={() => cancelUpload(session.id)}
+            accessibilityHint="Cancels the current upload"
+          />
+        </View>
       </View>
     </View>
   );
@@ -184,5 +197,9 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: Radiuses.xxxs,
     backgroundColor: Colors.PRIMARY,
+  },
+  cancelRow: {
+    marginTop: Spacings.md,
+    alignItems: 'flex-end',
   },
 });

@@ -1,4 +1,11 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { TUploadProgress } from '@monorepo/expo/shared/services';
 import { UploadProgressContext } from './UploadProgressContext';
 import {
@@ -22,24 +29,33 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   const { children } = props;
 
   const [sessions, setSessions] = useState<TUploadSession[]>([]);
+  const sessionsRef = useRef<TUploadSession[]>([]);
 
-  const startUpload = useCallback((id: string, names: string[]) => {
-    setSessions((prev) => [
-      ...prev,
-      {
-        id,
-        stage: 'GENERATING',
-        items: names.map((name, index) => ({
-          refId: `pending-${index}`,
-          name,
-          status: 'pending' as TUploadItemStatus,
-        })),
-        completed: 0,
-        total: names.length,
-        failed: false,
-      },
-    ]);
-  }, []);
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
+  const startUpload = useCallback(
+    (id: string, names: string[], onCancel?: () => void) => {
+      setSessions((prev) => [
+        ...prev,
+        {
+          id,
+          stage: 'GENERATING',
+          items: names.map((name, index) => ({
+            refId: `pending-${index}`,
+            name,
+            status: 'pending' as TUploadItemStatus,
+          })),
+          completed: 0,
+          total: names.length,
+          failed: false,
+          onCancel,
+        },
+      ]);
+    },
+    [],
+  );
 
   const setUploadManifest = useCallback(
     (id: string, manifest: TUploadManifestEntry[]) => {
@@ -104,9 +120,28 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
     setSessions((prev) => prev.filter((session) => session.id !== id));
   }, []);
 
+  const cancelUpload = useCallback((id: string) => {
+    sessionsRef.current.find((session) => session.id === id)?.onCancel?.();
+    setSessions((prev) => prev.filter((session) => session.id !== id));
+  }, []);
+
   const value = useMemo(
-    () => ({ sessions, startUpload, setUploadManifest, updateUpload, endUpload }),
-    [sessions, startUpload, setUploadManifest, updateUpload, endUpload],
+    () => ({
+      sessions,
+      startUpload,
+      setUploadManifest,
+      updateUpload,
+      endUpload,
+      cancelUpload,
+    }),
+    [
+      sessions,
+      startUpload,
+      setUploadManifest,
+      updateUpload,
+      endUpload,
+      cancelUpload,
+    ],
   );
 
   return (

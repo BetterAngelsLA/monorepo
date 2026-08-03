@@ -25,8 +25,13 @@ vi.mock('./UploadProgressDrawer', () => ({
 }));
 
 function Harness() {
-  const { startUpload, setUploadManifest, updateUpload, endUpload } =
-    useUploadProgress();
+  const {
+    startUpload,
+    setUploadManifest,
+    updateUpload,
+    endUpload,
+    cancelUpload,
+  } = useUploadProgress();
 
   return (
     <View>
@@ -37,6 +42,14 @@ function Harness() {
         onPress={() => startUpload('a', ['x.pdf', 'y.pdf'])}
       >
         start
+      </Text>
+      <Text
+        accessibilityRole="button"
+        accessibilityLabel="cancel"
+        accessibilityHint="cancel the cancelable upload"
+        onPress={() => cancelUpload('c')}
+      >
+        cancel
       </Text>
       <Text
         accessibilityRole="button"
@@ -130,5 +143,49 @@ describe('UploadProgressProvider', () => {
     fireEvent.press(getByLabelText('update error'));
 
     expect(getByTestId('session-a').props.children).toEqual([1, '/', 2]);
+  });
+
+  it('cancels a session and invokes its onCancel handler', () => {
+    const onCancel = vi.fn();
+
+    function CancelHarness() {
+      const { startUpload, cancelUpload } = useUploadProgress();
+
+      return (
+        <View>
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="start"
+            accessibilityHint="start an upload"
+            onPress={() => startUpload('c', ['z.pdf'], onCancel)}
+          >
+            start
+          </Text>
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="cancel"
+            accessibilityHint="cancel the upload"
+            onPress={() => cancelUpload('c')}
+          >
+            cancel
+          </Text>
+        </View>
+      );
+    }
+
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <CancelHarness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    expect(getByTestId('session-c').props.children).toEqual([0, '/', 1]);
+
+    fireEvent.press(getByLabelText('cancel'));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('session-c')).toBeNull();
+    expect(getByTestId('drawer-count').props.children).toBe(0);
   });
 });
