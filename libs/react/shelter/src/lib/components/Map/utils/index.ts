@@ -3,6 +3,7 @@ export { fromMapBounds } from './fromMapBounds';
 export { mapBoundsFromCenter } from './mapBoundsFromCenter';
 export {
   consumeSavedMapViewport,
+  mapViewportFromMap,
   peekSavedMapViewport,
   saveMapViewport,
 } from './mapViewportStorage';

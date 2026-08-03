@@ -14,6 +14,7 @@ import {
 } from '../../atoms';
 import {
   DEFAULT_BOUNDS_MILES,
+  DEFAULT_MAP_ZOOM,
   LA_COUNTY_CENTER,
   LoginBanner,
   MILES_TO_DEGREES_AT_EQUATOR,
@@ -23,12 +24,12 @@ import {
   ShelterSearch,
   TLatLng,
   TMapBounds,
+  TMapCamera,
   TMarker,
   TShelter,
   consumeSavedMapViewport,
   mapBoundsFromCenter,
   modalAtom,
-  toGoogleLatLng,
   toMapBounds,
   useRestoredMapViewport,
 } from '../../components';
@@ -95,9 +96,21 @@ export function HomePage() {
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  // Mounts the Map at the exact viewport saved before navigating to a shelter
+  // Mount the Map at the exact viewport saved before navigating to a shelter
   // detail page, so the visible pins and result count are unchanged on return.
   const { defaultCenter, defaultZoom } = useRestoredMapViewport();
+  const [camera, setCameraState] = useState<TMapCamera>(() => ({
+    center: defaultCenter ?? LA_COUNTY_CENTER,
+    zoom: defaultZoom ?? DEFAULT_MAP_ZOOM,
+  }));
+  const cameraRef = useRef<TMapCamera>(camera);
+  /** Set the controlled camera, keeping a ref in sync for the location effect. */
+  const setCamera = useCallback((next: TMapCamera) => {
+    cameraRef.current = next;
+    setCameraState(next);
+  }, []);
+  /** True while a programmatic camera move awaits the map's idle search. */
+  const pendingLocationSearchRef = useRef(false);
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -112,6 +125,33 @@ export function HomePage() {
   const hasLocationPermission = useLocationPermission();
   /** Skips one location-effect map sync when viewport fit handles center/zoom. */
   const skipNextLocationMapSyncRef = useRef(false);
+
+  /** Keeps the controlled camera in sync with user pan/zoom and fitBounds. */
+  const handleCameraChange = useCallback(
+    (next: TMapCamera) => {
+      setCamera(next);
+    },
+    [setCamera]
+  );
+
+  /**
+   * Fires whenever the map settles: reveal the search button and, if a
+   * programmatic camera move is pending, fire the search with the actual
+   * rendered bounds so the result total matches what's visible.
+   */
+  const handleMapIdle = useCallback(
+    (bounds: TMapBounds | null) => {
+      setShowSearchButton(true);
+      if (pendingLocationSearchRef.current) {
+        pendingLocationSearchRef.current = false;
+        if (bounds) {
+          setMapBoundsFilter(bounds);
+          setSearchTrigger((n) => n + 1);
+        }
+      }
+    },
+    [setSearchTrigger]
+  );
 
   const handleClick = useCallback(
     (markerId: string | null | undefined) => {
@@ -202,8 +242,8 @@ export function HomePage() {
   const applyMapCenter = useCallback(
     (lat: number, lng: number) => {
       // Only the location drives the camera once the Map is mounted (the
-      // location effect below calls map.setCenter); defaultCenter matters
-      // solely for the Map's initial camera at mount time.
+      // location effect updates the controlled camera); the initial camera
+      // comes from the camera state above.
       setLocation({ latitude: lat, longitude: lng });
     },
     [setLocation]
@@ -217,33 +257,26 @@ export function HomePage() {
       return;
     }
 
-    const center = toGoogleLatLng(location);
+    const alreadyCentered =
+      cameraRef.current.center.latitude === location.latitude &&
+      cameraRef.current.center.longitude === location.longitude;
 
-    if (center) {
-      map.setCenter(center);
-    }
-
-    const bounds = map.getBounds();
-
-    if (bounds) {
-      setMapBoundsFilter(toMapBounds(bounds));
-      setSearchTrigger((n) => n + 1);
+    if (alreadyCentered) {
+      // The camera is already at the location (e.g. restored viewport or a
+      // repeat). Search immediately with the current rendered bounds.
+      const bounds = map.getBounds();
+      if (bounds) {
+        setMapBoundsFilter(toMapBounds(bounds));
+        setSearchTrigger((n) => n + 1);
+      }
       return;
     }
 
-    const listener = map.addListener('idle', () => {
-      const idleBounds = map.getBounds();
-
-      if (idleBounds) {
-        setMapBoundsFilter(toMapBounds(idleBounds));
-        setSearchTrigger((n) => n + 1);
-      }
-
-      listener.remove();
-    });
-
-    return () => listener.remove();
-  }, [map, location, setSearchTrigger]);
+    // Move the controlled camera to the location; the search fires once the
+    // map settles (see handleMapIdle) with the actual rendered bounds.
+    setCamera({ ...cameraRef.current, center: location });
+    pendingLocationSearchRef.current = true;
+  }, [map, location, setSearchTrigger, setCamera]);
 
   useEffect(() => {
     if (!map || hasInitialized) return;
@@ -252,9 +285,9 @@ export function HomePage() {
     const savedViewport = consumeSavedMapViewport();
 
     if (savedViewport) {
-      // The Map already mounted at the saved camera (see defaultCenter /
-      // defaultZoom above). Set the location so the location effect fires a
-      // search with the restored viewport's actual bounds.
+      // The Map already mounted at the saved camera (see the camera state
+      // above). Set the location so the location effect fires a search with
+      // the restored viewport's actual bounds.
       applyMapCenter(
         savedViewport.center.latitude,
         savedViewport.center.longitude
@@ -333,15 +366,16 @@ export function HomePage() {
       <MaxWLayout className="-mx-4 relative">
         {!user && <LoginBanner />}
         <Map
-          defaultCenter={defaultCenter}
-          defaultZoom={defaultZoom}
+          center={camera.center}
+          zoom={camera.zoom}
+          onCameraChange={handleCameraChange}
+          onMapIdle={handleMapIdle}
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
           userLocation={userLocation}
           showCurrentLocationBtn={hasLocationPermission}
           showSearchButton={showSearchButton}
-          setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}
           onSearchMapArea={onSearchMapArea}
           placeViewportToFit={placeViewportToFit}
