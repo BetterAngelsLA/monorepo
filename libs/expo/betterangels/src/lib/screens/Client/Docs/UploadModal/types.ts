@@ -3,8 +3,6 @@ import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
 export interface IUploadModalProps {
   closeModal: () => void;
-  onUploadSuccess?: () => void;
-  onUploadError?: () => void;
   client: ClientProfileQuery | undefined;
 }
 

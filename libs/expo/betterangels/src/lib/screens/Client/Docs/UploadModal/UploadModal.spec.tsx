@@ -7,6 +7,7 @@ import UploadModal from './index';
 
 const mocks = vi.hoisted(() => ({
   uploadDocuments: vi.fn(),
+  endUpload: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -33,7 +34,7 @@ vi.mock('../../../../providers', () => ({
     cancel: vi.fn(),
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
-    endUpload: vi.fn(),
+    endUpload: mocks.endUpload,
   }),
 }));
 
@@ -78,17 +79,11 @@ const sampleFile = {
   uri: 'file://consent.pdf',
 };
 
-function renderModal(overrides: {
-  onUploadSuccess?: () => void;
-  onUploadError?: () => void;
-  closeModal?: () => void;
-}) {
+function renderModal(overrides?: { closeModal?: () => void }) {
   return render(
     <UploadModal
       client={client}
-      closeModal={overrides.closeModal ?? vi.fn()}
-      onUploadSuccess={overrides.onUploadSuccess}
-      onUploadError={overrides.onUploadError}
+      closeModal={overrides?.closeModal ?? vi.fn()}
     />
   );
 }
@@ -104,16 +99,15 @@ async function selectFiles(files: unknown[]) {
 describe('UploadModal', () => {
   beforeEach(() => {
     mocks.uploadDocuments.mockReset();
+    mocks.endUpload.mockClear();
     mocks.mediaPickerProps.length = 0;
   });
 
-  it('uploads selected files with the matching namespace and reports success', async () => {
-    const onUploadSuccess = vi.fn();
-    const onUploadError = vi.fn();
+  it('uploads selected files with the matching namespace and closes on success', async () => {
     const closeModal = vi.fn();
     mocks.uploadDocuments.mockResolvedValue(undefined);
 
-    const { getByText } = renderModal({ onUploadSuccess, onUploadError, closeModal });
+    const { getByText } = renderModal({ closeModal });
 
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
@@ -125,24 +119,21 @@ describe('UploadModal', () => {
         namespace: ClientDocumentNamespaceEnum.ConsentForm,
       }),
     );
-    expect(onUploadSuccess).toHaveBeenCalled();
+    expect(mocks.endUpload).toHaveBeenCalled();
     expect(closeModal).toHaveBeenCalled();
-    expect(onUploadError).not.toHaveBeenCalled();
   });
 
-  it('reports an error without closing the modal when the upload fails', async () => {
-    const onUploadSuccess = vi.fn();
-    const onUploadError = vi.fn();
+  it('keeps the modal and the progress session open when the upload fails', async () => {
     const closeModal = vi.fn();
     mocks.uploadDocuments.mockRejectedValue(new Error('upload failed'));
 
-    const { getByText } = renderModal({ onUploadSuccess, onUploadError, closeModal });
+    const { getByText } = renderModal({ closeModal });
 
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(onUploadError).toHaveBeenCalled();
     expect(closeModal).not.toHaveBeenCalled();
-    expect(onUploadSuccess).not.toHaveBeenCalled();
+    // Session stays open so the drawer can show the failed file(s).
+    expect(mocks.endUpload).not.toHaveBeenCalled();
   });
 });

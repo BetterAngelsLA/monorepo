@@ -38,13 +38,15 @@ type TUploadProgressDrawerProps = {
  */
 export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
   const { sessions } = props;
-  const { cancelUpload } = useUploadProgress();
+  const { cancelUpload, endUpload } = useUploadProgress();
 
   if (!sessions.length) {
     return null;
   }
 
   const session = sessions[sessions.length - 1];
+  const failed =
+    session.failed || session.items.some((item) => item.status === 'error');
   const percent = session.total ? (session.completed / session.total) * 100 : 0;
 
   return (
@@ -58,7 +60,9 @@ export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
         <View style={styles.handle} />
 
         <View style={styles.headerRow}>
-          <TextBold size="sm">{STAGE_LABELS[session.stage]}</TextBold>
+          <TextBold size="sm" color={failed ? Colors.ERROR : undefined}>
+            {failed ? 'Upload failed' : STAGE_LABELS[session.stage]}
+          </TextBold>
           <TextRegular size="sm">
             {session.completed} of {session.total}
           </TextRegular>
@@ -115,11 +119,19 @@ export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
         )}
 
         <View style={styles.cancelRow}>
-          <TextButton
-            title="Cancel upload"
-            onPress={() => cancelUpload(session.id)}
-            accessibilityHint="Cancels the current upload"
-          />
+          {failed ? (
+            <TextButton
+              title="Close"
+              onPress={() => endUpload(session.id)}
+              accessibilityHint="Closes the upload progress panel"
+            />
+          ) : (
+            <TextButton
+              title="Cancel upload"
+              onPress={() => cancelUpload(session.id)}
+              accessibilityHint="Cancels the current upload"
+            />
+          )}
         </View>
       </View>
     </View>

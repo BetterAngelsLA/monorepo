@@ -17,7 +17,7 @@ type TUploadSelection = {
 };
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { client, closeModal, onUploadSuccess, onUploadError } = props;
+  const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
     null
@@ -94,15 +94,15 @@ export default function UploadModal(props: IUploadModalProps) {
       });
 
       endUpload(session.id);
-      onUploadSuccess?.();
       closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
-      endUpload(session.id);
-
-      if (!session.isAborted()) {
-        onUploadError?.();
+      // Keep the session so the progress drawer shows the failed file(s); the
+      // modal stays open so the user can retry. Cancelled sessions were already
+      // removed by the drawer's cancel action.
+      if (session.isAborted()) {
+        endUpload(session.id);
       }
     }
   };

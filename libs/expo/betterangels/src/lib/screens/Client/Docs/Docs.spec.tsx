@@ -6,15 +6,10 @@ import Docs from './index';
 
 const mocks = vi.hoisted(() => ({
   showModalScreen: vi.fn(),
-  showSnackbar: vi.fn(),
 }));
 
 vi.mock('../../../providers', () => ({
   useModalScreen: () => ({ showModalScreen: mocks.showModalScreen }),
-}));
-
-vi.mock('../../../hooks', () => ({
-  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
 }));
 
 vi.mock('@monorepo/expo/shared/icons', () => ({
@@ -57,27 +52,9 @@ vi.mock('./Documents', () => ({
 
 vi.mock('./UploadModal', () => ({
   __esModule: true,
-  default: (props: {
-    onUploadSuccess?: () => void;
-    onUploadError?: () => void;
-  }) => (
+  default: () => (
     <View>
-      <Text
-        accessibilityRole="button"
-        accessibilityLabel="upload success"
-        accessibilityHint="simulate a successful upload"
-        onPress={() => props.onUploadSuccess?.()}
-      >
-        success
-      </Text>
-      <Text
-        accessibilityRole="button"
-        accessibilityLabel="upload error"
-        accessibilityHint="simulate a failed upload"
-        onPress={() => props.onUploadError?.()}
-      >
-        error
-      </Text>
+      <Text>UploadModal</Text>
     </View>
   ),
 }));
@@ -103,7 +80,6 @@ const populatedClient = {
 describe('Client Docs', () => {
   beforeEach(() => {
     mocks.showModalScreen.mockClear();
-    mocks.showSnackbar.mockClear();
   });
 
   it('shows the empty state when there are no documents', () => {
@@ -121,35 +97,17 @@ describe('Client Docs', () => {
     expect(queryByText('No files yet')).toBeNull();
   });
 
-  it('shows a success snackbar when the upload modal reports success', () => {
+  it('opens the upload modal from the add button', () => {
     const { getByLabelText } = render(<Docs client={emptyClient} />);
 
     fireEvent.press(getByLabelText('add document'));
 
-    const modalOptions = mocks.showModalScreen.mock.calls[0][0];
-    const modal = render(modalOptions.renderContent({ close: vi.fn() }));
-
-    fireEvent.press(modal.getByLabelText('upload success'));
-
-    expect(mocks.showSnackbar).toHaveBeenCalledWith({
-      message: 'File uploaded successfully.',
-      type: 'success',
-    });
-  });
-
-  it('shows an error snackbar when the upload modal reports failure', () => {
-    const { getByLabelText } = render(<Docs client={emptyClient} />);
-
-    fireEvent.press(getByLabelText('add document'));
+    expect(mocks.showModalScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Upload Files' }),
+    );
 
     const modalOptions = mocks.showModalScreen.mock.calls[0][0];
     const modal = render(modalOptions.renderContent({ close: vi.fn() }));
-
-    fireEvent.press(modal.getByLabelText('upload error'));
-
-    expect(mocks.showSnackbar).toHaveBeenCalledWith({
-      message: 'Upload failed. Please try again.',
-      type: 'error',
-    });
+    expect(modal.getByText('UploadModal')).toBeTruthy();
   });
 });

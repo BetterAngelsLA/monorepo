@@ -4,7 +4,6 @@ import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
@@ -18,7 +17,6 @@ export default function Docs({
 }) {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const { showModalScreen } = useModalScreen();
-  const { showSnackbar } = useSnackbar();
 
   const props = {
     expanded,
@@ -55,22 +53,7 @@ export default function Docs({
               presentation: 'fullScreenModal',
               title: 'Upload Files',
               renderContent: ({ close }) => (
-                <UploadModal
-                  client={client}
-                  closeModal={close}
-                  onUploadSuccess={() =>
-                    showSnackbar({
-                      message: 'File uploaded successfully.',
-                      type: 'success',
-                    })
-                  }
-                  onUploadError={() =>
-                    showSnackbar({
-                      message: 'Upload failed. Please try again.',
-                      type: 'error',
-                    })
-                  }
-                />
+                <UploadModal client={client} closeModal={close} />
               ),
             })
           }
