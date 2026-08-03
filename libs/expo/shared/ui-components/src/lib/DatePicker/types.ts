@@ -20,6 +20,7 @@ export type INumericDatePickerProps = Omit<
   onChange?: (date: Date | null) => void;
   // Handler for clearing the date. If provided, clear button will be shown when value exists.
   onDelete?: () => void;
+  testId?: string;
 };
 
 export interface IWheelDatePickerProps extends TMarginProps {
@@ -36,6 +37,7 @@ export interface IWheelDatePickerProps extends TMarginProps {
   minDate?: Date;
   maxDate?: Date;
   value?: Date | null;
+  testId?: string;
 }
 
 type OmittedRHFKeys = 'value' | 'onChange' | 'onBlur';
