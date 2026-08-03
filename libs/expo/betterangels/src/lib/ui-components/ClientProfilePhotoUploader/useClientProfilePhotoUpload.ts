@@ -20,14 +20,22 @@ export function useClientProfilePhotoUpload() {
   async function uploadPhoto({
     clientProfileId,
     file,
+    signal,
+    onManifest,
     onProgress,
   }: {
     clientProfileId: string;
     file: ReactNativeFile;
+    signal?: AbortSignal;
+    onManifest?: (
+      manifest: Array<{ refId: string; file: ReactNativeFile }>,
+    ) => void;
     onProgress?: (progress: TUploadProgress) => void;
   }) {
     await runPresignedUpload({
       files: [file],
+      signal,
+      onManifest,
       generateUpload: async (inputs) => {
         const input = inputs[0];
 

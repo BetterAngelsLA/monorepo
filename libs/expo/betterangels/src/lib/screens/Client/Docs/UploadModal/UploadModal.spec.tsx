@@ -8,6 +8,7 @@ import UploadModal from './index';
 const mocks = vi.hoisted(() => ({
   uploadDocuments: vi.fn(),
   endUpload: vi.fn(),
+  failUpload: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -31,9 +32,9 @@ vi.mock('../../../../providers', () => ({
       signal: new AbortController().signal,
       isAborted: () => false,
     })),
-    cancel: vi.fn(),
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
+    failUpload: mocks.failUpload,
     endUpload: mocks.endUpload,
   }),
 }));
@@ -100,6 +101,7 @@ describe('UploadModal', () => {
   beforeEach(() => {
     mocks.uploadDocuments.mockReset();
     mocks.endUpload.mockClear();
+    mocks.failUpload.mockClear();
     mocks.mediaPickerProps.length = 0;
   });
 
@@ -133,7 +135,9 @@ describe('UploadModal', () => {
     await selectFiles([sampleFile]);
 
     expect(closeModal).not.toHaveBeenCalled();
-    // Session stays open so the drawer can show the failed file(s).
+    // Session stays open and is marked failed so the drawer shows the
+    // failure + Close action.
     expect(mocks.endUpload).not.toHaveBeenCalled();
+    expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
   });
 });

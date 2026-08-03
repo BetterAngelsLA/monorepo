@@ -1,12 +1,11 @@
-import { useRef } from 'react';
 import { randomUUID } from 'expo-crypto';
-import { TUploadManifestEntry, useUploadProgress } from './UploadProgressContext';
+import { useUploadProgress } from './UploadProgressContext';
 
 type TUploadSessionHandle = {
   id: string;
   /** Abort signal to pass to the upload pipeline so cancellation works. */
   signal: AbortSignal;
-  /** True once the session has been cancelled (via `cancel` or the drawer). */
+  /** True once the session has been cancelled via the drawer. */
   isAborted: () => boolean;
 };
 
@@ -16,21 +15,13 @@ type TUploadSessionHandle = {
  * aborts the in-flight upload.
  */
 export function useUploadSession() {
-  const {
-    startUpload,
-    setUploadManifest,
-    updateUpload,
-    endUpload,
-    cancelUpload,
-  } = useUploadProgress();
-
-  const controllerRef = useRef<AbortController | null>(null);
+  const { startUpload, setUploadManifest, updateUpload, failUpload, endUpload } =
+    useUploadProgress();
 
   const begin = (names: string[]): TUploadSessionHandle => {
     const id = randomUUID();
     const controller = new AbortController();
 
-    controllerRef.current = controller;
     startUpload(id, names, () => controller.abort());
 
     return {
@@ -40,9 +31,7 @@ export function useUploadSession() {
     };
   };
 
-  const cancel = (id: string) => cancelUpload(id);
-
-  return { begin, cancel, setUploadManifest, updateUpload, endUpload };
+  return { begin, setUploadManifest, updateUpload, failUpload, endUpload };
 }
 
-export type { TUploadManifestEntry, TUploadSessionHandle };
+export type { TUploadSessionHandle };

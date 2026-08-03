@@ -35,7 +35,7 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const { begin, setUploadManifest, updateUpload, endUpload } =
+  const { begin, setUploadManifest, updateUpload, failUpload, endUpload } =
     useUploadSession();
 
   const clientProfileId = client?.clientProfile.id;
@@ -98,11 +98,13 @@ export default function UploadModal(props: IUploadModalProps) {
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
-      // Keep the session so the progress drawer shows the failed file(s); the
-      // modal stays open so the user can retry. Cancelled sessions were already
-      // removed by the drawer's cancel action.
+      // Cancelled sessions were already removed by the drawer's cancel
+      // action. Other failures mark the session failed so the drawer shows
+      // the failure + Close; the modal stays open so the user can retry.
       if (session.isAborted()) {
         endUpload(session.id);
+      } else {
+        failUpload(session.id);
       }
     }
   };
