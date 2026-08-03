@@ -38,7 +38,7 @@ export function DayRow(props: TProps) {
   const updateRange = (index: number, patch: Partial<TimeRange>) => {
     onChange({
       ranges: schedule.ranges.map((r, i) =>
-        i === index ? { ...r, ...patch } : r
+        i === index ? { ...r, ...patch } : r,
       ),
     });
   };

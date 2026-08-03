@@ -71,7 +71,7 @@ export function ShelterCard(props: TShelterCard) {
         lat: location?.latitude,
         lng: location?.longitude,
         zoom: map?.getZoom(),
-      })
+      }),
     );
     navigate(`/shelter/${id}`);
   };

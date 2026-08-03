@@ -45,13 +45,13 @@ type GetFieldErrorsOrThrowParams = {
  *    `FieldError[]`; PERMISSION → `BaPermissionError`; anything else → `Error`.
  */
 export function getFieldErrorsOrThrow(
-  params: GetFieldErrorsOrThrowParams
+  params: GetFieldErrorsOrThrowParams,
 ): FieldError[] {
   const { response, operationKey, successTypename, fields } = params;
 
   if (!fields.length) {
     console.error(
-      '[getFieldErrorsOrThrow] requires a non-empty fields argument.'
+      '[getFieldErrorsOrThrow] requires a non-empty fields argument.',
     );
 
     throw new Error(DEFAULT_GENERIC_ERROR_MESSAGE);
@@ -87,7 +87,7 @@ export function getFieldErrorsOrThrow(
               DEFAULT_FIELD_ERROR_MESSAGE,
           },
         ];
-      }
+      },
     );
 
     // Extensions with field-level errors are recoverable — return for form display
@@ -100,7 +100,7 @@ export function getFieldErrorsOrThrow(
   if (response.errors?.length) {
     if (isUnauthenticatedError(response.errors)) {
       throw new BaPermissionError(
-        response.errors.find((e) => e.message)?.message || undefined
+        response.errors.find((e) => e.message)?.message || undefined,
       );
     }
 
@@ -129,21 +129,21 @@ export function getFieldErrorsOrThrow(
 
   // PERMISSION → throw
   const permissionMsg = operationInfo?.messages.find(
-    (m) => m.kind === OperationMessageKind.Permission
+    (m) => m.kind === OperationMessageKind.Permission,
   );
 
   if (permissionMsg) {
     throw new BaPermissionError(
       permissionMsg.field
         ? `You do not have permission to update the "${permissionMsg.field}" field`
-        : permissionMsg.message || undefined
+        : permissionMsg.message || undefined,
     );
   }
 
   // Partition messages
   const { recoverable, unrecoverable } = filterRecoverableOperationMessages(
     operationInfo?.messages ?? [],
-    fields
+    fields,
   );
 
   // unrecoverable: we can't handle them, must throw.

@@ -163,7 +163,7 @@ export default function UploadModal(props: IUploadModalProps) {
   useEffect(() => {
     const findDoc = (namespace: ClientDocumentNamespaceEnum) => {
       const file = client?.clientProfile.docReadyDocuments?.find(
-        (item) => item.namespace === namespace
+        (item) => item.namespace === namespace,
       )?.file as ReactNativeFile | undefined;
       return file ? [file] : [];
     };
@@ -171,13 +171,13 @@ export default function UploadModal(props: IUploadModalProps) {
     setDocs((prev) => ({
       ...prev,
       DriversLicenseFront: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseFront
+        ClientDocumentNamespaceEnum.DriversLicenseFront,
       ),
       DriversLicenseBack: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseBack
+        ClientDocumentNamespaceEnum.DriversLicenseBack,
       ),
       SocialSecurityCard: findDoc(
-        ClientDocumentNamespaceEnum.SocialSecurityCard
+        ClientDocumentNamespaceEnum.SocialSecurityCard,
       ),
       BirthCertificate: findDoc(ClientDocumentNamespaceEnum.BirthCertificate),
       PhotoId: findDoc(ClientDocumentNamespaceEnum.PhotoId),

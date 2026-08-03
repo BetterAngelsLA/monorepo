@@ -34,7 +34,7 @@ export default function useAppState() {
     if (!appStateSubscription.current) {
       appStateSubscription.current = AppState.addEventListener(
         'change',
-        handleAppStateChange
+        handleAppStateChange,
       );
     }
 

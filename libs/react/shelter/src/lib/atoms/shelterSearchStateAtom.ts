@@ -50,4 +50,6 @@ export type TShelterSearchRequest = {
  * Written by SearchPage when the user confirms their search.
  * ShelterSearch watches this and applies the search, then clears it.
  */
-export const shelterSearchRequestAtom = atom<TShelterSearchRequest | null>(null);
+export const shelterSearchRequestAtom = atom<TShelterSearchRequest | null>(
+  null,
+);

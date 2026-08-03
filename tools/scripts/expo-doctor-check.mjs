@@ -24,10 +24,14 @@ const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const group = (label) => console.log(`::group::${label}`);
 const endgroup = () => console.log('::endgroup::');
 const ok = (msg) => console.log(`  ✓ ${msg}`);
-const err = (msg) => { console.error(msg); process.exit(1); };
+const err = (msg) => {
+  console.error(msg);
+  process.exit(1);
+};
 
 // Wraps execSync to always use ROOT_DIR and inherit stdio for visibility
-const run = (cmd, opts = {}) => execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit', ...opts });
+const run = (cmd, opts = {}) =>
+  execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit', ...opts });
 
 // --- main ---
 
@@ -46,7 +50,7 @@ run(`yarn nx run ${appName}:sync-deps --skip-nx-cache`);
 if (readFileSync(appPkgPath, 'utf-8') !== snapshot) {
   err(
     `ERROR: sync-deps modified ${appRel}/package.json!\n` +
-    `Dependencies are out of sync. Run 'yarn nx run ${appName}:sync-deps' locally and commit.`
+      `Dependencies are out of sync. Run 'yarn nx run ${appName}:sync-deps' locally and commit.`,
   );
 }
 ok('Package deps in sync');
@@ -75,7 +79,9 @@ try {
   // ---- cleanup: always restore ----
   writeFileSync(appPkgPath, originalPkg);
   // Remove lockfile if filled-star-deps copied it into the app dir
-  try { rmSync(resolve(appDir, 'yarn.lock')); } catch {}
+  try {
+    rmSync(resolve(appDir, 'yarn.lock'));
+  } catch {}
   ok('Restored original package.json');
 }
 

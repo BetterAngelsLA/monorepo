@@ -10,7 +10,7 @@ type TProps = {
 };
 
 function propertyFiltersAffectQuery(
-  propertyFilters?: TShelterPropertyFilters | null
+  propertyFilters?: TShelterPropertyFilters | null,
 ): boolean {
   if (!propertyFilters) {
     return false;

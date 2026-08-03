@@ -13,7 +13,7 @@ export const DEFAULT_PRESET: DateRangePreset = 'LAST_30_DAYS';
 
 export function resolvePreset(
   preset: DateRangePreset,
-  today: Date = new Date()
+  today: Date = new Date(),
 ): DateRange {
   switch (preset) {
     case 'LAST_7_DAYS':

@@ -24,7 +24,7 @@ export type CreateShelterTypePoliciesProps = {
 };
 
 export function createShelterTypePolicies(
-  props: CreateShelterTypePoliciesProps
+  props: CreateShelterTypePoliciesProps,
 ): TypePolicies {
   const { isDevEnv, extraPolicies } = props;
 
@@ -43,7 +43,7 @@ export function createShelterTypePolicies(
         const rawUrl =
           obj['url'] ??
           Object.values(obj).find(
-            (v) => typeof v === 'string' && v.startsWith('http')
+            (v) => typeof v === 'string' && v.startsWith('http'),
           );
 
         const urlKey = toUrlKeyFieldValue(rawUrl);
@@ -51,8 +51,8 @@ export function createShelterTypePolicies(
         if (isDevEnv && !urlKey) {
           console.warn(
             `[typePolicies: DjangoImageType] missing url keyField: ${JSON.stringify(
-              obj
-            )}`
+              obj,
+            )}`,
           );
         }
 
@@ -66,8 +66,8 @@ export function createShelterTypePolicies(
         if (isDevEnv && !urlKey) {
           console.warn(
             `[typePolicies: DjangoFileType] missing url keyField: ${JSON.stringify(
-              obj
-            )}`
+              obj,
+            )}`,
           );
         }
 

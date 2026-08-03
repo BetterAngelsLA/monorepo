@@ -31,7 +31,7 @@ type TProps = {
 };
 
 export async function processHouseholdMemberForm(
-  props: TProps
+  props: TProps,
 ): Promise<boolean> {
   const {
     formData,

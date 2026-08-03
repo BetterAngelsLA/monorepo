@@ -20,7 +20,7 @@ export default function Interactions({
 
   const renderItemFn = useCallback(
     (note: NoteType) => <NoteCard note={note} variant="clientProfile" />,
-    []
+    [],
   );
 
   const renderListHeader = useCallback(
@@ -44,7 +44,7 @@ export default function Interactions({
         </View>
       );
     },
-    [client]
+    [client],
   );
 
   if (!client) {

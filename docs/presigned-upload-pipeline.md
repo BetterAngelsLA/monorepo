@@ -31,14 +31,14 @@ routing bytes through the Django backend. It uses a three-phase flow:
 
 ### Key files
 
-| Layer | File | Role |
-|---|---|---|
-| Generic pipeline | `common/services/file_upload.py` | Phase 1 & 3 orchestration |
-| S3 operations | `common/services/s3.py` | Presigned POST generation, key existence checks |
-| Token auth | `common/services/upload_token.py` | Stateless HMAC token create/validate |
-| Types | `common/services/types.py` | Dataclasses: config, input/output items |
-| Exceptions | `common/services/exceptions.py` | Domain-specific validation errors |
-| GraphQL types | `common/graphql/types.py` | Strawberry types for API responses |
+| Layer            | File                              | Role                                            |
+| ---------------- | --------------------------------- | ----------------------------------------------- |
+| Generic pipeline | `common/services/file_upload.py`  | Phase 1 & 3 orchestration                       |
+| S3 operations    | `common/services/s3.py`           | Presigned POST generation, key existence checks |
+| Token auth       | `common/services/upload_token.py` | Stateless HMAC token create/validate            |
+| Types            | `common/services/types.py`        | Dataclasses: config, input/output items         |
+| Exceptions       | `common/services/exceptions.py`   | Domain-specific validation errors               |
+| GraphQL types    | `common/graphql/types.py`         | Strawberry types for API responses              |
 
 ---
 
@@ -47,12 +47,12 @@ routing bytes through the Django backend. It uses a three-phase flow:
 Each domain instantiates an `AttachmentUploadConfig` with its own upload path,
 service name, content-type allowlist, and max file size:
 
-| Domain | Config constant | Upload path | Service name | Content types | Max size |
-|---|---|---|---|---|---|
-| Shelter photos | `SHELTER_PHOTO_CONFIG` | `shelters` | `shelter_photo` | Images only | `SHELTER_PHOTO_MAX_FILE_SIZE` |
-| Client documents | `CLIENT_DOCUMENT_CONFIG` | `attachments` | `client_document` | Docs + images | `CLIENT_DOCUMENT_MAX_FILE_SIZE` |
-| Client profile photo | `CLIENT_PROFILE_PHOTO_CONFIG` | `client_profile_photos` | `client_profile_photo` | Images only | `S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE` |
-| Note attachments | `NOTE_ATTACHMENT_CONFIG` | `note_attachments` | `note_attachment` | Docs + images | `NOTE_ATTACHMENT_MAX_FILE_SIZE` |
+| Domain               | Config constant               | Upload path             | Service name           | Content types | Max size                             |
+| -------------------- | ----------------------------- | ----------------------- | ---------------------- | ------------- | ------------------------------------ |
+| Shelter photos       | `SHELTER_PHOTO_CONFIG`        | `shelters`              | `shelter_photo`        | Images only   | `SHELTER_PHOTO_MAX_FILE_SIZE`        |
+| Client documents     | `CLIENT_DOCUMENT_CONFIG`      | `attachments`           | `client_document`      | Docs + images | `CLIENT_DOCUMENT_MAX_FILE_SIZE`      |
+| Client profile photo | `CLIENT_PROFILE_PHOTO_CONFIG` | `client_profile_photos` | `client_profile_photo` | Images only   | `S3_DEFAULT_PRESIGNED_MAX_FILE_SIZE` |
+| Note attachments     | `NOTE_ATTACHMENT_CONFIG`      | `note_attachments`      | `note_attachment`      | Docs + images | `NOTE_ATTACHMENT_MAX_FILE_SIZE`      |
 
 All defaults are 50 MB. Each can be overridden via environment variable.
 
@@ -66,6 +66,7 @@ Upload tokens are stateless — no database or cache storage needed.
 `salt="upload-token"`.
 
 **Token payload (signed + timestamped):**
+
 ```json
 {
   "key": "media/note_attachments/<uuid>.pdf",
@@ -76,6 +77,7 @@ Upload tokens are stateless — no database or cache storage needed.
 ```
 
 **Validation checks:**
+
 1. HMAC signature is valid (not tampered)
 2. `key` matches the expected S3 key
 3. `user_id` matches the current user
@@ -93,11 +95,11 @@ this use case.
 The presigned POST policy enforces at the S3 level (before any file reaches
 the backend):
 
-| Condition | Value |
-|---|---|
-| `Content-Type` | Must match the declared MIME type |
-| `content-length-range` | 1 byte to `max_file_size` (default 50 MB) |
-| `starts-with $key` | Must be under the domain's upload path prefix (e.g. `note_attachments/`) |
+| Condition              | Value                                                                    |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `Content-Type`         | Must match the declared MIME type                                        |
+| `content-length-range` | 1 byte to `max_file_size` (default 50 MB)                                |
+| `starts-with $key`     | Must be under the domain's upload path prefix (e.g. `note_attachments/`) |
 
 S3 rejects non-compliant uploads before they complete — no backend cycles
 wasted on validation.
@@ -108,9 +110,9 @@ wasted on validation.
 
 Two-level permission model for attachments:
 
-| Level | Permission | Source | Scope |
-|---|---|---|---|
-| **Model** | `VIEW` | CASEWORKER template | All attachments in the org |
+| Level      | Permission         | Source                                  | Scope                             |
+| ---------- | ------------------ | --------------------------------------- | --------------------------------- |
+| **Model**  | `VIEW`             | CASEWORKER template                     | All attachments in the org        |
 | **Object** | `CHANGE`, `DELETE` | Assigned per-attachment at resolve time | Only attachments the user created |
 
 **Why not object-level VIEW?** The CASEWORKER template already grants
@@ -128,6 +130,7 @@ a direct organization FK.
 ## Adding a New Domain
 
 1. **Create the config** in the domain service file:
+
    ```python
    MY_CONFIG = AttachmentUploadConfig(
        upload_path="my_uploads",
@@ -138,11 +141,13 @@ a direct organization FK.
    ```
 
 2. **Add env var default** in `settings.py`:
+
    ```python
    MY_MAX_FILE_SIZE=(int, 50_000_000),
    ```
 
 3. **Implement Phase 1 wrapper:**
+
    ```python
    def create_presigned_uploads(*, user, uploads):
        return file_upload.create_presigned_uploads(
@@ -151,6 +156,7 @@ a direct organization FK.
    ```
 
 4. **Implement Phase 3 wrapper:**
+
    ```python
    def resolve_uploads(*, user, content_object, items):
        permission_group = resolve_permission_group(user, ...)

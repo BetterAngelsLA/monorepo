@@ -59,7 +59,7 @@ export function SearchableDropdown({
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
-    'bottom'
+    'bottom',
   );
   const [value, setValue] = useState('');
   const inputRef = useRef<TextInput>(null);

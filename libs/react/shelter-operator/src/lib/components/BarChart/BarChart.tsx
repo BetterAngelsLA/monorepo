@@ -115,13 +115,13 @@ export function BarChart({
 
   const mergedConfig = mergeDeep(
     defaultConfig as Record<string, unknown>,
-    config as Record<string, unknown>
+    config as Record<string, unknown>,
   ) as ColumnConfig;
 
   const viewOverrides = onViewChange?.(viewMode) ?? {};
   const displayConfig = mergeDeep(
     mergedConfig as Record<string, unknown>,
-    viewOverrides as Record<string, unknown>
+    viewOverrides as Record<string, unknown>,
   ) as ColumnConfig;
 
   const cfg = mergedConfig as Record<string, unknown>;
@@ -161,7 +161,7 @@ export function BarChart({
                 d: Record<string, unknown>,
                 _index: number,
                 _data: unknown[],
-                _column: Record<string, { values: unknown[] }>
+                _column: Record<string, { values: unknown[] }>,
               ) => ({
                 color: singleFill,
                 name: '',
@@ -217,7 +217,7 @@ export function BarChart({
                       'text-sm font-medium px-4 py-1.5 rounded-full border-none cursor-pointer transition-all',
                       viewMode === mode
                         ? 'bg-white text-gray-900 shadow-sm'
-                        : 'bg-transparent text-gray-500'
+                        : 'bg-transparent text-gray-500',
                     )}
                     style={{ fontFamily: FONT_FAMILY }}
                   >

@@ -8,7 +8,7 @@ export const RN_SHARED_LIB_STORIES: StoriesSpecifier[] = [
   {
     directory: join(
       __dirname,
-      '../../../libs/expo/shared/ui-components/src/lib/Pill'
+      '../../../libs/expo/shared/ui-components/src/lib/Pill',
     ),
     files: 'Pill.stories.tsx',
     titlePrefix: 'RN Components',
@@ -16,7 +16,7 @@ export const RN_SHARED_LIB_STORIES: StoriesSpecifier[] = [
   {
     directory: join(
       __dirname,
-      '../../../libs/expo/shared/ui-components/src/lib/PillContainer'
+      '../../../libs/expo/shared/ui-components/src/lib/PillContainer',
     ),
     files: 'PillContainer.stories.tsx',
     titlePrefix: 'RN Components',

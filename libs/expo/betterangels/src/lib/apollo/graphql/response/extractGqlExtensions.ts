@@ -6,24 +6,24 @@ import {
 } from './types';
 
 export function extractGqlExtensions(
-  input?: TResultMinimal | TResultWithError
+  input?: TResultMinimal | TResultWithError,
 ): TGqlExtensionEntries {
   if (!input) {
     return [];
   }
 
   const fromMinimal = collectResponseExtensions(
-    (input as TResultMinimal).errors
+    (input as TResultMinimal).errors,
   );
   const fromResultWithError = collectResponseExtensions(
-    (input as TResultWithError).error?.errors
+    (input as TResultWithError).error?.errors,
   );
 
   return [...fromMinimal, ...fromResultWithError];
 }
 
 function collectResponseExtensions(
-  errors?: readonly { extensions?: Record<string, unknown> }[]
+  errors?: readonly { extensions?: Record<string, unknown> }[],
 ): TGqlExtensionEntry[] {
   if (!Array.isArray(errors)) {
     return [];
@@ -35,6 +35,6 @@ function collectResponseExtensions(
       typeof err === 'object' &&
       err.extensions &&
       typeof err.extensions === 'object' &&
-      !Array.isArray(err.extensions)
+      !Array.isArray(err.extensions),
   );
 }

@@ -66,7 +66,7 @@ export function ClientProfileList({
 
   const renderItemFn = useCallback(
     (item: TClientProfile) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   return (

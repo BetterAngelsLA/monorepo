@@ -6,7 +6,7 @@ export function useBottomSheetLayoutContext() {
 
   if (!ctx) {
     throw new Error(
-      'useBottomSheetLayoutContext must be used inside BottomSheetLayoutProvider'
+      'useBottomSheetLayoutContext must be used inside BottomSheetLayoutProvider',
     );
   }
 

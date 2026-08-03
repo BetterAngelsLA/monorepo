@@ -18,7 +18,7 @@ import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 function toUpdateInput(
   shelterId: string,
-  data: BasicInfoFormData
+  data: BasicInfoFormData,
 ): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
@@ -55,7 +55,7 @@ export function ShelterBasicInfo(props: TProps) {
 
   async function onSubmit(
     data: BasicInfoFormData,
-    setError: UseFormSetError<BasicInfoFormData>
+    setError: UseFormSetError<BasicInfoFormData>,
   ) {
     try {
       const response = await updateShelter({

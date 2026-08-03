@@ -50,7 +50,6 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
-
   - email: `admin@example.com`
   - psw: `password`
 

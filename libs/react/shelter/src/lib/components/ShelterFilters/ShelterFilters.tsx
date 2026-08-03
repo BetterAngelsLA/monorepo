@@ -52,7 +52,7 @@ export function ShelterFilters(props: IProps) {
 
   function onFilterChange(
     filterName: TFilterConfig['name'],
-    selected: string[]
+    selected: string[],
   ) {
     onFiltersChange({
       ...filters,
@@ -62,7 +62,7 @@ export function ShelterFilters(props: IProps) {
 
   function onOpenNowScheduleTypeChange(
     scheduleType: ScheduleTypeChoices,
-    checked: boolean
+    checked: boolean,
   ) {
     const newTypes = checked
       ? [...openNowTypes, scheduleType]

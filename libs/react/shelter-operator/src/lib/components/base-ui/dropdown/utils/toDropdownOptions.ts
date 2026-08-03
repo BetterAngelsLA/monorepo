@@ -32,7 +32,7 @@ import { DropdownOption } from '../types';
  */
 export function toDropdownOptions<T extends string | number>(
   map: Record<T, string>,
-  options?: T[] | { head?: T[]; tail?: T[] }
+  options?: T[] | { head?: T[]; tail?: T[] },
 ): DropdownOption<T>[] {
   const entries = Object.entries(map) as [T, string][];
 

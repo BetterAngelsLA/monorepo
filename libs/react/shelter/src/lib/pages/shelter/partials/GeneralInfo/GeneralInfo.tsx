@@ -16,7 +16,7 @@ import { ViewShelterQuery } from '../../__generated__/shelter.generated';
 
 function renderLabel(
   label?: string | null,
-  key?: string | null
+  key?: string | null,
 ): React.ReactNode {
   if (!label) return 'Not Available';
 

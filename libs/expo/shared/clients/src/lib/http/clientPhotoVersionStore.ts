@@ -2,9 +2,10 @@ import { atom, createStore } from 'jotai/vanilla';
 
 const jotaiStore = createStore();
 const clientPhotoVersionsAtom = atom<Record<string, number>>({});
-const clientPhotoVersionUpdateAtom = atom<{ clientId: string; version: number } | null>(
-  null
-);
+const clientPhotoVersionUpdateAtom = atom<{
+  clientId: string;
+  version: number;
+} | null>(null);
 const incrementClientPhotoVersionAtom = atom(
   null,
   (get, set, clientId: string | number) => {
@@ -19,7 +20,7 @@ const incrementClientPhotoVersionAtom = atom(
       [id]: version,
     });
     set(clientPhotoVersionUpdateAtom, { clientId: id, version });
-  }
+  },
 );
 
 export function getClientPhotoVersion(clientId: string | number): number {
@@ -32,7 +33,7 @@ export function incrementClientPhotoVersion(clientId: string | number): void {
 }
 
 export function subscribeClientPhotoVersion(
-  callback: (clientId: string) => void
+  callback: (clientId: string) => void,
 ): () => void {
   return jotaiStore.sub(clientPhotoVersionUpdateAtom, () => {
     const update = jotaiStore.get(clientPhotoVersionUpdateAtom);

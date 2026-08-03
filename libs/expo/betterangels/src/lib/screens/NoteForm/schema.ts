@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  CreateNoteServiceInput,
-  LocationInput,
-} from '../../apollo';
+import { CreateNoteServiceInput, LocationInput } from '../../apollo';
 import { TaskFormSchema } from '../../ui-components/TaskForm';
 
 /** Form-local extension of the GraphQL input – carries a display label. */
@@ -41,5 +38,5 @@ export const NOTE_FORM_EMPTY_STATE: TNoteFormInputs = {
 type NoteFormFieldName = keyof typeof NoteFormSchema.shape;
 
 export const NoteFormFieldNames = Object.keys(
-  NoteFormSchema.shape
+  NoteFormSchema.shape,
 ) as NoteFormFieldName[];

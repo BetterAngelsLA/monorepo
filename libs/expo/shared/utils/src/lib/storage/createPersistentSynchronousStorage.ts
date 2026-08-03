@@ -6,7 +6,7 @@ type TConfig = {
 };
 
 export function createPersistentSynchronousStorage(
-  config?: TConfig
+  config?: TConfig,
 ): PersistentSynchronousStorageApi {
   const mmkv = createMMKV(config ? { id: config.scopeId } : undefined);
 

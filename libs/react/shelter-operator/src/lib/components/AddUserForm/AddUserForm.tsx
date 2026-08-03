@@ -30,10 +30,7 @@ export function AddUserForm(props: TProps) {
   const [disabled, setDisabled] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  const {
-    control,
-    handleSubmit,
-  } = useForm<TFormSchema>({
+  const { control, handleSubmit } = useForm<TFormSchema>({
     resolver: zodResolver(FormSchema),
     defaultValues,
   });
@@ -61,7 +58,7 @@ export function AddUserForm(props: TProps) {
         const firstMessage =
           response.data.addOrganizationMember.messages?.[0]?.message;
         setSubmissionError(
-          firstMessage || 'Unable to add user. Please try again.'
+          firstMessage || 'Unable to add user. Please try again.',
         );
         return;
       }

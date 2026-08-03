@@ -26,7 +26,7 @@ export interface UploadFileToS3Input {
  * Expo's winter fetch) and delegates to the shared implementation.
  */
 export async function uploadFileToS3WithPresignedPost(
-  input: UploadFileToS3Input
+  input: UploadFileToS3Input,
 ): Promise<{ key: string }> {
   return uploadBlob({
     presignedPost: input.presignedPost,
