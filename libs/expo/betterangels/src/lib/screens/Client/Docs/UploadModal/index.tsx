@@ -82,6 +82,9 @@ export default function UploadModal(props: IUploadModalProps) {
     setSelectedUpload(null);
 
     const session = begin(selectedFiles.map((file) => file.name));
+    // Close the modal immediately so the user lands back on the library and
+    // watches the upload progress in the drawer.
+    closeModal();
 
     try {
       await uploadDocuments({
@@ -94,13 +97,12 @@ export default function UploadModal(props: IUploadModalProps) {
       });
 
       completeUpload(session.id);
-      closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
       // Cancelled sessions were already removed by the drawer's cancel
       // action. Other failures mark the session failed so the drawer shows
-      // the failure + Close; the modal stays open so the user can retry.
+      // the failure + Close; the user can reopen the modal to retry.
       if (session.isAborted()) {
         endUpload(session.id);
       } else {

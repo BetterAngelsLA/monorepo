@@ -8,6 +8,7 @@ import UploadModal from './index';
 const mocks = vi.hoisted(() => ({
   uploadDocuments: vi.fn(),
   endUpload: vi.fn(),
+  completeUpload: vi.fn(),
   failUpload: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
@@ -35,6 +36,7 @@ vi.mock('../../../../providers', () => ({
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
     failUpload: mocks.failUpload,
+    completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
   }),
 }));
@@ -101,6 +103,7 @@ describe('UploadModal', () => {
   beforeEach(() => {
     mocks.uploadDocuments.mockReset();
     mocks.endUpload.mockClear();
+    mocks.completeUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.mediaPickerProps.length = 0;
   });
@@ -121,7 +124,8 @@ describe('UploadModal', () => {
         namespace: ClientDocumentNamespaceEnum.ConsentForm,
       }),
     );
-    expect(mocks.endUpload).toHaveBeenCalled();
+    expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
+    expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(closeModal).toHaveBeenCalled();
   });
 
@@ -134,9 +138,9 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(closeModal).not.toHaveBeenCalled();
-    // Session stays open and is marked failed so the drawer shows the
+    // The modal closes immediately on upload start; the drawer carries the
     // failure + Close action.
+    expect(closeModal).toHaveBeenCalled();
     expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
   });

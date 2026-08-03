@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { PanResponder, StyleSheet, View } from 'react-native';
 import {
   TUploadItemStatus,
   TUploadSession,
@@ -35,20 +36,40 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
 export function UploadProgressDrawer() {
   const { sessions, cancelUpload, endUpload } = useUploadProgress();
 
+  const latest = sessions[sessions.length - 1];
+  const failed = latest
+    ? latest.failed || latest.items.some((item) => item.status === 'error')
+    : false;
+  const complete = !failed && !!latest?.complete;
+  const terminal = failed || complete;
+
+  // Swipe down on the card to dismiss a terminal (complete/failed) session;
+  // active sessions keep the explicit Cancel control.
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => terminal && gesture.dy > 8,
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dy > 60 && latest) {
+            endUpload(latest.id);
+          }
+        },
+      }),
+    [terminal, latest, endUpload],
+  );
+
   if (!sessions.length) {
     return null;
   }
 
   const session = sessions[sessions.length - 1];
-  const failed =
-    session.failed || session.items.some((item) => item.status === 'error');
-  const complete = !failed && !!session.complete;
   const percent = session.total ? (session.completed / session.total) * 100 : 0;
 
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <View
         style={styles.card}
+        {...panResponder.panHandlers}
         accessibilityRole="summary"
         accessibilityLabel="Upload progress"
         accessibilityHint="Shows the status of the current file upload"
