@@ -29,7 +29,6 @@ type TProps = {
   isOpen: boolean;
   children: ReactNode;
   onClose?: () => void;
-  onDismiss?: () => void;
   options?: BottomSheetOptions;
 };
 

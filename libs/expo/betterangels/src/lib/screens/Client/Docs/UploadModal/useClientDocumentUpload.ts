@@ -2,8 +2,8 @@ import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services';
 import { randomUUID } from 'expo-crypto';
-import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
-import { ClientProfileDocument } from '../../../__generated__/Client.generated';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { ClientProfileDocument } from '../../__generated__/Client.generated';
 import {
   GenerateClientDocumentUploadsDocument,
   ResolveClientDocumentUploadsDocument,

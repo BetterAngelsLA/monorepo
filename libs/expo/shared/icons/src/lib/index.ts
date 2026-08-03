@@ -45,6 +45,7 @@ export { default as FaceRollingEyesIcon } from './components/FaceRollingEyesIcon
 export { default as FaceSmileBeamIcon } from './components/FaceSmileBeamIcon';
 export { default as FaceSmileIcon } from './components/FaceSmileIcon';
 export { default as FaceTiredIcon } from './components/FaceTiredIcon';
+export { default as FileOutlineIcon } from './components/FileOutlineIcon';
 export { default as FilePdfIcon } from './components/FilePdfIcon';
 export { default as FilePlusIcon } from './components/FilePlusIcon';
 export { default as FileSearchIcon } from './components/FileSearchIcon';
@@ -70,7 +71,6 @@ export { default as LocationPinIcon } from './components/LocationPinIcon';
 export { default as MapLineIcon } from './components/MapLineIcon';
 export * from './components/MapPinIcon';
 export { default as MapSolidIcon } from './components/MapSolidIcon';
-export { default as NoFilesYet } from './components/NoFilesYet';
 export { default as NoteIcon } from './components/NoteIcon';
 export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';
