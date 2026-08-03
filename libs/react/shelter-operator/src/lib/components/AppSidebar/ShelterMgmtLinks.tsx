@@ -44,6 +44,29 @@ export function ShelterMgmtLinks(props: IProps) {
         >
           Rooms
         </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterMgmtRoute(
+            shelterId,
+            mgmtRouteConfig.children.reservations,
+          )}
+          isActive={isShelterMgmtRoute(pathname, {
+            segment: mgmtRouteConfig.children.reservations,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Reservations
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterMgmtRoute(shelterId, mgmtRouteConfig.children.reports)}
+          isActive={isShelterMgmtRoute(pathname, {
+            segment: mgmtRouteConfig.children.reports,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Reports
+        </Sidebar.Link>
       </Sidebar.Content>
     </Sidebar.NestedLinks>
   );

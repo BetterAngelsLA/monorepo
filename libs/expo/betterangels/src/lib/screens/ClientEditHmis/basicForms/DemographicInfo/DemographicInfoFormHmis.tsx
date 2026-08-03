@@ -43,7 +43,6 @@ export function DemographicInfoFormHmis() {
   return (
     <Form>
       <Form.Field title="Gender">
-        {/* eslint-disable-next-line react/jsx-pascal-case */}
         <MultiSelect_V2
           options={Object.entries(enumGenderHmis).map(([key, value]) => ({
             id: key as HmisGenderEnum,
@@ -96,7 +95,6 @@ export function DemographicInfoFormHmis() {
       </Form.Field>
 
       <Form.Field title="Race and Ethnicity">
-        {/* eslint-disable-next-line react/jsx-pascal-case */}
         <MultiSelect_V2
           options={Object.entries(enumRaceHmis).map(([key, value]) => ({
             id: key as HmisRaceEnum,
@@ -264,7 +262,6 @@ export function DemographicInfoFormHmis() {
       </Form.Field>
 
       <Form.Field title="ADA Accommodation">
-        {/* eslint-disable-next-line react/jsx-pascal-case */}
         <MultiSelect_V2
           options={Object.entries(enumDisplayAdaAccommodationEnum).map(
             ([key, value]) => ({
