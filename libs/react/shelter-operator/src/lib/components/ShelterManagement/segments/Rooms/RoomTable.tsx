@@ -7,6 +7,7 @@ import {
   type StatusBadgeVariant,
 } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
+import { tableEmptyState } from '../tableEmptyState';
 
 import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 
@@ -69,11 +70,7 @@ export function RoomTable({
   onReserve,
   loading,
   loadingState,
-  emptyState = (
-    <div className="px-6 py-8 text-center text-sm text-gray-500">
-      No rooms yet.
-    </div>
-  ),
+  emptyState = tableEmptyState('No rooms yet.'),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,

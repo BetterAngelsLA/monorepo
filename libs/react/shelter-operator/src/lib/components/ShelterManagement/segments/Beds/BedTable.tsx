@@ -8,6 +8,7 @@ import {
   type StatusBadgeVariant,
 } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
+import { tableEmptyState } from '../tableEmptyState';
 
 export type Bed = {
   id: string;
@@ -80,11 +81,7 @@ export function BedTable({
   onReserve,
   loading,
   loadingState,
-  emptyState = (
-    <div className="px-6 py-8 text-center text-sm text-gray-500">
-      No beds yet.
-    </div>
-  ),
+  emptyState = tableEmptyState('No beds yet.'),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,

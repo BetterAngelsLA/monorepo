@@ -9,7 +9,6 @@ export type ShelterRowObject = {
   address: string;
   totalBeds: number;
   unavailableBeds: number;
-  tags: string[];
 };
 
 type ShelterTableProps = {
@@ -127,7 +126,6 @@ export function ShelterTable({
           address: shelter.address ?? 'N/A',
           totalBeds: shelter.bedCounts.total,
           unavailableBeds,
-          tags: shelter.tags ?? [],
         };
       }}
       onRowClick={onRowClick}
