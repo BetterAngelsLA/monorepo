@@ -1,8 +1,8 @@
-import { TPlacePrediction } from '@monorepo/shared/places';
 import {
   AutocompleteInput,
   useGooglePlaces,
 } from '@monorepo/expo/shared/ui-components';
+import { TPlacePrediction } from '@monorepo/shared/places';
 import { debounce } from 'lodash';
 import { RefObject, useMemo, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
@@ -28,7 +28,7 @@ type TAddressAutocomplete<TForm extends FieldValues> = {
 };
 
 export function AddressAutocomplete<TForm extends FieldValues>(
-  props: TAddressAutocomplete<TForm>
+  props: TAddressAutocomplete<TForm>,
 ) {
   const {
     name,
@@ -76,7 +76,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
           setPredictions([]);
         }
       }, debounceMs),
-    [debounceMs, places]
+    [debounceMs, places],
   );
 
   function handleScrollToTop() {
