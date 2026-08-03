@@ -168,6 +168,40 @@ describe('runPresignedUpload', () => {
     ).rejects.toBeInstanceOf(PresignedUploadError);
   });
 
+  it('artificially delays each stage when simulateDelayMs is set', async () => {
+    vi.useFakeTimers();
+
+    try {
+      uploadFileToS3.mockResolvedValue({ key: 'k' });
+      const resolveUpload = vi.fn(async () => undefined);
+      const events: TUploadProgress[] = [];
+
+      const promise = runPresignedUpload({
+        files: [file('a.pdf')],
+        generateRefId: sequentialRefId(),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload,
+        simulateDelayMs: 1000,
+        onProgress: (progress) => events.push(progress),
+      });
+
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(events.map((event) => event.stage)).toEqual([
+        'GENERATING',
+        'UPLOADING',
+        'UPLOADING',
+        'UPLOADING',
+        'SAVING',
+      ]);
+      expect(resolveUpload).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('throws when the upload response does not match the requested files', async () => {
     uploadFileToS3.mockResolvedValue({ key: 'k' });
 

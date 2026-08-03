@@ -31,8 +31,14 @@ export function useClientDocumentUpload() {
       return;
     }
 
+    // TEST TOOLING: set EXPO_PUBLIC_SIMULATE_UPLOAD_DELAY_MS (e.g. 1500) to
+    // artificially slow down uploads while developing/testing the UI.
+    const simulateDelayMs =
+      Number(process.env.EXPO_PUBLIC_SIMULATE_UPLOAD_DELAY_MS) || 0;
+
     await runPresignedUpload({
       files: documents,
+      simulateDelayMs,
       generateUpload: async (inputs) => {
         const result = await createUploads({
           variables: {

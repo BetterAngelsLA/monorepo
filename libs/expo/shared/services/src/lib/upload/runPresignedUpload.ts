@@ -31,7 +31,16 @@ export type TRunPresignedUploadArgs<TResolve> = {
   failFast?: boolean;
   /** Injectable id generator (defaults to expo-crypto). Useful for tests. */
   generateRefId?: () => string;
+  /**
+   * TEST TOOLING ONLY: artificially delays each stage (GENERATING, per-file
+   * UPLOADING, SAVING) so upload progress is visible while developing the UI.
+   * Remove before shipping.
+   */
+  simulateDelayMs?: number;
 };
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Orchestrates a presigned S3 upload: request presigned POSTs, upload each
@@ -52,6 +61,7 @@ export async function runPresignedUpload<TResolve>(
     signal,
     failFast = true,
     generateRefId = randomUUID,
+    simulateDelayMs = 0,
   } = args;
 
   if (!files.length) {
@@ -68,6 +78,9 @@ export async function runPresignedUpload<TResolve>(
     onProgress?.({ stage, completed, total, ...extra });
   };
 
+  const slowDown = () =>
+    simulateDelayMs > 0 ? sleep(simulateDelayMs) : undefined;
+
   const throwIfAborted = () => {
     if (signal?.aborted) {
       throw new PresignedUploadError('Upload aborted');
@@ -81,6 +94,7 @@ export async function runPresignedUpload<TResolve>(
   // 2. Request presigned POSTs from the backend.
   throwIfAborted();
   emit('GENERATING');
+  await slowDown();
 
   const presignedUploads = await generateUpload(
     manifest.map((entry) => ({
@@ -112,6 +126,7 @@ export async function runPresignedUpload<TResolve>(
     }
 
     emit('UPLOADING', { refId: upload.refId, status: 'started' });
+    await slowDown();
 
     try {
       await uploadFileToS3WithPresignedPost({
@@ -153,6 +168,7 @@ export async function runPresignedUpload<TResolve>(
   // 4. Persist the successful uploads.
   throwIfAborted();
   emit('SAVING');
+  await slowDown();
 
   const savedUploads = succeeded.map((upload) => {
     const file = fileByRefId.get(upload.refId);
