@@ -13,23 +13,23 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   /** Date (isoformat) */
-  Date: { input: any; output: any; }
+  Date: { input: import('@monorepo/ba-platform/types').DateString; output: import('@monorepo/ba-platform/types').DateString; }
   /** Date with time (isoformat) */
-  DateTime: { input: any; output: any; }
+  DateTime: { input: import('@monorepo/ba-platform/types').DateTimeString; output: import('@monorepo/ba-platform/types').DateTimeString; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
-  LatitudeScalar: { input: any; output: any; }
-  LongitudeScalar: { input: any; output: any; }
+  LatitudeScalar: { input: number; output: number; }
+  LongitudeScalar: { input: number; output: number; }
   /** Coerces blank input to None. Use for optional string fields where blank means 'no value'. */
   NonBlankString: { input: string; output: string; }
   /** Rejects blank input. Use for required string fields. */
-  NonEmptyString: { input: any; output: any; }
-  PhoneNumber: { input: any; output: any; }
+  NonEmptyString: { input: string; output: string; }
+  PhoneNumber: { input: import('@monorepo/ba-platform/types').PhoneNumberString; output: import('@monorepo/ba-platform/types').PhoneNumberString; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
   /** Time (isoformat) */
-  Time: { input: any; output: any; }
-  UUID: { input: any; output: any; }
+  Time: { input: import('@monorepo/ba-platform/types').TimeString; output: import('@monorepo/ba-platform/types').TimeString; }
+  UUID: { input: import('@monorepo/ba-platform/types').UUIDString; output: import('@monorepo/ba-platform/types').UUIDString; }
   /** Represents a file upload. */
   Upload: { input: any; output: any; }
 };

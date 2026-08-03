@@ -97,20 +97,18 @@ function toApiInputs(values: THouseholdMemberFormState) {
     return null;
   }
 
-  // make a copy so we don't mutate RHF's form state
-  const next: THouseholdMemberFormState = { ...values };
+  // Convert Date objects to DateString (ISO date) for the GraphQL mutation.
+  const dateOfBirthStr: string | null | undefined =
+    dateOfBirth instanceof Date
+      ? dateOfBirth.toISOString().split('T')[0]
+      : dateOfBirth;
 
-  if (next.dateOfBirth instanceof Date) {
-    next.dateOfBirth = next.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
-  } else if (next.dateOfBirth === null) {
-    next.dateOfBirth = null;
-  } else if (next.dateOfBirth === undefined) {
-    delete next.dateOfBirth;
-  }
-
-  return next;
+  return {
+    name,
+    gender,
+    dateOfBirth: dateOfBirthStr,
+    relationshipToClient,
+  };
 }
 
 function isSuccessMutationResponse(response: HouseholdMutationResult): boolean {

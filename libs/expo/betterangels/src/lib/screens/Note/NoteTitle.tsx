@@ -16,9 +16,9 @@ export default function NoteTitle({
         </TextBold>
       )}
       <TextRegular selectable mb="sm" size="sm">
-        {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
+        {format(new Date(note?.interactedAt ?? ''), 'MM/dd/yyyy')}
         {' @ '}
-        {format(new Date(note?.interactedAt), 'hh:mm a')}
+        {format(new Date(note?.interactedAt ?? ''), 'hh:mm a')}
       </TextRegular>
       {!!note?.currentTeam?.name && (
         <>

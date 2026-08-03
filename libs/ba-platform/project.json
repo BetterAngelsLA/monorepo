@@ -8,6 +8,7 @@
     "default": ["{projectRoot}/**/*"]
   },
   "targets": {
+
     "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {

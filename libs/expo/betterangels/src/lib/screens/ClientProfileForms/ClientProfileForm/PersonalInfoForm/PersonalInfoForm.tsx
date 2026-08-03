@@ -169,9 +169,12 @@ export function PersonalInfoForm() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dateOfBirth || undefined}
+          value={dateOfBirth ? new Date(dateOfBirth) : undefined}
           onChange={(date) => {
-            setValue('dateOfBirth', date);
+            setValue(
+              'dateOfBirth',
+              date ? (date.toISOString().split('T')[0] as UpdateClientProfileInput['dateOfBirth']) : null
+            );
           }}
           onDelete={() => {
             setValue('dateOfBirth', null);
@@ -220,9 +223,12 @@ export function PersonalInfoForm() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={unhousedStartDate || undefined}
+          value={unhousedStartDate ? new Date(unhousedStartDate) : undefined}
           onChange={(date) => {
-            setValue('unhousedStartDate', date);
+            setValue(
+              'unhousedStartDate',
+              date ? (date.toISOString().split('T')[0] as UpdateClientProfileInput['unhousedStartDate']) : null
+            );
           }}
           onDelete={() => {
             setValue('unhousedStartDate', null);

@@ -102,7 +102,7 @@ export default function ClientSummaryGeneral(
           onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
           disabled={!phoneNumberUrl}
           flex={3}
-          title={formattedNumber || 'N/A'}
+          title={phoneNumber || 'N/A'}
           extension={extension}
           subtitle="CONTACT"
           icon={<CallOutlinedIcon color={Colors.PRIMARY} />}
