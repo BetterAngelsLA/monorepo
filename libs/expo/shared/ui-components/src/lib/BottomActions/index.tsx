@@ -43,6 +43,7 @@ export default function BottomActions(props: IBottomActionsProps) {
         {optionalAction}
         <Button
           loading={isLoading}
+          testID="action-btn-primary"
           disabled={isLoading || disabled}
           fontSize="sm"
           height="md"
