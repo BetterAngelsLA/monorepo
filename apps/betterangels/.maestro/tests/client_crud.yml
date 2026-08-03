@@ -1,6 +1,6 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- runFlow: ../steps/start_test.yml
+- runFlow: ../lib/framework/start_test.yml
 
 - assertVisible:
     id: clients-screen

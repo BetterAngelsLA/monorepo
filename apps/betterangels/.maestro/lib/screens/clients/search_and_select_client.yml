@@ -5,6 +5,10 @@
 
 appId: ${MAESTRO_APP_ID}
 ---
+# Precondition: on the clients screen
+- assertVisible:
+    id: clients-screen
+
 - evalScript: ${output.clientFound = false}
 
 # Type the search

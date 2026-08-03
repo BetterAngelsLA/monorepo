@@ -246,14 +246,30 @@ maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
 
 ```
 .maestro/
-  tests/
-    landing.yml          # Test flows
+  tests/                    # Runnable test scenarios (what `maestro test` runs)
+    client_crud.yml
+    client_interaction.yml
+    clients_page.yml
+    logout.yml
+    tasks_page.yml
 
-  steps/
-    (reusable steps)
+  lib/                      # Reusable flows, grouped by precondition kind
+    framework/              #   No screen dependency (app lifecycle + setup)
+      launch_app.yml
+      start_test.yml
+      auth/
+        ensure_logged_in_ba.yml
+        login_ba.yml
+    navigation/             #   Any screen with the nav menu component
+      open_app_menu.yml
+      navigate_via_menu.yml
+    screens/                #   Specific screen required
+      clients/
+        search_and_select_client.yml
+        ensure_fixture_client_exists.yml
 
   scripts/
-    setup-maestro.sh     # Auto-detects device & deep link, runs maestro
+    setup-maestro.sh        # Auto-detects device & deep link, runs maestro
 ```
 
 ---
@@ -308,6 +324,32 @@ Sometimes we need to add a `testID` prop to React Native components so Maestro c
 App-state IDs (`authorized-root`, `unauthorized-root`, `authorized-pending`)
 are used by test steps to detect auth state. Do not rename or remove them
 without updating the corresponding Maestro steps.
+
+### Reusable Flows
+
+`tests/` contains runnable scenarios; everything else that tests reuse via
+`runFlow` lives in `lib/`, grouped by the **precondition kind** (the app state
+that must hold when the flow starts):
+
+| Precondition kind                        | Directory               |
+| ---------------------------------------- | ----------------------- |
+| No screen dependency (lifecycle + setup) | `lib/framework/`        |
+| Auth state (not bound to a screen)       | `lib/framework/auth/`   |
+| Any screen with a shared component       | `lib/navigation/`       |
+| A specific screen                        | `lib/screens/<screen>/` |
+
+Rules for reusable flows:
+
+- **Top-level folder = precondition kind**; under `lib/screens/`, the next
+  level is the screen name (e.g. `lib/screens/clients/`).
+- **Filenames are verb-first** actions within their scope
+  (e.g. `search_and_select_client.yml`, `open_app_menu.yml`).
+- **Every reusable flow starts with a header comment** declaring its contract:
+  `Precondition`, `Input env vars`, `Output vars`, `Side effects`.
+- **Self-assert the precondition.** Screen- and component-scoped flows begin
+  with an `assertVisible` of their starting screen/component (e.g.
+  `clients-screen`, `nav-menu-btn`), so calling a flow from the wrong screen
+  fails fast with a clear signal instead of failing deep inside the flow.
 
 ---
 

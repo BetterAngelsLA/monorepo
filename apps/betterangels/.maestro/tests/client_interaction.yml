@@ -1,6 +1,6 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- runFlow: ../steps/start_test.yml
+- runFlow: ../lib/framework/start_test.yml
 
 - assertVisible:
     id: clients-screen
@@ -9,6 +9,6 @@ appId: ${MAESTRO_APP_ID}
 
 # Ensure fixture client exists and open its profile
 - runFlow:
-    file: ../steps/client_search/ensure_fixture_client_exists.yml
+    file: ../lib/screens/clients/ensure_fixture_client_exists.yml
 # TODO: Add interaction tests here
 # e.g., add a note, verify it appears, edit it, etc.

@@ -7,6 +7,10 @@
 
 appId: ${MAESTRO_APP_ID}
 ---
+# Precondition: on the clients screen
+- assertVisible:
+    id: clients-screen
+
 - evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-client'}
 
 # Search and try to select the client
