@@ -34,19 +34,19 @@ export function ClientSearchInput({
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [search, { data, loading }] = useSearchClient();
 
   // Debounce
   useEffect(() => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearch(searchText);
     }, DEBOUNCE_MS);
     return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [searchText]);
 
@@ -74,11 +74,13 @@ export function ClientSearchInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const resultsData = data?.clientProfiles?.results;
+
   const results = useMemo(() => {
-    if (!data?.clientProfiles.results) return [];
+    if (!resultsData) return [];
     const selectedIds = new Set(selectedClients.map((c) => c.id));
-    return data.clientProfiles.results.filter((c) => !selectedIds.has(c.id));
-  }, [data?.clientProfiles.results, selectedClients]);
+    return resultsData.filter((c) => !selectedIds.has(c.id));
+  }, [resultsData, selectedClients]);
 
   return (
     <div className="space-y-3" ref={containerRef}>

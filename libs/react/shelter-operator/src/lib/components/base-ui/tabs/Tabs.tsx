@@ -19,16 +19,16 @@ export function Tabs<T extends string | number>({
   className,
   endContent,
 }: TabsProps<T>) {
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tabsRef = useRef<Array<HTMLButtonElement | null>>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
 
   useLayoutEffect(() => {
     const updateSlider = () => {
       const activeIndex = Math.max(
         0,
-        tabs.findIndex((tab) => tab === selectedTab)
+        tabs.findIndex((tab) => tab === selectedTab),
       );
-      const activeTab = tabRefs.current[activeIndex];
+      const activeTab = tabsRef.current[activeIndex];
 
       if (!activeTab) {
         return;
@@ -69,7 +69,7 @@ export function Tabs<T extends string | number>({
             <Tab
               key={String(tab)}
               tabRef={(el) => {
-                tabRefs.current[index] = el;
+                tabsRef.current[index] = el;
               }}
               value={tab}
               label={getLabel(tab)}

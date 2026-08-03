@@ -23,7 +23,7 @@ export default function SliderTabs({
   basePath,
   items,
 }: SliderTabsProps) {
-  const tabRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const tabsRef = useRef<Array<HTMLAnchorElement | null>>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
 
   useLayoutEffect(() => {
@@ -32,7 +32,7 @@ export default function SliderTabs({
         0,
         items.findIndex((item) => item.pathSuffix === activePathSuffix),
       );
-      const activeTab = tabRefs.current[activeIndex];
+      const activeTab = tabsRef.current[activeIndex];
 
       if (!activeTab) return;
 
@@ -70,7 +70,7 @@ export default function SliderTabs({
                 <Link
                   key={`${item.label}-${item.pathSuffix}`}
                   ref={(element) => {
-                    tabRefs.current[index] = element;
+                    tabsRef.current[index] = element;
                   }}
                   to={buildTabPath(basePath, item.pathSuffix)}
                   aria-current={isActive ? 'page' : undefined}

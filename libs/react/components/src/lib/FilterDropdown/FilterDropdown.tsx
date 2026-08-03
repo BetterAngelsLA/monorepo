@@ -49,12 +49,16 @@ export function FilterDropdown({
     position === 'dropdown-end'
       ? 'right-0'
       : position === 'dropdown-center'
-      ? 'left-1/2 -translate-x-1/2'
-      : 'left-0';
+        ? 'left-1/2 -translate-x-1/2'
+        : 'left-0';
 
   return (
     <div ref={dropdownRef} className={`relative inline-block ${className}`}>
-      <div className="cursor-pointer" onClick={() => setOpen(!open)}>
+      <div
+        role="button"
+        className="cursor-pointer"
+        onClick={() => setOpen(!open)}
+      >
         {title}
       </div>
       {open && (

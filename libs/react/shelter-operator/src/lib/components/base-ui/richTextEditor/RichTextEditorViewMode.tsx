@@ -40,6 +40,7 @@ export function RichTextEditorViewMode({
       )}
       <div
         className={mergeCss(viewContentCss)}
+        // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
         dangerouslySetInnerHTML={{
           __html: sanitizeHtml(value, RICH_TEXT_SANITIZE_OPTIONS),
         }}
