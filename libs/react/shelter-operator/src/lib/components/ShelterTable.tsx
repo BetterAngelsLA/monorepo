@@ -61,7 +61,7 @@ export function ShelterTable({
         width: '1fr',
         cellClassName:
           'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
-        render: (shelter) => shelter.address ?? 'N/A',
+        render: (shelter) => shelter.address ?? 'No address listed',
         sortValue: (shelter) => shelter.address ?? '',
       },
       {
