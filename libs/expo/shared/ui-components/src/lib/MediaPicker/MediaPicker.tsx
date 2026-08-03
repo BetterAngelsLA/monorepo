@@ -37,6 +37,10 @@ export function MediaPicker(props: MediaPickerModalProps) {
   const [currentMode, setCurrentMode] = useState<PickerMode>('menu');
   const currentModeRef = useRef<PickerMode>('menu');
 
+  // Callers can override what happens after a successful selection; default to
+  // closing the picker to preserve the original behavior.
+  const completeSelection = onSelectionComplete ?? onMediaPickerClose;
+
   const { pickImage } = useImagePicker({
     allowMultiple,
   });
@@ -71,7 +75,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
     }
 
     onFilesSelected(result.files);
-    onSelectionComplete?.();
+    completeSelection();
   }
 
   async function handlePickDocuments() {
@@ -86,7 +90,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
     }
 
     onFilesSelected(result.files);
-    onSelectionComplete?.();
+    completeSelection();
   }
 
   const handleMenuSheetClose = useCallback(() => {
@@ -125,7 +129,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
           onClose={() => setCurrentMode('menu')}
           onCapture={(file) => {
             onCameraCapture(file);
-            onSelectionComplete?.();
+            completeSelection();
           }}
         />
       )}
