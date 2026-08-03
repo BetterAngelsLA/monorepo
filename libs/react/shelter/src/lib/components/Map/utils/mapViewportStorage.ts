@@ -1,13 +1,24 @@
-import { SESSION_STORAGE_MAP_BOUNDS } from '../../../constants';
-import { TMapBounds } from '../types.maps';
+import { SESSION_STORAGE_MAP_VIEWPORT } from '../../../constants';
+import { TLatLng } from '../types.maps';
+
+/** Exact map viewport: center coordinates + zoom level. */
+export type TMapViewport = {
+  center: TLatLng;
+  zoom: number;
+};
 
 /**
- * Persists the current map viewport before navigating to a shelter detail page
- * so the exact same boundaries (and search results) can be restored on return.
+ * Persists the exact map center + zoom before navigating to a shelter detail
+ * page so the identical viewport (and therefore search results) can be
+ * restored on return. Restoring via fitBounds is avoided because it can pick a
+ * different zoom level (with padding), which changes the visible pins.
  */
-export function saveMapBounds(bounds: TMapBounds): void {
+export function saveMapViewport(viewport: TMapViewport): void {
   try {
-    sessionStorage.setItem(SESSION_STORAGE_MAP_BOUNDS, JSON.stringify(bounds));
+    sessionStorage.setItem(
+      SESSION_STORAGE_MAP_VIEWPORT,
+      JSON.stringify(viewport)
+    );
   } catch {
     // sessionStorage can be unavailable (private mode, quota exceeded).
     // Navigation proceeds without viewport restore in that case.
@@ -15,20 +26,37 @@ export function saveMapBounds(bounds: TMapBounds): void {
 }
 
 /**
- * Reads and consumes the previously saved map bounds so they're applied only
- * once, immediately after returning from a shelter detail page. Returns null
- * when nothing is saved or the stored value is malformed.
+ * Reads (without consuming) the saved map viewport. Used to initialize the
+ * Map's default camera so it mounts directly at the exact restored center +
+ * zoom, avoiding the controlled map overriding imperative camera calls.
  */
-export function consumeSavedMapBounds(): TMapBounds | null {
-  const raw = sessionStorage.getItem(SESSION_STORAGE_MAP_BOUNDS);
+export function peekSavedMapViewport(): TMapViewport | null {
+  const raw = sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT);
   if (!raw) {
     return null;
   }
-  // Consume the saved bounds so they aren't re-applied on navigations that
-  // don't originate from a shelter detail page.
-  sessionStorage.removeItem(SESSION_STORAGE_MAP_BOUNDS);
   try {
-    return JSON.parse(raw) as TMapBounds;
+    return JSON.parse(raw) as TMapViewport;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reads and consumes the previously saved map viewport so it's applied only
+ * once, immediately after returning from a shelter detail page. Returns null
+ * when nothing is saved or the stored value is malformed.
+ */
+export function consumeSavedMapViewport(): TMapViewport | null {
+  const raw = sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT);
+  if (!raw) {
+    return null;
+  }
+  // Consume the saved viewport so it isn't re-applied on navigations that
+  // don't originate from a shelter detail page.
+  sessionStorage.removeItem(SESSION_STORAGE_MAP_VIEWPORT);
+  try {
+    return JSON.parse(raw) as TMapViewport;
   } catch {
     return null;
   }

@@ -1,7 +1,9 @@
-import { SESSION_STORAGE_MAP_BOUNDS } from '../../../constants';
+import { SESSION_STORAGE_MAP_VIEWPORT } from '../../../constants';
 import {
-  consumeSavedMapBounds,
-  saveMapBounds,
+  consumeSavedMapViewport,
+  peekSavedMapViewport,
+  saveMapViewport,
+  TMapViewport,
 } from './mapViewportStorage';
 
 // This project's Jest environment is 'node', so provide an in-memory
@@ -19,11 +21,9 @@ const sessionStorageMock: Storage = {
   setItem: (key: string, value: string) => void store.set(key, value),
 };
 
-const BOUNDS = {
-  westLng: -118.5,
-  northLat: 34.1,
-  eastLng: -118.2,
-  southLat: 33.9,
+const VIEWPORT: TMapViewport = {
+  center: { latitude: 34.04499, longitude: -118.251601 },
+  zoom: 13,
 };
 
 beforeEach(() => {
@@ -34,12 +34,12 @@ beforeEach(() => {
   });
 });
 
-describe('saveMapBounds', () => {
-  it('persists the map bounds to session storage', () => {
-    saveMapBounds(BOUNDS);
+describe('saveMapViewport', () => {
+  it('persists the exact center + zoom to session storage', () => {
+    saveMapViewport(VIEWPORT);
 
-    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_BOUNDS)).toBe(
-      JSON.stringify(BOUNDS)
+    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBe(
+      JSON.stringify(VIEWPORT)
     );
   });
 
@@ -49,27 +49,46 @@ describe('saveMapBounds', () => {
       configurable: true,
     });
 
-    expect(() => saveMapBounds(BOUNDS)).not.toThrow();
+    expect(() => saveMapViewport(VIEWPORT)).not.toThrow();
   });
 });
 
-describe('consumeSavedMapBounds', () => {
-  it('returns the saved bounds and removes the stored value (single use)', () => {
-    saveMapBounds(BOUNDS);
+describe('peekSavedMapViewport', () => {
+  it('returns the saved viewport without consuming it', () => {
+    saveMapViewport(VIEWPORT);
 
-    expect(consumeSavedMapBounds()).toEqual(BOUNDS);
-    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_BOUNDS)).toBeNull();
-    expect(consumeSavedMapBounds()).toBeNull();
+    expect(peekSavedMapViewport()).toEqual(VIEWPORT);
+    // Value is still stored for the consuming call.
+    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBe(
+      JSON.stringify(VIEWPORT)
+    );
+  });
+
+  it('returns null when nothing is saved or the value is malformed', () => {
+    expect(peekSavedMapViewport()).toBeNull();
+
+    sessionStorage.setItem(SESSION_STORAGE_MAP_VIEWPORT, '{not valid json');
+    expect(peekSavedMapViewport()).toBeNull();
+  });
+});
+
+describe('consumeSavedMapViewport', () => {
+  it('returns the saved viewport and removes the stored value (single use)', () => {
+    saveMapViewport(VIEWPORT);
+
+    expect(consumeSavedMapViewport()).toEqual(VIEWPORT);
+    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBeNull();
+    expect(consumeSavedMapViewport()).toBeNull();
   });
 
   it('returns null when nothing is saved', () => {
-    expect(consumeSavedMapBounds()).toBeNull();
+    expect(consumeSavedMapViewport()).toBeNull();
   });
 
   it('returns null and clears the entry when the value is malformed', () => {
-    sessionStorage.setItem(SESSION_STORAGE_MAP_BOUNDS, '{not valid json');
+    sessionStorage.setItem(SESSION_STORAGE_MAP_VIEWPORT, '{not valid json');
 
-    expect(consumeSavedMapBounds()).toBeNull();
-    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_BOUNDS)).toBeNull();
+    expect(consumeSavedMapViewport()).toBeNull();
+    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBeNull();
   });
 });

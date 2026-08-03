@@ -23,11 +23,13 @@ import {
   ShelterSearch,
   TLatLng,
   TMapBounds,
+  TMapViewport,
   TMarker,
   TShelter,
-  consumeSavedMapBounds,
+  consumeSavedMapViewport,
   mapBoundsFromCenter,
   modalAtom,
+  peekSavedMapViewport,
   toGoogleLatLng,
   toMapBounds,
 } from '../../components';
@@ -94,7 +96,25 @@ export function HomePage() {
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
+  /**
+   * Restore-on-return: read the saved viewport once (per mount) so the Map can
+   * mount directly at the exact saved camera (center + zoom). The Map is
+   * controlled via initial camera props, so imperative setZoom/setCenter calls
+   * afterward would be overridden back to the default camera.
+   */
+  const savedViewportRef = useRef<TMapViewport | null | undefined>(undefined);
+
+  if (savedViewportRef.current === undefined) {
+    savedViewportRef.current = peekSavedMapViewport();
+  }
+
+  const [defaultCenter, setDefaultCenter] = useState<TLatLng | undefined>(
+    () => savedViewportRef.current?.center
+  );
+  // Only initialized from the saved viewport; never updated after mount.
+  const [defaultZoom] = useState<number | undefined>(
+    () => savedViewportRef.current?.zoom
+  );
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -245,13 +265,16 @@ export function HomePage() {
     if (!map || hasInitialized) return;
     setHasInitialized(true);
 
-    const savedBounds = consumeSavedMapBounds();
+    const savedViewport = consumeSavedMapViewport();
 
-    if (savedBounds) {
-      // Restore the exact previous viewport via fitBounds, which triggers
-      // onPlaceViewportFitted -> setMapBoundsFilter + search, so the result
-      // total matches exactly what's visible on the restored map.
-      setPlaceViewportToFit(savedBounds);
+    if (savedViewport) {
+      // The Map already mounted at the saved camera (see defaultCenter /
+      // defaultZoom above). Set the location so the location effect fires a
+      // search with the restored viewport's actual bounds.
+      applyMapCenter(
+        savedViewport.center.latitude,
+        savedViewport.center.longitude
+      );
       return;
     }
 
@@ -327,6 +350,7 @@ export function HomePage() {
         {!user && <LoginBanner />}
         <Map
           defaultCenter={defaultCenter}
+          defaultZoom={defaultZoom}
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
