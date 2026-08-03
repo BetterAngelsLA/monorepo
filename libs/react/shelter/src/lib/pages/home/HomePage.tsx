@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ShelterChoices } from '../../apollo';
 import {
+  savedMapViewportAtom,
   shelterLocationSearchInputAtom,
   shelterSearchAppliedLocationAtom,
   shelterSearchPendingLocationAtom,
@@ -27,11 +28,9 @@ import {
   TMapCamera,
   TMarker,
   TShelter,
-  consumeSavedMapViewport,
   mapBoundsFromCenter,
   modalAtom,
   toMapBounds,
-  useRestoredMapViewport,
 } from '../../components';
 import { SHELTERS_MAP_ID } from '../../constants';
 import { MaxWLayout } from '../../layout';
@@ -96,12 +95,13 @@ export function HomePage() {
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  // Mount the Map at the exact viewport saved before navigating to a shelter
-  // detail page, so the visible pins and result count are unchanged on return.
-  const { defaultCenter, defaultZoom } = useRestoredMapViewport();
+  // Restore the exact viewport saved before navigating to a shelter detail
+  // page: the Map mounts at the saved camera so the visible pins and result
+  // count are unchanged on return.
+  const [savedViewport, setSavedMapViewport] = useAtom(savedMapViewportAtom);
   const [camera, setCameraState] = useState<TMapCamera>(() => ({
-    center: defaultCenter ?? LA_COUNTY_CENTER,
-    zoom: defaultZoom ?? DEFAULT_MAP_ZOOM,
+    center: savedViewport?.center ?? LA_COUNTY_CENTER,
+    zoom: savedViewport?.zoom ?? DEFAULT_MAP_ZOOM,
   }));
   const cameraRef = useRef<TMapCamera>(camera);
   /** Set the controlled camera, keeping a ref in sync for the location effect. */
@@ -282,12 +282,12 @@ export function HomePage() {
     if (!map || hasInitialized) return;
     setHasInitialized(true);
 
-    const savedViewport = consumeSavedMapViewport();
-
     if (savedViewport) {
-      // The Map already mounted at the saved camera (see the camera state
-      // above). Set the location so the location effect fires a search with
-      // the restored viewport's actual bounds.
+      // Consume so it isn't re-applied on navigations that didn't originate
+      // from a shelter detail page. The Map already mounted at the saved
+      // camera (see the camera state above); set the location so the location
+      // effect fires a search with the restored viewport's actual bounds.
+      setSavedMapViewport(null);
       applyMapCenter(
         savedViewport.center.latitude,
         savedViewport.center.longitude
@@ -312,7 +312,7 @@ export function HomePage() {
     } else {
       applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);
     }
-  }, [map, hasInitialized, applyMapCenter]);
+  }, [map, hasInitialized, savedViewport, setSavedMapViewport, applyMapCenter]);
 
   function setSearchLocation(location: TLatLng, mapBounds?: TMapBounds) {
     setShowSearchButton(false);

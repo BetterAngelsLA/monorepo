@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render } from '@testing-library/react';
+import { getDefaultStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SESSION_STORAGE_MAP_VIEWPORT } from '../../constants';
+import { savedMapViewportAtom } from '../../atoms';
 import { ShelterCard, TShelter } from './ShelterCard';
 
 const navigateMock = vi.fn();
@@ -28,16 +29,12 @@ vi.mock('@vis.gl/react-google-maps', () => ({
 
 // Mock the heavy `../Map` barrel (it would pull in Map.tsx, Google Maps
 // controls and @monorepo/react/components), forwarding the real
-// saveMapViewport/mapViewportFromMap helpers so the sessionStorage behavior
-// is exercised.
+// mapViewportFromMap helper so the viewport conversion is exercised.
 vi.mock('../Map', async () => {
-  const storage = await vi.importActual<
-    typeof import('../Map/utils/mapViewportStorage')
-  >('../Map/utils/mapViewportStorage');
-  return {
-    mapViewportFromMap: storage.mapViewportFromMap,
-    saveMapViewport: storage.saveMapViewport,
-  };
+  const util = await vi.importActual<typeof import('../Map/utils/mapViewport')>(
+    '../Map/utils/mapViewport'
+  );
+  return { mapViewportFromMap: util.mapViewportFromMap };
 });
 
 vi.mock('react-router-dom', async () => {
@@ -58,7 +55,7 @@ const shelter: TShelter = {
 };
 
 beforeEach(() => {
-  sessionStorage.clear();
+  getDefaultStore().set(savedMapViewportAtom, null);
   navigateMock.mockClear();
   mapMock = makeMap();
 });
@@ -70,12 +67,10 @@ describe('ShelterCard', () => {
     fireEvent.click(getByText('Buck Foundation Outreach'));
 
     expect(navigateMock).toHaveBeenCalledWith('/shelter/5');
-    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBe(
-      JSON.stringify({
-        center: { latitude: 34.097262, longitude: -118.361874 },
-        zoom: 12,
-      })
-    );
+    expect(getDefaultStore().get(savedMapViewportAtom)).toEqual({
+      center: { latitude: 34.097262, longitude: -118.361874 },
+      zoom: 12,
+    });
   });
 
   it('navigates to shelter details without saving when the map is not ready', () => {
@@ -86,6 +81,6 @@ describe('ShelterCard', () => {
     fireEvent.click(getByText('Buck Foundation Outreach'));
 
     expect(navigateMock).toHaveBeenCalledWith('/shelter/5');
-    expect(sessionStorage.getItem(SESSION_STORAGE_MAP_VIEWPORT)).toBeNull();
+    expect(getDefaultStore().get(savedMapViewportAtom)).toBeNull();
   });
 });
