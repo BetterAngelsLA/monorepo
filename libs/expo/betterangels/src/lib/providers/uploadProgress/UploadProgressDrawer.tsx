@@ -145,9 +145,14 @@ export function UploadProgressDrawer() {
                     </View>
                   </View>
                 ) : (
-                  <TextRegular size="xs" color={STATUS_COLORS[item.status]}>
-                    {STATUS_LABELS[item.status]}
-                  </TextRegular>
+                  <View style={styles.itemStatus}>
+                    <TextRegular
+                      size="xs"
+                      color={STATUS_COLORS[item.status]}
+                    >
+                      {STATUS_LABELS[item.status]}
+                    </TextRegular>
+                  </View>
                 )}
               </View>
             ))}
@@ -249,8 +254,18 @@ const styles = StyleSheet.create({
     marginRight: Spacings.sm,
   },
   itemProgress: {
+    // Fixed height so the row does not resize when an item finishes and the
+    // progress block is replaced by its status label.
+    height: Spacings.md,
     alignItems: 'flex-end',
+    justifyContent: 'flex-end',
     gap: Spacings.xxs,
+  },
+  itemStatus: {
+    // Matches itemProgress so rows keep a stable height through completion.
+    height: Spacings.md,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
   },
   itemBar: {
     width: 64,
