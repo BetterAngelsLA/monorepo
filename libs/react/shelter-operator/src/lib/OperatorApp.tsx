@@ -103,7 +103,6 @@ export function OperatorApp() {
               />
             </Route>
             <Route path={routePath(mgmtRouteConfig.root)}>
-              <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
                 index
                 element={

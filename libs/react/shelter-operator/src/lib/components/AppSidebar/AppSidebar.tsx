@@ -5,12 +5,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import {
-  isShelterManageRoute,
-  isShelterRoute,
-  paths,
-  shelterMgmtRoute,
-} from '../../routing';
+import { isShelterRoute, paths } from '../../routing';
 import { ShelterMgmtLinks } from './ShelterMgmtLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
@@ -68,17 +63,8 @@ export function AppSidebar(props: IProps) {
             <Divider
               className="my-4 h-6 text-[#747A82]"
               lineClassName="bg-[#747A82]"
-              label={isOpen ? 'shelter management' : ''}
+              label={isOpen ? 'Shelter Operation' : ''}
             />
-
-            <Sidebar.Link
-              to={shelterMgmtRoute(shelterId)}
-              isActive={isShelterManageRoute(location.pathname)}
-              collapsed={!isOpen}
-            >
-              Operations
-            </Sidebar.Link>
-
             <ShelterProfileLinks
               pathname={location.pathname}
               shelterId={shelterId}

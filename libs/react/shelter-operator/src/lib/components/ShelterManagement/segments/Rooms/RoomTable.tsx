@@ -69,7 +69,11 @@ export function RoomTable({
   onReserve,
   loading,
   loadingState,
-  emptyState,
+  emptyState = (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No rooms yet.
+    </div>
+  ),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,

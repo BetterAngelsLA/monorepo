@@ -80,7 +80,11 @@ export function BedTable({
   onReserve,
   loading,
   loadingState,
-  emptyState,
+  emptyState = (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No beds yet.
+    </div>
+  ),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,
