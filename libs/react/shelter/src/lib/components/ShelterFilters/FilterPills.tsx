@@ -64,7 +64,7 @@ export function FilterPills(props: IProps) {
             label,
             clear: (prev) => {
               const nextTypes = (prev.openNowScheduleTypes ?? []).filter(
-                (t) => t !== scheduleType
+                (t) => t !== scheduleType,
               );
               return {
                 ...prev,
@@ -103,7 +103,7 @@ export function FilterPills(props: IProps) {
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(
         key as keyof TShelterPropertyFilters,
-        val as never
+        val as never,
       );
 
       if (label) {
