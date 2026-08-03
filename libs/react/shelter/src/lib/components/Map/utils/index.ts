@@ -4,5 +4,6 @@ export { mapBoundsFromCenter } from './mapBoundsFromCenter';
 export { mapViewportFromMap } from './mapViewport';
 export type { TMapViewport } from './mapViewport';
 export { sameMapBounds } from './sameMapBounds';
+export { symmetricBoundsAroundPinCentroid } from './symmetricBoundsAroundPinCentroid';
 export { toGoogleLatLng } from './toGoogleLatLng';
 export { toMapBounds } from './toMapBounds';
