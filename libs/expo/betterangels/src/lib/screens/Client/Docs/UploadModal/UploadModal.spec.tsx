@@ -53,6 +53,27 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
     return null;
   },
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextRegular: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
+  TextButton: ({
+    title,
+    onPress,
+    accessibilityHint,
+  }: {
+    title: string;
+    onPress?: () => void;
+    accessibilityHint?: string;
+  }) => (
+    <Text
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={accessibilityHint}
+      onPress={onPress}
+    >
+      {title}
+    </Text>
+  ),
   Button: ({
     title,
     onPress,
@@ -110,7 +131,7 @@ describe('UploadModal', () => {
     mocks.mediaPickerProps.length = 0;
   });
 
-  it('starts a labelled session, uploads, and closes immediately', async () => {
+  it('starts a labelled session, uploads, and keeps the form open', async () => {
     mocks.uploadDocuments.mockResolvedValue(undefined);
     const closeModal = vi.fn();
 
@@ -132,12 +153,12 @@ describe('UploadModal', () => {
     );
     expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
     expect(mocks.endUpload).not.toHaveBeenCalled();
-    // Pick-and-go: the modal closes as soon as the upload starts so the user
-    // can watch progress in the drawer.
-    expect(closeModal).toHaveBeenCalled();
+    // The form stays open so the user can upload more documents; they dismiss
+    // it with Done. Progress is visible in the drawer.
+    expect(closeModal).not.toHaveBeenCalled();
   });
 
-  it('marks the upload failed and still closes so the drawer can show retry', async () => {
+  it('keeps the form open when the upload fails so the drawer can show retry', async () => {
     mocks.uploadDocuments.mockRejectedValue(new Error('upload failed'));
     const closeModal = vi.fn();
 
@@ -146,8 +167,17 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(closeModal).toHaveBeenCalled();
+    expect(closeModal).not.toHaveBeenCalled();
     expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
     expect(mocks.endUpload).not.toHaveBeenCalled();
+  });
+
+  it('closes the form when Done is pressed', () => {
+    const closeModal = vi.fn();
+
+    const { getByLabelText } = renderModal({ closeModal });
+
+    fireEvent.press(getByLabelText('Done'));
+    expect(closeModal).toHaveBeenCalled();
   });
 });

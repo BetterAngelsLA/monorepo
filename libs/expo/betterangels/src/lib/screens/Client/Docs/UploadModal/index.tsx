@@ -1,6 +1,11 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
+import {
+  MediaPicker,
+  TextBold,
+  TextButton,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -142,9 +147,9 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    // Close immediately so the user sees the upload in the drawer and can
-    // start another doc type without waiting for this one to finish.
-    closeModal();
+    // Keep the form open so the user can upload several documents in one
+    // session — the progress panel shows each upload and they dismiss the
+    // form with Done when finished.
     startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
   };
 
@@ -160,6 +165,35 @@ export default function UploadModal(props: IUploadModalProps) {
         flex: 1,
       }}
     >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: Spacings.sm,
+          paddingBottom: Spacings.sm,
+        }}
+      >
+        <TextBold size="lg">Upload Files</TextBold>
+        <TextButton
+          title="Done"
+          onPress={closeModal}
+          accessibilityHint="Closes the upload form"
+        />
+      </View>
+
+      <TextRegular
+        size="xs"
+        color={Colors.NEUTRAL}
+        style={{
+          paddingHorizontal: Spacings.sm,
+          marginBottom: Spacings.sm,
+        }}
+      >
+        You can upload several documents at once — progress appears in a panel
+        at the bottom. Tap Done when finished.
+      </TextRegular>
+
       <ScrollView
         style={{
           paddingHorizontal: Spacings.sm,
