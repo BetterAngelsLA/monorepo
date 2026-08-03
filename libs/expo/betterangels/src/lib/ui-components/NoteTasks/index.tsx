@@ -70,7 +70,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     update(cache, { data }) {
       if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
         console.error(
-          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`
+          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`,
         );
 
         return;
@@ -94,6 +94,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     if (!onDraftTasksChange) return;
 
     const newTask: LocalDraftTask = {
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in event handler, not render
       id: existingId || `temp-${Date.now()}`,
       summary: data.summary,
       description: data.description || '',
@@ -103,7 +104,7 @@ export default function NoteTasks(props: INoteTasksProps) {
 
     if (existingId) {
       const updatedList = (tasks as LocalDraftTask[]).map((t) =>
-        t.id === existingId ? newTask : t
+        t.id === existingId ? newTask : t,
       );
       onDraftTasksChange(updatedList);
     } else {
@@ -154,6 +155,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       }
       refetch?.();
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to save task', type: 'error' });
     }
   };
@@ -166,6 +168,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       refetch?.();
       showSnackbar({ message: 'Task deleted', type: 'success' });
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to delete task', type: 'error' });
     }
   };

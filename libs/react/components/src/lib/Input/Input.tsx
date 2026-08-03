@@ -85,6 +85,7 @@ export function Input(props: IInputProps) {
         {!noClearBtn && (
           <div className="ml-2">
             <div
+              role="button"
               className="bg-neutral-90 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer"
               onClick={onClear}
             >

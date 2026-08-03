@@ -35,7 +35,6 @@ export function OptionScreen({
 
   return (
     <Filters.Screen onDone={handleDone} onClear={() => setLocalSelected([])}>
-      {/* eslint-disable-next-line react/jsx-pascal-case */}
       <MultiSelect_V2<TFilterOption>
         options={options}
         selected={localSelected}
