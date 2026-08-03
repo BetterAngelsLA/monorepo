@@ -46,6 +46,16 @@ function Harness() {
       </Text>
       <Text
         accessibilityRole="button"
+        accessibilityLabel="begin non-cancellable"
+        accessibilityHint="begin a non-abortable upload"
+        onPress={() => {
+          lastHandle = begin(['c.pdf'], { cancellable: false });
+        }}
+      >
+        begin-nc
+      </Text>
+      <Text
+        accessibilityRole="button"
         accessibilityLabel="manifest"
         accessibilityHint="set the manifest"
         onPress={() =>
@@ -113,7 +123,22 @@ describe('useUploadSession', () => {
     // The onCancel passed to the provider aborts the session's signal.
     onCancel();
     expect(lastHandle?.isAborted()).toBe(true);
-    expect(lastHandle?.signal.aborted).toBe(true);
+    expect(lastHandle?.signal?.aborted).toBe(true);
+  });
+
+  it('begin with cancellable false registers a non-abortable session', () => {
+    const { getByLabelText } = render(<Harness />);
+
+    fireEvent.press(getByLabelText('begin non-cancellable'));
+
+    const [id, names, onCancel] = mocks.startUpload.mock.calls[0];
+
+    expect(names).toEqual(['c.pdf']);
+    // No onCancel → the drawer will not show a cancel button.
+    expect(onCancel).toBeUndefined();
+    expect(lastHandle?.id).toBe(id);
+    expect(lastHandle?.signal).toBeUndefined();
+    expect(lastHandle?.isAborted()).toBe(false);
   });
 
   it('forwards setUploadManifest, updateUpload, failUpload and endUpload', () => {

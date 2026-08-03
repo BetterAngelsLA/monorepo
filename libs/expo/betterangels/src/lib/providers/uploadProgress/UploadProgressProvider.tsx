@@ -1,7 +1,6 @@
 import {
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -29,14 +28,16 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   const { children } = props;
 
   const [sessions, setSessions] = useState<TUploadSession[]>([]);
-  const sessionsRef = useRef<TUploadSession[]>([]);
-
-  useEffect(() => {
-    sessionsRef.current = sessions;
-  }, [sessions]);
+  // Cancellation handlers keyed by session id, kept out of state so cancel
+  // works even between renders.
+  const cancelHandlersRef = useRef(new Map<string, () => void>());
 
   const startUpload = useCallback(
     (id: string, names: string[], onCancel?: () => void) => {
+      if (onCancel) {
+        cancelHandlersRef.current.set(id, onCancel);
+      }
+
       setSessions((prev) => [
         ...prev,
         {
@@ -123,7 +124,6 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
           ? session
           : {
               ...session,
-              stage: 'UPLOADING',
               failed: true,
               errorMessage,
               items: session.items.map((item) =>
@@ -137,11 +137,13 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   }, []);
 
   const endUpload = useCallback((id: string) => {
+    cancelHandlersRef.current.delete(id);
     setSessions((prev) => prev.filter((session) => session.id !== id));
   }, []);
 
   const cancelUpload = useCallback((id: string) => {
-    sessionsRef.current.find((session) => session.id === id)?.onCancel?.();
+    cancelHandlersRef.current.get(id)?.();
+    cancelHandlersRef.current.delete(id);
     setSessions((prev) => prev.filter((session) => session.id !== id));
   }, []);
 
@@ -169,7 +171,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   return (
     <UploadProgressContext.Provider value={value}>
       {children}
-      <UploadProgressDrawer sessions={sessions} />
+      <UploadProgressDrawer />
     </UploadProgressContext.Provider>
   );
 }
@@ -180,7 +182,6 @@ function toItemStatus(status: TUploadProgress['status']): TUploadItemStatus {
       return 'done';
     case 'error':
       return 'error';
-    case 'started':
     case 'uploading':
       return 'uploading';
     default:

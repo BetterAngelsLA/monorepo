@@ -137,7 +137,7 @@ export async function runPresignedUpload<TResolve>(
       throw new PresignedUploadError(`Missing file for refId ${upload.refId}`);
     }
 
-    emit('UPLOADING', { refId: upload.refId, status: 'started' });
+    emit('UPLOADING', { refId: upload.refId, status: 'uploading' });
     await slowDown();
 
     try {

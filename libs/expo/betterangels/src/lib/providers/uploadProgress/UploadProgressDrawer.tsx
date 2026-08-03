@@ -27,18 +27,13 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
   error: Colors.ERROR,
 };
 
-type TUploadProgressDrawerProps = {
-  sessions: TUploadSession[];
-};
-
 /**
  * Bottom drawer that shows the progress of the most recent upload session:
  * stage label, x-of-y counter, a progress bar, and per-file status rows.
  * Rendered by UploadProgressProvider so it appears above modals.
  */
-export function UploadProgressDrawer(props: TUploadProgressDrawerProps) {
-  const { sessions } = props;
-  const { cancelUpload, endUpload } = useUploadProgress();
+export function UploadProgressDrawer() {
+  const { sessions, cancelUpload, endUpload } = useUploadProgress();
 
   if (!sessions.length) {
     return null;

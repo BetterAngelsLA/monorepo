@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { TUploadSession, useUploadProgress } from './UploadProgressContext';
+import { useUploadProgress } from './UploadProgressContext';
 import { UploadProgressProvider } from './UploadProgressProvider';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
@@ -12,7 +12,21 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 }));
 
 vi.mock('./UploadProgressDrawer', () => ({
-  UploadProgressDrawer: ({ sessions }: { sessions: TUploadSession[] }) => (
+  UploadProgressDrawer: () => null,
+}));
+
+function Harness() {
+  const {
+    sessions,
+    startUpload,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    endUpload,
+    cancelUpload,
+  } = useUploadProgress();
+
+  return (
     <View>
       <Text testID="drawer-count">{sessions.length}</Text>
       {sessions.map((session) => (
@@ -28,22 +42,6 @@ vi.mock('./UploadProgressDrawer', () => ({
           </Text>
         </View>
       ))}
-    </View>
-  ),
-}));
-
-function Harness() {
-  const {
-    startUpload,
-    setUploadManifest,
-    updateUpload,
-    failUpload,
-    endUpload,
-    cancelUpload,
-  } = useUploadProgress();
-
-  return (
-    <View>
       <Text
         accessibilityRole="button"
         accessibilityLabel="start"
@@ -187,10 +185,16 @@ describe('UploadProgressProvider', () => {
     const onCancel = vi.fn();
 
     function CancelHarness() {
-      const { startUpload, cancelUpload } = useUploadProgress();
+      const { sessions, startUpload, cancelUpload } = useUploadProgress();
 
       return (
         <View>
+          <Text testID="drawer-count">{sessions.length}</Text>
+          {sessions.map((session) => (
+            <Text key={session.id} testID={`session-${session.id}`}>
+              {session.completed}/{session.total}
+            </Text>
+          ))}
           <Text
             accessibilityRole="button"
             accessibilityLabel="start"

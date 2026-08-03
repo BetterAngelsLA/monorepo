@@ -32,6 +32,11 @@ const mocks = vi.hoisted(() => {
     failUpload: vi.fn(),
     endUpload: vi.fn(),
     readFileAsBase64: vi.fn(),
+    begin: vi.fn(() => ({
+      id: 'session-hmis',
+      signal: undefined,
+      isAborted: () => false,
+    })),
     ErrorHmis: MockErrorHmis,
     InvalidFileTypeErrorHmis: MockInvalidFileTypeErrorHmis,
     selectorProps: [] as Array<{ onSelect: (selection: unknown) => void }>,
@@ -109,14 +114,12 @@ vi.mock('../../../../hooks/fileMetadataHmis/useClientFiles', () => ({
 }));
 
 vi.mock('../../../../providers', () => ({
-  useUploadProgress: () => ({
-    sessions: [],
-    startUpload: mocks.startUpload,
+  useUploadSession: () => ({
+    begin: mocks.begin,
     setUploadManifest: vi.fn(),
     updateUpload: mocks.updateUpload,
     failUpload: mocks.failUpload,
     endUpload: mocks.endUpload,
-    cancelUpload: vi.fn(),
   }),
 }));
 
@@ -181,6 +184,7 @@ describe('UploadModalHmis', () => {
     mocks.updateUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
+    mocks.begin.mockClear();
     mocks.selectorProps.length = 0;
     mocks.mediaPickerProps.length = 0;
     mocks.formPageProps.length = 0;
@@ -218,7 +222,9 @@ describe('UploadModalHmis', () => {
       customFileName: undefined,
       isPrivate: false,
     });
-    expect(mocks.startUpload).toHaveBeenCalledWith('session-hmis', ['doc.pdf']);
+    expect(mocks.begin).toHaveBeenCalledWith(['doc.pdf'], {
+      cancellable: false,
+    });
     expect(mocks.updateUpload).toHaveBeenCalledWith('session-hmis', {
       stage: 'UPLOADING',
       completed: 0,
@@ -291,7 +297,7 @@ describe('UploadModalHmis', () => {
     await submit();
 
     // Missing custom filename for subcategory 0 throws before startUpload.
-    expect(mocks.startUpload).not.toHaveBeenCalled();
+    expect(mocks.begin).not.toHaveBeenCalled();
     expect(mocks.failUpload).not.toHaveBeenCalled();
     expect(closeModal).not.toHaveBeenCalled();
   });

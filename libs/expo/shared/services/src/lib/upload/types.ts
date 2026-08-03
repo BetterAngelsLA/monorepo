@@ -30,7 +30,7 @@ export type TSavedUpload = {
 
 export type TUploadStage = 'GENERATING' | 'UPLOADING' | 'SAVING';
 
-export type TUploadFileStatus = 'started' | 'uploading' | 'done' | 'error';
+export type TUploadFileStatus = 'uploading' | 'done' | 'error';
 
 export type TUploadProgress = {
   stage: TUploadStage;

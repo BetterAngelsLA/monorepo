@@ -1,6 +1,6 @@
-import type { PresignedPostPayload } from '@monorepo/react/shared';
-
 export type { PresignedPostPayload } from '@monorepo/react/shared';
+
+export { assertPresignedPost } from './presignedPost';
 
 /** Byte-level upload progress reported by the S3 transport. */
 export type TS3UploadProgress = {
@@ -32,23 +32,3 @@ export type TS3UploadInput = {
 export type TS3UploadTransport = (
   input: TS3UploadInput,
 ) => Promise<{ key: string }>;
-
-/**
- * Validates a presigned POST payload and returns its Content-Type. Throws on
- * missing/invalid fields, mirroring the generic shared transport's contract.
- */
-export function assertPresignedPost(
-  presignedPost: PresignedPostPayload,
-): string {
-  const contentType = presignedPost.fields['Content-Type'];
-
-  if (!contentType) {
-    throw new Error('Missing Content-Type in presigned fields');
-  }
-
-  if (!presignedPost.key || presignedPost.fields['key'] !== presignedPost.key) {
-    throw new Error('Presigned key mismatch between payload and fields');
-  }
-
-  return contentType;
-}

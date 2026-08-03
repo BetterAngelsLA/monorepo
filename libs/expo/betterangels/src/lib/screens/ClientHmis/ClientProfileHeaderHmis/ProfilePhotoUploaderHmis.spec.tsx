@@ -5,7 +5,11 @@ const mocks = vi.hoisted(() => ({
   uploadClientPhoto: vi.fn(),
   refetchQueries: vi.fn(),
   incrementClientPhotoVersion: vi.fn(),
-  startUpload: vi.fn(),
+  begin: vi.fn(() => ({
+    id: 'session-photo',
+    signal: undefined,
+    isAborted: () => false,
+  })),
   updateUpload: vi.fn(),
   failUpload: vi.fn(),
   endUpload: vi.fn(),
@@ -50,14 +54,12 @@ vi.mock('../../../hooks/useClientHmis', () => ({
 }));
 
 vi.mock('../../../providers', () => ({
-  useUploadProgress: () => ({
-    sessions: [],
-    startUpload: mocks.startUpload,
+  useUploadSession: () => ({
+    begin: mocks.begin,
     setUploadManifest: vi.fn(),
     updateUpload: mocks.updateUpload,
     failUpload: mocks.failUpload,
     endUpload: mocks.endUpload,
-    cancelUpload: vi.fn(),
   }),
 }));
 
@@ -84,7 +86,7 @@ describe('ProfilePhotoUploaderHmis', () => {
     mocks.uploadClientPhoto.mockReset();
     mocks.refetchQueries.mockClear();
     mocks.incrementClientPhotoVersion.mockClear();
-    mocks.startUpload.mockClear();
+    mocks.begin.mockClear();
     mocks.updateUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
@@ -108,9 +110,9 @@ describe('ProfilePhotoUploaderHmis', () => {
     );
     await selectFile(sampleFile);
 
-    expect(mocks.startUpload).toHaveBeenCalledWith('session-photo', [
-      'photo.jpg',
-    ]);
+    expect(mocks.begin).toHaveBeenCalledWith(['photo.jpg'], {
+      cancellable: false,
+    });
     expect(mocks.updateUpload).toHaveBeenCalledWith('session-photo', {
       stage: 'UPLOADING',
       completed: 0,

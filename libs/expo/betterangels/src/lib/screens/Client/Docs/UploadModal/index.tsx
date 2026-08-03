@@ -251,7 +251,6 @@ export default function UploadModal(props: IUploadModalProps) {
         allowMultiple={!!selectedUpload?.allowMultiple}
         isOpen={!!selectedUpload}
         onClose={() => setSelectedUpload(null)}
-        onSelectionComplete={() => setSelectedUpload(null)}
         onCameraCapture={(file) => {
           uploadSelectedFiles([file]);
         }}

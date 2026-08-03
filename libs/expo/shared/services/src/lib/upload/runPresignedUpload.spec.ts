@@ -223,7 +223,9 @@ describe('runPresignedUpload', () => {
       onProgress: (progress) => events.push(progress),
     });
 
-    const byteEvents = events.filter((event) => event.status === 'uploading');
+    const byteEvents = events.filter(
+      (event) => event.status === 'uploading' && typeof event.bytesSent === 'number',
+    );
     expect(byteEvents.map((event) => event.bytesSent)).toEqual([250, 500, 1000]);
     expect(byteEvents[0]).toMatchObject({
       refId: 'ref-0',

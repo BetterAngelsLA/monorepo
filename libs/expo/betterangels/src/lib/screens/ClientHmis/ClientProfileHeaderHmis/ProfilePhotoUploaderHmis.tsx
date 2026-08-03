@@ -6,11 +6,10 @@ import {
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
-import { randomUUID } from 'expo-crypto';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useClientHmis } from '../../../hooks/useClientHmis';
-import { useUploadProgress } from '../../../providers';
+import { useUploadSession } from '../../../providers';
 import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
 import { ProfilePhotoModalHmis } from './ProfilePhotoModalHmis';
 
@@ -35,16 +34,15 @@ export function ProfilePhotoUploaderHmis({
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { startUpload, updateUpload, failUpload, endUpload } =
-    useUploadProgress();
+  const { begin, updateUpload, failUpload, endUpload } = useUploadSession();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
   const handleUpload = async (file: ReactNativeFile) => {
     setUploading(true);
-    const sessionId = randomUUID();
-    startUpload(sessionId, [file.name]);
-    updateUpload(sessionId, {
+    // HMIS uploads cannot be aborted, so the session is not cancellable.
+    const session = begin([file.name], { cancellable: false });
+    updateUpload(session.id, {
       stage: 'UPLOADING',
       completed: 0,
       total: 1,
@@ -57,10 +55,10 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      endUpload(sessionId);
+      endUpload(session.id);
       setModalType(null);
     } catch {
-      failUpload(sessionId, 'Error uploading profile photo.');
+      failUpload(session.id, 'Error uploading profile photo.');
       setModalType(null);
     } finally {
       setUploading(false);
