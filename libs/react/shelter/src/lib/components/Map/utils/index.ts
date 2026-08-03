@@ -8,3 +8,4 @@ export {
 } from './mapViewportStorage';
 export { toGoogleLatLng } from './toGoogleLatLng';
 export { toMapBounds } from './toMapBounds';
+export { useRestoredMapViewport } from './useRestoredMapViewport';

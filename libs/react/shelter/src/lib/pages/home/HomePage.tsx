@@ -23,15 +23,14 @@ import {
   ShelterSearch,
   TLatLng,
   TMapBounds,
-  TMapViewport,
   TMarker,
   TShelter,
   consumeSavedMapViewport,
   mapBoundsFromCenter,
   modalAtom,
-  peekSavedMapViewport,
   toGoogleLatLng,
   toMapBounds,
+  useRestoredMapViewport,
 } from '../../components';
 import { SHELTERS_MAP_ID } from '../../constants';
 import { MaxWLayout } from '../../layout';
@@ -96,25 +95,9 @@ export function HomePage() {
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  /**
-   * Restore-on-return: read the saved viewport once (per mount) so the Map can
-   * mount directly at the exact saved camera (center + zoom). The Map is
-   * controlled via initial camera props, so imperative setZoom/setCenter calls
-   * afterward would be overridden back to the default camera.
-   */
-  const savedViewportRef = useRef<TMapViewport | null | undefined>(undefined);
-
-  if (savedViewportRef.current === undefined) {
-    savedViewportRef.current = peekSavedMapViewport();
-  }
-
-  const [defaultCenter, setDefaultCenter] = useState<TLatLng | undefined>(
-    () => savedViewportRef.current?.center
-  );
-  // Only initialized from the saved viewport; never updated after mount.
-  const [defaultZoom] = useState<number | undefined>(
-    () => savedViewportRef.current?.zoom
-  );
+  // Mounts the Map at the exact viewport saved before navigating to a shelter
+  // detail page, so the visible pins and result count are unchanged on return.
+  const { defaultCenter, defaultZoom } = useRestoredMapViewport();
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -218,9 +201,10 @@ export function HomePage() {
 
   const applyMapCenter = useCallback(
     (lat: number, lng: number) => {
-      const location = { latitude: lat, longitude: lng };
-      setDefaultCenter(location);
-      setLocation(location);
+      // Only the location drives the camera once the Map is mounted (the
+      // location effect below calls map.setCenter); defaultCenter matters
+      // solely for the Map's initial camera at mount time.
+      setLocation({ latitude: lat, longitude: lng });
     },
     [setLocation]
   );
