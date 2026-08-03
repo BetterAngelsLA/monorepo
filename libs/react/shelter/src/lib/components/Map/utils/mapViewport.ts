@@ -8,7 +8,7 @@ export type TMapViewport = {
 
 /** Minimal surface of the Google Map we read a viewport from. */
 type TMapLike = {
-  getCenter: () => { lat: () => number; lng: () => number } | null;
+  getCenter: () => { lat: () => number; lng: () => number } | null | undefined;
   getZoom: () => number | undefined;
 };
 
