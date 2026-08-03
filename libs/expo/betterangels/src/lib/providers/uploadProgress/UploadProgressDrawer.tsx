@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
  * Rendered by UploadProgressProvider so it appears above modals.
  */
 export function UploadProgressDrawer() {
-  const { sessions, queueOpen, cancelUpload, endUpload } = useUploadProgress();
+  const { sessions, cancelUpload, endUpload } = useUploadProgress();
 
   const latest = last(sessions);
   const failed = latest
@@ -59,9 +59,7 @@ export function UploadProgressDrawer() {
     [terminal, latest, endUpload],
   );
 
-  // While an upload queue (the modal) is showing progress, hide the drawer so
-  // there is only one progress surface on screen.
-  if (queueOpen || !sessions.length) {
+  if (!sessions.length) {
     return null;
   }
 
@@ -157,7 +155,25 @@ export function UploadProgressDrawer() {
         )}
 
         <View style={styles.cancelRow}>
-          {failed || complete ? (
+          {failed ? (
+            <View style={styles.failedActions}>
+              {session.onRetry ? (
+                <TextButton
+                  title="Retry"
+                  onPress={() => {
+                    endUpload(session.id);
+                    session.onRetry?.();
+                  }}
+                  accessibilityHint="Retries the failed upload"
+                />
+              ) : null}
+              <TextButton
+                title="Close"
+                onPress={() => endUpload(session.id)}
+                accessibilityHint="Closes the upload progress panel"
+              />
+            </View>
+          ) : complete ? (
             <TextButton
               title="Close"
               onPress={() => endUpload(session.id)}
@@ -251,6 +267,11 @@ const styles = StyleSheet.create({
   cancelRow: {
     marginTop: Spacings.md,
     alignItems: 'flex-end',
+  },
+  failedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
   },
   errorMessage: {
     marginTop: Spacings.xxs,

@@ -1,14 +1,13 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useUploadProgress, useUploadSession } from '../../../../providers';
+import { useUploadSession } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
-import { UploadQueue } from './UploadQueue';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 type TUploadSelection = {
@@ -29,14 +28,8 @@ const DOC_TYPE_TITLES: Record<keyof DocUploads, string> = {
   OtherClientDocument: 'Other Documents',
 };
 
-type TRetryPayload = {
-  files: ReactNativeFile[];
-  namespace: ClientDocumentNamespaceEnum;
-  title: string;
-};
-
 export default function UploadModal(props: IUploadModalProps) {
-  const { client } = props;
+  const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
     null
@@ -62,17 +55,8 @@ export default function UploadModal(props: IUploadModalProps) {
     completeUpload,
     endUpload,
   } = useUploadSession();
-  const { sessions, setQueueOpen, cancelUpload } = useUploadProgress();
-  // Payloads needed to retry a failed upload, keyed by session id.
-  const retryPayloadRef = useRef(new Map<string, TRetryPayload>());
 
   const clientProfileId = client?.clientProfile.id;
-
-  // Hide the drawer while this modal's queue is showing upload status.
-  useEffect(() => {
-    setQueueOpen(true);
-    return () => setQueueOpen(false);
-  }, [setQueueOpen]);
 
   // Pre-populate existing doc-ready documents so already-uploaded doc types
   // are shown as complete and cannot be overwritten.
@@ -133,6 +117,21 @@ export default function UploadModal(props: IUploadModalProps) {
     }
   };
 
+  const startSession = (
+    files: ReactNativeFile[],
+    namespace: ClientDocumentNamespaceEnum,
+    title: string,
+  ) => {
+    const session = begin(files.map((file) => file.name), {
+      label: title,
+      // The drawer's Retry ends this session and starts a fresh one with the
+      // same payload.
+      onRetry: () => startSession(files, namespace, title),
+    });
+
+    void runUpload(session, files, namespace);
+  };
+
   const uploadSelectedFiles = async (newFiles: ReactNativeFile[]) => {
     if (!clientProfileId || !selectedUpload || !newFiles.length) return;
 
@@ -143,41 +142,10 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    const title = DOC_TYPE_TITLES[docType];
-    const session = begin(
-      selectedFiles.map((file) => file.name),
-      { label: title },
-    );
-    retryPayloadRef.current.set(session.id, {
-      files: selectedFiles,
-      namespace,
-      title,
-    });
-
-    // Keep the modal open so the user can queue more documents; the queue
-    // below shows each upload's status.
-    await runUpload(session, selectedFiles, namespace);
-  };
-
-  const handleRetry = (sessionId: string) => {
-    const payload = retryPayloadRef.current.get(sessionId);
-    if (!payload || !clientProfileId) return;
-
-    endUpload(sessionId);
-
-    const session = begin(
-      payload.files.map((file) => file.name),
-      { label: payload.title },
-    );
-    retryPayloadRef.current.set(session.id, payload);
-
-    void runUpload(session, payload.files, payload.namespace);
-  };
-
-  const handleClearCompleted = () => {
-    sessions
-      .filter((session) => session.complete)
-      .forEach((session) => endUpload(session.id));
+    // Close immediately so the user sees the upload in the drawer and can
+    // start another doc type without waiting for this one to finish.
+    closeModal();
+    startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
   };
 
   const insets = useSafeAreaInsets();
@@ -198,14 +166,6 @@ export default function UploadModal(props: IUploadModalProps) {
           paddingBottom: 35 + bottomOffset,
         }}
       >
-        <UploadQueue
-          sessions={sessions}
-          onCancel={cancelUpload}
-          onRetry={handleRetry}
-          onDismiss={endUpload}
-          onClearCompleted={handleClearCompleted}
-        />
-
         <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
           <TextBold>Doc-Ready</TextBold>
           <FileUploadTab

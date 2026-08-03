@@ -14,6 +14,8 @@ type TBeginOptions = {
   cancellable?: boolean;
   /** Human-readable label (e.g. the doc type) shown in the queue/drawer. */
   label?: string;
+  /** Starts a fresh session with the same payload (drawer's Retry action). */
+  onRetry?: () => void;
 };
 
 /**
@@ -45,6 +47,7 @@ export function useUploadSession() {
       names,
       controller ? () => controller.abort() : undefined,
       options?.label,
+      options?.onRetry,
     );
 
     return {

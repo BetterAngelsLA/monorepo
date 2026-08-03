@@ -15,11 +15,9 @@ import {
 
 type TUploadState = {
   sessions: TUploadSession[];
-  /** True while an upload queue (e.g. the upload modal) is showing progress. */
-  queueOpen: boolean;
 };
 
-let state: TUploadState = { sessions: [], queueOpen: false };
+let state: TUploadState = { sessions: [] };
 const cancelHandlers = new Map<string, () => void>();
 const listeners = new Set<() => void>();
 
@@ -40,18 +38,14 @@ export function getUploadSnapshot(): TUploadState {
   return state;
 }
 
-export function setQueueOpenSession(open: boolean) {
-  commit({ sessions: state.sessions, queueOpen: open });
-}
-
 export function startUploadSession(
   id: string,
   names: string[],
   onCancel?: () => void,
   label?: string,
+  onRetry?: () => void,
 ) {
-  // Uploads can be queued in a batch, so sessions accumulate until they are
-  // dismissed instead of superseding each other.
+  // Uploads accumulate until dismissed so several can be in flight at once.
   if (onCancel) {
     cancelHandlers.set(id, onCancel);
   }
@@ -72,9 +66,9 @@ export function startUploadSession(
         failed: false,
         label,
         onCancel,
+        onRetry,
       },
     ],
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -97,7 +91,6 @@ export function setUploadManifestSession(
         })),
       };
     }),
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -135,7 +128,6 @@ export function updateUploadSession(id: string, progress: TUploadProgress) {
         failed: session.failed || progress.status === 'error',
       };
     }),
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -155,7 +147,6 @@ export function failUploadSession(id: string, errorMessage?: string) {
             ),
           },
     ),
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -166,7 +157,6 @@ export function completeUploadSession(id: string) {
         ? session
         : { ...session, complete: true, completed: session.total },
     ),
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -174,7 +164,6 @@ export function endUploadSession(id: string) {
   cancelHandlers.delete(id);
   commit({
     sessions: state.sessions.filter((session) => session.id !== id),
-    queueOpen: state.queueOpen,
   });
 }
 
@@ -183,13 +172,12 @@ export function cancelUploadSession(id: string) {
   cancelHandlers.delete(id);
   commit({
     sessions: state.sessions.filter((session) => session.id !== id),
-    queueOpen: state.queueOpen,
   });
 }
 
 /** Test-only: resets module state between test cases. */
 export function resetUploadProgressStore() {
-  state = { sessions: [], queueOpen: false };
+  state = { sessions: [] };
   cancelHandlers.clear();
   listeners.clear();
 }

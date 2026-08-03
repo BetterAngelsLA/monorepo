@@ -6,7 +6,6 @@ import { UploadProgressDrawer } from './UploadProgressDrawer';
 
 const mocks = vi.hoisted(() => ({
   sessions: [] as TUploadSession[],
-  queueOpen: false,
   cancelUpload: vi.fn(),
   endUpload: vi.fn(),
 }));
@@ -14,8 +13,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./UploadProgressContext', () => ({
   useUploadProgress: () => ({
     sessions: mocks.sessions,
-    queueOpen: mocks.queueOpen,
-    setQueueOpen: vi.fn(),
     startUpload: vi.fn(),
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
@@ -66,21 +63,11 @@ function makeSession(overrides: Partial<TUploadSession> = {}): TUploadSession {
 describe('UploadProgressDrawer', () => {
   beforeEach(() => {
     mocks.sessions = [];
-    mocks.queueOpen = false;
     mocks.cancelUpload.mockClear();
     mocks.endUpload.mockClear();
   });
 
   it('renders nothing when there are no sessions', () => {
-    const { queryByText } = render(<UploadProgressDrawer />);
-
-    expect(queryByText('Uploading…')).toBeNull();
-  });
-
-  it('renders nothing while the upload queue is open', () => {
-    mocks.sessions = [makeSession()];
-    mocks.queueOpen = true;
-
     const { queryByText } = render(<UploadProgressDrawer />);
 
     expect(queryByText('Uploading…')).toBeNull();
@@ -175,6 +162,27 @@ describe('UploadProgressDrawer', () => {
 
     fireEvent.press(getByLabelText('Close'));
     expect(mocks.endUpload).toHaveBeenCalledWith('s1');
+  });
+
+  it('retries a failed session via its onRetry callback', () => {
+    const onRetry = vi.fn();
+    mocks.sessions = [
+      makeSession({
+        failed: true,
+        errorMessage: 'boom',
+        items: [{ refId: 'r1', name: 'a.pdf', status: 'error' }],
+        onRetry,
+      }),
+    ];
+
+    const { getByText, getByLabelText } = render(<UploadProgressDrawer />);
+
+    expect(getByText('Upload failed')).toBeTruthy();
+    expect(getByText('boom')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('Retry'));
+    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
+    expect(onRetry).toHaveBeenCalled();
   });
 
   it('shows Cancel only for sessions that can be aborted', () => {

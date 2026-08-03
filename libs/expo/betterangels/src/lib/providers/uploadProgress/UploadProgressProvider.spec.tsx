@@ -19,8 +19,6 @@ vi.mock('./UploadProgressDrawer', () => ({
 function Harness() {
   const {
     sessions,
-    queueOpen,
-    setQueueOpen,
     startUpload,
     setUploadManifest,
     updateUpload,
@@ -33,7 +31,6 @@ function Harness() {
   return (
     <View>
       <Text testID="drawer-count">{sessions.length}</Text>
-      <Text testID="queue-open">{queueOpen ? 'open' : 'closed'}</Text>
       {sessions.map((session) => (
         <View key={session.id}>
           <Text testID={`session-${session.id}`}>
@@ -57,14 +54,6 @@ function Harness() {
         onPress={() => startUpload('a', ['x.pdf', 'y.pdf'])}
       >
         start
-      </Text>
-      <Text
-        accessibilityRole="button"
-        accessibilityLabel="toggle queue"
-        accessibilityHint="toggle the upload queue"
-        onPress={() => setQueueOpen(!queueOpen)}
-      >
-        toggle-queue
       </Text>
       <Text
         accessibilityRole="button"
@@ -165,18 +154,6 @@ describe('UploadProgressProvider', () => {
 
     fireEvent.press(getByLabelText('start'));
     expect(getByTestId('drawer-count').props.children).toBe(2);
-  });
-
-  it('setQueueOpen toggles the queue flag', () => {
-    const { getByLabelText, getByTestId } = render(
-      <UploadProgressProvider>
-        <Harness />
-      </UploadProgressProvider>,
-    );
-
-    expect(getByTestId('queue-open').props.children).toBe('closed');
-    fireEvent.press(getByLabelText('toggle queue'));
-    expect(getByTestId('queue-open').props.children).toBe('open');
   });
 
   it('tracks a session through start, progress, and completion', () => {

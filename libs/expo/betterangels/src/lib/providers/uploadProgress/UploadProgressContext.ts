@@ -26,6 +26,8 @@ export type TUploadSession = {
   errorMessage?: string;
   /** Aborts the underlying upload. Invoked by `cancelUpload`. */
   onCancel?: () => void;
+  /** Starts a fresh session with the same payload. Invoked by the drawer's Retry. */
+  onRetry?: () => void;
 };
 
 export type TUploadManifestEntry = {
@@ -35,12 +37,14 @@ export type TUploadManifestEntry = {
 
 export type TUploadProgressContextValue = {
   sessions: TUploadSession[];
-  /** True while an upload queue (e.g. the upload modal) is open. */
-  queueOpen: boolean;
-  /** Lets the queue surface hide the drawer while it is showing progress. */
-  setQueueOpen: (open: boolean) => void;
   /** Registers a new upload session with the display names of its files. */
-  startUpload: (id: string, names: string[], onCancel?: () => void) => void;
+  startUpload: (
+    id: string,
+    names: string[],
+    onCancel?: () => void,
+    label?: string,
+    onRetry?: () => void,
+  ) => void;
   /** Pairs pipeline refIds with file names once the manifest is built. */
   setUploadManifest: (id: string, manifest: TUploadManifestEntry[]) => void;
   /** Applies a pipeline progress event to a session. */

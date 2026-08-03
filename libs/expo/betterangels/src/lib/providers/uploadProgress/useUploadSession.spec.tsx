@@ -25,8 +25,6 @@ vi.mock('./UploadProgressContext', () => ({
     completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
     cancelUpload: vi.fn(),
-    queueOpen: false,
-    setQueueOpen: vi.fn(),
   }),
 }));
 
@@ -56,6 +54,7 @@ function Harness() {
           lastHandle = begin(['c.pdf'], {
             cancellable: false,
             label: 'Consent Forms',
+            onRetry: () => undefined,
           });
         }}
       >
@@ -146,12 +145,13 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin non-cancellable'));
 
-    const [id, names, onCancel, label] = mocks.startUpload.mock.calls[0];
+    const [id, names, onCancel, label, onRetry] = mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
     // No onCancel → the drawer will not show a cancel button.
     expect(onCancel).toBeUndefined();
     expect(label).toBe('Consent Forms');
+    expect(typeof onRetry).toBe('function');
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signal).toBeUndefined();
     expect(lastHandle?.isAborted()).toBe(false);
