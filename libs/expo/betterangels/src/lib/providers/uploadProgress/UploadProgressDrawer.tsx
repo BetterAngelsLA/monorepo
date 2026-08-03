@@ -2,6 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
+import { last } from 'remeda';
 import {
   TUploadItemStatus,
   TUploadSession,
@@ -36,7 +37,7 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
 export function UploadProgressDrawer() {
   const { sessions, queueOpen, cancelUpload, endUpload } = useUploadProgress();
 
-  const latest = sessions[sessions.length - 1];
+  const latest = last(sessions);
   const failed = latest
     ? latest.failed || latest.items.some((item) => item.status === 'error')
     : false;

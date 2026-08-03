@@ -174,6 +174,12 @@ export default function UploadModal(props: IUploadModalProps) {
     void runUpload(session, payload.files, payload.namespace);
   };
 
+  const handleClearCompleted = () => {
+    sessions
+      .filter((session) => session.complete)
+      .forEach((session) => endUpload(session.id));
+  };
+
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
@@ -197,6 +203,7 @@ export default function UploadModal(props: IUploadModalProps) {
           onCancel={cancelUpload}
           onRetry={handleRetry}
           onDismiss={endUpload}
+          onClearCompleted={handleClearCompleted}
         />
 
         <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>

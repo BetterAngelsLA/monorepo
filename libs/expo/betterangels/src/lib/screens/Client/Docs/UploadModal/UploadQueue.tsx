@@ -8,6 +8,7 @@ type TUploadQueueProps = {
   onCancel: (sessionId: string) => void;
   onRetry: (sessionId: string) => void;
   onDismiss: (sessionId: string) => void;
+  onClearCompleted: () => void;
 };
 
 function sessionState(session: TUploadSession): {
@@ -46,15 +47,26 @@ function sessionState(session: TUploadSession): {
  * completed ones before leaving the screen.
  */
 export function UploadQueue(props: TUploadQueueProps) {
-  const { sessions, onCancel, onRetry, onDismiss } = props;
+  const { sessions, onCancel, onRetry, onDismiss, onClearCompleted } = props;
 
   if (!sessions.length) {
     return null;
   }
 
+  const hasCompleted = sessions.some((session) => session.complete);
+
   return (
     <View style={styles.section}>
-      <TextBold size="sm">Uploading</TextBold>
+      <View style={styles.headerRow}>
+        <TextBold size="sm">Uploading</TextBold>
+        {hasCompleted && (
+          <TextButton
+            title="Clear completed"
+            onPress={onClearCompleted}
+            accessibilityHint="Dismisses all completed uploads"
+          />
+        )}
+      </View>
 
       <View style={styles.list}>
         {sessions.map((session) => {
@@ -127,6 +139,11 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacings.xs,
     marginBottom: Spacings.lg,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   list: {
     gap: Spacings.sm,

@@ -249,6 +249,23 @@ describe('UploadModal', () => {
     expect(mocks.completeUpload).toHaveBeenCalledWith('session-2');
   });
 
+  it('clears all completed uploads from the queue', async () => {
+    mocks.uploadDocuments.mockResolvedValue(undefined);
+
+    const { getByText } = renderModal();
+
+    fireEvent.press(getByText('Consent Forms'));
+    await selectFiles([sampleFile]);
+    fireEvent.press(getByText('HMIS Forms'));
+    await selectFiles([sampleFile]);
+
+    // Both sessions completed; a bulk action dismisses them.
+    fireEvent.press(getByText('Clear completed'));
+
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-1');
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-2');
+  });
+
   it('cancels an active upload from the queue', async () => {
     mocks.uploadDocuments.mockImplementation(() => new Promise(() => {}));
 

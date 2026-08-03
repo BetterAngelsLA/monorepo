@@ -1,4 +1,5 @@
 import { randomUUID } from 'expo-crypto';
+import { filter, isNonNullish, map, pipe } from 'remeda';
 import { uploadFileToS3WithPresignedPost } from '../s3';
 import { PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
 import {
@@ -196,9 +197,13 @@ export async function runPresignedUpload<TResolve>(
   } else {
     const settled = await Promise.allSettled(presignedUploads.map(uploadOne));
 
-    succeeded = settled
-      .map((result) => (result.status === 'fulfilled' ? result.value : null))
-      .filter((value): value is TPresignedUpload => value !== null);
+    succeeded = pipe(
+      settled,
+      map((result) =>
+        result.status === 'fulfilled' ? result.value : null,
+      ),
+      filter(isNonNullish),
+    );
 
     if (!succeeded.length) {
       throw new PresignedUploadError('All file uploads failed');
