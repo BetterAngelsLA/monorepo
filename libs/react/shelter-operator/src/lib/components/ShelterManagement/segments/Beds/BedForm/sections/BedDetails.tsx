@@ -13,34 +13,38 @@ export function BedDetails({
 }: SectionProps) {
   return (
     <FormSection title="Bed Details">
-      <Controller
-        name="demographics"
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            name="demographics"
-            label="Demographics"
-            options={filteredPropertyOptions?.demographics ?? []}
-            values={field.value}
-            onChange={field.onChange}
-            error={errors.demographics?.message}
-          />
-        )}
-      />
-      <Controller
-        name="accessibility"
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            name="accessibility"
-            label="Accessibility"
-            options={filteredPropertyOptions?.accessibility ?? []}
-            values={field.value}
-            onChange={field.onChange}
-            error={errors.accessibility?.message}
-          />
-        )}
-      />
+      {!!filteredPropertyOptions?.demographics.length && (
+        <Controller
+          name="demographics"
+          control={control}
+          render={({ field }) => (
+            <CheckboxGroup
+              name="demographics"
+              label="Demographics"
+              options={filteredPropertyOptions?.demographics ?? []}
+              values={field.value}
+              onChange={field.onChange}
+              error={errors.demographics?.message}
+            />
+          )}
+        />
+      )}
+      {!!filteredPropertyOptions?.accessibility.length && (
+        <Controller
+          name="accessibility"
+          control={control}
+          render={({ field }) => (
+            <CheckboxGroup
+              name="accessibility"
+              label="Accessibility"
+              options={filteredPropertyOptions?.accessibility ?? []}
+              values={field.value}
+              onChange={field.onChange}
+              error={errors.accessibility?.message}
+            />
+          )}
+        />
+      )}
       <Controller
         name="medicalNeeds"
         control={control}
@@ -55,34 +59,38 @@ export function BedDetails({
           />
         )}
       />
-      <Controller
-        name="funders"
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            name="funders"
-            label="Funders"
-            options={filteredPropertyOptions?.funders ?? []}
-            values={field.value}
-            onChange={field.onChange}
-            error={errors.funders?.message}
-          />
-        )}
-      />
-      <Controller
-        name="pets"
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            name="pets"
-            label="Pets"
-            options={filteredPropertyOptions?.pets ?? []}
-            values={field.value}
-            onChange={field.onChange}
-            error={errors.pets?.message}
-          />
-        )}
-      />
+      {!!filteredPropertyOptions?.funders.length && (
+        <Controller
+          name="funders"
+          control={control}
+          render={({ field }) => (
+            <CheckboxGroup
+              name="funders"
+              label="Funders"
+              options={filteredPropertyOptions?.funders ?? []}
+              values={field.value}
+              onChange={field.onChange}
+              error={errors.funders?.message}
+            />
+          )}
+        />
+      )}
+      {!!filteredPropertyOptions?.pets.length && (
+        <Controller
+          name="pets"
+          control={control}
+          render={({ field }) => (
+            <CheckboxGroup
+              name="pets"
+              label="Pets"
+              options={filteredPropertyOptions?.pets ?? []}
+              values={field.value}
+              onChange={field.onChange}
+              error={errors.pets?.message}
+            />
+          )}
+        />
+      )}
       <Controller
         name="storage"
         control={control}

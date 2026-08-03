@@ -8,6 +8,7 @@ import {
   type StatusBadgeVariant,
 } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
+import { tableEmptyState } from '../tableEmptyState';
 
 export type Bed = {
   id: string;
@@ -38,10 +39,6 @@ type BedTableProps = {
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
 };
-
-function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
-  return status === BedStatusChoices.Available;
-}
 
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
@@ -80,7 +77,7 @@ export function BedTable({
   onReserve,
   loading,
   loadingState,
-  emptyState,
+  emptyState = tableEmptyState('No beds yet.'),
   wrapperClassName,
   headerClassName,
   headerInsetClassName,
@@ -130,7 +127,7 @@ export function BedTable({
   );
 
   return (
-    <Table<Bed, Bed>
+    <Table<Bed>
       columns={columns}
       rows={beds}
       getRowKey={getRowKey ?? ((bed) => bed.id)}
@@ -154,13 +151,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Reserve bed"
-              disabled={!isBedAvailable(bed.status)}
-              leftIcon={
-                <BookCheck
-                  size={22}
-                  stroke={!isBedAvailable(bed.status) ? 'gray' : 'black'}
-                />
-              }
+              leftIcon={<BookCheck size={22} stroke="black" />}
               onClick={() => onReserve(bed)}
             />
           )}
