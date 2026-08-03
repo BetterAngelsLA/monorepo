@@ -21,7 +21,6 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -103,7 +102,6 @@ export function OperatorApp() {
               />
             </Route>
             <Route path={routePath(mgmtRouteConfig.root)}>
-              <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
                 index
                 element={
