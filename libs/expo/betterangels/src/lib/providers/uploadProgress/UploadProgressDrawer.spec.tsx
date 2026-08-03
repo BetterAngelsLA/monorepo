@@ -150,7 +150,7 @@ describe('UploadProgressDrawer', () => {
     expect(lastPanelProps().snapPoints).toBeUndefined();
   });
 
-  it('shows the failed state with the error message and a Close action', () => {
+  it('shows the failed state with the error message and no dismiss button', () => {
     mocks.sessions = [
       makeSession({
         failed: true,
@@ -159,15 +159,13 @@ describe('UploadProgressDrawer', () => {
       }),
     ];
 
-    const { getByText, getByLabelText } = render(<UploadProgressDrawer />);
+    const { getByText, queryByLabelText } = render(<UploadProgressDrawer />);
 
     expect(getByText('Upload failed')).toBeTruthy();
     expect(getByText('File type not supported.')).toBeTruthy();
-
-    fireEvent.press(getByLabelText('Close'));
-
-    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
-    expect(mocks.cancelUpload).not.toHaveBeenCalled();
+    // Terminal sessions are dismissed by swiping the card down, not a button.
+    expect(queryByLabelText('Close')).toBeNull();
+    expect(queryByLabelText('Retry')).toBeNull();
   });
 
   it('derives the failed state from an errored item even if not flagged', () => {
@@ -183,7 +181,7 @@ describe('UploadProgressDrawer', () => {
     expect(getByText('Upload failed')).toBeTruthy();
   });
 
-  it('shows the complete state with a Close action and no cancel', () => {
+  it('shows the complete state with no action buttons (dismiss via swipe)', () => {
     mocks.sessions = [
       makeSession({
         complete: true,
@@ -192,16 +190,12 @@ describe('UploadProgressDrawer', () => {
       }),
     ];
 
-    const { getByText, getByLabelText, queryByLabelText } = render(
-      <UploadProgressDrawer />,
-    );
+    const { getByText, queryByLabelText } = render(<UploadProgressDrawer />);
 
     expect(getByText('Upload complete')).toBeTruthy();
     expect(getByText('2 of 2')).toBeTruthy();
     expect(queryByLabelText('Cancel upload')).toBeNull();
-
-    fireEvent.press(getByLabelText('Close'));
-    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
+    expect(queryByLabelText('Close')).toBeNull();
   });
 
   it('retries a failed session via its onRetry callback', () => {

@@ -142,39 +142,28 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
         </View>
       )}
 
-      <View style={styles.cancelRow}>
-        {failed ? (
-          <View style={styles.failedActions}>
-            {session.onRetry ? (
-              <TextButton
-                title="Retry"
-                onPress={() => {
-                  endUpload(session.id);
-                  session.onRetry?.();
-                }}
-                accessibilityHint="Retries the failed upload"
-              />
-            ) : null}
+      {failed ? (
+        session.onRetry ? (
+          <View style={styles.cancelRow}>
             <TextButton
-              title="Close"
-              onPress={() => endUpload(session.id)}
-              accessibilityHint="Closes the upload progress panel"
+              title="Retry"
+              onPress={() => {
+                endUpload(session.id);
+                session.onRetry?.();
+              }}
+              accessibilityHint="Retries the failed upload"
             />
           </View>
-        ) : complete ? (
-          <TextButton
-            title="Close"
-            onPress={() => endUpload(session.id)}
-            accessibilityHint="Closes the upload progress panel"
-          />
-        ) : session.onCancel ? (
+        ) : null
+      ) : session.onCancel ? (
+        <View style={styles.cancelRow}>
           <TextButton
             title="Cancel upload"
             onPress={() => cancelUpload(session.id)}
             accessibilityHint="Cancels the current upload"
           />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -187,8 +176,7 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
  * real swipe-down behavior:
  * - Active sessions can't be swiped away (pan-down disabled; Cancel is the
  *   control).
- * - Terminal (complete/failed) sessions are dismissed by swiping down or with
- *   the Close action.
+ * - Terminal (complete/failed) sessions are dismissed by swiping down.
  */
 export function UploadProgressDrawer() {
   const { sessions, endUpload } = useUploadProgress();
@@ -285,11 +273,6 @@ const styles = StyleSheet.create({
   cancelRow: {
     marginTop: Spacings.md,
     alignItems: 'flex-end',
-  },
-  failedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.sm,
   },
   errorMessage: {
     marginTop: Spacings.xxs,
