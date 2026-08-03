@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useUploadProgress } from './UploadProgressContext';
 import { UploadProgressProvider } from './UploadProgressProvider';
+import { resetUploadProgressStore } from './uploadProgressStore';
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
@@ -136,6 +137,11 @@ function Harness() {
 }
 
 describe('UploadProgressProvider', () => {
+  beforeEach(() => {
+    // The session store is module-scoped and shared across provider mounts.
+    resetUploadProgressStore();
+  });
+
   it('tracks a session through start, progress, and completion', () => {
     const { getByLabelText, getByTestId, queryByTestId } = render(
       <UploadProgressProvider>
@@ -211,6 +217,31 @@ describe('UploadProgressProvider', () => {
 
     fireEvent.press(getByLabelText('end'));
     expect(queryByTestId('session-a')).toBeNull();
+  });
+
+  it('keeps the session when the provider that started it unmounts', () => {
+    // Mirrors the real app: the upload starts in the modal-scoped provider,
+    // then the modal closes (that provider unmounts) — the root provider must
+    // still show the session because both share the module store.
+    const first = render(
+      <UploadProgressProvider>
+        <Harness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(first.getByLabelText('start'));
+    expect(first.getByTestId('drawer-count').props.children).toBe(1);
+
+    first.unmount();
+
+    const second = render(
+      <UploadProgressProvider>
+        <Harness />
+      </UploadProgressProvider>,
+    );
+
+    expect(second.getByTestId('drawer-count').props.children).toBe(1);
+    expect(second.getByTestId('session-a')).toBeTruthy();
   });
 
   it('cancels a session and invokes its onCancel handler', () => {
