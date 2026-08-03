@@ -19,7 +19,7 @@ type DirtyFields = Partial<Record<keyof TNoteFormInputs, boolean | object>>;
 export function buildNotePayload(
   form: TNoteFormInputs,
   isSubmitted?: boolean,
-  dirtyFields?: DirtyFields
+  dirtyFields?: DirtyFields,
 ) {
   const include = (field: keyof TNoteFormInputs) =>
     !dirtyFields || !!dirtyFields[field];
@@ -35,12 +35,12 @@ export function buildNotePayload(
   if (include('location')) payload.location = form.location || undefined;
   if (include('providedServices')) {
     payload.providedServices = form.providedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('requestedServices')) {
     payload.requestedServices = form.requestedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('tasks')) {
@@ -93,7 +93,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     requestedServices: (note.requestedServices ?? []).map(
       (service: {
@@ -108,7 +108,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     tasks: (note.tasks ?? []).map((task) => ({
       id: task.id,

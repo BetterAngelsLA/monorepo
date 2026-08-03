@@ -97,7 +97,7 @@ export function Dashboard() {
       },
       skip: !selectedOrganizationId,
       fetchPolicy: 'cache-and-network',
-    }
+    },
   );
 
   // Use previous results while loading to prevent flicker
@@ -136,7 +136,7 @@ export function Dashboard() {
     (row: ShelterRowObject) => {
       navigate(`shelter/${row.id}/manage`);
     },
-    [navigate]
+    [navigate],
   );
   // ── End hooks ──────────────────────────────────────────────────────────────
 

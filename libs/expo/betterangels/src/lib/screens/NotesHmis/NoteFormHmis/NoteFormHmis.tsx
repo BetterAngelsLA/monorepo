@@ -42,7 +42,7 @@ export function NoteFormHmis(props: TProps) {
   const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
   const [enrollmentsError, setProgramsError] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const titleValue = watch('title') || '';
@@ -82,7 +82,7 @@ export function NoteFormHmis(props: TProps) {
       return;
     }
     const optionExists = clientPrograms.some(
-      (p) => p.id === refClientProgramValue
+      (p) => p.id === refClientProgramValue,
     );
     if (optionExists) {
       return;

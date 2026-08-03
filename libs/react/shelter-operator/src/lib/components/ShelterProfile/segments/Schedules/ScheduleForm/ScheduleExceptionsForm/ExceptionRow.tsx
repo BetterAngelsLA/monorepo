@@ -16,7 +16,7 @@ const CONDITION_LABELS: Record<ConditionChoices, string> = {
 };
 
 const CONDITION_OPTIONS: DropdownOption<ConditionChoices>[] = Object.entries(
-  CONDITION_LABELS
+  CONDITION_LABELS,
 ).map(([value, label]) => ({ value: value as ConditionChoices, label }));
 
 export type ExceptionErrors = {
@@ -104,7 +104,8 @@ export function ExceptionRow(props: TProps) {
         options={CONDITION_OPTIONS}
         value={
           entry.condition
-            ? CONDITION_OPTIONS.find((o) => o.value === entry.condition) ?? null
+            ? (CONDITION_OPTIONS.find((o) => o.value === entry.condition) ??
+              null)
             : null
         }
         onChange={(opt) => onChange({ condition: opt?.value ?? undefined })}

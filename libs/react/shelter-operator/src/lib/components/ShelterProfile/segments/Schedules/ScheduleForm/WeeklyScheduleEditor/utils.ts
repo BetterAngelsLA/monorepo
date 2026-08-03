@@ -7,6 +7,6 @@ export function buildDefaultWeeklyState(): WeeklyFormState {
       ...weeklyState,
       [day]: { ranges: [] },
     }),
-    {} as WeeklyFormState
+    {} as WeeklyFormState,
   );
 }

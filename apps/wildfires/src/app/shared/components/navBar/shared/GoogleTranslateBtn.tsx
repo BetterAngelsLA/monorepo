@@ -13,7 +13,7 @@ export function GoogleTranslateBtn(props: IProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>(
-    'right'
+    'right',
   );
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);

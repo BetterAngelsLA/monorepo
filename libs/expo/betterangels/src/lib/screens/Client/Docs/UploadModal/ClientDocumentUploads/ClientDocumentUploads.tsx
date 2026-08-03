@@ -70,7 +70,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
 
   const onFilenameChange = (index: number, value: string) => {
     onFilesChange(
-      files.map((file, i) => (i === index ? { ...file, name: value } : file))
+      files.map((file, i) => (i === index ? { ...file, name: value } : file)),
     );
   };
 
@@ -147,7 +147,7 @@ export function ClientDocumentUploads(props: IClientDocUploadsProps) {
         }}
         onFilesSelected={(newFiles) => {
           onFilesChange(
-            allowMultiple ? [...files, ...newFiles] : [newFiles[0]]
+            allowMultiple ? [...files, ...newFiles] : [newFiles[0]],
           );
         }}
       />

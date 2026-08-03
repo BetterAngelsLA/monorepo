@@ -51,7 +51,7 @@ export function Survey(props: IProps) {
     console.log(newAnswer);
 
     const existingIdx = answers.findIndex(
-      (a) => a.questionId === newAnswer.questionId
+      (a) => a.questionId === newAnswer.questionId,
     );
 
     // update existing answer

@@ -58,7 +58,7 @@ const TableBase = <TItem, TRowObject = TItem>({
       handleFilterChange(columnKey, '');
       setOpenFilterColumn(null);
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const dataTemplateColumns = columns

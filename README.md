@@ -47,6 +47,7 @@ BetterAngels is a nonprofit organization focused on addressing the homelessness 
 Setting up SSH on GitHub allows you to securely connect to your repositories without needing to enter your password each time, providing a more streamlined and secure way to interact with your code
 
 - **[Setting up your SSH key for GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)**: This guide will walk you through the steps needed to set up a SSH on your machine then configuring your GitHub account to accept the connection.
+
 ## Dev Container
 
 This project uses a VS Code Dev Container for a consistent, zero-config development environment.

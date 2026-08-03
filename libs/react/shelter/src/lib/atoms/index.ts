@@ -1,4 +1,7 @@
-export { nullShelterPropertyFilters, shelterPropertyFiltersAtom } from './shelterPropertyFiltersAtom';
+export {
+  nullShelterPropertyFilters,
+  shelterPropertyFiltersAtom,
+} from './shelterPropertyFiltersAtom';
 export {
   shelterLocationSearchInputAtom,
   shelterNameSearchAtom,

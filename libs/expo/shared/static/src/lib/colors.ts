@@ -51,4 +51,4 @@ export const Colors = {
   IOS_BLUE: '#007aff',
 } as const;
 
-export type Colors = typeof Colors[keyof typeof Colors];
+export type Colors = (typeof Colors)[keyof typeof Colors];

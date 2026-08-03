@@ -45,8 +45,8 @@ const getUrl = (input: RequestInfo | URL): string =>
   typeof input === 'string'
     ? input
     : input instanceof URL
-    ? input.href
-    : input.url;
+      ? input.href
+      : input.url;
 
 /**
  * Helper to get HMIS auth token from the stored HMIS domain
@@ -113,7 +113,7 @@ export const loadFileHeadersHmis =
 export const userAgentInterceptor: FetchInterceptor = async (
   input,
   init,
-  next
+  next,
 ) => {
   const headers = new Headers(init.headers);
   headers.set(HEADER_NAMES.USER_AGENT, MODERN_BROWSER_USER_AGENT);
@@ -125,7 +125,9 @@ export const userAgentInterceptor: FetchInterceptor = async (
  * Adds Referer header.  When ``referer`` is omitted the header is not sent
  * (the browser / runtime default applies).
  */
-export const createRefererInterceptor = (referer?: string): FetchInterceptor => {
+export const createRefererInterceptor = (
+  referer?: string,
+): FetchInterceptor => {
   return async (input, init, next) => {
     if (referer === undefined) return next(input, init);
     const headers = new Headers(init.headers);
@@ -165,7 +167,7 @@ export const bodyInterceptor: FetchInterceptor = async (input, init, next) => {
 export const hmisAuthInterceptor: FetchInterceptor = async (
   _input,
   init,
-  next
+  next,
 ) => {
   const tokenHmis = await getAuthTokenHmis();
   if (!tokenHmis) return next(_input, init);
@@ -192,7 +194,7 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
   headers.set(HEADER_NAMES.ACCEPT, HEADER_VALUES.ACCEPT_JSON_ALL);
   headers.set(
     HEADER_NAMES.X_REQUESTED_WITH,
-    HEADER_VALUES.X_REQUESTED_WITH_AJAX
+    HEADER_VALUES.X_REQUESTED_WITH_AJAX,
   );
 
   const response = await next(input, { ...init, headers });
@@ -231,8 +233,8 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
 
       await Promise.all(
         matchingCookies.map((str) =>
-          CookieManager.setFromResponse(targetDomain, str)
-        )
+          CookieManager.setFromResponse(targetDomain, str),
+        ),
       );
     }
   }
@@ -246,7 +248,7 @@ export const interceptorHmis: FetchInterceptor = async (input, init, next) => {
 export const includeCredentialsInterceptor: FetchInterceptor = async (
   input,
   init,
-  next
+  next,
 ) => {
   return next(input, { ...init, credentials: 'include' });
 };

@@ -27,14 +27,17 @@ describe('createWebFetchClient', () => {
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn((key: string) => storage[key] ?? null),
-        setItem: vi.fn((key: string, value: string) => { storage[key] = value; }),
+        setItem: vi.fn((key: string, value: string) => {
+          storage[key] = value;
+        }),
       },
       writable: true,
     });
 
     // Clear cookies
     document.cookie.split(';').forEach((c) => {
-      const n = c.indexOf('=') > -1 ? c.substring(0, c.indexOf('=')).trim() : c.trim();
+      const n =
+        c.indexOf('=') > -1 ? c.substring(0, c.indexOf('=')).trim() : c.trim();
       document.cookie = `${n}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     });
   });

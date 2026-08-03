@@ -9,7 +9,7 @@ import { extractPerPagePagination } from './extractPerPagePagination';
 
 export function extractPagination(
   variables: unknown,
-  paginationVars?: TPaginationVariables
+  paginationVars?: TPaginationVariables,
 ): PaginationVars | undefined {
   if (!variables) {
     return undefined;

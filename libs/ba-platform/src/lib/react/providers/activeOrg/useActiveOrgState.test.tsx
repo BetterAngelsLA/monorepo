@@ -36,7 +36,7 @@ describe('useActiveOrgState', () => {
     const { result } = renderHook(() =>
       useActiveOrgState(orgs, {
         storage: createInMemoryStorage(),
-      })
+      }),
     );
 
     expect(result.current.activeOrg?.id).toBe('org-1');
@@ -84,10 +84,12 @@ describe('useActiveOrgState', () => {
     const { result } = renderHook(() =>
       useActiveOrgState(orgs, {
         storage: createInMemoryStorage(),
-      })
+      }),
     );
 
-    expect(result.current.hasPermission('organizations.add_org_member')).toBe(true);
+    expect(result.current.hasPermission('organizations.add_org_member')).toBe(
+      true,
+    );
     expect(result.current.hasPermission('shelters.view_shelter')).toBe(true);
     expect(result.current.hasPermission('shelters.delete_shelter')).toBe(false);
   });
@@ -110,9 +112,7 @@ describe('useActiveOrgState', () => {
   it('handles empty organizations list gracefully', () => {
     const storage = createInMemoryStorage();
 
-    const { result } = renderHook(() =>
-      useActiveOrgState([], { storage })
-    );
+    const { result } = renderHook(() => useActiveOrgState([], { storage }));
 
     expect(result.current.activeOrg).toBeUndefined();
     expect(storage.getItem(STORAGE_KEY)).toBeNull();

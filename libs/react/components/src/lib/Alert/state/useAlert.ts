@@ -20,7 +20,7 @@ export function useAlert() {
     (props: Omit<TAlertAtomProps, 'visible'>) => {
       setAlert({ ...props, visible: true });
     },
-    [setAlert]
+    [setAlert],
   );
 
   return {

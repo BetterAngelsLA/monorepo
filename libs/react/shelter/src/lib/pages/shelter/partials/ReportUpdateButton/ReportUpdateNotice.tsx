@@ -44,10 +44,7 @@ export function ReportUpdateNotice(props: TProps) {
 
       <div className="mt-8 flex justify-between">
         <Button
-          className={mergeCss([
-            'active:bg-[#E8ECF2]',
-            'transition-colors',
-          ])}
+          className={mergeCss(['active:bg-[#E8ECF2]', 'transition-colors'])}
           size="sm"
           variant="text"
           onClick={close}

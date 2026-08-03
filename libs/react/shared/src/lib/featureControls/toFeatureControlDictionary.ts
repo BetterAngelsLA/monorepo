@@ -7,7 +7,7 @@ type FeatureControlItem = {
 };
 
 export const toFeatureControlDictionary = (
-  items: FeatureControlItem[]
+  items: FeatureControlItem[],
 ): FeatureControlDictionary =>
   items.reduce((acc, item) => {
     acc[item.name] = {

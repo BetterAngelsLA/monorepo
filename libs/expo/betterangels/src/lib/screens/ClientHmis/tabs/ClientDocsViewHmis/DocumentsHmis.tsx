@@ -35,7 +35,7 @@ export default function DocumentsHmis({
   const isExpanded = expanded === accordionKey;
   const fileNameMap = useMemo(
     () => R.indexBy(fileNames, (n) => n.id),
-    [fileNames]
+    [fileNames],
   );
 
   const handlePress = useCallback(
@@ -45,7 +45,7 @@ export default function DocumentsHmis({
         params: { ...params, clientId, hmisId },
       });
     },
-    [clientId, hmisId]
+    [clientId, hmisId],
   );
 
   return (

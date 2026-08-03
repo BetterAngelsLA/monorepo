@@ -22,7 +22,13 @@ export interface IStatCardProps {
 }
 
 /** A single stat box: icon, title, and value. */
-export function StatCard({ icon, title, value, testId, className }: IStatCardProps) {
+export function StatCard({
+  icon,
+  title,
+  value,
+  testId,
+  className,
+}: IStatCardProps) {
   return (
     <div
       className={mergeCss([
@@ -98,7 +104,8 @@ export function ReservationStatusChanges({
             left={{
               icon: <CalendarCheck2 size={ICON_SIZE} className={iconClass} />,
               title: 'Newly Checked In',
-              value: metrics?.checkedIn != null ? String(metrics.checkedIn) : '—',
+              value:
+                metrics?.checkedIn != null ? String(metrics.checkedIn) : '—',
               testId: 'stat-newly-checked-in',
             }}
             right={{
@@ -130,7 +137,11 @@ export function ReservationStatusChanges({
           <StatCard
             icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
             title="Newly Overdue"
-            value={metrics?.checkInOverdue != null ? String(metrics.checkInOverdue) : '—'}
+            value={
+              metrics?.checkInOverdue != null
+                ? String(metrics.checkInOverdue)
+                : '—'
+            }
             testId="stat-newly-overdue"
             className="min-w-[140px] grow-[268] basis-0"
           />
@@ -146,7 +157,9 @@ export function ReservationStatusChanges({
           <StatCard
             icon={<Clock size={ICON_SIZE} className={iconClass} />}
             title="Average days to occupancy"
-            value={avgDaysToOccupancy != null ? String(avgDaysToOccupancy) : '—'}
+            value={
+              avgDaysToOccupancy != null ? String(avgDaysToOccupancy) : '—'
+            }
             testId="stat-average-days-to-occupancy"
             className="min-w-[220px] flex-1"
           />

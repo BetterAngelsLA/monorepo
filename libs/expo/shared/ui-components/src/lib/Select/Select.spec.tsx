@@ -11,7 +11,7 @@ describe('Select Component', () => {
         items={mockData.map((item) => ({ title: item }))}
         onValueChange={mockSetExternalValue}
         placeholder="Select an option"
-      />
+      />,
     );
     expect(getByText('Select an option')).toBeTruthy();
   });
@@ -23,7 +23,7 @@ describe('Select Component', () => {
         onValueChange={mockSetExternalValue}
         label="Select Label"
         placeholder="Select an option"
-      />
+      />,
     );
     expect(getByText('Select Label')).toBeTruthy();
   });

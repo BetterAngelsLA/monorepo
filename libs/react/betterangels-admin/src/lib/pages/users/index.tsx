@@ -32,7 +32,9 @@ type IProps = {
   className?: string;
 };
 
-const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>> = {
+const ROLE_LABELS: Partial<
+  Record<PermissionTemplateEnum | OrgRoleEnum, string>
+> = {
   [PermissionTemplateEnum.Caseworker]: 'Caseworker',
   [OrgRoleEnum.Admin]: 'Admin',
   [OrgRoleEnum.Member]: 'Member',
@@ -40,7 +42,10 @@ const ROLE_LABELS: Partial<Record<PermissionTemplateEnum | OrgRoleEnum, string>>
 };
 
 function roleLabel(m: OrganizationMemberType): string {
-  if (m.memberRole === OrgRoleEnum.Admin || m.memberRole === OrgRoleEnum.Superuser) {
+  if (
+    m.memberRole === OrgRoleEnum.Admin ||
+    m.memberRole === OrgRoleEnum.Superuser
+  ) {
     return ROLE_LABELS[m.memberRole] ?? m.memberRole;
   }
   const templates = (m.permissionTemplates ?? [])
@@ -111,7 +116,7 @@ function useOrganizationMembers(
   page: number,
   sort: { field: string; direction: Ordering },
   search?: string,
-  orgType?: OrgTypeEnum
+  orgType?: OrgTypeEnum,
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -125,7 +130,7 @@ function useOrganizationMembers(
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
-    }
+    },
   );
 
   const activeData = data ?? previousData;
@@ -157,7 +162,7 @@ export default function Users(props: IProps) {
   useOutsideClick(
     menuRef,
     () => setOpenMenuRowId(null),
-    openMenuRowId !== null
+    openMenuRowId !== null,
   );
 
   const organizationId = activeOrg?.id ?? '';
@@ -165,7 +170,13 @@ export default function Users(props: IProps) {
     useMutation(RemoveOrganizationMemberDocument);
 
   const { members, totalPages, loading, isInitialLoad, refetch } =
-    useOrganizationMembers(organizationId, page, sort, search, OrgTypeEnum.Outreach);
+    useOrganizationMembers(
+      organizationId,
+      page,
+      sort,
+      search,
+      OrgTypeEnum.Outreach,
+    );
 
   const parentCss = [
     'flex-1',
@@ -199,7 +210,7 @@ export default function Users(props: IProps) {
 
       const errorMessage = extractOperationInfoMessage(
         response,
-        'removeOrganizationMember'
+        'removeOrganizationMember',
       );
 
       if (errorMessage) {
@@ -259,7 +270,7 @@ export default function Users(props: IProps) {
           )}
         </button>
       )),
-    [sort]
+    [sort],
   );
 
   if (!organizationId) return null;
@@ -342,7 +353,7 @@ export default function Users(props: IProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMenuRowId((prev) =>
-                            prev === member.id ? null : member.id
+                            prev === member.id ? null : member.id,
                           );
                         }}
                         className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99"
@@ -405,7 +416,7 @@ export default function Users(props: IProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenMenuRowId((prev) =>
-                          prev === row.id ? null : row.id
+                          prev === row.id ? null : row.id,
                         );
                       }}
                       className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
@@ -448,7 +459,13 @@ export default function Users(props: IProps) {
 }
 
 /** Star icon for org owner indicator. */
-function StarIconSm({ className, title }: { className?: string; title?: string }) {
+function StarIconSm({
+  className,
+  title,
+}: {
+  className?: string;
+  title?: string;
+}) {
   return (
     <svg
       className={className}

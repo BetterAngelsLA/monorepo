@@ -19,7 +19,9 @@ export type TMarker = {
   position: TLatLng;
   id?: string;
   label?: string;
-  onClick?: ((e: google.maps.marker.AdvancedMarkerClickEvent) => void) | undefined;
+  onClick?:
+    | ((e: google.maps.marker.AdvancedMarkerClickEvent) => void)
+    | undefined;
   type?: 'primary' | 'secondary' | 'purple';
   isPrivate?: boolean;
 };

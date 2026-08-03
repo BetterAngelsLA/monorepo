@@ -33,7 +33,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
 
   // Convert interactedAt to Date object if it's a string
   const parseInteractedAt = (
-    value: Date | string | null | undefined
+    value: Date | string | null | undefined,
   ): Date | undefined => {
     if (!value) {
       return undefined;
@@ -81,7 +81,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
 
   const computeInteractedAt = (
     key: 'time' | 'date',
-    value: Date | null | undefined
+    value: Date | null | undefined,
   ): string | null | undefined => {
     const currentNote = noteRef.current;
 
@@ -92,7 +92,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
         if (currentNote.date && isValid(currentNote.date)) {
           const dateWithStartTime = setMinutes(
             setHours(new Date(currentNote.date), 0),
-            0
+            0,
           );
           return dateWithStartTime.toISOString();
         } else {
@@ -119,7 +119,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
         const minutes = timeValue.getMinutes();
         const combinedDateTime = setMinutes(
           setHours(dateValue, hours),
-          minutes
+          minutes,
         );
         return combinedDateTime.toISOString();
       }

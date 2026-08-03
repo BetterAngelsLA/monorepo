@@ -10,8 +10,8 @@ export type LinkPaginatedResponseHmis<T> = {
 
 export async function fetchAllPages<T>(
   fetchPage: (
-    params?: HttpQueryParamsHmis
-  ) => Promise<LinkPaginatedResponseHmis<T>>
+    params?: HttpQueryParamsHmis,
+  ) => Promise<LinkPaginatedResponseHmis<T>>,
 ): Promise<T[]> {
   const allItems: T[] = [];
 

@@ -40,9 +40,9 @@ export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled
+        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
       ),
-    [referralsEnabled]
+    [referralsEnabled],
   );
 
   return (
@@ -82,12 +82,12 @@ function TabItem({ label, active, onPress }: TabItemProps) {
   const tabWidthStyle = useMemo(
     () =>
       boldW != null ? ({ width: boldW + PADDING_H * 2 } as const) : undefined,
-    [boldW]
+    [boldW],
   );
 
   const btnStyle = useMemo(
     () => StyleSheet.flatten([styles.textBtn, tabWidthStyle]),
-    [tabWidthStyle]
+    [tabWidthStyle],
   );
 
   return (

@@ -16,7 +16,7 @@ export const ERROR_MESSAGE_MAP: Record<string, string> = {
 };
 
 export function parseValidationErrors(
-  errors: TValidationError[]
+  errors: TValidationError[],
 ): Record<string, string> {
   const formErrors: Record<string, string> = {};
   errors.forEach((error) => {
@@ -40,7 +40,7 @@ export function parseValidationErrors(
 
 export function applyValidationErrors<T>(
   errors: TValidationError[],
-  setError: (name: keyof T, error: { type: string; message: string }) => void
+  setError: (name: keyof T, error: { type: string; message: string }) => void,
 ) {
   const formErrors = parseValidationErrors(errors);
   Object.entries(formErrors).forEach(([key, message]) => {

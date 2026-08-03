@@ -48,7 +48,7 @@ function renderTags(tags: string[] | null) {
 
   const remainingTagsCount = Math.max(
     tagsToShow.length - visibleTags.length,
-    0
+    0,
   );
 
   return (
@@ -147,7 +147,7 @@ export function ShelterTable({
         autoFilterOptions: true,
       },
     ],
-    []
+    [],
   );
 
   return (

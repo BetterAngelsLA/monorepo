@@ -83,7 +83,7 @@ export function useClientDocumentUpload() {
           },
           fileUri: originalDoc.uri,
         });
-      })
+      }),
     );
 
     const documentsToSave = payload.uploads.map((fileUpload) => {

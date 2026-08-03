@@ -10,7 +10,7 @@ import {
 
 export function useClientProfilePhotoUpload() {
   const [generateUpload] = useMutation(
-    GenerateClientProfilePhotoUploadDocument
+    GenerateClientProfilePhotoUploadDocument,
   );
   const [resolveUpload] = useMutation(ResolveClientProfilePhotoUploadDocument);
 
@@ -88,14 +88,14 @@ export function useClientProfilePhotoUpload() {
 
         if (resolvePayload.__typename === 'OperationInfo') {
           throw new Error(
-            resolvePayload.messages.map((m) => m.message).join(', ')
+            resolvePayload.messages.map((m) => m.message).join(', '),
           );
         }
       } finally {
         setProcessing(false);
       }
     },
-    [generateUpload, resolveUpload]
+    [generateUpload, resolveUpload],
   );
 
   return { uploadPhoto, loading: processing };

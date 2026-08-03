@@ -3,10 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/apollo/src",
   "projectType": "library",
-  "tags": [
-    "type:util",
-    "scope:shared"
-  ],
+  "tags": ["type:util", "scope:shared"],
   "targets": {
     "typecheck": {
       "executor": "nx:run-commands",
@@ -21,16 +18,12 @@
     },
     "build": {
       "executor": "@nx/js:swc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/apollo",
         "main": "libs/apollo/src/index.ts",
         "tsConfig": "libs/apollo/tsconfig.lib.json",
-        "assets": [
-          "libs/apollo/*.md"
-        ]
+        "assets": ["libs/apollo/*.md"]
       }
     }
   }

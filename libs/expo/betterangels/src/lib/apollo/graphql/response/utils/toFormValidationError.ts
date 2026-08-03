@@ -3,7 +3,7 @@ import { toErrorMessage } from './toErrorMessage';
 import { toOptionalString } from './toOptionalString';
 
 export function toFormValidationError(
-  rawInput: unknown
+  rawInput: unknown,
 ): TFormValidationError | undefined {
   if (!rawInput || typeof rawInput !== 'object') {
     return undefined;

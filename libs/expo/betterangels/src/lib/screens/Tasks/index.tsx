@@ -21,7 +21,7 @@ export default function Tasks() {
   const [teamPreference] = useUserTeamPreference();
   const [search, setSearch] = useState('');
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters({ teamId: teamPreference })
+    getInitialTaskFilters({ teamId: teamPreference }),
   );
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
 
@@ -34,7 +34,7 @@ export default function Tasks() {
 
   const renderTaskItem = useCallback(
     (task: TaskType) => <TaskCard task={task} onPress={handleTaskPress} />,
-    [handleTaskPress]
+    [handleTaskPress],
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {

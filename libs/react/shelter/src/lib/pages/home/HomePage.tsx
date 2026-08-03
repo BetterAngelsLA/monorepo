@@ -49,7 +49,7 @@ const FOOTER_STYLE = [
  */
 
 function symmetricBoundsAroundPinCentroid(
-  pinLocations: TLatLng[]
+  pinLocations: TLatLng[],
 ): google.maps.LatLngBounds {
   const n = pinLocations.length;
   const centroidLat = pinLocations.reduce((sum, p) => sum + p.latitude, 0) / n;
@@ -62,7 +62,7 @@ function symmetricBoundsAroundPinCentroid(
     maxHalfLatDeg = Math.max(maxHalfLatDeg, Math.abs(p.latitude - centroidLat));
     maxHalfLngDeg = Math.max(
       maxHalfLngDeg,
-      Math.abs(p.longitude - centroidLng)
+      Math.abs(p.longitude - centroidLng),
     );
   }
 
@@ -128,7 +128,7 @@ export function HomePage() {
         closeOnMaskClick: true,
       });
     },
-    [setModal, shelters]
+    [setModal, shelters],
   );
 
   const onPlaceViewportFitted = useCallback(
@@ -139,7 +139,7 @@ export function HomePage() {
       setPlaceViewportToFit(null);
       setSearchTrigger((n) => n + 1);
     },
-    [setSearchTrigger]
+    [setSearchTrigger],
   );
 
   const onShelterPinsReadyForMapFit = useCallback(
@@ -151,7 +151,7 @@ export function HomePage() {
       const bounds = symmetricBoundsAroundPinCentroid(pinLocations);
       map.fitBounds(bounds);
     },
-    [map]
+    [map],
   );
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export function HomePage() {
           label: shelter.name,
           onClick: () => handleClick(shelter.id),
           type: shelter.shelterTypes?.find(
-            (t) => t.name === ShelterChoices.AccessCenter
+            (t) => t.name === ShelterChoices.AccessCenter,
           )
             ? 'purple'
             : 'secondary',
@@ -201,7 +201,7 @@ export function HomePage() {
       setDefaultCenter(location);
       setLocation(location);
     },
-    [setLocation]
+    [setLocation],
   );
 
   useEffect(() => {
@@ -264,7 +264,7 @@ export function HomePage() {
         () => {
           applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);
         },
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 5000 },
       );
     } else {
       applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);

@@ -50,7 +50,7 @@ function loadConfig() {
           !googlePlacesApiKey && 'Google Places API key',
         ]
           .filter(Boolean)
-          .join(', ')
+          .join(', '),
     );
   }
 

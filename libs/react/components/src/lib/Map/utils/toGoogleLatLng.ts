@@ -2,7 +2,7 @@
 import { TLatLng } from '../types.maps';
 
 export function toGoogleLatLng(
-  coords?: TLatLng | google.maps.LatLngLiteral | null
+  coords?: TLatLng | google.maps.LatLngLiteral | null,
 ): google.maps.LatLngLiteral | null | undefined {
   if (!coords) {
     return coords;

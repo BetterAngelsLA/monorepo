@@ -1,6 +1,10 @@
 // HMIS error - base
 export class ErrorHmis extends Error {
-  constructor(message: string, public status: number, public data?: unknown) {
+  constructor(
+    message: string,
+    public status: number,
+    public data?: unknown,
+  ) {
     super(message);
     this.name = 'ErrorHmis';
   }
@@ -23,7 +27,7 @@ export class FileErrorHmis extends ErrorHmis {
     message: string,
     status: number,
     code: FileErrorCodeHmis,
-    data?: unknown
+    data?: unknown,
   ) {
     super(message, status, data);
     this.name = 'FileErrorHmis';
@@ -42,7 +46,7 @@ export class InvalidFileTypeErrorHmis extends FileErrorHmis {
   constructor(
     message: string,
     status: number,
-    data?: InvalidFileTypeErrorDataHmis
+    data?: InvalidFileTypeErrorDataHmis,
   ) {
     super(message, status, FileErrorCodeHmis.INVALID_FILE_TYPE, data);
     this.name = 'InvalidFileTypeErrorHmis';

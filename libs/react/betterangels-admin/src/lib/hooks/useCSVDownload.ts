@@ -38,7 +38,7 @@ export default function useCSVDownload() {
         setIsDownloading(false);
       }
     },
-    [fetch]
+    [fetch],
   );
 
   return { download, isDownloading, error, clearError: () => setError(null) };

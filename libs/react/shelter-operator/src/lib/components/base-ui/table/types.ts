@@ -66,7 +66,7 @@ export type TableProps<TItem, TRowObject = TItem> = {
   /** Called when the user clicks a sortable column header. */
   onSortChange?: (
     column: string | null,
-    direction: SortDirection | null
+    direction: SortDirection | null,
   ) => void;
   /** Controlled filter values keyed by column key. */
   filters?: Record<string, string>;
