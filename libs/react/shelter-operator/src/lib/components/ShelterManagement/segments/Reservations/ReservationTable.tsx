@@ -1,15 +1,13 @@
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { formatClientDisplayName } from '@monorepo/react/shared';
 import { Check, X } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
-import { ReservationsQuery } from '../hooks/useReservations/__generated__/useReservations.generated';
-import { shelterEditResourceRoute } from '../routing';
-import { Button } from './base-ui/buttons';
-import { StatusBadge } from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
-import { reservationStatusInfo } from './reservations/reservation-form/constants/reservationFormOptions';
+import { ReservationsQuery } from '../../../../hooks/useReservations/__generated__/useReservations.generated';
+import { Button } from '../../../base-ui/buttons';
+import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
+import { reservationStatusInfo } from './ReservationForm';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,
@@ -22,21 +20,21 @@ const CANCEL_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.CheckInOverdue,
 ]);
 
-type ReservationRow = NonNullable<
+export type Reservation = NonNullable<
   ReservationsQuery['reservations']['results'][number]
 >;
 
 type ReservationTableProps = {
-  reservations: ReservationRow[];
-  shelterId: string;
+  reservations: Reservation[];
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
   isConfirmActionLoading?: boolean;
   isCancelActionLoading?: boolean;
-  onCheckIn?: (reservationId: string) => void;
-  onComplete?: (reservationId: string) => void;
-  onCancel?: (reservationId: string) => void;
+  onEdit: (reservationId: string) => void;
+  onCheckIn: (reservationId: string) => void;
+  onComplete: (reservationId: string) => void;
+  onCancel: (reservationId: string) => void;
   wrapperClassName?: string;
   headerClassName?: string;
   headerInsetClassName?: string;
@@ -48,9 +46,20 @@ type ReservationTableProps = {
   trailingColumnWidth?: string;
 };
 
+function getEffectiveCheckIn(reservation: Reservation): {
+  date: string | null;
+  isScheduled: boolean;
+} {
+  const isActual =
+    reservation.status === ReservationStatusChoices.CheckedIn ||
+    reservation.status === ReservationStatusChoices.Completed;
+  return isActual
+    ? { date: reservation.checkedInAt, isScheduled: false }
+    : { date: reservation.startDate, isScheduled: true };
+}
+
 export function ReservationTable({
   reservations,
-  shelterId,
   loading,
   loadingState,
   emptyState = (
@@ -60,6 +69,7 @@ export function ReservationTable({
   ),
   isConfirmActionLoading,
   isCancelActionLoading,
+  onEdit,
   onCheckIn,
   onComplete,
   onCancel,
@@ -73,9 +83,7 @@ export function ReservationTable({
   rowStyle,
   trailingColumnWidth = '140px',
 }: ReservationTableProps) {
-  const navigate = useNavigate();
-
-  const columns: TableColumn<ReservationRow>[] = useMemo(
+  const columns: TableColumn<Reservation>[] = useMemo(
     () => [
       {
         key: 'client',
@@ -161,42 +169,14 @@ export function ReservationTable({
         label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          return showCheckedInAt
-            ? (reservation.checkedInAt ?? '')
-            : (reservation.startDate ?? '');
-        },
-        filterValue: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          return showCheckedInAt
-            ? (reservation.checkedInAt ?? '')
-            : (reservation.startDate ?? '');
-        },
+        sortValue: (reservation) => getEffectiveCheckIn(reservation).date ?? '',
+        filterValue: (reservation) =>
+          getEffectiveCheckIn(reservation).date ?? '',
         render: (reservation) => {
-          const showCheckedInAt =
-            reservation.status === ReservationStatusChoices.CheckedIn ||
-            reservation.status === ReservationStatusChoices.Completed;
-          if (showCheckedInAt) {
-            return reservation.checkedInAt ? (
-              <span>
-                {new Date(reservation.checkedInAt).toLocaleDateString()}
-              </span>
-            ) : (
-              <span className="text-gray-400">—</span>
-            );
-          }
-          return reservation.startDate ? (
-            <span>
-              {new Date(reservation.startDate).toLocaleDateString()} (sched.)
-            </span>
-          ) : (
-            <span className="text-gray-400">—</span>
-          );
+          const { date, isScheduled } = getEffectiveCheckIn(reservation);
+          if (!date) return <span className="text-gray-400">—</span>;
+          const label = new Date(date).toLocaleDateString();
+          return <span>{isScheduled ? `${label} (sched.)` : label}</span>;
         },
       },
       {
@@ -224,35 +204,35 @@ export function ReservationTable({
       columns={columns}
       rows={reservations}
       getRowKey={(reservation) => reservation.id}
-      getRowSlot={(rowObject) => (
+      getRowSlot={(reservation) => (
         <div
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
           role="group"
           aria-label="Reservation actions"
         >
-          {CONFIRM_ELIGIBLE_STATUSES.has(rowObject.status) && (
+          {CONFIRM_ELIGIBLE_STATUSES.has(reservation.status) && (
             <Button
               type="button"
               variant="confirm"
               className="text-[#747A82]"
               aria-label={
-                rowObject.status === ReservationStatusChoices.CheckedIn
+                reservation.status === ReservationStatusChoices.CheckedIn
                   ? 'Mark completed'
                   : 'Mark checked in'
               }
               leftIcon={<Check size={24} stroke="black" />}
               disabled={isConfirmActionLoading}
               onClick={() => {
-                if (rowObject.status === ReservationStatusChoices.CheckedIn) {
-                  onComplete?.(rowObject.id);
+                if (reservation.status === ReservationStatusChoices.CheckedIn) {
+                  onComplete(reservation.id);
                 } else {
-                  onCheckIn?.(rowObject.id);
+                  onCheckIn(reservation.id);
                 }
               }}
             />
           )}
-          {CANCEL_ELIGIBLE_STATUSES.has(rowObject.status) && (
+          {CANCEL_ELIGIBLE_STATUSES.has(reservation.status) && (
             <Button
               type="button"
               variant="trash"
@@ -260,7 +240,7 @@ export function ReservationTable({
               aria-label="Cancel reservation"
               leftIcon={<X size={24} stroke="black" />}
               disabled={isCancelActionLoading}
-              onClick={() => onCancel?.(rowObject.id)}
+              onClick={() => onCancel(reservation.id)}
             />
           )}
           <Button
@@ -268,9 +248,7 @@ export function ReservationTable({
             variant="edit"
             className="text-[#747A82]"
             aria-label="Edit reservation"
-            onClick={() =>
-              navigate(shelterEditResourceRoute(shelterId, 'reservation', rowObject.id))
-            }
+            onClick={() => onEdit(reservation.id)}
           />
         </div>
       )}
