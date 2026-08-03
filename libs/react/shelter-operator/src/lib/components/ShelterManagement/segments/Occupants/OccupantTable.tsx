@@ -1,9 +1,9 @@
+import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
-import { StatusBadge } from '../base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from '../base-ui/table';
-import { reservationStatusInfo } from '../reservations/reservation-form/constants/reservationFormOptions';
+import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
+import { reservationStatusInfo } from '../Reservations';
 
 export type OccupantRow = {
   id: string;
@@ -11,6 +11,7 @@ export type OccupantRow = {
   status: ReservationStatusChoices;
   roomName: string | null;
   bedName: string | null;
+  checkedInAt: string | null;
   startDate: string | null;
 };
 
@@ -29,6 +30,18 @@ type OccupantTableProps = {
   rowStyle?: CSSProperties;
   trailingColumnWidth?: string;
 };
+
+function getEffectiveCheckIn(row: OccupantRow): {
+  date: string | null;
+  isScheduled: boolean;
+} {
+  const isActual =
+    row.status === ReservationStatusChoices.CheckedIn ||
+    row.status === ReservationStatusChoices.Completed;
+  return isActual
+    ? { date: row.checkedInAt, isScheduled: false }
+    : { date: row.startDate, isScheduled: true };
+}
 
 export function OccupantTable({
   occupants,
@@ -97,21 +110,21 @@ export function OccupantTable({
         },
       },
       {
-        key: 'startDate',
-        label: 'Sched. Check-In',
+        key: 'checkedInAt',
+        label: 'Check-In',
         width: '0.9fr',
         cellClassName: 'text-sm text-gray-700',
-        sortValue: (row) => row.startDate ?? '',
-        filterValue: (row) => row.startDate ?? '',
-        render: (row) =>
-          row.startDate ? (
-            <span>{new Date(row.startDate).toLocaleDateString()}</span>
-          ) : (
-            <span className="text-gray-400">—</span>
-          ),
+        sortValue: (row) => getEffectiveCheckIn(row).date ?? '',
+        filterValue: (row) => getEffectiveCheckIn(row).date ?? '',
+        render: (row) => {
+          const { date, isScheduled } = getEffectiveCheckIn(row);
+          if (!date) return <span className="text-gray-400">—</span>;
+          const label = new Date(date).toLocaleDateString();
+          return <span>{isScheduled ? `${label} (sched.)` : label}</span>;
+        },
       },
     ],
-    []
+    [],
   );
 
   return (

@@ -1,25 +1,32 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
+import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { applyFieldErrors, toError } from '@monorepo/react/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import { BedStatusChoices } from '@monorepo/ba-platform/types';
-import { useBeds, useRooms } from '../../../hooks';
-import { useCreateReservation } from '../../../hooks/useCreateReservation';
-import { useUpdateReservation } from '../../../hooks/useUpdateReservation';
-import { Form } from '../../form/Form';
-
-import { createReservationMeta } from '../../../hooks/useCreateReservation/__generated__/useCreateReservation_meta.generated';
-import { updateReservationMeta } from '../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
-import type { SelectedClient } from '../components/ClientSearchInput';
-import { createEmptyReservationFormData } from './constants/defaultReservationFormData';
-import { formSchema } from './constants/formSchema';
-import type { ReservationFormData } from './formTypes';
-import { ReservationFormSection } from './sections/ReservationFormSection';
+import {
+  useBeds,
+  useCreateReservation,
+  useRooms,
+  useUpdateReservation,
+} from '../../../../../hooks';
+import { createReservationMeta } from '../../../../../hooks/useCreateReservation/__generated__/useCreateReservation_meta.generated';
+import { updateReservationMeta } from '../../../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
+import { Form } from '../../../../form/Form';
+import {
+  createEmptyReservationFormData,
+  formSchema,
+  type ReservationFormData,
+} from './formSchema';
 import {
   buildCreateReservationInput,
   buildUpdateReservationInput,
-} from './utils/reservationFormInput';
+} from './reservationFormInput';
+import { BedRoomSelection } from './sections/BedRoomSelection';
+import {
+  ClientSearchInput,
+  type SelectedClient,
+} from './sections/ClientSearchInput';
 
 export type ReservationFormProps = {
   shelterId: string;
@@ -290,7 +297,17 @@ export function ReservationForm({
           className="space-y-6"
           data-testid="reservation-form"
         >
-          <ReservationFormSection
+          <ClientSearchInput
+            selectedClients={selectedClients}
+            primaryClientId={watchedPrimaryClientId}
+            onAddClient={handleAddClient}
+            onRemoveClient={handleRemoveClient}
+            onSetPrimary={handleSetPrimary}
+          />
+          {errors.clientIds?.message ? (
+            <p className="text-sm text-red-600">{errors.clientIds.message}</p>
+          ) : null}
+          <BedRoomSelection
             control={control}
             errors={errors}
             bedOptions={bedOptions.map(({ value, label }) => ({
@@ -300,11 +317,6 @@ export function ReservationForm({
             roomOptions={roomOptions}
             bedRoomError={bedRoomError}
             readOnlyFields={effectiveReadOnlyFields}
-            selectedClients={selectedClients}
-            primaryClientId={watchedPrimaryClientId}
-            onAddClient={handleAddClient}
-            onRemoveClient={handleRemoveClient}
-            onSetPrimary={handleSetPrimary}
           />
 
           <Form.Actions

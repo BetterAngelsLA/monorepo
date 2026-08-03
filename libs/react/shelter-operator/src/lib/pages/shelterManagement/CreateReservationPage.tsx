@@ -1,20 +1,20 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { ReservationForm } from '../../components/reservations/reservation-form/ReservationForm';
-import { createEmptyReservationFormData } from '../../components/reservations/reservation-form/constants/defaultReservationFormData';
 import {
-  mapReservationClientsToSelectedClients,
-  mapReservationToFormData,
-} from '../../components/reservations/reservation-form/utils/mapReservationToFormData';
-import { useReservation } from '../../hooks/useReservation';
+  createEmptyReservationFormData,
+  ReservationForm,
+} from '../../components/ShelterManagement';
 import { shelterMgmtResourceRoute } from '../../routing';
 
-export function ReservationFormPage() {
+export function CreateReservationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { shelterId = '', id: reservationId } = useParams();
-  const { reservation, loading, error } = useReservation(reservationId ?? '');
+  const { shelterId } = useParams<{ shelterId: string }>();
+
+  if (!shelterId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
 
   const rawState = location.state as Record<string, unknown> | null | undefined;
   const bedId =
@@ -43,63 +43,46 @@ export function ReservationFormPage() {
 
   const { initialData, readOnlyFields } = useMemo(() => {
     const defaults = createEmptyReservationFormData();
-    const readOnlyFields: ('bedId' | 'roomId')[] = [];
+    const readOnly: ('bedId' | 'roomId')[] = [];
 
-    if (reservationId && reservation) {
-      return {
-        initialData: mapReservationToFormData(reservation),
-        readOnlyFields,
-      };
-    }
-    if (!reservationId && bedId) {
-      readOnlyFields.push('bedId', 'roomId');
+    if (bedId) {
+      readOnly.push('bedId', 'roomId');
       return {
         initialData: {
           ...defaults,
           bedId,
           roomId: roomId || null,
         },
-        readOnlyFields,
+        readOnlyFields: readOnly,
       };
     }
-    if (!reservationId && roomId) {
-      readOnlyFields.push('roomId');
+    if (roomId) {
+      readOnly.push('roomId');
       return {
         initialData: {
           ...defaults,
           roomId,
         },
-        readOnlyFields,
+        readOnlyFields: readOnly,
       };
     }
-    return { initialData: undefined, readOnlyFields };
-  }, [reservationId, reservation, bedId, roomId]);
-
-  const initialSelectedClients =
-    reservationId && reservation
-      ? mapReservationClientsToSelectedClients(reservation)
-      : undefined;
+    return { initialData: undefined, readOnlyFields: readOnly };
+  }, [bedId, roomId]);
 
   return (
     <ManageFormPageLayout
       shelterId={shelterId}
       backLinkPath={backLinkPath}
       backLinkLabel={backLinkLabel}
-      entityId={reservationId}
-      loading={loading}
-      hasError={!!(reservationId && (error || !reservation))}
-      errorMessage={
-        error ? 'Unable to load this reservation.' : 'Reservation not found.'
-      }
+      entityId={undefined}
+      loading={false}
+      hasError={false}
       entityName="reservation"
       entityLabel="Reservation"
     >
       <ReservationForm
-        key={reservationId}
-        shelterId={shelterId ?? ''}
-        reservationId={reservationId ? reservationId : undefined}
+        shelterId={shelterId}
         initialData={initialData}
-        initialSelectedClients={initialSelectedClients}
         readOnlyFields={readOnlyFields}
         onSuccess={() => navigate(backLinkPath)}
         onCancel={() => navigate(backLinkPath)}

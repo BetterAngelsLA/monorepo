@@ -8,16 +8,20 @@ import { OperatorLayout } from './components/layout/OperatorLayout';
 import {
   BedsPage,
   CreateBedPage,
+  CreateReservationPage,
   CreateRoomPage,
   EditBedPage,
+  EditReservationPage,
   EditRoomPage,
+  OccupantsPage,
+  ReportsPage,
+  ReservationsPage,
   RoomsPage,
   UsersPage,
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -131,20 +135,24 @@ export function OperatorApp() {
                 element={<EditRoomPage />}
               />
               <Route
+                path={mgmtRouteConfig.children.reservations}
+                element={<ReservationsPage />}
+              />
+              <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
-                element={<ReservationFormPage />}
+                element={<CreateReservationPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
-                element={<ReservationFormPage />}
+                element={<EditReservationPage />}
               />
               <Route
                 path={mgmtRouteConfig.children.occupants}
-                element={<ShelterDashboardPage tab="occupants" />}
+                element={<OccupantsPage />}
               />
               <Route
-                path={mgmtRouteConfig.children.reservations}
-                element={<ShelterDashboardPage tab="reservations" />}
+                path={mgmtRouteConfig.children.reports}
+                element={<ReportsPage />}
               />
             </Route>
           </Route>

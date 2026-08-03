@@ -3,26 +3,18 @@ import { Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
-import { OccupantsView } from '../../components/occupants/OccupantsView';
 import { ReportsView } from '../../components/reports/ReportsView';
-import { ReservationsView } from '../../components/reservations/ReservationsView';
 import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterMgmtRoute } from '../../routing';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
-type ShelterTab = 'reports' | 'reservations' | 'occupants';
+type ShelterTab = 'reports';
 
 const TAB_CONFIG: Record<ShelterTab, SliderTabItem> = {
   reports: { label: 'Reports', pathSuffix: '' },
-  reservations: { label: 'Reservations', pathSuffix: 'reservations' },
-  occupants: { label: 'Occupants', pathSuffix: 'occupants' },
 };
 
-const TAB_ITEMS: SliderTabItem[] = [
-  TAB_CONFIG.reports,
-  TAB_CONFIG.reservations,
-  TAB_CONFIG.occupants,
-];
+const TAB_ITEMS: SliderTabItem[] = [TAB_CONFIG.reports];
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const { shelterId } = useParams();
@@ -75,8 +67,6 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
       />
 
       {tab === 'reports' && <ReportsView shelterId={id} />}
-      {tab === 'occupants' && <OccupantsView shelterId={id} />}
-      {tab === 'reservations' && <ReservationsView shelterId={id} />}
     </div>
   );
 }
