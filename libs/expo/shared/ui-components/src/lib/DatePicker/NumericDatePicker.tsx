@@ -6,7 +6,7 @@ import { InputClearIcon } from '../Input/InputClearIcon';
 import { INumericDatePickerProps } from './types';
 
 export function NumericDatePicker(props: INumericDatePickerProps) {
-  const { label, disabled, value, onChange, onDelete, ...rest } = props;
+  const { label, disabled, testId, value, onChange, onDelete, ...rest } = props;
 
   const showClear = Boolean(value && onDelete);
 
@@ -22,6 +22,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
       <View style={styles.inputWrapper}>
         <DatePickerInput
           locale="en"
+          testID={testId || 'numeric-datepicker-input'}
           inputMode="start"
           mode="outlined"
           iconColor={Colors.PRIMARY_EXTRA_DARK}
@@ -52,6 +53,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             accessibilityRole="button"
             accessibilityLabel="Clear date"
             accessibilityHint="Clears the selected date"
+            testID="clear-numeric-datepicker"
             hitSlop={8}
             style={styles.clearButton}
             disabled={disabled}
