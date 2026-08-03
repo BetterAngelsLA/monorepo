@@ -19,10 +19,13 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const { clientId, imageUrl } = props;
 
   const [modalType, setModalType] = useState<ModalType>(null);
-  const { uploadPhoto, loading } = useClientProfilePhotoUpload();
+  const [isUploading, setIsUploading] = useState(false);
+  const { uploadPhoto } = useClientProfilePhotoUpload();
   const { showSnackbar } = useSnackbar();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    setIsUploading(true);
+
     try {
       await uploadPhoto({
         clientProfileId: clientId,
@@ -36,6 +39,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
         type: 'error',
       });
     } finally {
+      setIsUploading(false);
       setModalType(null);
     }
   };
@@ -54,7 +58,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
       >
         <View style={{ position: 'relative' }}>
           <Avatar
-            loading={loading}
+            loading={isUploading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}

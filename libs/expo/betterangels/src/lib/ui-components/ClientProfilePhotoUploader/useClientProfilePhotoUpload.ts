@@ -1,8 +1,11 @@
 import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { uploadFileToS3WithPresignedPost } from '@monorepo/expo/shared/services';
-import { randomUUID } from 'expo-crypto';
-import { useCallback, useState } from 'react';
+import {
+  PresignedUploadError,
+  runPresignedUpload,
+  unwrapPayload,
+  type TUploadProgress,
+} from '@monorepo/expo/shared/services';
 import {
   GenerateClientProfilePhotoUploadDocument,
   ResolveClientProfilePhotoUploadDocument,
@@ -10,93 +13,73 @@ import {
 
 export function useClientProfilePhotoUpload() {
   const [generateUpload] = useMutation(
-    GenerateClientProfilePhotoUploadDocument
+    GenerateClientProfilePhotoUploadDocument,
   );
   const [resolveUpload] = useMutation(ResolveClientProfilePhotoUploadDocument);
 
-  const [processing, setProcessing] = useState(false);
+  async function uploadPhoto({
+    clientProfileId,
+    file,
+    onProgress,
+  }: {
+    clientProfileId: string;
+    file: ReactNativeFile;
+    onProgress?: (progress: TUploadProgress) => void;
+  }) {
+    await runPresignedUpload({
+      files: [file],
+      generateUpload: async (inputs) => {
+        const input = inputs[0];
 
-  const uploadPhoto = useCallback(
-    async function uploadPhoto({
-      clientProfileId,
-      file,
-    }: {
-      clientProfileId: string;
-      file: ReactNativeFile;
-    }) {
-      setProcessing(true);
-
-      try {
-        const refId = randomUUID();
-
-        // 1: Request presigned POST data from backend
         const result = await generateUpload({
           variables: {
             data: {
-              refId,
+              refId: input.refId,
               clientProfileId,
-              filename: file.name,
-              contentType: file.type,
+              filename: input.filename,
+              contentType: input.contentType,
             },
           },
         });
 
-        const payload = result.data?.generateClientProfilePhotoUpload;
-
-        if (!payload) {
-          throw new Error('Missing response');
-        }
-
-        if (payload.__typename === 'OperationInfo') {
-          throw new Error(payload.messages.map((m) => m.message).join(', '));
-        }
-
-        if (payload.__typename !== 'AuthorizedPresignedS3UploadType') {
-          throw new Error('Unexpected response type');
-        }
+        const payload = unwrapPayload(
+          result.data?.generateClientProfilePhotoUpload,
+          'generate client profile photo upload',
+          'AuthorizedPresignedS3UploadType',
+        );
 
         if (!payload.uploadToken) {
-          throw new Error('Missing uploadToken in presigned upload response');
+          throw new PresignedUploadError(
+            'Missing uploadToken in presigned upload response',
+          );
         }
 
-        // 2: Upload file directly to S3 using presigned POST
-        await uploadFileToS3WithPresignedPost({
-          presignedPost: {
+        return [
+          {
+            refId: payload.refId,
             url: payload.url,
             fields: payload.fields as Record<string, string>,
-            key: payload.presignedKey,
+            presignedKey: payload.presignedKey,
+            uploadToken: payload.uploadToken,
           },
-          fileUri: file.uri,
-        });
+        ];
+      },
+      resolveUpload: async (saved) => {
+        const upload = saved[0];
 
-        // 3: Persist uploaded photo in backend
-        const resolved = await resolveUpload({
+        await resolveUpload({
           variables: {
             data: {
               clientProfileId,
-              presignedKey: payload.presignedKey,
-              uploadToken: payload.uploadToken,
+              presignedKey: upload.presignedKey,
+              uploadToken: upload.uploadToken,
             },
           },
         });
+      },
+      onProgress,
+    });
+  }
 
-        const resolvePayload = resolved.data?.resolveClientProfilePhotoUpload;
-
-        if (!resolvePayload) {
-          throw new Error('Missing resolveUpload response');
-        }
-
-        if (resolvePayload.__typename === 'OperationInfo') {
-          throw new Error(
-            resolvePayload.messages.map((m) => m.message).join(', ')
-          );
-        }
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [generateUpload, resolveUpload]
-  );
-
-  return { uploadPhoto, loading: processing };
+  return { uploadPhoto };
 }
