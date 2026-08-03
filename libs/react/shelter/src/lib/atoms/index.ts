@@ -2,6 +2,7 @@ export { nullShelterPropertyFilters, shelterPropertyFiltersAtom } from './shelte
 export { savedMapViewportAtom } from './mapViewportAtom';
 export {
   shelterLocationSearchInputAtom,
+  shelterMapBoundsFilterAtom,
   shelterNameSearchAtom,
   shelterNameSearchInputAtom,
   shelterSearchAppliedLocationAtom,

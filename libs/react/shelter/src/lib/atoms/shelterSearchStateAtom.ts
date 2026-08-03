@@ -8,6 +8,17 @@ import { TLatLng, TMapBounds } from '../components/Map';
  */
 export const shelterSearchTriggerAtom = atom(0);
 
+/**
+ * The map-area bounds filter the current shelter results were searched for.
+ * Persisted as an atom (not component state) so returning from a shelter
+ * detail page restores the exact previously-searched bounds: ShelterSearch
+ * re-runs the query with identical variables and Apollo's cache-first policy
+ * serves it from cache without a network round-trip.
+ */
+export const shelterMapBoundsFilterAtom = atom<TMapBounds | undefined>(
+  undefined
+);
+
 /** The name text currently in the search input (kept in sync so SearchPage pre-populates correctly). */
 export const shelterNameSearchInputAtom = atom('');
 

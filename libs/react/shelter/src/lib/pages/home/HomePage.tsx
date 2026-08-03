@@ -8,6 +8,7 @@ import { ShelterChoices } from '../../apollo';
 import {
   savedMapViewportAtom,
   shelterLocationSearchInputAtom,
+  shelterMapBoundsFilterAtom,
   shelterSearchAppliedLocationAtom,
   shelterSearchPendingLocationAtom,
   shelterSearchTriggerAtom,
@@ -30,6 +31,7 @@ import {
   TShelter,
   mapBoundsFromCenter,
   modalAtom,
+  sameMapBounds,
   toMapBounds,
 } from '../../components';
 import { SHELTERS_MAP_ID } from '../../constants';
@@ -112,7 +114,24 @@ export function HomePage() {
   /** True while a programmatic camera move awaits the map's idle search. */
   const pendingLocationSearchRef = useRef(false);
   const [showSearchButton, setShowSearchButton] = useState(false);
-  const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
+  // Persisted as an atom so the exact previously-searched bounds survive a
+  // shelter-detail round trip: the query re-runs with identical variables and
+  // Apollo's cache-first policy serves it without a network request.
+  const [mapBoundsFilter, setMapBoundsFilter] = useAtom(
+    shelterMapBoundsFilterAtom
+  );
+  // Mirrors the persisted bounds so the location effect can compare without
+  // subscribing (same pattern as cameraRef); seeded from the atom so it
+  // survives HomePage remounts after returning from a shelter detail page.
+  const lastSearchedBoundsRef = useRef<TMapBounds | undefined>(mapBoundsFilter);
+  /** Sets the map bounds filter, keeping the last-searched ref in sync. */
+  const setMapBounds = useCallback(
+    (bounds: TMapBounds | undefined) => {
+      lastSearchedBoundsRef.current = bounds;
+      setMapBoundsFilter(bounds);
+    },
+    [setMapBoundsFilter]
+  );
   const [hasInitialized, setHasInitialized] = useState(false);
   const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
   const [placeViewportToFit, setPlaceViewportToFit] =
@@ -129,10 +148,10 @@ export function HomePage() {
   /** Fires a search for the given rendered bounds (single map-area search primitive). */
   const fireSearchForBounds = useCallback(
     (bounds: TMapBounds) => {
-      setMapBoundsFilter(bounds);
+      setMapBounds(bounds);
       setSearchTrigger((n) => n + 1);
     },
-    [setSearchTrigger]
+    [setMapBounds, setSearchTrigger]
   );
 
   /**
@@ -260,10 +279,15 @@ export function HomePage() {
       cameraRef.current.center.longitude === location.longitude;
 
     if (alreadyCentered) {
-      // The camera is already at the location (e.g. restored viewport or a
-      // repeat). Search immediately with the current rendered bounds.
+      // The camera is already at the location (e.g. a restored viewport or a
+      // repeat). Search immediately with the current rendered bounds -- unless
+      // they match the last search, in which case the results (and Apollo
+      // cache entry) are already up to date, so skip the redundant request.
       const bounds = map.getBounds();
-      if (bounds) {
+      if (
+        bounds &&
+        !sameMapBounds(toMapBounds(bounds), lastSearchedBoundsRef.current)
+      ) {
         fireSearchForBounds(toMapBounds(bounds));
       }
       return;
@@ -324,7 +348,7 @@ export function HomePage() {
       return;
     }
 
-    setMapBoundsFilter(mapBoundsFromCenter(location));
+    setMapBounds(mapBoundsFromCenter(location));
     setPlaceViewportToFit(null);
   }
 
@@ -351,7 +375,7 @@ export function HomePage() {
     }
 
     // Name only: clear any stale map bounds, then fire immediately.
-    setMapBoundsFilter(undefined);
+    setMapBounds(undefined);
     setNameSearchPinFitRequestId((n) => n + 1);
     setShowSearchButton(false);
     setSearchTrigger((n) => n + 1);

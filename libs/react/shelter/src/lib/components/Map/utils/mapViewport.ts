@@ -1,4 +1,4 @@
-import { TLatLng } from '../types.maps';
+import { TLatLng, TMapBounds } from '../types.maps';
 
 /** Exact map viewport: center coordinates + zoom level. */
 export type TMapViewport = {
@@ -28,4 +28,23 @@ export function mapViewportFromMap(map: TMapLike): TMapViewport | null {
     center: { latitude: center.lat(), longitude: center.lng() },
     zoom,
   };
+}
+
+/**
+ * Exact-equality comparison of two bounds. Safe here because the map camera is
+ * restored to the exact saved center + zoom, so `getBounds()` recomputes
+ * identical floating-point values for the same viewport.
+ */
+export function sameMapBounds(
+  a: TMapBounds | undefined,
+  b: TMapBounds | undefined
+): boolean {
+  return (
+    !!a &&
+    !!b &&
+    a.westLng === b.westLng &&
+    a.northLat === b.northLat &&
+    a.eastLng === b.eastLng &&
+    a.southLat === b.southLat
+  );
 }
