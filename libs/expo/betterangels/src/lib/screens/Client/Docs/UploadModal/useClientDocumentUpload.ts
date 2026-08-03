@@ -21,11 +21,15 @@ export function useClientDocumentUpload() {
     documents,
     namespace,
     onProgress,
+    onManifest,
   }: {
     clientProfileId: string;
     documents: ReactNativeFile[];
     namespace: ClientDocumentNamespaceEnum;
     onProgress?: (progress: TUploadProgress) => void;
+    onManifest?: (
+      manifest: Array<{ refId: string; file: ReactNativeFile }>,
+    ) => void;
   }) {
     if (!documents.length) {
       return;
@@ -39,6 +43,7 @@ export function useClientDocumentUpload() {
     await runPresignedUpload({
       files: documents,
       simulateDelayMs,
+      onManifest,
       generateUpload: async (inputs) => {
         const result = await createUploads({
           variables: {

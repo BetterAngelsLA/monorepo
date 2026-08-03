@@ -168,6 +168,55 @@ describe('runPresignedUpload', () => {
     ).rejects.toBeInstanceOf(PresignedUploadError);
   });
 
+  it('reports the refId/file manifest before generating', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const manifest = vi.fn();
+
+    await runPresignedUpload({
+      files: [file('a.pdf'), file('b.pdf')],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async () => undefined,
+      onManifest: manifest,
+    });
+
+    expect(manifest).toHaveBeenCalledTimes(1);
+    expect(manifest.mock.calls[0][0]).toEqual([
+      { refId: 'ref-0', file: file('a.pdf') },
+      { refId: 'ref-1', file: file('b.pdf') },
+    ]);
+  });
+
+  it('forwards byte-level progress from the transport, throttled to 1% steps', async () => {
+    uploadFileToS3.mockImplementation(({ onProgress }: { onProgress?: (p: { bytesSent: number; totalBytes: number }) => void }) => {
+      onProgress?.({ bytesSent: 250, totalBytes: 1000 });
+      onProgress?.({ bytesSent: 500, totalBytes: 1000 });
+      onProgress?.({ bytesSent: 505, totalBytes: 1000 }); // same 50% → dropped
+      onProgress?.({ bytesSent: 1000, totalBytes: 1000 });
+      return Promise.resolve({ key: 'k' });
+    });
+
+    const events: TUploadProgress[] = [];
+
+    await runPresignedUpload({
+      files: [file('a.pdf')],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async () => undefined,
+      onProgress: (progress) => events.push(progress),
+    });
+
+    const byteEvents = events.filter((event) => event.status === 'uploading');
+    expect(byteEvents.map((event) => event.bytesSent)).toEqual([250, 500, 1000]);
+    expect(byteEvents[0]).toMatchObject({
+      refId: 'ref-0',
+      status: 'uploading',
+      totalBytes: 1000,
+    });
+  });
+
   it('artificially delays each stage when simulateDelayMs is set', async () => {
     vi.useFakeTimers();
 

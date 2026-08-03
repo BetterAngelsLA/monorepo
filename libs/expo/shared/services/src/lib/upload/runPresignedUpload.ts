@@ -21,6 +21,11 @@ export type TRunPresignedUploadArgs<TResolve> = {
   resolveUpload: (saved: TSavedUpload[]) => Promise<TResolve>;
   /** Called on stage changes and per-file upload progress. */
   onProgress?: (progress: TUploadProgress) => void;
+  /**
+   * Called once the refId/file correlation is built, before the backend is
+   * contacted. Useful for surfacing per-file state (e.g. names) in the UI.
+   */
+  onManifest?: (manifest: Array<{ refId: string; file: TUploadFile }>) => void;
   /** Aborts the pipeline between steps (and before each S3 upload). */
   signal?: AbortSignal;
   /**
@@ -58,6 +63,7 @@ export async function runPresignedUpload<TResolve>(
     generateUpload,
     resolveUpload,
     onProgress,
+    onManifest,
     signal,
     failFast = true,
     generateRefId = randomUUID,
@@ -73,7 +79,10 @@ export async function runPresignedUpload<TResolve>(
 
   const emit = (
     stage: TUploadStage,
-    extra?: Pick<TUploadProgress, 'refId' | 'status' | 'error'>,
+    extra?: Pick<
+      TUploadProgress,
+      'refId' | 'status' | 'error' | 'bytesSent' | 'totalBytes'
+    >,
   ) => {
     onProgress?.({ stage, completed, total, ...extra });
   };
@@ -89,7 +98,10 @@ export async function runPresignedUpload<TResolve>(
 
   // 1. Correlate files to refIds so server responses map back to originals.
   const manifest = files.map((file) => ({ refId: generateRefId(), file }));
-  const fileByRefId = new Map(manifest.map((entry) => [entry.refId, entry.file]));
+  onManifest?.(manifest);
+  const fileByRefId = new Map(
+    manifest.map((entry) => [entry.refId, entry.file]),
+  );
 
   // 2. Request presigned POSTs from the backend.
   throwIfAborted();
@@ -129,13 +141,33 @@ export async function runPresignedUpload<TResolve>(
     await slowDown();
 
     try {
+      let lastPercent = -1;
+
       await uploadFileToS3WithPresignedPost({
         presignedPost: {
           url: upload.url,
           fields: upload.fields,
           key: upload.presignedKey,
         },
-        fileUri: file.uri,
+        file,
+        signal,
+        onProgress: ({ bytesSent, totalBytes }) => {
+          // Throttle to 1% steps so byte events don't flood React state.
+          const percent =
+            totalBytes > 0 ? Math.floor((bytesSent / totalBytes) * 100) : -1;
+
+          if (percent === lastPercent) {
+            return;
+          }
+
+          lastPercent = percent;
+          emit('UPLOADING', {
+            refId: upload.refId,
+            status: 'uploading',
+            bytesSent,
+            totalBytes,
+          });
+        },
       });
 
       completed += 1;

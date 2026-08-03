@@ -30,7 +30,7 @@ export type TSavedUpload = {
 
 export type TUploadStage = 'GENERATING' | 'UPLOADING' | 'SAVING';
 
-export type TUploadFileStatus = 'started' | 'done' | 'error';
+export type TUploadFileStatus = 'started' | 'uploading' | 'done' | 'error';
 
 export type TUploadProgress = {
   stage: TUploadStage;
@@ -39,5 +39,8 @@ export type TUploadProgress = {
   total: number;
   refId?: string;
   status?: TUploadFileStatus;
+  /** Byte-level progress for the current file (when the transport reports it). */
+  bytesSent?: number;
+  totalBytes?: number;
   error?: unknown;
 };

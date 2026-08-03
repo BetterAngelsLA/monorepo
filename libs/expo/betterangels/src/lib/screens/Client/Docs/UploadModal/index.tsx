@@ -8,7 +8,9 @@ import {
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { randomUUID } from 'expo-crypto';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { useUploadProgress } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
@@ -39,6 +41,12 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
+  const {
+    startUpload,
+    setUploadManifest,
+    updateUpload,
+    endUpload,
+  } = useUploadProgress();
 
   const clientProfileId = client?.clientProfile.id;
 
@@ -84,20 +92,27 @@ export default function UploadModal(props: IUploadModalProps) {
     setSelectedUpload(null);
     setUploading(true);
 
+    const sessionId = randomUUID();
+    startUpload(sessionId, selectedFiles.map((file) => file.name));
+
     try {
       await uploadDocuments({
         clientProfileId,
         documents: selectedFiles,
         namespace,
+        onManifest: (manifest) => setUploadManifest(sessionId, manifest),
+        onProgress: (progress) => updateUpload(sessionId, progress),
       });
 
       setUploading(false);
+      endUpload(sessionId);
       onUploadSuccess?.();
       closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
       setUploading(false);
+      endUpload(sessionId);
       onUploadError?.();
     }
   };
