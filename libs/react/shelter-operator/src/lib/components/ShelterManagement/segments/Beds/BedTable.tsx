@@ -40,10 +40,6 @@ type BedTableProps = {
   rowStyle?: CSSProperties;
 };
 
-function isBedAvailable(status: BedStatusChoices | null | undefined): boolean {
-  return status === BedStatusChoices.Available;
-}
-
 function bedStatusInfo(
   status: BedStatusChoices | null | undefined,
   maintenanceFlag?: boolean,
