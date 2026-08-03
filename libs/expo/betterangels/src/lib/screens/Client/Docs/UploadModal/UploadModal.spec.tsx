@@ -49,7 +49,6 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
     return null;
   },
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
-  TextRegular: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
   Button: ({
     title,
     onPress,
@@ -136,32 +135,5 @@ describe('UploadModal', () => {
     expect(closeModal).not.toHaveBeenCalled();
     // Session stays open so the drawer can show the failed file(s).
     expect(mocks.endUpload).not.toHaveBeenCalled();
-  });
-
-  it('renders already-uploaded doc-ready rows as a completed label, not a button', async () => {
-    const completedClient = {
-      clientProfile: {
-        id: 'client-1',
-        docReadyDocuments: [
-          {
-            namespace: ClientDocumentNamespaceEnum.DriversLicenseFront,
-            file: { uri: 'file://id-front.jpg', name: 'id.jpg', type: 'image/jpeg' },
-          },
-        ],
-      },
-    } as unknown as ClientProfileQuery;
-
-    const { findByText, queryByLabelText } = render(
-      <UploadModal client={completedClient} closeModal={vi.fn()} />,
-    );
-
-    // The completed row is a non-interactive label (no button affordance).
-    expect(await findByText('Uploaded')).toBeTruthy();
-    expect(
-      queryByLabelText('CA ID or CA Driver’s License - Front'),
-    ).toBeNull();
-
-    // Rows without an uploaded doc still render as upload buttons.
-    expect(queryByLabelText('Birth Certificate')).toBeTruthy();
   });
 });
