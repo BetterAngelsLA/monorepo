@@ -47,7 +47,7 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
         size="full"
         variant="secondary"
         title={title}
-        accessibilityHint={`opens the ${title} screen`}
+        accessibilityHint={`opens the file picker for ${title}`}
       />
     </View>
   );

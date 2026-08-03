@@ -34,8 +34,6 @@ export default function UploadModal(props: IUploadModalProps) {
     HmisForm: [],
     IncomeForm: [],
     OtherClientDocument: [],
-    OtherDocReady: [],
-    OtherForm: [],
     PhotoId: [],
     SocialSecurityCard: [],
   });
@@ -93,14 +91,14 @@ export default function UploadModal(props: IUploadModalProps) {
         namespace,
       });
 
+      setUploading(false);
       onUploadSuccess?.();
       closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
-      onUploadError?.();
-    } finally {
       setUploading(false);
+      onUploadError?.();
     }
   };
 
