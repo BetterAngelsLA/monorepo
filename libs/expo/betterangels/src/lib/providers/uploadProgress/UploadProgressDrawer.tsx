@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
  * Rendered by UploadProgressProvider so it appears above modals.
  */
 export function UploadProgressDrawer() {
-  const { sessions, cancelUpload, endUpload } = useUploadProgress();
+  const { sessions, queueOpen, cancelUpload, endUpload } = useUploadProgress();
 
   const latest = sessions[sessions.length - 1];
   const failed = latest
@@ -58,12 +58,19 @@ export function UploadProgressDrawer() {
     [terminal, latest, endUpload],
   );
 
-  if (!sessions.length) {
+  // While an upload queue (the modal) is showing progress, hide the drawer so
+  // there is only one progress surface on screen.
+  if (queueOpen || !sessions.length) {
     return null;
   }
 
   const session = sessions[sessions.length - 1];
   const percent = session.total ? (session.completed / session.total) * 100 : 0;
+  const stateLabel = failed
+    ? 'Upload failed'
+    : complete
+    ? 'Upload complete'
+    : STAGE_LABELS[session.stage];
 
   return (
     <View style={styles.overlay} pointerEvents="box-none">
@@ -81,11 +88,7 @@ export function UploadProgressDrawer() {
             size="sm"
             color={failed ? Colors.ERROR : complete ? Colors.SUCCESS : undefined}
           >
-            {failed
-              ? 'Upload failed'
-              : complete
-              ? 'Upload complete'
-              : STAGE_LABELS[session.stage]}
+            {session.label ? `${session.label} · ${stateLabel}` : stateLabel}
           </TextBold>
           <TextRegular size="sm">
             {session.completed} of {session.total}

@@ -20,6 +20,8 @@ export type TUploadSession = {
   failed: boolean;
   /** True once the session finished successfully and is awaiting dismissal. */
   complete?: boolean;
+  /** Human-readable label (e.g. the doc type) shown in the queue/drawer. */
+  label?: string;
   /** Optional, flow-specific failure detail shown in the drawer's failed state. */
   errorMessage?: string;
   /** Aborts the underlying upload. Invoked by `cancelUpload`. */
@@ -33,6 +35,10 @@ export type TUploadManifestEntry = {
 
 export type TUploadProgressContextValue = {
   sessions: TUploadSession[];
+  /** True while an upload queue (e.g. the upload modal) is open. */
+  queueOpen: boolean;
+  /** Lets the queue surface hide the drawer while it is showing progress. */
+  setQueueOpen: (open: boolean) => void;
   /** Registers a new upload session with the display names of its files. */
   startUpload: (id: string, names: string[], onCancel?: () => void) => void;
   /** Pairs pipeline refIds with file names once the manifest is built. */

@@ -12,6 +12,8 @@ type TUploadSessionHandle = {
 type TBeginOptions = {
   /** When false the session is not abortable (drawer shows no Cancel). */
   cancellable?: boolean;
+  /** Human-readable label (e.g. the doc type) shown in the queue/drawer. */
+  label?: string;
 };
 
 /**
@@ -38,7 +40,12 @@ export function useUploadSession() {
     const cancellable = options?.cancellable !== false;
     const controller = cancellable ? new AbortController() : undefined;
 
-    startUpload(id, names, controller ? () => controller.abort() : undefined);
+    startUpload(
+      id,
+      names,
+      controller ? () => controller.abort() : undefined,
+      options?.label,
+    );
 
     return {
       id,

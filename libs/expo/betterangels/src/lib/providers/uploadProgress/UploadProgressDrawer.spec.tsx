@@ -6,6 +6,7 @@ import { UploadProgressDrawer } from './UploadProgressDrawer';
 
 const mocks = vi.hoisted(() => ({
   sessions: [] as TUploadSession[],
+  queueOpen: false,
   cancelUpload: vi.fn(),
   endUpload: vi.fn(),
 }));
@@ -13,10 +14,13 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./UploadProgressContext', () => ({
   useUploadProgress: () => ({
     sessions: mocks.sessions,
+    queueOpen: mocks.queueOpen,
+    setQueueOpen: vi.fn(),
     startUpload: vi.fn(),
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
     failUpload: vi.fn(),
+    completeUpload: vi.fn(),
     endUpload: mocks.endUpload,
     cancelUpload: mocks.cancelUpload,
   }),
@@ -62,11 +66,21 @@ function makeSession(overrides: Partial<TUploadSession> = {}): TUploadSession {
 describe('UploadProgressDrawer', () => {
   beforeEach(() => {
     mocks.sessions = [];
+    mocks.queueOpen = false;
     mocks.cancelUpload.mockClear();
     mocks.endUpload.mockClear();
   });
 
   it('renders nothing when there are no sessions', () => {
+    const { queryByText } = render(<UploadProgressDrawer />);
+
+    expect(queryByText('Uploading…')).toBeNull();
+  });
+
+  it('renders nothing while the upload queue is open', () => {
+    mocks.sessions = [makeSession()];
+    mocks.queueOpen = true;
+
     const { queryByText } = render(<UploadProgressDrawer />);
 
     expect(queryByText('Uploading…')).toBeNull();

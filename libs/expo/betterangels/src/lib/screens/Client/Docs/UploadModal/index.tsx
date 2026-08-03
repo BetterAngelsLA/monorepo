@@ -1,13 +1,14 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useUploadSession } from '../../../../providers';
+import { useUploadProgress, useUploadSession } from '../../../../providers';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
+import { UploadQueue } from './UploadQueue';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 type TUploadSelection = {
@@ -16,8 +17,26 @@ type TUploadSelection = {
   allowMultiple?: boolean;
 };
 
+const DOC_TYPE_TITLES: Record<keyof DocUploads, string> = {
+  DriversLicenseFront: 'CA ID or CA Driver’s License - Front',
+  DriversLicenseBack: 'CA ID or CA Driver’s License - Back',
+  PhotoId: 'Other Photo ID (e.g., out of state)',
+  BirthCertificate: 'Birth Certificate',
+  SocialSecurityCard: 'Social Security Card',
+  ConsentForm: 'Consent Forms',
+  HmisForm: 'HMIS Forms',
+  IncomeForm: 'Income Forms (pay stubs)',
+  OtherClientDocument: 'Other Documents',
+};
+
+type TRetryPayload = {
+  files: ReactNativeFile[];
+  namespace: ClientDocumentNamespaceEnum;
+  title: string;
+};
+
 export default function UploadModal(props: IUploadModalProps) {
-  const { client, closeModal } = props;
+  const { client } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
     null
@@ -35,10 +54,25 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
-    useUploadSession();
+  const {
+    begin,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  } = useUploadSession();
+  const { sessions, setQueueOpen, cancelUpload } = useUploadProgress();
+  // Payloads needed to retry a failed upload, keyed by session id.
+  const retryPayloadRef = useRef(new Map<string, TRetryPayload>());
 
   const clientProfileId = client?.clientProfile.id;
+
+  // Hide the drawer while this modal's queue is showing upload status.
+  useEffect(() => {
+    setQueueOpen(true);
+    return () => setQueueOpen(false);
+  }, [setQueueOpen]);
 
   // Pre-populate existing doc-ready documents so already-uploaded doc types
   // are shown as complete and cannot be overwritten.
@@ -70,26 +104,15 @@ export default function UploadModal(props: IUploadModalProps) {
     setSelectedUpload(upload);
   };
 
-  const uploadSelectedFiles = async (newFiles: ReactNativeFile[]) => {
-    if (!clientProfileId || !selectedUpload || !newFiles.length) return;
-
-    const selectedFiles = selectedUpload.allowMultiple
-      ? [...docs[selectedUpload.docType], ...newFiles]
-      : [newFiles[0]];
-
-    const namespace = selectedUpload.namespace;
-
-    setSelectedUpload(null);
-
-    const session = begin(selectedFiles.map((file) => file.name));
-    // Close the modal immediately so the user lands back on the library and
-    // watches the upload progress in the drawer.
-    closeModal();
-
+  const runUpload = async (
+    session: ReturnType<typeof begin>,
+    files: ReactNativeFile[],
+    namespace: ClientDocumentNamespaceEnum,
+  ) => {
     try {
       await uploadDocuments({
         clientProfileId,
-        documents: selectedFiles,
+        documents: files,
         namespace,
         signal: session.signal,
         onManifest: (manifest) => setUploadManifest(session.id, manifest),
@@ -100,15 +123,55 @@ export default function UploadModal(props: IUploadModalProps) {
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
-      // Cancelled sessions were already removed by the drawer's cancel
-      // action. Other failures mark the session failed so the drawer shows
-      // the failure + Close; the user can reopen the modal to retry.
+      // Cancelled sessions were already removed by the cancel action. Other
+      // failures stay in the queue so the user can retry or dismiss.
       if (session.isAborted()) {
         endUpload(session.id);
       } else {
         failUpload(session.id);
       }
     }
+  };
+
+  const uploadSelectedFiles = async (newFiles: ReactNativeFile[]) => {
+    if (!clientProfileId || !selectedUpload || !newFiles.length) return;
+
+    const { docType, namespace, allowMultiple = false } = selectedUpload;
+    const selectedFiles = allowMultiple
+      ? [...docs[docType], ...newFiles]
+      : [newFiles[0]];
+
+    setSelectedUpload(null);
+
+    const title = DOC_TYPE_TITLES[docType];
+    const session = begin(
+      selectedFiles.map((file) => file.name),
+      { label: title },
+    );
+    retryPayloadRef.current.set(session.id, {
+      files: selectedFiles,
+      namespace,
+      title,
+    });
+
+    // Keep the modal open so the user can queue more documents; the queue
+    // below shows each upload's status.
+    await runUpload(session, selectedFiles, namespace);
+  };
+
+  const handleRetry = (sessionId: string) => {
+    const payload = retryPayloadRef.current.get(sessionId);
+    if (!payload || !clientProfileId) return;
+
+    endUpload(sessionId);
+
+    const session = begin(
+      payload.files.map((file) => file.name),
+      { label: payload.title },
+    );
+    retryPayloadRef.current.set(session.id, payload);
+
+    void runUpload(session, payload.files, payload.namespace);
   };
 
   const insets = useSafeAreaInsets();
@@ -129,6 +192,13 @@ export default function UploadModal(props: IUploadModalProps) {
           paddingBottom: 35 + bottomOffset,
         }}
       >
+        <UploadQueue
+          sessions={sessions}
+          onCancel={cancelUpload}
+          onRetry={handleRetry}
+          onDismiss={endUpload}
+        />
+
         <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
           <TextBold>Doc-Ready</TextBold>
           <FileUploadTab

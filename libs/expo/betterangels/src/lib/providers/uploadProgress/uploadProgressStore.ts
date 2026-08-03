@@ -13,12 +13,18 @@ import {
  * "Upload complete" state is visible after the modal is gone.
  */
 
-let sessions: TUploadSession[] = [];
+type TUploadState = {
+  sessions: TUploadSession[];
+  /** True while an upload queue (e.g. the upload modal) is showing progress. */
+  queueOpen: boolean;
+};
+
+let state: TUploadState = { sessions: [], queueOpen: false };
 const cancelHandlers = new Map<string, () => void>();
 const listeners = new Set<() => void>();
 
-function commit(next: TUploadSession[]) {
-  sessions = next;
+function commit(next: TUploadState) {
+  state = next;
   listeners.forEach((listener) => listener());
 }
 
@@ -30,45 +36,54 @@ export function subscribeUploadStore(listener: () => void): () => void {
   };
 }
 
-export function getUploadSnapshot(): TUploadSession[] {
-  return sessions;
+export function getUploadSnapshot(): TUploadState {
+  return state;
+}
+
+export function setQueueOpenSession(open: boolean) {
+  commit({ sessions: state.sessions, queueOpen: open });
 }
 
 export function startUploadSession(
   id: string,
   names: string[],
   onCancel?: () => void,
+  label?: string,
 ) {
-  // Only the most recent upload is shown, so a new session supersedes any
-  // previous (completed/failed) ones.
-  cancelHandlers.clear();
+  // Uploads can be queued in a batch, so sessions accumulate until they are
+  // dismissed instead of superseding each other.
   if (onCancel) {
     cancelHandlers.set(id, onCancel);
   }
 
-  commit([
-    {
-      id,
-      stage: 'GENERATING',
-      items: names.map((name, index) => ({
-        refId: `pending-${index}`,
-        name,
-        status: 'pending' as TUploadItemStatus,
-      })),
-      completed: 0,
-      total: names.length,
-      failed: false,
-      onCancel,
-    },
-  ]);
+  commit({
+    sessions: [
+      ...state.sessions,
+      {
+        id,
+        stage: 'GENERATING',
+        items: names.map((name, index) => ({
+          refId: `pending-${index}`,
+          name,
+          status: 'pending' as TUploadItemStatus,
+        })),
+        completed: 0,
+        total: names.length,
+        failed: false,
+        label,
+        onCancel,
+      },
+    ],
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function setUploadManifestSession(
   id: string,
   manifest: TUploadManifestEntry[],
 ) {
-  commit(
-    sessions.map((session) => {
+  commit({
+    sessions: state.sessions.map((session) => {
       if (session.id !== id) {
         return session;
       }
@@ -82,12 +97,13 @@ export function setUploadManifestSession(
         })),
       };
     }),
-  );
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function updateUploadSession(id: string, progress: TUploadProgress) {
-  commit(
-    sessions.map((session) => {
+  commit({
+    sessions: state.sessions.map((session) => {
       if (session.id !== id) {
         return session;
       }
@@ -119,12 +135,13 @@ export function updateUploadSession(id: string, progress: TUploadProgress) {
         failed: session.failed || progress.status === 'error',
       };
     }),
-  );
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function failUploadSession(id: string, errorMessage?: string) {
-  commit(
-    sessions.map((session) =>
+  commit({
+    sessions: state.sessions.map((session) =>
       session.id !== id
         ? session
         : {
@@ -138,33 +155,41 @@ export function failUploadSession(id: string, errorMessage?: string) {
             ),
           },
     ),
-  );
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function completeUploadSession(id: string) {
-  commit(
-    sessions.map((session) =>
+  commit({
+    sessions: state.sessions.map((session) =>
       session.id !== id
         ? session
         : { ...session, complete: true, completed: session.total },
     ),
-  );
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function endUploadSession(id: string) {
   cancelHandlers.delete(id);
-  commit(sessions.filter((session) => session.id !== id));
+  commit({
+    sessions: state.sessions.filter((session) => session.id !== id),
+    queueOpen: state.queueOpen,
+  });
 }
 
 export function cancelUploadSession(id: string) {
   cancelHandlers.get(id)?.();
   cancelHandlers.delete(id);
-  commit(sessions.filter((session) => session.id !== id));
+  commit({
+    sessions: state.sessions.filter((session) => session.id !== id),
+    queueOpen: state.queueOpen,
+  });
 }
 
 /** Test-only: resets module state between test cases. */
 export function resetUploadProgressStore() {
-  sessions = [];
+  state = { sessions: [], queueOpen: false };
   cancelHandlers.clear();
   listeners.clear();
 }

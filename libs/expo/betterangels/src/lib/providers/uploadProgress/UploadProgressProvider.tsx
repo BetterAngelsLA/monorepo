@@ -7,6 +7,7 @@ import {
   endUploadSession,
   failUploadSession,
   getUploadSnapshot,
+  setQueueOpenSession,
   setUploadManifestSession,
   startUploadSession,
   subscribeUploadStore,
@@ -27,7 +28,7 @@ type TUploadProgressProviderProps = {
  */
 export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   const { children } = props;
-  const sessions = useSyncExternalStore(
+  const { sessions, queueOpen } = useSyncExternalStore(
     subscribeUploadStore,
     getUploadSnapshot,
   );
@@ -35,6 +36,8 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   const value = useMemo(
     () => ({
       sessions,
+      queueOpen,
+      setQueueOpen: setQueueOpenSession,
       startUpload: startUploadSession,
       setUploadManifest: setUploadManifestSession,
       updateUpload: updateUploadSession,
@@ -43,7 +46,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       endUpload: endUploadSession,
       cancelUpload: cancelUploadSession,
     }),
-    [sessions],
+    [sessions, queueOpen],
   );
 
   return (
