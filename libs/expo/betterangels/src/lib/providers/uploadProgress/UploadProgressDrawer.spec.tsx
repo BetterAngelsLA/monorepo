@@ -8,6 +8,13 @@ const mocks = vi.hoisted(() => ({
   sessions: [] as TUploadSession[],
   cancelUpload: vi.fn(),
   endUpload: vi.fn(),
+  panelProps: [] as Array<{
+    index?: number;
+    enableDynamicSizing?: boolean;
+    snapPoints?: Array<string | number>;
+    enablePanDownToClose?: boolean;
+    onClose?: () => void;
+  }>,
 }));
 
 vi.mock('./UploadProgressContext', () => ({
@@ -46,7 +53,26 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
       {title}
     </Text>
   ),
+  BottomSheetPanel: ({
+    children,
+    ...props
+  }: {
+    children: ReactNode;
+    index?: number;
+    enableDynamicSizing?: boolean;
+    snapPoints?: Array<string | number>;
+    enablePanDownToClose?: boolean;
+    onClose?: () => void;
+  }) => {
+    mocks.panelProps.push(props);
+
+    return <>{children}</>;
+  },
 }));
+
+function lastPanelProps() {
+  return mocks.panelProps.at(-1) ?? {};
+}
 
 function makeSession(overrides: Partial<TUploadSession> = {}): TUploadSession {
   return {
@@ -65,12 +91,14 @@ describe('UploadProgressDrawer', () => {
     mocks.sessions = [];
     mocks.cancelUpload.mockClear();
     mocks.endUpload.mockClear();
+    mocks.panelProps = [];
   });
 
   it('renders nothing when there are no sessions', () => {
     const { queryByText } = render(<UploadProgressDrawer />);
 
     expect(queryByText('Uploading…')).toBeNull();
+    expect(mocks.panelProps).toHaveLength(0);
   });
 
   it('shows the stage label and x-of-y counter of the latest session', () => {
@@ -108,6 +136,18 @@ describe('UploadProgressDrawer', () => {
     expect(getByText('b.pdf')).toBeTruthy();
     expect(getByText('50%')).toBeTruthy();
     expect(getByText('Done')).toBeTruthy();
+  });
+
+  it('configures the panel as a single dynamic snap sheet', () => {
+    mocks.sessions = [makeSession()];
+
+    render(<UploadProgressDrawer />);
+
+    expect(lastPanelProps()).toMatchObject({
+      index: 0,
+      enableDynamicSizing: true,
+      snapPoints: ['auto'],
+    });
   });
 
   it('shows the failed state with the error message and a Close action', () => {
@@ -198,5 +238,38 @@ describe('UploadProgressDrawer', () => {
     const second = render(<UploadProgressDrawer />);
     expect(second.queryByLabelText('Cancel upload')).toBeNull();
     expect(second.queryByLabelText('Close')).toBeNull();
+  });
+
+  it('disables pan-down while active and enables it for terminal sessions', () => {
+    mocks.sessions = [makeSession()];
+
+    render(<UploadProgressDrawer />);
+    expect(lastPanelProps().enablePanDownToClose).toBe(false);
+    expect(lastPanelProps().onClose).toBeUndefined();
+
+    mocks.sessions = [
+      makeSession({
+        complete: true,
+        completed: 2,
+        items: [{ refId: 'r1', name: 'a.pdf', status: 'done' }],
+      }),
+    ];
+    render(<UploadProgressDrawer />);
+    expect(lastPanelProps().enablePanDownToClose).toBe(true);
+    expect(lastPanelProps().onClose).toBeDefined();
+  });
+
+  it('ends the session when the terminal sheet is swiped down (onClose)', () => {
+    mocks.sessions = [
+      makeSession({
+        failed: true,
+        items: [{ refId: 'r1', name: 'a.pdf', status: 'error' }],
+      }),
+    ];
+
+    render(<UploadProgressDrawer />);
+
+    lastPanelProps().onClose?.();
+    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
   });
 });

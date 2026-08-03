@@ -1,6 +1,5 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
-import { ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { act, render } from '@testing-library/react-native';
+import { View } from 'react-native';
 import { ClientProfilePhotoUploader } from './ClientProfilePhotoUploader';
 
 const mocks = vi.hoisted(() => ({
