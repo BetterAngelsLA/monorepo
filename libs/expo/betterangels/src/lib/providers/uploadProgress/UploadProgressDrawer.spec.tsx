@@ -146,8 +146,8 @@ describe('UploadProgressDrawer', () => {
     expect(lastPanelProps()).toMatchObject({
       index: 0,
       enableDynamicSizing: true,
-      snapPoints: ['auto'],
     });
+    expect(lastPanelProps().snapPoints).toBeUndefined();
   });
 
   it('shows the failed state with the error message and a Close action', () => {

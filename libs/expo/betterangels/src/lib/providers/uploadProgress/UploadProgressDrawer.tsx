@@ -206,7 +206,6 @@ export function UploadProgressDrawer() {
       <BottomSheetPanel
         index={0}
         enableDynamicSizing
-        snapPoints={['auto']}
         enablePanDownToClose={terminal}
         onClose={terminal ? () => endUpload(session.id) : undefined}
       >
