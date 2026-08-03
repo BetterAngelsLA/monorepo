@@ -2,7 +2,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { MediaPicker, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useUploadSession } from '../../../../providers';
@@ -15,6 +15,9 @@ type TUploadSelection = {
   namespace: ClientDocumentNamespaceEnum;
   allowMultiple?: boolean;
 };
+
+/** Extra bottom padding so the last row clears the screen edge/scroll area. */
+const SCROLL_BOTTOM_PADDING = 35;
 
 export default function UploadModal(props: IUploadModalProps) {
   const { client, closeModal } = props;
@@ -112,20 +115,14 @@ export default function UploadModal(props: IUploadModalProps) {
   const topOffset = insets.top;
 
   return (
-    <View
-      style={{
-        paddingTop: topOffset + Spacings.xs,
-        backgroundColor: Colors.WHITE,
-        flex: 1,
-      }}
-    >
+    <View style={[styles.container, { paddingTop: topOffset + Spacings.xs }]}>
       <ScrollView
-        style={{
-          paddingHorizontal: Spacings.sm,
-          paddingBottom: 35 + bottomOffset,
-        }}
+        style={[
+          styles.scroll,
+          { paddingBottom: SCROLL_BOTTOM_PADDING + bottomOffset },
+        ]}
       >
-        <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+        <View style={styles.section}>
           <TextBold>Doc-Ready</TextBold>
           <FileUploadTab
             docs={docs}
@@ -184,7 +181,7 @@ export default function UploadModal(props: IUploadModalProps) {
           />
         </View>
 
-        <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+        <View style={styles.section}>
           <TextBold>Forms</TextBold>
           <FileUploadTab
             docs={docs}
@@ -227,7 +224,7 @@ export default function UploadModal(props: IUploadModalProps) {
           />
         </View>
 
-        <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+        <View style={styles.section}>
           <TextBold>Other</TextBold>
           <FileUploadTab
             docs={docs}
@@ -260,3 +257,17 @@ export default function UploadModal(props: IUploadModalProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.WHITE,
+    flex: 1,
+  },
+  scroll: {
+    paddingHorizontal: Spacings.sm,
+  },
+  section: {
+    gap: Spacings.xs,
+    marginBottom: Spacings.lg,
+  },
+});

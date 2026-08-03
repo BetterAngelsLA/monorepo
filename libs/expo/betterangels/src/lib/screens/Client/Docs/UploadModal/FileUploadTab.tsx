@@ -12,6 +12,9 @@ export interface IFileUploadTabProps {
   onPress: () => void;
 }
 
+/** Size of the circular status badge (plus/check) before each row. */
+const ICON_BADGE_SIZE = 20;
+
 const FileUploadTab = (props: IFileUploadTabProps) => {
   const { docs, tabKey, title, allowMultiple = false, onPress } = props;
   const disabled = !allowMultiple && docs[tabKey].length > 0;
@@ -41,7 +44,7 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
         disabled={disabled}
         containerStyle={{ flex: 1 }}
         onPress={onPress}
-        height="md"
+        height="lg"
         align="flex-start"
         weight="regular"
         size="full"
@@ -62,9 +65,9 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xxxl,
     borderColor: Colors.NEUTRAL_LIGHT,
     borderWidth: 1,
-    height: 20,
+    height: ICON_BADGE_SIZE,
     justifyContent: 'center',
     marginRight: Spacings.xs,
-    width: 20,
+    width: ICON_BADGE_SIZE,
   },
 });
