@@ -28,28 +28,17 @@ vi.mock('@vis.gl/react-google-maps', () => ({
 
 // Mock the heavy `../Map` barrel (it would pull in Map.tsx, Google Maps
 // controls and @monorepo/react/components), forwarding the real
-// saveMapViewport helper so the sessionStorage behavior is exercised.
+// saveMapViewport/mapViewportFromMap helpers so the sessionStorage behavior
+// is exercised.
 vi.mock('../Map', async () => {
   const storage = await vi.importActual<
     typeof import('../Map/utils/mapViewportStorage')
   >('../Map/utils/mapViewportStorage');
-  return { saveMapViewport: storage.saveMapViewport };
+  return {
+    mapViewportFromMap: storage.mapViewportFromMap,
+    saveMapViewport: storage.saveMapViewport,
+  };
 });
-
-// mergeCss/calcDistance are trivial and pulling the real shared lib would load
-// heavy icon/SVG assets that Vite denies in the test environment.
-vi.mock('@monorepo/react/shared', () => ({
-  mergeCss: (...classes: Array<string | false | null | undefined>) =>
-    classes.filter(Boolean).join(' '),
-  calcDistance: () => 1,
-  formatDistance: () => '1 mi',
-}));
-
-vi.mock('@monorepo/react/icons', () => ({
-  LockIcon: () => null,
-  MapPinIcon: () => null,
-  ImageIcon: () => null,
-}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>(
