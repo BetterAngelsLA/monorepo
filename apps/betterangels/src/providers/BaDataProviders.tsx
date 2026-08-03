@@ -49,9 +49,7 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
               <SnackbarProvider>
                 <UserProvider>
                   <BlockingScreenProvider>
-                    <ModalScreenProvider>
-                      {children}
-                    </ModalScreenProvider>
+                    <ModalScreenProvider>{children}</ModalScreenProvider>
                   </BlockingScreenProvider>
                 </UserProvider>
               </SnackbarProvider>

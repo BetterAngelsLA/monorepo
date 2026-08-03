@@ -2,7 +2,7 @@ import type {
   CreateRoomInput,
   UpdateRoomInput,
 } from '@monorepo/ba-platform/types';
-import type { RoomFormData } from './formTypes';
+import type { RoomFormData } from './formSchema';
 
 const compactEnumValues = <T extends string>(values: readonly T[]): T[] =>
   Array.from(new Set(values.filter(Boolean)));
@@ -38,7 +38,7 @@ const buildRoomFieldInput = (formData: RoomFormData) => ({
 
 export const buildCreateRoomInput = (
   formData: RoomFormData,
-  shelterId: string
+  shelterId: string,
 ): CreateRoomInput => ({
   shelterId,
   ...buildRoomFieldInput(formData),

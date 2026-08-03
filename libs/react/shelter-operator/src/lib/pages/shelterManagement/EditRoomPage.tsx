@@ -1,16 +1,25 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  RoomForm,
+  toRoomFormData as toFormData,
+} from '../../components/ShelterManagement';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { RoomForm } from '../../components/rooms/room-form/RoomForm';
-import { mapRoomToFormData } from '../../components/rooms/room-form/utils/mapRoomToFormData';
-import { useRoom } from '../../hooks/useRoom';
+import { useRoom } from '../../hooks';
 import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditRoomPage() {
   const navigate = useNavigate();
-  const { shelterId, id: roomId } = useParams();
-  const { room, loading, error } = useRoom(roomId ?? '');
+  const { shelterId, id: roomId } = useParams<{
+    shelterId: string;
+    id: string;
+  }>();
 
-  const roomsPath = shelterMgmtResourceRoute(shelterId ?? '', 'room');
+  if (!shelterId || !roomId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  const { room, loading, error } = useRoom(roomId);
+  const roomsPath = shelterMgmtResourceRoute(shelterId, 'room');
 
   return (
     <ManageFormPageLayout
@@ -23,13 +32,12 @@ export function EditRoomPage() {
       errorMessage={error ? 'Unable to load this room.' : 'Room not found.'}
       entityName="room"
       entityLabel="Room"
-      createSubtitle="Fields left blank will use defaults where applicable."
     >
       <RoomForm
         key={roomId}
-        shelterId={shelterId ?? ''}
+        shelterId={shelterId}
         roomId={roomId}
-        initialData={room ? mapRoomToFormData(room) : undefined}
+        initialData={room ? toFormData(room) : undefined}
         onSuccess={() => navigate(roomsPath)}
         onCancel={() => navigate(roomsPath)}
       />

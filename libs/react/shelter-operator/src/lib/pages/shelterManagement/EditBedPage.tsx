@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   BedForm,
-  toFormData,
-} from '../../components/ShelterManagement/segments/Beds';
+  toBedFormData as toFormData,
+} from '../../components/ShelterManagement';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
-import { useBed } from '../../hooks/useBed';
+import { useBed } from '../../hooks';
 import { shelterMgmtResourceRoute } from '../../routing';
 
 export function EditBedPage() {

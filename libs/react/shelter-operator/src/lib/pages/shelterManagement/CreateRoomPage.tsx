@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { BedForm } from '../../components/ShelterManagement';
+import { RoomForm } from '../../components/ShelterManagement';
 import { ManageFormPageLayout } from '../../components/manage-form-page-layout';
 import { shelterMgmtResourceRoute } from '../../routing';
 
-export function CreateBedPage() {
+export function CreateRoomPage() {
   const navigate = useNavigate();
   const { shelterId } = useParams<{ shelterId: string }>();
 
@@ -11,24 +11,24 @@ export function CreateBedPage() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  const bedsPath = shelterMgmtResourceRoute(shelterId, 'bed');
+  const roomsPath = shelterMgmtResourceRoute(shelterId, 'room');
 
   return (
     <ManageFormPageLayout
       shelterId={shelterId}
-      backLinkPath={bedsPath}
-      backLinkLabel="Back to Beds"
+      backLinkPath={roomsPath}
+      backLinkLabel="Back to Rooms"
       entityId={undefined}
       loading={false}
       hasError={false}
-      entityName="bed"
-      entityLabel="Bed"
+      entityName="room"
+      entityLabel="Room"
       createSubtitle="Fields left blank will use defaults where applicable."
     >
-      <BedForm
+      <RoomForm
         shelterId={shelterId}
-        onSuccess={() => navigate(bedsPath)}
-        onCancel={() => navigate(bedsPath)}
+        onSuccess={() => navigate(roomsPath)}
+        onCancel={() => navigate(roomsPath)}
       />
     </ManageFormPageLayout>
   );

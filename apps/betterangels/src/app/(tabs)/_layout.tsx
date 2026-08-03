@@ -33,7 +33,11 @@ const TabIcon = ({
   label,
 }: TabIconProps): React.ReactElement => (
   <View style={styles.tabIconContainer}>
-    {focused ? <Icon color={color as string} /> : <InactiveIcon color={color as string} />}
+    {focused ? (
+      <Icon color={color as string} />
+    ) : (
+      <InactiveIcon color={color as string} />
+    )}
     <TextRegular color={color as string} size="xs" style={styles.labelText}>
       {label}
     </TextRegular>
@@ -126,6 +130,7 @@ export default function TabLayout() {
             tabBarIcon: () => (
               <View style={styles.plusButtonWrapper}>
                 <Pressable
+                  testID="main-plus-tab-btn"
                   accessibilityRole="button"
                   accessibilityHint="Opening homepage main modal"
                   onPress={() => setModalVisible(true)}

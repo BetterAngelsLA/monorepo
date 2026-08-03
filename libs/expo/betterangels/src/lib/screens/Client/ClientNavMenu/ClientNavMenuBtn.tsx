@@ -5,6 +5,7 @@ import { Pressable, StyleSheet } from 'react-native';
 
 type TProps = {
   text?: string;
+  testId?: string;
   icon?: ReactNode;
   color?: Colors;
   disabled?: boolean;
@@ -13,7 +14,8 @@ type TProps = {
 };
 
 export function ClientNavMenuBtn(props: TProps) {
-  const { text, icon, color, onPress, accessibilityHint, disabled } = props;
+  const { text, testId, icon, color, onPress, accessibilityHint, disabled } =
+    props;
 
   if (!text && !icon) {
     return null;
@@ -23,6 +25,7 @@ export function ClientNavMenuBtn(props: TProps) {
     <Pressable
       disabled={disabled}
       onPress={onPress}
+      testID={testId}
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [

@@ -1,16 +1,14 @@
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Button } from './base-ui/buttons';
+import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
   type StatusBadgeVariant,
-} from './base-ui/status-badge/StatusBadge';
-import { Table, type TableColumn } from './base-ui/table';
+} from '../../../base-ui/status-badge/StatusBadge';
+import { Table, type TableColumn } from '../../../base-ui/table';
 
-import {
-  RoomStatusChoices,
-} from '@monorepo/ba-platform/types';
+import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 
 export type Room = {
   id: string;
@@ -22,6 +20,11 @@ type RoomTableProps = {
   rooms: Room[];
   getRowKey?: (item: Room, index: number) => string;
   onRowClick?: (room: Room, rowIndex: number) => void;
+  onClone: (roomId: string) => void;
+  onEdit: (roomId: string) => void;
+  onDeleteRooms: (roomIds: string[], roomName?: string) => void;
+  onMarkReady: (bedId: string) => void;
+  onReserve: (roomId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
   emptyState?: ReactNode;
@@ -33,10 +36,6 @@ type RoomTableProps = {
   tableStyle?: CSSProperties;
   headerStyle?: CSSProperties;
   rowStyle?: CSSProperties;
-  onEdit?: (room: Room) => void;
-  onClone?: (room: Room) => void;
-  onDeleteRooms?: (roomIds: string[], roomName?: string) => void;
-  onReserve?: (room: Room) => void;
 };
 
 function roomStatusInfo(status: RoomStatusChoices | null | undefined): {
@@ -63,6 +62,11 @@ export function RoomTable({
   rooms,
   getRowKey,
   onRowClick,
+  onEdit,
+  onClone,
+  onDeleteRooms,
+  onMarkReady,
+  onReserve,
   loading,
   loadingState,
   emptyState,
@@ -74,10 +78,6 @@ export function RoomTable({
   tableStyle,
   headerStyle,
   rowStyle,
-  onEdit,
-  onClone,
-  onDeleteRooms,
-  onReserve,
 }: RoomTableProps) {
   const columns: TableColumn<Room>[] = useMemo(
     () => [
@@ -102,7 +102,7 @@ export function RoomTable({
         autoFilterOptions: true,
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -117,14 +117,22 @@ export function RoomTable({
           role="group"
           aria-label="Room actions"
         >
-          {onReserve && (
+          {room.status === RoomStatusChoices.InTurnaround && (
+            <Button
+              type="button"
+              variant="confirm"
+              aria-label="Mark ready"
+              onClick={() => onMarkReady(room.id)}
+            />
+          )}
+          {room.status === RoomStatusChoices.Available && (
             <Button
               type="button"
               variant="edit"
               className="text-[#747A82]"
               aria-label="Reserve room"
               leftIcon={<BookCheck size={22} stroke="black" />}
-              onClick={() => onReserve(room)}
+              onClick={() => onReserve(room.id)}
             />
           )}
           <Button
@@ -133,18 +141,18 @@ export function RoomTable({
             className="text-[#747A82]"
             aria-label="Clone room"
             leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone?.(room)}
+            onClick={() => onClone(room.id)}
           />
           <Button
             type="button"
             variant="edit"
             className="text-[#747A82]"
-            onClick={() => onEdit?.(room)}
+            onClick={() => onEdit(room.id)}
           />
           <Button
             type="button"
             variant="trash"
-            onClick={() => onDeleteRooms?.([room.id], room.name)}
+            onClick={() => onDeleteRooms([room.id], room.name)}
           />
         </div>
       )}
