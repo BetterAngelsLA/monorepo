@@ -1,6 +1,6 @@
 export {
   BedForm,
-  toFormData,
+  toFormData as toBedFormData,
   type BedFormData,
   type BedFormProps,
 } from './BedForm';

@@ -25,6 +25,7 @@ interface ISingleSelectProps extends TMarginProps {
   error?: string;
   maxRadioItems?: number;
   modalTitle?: string;
+  testId?: string;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {

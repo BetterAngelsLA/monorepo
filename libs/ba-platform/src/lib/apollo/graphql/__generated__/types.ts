@@ -3873,6 +3873,7 @@ export type UpdateRoomInput = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
   medicalRespite?: InputMaybe<Scalars['Boolean']['input']>;

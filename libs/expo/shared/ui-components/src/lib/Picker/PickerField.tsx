@@ -15,6 +15,7 @@ type TProps = {
   required?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  testId?: string;
 };
 
 export const PickerField = React.memo(function PickerField(props: TProps) {
@@ -29,13 +30,14 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     required,
     disabled,
     style,
+    testId,
   } = props;
 
   const displayValue = useMemo(() => {
     if (selectedValue == null || selectedValue === '') return undefined;
     const strVal = String(selectedValue);
     const item = items.find((it) => String(it.value) === strVal);
-    return item ? item.displayValue ?? String(item.value) : undefined;
+    return item ? (item.displayValue ?? String(item.value)) : undefined;
   }, [items, selectedValue]);
 
   return (
@@ -50,6 +52,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       label={label}
       error={!!error}
       errorMessage={error}
+      testID={testId}
       onFocus={onFocus}
       slotRight={{
         focusableInput: true,

@@ -9,7 +9,7 @@ import { ReservationStatusChanges } from './ReservationStatusChanges';
  * Reporting layout for a shelter's Reports tab.
  *
  * Fetches ShelterOccupancyMetrics for the current shelter + date-range filter
- * and logs the payload for verification until charts/stats are wired up.
+ * and passes the metrics into the reservation status summary cards and charts.
  */
 export function ReportsView({ shelterId }: { shelterId?: string }) {
   const { range } = useAtomValue(dateRangeFilterAtom);
@@ -26,13 +26,16 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
       endDate: range.to,
     });
   } else if (error) {
-    console.error('[reporting] failed to load shelter occupancy metrics', error);
+    console.error(
+      '[reporting] failed to load shelter occupancy metrics',
+      error,
+    );
   } else if (metrics) {
     console.log('[reporting] shelter occupancy metrics', metrics);
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-6 px-6">
+    <div className="mt-6 flex flex-col gap-6 px-6 pb-10">
       <ReportFilterBar />
 
       <ReservationStatusChanges
@@ -41,8 +44,8 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
       />
 
       <div className="grid gap-6 md:grid-cols-2">
-        <BedStatusChart />
-        <DailyOccupancyChart />
+        <BedStatusChart data={metrics?.dailyBedStatus} />
+        <DailyOccupancyChart data={metrics?.dailyOccupancy} />
       </div>
     </div>
   );

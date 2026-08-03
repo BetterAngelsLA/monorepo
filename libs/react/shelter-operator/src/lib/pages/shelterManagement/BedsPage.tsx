@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Beds } from '../../components/ShelterManagement/segments/Beds';
+import { Beds } from '../../components/ShelterManagement';
 
 export function BedsPage() {
   const { shelterId } = useParams<{ shelterId: string }>();
