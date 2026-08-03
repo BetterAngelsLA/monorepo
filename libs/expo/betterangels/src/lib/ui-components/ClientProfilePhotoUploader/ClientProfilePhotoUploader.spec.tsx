@@ -6,6 +6,7 @@ import { ClientProfilePhotoUploader } from './ClientProfilePhotoUploader';
 const mocks = vi.hoisted(() => ({
   uploadPhoto: vi.fn(),
   endUpload: vi.fn(),
+  completeUpload: vi.fn(),
   failUpload: vi.fn(),
   isAborted: false,
   mediaPickerProps: [] as Array<{
@@ -42,6 +43,7 @@ vi.mock('../../providers', () => ({
     setUploadManifest: vi.fn(),
     updateUpload: vi.fn(),
     failUpload: mocks.failUpload,
+    completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
   }),
 }));
@@ -72,6 +74,7 @@ describe('ClientProfilePhotoUploader', () => {
   beforeEach(() => {
     mocks.uploadPhoto.mockReset();
     mocks.endUpload.mockClear();
+    mocks.completeUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.isAborted = false;
     mocks.mediaPickerProps.length = 0;
@@ -93,7 +96,8 @@ describe('ClientProfilePhotoUploader', () => {
         onProgress: expect.any(Function),
       }),
     );
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-1');
+    expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
+    expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 

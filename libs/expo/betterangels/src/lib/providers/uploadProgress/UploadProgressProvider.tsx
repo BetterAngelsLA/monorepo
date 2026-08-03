@@ -34,12 +34,14 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
 
   const startUpload = useCallback(
     (id: string, names: string[], onCancel?: () => void) => {
+      // Only the most recent upload is shown, so a new session supersedes any
+      // previous (completed/failed) ones.
+      cancelHandlersRef.current.clear();
       if (onCancel) {
         cancelHandlersRef.current.set(id, onCancel);
       }
 
-      setSessions((prev) => [
-        ...prev,
+      setSessions([
         {
           id,
           stage: 'GENERATING',
@@ -136,6 +138,16 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
     );
   }, []);
 
+  const completeUpload = useCallback((id: string) => {
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id !== id
+          ? session
+          : { ...session, complete: true, completed: session.total },
+      ),
+    );
+  }, []);
+
   const endUpload = useCallback((id: string) => {
     cancelHandlersRef.current.delete(id);
     setSessions((prev) => prev.filter((session) => session.id !== id));
@@ -154,6 +166,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       setUploadManifest,
       updateUpload,
       failUpload,
+      completeUpload,
       endUpload,
       cancelUpload,
     }),
@@ -163,6 +176,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       setUploadManifest,
       updateUpload,
       failUpload,
+      completeUpload,
       endUpload,
       cancelUpload,
     ],

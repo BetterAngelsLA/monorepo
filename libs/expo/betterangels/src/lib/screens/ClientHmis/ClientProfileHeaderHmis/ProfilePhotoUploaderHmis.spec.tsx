@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   updateUpload: vi.fn(),
   failUpload: vi.fn(),
   endUpload: vi.fn(),
+  completeUpload: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -59,6 +60,7 @@ vi.mock('../../../providers', () => ({
     setUploadManifest: vi.fn(),
     updateUpload: mocks.updateUpload,
     failUpload: mocks.failUpload,
+    completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
   }),
 }));
@@ -90,6 +92,7 @@ describe('ProfilePhotoUploaderHmis', () => {
     mocks.updateUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
+    mocks.completeUpload.mockClear();
     mocks.mediaPickerProps.length = 0;
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
@@ -126,7 +129,8 @@ describe('ProfilePhotoUploaderHmis', () => {
       include: [expect.anything()],
     });
     expect(mocks.incrementClientPhotoVersion).toHaveBeenCalledWith('client-1');
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-photo');
+    expect(mocks.completeUpload).toHaveBeenCalledWith('session-photo');
+    expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 

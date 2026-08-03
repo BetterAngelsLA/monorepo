@@ -21,7 +21,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { uploadPhoto } = useClientProfilePhotoUpload();
-  const { begin, setUploadManifest, updateUpload, failUpload, endUpload } =
+  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
     useUploadSession();
 
   const handleUpload = async (file: ReactNativeFile) => {
@@ -37,7 +37,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
         onProgress: (progress) => updateUpload(session.id, progress),
       });
 
-      endUpload(session.id);
+      completeUpload(session.id);
     } catch (err) {
       console.error(`[ClientProfilePhotoUploader]: ${err}`);
 

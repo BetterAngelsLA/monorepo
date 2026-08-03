@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   setUploadManifest: vi.fn(),
   updateUpload: vi.fn(),
   failUpload: vi.fn(),
+  completeUpload: vi.fn(),
   endUpload: vi.fn(),
 }));
 
@@ -21,6 +22,7 @@ vi.mock('./UploadProgressContext', () => ({
     setUploadManifest: mocks.setUploadManifest,
     updateUpload: mocks.updateUpload,
     failUpload: mocks.failUpload,
+    completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
     cancelUpload: vi.fn(),
   }),
@@ -29,7 +31,7 @@ vi.mock('./UploadProgressContext', () => ({
 let lastHandle: TUploadSessionHandle | undefined;
 
 function Harness() {
-  const { begin, setUploadManifest, updateUpload, failUpload, endUpload } =
+  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
     useUploadSession();
 
   return (
@@ -90,6 +92,14 @@ function Harness() {
       </Text>
       <Text
         accessibilityRole="button"
+        accessibilityLabel="complete"
+        accessibilityHint="complete the upload"
+        onPress={() => completeUpload('session-x')}
+      >
+        complete
+      </Text>
+      <Text
+        accessibilityRole="button"
         accessibilityLabel="end"
         accessibilityHint="end the upload"
         onPress={() => endUpload('session-x')}
@@ -141,12 +151,13 @@ describe('useUploadSession', () => {
     expect(lastHandle?.isAborted()).toBe(false);
   });
 
-  it('forwards setUploadManifest, updateUpload, failUpload and endUpload', () => {
+  it('forwards setUploadManifest, updateUpload, failUpload, completeUpload and endUpload', () => {
     const { getByLabelText } = render(<Harness />);
 
     fireEvent.press(getByLabelText('manifest'));
     fireEvent.press(getByLabelText('progress'));
     fireEvent.press(getByLabelText('fail'));
+    fireEvent.press(getByLabelText('complete'));
     fireEvent.press(getByLabelText('end'));
 
     expect(mocks.setUploadManifest).toHaveBeenCalledWith('session-x', [
@@ -158,6 +169,7 @@ describe('useUploadSession', () => {
       total: 2,
     });
     expect(mocks.failUpload).toHaveBeenCalledWith('session-x', 'boom');
+    expect(mocks.completeUpload).toHaveBeenCalledWith('session-x');
     expect(mocks.endUpload).toHaveBeenCalledWith('session-x');
   });
 });

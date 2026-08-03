@@ -27,10 +27,10 @@ const mocks = vi.hoisted(() => {
   return {
     uploadClientFile: vi.fn(),
     invalidateQueries: vi.fn(),
-    startUpload: vi.fn(),
     updateUpload: vi.fn(),
     failUpload: vi.fn(),
     endUpload: vi.fn(),
+    completeUpload: vi.fn(),
     readFileAsBase64: vi.fn(),
     begin: vi.fn(() => ({
       id: 'session-hmis',
@@ -119,6 +119,7 @@ vi.mock('../../../../providers', () => ({
     setUploadManifest: vi.fn(),
     updateUpload: mocks.updateUpload,
     failUpload: mocks.failUpload,
+    completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
   }),
 }));
@@ -180,10 +181,10 @@ describe('UploadModalHmis', () => {
     mocks.uploadClientFile.mockReset();
     mocks.readFileAsBase64.mockResolvedValue('base64data');
     mocks.invalidateQueries.mockClear();
-    mocks.startUpload.mockClear();
     mocks.updateUpload.mockClear();
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
+    mocks.completeUpload.mockClear();
     mocks.begin.mockClear();
     mocks.selectorProps.length = 0;
     mocks.mediaPickerProps.length = 0;
@@ -230,7 +231,8 @@ describe('UploadModalHmis', () => {
       completed: 0,
       total: 1,
     });
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-hmis');
+    expect(mocks.completeUpload).toHaveBeenCalledWith('session-hmis');
+    expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['hmis-files'],
     });

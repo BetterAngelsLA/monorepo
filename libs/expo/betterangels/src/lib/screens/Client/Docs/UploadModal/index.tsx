@@ -35,7 +35,7 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
-  const { begin, setUploadManifest, updateUpload, failUpload, endUpload } =
+  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
     useUploadSession();
 
   const clientProfileId = client?.clientProfile.id;
@@ -93,7 +93,7 @@ export default function UploadModal(props: IUploadModalProps) {
         onProgress: (progress) => updateUpload(session.id, progress),
       });
 
-      endUpload(session.id);
+      completeUpload(session.id);
       closeModal();
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);

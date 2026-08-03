@@ -21,8 +21,14 @@ type TBeginOptions = {
  * no abort support (e.g. HMIS base64/multipart uploads).
  */
 export function useUploadSession() {
-  const { startUpload, setUploadManifest, updateUpload, failUpload, endUpload } =
-    useUploadProgress();
+  const {
+    startUpload,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  } = useUploadProgress();
 
   const begin = (
     names: string[],
@@ -41,7 +47,14 @@ export function useUploadSession() {
     };
   };
 
-  return { begin, setUploadManifest, updateUpload, failUpload, endUpload };
+  return {
+    begin,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  };
 }
 
 export type { TUploadSessionHandle };

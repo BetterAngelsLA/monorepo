@@ -42,6 +42,7 @@ export function UploadProgressDrawer() {
   const session = sessions[sessions.length - 1];
   const failed =
     session.failed || session.items.some((item) => item.status === 'error');
+  const complete = !failed && !!session.complete;
   const percent = session.total ? (session.completed / session.total) * 100 : 0;
 
   return (
@@ -55,8 +56,15 @@ export function UploadProgressDrawer() {
         <View style={styles.handle} />
 
         <View style={styles.headerRow}>
-          <TextBold size="sm" color={failed ? Colors.ERROR : undefined}>
-            {failed ? 'Upload failed' : STAGE_LABELS[session.stage]}
+          <TextBold
+            size="sm"
+            color={failed ? Colors.ERROR : complete ? Colors.SUCCESS : undefined}
+          >
+            {failed
+              ? 'Upload failed'
+              : complete
+              ? 'Upload complete'
+              : STAGE_LABELS[session.stage]}
           </TextBold>
           <TextRegular size="sm">
             {session.completed} of {session.total}
@@ -124,7 +132,7 @@ export function UploadProgressDrawer() {
         )}
 
         <View style={styles.cancelRow}>
-          {failed ? (
+          {failed || complete ? (
             <TextButton
               title="Close"
               onPress={() => endUpload(session.id)}

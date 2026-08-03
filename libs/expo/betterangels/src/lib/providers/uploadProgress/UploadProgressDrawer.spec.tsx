@@ -142,6 +142,27 @@ describe('UploadProgressDrawer', () => {
     expect(getByText('Upload failed')).toBeTruthy();
   });
 
+  it('shows the complete state with a Close action and no cancel', () => {
+    mocks.sessions = [
+      makeSession({
+        complete: true,
+        completed: 2,
+        items: [{ refId: 'r1', name: 'a.pdf', status: 'done' }],
+      }),
+    ];
+
+    const { getByText, getByLabelText, queryByLabelText } = render(
+      <UploadProgressDrawer />,
+    );
+
+    expect(getByText('Upload complete')).toBeTruthy();
+    expect(getByText('2 of 2')).toBeTruthy();
+    expect(queryByLabelText('Cancel upload')).toBeNull();
+
+    fireEvent.press(getByLabelText('Close'));
+    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
+  });
+
   it('shows Cancel only for sessions that can be aborted', () => {
     mocks.sessions = [makeSession({ onCancel: vi.fn() })];
 

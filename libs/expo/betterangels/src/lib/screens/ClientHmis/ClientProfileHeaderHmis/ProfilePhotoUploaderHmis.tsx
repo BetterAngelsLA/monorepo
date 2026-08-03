@@ -34,7 +34,8 @@ export function ProfilePhotoUploaderHmis({
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { begin, updateUpload, failUpload, endUpload } = useUploadSession();
+  const { begin, updateUpload, failUpload, completeUpload } =
+    useUploadSession();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
@@ -55,7 +56,7 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      endUpload(session.id);
+      completeUpload(session.id);
       setModalType(null);
     } catch {
       failUpload(session.id, 'Error uploading profile photo.');

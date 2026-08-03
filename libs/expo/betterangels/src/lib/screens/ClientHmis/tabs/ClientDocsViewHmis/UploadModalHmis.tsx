@@ -63,7 +63,8 @@ export default function UploadModalHmis(props: TProps) {
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { begin, updateUpload, failUpload, endUpload } = useUploadSession();
+  const { begin, updateUpload, failUpload, completeUpload } =
+    useUploadSession();
   const { uploadClientFile } = useClientHmis();
   const queryClient = useQueryClient();
 
@@ -140,7 +141,7 @@ export default function UploadModalHmis(props: TProps) {
         isPrivate: false,
       });
 
-      endUpload(session.id);
+      completeUpload(session.id);
 
       if (client?.id && client?.hmisId) {
         queryClient.invalidateQueries({

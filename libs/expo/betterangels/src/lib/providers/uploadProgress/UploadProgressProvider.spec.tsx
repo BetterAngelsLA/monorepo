@@ -22,6 +22,7 @@ function Harness() {
     setUploadManifest,
     updateUpload,
     failUpload,
+    completeUpload,
     endUpload,
     cancelUpload,
   } = useUploadProgress();
@@ -36,6 +37,9 @@ function Harness() {
           </Text>
           <Text testID={`session-${session.id}-failed`}>
             {session.failed ? 'failed' : 'ok'}
+          </Text>
+          <Text testID={`session-${session.id}-complete`}>
+            {session.complete ? 'complete' : 'incomplete'}
           </Text>
           <Text testID={`session-${session.id}-error`}>
             {session.errorMessage ?? 'none'}
@@ -113,6 +117,14 @@ function Harness() {
       </Text>
       <Text
         accessibilityRole="button"
+        accessibilityLabel="complete"
+        accessibilityHint="mark the upload complete"
+        onPress={() => completeUpload('a')}
+      >
+        complete
+      </Text>
+      <Text
+        accessibilityRole="button"
         accessibilityLabel="end"
         accessibilityHint="end the upload"
         onPress={() => endUpload('a')}
@@ -176,6 +188,26 @@ describe('UploadProgressProvider', () => {
     expect(getByTestId('session-a-error').props.children).toBe(
       'Something went wrong.',
     );
+
+    fireEvent.press(getByLabelText('end'));
+    expect(queryByTestId('session-a')).toBeNull();
+  });
+
+  it('completeUpload keeps the session in a completed state until dismissed', () => {
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <Harness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    expect(getByTestId('session-a-complete').props.children).toBe('incomplete');
+
+    fireEvent.press(getByLabelText('complete'));
+
+    // Session stays open so the drawer can show the completion + Close action.
+    expect(getByTestId('drawer-count').props.children).toBe(1);
+    expect(getByTestId('session-a-complete').props.children).toBe('complete');
 
     fireEvent.press(getByLabelText('end'));
     expect(queryByTestId('session-a')).toBeNull();
