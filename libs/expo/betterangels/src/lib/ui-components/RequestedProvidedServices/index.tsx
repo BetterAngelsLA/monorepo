@@ -139,7 +139,6 @@ export default function RequestedProvidedServices(
       }
     >
       {/* FieldCard requires children */}
-      {/* eslint-disable-next-line react/jsx-no-useless-fragment */}
       <></>
     </FieldCard>
   );

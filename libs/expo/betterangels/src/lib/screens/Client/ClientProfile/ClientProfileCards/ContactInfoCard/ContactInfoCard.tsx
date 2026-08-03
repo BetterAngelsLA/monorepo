@@ -34,6 +34,7 @@ export default function ContactInfoCard(props: TProps) {
       rows: [
         [
           residenceAddress ? (
+            /* eslint-disable-next-line @eslint-react/no-missing-key */
             <ContactInfoRow
               menuTitle="Address"
               triggerAccessibilityLabel="Residence address actions"

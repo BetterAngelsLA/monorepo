@@ -3,7 +3,7 @@ export function formatPhoneNumber(originalNumber: string) {
     const parsed = parseNumber(originalNumber);
 
     return formatNumber(parsed);
-  } catch (e) {
+  } catch (_e) {
     if (typeof originalNumber === 'string') {
       return [originalNumber.replace(/\D/g, '')];
     }

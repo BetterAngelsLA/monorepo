@@ -14,9 +14,9 @@ import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
 import { apiUrl, demoApiUrl } from '../../config';
 import { buildFetchClient } from '../init';
+import { BaDataProviders } from '../providers/BaDataProviders';
+import { BaUiProviders } from '../providers/BaUiProviders';
 import AppRoutesStack from './AppRoutesStack';
-import { BaDataProviders } from './BaDataProviders';
-import { BaUiProviders } from './BaUiProviders';
 
 // ---------------------------------------------------------------------------
 // Static config

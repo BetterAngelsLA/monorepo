@@ -1,5 +1,10 @@
 import { useMutation } from '@apollo/client/react';
-import { AppDrawer, Button, useAlert, useAppDrawer } from '@monorepo/react/components';
+import {
+  AppDrawer,
+  Button,
+  useAlert,
+  useAppDrawer,
+} from '@monorepo/react/components';
 import { Input, mergeCss } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
@@ -65,6 +70,7 @@ export function AddTeamDrawer(props: TProps) {
           label="Team Name"
           placeholder="e.g. Outreach Team Alpha"
           autoCapitalize="none"
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- drawer just opened; primary input should receive focus
           autoFocus
         />
       </div>

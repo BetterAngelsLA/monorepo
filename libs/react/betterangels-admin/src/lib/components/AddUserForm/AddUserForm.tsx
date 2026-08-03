@@ -1,15 +1,15 @@
 import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
-import { Button, useAlert } from '@monorepo/react/components';
-import { Input, mergeCss, toError } from '@monorepo/react/shared';
-import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   OrganizationMemberType,
   PermissionTemplateEnum,
 } from '@monorepo/ba-platform/types';
+import { Button, useAlert } from '@monorepo/react/components';
+import { Input, mergeCss, toError } from '@monorepo/react/shared';
+import { useId, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import { AddOrganizationMemberDocument } from './__generated__/addOrganizationMember.generated';
 import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
@@ -25,6 +25,7 @@ export function AddUserForm(props: TProps) {
   const { activeOrg } = useActiveOrg();
   const { showAlert } = useAlert();
   const [disabled, setDisabled] = useState(false);
+  const permissionTemplateId = useId();
 
   const {
     register,
@@ -58,7 +59,7 @@ export function AddUserForm(props: TProps) {
 
       const errorMessage = extractOperationInfoMessage(
         response,
-        'addOrganizationMember'
+        'addOrganizationMember',
       );
 
       if (errorMessage) {
@@ -135,11 +136,15 @@ export function AddUserForm(props: TProps) {
         />
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-neutral-40 mb-1">
+          <label
+            htmlFor={permissionTemplateId}
+            className="block text-sm font-medium text-neutral-40 mb-1"
+          >
             Role
           </label>
           <select
             {...register('permissionTemplate')}
+            id={permissionTemplateId}
             disabled={disabled}
             className="select select-md w-96 rounded-lg border border-neutral-90 bg-white px-3 py-2 text-sm"
           >

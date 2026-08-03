@@ -20,6 +20,7 @@ alias ynx-format-be="yarn nx affected -t format betterangels-backend"
 alias ynx-lint-be="yarn nx lint betterangels-backend"
 alias ynx-lint-fe="yarn nx lint betterangels"
 alias ynx-lint="yarn nx affected -t lint"
+alias ynx-lint-all="yarn nx run-many -t lint"
 alias ynx-typecheck="yarn nx affected -t typecheck"
 
 # db
