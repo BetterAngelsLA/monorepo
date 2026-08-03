@@ -37,7 +37,7 @@ export function RoomDetails({
             <CheckboxGroup
               name="accessibility"
               label="Accessibility"
-              options={filteredPropertyOptions.accessibility}
+              options={filteredPropertyOptions?.accessibility ?? []}
               values={field.value}
               onChange={field.onChange}
               error={errors.accessibility?.message}
@@ -54,7 +54,7 @@ export function RoomDetails({
             <CheckboxGroup
               name="funders"
               label="Funders"
-              options={filteredPropertyOptions.funders}
+              options={filteredPropertyOptions?.funders ?? []}
               values={field.value}
               onChange={field.onChange}
               error={errors.funders?.message}

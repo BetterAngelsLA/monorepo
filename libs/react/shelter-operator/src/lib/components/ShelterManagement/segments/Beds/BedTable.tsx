@@ -134,7 +134,7 @@ export function BedTable({
   );
 
   return (
-    <Table<Bed, Bed>
+    <Table<Bed>
       columns={columns}
       rows={beds}
       getRowKey={getRowKey ?? ((bed) => bed.id)}
@@ -158,13 +158,7 @@ export function BedTable({
               type="button"
               variant="edit"
               aria-label="Reserve bed"
-              disabled={!isBedAvailable(bed.status)}
-              leftIcon={
-                <BookCheck
-                  size={22}
-                  stroke={!isBedAvailable(bed.status) ? 'gray' : 'black'}
-                />
-              }
+              leftIcon={<BookCheck size={22} stroke="black" />}
               onClick={() => onReserve(bed)}
             />
           )}

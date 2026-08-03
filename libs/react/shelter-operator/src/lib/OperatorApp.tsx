@@ -21,7 +21,6 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,

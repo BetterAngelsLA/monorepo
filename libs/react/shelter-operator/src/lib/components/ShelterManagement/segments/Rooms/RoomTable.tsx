@@ -23,7 +23,7 @@ type RoomTableProps = {
   onClone: (roomId: string) => void;
   onEdit: (roomId: string) => void;
   onDeleteRooms: (roomIds: string[], roomName?: string) => void;
-  onMarkReady: (bedId: string) => void;
+  onMarkReady: (roomId: string) => void;
   onReserve: (roomId: string) => void;
   loading?: boolean;
   loadingState?: ReactNode;
@@ -151,11 +151,13 @@ export function RoomTable({
             type="button"
             variant="edit"
             className="text-[#747A82]"
+            aria-label="Edit room"
             onClick={() => onEdit(room.id)}
           />
           <Button
             type="button"
             variant="trash"
+            aria-label="Delete room"
             onClick={() => onDeleteRooms([room.id], room.name)}
           />
         </div>
