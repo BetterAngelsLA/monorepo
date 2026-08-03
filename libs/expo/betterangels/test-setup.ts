@@ -1,6 +1,15 @@
-import '@testing-library/react-native/build/matchers/extend-expect';
+// Stub ErrorUtils global before any module imports from 'expo'.
+// expo's Expo.fx.tsx accesses this at import time. vitest-native's
+// native engine doesn't expose RN globals during setup file execution,
+// and importing 'react-native' fails because the Flow transform isn't
+// active yet. Using vi.fn() avoids empty-function lint violations.
+import { vi } from 'vitest';
 
-// Mock native modules that crash in Node.js environment
+(globalThis as Record<string, unknown>).ErrorUtils = {
+  setGlobalHandler: vi.fn(),
+  getGlobalHandler: vi.fn(() => vi.fn()),
+  reportFatalError: vi.fn((e: Error) => { throw e; }),
+};
 vi.mock('@preeternal/react-native-cookie-manager', () => ({
   __esModule: true,
   default: {
