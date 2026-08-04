@@ -266,7 +266,7 @@ maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
     screens/                #   Specific screen required
       clients/
         search_and_select_client.yml
-        ensure_fixture_client_exists.yml
+        visit_fixture_client_profile_summary.yml
 
   scripts/
     setup-maestro.sh        # Auto-detects device & deep link, runs maestro
