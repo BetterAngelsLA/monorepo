@@ -43,7 +43,7 @@ export type TRunPresignedUploadArgs<TResolve> = {
   /**
    * TEST TOOLING ONLY: artificially delays each stage (GENERATING, per-file
    * UPLOADING, SAVING) so upload progress is visible while developing the UI.
-   * Remove before shipping.
+   * Wired up only in tests — the shipped uploaders do not set it.
    */
   simulateDelayMs?: number;
 };
