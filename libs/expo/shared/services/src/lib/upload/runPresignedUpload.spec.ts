@@ -183,6 +183,81 @@ describe('runPresignedUpload', () => {
     ).rejects.toBeInstanceOf(UploadAbortedError);
   });
 
+  it('passes the abort signal to resolveUpload so the save can be cancelled', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const controller = new AbortController();
+    const resolveUpload = vi.fn(async () => undefined);
+
+    await runPresignedUpload({
+      files: [file('a.pdf')],
+      signal: controller.signal,
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    expect(resolveUpload).toHaveBeenCalledTimes(1);
+    expect(resolveUpload.mock.calls[0][1]).toBe(controller.signal);
+  });
+
+  it('throws UploadAbortedError when the signal aborts while the save is in flight', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const controller = new AbortController();
+    const abortError = () => {
+      const error = new Error('Aborted');
+      error.name = 'AbortError';
+      return error;
+    };
+    const resolveUpload = vi.fn(
+      (_saved: TSavedUpload[], signal?: AbortSignal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => reject(abortError()));
+        }),
+    );
+
+    const promise = runPresignedUpload({
+      files: [file('a.pdf')],
+      signal: controller.signal,
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    await vi.waitFor(() => expect(resolveUpload).toHaveBeenCalled());
+
+    controller.abort();
+
+    await expect(promise).rejects.toBeInstanceOf(UploadAbortedError);
+  });
+
+  it('does not resolve successfully once the signal has aborted during the save', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const controller = new AbortController();
+    let resolveSave: (() => void) | undefined;
+    const resolveUpload = vi.fn(
+      (_saved: TSavedUpload[], signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+          signal?.addEventListener('abort', () => {});
+        }),
+    );
+
+    const promise = runPresignedUpload({
+      files: [file('a.pdf')],
+      signal: controller.signal,
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    await vi.waitFor(() => expect(resolveUpload).toHaveBeenCalled());
+
+    controller.abort();
+    resolveSave?.();
+
+    await expect(promise).rejects.toBeInstanceOf(UploadAbortedError);
+  });
+
   it('reports the refId/file manifest before generating', async () => {
     uploadFileToS3.mockResolvedValue({ key: 'k' });
     const manifest = vi.fn();

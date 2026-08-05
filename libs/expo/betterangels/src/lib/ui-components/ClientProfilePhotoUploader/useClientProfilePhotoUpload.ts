@@ -72,7 +72,7 @@ export function useClientProfilePhotoUpload() {
           },
         ];
       },
-      resolveUpload: async (saved) => {
+      resolveUpload: async (saved, signal) => {
         const upload = saved[0];
 
         await resolveUpload({
@@ -83,6 +83,8 @@ export function useClientProfilePhotoUpload() {
               uploadToken: upload.uploadToken,
             },
           },
+          // Aborts the persist request when the user cancels the upload.
+          context: signal ? { fetchOptions: { signal } } : undefined,
         });
       },
       onProgress,

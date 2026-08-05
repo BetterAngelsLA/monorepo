@@ -18,8 +18,11 @@ export type TRunPresignedUploadArgs<TResolve> = {
    * input, keyed by the same `refId`.
    */
   generateUpload: (inputs: TUploadInput[]) => Promise<TPresignedUpload[]>;
-  /** Persists the successfully uploaded files and returns the caller's result. */
-  resolveUpload: (saved: TSavedUpload[]) => Promise<TResolve>;
+  /**
+   * Persists the successfully uploaded files and returns the caller's result.
+   * Receives the pipeline's abort signal so the save itself can be cancelled.
+   */
+  resolveUpload: (saved: TSavedUpload[], signal?: AbortSignal) => Promise<TResolve>;
   /** Called on stage changes and per-file upload progress. */
   onProgress?: (progress: TUploadProgress) => void;
   /**
@@ -230,5 +233,18 @@ export async function runPresignedUpload<TResolve>(
     };
   });
 
-  return resolveUpload(savedUploads);
+  try {
+    const result = await resolveUpload(savedUploads, signal);
+
+    // A cancelled save never reports success, even if the request landed.
+    throwIfAborted();
+
+    return result;
+  } catch (err) {
+    if (signal?.aborted) {
+      throw new UploadAbortedError();
+    }
+
+    throw err;
+  }
 }

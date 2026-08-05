@@ -68,7 +68,7 @@ export function useClientDocumentUpload() {
           uploadToken: upload.uploadToken,
         }));
       },
-      resolveUpload: async (saved) => {
+      resolveUpload: async (saved, signal) => {
         const result = await resolveUploads({
           variables: {
             data: {
@@ -76,6 +76,8 @@ export function useClientDocumentUpload() {
               documents: saved.map((upload) => ({ ...upload, namespace })),
             },
           },
+          // Aborts the persist request when the user cancels the upload.
+          context: signal ? { fetchOptions: { signal } } : undefined,
           refetchQueries: [
             {
               query: ClientProfileDocument,
