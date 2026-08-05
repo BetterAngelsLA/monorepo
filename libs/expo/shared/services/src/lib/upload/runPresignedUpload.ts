@@ -185,9 +185,7 @@ export async function runPresignedUpload<TResolve>(
         error: err,
       });
 
-      if (signal?.aborted) {
-        throw new UploadAbortedError();
-      }
+      throwIfAborted();
 
       throw new S3UploadError(`Failed to upload ${file.name}`, err);
     }
@@ -241,9 +239,7 @@ export async function runPresignedUpload<TResolve>(
 
     return result;
   } catch (err) {
-    if (signal?.aborted) {
-      throw new UploadAbortedError();
-    }
+    throwIfAborted();
 
     throw err;
   }

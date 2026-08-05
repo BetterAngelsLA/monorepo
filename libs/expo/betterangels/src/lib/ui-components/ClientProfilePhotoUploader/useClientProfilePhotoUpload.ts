@@ -3,9 +3,11 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import {
   PresignedUploadError,
   runPresignedUpload,
+  toPresignedUploads,
   unwrapPayload,
   type TUploadProgress,
 } from '@monorepo/expo/shared/services';
+import { abortableContext } from '../../apollo';
 import {
   GenerateClientProfilePhotoUploadDocument,
   ResolveClientProfilePhotoUploadDocument,
@@ -62,15 +64,7 @@ export function useClientProfilePhotoUpload() {
           );
         }
 
-        return [
-          {
-            refId: payload.refId,
-            url: payload.url,
-            fields: payload.fields as Record<string, string>,
-            presignedKey: payload.presignedKey,
-            uploadToken: payload.uploadToken,
-          },
-        ];
+        return toPresignedUploads([payload]);
       },
       resolveUpload: async (saved, signal) => {
         const upload = saved[0];
@@ -83,8 +77,7 @@ export function useClientProfilePhotoUpload() {
               uploadToken: upload.uploadToken,
             },
           },
-          // Aborts the persist request when the user cancels the upload.
-          context: signal ? { fetchOptions: { signal } } : undefined,
+          context: abortableContext(signal),
         });
       },
       onProgress,

@@ -3,6 +3,7 @@ import { uploadFileToS3WithPresignedPost as nativeUpload } from './s3Upload.nati
 import { uploadFileToS3WithPresignedPost as webUpload } from './s3Upload.web';
 
 export * from './types';
+export { assertPresignedPost } from './presignedPost';
 
 /**
  * Platform-selected S3 transport. Both implementations share the same

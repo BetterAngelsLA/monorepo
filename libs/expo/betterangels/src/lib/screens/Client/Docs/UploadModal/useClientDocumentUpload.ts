@@ -2,10 +2,14 @@ import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import {
   runPresignedUpload,
+  toPresignedUploads,
   unwrapPayload,
   type TUploadProgress,
 } from '@monorepo/expo/shared/services';
-import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import {
+  abortableContext,
+  ClientDocumentNamespaceEnum,
+} from '../../../../apollo';
 import { ClientProfileDocument } from '../../__generated__/Client.generated';
 import {
   GenerateClientDocumentUploadsDocument,
@@ -37,14 +41,8 @@ export function useClientDocumentUpload() {
       return;
     }
 
-    // TEST TOOLING: set EXPO_PUBLIC_SIMULATE_UPLOAD_DELAY_MS (e.g. 1500) to
-    // artificially slow down uploads while developing/testing the UI.
-    const simulateDelayMs =
-      Number(process.env.EXPO_PUBLIC_SIMULATE_UPLOAD_DELAY_MS) || 0;
-
     await runPresignedUpload({
       files: documents,
-      simulateDelayMs,
       signal,
       onManifest,
       generateUpload: async (inputs) => {
@@ -60,13 +58,7 @@ export function useClientDocumentUpload() {
           'AuthorizedPresignedS3UploadsType',
         );
 
-        return payload.uploads.map((upload) => ({
-          refId: upload.refId,
-          url: upload.url,
-          fields: upload.fields as Record<string, string>,
-          presignedKey: upload.presignedKey,
-          uploadToken: upload.uploadToken,
-        }));
+        return toPresignedUploads(payload.uploads);
       },
       resolveUpload: async (saved, signal) => {
         const result = await resolveUploads({
@@ -76,8 +68,7 @@ export function useClientDocumentUpload() {
               documents: saved.map((upload) => ({ ...upload, namespace })),
             },
           },
-          // Aborts the persist request when the user cancels the upload.
-          context: signal ? { fetchOptions: { signal } } : undefined,
+          context: abortableContext(signal),
           refetchQueries: [
             {
               query: ClientProfileDocument,

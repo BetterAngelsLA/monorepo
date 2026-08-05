@@ -1,6 +1,6 @@
 import { File, UploadType } from 'expo-file-system';
+import { assertPresignedPost } from './presignedPost';
 import {
-  assertPresignedPost,
   type TS3UploadProgress,
   type TS3UploadTransport,
 } from './types';

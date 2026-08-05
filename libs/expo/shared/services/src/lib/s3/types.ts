@@ -2,8 +2,6 @@ import type { PresignedPostPayload } from '@monorepo/react/shared';
 
 export type { PresignedPostPayload };
 
-export { assertPresignedPost } from './presignedPost';
-
 /** Byte-level upload progress reported by the S3 transport. */
 export type TS3UploadProgress = {
   bytesSent: number;
