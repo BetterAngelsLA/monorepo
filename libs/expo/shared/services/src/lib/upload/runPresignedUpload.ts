@@ -185,16 +185,17 @@ export async function runPresignedUpload<TResolve>(
 
       return upload;
     } catch (err) {
+      // Per-file cancel mid-upload: skip the file, don't fail the batch, and
+      // don't report an 'error' status — a cancellation isn't a failure.
+      if (file.signal?.aborted) {
+        return null;
+      }
+
       emit('UPLOADING', {
         refId: upload.refId,
         status: 'error',
         error: err,
       });
-
-      // Per-file cancel mid-upload: skip the file, don't fail the batch.
-      if (file.signal?.aborted) {
-        return null;
-      }
 
       throwIfAborted();
 

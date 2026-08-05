@@ -72,7 +72,9 @@ describe('BottomSheetModalControlled', () => {
     });
 
     // The close is scheduled on a microtask to avoid a render-phase setState.
-    await act(async () => {});
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(closeSheet).toHaveBeenCalled();
   });

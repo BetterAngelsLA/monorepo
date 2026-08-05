@@ -323,6 +323,48 @@ describe('runPresignedUpload', () => {
     expect(saved[0].filename).toBe('b.pdf');
   });
 
+  it('does not emit an error status for a file cancelled mid-upload', async () => {
+    const controller = new AbortController();
+    let releaseB: (() => void) | undefined;
+    uploadFileToS3.mockImplementation(
+      ({ signal }: { signal?: AbortSignal }) =>
+        new Promise((resolve, reject) => {
+          if (signal) {
+            signal.addEventListener('abort', () =>
+              reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+            );
+          } else {
+            releaseB = () => resolve({ key: 'k' });
+          }
+        }),
+    );
+    const events: TUploadProgress[] = [];
+    const resolveUpload = vi.fn(async () => undefined);
+
+    const promise = runPresignedUpload({
+      files: [
+        { ...file('a.pdf'), signal: controller.signal },
+        file('b.pdf'),
+      ],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+      onProgress: (progress) => events.push(progress),
+    });
+
+    await vi.waitFor(() => expect(releaseB).toBeDefined());
+
+    controller.abort();
+    releaseB?.();
+
+    await promise;
+
+    // A cancellation is not a failure — the session must not be marked failed
+    // by the progress event the cancelled file emits.
+    expect(events.some((event) => event.status === 'error')).toBe(false);
+  });
+
   it('drops a file cancelled after its upload finished from the persisted batch', async () => {
     const controller = new AbortController();
     let releaseB: (() => void) | undefined;
