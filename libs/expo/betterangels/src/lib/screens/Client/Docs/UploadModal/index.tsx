@@ -98,6 +98,10 @@ export default function UploadModal(props: IUploadModalProps) {
     files: ReactNativeFile[],
     namespace: ClientDocumentNamespaceEnum,
   ) => {
+    if (!clientProfileId) {
+      return;
+    }
+
     try {
       await uploadDocuments({
         clientProfileId,

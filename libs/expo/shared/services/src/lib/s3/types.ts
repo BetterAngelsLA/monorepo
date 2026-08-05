@@ -1,4 +1,6 @@
-export type { PresignedPostPayload } from '@monorepo/react/shared';
+import type { PresignedPostPayload } from '@monorepo/react/shared';
+
+export type { PresignedPostPayload };
 
 export { assertPresignedPost } from './presignedPost';
 
