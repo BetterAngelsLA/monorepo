@@ -7,6 +7,7 @@ import { UploadProgressDrawer } from './UploadProgressDrawer';
 const mocks = vi.hoisted(() => ({
   sessions: [] as TUploadSession[],
   cancelUploadItem: vi.fn(),
+  retryUploadItem: vi.fn(),
   endUpload: vi.fn(),
   panelProps: [] as Array<{
     index?: number;
@@ -27,6 +28,7 @@ vi.mock('./UploadProgressContext', () => ({
     completeUpload: vi.fn(),
     endUpload: mocks.endUpload,
     cancelUploadItem: mocks.cancelUploadItem,
+    retryUploadItem: mocks.retryUploadItem,
   }),
 }));
 
@@ -90,6 +92,7 @@ describe('UploadProgressDrawer', () => {
   beforeEach(() => {
     mocks.sessions = [];
     mocks.cancelUploadItem.mockClear();
+    mocks.retryUploadItem.mockClear();
     mocks.endUpload.mockClear();
     mocks.panelProps = [];
   });
@@ -201,14 +204,14 @@ describe('UploadProgressDrawer', () => {
     expect(queryByLabelText('Close')).toBeNull();
   });
 
-  it('retries a failed session via its onRetry callback', () => {
-    const onRetry = vi.fn();
+  it('retries a failed item via its onRetry callback', () => {
     mocks.sessions = [
       makeSession({
         failed: true,
         errorMessage: 'boom',
-        items: [{ refId: 'r1', name: 'a.pdf', status: 'error' }],
-        onRetry,
+        items: [
+          { refId: 'r1', name: 'a.pdf', status: 'error', onRetry: vi.fn() },
+        ],
       }),
     ];
 
@@ -218,8 +221,32 @@ describe('UploadProgressDrawer', () => {
     expect(getByText('boom')).toBeTruthy();
 
     fireEvent.press(getByLabelText('Retry'));
-    expect(mocks.endUpload).toHaveBeenCalledWith('s1');
-    expect(onRetry).toHaveBeenCalled();
+    // Retry re-runs only that file — the session itself is not ended here.
+    expect(mocks.retryUploadItem).toHaveBeenCalledWith('s1', 'r1');
+    expect(mocks.endUpload).not.toHaveBeenCalled();
+  });
+
+  it('shows a per-item Retry only for failed items with a retry callback', () => {
+    mocks.sessions = [
+      makeSession({
+        failed: true,
+        items: [
+          { refId: 'r1', name: 'a.pdf', status: 'error', onRetry: vi.fn() },
+          { refId: 'r2', name: 'b.pdf', status: 'done' },
+          { refId: 'r3', name: 'c.pdf', status: 'error' },
+        ],
+      }),
+    ];
+
+    const { getByLabelText, queryAllByLabelText } = render(
+      <UploadProgressDrawer />,
+    );
+
+    // Only the failed, retryable item gets a Retry button.
+    expect(queryAllByLabelText('Retry')).toHaveLength(1);
+
+    fireEvent.press(getByLabelText('Retry'));
+    expect(mocks.retryUploadItem).toHaveBeenCalledWith('s1', 'r1');
   });
 
   it('shows a per-item Cancel only for cancellable, active items', () => {

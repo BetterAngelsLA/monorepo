@@ -142,7 +142,7 @@ describe('UploadModal', () => {
 
     expect(mocks.begin).toHaveBeenCalledWith(['consent.pdf'], {
       label: 'Consent Forms',
-      onRetry: expect.any(Function),
+      onRetryItem: expect.any(Function),
     });
     expect(mocks.uploadDocuments).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -170,6 +170,38 @@ describe('UploadModal', () => {
     expect(closeModal).not.toHaveBeenCalled();
     expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
     expect(mocks.endUpload).not.toHaveBeenCalled();
+  });
+
+  it('retries only the failed file in a fresh single-file session', async () => {
+    mocks.uploadDocuments.mockResolvedValue(undefined);
+
+    const { getByText } = renderModal();
+
+    fireEvent.press(getByText('Consent Forms'));
+    await selectFiles([sampleFile]);
+
+    const beginCall = mocks.begin.mock.calls[0];
+    const options = beginCall[1] as { onRetryItem?: (index: number) => void };
+    expect(options.onRetryItem).toBeDefined();
+
+    // The drawer's per-item Retry invokes onRetryItem with the item index.
+    await act(async () => {
+      options.onRetryItem?.(0);
+    });
+
+    // A fresh session is started with just the retried file — not the whole
+    // batch — and that single file is re-uploaded.
+    expect(mocks.begin).toHaveBeenCalledTimes(2);
+    expect(mocks.begin.mock.calls[1][0]).toEqual(['consent.pdf']);
+
+    expect(mocks.uploadDocuments).toHaveBeenCalledTimes(2);
+    const retryUpload = mocks.uploadDocuments.mock.calls[1][0] as {
+      documents: unknown[];
+    };
+    expect(retryUpload.documents).toHaveLength(1);
+    expect(retryUpload.documents[0]).toEqual(
+      expect.objectContaining(sampleFile),
+    );
   });
 
   it('closes the form when Done is pressed', () => {

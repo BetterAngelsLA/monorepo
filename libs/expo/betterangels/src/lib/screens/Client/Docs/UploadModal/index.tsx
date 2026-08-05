@@ -137,9 +137,9 @@ export default function UploadModal(props: IUploadModalProps) {
   ) => {
     const session = begin(files.map((file) => file.name), {
       label: title,
-      // The drawer's Retry ends this session and starts a fresh one with the
-      // same payload.
-      onRetry: () => startSession(files, namespace, title),
+      // Retrying a failed item re-runs only that file in a fresh session;
+      // the successful files were already persisted and stay untouched.
+      onRetryItem: (index) => startSession([files[index]], namespace, title),
     });
 
     void runUpload(session, files, namespace);

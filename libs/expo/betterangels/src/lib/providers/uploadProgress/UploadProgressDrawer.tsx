@@ -45,11 +45,10 @@ function isFailed(session: TUploadSession): boolean {
  * keeps the progress bar and per-file rows live as the session updates.
  */
 function UploadProgressCard({ session }: { session: TUploadSession }) {
-  const { cancelUploadItem, endUpload } = useUploadProgress();
+  const { cancelUploadItem, retryUploadItem } = useUploadProgress();
 
   const failed = isFailed(session);
   const complete = !failed && !!session.complete;
-  const percent = session.total ? (session.completed / session.total) * 100 : 0;
   const stateLabel = failed
     ? 'Upload failed'
     : complete
@@ -86,10 +85,6 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
           {session.errorMessage}
         </TextRegular>
       ) : null}
-
-      <View style={styles.bar}>
-        <View style={[styles.barFill, { width: `${percent}%` }]} />
-      </View>
 
       {session.items.length > 0 && (
         <View style={styles.items}>
@@ -154,25 +149,23 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
                       accessibilityHint={`Cancels upload of ${item.name}`}
                     />
                   )}
+
+                  {item.status === 'error' && item.onRetry && (
+                    <TextButton
+                      title="Retry"
+                      fontSize="sm"
+                      onPress={() =>
+                        retryUploadItem(session.id, item.refId)
+                      }
+                      accessibilityHint={`Retries upload of ${item.name}`}
+                    />
+                  )}
                 </View>
               </View>
             );
           })}
         </View>
       )}
-
-      {failed && session.onRetry ? (
-        <View style={styles.cancelRow}>
-          <TextButton
-            title="Retry"
-            onPress={() => {
-              endUpload(session.id);
-              session.onRetry?.();
-            }}
-            accessibilityHint="Retries the failed upload"
-          />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -229,17 +222,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: Spacings.xs,
   },
-  bar: {
-    height: 6,
-    borderRadius: Radiuses.xxxs,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: Radiuses.xxxs,
-    backgroundColor: Colors.PRIMARY,
-  },
   items: {
     marginTop: Spacings.sm,
     gap: Spacings.xs,
@@ -282,10 +264,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: Radiuses.xxxs,
     backgroundColor: Colors.PRIMARY,
-  },
-  cancelRow: {
-    marginTop: Spacings.md,
-    alignItems: 'flex-end',
   },
   errorMessage: {
     marginTop: Spacings.xxs,

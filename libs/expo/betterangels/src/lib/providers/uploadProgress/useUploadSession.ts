@@ -17,8 +17,8 @@ type TBeginOptions = {
   cancellable?: boolean;
   /** Human-readable label (e.g. the doc type) shown in the queue/drawer. */
   label?: string;
-  /** Starts a fresh session with the same payload (drawer's Retry action). */
-  onRetry?: () => void;
+  /** Starts a fresh single-file session when a failed item is retried. */
+  onRetryItem?: (index: number) => void;
 };
 
 /**
@@ -54,7 +54,7 @@ export function useUploadSession() {
         ? (index: number) => controllers[index].abort()
         : undefined,
       options?.label,
-      options?.onRetry,
+      options?.onRetryItem,
     );
 
     return {

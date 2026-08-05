@@ -11,6 +11,8 @@ export type TUploadItem = {
   totalBytes?: number;
   /** Aborts this file's upload. Invoked by the drawer's per-item cancel. */
   onCancel?: () => void;
+  /** Re-runs this file's upload. Invoked by the drawer's per-item retry. */
+  onRetry?: () => void;
 };
 
 export type TUploadSession = {
@@ -26,8 +28,6 @@ export type TUploadSession = {
   label?: string;
   /** Optional, flow-specific failure detail shown in the drawer's failed state. */
   errorMessage?: string;
-  /** Starts a fresh session with the same payload. Invoked by the drawer's Retry. */
-  onRetry?: () => void;
 };
 
 export type TUploadManifestEntry = {
@@ -43,7 +43,7 @@ export type TUploadProgressContextValue = {
     names: string[],
     onCancelItem?: (index: number) => void,
     label?: string,
-    onRetry?: () => void,
+    onRetryItem?: (index: number) => void,
   ) => void;
   /** Pairs pipeline refIds with file names once the manifest is built. */
   setUploadManifest: (id: string, manifest: TUploadManifestEntry[]) => void;
@@ -57,6 +57,8 @@ export type TUploadProgressContextValue = {
   endUpload: (id: string) => void;
   /** Aborts and removes a single item from a session. */
   cancelUploadItem: (sessionId: string, refId: string) => void;
+  /** Removes a failed item from its session and starts its per-item retry. */
+  retryUploadItem: (sessionId: string, refId: string) => void;
 };
 
 export const UploadProgressContext =

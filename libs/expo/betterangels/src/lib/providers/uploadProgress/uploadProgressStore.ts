@@ -42,7 +42,7 @@ export function startUploadSession(
   names: string[],
   onCancelItem?: (index: number) => void,
   label?: string,
-  onRetry?: () => void,
+  onRetryItem?: (index: number) => void,
 ) {
   // Uploads accumulate until dismissed so several can be in flight at once.
   commit({
@@ -56,12 +56,12 @@ export function startUploadSession(
           name,
           status: 'pending' as TUploadItemStatus,
           onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
+          onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
         })),
         completed: 0,
         total: names.length,
         failed: false,
         label,
-        onRetry,
       },
     ],
   });
@@ -84,6 +84,7 @@ export function setUploadManifestSession(
           name: session.items[index]?.name ?? entry.file.name,
           status: session.items[index]?.status ?? 'pending',
           onCancel: session.items[index]?.onCancel,
+          onRetry: session.items[index]?.onRetry,
         })),
       };
     }),
@@ -159,6 +160,43 @@ export function completeUploadSession(id: string) {
 export function endUploadSession(id: string) {
   commit({
     sessions: state.sessions.filter((session) => session.id !== id),
+  });
+}
+
+export function retryUploadItemSession(sessionId: string, refId: string) {
+  const session = state.sessions.find((s) => s.id === sessionId);
+  const item = session?.items.find((i) => i.refId === refId);
+
+  if (!session || !item) {
+    return;
+  }
+
+  // Start the replacement session first so the drawer surfaces it as the
+  // latest session (sessions are appended, and the drawer shows the last).
+  item.onRetry?.();
+
+  const items = session.items.filter((i) => i.refId !== refId);
+
+  if (!items.length) {
+    // The retried file was the only item → nothing left in this session.
+    commit({
+      sessions: state.sessions.filter((s) => s.id !== sessionId),
+    });
+    return;
+  }
+
+  commit({
+    sessions: state.sessions.map((s) =>
+      s.id !== sessionId
+        ? s
+        : {
+            ...s,
+            items,
+            total: s.total - 1,
+            completed:
+              item.status === 'done' ? s.completed - 1 : s.completed,
+          },
+    ),
   });
 }
 

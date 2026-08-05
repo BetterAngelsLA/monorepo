@@ -5,6 +5,7 @@ import {
   runPresignedUpload,
   toPresignedUploads,
   unwrapPayload,
+  type TUploadFile,
   type TUploadProgress,
 } from '@monorepo/expo/shared/services';
 import { abortableContext } from '../../apollo';
@@ -26,7 +27,7 @@ export function useClientProfilePhotoUpload() {
     onProgress,
   }: {
     clientProfileId: string;
-    file: ReactNativeFile;
+    file: TUploadFile;
     onManifest?: (
       manifest: Array<{ refId: string; file: ReactNativeFile }>,
     ) => void;

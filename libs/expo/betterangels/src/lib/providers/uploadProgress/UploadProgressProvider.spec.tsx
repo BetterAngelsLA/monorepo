@@ -367,4 +367,122 @@ describe('UploadProgressProvider', () => {
     expect(queryByTestId('session-s')).toBeNull();
     expect(getByTestId('drawer-count').props.children).toBe(0);
   });
+
+  it('retries a single item via its onRetry and keeps the other items', () => {
+    const onRetryItem = vi.fn();
+
+    function RetryHarness() {
+      const { sessions, startUpload, retryUploadItem } = useUploadProgress();
+
+      return (
+        <View>
+          <Text testID="drawer-count">{sessions.length}</Text>
+          {sessions.map((session) => (
+            <View key={session.id}>
+              <Text testID={`session-${session.id}`}>
+                {session.completed}/{session.total}
+              </Text>
+              {session.items.map((item) => (
+                <Text key={item.refId} testID={`item-${item.refId}`}>
+                  {item.name}
+                </Text>
+              ))}
+            </View>
+          ))}
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="start"
+            accessibilityHint="start an upload"
+            onPress={() =>
+              startUpload(
+                'r',
+                ['z.pdf', 'w.pdf'],
+                undefined,
+                undefined,
+                onRetryItem,
+              )
+            }
+          >
+            start
+          </Text>
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="retry item"
+            accessibilityHint="retry the first item"
+            onPress={() => retryUploadItem('r', 'pending-0')}
+          >
+            retry
+          </Text>
+        </View>
+      );
+    }
+
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <RetryHarness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    expect(getByTestId('item-pending-0').props.children).toBe('z.pdf');
+
+    fireEvent.press(getByLabelText('retry item'));
+
+    // Only the retried file's callback fires; it leaves its session while
+    // the other item keeps its state.
+    expect(onRetryItem).toHaveBeenCalledWith(0);
+    expect(queryByTestId('item-pending-0')).toBeNull();
+    expect(getByTestId('item-pending-1').props.children).toBe('w.pdf');
+    expect(getByTestId('session-r').props.children).toEqual([0, '/', 1]);
+  });
+
+  it('removes the session when its last item is retried', () => {
+    const onRetryItem = vi.fn();
+
+    function SingleRetryHarness() {
+      const { sessions, startUpload, retryUploadItem } = useUploadProgress();
+
+      return (
+        <View>
+          <Text testID="drawer-count">{sessions.length}</Text>
+          {sessions.map((session) => (
+            <Text key={session.id} testID={`session-${session.id}`}>
+              {session.completed}/{session.total}
+            </Text>
+          ))}
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="start"
+            accessibilityHint="start an upload"
+            onPress={() =>
+              startUpload('s2', ['z.pdf'], undefined, undefined, onRetryItem)
+            }
+          >
+            start
+          </Text>
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="retry item"
+            accessibilityHint="retry the item"
+            onPress={() => retryUploadItem('s2', 'pending-0')}
+          >
+            retry
+          </Text>
+        </View>
+      );
+    }
+
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <SingleRetryHarness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    fireEvent.press(getByLabelText('retry item'));
+
+    expect(onRetryItem).toHaveBeenCalledWith(0);
+    expect(queryByTestId('session-s2')).toBeNull();
+    expect(getByTestId('drawer-count').props.children).toBe(0);
+  });
 });

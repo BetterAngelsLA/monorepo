@@ -7,6 +7,7 @@ import {
   endUploadSession,
   failUploadSession,
   getUploadSnapshot,
+  retryUploadItemSession,
   setUploadManifestSession,
   startUploadSession,
   subscribeUploadStore,
@@ -39,6 +40,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       completeUpload: completeUploadSession,
       endUpload: endUploadSession,
       cancelUploadItem: cancelUploadItemSession,
+      retryUploadItem: retryUploadItemSession,
     }),
     [sessions],
   );

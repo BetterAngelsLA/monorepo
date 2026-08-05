@@ -29,6 +29,7 @@ vi.mock('./UploadProgressContext', () => ({
 }));
 
 let lastHandle: TUploadSessionHandle | undefined;
+let lastRetryIndex: number | undefined;
 
 function Harness() {
   const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
@@ -54,11 +55,25 @@ function Harness() {
           lastHandle = begin(['c.pdf'], {
             cancellable: false,
             label: 'Consent Forms',
-            onRetry: () => undefined,
+            onRetryItem: () => undefined,
           });
         }}
       >
         begin-nc
+      </Text>
+      <Text
+        accessibilityRole="button"
+        accessibilityLabel="begin retryable"
+        accessibilityHint="begin an upload with per-item retry"
+        onPress={() => {
+          lastHandle = begin(['x.pdf', 'y.pdf'], {
+            onRetryItem: (index) => {
+              lastRetryIndex = index;
+            },
+          });
+        }}
+      >
+        begin-r
       </Text>
       <Text
         accessibilityRole="button"
@@ -117,6 +132,7 @@ function Harness() {
 describe('useUploadSession', () => {
   beforeEach(() => {
     lastHandle = undefined;
+    lastRetryIndex = undefined;
     Object.values(mocks).forEach((mock) => mock.mockClear());
   });
 
@@ -150,17 +166,36 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin non-cancellable'));
 
-    const [id, names, onCancelItem, label, onRetry] =
+    const [id, names, onCancelItem, label, onRetryItem] =
       mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
     // No onCancelItem → the drawer will not show per-item cancel buttons.
     expect(onCancelItem).toBeUndefined();
     expect(label).toBe('Consent Forms');
-    expect(typeof onRetry).toBe('function');
+    expect(typeof onRetryItem).toBe('function');
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toEqual([undefined]);
     expect(lastHandle?.isAborted()).toBe(false);
+  });
+
+  it('forwards per-item retry callbacks with the item index', () => {
+    const { getByLabelText } = render(<Harness />);
+
+    fireEvent.press(getByLabelText('begin retryable'));
+
+    const [id, names, onCancelItem, label, onRetryItem] =
+      mocks.startUpload.mock.calls[0];
+
+    expect(names).toEqual(['x.pdf', 'y.pdf']);
+    expect(label).toBeUndefined();
+    expect(typeof onCancelItem).toBe('function');
+    expect(typeof onRetryItem).toBe('function');
+
+    // The drawer invokes onRetryItem with the failed item's index.
+    onRetryItem(1);
+    expect(lastRetryIndex).toBe(1);
+    expect(lastHandle?.id).toBe(id);
   });
 
   it('forwards setUploadManifest, updateUpload, failUpload, completeUpload and endUpload', () => {
