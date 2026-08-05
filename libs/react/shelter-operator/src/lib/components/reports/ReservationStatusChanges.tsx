@@ -21,7 +21,7 @@ export function StatCard({ icon, title, value, testId, className, subRow }: ISta
   return (
     <div
       className={mergeCss([
-        'flex h-[120px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-[0_0_4px_rgba(154,154,154,0.13)]',
+        'flex min-h-[120px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-[0_0_4px_rgba(154,154,154,0.13)]',
         className ?? 'flex-1',
       ])}
       data-testid={testId}
@@ -43,8 +43,8 @@ export function StatCard({ icon, title, value, testId, className, subRow }: ISta
 }
 
 export interface IPreviouslyOverdueRowProps {
-  overdueCount?: number | null;
-  totalCount?: number | null;
+  overdueCount: number;
+  totalCount: number;
 }
 
 /** "Previously Overdue x / y" pill shown under the Newly Checked In stat. */
@@ -55,7 +55,7 @@ function PreviouslyOverdueRow({ overdueCount, totalCount }: IPreviouslyOverdueRo
         Previously Overdue
       </Text>
       <span className="rounded-full bg-[#F3F3F9] px-6 py-0.5 text-[13px] leading-[150%] text-[#383B40]">
-        {overdueCount ?? '—'} / {totalCount ?? '—'}
+        {overdueCount} / {totalCount}
       </span>
     </div>
   );
@@ -87,10 +87,12 @@ export function ReservationStatusChanges({
           title="Newly Checked In"
           value={metrics?.checkedIn != null ? String(metrics.checkedIn) : '—'}
           subRow={
-            <PreviouslyOverdueRow
-              overdueCount={metrics?.checkInOverdueToCheckedIn}
-              totalCount={metrics?.checkedIn}
-            />
+            metrics?.checkInOverdueToCheckedIn != null && metrics?.checkedIn != null ? (
+              <PreviouslyOverdueRow
+                overdueCount={metrics.checkInOverdueToCheckedIn}
+                totalCount={metrics.checkedIn}
+              />
+            ) : undefined
           }
           testId="stat-newly-checked-in"
           className="basis-0 lg:flex-1"
@@ -111,7 +113,7 @@ export function ReservationStatusChanges({
         <div
           role="separator"
           aria-orientation="vertical"
-          className="hidden h-[93px] w-[3px] shrink-0 self-center rounded-full bg-[#D0CFCF] lg:block"
+          className="hidden w-[3px] shrink-0 self-stretch rounded-full bg-[#D0CFCF] lg:block"
         />
 
         <StatCard
