@@ -35,6 +35,7 @@ export const mgmtResources = {
   bed: { path: 'beds', param: 'bedId' },
   reservation: { path: 'reservations', param: 'reservationId' },
   occupant: { path: 'occupants' },
+  report: { path: 'reports' },
 } as const satisfies Record<string, ResourceConfig>;
 
 export type TMgmtResource = keyof typeof mgmtResources;
@@ -72,6 +73,7 @@ export const mgmtRouteConfig = {
     beds: mgmtResources.bed.path,
     reservations: mgmtResources.reservation.path,
     occupants: mgmtResources.occupant.path,
+    reports: mgmtResources.report.path,
   },
   actions: {
     create: 'create',

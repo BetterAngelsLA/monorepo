@@ -26,7 +26,12 @@ export function AppDrawerMask(props: IProps) {
   ];
 
   return (
-    <div className={mergeCss(parentCss)} onClick={onClick}>
+    <div
+      role="button"
+      aria-label="Close drawer"
+      className={mergeCss(parentCss)}
+      onClick={onClick}
+    >
       {children}
     </div>
   );

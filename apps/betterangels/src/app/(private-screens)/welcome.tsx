@@ -14,7 +14,6 @@ export default function Welcome() {
   const { signOut } = useSignOut();
   return (
     <View style={styles.container}>
-      {/* eslint-disable-next-line react/style-prop-object -- Expo StatusBar style accepts string */}
       <StatusBar style="dark" />
       <View
         style={{ flex: 1, justifyContent: 'space-between', paddingBottom: 60 }}
