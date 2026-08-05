@@ -36,7 +36,7 @@ vi.mock('../../providers', () => ({
   useUploadSession: () => ({
     begin: vi.fn(() => ({
       id: 'session-1',
-      signal: new AbortController().signal,
+      signals: [new AbortController().signal],
       isAborted: () => mocks.isAborted,
     })),
     setUploadManifest: vi.fn(),
@@ -89,8 +89,10 @@ describe('ClientProfilePhotoUploader', () => {
     expect(mocks.uploadPhoto).toHaveBeenCalledWith(
       expect.objectContaining({
         clientProfileId: 'client-1',
-        file: sampleFile,
-        signal: expect.any(AbortSignal),
+        file: expect.objectContaining({
+          ...sampleFile,
+          signal: expect.any(AbortSignal),
+        }),
         onManifest: expect.any(Function),
         onProgress: expect.any(Function),
       }),
@@ -138,7 +140,7 @@ describe('ClientProfilePhotoUploader', () => {
     });
 
     expect(mocks.uploadPhoto).toHaveBeenCalledWith(
-      expect.objectContaining({ file: sampleFile }),
+      expect.objectContaining({ file: expect.objectContaining(sampleFile) }),
     );
   });
 });

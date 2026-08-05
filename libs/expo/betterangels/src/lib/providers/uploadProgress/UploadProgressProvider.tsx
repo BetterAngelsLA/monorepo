@@ -2,7 +2,7 @@ import { ReactNode, useMemo, useSyncExternalStore } from 'react';
 import { UploadProgressContext } from './UploadProgressContext';
 import { UploadProgressDrawer } from './UploadProgressDrawer';
 import {
-  cancelUploadSession,
+  cancelUploadItemSession,
   completeUploadSession,
   endUploadSession,
   failUploadSession,
@@ -38,7 +38,7 @@ export function UploadProgressProvider(props: TUploadProgressProviderProps) {
       failUpload: failUploadSession,
       completeUpload: completeUploadSession,
       endUpload: endUploadSession,
-      cancelUpload: cancelUploadSession,
+      cancelUploadItem: cancelUploadItemSession,
     }),
     [sessions],
   );

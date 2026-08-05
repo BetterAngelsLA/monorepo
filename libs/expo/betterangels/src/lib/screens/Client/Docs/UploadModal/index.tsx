@@ -105,9 +105,13 @@ export default function UploadModal(props: IUploadModalProps) {
     try {
       await uploadDocuments({
         clientProfileId,
-        documents: files,
+        // Each file carries its own abort signal so the drawer can cancel a
+        // single item without affecting the rest of the batch.
+        documents: files.map((file, index) => ({
+          ...file,
+          signal: session.signals[index],
+        })),
         namespace,
-        signal: session.signal,
         onManifest: (manifest) => setUploadManifest(session.id, manifest),
         onProgress: (progress) => updateUpload(session.id, progress),
       });

@@ -34,7 +34,7 @@ const mocks = vi.hoisted(() => {
     readFileAsBase64: vi.fn(),
     begin: vi.fn(() => ({
       id: 'session-hmis',
-      signal: undefined,
+      signals: [],
       isAborted: () => false,
     })),
     ErrorHmis: MockErrorHmis,

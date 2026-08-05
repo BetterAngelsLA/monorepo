@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   incrementClientPhotoVersion: vi.fn(),
   begin: vi.fn(() => ({
     id: 'session-photo',
-    signal: undefined,
+    signals: [],
     isAborted: () => false,
   })),
   updateUpload: vi.fn(),

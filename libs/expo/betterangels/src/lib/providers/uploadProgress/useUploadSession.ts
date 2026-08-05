@@ -3,9 +3,12 @@ import { useUploadProgress } from './UploadProgressContext';
 
 type TUploadSessionHandle = {
   id: string;
-  /** Abort signal to pass to the upload pipeline so cancellation works. */
-  signal: AbortSignal | undefined;
-  /** True once the session has been cancelled via the drawer. */
+  /**
+   * Per-file abort signals, aligned with the names passed to `begin`. A
+   * file's signal aborts when its per-item cancel is pressed in the drawer.
+   */
+  signals: (AbortSignal | undefined)[];
+  /** True once every cancellable file in the session has been cancelled. */
   isAborted: () => boolean;
 };
 
@@ -40,20 +43,28 @@ export function useUploadSession() {
   ): TUploadSessionHandle => {
     const id = randomUUID();
     const cancellable = options?.cancellable !== false;
-    const controller = cancellable ? new AbortController() : undefined;
+    const controllers = cancellable
+      ? names.map(() => new AbortController())
+      : undefined;
 
     startUpload(
       id,
       names,
-      controller ? () => controller.abort() : undefined,
+      controllers
+        ? (index: number) => controllers[index].abort()
+        : undefined,
       options?.label,
       options?.onRetry,
     );
 
     return {
       id,
-      signal: controller?.signal,
-      isAborted: () => controller?.signal.aborted ?? false,
+      signals: names.map((_, index) => controllers?.[index]?.signal),
+      isAborted: () =>
+        controllers
+          ? controllers.length > 0 &&
+            controllers.every((controller) => controller.signal.aborted)
+          : false,
     };
   };
 

@@ -45,7 +45,7 @@ function isFailed(session: TUploadSession): boolean {
  * keeps the progress bar and per-file rows live as the session updates.
  */
 function UploadProgressCard({ session }: { session: TUploadSession }) {
-  const { cancelUpload, endUpload } = useUploadProgress();
+  const { cancelUploadItem, endUpload } = useUploadProgress();
 
   const failed = isFailed(session);
   const complete = !failed && !!session.complete;
@@ -91,76 +91,83 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
         <View style={[styles.barFill, { width: `${percent}%` }]} />
       </View>
 
-      {session.items.length > 1 && (
+      {session.items.length > 0 && (
         <View style={styles.items}>
-          {session.items.map((item) => (
-            <View key={item.refId} style={styles.itemRow}>
-              <TextRegular
-                size="xs"
-                numberOfLines={1}
-                style={styles.itemName}
-              >
-                {item.name}
-              </TextRegular>
+          {session.items.map((item) => {
+            const cancellable =
+              !!item.onCancel &&
+              (item.status === 'pending' || item.status === 'uploading');
 
-              {item.status === 'uploading' &&
-              typeof item.totalBytes === 'number' &&
-              item.totalBytes > 0 ? (
-                <View style={styles.itemProgress}>
-                  <TextRegular size="xs" color={Colors.PRIMARY}>
-                    {Math.round(
-                      ((item.bytesSent ?? 0) / item.totalBytes) * 100,
-                    )}
-                    %
-                  </TextRegular>
-                  <View style={styles.itemBar}>
-                    <View
-                      style={[
-                        styles.itemBarFill,
-                        {
-                          width: `${Math.min(
-                            100,
-                            ((item.bytesSent ?? 0) / item.totalBytes) * 100,
-                          )}%`,
-                        },
-                      ]}
-                    />
+            return (
+              <View key={item.refId} style={styles.itemRow}>
+                <TextRegular
+                  size="xs"
+                  numberOfLines={1}
+                  style={styles.itemName}
+                >
+                  {item.name}
+                </TextRegular>
+
+                {item.status === 'uploading' &&
+                typeof item.totalBytes === 'number' &&
+                item.totalBytes > 0 ? (
+                  <View style={styles.itemProgress}>
+                    <TextRegular size="xs" color={Colors.PRIMARY}>
+                      {Math.round(
+                        ((item.bytesSent ?? 0) / item.totalBytes) * 100,
+                      )}
+                      %
+                    </TextRegular>
+                    <View style={styles.itemBar}>
+                      <View
+                        style={[
+                          styles.itemBarFill,
+                          {
+                            width: `${Math.min(
+                              100,
+                              ((item.bytesSent ?? 0) / item.totalBytes) * 100,
+                            )}%`,
+                          },
+                        ]}
+                      />
+                    </View>
                   </View>
-                </View>
-              ) : (
-                <View style={styles.itemStatus}>
-                  <TextRegular
-                    size="xs"
-                    color={STATUS_COLORS[item.status]}
-                  >
-                    {STATUS_LABELS[item.status]}
-                  </TextRegular>
-                </View>
-              )}
-            </View>
-          ))}
+                ) : (
+                  <View style={styles.itemStatus}>
+                    <TextRegular
+                      size="xs"
+                      color={STATUS_COLORS[item.status]}
+                    >
+                      {STATUS_LABELS[item.status]}
+                    </TextRegular>
+                  </View>
+                )}
+
+                {cancellable && (
+                  <TextButton
+                    title="Cancel"
+                    style={styles.itemCancel}
+                    onPress={() =>
+                      cancelUploadItem(session.id, item.refId)
+                    }
+                    accessibilityHint={`Cancels upload of ${item.name}`}
+                  />
+                )}
+              </View>
+            );
+          })}
         </View>
       )}
 
-      {failed ? (
-        session.onRetry ? (
-          <View style={styles.cancelRow}>
-            <TextButton
-              title="Retry"
-              onPress={() => {
-                endUpload(session.id);
-                session.onRetry?.();
-              }}
-              accessibilityHint="Retries the failed upload"
-            />
-          </View>
-        ) : null
-      ) : session.onCancel ? (
+      {failed && session.onRetry ? (
         <View style={styles.cancelRow}>
           <TextButton
-            title="Cancel upload"
-            onPress={() => cancelUpload(session.id)}
-            accessibilityHint="Cancels the current upload"
+            title="Retry"
+            onPress={() => {
+              endUpload(session.id);
+              session.onRetry?.();
+            }}
+            accessibilityHint="Retries the failed upload"
           />
         </View>
       ) : null}
@@ -269,6 +276,9 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: Radiuses.xxxs,
     backgroundColor: Colors.PRIMARY,
+  },
+  itemCancel: {
+    marginLeft: Spacings.sm,
   },
   cancelRow: {
     marginTop: Spacings.md,

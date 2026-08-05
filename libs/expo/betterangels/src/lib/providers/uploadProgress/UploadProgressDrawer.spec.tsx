@@ -6,7 +6,7 @@ import { UploadProgressDrawer } from './UploadProgressDrawer';
 
 const mocks = vi.hoisted(() => ({
   sessions: [] as TUploadSession[],
-  cancelUpload: vi.fn(),
+  cancelUploadItem: vi.fn(),
   endUpload: vi.fn(),
   panelProps: [] as Array<{
     index?: number;
@@ -26,7 +26,7 @@ vi.mock('./UploadProgressContext', () => ({
     failUpload: vi.fn(),
     completeUpload: vi.fn(),
     endUpload: mocks.endUpload,
-    cancelUpload: mocks.cancelUpload,
+    cancelUploadItem: mocks.cancelUploadItem,
   }),
 }));
 
@@ -89,7 +89,7 @@ function makeSession(overrides: Partial<TUploadSession> = {}): TUploadSession {
 describe('UploadProgressDrawer', () => {
   beforeEach(() => {
     mocks.sessions = [];
-    mocks.cancelUpload.mockClear();
+    mocks.cancelUploadItem.mockClear();
     mocks.endUpload.mockClear();
     mocks.panelProps = [];
   });
@@ -107,9 +107,12 @@ describe('UploadProgressDrawer', () => {
       makeSession(),
     ];
 
-    const { getByText, queryByText } = render(<UploadProgressDrawer />);
+    const { getAllByText, getByText, queryByText } = render(
+      <UploadProgressDrawer />,
+    );
 
-    expect(getByText('Uploading…')).toBeTruthy();
+    // 'Uploading…' appears as both the stage label and the item status.
+    expect(getAllByText('Uploading…').length).toBeGreaterThan(0);
     expect(getByText('1 of 2')).toBeTruthy();
     expect(queryByText('1 of 1')).toBeNull();
   });
@@ -194,7 +197,7 @@ describe('UploadProgressDrawer', () => {
 
     expect(getByText('Upload complete')).toBeTruthy();
     expect(getByText('2 of 2')).toBeTruthy();
-    expect(queryByLabelText('Cancel upload')).toBeNull();
+    expect(queryByLabelText('Cancel')).toBeNull();
     expect(queryByLabelText('Close')).toBeNull();
   });
 
@@ -219,19 +222,46 @@ describe('UploadProgressDrawer', () => {
     expect(onRetry).toHaveBeenCalled();
   });
 
-  it('shows Cancel only for sessions that can be aborted', () => {
-    mocks.sessions = [makeSession({ onCancel: vi.fn() })];
+  it('shows a per-item Cancel only for cancellable, active items', () => {
+    mocks.sessions = [
+      makeSession({
+        items: [
+          { refId: 'r1', name: 'a.pdf', status: 'uploading', onCancel: vi.fn() },
+          { refId: 'r2', name: 'b.pdf', status: 'done', onCancel: vi.fn() },
+          { refId: 'r3', name: 'c.pdf', status: 'pending' },
+        ],
+      }),
+    ];
 
-    const { getByLabelText } = render(<UploadProgressDrawer />);
+    const { getByLabelText, queryAllByLabelText } = render(
+      <UploadProgressDrawer />,
+    );
 
-    fireEvent.press(getByLabelText('Cancel upload'));
-    expect(mocks.cancelUpload).toHaveBeenCalledWith('s1');
+    // Only the in-flight, cancellable item gets a Cancel button.
+    expect(queryAllByLabelText('Cancel')).toHaveLength(1);
+
+    fireEvent.press(getByLabelText('Cancel'));
+    expect(mocks.cancelUploadItem).toHaveBeenCalledWith('s1', 'r1');
     expect(mocks.endUpload).not.toHaveBeenCalled();
+  });
 
-    mocks.sessions = [makeSession()];
-    const second = render(<UploadProgressDrawer />);
-    expect(second.queryByLabelText('Cancel upload')).toBeNull();
-    expect(second.queryByLabelText('Close')).toBeNull();
+  it('shows a per-item Cancel for single-file sessions', () => {
+    mocks.sessions = [
+      makeSession({
+        items: [
+          { refId: 'r1', name: 'a.pdf', status: 'uploading', onCancel: vi.fn() },
+        ],
+      }),
+    ];
+
+    const { getByLabelText, queryAllByLabelText } = render(
+      <UploadProgressDrawer />,
+    );
+
+    expect(queryAllByLabelText('Cancel')).toHaveLength(1);
+
+    fireEvent.press(getByLabelText('Cancel'));
+    expect(mocks.cancelUploadItem).toHaveBeenCalledWith('s1', 'r1');
   });
 
   it('disables pan-down while active and enables it for terminal sessions', () => {

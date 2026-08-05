@@ -18,7 +18,6 @@ type TUploadState = {
 };
 
 let state: TUploadState = { sessions: [] };
-const cancelHandlers = new Map<string, () => void>();
 const listeners = new Set<() => void>();
 
 function commit(next: TUploadState) {
@@ -41,15 +40,11 @@ export function getUploadSnapshot(): TUploadState {
 export function startUploadSession(
   id: string,
   names: string[],
-  onCancel?: () => void,
+  onCancelItem?: (index: number) => void,
   label?: string,
   onRetry?: () => void,
 ) {
   // Uploads accumulate until dismissed so several can be in flight at once.
-  if (onCancel) {
-    cancelHandlers.set(id, onCancel);
-  }
-
   commit({
     sessions: [
       ...state.sessions,
@@ -60,12 +55,12 @@ export function startUploadSession(
           refId: `pending-${index}`,
           name,
           status: 'pending' as TUploadItemStatus,
+          onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
         })),
         completed: 0,
         total: names.length,
         failed: false,
         label,
-        onCancel,
         onRetry,
       },
     ],
@@ -88,6 +83,7 @@ export function setUploadManifestSession(
           refId: entry.refId,
           name: session.items[index]?.name ?? entry.file.name,
           status: session.items[index]?.status ?? 'pending',
+          onCancel: session.items[index]?.onCancel,
         })),
       };
     }),
@@ -122,8 +118,8 @@ export function updateUploadSession(id: string, progress: TUploadProgress) {
       return {
         ...session,
         stage: progress.stage,
-        completed: progress.completed,
-        total: progress.total,
+        // total stays authoritative in the store (per-item cancels shrink it).
+        completed: Math.min(progress.completed, session.total),
         items,
         failed: session.failed || progress.status === 'error',
       };
@@ -161,24 +157,49 @@ export function completeUploadSession(id: string) {
 }
 
 export function endUploadSession(id: string) {
-  cancelHandlers.delete(id);
   commit({
     sessions: state.sessions.filter((session) => session.id !== id),
   });
 }
 
-export function cancelUploadSession(id: string) {
-  cancelHandlers.get(id)?.();
-  cancelHandlers.delete(id);
+export function cancelUploadItemSession(sessionId: string, refId: string) {
+  const session = state.sessions.find((s) => s.id === sessionId);
+  const item = session?.items.find((i) => i.refId === refId);
+
+  if (!session || !item) {
+    return;
+  }
+
+  item.onCancel?.();
+
+  const items = session.items.filter((i) => i.refId !== refId);
+
+  if (!items.length) {
+    // Last item cancelled → nothing left to show; remove the whole session.
+    commit({
+      sessions: state.sessions.filter((s) => s.id !== sessionId),
+    });
+    return;
+  }
+
   commit({
-    sessions: state.sessions.filter((session) => session.id !== id),
+    sessions: state.sessions.map((s) =>
+      s.id !== sessionId
+        ? s
+        : {
+            ...s,
+            items,
+            total: s.total - 1,
+            completed:
+              item.status === 'done' ? s.completed - 1 : s.completed,
+          },
+    ),
   });
 }
 
 /** Test-only: resets module state between test cases. */
 export function resetUploadProgressStore() {
   state = { sessions: [] };
-  cancelHandlers.clear();
   listeners.clear();
 }
 

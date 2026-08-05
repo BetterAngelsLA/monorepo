@@ -31,8 +31,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
     try {
       await uploadPhoto({
         clientProfileId: clientId,
-        file,
-        signal: session.signal,
+        file: { ...file, signal: session.signals[0] },
         onManifest: (manifest) => setUploadManifest(session.id, manifest),
         onProgress: (progress) => updateUpload(session.id, progress),
       });

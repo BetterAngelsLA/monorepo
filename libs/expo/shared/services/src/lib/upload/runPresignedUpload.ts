@@ -132,13 +132,19 @@ export async function runPresignedUpload<TResolve>(
 
   const uploadOne = async (
     upload: TPresignedUpload,
-  ): Promise<TPresignedUpload> => {
+  ): Promise<TPresignedUpload | null> => {
     throwIfAborted();
 
     const file = fileByRefId.get(upload.refId);
 
     if (!file) {
       throw new PresignedUploadError(`Missing file for refId ${upload.refId}`);
+    }
+
+    // Per-file cancel: files cancelled before their upload starts are skipped
+    // without failing the batch.
+    if (file.signal?.aborted) {
+      return null;
     }
 
     emit('UPLOADING', { refId: upload.refId, status: 'uploading' });
@@ -154,7 +160,7 @@ export async function runPresignedUpload<TResolve>(
           key: upload.presignedKey,
         },
         file,
-        signal,
+        signal: file.signal ?? signal,
         onProgress: ({ bytesSent, totalBytes }) => {
           // Throttle to 1% steps so byte events don't flood React state.
           const percent =
@@ -185,6 +191,11 @@ export async function runPresignedUpload<TResolve>(
         error: err,
       });
 
+      // Per-file cancel mid-upload: skip the file, don't fail the batch.
+      if (file.signal?.aborted) {
+        return null;
+      }
+
       throwIfAborted();
 
       throw new S3UploadError(`Failed to upload ${file.name}`, err);
@@ -194,7 +205,10 @@ export async function runPresignedUpload<TResolve>(
   let succeeded: TPresignedUpload[];
 
   if (failFast) {
-    succeeded = await Promise.all(presignedUploads.map(uploadOne));
+    const results = await Promise.all(presignedUploads.map(uploadOne));
+    succeeded = results.filter(
+      (upload): upload is TPresignedUpload => upload !== null,
+    );
   } else {
     const settled = await Promise.allSettled(presignedUploads.map(uploadOne));
 
@@ -205,10 +219,16 @@ export async function runPresignedUpload<TResolve>(
       ),
       filter(isNonNullish),
     );
+  }
 
-    if (!succeeded.length) {
-      throw new PresignedUploadError('All file uploads failed');
+  if (!succeeded.length) {
+    // Every file was cancelled, not failed — surface an abort so the caller
+    // treats it as a cancellation rather than a batch failure.
+    if (files.every((file) => file.signal?.aborted)) {
+      throw new UploadAbortedError();
     }
+
+    throw new PresignedUploadError('All file uploads failed');
   }
 
   // 4. Persist the successful uploads.
@@ -216,7 +236,19 @@ export async function runPresignedUpload<TResolve>(
   emit('SAVING');
   await slowDown();
 
-  const savedUploads = succeeded.map((upload) => {
+  // Drop files cancelled after their S3 upload finished so they are not
+  // persisted.
+  const remaining = succeeded.filter((upload) => {
+    const file = fileByRefId.get(upload.refId);
+
+    return !file?.signal?.aborted;
+  });
+
+  if (!remaining.length) {
+    throw new UploadAbortedError();
+  }
+
+  const savedUploads = remaining.map((upload) => {
     const file = fileByRefId.get(upload.refId);
 
     if (!file) {

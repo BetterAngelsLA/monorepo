@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   uploadDocuments: vi.fn(),
   begin: vi.fn(() => ({
     id: 'session-1',
-    signal: new AbortController().signal,
+    signals: [new AbortController().signal],
     isAborted: () => false,
   })),
   endUpload: vi.fn(),
@@ -147,7 +147,7 @@ describe('UploadModal', () => {
     expect(mocks.uploadDocuments).toHaveBeenCalledWith(
       expect.objectContaining({
         clientProfileId: 'client-1',
-        documents: [sampleFile],
+        documents: [expect.objectContaining(sampleFile)],
         namespace: ClientDocumentNamespaceEnum.ConsentForm,
       }),
     );

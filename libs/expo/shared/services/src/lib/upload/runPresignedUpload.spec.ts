@@ -235,10 +235,9 @@ describe('runPresignedUpload', () => {
     const controller = new AbortController();
     let resolveSave: (() => void) | undefined;
     const resolveUpload = vi.fn(
-      (_saved: TSavedUpload[], signal?: AbortSignal) =>
+      (_saved: TSavedUpload[]) =>
         new Promise<void>((resolve) => {
           resolveSave = resolve;
-          signal?.addEventListener('abort', () => {});
         }),
     );
 
@@ -256,6 +255,131 @@ describe('runPresignedUpload', () => {
     resolveSave?.();
 
     await expect(promise).rejects.toBeInstanceOf(UploadAbortedError);
+  });
+
+  it('skips a file whose per-file signal is already aborted', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const controller = new AbortController();
+    controller.abort();
+    const resolveUpload = vi.fn(async () => undefined);
+
+    await runPresignedUpload({
+      files: [
+        { ...file('a.pdf'), signal: controller.signal },
+        file('b.pdf'),
+      ],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    // Only the non-cancelled file is uploaded and persisted.
+    expect(uploadFileToS3).toHaveBeenCalledTimes(1);
+
+    const saved = resolveUpload.mock.calls[0][0] as TSavedUpload[];
+    expect(saved).toHaveLength(1);
+    expect(saved[0].filename).toBe('b.pdf');
+  });
+
+  it('skips a file cancelled mid-upload and still persists the others', async () => {
+    const controller = new AbortController();
+    let releaseB: (() => void) | undefined;
+    uploadFileToS3.mockImplementation(
+      ({ signal }: { signal?: AbortSignal }) =>
+        new Promise((resolve, reject) => {
+          if (signal) {
+            signal.addEventListener('abort', () =>
+              reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+            );
+          } else {
+            releaseB = () => resolve({ key: 'k' });
+          }
+        }),
+    );
+    const resolveUpload = vi.fn(async () => undefined);
+
+    const promise = runPresignedUpload({
+      files: [
+        { ...file('a.pdf'), signal: controller.signal },
+        file('b.pdf'),
+      ],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    // Both uploads are in flight (b is parked on releaseB).
+    await vi.waitFor(() => expect(releaseB).toBeDefined());
+
+    controller.abort();
+    releaseB?.();
+
+    await promise;
+
+    const saved = resolveUpload.mock.calls[0][0] as TSavedUpload[];
+    expect(saved).toHaveLength(1);
+    expect(saved[0].filename).toBe('b.pdf');
+  });
+
+  it('drops a file cancelled after its upload finished from the persisted batch', async () => {
+    const controller = new AbortController();
+    let releaseB: (() => void) | undefined;
+    uploadFileToS3.mockImplementation(
+      ({ signal }: { signal?: AbortSignal }) =>
+        new Promise((resolve) => {
+          if (signal) {
+            // a.pdf uploads instantly (no listener — it succeeds).
+            resolve({ key: 'k' });
+          } else {
+            releaseB = () => resolve({ key: 'k' });
+          }
+        }),
+    );
+    const resolveUpload = vi.fn(async () => undefined);
+
+    const promise = runPresignedUpload({
+      files: [
+        { ...file('a.pdf'), signal: controller.signal },
+        file('b.pdf'),
+      ],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload,
+    });
+
+    // a.pdf finished; b.pdf still in flight, so the batch hasn't resolved yet.
+    await vi.waitFor(() => expect(releaseB).toBeDefined());
+
+    controller.abort(); // cancel a.pdf after its upload completed
+    releaseB?.(); // let the batch finish
+
+    await promise;
+
+    const saved = resolveUpload.mock.calls[0][0] as TSavedUpload[];
+    expect(saved).toHaveLength(1);
+    expect(saved[0].filename).toBe('b.pdf');
+  });
+
+  it('throws UploadAbortedError when every file is cancelled', async () => {
+    const controllerA = new AbortController();
+    const controllerB = new AbortController();
+    controllerA.abort();
+    controllerB.abort();
+
+    await expect(
+      runPresignedUpload({
+        files: [
+          { ...file('a.pdf'), signal: controllerA.signal },
+          { ...file('b.pdf'), signal: controllerB.signal },
+        ],
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload: async () => undefined,
+      }),
+    ).rejects.toBeInstanceOf(UploadAbortedError);
   });
 
   it('reports the refId/file manifest before generating', async () => {

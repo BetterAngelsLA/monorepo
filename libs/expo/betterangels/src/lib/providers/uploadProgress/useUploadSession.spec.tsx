@@ -24,7 +24,7 @@ vi.mock('./UploadProgressContext', () => ({
     failUpload: mocks.failUpload,
     completeUpload: mocks.completeUpload,
     endUpload: mocks.endUpload,
-    cancelUpload: vi.fn(),
+    cancelUploadItem: vi.fn(),
   }),
 }));
 
@@ -120,24 +120,29 @@ describe('useUploadSession', () => {
     Object.values(mocks).forEach((mock) => mock.mockClear());
   });
 
-  it('begin registers a session with the file names and an abortable signal', () => {
+  it('begin registers a session with per-file abort signals', () => {
     const { getByLabelText } = render(<Harness />);
 
     fireEvent.press(getByLabelText('begin'));
 
     expect(mocks.startUpload).toHaveBeenCalledTimes(1);
-    const [id, names, onCancel] = mocks.startUpload.mock.calls[0];
+    const [id, names, onCancelItem] = mocks.startUpload.mock.calls[0];
 
     expect(typeof id).toBe('string');
     expect(names).toEqual(['a.pdf', 'b.pdf']);
-    expect(typeof onCancel).toBe('function');
+    expect(typeof onCancelItem).toBe('function');
     expect(lastHandle?.id).toBe(id);
+    expect(lastHandle?.signals).toHaveLength(2);
     expect(lastHandle?.isAborted()).toBe(false);
 
-    // The onCancel passed to the provider aborts the session's signal.
-    onCancel();
+    // onCancelItem(index) aborts only that file's signal.
+    onCancelItem(0);
+    expect(lastHandle?.signals[0]?.aborted).toBe(true);
+    expect(lastHandle?.signals[1]?.aborted).toBe(false);
+    expect(lastHandle?.isAborted()).toBe(false);
+
+    onCancelItem(1);
     expect(lastHandle?.isAborted()).toBe(true);
-    expect(lastHandle?.signal?.aborted).toBe(true);
   });
 
   it('begin with cancellable false registers a non-abortable session', () => {
@@ -145,15 +150,16 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin non-cancellable'));
 
-    const [id, names, onCancel, label, onRetry] = mocks.startUpload.mock.calls[0];
+    const [id, names, onCancelItem, label, onRetry] =
+      mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
-    // No onCancel → the drawer will not show a cancel button.
-    expect(onCancel).toBeUndefined();
+    // No onCancelItem → the drawer will not show per-item cancel buttons.
+    expect(onCancelItem).toBeUndefined();
     expect(label).toBe('Consent Forms');
     expect(typeof onRetry).toBe('function');
     expect(lastHandle?.id).toBe(id);
-    expect(lastHandle?.signal).toBeUndefined();
+    expect(lastHandle?.signals).toEqual([undefined]);
     expect(lastHandle?.isAborted()).toBe(false);
   });
 

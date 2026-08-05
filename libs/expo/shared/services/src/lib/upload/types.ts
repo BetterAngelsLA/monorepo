@@ -2,6 +2,8 @@ export type TUploadFile = {
   uri: string;
   name: string;
   type: string;
+  /** Per-file abort signal (e.g. from a per-item cancel control). */
+  signal?: AbortSignal;
 };
 
 /** Input sent to the backend to request presigned POSTs (correlated by refId). */

@@ -25,7 +25,7 @@ function Harness() {
     failUpload,
     completeUpload,
     endUpload,
-    cancelUpload,
+    cancelUploadItem,
   } = useUploadProgress();
 
   return (
@@ -58,8 +58,8 @@ function Harness() {
       <Text
         accessibilityRole="button"
         accessibilityLabel="cancel"
-        accessibilityHint="cancel the cancelable upload"
-        onPress={() => cancelUpload('c')}
+        accessibilityHint="cancel the first item"
+        onPress={() => cancelUploadItem('a', 'pending-0')}
       >
         cancel
       </Text>
@@ -258,33 +258,42 @@ describe('UploadProgressProvider', () => {
     expect(second.getByTestId('session-a')).toBeTruthy();
   });
 
-  it('cancels a session and invokes its onCancel handler', () => {
-    const onCancel = vi.fn();
+  it('cancels a single item, invoking its onCancel, and keeps the session', () => {
+    const onCancelItem = vi.fn();
 
     function CancelHarness() {
-      const { sessions, startUpload, cancelUpload } = useUploadProgress();
+      const { sessions, startUpload, cancelUploadItem } = useUploadProgress();
 
       return (
         <View>
           <Text testID="drawer-count">{sessions.length}</Text>
           {sessions.map((session) => (
-            <Text key={session.id} testID={`session-${session.id}`}>
-              {session.completed}/{session.total}
-            </Text>
+            <View key={session.id}>
+              <Text testID={`session-${session.id}`}>
+                {session.completed}/{session.total}
+              </Text>
+              {session.items.map((item) => (
+                <Text key={item.refId} testID={`item-${item.refId}`}>
+                  {item.name}
+                </Text>
+              ))}
+            </View>
           ))}
           <Text
             accessibilityRole="button"
             accessibilityLabel="start"
             accessibilityHint="start an upload"
-            onPress={() => startUpload('c', ['z.pdf'], onCancel)}
+            onPress={() =>
+              startUpload('c', ['z.pdf', 'w.pdf'], onCancelItem)
+            }
           >
             start
           </Text>
           <Text
             accessibilityRole="button"
-            accessibilityLabel="cancel"
-            accessibilityHint="cancel the upload"
-            onPress={() => cancelUpload('c')}
+            accessibilityLabel="cancel item"
+            accessibilityHint="cancel the first item"
+            onPress={() => cancelUploadItem('c', 'pending-0')}
           >
             cancel
           </Text>
@@ -299,12 +308,63 @@ describe('UploadProgressProvider', () => {
     );
 
     fireEvent.press(getByLabelText('start'));
+    expect(getByTestId('session-c').props.children).toEqual([0, '/', 2]);
+    expect(getByTestId('item-pending-0').props.children).toBe('z.pdf');
+
+    fireEvent.press(getByLabelText('cancel item'));
+
+    expect(onCancelItem).toHaveBeenCalledWith(0);
+    // The cancelled item is removed; the session stays with the rest.
+    expect(queryByTestId('item-pending-0')).toBeNull();
     expect(getByTestId('session-c').props.children).toEqual([0, '/', 1]);
+    expect(getByTestId('item-pending-1').props.children).toBe('w.pdf');
+  });
 
-    fireEvent.press(getByLabelText('cancel'));
+  it('removes the session when its last item is cancelled', () => {
+    const onCancelItem = vi.fn();
 
-    expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(queryByTestId('session-c')).toBeNull();
+    function SingleHarness() {
+      const { sessions, startUpload, cancelUploadItem } = useUploadProgress();
+
+      return (
+        <View>
+          <Text testID="drawer-count">{sessions.length}</Text>
+          {sessions.map((session) => (
+            <Text key={session.id} testID={`session-${session.id}`}>
+              {session.completed}/{session.total}
+            </Text>
+          ))}
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="start"
+            accessibilityHint="start an upload"
+            onPress={() => startUpload('s', ['z.pdf'], onCancelItem)}
+          >
+            start
+          </Text>
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel="cancel item"
+            accessibilityHint="cancel the item"
+            onPress={() => cancelUploadItem('s', 'pending-0')}
+          >
+            cancel
+          </Text>
+        </View>
+      );
+    }
+
+    const { getByLabelText, getByTestId, queryByTestId } = render(
+      <UploadProgressProvider>
+        <SingleHarness />
+      </UploadProgressProvider>,
+    );
+
+    fireEvent.press(getByLabelText('start'));
+    fireEvent.press(getByLabelText('cancel item'));
+
+    expect(onCancelItem).toHaveBeenCalledWith(0);
+    expect(queryByTestId('session-s')).toBeNull();
     expect(getByTestId('drawer-count').props.children).toBe(0);
   });
 });
