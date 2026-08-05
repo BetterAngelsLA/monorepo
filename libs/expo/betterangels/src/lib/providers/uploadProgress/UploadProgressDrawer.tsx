@@ -108,51 +108,53 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
                   {item.name}
                 </TextRegular>
 
-                {item.status === 'uploading' &&
-                typeof item.totalBytes === 'number' &&
-                item.totalBytes > 0 ? (
-                  <View style={styles.itemProgress}>
-                    <TextRegular size="xs" color={Colors.PRIMARY}>
-                      {Math.round(
-                        ((item.bytesSent ?? 0) / item.totalBytes) * 100,
-                      )}
-                      %
-                    </TextRegular>
-                    <View style={styles.itemBar}>
-                      <View
-                        style={[
-                          styles.itemBarFill,
-                          {
-                            width: `${Math.min(
-                              100,
-                              ((item.bytesSent ?? 0) / item.totalBytes) * 100,
-                            )}%`,
-                          },
-                        ]}
-                      />
+                <View style={styles.itemActions}>
+                  {item.status === 'uploading' &&
+                  typeof item.totalBytes === 'number' &&
+                  item.totalBytes > 0 ? (
+                    <View style={styles.itemProgress}>
+                      <TextRegular size="xs" color={Colors.PRIMARY}>
+                        {Math.round(
+                          ((item.bytesSent ?? 0) / item.totalBytes) * 100,
+                        )}
+                        %
+                      </TextRegular>
+                      <View style={styles.itemBar}>
+                        <View
+                          style={[
+                            styles.itemBarFill,
+                            {
+                              width: `${Math.min(
+                                100,
+                                ((item.bytesSent ?? 0) / item.totalBytes) * 100,
+                              )}%`,
+                            },
+                          ]}
+                        />
+                      </View>
                     </View>
-                  </View>
-                ) : (
-                  <View style={styles.itemStatus}>
-                    <TextRegular
-                      size="xs"
-                      color={STATUS_COLORS[item.status]}
-                    >
-                      {STATUS_LABELS[item.status]}
-                    </TextRegular>
-                  </View>
-                )}
+                  ) : (
+                    <View style={styles.itemStatus}>
+                      <TextRegular
+                        size="xs"
+                        color={STATUS_COLORS[item.status]}
+                      >
+                        {STATUS_LABELS[item.status]}
+                      </TextRegular>
+                    </View>
+                  )}
 
-                {cancellable && (
-                  <TextButton
-                    title="Cancel"
-                    style={styles.itemCancel}
-                    onPress={() =>
-                      cancelUploadItem(session.id, item.refId)
-                    }
-                    accessibilityHint={`Cancels upload of ${item.name}`}
-                  />
-                )}
+                  {cancellable && (
+                    <TextButton
+                      title="Cancel"
+                      fontSize="sm"
+                      onPress={() =>
+                        cancelUploadItem(session.id, item.refId)
+                      }
+                      accessibilityHint={`Cancels upload of ${item.name}`}
+                    />
+                  )}
+                </View>
               </View>
             );
           })}
@@ -245,11 +247,15 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   itemName: {
     flex: 1,
     marginRight: Spacings.sm,
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
   },
   itemProgress: {
     // Fixed height so the row does not resize when an item finishes and the
@@ -263,7 +269,7 @@ const styles = StyleSheet.create({
     // Matches itemProgress so rows keep a stable height through completion.
     height: Spacings.md,
     alignItems: 'flex-end',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   itemBar: {
     width: 64,
@@ -276,9 +282,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: Radiuses.xxxs,
     backgroundColor: Colors.PRIMARY,
-  },
-  itemCancel: {
-    marginLeft: Spacings.sm,
   },
   cancelRow: {
     marginTop: Spacings.md,
