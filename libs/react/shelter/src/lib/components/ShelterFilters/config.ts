@@ -45,7 +45,7 @@ const unknownOption: TShelterFilterOption = {
 
 type TSelectableFilterName = Exclude<
   keyof TShelterPropertyFilters,
-  'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
+  'openNowFor' | 'isAccessCenter' | 'maxStay'
 >;
 
 export type TFilterConfig = {

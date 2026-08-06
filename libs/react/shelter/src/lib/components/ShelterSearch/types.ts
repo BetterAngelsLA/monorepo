@@ -11,7 +11,7 @@ import {
 } from '../../apollo';
 
 export type TShelterPropertyFilters = {
-  openNowScheduleTypes?: ScheduleTypeChoices[] | null;
+  openNowFor?: ScheduleTypeChoices[] | null;
   isAccessCenter?: boolean | null;
   maxStay?: { days: number; includeNull: boolean };
   demographics?: DemographicChoices[] | null;

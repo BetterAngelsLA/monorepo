@@ -6,18 +6,18 @@ type TProps = {
   className?: string;
   nameFilter?: string;
   mapBoundsFilter?: TMapBounds | null;
-  openNowScheduleTypesFilter?: ScheduleTypeChoices[] | null;
+  openNowForFilter?: ScheduleTypeChoices[] | null;
   propertyFilters?: TShelterPropertyFilters | null;
 };
 
 function propertyFiltersAffectQuery(
-  propertyFilters?: TShelterPropertyFilters | null
+  propertyFilters?: TShelterPropertyFilters | null,
 ): boolean {
   if (!propertyFilters) {
     return false;
   }
 
-  const { openNowScheduleTypes, ...propertyOnly } = propertyFilters;
+  const { openNowFor, ...propertyOnly } = propertyFilters;
 
   return Object.keys(propertyOnly).length > 0;
 }
@@ -38,7 +38,7 @@ export function ResultsSource(props: TProps) {
   const {
     nameFilter,
     mapBoundsFilter,
-    openNowScheduleTypesFilter,
+    openNowForFilter,
     propertyFilters,
     className = '',
   } = props;
@@ -49,7 +49,7 @@ export function ResultsSource(props: TProps) {
     resultSourceParts.push('map area');
   }
   if (
-    (openNowScheduleTypesFilter && openNowScheduleTypesFilter.length > 0) ||
+    (openNowForFilter && openNowForFilter.length > 0) ||
     propertyFiltersAffectQuery(propertyFilters)
   ) {
     resultSourceParts.push('filters');

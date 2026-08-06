@@ -563,7 +563,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING"]}},
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
             )
 
         results = response["data"]["shelters"]["results"]
@@ -626,7 +626,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING"]}},
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -695,7 +695,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING"]}},
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -745,7 +745,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING"]}},
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -818,7 +818,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING"]}},
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -834,7 +834,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_shelter_open_now_multiple_schedule_types(self) -> None:
-        """openNow accepts a list of schedule types and returns shelters open in ANY of them (union)."""
+        """openNowFor accepts a list of schedule types and returns shelters open in ANY of them (union)."""
         # Monday 1:00 PM PST
         fixed_pst = datetime.datetime(
             2026,
@@ -900,7 +900,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING", "INTAKE", "MEAL_SERVICE"]}},
+                variables={"filters": {"openNowFor": ["OPERATING", "INTAKE", "MEAL_SERVICE"]}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -974,11 +974,11 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response_both = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["OPERATING", "INTAKE"]}},
+                variables={"filters": {"openNowFor": ["OPERATING", "INTAKE"]}},
             )
             response_intake_only = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": ["INTAKE"]}},
+                variables={"filters": {"openNowFor": ["INTAKE"]}},
             )
 
         both_ids = {r["id"] for r in response_both["data"]["shelters"]["results"]}
@@ -999,7 +999,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         """An empty schedule-type list disables the filter (does not exclude shelters)."""
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         # No schedules at all — this shelter should still be returned when the
-        # openNow filter is a no-op.
+        # openNowFor filter is a no-op.
 
         query = """
             query ($filters: ShelterFilter) {
@@ -1010,7 +1010,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             }
         """
 
-        response = self.execute_graphql(query, variables={"filters": {"openNow": []}})
+        response = self.execute_graphql(query, variables={"filters": {"openNowFor": []}})
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertIn(str(shelter.pk), result_ids)

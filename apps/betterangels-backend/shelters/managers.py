@@ -16,11 +16,7 @@ from shelters.selectors.computed_status import (
 )
 
 if TYPE_CHECKING:
-    from shelters.models import (  # noqa: F401
-        Bed,
-        Room,
-        Shelter,  # noqa: F401
-    )
+    from shelters.models import Bed, Room, Shelter  # noqa: F401
 
 
 class ShelterQuerySet(QuerySet["Shelter"]):

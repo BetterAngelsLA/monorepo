@@ -166,7 +166,7 @@ class ShelterFilter:
         return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
-    def open_now(
+    def open_now_for(
         self,
         queryset: QuerySet,
         value: Optional[List[ScheduleTypeChoices]],

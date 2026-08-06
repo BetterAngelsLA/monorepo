@@ -51,21 +51,21 @@ export function FilterPills(props: IProps) {
   const pills: TPill[] = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (key === 'openNowScheduleTypes') {
+    if (key === 'openNowFor') {
       const scheduleTypes = value as ScheduleTypeChoices[] | undefined;
       scheduleTypes?.forEach((scheduleType) => {
         const label = OPEN_NOW_SCHEDULE_TYPE_LABELS[scheduleType];
         if (label) {
           pills.push({
-            id: `openNowScheduleTypes-${scheduleType}`,
+            id: `openNowFor-${scheduleType}`,
             label,
             clear: (prev) => {
-              const nextTypes = (prev.openNowScheduleTypes ?? []).filter(
+              const nextTypes = (prev.openNowFor ?? []).filter(
                 (t) => t !== scheduleType
               );
               return {
                 ...prev,
-                openNowScheduleTypes:
+                openNowFor:
                   nextTypes.length > 0 ? nextTypes : undefined,
               };
             },

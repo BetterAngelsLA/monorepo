@@ -40,13 +40,13 @@ export function ShelterFilters(props: IProps) {
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
-  const initialOpenNowTypes = filters.openNowScheduleTypes ?? [];
+  const initialOpenNowTypes = filters.openNowFor ?? [];
   const [openNowTypes, setOpenNowTypes] =
     useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
 
   useEffect(() => {
-    setOpenNowTypes(filters.openNowScheduleTypes ?? []);
-  }, [filters.openNowScheduleTypes]);
+    setOpenNowTypes(filters.openNowFor ?? []);
+  }, [filters.openNowFor]);
 
   const parentCss = ['pb-24', className];
 
@@ -72,7 +72,7 @@ export function ShelterFilters(props: IProps) {
 
     onFiltersChange({
       ...filters,
-      openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
+      openNowFor: newTypes.length > 0 ? newTypes : undefined,
     });
   }
 
