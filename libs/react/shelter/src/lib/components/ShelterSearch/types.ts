@@ -13,6 +13,7 @@ import {
 export type TShelterPropertyFilters = {
   openNow?: boolean | null;
   openNowScheduleTypes?: ScheduleTypeChoices[] | null;
+  openNowIncludeNull?: boolean | null;
   isAccessCenter?: boolean | null;
   maxStay?: { days: number; includeNull: boolean };
   demographics?: DemographicChoices[] | null;

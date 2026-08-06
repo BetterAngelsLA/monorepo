@@ -2179,6 +2179,10 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OpenNowInput = {
+  includeNull?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -3313,7 +3317,7 @@ export type ShelterFilter = {
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
-  openNow?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
