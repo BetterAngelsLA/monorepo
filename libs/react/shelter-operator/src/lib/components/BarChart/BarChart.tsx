@@ -14,6 +14,10 @@ const DEFAULT_MAX_BARS = 40;
  *
  * The x-axis label for a bucket with more than one point becomes
  * "firstLabel - lastLabel".
+ *
+ * **Ordering**: bucket boundaries are derived from the insertion order of
+ * unique x-values in `data`. Callers must pass data in the intended display
+ * order (e.g. chronological for date series) so bucket ranges are meaningful.
  */
 function bucketData(
   data: Record<string, unknown>[],
@@ -26,6 +30,19 @@ function bucketData(
 
   if (xValues.length <= maxBars) return data;
 
+  // Build a lookup map from x-value → rows once (O(n)) so each bucket can
+  // retrieve its rows in O(bucket-size) rather than re-scanning all data.
+  const rowsByX = new Map<unknown, Record<string, unknown>[]>();
+  for (const d of data) {
+    const x = d[xField];
+    const bucket = rowsByX.get(x);
+    if (bucket) {
+      bucket.push(d);
+    } else {
+      rowsByX.set(x, [d]);
+    }
+  }
+
   const bucketSize = Math.ceil(xValues.length / maxBars);
 
   return chunk(xValues, bucketSize).flatMap((bucketXValues) => {
@@ -34,7 +51,7 @@ function bucketData(
         ? String(bucketXValues[0])
         : `${bucketXValues[0]} - ${bucketXValues[bucketXValues.length - 1]}`;
 
-    const bucketRows = data.filter((d) => bucketXValues.includes(d[xField]));
+    const bucketRows = bucketXValues.flatMap((x) => rowsByX.get(x) ?? []);
 
     if (!colorField) {
       const avg = meanBy(bucketRows, (d) => Number(d[yField]) || 0) ?? 0;
