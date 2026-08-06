@@ -25,7 +25,6 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
     if MetricsExportOptions.DAILY_OCCUPANCY_METRICS in selected_options:
         report[MetricsExportOptions.DAILY_OCCUPANCY_METRICS] = {
             metric.date.isoformat(): {
-                "shelter_id": shelter_id,
                 "occupied_count": metric.occupied_count,
                 "total_beds": metric.total_beds,
                 "occupancy_pct": metric.occupancy_pct,
@@ -36,7 +35,6 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
     if MetricsExportOptions.DAILY_BED_STATUS_METRICS in selected_options:
         report[MetricsExportOptions.DAILY_BED_STATUS_METRICS] = {
             metric.date.isoformat(): {
-                "shelter_id": shelter_id,
                 "available": metric.available,
                 "occupied": metric.occupied,
                 "reserved": metric.reserved,
@@ -50,7 +48,6 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
         reservation_metrics = metrics.reservation_metrics
         report[MetricsExportOptions.RESERVATION_METRICS] = {
             date_range: {
-                "shelter_id": shelter_id,
                 "check_in_overdue": reservation_metrics.check_in_overdue,
                 "cancelled": reservation_metrics.cancelled,
                 "checked_in": reservation_metrics.checked_in,
@@ -61,10 +58,9 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
     if MetricsExportOptions.AVG_DAYS_TO_OCCUPANCY in selected_options:
         report[MetricsExportOptions.AVG_DAYS_TO_OCCUPANCY] = {
             date_range: {
-                "shelter_id": shelter_id,
                 "avg_days_to_occupancy": metrics.avg_days_to_occupancy,
             }
         }
 
     filename = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}_shelter_report.json"
-    return filename, json.dumps({"report": report}, indent=2)
+    return filename, json.dumps({f"{shelter_id}_report": report}, indent=2)

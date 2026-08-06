@@ -402,10 +402,9 @@ class TestShelterMetricsExport:
 
         assert filename == "20260601_20260630_shelter_report.json"
         assert json.loads(json_content) == {
-            "report": {
+            "shelter-1_report": {
                 "daily_occupancy_metrics": {
                     "2026-06-01": {
-                        "shelter_id": "shelter-1",
                         "occupied_count": 8,
                         "total_beds": 10,
                         "occupancy_pct": 80.0,
@@ -413,7 +412,6 @@ class TestShelterMetricsExport:
                 },
                 "daily_bed_status_metrics": {
                     "2026-06-01": {
-                        "shelter_id": "shelter-1",
                         "available": 2,
                         "occupied": 8,
                         "reserved": 1,
@@ -423,7 +421,6 @@ class TestShelterMetricsExport:
                 },
                 "reservation_metrics": {
                     "2026-06-01_2026-06-30": {
-                        "shelter_id": "shelter-1",
                         "check_in_overdue": 3,
                         "cancelled": 2,
                         "checked_in": 11,
@@ -432,7 +429,6 @@ class TestShelterMetricsExport:
                 },
                 "avg_days_to_occupancy": {
                     "2026-06-01_2026-06-30": {
-                        "shelter_id": "shelter-1",
                         "avg_days_to_occupancy": 4.5,
                     }
                 },
@@ -445,7 +441,7 @@ class TestShelterMetricsExport:
             [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
         )
 
-        assert json.loads(json_content)["report"].keys() == {
+        assert json.loads(json_content)["shelter-1_report"].keys() == {
             "daily_occupancy_metrics",
             "reservation_metrics",
         }
