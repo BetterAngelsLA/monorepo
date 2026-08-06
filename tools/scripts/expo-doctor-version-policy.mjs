@@ -66,7 +66,7 @@ export function coerceVersion(value) {
  *   - 'major' -> different major
  *   - 'minor' -> same major, different minor
  *   - 'patch' -> same major/minor, different patch
- *   - 'unknown' -> could not coerce either version
+ *   - 'unknown' -> either version could not be coerced
  *
  * @param {{ expectedVersionOrRange?: string, actualVersion?: string }} dep
  * @returns {string | null}

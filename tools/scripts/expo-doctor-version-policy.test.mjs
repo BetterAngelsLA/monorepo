@@ -9,6 +9,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  BUCKETS,
   coerceVersion,
   classifyMismatch,
   parseInstallCheckJson,
@@ -64,21 +65,21 @@ describe('classifyMismatch', () => {
   it('buckets a major version mismatch (the gesture-handler CI failure)', () => {
     assert.equal(
       classifyMismatch({ expectedVersionOrRange: '~3.1.0', actualVersion: '2.32.0' }),
-      'major'
+      BUCKETS.MAJOR
     );
   });
 
   it('buckets a minor version mismatch', () => {
     assert.equal(
       classifyMismatch({ expectedVersionOrRange: '~57.1.0', actualVersion: '57.0.9' }),
-      'minor'
+      BUCKETS.MINOR
     );
   });
 
   it('buckets a patch version mismatch (expo released a new patch)', () => {
     assert.equal(
       classifyMismatch({ expectedVersionOrRange: '~57.0.11', actualVersion: '57.0.10' }),
-      'patch'
+      BUCKETS.PATCH
     );
   });
 
@@ -92,7 +93,7 @@ describe('classifyMismatch', () => {
   it('buckets uncoercible versions as unknown', () => {
     assert.equal(
       classifyMismatch({ expectedVersionOrRange: '~57.0.9', actualVersion: 'not-a-version' }),
-      'unknown'
+      BUCKETS.UNKNOWN
     );
   });
 });
@@ -135,9 +136,9 @@ describe('parseInstallCheckJson', () => {
       packageType: 'dependencies',
       expectedVersionOrRange: '~3.1.0',
       actualVersion: '2.32.0',
-      bucket: 'major',
+      bucket: BUCKETS.MAJOR,
     });
-    assert.equal(result.mismatches[1].bucket, 'patch');
+    assert.equal(result.mismatches[1].bucket, BUCKETS.PATCH);
   });
 
   it('tolerates non-JSON noise before the JSON payload', () => {
@@ -168,7 +169,7 @@ env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_DEMO_API_URL
     assert.equal(result.upToDate, false);
     assert.equal(result.mismatches.length, 1);
     assert.equal(result.mismatches[0].packageName, 'expo');
-    assert.equal(result.mismatches[0].bucket, 'patch');
+    assert.equal(result.mismatches[0].bucket, BUCKETS.PATCH);
   });
 
   it('throws on invalid JSON (fail closed)', () => {
@@ -194,7 +195,7 @@ describe('evaluateVersionPolicy', () => {
   });
 
   it('fails on major mismatches only', () => {
-    const { fail, warn } = evaluateVersionPolicy([mismatch('a', 'major')]);
+    const { fail, warn } = evaluateVersionPolicy([mismatch('a', BUCKETS.MAJOR)]);
     assert.equal(fail.length, 1);
     assert.equal(fail[0].packageName, 'a');
     assert.deepEqual(warn, []);
@@ -202,9 +203,9 @@ describe('evaluateVersionPolicy', () => {
 
   it('warns (does not fail) on minor/patch/unknown mismatches', () => {
     const { fail, warn } = evaluateVersionPolicy([
-      mismatch('minor-pkg', 'minor'),
-      mismatch('patch-pkg', 'patch'),
-      mismatch('unknown-pkg', 'unknown'),
+      mismatch('minor-pkg', BUCKETS.MINOR),
+      mismatch('patch-pkg', BUCKETS.PATCH),
+      mismatch('unknown-pkg', BUCKETS.UNKNOWN),
     ]);
     assert.deepEqual(fail, []);
     assert.deepEqual(
@@ -215,8 +216,8 @@ describe('evaluateVersionPolicy', () => {
 
   it('separates fail and warn for a mixed payload', () => {
     const { fail, warn } = evaluateVersionPolicy([
-      mismatch('drifted', 'major'),
-      mismatch('out-of-date', 'patch'),
+      mismatch('drifted', BUCKETS.MAJOR),
+      mismatch('out-of-date', BUCKETS.PATCH),
     ]);
     assert.deepEqual(fail.map((m) => m.packageName), ['drifted']);
     assert.deepEqual(warn.map((m) => m.packageName), ['out-of-date']);
@@ -261,7 +262,7 @@ describe('formatMismatchSections', () => {
   });
 
   it('formats a patch mismatch section with icon, header and table', () => {
-    const out = formatMismatchSections([mismatch('expo', 'patch', '~57.0.11', '57.0.10')]);
+    const out = formatMismatchSections([mismatch('expo', BUCKETS.PATCH, '~57.0.11', '57.0.10')]);
     assert.ok(out.includes('🔧 Patch version mismatches'));
     assert.ok(out.includes('expo'));
     assert.ok(out.includes('~57.0.11'));
@@ -270,8 +271,8 @@ describe('formatMismatchSections', () => {
 
   it('groups sections by bucket in major→minor→patch→unknown order', () => {
     const out = formatMismatchSections([
-      mismatch('expo', 'patch'),
-      mismatch('gesture', 'major', '~3.1.0', '2.32.0'),
+      mismatch('expo', BUCKETS.PATCH),
+      mismatch('gesture', BUCKETS.MAJOR, '~3.1.0', '2.32.0'),
     ]);
     const majorIdx = out.indexOf('❗ Major version mismatches');
     const patchIdx = out.indexOf('🔧 Patch version mismatches');

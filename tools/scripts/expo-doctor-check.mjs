@@ -51,9 +51,14 @@ const runCapture = (cmd, opts = {}) => {
         stdio: ['pipe', 'pipe', 'pipe'],
         ...opts,
       }).toString(),
+      stderr: '',
     };
   } catch (e) {
-    return { status: e.status ?? 1, stdout: String(e.stdout ?? '') };
+    return {
+      status: e.status ?? 1,
+      stdout: String(e.stdout ?? ''),
+      stderr: String(e.stderr ?? ''),
+    };
   }
 };
 
@@ -118,6 +123,7 @@ try {
       `ERROR: 'npx expo install --check --json' failed with status ${check.status}.`
     );
     if (check.stdout) console.error(check.stdout);
+    if (check.stderr) console.error(check.stderr);
     exitCode = exitCode || 1;
   } else {
     try {
