@@ -217,13 +217,14 @@ export function BarChart({
   // down to at most `maxBars` bars by averaging consecutive values.
   const xField = cfg['xField'] as string | undefined;
   const yField = cfg['yField'] as string | undefined;
+  const normalizedMaxBars = Math.max(1, Math.floor(maxBars));
   const displayData =
     ((displayConfig as Record<string, unknown>)['data'] as
       | Record<string, unknown>[]
       | undefined) ?? [];
   const finalData =
     xField && yField
-      ? bucketData(displayData, xField, yField, colorField, maxBars)
+      ? bucketData(displayData, xField, yField, colorField, normalizedMaxBars)
       : displayData;
 
   const activeFill = (datum: Record<string, unknown>): string => {
