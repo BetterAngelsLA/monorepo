@@ -85,6 +85,8 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
+      // accessibilityRole="button"
+      // accessibilityHint={`expands ${title} field`}
       accessible={false}
       style={({ pressed }) => [
         styles.container,
