@@ -4,7 +4,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSnackbar } from '../../hooks';
+import { useUploadSession } from '../../providers';
 import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
 import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';
 
@@ -19,23 +19,39 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const { clientId, imageUrl } = props;
 
   const [modalType, setModalType] = useState<ModalType>(null);
-  const { uploadPhoto, loading } = useClientProfilePhotoUpload();
-  const { showSnackbar } = useSnackbar();
+  const [isUploading, setIsUploading] = useState(false);
+  const { uploadPhoto } = useClientProfilePhotoUpload();
+  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
+    useUploadSession();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    setIsUploading(true);
+    const session = begin([file.name]);
+
     try {
       await uploadPhoto({
         clientProfileId: clientId,
-        file,
+        file: { ...file, signal: session.signals[0] },
+        onManifest: (manifest) => setUploadManifest(session.id, manifest),
+        onProgress: (progress) => updateUpload(session.id, progress),
       });
+
+      completeUpload(session.id);
     } catch (err) {
       console.error(`[ClientProfilePhotoUploader]: ${err}`);
 
-      showSnackbar({
-        message: 'Sorry, something went wrong. Please try again.',
-        type: 'error',
-      });
+      // Cancelled sessions were already removed by the drawer's cancel action.
+      if (session.isAborted()) {
+        endUpload(session.id);
+      } else {
+        // Keep the session so the drawer shows the failure + Close.
+        failUpload(
+          session.id,
+          'Sorry, something went wrong. Please try again.',
+        );
+      }
     } finally {
+      setIsUploading(false);
       setModalType(null);
     }
   };
@@ -54,7 +70,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
       >
         <View style={{ position: 'relative' }}>
           <Avatar
-            loading={loading}
+            loading={isUploading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}

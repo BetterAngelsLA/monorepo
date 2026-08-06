@@ -38,6 +38,7 @@ export function BottomSheetModalControlled(props: TProps) {
 
   const closeSheetRef = useRef<(() => void) | null>(null);
   const closingFromStateRef = useRef(false);
+  const isOpenRef = useRef(isOpen);
 
   // Mutable ref container to stabilize sheet inputs by render + lifecycle callbacks
   const stableInputsRef = useRef({
@@ -49,6 +50,10 @@ export function BottomSheetModalControlled(props: TProps) {
   useEffect(() => {
     stableInputsRef.current = { children, options, onClose };
   }, [children, options, onClose]);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,6 +73,14 @@ export function BottomSheetModalControlled(props: TProps) {
     showBottomSheet({
       render: ({ closeSheet }) => {
         closeSheetRef.current = closeSheet;
+
+        // The sheet can mount after `isOpen` has already flipped back to
+        // false (e.g. a selection closed the picker while the sheet was still
+        // presenting). Dismiss it right away so it never lingers open.
+        if (!isOpenRef.current) {
+          closingFromStateRef.current = true;
+          queueMicrotask(() => closeSheetRef.current?.());
+        }
 
         return stableInputsRef.current.children;
       },
