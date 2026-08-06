@@ -22,6 +22,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
   const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
+      testId: 'add-client-btn',
       Icon: UserAddIcon,
       route: '/clients/create',
     },
@@ -46,6 +47,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
         <View style={styles.wrapper}>
           <Pressable
             onPress={closeModal}
+            testID="main-plus-modal-btn"
             accessibilityRole="button"
             accessibilityHint="Closing homepage main modal"
             style={({ pressed }) => [

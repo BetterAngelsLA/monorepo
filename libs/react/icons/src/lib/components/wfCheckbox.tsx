@@ -1,4 +1,4 @@
-import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/tabler/svg/tabler:checkbox.svg';
+import svg from '../../../../../../libs/expo/shared/icons/src/assets/third_party/tabler/svg/tabler:checkbox.svg?raw';
 
 import { createSvgComponent } from '../../toComponent';
 

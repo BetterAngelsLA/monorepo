@@ -4,18 +4,19 @@ import dataclasses
 import datetime
 from collections import Counter, defaultdict
 from itertools import groupby
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
 
 import pghistory
+from strawberry import ID
 
 from shelters.enums import BedStatusChoices, ReservationStatusChoices
 
 if TYPE_CHECKING:
     from shelters.models import Shelter
-    from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType
+    from shelters.types.reporting import DailyOccupancyMetricsType, ReservationMetricsType, ShelterOccupancyMetricsType
 
 
 # ── Private helpers ───────────────────────────────────────────────────────────
@@ -659,3 +660,37 @@ def avg_days_to_occupancy(
     if not gaps:
         return None
     return round(sum(gaps) / len(gaps), 2)
+
+
+def shelter_occupancy_metrics(
+    *, shelter: "Shelter", start: datetime.datetime, end: datetime.datetime
+) -> "ShelterOccupancyMetricsType":
+    """Invoke the individual metric selectors for *shelter* and assemble a ``ShelterOccupancyMetricsType``.
+
+    *start* and *end* are timezone-aware datetimes; *end* is exclusive, matching
+    the other selectors in this module.
+    """
+    from shelters.types.reporting import DailyBedStatusMetricsType, ShelterOccupancyMetricsType
+
+    bed_status_counts = report_bed_status_counts(shelter=shelter, start=start, end=end)
+    end_date = (end - datetime.timedelta(microseconds=1)).date() if end > start else start.date()
+
+    return ShelterOccupancyMetricsType(
+        shelter_id=cast(ID, shelter.pk),
+        start_date=start.date(),
+        end_date=end_date,
+        daily_occupancy=daily_occupancy(shelter=shelter, start=start, end=end),
+        daily_bed_status=[
+            DailyBedStatusMetricsType(
+                date=d.date,
+                available=d.available,
+                occupied=d.occupied,
+                reserved=d.reserved,
+                out_of_service=d.out_of_service,
+                in_turnaround=d.in_turnaround,
+            )
+            for d in bed_status_counts
+        ],
+        reservation_metrics=reservation_status_change_counts(shelter=shelter, start=start, end=end),
+        avg_days_to_occupancy=avg_days_to_occupancy(shelter=shelter, start=start, end=end),
+    )

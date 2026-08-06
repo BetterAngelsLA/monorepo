@@ -3,8 +3,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
 import { useCallback, useMemo, useState } from 'react';
-import type { UseFormSetError } from 'react-hook-form';
-import { Controller, type FieldPathValue, useForm } from 'react-hook-form';
+import {
+  Controller,
+  type FieldPathValue,
+  useForm,
+  UseFormSetError,
+} from 'react-hook-form';
 import { type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
 import ServiceCategoryRow from './ServiceCategoryRow';
@@ -14,7 +18,7 @@ type TProps = {
   values?: Partial<ServicesFormData>;
   onSubmit: (
     data: ServicesFormData,
-    setError: UseFormSetError<ServicesFormData>
+    setError: UseFormSetError<ServicesFormData>,
   ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
@@ -42,7 +46,7 @@ export function ShelterServicesForm(props: TProps) {
 
   const initialValues = useMemo(
     () => ({ ...defaultFormValues, ...values }),
-    [values]
+    [values],
   );
 
   const { control, handleSubmit, setError, reset } = useForm<ServicesFormData>({
@@ -64,7 +68,7 @@ export function ShelterServicesForm(props: TProps) {
         [categoryId]: nextOptions,
       }));
     },
-    []
+    [],
   );
 
   return (
@@ -93,7 +97,7 @@ export function ShelterServicesForm(props: TProps) {
                           nextServiceIds as FieldPathValue<
                             ServicesFormData,
                             'services'
-                          >
+                          >,
                         );
                       }}
                       createdOtherOptions={
@@ -102,7 +106,7 @@ export function ShelterServicesForm(props: TProps) {
                       setCreatedOtherOptions={(nextOptions) => {
                         setCreatedOtherOptionsForCategory(
                           category.id,
-                          nextOptions
+                          nextOptions,
                         );
                       }}
                       isViewMode={isViewMode}

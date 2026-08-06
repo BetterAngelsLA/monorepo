@@ -23,7 +23,7 @@ type TClientProfileHmis =
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
-    null
+    null,
   );
   const [search, setSearch] = useState('');
   const { user } = useUser();
@@ -36,7 +36,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         onMenuPress={setCurrentClient}
       />
     ),
-    [setCurrentClient]
+    [setCurrentClient],
   );
 
   const handleClientPress = useCallback((id: string) => {
@@ -46,17 +46,20 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     });
   }, []);
 
-  const renderClientItemHmis = useCallback((client: TClientProfileHmis) => {
-    const { id } = client;
+  const renderClientItemHmis = useCallback(
+    (client: TClientProfileHmis) => {
+      const { id } = client;
 
-    if (!id) {
-      return null;
-    }
+      if (!id) {
+        return null;
+      }
 
-    return (
-      <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
-    );
-  }, []);
+      return (
+        <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
+      );
+    },
+    [handleClientPress],
+  );
 
   return (
     <View style={styles.container} testID="clients-screen">

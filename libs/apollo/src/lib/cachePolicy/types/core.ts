@@ -1,11 +1,16 @@
-import { FieldPolicy, InMemoryCache, TypePolicies } from '@apollo/client';
+import {
+  FieldPolicy,
+  InMemoryCache,
+  TypePolicies,
+  TypePolicy,
+} from '@apollo/client';
 import { TYPE_POLICIES_SYM } from '../constants';
 import { QueryPolicyConfig } from './queryPolicyConfig';
 
 /** Represents a single field policy entry */
 export type TCachePolicyEntry = {
   entityTypename: string;
-  keyFields?: string[] | false;
+  keyFields?: TypePolicy['keyFields'];
   fieldPolicy: FieldPolicy<Record<string, unknown>, Record<string, unknown>>;
   queryPolicyConfig?: QueryPolicyConfig;
 };

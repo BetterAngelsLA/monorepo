@@ -37,6 +37,9 @@ export default function SignInContainer({
       refetchFeatureFlags();
       router.replace(user.isOutreachAuthorized ? '/' : '/welcome');
     }
+    // refetchFeatureFlags is called only when user just became truthy (login).
+    // Adding it to deps could cause spurious refetches if not memoized upstream.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (

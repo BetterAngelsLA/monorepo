@@ -23,16 +23,16 @@ export default function SliderTabs({
   basePath,
   items,
 }: SliderTabsProps) {
-  const tabRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const tabsRef = useRef<Array<HTMLAnchorElement | null>>([]);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
 
   useLayoutEffect(() => {
     const updateSlider = () => {
       const activeIndex = Math.max(
         0,
-        items.findIndex((item) => item.pathSuffix === activePathSuffix)
+        items.findIndex((item) => item.pathSuffix === activePathSuffix),
       );
-      const activeTab = tabRefs.current[activeIndex];
+      const activeTab = tabsRef.current[activeIndex];
 
       if (!activeTab) return;
 
@@ -70,7 +70,7 @@ export default function SliderTabs({
                 <Link
                   key={`${item.label}-${item.pathSuffix}`}
                   ref={(element) => {
-                    tabRefs.current[index] = element;
+                    tabsRef.current[index] = element;
                   }}
                   to={buildTabPath(basePath, item.pathSuffix)}
                   aria-current={isActive ? 'page' : undefined}
@@ -79,7 +79,7 @@ export default function SliderTabs({
                     'border border-neutral-90 rounded-t-lg -mr-px',
                     isActive
                       ? 'text-[#008CEE] bg-white border-b-white border-t-2 border-t-[#008CEE] -mb-px'
-                      : 'text-[#6B7280] hover:text-[#4B5563] bg-neutral-97',
+                      : 'text-[#6B7280] hover:text-[#4B5563] bg-neutral-99',
                   ])}
                 >
                   <Text variant="subheading-regular" textColor="text-inherit">

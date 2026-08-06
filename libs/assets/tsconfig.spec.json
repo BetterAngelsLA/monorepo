@@ -4,7 +4,7 @@
     "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": ["vite/client", "jest", "node"]
+    "types": ["vite/client", "node"]
   },
   "include": [
     "src/**/*.spec.ts",

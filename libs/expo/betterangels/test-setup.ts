@@ -1,43 +1,52 @@
-import '@testing-library/react-native/build/matchers/extend-expect';
+// Stub ErrorUtils global before any module imports from 'expo'.
+// expo's Expo.fx.tsx accesses this at import time. vitest-native's
+// native engine doesn't expose RN globals during setup file execution,
+// and importing 'react-native' fails because the Flow transform isn't
+// active yet. Using vi.fn() avoids empty-function lint violations.
+import { vi } from 'vitest';
 
-// Mock native modules that crash in Node.js environment
-jest.mock('@preeternal/react-native-cookie-manager', () => ({
+(globalThis as Record<string, unknown>).ErrorUtils = {
+  setGlobalHandler: vi.fn(),
+  getGlobalHandler: vi.fn(() => vi.fn()),
+  reportFatalError: vi.fn((e: Error) => { throw e; }),
+};
+vi.mock('@preeternal/react-native-cookie-manager', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(),
-    set: jest.fn(),
-    clearAll: jest.fn(),
-    setFromResponse: jest.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
+    clearAll: vi.fn(),
+    setFromResponse: vi.fn(),
   },
 }));
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
+vi.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
   default: {
-    getItem: jest.fn(() => Promise.resolve(null)),
-    setItem: jest.fn(() => Promise.resolve()),
-    removeItem: jest.fn(() => Promise.resolve()),
-    clear: jest.fn(() => Promise.resolve()),
+    getItem: vi.fn(() => Promise.resolve(null)),
+    setItem: vi.fn(() => Promise.resolve()),
+    removeItem: vi.fn(() => Promise.resolve()),
+    clear: vi.fn(() => Promise.resolve()),
   },
 }));
 
-jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn(() => ({
-    getString: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn(),
-    clearAll: jest.fn(),
-    getAllKeys: jest.fn(() => []),
+vi.mock('react-native-mmkv', () => ({
+  MMKV: vi.fn(() => ({
+    getString: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    clearAll: vi.fn(),
+    getAllKeys: vi.fn(() => []),
   })),
-  createMMKV: jest.fn(() => ({
-    getString: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn(),
-    clearAll: jest.fn(),
-    getAllKeys: jest.fn(() => []),
+  createMMKV: vi.fn(() => ({
+    getString: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
+    clearAll: vi.fn(),
+    getAllKeys: vi.fn(() => []),
   })),
 }));
 
 // Mock native modules that crash in Jest Node.js environment
-jest.mock('@preeternal/react-native-cookie-manager');
-jest.mock('react-native-mmkv');
+vi.mock('@preeternal/react-native-cookie-manager');
+vi.mock('react-native-mmkv');

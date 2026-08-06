@@ -22,6 +22,7 @@ export default function Picker(props: IPickerProps) {
     disabled,
     modalTitle,
     placeholderTextColor,
+    testId,
   } = props;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -41,7 +42,7 @@ export default function Picker(props: IPickerProps) {
       if (newValue === NONE_VALUE) return onChange(null);
       onChange(newValue);
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -57,6 +58,7 @@ export default function Picker(props: IPickerProps) {
         items={items}
         label={label}
         error={error}
+        testId={testId}
       />
 
       <PickerModal

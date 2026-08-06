@@ -246,6 +246,7 @@ class UpdateRoomInput:
     amenities: Maybe[str | None]
     demographics: Maybe[List[DemographicChoices] | None]
     funders: Maybe[List[FunderChoices] | None]
+    last_cleaned: Maybe[datetime | None]
     last_cleaned_inspected: Maybe[datetime | None]
     maintenance_flag: Maybe[bool]
     medical_respite: Maybe[bool]

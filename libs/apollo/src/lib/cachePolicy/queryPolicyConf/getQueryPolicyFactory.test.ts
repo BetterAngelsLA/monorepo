@@ -29,17 +29,32 @@ vi.mock('../generateFieldPolicy', () => ({
 
 // 2) mock getMergeOptions so we can see what paths were passed
 vi.mock('./utils/getMergeOptions', () => ({
-  getMergeOptions: vi.fn((mergeOpts: any, paths: any) => {
-    return {
-      ...mergeOpts,
-      __paths: paths,
-    };
-  }),
+  getMergeOptions: vi.fn(
+    (mergeOpts: Record<string, unknown>, paths: Record<string, unknown>) => {
+      return {
+        ...mergeOpts,
+        __paths: paths,
+      };
+    },
+  ),
 }));
 
 // 3) mock generateQueryPolicyConfig — this is the new piece we actually use
+interface GenerateQueryPolicyConfigInput {
+  itemsPath?: string[];
+  totalCountPath?: string[];
+  paginationMode?: PaginationModeEnum;
+  paginationVariables?: {
+    offsetPath?: string[];
+    limitPath?: string[];
+    pagePath?: string[];
+    perPagePath?: string[];
+    mode?: PaginationModeEnum;
+  };
+}
+
 vi.mock('./utils/generateQueryPolicyConfig', () => ({
-  generateQueryPolicyConfig: vi.fn((input: any) => {
+  generateQueryPolicyConfig: vi.fn((input: GenerateQueryPolicyConfigInput) => {
     // emulate the real function enough for tests
     const {
       itemsPath = [DEFAULT_QUERY_RESULTS_KEY],
@@ -82,7 +97,7 @@ vi.mock('./utils/generateQueryPolicyConfig', () => ({
 
 // 4) mock itemIdPathToKeyFields
 vi.mock('./utils/itemIdPathToKeyFields', () => ({
-  itemIdPathToKeyFields: vi.fn((itemIdPath: any) => {
+  itemIdPathToKeyFields: vi.fn((itemIdPath: string | string[]) => {
     return Array.isArray(itemIdPath) ? itemIdPath : [itemIdPath];
   }),
 }));
@@ -129,7 +144,7 @@ describe('getQueryPolicyFactory', () => {
     expect(generateFieldPolicy).toHaveBeenCalledWith(
       expect.objectContaining({
         keyArgs: ['filters'],
-      })
+      }),
     );
   });
 
@@ -176,7 +191,7 @@ describe('getQueryPolicyFactory', () => {
         itemsPath: ['data', 'items'],
         totalCountPath: ['data', 'total'],
         itemIdPath: ['data', 'items', 'clientId'],
-      }
+      },
     );
 
     // we built the policy config with the provided pagination
@@ -190,7 +205,7 @@ describe('getQueryPolicyFactory', () => {
           pagePath: ['pagination', 'page'],
           perPagePath: ['pagination', 'pageSize'],
         },
-      })
+      }),
     );
 
     // generateFieldPolicy should receive THAT config
@@ -207,7 +222,7 @@ describe('getQueryPolicyFactory', () => {
           mode: MergeModeEnum.Object,
           __paths: expect.any(Object),
         }),
-      })
+      }),
     );
   });
 
@@ -257,7 +272,7 @@ describe('getQueryPolicyFactory', () => {
     conf.buildFn();
 
     expect(warnSpy).toHaveBeenCalledWith(
-      '[getQueryPolicyFactory]: array mode is not yet fully supported.'
+      '[getQueryPolicyFactory]: array mode is not yet fully supported.',
     );
   });
 
@@ -288,7 +303,7 @@ describe('getQueryPolicyFactory', () => {
         itemsPath: [DEFAULT_QUERY_RESULTS_KEY],
         totalCountPath: [DEFAULT_QUERY_TOTAL_COUNT_KEY],
         itemIdPath: [DEFAULT_QUERY_ID_KEY],
-      }
+      },
     );
   });
 

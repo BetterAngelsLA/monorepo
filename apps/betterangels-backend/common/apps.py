@@ -2,6 +2,7 @@ from common.utils import get_fargate_task_ips
 from django.apps import AppConfig
 from django.conf import settings
 from django.db.models.fields import files
+from django.db.models.signals import post_migrate
 from strawberry_django.fields.types import field_type_map
 
 
@@ -9,10 +10,13 @@ class CommonConfig(AppConfig):
     name = "common"
 
     def ready(self) -> None:
-        from . import signals  # noqa: F401
+        from .signals import enable_imgproxy_switch
 
         self._register_imgproxy_image_type()
         self._configure_allowed_hosts()
+
+        # Connect with sender=self so handler fires exactly once.
+        post_migrate.connect(enable_imgproxy_switch, sender=self)
 
     @staticmethod
     def _configure_allowed_hosts() -> None:

@@ -156,6 +156,13 @@
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
       "options": {}
+    },
+    "expo-doctor": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../tools/scripts/expo-doctor-check.mjs apps/betterangels",
+        "cwd": "apps/betterangels"
+      }
     }
   }
 }

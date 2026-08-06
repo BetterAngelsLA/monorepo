@@ -83,7 +83,7 @@ const policyFactoryList = [
 ] as const;
 
 export function createBaApolloCachePolicyRegistry(
-  isDevEnv: boolean
+  isDevEnv: boolean,
 ): TCachePolicyConfig {
   return assemblePolicyRegistry(policyFactoryList, {
     isDevEnv: isDevEnv,
