@@ -8,8 +8,8 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSnackbar } from '../../../hooks';
 import { useClientHmis } from '../../../hooks/useClientHmis';
+import { useUploadSession } from '../../../providers';
 import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
 import { ProfilePhotoModalHmis } from './ProfilePhotoModalHmis';
 
@@ -17,7 +17,6 @@ interface ProfilePhotoUploaderHmisProps {
   clientId: string;
   imageUrl: string | null;
   headers?: Record<string, string> | null;
-  onUploadSuccess?: () => void;
 }
 
 type ModalType = 'picker' | 'profile' | null;
@@ -32,16 +31,24 @@ export function ProfilePhotoUploaderHmis({
   clientId,
   imageUrl,
   headers,
-  onUploadSuccess,
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { showSnackbar } = useSnackbar();
+  const { begin, updateUpload, failUpload, completeUpload } =
+    useUploadSession();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
   const handleUpload = async (file: ReactNativeFile) => {
     setUploading(true);
+    // HMIS uploads cannot be aborted, so the session is not cancellable.
+    const session = begin([file.name], { cancellable: false });
+    updateUpload(session.id, {
+      stage: 'UPLOADING',
+      completed: 0,
+      total: 1,
+    });
+
     try {
       const formData = buildFormData(file);
       await uploadClientPhoto(clientId, formData);
@@ -49,13 +56,11 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      onUploadSuccess?.();
+      completeUpload(session.id);
       setModalType(null);
     } catch {
-      showSnackbar({
-        message: 'Error uploading profile photo.',
-        type: 'error',
-      });
+      failUpload(session.id, 'Error uploading profile photo.');
+      setModalType(null);
     } finally {
       setUploading(false);
       setModalType(null);

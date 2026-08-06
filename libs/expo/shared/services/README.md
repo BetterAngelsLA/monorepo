@@ -26,8 +26,10 @@ Each service lives in its own folder under `src/lib/` and re-exports through bar
 src/
   lib/
     s3/
-      index.ts
-      s3Upload.service.ts
+      index.ts          # platform-selected transport
+      types.ts
+      s3Upload.native.ts
+      s3Upload.web.ts
     <your-service>/
       index.ts
       yourService.service.ts
