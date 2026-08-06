@@ -1,4 +1,30 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Pre-grant location permission so map-based forms (e.g. Add Interaction)
+# never hit the native iOS/Android location prompt mid-flow.
+#   - iOS: location only accepts `inuse` (While Using) / `always` / `never`
+#     / `unset` — `allow` throws "wrong argument value". The app only
+#     declares NSLocationWhenInUseUsageDescription, so `inuse` is correct.
+#   - Android: `allow` grants foreground location (fine + coarse).
+# Note: Maestro only auto-grants permissions on `launchApp`; this app is
+# started via `openLink` (Expo deep link), so we grant explicitly here.
+# `setPermissions` values can't be JS-interpolated on older Maestro CLIs
+# (< 2.8.0), so the value is hardcoded per platform via `when: platform:`.
+- runFlow:
+    when:
+      platform: ios
+    commands:
+      - setPermissions:
+          permissions:
+            location: inuse
+
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - setPermissions:
+          permissions:
+            location: allow
+
 - runFlow: ./launch_app.yml
 - runFlow: ./auth/ensure_logged_in_ba.yml

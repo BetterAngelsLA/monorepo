@@ -1,0 +1,111 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+
+- assertVisible: 'Profile'
+- assertVisible: 'Back'
+- assertVisible: ${output.fixtureClientName}
+
+# ###############################
+# Go to Interactions Tab ########
+# ###############################
+
+# genearate unique test data
+- evalScript: ${output.interactionId = Date.now()}
+- evalScript: ${output.interactionPurpose = "interaction-" + String(output.interactionId)}
+- evalScript: ${output.noteCardTestId = "note-card-" + String(output.interactionPurpose)}
+
+# #########################
+# Add Intgeraction ########
+# #########################
+
+- tapOn:
+    id: 'tab-interactions'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'create-interaction-btn'
+
+- assertVisible: 'Add Interaction'
+
+- tapOn:
+    id: 'note-purpose-field'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'note-purpose-input'
+- extendedWaitUntil:
+    visible:
+      id: 'note-purpose-input'
+    timeout: 2000
+
+- inputText: ${output.interactionPurpose}
+
+# close keyboard
+# `hideKeyboard` may not always hit `Done` btn exactly
+# and in this case would trigger another tap event
+- tapOn: 'Done'
+- waitForAnimationToEnd
+
+# Assert current location: set as static value in launch_app.yml
+- assertVisible: '203 S Los Angeles St'
+
+# Submit
+- tapOn:
+    id: 'action-btn-primary'
+- waitForAnimationToEnd
+
+# ###################################
+# Assert Created Interaction ########
+# ###################################
+
+# visit Interactions Tab to confirm
+- tapOn:
+    id: 'tab-interactions'
+- waitForAnimationToEnd
+
+# Latest created interaction should be at the top
+- extendedWaitUntil:
+    visible:
+      id: ${output.noteCardTestId}
+    timeout: 2000
+
+# ###########################
+# Delete Interaction ########
+# ###########################
+
+- tapOn:
+    id: ${output.noteCardTestId}
+
+- tapOn: 'Edit'
+
+- scrollUntilVisible:
+    element:
+      id: delete-interaction-btn
+    direction: DOWN
+
+- tapOn:
+    id: delete-interaction-btn
+
+- tapOn:
+    id: delete-modal-confirm-btn
+
+# navigates back to clients-screen
+- assertVisible:
+    id: client-view-interactions

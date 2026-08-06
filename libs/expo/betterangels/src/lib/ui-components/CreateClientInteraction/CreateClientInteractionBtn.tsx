@@ -61,6 +61,7 @@ export function CreateClientInteractionBtn(props: TProps) {
 
   return (
     <IconButton
+      testID="create-interaction-btn"
       disabled={isDisabled}
       variant="secondary"
       borderColor={Colors.WHITE}
