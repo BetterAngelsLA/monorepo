@@ -1,10 +1,25 @@
-from datetime import timedelta
+import re
+from datetime import date, datetime, timedelta
 from functools import reduce
 from operator import and_, or_
 from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from common.graphql.types import (
+    AttachmentInterface,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberScalar,
+    PhoneNumberType,
+)
+from common.models import Attachment, PhoneNumber
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
+from django.utils import timezone
+from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -13,18 +28,6 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import (
-    AttachmentInterface,
-    NonBlankString,
-    PhoneNumberInput,
-    PhoneNumberScalar,
-    PhoneNumberType,
-)
-from common.models import Attachment
-from django.db.models import Exists, Max, OuterRef, Q, QuerySet
-from django.utils import timezone
-from strawberry import ID, Info, auto
-from strawberry.file_uploads import Upload
 
 from .models import (
     ClientContact,
@@ -37,6 +40,19 @@ from .models import (
 )
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
+MIN_PHONE_SEARCH_DIGITS = 3
+DOB_SEARCH_FORMATS = ("%m/%d/%Y", "%m-%d-%Y")
+
+
+def _parse_dob_search_value(value: str) -> Optional[date]:
+    for fmt in DOB_SEARCH_FORMATS:
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
     ClientDocumentGroupEnum.DOC_READY: [
         ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
@@ -133,6 +149,10 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
+        value = value.strip()
+        if not value:
+            return queryset, Q()
+
         search_terms = value.split()
 
         searchable_fields = [
@@ -160,6 +180,44 @@ class ClientProfileFilter:
         )
 
         combined_query = direct_query | related_query
+
+        # Date of birth exact match (MM/DD/YYYY or MM-DD-YYYY)
+        dob = _parse_dob_search_value(value)
+        if dob is not None:
+            combined_query |= Q(date_of_birth=dob)
+
+        # Phone number partial match on digits only (like HMIS ID partial search)
+        digits_only = re.sub(r"\D", "", value)
+        if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+            direct_phone_digits = Func(
+                F("phone_number"),
+                Value(r"[^0-9]"),
+                Value(""),
+                Value("g"),
+                function="regexp_replace",
+                output_field=CharField(),
+            )
+            related_phone_digits = Func(
+                F("number"),
+                Value(r"[^0-9]"),
+                Value(""),
+                Value("g"),
+                function="regexp_replace",
+                output_field=CharField(),
+            )
+            client_profile_ct = ContentType.objects.get_for_model(ClientProfile)
+            related_phone_exists = Exists(
+                PhoneNumber.objects.annotate(digits=related_phone_digits).filter(
+                    content_type=client_profile_ct,
+                    object_id=OuterRef("pk"),
+                    digits__contains=digits_only,
+                )
+            )
+            queryset = queryset.annotate(
+                _phone_search_digits=direct_phone_digits,
+                _has_matching_phone_number=related_phone_exists,
+            )
+            combined_query |= Q(_phone_search_digits__contains=digits_only) | Q(_has_matching_phone_number=True)
 
         return queryset.filter(combined_query), Q()
 
