@@ -1,46 +1,35 @@
-@import 'tailwindcss';
+@import '../../../../../libs/tailwind/src/index.css';
 
-@config '../../../tailwind.config.ts';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  /* App-specific animation speed overrides (keyframes in libs/tailwind/src/css/theme.css) */
+  --animate-slide-in-up: slideInUp 250ms ease-in-out 0ms;
+  --animate-expand-in-out: expandInOut 200ms ease-in-out 0ms;
+
+  /* App-specific breakpoints */
+  --breakpoint-sm: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1152px;
+
+  /* App-specific colors */
+  --color-primary-dark: #1650c1;
+  --color-dark-blue: #1e3342;
+  --color-neutral-warm-50: #767676;
+  --color-neutral-warm-70: #676767;
+  --color-neutral-warm-95: #f8f7f9;
+  --color-tags-main: #c3f4ff;
+  --color-tags-yellow: #fff7ae;
+  --color-tags-purple: #e2c6ff;
+  --color-tags-pink: #ffd7e7;
+  --color-tags-blue: #dcf1ff;
+  --color-white-60: #ffffff99;
+}
 
 @layer base {
-  :root {
-    --font-primary: 'Poppins', 'sans-serif';
-    --color-brand-yellow: #fff82e;
-    --color-primary-20: #052b73;
-    --color-primary-60: #216af8;
-    --color-primary-95: #dae7ff;
-    --color-steel-blue: #375c76;
-    --color-neutral-20: #383b40;
-    --color-neutral-40: #62676f;
-    --color-neutral-70: #a8aeb8;
-    --color-neutral-90: #d3d9e3;
-    --color-neutral-98: #e8ecf2;
-    --color-neutral-99: #f4f6fd;
-    --color-success-30: #007934;
-    --color-success-90: #ddf8e8;
-    --color-primary-dark: #1650c1;
-    --color-dark-blue: #1e3342;
-    --color-neutral-warm-50: #767676;
-    --color-neutral-warm-70: #676767;
-    --color-neutral-warm-95: #f8f7f9;
-    --color-tags-main: #c3f4ff;
-    --color-tags-yellow: #fff7ae;
-    --color-tags-purple: #e2c6ff;
-    --color-tags-pink: #ffd7e7;
-    --color-tags-blue: #dcf1ff;
-    --color-white-60: #ffffff99;
-  }
-
-  * {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-
   html,
   body {
-    font-family: var(--font-primary);
+    font-family: var(--font-family-primary);
     color: var(--color-primary-20);
     font-weight: 400;
     letter-spacing: 0.3px;

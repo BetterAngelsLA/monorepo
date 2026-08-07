@@ -12,7 +12,7 @@ import { ClientProfileSectionEnum } from '../../screenRouting';
 import { FeatureFlags } from '../../static';
 import { MainContainer } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
-import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
+import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
@@ -50,7 +50,7 @@ const tabComponents: Record<
 const getTabComponent = (
   key: ClientViewTabEnum,
   client: ClientProfileQuery | undefined,
-  openCard?: ClientProfileSectionEnum
+  openCard?: ClientProfileSectionEnum,
 ): ReactElement | null => {
   if (key === ClientViewTabEnum.Profile) {
     return <ClientProfileView client={client} openCard={openCard} />;
@@ -78,7 +78,8 @@ export default function Client({
     ClientProfileDocument,
     {
       variables: { id: clientProfileId },
-    }
+      fetchPolicy: 'cache-and-network',
+    },
   );
 
   const [tab, setTab] = useState<ClientViewTabEnum>(ClientViewTabEnum.Profile);

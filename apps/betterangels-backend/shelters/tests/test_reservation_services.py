@@ -4,9 +4,9 @@ from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
@@ -183,22 +183,6 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
         rc_2 = ReservationClient.objects.get(reservation=reservation, client_profile=self.client_2)
         self.assertFalse(rc_2.is_primary)
 
-    def test_duplicate_client_on_same_reservation_rejected(self) -> None:
-        client = baker.make(ClientProfile)
-
-        with self.assertRaises(IntegrityError):
-            reservation_create(
-                user=self.user,
-                organization_id=self.org.pk,
-                data={
-                    "bed_id": self.bed_1.pk,
-                    "clients": [
-                        {"client_profile_id": client.pk},
-                        {"client_profile_id": client.pk},
-                    ],
-                },
-            )
-
     def test_create_reservation_without_clients_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError) as ctx:
             reservation_create(
@@ -207,6 +191,23 @@ class ReservationCreateTestCase(ReservationServiceTestCase):
                 data={"bed_id": self.bed_1.pk},
             )
         self.assertIn("At least one client must be associated", str(ctx.exception))
+
+    def test_create_reservation_primary_client_raises_validation_error(self) -> None:
+        with self.assertRaises(ValidationError) as ctx:
+            reservation_create(
+                user=self.user,
+                organization_id=self.org.pk,
+                data={
+                    "bed_id": self.bed_1.pk,
+                    "clients": [
+                        {"client_profile_id": self.client_1.pk},
+                        {"client_profile_id": self.client_2.pk},
+                    ],
+                },
+            )
+        self.assertIn(
+            "Exactly one client must be marked as primary when multiple clients are assigned", str(ctx.exception)
+        )
 
 
 class ReservationUpdateTestCase(ReservationServiceTestCase):

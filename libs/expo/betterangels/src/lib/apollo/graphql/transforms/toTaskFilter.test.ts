@@ -1,9 +1,8 @@
 /**
- * @jest-environment node
  */
 
-import type { IdFilterLookup, TaskFilter } from '../__generated__/types';
-import { TaskStatusEnum } from '../__generated__/types';
+import type { IdFilterLookup, TaskFilter } from '@monorepo/ba-platform/types';
+import { TaskStatusEnum } from '@monorepo/ba-platform/types';
 import { toTaskFilter } from './toTaskFilter';
 
 describe('toTaskFilter', () => {

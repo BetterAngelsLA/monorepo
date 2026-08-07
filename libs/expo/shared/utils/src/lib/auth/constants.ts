@@ -12,9 +12,6 @@ export const CLIENT_ONLY_COOKIES = [
   HMIS_SERVER_DATE_TIME_COOKIE_NAME, // Client-side only
 ] as const;
 
-// Cookie/CSRF constants
-export const CSRF_COOKIE_NAME = 'csrftoken';
-export const CSRF_HEADER_NAME = 'x-csrftoken';
 export const SESSION_COOKIE_NAME = 'sessionid';
 
 // Storage keys
@@ -23,4 +20,3 @@ export const ENVIRONMENT_STORAGE_KEY = 'currentEnvironment';
 export const NATIVE_COOKIE_ENCRYPTION_KEY_STORAGE =
   'native-cookie-encryption-key';
 
-export const CSRF_LOGIN_PATH = '/admin/login/';

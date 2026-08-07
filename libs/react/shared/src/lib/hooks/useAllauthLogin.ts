@@ -1,14 +1,15 @@
 import { useCallback, useState } from 'react';
 
-export type FetchClient = (
-  path: string,
-  options?: RequestInit
+export type FetchFn = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
 ) => Promise<Response>;
 
 export type LoginStep = 'initial' | 'otp';
 
 interface UseAllauthLoginOptions {
-  fetchClient: FetchClient;
+  /** URL-baked fetch — paths only, base URL is pre-appended. */
+  fetch: FetchFn;
   onLoginSuccess: () => void | Promise<void>;
   onCodeSent?: () => void;
 }
@@ -49,7 +50,7 @@ function stripDemoTag(email: string): string {
 }
 
 export function useAllauthLogin({
-  fetchClient,
+  fetch,
   onLoginSuccess,
   onCodeSent,
 }: UseAllauthLoginOptions): UseAllauthLoginReturn {
@@ -68,6 +69,16 @@ export function useAllauthLogin({
     setErrorMsg('');
   }, []);
 
+  const post = useCallback(
+    (path: string, body: unknown) =>
+      fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    [fetch],
+  );
+
   const handleSendCode = useCallback(
     async (email: string) => {
       const cleaned = stripDemoTag(email.toLowerCase().trim());
@@ -75,13 +86,9 @@ export function useAllauthLogin({
       setErrorMsg('');
 
       try {
-        const res = await fetchClient(
-          '/_allauth/browser/v1/auth/code/request',
-          {
-            method: 'POST',
-            body: JSON.stringify({ email: cleaned }),
-          }
-        );
+        const res = await post('/_allauth/browser/v1/auth/code/request', {
+          email: cleaned,
+        });
 
         if (res.ok || res.status === 401) {
           setStep('otp');
@@ -96,7 +103,7 @@ export function useAllauthLogin({
         setSendingCode(false);
       }
     },
-    [fetchClient, onCodeSent]
+    [post, onCodeSent],
   );
 
   const handleConfirmCode = useCallback(
@@ -105,13 +112,9 @@ export function useAllauthLogin({
       setErrorMsg('');
 
       try {
-        const res = await fetchClient(
-          '/_allauth/browser/v1/auth/code/confirm',
-          {
-            method: 'POST',
-            body: JSON.stringify({ code: code.trim() }),
-          }
-        );
+        const res = await post('/_allauth/browser/v1/auth/code/confirm', {
+          code: code.trim(),
+        });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let data: any;
@@ -120,7 +123,7 @@ export function useAllauthLogin({
         } catch (parseError) {
           console.error(
             'Confirm code: failed to parse response as JSON',
-            parseError
+            parseError,
           );
           setErrorMsg('Unexpected server response. Please try again.');
           return;
@@ -139,7 +142,7 @@ export function useAllauthLogin({
         setConfirmingCode(false);
       }
     },
-    [fetchClient, onLoginSuccess]
+    [post, onLoginSuccess],
   );
 
   const handlePasswordLogin = useCallback(
@@ -149,12 +152,9 @@ export function useAllauthLogin({
 
       try {
         const cleaned = stripDemoTag(email.toLowerCase().trim());
-        const res = await fetchClient('/_allauth/browser/v1/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: cleaned,
-            password,
-          }),
+        const res = await post('/_allauth/browser/v1/auth/login', {
+          email: cleaned,
+          password,
         });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,7 +179,7 @@ export function useAllauthLogin({
         setLoggingIn(false);
       }
     },
-    [fetchClient, onLoginSuccess]
+    [post, onLoginSuccess],
   );
 
   return {

@@ -8,11 +8,13 @@ from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
 from common.graphql.types import (
+    AttachmentInterface,
     LocationInput,
     LocationType,
     NonBlankString,
     make_in_filter,
 )
+from common.models import Attachment
 from common.org_types import REGISTRY
 from django.db.models import (
     BooleanField,
@@ -411,3 +413,40 @@ class NoteImportRecordType:
     created_at: auto
     note: Optional[NoteType]
     raw_data: auto
+
+
+@strawberry_django.type(Attachment, pagination=True)
+class NoteAttachmentType(AttachmentInterface):
+    pass
+
+
+@strawberry.input
+class NoteAttachmentUploadItemInput:
+    ref_id: str
+    filename: str
+    content_type: str
+
+
+@strawberry.input
+class GenerateNoteAttachmentUploadsInput:
+    note_id: ID
+    uploads: list[NoteAttachmentUploadItemInput]
+
+
+@strawberry.input
+class NoteAttachmentFromUploadInput:
+    presigned_key: str
+    upload_token: str
+    filename: str
+    content_type: str
+
+
+@strawberry.type
+class NoteAttachmentUploadsType:
+    attachments: list[NoteAttachmentType]
+
+
+@strawberry.input
+class ResolveNoteAttachmentUploadsInput:
+    note_id: ID
+    attachments: list[NoteAttachmentFromUploadInput]

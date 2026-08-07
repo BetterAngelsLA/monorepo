@@ -28,6 +28,8 @@ export const formSchema = z.object({
 
 export type DetailsFormData = z.infer<typeof formSchema>;
 
+export const formFieldNames = Object.keys(formSchema.shape);
+
 export const defaultFormValues: DetailsFormData = {
   demographics: [],
   demographicsOther: undefined,

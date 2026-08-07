@@ -1,27 +1,25 @@
 import { useMutation, useQuery } from '@apollo/client/react';
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { TeamPermissions } from '@monorepo/ba-platform/permissions';
+import { Ordering, TeamType } from '@monorepo/ba-platform/types';
 import {
   SearchInput,
   Table,
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { GroupsIcon, PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
+import { GroupsIcon, PlusIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
-import {
-  Ordering,
-  TeamPermissions,
-  TeamType,
-} from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '../../providers';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
 } from './__generated__/teams.generated';
 import { AddTeamDrawer } from './AddTeamDrawer';
+import { ThreeDotMenu } from './ThreeDotMenu';
 
 type IProps = {
   className?: string;
@@ -64,12 +62,12 @@ export function TeamsPage(props: IProps) {
   useOutsideClick(
     menuRef,
     () => setOpenMenuRowId(null),
-    openMenuRowId !== null
+    openMenuRowId !== null,
   );
 
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    { fetchPolicy: 'cache-and-network' }
+    { fetchPolicy: 'cache-and-network' },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
@@ -153,7 +151,7 @@ export function TeamsPage(props: IProps) {
   if (search) {
     const lower = search.toLowerCase();
     displayTeams = displayTeams.filter((t) =>
-      t.name.toLowerCase().includes(lower)
+      t.name.toLowerCase().includes(lower),
     );
   }
   // Sort client-side
@@ -168,37 +166,6 @@ export function TeamsPage(props: IProps) {
     }
     return sort.direction === Ordering.Asc ? cmp : -cmp;
   });
-
-  const ThreeDotMenu = ({ team }: { team: TeamType }) => {
-    const isOpen = openMenuRowId === team.id;
-    return (
-      <div className="relative">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenMenuRowId((prev) => (prev === team.id ? null : team.id));
-          }}
-          className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
-        >
-          <ThreeDotIcon className="w-6" fill="#052b73" />
-        </button>
-        {isOpen && (
-          <div
-            ref={menuRef}
-            className="absolute flex flex-col items-start top-full right-0 shadow-md bg-white z-10 p-2 rounded-lg"
-          >
-            <button
-              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
-              onClick={() => void handleDelete(team)}
-              disabled={deleting}
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="h-full flex flex-col">
@@ -251,42 +218,58 @@ export function TeamsPage(props: IProps) {
 
       {hasPermission(TeamPermissions.View) && displayTeams.length > 0 && (
         <>
-            <>
-              {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
-              <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
-                {displayTeams.map((team) => (
-                  <div
-                    key={team.id}
-                    className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-95 flex items-center justify-center">
-                        <GroupsIcon className="w-4 h-4 text-primary-40" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-sm truncate">
-                          {team.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Created {formatCreatedDate(team.createdAt)}
-                        </div>
-                      </div>
-                      <ThreeDotMenu team={team} />
+          <>
+            {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
+            <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
+              {displayTeams.map((team) => (
+                <div
+                  key={team.id}
+                  className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-95 flex items-center justify-center">
+                      <GroupsIcon className="w-4 h-4 text-primary-40" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900 text-sm truncate">
+                        {team.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Created {formatCreatedDate(team.createdAt)}
+                      </div>
+                    </div>
+                    <ThreeDotMenu
+                      team={team}
+                      openMenuRowId={openMenuRowId}
+                      setOpenMenuRowId={setOpenMenuRowId}
+                      menuRef={menuRef}
+                      onDelete={handleDelete}
+                      deleting={deleting}
+                    />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
-              {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
-              <div className={mergeCss(['hidden lg:flex', parentCss])}>
-                <Table<TeamType>
-                  action={(row) => <ThreeDotMenu team={row} />}
-                  data={displayTeams}
-                  header={headerButtons}
-                  renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
-                />
-              </div>
-            </>
+            {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
+            <div className={mergeCss(['hidden lg:flex', parentCss])}>
+              <Table<TeamType>
+                action={(row) => (
+                  <ThreeDotMenu
+                    team={row}
+                    openMenuRowId={openMenuRowId}
+                    setOpenMenuRowId={setOpenMenuRowId}
+                    menuRef={menuRef}
+                    onDelete={handleDelete}
+                    deleting={deleting}
+                  />
+                )}
+                data={displayTeams}
+                header={headerButtons}
+                renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
+              />
+            </div>
+          </>
         </>
       )}
     </div>

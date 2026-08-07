@@ -73,7 +73,7 @@ export default function Modal({
         inputRange: [0, 1],
         outputRange: [OFF, 0],
       }),
-    [progress, OFF]
+    [progress, OFF],
   );
 
   const backdropOpacity = useMemo(
@@ -82,7 +82,7 @@ export default function Modal({
         inputRange: [0, 1],
         outputRange: [0, opacity],
       }),
-    [progress, opacity]
+    [progress, opacity],
   );
 
   const animateTo = useCallback(
@@ -94,7 +94,7 @@ export default function Modal({
         useNativeDriver: true,
       }).start(({ finished }) => finished && after?.());
     },
-    [progress]
+    [progress],
   );
 
   // Only animate on real visibility flips
@@ -154,7 +154,7 @@ export default function Modal({
   const transform: ViewStyle['transform'] = useMemo(
     () =>
       vertical ? [{ translateY: translate }] : [{ translateX: translate }],
-    [vertical, translate]
+    [vertical, translate],
   );
 
   if (!mounted) return null;

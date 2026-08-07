@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "module": "esnext",
-    "moduleResolution": "Bundler",
-    "types": ["jest", "node", "vite/client"]
+    "moduleResolution": "bundler",
+    "composite": true,
+    "types": ["node", "vite/client"]
   }
 }

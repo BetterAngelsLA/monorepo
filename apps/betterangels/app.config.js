@@ -3,7 +3,7 @@
 // We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
 // NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
 // This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 dotenv.config();
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.0',
+    version: '1.2.9',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.0',
+      buildNumber: '1.2.9',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -70,7 +70,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 74,
+      versionCode: 82,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -78,13 +78,23 @@ export default {
     },
     plugins: [
       'newrelic-react-native-agent',
-      '@config-plugins/react-native-blob-util',
       '@config-plugins/react-native-pdf',
       [
         'expo-build-properties',
         {
           ios: {
-            deploymentTarget: '16.0',
+            deploymentTarget: '16.4',
+            // Weak-link WidgetKit and ActivityKit to prevent dyld crash at launch
+            // on macOS < 14.2 when running as "Designed for iPad" (Catalyst).
+            // The activityBackgroundTint symbol from WidgetKit is pulled in
+            // transitively by Expo native dependencies but doesn't exist in the
+            // iOSSupport WidgetKit on macOS 14.1 and earlier. Weak-linking tells
+            // dyld to treat missing symbols as NULL instead of aborting.
+            // See: https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPFrameworks/Concepts/WeakLinking.html
+            extraIosProps: {
+              OTHER_LDFLAGS:
+                '$(inherited) -weak_framework WidgetKit -weak_framework ActivityKit',
+            },
           },
         },
       ],
@@ -92,6 +102,10 @@ export default {
         'expo-dev-client',
         {
           launchMode: 'launcher',
+          toolsButton: false,
+          skipOnboarding: true,
+          showMenuAtLaunch: false,
+          // See: https://github.com/expo/expo/blob/main/packages/expo-dev-launcher/plugin/src/pluginConfig.ts
         },
       ],
       [

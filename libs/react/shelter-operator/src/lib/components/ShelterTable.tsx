@@ -8,8 +8,7 @@ export type ShelterRowObject = {
   name: string;
   address: string;
   totalBeds: number;
-  reservedBeds: number | null;
-  tags: string[];
+  unavailableBeds: number;
 };
 
 type ShelterTableProps = {
@@ -27,52 +26,8 @@ type ShelterTableProps = {
   rowStyle?: CSSProperties;
 };
 
-const MAX_VISIBLE_TAG_CHAR_COUNT = 15;
-
-function computeReservedBeds(shelter: Shelter): number | null {
-  const totalBeds = shelter.totalBeds ?? 0;
-  if (totalBeds === 0) return null;
-  return Math.min(
-    Math.max(totalBeds - (shelter.availableBeds ?? 0), 0),
-    totalBeds
-  );
-}
-
-function renderTags(tags: string[] | null) {
-  const validTags = (tags ?? []).filter((tag) => Boolean(tag?.trim()));
-  const hardcodedTags = ['Women Only', 'Shared', 'Pets Allowed', 'No Parking'];
-  const tagsToShow = validTags.length > 0 ? validTags : hardcodedTags;
-
-  let visibleCharCount = 0;
-  const visibleTags = tagsToShow.filter((tag) => {
-    const nextCount = visibleCharCount + tag.length;
-    if (nextCount >= MAX_VISIBLE_TAG_CHAR_COUNT) return false;
-    visibleCharCount = nextCount;
-    return true;
-  });
-
-  const remainingTagsCount = Math.max(
-    tagsToShow.length - visibleTags.length,
-    0
-  );
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {visibleTags.map((tag) => (
-        <span
-          key={tag}
-          className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]"
-        >
-          {tag}
-        </span>
-      ))}
-      {remainingTagsCount > 0 && (
-        <span className="rounded-full bg-[#EDEFF5] px-3 py-1 text-xs text-[#747A82]">
-          +{remainingTagsCount}
-        </span>
-      )}
-    </div>
-  );
+function getUnavailableBeds(shelter: Shelter) {
+  return shelter.bedCounts.total - (shelter.bedCounts.available ?? 0);
 }
 
 export function ShelterTable({
@@ -101,18 +56,30 @@ export function ShelterTable({
         sortValue: (shelter) => shelter.name ?? '',
       },
       {
+        key: 'address',
+        label: 'Address',
+        width: '1fr',
+        cellClassName:
+          'font-medium text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.address ?? 'No address listed',
+        sortValue: (shelter) => shelter.address ?? '',
+      },
+      {
         key: 'capacity',
         label: 'Capacity',
         width: '1.2fr',
         cellClassName: 'whitespace-nowrap text-gray-700',
         render: (shelter) => {
-          const totalBeds = shelter.totalBeds ?? 0;
-          const reservedBeds = computeReservedBeds(shelter);
+          const unavailableBeds = getUnavailableBeds(shelter);
           const progressPct =
-            reservedBeds !== null ? (reservedBeds / totalBeds) * 100 : 0;
+            shelter.bedCounts.total > 0
+              ? (unavailableBeds / shelter.bedCounts.total) * 100
+              : 0;
 
-          if (reservedBeds === null) {
-            return <div className="whitespace-nowrap">N/A</div>;
+          if (shelter.bedCounts.total === 0) {
+            return (
+              <div className="whitespace-nowrap">No availability data</div>
+            );
           }
 
           return (
@@ -124,19 +91,12 @@ export function ShelterTable({
                 />
               </div>
               <span className="leading-5 text-slate-700">
-                {reservedBeds} / {totalBeds} beds
+                {unavailableBeds} / {shelter.bedCounts.total} beds
               </span>
             </div>
           );
         },
-        sortValue: (shelter) => shelter.totalBeds ?? 0,
-      },
-      {
-        key: 'tags',
-        label: 'Tags',
-        width: '0.8fr',
-        cellClassName: 'text-gray-600',
-        render: (shelter) => renderTags(shelter.tags),
+        sortValue: (shelter) => shelter.bedCounts.total,
       },
       {
         key: 'status',
@@ -149,7 +109,7 @@ export function ShelterTable({
         autoFilterOptions: true,
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -158,16 +118,14 @@ export function ShelterTable({
       rows={rows}
       getRowKey={getRowKey ?? ((shelter) => shelter.id)}
       getRowObject={(shelter) => {
-        const totalBeds = shelter.totalBeds ?? 0;
-        const reservedBeds = computeReservedBeds(shelter);
+        const unavailableBeds = getUnavailableBeds(shelter);
 
         return {
           id: shelter.id,
           name: shelter.name ?? 'N/A',
           address: shelter.address ?? 'N/A',
-          totalBeds,
-          reservedBeds,
-          tags: shelter.tags ?? [],
+          totalBeds: shelter.bedCounts.total,
+          unavailableBeds,
         };
       }}
       onRowClick={onRowClick}

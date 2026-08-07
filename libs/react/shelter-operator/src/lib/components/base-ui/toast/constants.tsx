@@ -9,7 +9,12 @@ interface IToastVariantConfig {
   actionButtonClass: ButtonColor;
 }
 
-export const AUTO_DISMISS_MS = 5000;
+export const AUTO_DISMISS_MS: Record<TToastStatus, number> = {
+  error: 12000,
+  warning: 8000,
+  success: 5000,
+  info: 5000,
+};
 export const CLOSE_ANIMATION_MS = 200;
 
 export const toastVariantConfig: Record<TToastStatus, IToastVariantConfig> = {

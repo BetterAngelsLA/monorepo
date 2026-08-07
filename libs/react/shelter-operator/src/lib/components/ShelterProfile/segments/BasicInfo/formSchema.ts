@@ -1,3 +1,4 @@
+import { Regex } from '@monorepo/react/shared';
 import { StatusChoices } from '@monorepo/react/shelter';
 import { z } from 'zod';
 import { ShelterProfileType } from '../../types';
@@ -16,13 +17,30 @@ export const formSchema = z.object({
   status: z.enum(StatusChoices).refine(Boolean, 'Status is required'),
   description: z.string(),
   location: locationSchema,
-  email: z.email('Invalid email address').trim().optional().or(z.literal('')),
-  phone: z.string().trim().optional().or(z.literal('')),
-  website: z.url('Invalid URL').trim().optional().or(z.literal('')),
+  email: z
+    .string()
+    .trim()
+    .regex(Regex.email, 'Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
+  phone: z
+    .string()
+    .trim()
+    .regex(Regex.phoneNumberLoose, 'Please enter a valid phone number')
+    .optional()
+    .or(z.literal('')),
+  website: z
+    .string()
+    .trim()
+    .regex(Regex.url, 'Please enter a valid URL')
+    .optional()
+    .or(z.literal('')),
   isPrivate: z.boolean(),
 });
 
 export type BasicInfoFormData = z.infer<typeof formSchema>;
+
+export const formFieldNames = Object.keys(formSchema.shape);
 
 export const defaultFormValues: BasicInfoFormData = {
   name: '',

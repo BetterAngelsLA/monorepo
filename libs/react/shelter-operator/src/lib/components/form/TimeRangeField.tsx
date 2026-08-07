@@ -51,15 +51,27 @@ const parseValueToSelection = (value: string): Selection => {
   const selected = Array(SLICES).fill(false) as boolean[];
   if (!value) return selected;
 
-  value.split(',').forEach(rangeStr => {
-    const [startRaw, endRaw] = rangeStr.split('-').map(part => part?.trim() ?? '');
+  value.split(',').forEach((rangeStr) => {
+    const [startRaw, endRaw] = rangeStr
+      .split('-')
+      .map((part) => part?.trim() ?? '');
     const startMinutes = parseTimeToMinutes(startRaw);
     const endMinutes = parseTimeToMinutes(endRaw);
-    if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+    if (
+      startMinutes === null ||
+      endMinutes === null ||
+      endMinutes <= startMinutes
+    ) {
       return;
     }
-    const startIdx = Math.max(0, Math.min(SLICES - 1, Math.floor(startMinutes / MINUTES_PER_SLICE)));
-    const endIdx = Math.max(0, Math.min(SLICES, Math.ceil(endMinutes / MINUTES_PER_SLICE)));
+    const startIdx = Math.max(
+      0,
+      Math.min(SLICES - 1, Math.floor(startMinutes / MINUTES_PER_SLICE)),
+    );
+    const endIdx = Math.max(
+      0,
+      Math.min(SLICES, Math.ceil(endMinutes / MINUTES_PER_SLICE)),
+    );
     for (let i = startIdx; i < endIdx; i += 1) {
       selected[i] = true;
     }
@@ -83,7 +95,9 @@ const selectionToValue = (selection: Selection) => {
     const end = i;
     ranges.push([start * MINUTES_PER_SLICE, end * MINUTES_PER_SLICE]);
   }
-  return ranges.map(([start, end]) => `${minutesTo24h(start)}-${minutesTo24h(end)}`).join(',');
+  return ranges
+    .map(([start, end]) => `${minutesTo24h(start)}-${minutesTo24h(end)}`)
+    .join(',');
 };
 
 const selectionToFriendlyText = (selection: Selection) => {
@@ -99,26 +113,49 @@ const selectionToFriendlyText = (selection: Selection) => {
       i += 1;
     }
     const end = i;
-    ranges.push(`${minutesToDisplay(start * MINUTES_PER_SLICE)} – ${minutesToDisplay(end * MINUTES_PER_SLICE)}`);
+    ranges.push(
+      `${minutesToDisplay(start * MINUTES_PER_SLICE)} – ${minutesToDisplay(end * MINUTES_PER_SLICE)}`,
+    );
   }
 
   return ranges.length ? ranges.join(', ') : 'No hours selected';
 };
 
-export function TimeRangeField({ id, label, value, onChange, helperText, error, required }: TimeRangeFieldProps) {
-  const [selected, setSelected] = useState<Selection>(() => parseValueToSelection(value));
+export function TimeRangeField({
+  id,
+  label,
+  value,
+  onChange,
+  helperText,
+  error,
+  required,
+}: TimeRangeFieldProps) {
+  const [selected, setSelected] = useState<Selection>(() =>
+    parseValueToSelection(value),
+  );
   const [dragMode, setDragMode] = useState<'select' | 'deselect' | null>(null);
 
   useEffect(() => {
     setSelected(parseValueToSelection(value));
   }, [value]);
 
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
-  const friendlyText = useMemo(() => selectionToFriendlyText(selected), [selected]);
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
+  const friendlyText = useMemo(
+    () => selectionToFriendlyText(selected),
+    [selected],
+  );
 
-  const updateSelection = (index: number, modeOverride?: 'select' | 'deselect') => {
+  const updateSelection = (
+    index: number,
+    modeOverride?: 'select' | 'deselect',
+  ) => {
     const next = [...selected];
-    const shouldSelect = modeOverride ?? (selected[index] ? 'deselect' : 'select');
+    const shouldSelect =
+      modeOverride ?? (selected[index] ? 'deselect' : 'select');
     next[index] = shouldSelect === 'select';
     setSelected(next);
     onChange(selectionToValue(next));
@@ -142,11 +179,17 @@ export function TimeRangeField({ id, label, value, onChange, helperText, error, 
   useEffect(() => {
     window.addEventListener('pointerup', handlePointerUp);
     return () => window.removeEventListener('pointerup', handlePointerUp);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText} error={error} messageId={messageId} required={required}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+      required={required}
+    >
       <div className="flex flex-col gap-3 border border-gray-200 rounded-md p-3">
         <div className="flex items-center justify-between text-xs text-gray-600">
           <span>Click or drag across 30-minute blocks to add ranges.</span>
@@ -167,7 +210,9 @@ export function TimeRangeField({ id, label, value, onChange, helperText, error, 
                     onPointerDown={() => handlePointerDown(index)}
                     onPointerEnter={() => handlePointerEnter(index)}
                     className={`h-8 cursor-pointer transition-colors outline outline-[0.5px] outline-gray-300 ${
-                      isSelected ? 'bg-green-600' : 'bg-white hover:bg-green-100'
+                      isSelected
+                        ? 'bg-green-600'
+                        : 'bg-white hover:bg-green-100'
                     }`}
                     data-testid={`${id}-slice-${index}`}
                   />

@@ -7,15 +7,14 @@ import { DEFAULT_QUERY_ID_KEY } from '../constants';
  */
 export function defaultGetItemId<TItem>(
   item: TItem,
-  readField: FieldFunctionOptions['readField']
+  readField: FieldFunctionOptions['readField'],
 ): string | number | null | undefined {
   if (typeof readField !== 'function') {
     return null;
   }
 
-  return readField(DEFAULT_QUERY_ID_KEY, item as any) as
-    | string
-    | number
-    | null
-    | undefined;
+  return readField(
+    DEFAULT_QUERY_ID_KEY,
+    item as NonNullable<Parameters<typeof readField>[1]>,
+  ) as string | number | null | undefined;
 }

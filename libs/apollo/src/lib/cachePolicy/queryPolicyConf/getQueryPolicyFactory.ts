@@ -83,7 +83,6 @@
  */
 
 import type { FieldPolicy, TypePolicy } from '@apollo/client';
-import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies';
 import {
   DEFAULT_QUERY_ID_KEY,
   DEFAULT_QUERY_RESULTS_KEY,
@@ -123,7 +122,7 @@ type TgetQueryPolicyFactory<
    * variables that affect cache key
    * can accept KeyArgsFunction, but not fully tested here
    */
-  cacheKeyVariables: KeyArgsFor<TVariables> | KeyArgsFunction | false;
+  cacheKeyVariables: KeyArgsFor<TVariables> | NonNullable<FieldPolicy['keyArgs']>;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
@@ -163,7 +162,15 @@ export function getQueryPolicyFactory<
   paginationMode = PaginationModeEnum.Offset,
   paginationVariables,
   mergeOpts = { mode: MergeModeEnum.Object },
-}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>) {
+}: TgetQueryPolicyFactory<TQuery, TVariables, TFieldKey, TItem>): {
+  key: TFieldKey;
+  buildFn: () => {
+    entityTypename: [TItem] extends [never] ? string : TypenameOf<TItem>;
+    fieldPolicy: FieldPolicy;
+    keyFields: TypePolicy['keyFields'];
+    queryPolicyConfig: ReturnType<typeof generateQueryPolicyConfig>;
+  };
+} {
   const isArrayMergeMode = mergeOpts.mode === MergeModeEnum.Array;
 
   if (isArrayMergeMode) {

@@ -1,2 +1,1 @@
-export type { UseBedResultType } from './types';
-export { useBed } from './useBed';
+export { useBed, type UseBedResultType } from './useBed';

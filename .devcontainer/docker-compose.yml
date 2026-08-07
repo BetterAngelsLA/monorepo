@@ -16,7 +16,7 @@ services:
       - AWS_PROFILE=Development
 
     volumes:
-      # Persist developer state (gh config, Cline data, VS Code settings, etc.) across rebuilds.
+      # Persist developer state (gh config, VS Code settings, etc.) across rebuilds.
       # If VS Code Server updates break things, clear with: docker volume rm <project>_dev_home
       - dev_home:/home/betterangels
 

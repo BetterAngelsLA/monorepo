@@ -19,9 +19,6 @@ export const HEADER_VALUES = {
   X_REQUESTED_WITH_AJAX: 'XMLHttpRequest',
 } as const;
 
-// HTTP Methods that require CSRF protection
-export const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
-
 export const API_ERROR_CODES = {
   UNKNOWN: 'UNKNOWN',
   UNAUTHENTICATED: 'UNAUTHENTICATED',

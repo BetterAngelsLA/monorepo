@@ -3,74 +3,82 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": [],
+  "tags": [
+    "type:app",
+    "scope:betterangels"
+  ],
   "targets": {
     "start": {
-      "executor": "@nx/expo:start",
-      "dependsOn": ["sync-deps"],
+      "command": "expo start --port 8081",
       "options": {
-        "port": 8081
-      }
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps"
+      ]
     },
     "serve": {
-      "executor": "nx:run-commands",
+      "command": "expo start --web",
       "options": {
-        "command": "nx start betterangels"
+        "cwd": "apps/betterangels"
       }
     },
     "run-ios": {
-      "executor": "@nx/expo:run",
-      "dependsOn": ["sync-deps"],
+      "command": "expo run:ios",
       "options": {
-        "platform": "ios"
-      }
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps"
+      ]
     },
     "run-android": {
-      "executor": "@nx/expo:run",
-      "dependsOn": ["sync-deps"],
+      "command": "expo run:android",
       "options": {
-        "platform": "android"
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps"
+      ]
+    },
+    "build-list": {
+      "command": "eas build:list",
+      "options": {
+        "cwd": "apps/betterangels"
       }
     },
     "eas-build": {
-      "executor": "@nx/expo:build",
-      "options": {}
-    },
-    "submit": {
-      "executor": "@nx/expo:submit",
-      "options": {}
-    },
-    "build-list": {
-      "executor": "@nx/expo:build-list",
-      "options": {}
-    },
-    "download": {
-      "executor": "@nx/expo:download",
+      "command": "eas build",
       "options": {
-        "output": "apps/betterangels/dist"
-      }
-    },
-    "sync-deps": {
-      "executor": "@nx/expo:sync-deps",
-      "options": {}
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps",
+        "copy-lockfile"
+      ]
     },
     "prebuild": {
-      "executor": "@nx/expo:prebuild",
-      "dependsOn": ["sync-deps"],
-      "options": {}
-    },
-    "install": {
-      "executor": "@nx/expo:install",
-      "options": {}
+      "command": "expo prebuild --no-install",
+      "options": {
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps"
+      ]
     },
     "eas-update": {
-      "executor": "@nx/expo:update",
+      "command": "eas update",
       "options": {
-        "auto": true
-      }
+        "cwd": "apps/betterangels"
+      },
+      "dependsOn": [
+        "sync-deps",
+        "copy-lockfile"
+      ]
     },
     "build": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "preview",
       "configurations": {
         "preview": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile preview"
@@ -78,28 +86,27 @@
         "production": {
           "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-deploy.ts --project betterangels --profile production"
         }
-      },
-      "defaultConfiguration": "preview"
+      }
     },
     "export": {
-      "executor": "@nx/expo:export",
-      "dependsOn": ["sync-deps"],
+      "outputs": [
+        "{projectRoot}/{options.outputDir}",
+        "{workspaceRoot}/apps/betterangels/dist"
+      ],
       "options": {
-        "platform": "all",
-        "outputDir": "dist/apps/betterangels"
+        "outputDir": "../../dist/apps/betterangels",
+        "platform": "all"
       },
-      "outputs": ["{options.outputDir}"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "inputs": ["{projectRoot}/**/*"],
-      "outputs": ["{options.outputFile}"]
+      "dependsOn": [
+        "sync-deps"
+      ]
     },
     "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
-        "jestConfig": "apps/betterangels/jest.config.ts"
+        "passWithNoTests": true
       }
     },
     "typecheck": {
@@ -118,25 +125,43 @@
     },
     "e2e": {
       "executor": "nx:run-commands",
+      "defaultConfiguration": "ios",
       "options": {
         "cwd": "apps/betterangels"
       },
       "configurations": {
         "ios": {
           "command": ".maestro/scripts/setup-maestro.sh",
-          "env": { "MAESTRO_PLATFORM": "ios" }
+          "env": {
+            "MAESTRO_PLATFORM": "ios"
+          }
         },
         "android": {
           "command": ".maestro/scripts/setup-maestro.sh",
-          "env": { "MAESTRO_PLATFORM": "android" }
+          "env": {
+            "MAESTRO_PLATFORM": "android"
+          }
         }
-      },
-      "defaultConfiguration": "ios"
+      }
     },
     "eas-e2e": {
       "executor": "nx:run-commands",
       "options": {
         "command": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/eas-e2e.ts --project betterangels"
+      }
+    },
+    "copy-lockfile": {
+      "command": "node tools/scripts/eas-build-pre-install.mjs . apps/betterangels"
+    },
+    "sync-deps": {
+      "executor": "@nx/expo:sync-deps",
+      "options": {}
+    },
+    "expo-doctor": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../tools/scripts/expo-doctor-check.mjs apps/betterangels",
+        "cwd": "apps/betterangels"
       }
     }
   }

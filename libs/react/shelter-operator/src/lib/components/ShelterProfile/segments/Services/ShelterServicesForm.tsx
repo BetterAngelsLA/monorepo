@@ -2,16 +2,24 @@ import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
 import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
-import { useCallback, useState } from 'react';
-import { Controller, type FieldPathValue, useForm } from 'react-hook-form';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  Controller,
+  type FieldPathValue,
+  useForm,
+  UseFormSetError,
+} from 'react-hook-form';
 import { type DropdownOption } from '../../../base-ui/dropdown';
 import { Form } from '../../../form/Form';
 import ServiceCategoryRow from './ServiceCategoryRow';
 import { defaultFormValues, formSchema, ServicesFormData } from './formSchema';
 
 type TProps = {
-  defaultValues?: Partial<ServicesFormData>;
-  onSubmit?: (data: ServicesFormData) => void;
+  values?: Partial<ServicesFormData>;
+  onSubmit: (
+    data: ServicesFormData,
+    setError: UseFormSetError<ServicesFormData>,
+  ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
   onCancel?: () => void;
@@ -21,7 +29,7 @@ type TProps = {
 
 export function ShelterServicesForm(props: TProps) {
   const {
-    defaultValues,
+    values,
     onSubmit,
     isViewMode = false,
     onEditClick,
@@ -36,18 +44,20 @@ export function ShelterServicesForm(props: TProps) {
   const [createdOtherOptionsByCategory, setCreatedOtherOptionsByCategory] =
     useState<Record<string, DropdownOption<string>[]>>({});
 
-  const {
-    control,
-    handleSubmit,
-    formState: { isValid },
-    reset,
-  } = useForm<ServicesFormData>({
+  const initialValues = useMemo(
+    () => ({ ...defaultFormValues, ...values }),
+    [values],
+  );
+
+  const { control, handleSubmit, setError, reset } = useForm<ServicesFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
+    values: initialValues,
+    mode: 'onBlur',
   });
 
   function handleCancel() {
-    reset();
+    reset(initialValues);
+    setCreatedOtherOptionsByCategory({});
     onCancel?.();
   }
 
@@ -58,7 +68,7 @@ export function ShelterServicesForm(props: TProps) {
         [categoryId]: nextOptions,
       }));
     },
-    []
+    [],
   );
 
   return (
@@ -70,7 +80,7 @@ export function ShelterServicesForm(props: TProps) {
           className="pl-5"
         />
 
-        <form className="flex flex-col gap-10 mt-8">
+        <Form.Content className="mt-8">
           <Controller
             name="services"
             control={control}
@@ -87,7 +97,7 @@ export function ShelterServicesForm(props: TProps) {
                           nextServiceIds as FieldPathValue<
                             ServicesFormData,
                             'services'
-                          >
+                          >,
                         );
                       }}
                       createdOtherOptions={
@@ -96,7 +106,7 @@ export function ShelterServicesForm(props: TProps) {
                       setCreatedOtherOptions={(nextOptions) => {
                         setCreatedOtherOptionsForCategory(
                           category.id,
-                          nextOptions
+                          nextOptions,
                         );
                       }}
                       isViewMode={isViewMode}
@@ -108,15 +118,15 @@ export function ShelterServicesForm(props: TProps) {
             )}
           />
 
-          {!isViewMode && onSubmit && (
+          {!isViewMode && (
             <Form.Actions
-              onPrimaryClick={() => handleSubmit(onSubmit)()}
+              onPrimaryClick={handleSubmit((data) => onSubmit(data, setError))}
               onSecondaryClick={handleCancel}
-              primaryDisabled={disabled || !isValid}
+              primaryDisabled={disabled}
               secondaryDisabled={disabled}
             />
           )}
-        </form>
+        </Form.Content>
       </Form>
     </div>
   );

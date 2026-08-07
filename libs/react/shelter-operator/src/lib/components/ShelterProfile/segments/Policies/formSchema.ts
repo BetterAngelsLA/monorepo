@@ -20,6 +20,8 @@ export const formSchema = z.object({
 
 export type PoliciesFormData = z.infer<typeof formSchema>;
 
+export const formFieldNames = Object.keys(formSchema.shape);
+
 export const defaultFormValues: PoliciesFormData = {
   maxStay: undefined,
   onSiteSecurity: undefined,

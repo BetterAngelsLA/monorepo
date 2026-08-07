@@ -3,7 +3,7 @@ import {
   IdFilterLookup,
   TaskFilter,
   TaskStatusEnum,
-} from '../__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { toEnumArray } from './toEnumArray';
 
 function pruneFilter<T extends Record<string, unknown>>(filter: T): Partial<T> {

@@ -161,7 +161,7 @@ export default function LocationComponent(props: ILocationProps) {
           ? {
               formattedAddress: geocodeResult.formattedAddress,
               addressComponents: JSON.stringify(
-                geocodeResult.addressComponents ?? []
+                geocodeResult.addressComponents ?? [],
               ),
             }
           : undefined,
@@ -185,12 +185,12 @@ export default function LocationComponent(props: ILocationProps) {
         ) {
           await geocodeAndSave(
             defaultLocation.latitude,
-            defaultLocation.longitude
+            defaultLocation.longitude,
           );
         } else {
           await geocodeAndSave(
             coords?.latitude ?? INITIAL_LOCATION.latitude,
-            coords?.longitude ?? INITIAL_LOCATION.longitude
+            coords?.longitude ?? INITIAL_LOCATION.longitude,
           );
         }
       } catch (err) {
@@ -199,7 +199,7 @@ export default function LocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, places, onLocationChange, location]);
+  }, [point, address, places, onLocationChange, location, defaultLocation]);
 
   return (
     <FieldCard

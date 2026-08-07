@@ -1,5 +1,4 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { TModalPresentationType } from '../../providers';
 import { HeaderLeftButton } from '../HeaderLeftButton';
 import { defaultModalNavOpts } from './config';
@@ -14,7 +13,7 @@ type TProps = {
 
 export function getDefaultStackModalOptions(
   props?: TProps
-): NativeStackNavigationOptions {
+) {
   const { presentation, hideHeader, title, onClose } = props || {};
 
   if (hideHeader) {

@@ -3,6 +3,7 @@ from typing import Any, Dict, List, overload
 from django.core.exceptions import ValidationError
 from django.db import models
 from places import Places
+
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 from shelters.models import Bed, Room, Schedule, Shelter
 

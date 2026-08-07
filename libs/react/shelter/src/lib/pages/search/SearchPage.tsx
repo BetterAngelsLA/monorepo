@@ -1,4 +1,4 @@
-import { Button } from '@monorepo/react/components';
+import { AddressAutocomplete, Button } from '@monorepo/react/components';
 import { CloseIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
@@ -9,7 +9,6 @@ import {
   shelterSearchPendingLocationAtom,
   shelterSearchRequestAtom,
 } from '../../atoms';
-import { AddressAutocomplete } from '../../components/AddressAutocomplete';
 import { Input } from '../../components/Input';
 import { shelterHomePath } from '../../constants';
 
@@ -20,7 +19,7 @@ export function SearchPage() {
   const setLocationInput = useSetAtom(shelterLocationSearchInputAtom);
   const setSearchRequest = useSetAtom(shelterSearchRequestAtom);
   const [pendingLocation, setPendingLocation] = useAtom(
-    shelterSearchPendingLocationAtom
+    shelterSearchPendingLocationAtom,
   );
 
   const [nameInput, setNameInput] = useState(initialNameInput);
@@ -51,7 +50,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 bottom-0 z-modal bg-white flex flex-col animate-slideInUp overflow-x-hidden overflow-y-auto">
+    <div className="absolute top-0 left-0 right-0 bottom-0 z-modal bg-white flex flex-col animate-slide-in-up overflow-x-hidden overflow-y-auto">
       <div className="md:pt-8 p-6 md:p-10 flex-1">
         <div className="flex justify-between items-center mt-0 mb-4">
           <h2 className="text-xl font-semibold">Search</h2>
@@ -68,9 +67,11 @@ export function SearchPage() {
           onKeyDown={handleSearchKeyDown}
           leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
         />
+
         <AddressAutocomplete
           className="w-full"
-          inputClassname="rounded-t-none"
+          inputClassname="bg-white border border-neutral-90 rounded-t-none"
+          placeholderClassname="placeholder:text-sm placeholder:text-neutral-40"
           placeholder="Search by location"
           initialValue={locationInput}
           onPlaceSelect={(place) => {

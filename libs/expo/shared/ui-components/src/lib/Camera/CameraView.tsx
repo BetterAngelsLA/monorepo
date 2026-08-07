@@ -75,7 +75,7 @@ export function CameraView(props: CameraProps) {
     <View style={styles.root}>
       <ExpoCamera
         ref={cameraRef}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         facing={cameraType}
         flash={flashMode}
       />

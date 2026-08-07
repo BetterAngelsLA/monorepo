@@ -1,107 +1,143 @@
 import { generatePath, matchPath } from 'react-router-dom';
-import { TShelterProfileSegment } from './types';
+import { TShelterMgmtSegment, TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';
 
-/** Strips the /operator prefix for use in <Route path> */
 export function routePath(fullPath: string): string {
   return fullPath.startsWith(OPERATOR_BASE)
     ? fullPath.slice(OPERATOR_BASE.length + 1)
     : fullPath;
 }
 
-// ─── FULL PATHS ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORE PATHS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const paths = {
   signIn: '/operator/sign-in',
   createOrganization: '/operator/create-organization',
   users: '/operator/users',
-  dashboardCreate: '/operator/dashboard/create',
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
-  shelterManage: '/operator/shelter/:shelterId/manage',
-  shelterProfile: '/operator/shelter/:shelterId/profile',
-  shelterReservation: '/operator/shelter/:shelterId/reservation',
-  reservation: '/operator/reservation',
 } as const;
 
-// ─── SEGMENTS ────────────────────────────────────────────────────────────────
-export const shelterProfileSegments = {
-  basic: 'basic-info',
-  operatingHours: 'operating-hours',
-  policies: 'policies',
-  details: 'details',
-  services: 'services',
-  ecosystem: 'ecosystem',
-  media: 'media',
-} as const;
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESOURCE METADATA — single source of truth for path segments & param names
+// ═══════════════════════════════════════════════════════════════════════════════
 
-export const manageSegments = {
-  rooms: 'rooms',
-  roomsCreate: 'rooms/create',
-  roomsEdit: 'rooms/:roomId/edit',
-  beds: 'beds',
-  bedsCreate: 'beds/create',
-  bedsEdit: 'beds/:bedId/edit',
-  occupancy: 'occupancy',
-  label: 'label',
-} as const;
+type ResourceConfig = {
+  path: string;
+  param?: string;
+};
 
-export const reservationSegments = {
-  addProfile: 'add-profile',
-  selectShelter: 'select-shelter',
-  selectRoom: 'select-room',
-  checkInByDate: 'check-in-by-date',
-  confirmation: 'confirmation',
-} as const;
+export const mgmtResources = {
+  room: { path: 'rooms', param: 'roomId' },
+  bed: { path: 'beds', param: 'bedId' },
+  reservation: { path: 'reservations', param: 'reservationId' },
+  occupant: { path: 'occupants' },
+  report: { path: 'reports' },
+} as const satisfies Record<string, ResourceConfig>;
 
-// ─── DYNAMIC ROUTE HELPERS ───────────────────────────────────────────────────
+export type TMgmtResource = keyof typeof mgmtResources;
 
-export function shelterManageRoute(shelterId: string): string {
-  return generatePath(paths.shelterManage, { shelterId });
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROUTE CONFIGS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-export function shelterManageRoomsRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.rooms}`;
-}
+type StaticRouteConfig = {
+  root: string;
+  children: Record<string, string>;
+};
 
-export function shelterCreateRoomRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.roomsCreate}`;
-}
+type CrudRouteConfig = StaticRouteConfig & {
+  actions: Record<string, string>;
+};
 
-export function shelterEditRoomRoute(
+export const profileRouteConfig = {
+  root: '/operator/shelter/:shelterId/profile',
+  children: {
+    basic: 'basic-info',
+    operatingHours: 'operating-hours',
+    policies: 'policies',
+    details: 'details',
+    services: 'services',
+    ecosystem: 'ecosystem',
+    media: 'media',
+  },
+} as const satisfies StaticRouteConfig;
+
+export const mgmtRouteConfig = {
+  root: '/operator/shelter/:shelterId/manage',
+  children: {
+    rooms: mgmtResources.room.path,
+    beds: mgmtResources.bed.path,
+    reservations: mgmtResources.reservation.path,
+    occupants: mgmtResources.occupant.path,
+    reports: mgmtResources.report.path,
+  },
+  actions: {
+    create: 'create',
+    edit: ':id/edit',
+  },
+} as const satisfies CrudRouteConfig;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Manage ────────────────────────────────────────────────────────────────────
+
+export function shelterMgmtRoute(
   shelterId: string,
-  roomId: string
+  segment?: TShelterMgmtSegment,
 ): string {
-  return generatePath(`${paths.shelterManage}/${manageSegments.roomsEdit}`, {
-    shelterId,
-    roomId,
-  });
-}
-
-export function shelterManageBedsRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.beds}`;
-}
-
-export function shelterCreateBedRoute(shelterId: string): string {
-  return `${shelterManageRoute(shelterId)}/${manageSegments.bedsCreate}`;
-}
-
-export function shelterEditBedRoute(shelterId: string, bedId: string): string {
-  return generatePath(`${paths.shelterManage}/${manageSegments.bedsEdit}`, {
-    shelterId,
-    bedId,
-  });
-}
-
-export function shelterProfileRoute(
-  shelterId: string,
-  segment?: TShelterProfileSegment
-): string {
-  const base = generatePath(paths.shelterProfile, { shelterId });
+  const base = generatePath(mgmtRouteConfig.root, { shelterId });
 
   return segment ? `${base}/${segment}` : base;
 }
+
+/** /operator/shelter/5/manage/beds */
+export function shelterMgmtResourceRoute(
+  shelterId: string,
+  resource: TMgmtResource,
+): string {
+  return `${shelterMgmtRoute(shelterId)}/${mgmtResources[resource].path}`;
+}
+
+/** /operator/shelter/5/manage/beds/create */
+export function shelterCreateResourceRoute(
+  shelterId: string,
+  resource: TMgmtResource,
+): string {
+  return `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.create}`;
+}
+
+/** /operator/shelter/5/manage/beds/12/edit */
+export function shelterEditResourceRoute(
+  shelterId: string,
+  resource: TMgmtResource,
+  resourceId: string,
+): string {
+  return generatePath(
+    `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.edit}`,
+    { id: resourceId },
+  );
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+export function shelterProfileRoute(
+  shelterId: string,
+  segment?: TShelterProfileSegment,
+): string {
+  const base = generatePath(profileRouteConfig.root, { shelterId });
+
+  return segment ? `${base}/${segment}` : base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MATCHERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export function isShelterRoute(path: string, strict?: boolean): boolean {
   if (strict) {
@@ -113,24 +149,40 @@ export function isShelterRoute(path: string, strict?: boolean): boolean {
 
 export function isShelterManageRoute(path: string, strict?: boolean): boolean {
   if (strict) {
-    return Boolean(matchPath(paths.shelterManage, path));
+    return Boolean(matchPath(mgmtRouteConfig.root, path));
   }
 
-  return Boolean(matchPath(`${paths.shelterManage}/*`, path));
+  return Boolean(matchPath(`${mgmtRouteConfig.root}/*`, path));
 }
 
 export function isShelterProfileRoute(
   path: string,
-  opts?: { strict?: boolean; segment?: TShelterProfileSegment }
+  opts?: { strict?: boolean; segment?: TShelterProfileSegment },
 ): boolean {
   const { strict, segment } = opts ?? {};
   if (segment) {
-    return Boolean(matchPath(`${paths.shelterProfile}/${segment}`, path));
+    return Boolean(matchPath(`${profileRouteConfig.root}/${segment}`, path));
   }
 
   if (strict) {
-    return Boolean(matchPath(paths.shelterProfile, path));
+    return Boolean(matchPath(profileRouteConfig.root, path));
   }
 
-  return Boolean(matchPath(`${paths.shelterProfile}/*`, path));
+  return Boolean(matchPath(`${profileRouteConfig.root}/*`, path));
+}
+
+export function isShelterMgmtRoute(
+  path: string,
+  opts?: { strict?: boolean; segment?: TShelterMgmtSegment },
+): boolean {
+  const { strict, segment } = opts ?? {};
+  if (segment) {
+    return Boolean(matchPath(`${mgmtRouteConfig.root}/${segment}`, path));
+  }
+
+  if (strict) {
+    return Boolean(matchPath(mgmtRouteConfig.root, path));
+  }
+
+  return Boolean(matchPath(`${mgmtRouteConfig.root}/*`, path));
 }

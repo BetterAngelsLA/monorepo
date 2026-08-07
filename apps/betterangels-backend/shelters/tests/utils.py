@@ -3,6 +3,7 @@ from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
+
 from shelters.groups import SHELTER_OPERATOR
 
 
@@ -59,6 +60,16 @@ class ShelterTestCase(GraphQLBaseTestCase):
             bed { id }
             room { id }
             shelter { id }
+            clients {
+                id
+                isPrimary
+                clientProfile {
+                    firstName
+                    middleName
+                    lastName
+                    nickname
+                }
+            }
         """
 
     def setup_org_with_user(self) -> None:

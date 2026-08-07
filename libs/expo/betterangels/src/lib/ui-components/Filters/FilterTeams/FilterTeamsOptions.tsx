@@ -25,9 +25,9 @@ export function FilterTeamsOptions(props: TProps) {
 
   const options = useMemo<TFilterOption[]>(() => {
     return teams.map((t) => ({
-        id: t.id,
-        label: t.name,
-      }));
+      id: t.id,
+      label: t.name,
+    }));
   }, [teams]);
 
   if (error) {

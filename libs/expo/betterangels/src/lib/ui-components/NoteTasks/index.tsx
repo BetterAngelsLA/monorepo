@@ -70,7 +70,7 @@ export default function NoteTasks(props: INoteTasksProps) {
     update(cache, { data }) {
       if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
         console.error(
-          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`
+          `[DeleteTask] failed to delete Task __typename DeletedObjectType missing from response.`,
         );
 
         return;
@@ -94,16 +94,17 @@ export default function NoteTasks(props: INoteTasksProps) {
     if (!onDraftTasksChange) return;
 
     const newTask: LocalDraftTask = {
+      // eslint-disable-next-line react-hooks/purity -- Date.now() is called in event handler, not render
       id: existingId || `temp-${Date.now()}`,
       summary: data.summary,
       description: data.description || '',
       status: (data.status as TaskStatusEnum) || TaskStatusEnum.ToDo,
-      teamId: data.teamId || teamId || null,
+      teamId: data.teamId ?? teamId ?? null,
     };
 
     if (existingId) {
       const updatedList = (tasks as LocalDraftTask[]).map((t) =>
-        t.id === existingId ? newTask : t
+        t.id === existingId ? newTask : t,
       );
       onDraftTasksChange(updatedList);
     } else {
@@ -144,16 +145,17 @@ export default function NoteTasks(props: INoteTasksProps) {
               status: cleanStatus,
               clientProfile: clientProfileId,
               hmisClientProfile: hmisClientProfileId,
-              teamId: cleanTeamId || teamId || null,
+              teamId: cleanTeamId ?? teamId ?? undefined,
               // Handle linking to either Note type
-              note: noteId || null,
-              hmisNote: hmisNoteId || null,
+              note: noteId ?? undefined,
+              hmisNote: hmisNoteId ?? undefined,
             },
           },
         });
       }
       refetch?.();
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to save task', type: 'error' });
     }
   };
@@ -166,6 +168,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       refetch?.();
       showSnackbar({ message: 'Task deleted', type: 'success' });
     } catch (err) {
+      console.error(err);
       showSnackbar({ message: 'Failed to delete task', type: 'error' });
     }
   };

@@ -39,7 +39,7 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
     if (prevHasValue && !newHasValue) {
       onClear?.();
     }
-  }, [localPhone, localExt]);
+  }, [localPhone, localExt, onChangeParts, onClear]);
 
   return (
     <View style={[style]}>

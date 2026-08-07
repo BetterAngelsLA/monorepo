@@ -41,7 +41,7 @@ export function ClientContactForm(props: TProps) {
     isError,
     setValue,
     clearErrors,
-  } = useClientContactForm({ clientProfile, relationId, router, showSnackbar });
+  } = useClientContactForm({ clientProfile, relationId, showSnackbar });
 
   const isEditMode = !!relationId;
   const clientProfileId = clientProfile?.id;

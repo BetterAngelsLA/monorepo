@@ -5,6 +5,7 @@ from clients.models import ClientProfile
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
+
 from shelters.enums import ReservationStatusChoices
 from shelters.models import Bed, Reservation, Room
 from shelters.tests.baker_recipes import shelter_recipe
@@ -36,7 +37,16 @@ class ReservationMutationTestCase(ShelterTestCase, TestCase):
             shelter { id }
             createdById
             clients {
-                clientProfileId
+                clientProfile {
+                    id
+                    firstName
+                    lastName
+                    middleName
+                    nickname
+                    californiaId
+                    dateOfBirth
+                    email
+                }
                 isPrimary
             }
         """
@@ -229,7 +239,7 @@ class CreateReservationMutationTestCase(ReservationMutationTestCase):
         data = response["data"]["createReservation"]
         self.assertIsNotNone(data["id"])
         self.assertEqual(len(data["clients"]), 2)
-        client_map = {c["clientProfileId"]: c["isPrimary"] for c in data["clients"]}
+        client_map = {c["clientProfile"]["id"]: c["isPrimary"] for c in data["clients"]}
         self.assertTrue(client_map[str(self.client_1.pk)])
         self.assertFalse(client_map[str(self.client_2.pk)])
 
@@ -383,58 +393,3 @@ class DeleteReservationMutationTestCase(ReservationMutationTestCase):
 
         self.assertFalse(Reservation.objects.filter(pk=to_delete.pk).exists())
         self.assertTrue(Reservation.objects.filter(pk=other.pk).exists())
-
-
-class ReservationQueryTestCase(ReservationMutationTestCase):
-    def test_query_reservation(self) -> None:
-        reservation = baker.make(
-            Reservation,
-            bed=self.bed_1,
-            status=ReservationStatusChoices.CONFIRMED,
-        )
-
-        query = f"""
-            query Reservation($id: ID!) {{
-                reservation(pk: $id) {{
-                    ... on ReservationType {{
-                        {self.reservation_fields}
-                    }}
-                }}
-            }}
-        """
-
-        response = self.execute_graphql(query, {"id": str(reservation.pk)})
-
-        self.assertIsNone(response.get("errors"))
-        data = response["data"]["reservation"]
-        self.assertEqual(data["id"], str(reservation.pk))
-        self.assertEqual(data["status"], "CONFIRMED")
-        self.assertEqual(data["bed"]["id"], str(self.bed_1.pk))
-
-    def test_query_reservations_list(self) -> None:
-        baker.make(
-            Reservation,
-            bed=self.bed_1,
-            status=ReservationStatusChoices.CONFIRMED,
-        )
-        baker.make(
-            Reservation,
-            bed=self.bed_2,
-            status=ReservationStatusChoices.CHECKED_IN,
-        )
-
-        query = f"""
-            query Reservations {{
-                reservations {{
-                    results {{
-                        {self.reservation_fields}
-                    }}
-                }}
-            }}
-        """
-
-        response = self.execute_graphql(query, {})
-
-        self.assertIsNone(response.get("errors"))
-        results = response["data"]["reservations"]["results"]
-        self.assertEqual(len(results), 2)

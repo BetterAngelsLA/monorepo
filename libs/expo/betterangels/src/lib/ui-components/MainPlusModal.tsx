@@ -17,16 +17,17 @@ interface IMainPlusModalProps {
 export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
 
-  const { isHmisUser } = useUser();
+  const { user } = useUser();
 
   const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
+      testId: 'add-client-btn',
       Icon: UserAddIcon,
       route: '/clients/create',
     },
     {
-      title: `Add ${isHmisUser ? 'note' : 'interaction'}`,
+      title: `Add ${user?.isHmisUser ? 'note' : 'interaction'}`,
       Icon: FilePlusIcon,
       route: '/',
       params: {
@@ -46,6 +47,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
         <View style={styles.wrapper}>
           <Pressable
             onPress={closeModal}
+            testID="main-plus-modal-btn"
             accessibilityRole="button"
             accessibilityHint="Closing homepage main modal"
             style={({ pressed }) => [

@@ -6,9 +6,11 @@ from clients.enums import (
     LivingSituationEnum,
     RelationshipTypeEnum,
 )
+from clients.admin_merge import ClientProfileMergeMixin
 from common.models import Attachment, PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.utils.encoding import force_str
@@ -157,8 +159,12 @@ class ClientProfileResource(resources.ModelResource):
 
 
 @admin.register(ClientProfile)
-class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
+class ClientProfileAdmin(ExportActionMixin, ClientProfileMergeMixin, admin.ModelAdmin):
     resource_class = ClientProfileResource
+
+    actions = ["merge_clients"]
+    change_list_template = "admin/clients/clientprofile/change_list.html"
+    change_form_template = "admin/clients/clientprofile/change_form.html"
 
     def get_export_formats(self) -> list:
         return [CSV]
@@ -204,6 +210,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         "last_name",
         "middle_name",
     )
+    list_filter = ("merged_into",)
 
 
 @admin.register(ClientContact)
@@ -361,6 +368,22 @@ class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientDocument]:
         return super().get_queryset(request).filter(content_type__model="clientprofile")
+
+    def get_search_results(self, request: HttpRequest, queryset: QuerySet, search_term: str) -> tuple[QuerySet, bool]:
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+
+        if search_term:
+            client_content_type = ContentType.objects.get_for_model(ClientProfile)
+            matching_client_ids = ClientProfile.objects.filter(
+                Q(first_name__icontains=search_term) | Q(last_name__icontains=search_term)
+            ).values_list("pk", flat=True)
+
+            queryset |= self.model.objects.filter(
+                content_type=client_content_type,
+                object_id__in=matching_client_ids,
+            )
+
+        return queryset, use_distinct
 
     list_display = (
         "attachment_type",

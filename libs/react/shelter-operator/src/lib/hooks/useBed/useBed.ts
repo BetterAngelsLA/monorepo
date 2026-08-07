@@ -1,13 +1,15 @@
 import { useQuery } from '@apollo/client/react';
 import {
-  GetBedDocument,
-  type GetBedQuery,
-  type GetBedQueryVariables,
-} from '../../components/beds/api/__generated__/bedQueries.generated';
+  BedDocument,
+  type BedQuery,
+  type BedQueryVariables,
+} from './__generated__/useBed.generated';
+
+export type UseBedResultType = BedQuery['bed'];
 
 export function useBed(bedId: string) {
-  const { data, loading, error } = useQuery<GetBedQuery, GetBedQueryVariables>(
-    GetBedDocument,
+  const { data, loading, error } = useQuery<BedQuery, BedQueryVariables>(
+    BedDocument,
     {
       variables: { id: bedId },
       skip: !bedId,
@@ -15,7 +17,7 @@ export function useBed(bedId: string) {
   );
 
   return {
-    bed: data?.beds.results?.[0],
+    bed: data?.bed,
     loading,
     error,
   };

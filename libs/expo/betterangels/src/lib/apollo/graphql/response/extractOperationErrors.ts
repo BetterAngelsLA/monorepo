@@ -3,7 +3,7 @@ import {
   OperationInfo,
   OperationMessage,
   OperationMessageKind,
-} from '../__generated__/types';
+} from '@monorepo/ba-platform/types';
 import { extractOperationInfo } from './extractOperationInfo';
 import { extractOperationInfoMessage } from './extractOperationInfoMessage';
 import { hasTypename } from './utils';

@@ -17,6 +17,7 @@ from model_clone import CloneMixin
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 from places.fields import PlacesField
+
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -53,11 +54,11 @@ from .lookups import (
 )
 from .service import Service
 
-ACTIVE_RESERVATION_STATUSES = {
-    ReservationStatusChoices.CONFIRMED,
+ACTIVE_RESERVATION_STATUSES = (
     ReservationStatusChoices.CHECKED_IN,
     ReservationStatusChoices.CHECK_IN_OVERDUE,
-}
+    ReservationStatusChoices.CONFIRMED,
+)
 
 
 @pghistory.track(
@@ -219,7 +220,7 @@ class Shelter(BaseModel):
 @pghistory.track(
     pghistory.InsertEvent("bed.add"),
     pghistory.DeleteEvent("bed.remove"),
-    pghistory.UpdateEvent("bed.maintenance_flag_change", condition=pghistory.AnyChange("maintenance_flag")),
+    pghistory.UpdateEvent("bed.update"),
 )
 class Bed(CloneMixin, BaseModel):
     objects = BedManager()

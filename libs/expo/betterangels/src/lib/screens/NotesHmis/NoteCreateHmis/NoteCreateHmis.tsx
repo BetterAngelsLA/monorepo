@@ -10,8 +10,8 @@ import {
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
+import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   NoteFormHmis,
   NoteFormSchemaHmis,
@@ -22,7 +22,7 @@ import {
   getNoteFormEmptyStateHmis,
   NoteFormFieldNamesHmis,
 } from '../NoteFormHmis/formSchema';
-import splitBucket from '../utils/splitBucket';
+import splitBucket, { TBucket } from '../utils/splitBucket';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateNoteHmisDocument } from './__generated__/createClientNoteHmis.generated';
 import {
@@ -52,7 +52,7 @@ export function NoteCreateHmis(props: TProps) {
   async function applyBucket(
     id: string,
     type: ServiceRequestTypeEnum,
-    bucket: any
+    bucket: TBucket | undefined,
   ) {
     const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
       splitBucket(bucket);
@@ -64,7 +64,7 @@ export function NoteCreateHmis(props: TProps) {
           data: {
             hmisNoteId: id,
             serviceRequestType: type,
-            serviceId: s.serviceId!,
+            serviceId: s.serviceId,
           },
         },
       });
@@ -75,7 +75,7 @@ export function NoteCreateHmis(props: TProps) {
       await deleteService({
         variables: {
           data: {
-            serviceRequestId: s.serviceRequestId!,
+            serviceRequestId: s.serviceRequestId,
             hmisNoteId: id,
             serviceRequestType: type,
           },
@@ -90,7 +90,7 @@ export function NoteCreateHmis(props: TProps) {
           data: {
             hmisNoteId: id,
             serviceRequestType: type,
-            serviceOther: o.serviceOther!.trim(),
+            serviceOther: o.serviceOther.trim(),
           },
         },
       });
@@ -101,7 +101,7 @@ export function NoteCreateHmis(props: TProps) {
       await deleteService({
         variables: {
           data: {
-            serviceRequestId: o.serviceRequestId!,
+            serviceRequestId: o.serviceRequestId,
             hmisNoteId: id,
             serviceRequestType: type,
           },
@@ -143,7 +143,7 @@ export function NoteCreateHmis(props: TProps) {
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(
           error,
-          NoteFormFieldNamesHmis
+          NoteFormFieldNamesHmis,
         );
         if (fieldErrors.length) {
           applyManualFormErrors(fieldErrors, methods.setError);
@@ -188,13 +188,13 @@ export function NoteCreateHmis(props: TProps) {
       await applyBucket(
         hmisNoteId,
         ServiceRequestTypeEnum.Provided,
-        draftServices[ServiceRequestTypeEnum.Provided]
+        draftServices[ServiceRequestTypeEnum.Provided],
       );
 
       await applyBucket(
         hmisNoteId,
         ServiceRequestTypeEnum.Requested,
-        draftServices[ServiceRequestTypeEnum.Requested]
+        draftServices[ServiceRequestTypeEnum.Requested],
       );
 
       await apolloClient.refetchQueries({
@@ -203,7 +203,7 @@ export function NoteCreateHmis(props: TProps) {
 
       // 5. Success - Redirect
       router.replace(
-        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`,
       );
     } catch (error) {
       console.error('[HmisNoteCreate] error:', error);

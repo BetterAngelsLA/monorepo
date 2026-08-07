@@ -60,7 +60,7 @@ export function ExportShelterModal({
     INCLUDED_METRICS.map((metric) => metric.value)
   );
   const [isExporting, setIsExporting] = useState(false);
-  const { fetchClient } = useApiConfig();
+  const { fetch } = useApiConfig();
 
   function toggleMetric(metric: ExportMetric) {
     setIncludedMetrics((currentMetrics) =>
@@ -84,7 +84,7 @@ export function ExportShelterModal({
     setIsExporting(true);
 
     try {
-      const response = await fetchClient(
+      const response = await fetch(
         `/shelter/${shelterId}/export/?${params.toString()}`,
         { method: 'GET' }
       );

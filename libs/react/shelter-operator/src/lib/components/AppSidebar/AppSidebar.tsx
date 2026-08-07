@@ -1,16 +1,12 @@
+import { useActiveOrg } from '@monorepo/ba-platform';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { Divider, Sidebar } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
-import { useActiveOrg } from '../../providers';
-import {
-  isShelterManageRoute,
-  isShelterRoute,
-  paths,
-  shelterManageRoute,
-} from '../../routing';
+import { isShelterRoute, paths } from '../../routing';
+import { ShelterMgmtLinks } from './ShelterMgmtLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';
 
 type IProps = {
@@ -27,7 +23,7 @@ export function AppSidebar(props: IProps) {
   const { shelterId } = useParams<{ shelterId: string }>();
   const { hasPermission } = useActiveOrg();
   const canViewMembers = hasPermission(
-    UserOrganizationPermissions.ViewOrgMembers
+    UserOrganizationPermissions.ViewOrgMembers,
   );
 
   const parentCss = ['bg-[#FAFAFA]', className];
@@ -67,18 +63,14 @@ export function AppSidebar(props: IProps) {
             <Divider
               className="my-4 h-6 text-[#747A82]"
               lineClassName="bg-[#747A82]"
-              label={isOpen ? 'shelter management' : ''}
+              label={isOpen ? 'Shelter Operation' : ''}
             />
-
-            <Sidebar.Link
-              to={shelterManageRoute(shelterId)}
-              isActive={isShelterManageRoute(location.pathname)}
-              collapsed={!isOpen}
-            >
-              Operations
-            </Sidebar.Link>
-
             <ShelterProfileLinks
+              pathname={location.pathname}
+              shelterId={shelterId}
+              isOpen={isOpen}
+            />
+            <ShelterMgmtLinks
               pathname={location.pathname}
               shelterId={shelterId}
               isOpen={isOpen}

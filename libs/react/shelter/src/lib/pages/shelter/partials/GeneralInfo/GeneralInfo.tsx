@@ -22,7 +22,17 @@ function renderLabel(
 
   if (isEmail(label)) {
     return (
-      <a href={`mailto:${label}`} className="underline">
+      <a
+        href={`mailto:${label}`}
+        className="
+  underline
+  rounded-lg
+  px-2 py-1
+  transition-all
+  active:bg-[#E8ECF2]
+  active:opacity-70
+"
+      >
         {label}
       </a>
     );
@@ -30,7 +40,17 @@ function renderLabel(
 
   if (key === 'phone') {
     return (
-      <a className="underline" href={`tel:${label}`}>
+      <a
+        href={`tel:${label}`}
+        className="
+  underline
+  rounded-lg
+  px-2 py-1
+  transition-all
+  active:bg-[#E8ECF2]
+  active:opacity-70
+"
+      >
         {label}
       </a>
     );
@@ -43,7 +63,14 @@ function renderLabel(
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="underline"
+        className="
+  underline
+  rounded-lg
+  px-2 py-1
+  transition-all
+  active:bg-[#E8ECF2]
+  active:opacity-70
+"
       >
         {key === 'instagram' ? 'Instagram' : 'Website'}
       </a>

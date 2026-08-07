@@ -1,0 +1,15 @@
+mutation CloneRoom($id: ID!) {
+  cloneRoom(id: $id) {
+    ... on RoomType {
+      id
+      name
+    }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+  }
+}

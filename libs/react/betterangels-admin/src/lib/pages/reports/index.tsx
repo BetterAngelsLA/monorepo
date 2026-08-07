@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { ChartCard } from '../../components';
 import { useCSVDownload } from '../../hooks';
-import { useActiveOrg, useApiConfig } from '../../providers';
+import { useActiveOrg } from '@monorepo/ba-platform';
 import { ReportSummaryDocument } from './__generated__/reports.generated';
 
 const { RangePicker } = DatePicker;
@@ -43,11 +43,9 @@ const CHART_COLORS = {
 } as const;
 
 export default function Reports({ className = '' }: IProps) {
-  const { fetchClient } = useApiConfig();
   const { activeOrg } = useActiveOrg();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>(getDefaultRange);
-  const { download, isDownloading, error, clearError } =
-    useCSVDownload(fetchClient);
+  const { download, isDownloading, error, clearError } = useCSVDownload();
 
   const [startDate, endDate] = dateRange;
   const startStr = formatDate(startDate);
