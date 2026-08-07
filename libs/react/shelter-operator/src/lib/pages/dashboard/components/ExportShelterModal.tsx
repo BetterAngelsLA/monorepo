@@ -115,6 +115,7 @@ export function ExportShelterModal({
       onClose={onClose}
       size="xl"
       className="max-w-[625px] rounded-[28px]"
+      backdropClassName="backdrop:bg-black/20 backdrop:backdrop-blur-xs"
     >
       <ModalHeader className="px-7 pb-1 pt-7" onClose={onClose}>
         <div className="flex flex-col gap-2">
