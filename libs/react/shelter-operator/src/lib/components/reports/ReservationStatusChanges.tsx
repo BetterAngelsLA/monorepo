@@ -51,10 +51,14 @@ export interface IPreviouslyOverdueRowProps {
 function PreviouslyOverdueRow({ overdueCount, totalCount }: IPreviouslyOverdueRowProps) {
   return (
     <div className="flex items-center justify-between" data-testid="stat-previously-overdue">
-      <Text variant="body" textColor="text-[#747A82]" className="text-[13px] leading-[150%]">
+      <Text
+        variant="body"
+        textColor="text-[#747A82]"
+        className="whitespace-nowrap text-[13px] leading-[150%]"
+      >
         Previously Overdue
       </Text>
-      <span className="rounded-full bg-[#F3F3F9] px-6 py-0.5 text-[13px] leading-[150%] text-[#383B40]">
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#F3F3F9] px-6 py-0.5 text-[13px] leading-[150%] text-[#383B40]">
         {overdueCount} / {totalCount}
       </span>
     </div>
