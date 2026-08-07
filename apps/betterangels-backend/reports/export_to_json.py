@@ -20,7 +20,7 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
     start_date = metrics.start_date
     end_date = metrics.end_date
     date_range = f"{start_date.isoformat()}_{end_date.isoformat()}"
-    report: dict[str, object] = {}
+    report: dict[str, object] = {"shelter_id": shelter_id}
 
     if MetricsExportOptions.DAILY_OCCUPANCY_METRICS in selected_options:
         report[MetricsExportOptions.DAILY_OCCUPANCY_METRICS] = {
@@ -63,4 +63,4 @@ def metrics_to_json(metrics: ShelterOccupancyMetricsType, options: list[MetricsE
         }
 
     filename = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}_shelter_report.json"
-    return filename, json.dumps({f"{shelter_id}_report": report}, indent=2)
+    return filename, json.dumps({"report": report}, indent=2)

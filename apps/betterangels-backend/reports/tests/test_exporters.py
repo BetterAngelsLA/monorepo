@@ -402,7 +402,8 @@ class TestShelterMetricsExport:
 
         assert filename == "20260601_20260630_shelter_report.json"
         assert json.loads(json_content) == {
-            "shelter-1_report": {
+            "report": {
+                "shelter_id": "shelter-1",
                 "daily_occupancy_metrics": {
                     "2026-06-01": {
                         "occupied_count": 8,
@@ -441,7 +442,10 @@ class TestShelterMetricsExport:
             [MetricsExportOptions.DAILY_OCCUPANCY_METRICS, MetricsExportOptions.RESERVATION_METRICS],
         )
 
-        assert json.loads(json_content)["shelter-1_report"].keys() == {
+        report = json.loads(json_content)["report"]
+        assert report["shelter_id"] == "shelter-1"
+        assert report.keys() == {
+            "shelter_id",
             "daily_occupancy_metrics",
             "reservation_metrics",
         }
