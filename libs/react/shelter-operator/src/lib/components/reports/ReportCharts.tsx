@@ -64,8 +64,8 @@ function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
 
 const cardClassName =
   'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
-// BarChart uses autoFit, so the card needs an explicit height for the plot to fill.
-const chartCardClassName = `flex flex-col ${cardClassName} h-[560px]`;
+const chartCardClassName = `flex flex-col ${cardClassName}`;
+const CHART_PLOT_HEIGHT = 460;
 
 const STATUSES = [
   'Occupied',
@@ -100,6 +100,7 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
               }
             : {}
         }
+        chartHeight={CHART_PLOT_HEIGHT}
         data={countData}
         xField="date"
         yField="count"
@@ -116,7 +117,6 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
         }}
         style={{ stroke: '#ffffff', lineWidth: 1, inset: 0.1 }}
         tooltip={{ title: 'date' }}
-        className="h-full"
       />
     </section>
   );
@@ -148,6 +148,7 @@ export function DailyOccupancyChart({
               }
             : {}
         }
+        chartHeight={CHART_PLOT_HEIGHT}
         data={countData}
         xField="date"
         yField="count"
@@ -158,7 +159,6 @@ export function DailyOccupancyChart({
         scale={{ x: { padding: 0.4 }, y: { nice: true } }}
         style={{ fill: '#008CEE' }}
         tooltip={{ title: 'date' }}
-        className="h-full"
       />
     </section>
   );
