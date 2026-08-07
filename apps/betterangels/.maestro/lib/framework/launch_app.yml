@@ -1,5 +1,13 @@
 appId: ${MAESTRO_APP_ID}
 ---
+# Set a deterministic device location for tests that rely on GPS.
+# Choose coordinates that match your test fixtures.
+
+# Los Angeles Central Library: '203 S Los Angeles St'
+- setLocation:
+    latitude: 34.05028
+    longitude: -118.243683
+
 # Launches the app via Expo deep link.
 # Handles the "Reload" overlay that can appear on first launch
 # by killing and re-opening the app (up to 10 attempts).
@@ -81,7 +89,7 @@ appId: ${MAESTRO_APP_ID}
           commands:
             - tapOn: 'Open'
 
-      # if see `landing-screen: break out of loop
+      # if see `landing-screen`: break out of loop
       - runFlow:
           when:
             visible:

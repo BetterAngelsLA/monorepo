@@ -16,6 +16,7 @@ interface IFieldCardProps {
   children: ReactNode;
   title: string;
   actionName: ReactNode;
+  testId?: string;
   required?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -36,6 +37,7 @@ export function FieldCard(props: IFieldCardProps) {
   const {
     children,
     title,
+    testId,
     mb,
     mt,
     mr,
@@ -74,6 +76,7 @@ export function FieldCard(props: IFieldCardProps) {
       onPress={() => {
         setExpanded();
       }}
+      testID={testId}
       onLayout={(event) => {
         const layout = event.nativeEvent.layout;
         expanded === title && scrollRef
@@ -82,9 +85,9 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
-      accessible
-      accessibilityRole="button"
-      accessibilityHint={`expands ${title} field`}
+      // accessibilityRole="button"
+      // accessibilityHint={`expands ${title} field`}
+      accessible={false}
       style={({ pressed }) => [
         styles.container,
         {

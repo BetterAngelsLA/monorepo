@@ -5,6 +5,7 @@ import {
   TMarginProps,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../providers';
@@ -36,6 +37,7 @@ function ClientCardRaw(props: IClientCardProps) {
     return (
       <Pressable
         accessibilityRole="button"
+        testID={toTestId({ prefix: 'client-card', value: client.firstName })}
         onPress={() =>
           showModalScreen({
             presentation: 'modal',
