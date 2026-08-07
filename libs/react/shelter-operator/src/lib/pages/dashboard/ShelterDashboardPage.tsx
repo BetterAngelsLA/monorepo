@@ -10,6 +10,7 @@ import { RoomsView } from '../../components/rooms/RoomsView';
 import { GetShelterNameDocument } from '../../graphql/__generated__/shelters.generated';
 import { shelterManageRoute } from '../../routing';
 import { ExportShelterModal } from './components/ExportShelterModal';
+import { ExportStatusNotification } from './components/ExportStatusNotification';
 import SliderTabs, { type SliderTabItem } from './components/SliderTabs';
 
 type ShelterTab = 'overview' | 'rooms' | 'beds' | 'occupancy' | 'label';
@@ -32,6 +33,9 @@ const TAB_ITEMS: SliderTabItem[] = [
 
 export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  // TEMP: visual check for both notification states. Remove once the real
+  // export flow drives this.
+  const [showExportNotifications, setShowExportNotifications] = useState(false);
   const { shelterId } = useParams();
   const id = shelterId ?? '';
 
@@ -108,7 +112,28 @@ export default function ShelterDashboardPage({ tab }: { tab: ShelterTab }) {
         isOpen={isExportModalOpen}
         shelterId={shelterId}
         onClose={() => setIsExportModalOpen(false)}
+        onExport={() => {
+          setIsExportModalOpen(false);
+          setShowExportNotifications(true);
+        }}
       />
+
+      {/* TEMP: both states rendered together for visual review. */}
+      {showExportNotifications && (
+        <div className="fixed right-6 top-6 z-50 flex flex-col gap-4">
+          <ExportStatusNotification
+            success
+            description="reportname.pdf"
+            onClose={() => setShowExportNotifications(false)}
+          />
+          <ExportStatusNotification
+            success={false}
+            description="[Error reason]"
+            className="[animation-delay:90ms]"
+            onClose={() => setShowExportNotifications(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

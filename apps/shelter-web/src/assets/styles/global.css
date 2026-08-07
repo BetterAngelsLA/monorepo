@@ -53,6 +53,38 @@
   }
 }
 
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Overshoots slightly on the way in for a springy "pop". */
+.animate-pop-in {
+  animation: popIn 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes popInFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in {
+    animation: popInFade 150ms ease-out both;
+  }
+}
+
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;

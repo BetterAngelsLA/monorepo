@@ -22,6 +22,7 @@ type ExportShelterModalProps = {
   isOpen: boolean;
   shelterId: string | undefined;
   onClose: () => void;
+  onExport?: () => void;
 };
 
 const FILE_TYPES: ExportFileType[] = ['PDF', 'CSV', 'XLSX', 'JSON'];
@@ -49,6 +50,7 @@ export function ExportShelterModal({
   isOpen,
   shelterId,
   onClose,
+  onExport,
 }: ExportShelterModalProps) {
   const [startDate, setStartDate] = useState('2026-05-02');
   const [endDate, setEndDate] = useState('2026-05-28');
@@ -267,6 +269,7 @@ export function ExportShelterModal({
           color="blue"
           className="h-[54px] w-[213px] justify-center shadow-none [&>span]:font-normal"
           rightIcon={false}
+          onClick={onExport}
         >
           Export
         </Button>
