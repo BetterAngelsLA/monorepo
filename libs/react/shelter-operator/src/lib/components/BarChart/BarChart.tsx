@@ -170,6 +170,8 @@ export function BarChart({
         titleLetterSpacing: -0.32,
         titleLineHeight: 24,
         titleFill: '#747A82',
+        labelFormatter: (value: number) =>
+          Number.isInteger(value) ? String(value) : '',
         tick: false,
         grid: true,
         gridStroke: '#D3D9E3',
