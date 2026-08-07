@@ -256,7 +256,7 @@ export function ExportShelterModal({
       <ModalFooter className="grid grid-cols-2 gap-5 px-7 pb-7 pt-8">
         <Button
           variant="floating-inverse"
-          className="h-[54px] w-full justify-center border-0 bg-white text-[#6B7280] shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:bg-[#F9FAFB]"
+          className="h-[54px] w-full justify-center border-0 bg-white text-[#6B7280] shadow-[0_10px_24px_rgba(17,24,39,0.08)] hover:bg-[#F9FAFB] [&>span]:font-normal"
           rightIcon={false}
           onClick={onClose}
         >
@@ -265,7 +265,7 @@ export function ExportShelterModal({
         <Button
           variant="floating"
           color="blue"
-          className="h-[54px] w-full justify-center shadow-none"
+          className="h-[54px] w-full justify-center shadow-none [&>span]:font-normal"
           rightIcon={false}
         >
           Export
