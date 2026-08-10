@@ -39,9 +39,9 @@ const OPEN_NOW_OPTIONS: {
 ];
 
 const HIGH_PRIORITY_FILTERS = [
-  demographicFilter,
-  entryRequirementFilter,
-  parkingFilter,
+  // demographicFilter,
+  // entryRequirementFilter,
+  // parkingFilter,
   petsFilter,
   referralRequirementFilter,
 ];
