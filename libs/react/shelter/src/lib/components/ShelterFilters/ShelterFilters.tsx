@@ -29,19 +29,22 @@ const OPEN_NOW_OPTIONS: {
   key: ScheduleTypeChoices;
   label: string;
 }[] = [
-  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
   { key: ScheduleTypeChoices.Intake, label: 'Intake' },
   { key: ScheduleTypeChoices.MealService, label: 'Meal Services' },
+  { key: ScheduleTypeChoices.Operating, label: 'Operating Hours' },
   {
     key: ScheduleTypeChoices.StaffAvailability,
     label: 'Staff Availability',
   },
 ];
 
-const HIGH_PRIORITY_FILTERS = [
-  // demographicFilter,
-  // entryRequirementFilter,
-  // parkingFilter,
+const HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW = [
+  demographicFilter,
+  entryRequirementFilter,
+];
+
+const HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW = [
+  parkingFilter,
   petsFilter,
   referralRequirementFilter,
 ];
@@ -150,6 +153,7 @@ export function ShelterFilters(props: IProps) {
       </div>
 
       <div>
+
         <div className="mt-8">
           <ExpandableContainer header="Access Center">
             <Checkbox
@@ -160,6 +164,9 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
+        {HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW.map(renderFilterSelector)}
+
+        {/* Open Now */}
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
             <div className="flex flex-col gap-2">
@@ -177,7 +184,7 @@ export function ShelterFilters(props: IProps) {
           </ExpandableContainer>
         </div>
 
-        {HIGH_PRIORITY_FILTERS.map(renderFilterSelector)}
+        {HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW.map(renderFilterSelector)}
 
         <div id="low-priority-shelter-filters">
           {showMoreCategories &&
@@ -214,7 +221,9 @@ export function ShelterFilters(props: IProps) {
               min={1}
               max={maxStayMax}
               value={filters.maxStay?.days || ''}
-              onChange={(event) => onMaxStayDaysChange(event.target.value)}
+              onChange={(event) =>
+                onMaxStayDaysChange(event.target.value)
+              }
               placeholder={
                 maxStayMax
                   ? `Enter number between 1 and ${maxStayMax}`
