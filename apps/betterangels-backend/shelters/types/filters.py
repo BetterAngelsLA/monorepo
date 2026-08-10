@@ -114,7 +114,7 @@ class ShelterFilter:
     name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
-    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+    def organizations(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         user = get_current_user(info)
 
         if user is None or not user.is_authenticated:

@@ -995,6 +995,133 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter must be excluded when only INTAKE is requested and INTAKE has an active exception.",
         )
 
+    def test_shelter_open_now_full_day_exception_is_per_type(self) -> None:
+        """A full-day (permanent) exception only closes its own schedule type in the union."""
+        # Monday 1:00 PM PST
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        closed_for_operating = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # OPERATING window covering 1 PM.
+        Schedule.objects.create(
+            shelter=closed_for_operating,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+
+        # INTAKE window covering 1 PM.
+        Schedule.objects.create(
+            shelter=closed_for_operating,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(12, 0),
+            end_time=datetime.time(14, 0),
+            is_exception=False,
+        )
+
+        # Permanent full-day closure recorded under OPERATING only. It must
+        # close the shelter for OPERATING-only queries, but the shelter must
+        # still appear when INTAKE is among the requested types (union).
+        Schedule.objects.create(
+            shelter=closed_for_operating,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=None,
+            end_time=None,
+            is_exception=True,
+            start_date=None,
+            end_date=None,
+        )
+
+        open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        Schedule.objects.create(
+            shelter=open_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+        Schedule.objects.create(
+            shelter=open_shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(12, 0),
+            end_time=datetime.time(14, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response_operating = self.execute_graphql(
+                query,
+                variables={"filters": {"openNowFor": ["OPERATING"]}},
+            )
+            response_intake = self.execute_graphql(
+                query,
+                variables={"filters": {"openNowFor": ["INTAKE"]}},
+            )
+            response_both = self.execute_graphql(
+                query,
+                variables={"filters": {"openNowFor": ["OPERATING", "INTAKE"]}},
+            )
+
+        operating_ids = {r["id"] for r in response_operating["data"]["shelters"]["results"]}
+        intake_ids = {r["id"] for r in response_intake["data"]["shelters"]["results"]}
+        both_ids = {r["id"] for r in response_both["data"]["shelters"]["results"]}
+
+        self.assertNotIn(
+            str(closed_for_operating.pk),
+            operating_ids,
+            "Permanent OPERATING closure must exclude the shelter from OPERATING-only queries.",
+        )
+        self.assertIn(
+            str(closed_for_operating.pk),
+            intake_ids,
+            "Permanent OPERATING closure must NOT exclude the shelter from INTAKE-only queries.",
+        )
+        self.assertIn(
+            str(closed_for_operating.pk),
+            both_ids,
+            "Permanent OPERATING closure must NOT exclude the shelter when OPERATING and INTAKE are requested.",
+        )
+        self.assertIn(
+            str(open_shelter.pk),
+            operating_ids,
+            "Shelter without an exception must appear for OPERATING.",
+        )
+        self.assertIn(
+            str(open_shelter.pk),
+            intake_ids,
+            "Shelter without an exception must appear for INTAKE.",
+        )
+        self.assertIn(
+            str(open_shelter.pk),
+            both_ids,
+            "Shelter without an exception must appear for OPERATING and INTAKE.",
+        )
+
     @parametrize(
         "open_now_for",
         [
