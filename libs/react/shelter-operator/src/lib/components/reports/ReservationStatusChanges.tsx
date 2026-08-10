@@ -1,11 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import {
-  ArrowRight,
-  CalendarCheck2,
-  CalendarClock,
-  CalendarX2,
-  Clock,
-} from 'lucide-react';
+import { Clock } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ReservationMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { Text } from '../base-ui/text/text';
@@ -14,65 +8,80 @@ const ICON_SIZE = 18;
 const iconClass = 'shrink-0 text-[#747A82]';
 
 export interface IStatCardProps {
-  icon: ReactNode;
+  icon?: ReactNode;
   title: ReactNode;
   value: string;
   testId?: string;
   className?: string;
+  subRow?: ReactNode;
 }
 
-/** A single stat box: icon, title, and value. */
+/** A single stat card: optional icon, title, value, and an optional secondary row. */
 export function StatCard({
   icon,
   title,
   value,
   testId,
   className,
+  subRow,
 }: IStatCardProps) {
   return (
     <div
       className={mergeCss([
-        'flex h-[109px] flex-col gap-4 rounded-[20px] bg-white p-2.5',
+        'flex min-h-[120px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-[0_0_4px_rgba(154,154,154,0.13)]',
         className ?? 'flex-1',
       ])}
       data-testid={testId}
     >
-      <div className="flex items-start gap-2">
-        {icon}
-        <Text variant="body" textColor="text-[#747A82]">
-          {title}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2.5">
+          {icon}
+          <Text
+            variant="body"
+            textColor="text-[#747A82]"
+            className="text-[15px]"
+          >
+            {title}
+          </Text>
+        </div>
+        <Text
+          variant="header-lg"
+          textColor="text-black"
+          className="text-[25px] leading-none"
+        >
+          {value}
         </Text>
       </div>
-      <Text variant="header-lg" textColor="text-black" className="leading-none">
-        {value}
-      </Text>
+      {subRow}
     </div>
   );
 }
 
-/** Thin divider used between the paired stat cards. */
-function CardDivider() {
+export interface IPreviouslyOverdueRowProps {
+  overdueCount: number;
+  totalCount: number;
+}
+
+/** "Previously Overdue x / y" pill shown under the Newly Checked In stat. */
+function PreviouslyOverdueRow({
+  overdueCount,
+  totalCount,
+}: IPreviouslyOverdueRowProps) {
   return (
     <div
-      role="separator"
-      aria-orientation="vertical"
-      className="my-3 w-[3px] shrink-0 rounded-full bg-[#F3F3F3]"
-    />
-  );
-}
-
-export interface IConjoinedStatCardProps {
-  left: IStatCardProps;
-  right: IStatCardProps;
-}
-
-/** Two StatCards joined by a divider inside a shared rounded container. */
-export function ConjoinedStatCard({ left, right }: IConjoinedStatCardProps) {
-  return (
-    <div className="flex min-w-[300px] grow-[507] basis-0 items-stretch rounded-[20px] bg-white">
-      <StatCard {...left} className="min-w-[130px] grow-[195] basis-0" />
-      <CardDivider />
-      <StatCard {...right} className="min-w-[160px] grow-[240] basis-0" />
+      className="flex items-center justify-between"
+      data-testid="stat-previously-overdue"
+    >
+      <Text
+        variant="body"
+        textColor="text-[#747A82]"
+        className="whitespace-nowrap text-[13px] leading-[150%]"
+      >
+        Previously Overdue
+      </Text>
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#F3F3F9] px-6 py-0.5 text-[13px] leading-[150%] text-[#383B40]">
+        {overdueCount} / {totalCount}
+      </span>
     </div>
   );
 }
@@ -83,87 +92,67 @@ export interface IReservationStatusChangesProps {
 }
 
 /**
- * "Reservation Status Changes" section — heading plus the reservation stat
- * boxes. Per the design, four transition stats sit grouped in one rounded grey
- * container (the first two paired behind a divider) and "Average days to
- * occupancy" is a separated container.
+ * "Reservation Status Changes" section — heading plus four equal-width stat
+ * cards. The first card shows a "Previously Overdue" ratio pill beneath its
+ * value, and a vertical divider separates "Average days to occupancy" from
+ * the rest.
  */
 export function ReservationStatusChanges({
   metrics,
   avgDaysToOccupancy,
 }: IReservationStatusChangesProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <Text variant="subheading" textColor="text-[#111827]">
+    <div className="flex flex-col gap-4">
+      <Text variant="subheading" textColor="text-[#111827]" className="pl-2">
         Reservation Status Changes
       </Text>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-        <div className="flex grow-[1091] basis-0 flex-wrap items-stretch gap-5 rounded-[28px] bg-[#F3F3F3] p-3">
-          <ConjoinedStatCard
-            left={{
-              icon: <CalendarCheck2 size={ICON_SIZE} className={iconClass} />,
-              title: 'Newly Checked In',
-              value:
-                metrics?.checkedIn != null ? String(metrics.checkedIn) : '—',
-              testId: 'stat-newly-checked-in',
-            }}
-            right={{
-              icon: <CalendarClock size={ICON_SIZE} className={iconClass} />,
-              title: (
-                <>
-                  Overdue{' '}
-                  <ArrowRight
-                    size={13}
-                    className={`${iconClass} inline-block align-middle`}
-                  />{' '}
-                  Checked In
-                </>
-              ),
-              value:
-                metrics?.checkInOverdueToCheckedIn != null
-                  ? String(metrics.checkInOverdueToCheckedIn)
-                  : '—',
-              testId: 'stat-overdue-to-checked-in',
-            }}
-          />
-          <StatCard
-            icon={<CalendarX2 size={ICON_SIZE} className={iconClass} />}
-            title="Newly Canceled"
-            value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'}
-            testId="stat-newly-canceled"
-            className="min-w-[140px] grow-[268] basis-0"
-          />
-          <StatCard
-            icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
-            title="Newly Overdue"
-            value={
-              metrics?.checkInOverdue != null
-                ? String(metrics.checkInOverdue)
-                : '—'
-            }
-            testId="stat-newly-overdue"
-            className="min-w-[140px] grow-[268] basis-0"
-          />
-        </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+        <StatCard
+          title="Newly Checked In"
+          value={metrics?.checkedIn != null ? String(metrics.checkedIn) : '—'}
+          subRow={
+            metrics?.checkInOverdueToCheckedIn != null &&
+            metrics?.checkedIn != null ? (
+              <PreviouslyOverdueRow
+                overdueCount={metrics.checkInOverdueToCheckedIn}
+                totalCount={metrics.checkedIn}
+              />
+            ) : undefined
+          }
+          testId="stat-newly-checked-in"
+          className="basis-0 lg:flex-1"
+        />
+        <StatCard
+          title="Newly Canceled"
+          value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'}
+          testId="stat-newly-canceled"
+          className="basis-0 lg:flex-1"
+        />
+        <StatCard
+          title="Newly Overdue"
+          value={
+            metrics?.checkInOverdue != null
+              ? String(metrics.checkInOverdue)
+              : '—'
+          }
+          testId="stat-newly-overdue"
+          className="basis-0 lg:flex-1"
+        />
 
         <div
           role="separator"
           aria-orientation="vertical"
-          className="hidden h-[83px] w-[3px] shrink-0 self-center rounded-full bg-[#E3E3E3] lg:block"
+          className="hidden w-[3px] shrink-0 self-stretch rounded-full bg-[#D0CFCF] lg:block"
         />
 
-        <div className="flex p-3 lg:grow-[298] lg:basis-0">
-          <StatCard
-            icon={<Clock size={ICON_SIZE} className={iconClass} />}
-            title="Average days to occupancy"
-            value={
-              avgDaysToOccupancy != null ? String(avgDaysToOccupancy) : '—'
-            }
-            testId="stat-average-days-to-occupancy"
-            className="min-w-[220px] flex-1"
-          />
-        </div>
+        <StatCard
+          icon={<Clock size={ICON_SIZE} className={iconClass} />}
+          title="Average days to occupancy"
+          value={avgDaysToOccupancy != null ? String(avgDaysToOccupancy) : '—'}
+          testId="stat-average-days-to-occupancy"
+          className="basis-0 lg:flex-1"
+        />
       </div>
     </div>
   );

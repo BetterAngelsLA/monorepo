@@ -15,6 +15,7 @@ import {
   KeyboardToolbarProvider,
   ModalScreenProvider,
   SnackbarProvider,
+  UploadProgressProvider,
   UserProvider,
 } from '@monorepo/expo/betterangels';
 import { createErrorLink, loggerLink } from '@monorepo/expo/shared/clients';
@@ -41,22 +42,24 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
   }, [apiUrl, rawFetch]);
 
   return (
-    <QueryClientProvider client={reactQueryClient}>
-      <ApolloClientProvider typePolicies={baTypePolicies} link={link}>
-        <BaFeatureControlProvider>
-          <KeyboardProvider>
-            <KeyboardToolbarProvider>
-              <SnackbarProvider>
-                <UserProvider>
-                  <BlockingScreenProvider>
-                    <ModalScreenProvider>{children}</ModalScreenProvider>
-                  </BlockingScreenProvider>
-                </UserProvider>
-              </SnackbarProvider>
-            </KeyboardToolbarProvider>
-          </KeyboardProvider>
-        </BaFeatureControlProvider>
-      </ApolloClientProvider>
-    </QueryClientProvider>
+    <UploadProgressProvider>
+      <QueryClientProvider client={reactQueryClient}>
+        <ApolloClientProvider typePolicies={baTypePolicies} link={link}>
+          <BaFeatureControlProvider>
+            <KeyboardProvider>
+              <KeyboardToolbarProvider>
+                <SnackbarProvider>
+                  <UserProvider>
+                    <BlockingScreenProvider>
+                      <ModalScreenProvider>{children}</ModalScreenProvider>
+                    </BlockingScreenProvider>
+                  </UserProvider>
+                </SnackbarProvider>
+              </KeyboardToolbarProvider>
+            </KeyboardProvider>
+          </BaFeatureControlProvider>
+        </ApolloClientProvider>
+      </QueryClientProvider>
+    </UploadProgressProvider>
   );
 }
