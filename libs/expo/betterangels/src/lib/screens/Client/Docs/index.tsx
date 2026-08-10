@@ -7,6 +7,7 @@ import { ClientDocumentType } from '../../../apollo';
 import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
+import EmptyState from './EmptyState';
 import UploadModal from './UploadModal';
 
 export default function Docs({
@@ -21,6 +22,17 @@ export default function Docs({
     expanded,
     setExpanded,
   };
+
+  const hasDocReadyDocuments =
+    !!client?.clientProfile.docReadyDocuments?.length;
+
+  const hasConsentFormDocuments =
+    !!client?.clientProfile.consentFormDocuments?.length;
+
+  const hasOtherDocuments = !!client?.clientProfile.otherDocuments?.length;
+
+  const hasAnyDocuments =
+    hasDocReadyDocuments || hasConsentFormDocuments || hasOtherDocuments;
 
   return (
     <ScrollView
@@ -53,41 +65,47 @@ export default function Docs({
           <PlusIcon />
         </IconButton>
       </View>
+
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
-        {client?.clientProfile.docReadyDocuments &&
-          client?.clientProfile.docReadyDocuments?.length > 0 && (
-            <Documents
-              title="Doc Ready"
-              {...props}
-              data={
-                client?.clientProfile.docReadyDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
-        {client?.clientProfile.consentFormDocuments &&
-          client?.clientProfile.consentFormDocuments?.length > 0 && (
-            <Documents
-              title="Forms"
-              {...props}
-              data={
-                client?.clientProfile
-                  .consentFormDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
-        {client?.clientProfile.otherDocuments &&
-          client?.clientProfile.otherDocuments?.length > 0 && (
-            <Documents
-              title="Other"
-              {...props}
-              data={
-                client?.clientProfile.otherDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
+        {!hasAnyDocuments ? (
+          <EmptyState />
+        ) : (
+          <>
+            {hasDocReadyDocuments && (
+              <Documents
+                title="Doc Ready"
+                {...props}
+                data={
+                  client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id}
+              />
+            )}
+
+            {hasConsentFormDocuments && (
+              <Documents
+                title="Forms"
+                {...props}
+                data={
+                  client?.clientProfile
+                    .consentFormDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id}
+              />
+            )}
+
+            {hasOtherDocuments && (
+              <Documents
+                title="Other"
+                {...props}
+                data={
+                  client?.clientProfile.otherDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id}
+              />
+            )}
+          </>
+        )}
       </View>
     </ScrollView>
   );

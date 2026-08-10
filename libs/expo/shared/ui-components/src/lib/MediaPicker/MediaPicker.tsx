@@ -68,8 +68,12 @@ export function MediaPicker(props: MediaPickerModalProps) {
       return;
     }
 
-    onFilesSelected(result.files);
-    onMediaPickerClose();
+    // Selection always closes the picker, even if the caller's handler throws.
+    try {
+      onFilesSelected(result.files);
+    } finally {
+      onMediaPickerClose();
+    }
   }
 
   async function handlePickDocuments() {
@@ -83,8 +87,12 @@ export function MediaPicker(props: MediaPickerModalProps) {
       return;
     }
 
-    onFilesSelected(result.files);
-    onMediaPickerClose();
+    // Selection always closes the picker, even if the caller's handler throws.
+    try {
+      onFilesSelected(result.files);
+    } finally {
+      onMediaPickerClose();
+    }
   }
 
   const handleMenuSheetClose = useCallback(() => {
@@ -122,8 +130,12 @@ export function MediaPicker(props: MediaPickerModalProps) {
         <CameraModal
           onClose={() => setCurrentMode('menu')}
           onCapture={(file) => {
-            onCameraCapture(file);
-            onMediaPickerClose();
+            // Capture always closes the picker, even if the handler throws.
+            try {
+              onCameraCapture(file);
+            } finally {
+              onMediaPickerClose();
+            }
           }}
         />
       )}
