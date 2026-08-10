@@ -169,7 +169,7 @@ class ShelterFilter:
     def open_now_for(
         self,
         queryset: QuerySet,
-        value: Optional[List[ScheduleTypeChoices]],
+        value: Optional[list[ScheduleTypeChoices]],
         prefix: str,
     ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:

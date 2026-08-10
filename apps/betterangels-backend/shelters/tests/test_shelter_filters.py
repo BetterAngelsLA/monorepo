@@ -517,7 +517,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(result_ids, {str(shelter.id) for shelter in shelters_in_spa})
 
-    def test_shelter_open_now_filter(self) -> None:
+    def test_shelter_open_now_for_filter(self) -> None:
         open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         closed_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         fixed_utc_now = datetime.datetime(
@@ -572,7 +572,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertIn(str(open_shelter.pk), result_ids)
         self.assertNotIn(str(closed_shelter.pk), result_ids)
 
-    def test_shelter_open_now_excludes_permanent_closed_exception(self) -> None:
+    def test_shelter_open_now_for_excludes_permanent_closed_exception(self) -> None:
         """A shelter with a permanent closed exception (no date bounds)
         for the current day should NOT appear in Open Now results."""
         shelter_with_exception = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -637,7 +637,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
         self.assertIn(str(shelter_without_exception.pk), result_ids)
 
-    def test_shelter_open_now_no_exceptions(self) -> None:
+    def test_shelter_open_now_for_no_exceptions(self) -> None:
         """Regression: shelters open on Monday must not be excluded because of
         a *different-day* permanent closed exception on the same shelter.
 
@@ -705,7 +705,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter with regular hours and no exceptions must appear in Open Now",
         )
 
-    def test_shelter_open_now_every_day_schedule(self) -> None:
+    def test_shelter_open_now_for_every_day_schedule(self) -> None:
         """Schedules with day=NULL mean 'every day' and must be matched
         by the Open Now filter regardless of the current weekday."""
         shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
@@ -755,7 +755,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter with day=NULL (every-day) schedule must appear in Open Now",
         )
 
-    def test_shelter_open_now_excludes_partial_day_exception(self) -> None:
+    def test_shelter_open_now_for_excludes_partial_day_exception(self) -> None:
         """A shelter with a partial-day exception covering the current time
         should NOT appear in Open Now results, but a shelter whose partial
         exception does NOT cover the current time should still appear."""
@@ -833,7 +833,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter with partial exception NOT covering current time must appear",
         )
 
-    def test_shelter_open_now_multiple_schedule_types(self) -> None:
+    def test_shelter_open_now_for_multiple_schedule_types(self) -> None:
         """openNowFor accepts a list of schedule types and returns shelters open in ANY of them (union)."""
         # Monday 1:00 PM PST
         fixed_pst = datetime.datetime(
@@ -913,7 +913,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter with only STAFF_AVAILABILITY schedule (outside requested types) must be excluded.",
         )
 
-    def test_shelter_open_now_multiple_types_exception_per_type(self) -> None:
+    def test_shelter_open_now_for_multiple_types_exception_per_type(self) -> None:
         """A partial exception for one schedule type must not close the shelter under a different type."""
         # Monday 1:00 PM PST
         fixed_pst = datetime.datetime(
@@ -1002,7 +1002,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             None,
         ],
     )
-    def test_shelter_open_now_empty_or_null_is_noop(self, open_now_for: list[ScheduleTypeChoices] | None) -> None:
+    def test_shelter_open_now_for_empty_or_null_is_noop(self, open_now_for: list[ScheduleTypeChoices] | None) -> None:
         """An empty or null schedule-type list disables the filter (does not exclude shelters)."""
         no_schedule_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
         closed_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
