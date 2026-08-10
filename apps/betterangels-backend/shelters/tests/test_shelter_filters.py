@@ -562,7 +562,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": True}},
+                variables={"filters": {"openNow": {}}},
             )
 
         results = response["data"]["shelters"]["results"]
@@ -625,7 +625,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": True}},
+                variables={"filters": {"openNow": {}}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -694,7 +694,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": True}},
+                variables={"filters": {"openNow": {}}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -744,7 +744,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": True}},
+                variables={"filters": {"openNow": {}}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
@@ -817,7 +817,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ):
             response = self.execute_graphql(
                 query,
-                variables={"filters": {"openNow": True}},
+                variables={"filters": {"openNow": {}}},
             )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}

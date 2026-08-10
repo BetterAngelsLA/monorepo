@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -88,6 +88,11 @@ class ShelterPropertyInput:
 @strawberry.input
 class MaxStayInput:
     days: int
+    include_null: Optional[bool] = False
+
+
+@strawberry.input
+class OpenNowInput:
     include_null: Optional[bool] = False
 
 
@@ -166,18 +171,33 @@ class ShelterFilter:
         return queryset.filter(combined_q).distinct(), Q()
 
     @strawberry_django.filter_field
-    def open_now(self, queryset: QuerySet, value: Optional[bool], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+    def open_now(
+        self, queryset: QuerySet, value: Optional[OpenNowInput], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
 
-        return (
-            shelters_open_at(
-                queryset,
-                dt=get_current_shelter_schedule_datetime(),
-                schedule_type=ScheduleTypeChoices.OPERATING,
-            ),
-            Q(),
-        )
+        from shelters.models import Schedule
+
+        open_pks = shelters_open_at(
+            queryset,
+            dt=get_current_shelter_schedule_datetime(),
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        ).values("pk")
+
+        open_condition = Q(pk__in=open_pks)
+
+        if value.include_null:
+            has_no_operating_schedule = ~Exists(
+                Schedule.objects.filter(
+                    shelter=OuterRef("pk"),
+                    schedule_type=ScheduleTypeChoices.OPERATING,
+                    is_exception=False,
+                )
+            )
+            open_condition |= has_no_operating_schedule
+
+        return queryset.filter(open_condition), Q()
 
     @strawberry_django.filter_field
     def map_bounds(
