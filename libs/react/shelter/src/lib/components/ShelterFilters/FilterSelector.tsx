@@ -18,7 +18,9 @@ type IProps = {
   onChange: (name: TFilterConfig['name'], selected: string[]) => void;
 };
 
-const PRIORITY_OPTION_COUNT = 7;
+const MAX_VISIBLE_ROWS = 7;
+const SELECT_ALL_ROW_COUNT = 1;
+const INITIAL_OPTION_COUNT = MAX_VISIBLE_ROWS - SELECT_ALL_ROW_COUNT;
 
 export function FilterSelector(props: IProps) {
   const { header, name, options, values, expanded, onChange, className } =
@@ -37,11 +39,11 @@ export function FilterSelector(props: IProps) {
     [options],
   );
 
-  const hasAdditionalOptions = sortedOptions.length > PRIORITY_OPTION_COUNT;
+  const hasAdditionalOptions = sortedOptions.length > INITIAL_OPTION_COUNT;
 
   const visibleOptions = showMoreOptions
     ? sortedOptions
-    : sortedOptions.slice(0, PRIORITY_OPTION_COUNT);
+    : sortedOptions.slice(0, INITIAL_OPTION_COUNT);
 
   function handleOptionsChange(selected: string[]) {
     const visibleValues = new Set(
