@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
     baseHrefPlugin(basePath),
     // Vite handles ?raw SVG imports natively.
     // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
-    ...(process.env.VITEST ? [svgTestResolver(__dirname)] : []),
+    ...(process.env.VITEST ? [svgTestResolver()] : []),
   ],
 
   resolve: {
