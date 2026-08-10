@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.14.6-trixie AS base
+FROM python:3.15.0rc1-trixie AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
