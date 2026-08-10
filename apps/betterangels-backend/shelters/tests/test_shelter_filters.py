@@ -1051,8 +1051,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertIn(
             str(closed_shelter.pk),
             result_ids,
-            "A shelter with no currently-open schedule must still be returned when "
-            "the openNowFor filter is a no-op.",
+            "A shelter with no currently-open schedule must still be returned when the openNowFor filter is a no-op.",
         )
 
     def test_shelter_has_available_beds_filter_true(self) -> None:
