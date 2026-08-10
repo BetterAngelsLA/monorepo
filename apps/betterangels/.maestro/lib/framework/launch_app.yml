@@ -3,10 +3,12 @@ appId: ${MAESTRO_APP_ID}
 # Set a deterministic device location for tests that rely on GPS.
 # Choose coordinates that match your test fixtures.
 
-# Los Angeles Central Library: '203 S Los Angeles St'
+# 727 W 7th St, Los Angeles, CA 90017
+# our default address in expo useInitialLocation.ts and NoteForm/Location
+# TODO: consolidate INITIAL_LOCATION in expo libs
 - setLocation:
-    latitude: 34.05028
-    longitude: -118.243683
+    latitude: 34.048655
+    longitude: -118.258815
 
 # Launches the app via Expo deep link.
 # Handles the "Reload" overlay that can appear on first launch

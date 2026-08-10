@@ -64,7 +64,7 @@ appId: ${MAESTRO_APP_ID}
 - waitForAnimationToEnd
 
 # Assert current location: set as static value in launch_app.yml
-- assertVisible: '203 S Los Angeles St'
+- assertVisible: '727 W 7th St'
 
 # Submit
 - tapOn:
