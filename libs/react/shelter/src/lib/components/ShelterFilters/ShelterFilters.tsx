@@ -47,13 +47,10 @@ const HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW = [
   parkingFilter,
   petsFilter,
   referralRequirementFilter,
+  roomStyleFilter,
 ];
 
-const LOW_PRIORITY_FILTERS = [
-  roomStyleFilter,
-  shelterTypeFilter,
-  specialSituationFilter,
-];
+const LOW_PRIORITY_FILTERS = [shelterTypeFilter, specialSituationFilter];
 
 export function ShelterFilters(props: IProps) {
   const { className, filters, onFiltersChange } = props;
@@ -153,7 +150,6 @@ export function ShelterFilters(props: IProps) {
       </div>
 
       <div>
-
         <div className="mt-8">
           <ExpandableContainer header="Access Center">
             <Checkbox
@@ -166,7 +162,6 @@ export function ShelterFilters(props: IProps) {
 
         {HIGH_PRIORITY_FILTERS_BEFORE_OPEN_NOW.map(renderFilterSelector)}
 
-        {/* Open Now */}
         <div className="mt-8">
           <ExpandableContainer header="Open Now">
             <div className="flex flex-col gap-2">
@@ -187,8 +182,7 @@ export function ShelterFilters(props: IProps) {
         {HIGH_PRIORITY_FILTERS_AFTER_OPEN_NOW.map(renderFilterSelector)}
 
         <div id="low-priority-shelter-filters">
-          {showMoreCategories &&
-            LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
+          {showMoreCategories && LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
         </div>
 
         <button
@@ -221,9 +215,7 @@ export function ShelterFilters(props: IProps) {
               min={1}
               max={maxStayMax}
               value={filters.maxStay?.days || ''}
-              onChange={(event) =>
-                onMaxStayDaysChange(event.target.value)
-              }
+              onChange={(event) => onMaxStayDaysChange(event.target.value)}
               placeholder={
                 maxStayMax
                   ? `Enter number between 1 and ${maxStayMax}`
