@@ -100,7 +100,6 @@ fi
 
 export MAESTRO_DEVICE
 
-
 # -----------------------------
 # Resolve deep link
 # -----------------------------

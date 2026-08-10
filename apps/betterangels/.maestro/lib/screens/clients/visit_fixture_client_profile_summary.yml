@@ -53,7 +53,7 @@ appId: ${MAESTRO_APP_ID}
       - waitForAnimationToEnd
       - assertVisible: ${output.fixtureClientName}
       - assertVisible:
-          id: 'tab-profile'
+          id: 'client-tab-profile'
 
       # Go back to clients list and re-select
       - tapOn:

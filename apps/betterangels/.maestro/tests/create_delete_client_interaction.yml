@@ -36,7 +36,7 @@ appId: ${MAESTRO_APP_ID}
 # #########################
 
 - tapOn:
-    id: 'tab-interactions'
+    id: 'client-tab-interactions'
 - waitForAnimationToEnd
 
 - tapOn:
@@ -78,7 +78,7 @@ appId: ${MAESTRO_APP_ID}
 
 # visit Interactions Tab to confirm
 - tapOn:
-    id: 'tab-interactions'
+    id: 'client-tab-interactions'
 - waitForAnimationToEnd
 
 # Latest created interaction should be at the top
