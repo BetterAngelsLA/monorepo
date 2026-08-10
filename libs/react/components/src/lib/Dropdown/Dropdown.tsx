@@ -35,6 +35,9 @@ export function Dropdown<T extends string>({
     <div ref={dropdownRef} className={`relative inline-block ${className}`}>
       <div
         className="m-1 cursor-pointer"
+        role="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen((prev) => !prev)}
       >
         {title}

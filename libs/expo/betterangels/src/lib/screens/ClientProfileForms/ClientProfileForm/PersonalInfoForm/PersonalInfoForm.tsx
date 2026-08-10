@@ -30,7 +30,7 @@ const languageOptions = Object.entries(enumDisplayLanguage).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
@@ -39,7 +39,7 @@ const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
@@ -48,7 +48,7 @@ const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
       value: enumValue,
       displayValue,
     };
-  }
+  },
 );
 
 export function PersonalInfoForm() {
@@ -84,12 +84,12 @@ export function PersonalInfoForm() {
   });
 
   const clientDedupeFeatureOn = useFeatureFlagActive(
-    FeatureFlags.CLIENT_DEDUPE_FF
+    FeatureFlags.CLIENT_DEDUPE_FF,
   );
 
   const uniqueCheckError = useCaliforniaIdUniqueCheck(
     californiaId as string,
-    id as string
+    id as string,
   );
 
   useEffect(() => {
@@ -164,6 +164,7 @@ export function PersonalInfoForm() {
       <Form.Field title="Date of Birth">
         <DatePicker
           type="numeric"
+          testId="datepicker-input"
           placeholder="Enter date"
           validRange={{
             endDate: new Date(),
@@ -181,6 +182,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Living Situation">
         <SingleSelect
+          testId="living-situation-select"
           placeholder="Select situation"
           items={livingSituationOptions}
           selectedValue={livingSituation || undefined}
@@ -192,6 +194,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Veteran Status">
         <SingleSelect
+          testId="veteran-status-select"
           placeholder="Select veteran status"
           items={veteranStatusOptions}
           selectedValue={veteranStatus || undefined}
@@ -203,6 +206,7 @@ export function PersonalInfoForm() {
 
       <Form.Field title="Preferred Language">
         <SingleSelect
+          testId="preferred-language-select"
           placeholder="Select language"
           items={languageOptions}
           selectedValue={preferredLanguage || undefined}

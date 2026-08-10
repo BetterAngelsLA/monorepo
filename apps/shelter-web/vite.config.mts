@@ -3,8 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases, svgTestResolver } from '../../libs/vite-utils/src/index';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
@@ -48,8 +47,10 @@ export default defineConfig(({ mode }) => {
 
     plugins: [
       react(),
-      rawSvgPlugin(),
       baseHrefPlugin(basePath),
+      // Vite handles ?raw SVG imports natively.
+      // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
+      ...(process.env.VITEST ? [svgTestResolver()] : []),
     ],
 
     resolve: {
@@ -74,6 +75,12 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         transformMixedEsModules: true,
       },
+    },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
     },
   };
 });

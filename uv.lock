@@ -1415,7 +1415,7 @@ dev = [
     { name = "pytest-django", specifier = ">=4.11.1,<5" },
     { name = "ruff", specifier = ">=0.15.0,<1.0.0" },
     { name = "time-machine", specifier = ">=3.2.0,<4" },
-    { name = "types-gevent", specifier = ">=25.4.0.20250801,<26" },
+    { name = "types-gevent", specifier = ">=25.4.0.20250801,<27" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20260518,<4" },
     { name = "types-python-dateutil", specifier = ">=2.9.0.20260124,<3" },
     { name = "types-requests", specifier = ">=2.32.0,<3" },

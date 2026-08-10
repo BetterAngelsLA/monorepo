@@ -6,6 +6,6 @@
     "declaration": true,
     "outDir": "../../../dist/out-tsc",
     "module": "commonjs",
-    "types": ["jest", "node"]
+    "types": ["node"]
   }
 }

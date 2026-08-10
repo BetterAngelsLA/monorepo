@@ -6,7 +6,7 @@ describe('Radio component', () => {
     const { getByText } = render(
       <Radio
         displayValue="Option Test"
-        onPress={jest.fn()}
+        onPress={vi.fn()}
         value="test"
         selectedValue="other"
       />
@@ -15,7 +15,7 @@ describe('Radio component', () => {
   });
 
   it('calls onPress with value when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <Radio
         displayValue="Pressable Option"
@@ -32,7 +32,7 @@ describe('Radio component', () => {
     const { getByA11yHint } = render(
       <Radio
         displayValue="Accessibility Test"
-        onPress={jest.fn()}
+        onPress={vi.fn()}
         value="test"
         selectedValue="other"
       />

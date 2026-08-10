@@ -3,9 +3,8 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
-import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
+import { monorepoTsconfigAliases, svgTestResolver } from '../../libs/vite-utils/src/index';
 import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../tools/vite/monorepo-aliases';
 
 const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
@@ -25,15 +24,6 @@ export default defineConfig(({ mode }) => {
   server: {
     port: SERVER_PORT,
     host: 'localhost',
-    fs: {
-      allow: [
-        // TODO: confirm if this configuration is needed.
-        // Did not need this with shelter-web
-        path.resolve(__dirname, '../../libs/assets/src'), // Allow assets from libs
-        path.resolve(__dirname, 'src'), // Allow app source directory (relative to the app folder)
-        path.resolve(__dirname, '../../apps/wildfires/src'), // Ensure this allows
-      ],
-    },
   },
 
   preview: {
@@ -43,11 +33,15 @@ export default defineConfig(({ mode }) => {
 
   plugins: [
     react(),
-    rawSvgPlugin(),
     baseHrefPlugin(basePath),
+    // Vite handles ?raw SVG imports natively.
+    // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
+    ...(process.env.VITEST ? [svgTestResolver()] : []),
   ],
 
-  resolve: { alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')) },
+  resolve: {
+    alias: monorepoTsconfigAliases(path.resolve(__dirname, '../..')),
+  },
 
   css: {
     postcss: {
@@ -72,6 +66,12 @@ export default defineConfig(({ mode }) => {
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+  },
+
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 };
 });

@@ -7,6 +7,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "eslint.format.enable": true,
+  "eslint.useFlatConfig": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

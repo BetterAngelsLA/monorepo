@@ -5,6 +5,6 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "composite": true,
-    "types": ["jest", "node", "vite/client"]
+    "types": ["node", "vite/client"]
   }
 }

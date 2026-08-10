@@ -5,13 +5,22 @@ import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import { OperatorLayout } from './components/layout/OperatorLayout';
-import { UsersPage } from './pages';
-import { EditBedPage } from './pages/beds/EditBedPage';
+import {
+  BedsPage,
+  CreateBedPage,
+  CreateReservationPage,
+  CreateRoomPage,
+  EditBedPage,
+  EditReservationPage,
+  EditRoomPage,
+  OccupantsPage,
+  ReportsPage,
+  ReservationsPage,
+  RoomsPage,
+  UsersPage,
+} from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import ShelterDashboardPage from './pages/dashboard/ShelterDashboardPage';
-import { ReservationFormPage } from './pages/reservations/ReservationFormPage';
-import { EditRoomPage } from './pages/rooms/EditRoomPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -93,46 +102,55 @@ export function OperatorApp() {
               />
             </Route>
             <Route path={routePath(mgmtRouteConfig.root)}>
-              <Route index element={<ShelterDashboardPage tab="reports" />} />
               <Route
-                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
-                element={<EditRoomPage />}
+                index
+                element={
+                  <Navigate to={mgmtRouteConfig.children.beds} replace />
+                }
               />
               <Route
-                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
-                element={<EditRoomPage />}
-              />
-              <Route
-                path={mgmtRouteConfig.children.rooms}
-                element={<ShelterDashboardPage tab="rooms" />}
+                path={mgmtRouteConfig.children.beds}
+                element={<BedsPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
-                element={<EditBedPage />}
+                element={<CreateBedPage />}
               />
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
                 element={<EditBedPage />}
               />
               <Route
-                path={mgmtRouteConfig.children.beds}
-                element={<ShelterDashboardPage tab="beds" />}
+                path={mgmtRouteConfig.children.rooms}
+                element={<RoomsPage />}
               />
               <Route
-                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
-                element={<ReservationFormPage />}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
+                element={<CreateRoomPage />}
               />
               <Route
-                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
-                element={<ReservationFormPage />}
-              />
-              <Route
-                path={mgmtRouteConfig.children.occupants}
-                element={<ShelterDashboardPage tab="occupants" />}
+                path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
+                element={<EditRoomPage />}
               />
               <Route
                 path={mgmtRouteConfig.children.reservations}
-                element={<ShelterDashboardPage tab="reservations" />}
+                element={<ReservationsPage />}
+              />
+              <Route
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
+                element={<CreateReservationPage />}
+              />
+              <Route
+                path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
+                element={<EditReservationPage />}
+              />
+              <Route
+                path={mgmtRouteConfig.children.occupants}
+                element={<OccupantsPage />}
+              />
+              <Route
+                path={mgmtRouteConfig.children.reports}
+                element={<ReportsPage />}
               />
             </Route>
           </Route>
