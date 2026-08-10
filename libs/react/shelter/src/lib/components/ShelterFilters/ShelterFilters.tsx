@@ -1,6 +1,5 @@
 import { useQuery } from '@apollo/client/react';
 import { Checkbox, ExpandableContainer } from '@monorepo/react/components';
-import { ChevronLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useState } from 'react';
 import { ScheduleTypeChoices } from '../../apollo';
@@ -18,6 +17,7 @@ import {
   TFilterConfig,
 } from './config';
 import { FilterSelector } from './FilterSelector';
+import { ShowMoreToggle } from './ShowMoreToggle';
 
 type IProps = {
   className?: string;
@@ -219,26 +219,13 @@ export function ShelterFilters(props: IProps) {
           {showMoreCategories && LOW_PRIORITY_FILTERS.map(renderFilterSelector)}
         </div>
 
-        <button
-          type="button"
-          className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
-          aria-expanded={showMoreCategories}
-          aria-controls="low-priority-shelter-filters"
+        <ShowMoreToggle
+          expanded={showMoreCategories}
+          moreLabel="Show More Categories"
+          lessLabel="Show Less Categories"
+          controls="low-priority-shelter-filters"
           onClick={() => setShowMoreCategories((current) => !current)}
-        >
-          <span>
-            {showMoreCategories
-              ? 'Show Less Categories'
-              : 'Show More Categories'}
-          </span>
-
-          <ChevronLeftIcon
-            className={mergeCss([
-              'w-3 text-primary-20 transition-transform',
-              showMoreCategories ? 'rotate-90' : '-rotate-90',
-            ])}
-          />
-        </button>
+        />
 
         <div className="mt-8">
           <div className="flex items-center justify-between">Max Stay</div>
