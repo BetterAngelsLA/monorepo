@@ -63,7 +63,8 @@ appId: ${MAESTRO_APP_ID}
 - tapOn: 'Done'
 - waitForAnimationToEnd
 
-# Assert current location: set as static value in launch_app.yml
+# Assert default location set in launch_app.yml
+# should match INITIAL_LOCATION in NoteForm/Location
 - assertVisible: '727 W 7th St'
 
 # Submit

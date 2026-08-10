@@ -4,8 +4,7 @@ appId: ${MAESTRO_APP_ID}
 # Choose coordinates that match your test fixtures.
 
 # 727 W 7th St, Los Angeles, CA 90017
-# our default address in expo useInitialLocation.ts and NoteForm/Location
-# TODO: consolidate INITIAL_LOCATION in expo libs
+# should match INITIAL_LOCATION in NoteForm/Location
 - setLocation:
     latitude: 34.048655
     longitude: -118.258815

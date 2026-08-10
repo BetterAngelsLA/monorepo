@@ -100,19 +100,6 @@ fi
 
 export MAESTRO_DEVICE
 
-# -----------------------------
-# Pre-grant Android runtime permissions
-# -----------------------------
-# On Android, Maestro's `setPermissions` relies on `adb shell pm grant`,
-# which can silently fail (e.g. app not fully installed yet when the flow
-# starts). Pre-grant at the host level so the location prompt never appears
-# mid-test. Harmless if the app isn't installed yet (grant fails -> ignored).
-# if [[ "$PLATFORM" == "android" ]]; then
-#   ANDROID_APP_ID="${MAESTRO_APP_ID:-la.betterangels.dev.app}"
-#   adb shell pm grant "$ANDROID_APP_ID" android.permission.ACCESS_FINE_LOCATION >/dev/null 2>&1 || true
-#   adb shell pm grant "$ANDROID_APP_ID" android.permission.ACCESS_COARSE_LOCATION >/dev/null 2>&1 || true
-#   echo "🔐 Pre-granted location permissions to $ANDROID_APP_ID"
-# fi
 
 # -----------------------------
 # Resolve deep link
