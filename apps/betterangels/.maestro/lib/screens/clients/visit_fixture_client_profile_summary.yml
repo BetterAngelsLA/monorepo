@@ -12,14 +12,23 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: clients-screen
 
-- evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-client'}
+# define define fixtureClientName by platform to avoid parallel issues in CI
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-ios-client'}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-android-client'}
 
 # Search and try to select the client
 - runFlow:
     file: search_and_select_client.yml
     env:
       CLIENT_NAME: ${output.fixtureClientName}
-      # X1234567
 
 # If not found, create it
 - runFlow:
@@ -43,10 +52,13 @@ appId: ${MAESTRO_APP_ID}
           id: 'action-btn-primary'
       - waitForAnimationToEnd
       - assertVisible: ${output.fixtureClientName}
+      - assertVisible:
+          id: 'tab-profile'
 
       # Go back to clients list and re-select
       - tapOn:
-          id: 'tab-clients'
+          id: 'client-screen-back-btn'
+
       - runFlow:
           file: search_and_select_client.yml
           env:

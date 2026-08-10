@@ -17,7 +17,7 @@ appId: ${MAESTRO_APP_ID}
 - hideKeyboard
 - waitForAnimationToEnd
 
-# If the name appears in a card, tap it (index 1 = card, index 0 = search input)
+# find card by testID or check for `No Results` in search
 - runFlow:
     when:
       notVisible: 'No results'
@@ -26,10 +26,3 @@ appId: ${MAESTRO_APP_ID}
           id: ${'client-card-' + CLIENT_NAME}
       - waitForAnimationToEnd
       - evalScript: ${output.clientFound = true}
-# - tapOn:
-#     id: ${'client-card-' + CLIENT_NAME}
-#     # text: ${CLIENT_NAME}
-#     # id: ${CLIENT_NAME}
-#     # index: 1
-# - waitForAnimationToEnd
-# - evalScript: ${output.clientFound = true}
