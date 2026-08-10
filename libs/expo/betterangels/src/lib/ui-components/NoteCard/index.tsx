@@ -25,7 +25,7 @@ export default function NoteCard(props: INoteCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      testID={testId ?? toTestId({ prefix: 'note-card', value: note.purpose })}
+      testID={testId ?? toTestId(['note-card', note.purpose])}
       onPress={() => {
         if (onPress) {
           onPress();

@@ -4,34 +4,32 @@ import { toTestId } from './toTestId';
 type TTestCase = [Parameters<typeof toTestId>[0], string];
 
 const testCases: TTestCase[] = [
-  // basic value only
-  [{ value: 'hello' }, 'hello'],
-  // prefix
+  // single segment
+  [['hello'], 'hello'],
+  // multiple segments joined with dashes
+  [['client-card', 'e2e-test-client'], 'client-card-e2e-test-client'],
+  [['John', 'Doe'], 'john-doe'],
   [
-    { prefix: 'client-card', value: 'e2e-test-client' },
-    'client-card-e2e-test-client',
-  ],
-  // suffix
-  [{ value: 'John', suffix: 'Doe' }, 'john-doe'],
-  // prefix + value + suffix
-  [
-    { prefix: 'note-card', value: 'interaction-1785966140837' },
+    ['note-card', 'interaction-1785966140837'],
     'note-card-interaction-1785966140837',
   ],
-  // case normalization (prefix, value, suffix)
-  [{ value: 'tAbS' }, 'tabs'],
-  [{ prefix: 'TAB', value: 'Interactions' }, 'tab-interactions'],
+  // case normalization per segment
+  [['tAbS'], 'tabs'],
+  [['TAB', 'Interactions'], 'tab-interactions'],
   // whitespace collapsed to dashes
-  [{ prefix: 'edit', value: 'Personal Info' }, 'edit-personal-info'],
-  [{ value: '  Hello   World  ' }, 'hello-world'],
+  [['edit', 'Personal Info'], 'edit-personal-info'],
+  [['  Hello   World  '], 'hello-world'],
   // non-alphanumeric characters stripped
-  [{ value: 'a!b@c' }, 'abc'],
+  [['a!b@c'], 'abc'],
   // alphanumeric tokens preserved — regression: remeda's toKebabCase
   // split letter<->digit boundaries ("e2e" -> "e-2-e")
-  [{ value: 'e2e' }, 'e2e'],
-  [{ value: 'client v2' }, 'client-v2'],
+  [['e2e'], 'e2e'],
+  [['client v2'], 'client-v2'],
   // digit-only values preserved
-  [{ value: '123' }, '123'],
+  [['123'], '123'],
+  // nullish/empty segments dropped, remaining joined
+  [['a', null, 'b'], 'a-b'],
+  [['edit', undefined], 'edit'],
 ];
 
 describe('toTestId', () => {
@@ -41,17 +39,21 @@ describe('toTestId', () => {
     });
   });
 
-  describe('empty or missing value', () => {
+  describe('empty or missing segments', () => {
     it('returns "" for null', () => {
-      expect(toTestId({ value: null })).toBe('');
+      expect(toTestId([null])).toBe('');
     });
 
     it('returns "" for undefined', () => {
-      expect(toTestId({ value: undefined })).toBe('');
+      expect(toTestId([undefined])).toBe('');
     });
 
     it('returns "" for empty string', () => {
-      expect(toTestId({ value: '' })).toBe('');
+      expect(toTestId([''])).toBe('');
+    });
+
+    it('returns "" for an empty array', () => {
+      expect(toTestId([])).toBe('');
     });
   });
 });

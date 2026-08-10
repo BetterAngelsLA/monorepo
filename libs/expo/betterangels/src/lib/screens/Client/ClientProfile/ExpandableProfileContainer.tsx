@@ -67,7 +67,7 @@ function Header(props: THeader) {
       {isOpen && (
         <EditButton
           onClick={onEditClick}
-          testId={toTestId({ prefix: 'edit', value: title })}
+          testId={toTestId(['edit', title])}
           style={styles.editButton}
           accessibilityHint={`edit ${ClientProfileCardTitles[card]}`}
         />
@@ -100,7 +100,7 @@ function OpenCloseButton(props: TOpenCloseButton) {
   return (
     <Pressable
       onPress={onClick}
-      testID={toTestId({ value: testId })}
+      testID={toTestId([testId])}
       accessible
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}

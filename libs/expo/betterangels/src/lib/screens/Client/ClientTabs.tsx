@@ -110,7 +110,7 @@ function TabItem({ label, active, onPress }: TabItemProps) {
       {/* Visible control = original TextButton (keeps exact colors/regular prop behavior) */}
       <TextButton
         onPress={onPress}
-        testId={toTestId({ prefix: 'tab', value: label })}
+        testId={toTestId(['tab', label])}
         style={btnStyle}
         regular={!active}
         title={label}
