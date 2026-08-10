@@ -995,11 +995,38 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             "Shelter must be excluded when only INTAKE is requested and INTAKE has an active exception.",
         )
 
-    def test_shelter_open_now_empty_list_is_noop(self) -> None:
-        """An empty schedule-type list disables the filter (does not exclude shelters)."""
-        shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
-        # No schedules at all — this shelter should still be returned when the
-        # openNowFor filter is a no-op.
+    @parametrize(
+        "open_now_for",
+        [
+            [],
+            None,
+        ],
+    )
+    def test_shelter_open_now_empty_or_null_is_noop(self, open_now_for: list[ScheduleTypeChoices] | None) -> None:
+        """An empty or null schedule-type list disables the filter (does not exclude shelters)."""
+        no_schedule_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        closed_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        # closed_shelter has an OPERATING schedule that does NOT cover "now", so
+        # it would be excluded if the filter were (incorrectly) applied.
+
+        # Monday 1:00 PM PST — outside closed_shelter's 8–10 AM window.
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        Schedule.objects.create(
+            shelter=closed_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(10, 0),
+            is_exception=False,
+        )
 
         query = """
             query ($filters: ShelterFilter) {
@@ -1010,10 +1037,23 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             }
         """
 
-        response = self.execute_graphql(query, variables={"filters": {"openNowFor": []}})
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNowFor": open_now_for}},
+            )
 
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
-        self.assertIn(str(shelter.pk), result_ids)
+        self.assertIn(str(no_schedule_shelter.pk), result_ids)
+        self.assertIn(
+            str(closed_shelter.pk),
+            result_ids,
+            "A shelter with no currently-open schedule must still be returned when "
+            "the openNowFor filter is a no-op.",
+        )
 
     def test_shelter_has_available_beds_filter_true(self) -> None:
         """Only shelters with available beds (non_restricted or restricted > 0) are returned."""

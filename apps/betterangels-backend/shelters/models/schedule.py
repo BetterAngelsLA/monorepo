@@ -159,6 +159,16 @@ class Schedule(BaseModel):
     is_exception = models.BooleanField(default=False, blank=True)
 
     class Meta:
+        # Composite index backing the correlated ``Exists`` subqueries in
+        # ``shelters.open_at.shelters_open_at``, which filter schedules by
+        # (shelter, schedule_type, is_exception) — especially when multiple
+        # schedule types are requested in one query.
+        indexes = [
+            models.Index(
+                fields=["shelter", "schedule_type", "is_exception"],
+                name="schedule_shelter_type_exception_idx",
+            ),
+        ]
         constraints = [
             UniqueConstraint(
                 fields=["shelter", "schedule_type", "day", "start_time", "start_date"],

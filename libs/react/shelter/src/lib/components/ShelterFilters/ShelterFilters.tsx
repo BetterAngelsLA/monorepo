@@ -40,12 +40,12 @@ export function ShelterFilters(props: IProps) {
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
-  const initialOpenNowTypes = filters.openNowFor ?? [];
-  const [openNowTypes, setOpenNowTypes] =
-    useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
+  const initialOpenNowForTypes = filters.openNowFor ?? [];
+  const [openNowForTypes, setOpenNowForTypes] =
+    useState<ScheduleTypeChoices[]>(initialOpenNowForTypes);
 
   useEffect(() => {
-    setOpenNowTypes(filters.openNowFor ?? []);
+    setOpenNowForTypes(filters.openNowFor ?? []);
   }, [filters.openNowFor]);
 
   const parentCss = ['pb-24', className];
@@ -60,15 +60,15 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
-  function onOpenNowScheduleTypeChange(
+  function onOpenNowForTypeChange(
     scheduleType: ScheduleTypeChoices,
     checked: boolean
   ) {
     const newTypes = checked
-      ? [...openNowTypes, scheduleType]
-      : openNowTypes.filter((t) => t !== scheduleType);
+      ? [...openNowForTypes, scheduleType]
+      : openNowForTypes.filter((t) => t !== scheduleType);
 
-    setOpenNowTypes(newTypes);
+    setOpenNowForTypes(newTypes);
 
     onFiltersChange({
       ...filters,
@@ -129,9 +129,9 @@ export function ShelterFilters(props: IProps) {
                 <Checkbox
                   key={option.key}
                   label={option.label}
-                  checked={openNowTypes.includes(option.key)}
+                  checked={openNowForTypes.includes(option.key)}
                   onChange={(checked) =>
-                    onOpenNowScheduleTypeChange(option.key, checked)
+                    onOpenNowForTypeChange(option.key, checked)
                   }
                 />
               ))}

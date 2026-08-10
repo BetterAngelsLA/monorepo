@@ -1,7 +1,7 @@
 """Shelter open-at query — determines which shelters are open at a given datetime."""
 
 import datetime
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Sequence
 
 from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
 from django.db.models.functions import Mod
@@ -18,7 +18,7 @@ def shelters_open_at(
     queryset: "QuerySet[Shelter]",
     *,
     dt: datetime.datetime,
-    schedule_types: Iterable[ScheduleTypeChoices],
+    schedule_types: Sequence[ScheduleTypeChoices],
 ) -> "QuerySet[Shelter]":
     """Return shelters whose schedule says they are open at *dt* in ANY of *schedule_types*.
 
