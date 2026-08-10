@@ -109,7 +109,7 @@ function renderModal(overrides?: { closeModal?: () => void }) {
     <UploadModal
       client={client}
       closeModal={overrides?.closeModal ?? vi.fn()}
-    />
+    />,
   );
 }
 

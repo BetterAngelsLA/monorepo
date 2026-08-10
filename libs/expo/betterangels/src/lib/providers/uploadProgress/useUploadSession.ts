@@ -50,9 +50,7 @@ export function useUploadSession() {
     startUpload(
       id,
       names,
-      controllers
-        ? (index: number) => controllers[index].abort()
-        : undefined,
+      controllers ? (index: number) => controllers[index].abort() : undefined,
       options?.label,
       options?.onRetryItem,
     );

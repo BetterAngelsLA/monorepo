@@ -253,7 +253,12 @@ describe('UploadProgressDrawer', () => {
     mocks.sessions = [
       makeSession({
         items: [
-          { refId: 'r1', name: 'a.pdf', status: 'uploading', onCancel: vi.fn() },
+          {
+            refId: 'r1',
+            name: 'a.pdf',
+            status: 'uploading',
+            onCancel: vi.fn(),
+          },
           { refId: 'r2', name: 'b.pdf', status: 'done', onCancel: vi.fn() },
           { refId: 'r3', name: 'c.pdf', status: 'pending' },
         ],
@@ -276,7 +281,12 @@ describe('UploadProgressDrawer', () => {
     mocks.sessions = [
       makeSession({
         items: [
-          { refId: 'r1', name: 'a.pdf', status: 'uploading', onCancel: vi.fn() },
+          {
+            refId: 'r1',
+            name: 'a.pdf',
+            status: 'uploading',
+            onCancel: vi.fn(),
+          },
         ],
       }),
     ];

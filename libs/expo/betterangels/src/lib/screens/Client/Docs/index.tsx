@@ -76,7 +76,8 @@ export default function Docs({
                 title="Doc Ready"
                 {...props}
                 data={
-                  client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+                  client?.clientProfile
+                    .docReadyDocuments as ClientDocumentType[]
                 }
                 clientId={client?.clientProfile.id}
               />

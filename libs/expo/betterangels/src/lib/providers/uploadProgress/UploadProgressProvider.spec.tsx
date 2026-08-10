@@ -283,9 +283,7 @@ describe('UploadProgressProvider', () => {
             accessibilityRole="button"
             accessibilityLabel="start"
             accessibilityHint="start an upload"
-            onPress={() =>
-              startUpload('c', ['z.pdf', 'w.pdf'], onCancelItem)
-            }
+            onPress={() => startUpload('c', ['z.pdf', 'w.pdf'], onCancelItem)}
           >
             start
           </Text>

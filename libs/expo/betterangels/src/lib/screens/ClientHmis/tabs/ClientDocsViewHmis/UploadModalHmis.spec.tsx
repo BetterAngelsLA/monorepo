@@ -266,7 +266,9 @@ describe('UploadModalHmis', () => {
   });
 
   it('maps a 401 to the session-expired message', async () => {
-    mocks.uploadClientFile.mockRejectedValue(new mocks.ErrorHmis('expired', 401));
+    mocks.uploadClientFile.mockRejectedValue(
+      new mocks.ErrorHmis('expired', 401),
+    );
     const closeModal = vi.fn();
 
     renderModal(closeModal);

@@ -193,8 +193,7 @@ export function retryUploadItemSession(sessionId: string, refId: string) {
             ...s,
             items,
             total: s.total - 1,
-            completed:
-              item.status === 'done' ? s.completed - 1 : s.completed,
+            completed: item.status === 'done' ? s.completed - 1 : s.completed,
           },
     ),
   });
@@ -228,8 +227,7 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
             ...s,
             items,
             total: s.total - 1,
-            completed:
-              item.status === 'done' ? s.completed - 1 : s.completed,
+            completed: item.status === 'done' ? s.completed - 1 : s.completed,
           },
     ),
   });

@@ -1,4 +1,9 @@
-import { OperationInfoError, PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
+import {
+  OperationInfoError,
+  PresignedUploadError,
+  S3UploadError,
+  UploadAbortedError,
+} from './errors';
 import { runPresignedUpload } from './runPresignedUpload';
 import { unwrapPayload } from './unwrapPayload';
 import {
@@ -49,7 +54,8 @@ describe('runPresignedUpload', () => {
     const result = await runPresignedUpload({
       files: [file('a.pdf'), file('b.pdf')],
       generateRefId: sequentialRefId(),
-      generateUpload: async (inputs) => inputs.map((input) => presigned(input.refId)),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
       resolveUpload,
     });
 
@@ -75,7 +81,8 @@ describe('runPresignedUpload', () => {
     await runPresignedUpload({
       files: [file('a.pdf')],
       generateRefId: sequentialRefId(),
-      generateUpload: async (inputs) => inputs.map((input) => presigned(input.refId)),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
       resolveUpload: async () => undefined,
       onProgress: (progress) => events.push(progress),
     });
@@ -109,7 +116,8 @@ describe('runPresignedUpload', () => {
     await expect(
       runPresignedUpload({
         files: [file('a.pdf')],
-        generateUpload: async (inputs) => inputs.map((input) => presigned(input.refId)),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
         resolveUpload,
       }),
     ).rejects.toBeInstanceOf(S3UploadError);
@@ -127,7 +135,8 @@ describe('runPresignedUpload', () => {
     await runPresignedUpload({
       files: [file('a.pdf'), file('b.pdf')],
       generateRefId: sequentialRefId(),
-      generateUpload: async (inputs) => inputs.map((input) => presigned(input.refId)),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
       resolveUpload,
       failFast: false,
       onProgress: (progress) => {
@@ -151,7 +160,8 @@ describe('runPresignedUpload', () => {
     await expect(
       runPresignedUpload({
         files: [file('a.pdf')],
-        generateUpload: async (inputs) => inputs.map((input) => presigned(input.refId)),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
         resolveUpload: async () => undefined,
         failFast: false,
       }),
@@ -264,10 +274,7 @@ describe('runPresignedUpload', () => {
     const resolveUpload = vi.fn(async () => undefined);
 
     await runPresignedUpload({
-      files: [
-        { ...file('a.pdf'), signal: controller.signal },
-        file('b.pdf'),
-      ],
+      files: [{ ...file('a.pdf'), signal: controller.signal }, file('b.pdf')],
       generateRefId: sequentialRefId(),
       generateUpload: async (inputs) =>
         inputs.map((input) => presigned(input.refId)),
@@ -290,7 +297,9 @@ describe('runPresignedUpload', () => {
         new Promise((resolve, reject) => {
           if (signal) {
             signal.addEventListener('abort', () =>
-              reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+              reject(
+                Object.assign(new Error('Aborted'), { name: 'AbortError' }),
+              ),
             );
           } else {
             releaseB = () => resolve({ key: 'k' });
@@ -300,10 +309,7 @@ describe('runPresignedUpload', () => {
     const resolveUpload = vi.fn(async () => undefined);
 
     const promise = runPresignedUpload({
-      files: [
-        { ...file('a.pdf'), signal: controller.signal },
-        file('b.pdf'),
-      ],
+      files: [{ ...file('a.pdf'), signal: controller.signal }, file('b.pdf')],
       generateRefId: sequentialRefId(),
       generateUpload: async (inputs) =>
         inputs.map((input) => presigned(input.refId)),
@@ -331,7 +337,9 @@ describe('runPresignedUpload', () => {
         new Promise((resolve, reject) => {
           if (signal) {
             signal.addEventListener('abort', () =>
-              reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+              reject(
+                Object.assign(new Error('Aborted'), { name: 'AbortError' }),
+              ),
             );
           } else {
             releaseB = () => resolve({ key: 'k' });
@@ -342,10 +350,7 @@ describe('runPresignedUpload', () => {
     const resolveUpload = vi.fn(async () => undefined);
 
     const promise = runPresignedUpload({
-      files: [
-        { ...file('a.pdf'), signal: controller.signal },
-        file('b.pdf'),
-      ],
+      files: [{ ...file('a.pdf'), signal: controller.signal }, file('b.pdf')],
       generateRefId: sequentialRefId(),
       generateUpload: async (inputs) =>
         inputs.map((input) => presigned(input.refId)),
@@ -382,10 +387,7 @@ describe('runPresignedUpload', () => {
     const resolveUpload = vi.fn(async () => undefined);
 
     const promise = runPresignedUpload({
-      files: [
-        { ...file('a.pdf'), signal: controller.signal },
-        file('b.pdf'),
-      ],
+      files: [{ ...file('a.pdf'), signal: controller.signal }, file('b.pdf')],
       generateRefId: sequentialRefId(),
       generateUpload: async (inputs) =>
         inputs.map((input) => presigned(input.refId)),
@@ -445,13 +447,19 @@ describe('runPresignedUpload', () => {
   });
 
   it('forwards byte-level progress from the transport, throttled to 1% steps', async () => {
-    uploadFileToS3.mockImplementation(({ onProgress }: { onProgress?: (p: { bytesSent: number; totalBytes: number }) => void }) => {
-      onProgress?.({ bytesSent: 250, totalBytes: 1000 });
-      onProgress?.({ bytesSent: 500, totalBytes: 1000 });
-      onProgress?.({ bytesSent: 505, totalBytes: 1000 }); // same 50% → dropped
-      onProgress?.({ bytesSent: 1000, totalBytes: 1000 });
-      return Promise.resolve({ key: 'k' });
-    });
+    uploadFileToS3.mockImplementation(
+      ({
+        onProgress,
+      }: {
+        onProgress?: (p: { bytesSent: number; totalBytes: number }) => void;
+      }) => {
+        onProgress?.({ bytesSent: 250, totalBytes: 1000 });
+        onProgress?.({ bytesSent: 500, totalBytes: 1000 });
+        onProgress?.({ bytesSent: 505, totalBytes: 1000 }); // same 50% → dropped
+        onProgress?.({ bytesSent: 1000, totalBytes: 1000 });
+        return Promise.resolve({ key: 'k' });
+      },
+    );
 
     const events: TUploadProgress[] = [];
 
@@ -465,9 +473,12 @@ describe('runPresignedUpload', () => {
     });
 
     const byteEvents = events.filter(
-      (event) => event.status === 'uploading' && typeof event.bytesSent === 'number',
+      (event) =>
+        event.status === 'uploading' && typeof event.bytesSent === 'number',
     );
-    expect(byteEvents.map((event) => event.bytesSent)).toEqual([250, 500, 1000]);
+    expect(byteEvents.map((event) => event.bytesSent)).toEqual([
+      250, 500, 1000,
+    ]);
     expect(byteEvents[0]).toMatchObject({
       refId: 'ref-0',
       status: 'uploading',

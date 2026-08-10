@@ -1,5 +1,8 @@
 import { createContext, useContext } from 'react';
-import type { TUploadProgress, TUploadStage } from '@monorepo/expo/shared/services';
+import type {
+  TUploadProgress,
+  TUploadStage,
+} from '@monorepo/expo/shared/services';
 
 export type TUploadItemStatus = 'pending' | 'uploading' | 'done' | 'error';
 
@@ -61,8 +64,9 @@ export type TUploadProgressContextValue = {
   retryUploadItem: (sessionId: string, refId: string) => void;
 };
 
-export const UploadProgressContext =
-  createContext<TUploadProgressContextValue | undefined>(undefined);
+export const UploadProgressContext = createContext<
+  TUploadProgressContextValue | undefined
+>(undefined);
 
 export function useUploadProgress(): TUploadProgressContextValue {
   const value = useContext(UploadProgressContext);

@@ -21,8 +21,14 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { uploadPhoto } = useClientProfilePhotoUpload();
-  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
-    useUploadSession();
+  const {
+    begin,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  } = useUploadSession();
 
   const handleUpload = async (file: ReactNativeFile) => {
     setIsUploading(true);

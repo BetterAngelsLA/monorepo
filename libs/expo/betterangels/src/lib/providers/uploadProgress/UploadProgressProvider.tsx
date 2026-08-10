@@ -28,7 +28,10 @@ type TUploadProgressProviderProps = {
  */
 export function UploadProgressProvider(props: TUploadProgressProviderProps) {
   const { children } = props;
-  const { sessions } = useSyncExternalStore(subscribeUploadStore, getUploadSnapshot);
+  const { sessions } = useSyncExternalStore(
+    subscribeUploadStore,
+    getUploadSnapshot,
+  );
 
   const value = useMemo(
     () => ({

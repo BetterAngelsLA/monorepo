@@ -1,7 +1,11 @@
 import { randomUUID } from 'expo-crypto';
 import { filter, isNonNullish, map, pipe } from 'remeda';
 import { uploadFileToS3WithPresignedPost } from '../s3';
-import { PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
+import {
+  PresignedUploadError,
+  S3UploadError,
+  UploadAbortedError,
+} from './errors';
 import {
   TPresignedUpload,
   TUploadFile,
@@ -22,7 +26,10 @@ export type TRunPresignedUploadArgs<TResolve> = {
    * Persists the successfully uploaded files and returns the caller's result.
    * Receives the pipeline's abort signal so the save itself can be cancelled.
    */
-  resolveUpload: (saved: TSavedUpload[], signal?: AbortSignal) => Promise<TResolve>;
+  resolveUpload: (
+    saved: TSavedUpload[],
+    signal?: AbortSignal,
+  ) => Promise<TResolve>;
   /** Called on stage changes and per-file upload progress. */
   onProgress?: (progress: TUploadProgress) => void;
   /**
@@ -215,9 +222,7 @@ export async function runPresignedUpload<TResolve>(
 
     succeeded = pipe(
       settled,
-      map((result) =>
-        result.status === 'fulfilled' ? result.value : null,
-      ),
+      map((result) => (result.status === 'fulfilled' ? result.value : null)),
       filter(isNonNullish),
     );
   }

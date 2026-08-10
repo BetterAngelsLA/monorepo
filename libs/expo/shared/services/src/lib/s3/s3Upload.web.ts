@@ -1,8 +1,5 @@
 import { assertPresignedPost } from './presignedPost';
-import {
-  type TS3UploadProgress,
-  type TS3UploadTransport,
-} from './types';
+import { type TS3UploadProgress, type TS3UploadTransport } from './types';
 
 /**
  * Web S3 transport: uploads a file directly to S3 using a presigned POST via
@@ -26,11 +23,7 @@ export const uploadFileToS3WithPresignedPost: TS3UploadTransport = async ({
   for (const [fieldName, fieldValue] of Object.entries(presignedPost.fields)) {
     formData.append(fieldName, fieldValue);
   }
-  formData.append(
-    'file',
-    new Blob([blob], { type: contentType }),
-    file.name,
-  );
+  formData.append('file', new Blob([blob], { type: contentType }), file.name);
 
   return new Promise<{ key: string }>((resolve, reject) => {
     const request = new XMLHttpRequest();

@@ -37,7 +37,7 @@ export default function UploadModal(props: IUploadModalProps) {
   const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
-    null
+    null,
   );
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
@@ -135,12 +135,15 @@ export default function UploadModal(props: IUploadModalProps) {
     namespace: ClientDocumentNamespaceEnum,
     title: string,
   ) => {
-    const session = begin(files.map((file) => file.name), {
-      label: title,
-      // Retrying a failed item re-runs only that file in a fresh session;
-      // the successful files were already persisted and stay untouched.
-      onRetryItem: (index) => startSession([files[index]], namespace, title),
-    });
+    const session = begin(
+      files.map((file) => file.name),
+      {
+        label: title,
+        // Retrying a failed item re-runs only that file in a fresh session;
+        // the successful files were already persisted and stay untouched.
+        onRetryItem: (index) => startSession([files[index]], namespace, title),
+      },
+    );
 
     void runUpload(session, files, namespace);
   };

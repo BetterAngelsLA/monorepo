@@ -32,8 +32,14 @@ let lastHandle: TUploadSessionHandle | undefined;
 let lastRetryIndex: number | undefined;
 
 function Harness() {
-  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
-    useUploadSession();
+  const {
+    begin,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  } = useUploadSession();
 
   return (
     <View>
