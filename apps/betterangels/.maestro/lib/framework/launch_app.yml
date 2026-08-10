@@ -4,7 +4,7 @@ appId: ${MAESTRO_APP_ID}
 # Choose coordinates that match your test fixtures.
 
 # 727 W 7th St, Los Angeles, CA 90017
-# should match INITIAL_LOCATION in NoteForm/Location
+# should match INITIAL_LOCATION in NoteForm/Location (for now)
 - setLocation:
     latitude: 34.048655
     longitude: -118.258815
