@@ -282,6 +282,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("718", 1),  # partial phone match on client 1 secondary phone
             ("347", 1),  # partial phone match on client 2 phone
             ("5551212", 2),  # partial phone match on both clients
+            ("tod 5551212", 1),  # name + phone match on same client
+            ("tod 347", 0),  # phone term matches a different client than name term
+            ("pea 718", 0),  # phone term matches a different client than name term
         ],
     )
     def test_client_profiles_query_text_search(self, search_value: str, expected_client_profile_count: int) -> None:
@@ -331,6 +334,23 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
         if expected_client_profile_count:
             self.assertEqual(response["data"]["clientProfiles"]["results"][0]["id"], self.client_profile_1["id"])
+
+    def test_client_profiles_query_dob_search_requires_all_terms_match(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                }
+            }
+        """
+
+        # "zzz" matches no field, so the dob-only match must not return client 1
+        search_value = f"zzz {self.date_of_birth.strftime('%m/%d/%Y')}"
+        response = self.execute_graphql(query, variables={"search": search_value})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], 0)
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),

@@ -53,6 +53,27 @@ def _parse_dob_search_value(value: str) -> Optional[date]:
     return None
 
 
+def _phone_number_matching_query(digits_only: str) -> Q:
+    related_phone_digits = Func(
+        F("number"),
+        Value(r"[^0-9]"),
+        Value(""),
+        Value("g"),
+        function="regexp_replace",
+        output_field=CharField(),
+    )
+    client_profile_ct = ContentType.objects.get_for_model(ClientProfile)
+    return Q(
+        Exists(
+            PhoneNumber.objects.annotate(digits=related_phone_digits).filter(
+                content_type=client_profile_ct,
+                object_id=OuterRef("pk"),
+                digits__contains=digits_only,
+            )
+        )
+    )
+
+
 CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
     ClientDocumentGroupEnum.DOC_READY: [
         ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
@@ -157,52 +178,51 @@ class ClientProfileFilter:
 
         searchable_fields = ["california_id", "first_name", "last_name", "middle_name", "nickname"]
 
-        # Build queries for direct fields
-        direct_queries = [
-            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
-        ]
-        direct_query = reduce(and_, direct_queries) if direct_queries else Q()
+        # Pure numeric/date searches (e.g. a formatted phone number) are matched
+        # against the whole value so that formatted numbers like "(212) 555-1212"
+        # are not fragmented into sub-terms that cause false positives.
+        if not re.search(r"[A-Za-z]", value):
+            digits_only = re.sub(r"\D", "", value)
+            dob = _parse_dob_search_value(value)
+            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS or dob is not None:
+                combined_query = Q()
+                if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+                    combined_query |= _phone_number_matching_query(digits_only)
+                if dob is not None:
+                    combined_query |= Q(date_of_birth=dob)
+                return queryset.filter(combined_query), Q()
+            return queryset.none(), Q()
 
-        # Build related queries
-        related_query = reduce(
-            and_,
-            [
+        # Each search term must match at least one searched field (direct fields,
+        # HMIS id, date of birth, or phone number). Terms are combined with AND so
+        # a single term matching a phone number or date of birth cannot bypass the
+        # other terms' requirements.
+        term_queries: List[Q] = []
+        for term in search_terms:
+            # Direct field partial matches
+            term_query = reduce(
+                or_,
+                [Q(**{f"{field}__istartswith": term}) for field in searchable_fields],
+            )
+
+            # HMIS id partial match
+            term_query |= Q(
                 Exists(HmisProfile.objects.filter(client_profile_id=OuterRef("pk"), hmis_id__istartswith=term))
-                for term in search_terms
-            ],
-            Q(),
-        )
-
-        combined_query = direct_query | related_query
-
-        # Date of birth exact match (MM/DD/YYYY or MM-DD-YYYY)
-        dob = _parse_dob_search_value(value)
-        if dob is not None:
-            combined_query |= Q(date_of_birth=dob)
-
-        # Phone number partial match on digits only (like HMIS ID partial search)
-        digits_only = re.sub(r"\D", "", value)
-        if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
-            related_phone_digits = Func(
-                F("number"),
-                Value(r"[^0-9]"),
-                Value(""),
-                Value("g"),
-                function="regexp_replace",
-                output_field=CharField(),
             )
-            client_profile_ct = ContentType.objects.get_for_model(ClientProfile)
-            related_phone_exists = Exists(
-                PhoneNumber.objects.annotate(digits=related_phone_digits).filter(
-                    content_type=client_profile_ct,
-                    object_id=OuterRef("pk"),
-                    digits__contains=digits_only,
-                )
-            )
-            queryset = queryset.annotate(
-                _has_matching_phone_number=related_phone_exists,
-            )
-            combined_query |= Q(_has_matching_phone_number=True)
+
+            # Date of birth exact match (MM/DD/YYYY or MM-DD-YYYY)
+            dob = _parse_dob_search_value(term)
+            if dob is not None:
+                term_query |= Q(date_of_birth=dob)
+
+            # Phone number partial match on digits only (like HMIS ID partial search)
+            digits_only = re.sub(r"\D", "", term)
+            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+                term_query |= _phone_number_matching_query(digits_only)
+
+            term_queries.append(term_query)
+
+        combined_query = reduce(and_, term_queries)
 
         return queryset.filter(combined_query), Q()
 
