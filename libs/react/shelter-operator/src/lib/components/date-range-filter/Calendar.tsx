@@ -10,7 +10,7 @@ import {
 } from './colors';
 import { addMonths, format, subMonths } from 'date-fns';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { createContext, useContext } from 'react';
 import {
   DayPicker,
   type DateRange as RdpDateRange,
@@ -51,6 +51,55 @@ const classNames = {
   hidden: 'invisible',
 };
 
+const CalendarContext = createContext<{
+  onMonthChange?: (month: Date) => void;
+  onMonthLabelClick?: (month: Date) => void;
+}>({});
+
+function CustomMonthCaption({ calendarMonth }: MonthCaptionProps) {
+  const { onMonthChange, onMonthLabelClick } = useContext(CalendarContext);
+  const date = calendarMonth.date;
+  return (
+    <div className="flex h-9 items-center justify-between">
+      <button
+        type="button"
+        onClick={() => onMonthLabelClick?.(date)}
+        className={`flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[${COLOR_TEXT_PRIMARY}] hover:bg-[${COLOR_HOVER_BG}]`}
+      >
+        {format(date, 'MMMM yyyy')}
+        <ChevronDown className={`h-4 w-4 text-[${COLOR_TEXT_SECONDARY}]`} />
+      </button>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label="Previous month"
+          onClick={() => onMonthChange?.(subMonths(date, 1))}
+          className={navButton}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Next month"
+          onClick={() => onMonthChange?.(addMonths(date, 1))}
+          className={navButton}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyNav() {
+  return <></>;
+}
+
+const customComponents = {
+  MonthCaption: CustomMonthCaption,
+  Nav: EmptyNav,
+};
+
 export function Calendar({
   selected,
   onSelect,
@@ -59,59 +108,19 @@ export function Calendar({
   onMonthLabelClick,
   className,
 }: CalendarProps) {
-  const MonthCaption = useCallback(
-    function MonthCaption({ calendarMonth }: MonthCaptionProps) {
-      const date = calendarMonth.date;
-      return (
-        <div className="flex h-9 items-center justify-between">
-          <button
-            type="button"
-            onClick={() => onMonthLabelClick?.(date)}
-            className={`flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[${COLOR_TEXT_PRIMARY}] hover:bg-[${COLOR_HOVER_BG}]`}
-          >
-            {format(date, 'MMMM yyyy')}
-            <ChevronDown className={`h-4 w-4 text-[${COLOR_TEXT_SECONDARY}]`} />
-          </button>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Previous month"
-              onClick={() => onMonthChange?.(subMonths(date, 1))}
-              className={navButton}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next month"
-              onClick={() => onMonthChange?.(addMonths(date, 1))}
-              className={navButton}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      );
-    },
-    [onMonthLabelClick, onMonthChange]
-  );
-
-  const components = useMemo(
-    () => ({ MonthCaption, Nav: () => <></> }),
-    [MonthCaption]
-  );
-
   return (
-    <DayPicker
-      mode="range"
-      selected={selected}
-      onSelect={onSelect}
-      month={month}
-      onMonthChange={onMonthChange}
-      showOutsideDays
-      className={mergeCss(['font-sans', className])}
-      classNames={classNames}
-      components={components}
-    />
+    <CalendarContext.Provider value={{ onMonthChange, onMonthLabelClick }}>
+      <DayPicker
+        mode="range"
+        selected={selected}
+        onSelect={onSelect}
+        month={month}
+        onMonthChange={onMonthChange}
+        showOutsideDays
+        className={mergeCss(['font-sans', className])}
+        classNames={classNames}
+        components={customComponents}
+      />
+    </CalendarContext.Provider>
   );
 }
