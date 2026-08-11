@@ -155,13 +155,7 @@ class ClientProfileFilter:
 
         search_terms = value.split()
 
-        searchable_fields = [
-            "california_id",
-            "first_name",
-            "last_name",
-            "middle_name",
-            "nickname",
-        ]
+        searchable_fields = ["california_id", "first_name", "last_name", "middle_name", "nickname"]
 
         # Build queries for direct fields
         direct_queries = [
@@ -189,14 +183,6 @@ class ClientProfileFilter:
         # Phone number partial match on digits only (like HMIS ID partial search)
         digits_only = re.sub(r"\D", "", value)
         if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
-            direct_phone_digits = Func(
-                F("phone_number"),
-                Value(r"[^0-9]"),
-                Value(""),
-                Value("g"),
-                function="regexp_replace",
-                output_field=CharField(),
-            )
             related_phone_digits = Func(
                 F("number"),
                 Value(r"[^0-9]"),
@@ -214,10 +200,9 @@ class ClientProfileFilter:
                 )
             )
             queryset = queryset.annotate(
-                _phone_search_digits=direct_phone_digits,
                 _has_matching_phone_number=related_phone_exists,
             )
-            combined_query |= Q(_phone_search_digits__contains=digits_only) | Q(_has_matching_phone_number=True)
+            combined_query |= Q(_has_matching_phone_number=True)
 
         return queryset.filter(combined_query), Q()
 
