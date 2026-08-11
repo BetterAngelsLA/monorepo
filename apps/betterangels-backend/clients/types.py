@@ -184,12 +184,13 @@ class ClientProfileFilter:
         if not re.search(r"[A-Za-z]", value):
             digits_only = re.sub(r"\D", "", value)
             dob = _parse_dob_search_value(value)
-            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS or dob is not None:
-                combined_query = Q()
-                if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
-                    combined_query |= _phone_number_matching_query(digits_only)
-                if dob is not None:
-                    combined_query |= Q(date_of_birth=dob)
+            combined_query = Q()
+
+            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+                combined_query |= _phone_number_matching_query(digits_only)
+            if dob is not None:
+                combined_query |= Q(date_of_birth=dob)
+            if combined_query:
                 return queryset.filter(combined_query), Q()
             return queryset.none(), Q()
 
