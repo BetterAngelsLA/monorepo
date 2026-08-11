@@ -12,7 +12,9 @@ appId: ${MAESTRO_APP_ID}
 - evalScript: ${output.clientFound = false}
 
 # Type the search
-- tapOn: 'Search by name clients'
+- tapOn:
+    id: 'clients-search-input'
+
 - inputText: ${CLIENT_NAME}
 - hideKeyboard
 - waitForAnimationToEnd

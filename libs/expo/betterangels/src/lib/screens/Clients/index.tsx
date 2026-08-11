@@ -77,6 +77,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           <SearchBar
             value={search}
             placeholder="Search name, phone, DOB, HMIS ID"
+            testID="clients-search-input"
             onChange={(text) => setSearch(text)}
             onClear={() => setSearch('')}
             style={{ marginBottom: Spacings.xs }}
