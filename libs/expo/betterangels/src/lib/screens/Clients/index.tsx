@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -27,6 +27,13 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
   const [search, setSearch] = useState('');
   const { user } = useUser();
+
+  // reset search query every time the screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      setSearch('');
+    }, []),
+  );
 
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
@@ -70,6 +77,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           <SearchBar
             value={search}
             placeholder="Search name, phone, DOB, HMIS ID"
+            testID="clients-search-input"
             onChange={(text) => setSearch(text)}
             onClear={() => setSearch('')}
             style={{ marginBottom: Spacings.xs }}

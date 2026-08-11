@@ -243,7 +243,7 @@ export default function LocationComponent(props: ILocationProps) {
         (!location || (location && !location.address)) && !isLocation ? (
           <TextMedium size="sm">Add Location</TextMedium>
         ) : (
-          <TextMedium size="sm">
+          <TextMedium size="sm" testID="note-location-address">
             {location && location.latitude
               ? location?.name
                 ? location.name

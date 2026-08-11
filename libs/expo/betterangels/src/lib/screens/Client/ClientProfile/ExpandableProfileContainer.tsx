@@ -5,9 +5,9 @@ import {
   ExpandableContainer,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { toKebabCase } from 'remeda';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { ClientProfileCardTitles } from './constants';
 
@@ -67,7 +67,7 @@ function Header(props: THeader) {
       {isOpen && (
         <EditButton
           onClick={onEditClick}
-          testId={toKebabCase(`edit-${title.toLowerCase()}`)}
+          testId={toTestId(['edit', title])}
           style={styles.editButton}
           accessibilityHint={`edit ${ClientProfileCardTitles[card]}`}
         />
@@ -100,7 +100,7 @@ function OpenCloseButton(props: TOpenCloseButton) {
   return (
     <Pressable
       onPress={onClick}
-      testID={toKebabCase(testId.toLowerCase())}
+      testID={toTestId([testId])}
       accessible
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}

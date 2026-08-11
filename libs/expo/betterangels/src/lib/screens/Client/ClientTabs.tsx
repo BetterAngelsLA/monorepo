@@ -1,5 +1,6 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
 import { useMemo, useState } from 'react';
 import {
@@ -40,9 +41,9 @@ export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const visibleTabs = useMemo(
     () =>
       orderedTabs.filter(
-        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled
+        (t) => t !== ClientViewTabEnum.Referrals || referralsEnabled,
       ),
-    [referralsEnabled]
+    [referralsEnabled],
   );
 
   return (
@@ -82,12 +83,12 @@ function TabItem({ label, active, onPress }: TabItemProps) {
   const tabWidthStyle = useMemo(
     () =>
       boldW != null ? ({ width: boldW + PADDING_H * 2 } as const) : undefined,
-    [boldW]
+    [boldW],
   );
 
   const btnStyle = useMemo(
     () => StyleSheet.flatten([styles.textBtn, tabWidthStyle]),
-    [tabWidthStyle]
+    [tabWidthStyle],
   );
 
   return (
@@ -109,6 +110,7 @@ function TabItem({ label, active, onPress }: TabItemProps) {
       {/* Visible control = original TextButton (keeps exact colors/regular prop behavior) */}
       <TextButton
         onPress={onPress}
+        testId={toTestId(['client-tab', label])}
         style={btnStyle}
         regular={!active}
         title={label}

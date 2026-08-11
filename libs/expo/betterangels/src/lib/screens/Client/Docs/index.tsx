@@ -40,6 +40,7 @@ export default function Docs({
       style={{ paddingHorizontal: Spacings.sm }}
     >
       <View
+        testID="client-view-docs"
         style={{
           flexDirection: 'row',
           alignItems: 'center',
