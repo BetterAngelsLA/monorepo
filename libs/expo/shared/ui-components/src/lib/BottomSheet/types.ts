@@ -71,7 +71,7 @@ export type BottomSheetVariant = 'default' | 'bare';
  */
 export type BottomSheetGorhomOptions = Pick<
   BottomSheetModalProps,
-  'snapPoints' | 'enableDynamicSizing' | 'enablePanDownToClose'
+  'snapPoints' | 'enableDynamicSizing' | 'enablePanDownToClose' | 'accessible'
 >;
 
 /**

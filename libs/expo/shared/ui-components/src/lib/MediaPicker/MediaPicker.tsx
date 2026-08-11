@@ -110,6 +110,7 @@ export function MediaPicker(props: MediaPickerModalProps) {
         onClose={handleMenuSheetClose}
         options={{
           variant: 'bare',
+          accessible: false,
           contentStyle: {
             ...BOTTOM_SHEET_PADDING,
             paddingTop: 0,

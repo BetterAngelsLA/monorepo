@@ -72,6 +72,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       enableDynamicSizing,
       snapPoints,
       containerComponent,
+      accessible,
 
       // Wrapper-level
       disableBackdrop,
@@ -116,6 +117,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
     return (
       <GbsBottomSheetModal
         ref={ref}
+        accessible={accessible}
         {...gorhomProps}
         snapPoints={snapPoints}
         enablePanDownToClose={enablePanDownToClose}
@@ -139,7 +141,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         </ContentContainer>
       </GbsBottomSheetModal>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

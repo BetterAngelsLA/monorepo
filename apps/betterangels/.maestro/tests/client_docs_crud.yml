@@ -1,0 +1,52 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-screen'
+
+# #######################
+# Go to Docs Tab ########
+# #######################
+
+- tapOn:
+    id: 'client-tab-docs'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-view-docs'
+
+# ###############################
+# Go to Docs Uploads Scren ######
+# ###############################
+- tapOn:
+    id: 'open-client-docs-upload-screen-btn'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-docs-upload-screen'
+
+- tapOn: 'CA ID or CA Driver’s License - Front'
+
+- assertVisible:
+    id: 'media-picker-menu'
+
+- tapOn:
+    id: 'media-picker-image-btn'
