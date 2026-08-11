@@ -85,6 +85,8 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
+      // accessible - these a11y fields are commented out and
+      // accessible is set to FALSE pending: DEV-2513: Make FieldCard a11y compliant
       // accessibilityRole="button"
       // accessibilityHint={`expands ${title} field`}
       accessible={false}
