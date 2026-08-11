@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='schedule',
-            index=models.Index(fields=['shelter', 'schedule_type', 'is_exception'], name='schedule_shelter_type_exception_idx'),
+            index=models.Index(fields=['shelter', 'schedule_type', 'is_exception'], name='sched_shelter_type_except_idx'),
         ),
     ]

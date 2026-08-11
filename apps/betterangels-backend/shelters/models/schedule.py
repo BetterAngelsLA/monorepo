@@ -6,12 +6,12 @@ from django.db import models
 from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
 from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
+
 from shelters.constants import DAILY_MINUTES
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
 from .lookups import Demographic
 from .shelter import Shelter
-
 
 # Helpers -------------------------------------------------------------------
 
@@ -166,7 +166,7 @@ class Schedule(BaseModel):
         indexes = [
             models.Index(
                 fields=["shelter", "schedule_type", "is_exception"],
-                name="schedule_shelter_type_exception_idx",
+                name="sched_shelter_type_except_idx",
             ),
         ]
         constraints = [
