@@ -32,7 +32,7 @@ export default function DeleteNote(props: TDeleteNoteProps) {
         button={
           <Pressable
             disabled={isDeleting}
-            testID="delete-interaction-btn"
+            testID="delete-note-btn"
             accessibilityRole="button"
             accessibilityHint="delete this interaction"
           >

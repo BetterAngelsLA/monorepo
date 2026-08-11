@@ -248,10 +248,9 @@ maestro --device <DEVICE_ID> test apps/betterangels/.maestro/tests \
 .maestro/
   tests/                    # Runnable test scenarios (what `maestro test` runs)
     client_crud.yml
-    client_interaction.yml
-    clients_page.yml
     logout.yml
     tasks_page.yml
+    ...
 
   lib/                      # Reusable flows, grouped by precondition kind
     framework/              #   No screen dependency (app lifecycle + setup)

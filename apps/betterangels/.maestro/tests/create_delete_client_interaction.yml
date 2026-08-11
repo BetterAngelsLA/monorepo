@@ -26,13 +26,13 @@ appId: ${MAESTRO_APP_ID}
 # Go to Interactions Tab ########
 # ###############################
 
-# genearate unique test data
+# generate unique test data
 - evalScript: ${output.interactionId = Date.now()}
 - evalScript: ${output.interactionPurpose = "interaction-" + String(output.interactionId)}
 - evalScript: ${output.noteCardTestId = "note-card-" + String(output.interactionPurpose)}
 
 # #########################
-# Add Intgeraction ########
+# Add Interaction ########
 # #########################
 
 - tapOn:
@@ -98,11 +98,11 @@ appId: ${MAESTRO_APP_ID}
 
 - scrollUntilVisible:
     element:
-      id: delete-interaction-btn
+      id: delete-note-btn
     direction: DOWN
 
 - tapOn:
-    id: delete-interaction-btn
+    id: delete-note-btn
 
 - tapOn:
     id: delete-modal-confirm-btn
