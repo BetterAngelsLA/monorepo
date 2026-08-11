@@ -76,7 +76,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         <HorizontalContainer>
           <SearchBar
             value={search}
-            placeholder="Search by name clients"
+            placeholder="Search name, phone, DOB, HMIS ID"
             onChange={(text) => setSearch(text)}
             onClear={() => setSearch('')}
             style={{ marginBottom: Spacings.xs }}
