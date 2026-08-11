@@ -6,12 +6,12 @@ from django.db import models
 from django.db.models import Case, ExpressionWrapper, F, Q, UniqueConstraint, Value, When
 from django.db.models.functions import Cast, Coalesce, Extract, Mod, NullIf
 from django_choices_field import TextChoicesField
+
 from shelters.constants import DAILY_MINUTES
 from shelters.enums import ConditionChoices, DayOfWeekChoices, ScheduleTypeChoices
 
 from .lookups import Demographic
 from .shelter import Shelter
-
 
 # Helpers -------------------------------------------------------------------
 
@@ -159,6 +159,16 @@ class Schedule(BaseModel):
     is_exception = models.BooleanField(default=False, blank=True)
 
     class Meta:
+        # Composite index backing the correlated ``Exists`` subqueries in
+        # ``shelters.open_at.shelters_open_at``, which filter schedules by
+        # (shelter, schedule_type, is_exception) — especially when multiple
+        # schedule types are requested in one query.
+        indexes = [
+            models.Index(
+                fields=["shelter", "schedule_type", "is_exception"],
+                name="sched_shelter_type_except_idx",
+            ),
+        ]
         constraints = [
             UniqueConstraint(
                 fields=["shelter", "schedule_type", "day", "start_time", "start_date"],
