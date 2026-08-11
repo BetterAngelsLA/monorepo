@@ -326,7 +326,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         search_value = self.date_of_birth.strftime(date_format)
-        response = self.execute_graphql(query, variables={"search": search_value})
+        response = self.execute_graphql(query, variables={"search": f"tod {search_value}"})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
         if expected_client_profile_count:
