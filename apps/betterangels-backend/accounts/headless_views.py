@@ -31,7 +31,7 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
             if email:
                 email = email.strip().lower()
                 with transaction.atomic():
-                    user, created = get_or_create_user_by_email(email, reactivate=False)
+                    user, created = get_or_create_user_by_email(email)
                     if created:
                         # Brand-new email: auto-provision so allauth can issue a
                         # real code.  Reuse any existing EmailAddress row

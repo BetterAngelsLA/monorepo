@@ -13,7 +13,7 @@ from rest_framework.request import Request
 
 from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User
-from .services import get_or_create_user_by_email
+from .services import get_or_create_user_by_email, reactivate_user
 from .utils import demo_email_context
 
 
@@ -26,10 +26,11 @@ class CustomInvitations(InvitationBackend):
     def invite_by_email(
         self, email: str, sender: Optional[User] = None, request: Optional[Request] = None, **kwargs: Any
     ) -> AbstractBaseUser:
-        # Normalizes the email and reactivates previously deactivated accounts
-        # (see accounts.services.get_or_create_user_by_email).
         with transaction.atomic():
             user, _ = get_or_create_user_by_email(email)
+            # Authorized action: a re-invitation reactivates a deactivated
+            # account.
+            reactivate_user(user)
         self.send_invitation(user, sender, **kwargs)
         return user
 

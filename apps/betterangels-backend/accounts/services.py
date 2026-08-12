@@ -37,20 +37,19 @@ def get_or_create_user_by_email(
     email: str,
     *,
     defaults: dict[str, Any] | None = None,
-    reactivate: bool = True,
 ) -> tuple[UserModel, bool]:
     """Find or create a user by normalized email.
 
-    A single unit of work: callers that perform additional writes alongside
-    this (e.g. ``member_add``) wrap it in their own transaction.
+    A single unit of work with **no side effects on existing users**: an
+    existing-but-deactivated account is returned unchanged.  Callers that are
+    authorized to change account state (e.g. admin-initiated flows such as
+    ``member_add``) call :func:`reactivate_user` explicitly — anonymous flows
+    such as login-code self-signup do not.
 
     Emails are stored lowercased by ``User.save()``, so the input is
     normalized (stripped + lowercased) before lookup — otherwise mixed-case
     input would miss the existing row and raise a unique-constraint
-    violation.  An existing-but-deactivated account is reactivated when
-    ``reactivate`` is true (the default — appropriate for admin-initiated
-    flows such as member re-invitation); pass ``reactivate=False`` for
-    anonymous flows that must not change account state.
+    violation.
 
     ``defaults`` (like :meth:`~django.db.models.QuerySet.get_or_create`)
     seeds field values only when a new user is created.  Brand-new users are
@@ -72,10 +71,19 @@ def get_or_create_user_by_email(
     if created:
         user.set_unusable_password()
         user.save()
-    elif reactivate and not user.is_active:
+    return user, created
+
+
+def reactivate_user(user: UserModel) -> None:
+    """Reactivate a deactivated account (no-op if already active).
+
+    Call only from authorized flows (e.g. an admin re-invites a member via
+    ``member_add``); never from anonymous requests such as login-code
+    self-signup, or a for-cause deactivation would be silently undone.
+    """
+    if not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
-    return user, created
 
 
 # ── Member management ────────────────────────────────────────────────
@@ -100,7 +108,7 @@ def member_add(
     assigned.  This allows the same user to be added through different
     portals (e.g. outreach and shelter operator) without raising an error.
     Existing-but-deactivated users are reactivated via
-    :func:`get_or_create_user_by_email`.
+    :func:`reactivate_user`.
     """
     user, _ = get_or_create_user_by_email(
         email,
@@ -110,6 +118,8 @@ def member_add(
             "middle_name": middle_name,
         },
     )
+    # Authorized action: re-adding a member reactivates a deactivated account.
+    reactivate_user(user)
 
     is_existing_member = organization.users.filter(pk=user.pk).exists()
 

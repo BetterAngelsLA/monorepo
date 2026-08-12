@@ -11,6 +11,7 @@ from accounts.services import (
     get_or_create_user_by_email,
     member_add,
     organization_remove_member,
+    reactivate_user,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -127,31 +128,34 @@ def test_get_or_create_user_by_email_new_user() -> None:
 
 
 @pytest.mark.django_db
-def test_get_or_create_user_by_email_reactivates_inactive_user() -> None:
-    """An existing-but-deactivated user is reactivated; no duplicate is
-    created."""
+def test_get_or_create_user_by_email_leaves_inactive_user_unchanged() -> None:
+    """The provisioning service has no side effects on existing users: a
+    deactivated account is returned unchanged (reactivation is an explicit,
+    authorized step via reactivate_user)."""
     existing = baker.make(User, email="sleepy@example.com", is_active=False)
 
     user, created = get_or_create_user_by_email("Sleepy@Example.com")
 
     assert not created
     assert user.pk == existing.pk
-    assert user.is_active
+    assert not user.is_active  # left as-is
     assert User.objects.filter(email="sleepy@example.com").count() == 1
 
 
 @pytest.mark.django_db
-def test_get_or_create_user_by_email_without_reactivate() -> None:
-    """With reactivate=False, an existing-but-deactivated user is returned
-    unchanged (no state change, no duplicate)."""
-    existing = baker.make(User, email="sleepy@example.com", is_active=False)
+def test_reactivate_user() -> None:
+    """reactivate_user reactivates a deactivated account and is a no-op for
+    an active one."""
+    inactive = baker.make(User, email="sleepy@example.com", is_active=False)
+    active = baker.make(User, email="awake@example.com", is_active=True)
 
-    user, created = get_or_create_user_by_email("Sleepy@Example.com", reactivate=False)
+    reactivate_user(inactive)
+    reactivate_user(active)
 
-    assert not created
-    assert user.pk == existing.pk
-    assert not user.is_active  # left as-is
-    assert User.objects.filter(email="sleepy@example.com").count() == 1
+    inactive.refresh_from_db()
+    active.refresh_from_db()
+    assert inactive.is_active
+    assert active.is_active
 
 
 # ── member_add ─────────────────────────────────────────────────────────
