@@ -17,13 +17,12 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
     calls ``initiate(user=None, ...)`` which silently fakes success without
     sending a real code.
 
-    We override ``post()`` to provision the account and set ``self.input._user``
-    so the verification process finds it and issues a real code.  Provisioning
-    is delegated to :func:`accounts.services.get_or_create_user_by_email`, which
-    reuses an existing account — reactivating it if it was deactivated — instead
-    of creating a duplicate (which would raise a unique-constraint violation).
-    This follows allauth's subclassing pattern: ``self.input._user`` is the
-    documented protocol variable that ``RequestLoginCodeView.post()`` reads.
+    We override ``post()`` to provision brand-new emails and set
+    ``self.input._user`` so the verification process issues a real code.
+    An email that already belongs to an existing-but-deactivated account is
+    deliberately left untouched — no reactivation, no email — so an anonymous
+    request can't undo an admin's deactivation; ``super().post()`` then fakes
+    success exactly as it does for unknown accounts.
     """
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -32,17 +31,27 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
             if email:
                 email = email.strip().lower()
                 with transaction.atomic():
-                    user, _ = get_or_create_user_by_email(email)
-                    # Ensure allauth can resolve the address: reuse any existing
-                    # row (case-insensitive) so mixed-case input can't create a
-                    # duplicate; new rows are primary and unverified.
-                    email_address = EmailAddress.objects.filter(user=user, email__iexact=email).first()
-                    if email_address is None:
-                        EmailAddress.objects.create(
-                            user=user,
-                            email=email,
-                            primary=True,
-                            verified=False,
-                        )
-                self.input._user = user  # type: ignore[union-attr]
+                    user, created = get_or_create_user_by_email(email, reactivate=False)
+                    if created:
+                        # Brand-new email: auto-provision so allauth can issue a
+                        # real code.  Reuse any existing EmailAddress row
+                        # (case-insensitive) so mixed-case input can't create a
+                        # duplicate; new rows are primary and unverified.
+                        email_address = EmailAddress.objects.filter(user=user, email__iexact=email).first()
+                        if email_address is None:
+                            EmailAddress.objects.create(
+                                user=user,
+                                email=email,
+                                primary=True,
+                                verified=False,
+                            )
+                        self.input._user = user  # type: ignore[union-attr]
+                    elif user.is_active:
+                        # Defensive: an active account allauth didn't resolve
+                        # still gets a real code.
+                        self.input._user = user  # type: ignore[union-attr]
+                    # else: existing-but-inactive — leave ``_user`` unset so
+                    # super().post() fakes success without sending anything
+                    # (ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS=False) and the account
+                    # stays deactivated.
         return cast(HttpResponse, super().post(request, *args, **kwargs))

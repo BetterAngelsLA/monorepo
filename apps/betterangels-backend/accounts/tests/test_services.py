@@ -140,6 +140,20 @@ def test_get_or_create_user_by_email_reactivates_inactive_user() -> None:
     assert User.objects.filter(email="sleepy@example.com").count() == 1
 
 
+@pytest.mark.django_db
+def test_get_or_create_user_by_email_without_reactivate() -> None:
+    """With reactivate=False, an existing-but-deactivated user is returned
+    unchanged (no state change, no duplicate)."""
+    existing = baker.make(User, email="sleepy@example.com", is_active=False)
+
+    user, created = get_or_create_user_by_email("Sleepy@Example.com", reactivate=False)
+
+    assert not created
+    assert user.pk == existing.pk
+    assert not user.is_active  # left as-is
+    assert User.objects.filter(email="sleepy@example.com").count() == 1
+
+
 # ── member_add ─────────────────────────────────────────────────────────
 
 

@@ -3,8 +3,9 @@
 Login-by-code self-signup: when ``ACCOUNT_PREVENT_ENUMERATION=True`` the
 headless form only resolves *active* users, so an existing-but-deactivated
 account (e.g. disabled by a bulk script) leaves ``self.input._user = None``.
-The view must reactivate that account (not attempt to create a duplicate,
-which would 500 on the unique email constraint) and still send a real code.
+Brand-new emails are auto-provisioned; existing-but-inactive accounts are left
+untouched (no 500, no duplicate, no email) so anonymous requests can't undo an
+admin's deactivation.
 """
 
 import json
@@ -41,10 +42,10 @@ def _assert_login_code_request_succeeded(response: Any) -> None:
 
 
 @pytest.mark.django_db
-def test_request_login_code_reactivates_existing_inactive_user() -> None:
-    """An existing-but-inactive account is reactivated and sent a real code,
-    without creating a duplicate user row."""
-    User.objects.create_user(
+def test_request_login_code_leaves_inactive_user_untouched() -> None:
+    """An anonymous code request must not reactivate an existing-but-inactive
+    account: no 500, no duplicate, no email, no state change."""
+    user = User.objects.create_user(
         email="sleeper@example.com",
         username="sleeper",
         is_active=False,
@@ -55,17 +56,13 @@ def test_request_login_code_reactivates_existing_inactive_user() -> None:
 
     _assert_login_code_request_succeeded(response)
 
-    # Exactly one user row, and it is active afterward.
+    # Exactly one user row, still inactive.
     assert User.objects.filter(email="sleeper@example.com").count() == 1
-    user = User.objects.get(email="sleeper@example.com")
-    assert user.is_active
+    user.refresh_from_db()
+    assert not user.is_active
 
-    # A real login code was sent (not the enumeration-fake-success mail).
-    mock_send_mail.assert_called_once()
-    template_prefix, recipient, context = mock_send_mail.call_args.args
-    assert template_prefix == "account/email/login_code"
-    assert recipient == "sleeper@example.com"
-    assert context["code"]
+    # Enumeration-safe: no login code and no unknown-account mail is sent.
+    mock_send_mail.assert_not_called()
 
 
 @pytest.mark.django_db

@@ -37,8 +37,9 @@ def get_or_create_user_by_email(
     email: str,
     *,
     defaults: dict[str, Any] | None = None,
+    reactivate: bool = True,
 ) -> tuple[UserModel, bool]:
-    """Find or create a user by normalized email, reactivating if needed.
+    """Find or create a user by normalized email.
 
     A single unit of work: callers that perform additional writes alongside
     this (e.g. ``member_add``) wrap it in their own transaction.
@@ -46,8 +47,10 @@ def get_or_create_user_by_email(
     Emails are stored lowercased by ``User.save()``, so the input is
     normalized (stripped + lowercased) before lookup — otherwise mixed-case
     input would miss the existing row and raise a unique-constraint
-    violation.  Existing-but-deactivated accounts (e.g. disabled by a bulk
-    script) are reactivated so login-by-code and re-invitation keep working.
+    violation.  An existing-but-deactivated account is reactivated when
+    ``reactivate`` is true (the default — appropriate for admin-initiated
+    flows such as member re-invitation); pass ``reactivate=False`` for
+    anonymous flows that must not change account state.
 
     ``defaults`` (like :meth:`~django.db.models.QuerySet.get_or_create`)
     seeds field values only when a new user is created.  Brand-new users are
@@ -69,7 +72,7 @@ def get_or_create_user_by_email(
     if created:
         user.set_unusable_password()
         user.save()
-    elif not user.is_active:
+    elif reactivate and not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
     return user, created
