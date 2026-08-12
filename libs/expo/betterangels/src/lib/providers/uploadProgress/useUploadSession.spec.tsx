@@ -56,6 +56,7 @@ function Harness() {
             cancellable: false,
             label: 'Consent Forms',
             onRetryItem: () => undefined,
+            folder: 'Forms',
           });
         }}
       >
@@ -142,22 +143,22 @@ describe('useUploadSession', () => {
     fireEvent.press(getByLabelText('begin'));
 
     expect(mocks.startUpload).toHaveBeenCalledTimes(1);
-    const [id, names, onCancelItem] = mocks.startUpload.mock.calls[0];
+    const [id, names, options] = mocks.startUpload.mock.calls[0];
 
     expect(typeof id).toBe('string');
     expect(names).toEqual(['a.pdf', 'b.pdf']);
-    expect(typeof onCancelItem).toBe('function');
+    expect(typeof options.onCancelItem).toBe('function');
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toHaveLength(2);
     expect(lastHandle?.isAborted()).toBe(false);
 
     // onCancelItem(index) aborts only that file's signal.
-    onCancelItem(0);
+    options.onCancelItem(0);
     expect(lastHandle?.signals[0]?.aborted).toBe(true);
     expect(lastHandle?.signals[1]?.aborted).toBe(false);
     expect(lastHandle?.isAborted()).toBe(false);
 
-    onCancelItem(1);
+    options.onCancelItem(1);
     expect(lastHandle?.isAborted()).toBe(true);
   });
 
@@ -166,14 +167,14 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin non-cancellable'));
 
-    const [id, names, onCancelItem, label, onRetryItem] =
-      mocks.startUpload.mock.calls[0];
+    const [id, names, options] = mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
-    // No onCancelItem → the drawer will not show per-item cancel buttons.
-    expect(onCancelItem).toBeUndefined();
-    expect(label).toBe('Consent Forms');
-    expect(typeof onRetryItem).toBe('function');
+    // No onCancelItem → no per-item cancel buttons.
+    expect(options.onCancelItem).toBeUndefined();
+    expect(options.label).toBe('Consent Forms');
+    expect(typeof options.onRetryItem).toBe('function');
+    expect(options.folder).toBe('Forms');
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toEqual([undefined]);
     expect(lastHandle?.isAborted()).toBe(false);
@@ -184,16 +185,15 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin retryable'));
 
-    const [id, names, onCancelItem, label, onRetryItem] =
-      mocks.startUpload.mock.calls[0];
+    const [id, names, options] = mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['x.pdf', 'y.pdf']);
-    expect(label).toBeUndefined();
-    expect(typeof onCancelItem).toBe('function');
-    expect(typeof onRetryItem).toBe('function');
+    expect(options.label).toBeUndefined();
+    expect(typeof options.onCancelItem).toBe('function');
+    expect(typeof options.onRetryItem).toBe('function');
 
-    // The drawer invokes onRetryItem with the failed item's index.
-    onRetryItem(1);
+    // The in-flight row invokes onRetryItem with the failed item's index.
+    options.onRetryItem(1);
     expect(lastRetryIndex).toBe(1);
     expect(lastHandle?.id).toBe(id);
   });

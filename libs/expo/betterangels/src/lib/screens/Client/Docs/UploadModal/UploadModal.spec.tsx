@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   endUpload: vi.fn(),
   completeUpload: vi.fn(),
   failUpload: vi.fn(),
+  showSnackbar: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -29,6 +30,10 @@ vi.mock('react-native-safe-area-context', () => ({
 
 vi.mock('./useClientDocumentUpload', () => ({
   useClientDocumentUpload: () => ({ uploadDocuments: mocks.uploadDocuments }),
+}));
+
+vi.mock('../../../../hooks', () => ({
+  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
 }));
 
 vi.mock('../../../../providers', () => ({
@@ -128,10 +133,11 @@ describe('UploadModal', () => {
     mocks.endUpload.mockClear();
     mocks.completeUpload.mockClear();
     mocks.failUpload.mockClear();
+    mocks.showSnackbar.mockClear();
     mocks.mediaPickerProps.length = 0;
   });
 
-  it('starts a labelled session, uploads, and keeps the form open', async () => {
+  it('starts a labelled session with its folder, uploads, and closes the form', async () => {
     mocks.uploadDocuments.mockResolvedValue(undefined);
     const closeModal = vi.fn();
 
@@ -142,6 +148,7 @@ describe('UploadModal', () => {
 
     expect(mocks.begin).toHaveBeenCalledWith(['consent.pdf'], {
       label: 'Consent Forms',
+      folder: 'Forms',
       onRetryItem: expect.any(Function),
     });
     expect(mocks.uploadDocuments).toHaveBeenCalledWith(
@@ -153,12 +160,16 @@ describe('UploadModal', () => {
     );
     expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
     expect(mocks.endUpload).not.toHaveBeenCalled();
-    // The form stays open so the user can upload more documents; they dismiss
-    // it with Done. Progress is visible in the drawer.
-    expect(closeModal).not.toHaveBeenCalled();
+    // The form is a picker: it closes once the upload starts and progress
+    // moves into the Doc Library tree under the file's folder.
+    expect(closeModal).toHaveBeenCalled();
+    expect(mocks.showSnackbar).toHaveBeenCalledWith({
+      message: 'Upload complete',
+      type: 'success',
+    });
   });
 
-  it('keeps the form open when the upload fails so the drawer can show retry', async () => {
+  it('closes the form and surfaces the failure via snackbar + tree retry', async () => {
     mocks.uploadDocuments.mockRejectedValue(new Error('upload failed'));
     const closeModal = vi.fn();
 
@@ -167,8 +178,14 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(closeModal).not.toHaveBeenCalled();
-    expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
+    expect(closeModal).toHaveBeenCalled();
+    expect(mocks.failUpload).toHaveBeenCalledWith(
+      'session-1',
+      expect.any(String),
+    );
+    expect(mocks.showSnackbar).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error' }),
+    );
     expect(mocks.endUpload).not.toHaveBeenCalled();
   });
 

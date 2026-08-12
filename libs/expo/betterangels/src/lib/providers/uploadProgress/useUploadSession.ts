@@ -5,7 +5,7 @@ type TUploadSessionHandle = {
   id: string;
   /**
    * Per-file abort signals, aligned with the names passed to `begin`. A
-   * file's signal aborts when its per-item cancel is pressed in the drawer.
+   * file's signal aborts when its per-item cancel is pressed.
    */
   signals: (AbortSignal | undefined)[];
   /** True once every cancellable file in the session has been cancelled. */
@@ -13,17 +13,22 @@ type TUploadSessionHandle = {
 };
 
 type TBeginOptions = {
-  /** When false the session is not abortable (drawer shows no Cancel). */
+  /** When false the session is not abortable (no per-item Cancel). */
   cancellable?: boolean;
-  /** Human-readable label (e.g. the doc type) shown in the queue/drawer. */
+  /** Human-readable label (e.g. the doc type) shown in the queue. */
   label?: string;
   /** Starts a fresh single-file session when a failed item is retried. */
   onRetryItem?: (index: number) => void;
+  /**
+   * Destination folder ('Doc Ready' | 'Forms' | 'Other') where the docs tree
+   * renders this session's in-flight rows.
+   */
+  folder?: string;
 };
 
 /**
  * Wraps the UploadProgressProvider API for a single upload, pairing the
- * session with an AbortController so the drawer's cancel button actually
+ * session with an AbortController so the per-item cancel button actually
  * aborts the in-flight upload. Pass `{ cancellable: false }` for flows with
  * no abort support (e.g. HMIS base64/multipart uploads).
  */
@@ -47,15 +52,14 @@ export function useUploadSession() {
       ? names.map(() => new AbortController())
       : undefined;
 
-    startUpload(
-      id,
-      names,
-      controllers
+    startUpload(id, names, {
+      onCancelItem: controllers
         ? (index: number) => controllers[index].abort()
         : undefined,
-      options?.label,
-      options?.onRetryItem,
-    );
+      label: options?.label,
+      onRetryItem: options?.onRetryItem,
+      folder: options?.folder,
+    });
 
     return {
       id,

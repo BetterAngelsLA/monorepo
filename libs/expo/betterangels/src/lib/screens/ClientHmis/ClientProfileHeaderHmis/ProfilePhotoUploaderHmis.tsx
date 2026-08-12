@@ -8,6 +8,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { useSnackbar } from '../../../hooks';
 import { useClientHmis } from '../../../hooks/useClientHmis';
 import { useUploadSession } from '../../../providers';
 import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
@@ -34,8 +35,9 @@ export function ProfilePhotoUploaderHmis({
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { begin, updateUpload, failUpload, completeUpload } =
+  const { begin, updateUpload, completeUpload, endUpload } =
     useUploadSession();
+  const { showSnackbar } = useSnackbar();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
@@ -59,7 +61,10 @@ export function ProfilePhotoUploaderHmis({
       completeUpload(session.id);
       setModalType(null);
     } catch {
-      failUpload(session.id, 'Error uploading profile photo.');
+      // The avatar spinner is the inline progress; the snackbar is the
+      // failure feedback now that the global drawer is gone.
+      showSnackbar({ message: 'Error uploading profile photo.', type: 'error' });
+      endUpload(session.id);
       setModalType(null);
     } finally {
       setUploading(false);

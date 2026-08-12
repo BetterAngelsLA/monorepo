@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => {
     failUpload: vi.fn(),
     endUpload: vi.fn(),
     completeUpload: vi.fn(),
+    showSnackbar: vi.fn(),
     readFileAsBase64: vi.fn(),
     begin: vi.fn(() => ({
       id: 'session-hmis',
@@ -101,6 +102,7 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('../../../../hooks', () => ({
   useClientHmis: () => ({ uploadClientFile: mocks.uploadClientFile }),
+  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
   useFileCategoryAndNamesHmis: () => ({
     categories: [{ id: '1', name: 'Category A' }],
     fileNames: { '1': [{ id: '2', name: 'Predefined' }] },
@@ -185,6 +187,7 @@ describe('UploadModalHmis', () => {
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
     mocks.completeUpload.mockClear();
+    mocks.showSnackbar.mockClear();
     mocks.begin.mockClear();
     mocks.selectorProps.length = 0;
     mocks.mediaPickerProps.length = 0;
@@ -257,12 +260,13 @@ describe('UploadModalHmis', () => {
     await selectFile(sampleFile);
     await submit();
 
-    expect(mocks.failUpload).toHaveBeenCalledWith(
-      'session-hmis',
-      'Sorry, file type "text/plain" is not supported.',
-    );
+    expect(mocks.showSnackbar).toHaveBeenCalledWith({
+      message: 'Sorry, file type "text/plain" is not supported.',
+      type: 'error',
+    });
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-hmis');
+    expect(mocks.failUpload).not.toHaveBeenCalled();
     expect(closeModal).not.toHaveBeenCalled();
-    expect(mocks.endUpload).not.toHaveBeenCalled();
   });
 
   it('maps a 401 to the session-expired message', async () => {
@@ -279,10 +283,12 @@ describe('UploadModalHmis', () => {
     await selectFile(sampleFile);
     await submit();
 
-    expect(mocks.failUpload).toHaveBeenCalledWith(
-      'session-hmis',
-      'Your HMIS session has expired. Please log in again.',
-    );
+    expect(mocks.showSnackbar).toHaveBeenCalledWith({
+      message: 'Your HMIS session has expired. Please log in again.',
+      type: 'error',
+    });
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-hmis');
+    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
   it('does not start a session when validation fails before upload', async () => {

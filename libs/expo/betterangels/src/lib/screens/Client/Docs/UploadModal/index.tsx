@@ -10,7 +10,9 @@ import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { useSnackbar } from '../../../../hooks';
 import { useUploadSession } from '../../../../providers';
+import { getDocFolder } from '../folders';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
 import { useClientDocumentUpload } from './useClientDocumentUpload';
@@ -52,6 +54,7 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const { uploadDocuments } = useClientDocumentUpload();
+  const { showSnackbar } = useSnackbar();
   const {
     begin,
     setUploadManifest,
@@ -117,15 +120,23 @@ export default function UploadModal(props: IUploadModalProps) {
       });
 
       completeUpload(session.id);
+      showSnackbar({ message: 'Upload complete', type: 'success' });
     } catch (err) {
       console.error(`[UploadModal upload error:] ${err}`);
 
       // Cancelled sessions were already removed by the cancel action. Other
-      // failures stay in the queue so the user can retry or dismiss.
+      // failures stay in the session so the tree shows the error + Retry.
       if (session.isAborted()) {
         endUpload(session.id);
       } else {
-        failUpload(session.id);
+        failUpload(
+          session.id,
+          'Upload failed. Use Retry on the file below.',
+        );
+        showSnackbar({
+          message: 'Upload failed. Please try again.',
+          type: 'error',
+        });
       }
     }
   };
@@ -137,6 +148,8 @@ export default function UploadModal(props: IUploadModalProps) {
   ) => {
     const session = begin(files.map((file) => file.name), {
       label: title,
+      // The folder the docs tree renders in-flight rows under.
+      folder: getDocFolder(namespace),
       // Retrying a failed item re-runs only that file in a fresh session;
       // the successful files were already persisted and stay untouched.
       onRetryItem: (index) => startSession([files[index]], namespace, title),
@@ -155,10 +168,10 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    // Keep the form open so the user can upload several documents in one
-    // session — the progress panel shows each upload and they dismiss the
-    // form with Done when finished.
+    // The form is a picker: close it once the upload starts. Progress shows
+    // inline in the Doc Library tree under the file's folder.
     startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
+    closeModal();
   };
 
   const insets = useSafeAreaInsets();
@@ -198,8 +211,8 @@ export default function UploadModal(props: IUploadModalProps) {
           marginBottom: Spacings.sm,
         }}
       >
-        You can upload several documents at once — progress appears in a panel
-        at the bottom. Tap Done when finished.
+        You can upload several documents at once — progress appears in the Doc
+        Library folder as each file uploads.
       </TextRegular>
 
       <ScrollView

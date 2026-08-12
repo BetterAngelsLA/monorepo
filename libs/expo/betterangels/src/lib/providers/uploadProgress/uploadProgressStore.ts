@@ -8,9 +8,9 @@ import {
 /**
  * Module-scoped upload session store shared by every UploadProgressProvider
  * instance (the app root and each modal screen). Keeping the state outside a
- * component means the progress drawer survives the provider that started an
- * upload unmounting — e.g. the UploadModal closing on success — so the
- * "Upload complete" state is visible after the modal is gone.
+ * component means in-flight sessions survive the provider that started an
+ * upload unmounting — e.g. the UploadModal closing on success — so the docs
+ * tree can keep rendering progress after the modal is gone.
  */
 
 type TUploadState = {
@@ -40,10 +40,15 @@ export function getUploadSnapshot(): TUploadState {
 export function startUploadSession(
   id: string,
   names: string[],
-  onCancelItem?: (index: number) => void,
-  label?: string,
-  onRetryItem?: (index: number) => void,
+  options?: {
+    onCancelItem?: (index: number) => void;
+    label?: string;
+    onRetryItem?: (index: number) => void;
+    folder?: string;
+  },
 ) {
+  const { onCancelItem, label, onRetryItem, folder } = options ?? {};
+
   // Uploads accumulate until dismissed so several can be in flight at once.
   commit({
     sessions: [
@@ -62,6 +67,7 @@ export function startUploadSession(
         total: names.length,
         failed: false,
         label,
+        folder,
       },
     ],
   });
@@ -171,8 +177,8 @@ export function retryUploadItemSession(sessionId: string, refId: string) {
     return;
   }
 
-  // Start the replacement session first so the drawer surfaces it as the
-  // latest session (sessions are appended, and the drawer shows the last).
+  // Start the replacement session first so it surfaces as the latest session
+  // (sessions are appended, and consumers show the last).
   item.onRetry?.();
 
   const items = session.items.filter((i) => i.refId !== refId);

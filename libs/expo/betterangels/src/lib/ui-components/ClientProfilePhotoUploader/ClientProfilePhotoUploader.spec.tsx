@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   endUpload: vi.fn(),
   completeUpload: vi.fn(),
   failUpload: vi.fn(),
+  showSnackbar: vi.fn(),
   isAborted: false,
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
@@ -47,6 +48,10 @@ vi.mock('../../providers', () => ({
   }),
 }));
 
+vi.mock('../../hooks', () => ({
+  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
+}));
+
 vi.mock('./useClientProfilePhotoUpload', () => ({
   useClientProfilePhotoUpload: () => ({ uploadPhoto: mocks.uploadPhoto }),
 }));
@@ -75,6 +80,7 @@ describe('ClientProfilePhotoUploader', () => {
     mocks.endUpload.mockClear();
     mocks.completeUpload.mockClear();
     mocks.failUpload.mockClear();
+    mocks.showSnackbar.mockClear();
     mocks.isAborted = false;
     mocks.mediaPickerProps.length = 0;
   });
@@ -102,21 +108,22 @@ describe('ClientProfilePhotoUploader', () => {
     expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
-  it('marks the session failed with a message when the upload errors', async () => {
+  it('shows an error snackbar and ends the session when the upload errors', async () => {
     mocks.uploadPhoto.mockRejectedValue(new Error('boom'));
 
     render(<ClientProfilePhotoUploader clientId="client-1" />);
 
     await openPickerAndSelect(sampleFile);
 
-    expect(mocks.failUpload).toHaveBeenCalledWith(
-      'session-1',
-      'Sorry, something went wrong. Please try again.',
-    );
-    expect(mocks.endUpload).not.toHaveBeenCalled();
+    expect(mocks.showSnackbar).toHaveBeenCalledWith({
+      message: 'Sorry, something went wrong. Please try again.',
+      type: 'error',
+    });
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-1');
+    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
-  it('ends the session when the upload was aborted via the drawer', async () => {
+  it('ends the session when the upload was aborted', async () => {
     mocks.isAborted = true;
     mocks.uploadPhoto.mockRejectedValue(new Error('aborted'));
 

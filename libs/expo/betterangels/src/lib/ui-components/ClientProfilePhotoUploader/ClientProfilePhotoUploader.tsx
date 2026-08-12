@@ -4,6 +4,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { useSnackbar } from '../../hooks';
 import { useUploadSession } from '../../providers';
 import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
 import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';
@@ -21,7 +22,8 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { uploadPhoto } = useClientProfilePhotoUpload();
-  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
+  const { showSnackbar } = useSnackbar();
+  const { begin, setUploadManifest, updateUpload, completeUpload, endUpload } =
     useUploadSession();
 
   const handleUpload = async (file: ReactNativeFile) => {
@@ -40,15 +42,17 @@ export function ClientProfilePhotoUploader(props: TProps) {
     } catch (err) {
       console.error(`[ClientProfilePhotoUploader]: ${err}`);
 
-      // Cancelled sessions were already removed by the drawer's cancel action.
+      // Cancelled sessions were already removed by the cancel action.
       if (session.isAborted()) {
         endUpload(session.id);
       } else {
-        // Keep the session so the drawer shows the failure + Close.
-        failUpload(
-          session.id,
-          'Sorry, something went wrong. Please try again.',
-        );
+        // The avatar spinner is the inline progress; the snackbar is the
+        // failure feedback now that the global drawer is gone.
+        showSnackbar({
+          message: 'Sorry, something went wrong. Please try again.',
+          type: 'error',
+        });
+        endUpload(session.id);
       }
     } finally {
       setIsUploading(false);

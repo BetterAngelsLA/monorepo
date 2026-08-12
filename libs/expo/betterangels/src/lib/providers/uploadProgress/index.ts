@@ -1,4 +1,4 @@
 export * from './UploadProgressContext';
 export { UploadProgressProvider } from './UploadProgressProvider';
-export { UploadProgressDrawer } from './UploadProgressDrawer';
+export { UploadProgressRows } from './UploadProgressRows';
 export { useUploadSession } from './useUploadSession';

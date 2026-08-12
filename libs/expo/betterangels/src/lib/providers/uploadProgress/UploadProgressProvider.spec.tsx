@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useUploadProgress } from './UploadProgressContext';
@@ -10,10 +10,6 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
   TextRegular: ({ children }: { children: ReactNode }) => (
     <Text>{children}</Text>
   ),
-}));
-
-vi.mock('./UploadProgressDrawer', () => ({
-  UploadProgressDrawer: () => null,
 }));
 
 function Harness() {
@@ -30,7 +26,7 @@ function Harness() {
 
   return (
     <View>
-      <Text testID="drawer-count">{sessions.length}</Text>
+      <Text testID="session-count">{sessions.length}</Text>
       {sessions.map((session) => (
         <View key={session.id}>
           <Text testID={`session-${session.id}`}>
@@ -150,10 +146,10 @@ describe('UploadProgressProvider', () => {
     );
 
     fireEvent.press(getByLabelText('start'));
-    expect(getByTestId('drawer-count').props.children).toBe(1);
+    expect(getByTestId('session-count').props.children).toBe(1);
 
     fireEvent.press(getByLabelText('start'));
-    expect(getByTestId('drawer-count').props.children).toBe(2);
+    expect(getByTestId('session-count').props.children).toBe(2);
   });
 
   it('tracks a session through start, progress, and completion', () => {
@@ -163,10 +159,10 @@ describe('UploadProgressProvider', () => {
       </UploadProgressProvider>,
     );
 
-    expect(getByTestId('drawer-count').props.children).toBe(0);
+    expect(getByTestId('session-count').props.children).toBe(0);
 
     fireEvent.press(getByLabelText('start'));
-    expect(getByTestId('drawer-count').props.children).toBe(1);
+    expect(getByTestId('session-count').props.children).toBe(1);
     expect(getByTestId('session-a').props.children).toEqual([0, '/', 2]);
 
     fireEvent.press(getByLabelText('manifest'));
@@ -175,7 +171,7 @@ describe('UploadProgressProvider', () => {
 
     fireEvent.press(getByLabelText('end'));
     expect(queryByTestId('session-a')).toBeNull();
-    expect(getByTestId('drawer-count').props.children).toBe(0);
+    expect(getByTestId('session-count').props.children).toBe(0);
   });
 
   it('marks a session as failed when a file errors', () => {
@@ -202,8 +198,8 @@ describe('UploadProgressProvider', () => {
     fireEvent.press(getByLabelText('start'));
     fireEvent.press(getByLabelText('fail'));
 
-    // Session stays open so the drawer can show the failure + Close action.
-    expect(getByTestId('drawer-count').props.children).toBe(1);
+    // Session stays open so the docs tree can show the failure + Retry.
+    expect(getByTestId('session-count').props.children).toBe(1);
     expect(getByTestId('session-a-failed').props.children).toBe('failed');
     expect(getByTestId('session-a-error').props.children).toBe(
       'Something went wrong.',
@@ -213,24 +209,32 @@ describe('UploadProgressProvider', () => {
     expect(queryByTestId('session-a')).toBeNull();
   });
 
-  it('completeUpload keeps the session in a completed state until dismissed', () => {
-    const { getByLabelText, getByTestId, queryByTestId } = render(
-      <UploadProgressProvider>
-        <Harness />
-      </UploadProgressProvider>,
-    );
+  it('auto-cleans completed sessions shortly after they finish', () => {
+    vi.useFakeTimers();
 
-    fireEvent.press(getByLabelText('start'));
-    expect(getByTestId('session-a-complete').props.children).toBe('incomplete');
+    try {
+      const { getByLabelText, getByTestId, queryByTestId } = render(
+        <UploadProgressProvider>
+          <Harness />
+        </UploadProgressProvider>,
+      );
 
-    fireEvent.press(getByLabelText('complete'));
+      fireEvent.press(getByLabelText('start'));
+      fireEvent.press(getByLabelText('complete'));
 
-    // Session stays open so the drawer can show the completion + Close action.
-    expect(getByTestId('drawer-count').props.children).toBe(1);
-    expect(getByTestId('session-a-complete').props.children).toBe('complete');
+      // The completed session is still present briefly.
+      expect(getByTestId('session-count').props.children).toBe(1);
+      expect(getByTestId('session-a-complete').props.children).toBe('complete');
 
-    fireEvent.press(getByLabelText('end'));
-    expect(queryByTestId('session-a')).toBeNull();
+      // After the cleanup delay the session is dropped from the store.
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(queryByTestId('session-a')).toBeNull();
+      expect(getByTestId('session-count').props.children).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps the session when the provider that started it unmounts', () => {
@@ -244,7 +248,7 @@ describe('UploadProgressProvider', () => {
     );
 
     fireEvent.press(first.getByLabelText('start'));
-    expect(first.getByTestId('drawer-count').props.children).toBe(1);
+    expect(first.getByTestId('session-count').props.children).toBe(1);
 
     first.unmount();
 
@@ -254,7 +258,7 @@ describe('UploadProgressProvider', () => {
       </UploadProgressProvider>,
     );
 
-    expect(second.getByTestId('drawer-count').props.children).toBe(1);
+    expect(second.getByTestId('session-count').props.children).toBe(1);
     expect(second.getByTestId('session-a')).toBeTruthy();
   });
 
@@ -266,7 +270,7 @@ describe('UploadProgressProvider', () => {
 
       return (
         <View>
-          <Text testID="drawer-count">{sessions.length}</Text>
+          <Text testID="session-count">{sessions.length}</Text>
           {sessions.map((session) => (
             <View key={session.id}>
               <Text testID={`session-${session.id}`}>
@@ -284,7 +288,7 @@ describe('UploadProgressProvider', () => {
             accessibilityLabel="start"
             accessibilityHint="start an upload"
             onPress={() =>
-              startUpload('c', ['z.pdf', 'w.pdf'], onCancelItem)
+              startUpload('c', ['z.pdf', 'w.pdf'], { onCancelItem })
             }
           >
             start
@@ -328,7 +332,7 @@ describe('UploadProgressProvider', () => {
 
       return (
         <View>
-          <Text testID="drawer-count">{sessions.length}</Text>
+          <Text testID="session-count">{sessions.length}</Text>
           {sessions.map((session) => (
             <Text key={session.id} testID={`session-${session.id}`}>
               {session.completed}/{session.total}
@@ -338,7 +342,7 @@ describe('UploadProgressProvider', () => {
             accessibilityRole="button"
             accessibilityLabel="start"
             accessibilityHint="start an upload"
-            onPress={() => startUpload('s', ['z.pdf'], onCancelItem)}
+            onPress={() => startUpload('s', ['z.pdf'], { onCancelItem })}
           >
             start
           </Text>
@@ -365,7 +369,7 @@ describe('UploadProgressProvider', () => {
 
     expect(onCancelItem).toHaveBeenCalledWith(0);
     expect(queryByTestId('session-s')).toBeNull();
-    expect(getByTestId('drawer-count').props.children).toBe(0);
+    expect(getByTestId('session-count').props.children).toBe(0);
   });
 
   it('retries a single item via its onRetry and keeps the other items', () => {
@@ -376,7 +380,7 @@ describe('UploadProgressProvider', () => {
 
       return (
         <View>
-          <Text testID="drawer-count">{sessions.length}</Text>
+          <Text testID="session-count">{sessions.length}</Text>
           {sessions.map((session) => (
             <View key={session.id}>
               <Text testID={`session-${session.id}`}>
@@ -394,13 +398,7 @@ describe('UploadProgressProvider', () => {
             accessibilityLabel="start"
             accessibilityHint="start an upload"
             onPress={() =>
-              startUpload(
-                'r',
-                ['z.pdf', 'w.pdf'],
-                undefined,
-                undefined,
-                onRetryItem,
-              )
+              startUpload('r', ['z.pdf', 'w.pdf'], { onRetryItem })
             }
           >
             start
@@ -444,7 +442,7 @@ describe('UploadProgressProvider', () => {
 
       return (
         <View>
-          <Text testID="drawer-count">{sessions.length}</Text>
+          <Text testID="session-count">{sessions.length}</Text>
           {sessions.map((session) => (
             <Text key={session.id} testID={`session-${session.id}`}>
               {session.completed}/{session.total}
@@ -455,7 +453,7 @@ describe('UploadProgressProvider', () => {
             accessibilityLabel="start"
             accessibilityHint="start an upload"
             onPress={() =>
-              startUpload('s2', ['z.pdf'], undefined, undefined, onRetryItem)
+              startUpload('s2', ['z.pdf'], { onRetryItem })
             }
           >
             start
@@ -483,6 +481,6 @@ describe('UploadProgressProvider', () => {
 
     expect(onRetryItem).toHaveBeenCalledWith(0);
     expect(queryByTestId('session-s2')).toBeNull();
-    expect(getByTestId('drawer-count').props.children).toBe(0);
+    expect(getByTestId('session-count').props.children).toBe(0);
   });
 });

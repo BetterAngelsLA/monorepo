@@ -13,7 +13,11 @@ import { readFileAsBase64 } from '@monorepo/expo/shared/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
-import { useClientHmis, useFileCategoryAndNamesHmis } from '../../../../hooks';
+import {
+  useClientHmis,
+  useFileCategoryAndNamesHmis,
+  useSnackbar,
+} from '../../../../hooks';
 import { getClientFilesQueryKey } from '../../../../hooks/fileMetadataHmis/useClientFiles';
 import { useUploadSession } from '../../../../providers';
 import { FileUploadsPreview } from '../../../../ui-components';
@@ -63,8 +67,9 @@ export default function UploadModalHmis(props: TProps) {
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { begin, updateUpload, failUpload, completeUpload } =
+  const { begin, updateUpload, completeUpload, endUpload } =
     useUploadSession();
+  const { showSnackbar } = useSnackbar();
   const { uploadClientFile } = useClientHmis();
   const queryClient = useQueryClient();
 
@@ -153,10 +158,14 @@ export default function UploadModalHmis(props: TProps) {
     } catch (err) {
       console.error('[UploadModalHmis onSubmit]', err);
 
-      // Keep the session so the drawer shows the failure with the specific
-      // message; the modal stays open so the user can retry or cancel.
+      // The full-screen overlay is the inline progress; the snackbar is the
+      // failure feedback now that the global drawer is gone. The modal stays
+      // open so the user can retry or cancel.
       if (session) {
-        failUpload(session.id, toErrorMessage(err));
+        const message = toErrorMessage(err);
+
+        showSnackbar({ message, type: 'error' });
+        endUpload(session.id);
       }
     } finally {
       setIsUploading(false);

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   failUpload: vi.fn(),
   endUpload: vi.fn(),
   completeUpload: vi.fn(),
+  showSnackbar: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -52,6 +53,10 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
 vi.mock('../../../hooks/useClientHmis', () => ({
   useClientHmis: () => ({ uploadClientPhoto: mocks.uploadClientPhoto }),
+}));
+
+vi.mock('../../../hooks', () => ({
+  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
 }));
 
 vi.mock('../../../providers', () => ({
@@ -93,6 +98,7 @@ describe('ProfilePhotoUploaderHmis', () => {
     mocks.failUpload.mockClear();
     mocks.endUpload.mockClear();
     mocks.completeUpload.mockClear();
+    mocks.showSnackbar.mockClear();
     mocks.mediaPickerProps.length = 0;
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
@@ -134,7 +140,7 @@ describe('ProfilePhotoUploaderHmis', () => {
     expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
-  it('marks the session failed when the upload errors', async () => {
+  it('shows an error snackbar and ends the session when the upload errors', async () => {
     mocks.uploadClientPhoto.mockRejectedValue(new Error('boom'));
 
     render(
@@ -146,10 +152,11 @@ describe('ProfilePhotoUploaderHmis', () => {
     );
     await selectFile(sampleFile);
 
-    expect(mocks.failUpload).toHaveBeenCalledWith(
-      'session-photo',
-      'Error uploading profile photo.',
-    );
-    expect(mocks.endUpload).not.toHaveBeenCalled();
+    expect(mocks.showSnackbar).toHaveBeenCalledWith({
+      message: 'Error uploading profile photo.',
+      type: 'error',
+    });
+    expect(mocks.endUpload).toHaveBeenCalledWith('session-photo');
+    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 });
