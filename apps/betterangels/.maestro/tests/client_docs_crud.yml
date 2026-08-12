@@ -26,6 +26,12 @@ appId: ${MAESTRO_APP_ID}
 # Go to Docs Tab ########
 # #######################
 
+# Tabs are in a horizontal ScrollView — Docs may be off-screen on narrower
+# devices. scrollUntilVisible ensures it's in view before tapping.
+- scrollUntilVisible:
+    element:
+      id: 'client-tab-docs'
+    direction: RIGHT
 - tapOn:
     id: 'client-tab-docs'
 - waitForAnimationToEnd
