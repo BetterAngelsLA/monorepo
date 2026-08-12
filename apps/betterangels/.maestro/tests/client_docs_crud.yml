@@ -43,7 +43,13 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: 'client-docs-upload-screen'
 
-- tapOn: 'CA ID or CA Driver’s License - Front'
+# We are uploading types that can accept multiple uploads
+# so as to avoid being blocked during tests.
+# Driver's License accepts 1 upload, so may not be clickable
+# if there is a pre-existing upload.
+# Should we create fixture profiles unique to each test run,
+# as per ticket DEV-2498, then we can update.
+- tapOn: 'Consent Forms'
 
 - assertVisible:
     id: 'media-picker-menu'
@@ -58,3 +64,8 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'PXGGridLayout-Info'
     index: 0
+
+# 'Consent Forms' allows multiple selections, so we need to click "add/done"
+- tapOn:
+    id: 'Add'
+# modal-screen-close-btn
