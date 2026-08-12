@@ -7,7 +7,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#services
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
@@ -28,6 +28,51 @@ from .role_manager import OrgRoleManager
 
 if TYPE_CHECKING:
     from .models import User
+
+
+# ── User provisioning ────────────────────────────────────────────────
+
+
+def get_or_create_user_by_email(
+    email: str,
+    *,
+    defaults: dict[str, Any] | None = None,
+) -> tuple[UserModel, bool]:
+    """Find or create a user by normalized email, reactivating if needed.
+
+    A single unit of work: callers that perform additional writes alongside
+    this (e.g. ``member_add``) wrap it in their own transaction.
+
+    Emails are stored lowercased by ``User.save()``, so the input is
+    normalized (stripped + lowercased) before lookup — otherwise mixed-case
+    input would miss the existing row and raise a unique-constraint
+    violation.  Existing-but-deactivated accounts (e.g. disabled by a bulk
+    script) are reactivated so login-by-code and re-invitation keep working.
+
+    ``defaults`` (like :meth:`~django.db.models.QuerySet.get_or_create`)
+    seeds field values only when a new user is created.  Brand-new users are
+    created active with an unusable password and a random username (the
+    codebase convention for programmatically created accounts, cf.
+    ``UserManager.create_client``).
+
+    Returns ``(user, created)``.
+    """
+    email = email.strip().lower()
+    user, created = UserModel.objects.get_or_create(
+        email=email,
+        defaults={
+            **(defaults or {}),
+            "username": str(uuid.uuid4()),
+            "is_active": True,
+        },
+    )
+    if created:
+        user.set_unusable_password()
+        user.save()
+    elif not user.is_active:
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+    return user, created
 
 
 # ── Member management ────────────────────────────────────────────────
@@ -51,17 +96,17 @@ def member_add(
     *permission_templates* the user does **not** already hold are
     assigned.  This allows the same user to be added through different
     portals (e.g. outreach and shelter operator) without raising an error.
+    Existing-but-deactivated users are reactivated via
+    :func:`get_or_create_user_by_email`.
     """
-    user, created = UserModel.objects.get_or_create(
-        email=email,
-        defaults={"username": str(uuid.uuid4()), "is_active": True},
+    user, _ = get_or_create_user_by_email(
+        email,
+        defaults={
+            "first_name": first_name,
+            "last_name": last_name,
+            "middle_name": middle_name,
+        },
     )
-    if created:
-        user.first_name = first_name
-        user.last_name = last_name
-        user.middle_name = middle_name
-        user.set_unusable_password()
-        user.save()
 
     is_existing_member = organization.users.filter(pk=user.pk).exists()
 

@@ -1,4 +1,3 @@
-import uuid
 from typing import Any, Optional
 
 from common.permissions.config import TemplateConfig
@@ -14,6 +13,7 @@ from rest_framework.request import Request
 
 from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User
+from .services import get_or_create_user_by_email
 from .utils import demo_email_context
 
 
@@ -26,15 +26,10 @@ class CustomInvitations(InvitationBackend):
     def invite_by_email(
         self, email: str, sender: Optional[User] = None, request: Optional[Request] = None, **kwargs: Any
     ) -> AbstractBaseUser:
+        # Normalizes the email and reactivates previously deactivated accounts
+        # (see accounts.services.get_or_create_user_by_email).
         with transaction.atomic():
-            user, created = self.user_model.objects.get_or_create(
-                email=email,
-                defaults={"username": str(uuid.uuid4()), "is_active": True},
-            )
-            if created:
-                user.set_unusable_password()
-                user.save()
-
+            user, _ = get_or_create_user_by_email(email)
         self.send_invitation(user, sender, **kwargs)
         return user
 
