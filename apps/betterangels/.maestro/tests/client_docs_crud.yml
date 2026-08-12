@@ -39,9 +39,9 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: 'client-view-docs'
 
-# ###############################
-# Go to Docs Uploads Scren ######
-# ###############################
+# ################################
+# Go to Docs Uploads Screen ######
+# ################################
 - tapOn:
     id: 'open-client-docs-upload-screen-btn'
 - waitForAnimationToEnd
@@ -60,41 +60,40 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible:
     id: 'media-picker-menu'
 
+# ###########################
+# Capture Camera Image ######
+# ###########################
 - tapOn:
-    id: 'media-picker-image-btn'
+    id: 'media-picker-camera-btn'
 
-# Pick the seeded image from the native photo picker. The selector differs
-# by platform — check `maestro hierarchy` with the picker open to confirm.
+# Opening the camera may trigger the native permission prompt (setPermissions
+# in start_test.yml is best-effort and Maestro-version dependent). Accept it
+# conditionally per platform — these runFlows are skipped when no prompt shows.
+#   - iOS camera prompt: Allow / Don't Allow
+#   - Android 11+ camera prompt: "While using the app" / "Only this time" /
+#     "Don't allow"
+- runFlow:
+    when:
+      visible:
+        text: 'Allow'
+    commands:
+      - tapOn: 'Allow'
+- runFlow:
+    when:
+      visible:
+        text: 'While using the app'
+    commands:
+      - tapOn: 'While using the app'
+
 - waitForAnimationToEnd
 
-# iOS: PHPicker grid cells have resource-id "PXGGridLayout-Info".
-# The seeded image is touched to "now" so it's always the newest → index: 0.
-# Consent Forms allows multiple selection, so tap "Add" to confirm.
-- runFlow:
-    when:
-      platform: ios
-    commands:
-      - tapOn:
-          id: 'PXGGridLayout-Info'
-          index: 0
-      - tapOn:
-          id: 'Add'
+- assertVisible:
+    id: 'camera-view'
 
-# Android: photo picker cells have no resource-id — match by accessibility
-# text instead. The seeded image is touched to "now" so it's always the
-# newest → index: 0. Maestro text matching is full-regex, so use `.*`.
-- runFlow:
-    when:
-      platform: android
-    commands:
-      - tapOn:
-          text: '.*Photo taken on .*'
-          index: 0
+- tapOn:
+    id: 'camera-capture-btn'
+- waitForAnimationToEnd
 
-      - tapOn:
-          text: 'Done'
-
-# - assertVisible: 'Upload Complete'
 - extendedWaitUntil:
     visible:
       id: 'upload-progress-state-upload-complete'
@@ -114,41 +113,17 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'client-docs-accordion-forms'
 
-# The doc name is shown in the list. iOS PHPicker preserves the seeded
-# filename (contains ${TEST_RUN_ID}); the Android Photo Picker synthesizes
-# DISPLAY_NAME as "<media-id>.jpg" and never exposes the real filename, so on
-# Android we match the generic ".jpg" pattern — safe because the pre-flight
-# guard above guarantees the accordion was empty of image docs beforehand.
-#
-# iOS taps the FileCard by its testID ("file-card-..."), NOT the filename
-# text: the filename Text is a child of the accessible FileCard Pressable,
-# and on iOS tapping the child does not activate the parent's onPress (so the
-# DocumentModal never opens). On Android, tapping the ".jpg" text does trigger
-# the parent Pressable via touch dispatch.
-- runFlow:
-    when:
-      platform: ios
-    commands:
-      - assertVisible:
-          text: '.*${TEST_RUN_ID}.*'
+# Validate the upload: soft check — the camera photo is named
+# "<epoch-ms>.jpg" (unpredictable) on both platforms, so we assert that a .jpg
+# doc exists in the accordion rather than matching the exact name.
+- assertVisible:
+    text: '.*\.jpg.*'
 
-      - tapOn:
-          id: '.*${TEST_RUN_ID}.*'
-
-- runFlow:
-    when:
-      platform: android
-    commands:
-      # for Android do only a `soft` validation since seeded photo
-      # filenames are not reliable, so check by that some jpg exists
-      - assertVisible:
-          text: '.*\.jpg.*'
-
-      # part of test is to delete a file, but will just grab
-      # first photo in list
-      - tapOn:
-          id: 'file-card-.*'
-          index: 0
+# Open the doc (FileCard) to get the DocumentModal, then delete it. Tapping by
+# the FileCard testID prefix (not the filename text) works on both platforms.
+- tapOn:
+    id: 'file-card-.*'
+    index: 0
 
 # ########################
 # Delete the recent upload
@@ -167,5 +142,5 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'delete-modal-confirm-btn'
 - waitForAnimationToEnd
-# currently there is no success/fail indicator to validate that file was
-# deleted.
+# Note: there is no success/fail indicator that the file was deleted; the
+# post-delete accordion re-check is a future improvement (DEV-2498).

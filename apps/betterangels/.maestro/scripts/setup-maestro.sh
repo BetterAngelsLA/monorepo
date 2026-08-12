@@ -100,46 +100,6 @@ fi
 
 export MAESTRO_DEVICE
 
-# -------------------------------------
-# Seed test fixtures (images)
-# -------------------------------------
-# Unique ID for this test invocation. Available to all Maestro YAML flows
-# via ${TEST_RUN_ID} — use it to generate names (seeded images, fixture
-# data, etc.) that can be uniquely asserted across parallel or sharded runs.
-TEST_RUN_ID="$(printf '%04x%04x' $RANDOM $RANDOM)"
-export TEST_RUN_ID
-
-echo "🆔 Test run ID: $TEST_RUN_ID"
-
-FIXTURES_DIR="$MAESTRO_ROOT/fixtures"
-IMAGES_DIR="$FIXTURES_DIR/images"
-
-if [[ -d "$IMAGES_DIR" ]]; then
-  for img in "$IMAGES_DIR"/*; do
-    if [[ -f "$img" ]]; then
-      seeded_name="e2e-${TEST_RUN_ID}-$(basename "$img")"
-      seeded_path="/tmp/${seeded_name}"
-
-      cp "$img" "$seeded_path"
-      touch -m "$seeded_path"
-
-      if [[ "$PLATFORM" == "ios" ]]; then
-        echo "📸 Seeding image to iOS: $seeded_name"
-        xcrun simctl addmedia booted "$seeded_path"
-      elif [[ "$PLATFORM" == "android" ]]; then
-        echo "📸 Seeding image to Android: $seeded_name"
-        adb shell mkdir -p /sdcard/DCIM/
-        adb push "$seeded_path" "/sdcard/DCIM/$seeded_name"
-        adb shell am broadcast \
-          -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-          -d "file:///sdcard/DCIM/$seeded_name"
-      fi
-
-      rm "$seeded_path"
-    fi
-  done
-fi
-
 # -----------------------------
 # Resolve deep link
 # -----------------------------
@@ -180,7 +140,7 @@ export MAESTRO_DEEPLINK
 # -----------------------------
 CMD=(maestro --device "$MAESTRO_DEVICE")
 [[ ${#MAESTRO_FLAGS[@]} -gt 0 ]] && CMD+=("${MAESTRO_FLAGS[@]}")
-CMD+=(test -e TEST_RUN_ID="$TEST_RUN_ID" "$TEST_PATH")
+CMD+=(test "$TEST_PATH")
 
 printf "🚀 %s\n\n" "${CMD[*]}"
 exec "${CMD[@]}"

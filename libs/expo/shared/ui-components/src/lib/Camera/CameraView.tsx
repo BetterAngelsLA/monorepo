@@ -72,7 +72,7 @@ export function CameraView(props: CameraProps) {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="camera-view">
       <ExpoCamera
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
@@ -121,6 +121,7 @@ export function CameraView(props: CameraProps) {
 
           <Pressable
             onPress={handleCapture}
+            testID="camera-capture-btn"
             style={{ flex: 2, alignItems: 'center' }}
             accessibilityRole="button"
             accessibilityLabel="capture"

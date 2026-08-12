@@ -26,5 +26,9 @@ appId: ${MAESTRO_APP_ID}
           permissions:
             location: allow
 
+- setPermissions:
+    permissions:
+      camera: allow
+
 - runFlow: ./launch_app.yml
 - runFlow: ./auth/ensure_logged_in_ba.yml
