@@ -100,6 +100,36 @@ fi
 
 export MAESTRO_DEVICE
 
+# -------------------------------------
+# Seed test fixtures (images: iOS only)
+# -------------------------------------
+if [[ "$PLATFORM" == "ios" ]]; then
+  FIXTURES_DIR="$MAESTRO_ROOT/fixtures"
+
+  # Seed images into the iOS simulator's Photos app.
+  # Uses a sentinel file keyed to the simulator UDID so images are only
+  # added once per simulator lifetime. On CI (fresh simulator every run)
+  # the sentinel won't exist and images are always seeded.
+  IMAGES_DIR="$FIXTURES_DIR/images"
+  if [[ -d "$IMAGES_DIR" ]]; then
+    UDID=$(xcrun simctl list devices booted -j 2>/dev/null \
+      | grep '"udid"' | head -1 | awk -F'"' '{print $4}')
+    SENTINEL="/tmp/maestro-seeded-images-${UDID:-unknown}"
+
+    if [[ -f "$SENTINEL" ]]; then
+      echo "📸 Images already seeded for this iOS simulator — skipping."
+    else
+      for img in "$IMAGES_DIR"/*; do
+        if [[ -f "$img" ]]; then
+          echo "📸 Adding image to iOS simulator Photos: $(basename "$img")"
+          xcrun simctl addmedia booted "$img"
+        fi
+      done
+      touch "$SENTINEL"
+    fi
+  fi
+fi
+
 # -----------------------------
 # Resolve deep link
 # -----------------------------

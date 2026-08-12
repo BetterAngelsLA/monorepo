@@ -50,3 +50,11 @@ appId: ${MAESTRO_APP_ID}
 
 - tapOn:
     id: 'media-picker-image-btn'
+
+# Native iOS PHPicker opens. Photo cells have resource-id "PXGGridLayout-Info"
+# and accessibility labels like "Photo, Aug 11, 5:05 PM" (not visible text).
+# index: 0 picks the first (most recent) photo in the grid.
+- waitForAnimationToEnd
+- tapOn:
+    id: 'PXGGridLayout-Info'
+    index: 0
