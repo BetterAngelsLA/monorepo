@@ -135,6 +135,23 @@ class SendInvitationTestCase(TestCase):
         self.assertEqual(abstract_user.pk, existing.pk)  # reused
         mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
 
+    @patch("accounts.backends.CustomInvitations.send_invitation")
+    def test_invite_by_email_reactivates_inactive_user(self, mock_send: Mock) -> None:
+        """A deactivated user re-invited with a mixed-case email is reactivated
+        instead of duplicated."""
+        existing = baker.make(User, email=self.email, username="existing", is_active=False)
+
+        abstract_user = self.invitation_backend.invite_by_email(
+            self.email.upper(), domain="localhost:8000"
+        )
+
+        assert isinstance(abstract_user, User)
+        self.assertEqual(abstract_user.pk, existing.pk)  # reused, not duplicated
+        self.assertEqual(User.objects.filter(email=self.email).count(), 1)
+        abstract_user.refresh_from_db()
+        self.assertTrue(abstract_user.is_active)
+        mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
+
     def test_send_invitation_case(self) -> None:
         """Original smoke test — invite_by_email creates an Email record."""
         self.invitation_backend.invite_by_email(self.email, domain={"domain": "localhost:8000"})
