@@ -5,6 +5,7 @@ import { Pressable, StyleProp, ViewStyle } from 'react-native';
 
 interface IProps {
   onClose: () => void;
+  testId?: string;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
@@ -14,6 +15,7 @@ interface IProps {
 export function CloseButton(props: IProps) {
   const {
     accessibilityHint,
+    testId,
     onClose,
     style,
     iconColor = Colors.BLACK,
@@ -23,6 +25,7 @@ export function CloseButton(props: IProps) {
   return (
     <Pressable
       onPress={onClose}
+      testID={testId}
       style={[
         {
           minWidth: 40,

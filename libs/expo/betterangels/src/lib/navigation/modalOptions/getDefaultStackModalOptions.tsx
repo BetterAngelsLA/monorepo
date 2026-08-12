@@ -9,12 +9,12 @@ type TProps = {
   presentation?: TModalPresentationType;
   hideHeader?: boolean;
   onClose?: null | (() => void);
+  headerCloseLabel?: string;
 };
 
-export function getDefaultStackModalOptions(
-  props?: TProps
-) {
-  const { presentation, hideHeader, title, onClose } = props || {};
+export function getDefaultStackModalOptions(props?: TProps) {
+  const { presentation, hideHeader, title, onClose, headerCloseLabel } =
+    props || {};
 
   if (hideHeader) {
     return {
@@ -28,7 +28,9 @@ export function getDefaultStackModalOptions(
       ...defaultModalNavOpts.modal,
       presentation,
       title: title || '',
-      headerRight: onClose ? () => getModalCloseBtn({ onClose }) : undefined,
+      headerRight: onClose
+        ? () => getModalCloseBtn({ onClose, label: headerCloseLabel })
+        : undefined,
     };
   }
 
@@ -37,7 +39,9 @@ export function getDefaultStackModalOptions(
       ...defaultModalNavOpts.fullScreenModal,
       presentation,
       title: title || '',
-      headerRight: onClose ? () => getModalCloseBtn({ onClose }) : undefined,
+      headerRight: onClose
+        ? () => getModalCloseBtn({ onClose, label: headerCloseLabel })
+        : undefined,
     };
   }
 
