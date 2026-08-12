@@ -44,7 +44,9 @@ def get_or_create_user_by_email(
     existing-but-deactivated account is returned unchanged.  Callers that are
     authorized to change account state (e.g. admin-initiated flows such as
     ``member_add``) call :func:`reactivate_user` explicitly — anonymous flows
-    such as login-code self-signup do not.
+    such as login-code self-signup do not.  Callers own transaction
+    boundaries: wrap this in ``transaction.atomic()`` when combining it with
+    other writes.
 
     Emails are stored lowercased by ``User.save()``, so the input is
     normalized (stripped + lowercased) before lookup — otherwise mixed-case
@@ -70,7 +72,9 @@ def get_or_create_user_by_email(
     )
     if created:
         user.set_unusable_password()
-        user.save()
+        # All other fields were just written by the INSERT above; only the
+        # password changed.
+        user.save(update_fields=["password"])
     return user, created
 
 
