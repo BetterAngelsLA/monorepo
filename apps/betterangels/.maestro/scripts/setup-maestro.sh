@@ -130,15 +130,52 @@ if [[ -d "$IMAGES_DIR" ]]; then
         echo "📸 Seeding image to Android: $seeded_name"
         adb shell mkdir -p /sdcard/DCIM/
         adb push "$seeded_path" "/sdcard/DCIM/$seeded_name"
-        adb shell am broadcast \
-          -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-          -d "file:///sdcard/DCIM/$seeded_name"
+        # The Android Photo Picker synthesizes DISPLAY_NAME as
+        # "<media-id>.jpg" (AOSP PickerDbFacade.getDisplayNameSql:
+        # `local_id || '.' || extension`) and NEVER exposes the real filename.
+        # So expo-image-picker reports asset.fileName =
+        # "<MediaStore _id>.jpg" (e.g. "26.jpg") no matter how we seed, and
+        # that becomes the uploaded doc name. Register the MediaStore row
+        # synchronously so we can capture its _id and pass it to the test,
+        # which matches "<id>.jpg".
+        adb shell content delete \
+          --uri content://media/external/images/media \
+          --where "_data='/sdcard/DCIM/$seeded_name'" 2>/dev/null || true
+        if insert_output="$(adb shell content insert \
+            --uri content://media/external/images/media \
+            --bind _display_name:s:"$seeded_name" \
+            --bind mime_type:s:image/jpeg \
+            --bind _data:s:"/sdcard/DCIM/$seeded_name" \
+            --bind relative_path:s:DCIM/ \
+            --bind date_added:i:$(date +%s) \
+            --bind date_modified:i:$(date +%s) \
+            --bind is_pending:i:0 2>/dev/null | tr -d '\r')"; then
+          # content insert prints the new media URI: .../media/<id>
+          ANDROID_SEEDED_MEDIA_ID="${insert_output##*/}"
+        else
+          echo "⚠️ MediaStore insert failed; falling back to legacy broadcast scan"
+          adb shell am broadcast \
+            -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+            -d "file:///sdcard/DCIM/$seeded_name"
+          # Best-effort lookup of the id by display name after the async scan.
+          ANDROID_SEEDED_MEDIA_ID="$(adb shell content query \
+            --uri content://media/external/images/media \
+            --projection _id \
+            --where "_display_name='$seeded_name'" 2>/dev/null | tr -d '\r' \
+            | sed -n 's/.*_id=\([0-9][0-9]*\).*/\1/p')"
+        fi
+        echo "🗂️ Seeded Android media id: ${ANDROID_SEEDED_MEDIA_ID:-unknown}"
       fi
 
       rm "$seeded_path"
     fi
   done
 fi
+
+# Available to Maestro flows as ${ANDROID_SEEDED_MEDIA_ID}. Only meaningful on
+# Android: the Photo Picker names picked uploads "<media id>.jpg", so the test
+# matches that instead of the seeded filename. Empty on iOS.
+export ANDROID_SEEDED_MEDIA_ID="${ANDROID_SEEDED_MEDIA_ID:-}"
 
 # -----------------------------
 # Resolve deep link
@@ -180,7 +217,10 @@ export MAESTRO_DEEPLINK
 # -----------------------------
 CMD=(maestro --device "$MAESTRO_DEVICE")
 [[ ${#MAESTRO_FLAGS[@]} -gt 0 ]] && CMD+=("${MAESTRO_FLAGS[@]}")
-CMD+=(test -e TEST_RUN_ID="$TEST_RUN_ID" "$TEST_PATH")
+CMD+=(test \
+  -e TEST_RUN_ID="$TEST_RUN_ID" \
+  -e ANDROID_SEEDED_MEDIA_ID="$ANDROID_SEEDED_MEDIA_ID" \
+  "$TEST_PATH")
 
 printf "🚀 %s\n\n" "${CMD[*]}"
 exec "${CMD[@]}"

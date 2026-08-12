@@ -80,18 +80,21 @@ appId: ${MAESTRO_APP_ID}
       - tapOn:
           id: 'Add'
 
-# Android: the system photo picker varies by device/OS version. Update after
-# running `maestro hierarchy` with the picker open on your Android target.
+# Android: photo picker cells have no resource-id — match by accessibility
+# text instead. The seeded image is touched to "now" so it's always the
+# newest → index: 0. Maestro text matching is full-regex, so use `.*`.
 - runFlow:
     when:
       platform: android
     commands:
       - tapOn:
-          id: 'TODO-android-photo-cell-id'
+          text: '.*Photo taken on .*'
           index: 0
-      # If the Android picker has a confirm/done button after selection:
-      # - tapOn:
-      #     id: 'TODO-android-confirm-btn'
+
+      - tapOn:
+          text: 'Done'
+
+#   "accessibilityText" : "Photo taken on Aug 12, 2026 10:38 AM",
 
 # - assertVisible: 'Upload Complete'
 - extendedWaitUntil:
@@ -113,10 +116,35 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'client-docs-accordion-forms'
 
-- assertVisible:
-    text: '.*${TEST_RUN_ID}.*'
+# iOS PHPicker preserves the seeded filename (contains ${TEST_RUN_ID}).
+# The Android Photo Picker synthesizes DISPLAY_NAME as "<media-id>.jpg"
+# (AOSP PickerDbFacade.getDisplayNameSql), so the uploaded doc is named
+# "<MediaStore _id>.jpg" — match the id setup-maestro.sh plumbed in as
+# ${ANDROID_SEEDED_MEDIA_ID}.
+- runFlow:
+    when:
+      platform: ios
+    commands:
+      - assertVisible:
+          text: '.*${TEST_RUN_ID}.*'
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - assertVisible:
+          text: '.*${ANDROID_SEEDED_MEDIA_ID}\.jpg.*'
+
 # ########################
 # Delete the recent upload
 # ########################
 
-- tapOn: '.*${TEST_RUN_ID}.*'
+- runFlow:
+    when:
+      platform: ios
+    commands:
+      - tapOn: '.*${TEST_RUN_ID}.*'
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - tapOn: '.*${ANDROID_SEEDED_MEDIA_ID}\.jpg.*'
