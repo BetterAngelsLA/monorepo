@@ -55,6 +55,7 @@ export default function Documents(props: IDocumentsProps) {
               url={document.file.url}
               onPress={() => setSelectedDocument(document)}
               createdAt={document.createdAt}
+              testId={toTestId(['file-card', document.originalFilename])}
               thumbnail={
                 <FileThumbnail
                   uri={document.file.url}

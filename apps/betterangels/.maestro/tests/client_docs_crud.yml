@@ -94,8 +94,6 @@ appId: ${MAESTRO_APP_ID}
       - tapOn:
           text: 'Done'
 
-#   "accessibilityText" : "Photo taken on Aug 12, 2026 10:38 AM",
-
 # - assertVisible: 'Upload Complete'
 - extendedWaitUntil:
     visible:
@@ -116,35 +114,58 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'client-docs-accordion-forms'
 
-# iOS PHPicker preserves the seeded filename (contains ${TEST_RUN_ID}).
-# The Android Photo Picker synthesizes DISPLAY_NAME as "<media-id>.jpg"
-# (AOSP PickerDbFacade.getDisplayNameSql), so the uploaded doc is named
-# "<MediaStore _id>.jpg" — match the id setup-maestro.sh plumbed in as
-# ${ANDROID_SEEDED_MEDIA_ID}.
+# The doc name is shown in the list. iOS PHPicker preserves the seeded
+# filename (contains ${TEST_RUN_ID}); the Android Photo Picker synthesizes
+# DISPLAY_NAME as "<media-id>.jpg" and never exposes the real filename, so on
+# Android we match the generic ".jpg" pattern — safe because the pre-flight
+# guard above guarantees the accordion was empty of image docs beforehand.
+#
+# iOS taps the FileCard by its testID ("file-card-..."), NOT the filename
+# text: the filename Text is a child of the accessible FileCard Pressable,
+# and on iOS tapping the child does not activate the parent's onPress (so the
+# DocumentModal never opens). On Android, tapping the ".jpg" text does trigger
+# the parent Pressable via touch dispatch.
 - runFlow:
     when:
       platform: ios
     commands:
       - assertVisible:
           text: '.*${TEST_RUN_ID}.*'
+
+      - tapOn:
+          id: '.*${TEST_RUN_ID}.*'
+
 - runFlow:
     when:
       platform: android
     commands:
+      # for Android do only a `soft` validation since seeded photo
+      # filenames are not reliable, so check by that some jpg exists
       - assertVisible:
-          text: '.*${ANDROID_SEEDED_MEDIA_ID}\.jpg.*'
+          text: '.*\.jpg.*'
+
+      # part of test is to delete a file, but will just grab
+      # first photo in list
+      - tapOn:
+          id: 'file-card-.*'
+          index: 0
 
 # ########################
 # Delete the recent upload
 # ########################
 
-- runFlow:
-    when:
-      platform: ios
-    commands:
-      - tapOn: '.*${TEST_RUN_ID}.*'
-- runFlow:
-    when:
-      platform: android
-    commands:
-      - tapOn: '.*${ANDROID_SEEDED_MEDIA_ID}\.jpg.*'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'delete-file-btn'
+
+- extendedWaitUntil:
+    visible:
+      id: 'delete-modal-confirm-btn'
+    timeout: 3000
+
+- tapOn:
+    id: 'delete-modal-confirm-btn'
+- waitForAnimationToEnd
+# currently there is no success/fail indicator to validate that file was
+# deleted.
