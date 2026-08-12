@@ -5,6 +5,7 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { StyleSheet, View } from 'react-native';
 import { last } from 'remeda';
 import {
@@ -34,7 +35,9 @@ const STATUS_COLORS: Record<TUploadItemStatus, string> = {
 };
 
 function isFailed(session: TUploadSession): boolean {
-  return session.failed || session.items.some((item) => item.status === 'error');
+  return (
+    session.failed || session.items.some((item) => item.status === 'error')
+  );
 }
 
 /**
@@ -52,8 +55,8 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
   const stateLabel = failed
     ? 'Upload failed'
     : complete
-    ? 'Upload complete'
-    : STAGE_LABELS[session.stage];
+      ? 'Upload complete'
+      : STAGE_LABELS[session.stage];
 
   return (
     <View
@@ -64,10 +67,9 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
     >
       <View style={styles.headerRow}>
         <TextBold
+          testID={toTestId(['upload-progress-state', stateLabel])}
           size="sm"
-          color={
-            failed ? Colors.ERROR : complete ? Colors.SUCCESS : undefined
-          }
+          color={failed ? Colors.ERROR : complete ? Colors.SUCCESS : undefined}
         >
           {session.label ? `${session.label} · ${stateLabel}` : stateLabel}
         </TextBold>
@@ -77,11 +79,7 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
       </View>
 
       {failed && session.errorMessage ? (
-        <TextRegular
-          size="xs"
-          color={Colors.ERROR}
-          style={styles.errorMessage}
-        >
+        <TextRegular size="xs" color={Colors.ERROR} style={styles.errorMessage}>
           {session.errorMessage}
         </TextRegular>
       ) : null}
@@ -130,10 +128,7 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
                     </View>
                   ) : (
                     <View style={styles.itemStatus}>
-                      <TextRegular
-                        size="xs"
-                        color={STATUS_COLORS[item.status]}
-                      >
+                      <TextRegular size="xs" color={STATUS_COLORS[item.status]}>
                         {STATUS_LABELS[item.status]}
                       </TextRegular>
                     </View>
@@ -143,9 +138,7 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
                     <TextButton
                       title="Cancel"
                       fontSize="sm"
-                      onPress={() =>
-                        cancelUploadItem(session.id, item.refId)
-                      }
+                      onPress={() => cancelUploadItem(session.id, item.refId)}
                       accessibilityHint={`Cancels upload of ${item.name}`}
                     />
                   )}
@@ -154,9 +147,7 @@ function UploadProgressCard({ session }: { session: TUploadSession }) {
                     <TextButton
                       title="Retry"
                       fontSize="sm"
-                      onPress={() =>
-                        retryUploadItem(session.id, item.refId)
-                      }
+                      onPress={() => retryUploadItem(session.id, item.refId)}
                       accessibilityHint={`Retries upload of ${item.name}`}
                     />
                   )}
@@ -198,6 +189,7 @@ export function UploadProgressDrawer() {
         enableDynamicSizing
         enablePanDownToClose={terminal}
         onClose={terminal ? () => endUpload(session.id) : undefined}
+        accessible={false}
       >
         <UploadProgressCard session={session} />
       </BottomSheetPanel>

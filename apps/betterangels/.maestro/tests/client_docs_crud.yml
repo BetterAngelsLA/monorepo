@@ -57,15 +57,22 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'media-picker-image-btn'
 
-# Native iOS PHPicker opens. Photo cells have resource-id "PXGGridLayout-Info"
-# and accessibility labels like "Photo, Aug 11, 5:05 PM" (not visible text).
-# index: 0 picks the first (most recent) photo in the grid.
+# Native iOS PHPicker opens. The seeded image is touched to "now" before
+# addmedia, so it always appears as the newest photo → index: 0.
+# Consent Forms allows multiple selection, so we must tap "Add" to confirm.
 - waitForAnimationToEnd
 - tapOn:
     id: 'PXGGridLayout-Info'
     index: 0
-
-# 'Consent Forms' allows multiple selections, so we need to click "add/done"
 - tapOn:
     id: 'Add'
-# modal-screen-close-btn
+
+# - assertVisible: 'Upload Complete'
+- extendedWaitUntil:
+    visible:
+      id: 'upload-progress-state-upload-complete'
+    timeout: 4000
+# Picker dismisses, upload begins. The filename includes our unique run ID
+# (e.g. maestro-fixture-ios-1723498745.png) so we can verify deterministically.
+# - assertVisible:
+#     text: '.*${TEST_RUN_ID}.*'

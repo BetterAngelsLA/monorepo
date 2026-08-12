@@ -103,30 +103,35 @@ export MAESTRO_DEVICE
 # -------------------------------------
 # Seed test fixtures (images: iOS only)
 # -------------------------------------
+# Unique ID for this test invocation. Available to all Maestro YAML flows
+# via ${TEST_RUN_ID} — use it to generate names (seeded images, fixture
+# data, etc.) that can be uniquely asserted across parallel or sharded runs.
+TEST_RUN_ID="$(printf '%04x%04x' $RANDOM $RANDOM)"
+export TEST_RUN_ID
+
+echo "🆔 Test run ID: $TEST_RUN_ID"
+
 if [[ "$PLATFORM" == "ios" ]]; then
   FIXTURES_DIR="$MAESTRO_ROOT/fixtures"
-
-  # Seed images into the iOS simulator's Photos app.
-  # Uses a sentinel file keyed to the simulator UDID so images are only
-  # added once per simulator lifetime. On CI (fresh simulator every run)
-  # the sentinel won't exist and images are always seeded.
   IMAGES_DIR="$FIXTURES_DIR/images"
-  if [[ -d "$IMAGES_DIR" ]]; then
-    UDID=$(xcrun simctl list devices booted -j 2>/dev/null \
-      | grep '"udid"' | head -1 | awk -F'"' '{print $4}')
-    SENTINEL="/tmp/maestro-seeded-images-${UDID:-unknown}"
 
-    if [[ -f "$SENTINEL" ]]; then
-      echo "📸 Images already seeded for this iOS simulator — skipping."
-    else
-      for img in "$IMAGES_DIR"/*; do
-        if [[ -f "$img" ]]; then
-          echo "📸 Adding image to iOS simulator Photos: $(basename "$img")"
-          xcrun simctl addmedia booted "$img"
-        fi
-      done
-      touch "$SENTINEL"
-    fi
+  if [[ -d "$IMAGES_DIR" ]]; then
+    for img in "$IMAGES_DIR"/*; do
+      if [[ -f "$img" ]]; then
+        seeded_name="e2e-${TEST_RUN_ID}-$(basename "$img")"
+        seeded_path="/tmp/${seeded_name}"
+
+        # Copy with the test-run filename so PHPicker's asset.fileName
+        # returns this exact name — testable via Maestro assertions.
+        cp "$img" "$seeded_path"
+        # Touch so iOS uses "now" as the photo date → newest → index: 0.
+        touch -m "$seeded_path"
+
+        echo "📸 Seeding image: $seeded_name"
+        xcrun simctl addmedia booted "$seeded_path"
+        rm "$seeded_path"
+      fi
+    done
   fi
 fi
 
@@ -170,7 +175,7 @@ export MAESTRO_DEEPLINK
 # -----------------------------
 CMD=(maestro --device "$MAESTRO_DEVICE")
 [[ ${#MAESTRO_FLAGS[@]} -gt 0 ]] && CMD+=("${MAESTRO_FLAGS[@]}")
-CMD+=(test "$TEST_PATH")
+CMD+=(test -e TEST_RUN_ID="$TEST_RUN_ID" "$TEST_PATH")
 
 printf "🚀 %s\n\n" "${CMD[*]}"
 exec "${CMD[@]}"
