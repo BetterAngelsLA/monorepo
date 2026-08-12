@@ -66,29 +66,10 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'media-picker-camera-btn'
 
-# Opening the camera may trigger the native permission prompt (setPermissions
-# in start_test.yml is best-effort and Maestro-version dependent). Accept it
-# conditionally per platform — these runFlows are skipped when no prompt shows.
-#   - iOS camera prompt: Allow / Don't Allow
-#   - Android 11+ camera prompt: "While using the app" / "Only this time" /
-#     "Don't allow"
-- runFlow:
-    when:
-      visible:
-        text: 'Allow'
-    commands:
-      - tapOn: 'Allow'
-- runFlow:
-    when:
-      visible:
-        text: 'While using the app'
-    commands:
-      - tapOn: 'While using the app'
-
-- waitForAnimationToEnd
-
-- assertVisible:
-    id: 'camera-view'
+- extendedWaitUntil:
+    visible:
+      id: 'camera-view'
+    timeout: 4000
 
 - tapOn:
     id: 'camera-capture-btn'
