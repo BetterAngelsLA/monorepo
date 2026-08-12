@@ -98,11 +98,25 @@ appId: ${MAESTRO_APP_ID}
     visible:
       id: 'upload-progress-state-upload-complete'
     timeout: 4000
-# Picker dismisses, upload begins. The filename includes our unique run ID
-# (e.g. maestro-fixture-ios-1723498745.png) so we can verify deterministically.
-# - assertVisible:
-#     text: '.*${TEST_RUN_ID}.*'
 
 # ###################################
 # Validate upload exists after upload
 # ###################################
+- tapOn:
+    id: 'modal-screen-close-btn'
+
+- assertVisible:
+    id: 'client-view-docs'
+
+- assertVisible: 'Forms'
+
+- tapOn:
+    id: 'client-docs-accordion-forms'
+
+- assertVisible:
+    text: '.*${TEST_RUN_ID}.*'
+# ########################
+# Delete the recent upload
+# ########################
+
+- tapOn: '.*${TEST_RUN_ID}.*'
