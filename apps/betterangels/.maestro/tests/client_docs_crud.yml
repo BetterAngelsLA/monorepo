@@ -63,15 +63,35 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'media-picker-image-btn'
 
-# Native iOS PHPicker opens. The seeded image is touched to "now" before
-# addmedia, so it always appears as the newest photo → index: 0.
-# Consent Forms allows multiple selection, so we must tap "Add" to confirm.
+# Pick the seeded image from the native photo picker. The selector differs
+# by platform — check `maestro hierarchy` with the picker open to confirm.
 - waitForAnimationToEnd
-- tapOn:
-    id: 'PXGGridLayout-Info'
-    index: 0
-- tapOn:
-    id: 'Add'
+
+# iOS: PHPicker grid cells have resource-id "PXGGridLayout-Info".
+# The seeded image is touched to "now" so it's always the newest → index: 0.
+# Consent Forms allows multiple selection, so tap "Add" to confirm.
+- runFlow:
+    when:
+      platform: ios
+    commands:
+      - tapOn:
+          id: 'PXGGridLayout-Info'
+          index: 0
+      - tapOn:
+          id: 'Add'
+
+# Android: the system photo picker varies by device/OS version. Update after
+# running `maestro hierarchy` with the picker open on your Android target.
+- runFlow:
+    when:
+      platform: android
+    commands:
+      - tapOn:
+          id: 'TODO-android-photo-cell-id'
+          index: 0
+      # If the Android picker has a confirm/done button after selection:
+      # - tapOn:
+      #     id: 'TODO-android-confirm-btn'
 
 # - assertVisible: 'Upload Complete'
 - extendedWaitUntil:
@@ -82,3 +102,7 @@ appId: ${MAESTRO_APP_ID}
 # (e.g. maestro-fixture-ios-1723498745.png) so we can verify deterministically.
 # - assertVisible:
 #     text: '.*${TEST_RUN_ID}.*'
+
+# ###################################
+# Validate upload exists after upload
+# ###################################

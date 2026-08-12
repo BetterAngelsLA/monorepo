@@ -101,7 +101,7 @@ fi
 export MAESTRO_DEVICE
 
 # -------------------------------------
-# Seed test fixtures (images: iOS only)
+# Seed test fixtures (images)
 # -------------------------------------
 # Unique ID for this test invocation. Available to all Maestro YAML flows
 # via ${TEST_RUN_ID} — use it to generate names (seeded images, fixture
@@ -111,28 +111,33 @@ export TEST_RUN_ID
 
 echo "🆔 Test run ID: $TEST_RUN_ID"
 
-if [[ "$PLATFORM" == "ios" ]]; then
-  FIXTURES_DIR="$MAESTRO_ROOT/fixtures"
-  IMAGES_DIR="$FIXTURES_DIR/images"
+FIXTURES_DIR="$MAESTRO_ROOT/fixtures"
+IMAGES_DIR="$FIXTURES_DIR/images"
 
-  if [[ -d "$IMAGES_DIR" ]]; then
-    for img in "$IMAGES_DIR"/*; do
-      if [[ -f "$img" ]]; then
-        seeded_name="e2e-${TEST_RUN_ID}-$(basename "$img")"
-        seeded_path="/tmp/${seeded_name}"
+if [[ -d "$IMAGES_DIR" ]]; then
+  for img in "$IMAGES_DIR"/*; do
+    if [[ -f "$img" ]]; then
+      seeded_name="e2e-${TEST_RUN_ID}-$(basename "$img")"
+      seeded_path="/tmp/${seeded_name}"
 
-        # Copy with the test-run filename so PHPicker's asset.fileName
-        # returns this exact name — testable via Maestro assertions.
-        cp "$img" "$seeded_path"
-        # Touch so iOS uses "now" as the photo date → newest → index: 0.
-        touch -m "$seeded_path"
+      cp "$img" "$seeded_path"
+      touch -m "$seeded_path"
 
-        echo "📸 Seeding image: $seeded_name"
+      if [[ "$PLATFORM" == "ios" ]]; then
+        echo "📸 Seeding image to iOS: $seeded_name"
         xcrun simctl addmedia booted "$seeded_path"
-        rm "$seeded_path"
+      elif [[ "$PLATFORM" == "android" ]]; then
+        echo "📸 Seeding image to Android: $seeded_name"
+        adb shell mkdir -p /sdcard/DCIM/
+        adb push "$seeded_path" "/sdcard/DCIM/$seeded_name"
+        adb shell am broadcast \
+          -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+          -d "file:///sdcard/DCIM/$seeded_name"
       fi
-    done
-  fi
+
+      rm "$seeded_path"
+    fi
+  done
 fi
 
 # -----------------------------
