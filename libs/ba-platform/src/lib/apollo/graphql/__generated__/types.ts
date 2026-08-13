@@ -3300,6 +3300,7 @@ export type ShelterFilter = {
   openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
+  search?: InputMaybe<Scalars['String']['input']>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 

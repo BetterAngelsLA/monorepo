@@ -17,8 +17,8 @@ import {
   type ShelterRowObject,
 } from '../../components/ShelterTable';
 import {
-  ViewSheltersByOrganizationDocument,
-  ViewSheltersByOrganizationQuery,
+  OperatorSheltersDocument,
+  OperatorSheltersQuery,
 } from '../../graphql/__generated__/shelters.generated';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
@@ -85,14 +85,18 @@ export function Dashboard() {
   }, [selectedOrganizationId]);
 
   const { data, loading, error, previousData } = useQuery(
-    ViewSheltersByOrganizationDocument,
+    OperatorSheltersDocument,
     {
       variables: {
-        organizationId: selectedOrganizationId,
-        name: debouncedSearch || undefined,
-        offset: (page - 1) * PAGE_SIZE,
-        limit: PAGE_SIZE,
-        properties: propertyFilters,
+        filters: {
+          search: debouncedSearch || undefined,
+          properties: propertyFilters,
+          organizations: [selectedOrganizationId],
+        },
+        pagination: {
+          offset: (page - 1) * PAGE_SIZE,
+          limit: PAGE_SIZE,
+        },
       },
       skip: !selectedOrganizationId,
       fetchPolicy: 'cache-and-network',
@@ -104,7 +108,7 @@ export function Dashboard() {
 
   const shelters: Shelter[] = useMemo(() => {
     type ShelterResult = NonNullable<
-      ViewSheltersByOrganizationQuery['operatorShelters']['results'][number]
+      OperatorSheltersQuery['operatorShelters']['results'][number]
     >;
     return (
       activeData?.operatorShelters?.results

@@ -1,18 +1,12 @@
-query ViewSheltersByOrganization(
-  $organizationId: ID!
-  $name: String
-  $offset: Int
-  $limit: Int
-  $properties: ShelterPropertyInput
+query OperatorShelters(
+  $pagination: OffsetPaginationInput
+  $filters: ShelterFilter
+  $ordering: [ShelterOrder!]! = []
 ) {
   operatorShelters(
-    filters: {
-      organizations: [$organizationId]
-      name: $name
-      properties: $properties
-    }
-    ordering: [{ createdAt: DESC }]
-    pagination: { offset: $offset, limit: $limit }
+    filters: $filters
+    ordering: $ordering
+    pagination: $pagination
   ) {
     totalCount
     results {
@@ -51,7 +45,7 @@ query ViewSheltersByOrganization(
   }
 }
 
-query GetShelterSummary($id: ID!) {
+query OperatorShelterSummary($id: ID!) {
   operatorShelter(pk: $id) {
     id
     name
