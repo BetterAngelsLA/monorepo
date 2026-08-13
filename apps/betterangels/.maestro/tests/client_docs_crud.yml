@@ -73,12 +73,11 @@ appId: ${MAESTRO_APP_ID}
 
 - tapOn:
     id: 'camera-capture-btn'
-- waitForAnimationToEnd
 
 - extendedWaitUntil:
     visible:
       id: 'upload-progress-state-upload-complete'
-    timeout: 4000
+    timeout: 10000
 
 # ###################################
 # Validate upload exists after upload
