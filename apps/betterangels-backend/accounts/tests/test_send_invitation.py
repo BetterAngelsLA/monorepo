@@ -141,9 +141,7 @@ class SendInvitationTestCase(TestCase):
         instead of duplicated."""
         existing = baker.make(User, email=self.email, username="existing", is_active=False)
 
-        abstract_user = self.invitation_backend.invite_by_email(
-            self.email.upper(), domain="localhost:8000"
-        )
+        abstract_user = self.invitation_backend.invite_by_email(self.email.upper(), domain="localhost:8000")
 
         assert isinstance(abstract_user, User)
         self.assertEqual(abstract_user.pk, existing.pk)  # reused, not duplicated
