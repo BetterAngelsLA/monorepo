@@ -42,7 +42,7 @@ def get_or_create_user_by_email(
 
     A single unit of work with **no side effects on existing users**: an
     existing-but-deactivated account is returned unchanged.  Callers that are
-    authorized to change account state (e.g. admin-initiated flows such as
+    authorized to change account state (e.g. org-admin-initiated flows such as
     ``member_add``) call :func:`reactivate_user` explicitly — anonymous flows
     such as login-code self-signup do not.  Callers own transaction
     boundaries: wrap this in ``transaction.atomic()`` when combining it with
@@ -81,7 +81,7 @@ def get_or_create_user_by_email(
 def reactivate_user(user: UserModel) -> None:
     """Reactivate a deactivated account (no-op if already active).
 
-    Call only from authorized flows (e.g. an admin re-invites a member via
+    Call only from authorized flows (e.g. an org admin re-invites a member via
     ``member_add``); never from anonymous requests such as login-code
     self-signup, or a for-cause deactivation would be silently undone.
     """

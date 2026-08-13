@@ -4,8 +4,8 @@ Login-by-code self-signup: when ``ACCOUNT_PREVENT_ENUMERATION=True`` the
 headless form only resolves *active* users, so an existing-but-deactivated
 account (e.g. disabled by a bulk script) leaves ``self.input._user = None``.
 Brand-new emails are auto-provisioned; existing-but-inactive accounts are left
-untouched (no 500, no duplicate, no email) so anonymous requests can't undo an
-admin's deactivation.
+untouched (no 500, no duplicate, no email) — anonymous requests can't
+reactivate a deactivated user.
 """
 
 import json

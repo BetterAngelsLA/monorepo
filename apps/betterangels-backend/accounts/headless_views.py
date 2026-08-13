@@ -20,9 +20,9 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
     We override ``post()`` to provision brand-new emails and set
     ``self.input._user`` so the verification process issues a real code.
     An email that already belongs to an existing-but-deactivated account is
-    deliberately left untouched — no reactivation, no email — so an anonymous
-    request can't undo an admin's deactivation; ``super().post()`` then fakes
-    success exactly as it does for unknown accounts.
+    deliberately left untouched — no reactivation, no email — anonymous
+    requests can't reactivate a deactivated user; ``super().post()`` then
+    fakes success exactly as it does for unknown accounts.
     """
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
