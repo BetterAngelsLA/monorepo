@@ -1,13 +1,15 @@
-from teams.models import Team
 from unittest.mock import ANY, patch
 
 import time_machine
+from accounts.role_manager import OrgRoleManager
 from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 from unittest_parametrize import parametrize
 
 
@@ -54,10 +56,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "point": self.point,
             "pointOfInterest": self.point_of_interest,
         }
+        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+            "teamId": str(wdi_team.pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -65,7 +68,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 20
+        expected_query_count = 21
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -124,6 +127,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "tasks": [],
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_update_note_omitted_team_id_preserves_team(self) -> None:
+        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(wdi_team.pk)})
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
+
+        self.assertIsNotNone(response["data"]["updateNote"])
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, wdi_team.pk)
 
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""
@@ -406,7 +418,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 21
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -987,3 +999,60 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
+
+
+@ignore_warnings(category=UserWarning)
+class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
+    """Notes must be created/updated in the active (header) organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_note_uses_active_org_not_first_match(self) -> None:
+        # The user is a caseworker in both org_1 and org_2.  First-match org
+        # resolution would pick org_1; the active header org must win.
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._set_active_org(self.org_2)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 2 note",
+                "publicDetails": "Created under org_2",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )
+
+        note_id = response["data"]["createNote"]["id"]
+        self.assertEqual(Note.objects.get(pk=note_id).organization_id, self.org_2.pk)
+
+    def test_create_note_rejects_cross_org_team(self) -> None:
+        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "teamId": str(org_2_team.pk),
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            f"Team with id {org_2_team.pk} does not exist in organization {self.org_1.pk}.",
+        )
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_update_note_denied_when_active_org_differs(self) -> None:
+        # org_1_case_manager_1 is not a member of org_2.
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Should not update"})
+
+        messages = response["data"]["updateNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertNotEqual(Note.objects.get(pk=self.note["id"]).purpose, "Should not update")

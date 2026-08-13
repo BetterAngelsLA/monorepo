@@ -1,4 +1,3 @@
-from teams.models import Team
 from unittest.mock import ANY
 
 import time_machine
@@ -11,6 +10,7 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 
 
 @ignore_warnings(category=UserWarning)
@@ -27,14 +27,15 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
+            wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
             variables = {
                 "clientProfile": str(client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+                "teamId": str(wdi_team.pk),
             }
 
             self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -42,10 +43,8 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         created_task = response["data"]["createTask"]
         expected_task = {
-            # teamId is an input-only field: the response exposes the team as
-            # ``currentTeam``.  The deprecated ``team`` enum used the same name
-            # on both sides, which is why spreading variables used to work.
-            **{k: v for k, v in variables.items() if k != "teamId"},
+            "description": variables["description"],
+            "summary": variables["summary"],
             "id": ANY,
             "clientProfile": {
                 "id": str(client_profile.pk),
@@ -83,16 +82,15 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
         }
 
-        expected_query_count = 6
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
         expected_task = {
-            # teamId is an input-only field: the response exposes the team as
-            # ``currentTeam``.  The deprecated ``team`` enum used the same name
-            # on both sides, which is why spreading variables used to work.
-            **{k: v for k, v in variables.items() if k != "teamId"},
+            "description": variables["description"],
+            "status": variables["status"],
+            "summary": variables["summary"],
             "id": ANY,
             "clientProfile": None,
             "createdAt": "2025-07-31T10:11:12+00:00",
@@ -110,6 +108,17 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "updatedAt": "2025-07-31T10:11:12+00:00",
         }
         self.assertEqual(updated_task, expected_task)
+
+    def test_update_task_omitted_team_id_preserves_team(self) -> None:
+        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(wdi_team.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "summary": "updated summary"})
+
+        self.assertIsNotNone(response["data"]["updateTask"])
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, wdi_team.pk)
 
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
@@ -163,3 +172,30 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         error_message = payload["messages"][0]["message"]
         self.assertIn("task_single_parent_check", error_message)
         self.assertIn("violates", error_message)
+
+
+@ignore_warnings(category=UserWarning)
+class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """Tasks must be created in the active (header) organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_create_task_rejects_cross_org_team(self) -> None:
+        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+
+        response = self.create_task_fixture(
+            {
+                "summary": "Org 1 task",
+                "teamId": str(org_2_team.pk),
+            }
+        )
+
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            f"Team with id {org_2_team.pk} does not exist in organization {self.org_1.pk}.",
+        )
+        self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)

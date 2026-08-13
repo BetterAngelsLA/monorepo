@@ -7,8 +7,8 @@ import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.selectors import resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from common.team_shim import maybe_value
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
