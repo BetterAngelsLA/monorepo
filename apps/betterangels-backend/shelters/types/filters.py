@@ -76,6 +76,11 @@ class MaxStayInput:
     include_null: Optional[bool] = False
 
 
+@strawberry.input
+class OpenNowInput:
+    schedule_type: Optional[List[ScheduleTypeChoices]] = None
+
+
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
@@ -165,6 +170,22 @@ class ShelterFilter:
                 queryset,
                 dt=get_current_shelter_schedule_datetime(),
                 schedule_types=value,
+            ),
+            Q(),
+        )
+
+    @strawberry_django.filter_field
+    def open_now(
+        self, queryset: QuerySet, value: Optional[OpenNowInput], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
+        if value is None or not value.schedule_type:
+            return queryset, Q()
+
+        return (
+            shelters_open_at(
+                queryset,
+                dt=get_current_shelter_schedule_datetime(),
+                schedule_types=value.schedule_type,
             ),
             Q(),
         )
