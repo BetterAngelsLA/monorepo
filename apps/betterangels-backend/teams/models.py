@@ -7,15 +7,10 @@ from django.db import models
 class Team(BaseModel):
     """Team, scoped per organization.
 
-    Teams are managed by org admins through the admin app and replace
-    the deprecated ``SelahTeamEnum``.
-
-    *slug* is the machine-readable identifier (maps to
-    ``SelahTeamEnum.value`` during migration).
-
-    TEMPORARY — remove after ``SelahTeamEnum`` deprecation window.
-    Teams are identified by ``id`` (FK); *slug* exists only for the
-    enum-to-FK migration shim.
+    Teams are managed by org admins through the admin app.  *slug* is
+    the machine-readable identifier, unique per organization (see
+    ``unique_team_slug_per_org``).  Teams are referenced by ``id`` (FK)
+    on notes and tasks.
     """
 
     slug = models.CharField(max_length=100)
