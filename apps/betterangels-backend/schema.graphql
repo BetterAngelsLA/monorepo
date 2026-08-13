@@ -2545,6 +2545,7 @@ input ShelterFilter {
   isAccessCenter: Boolean
   maxStay: MaxStayInput
   name: String
+  search: String
   organizations: [ID!]
   properties: ShelterPropertyInput
   openNowFor: [ScheduleTypeChoices!] @deprecated(reason: "Use openNow instead")

@@ -2,9 +2,11 @@ import datetime
 from typing import Any
 from unittest.mock import patch
 
+from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from model_bakery import baker
 from places import Places
 from unittest_parametrize import parametrize
 
@@ -71,6 +73,73 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         result_shelter_ids = [r["id"] for r in results]
         # s1 is ~27 miles away from the reference point, so it was not included in the response payload
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
+
+    def test_shelter_search_filter(self) -> None:
+        """Search filter matches name, org name, description, or subjective review."""
+
+        org = organization_recipe.make(name="Alpha House Network")
+
+        name_match = baker.make(
+            Shelter,
+            name="Safe Haven",
+            status=StatusChoices.APPROVED,
+        )
+        org_match = baker.make(
+            Shelter,
+            name="Distant Place",
+            organization=org,
+            status=StatusChoices.APPROVED,
+        )
+        desc_match = baker.make(
+            Shelter,
+            name="Another Shelter",
+            description="offers free breakfast every morning",
+            status=StatusChoices.APPROVED,
+        )
+        review_match = baker.make(
+            Shelter,
+            name="Yet Another Shelter",
+            subjective_review="exceptionally clean facility",
+            status=StatusChoices.APPROVED,
+        )
+        baker.make(Shelter, name="Unrelated Name", status=StatusChoices.APPROVED)
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        def search_ids(term: str) -> set[str]:
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"search": term}},
+            )
+            return {s["id"] for s in response["data"]["shelters"]["results"]}
+
+        # Name match, case-insensitive
+        self.assertEqual(search_ids("safe haven"), {str(name_match.id)})
+
+        # Organization name match
+        self.assertEqual(search_ids("alpha house"), {str(org_match.id)})
+
+        # Description match
+        self.assertEqual(search_ids("free breakfast"), {str(desc_match.id)})
+
+        # Subjective review match
+        self.assertEqual(search_ids("exceptionally clean"), {str(review_match.id)})
+
+        # No match returns nothing
+        self.assertEqual(search_ids("nonexistent-term"), set())
+
+        # Empty/absent search is a no-op and returns all
+        response = self.execute_graphql(query, variables={"filters": {}})
+        self.assertEqual(response["data"]["shelters"]["totalCount"], 5)
 
     def test_shelter_map_bounds_filter(self) -> None:
         """Test map bounds filter for querying shelters within a defined area.

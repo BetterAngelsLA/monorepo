@@ -166,31 +166,49 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             response["errors"][0]["message"],
         )
 
-    def test_operator_shelters_filter_by_name(self) -> None:
-        """Name filter returns only shelters whose name matches (case-insensitive)."""
+    def test_operator_shelters_filter_by_search(self) -> None:
+        """Search filter matches name, description, or subjective review (case-insensitive)."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.shelter.name = "Safe Haven"
+        self.shelter.description = "A welcoming overnight shelter"
         self.shelter.save()
 
+        review_match = shelter_recipe.make(
+            organization=self.org_1,
+            name="Other Place",
+            subjective_review="Pets welcome after intake",
+        )
+        shelter_recipe.make(organization=self.org_1, name="Unrelated Shelter")
+
         query = """
-            query OperatorShelters($orgIds: [ID!], $name: String) {
+            query OperatorShelters($orgIds: [ID!], $search: String) {
                 operatorShelters(
-                    filters: { organizations: $orgIds, name: $name }
+                    filters: { organizations: $orgIds, search: $search }
                 ) {
                     totalCount
-                    results { id name }
+                    results { id }
                 }
             }
         """
-        response = self.execute_graphql(
-            query,
-            variables={"orgIds": [str(self.org_1.id)], "name": "safe haven"},
-        )
 
-        payload = response["data"]["operatorShelters"]
-        self.assertEqual(payload["totalCount"], 1)
-        self.assertEqual(payload["results"][0]["id"], str(self.shelter.id))
-        self.assertEqual(payload["results"][0]["name"], "Safe Haven")
+        def search_ids(term: str) -> set[str]:
+            response = self.execute_graphql(
+                query,
+                variables={"orgIds": [str(self.org_1.id)], "search": term},
+            )
+            return {r["id"] for r in response["data"]["operatorShelters"]["results"]}
+
+        # Name match, case-insensitive
+        self.assertEqual(search_ids("safe haven"), {str(self.shelter.id)})
+
+        # Description match
+        self.assertEqual(search_ids("overnight"), {str(self.shelter.id)})
+
+        # Subjective review match
+        self.assertEqual(search_ids("pets welcome"), {str(review_match.id)})
+
+        # No match returns nothing
+        self.assertEqual(search_ids("zzz-no-match"), set())
 
     def test_operator_shelters_filter_by_properties(self) -> None:
         """Property filters narrow results through the operator endpoint."""

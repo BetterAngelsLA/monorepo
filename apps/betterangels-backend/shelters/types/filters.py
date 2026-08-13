@@ -1,6 +1,8 @@
 """Filter and ordering types for shelter queries."""
 
 import datetime
+from functools import reduce
+from operator import and_, or_
 from typing import List, Optional, Tuple, cast
 from zoneinfo import ZoneInfo
 
@@ -117,6 +119,36 @@ class ShelterFilter:
         return conditions
 
     name = make_icontains_filter("name")
+
+    @strawberry_django.filter_field
+    def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
+        """
+        Free-text search across name, organization name, description, and subjective review.
+
+        Each search term must match at least one searched field; terms are combined
+        with AND so a single term matching one field cannot bypass the other terms'
+        requirements.
+        """
+        if value is None:
+            return Q()
+
+        value = value.strip()
+        if not value:
+            return Q()
+
+        search_terms = value.split()
+        searchable_fields = ["name", "organization__name", "description", "subjective_review"]
+
+        # Each search term must match at least one searched field.
+        term_queries: list[Q] = []
+        for term in search_terms:
+            term_query = reduce(
+                or_,
+                [Q(**{f"{prefix}{field}__icontains": term}) for field in searchable_fields],
+            )
+            term_queries.append(term_query)
+
+        return reduce(and_, term_queries)
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
