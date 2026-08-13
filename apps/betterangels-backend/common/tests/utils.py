@@ -196,17 +196,32 @@ class GraphQLBaseTestCase(
         from notes.groups import CASEWORKER
         from teams.models import Team
 
-        from common.enums import SelahTeamEnum
-
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Create Team objects matching SelahTeamEnum values for backward
-        # compatibility with the deprecated ``team`` GraphQL field.
-        for org in (self.org_1, self.org_2):
-            for team_value in SelahTeamEnum.values:
+        # Create Team objects matching the legacy enum slugs so tests can
+        # exercise org-scoped team assignment.  Test-local list — product
+        # teams are created by org admins via the admin UI.
+        for slug in (
+            "bowtie_riverside_outreach",
+            "echo_park_on_site",
+            "echo_park_outreach",
+            "hollywood_on_site",
+            "hollywood_outreach",
+            "la_river_outreach",
+            "los_feliz_outreach",
+            "northeast_hollywood_outreach",
+            "selah_staff",
+            "silver_lake_outreach",
+            "slcc_on_site",
+            "sunday_social_atwater_on_site",
+            "sunday_social_atwater_outreach",
+            "wdi_on_site",
+            "wdi_outreach",
+        ):
+            for org in (self.org_1, self.org_2):
                 Team.objects.get_or_create(
-                    slug=team_value,
+                    slug=slug,
                     organization=org,
                 )
 
