@@ -29,26 +29,27 @@ class AutoCreateRequestLoginCodeView(RequestLoginCodeView):
         if not self.input._user:  # type: ignore[union-attr]
             email = self.input.cleaned_data.get("email")  # type: ignore[union-attr]
             if email:
-                email = email.strip().lower()
+                # get_or_create_user_by_email normalizes (strips + lowercases)
+                # the email before lookup and storage.
                 with transaction.atomic():
                     user, created = get_or_create_user_by_email(email)
                     if created:
                         # Brand-new email: auto-provision so allauth can issue a
-                        # real code.  Reuse any existing EmailAddress row
-                        # (case-insensitive) so mixed-case input can't create a
-                        # duplicate; new rows are primary and unverified.
-                        email_address = EmailAddress.objects.filter(user=user, email__iexact=email).first()
-                        if email_address is None:
-                            EmailAddress.objects.create(
-                                user=user,
-                                email=email,
-                                primary=True,
-                                verified=False,
-                            )
+                        # real code.  The user row is brand-new, so it can't own
+                        # an EmailAddress yet — create a primary, unverified one
+                        # with the normalized address.
+                        assert user.email is not None
+                        EmailAddress.objects.create(
+                            user=user,
+                            email=user.email,
+                            primary=True,
+                            verified=False,
+                        )
                         self.input._user = user  # type: ignore[union-attr]
                     elif user.is_active:
-                        # Defensive: an active account allauth didn't resolve
-                        # still gets a real code.
+                        # Defensive: allauth's form already resolves active
+                        # users case-insensitively, but if it somehow didn't,
+                        # still issue a real code.
                         self.input._user = user  # type: ignore[union-attr]
                     # else: existing-but-inactive — leave ``_user`` unset so
                     # super().post() fakes success without sending anything

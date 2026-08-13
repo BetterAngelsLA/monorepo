@@ -57,7 +57,8 @@ def get_or_create_user_by_email(
     seeds field values only when a new user is created.  Brand-new users are
     created active with an unusable password and a random username (the
     codebase convention for programmatically created accounts, cf.
-    ``UserManager.create_client``).
+    ``UserManager.create_client``).  Any ``username``/``is_active`` supplied
+    via ``defaults`` is ignored — the service always enforces these.
 
     Returns ``(user, created)``.
     """

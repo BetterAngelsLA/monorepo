@@ -87,3 +87,25 @@ def test_request_login_code_creates_new_user() -> None:
     template_prefix, recipient, _ = mock_send_mail.call_args.args
     assert template_prefix == "account/email/login_code"
     assert recipient == "brandnew@example.com"
+
+
+@pytest.mark.django_db
+def test_request_login_code_creates_new_user_mixed_case() -> None:
+    """A brand-new mixed-case email is normalized end-to-end: the user and
+    EmailAddress rows are stored lowercase."""
+    with patch.object(AccountAdapter, "send_mail") as mock_send_mail:
+        response = _request_login_code("BrandNew@Example.com")
+
+    _assert_login_code_request_succeeded(response)
+
+    user = User.objects.get(email="brandnew@example.com")
+    assert user.is_active
+    assert not user.has_usable_password()
+
+    email_address = EmailAddress.objects.get(user=user, email="brandnew@example.com")
+    assert email_address.primary
+    assert not email_address.verified
+
+    mock_send_mail.assert_called_once()
+    template_prefix, _, _ = mock_send_mail.call_args.args
+    assert template_prefix == "account/email/login_code"
