@@ -66,6 +66,27 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'media-picker-camera-btn'
 
+# Camera permission: iOS has NO setPermissions (flaky in CI + unreliable), so
+# the system prompt appears on fresh installs — it MUST be accepted inline.
+# These runFlows are skipped when no prompt shows (e.g. Android, already
+# granted via setPermissions).
+#   - iOS camera prompt: Allow / Don't Allow
+#   - Android 11+ camera prompt: "While using the app" / "Only this time" /
+#     "Don't allow"
+- runFlow:
+    when:
+      visible:
+        text: 'Allow'
+    commands:
+      - tapOn: 'Allow'
+- runFlow:
+    when:
+      visible:
+        text: 'While using the app'
+    commands:
+      - tapOn: 'While using the app'
+- waitForAnimationToEnd
+
 - extendedWaitUntil:
     visible:
       id: 'camera-view'
