@@ -6,7 +6,13 @@ from django.contrib.auth.models import Permission
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices, SpecialSituationRestrictionChoices
+from shelters.enums import (
+    DemographicChoices,
+    PetChoices,
+    ReservationStatusChoices,
+    SpecialSituationRestrictionChoices,
+    StatusChoices,
+)
 from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
@@ -320,6 +326,76 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 result["bedCounts"],
                 {"available": 0, "occupied": 0, "reserved": 0, "outOfService": 0, "inTurnaround": 0, "total": 0},
             )
+
+    def test_operator_shelters_order_by_status(self) -> None:
+        """operatorShelters orders by status via ``ShelterOrder.status``."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.shelter.status = StatusChoices.APPROVED
+        self.shelter.save()
+        shelter_recipe.make(organization=self.org_1, name="Pending Shelter", status=StatusChoices.PENDING)
+        shelter_recipe.make(organization=self.org_1, name="Draft Shelter", status=StatusChoices.DRAFT)
+        shelter_recipe.make(organization=self.org_1, name="Inactive Shelter", status=StatusChoices.INACTIVE)
+
+        query = """
+            query OperatorShelters($orgIds: [ID!], $ordering: [ShelterOrder!]! = []) {
+                operatorShelters(filters: { organizations: $orgIds }, ordering: $ordering) {
+                    results { id status }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "ordering": {"status": "ASC"}},
+        )
+        results = response["data"]["operatorShelters"]["results"]
+        self.assertEqual(
+            [r["status"] for r in results],
+            [
+                StatusChoices.APPROVED.value,
+                StatusChoices.DRAFT.value,
+                StatusChoices.INACTIVE.value,
+                StatusChoices.PENDING.value,
+            ],
+        )
+
+    def test_operator_shelters_order_by_bed_count(self) -> None:
+        """operatorShelters orders by bed count matching ``bedCounts.total``."""
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        # self.shelter has no beds (total 0); give the others distinct counts.
+        shelters = [
+            shelter_recipe.make(organization=self.org_1, name="Alpha"),
+            shelter_recipe.make(organization=self.org_1, name="Beta"),
+            shelter_recipe.make(organization=self.org_1, name="Gamma"),
+        ]
+        baker.make(Bed, shelter=shelters[0], _quantity=5)
+        baker.make(Bed, shelter=shelters[1], _quantity=1)
+        baker.make(Bed, shelter=shelters[2], _quantity=3)
+
+        query = """
+            query OperatorShelters($orgIds: [ID!], $ordering: [ShelterOrder!]! = []) {
+                operatorShelters(filters: { organizations: $orgIds }, ordering: $ordering) {
+                    results { id bedCounts { total } }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "ordering": {"bedCount": "DESC"}},
+        )
+        results = response["data"]["operatorShelters"]["results"]
+        self.assertEqual(
+            [r["id"] for r in results],
+            [
+                str(shelters[0].id),
+                str(shelters[2].id),
+                str(shelters[1].id),
+                str(self.shelter.id),
+            ],
+        )
+        self.assertEqual(
+            [r["bedCounts"]["total"] for r in results],
+            [5, 3, 1, 0],
+        )
 
 
 class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):

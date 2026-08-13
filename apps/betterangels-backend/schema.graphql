@@ -2586,6 +2586,8 @@ type ShelterOccupancyMetricsType {
 input ShelterOrder {
   name: Ordering
   createdAt: Ordering
+  status: Ordering
+  bedCount: Ordering
 }
 
 input ShelterPhotoFromUploadInput {

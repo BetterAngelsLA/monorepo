@@ -3335,8 +3335,10 @@ export type ShelterOccupancyMetricsType = {
 };
 
 export type ShelterOrder = {
+  bedCount?: InputMaybe<Ordering>;
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
 };
 
 export type ShelterPhotoFromUploadInput = {

@@ -44,6 +44,7 @@ from shelters.enums import (
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+from shelters.selectors.computed_status import shelter_count_subquery
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -297,6 +298,23 @@ class ShelterFilter:
 class ShelterOrder:
     name: auto
     created_at: auto
+    status: auto
+
+    @strawberry_django.order_field
+    def bed_count(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        """Order by the count of beds related to the shelter.
+
+        Mirrors the ``bedCounts.total`` value displayed in the operator
+        dashboard: both use the ``_bed_total`` subquery annotation.
+        """
+        queryset = queryset.annotate(**{f"{prefix}_bed_total": shelter_count_subquery(models.Bed)})
+        return queryset, [value.resolve(f"{prefix}_bed_total")]
 
 
 @strawberry_django.order_type(models.Bed, one_of=False)
