@@ -1,9 +1,11 @@
 import { useQuery } from '@apollo/client/react';
 import { useActiveOrg } from '@monorepo/ba-platform';
-import type {
-  DemographicChoices,
-  ShelterChoices,
-  SpecialSituationRestrictionChoices,
+import {
+  Ordering,
+  type DemographicChoices,
+  type ShelterChoices,
+  type ShelterOrder,
+  type SpecialSituationRestrictionChoices,
 } from '@monorepo/ba-platform/types';
 import { useDebounce } from '@monorepo/react/shared';
 import { useAtomValue } from 'jotai';
@@ -12,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
+import type { SortDirection } from '../../components/base-ui/table';
 import {
   ShelterTable,
   type ShelterRowObject,
@@ -25,6 +28,18 @@ import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 16;
+
+/** Table columns whose header can trigger a server-side sort. */
+type SortableColumn = 'name' | 'capacity' | 'status';
+
+/** Maps table column keys to backend `ShelterOrder` fields. */
+const SORT_FIELD_MAP: Record<SortableColumn, keyof ShelterOrder> = {
+  name: 'name',
+  capacity: 'bedCount',
+  status: 'status',
+};
+
+const DEFAULT_SORT = { column: 'name', direction: Ordering.Asc } as const;
 
 const poppinsStyle = { fontFamily: 'Poppins, sans-serif' } as const;
 
@@ -56,6 +71,10 @@ export function Dashboard() {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<{
+    column: SortableColumn;
+    direction: Ordering;
+  }>(DEFAULT_SORT);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -97,6 +116,7 @@ export function Dashboard() {
           offset: (page - 1) * PAGE_SIZE,
           limit: PAGE_SIZE,
         },
+        ordering: [{ [SORT_FIELD_MAP[sort.column]]: sort.direction }],
       },
       skip: !selectedOrganizationId,
       fetchPolicy: 'cache-and-network',
@@ -140,6 +160,21 @@ export function Dashboard() {
       navigate(`shelter/${row.id}/manage`);
     },
     [navigate],
+  );
+
+  const handleSortChange = useCallback(
+    (column: string | null, direction: SortDirection | null) => {
+      setPage(1);
+      if (!column || !direction || !(column in SORT_FIELD_MAP)) {
+        setSort(DEFAULT_SORT);
+        return;
+      }
+      setSort({
+        column: column as SortableColumn,
+        direction: direction === 'asc' ? Ordering.Asc : Ordering.Desc,
+      });
+    },
+    [],
   );
   // ── End hooks ──────────────────────────────────────────────────────────────
 
@@ -187,6 +222,9 @@ export function Dashboard() {
         loading={loading}
         loadingState={loadingState}
         emptyState={emptyState}
+        sortColumn={sort.column}
+        sortDirection={sort.direction === Ordering.Asc ? 'asc' : 'desc'}
+        onSortChange={handleSortChange}
         headerStyle={poppinsStyle}
         rowStyle={poppinsStyle}
       />
