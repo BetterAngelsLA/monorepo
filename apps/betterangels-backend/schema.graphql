@@ -2570,7 +2570,7 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
-  openNowFor: [ScheduleTypeChoices!]
+  openNowFor: [ScheduleTypeChoices!] @deprecated(reason: "Use openNow instead")
   openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput

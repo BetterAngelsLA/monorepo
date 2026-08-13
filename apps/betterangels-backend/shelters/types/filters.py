@@ -155,7 +155,7 @@ class ShelterFilter:
 
         return queryset.filter(combined_q).distinct(), Q()
 
-    @strawberry_django.filter_field
+    @strawberry_django.filter_field(deprecation_reason="Use openNow instead")
     def open_now_for(
         self,
         queryset: QuerySet,
