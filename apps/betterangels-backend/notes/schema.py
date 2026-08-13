@@ -2,8 +2,9 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.extensions import HasOrgPerm
 from accounts.models import User
-from accounts.selectors import resolve_permission_group
+from accounts.selectors import permission_group_for_user
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
@@ -12,10 +13,9 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error
+from common.graphql.utils import get_object_or_permission_error, maybe_int_value
 from common.models import Attachment
-from common.permissions.utils import IsAuthenticated
-from common.team_shim import resolve_team_id_from_input
+from common.permissions.utils import IsAuthenticated, get_current_organization
 from common.services.types import UploadRequest, UploadConfirmation
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -39,7 +39,6 @@ from notes.utils import NoteReverter
 from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
-from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
@@ -120,16 +119,14 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    # TODO(org-scoping): Migrate from resolve_permission_group() (first-match org)
-    # + PermissionedQuerySet to HasOrgPerm + get_current_organization(info),
-    # matching shelters/schema.py.  Affects create_note, update_note,
-    # update_note_location, revert_note, delete_note, create_note_service_request,
-    # and import_note.  The new note attachment mutations are already safe —
-    # their service layer passes organization_id=note.organization_id.
-    # Defer to a dedicated PR — touches 7 mutations + their tests.
+    # NOTE(permission model): Writes are org-owned — mutations resolve the
+    # active organization from the X-Organization-ID header (HasOrgPerm +
+    # get_current_organization) and the Caseworker PermissionGroup within
+    # that org.  Reads (notes/note via HasRetvalPerm) are platform-shared by
+    # design — all orgs can see client interactions across orgs.
 
     # Notes
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         """
         Create a note with optional nested relations (location, services, tasks).
@@ -137,20 +134,19 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
+        org_id = get_current_organization(info)
+        permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
-        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
-
         note = note_create(
             user=user,
             permission_group=permission_group,
             purpose=data.purpose,
-            team_id=team_id,
+            team_id=maybe_int_value(data.team_id),
             public_details=data.public_details or "",
             private_details=data.private_details or "",
             client_profile_id=str(data.client_profile) if data.client_profile else None,
@@ -172,18 +168,21 @@ class Mutation:
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
+        org_id = get_current_organization(info)
+        permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
-        qs: QuerySet[Note] = info.context.qs
-
-        # Resolve deprecated team enum / new teamId → FK before asdict.
-        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+        # Object-level CHANGE perms already bind the note to the user's org;
+        # additionally scope to the active organization from the request header.
+        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
 
         clean = asdict(data)
-        # Pop Maybe-wrapped team fields so setattr doesn't choke on them.
-        clean.pop("team", None)
+        # Pop the Maybe-wrapped team field so setattr doesn't choke on it.
         clean.pop("team_id", None)
-        clean["team_id"] = team_id
+        # Only touch the team when teamId was explicitly provided (UNSET
+        # leaves the current team unchanged).  Org validation happens in the
+        # note_update service.
+        if data.team_id is not strawberry.UNSET:
+            clean["team_id"] = maybe_int_value(data.team_id)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -201,7 +200,7 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
+        qs: QuerySet[Note] = info.context.qs.filter(organization_id=get_current_organization(info))
         note = get_object_or_permission_error(qs, data.id)
 
         location_data = cast(dict, strawberry.asdict(data)["location"])
@@ -214,7 +213,7 @@ class Mutation:
         extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
     )
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
+        qs: QuerySet[Note] = info.context.qs.filter(organization_id=get_current_organization(info))
         note = get_object_or_permission_error(qs, data.id)
 
         NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
@@ -224,26 +223,37 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    delete_note: NoteType = mutations.delete(
-        DeleteDjangoObjectInput,
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[
-            HasRetvalPerm(perms=NotePermissions.DELETE),
-        ],
+        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE])],
     )
+    def delete_note(self, info: Info, data: DeleteDjangoObjectInput) -> NoteType:
+        """Delete a note, scoped to the active organization."""
+        org_id = get_current_organization(info)
+        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
+        note = get_object_or_permission_error(
+            qs,
+            data.id,
+            error_message="You do not have permission to delete this note.",
+        )
+        pk = note.pk
+        note.delete()
+        note.pk = pk  # return the deleted note's ID in the response
+        return cast(NoteType, note)
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasPerm(ServiceRequestPermissions.ADD),
+            HasOrgPerm(ServiceRequestPermissions.ADD),
             PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
         ],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
+        org_id = get_current_organization(info)
+        permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
-        qs: QuerySet[Note] = info.context.qs
+        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
         note = get_object_or_permission_error(qs, str(data.note_id))
 
         service_requests = note_service_request_create(
@@ -297,7 +307,11 @@ class Mutation:
         )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasPerm(NoteImportRecordPermissions.ADD)]
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            HasPerm(NoteImportRecordPermissions.ADD),
+            HasOrgPerm(NotePermissions.ADD),
+        ],
     )
     def import_note(self, info: Info, data: ImportNoteInput) -> NoteImportRecordType:
         """
@@ -331,14 +345,17 @@ class Mutation:
 
         import_job = NoteDataImport.objects.get(id=data.import_job_id)
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
+        org_id = get_current_organization(info)
+        permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
         try:
             with transaction.atomic():
+                # Validation happens in note_create, inside the try so a bad
+                # teamId is recorded as a failed import row.
                 note = note_create(
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=resolve_team_id_from_input(data.note, organization_id=permission_group.organization_id),
+                    team_id=maybe_int_value(data.note.team_id),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

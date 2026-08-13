@@ -30,6 +30,27 @@ def team_create(
     )
 
 
+def resolve_team_id_for_org(
+    *,
+    team_id: int | None,
+    organization_id: int | None,
+) -> int | None:
+    """Validate *team_id* belongs to *organization_id*.
+
+    Raises :class:`~django.core.exceptions.ValidationError` for unknown or
+    cross-org team ids (never silently links another organization's team).
+    Returns ``None`` when no team is requested.
+    """
+    if team_id is None:
+        return None
+    if organization_id is None:
+        raise ValidationError(f"Team with id {team_id} does not exist: task has no organization.") from None
+    try:
+        return Team.objects.get(pk=team_id, organization_id=organization_id).pk
+    except Team.DoesNotExist:
+        raise ValidationError(f"Team with id {team_id} does not exist in organization {organization_id}.") from None
+
+
 @transaction.atomic
 def team_update(
     *,

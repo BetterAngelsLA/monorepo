@@ -6,7 +6,6 @@ import strawberry_django
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
-from common.enums import SelahTeamEnum
 from common.graphql.types import (
     AttachmentInterface,
     LocationInput,
@@ -130,9 +129,6 @@ class NoteFilter:
 
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
-    teams = make_in_filter(
-        "team", SelahTeamEnum
-    )  # TEMPORARY — @deprecated, use teamIds. Remove after deprecation window.
     team_ids = make_in_filter("team", ID)
 
     @strawberry_django.filter_field
@@ -173,17 +169,6 @@ class NoteType:
     purpose: auto
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
-
-    # TEMPORARY — @deprecated, use currentTeam instead.
-    # Remove this resolver and the `team` field after the deprecation window.
-    @strawberry_django.field(field_name="team", deprecation_reason="Use currentTeam instead")
-    def team(self, root: models.Note) -> Optional[SelahTeamEnum]:
-        if root.team is None:
-            return None
-        try:
-            return SelahTeamEnum(root.team.slug)
-        except KeyError, ValueError:
-            return None
 
     current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
 
@@ -247,8 +232,7 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID]  # new FK-based field
+    team_id: Maybe[ID]  # FK-based team field
 
 
 @strawberry.input
@@ -261,8 +245,7 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID]  # new FK-based field
+    team_id: Maybe[ID] = strawberry.UNSET  # FK-based team field; UNSET = leave unchanged
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
@@ -297,8 +280,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID]  # new FK-based field
+    team_id: Maybe[ID]  # FK-based team field
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -369,8 +351,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team: Optional[SelahTeamEnum] = None  # TEMPORARY — @deprecated, use teamId. Remove after deprecation window.
-    team_id: Maybe[ID]  # new FK-based field
+    team_id: Maybe[ID]  # FK-based team field
     public_details: auto
     private_details: auto
     client_profile: ID | None

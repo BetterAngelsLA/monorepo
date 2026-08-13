@@ -27,6 +27,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from tasks.services import task_create
+from teams.services import resolve_team_id_for_org
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -76,6 +77,13 @@ def note_update(
     provided_services_data = data.pop("provided_services", None)
     requested_services_data = data.pop("requested_services", None)
     tasks_data = data.pop("tasks", None)
+
+    # A team must belong to the note's organization.
+    if "team_id" in data:
+        data["team_id"] = resolve_team_id_for_org(
+            team_id=data["team_id"],
+            organization_id=note.organization_id,
+        )
 
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
         for field, value in data.items():
@@ -251,6 +259,12 @@ def note_create(
     All nested params (location, services, tasks) are optional,
     making this backward-compatible with callers that only send core fields.
     """
+
+    # A team must belong to the note's organization.
+    team_id = resolve_team_id_for_org(
+        team_id=team_id,
+        organization_id=permission_group.organization_id,
+    )
 
     location = None
     if location_data:

@@ -1,7 +1,6 @@
 from unittest.mock import ANY
 
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from notes.models import Note
@@ -20,6 +19,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.client_profile = baker.make(ClientProfile)
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
+        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
 
         self.task = self.create_task_fixture(
             {
@@ -27,7 +27,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(wdi_team.pk),
             }
         )["data"]["createTask"]
 
@@ -43,7 +43,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -70,7 +70,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             },
             "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
         }
 
@@ -83,11 +82,10 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task 2 description",
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
         )["data"]["createTask"]
 
-        expected_query_count = 8
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query())
 
@@ -113,7 +111,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             },
             "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
         }
 
@@ -163,6 +160,8 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
+        # Tasks are created in the active organization — org_2 here.
+        self._set_active_org(self.org_2)
 
         task_id = self.create_task_fixture(
             {
@@ -217,16 +216,16 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_teams_filter(self) -> None:
+        slcc_team = Team.objects.get(slug="slcc_on_site", organization=self.org_1)
         task_id = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "summary": "task 2 summary",
-                "team": SelahTeamEnum.SLCC_ON_SITE.name,
+                "teamId": str(slcc_team.pk),
             }
         )["data"]["createTask"]["id"]
 
-        team = Team.objects.get(slug=SelahTeamEnum.SLCC_ON_SITE.value, organization=self.org_1)
-        filters = {"teamIds": [team.pk]}
+        filters = {"teamIds": [slcc_team.pk]}
         variables = {"filters": filters}
 
         expected_query_count = 4

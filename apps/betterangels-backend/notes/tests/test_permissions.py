@@ -37,13 +37,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label is None:
                 self.assertGraphQLUnauthenticated(response)
             else:
+                self.assertEqual(len(response["errors"]), 1)
                 self.assertEqual(
-                    response["data"]["createNote"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": "createNote",
-                        "message": "You don't have permission to access this app.",
-                    },
+                    response["errors"][0]["message"],
+                    "You do not have permission to perform this action in this organization.",
                 )
 
     @parametrize(
@@ -312,13 +309,10 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
         else:
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
             if user_label == "org_2_case_manager_1":
+                self.assertEqual(len(response["errors"]), 1)
                 self.assertEqual(
-                    response["data"]["createNoteServiceRequest"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You do not have permission to perform this action.",
-                    },
+                    response["errors"][0]["message"],
+                    "You do not have permission to perform this action in this organization.",
                 )
             elif user_label is None:
                 self.assertGraphQLUnauthenticated(response)
