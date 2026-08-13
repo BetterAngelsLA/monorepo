@@ -6,12 +6,19 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
-from shelters.enums import (DayOfWeekChoices, ParkingChoices, PetChoices,
-                            ScheduleTypeChoices, ShelterChoices, StatusChoices)
+from unittest_parametrize import parametrize
+
+from shelters.enums import (
+    DayOfWeekChoices,
+    ParkingChoices,
+    PetChoices,
+    ScheduleTypeChoices,
+    ShelterChoices,
+    StatusChoices,
+)
 from shelters.models import SPA, Parking, Pet, Shelter, ShelterType
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
-from unittest_parametrize import parametrize
 
 
 class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
