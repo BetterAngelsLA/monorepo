@@ -1,5 +1,5 @@
 import { useAtomValue } from 'jotai';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { FileOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -72,11 +72,7 @@ function UploadProgressBarContent({
       accessibilityHint="Opens the upload screen"
     >
       <View style={styles.row}>
-        {failed ? (
-          <FileOutlineIcon size="sm" color={Colors.ERROR} />
-        ) : (
-          <ActivityIndicator size="small" color={Colors.PRIMARY} />
-        )}
+        {failed && <FileOutlineIcon size="sm" color={Colors.ERROR} />}
         <TextRegular
           size="sm"
           numberOfLines={1}
