@@ -29,6 +29,11 @@ type TBeginOptions = {
    * screen can find all of them (even after remounting).
    */
   groupId?: string;
+  /**
+   * Per-file source metadata, aligned with `names`, so upload rows can
+   * preview the actual file.
+   */
+  files?: Array<{ uri?: string; type?: string }>;
 };
 
 /**
@@ -65,6 +70,7 @@ export function useUploadSession() {
       onRetryItem: options?.onRetryItem,
       clientId: options?.clientId,
       groupId: options?.groupId,
+      files: options?.files,
     });
 
     return {

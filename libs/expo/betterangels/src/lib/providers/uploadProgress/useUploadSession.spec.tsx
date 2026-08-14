@@ -63,6 +63,7 @@ function Harness() {
             label: 'Consent Forms',
             onRetryItem: () => undefined,
             clientId: 'client-1',
+            files: [{ uri: 'file://c.pdf', type: 'application/pdf' }],
           });
         }}
       >
@@ -181,6 +182,9 @@ describe('useUploadSession', () => {
     expect(options.label).toBe('Consent Forms');
     expect(typeof options.onRetryItem).toBe('function');
     expect(options.clientId).toBe('client-1');
+    expect(options.files).toEqual([
+      { uri: 'file://c.pdf', type: 'application/pdf' },
+    ]);
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toEqual([undefined]);
     expect(lastHandle?.isAborted()).toBe(false);

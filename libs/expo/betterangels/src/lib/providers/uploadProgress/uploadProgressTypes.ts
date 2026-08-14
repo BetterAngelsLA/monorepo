@@ -14,6 +14,10 @@ export type TUploadItem = {
   refId: string;
   name: string;
   status: TUploadItemStatus;
+  /** Local file uri (images preview the actual file in upload rows). */
+  uri?: string;
+  /** MIME type, used to pick the row thumbnail (image vs pdf vs other). */
+  mimeType?: string;
   bytesSent?: number;
   totalBytes?: number;
   /** Aborts this file's upload. Invoked by the per-item cancel action. */
@@ -59,6 +63,11 @@ export type TStartUploadOptions = {
   onRetryItem?: (index: number) => void;
   clientId?: string;
   groupId?: string;
+  /**
+   * Per-file source metadata, aligned with `names`, so upload rows can
+   * preview the actual file (local image uri, pdf icon, etc.).
+   */
+  files?: Array<{ uri?: string; type?: string }>;
 };
 
 export type TUploadProgressContextValue = {

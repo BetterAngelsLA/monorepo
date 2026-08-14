@@ -38,7 +38,8 @@ export function startUploadSession(
   names: string[],
   options?: TStartUploadOptions,
 ) {
-  const { onCancelItem, label, onRetryItem, clientId, groupId } = options ?? {};
+  const { onCancelItem, label, onRetryItem, clientId, groupId, files } =
+    options ?? {};
 
   // Uploads accumulate until dismissed so several can be in flight at once.
   commit([
@@ -49,6 +50,8 @@ export function startUploadSession(
       items: names.map((name, index) => ({
         refId: `pending-${index}`,
         name,
+        uri: files?.[index]?.uri,
+        mimeType: files?.[index]?.type,
         status: 'pending' as TUploadItemStatus,
         onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
         onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
@@ -78,6 +81,8 @@ export function setUploadManifestSession(
         items: manifest.map((entry, index) => ({
           refId: entry.refId,
           name: session.items[index]?.name ?? entry.file.name,
+          uri: session.items[index]?.uri,
+          mimeType: session.items[index]?.mimeType,
           status: session.items[index]?.status ?? 'pending',
           onCancel: session.items[index]?.onCancel,
           onRetry: session.items[index]?.onRetry,

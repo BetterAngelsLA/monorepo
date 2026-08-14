@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   rows: [] as Array<{
     filename: string;
     status: string;
+    thumbnail?: unknown;
     onCancel?: () => void;
     onRetry?: () => void;
   }>,
@@ -40,11 +41,18 @@ vi.mock('../../../../providers', async () => {
   return actual;
 });
 
+vi.mock('../../../../ui-components', () => ({
+  FileThumbnail: (props: { uri: string; mimeType: string }) => (
+    <Text>{`preview:${props.uri}`}</Text>
+  ),
+}));
+
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   UploadItemRow: (props: {
     filename: string;
     status: string;
     progressPct?: number | null;
+    thumbnail?: unknown;
     onCancel?: () => void;
     onRetry?: () => void;
   }) => {
@@ -151,6 +159,31 @@ describe('UploadStage', () => {
     expect(getByText('Uploading…')).toBeTruthy();
     // Actions are per-file only; there is no global cancel button.
     expect(queryByText('Cancel upload')).toBeNull();
+  });
+
+  it('previews the actual local file for items with uri and mime type', () => {
+    startUploadSession('s1', ['photo.jpg'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+      files: [{ uri: 'file://photo.jpg', type: 'image/jpeg' }],
+    });
+
+    renderStage(['s1']);
+
+    expect(mocks.rows).toHaveLength(1);
+    expect(mocks.rows[0].thumbnail).toBeTruthy();
+  });
+
+  it('falls back to the default icon when no preview metadata exists', () => {
+    startUploadSession('s1', ['scan.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+    });
+
+    renderStage(['s1']);
+
+    expect(mocks.rows).toHaveLength(1);
+    expect(mocks.rows[0].thumbnail).toBeUndefined();
   });
 
   it('shows Done and stays open until the user closes it', () => {

@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   TextBold,
   TextRegular,
@@ -12,6 +12,7 @@ import {
   uploadProgressPct,
   useUploadProgress,
 } from '../../../../providers';
+import { FileThumbnail } from '../../../../ui-components';
 
 type TUploadStageProps = {
   closeModal: () => void;
@@ -157,6 +158,16 @@ export default function UploadStage(props: TUploadStageProps) {
                   filename={item.name}
                   status={item.status}
                   progressPct={uploadProgressPct(item)}
+                  thumbnail={
+                    item.uri && item.mimeType ? (
+                      <FileThumbnail
+                        uri={item.uri}
+                        mimeType={item.mimeType}
+                        thumbnailSize={{ width: 36, height: 36 }}
+                        borderRadius={Radiuses.xxxs}
+                      />
+                    ) : undefined
+                  }
                   onCancel={() => cancelUploadItem(session.id, item.refId)}
                   onRetry={
                     item.status === 'error' && item.onRetry

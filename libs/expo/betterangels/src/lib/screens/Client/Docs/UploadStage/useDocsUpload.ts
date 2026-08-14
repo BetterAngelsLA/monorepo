@@ -41,6 +41,8 @@ export function useDocsUpload(clientProfileId?: string) {
         label: title,
         clientId: clientProfileId,
         groupId,
+        // Local file metadata so upload rows can preview the actual file.
+        files: files.map((file) => ({ uri: file.uri, type: file.type })),
         // Retrying a failed item re-runs only that file in a fresh session
         // with the same group id — successful files were already persisted.
         onRetryItem: (index) =>
