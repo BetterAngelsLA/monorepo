@@ -4,7 +4,7 @@ import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
-import { useModalScreen, useUploadProgress } from '../../../providers';
+import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
 import EmptyState from './EmptyState';
@@ -18,20 +18,9 @@ export default function Docs({
 }) {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const { showModalScreen } = useModalScreen();
-  const { sessions } = useUploadProgress();
-
-  // Docs uploads register a session with a `folder` so the tree can render
-  // in-flight rows under the right folder. Completed sessions are hidden —
-  // the resolve refetch brings the real rows in.
-  const treeSessions = sessions.filter(
-    (session) => !!session.folder && !session.complete,
-  );
-
-  // Auto-expand the folder with the most recent in-flight upload.
-  const activeFolder = treeSessions[treeSessions.length - 1]?.folder;
 
   const props = {
-    expanded: expanded ?? activeFolder,
+    expanded,
     setExpanded,
   };
 
@@ -45,11 +34,6 @@ export default function Docs({
 
   const hasAnyDocuments =
     hasDocReadyDocuments || hasConsentFormDocuments || hasOtherDocuments;
-
-  const hasActiveUploads = treeSessions.length > 0;
-
-  const uploadingIn = (folder: string) =>
-    treeSessions.filter((session) => session.folder === folder);
 
   return (
     <ScrollView
@@ -85,25 +69,23 @@ export default function Docs({
       </View>
 
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
-        {!hasAnyDocuments && !hasActiveUploads ? (
+        {!hasAnyDocuments ? (
           <EmptyState />
         ) : (
           <>
-            {(hasDocReadyDocuments ||
-              uploadingIn(DOC_FOLDER_TITLES.DOC_READY).length > 0) && (
+            {hasDocReadyDocuments && (
               <Documents
                 title={DOC_FOLDER_TITLES.DOC_READY}
                 {...props}
                 data={
-                  client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+                  client?.clientProfile
+                    .docReadyDocuments as ClientDocumentType[]
                 }
                 clientId={client?.clientProfile.id ?? ''}
-                uploadingSessions={uploadingIn(DOC_FOLDER_TITLES.DOC_READY)}
               />
             )}
 
-            {(hasConsentFormDocuments ||
-              uploadingIn(DOC_FOLDER_TITLES.FORMS).length > 0) && (
+            {hasConsentFormDocuments && (
               <Documents
                 title={DOC_FOLDER_TITLES.FORMS}
                 {...props}
@@ -112,12 +94,10 @@ export default function Docs({
                     .consentFormDocuments as ClientDocumentType[]
                 }
                 clientId={client?.clientProfile.id ?? ''}
-                uploadingSessions={uploadingIn(DOC_FOLDER_TITLES.FORMS)}
               />
             )}
 
-            {(hasOtherDocuments ||
-              uploadingIn(DOC_FOLDER_TITLES.OTHER).length > 0) && (
+            {hasOtherDocuments && (
               <Documents
                 title={DOC_FOLDER_TITLES.OTHER}
                 {...props}
@@ -125,7 +105,6 @@ export default function Docs({
                   client?.clientProfile.otherDocuments as ClientDocumentType[]
                 }
                 clientId={client?.clientProfile.id ?? ''}
-                uploadingSessions={uploadingIn(DOC_FOLDER_TITLES.OTHER)}
               />
             )}
           </>

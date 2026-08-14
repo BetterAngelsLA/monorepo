@@ -1,84 +1,74 @@
+import { atom, getDefaultStore } from 'jotai';
 import type { TUploadProgress } from '@monorepo/expo/shared/services';
 import {
   TUploadItemStatus,
   TUploadManifestEntry,
   TUploadSession,
-} from './UploadProgressContext';
+  TStartUploadOptions,
+} from './uploadProgressTypes';
 
 /**
- * Module-scoped upload session store shared by every UploadProgressProvider
- * instance (the app root and each modal screen). Keeping the state outside a
- * component means in-flight sessions survive the provider that started an
- * upload unmounting — e.g. the UploadModal closing on success — so the docs
- * tree can keep rendering progress after the modal is gone.
+ * Module-scoped upload session state (Jotai convention — cf.
+ * `userPreferencesState`, `clientInteractionsMapState`). In-flight sessions
+ * survive any screen unmounting, so uploads keep running in the background
+ * and any surface (upload screen, global progress bar) can render them.
+ * No provider is required: the default Jotai store is shared module-wide.
  */
 
-type TUploadState = {
-  sessions: TUploadSession[];
-};
+const defaultStore = getDefaultStore();
 
-let state: TUploadState = { sessions: [] };
-const listeners = new Set<() => void>();
+export const uploadSessionsAtom = atom<TUploadSession[]>([]);
 
-function commit(next: TUploadState) {
-  state = next;
-  listeners.forEach((listener) => listener());
+/**
+ * True while the upload-stage screen is open. The global progress bar hides
+ * itself then — per-file progress is already on screen.
+ */
+export const uploadStageVisibleAtom = atom<boolean>(false);
+
+function getSessions(): TUploadSession[] {
+  return defaultStore.get(uploadSessionsAtom);
 }
 
-export function subscribeUploadStore(listener: () => void): () => void {
-  listeners.add(listener);
-
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function getUploadSnapshot(): TUploadState {
-  return state;
+function commit(next: TUploadSession[]) {
+  defaultStore.set(uploadSessionsAtom, next);
 }
 
 export function startUploadSession(
   id: string,
   names: string[],
-  options?: {
-    onCancelItem?: (index: number) => void;
-    label?: string;
-    onRetryItem?: (index: number) => void;
-    folder?: string;
-  },
+  options?: TStartUploadOptions,
 ) {
-  const { onCancelItem, label, onRetryItem, folder } = options ?? {};
+  const { onCancelItem, label, onRetryItem, clientId, groupId } = options ?? {};
 
   // Uploads accumulate until dismissed so several can be in flight at once.
-  commit({
-    sessions: [
-      ...state.sessions,
-      {
-        id,
-        stage: 'GENERATING',
-        items: names.map((name, index) => ({
-          refId: `pending-${index}`,
-          name,
-          status: 'pending' as TUploadItemStatus,
-          onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
-          onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
-        })),
-        completed: 0,
-        total: names.length,
-        failed: false,
-        label,
-        folder,
-      },
-    ],
-  });
+  commit([
+    ...getSessions(),
+    {
+      id,
+      stage: 'GENERATING',
+      items: names.map((name, index) => ({
+        refId: `pending-${index}`,
+        name,
+        status: 'pending' as TUploadItemStatus,
+        onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
+        onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
+      })),
+      completed: 0,
+      total: names.length,
+      failed: false,
+      label,
+      clientId,
+      groupId,
+    },
+  ]);
 }
 
 export function setUploadManifestSession(
   id: string,
   manifest: TUploadManifestEntry[],
 ) {
-  commit({
-    sessions: state.sessions.map((session) => {
+  commit(
+    getSessions().map((session) => {
       if (session.id !== id) {
         return session;
       }
@@ -94,12 +84,12 @@ export function setUploadManifestSession(
         })),
       };
     }),
-  });
+  );
 }
 
 export function updateUploadSession(id: string, progress: TUploadProgress) {
-  commit({
-    sessions: state.sessions.map((session) => {
+  commit(
+    getSessions().map((session) => {
       if (session.id !== id) {
         return session;
       }
@@ -131,12 +121,12 @@ export function updateUploadSession(id: string, progress: TUploadProgress) {
         failed: session.failed || progress.status === 'error',
       };
     }),
-  });
+  );
 }
 
 export function failUploadSession(id: string, errorMessage?: string) {
-  commit({
-    sessions: state.sessions.map((session) =>
+  commit(
+    getSessions().map((session) =>
       session.id !== id
         ? session
         : {
@@ -150,27 +140,25 @@ export function failUploadSession(id: string, errorMessage?: string) {
             ),
           },
     ),
-  });
+  );
 }
 
 export function completeUploadSession(id: string) {
-  commit({
-    sessions: state.sessions.map((session) =>
+  commit(
+    getSessions().map((session) =>
       session.id !== id
         ? session
         : { ...session, complete: true, completed: session.total },
     ),
-  });
+  );
 }
 
 export function endUploadSession(id: string) {
-  commit({
-    sessions: state.sessions.filter((session) => session.id !== id),
-  });
+  commit(getSessions().filter((session) => session.id !== id));
 }
 
 export function retryUploadItemSession(sessionId: string, refId: string) {
-  const session = state.sessions.find((s) => s.id === sessionId);
+  const session = getSessions().find((s) => s.id === sessionId);
   const item = session?.items.find((i) => i.refId === refId);
 
   if (!session || !item) {
@@ -185,29 +173,26 @@ export function retryUploadItemSession(sessionId: string, refId: string) {
 
   if (!items.length) {
     // The retried file was the only item → nothing left in this session.
-    commit({
-      sessions: state.sessions.filter((s) => s.id !== sessionId),
-    });
+    commit(getSessions().filter((s) => s.id !== sessionId));
     return;
   }
 
-  commit({
-    sessions: state.sessions.map((s) =>
+  commit(
+    getSessions().map((s) =>
       s.id !== sessionId
         ? s
         : {
             ...s,
             items,
             total: s.total - 1,
-            completed:
-              item.status === 'done' ? s.completed - 1 : s.completed,
+            completed: item.status === 'done' ? s.completed - 1 : s.completed,
           },
     ),
-  });
+  );
 }
 
 export function cancelUploadItemSession(sessionId: string, refId: string) {
-  const session = state.sessions.find((s) => s.id === sessionId);
+  const session = getSessions().find((s) => s.id === sessionId);
   const item = session?.items.find((i) => i.refId === refId);
 
   if (!session || !item) {
@@ -220,31 +205,32 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
 
   if (!items.length) {
     // Last item cancelled → nothing left to show; remove the whole session.
-    commit({
-      sessions: state.sessions.filter((s) => s.id !== sessionId),
-    });
+    commit(getSessions().filter((s) => s.id !== sessionId));
     return;
   }
 
-  commit({
-    sessions: state.sessions.map((s) =>
+  commit(
+    getSessions().map((s) =>
       s.id !== sessionId
         ? s
         : {
             ...s,
             items,
             total: s.total - 1,
-            completed:
-              item.status === 'done' ? s.completed - 1 : s.completed,
+            completed: item.status === 'done' ? s.completed - 1 : s.completed,
           },
     ),
-  });
+  );
+}
+
+export function setUploadStageVisible(visible: boolean) {
+  defaultStore.set(uploadStageVisibleAtom, visible);
 }
 
 /** Test-only: resets module state between test cases. */
-export function resetUploadProgressStore() {
-  state = { sessions: [] };
-  listeners.clear();
+export function resetUploadProgressAtoms() {
+  defaultStore.set(uploadSessionsAtom, []);
+  defaultStore.set(uploadStageVisibleAtom, false);
 }
 
 function toItemStatus(status: TUploadProgress['status']): TUploadItemStatus {

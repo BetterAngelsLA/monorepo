@@ -2,11 +2,9 @@ import { render } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Text } from 'react-native';
 import type { ClientDocumentType } from '../../../apollo';
-import type { TUploadSession } from '../../../providers';
 import Documents from './Documents';
 
 const mocks = vi.hoisted(() => ({
-  uploadRows: [] as Array<{ sessions?: unknown[] }>,
   fileCards: [] as Array<{ filename?: string | null }>,
 }));
 
@@ -24,35 +22,12 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
   },
 }));
 
-vi.mock('../../../providers', () => ({
-  UploadProgressRows: (props: { sessions?: unknown[] }) => {
-    mocks.uploadRows.push(props);
-
-    return <Text>upload-rows</Text>;
-  },
-}));
-
 vi.mock('../../../ui-components', () => ({
   DocumentModal: () => null,
   FileThumbnail: () => null,
 }));
 
-function makeSession(overrides: Partial<TUploadSession> = {}): TUploadSession {
-  return {
-    id: 's1',
-    stage: 'UPLOADING',
-    items: [{ refId: 'r1', name: 'a.pdf', status: 'uploading' }],
-    completed: 0,
-    total: 1,
-    failed: false,
-    ...overrides,
-  };
-}
-
-function renderFolder(options: {
-  data?: ClientDocumentType[];
-  uploadingSessions?: TUploadSession[];
-}) {
+function renderFolder(options: { data?: ClientDocumentType[] }) {
   return render(
     <Documents
       title="Doc Ready"
@@ -60,14 +35,12 @@ function renderFolder(options: {
       setExpanded={() => undefined}
       data={options.data ?? []}
       clientId="client-1"
-      uploadingSessions={options.uploadingSessions}
     />,
   );
 }
 
 describe('Documents', () => {
   beforeEach(() => {
-    mocks.uploadRows = [];
     mocks.fileCards = [];
   });
 
@@ -88,19 +61,9 @@ describe('Documents', () => {
     expect(mocks.fileCards[0].filename).toBe('consent.pdf');
   });
 
-  it('passes the folder’s in-flight sessions to UploadProgressRows', () => {
-    const session = makeSession();
-
-    renderFolder({ uploadingSessions: [session] });
-
-    expect(mocks.uploadRows).toHaveLength(1);
-    expect(mocks.uploadRows[0].sessions).toEqual([session]);
-  });
-
-  it('renders UploadProgressRows with an empty list when there are no uploads', () => {
+  it('renders no rows when there are no documents', () => {
     renderFolder({});
 
-    expect(mocks.uploadRows).toHaveLength(1);
-    expect(mocks.uploadRows[0].sessions).toEqual([]);
+    expect(mocks.fileCards).toHaveLength(0);
   });
 });

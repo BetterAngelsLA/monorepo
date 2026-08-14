@@ -10,12 +10,11 @@ import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useSnackbar } from '../../../../hooks';
-import { useUploadSession } from '../../../../providers';
-import { getDocFolder } from '../folders';
+import UploadStage, {
+  TUploadSelection as TUploadStageSelection,
+} from '../UploadStage/UploadStage';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
-import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 type TUploadSelection = {
   docType: keyof DocUploads;
@@ -39,8 +38,10 @@ export default function UploadModal(props: IUploadModalProps) {
   const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
-    null
+    null,
   );
+  const [pendingUpload, setPendingUpload] =
+    useState<TUploadStageSelection | null>(null);
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
     ConsentForm: [],
@@ -53,17 +54,6 @@ export default function UploadModal(props: IUploadModalProps) {
     SocialSecurityCard: [],
   });
 
-  const { uploadDocuments } = useClientDocumentUpload();
-  const { showSnackbar } = useSnackbar();
-  const {
-    begin,
-    setUploadManifest,
-    updateUpload,
-    failUpload,
-    completeUpload,
-    endUpload,
-  } = useUploadSession();
-
   const clientProfileId = client?.clientProfile.id;
 
   // Pre-populate existing doc-ready documents so already-uploaded doc types
@@ -71,7 +61,7 @@ export default function UploadModal(props: IUploadModalProps) {
   useEffect(() => {
     const findDoc = (namespace: ClientDocumentNamespaceEnum) => {
       const file = client?.clientProfile.docReadyDocuments?.find(
-        (item) => item.namespace === namespace
+        (item) => item.namespace === namespace,
       )?.file as ReactNativeFile | undefined;
       return file ? [file] : [];
     };
@@ -79,13 +69,13 @@ export default function UploadModal(props: IUploadModalProps) {
     setDocs((prev) => ({
       ...prev,
       DriversLicenseFront: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseFront
+        ClientDocumentNamespaceEnum.DriversLicenseFront,
       ),
       DriversLicenseBack: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseBack
+        ClientDocumentNamespaceEnum.DriversLicenseBack,
       ),
       SocialSecurityCard: findDoc(
-        ClientDocumentNamespaceEnum.SocialSecurityCard
+        ClientDocumentNamespaceEnum.SocialSecurityCard,
       ),
       BirthCertificate: findDoc(ClientDocumentNamespaceEnum.BirthCertificate),
       PhotoId: findDoc(ClientDocumentNamespaceEnum.PhotoId),
@@ -94,68 +84,6 @@ export default function UploadModal(props: IUploadModalProps) {
 
   const openMediaPicker = (upload: TUploadSelection) => {
     setSelectedUpload(upload);
-  };
-
-  const runUpload = async (
-    session: ReturnType<typeof begin>,
-    files: ReactNativeFile[],
-    namespace: ClientDocumentNamespaceEnum,
-  ) => {
-    if (!clientProfileId) {
-      return;
-    }
-
-    try {
-      await uploadDocuments({
-        clientProfileId,
-        // Each file carries its own abort signal so the drawer can cancel a
-        // single item without affecting the rest of the batch.
-        documents: files.map((file, index) => ({
-          ...file,
-          signal: session.signals[index],
-        })),
-        namespace,
-        onManifest: (manifest) => setUploadManifest(session.id, manifest),
-        onProgress: (progress) => updateUpload(session.id, progress),
-      });
-
-      completeUpload(session.id);
-      showSnackbar({ message: 'Upload complete', type: 'success' });
-    } catch (err) {
-      console.error(`[UploadModal upload error:] ${err}`);
-
-      // Cancelled sessions were already removed by the cancel action. Other
-      // failures stay in the session so the tree shows the error + Retry.
-      if (session.isAborted()) {
-        endUpload(session.id);
-      } else {
-        failUpload(
-          session.id,
-          'Upload failed. Use Retry on the file below.',
-        );
-        showSnackbar({
-          message: 'Upload failed. Please try again.',
-          type: 'error',
-        });
-      }
-    }
-  };
-
-  const startSession = (
-    files: ReactNativeFile[],
-    namespace: ClientDocumentNamespaceEnum,
-    title: string,
-  ) => {
-    const session = begin(files.map((file) => file.name), {
-      label: title,
-      // The folder the docs tree renders in-flight rows under.
-      folder: getDocFolder(namespace),
-      // Retrying a failed item re-runs only that file in a fresh session;
-      // the successful files were already persisted and stay untouched.
-      onRetryItem: (index) => startSession([files[index]], namespace, title),
-    });
-
-    void runUpload(session, files, namespace);
   };
 
   const uploadSelectedFiles = async (newFiles: ReactNativeFile[]) => {
@@ -168,15 +96,28 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    // The form is a picker: close it once the upload starts. Progress shows
-    // inline in the Doc Library tree under the file's folder.
-    startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
-    closeModal();
+    // The form is a picker: hand the files to the upload stage, which lets
+    // the user review them before anything is uploaded.
+    setPendingUpload({
+      namespace,
+      title: DOC_TYPE_TITLES[docType],
+      files: selectedFiles,
+    });
   };
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
+
+  if (pendingUpload) {
+    return (
+      <UploadStage
+        clientProfileId={clientProfileId}
+        selection={pendingUpload}
+        closeModal={closeModal}
+      />
+    );
+  }
 
   return (
     <View
@@ -211,8 +152,8 @@ export default function UploadModal(props: IUploadModalProps) {
           marginBottom: Spacings.sm,
         }}
       >
-        You can upload several documents at once — progress appears in the Doc
-        Library folder as each file uploads.
+        You can upload several documents at once — you'll review them before
+        uploading.
       </TextRegular>
 
       <ScrollView

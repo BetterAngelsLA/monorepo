@@ -1,5 +1,5 @@
 import { randomUUID } from 'expo-crypto';
-import { useUploadProgress } from './UploadProgressContext';
+import { useUploadProgress } from './useUploadProgress';
 
 type TUploadSessionHandle = {
   id: string;
@@ -20,17 +20,22 @@ type TBeginOptions = {
   /** Starts a fresh single-file session when a failed item is retried. */
   onRetryItem?: (index: number) => void;
   /**
-   * Destination folder ('Doc Ready' | 'Forms' | 'Other') where the docs tree
-   * renders this session's in-flight rows.
+   * Owning client profile id (docs uploads) so global surfaces such as the
+   * progress bar can attribute background sessions to a client.
    */
-  folder?: string;
+  clientId?: string;
+  /**
+   * Groups this session with its retry replacement sessions so an upload
+   * screen can find all of them (even after remounting).
+   */
+  groupId?: string;
 };
 
 /**
- * Wraps the UploadProgressProvider API for a single upload, pairing the
- * session with an AbortController so the per-item cancel button actually
- * aborts the in-flight upload. Pass `{ cancellable: false }` for flows with
- * no abort support (e.g. HMIS base64/multipart uploads).
+ * Wraps the upload session API for a single upload, pairing the session with
+ * an AbortController so the per-item cancel button actually aborts the
+ * in-flight upload. Pass `{ cancellable: false }` for flows with no abort
+ * support (e.g. HMIS base64/multipart uploads).
  */
 export function useUploadSession() {
   const {
@@ -58,7 +63,8 @@ export function useUploadSession() {
         : undefined,
       label: options?.label,
       onRetryItem: options?.onRetryItem,
-      folder: options?.folder,
+      clientId: options?.clientId,
+      groupId: options?.groupId,
     });
 
     return {

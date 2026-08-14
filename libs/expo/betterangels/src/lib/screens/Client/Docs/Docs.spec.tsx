@@ -6,17 +6,10 @@ import Docs from './index';
 
 const mocks = vi.hoisted(() => ({
   showModalScreen: vi.fn(),
-  sessions: [] as Array<Record<string, unknown>>,
-  documentsProps: [] as Array<{
-    title: string;
-    expanded?: unknown;
-    uploadingSessions?: unknown[];
-  }>,
 }));
 
 vi.mock('../../../providers', () => ({
   useModalScreen: () => ({ showModalScreen: mocks.showModalScreen }),
-  useUploadProgress: () => ({ sessions: mocks.sessions }),
 }));
 
 vi.mock('@monorepo/expo/shared/icons', () => ({
@@ -43,31 +36,22 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
       {children}
     </Pressable>
   ),
-  TextMedium: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextMedium: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
-  TextRegular: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextRegular: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
 }));
 
 vi.mock('./Documents', () => ({
   __esModule: true,
-  default: (props: {
-    title: string;
-    expanded?: unknown;
-    uploadingSessions?: unknown[];
-  }) => {
-    mocks.documentsProps.push(props);
-
-    return (
-      <View>
-        <Text>{props.title}</Text>
-        {props.uploadingSessions?.map((session) => (
-          <Text
-            key={String((session as { id?: string }).id)}
-          >{`uploading-${props.title}`}</Text>
-        ))}
-      </View>
-    );
-  },
+  default: (props: { title: string }) => (
+    <View>
+      <Text>{props.title}</Text>
+    </View>
+  ),
 }));
 
 vi.mock('./UploadModal', () => ({
@@ -100,21 +84,7 @@ const populatedClient = {
 describe('Client Docs', () => {
   beforeEach(() => {
     mocks.showModalScreen.mockClear();
-    mocks.sessions = [];
-    mocks.documentsProps = [];
   });
-
-  function makeSession(overrides: Record<string, unknown> = {}) {
-    return {
-      id: 's1',
-      stage: 'UPLOADING',
-      items: [{ refId: 'r1', name: 'a.pdf', status: 'uploading' }],
-      completed: 1,
-      total: 1,
-      failed: false,
-      ...overrides,
-    };
-  }
 
   it('shows the empty state when there are no documents', () => {
     const { getByText, queryByText } = render(<Docs client={emptyClient} />);
@@ -124,7 +94,9 @@ describe('Client Docs', () => {
   });
 
   it('shows document sections when documents exist', () => {
-    const { getByText, queryByText } = render(<Docs client={populatedClient} />);
+    const { getByText, queryByText } = render(
+      <Docs client={populatedClient} />,
+    );
 
     expect(getByText('Doc Ready')).toBeTruthy();
     expect(getByText('Forms')).toBeTruthy();
@@ -143,33 +115,5 @@ describe('Client Docs', () => {
     const modalOptions = mocks.showModalScreen.mock.calls[0][0];
     const modal = render(modalOptions.renderContent({ close: vi.fn() }));
     expect(modal.getByText('UploadModal')).toBeTruthy();
-  });
-
-  it('shows in-flight uploads in their folder instead of the empty state', () => {
-    mocks.sessions = [makeSession({ folder: 'Doc Ready' })];
-
-    const { getByText, queryByText } = render(<Docs client={emptyClient} />);
-
-    expect(queryByText('No files yet')).toBeNull();
-    expect(getByText('uploading-Doc Ready')).toBeTruthy();
-  });
-
-  it('auto-expands the folder with an in-flight upload', () => {
-    mocks.sessions = [makeSession({ folder: 'Forms' })];
-
-    render(<Docs client={emptyClient} />);
-
-    const formsProps = mocks.documentsProps.find(
-      (props) => props.title === 'Forms',
-    );
-    expect(formsProps?.expanded).toBe('Forms');
-  });
-
-  it('hides completed sessions and shows the empty state when there are no docs', () => {
-    mocks.sessions = [makeSession({ folder: 'Doc Ready', complete: true })];
-
-    const { getByText } = render(<Docs client={emptyClient} />);
-
-    expect(getByText('No files yet')).toBeTruthy();
   });
 });

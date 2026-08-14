@@ -6,16 +6,7 @@ import { ClientProfileQuery } from '../../__generated__/Client.generated';
 import UploadModal from './index';
 
 const mocks = vi.hoisted(() => ({
-  uploadDocuments: vi.fn(),
-  begin: vi.fn(() => ({
-    id: 'session-1',
-    signals: [new AbortController().signal],
-    isAborted: () => false,
-  })),
-  endUpload: vi.fn(),
-  completeUpload: vi.fn(),
-  failUpload: vi.fn(),
-  showSnackbar: vi.fn(),
+  uploadStageProps: [] as Array<Record<string, unknown>>,
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -28,23 +19,13 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-vi.mock('./useClientDocumentUpload', () => ({
-  useClientDocumentUpload: () => ({ uploadDocuments: mocks.uploadDocuments }),
-}));
+vi.mock('../UploadStage/UploadStage', () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => {
+    mocks.uploadStageProps.push(props);
 
-vi.mock('../../../../hooks', () => ({
-  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
-}));
-
-vi.mock('../../../../providers', () => ({
-  useUploadSession: () => ({
-    begin: mocks.begin,
-    setUploadManifest: vi.fn(),
-    updateUpload: vi.fn(),
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-  }),
+    return <Text>UploadStage</Text>;
+  },
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
@@ -114,7 +95,7 @@ function renderModal(overrides?: { closeModal?: () => void }) {
     <UploadModal
       client={client}
       closeModal={overrides?.closeModal ?? vi.fn()}
-    />
+    />,
   );
 }
 
@@ -128,17 +109,19 @@ async function selectFiles(files: unknown[]) {
 
 describe('UploadModal', () => {
   beforeEach(() => {
-    mocks.uploadDocuments.mockReset();
-    mocks.begin.mockClear();
-    mocks.endUpload.mockClear();
-    mocks.completeUpload.mockClear();
-    mocks.failUpload.mockClear();
-    mocks.showSnackbar.mockClear();
-    mocks.mediaPickerProps.length = 0;
+    mocks.uploadStageProps = [];
+    mocks.mediaPickerProps = [];
   });
 
-  it('starts a labelled session with its folder, uploads, and closes the form', async () => {
-    mocks.uploadDocuments.mockResolvedValue(undefined);
+  it('is a pure picker: nothing uploads until files are picked', () => {
+    const { queryByText, getByText } = renderModal();
+
+    expect(queryByText('UploadStage')).toBeNull();
+    // The picker is visible with its doc-type rows.
+    expect(getByText('Consent Forms')).toBeTruthy();
+  });
+
+  it('hands the picked files to the upload stage for review instead of uploading immediately', async () => {
     const closeModal = vi.fn();
 
     const { getByText } = renderModal({ closeModal });
@@ -146,31 +129,19 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(mocks.begin).toHaveBeenCalledWith(['consent.pdf'], {
-      label: 'Consent Forms',
-      folder: 'Forms',
-      onRetryItem: expect.any(Function),
+    expect(mocks.uploadStageProps).toHaveLength(1);
+    expect(mocks.uploadStageProps[0].clientProfileId).toBe('client-1');
+    expect(mocks.uploadStageProps[0].selection).toEqual({
+      namespace: ClientDocumentNamespaceEnum.ConsentForm,
+      title: 'Consent Forms',
+      files: [sampleFile],
     });
-    expect(mocks.uploadDocuments).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clientProfileId: 'client-1',
-        documents: [expect.objectContaining(sampleFile)],
-        namespace: ClientDocumentNamespaceEnum.ConsentForm,
-      }),
-    );
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-    // The form is a picker: it closes once the upload starts and progress
-    // moves into the Doc Library tree under the file's folder.
-    expect(closeModal).toHaveBeenCalled();
-    expect(mocks.showSnackbar).toHaveBeenCalledWith({
-      message: 'Upload complete',
-      type: 'success',
-    });
+    // The form stays open; the stage takes over the same modal.
+    expect(closeModal).not.toHaveBeenCalled();
+    expect(getByText('UploadStage')).toBeTruthy();
   });
 
-  it('closes the form and surfaces the failure via snackbar + tree retry', async () => {
-    mocks.uploadDocuments.mockRejectedValue(new Error('upload failed'));
+  it('passes the same closeModal through to the upload stage', async () => {
     const closeModal = vi.fn();
 
     const { getByText } = renderModal({ closeModal });
@@ -178,47 +149,7 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(closeModal).toHaveBeenCalled();
-    expect(mocks.failUpload).toHaveBeenCalledWith(
-      'session-1',
-      expect.any(String),
-    );
-    expect(mocks.showSnackbar).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error' }),
-    );
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-  });
-
-  it('retries only the failed file in a fresh single-file session', async () => {
-    mocks.uploadDocuments.mockResolvedValue(undefined);
-
-    const { getByText } = renderModal();
-
-    fireEvent.press(getByText('Consent Forms'));
-    await selectFiles([sampleFile]);
-
-    const beginCall = mocks.begin.mock.calls[0];
-    const options = beginCall[1] as { onRetryItem?: (index: number) => void };
-    expect(options.onRetryItem).toBeDefined();
-
-    // The drawer's per-item Retry invokes onRetryItem with the item index.
-    await act(async () => {
-      options.onRetryItem?.(0);
-    });
-
-    // A fresh session is started with just the retried file — not the whole
-    // batch — and that single file is re-uploaded.
-    expect(mocks.begin).toHaveBeenCalledTimes(2);
-    expect(mocks.begin.mock.calls[1][0]).toEqual(['consent.pdf']);
-
-    expect(mocks.uploadDocuments).toHaveBeenCalledTimes(2);
-    const retryUpload = mocks.uploadDocuments.mock.calls[1][0] as {
-      documents: unknown[];
-    };
-    expect(retryUpload.documents).toHaveLength(1);
-    expect(retryUpload.documents[0]).toEqual(
-      expect.objectContaining(sampleFile),
-    );
+    expect(mocks.uploadStageProps[0].closeModal).toBe(closeModal);
   });
 
   it('closes the form when Done is pressed', () => {

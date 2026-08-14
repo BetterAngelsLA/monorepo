@@ -4,7 +4,6 @@ import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
-import { TUploadSession, UploadProgressRows } from '../../../providers';
 import { DocumentModal, FileThumbnail } from '../../../ui-components';
 import type { TDocFolder } from './folders';
 
@@ -14,19 +13,10 @@ interface IDocumentsProps {
   data: ClientDocumentType[];
   clientId: string;
   title: TDocFolder;
-  /** In-flight upload sessions that belong to this folder. */
-  uploadingSessions?: TUploadSession[];
 }
 
 export default function Documents(props: IDocumentsProps) {
-  const {
-    expanded,
-    setExpanded,
-    data,
-    clientId,
-    title,
-    uploadingSessions = [],
-  } = props;
+  const { expanded, setExpanded, data, clientId, title } = props;
   const [selectedDocument, setSelectedDocument] = useState<
     Maybe<ClientDocumentType> | undefined
   >(undefined);
@@ -57,7 +47,6 @@ export default function Documents(props: IDocumentsProps) {
             backgroundColor: Colors.WHITE,
           }}
         >
-          <UploadProgressRows sessions={uploadingSessions} />
           {data?.map((document) => (
             <FileCard
               key={document.id}

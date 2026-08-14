@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   endUpload: vi.fn(),
 }));
 
-vi.mock('./UploadProgressContext', () => ({
+vi.mock('./useUploadProgress', () => ({
   useUploadProgress: () => ({
     sessions: [],
     startUpload: mocks.startUpload,
@@ -32,8 +32,14 @@ let lastHandle: TUploadSessionHandle | undefined;
 let lastRetryIndex: number | undefined;
 
 function Harness() {
-  const { begin, setUploadManifest, updateUpload, failUpload, completeUpload, endUpload } =
-    useUploadSession();
+  const {
+    begin,
+    setUploadManifest,
+    updateUpload,
+    failUpload,
+    completeUpload,
+    endUpload,
+  } = useUploadSession();
 
   return (
     <View>
@@ -56,7 +62,7 @@ function Harness() {
             cancellable: false,
             label: 'Consent Forms',
             onRetryItem: () => undefined,
-            folder: 'Forms',
+            clientId: 'client-1',
           });
         }}
       >
@@ -174,7 +180,7 @@ describe('useUploadSession', () => {
     expect(options.onCancelItem).toBeUndefined();
     expect(options.label).toBe('Consent Forms');
     expect(typeof options.onRetryItem).toBe('function');
-    expect(options.folder).toBe('Forms');
+    expect(options.clientId).toBe('client-1');
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toEqual([undefined]);
     expect(lastHandle?.isAborted()).toBe(false);
