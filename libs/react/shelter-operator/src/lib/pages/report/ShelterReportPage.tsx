@@ -37,25 +37,21 @@ export function ShelterReportPage() {
         </Button>
       </div>
 
-      {loading && (
+      {loading ? (
         <Text variant="body" textColor="text-[#6B7280]">
           Loading report…
         </Text>
-      )}
-
-      {error && (
+      ) : error ? (
         <Text variant="body" textColor="text-red-500">
           Failed to load the shelter report.
         </Text>
-      )}
-
-      {!loading && !error && !report && (
+      ) : report ? (
+        <ShelterReportPrint ref={targetRef} data={report} />
+      ) : (
         <Text variant="body" textColor="text-[#6B7280]">
           No shelter data available for this report.
         </Text>
       )}
-
-      {report && <ShelterReportPrint ref={targetRef} data={report} />}
     </div>
   );
 }
