@@ -36,22 +36,21 @@ export function useExportPdf(
 
       const usablePageHeight = pageHeight - margin * 2;
 
-      if (imgHeight <= usablePageHeight) {
-        // Single page fits.
-        doc.addImage(imgData, 'PNG', margin, margin, usableWidth, imgHeight);
-      } else {
-        // Taller than one page: render the full image on each page, shifting it
-        // up by a page worth each time so a new slice shows through the margins.
-        let heightLeft = imgHeight;
-        let position = margin;
-        doc.addImage(imgData, 'PNG', margin, position, usableWidth, imgHeight);
-        heightLeft -= usablePageHeight;
-        while (heightLeft > 0) {
-          position -= usablePageHeight;
-          doc.addPage();
-          doc.addImage(imgData, 'PNG', margin, position, usableWidth, imgHeight);
-          heightLeft -= usablePageHeight;
-        }
+      // Draw the full image on each page, shifted up by a page's worth each
+      // time so the next slice shows through the margins. A report that fits
+      // on one page is just the single-iteration case.
+      const pageCount = Math.max(1, Math.ceil(imgHeight / usablePageHeight));
+
+      for (let page = 0; page < pageCount; page++) {
+        if (page > 0) doc.addPage();
+        doc.addImage(
+          imgData,
+          'PNG',
+          margin,
+          margin - page * usablePageHeight,
+          usableWidth,
+          imgHeight
+        );
       }
 
       doc.save(filename);
