@@ -5,6 +5,7 @@ import {
   completeUploadSession,
   endUploadSession,
   resetUploadProgressAtoms,
+  setUploadStageVisible,
   startUploadSession,
   uploadSessionsAtom,
 } from './uploadProgressAtoms';
@@ -87,5 +88,51 @@ describe('UploadProgressCleanup', () => {
     });
 
     expect(store.get(uploadSessionsAtom)).toEqual([]);
+  });
+
+  it('keeps completed sessions while the upload stage is open', () => {
+    startUploadSession('s1', ['a.pdf']);
+    completeUploadSession('s1');
+    setUploadStageVisible(true);
+
+    render(<UploadProgressCleanup />);
+
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+
+    expect(store.get(uploadSessionsAtom)).toHaveLength(1);
+  });
+
+  it('clears pending timers when the stage opens, then prunes after it closes', () => {
+    startUploadSession('s1', ['a.pdf']);
+    completeUploadSession('s1');
+
+    render(<UploadProgressCleanup />);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    // The stage opens: the pending prune timer is cleared.
+    act(() => {
+      setUploadStageVisible(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+
+    expect(store.get(uploadSessionsAtom)).toHaveLength(1);
+
+    // The stage closes: pruning is scheduled again.
+    act(() => {
+      setUploadStageVisible(false);
+    });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(store.get(uploadSessionsAtom)).toHaveLength(0);
   });
 });

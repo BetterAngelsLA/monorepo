@@ -42,6 +42,7 @@ export default function UploadStage(props: TUploadStageProps) {
   const [stage, setStage] = useState<TStage>('uploading');
 
   const resumeIdsRef = useRef<string[]>(resumeSessionIds);
+  const hasShownSessionsRef = useRef(false);
 
   // Hide the global progress bar while this detail view is open.
   useEffect(() => {
@@ -101,9 +102,18 @@ export default function UploadStage(props: TUploadStageProps) {
     }
   }, [ownedSessions, stage, allComplete, anyInFlight, anyFailed]);
 
-  // Resumed sessions may have been cleaned up already; nothing to show.
+  // Resumed sessions may have been cleaned up before this screen opened;
+  // in that case there is nothing to show, so close. Once sessions have
+  // been shown the screen stays open no matter what happens to the store
+  // (completed sessions are pruned by the cleanup, which must not empty
+  // and dismiss the screen out from under the user).
   useEffect(() => {
-    if (resumeSessionIds.length > 0 && ownedSessions.length === 0) {
+    if (ownedSessions.length > 0) {
+      hasShownSessionsRef.current = true;
+      return;
+    }
+
+    if (!hasShownSessionsRef.current && resumeSessionIds.length > 0) {
       closeModal();
     }
   }, [ownedSessions.length, resumeSessionIds.length, closeModal]);

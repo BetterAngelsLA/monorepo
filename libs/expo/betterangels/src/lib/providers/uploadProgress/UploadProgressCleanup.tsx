@@ -1,6 +1,10 @@
 import { useAtomValue } from 'jotai';
 import { useEffect, useRef } from 'react';
-import { endUploadSession, uploadSessionsAtom } from './uploadProgressAtoms';
+import {
+  endUploadSession,
+  uploadSessionsAtom,
+  uploadStageVisibleAtom,
+} from './uploadProgressAtoms';
 
 const COMPLETE_CLEANUP_DELAY_MS = 3000;
 
@@ -10,15 +14,29 @@ const COMPLETE_CLEANUP_DELAY_MS = 3000;
  * after finishing to keep the store from growing unboundedly. Failed
  * sessions persist — their retry affordance stays visible.
  *
+ * Completed sessions are kept while the upload stage is open: the stage
+ * shows their final rows and closes only when the user dismisses it, so
+ * pruning them from under it would empty (and auto-close) the screen.
+ *
  * Mounted once at the app root; there is no per-screen provider anymore.
  */
 export function UploadProgressCleanup() {
   const sessions = useAtomValue(uploadSessionsAtom);
+  const uploadStageVisible = useAtomValue(uploadStageVisibleAtom);
   const cleanupTimers = useRef(
     new Map<string, ReturnType<typeof setTimeout>>(),
   );
 
   useEffect(() => {
+    if (uploadStageVisible) {
+      // The stage shows completed rows; keep them until it closes. Clear
+      // any timers that were scheduled before it opened so they can't prune
+      // sessions out from under it.
+      cleanupTimers.current.forEach((timer) => clearTimeout(timer));
+      cleanupTimers.current.clear();
+      return;
+    }
+
     for (const session of sessions) {
       if (!session.complete || cleanupTimers.current.has(session.id)) {
         continue;
@@ -43,7 +61,7 @@ export function UploadProgressCleanup() {
         cleanupTimers.current.delete(id);
       }
     }
-  }, [sessions]);
+  }, [sessions, uploadStageVisible]);
 
   // Clear pending timers when the provider tree unmounts.
   useEffect(() => {

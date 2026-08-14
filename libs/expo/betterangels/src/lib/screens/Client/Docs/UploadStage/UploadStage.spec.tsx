@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import {
   completeUploadSession,
+  endUploadSession,
   failUploadSession,
   resetUploadProgressAtoms,
   startUploadSession,
@@ -168,6 +169,23 @@ describe('UploadStage', () => {
     expect(getByText('Upload complete')).toBeTruthy();
     // No auto-close: the screen persists and has no footer action either.
     expect(queryByText('Done')).toBeNull();
+    expect(closeModal).not.toHaveBeenCalled();
+  });
+
+  it('stays open even if the completed sessions are pruned from the store', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+    });
+    const closeModal = vi.fn();
+
+    renderStage(['s1'], closeModal);
+
+    act(() => {
+      endUploadSession('s1');
+    });
+
+    // Sessions were shown, so the screen must not dismiss itself.
     expect(closeModal).not.toHaveBeenCalled();
   });
 
