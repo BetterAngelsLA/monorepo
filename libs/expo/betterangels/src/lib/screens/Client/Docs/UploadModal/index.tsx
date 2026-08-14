@@ -10,9 +10,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import UploadStage, {
-  TUploadSelection as TUploadStageSelection,
-} from '../UploadStage/UploadStage';
+import { useDocsUpload } from '../UploadStage/useDocsUpload';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
 
@@ -40,8 +38,6 @@ export default function UploadModal(props: IUploadModalProps) {
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
     null,
   );
-  const [pendingUpload, setPendingUpload] =
-    useState<TUploadStageSelection | null>(null);
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
     ConsentForm: [],
@@ -55,6 +51,7 @@ export default function UploadModal(props: IUploadModalProps) {
   });
 
   const clientProfileId = client?.clientProfile.id;
+  const { startSession } = useDocsUpload(clientProfileId);
 
   // Pre-populate existing doc-ready documents so already-uploaded doc types
   // are shown as complete and cannot be overwritten.
@@ -96,28 +93,16 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    // The form is a picker: hand the files to the upload stage, which lets
-    // the user review them before anything is uploaded.
-    setPendingUpload({
-      namespace,
-      title: DOC_TYPE_TITLES[docType],
-      files: selectedFiles,
-    });
+    // The form is a picker: start the upload and close. Progress shows in
+    // the top bar (tap it for per-file detail), and completion is surfaced
+    // with a snackbar.
+    startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
+    closeModal();
   };
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
-
-  if (pendingUpload) {
-    return (
-      <UploadStage
-        clientProfileId={clientProfileId}
-        selection={pendingUpload}
-        closeModal={closeModal}
-      />
-    );
-  }
 
   return (
     <View
@@ -152,8 +137,8 @@ export default function UploadModal(props: IUploadModalProps) {
           marginBottom: Spacings.sm,
         }}
       >
-        You can upload several documents at once — you'll review them before
-        uploading.
+        You can upload several documents at once — progress appears in a bar at
+        the top of the screen.
       </TextRegular>
 
       <ScrollView

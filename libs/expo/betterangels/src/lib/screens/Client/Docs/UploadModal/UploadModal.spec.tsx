@@ -6,7 +6,7 @@ import { ClientProfileQuery } from '../../__generated__/Client.generated';
 import UploadModal from './index';
 
 const mocks = vi.hoisted(() => ({
-  uploadStageProps: [] as Array<Record<string, unknown>>,
+  startSession: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -19,13 +19,8 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-vi.mock('../UploadStage/UploadStage', () => ({
-  __esModule: true,
-  default: (props: Record<string, unknown>) => {
-    mocks.uploadStageProps.push(props);
-
-    return <Text>UploadStage</Text>;
-  },
+vi.mock('../UploadStage/useDocsUpload', () => ({
+  useDocsUpload: () => ({ startSession: mocks.startSession }),
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
@@ -90,6 +85,12 @@ const sampleFile = {
   uri: 'file://consent.pdf',
 };
 
+const secondFile = {
+  name: 'consent-2.pdf',
+  type: 'application/pdf',
+  uri: 'file://consent-2.pdf',
+};
+
 function renderModal(overrides?: { closeModal?: () => void }) {
   return render(
     <UploadModal
@@ -109,19 +110,18 @@ async function selectFiles(files: unknown[]) {
 
 describe('UploadModal', () => {
   beforeEach(() => {
-    mocks.uploadStageProps = [];
+    mocks.startSession.mockClear();
     mocks.mediaPickerProps = [];
   });
 
   it('is a pure picker: nothing uploads until files are picked', () => {
-    const { queryByText, getByText } = renderModal();
+    const { getByText } = renderModal();
 
-    expect(queryByText('UploadStage')).toBeNull();
-    // The picker is visible with its doc-type rows.
     expect(getByText('Consent Forms')).toBeTruthy();
+    expect(mocks.startSession).not.toHaveBeenCalled();
   });
 
-  it('hands the picked files to the upload stage for review instead of uploading immediately', async () => {
+  it('starts the upload immediately and closes the form', async () => {
     const closeModal = vi.fn();
 
     const { getByText } = renderModal({ closeModal });
@@ -129,27 +129,25 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(mocks.uploadStageProps).toHaveLength(1);
-    expect(mocks.uploadStageProps[0].clientProfileId).toBe('client-1');
-    expect(mocks.uploadStageProps[0].selection).toEqual({
-      namespace: ClientDocumentNamespaceEnum.ConsentForm,
-      title: 'Consent Forms',
-      files: [sampleFile],
-    });
-    // The form stays open; the stage takes over the same modal.
-    expect(closeModal).not.toHaveBeenCalled();
-    expect(getByText('UploadStage')).toBeTruthy();
+    expect(mocks.startSession).toHaveBeenCalledWith(
+      [sampleFile],
+      ClientDocumentNamespaceEnum.ConsentForm,
+      'Consent Forms',
+    );
+    expect(closeModal).toHaveBeenCalled();
   });
 
-  it('passes the same closeModal through to the upload stage', async () => {
-    const closeModal = vi.fn();
-
-    const { getByText } = renderModal({ closeModal });
+  it('passes every picked file for multi-file doc types', async () => {
+    const { getByText } = renderModal();
 
     fireEvent.press(getByText('Consent Forms'));
-    await selectFiles([sampleFile]);
+    await selectFiles([sampleFile, secondFile]);
 
-    expect(mocks.uploadStageProps[0].closeModal).toBe(closeModal);
+    expect(mocks.startSession).toHaveBeenCalledWith(
+      [sampleFile, secondFile],
+      ClientDocumentNamespaceEnum.ConsentForm,
+      'Consent Forms',
+    );
   });
 
   it('closes the form when Done is pressed', () => {

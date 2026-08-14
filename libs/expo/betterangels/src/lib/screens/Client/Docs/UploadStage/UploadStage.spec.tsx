@@ -2,17 +2,17 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { getDefaultStore } from 'jotai';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import {
+  completeUploadSession,
+  failUploadSession,
   resetUploadProgressAtoms,
   startUploadSession,
+  updateUploadSession,
   uploadSessionsAtom,
 } from '../../../../providers';
-import UploadStage, { TUploadSelection } from './UploadStage';
+import UploadStage from './UploadStage';
 
 const mocks = vi.hoisted(() => ({
-  uploadDocuments: vi.fn(),
-  showSnackbar: vi.fn(),
   rows: [] as Array<{
     filename: string;
     status: string;
@@ -25,6 +25,11 @@ vi.mock('expo-crypto', () => ({
   randomUUID: () => 'session-generated',
 }));
 
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
+}));
+
 // The full providers index drags in expo-router and other native modules;
 // scope it to the upload-progress surface the stage actually uses.
 vi.mock('../../../../providers', async () => {
@@ -34,23 +39,6 @@ vi.mock('../../../../providers', async () => {
 
   return actual;
 });
-
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
-}));
-
-vi.mock('../../../../hooks', () => ({
-  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
-}));
-
-vi.mock('../UploadModal/useClientDocumentUpload', () => ({
-  useClientDocumentUpload: () => ({ uploadDocuments: mocks.uploadDocuments }),
-}));
-
-vi.mock('@monorepo/expo/shared/icons', () => ({
-  FileOutlineIcon: () => null,
-}));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   UploadItemRow: (props: {
@@ -132,26 +120,12 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
 const store = getDefaultStore();
 
-const selection: TUploadSelection = {
-  namespace: ClientDocumentNamespaceEnum.ConsentForm,
-  title: 'Consent Forms',
-  files: [
-    {
-      name: 'consent.pdf',
-      type: 'application/pdf',
-      uri: 'file://consent.pdf',
-    } as never,
-  ],
-};
-
-function renderStage(props: Partial<Parameters<typeof UploadStage>[0]> = {}) {
+function renderStage(
+  resumeSessionIds: string[],
+  closeModal: () => void = vi.fn(),
+) {
   return render(
-    <UploadStage
-      closeModal={vi.fn()}
-      clientProfileId="client-1"
-      selection={selection}
-      {...props}
-    />,
+    <UploadStage closeModal={closeModal} resumeSessionIds={resumeSessionIds} />,
   );
 }
 
@@ -159,8 +133,6 @@ describe('UploadStage', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetUploadProgressAtoms();
-    mocks.uploadDocuments.mockReset();
-    mocks.showSnackbar.mockClear();
     mocks.rows = [];
   });
 
@@ -169,41 +141,31 @@ describe('UploadStage', () => {
     resetUploadProgressAtoms();
   });
 
-  it('shows the Ready state and uploads nothing until confirmed', () => {
-    const closeModal = vi.fn();
-    const { getByText, queryByLabelText } = renderStage({ closeModal });
-
-    expect(getByText('Ready to upload')).toBeTruthy();
-    expect(getByText('consent.pdf')).toBeTruthy();
-    expect(queryByLabelText('Upload')).toBeTruthy();
-    expect(mocks.uploadDocuments).not.toHaveBeenCalled();
-
-    fireEvent.press(getByText('Cancel'));
-    expect(closeModal).toHaveBeenCalled();
-  });
-
-  it('uploads on confirm, shows Done, and auto-closes after the min display time', async () => {
-    mocks.uploadDocuments.mockResolvedValue(undefined);
-    const closeModal = vi.fn();
-
-    const { getByLabelText, getByText } = renderStage({ closeModal });
-
-    await act(async () => {
-      fireEvent.press(getByLabelText('Upload'));
+  it('renders the resumed session items with the uploading chrome', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
     });
 
-    expect(mocks.uploadDocuments).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clientProfileId: 'client-1',
-        namespace: ClientDocumentNamespaceEnum.ConsentForm,
-        documents: [
-          expect.objectContaining({
-            name: 'consent.pdf',
-            signal: expect.any(AbortSignal),
-          }),
-        ],
-      }),
-    );
+    const { getByText } = renderStage(['s1']);
+
+    expect(getByText('a.pdf')).toBeTruthy();
+    expect(getByText('Uploading…')).toBeTruthy();
+    expect(getByText('Cancel upload')).toBeTruthy();
+  });
+
+  it('shows Done and auto-closes when the session completes', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+    });
+    const closeModal = vi.fn();
+
+    const { getByText } = renderStage(['s1'], closeModal);
+
+    act(() => {
+      completeUploadSession('s1');
+    });
 
     expect(getByText('Upload complete')).toBeTruthy();
     expect(closeModal).not.toHaveBeenCalled();
@@ -215,19 +177,22 @@ describe('UploadStage', () => {
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('shows a failed state with Retry and does not auto-close', async () => {
-    mocks.uploadDocuments.mockRejectedValue(new Error('boom'));
+  it('shows a failed state with Retry and does not auto-close', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+      onRetryItem: () => undefined,
+    });
     const closeModal = vi.fn();
 
-    const { getByText } = renderStage({ closeModal });
+    const { getByText } = renderStage(['s1'], closeModal);
 
-    await act(async () => {
-      fireEvent.press(getByText('Upload'));
+    act(() => {
+      failUploadSession('s1', 'boom');
     });
 
     expect(getByText('Upload failed')).toBeTruthy();
     expect(getByText('Retry')).toBeTruthy();
-    expect(getByText('consent.pdf')).toBeTruthy();
 
     act(() => {
       vi.advanceTimersByTime(10000);
@@ -236,22 +201,16 @@ describe('UploadStage', () => {
     expect(closeModal).not.toHaveBeenCalled();
   });
 
-  it('cancel-all aborts every file, removes the session, and closes', async () => {
-    // Upload hangs forever so only the cancel path can end it.
-    mocks.uploadDocuments.mockImplementation(
-      () => new Promise(() => undefined),
-    );
+  it('cancel-all removes the session and closes', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      groupId: 'g1',
+      clientId: 'client-1',
+    });
     const closeModal = vi.fn();
 
-    const { getByLabelText } = renderStage({ closeModal });
+    const { getByLabelText } = renderStage(['s1'], closeModal);
 
-    await act(async () => {
-      fireEvent.press(getByLabelText('Upload'));
-    });
-
-    expect(store.get(uploadSessionsAtom)).toHaveLength(1);
-
-    await act(async () => {
+    act(() => {
       fireEvent.press(getByLabelText('Cancel upload'));
     });
 
@@ -259,29 +218,42 @@ describe('UploadStage', () => {
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('resumes background sessions from the store', () => {
+  it('retry starts a replacement session with the same group id', () => {
     startUploadSession('s1', ['a.pdf'], {
       groupId: 'g1',
       clientId: 'client-1',
+      onRetryItem: () =>
+        startUploadSession('s2', ['a.pdf'], {
+          groupId: 'g1',
+          clientId: 'client-1',
+        }),
+    });
+    updateUploadSession('s1', {
+      stage: 'UPLOADING',
+      completed: 0,
+      total: 1,
+      refId: 'pending-0',
+      status: 'error',
     });
 
-    const closeModal = vi.fn();
-    const { getByText } = renderStage({
-      closeModal,
-      selection: undefined,
-      resumeSessionIds: ['s1'],
+    const { getByLabelText, getByText } = renderStage(['s1']);
+
+    act(() => {
+      fireEvent.press(getByLabelText('retry-a.pdf'));
     });
 
+    // The failed session is replaced; the new session (same group) renders.
+    expect(store.get(uploadSessionsAtom).map((session) => session.id)).toEqual([
+      's2',
+    ]);
     expect(getByText('a.pdf')).toBeTruthy();
-    expect(mocks.uploadDocuments).not.toHaveBeenCalled();
-    // In-flight sessions show the uploading chrome.
     expect(getByText('Uploading…')).toBeTruthy();
   });
 
-  it('closes immediately when resumed sessions no longer exist', () => {
+  it('closes immediately when the resumed sessions no longer exist', () => {
     const closeModal = vi.fn();
 
-    render(<UploadStage closeModal={closeModal} resumeSessionIds={['gone']} />);
+    renderStage(['gone'], closeModal);
 
     expect(closeModal).toHaveBeenCalled();
   });
