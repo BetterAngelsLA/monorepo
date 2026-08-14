@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import {
   completeUploadSession,
-  endUploadSession,
   failUploadSession,
   resetUploadProgressAtoms,
   startUploadSession,
@@ -146,11 +145,12 @@ describe('UploadStage', () => {
       clientId: 'client-1',
     });
 
-    const { getByText } = renderStage(['s1']);
+    const { getByText, queryByText } = renderStage(['s1']);
 
     expect(getByText('a.pdf')).toBeTruthy();
     expect(getByText('Uploading…')).toBeTruthy();
-    expect(getByText('Cancel upload')).toBeTruthy();
+    // Actions are per-file only; there is no global cancel button.
+    expect(queryByText('Cancel upload')).toBeNull();
   });
 
   it('shows Done and stays open until the user closes it', () => {
@@ -169,23 +169,6 @@ describe('UploadStage', () => {
     expect(getByText('Upload complete')).toBeTruthy();
     // No auto-close: the screen persists and has no footer action either.
     expect(queryByText('Done')).toBeNull();
-    expect(closeModal).not.toHaveBeenCalled();
-  });
-
-  it('stays open even if the completed sessions are pruned from the store', () => {
-    startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
-      clientId: 'client-1',
-    });
-    const closeModal = vi.fn();
-
-    renderStage(['s1'], closeModal);
-
-    act(() => {
-      endUploadSession('s1');
-    });
-
-    // Sessions were shown, so the screen must not dismiss itself.
     expect(closeModal).not.toHaveBeenCalled();
   });
 
@@ -209,7 +192,7 @@ describe('UploadStage', () => {
     expect(closeModal).not.toHaveBeenCalled();
   });
 
-  it('cancel-all removes the session and closes', () => {
+  it('closes when every file is cancelled individually', () => {
     startUploadSession('s1', ['a.pdf'], {
       groupId: 'g1',
       clientId: 'client-1',
@@ -219,7 +202,7 @@ describe('UploadStage', () => {
     const { getByLabelText } = renderStage(['s1'], closeModal);
 
     act(() => {
-      fireEvent.press(getByLabelText('Cancel upload'));
+      fireEvent.press(getByLabelText('cancel-a.pdf'));
     });
 
     expect(store.get(uploadSessionsAtom)).toHaveLength(0);

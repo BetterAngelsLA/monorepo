@@ -1,7 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   TextBold,
-  TextButton,
   TextRegular,
   UploadItemRow,
 } from '@monorepo/expo/shared/ui-components';
@@ -29,10 +28,11 @@ type TStage = 'uploading' | 'done';
 /**
  * Detail view for in-flight uploads, opened from the global progress bar.
  * Uploads start immediately when files are picked (no confirmation step);
- * this screen exists to show per-file progress, cancel, and Retry on
- * demand. It stays open until the user closes it (X in the modal header) —
- * it never auto-closes. Closing mid-upload leaves the sessions running; the
- * progress bar picks them back up.
+ * this screen shows per-file progress, Cancel, and Retry — actions are
+ * strictly per-file, there is no global cancel. It stays open until the
+ * user closes it (X in the modal header) or until every file has been
+ * cancelled individually. Closing mid-upload leaves the sessions running;
+ * the progress bar picks them back up.
  */
 export default function UploadStage(props: TUploadStageProps) {
   const { closeModal, resumeSessionIds } = props;
@@ -104,28 +104,19 @@ export default function UploadStage(props: TUploadStageProps) {
 
   // Resumed sessions may have been cleaned up before this screen opened;
   // in that case there is nothing to show, so close. Once sessions have
-  // been shown the screen stays open no matter what happens to the store
-  // (completed sessions are pruned by the cleanup, which must not empty
-  // and dismiss the screen out from under the user).
+  // been shown, they only become empty when every file has been cancelled
+  // one-by-one (completed sessions are kept by the cleanup while the stage
+  // is open) — at that point there is nothing left to display, so close.
   useEffect(() => {
     if (ownedSessions.length > 0) {
       hasShownSessionsRef.current = true;
       return;
     }
 
-    if (!hasShownSessionsRef.current && resumeSessionIds.length > 0) {
+    if (hasShownSessionsRef.current || resumeSessionIds.length > 0) {
       closeModal();
     }
   }, [ownedSessions.length, resumeSessionIds.length, closeModal]);
-
-  const cancelAll = () => {
-    for (const session of ownedSessions) {
-      for (const item of [...session.items]) {
-        cancelUploadItem(session.id, item.refId);
-      }
-    }
-    closeModal();
-  };
 
   const insets = useSafeAreaInsets();
 
@@ -178,17 +169,6 @@ export default function UploadStage(props: TUploadStageProps) {
           ))}
         </View>
       </ScrollView>
-
-      {stage === 'uploading' && (
-        <View style={styles.footer}>
-          <TextButton
-            title="Cancel upload"
-            fontSize="md"
-            onPress={cancelAll}
-            accessibilityHint="Cancels all remaining uploads"
-          />
-        </View>
-      )}
     </View>
   );
 }
@@ -213,12 +193,5 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     marginBottom: Spacings.xxs,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: Spacings.sm,
-    paddingBottom: Spacings.md,
   },
 });
