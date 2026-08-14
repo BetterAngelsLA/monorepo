@@ -37,7 +37,7 @@ export default function UploadModal(props: IUploadModalProps) {
   const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
-    null
+    null,
   );
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
@@ -68,7 +68,7 @@ export default function UploadModal(props: IUploadModalProps) {
   useEffect(() => {
     const findDoc = (namespace: ClientDocumentNamespaceEnum) => {
       const file = client?.clientProfile.docReadyDocuments?.find(
-        (item) => item.namespace === namespace
+        (item) => item.namespace === namespace,
       )?.file as ReactNativeFile | undefined;
       return file ? [file] : [];
     };
@@ -76,13 +76,13 @@ export default function UploadModal(props: IUploadModalProps) {
     setDocs((prev) => ({
       ...prev,
       DriversLicenseFront: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseFront
+        ClientDocumentNamespaceEnum.DriversLicenseFront,
       ),
       DriversLicenseBack: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseBack
+        ClientDocumentNamespaceEnum.DriversLicenseBack,
       ),
       SocialSecurityCard: findDoc(
-        ClientDocumentNamespaceEnum.SocialSecurityCard
+        ClientDocumentNamespaceEnum.SocialSecurityCard,
       ),
       BirthCertificate: findDoc(ClientDocumentNamespaceEnum.BirthCertificate),
       PhotoId: findDoc(ClientDocumentNamespaceEnum.PhotoId),
@@ -135,12 +135,15 @@ export default function UploadModal(props: IUploadModalProps) {
     namespace: ClientDocumentNamespaceEnum,
     title: string,
   ) => {
-    const session = begin(files.map((file) => file.name), {
-      label: title,
-      // Retrying a failed item re-runs only that file in a fresh session;
-      // the successful files were already persisted and stay untouched.
-      onRetryItem: (index) => startSession([files[index]], namespace, title),
-    });
+    const session = begin(
+      files.map((file) => file.name),
+      {
+        label: title,
+        // Retrying a failed item re-runs only that file in a fresh session;
+        // the successful files were already persisted and stay untouched.
+        onRetryItem: (index) => startSession([files[index]], namespace, title),
+      },
+    );
 
     void runUpload(session, files, namespace);
   };
@@ -167,6 +170,7 @@ export default function UploadModal(props: IUploadModalProps) {
 
   return (
     <View
+      testID="client-docs-upload-screen"
       style={{
         paddingTop: topOffset + Spacings.xs,
         backgroundColor: Colors.WHITE,
@@ -184,6 +188,7 @@ export default function UploadModal(props: IUploadModalProps) {
       >
         <TextBold size="lg">Upload Files</TextBold>
         <TextButton
+          testId="client-docs-upload-screen-done-btn"
           title="Done"
           onPress={closeModal}
           accessibilityHint="Closes the upload form"

@@ -72,6 +72,11 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       enableDynamicSizing,
       snapPoints,
       containerComponent,
+      // default accessible to false
+      // iOS e2e test runner (maestro) collapses accessible elements making them
+      // hard to test. iOS screen-readers do similar things, meaning that our
+      // `accessibility` annotations already fail here. Related ticket: DEV-2513.
+      accessible = false,
 
       // Wrapper-level
       disableBackdrop,
@@ -116,6 +121,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
     return (
       <GbsBottomSheetModal
         ref={ref}
+        accessible={accessible}
         {...gorhomProps}
         snapPoints={snapPoints}
         enablePanDownToClose={enablePanDownToClose}
@@ -139,7 +145,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         </ContentContainer>
       </GbsBottomSheetModal>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

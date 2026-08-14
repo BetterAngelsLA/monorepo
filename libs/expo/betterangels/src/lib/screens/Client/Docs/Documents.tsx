@@ -1,6 +1,7 @@
 import { FolderIcon, FolderOpenIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
@@ -34,6 +35,7 @@ export default function Documents(props: IDocumentsProps) {
         setExpanded(isOtherDocuments ? null : title);
       }}
       title={title}
+      testId={toTestId(['client-docs-accordion', title])}
     >
       {isOtherDocuments && (
         <View
@@ -53,6 +55,7 @@ export default function Documents(props: IDocumentsProps) {
               url={document.file.url}
               onPress={() => setSelectedDocument(document)}
               createdAt={document.createdAt}
+              testId={toTestId(['file-card', document.originalFilename])}
               thumbnail={
                 <FileThumbnail
                   uri={document.file.url}

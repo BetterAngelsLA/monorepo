@@ -11,14 +11,16 @@ interface IFileCardProps {
   filename?: string | null;
   url: string;
   createdAt: string;
+  testId?: string;
 }
 
 export function FileCard(props: IFileCardProps) {
-  const { onPress, url, filename, createdAt, thumbnail } = props;
+  const { onPress, url, filename, createdAt, thumbnail, testId } = props;
 
   return (
     <Pressable
       onPress={onPress}
+      testID={testId}
       style={({ pressed }) => [
         {
           flexDirection: 'row',

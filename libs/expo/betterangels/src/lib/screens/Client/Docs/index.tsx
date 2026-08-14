@@ -49,6 +49,7 @@ export default function Docs({
       >
         <TextMedium size="lg">Doc Library</TextMedium>
         <IconButton
+          testID="open-client-docs-upload-screen-btn"
           onPress={() =>
             showModalScreen({
               presentation: 'fullScreenModal',
@@ -77,7 +78,8 @@ export default function Docs({
                 title="Doc Ready"
                 {...props}
                 data={
-                  client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+                  client?.clientProfile
+                    .docReadyDocuments as ClientDocumentType[]
                 }
                 clientId={client?.clientProfile.id}
               />

@@ -74,13 +74,10 @@ export default function Client({
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum;
 }) {
-  const { data, loading, error } = useQuery<ClientProfileQuery>(
-    ClientProfileDocument,
-    {
-      variables: { id: clientProfileId },
-      fetchPolicy: 'cache-and-network',
-    },
-  );
+  const { data, loading, error } = useQuery(ClientProfileDocument, {
+    variables: { id: clientProfileId },
+    fetchPolicy: 'cache-and-network',
+  });
 
   const [tab, setTab] = useState<ClientViewTabEnum>(ClientViewTabEnum.Profile);
 
@@ -98,6 +95,7 @@ export default function Client({
   if (loading) {
     return (
       <View
+        testID="client-screen-loading"
         style={{
           flex: 1,
           alignItems: 'center',
@@ -157,7 +155,13 @@ export default function Client({
           ),
         }}
       />
-      <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+      <MainContainer
+        testId="client-screen"
+        pt={0}
+        pb={0}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        px={0}
+      >
         {showHeader && <ClientHeader client={data?.clientProfile} />}
         <ClientTabs selectedTab={tab} setTab={setTab} />
         {getTabComponent(tab, data, openCard)}

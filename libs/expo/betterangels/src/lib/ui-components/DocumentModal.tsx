@@ -75,14 +75,14 @@ export default function DocumentModal({
         if (!pickedDir) {
           Alert.alert(
             'Permission Required',
-            'Storage access is required to save the file.'
+            'Storage access is required to save the file.',
           );
           return;
         }
 
         const outFile = pickedDir.createFile(
           originalFilename,
-          mimeType ?? null
+          mimeType ?? null,
         );
         const bytes = await downloaded.bytes();
         outFile.write(bytes, {});
@@ -102,7 +102,7 @@ export default function DocumentModal({
       console.error('Download failed', err);
       Alert.alert(
         'Download Error',
-        'An error occurred while downloading the file.'
+        'An error occurred while downloading the file.',
       );
     }
   };
@@ -112,21 +112,25 @@ export default function DocumentModal({
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
+      testId: 'view-file-btn',
       Icon: ViewIcon,
       route: `/file/${document.id}`,
     },
     {
       title: `Edit ${fileTypeText} name`,
+      testId: 'edit-file-btn',
       Icon: WFEdit,
       route: `/file/${document.id}?editing=true&clientId=${clientId}`,
     },
     {
       title: `Download ${fileTypeText}`,
+      testId: 'download-file-btn',
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
       title: `Delete ${fileTypeText}`,
+      testId: 'delete-file-btn',
       Icon: DeleteIcon,
       onPress: () => setModalState('deleteRequested'),
     },
