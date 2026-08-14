@@ -1,6 +1,5 @@
 import { useAtomValue } from 'jotai';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FileOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -8,15 +7,16 @@ import UploadStage from '../../screens/Client/Docs/UploadStage/UploadStage';
 import { useModalScreen } from '../../providers';
 import {
   aggregateUploadCounts,
+  TUploadSession,
   uploadSessionsAtom,
   uploadStageVisibleAtom,
 } from '../../providers/uploadProgress';
 
 /**
- * Global, app-wide upload progress bar (WhatsApp-style): a slim strip at the
- * very top of the screen that appears while uploads run in the background —
- * on every screen, tab, and modal — and disappears once everything settles.
- * Tapping it re-opens the upload screen for the in-flight sessions.
+ * In-flow upload progress bar (WhatsApp-style): a slim strip rendered by
+ * each screen between its header and content while uploads run in the
+ * background. Tapping it re-opens the upload screen for the in-flight
+ * sessions.
  *
  * Hidden while the upload screen itself is open (per-file progress is
  * already visible there).
@@ -24,8 +24,6 @@ import {
 export function UploadProgressBar() {
   const sessions = useAtomValue(uploadSessionsAtom);
   const uploadStageVisible = useAtomValue(uploadStageVisibleAtom);
-  const { showModalScreen } = useModalScreen();
-  const insets = useSafeAreaInsets();
 
   const activeSessions = sessions.filter((session) => !session.complete);
 
@@ -33,8 +31,18 @@ export function UploadProgressBar() {
     return null;
   }
 
+  return <UploadProgressBarContent sessions={activeSessions} />;
+}
+
+function UploadProgressBarContent({
+  sessions,
+}: {
+  sessions: TUploadSession[];
+}) {
+  const { showModalScreen } = useModalScreen();
+
   const { totalItems, completedItems, failed } =
-    aggregateUploadCounts(activeSessions);
+    aggregateUploadCounts(sessions);
   const pct =
     totalItems > 0
       ? Math.min(100, Math.round((completedItems / totalItems) * 100))
@@ -43,7 +51,7 @@ export function UploadProgressBar() {
     ? 'Upload failed — tap to review'
     : `Uploading ${completedItems} of ${totalItems} files…`;
 
-  const resumeSessionIds = activeSessions.map((session) => session.id);
+  const resumeSessionIds = sessions.map((session) => session.id);
 
   const openUploadStage = () => {
     showModalScreen({
@@ -57,7 +65,7 @@ export function UploadProgressBar() {
 
   return (
     <Pressable
-      style={[styles.bar, { paddingTop: insets.top }]}
+      style={styles.bar}
       onPress={openUploadStage}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -95,19 +103,9 @@ export function UploadProgressBar() {
 
 const styles = StyleSheet.create({
   bar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
     backgroundColor: Colors.WHITE,
     borderBottomWidth: 1,
     borderBottomColor: Colors.NEUTRAL_LIGHT,
-    elevation: 4,
-    shadowColor: Colors.NEUTRAL_DARK,
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
   },
   row: {
     flexDirection: 'row',

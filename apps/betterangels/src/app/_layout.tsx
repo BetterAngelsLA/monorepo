@@ -8,7 +8,6 @@ import { EnvironmentSwitcherProvider } from '@monorepo/ba-platform';
 import {
   AppUpdatePrompt,
   ErrorCrashView,
-  UploadProgressBar,
   useNewRelic,
 } from '@monorepo/expo/betterangels';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
@@ -53,7 +52,6 @@ export default function RootLayout() {
         buildFetch={buildFetchClient}
       >
         <BaDataProviders>
-          <UploadProgressBar />
           <AppUpdatePrompt />
           <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
           <AppRoutesStack />
