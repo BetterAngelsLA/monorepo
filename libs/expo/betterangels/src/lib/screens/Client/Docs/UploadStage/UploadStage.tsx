@@ -1,6 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Button,
   TextBold,
   TextButton,
   TextRegular,
@@ -27,16 +26,12 @@ type TUploadStageProps = {
 
 type TStage = 'uploading' | 'done';
 
-/** Minimum time the Done state stays visible before auto-closing. */
-const DONE_MIN_VISIBLE_MS = 1500;
-
 /**
  * Detail view for in-flight uploads, opened from the global progress bar.
  * Uploads start immediately when files are picked (no confirmation step);
  * this screen exists to show per-file progress, cancel, and Retry on
- * demand. Done shows final per-file status and stays visible for at least
- * `DONE_MIN_VISIBLE_MS` so fast uploads are still perceived, then
- * auto-closes. Closing mid-upload leaves the sessions running — the
+ * demand. It stays open until the user closes it (X in the modal header) —
+ * it never auto-closes. Closing mid-upload leaves the sessions running; the
  * progress bar picks them back up.
  */
 export default function UploadStage(props: TUploadStageProps) {
@@ -46,21 +41,12 @@ export default function UploadStage(props: TUploadStageProps) {
 
   const [stage, setStage] = useState<TStage>('uploading');
 
-  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resumeIdsRef = useRef<string[]>(resumeSessionIds);
 
   // Hide the global progress bar while this detail view is open.
   useEffect(() => {
     setUploadStageVisible(true);
     return () => setUploadStageVisible(false);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (autoCloseTimerRef.current) {
-        clearTimeout(autoCloseTimerRef.current);
-      }
-    };
   }, []);
 
   // Sessions shown here: everything sharing the resumed sessions' group id
@@ -91,13 +77,9 @@ export default function UploadStage(props: TUploadStageProps) {
   );
   const anyFailed = ownedSessions.some((session) => session.failed);
 
-  const scheduleAutoClose = () => {
-    autoCloseTimerRef.current = setTimeout(closeModal, DONE_MIN_VISIBLE_MS);
-  };
-
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):
-  //   all complete → Done + auto-close; anything in flight → Uploading;
+  //   all complete → Done; anything in flight → Uploading;
   //   everything settled with failures → Done (Retry affordance stays).
   useEffect(() => {
     if (ownedSessions.length === 0) {
@@ -106,7 +88,6 @@ export default function UploadStage(props: TUploadStageProps) {
 
     if (allComplete && stage !== 'done') {
       setStage('done');
-      scheduleAutoClose();
       return;
     }
 
@@ -188,23 +169,16 @@ export default function UploadStage(props: TUploadStageProps) {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        {stage === 'uploading' ? (
+      {stage === 'uploading' && (
+        <View style={styles.footer}>
           <TextButton
             title="Cancel upload"
             fontSize="md"
             onPress={cancelAll}
             accessibilityHint="Cancels all remaining uploads"
           />
-        ) : (
-          <Button
-            title="Done"
-            variant="primary"
-            onPress={closeModal}
-            accessibilityHint="Closes the upload screen"
-          />
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }

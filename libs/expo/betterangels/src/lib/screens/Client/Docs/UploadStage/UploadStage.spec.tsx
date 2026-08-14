@@ -131,13 +131,11 @@ function renderStage(
 
 describe('UploadStage', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     resetUploadProgressAtoms();
     mocks.rows = [];
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     resetUploadProgressAtoms();
   });
 
@@ -154,30 +152,26 @@ describe('UploadStage', () => {
     expect(getByText('Cancel upload')).toBeTruthy();
   });
 
-  it('shows Done and auto-closes when the session completes', () => {
+  it('shows Done and stays open until the user closes it', () => {
     startUploadSession('s1', ['a.pdf'], {
       groupId: 'g1',
       clientId: 'client-1',
     });
     const closeModal = vi.fn();
 
-    const { getByText } = renderStage(['s1'], closeModal);
+    const { getByText, queryByText } = renderStage(['s1'], closeModal);
 
     act(() => {
       completeUploadSession('s1');
     });
 
     expect(getByText('Upload complete')).toBeTruthy();
+    // No auto-close: the screen persists and has no footer action either.
+    expect(queryByText('Done')).toBeNull();
     expect(closeModal).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.advanceTimersByTime(1500);
-    });
-
-    expect(closeModal).toHaveBeenCalled();
   });
 
-  it('shows a failed state with Retry and does not auto-close', () => {
+  it('shows a failed state with Retry and no footer action', () => {
     startUploadSession('s1', ['a.pdf'], {
       groupId: 'g1',
       clientId: 'client-1',
@@ -185,7 +179,7 @@ describe('UploadStage', () => {
     });
     const closeModal = vi.fn();
 
-    const { getByText } = renderStage(['s1'], closeModal);
+    const { getByText, queryByText } = renderStage(['s1'], closeModal);
 
     act(() => {
       failUploadSession('s1', 'boom');
@@ -193,11 +187,7 @@ describe('UploadStage', () => {
 
     expect(getByText('Upload failed')).toBeTruthy();
     expect(getByText('Retry')).toBeTruthy();
-
-    act(() => {
-      vi.advanceTimersByTime(10000);
-    });
-
+    expect(queryByText('Done')).toBeNull();
     expect(closeModal).not.toHaveBeenCalled();
   });
 
