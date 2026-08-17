@@ -28,21 +28,17 @@ removing a column unused since June.
 
 ## Deploy steps
 
-1. **Pre-deploy audit** (against production DB, before migrating):
+1. **Migrate** — in graph order:
 
-   ```bash
-   manage.py audit_team_org_scoping
-   ```
+   | Migration | What it does |
+   | --- | --- |
+   | `teams.0002` | safety-net backfill (see above); a no-op on a normally-migrated database |
+   | `notes.0003`, `tasks.0003` | drop the `old_team` columns |
+   | `teams.0003` | drop `Team.slug`; uniqueness moves to `(lower(name), organization)`, deduping first |
+   | `teams.0004` | add the `(id, organization)` unique constraint the composite FKs target |
+   | `notes.0004`, `tasks.0004` | add the composite FK that makes a cross-org team unstorable, detaching any existing violation first |
 
-   Reports the total team count, teams per organization, and any note/task
-   whose team belongs to a different organization; exits non-zero if it finds
-   one.  It does **not** report legacy `old_team` values — read the pre-migrate
-   baseline off the teams-per-org counts, which should be zero for orgs that
-   have never used teams.
-
-2. **Migrate** — applies `teams.0002_backfill_org_teams` (safety-net backfill,
-   see above) and the `old_team` removals (`notes.0003`, `tasks.0003`).
-   Idempotent.
+   Every data step is idempotent and re-runnable.
 
    > Both run in the same `migrate`, so the backfill's source columns are gone
    > by the time it finishes. That is fine **when the counts above are zero** —
@@ -52,7 +48,7 @@ removing a column unused since June.
    > follow-up release; the removals reverse only to empty columns, so there
    > is no recovering the values afterwards.
 
-3. **Sync permission groups** — ensures every org's groups carry current
+2. **Sync permission groups** — ensures every org's groups carry current
    template permissions (including `teams.*` for Org Admin):
 
    ```bash
@@ -60,14 +56,19 @@ removing a column unused since June.
    manage.py sync_org_permission_groups --check  # verify-only
    ```
 
-4. **Post-deploy audit** — re-run `audit_team_org_scoping`; must exit `OK:
-   no cross-org team references.`
-
-5. **Teams are org-admin created.** New orgs start with no teams; org
+3. **Teams are org-admin created.** New orgs start with no teams; org
    admins create them through the admin UI (Teams page / `createTeam`).
    The legacy-team backfill migration only creates teams for orgs that
    already have notes/tasks carrying legacy `old_team` values. Test
    fixtures (`load_report_test_data`) remain available for local data.
+
+## Why there is no cross-org team audit
+
+Notes and tasks carry a composite foreign key on `(team_id, organization_id)`
+referencing `teams_team(id, organization_id)`, so a team from another
+organization cannot be stored in the first place. The migrations that add it
+detach any pre-existing violation first, so there is nothing to audit before or
+after deploying.
 
 ## Permission model (post-deploy)
 
