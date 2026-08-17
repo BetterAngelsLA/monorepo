@@ -3,12 +3,10 @@ import type { TUploadProgress } from '@monorepo/expo/shared/services';
 import {
   getUploadRunner,
   resetUploadRunners,
-  setRunnerItemRefIds,
   unregisterUploadRunner,
 } from './uploadRunnerRegistry';
 import {
   TUploadItemStatus,
-  TUploadManifestEntry,
   TUploadSession,
   TStartUploadOptions,
 } from './uploadProgressTypes';
@@ -42,52 +40,71 @@ function commit(next: TUploadSession[]) {
 export function startUploadSession(
   id: string,
   names: string[],
-  options?: TStartUploadOptions,
+  options: TStartUploadOptions,
 ) {
-  const { label, clientId, refIds, files, cancellable, retryable } =
-    options ?? {};
+  const {
+    label,
+    clientId,
+    refIds,
+    files,
+    cancellable,
+    retryable,
+    namespace,
+    createdAt,
+  } = options;
 
   const items = names.map((name, index) => ({
-    refId: refIds?.[index] ?? `pending-${index}`,
+    refId: refIds[index],
     name,
     uri: files?.[index]?.uri,
     mimeType: files?.[index]?.type,
     status: 'pending' as TUploadItemStatus,
   }));
 
-  setRunnerItemRefIds(
-    id,
-    items.map((item) => item.refId),
-  );
-
   // Uploads accumulate until dismissed so several can be in flight at once.
   commit([
     ...getSessions(),
-    { id, stage: 'GENERATING', items, label, clientId, cancellable, retryable },
+    {
+      id,
+      stage: 'GENERATING',
+      items,
+      label,
+      clientId,
+      namespace,
+      createdAt,
+      cancellable,
+      retryable,
+    },
   ]);
 }
 
-export function setUploadManifestSession(
+/**
+ * Stores the S3 credentials issued for a session's files, so a resume can
+ * save what already reached the bucket instead of re-sending it.
+ */
+export function recordUploadCredentials(
   id: string,
-  manifest: TUploadManifestEntry[],
+  issued: Array<{ refId: string; presignedKey: string; uploadToken: string }>,
 ) {
   commit(
-    getSessions().map((session) => {
-      if (session.id !== id) {
-        return session;
-      }
+    getSessions().map((session) =>
+      session.id !== id
+        ? session
+        : {
+            ...session,
+            items: session.items.map((item) => {
+              const match = issued.find((entry) => entry.refId === item.refId);
 
-      return {
-        ...session,
-        items: manifest.map((entry, index) => ({
-          refId: entry.refId,
-          name: session.items[index]?.name ?? entry.file.name,
-          uri: session.items[index]?.uri,
-          mimeType: session.items[index]?.mimeType,
-          status: session.items[index]?.status ?? 'pending',
-        })),
-      };
-    }),
+              return match
+                ? {
+                    ...item,
+                    presignedKey: match.presignedKey,
+                    uploadToken: match.uploadToken,
+                  }
+                : item;
+            }),
+          },
+    ),
   );
 }
 

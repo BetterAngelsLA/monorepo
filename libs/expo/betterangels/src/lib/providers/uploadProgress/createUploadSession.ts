@@ -1,12 +1,5 @@
 import { randomUUID } from 'expo-crypto';
-import {
-  completeUploadSession,
-  endUploadSession,
-  failUploadSession,
-  setUploadManifestSession,
-  startUploadSession,
-  updateUploadSession,
-} from './uploadProgressAtoms';
+import { startUploadSession } from './uploadProgressAtoms';
 import {
   registerUploadRunner,
   type TUploadRunner,
@@ -40,7 +33,11 @@ type TBeginOptions = {
    */
   clientId?: string;
   /** Caller-owned refIds, aligned with `names`, stable across retry runs. */
-  refIds?: string[];
+  refIds: string[];
+  /** Document namespace; marks the session as resumable from a cold start. */
+  namespace?: string;
+  /** Epoch ms, for presign-reuse and staleness decisions on resume. */
+  createdAt?: number;
   /**
    * Per-file source metadata, aligned with `names`, so upload rows can
    * preview the actual file.
@@ -62,67 +59,60 @@ type TBeginOptions = {
  * rather than onto the session, so session state stays plain serializable
  * data and the upload's lifetime is not tied to the component that started
  * it.
+ *
+ * A plain function, not a hook: it touches no React state, and the resume
+ * path needs to start sessions outside a component.
  */
-export function useUploadSession() {
-  const begin = (
-    names: string[],
-    options?: TBeginOptions,
-  ): TUploadSessionHandle => {
-    const id = randomUUID();
-    // Mutable so a retry can swap in fresh controllers while the registry's
-    // cancel lookup — which resolves by refId — keeps working.
-    const controllers = names.map(() => new AbortController());
-    const refIds = names.map(
-      (_, index) => options?.refIds?.[index] ?? `pending-${index}`,
-    );
+export function createUploadSession(
+  names: string[],
+  options: TBeginOptions,
+): TUploadSessionHandle {
+  const id = randomUUID();
+  // Mutable so a retry can swap in fresh controllers while the registry's
+  // cancel lookup — which resolves by refId — keeps working.
+  const controllers = names.map(() => new AbortController());
+  const { refIds } = options;
 
-    startUploadSession(id, names, {
-      label: options?.label,
-      clientId: options?.clientId,
-      refIds: options?.refIds,
-      files: options?.files,
-      cancellable: true,
-      retryable: !!options?.onRetryItems,
-    });
+  startUploadSession(id, names, {
+    label: options.label,
+    clientId: options.clientId,
+    namespace: options.namespace,
+    createdAt: options.createdAt,
+    refIds,
+    files: options.files,
+    cancellable: true,
+    retryable: !!options.onRetryItems,
+  });
 
-    const runner: TUploadRunner = {
-      cancelItem: (refId) => {
-        const index = refIds.indexOf(refId);
+  const runner: TUploadRunner = {
+    cancelItem: (refId) => {
+      const index = refIds.indexOf(refId);
 
-        if (index >= 0) {
-          controllers[index]?.abort();
-        }
-      },
-      rerun: (retryRefIds) => options?.onRetryItems?.(retryRefIds),
-    };
-
-    registerUploadRunner(id, runner);
-
-    return {
-      id,
-      signals: names.map((_, index) => controllers[index]?.signal),
-      isAborted: () =>
-        controllers.length > 0 &&
-        controllers.every((controller) => controller.signal.aborted),
-      renewSignals: (indexes: number[]) => {
-        indexes.forEach((index) => {
-          if (controllers[index]) {
-            controllers[index] = new AbortController();
-          }
-        });
-
-        return names.map((_, index) => controllers[index]?.signal);
-      },
-    };
+      if (index >= 0) {
+        controllers[index]?.abort();
+      }
+    },
+    rerun: (retryRefIds) => options.onRetryItems?.(retryRefIds),
+    cancelAll: () => controllers.forEach((controller) => controller.abort()),
   };
 
+  registerUploadRunner(id, runner);
+
   return {
-    begin,
-    setUploadManifest: setUploadManifestSession,
-    updateUpload: updateUploadSession,
-    failUpload: failUploadSession,
-    completeUpload: completeUploadSession,
-    endUpload: endUploadSession,
+    id,
+    signals: names.map((_, index) => controllers[index]?.signal),
+    isAborted: () =>
+      controllers.length > 0 &&
+      controllers.every((controller) => controller.signal.aborted),
+    renewSignals: (indexes: number[]) => {
+      indexes.forEach((index) => {
+        if (controllers[index]) {
+          controllers[index] = new AbortController();
+        }
+      });
+
+      return names.map((_, index) => controllers[index]?.signal);
+    },
   };
 }
 

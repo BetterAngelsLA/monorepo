@@ -10,6 +10,23 @@ import {
   uploadSessionsAtom,
 } from './uploadProgressAtoms';
 
+vi.mock('@react-native-async-storage/async-storage', () => {
+  const store = new Map<string, string>();
+
+  return {
+    __esModule: true,
+    default: {
+      getItem: async (key: string) => store.get(key) ?? null,
+      setItem: async (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: async (key: string) => {
+        store.delete(key);
+      },
+    },
+  };
+});
+
 const store = getDefaultStore();
 
 describe('UploadProgressCleanup', () => {
@@ -30,7 +47,7 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('prunes completed sessions after the cleanup delay', () => {
-    startUploadSession('s1', ['a.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
     render(<UploadProgressCleanup />);
@@ -45,7 +62,7 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('leaves in-flight sessions alone', () => {
-    startUploadSession('s1', ['a.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
 
     render(<UploadProgressCleanup />);
 
@@ -57,7 +74,7 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('clears a pending timer when a session ends before it fires', () => {
-    startUploadSession('s1', ['a.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
     render(<UploadProgressCleanup />);
@@ -76,8 +93,8 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('prunes each completed session exactly once', () => {
-    startUploadSession('s1', ['a.pdf']);
-    startUploadSession('s2', ['b.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
+    startUploadSession('s2', ['b.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
     completeUploadSession('s2');
 
@@ -91,7 +108,7 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('keeps completed sessions while the upload stage is open', () => {
-    startUploadSession('s1', ['a.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
     setUploadStageVisible(true);
 
@@ -105,7 +122,7 @@ describe('UploadProgressCleanup', () => {
   });
 
   it('clears pending timers when the stage opens, then prunes after it closes', () => {
-    startUploadSession('s1', ['a.pdf']);
+    startUploadSession('s1', ['a.pdf'], { refIds: ['r0'] });
     completeUploadSession('s1');
 
     render(<UploadProgressCleanup />);

@@ -53,7 +53,10 @@ describe('UploadProgressBar', () => {
   });
 
   it('shows the aggregate progress of background sessions', () => {
-    startUploadSession('s1', ['a.pdf', 'b.pdf'], { clientId: 'client-1' });
+    startUploadSession('s1', ['a.pdf', 'b.pdf'], {
+      refIds: ['ref-0', 'ref-1'],
+      clientId: 'client-1',
+    });
     // Progress is derived from item statuses, not the pipeline's own
     // counter — that counter describes the transport run, which diverges
     // from the session as soon as an item is cancelled or retried.
@@ -61,7 +64,7 @@ describe('UploadProgressBar', () => {
       stage: 'UPLOADING',
       completed: 1,
       total: 2,
-      refId: 'pending-0',
+      refId: 'ref-0',
       status: 'done',
     });
 
@@ -72,7 +75,7 @@ describe('UploadProgressBar', () => {
   });
 
   it('opens the upload screen in resume mode when tapped', () => {
-    startUploadSession('s1', ['a.pdf'], { clientId: 'client-1' });
+    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'], clientId: 'client-1' });
 
     const { getByLabelText } = render(<UploadProgressBar />);
 
@@ -91,7 +94,7 @@ describe('UploadProgressBar', () => {
   });
 
   it('shows the failure state for failed sessions', () => {
-    startUploadSession('s1', ['a.pdf'], { clientId: 'client-1' });
+    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'], clientId: 'client-1' });
     failUploadSession('s1', 'boom');
 
     const { getByText } = render(<UploadProgressBar />);
@@ -101,7 +104,7 @@ describe('UploadProgressBar', () => {
   });
 
   it('hides while the upload screen is open', () => {
-    startUploadSession('s1', ['a.pdf'], { clientId: 'client-1' });
+    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'], clientId: 'client-1' });
     setUploadStageVisible(true);
 
     const { toJSON } = render(<UploadProgressBar />);

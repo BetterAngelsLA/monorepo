@@ -5,6 +5,7 @@ import {
   uploadSessionsAtom,
   uploadStageVisibleAtom,
 } from './uploadProgressAtoms';
+import { startUploadManifestSync } from './uploadManifestSync';
 import { uploadSessionCounts } from './uploadProgressUtils';
 
 const COMPLETE_CLEANUP_DELAY_MS = 3000;
@@ -65,6 +66,10 @@ export function UploadProgressCleanup() {
       }
     }
   }, [sessions, uploadStageVisible]);
+
+  // Mirror session state to disk for crash recovery. Subscription-based, so
+  // nothing has to remember to write the manifest alongside the session.
+  useEffect(() => startUploadManifestSync(), []);
 
   // Clear pending timers when the provider tree unmounts.
   useEffect(() => {

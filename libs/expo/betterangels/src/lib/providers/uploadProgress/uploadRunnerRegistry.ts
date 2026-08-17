@@ -18,6 +18,8 @@ export type TUploadRunner = {
   cancelItem: (refId: string) => void;
   /** Re-runs the given files inside their existing session. */
   rerun: (refIds: string[]) => void;
+  /** Aborts every file this runner owns. */
+  cancelAll: () => void;
 };
 
 const runners = new Map<string, TUploadRunner>();
@@ -43,24 +45,10 @@ export function unregisterUploadRunner(sessionId: string): void {
  * switching to a different backend environment.
  */
 export function cancelAllUploadRunners(): void {
-  runners.forEach((runner, sessionId) => {
-    const refIds = runnerItemRefIds.get(sessionId) ?? [];
-    refIds.forEach((refId) => runner.cancelItem(refId));
-  });
-}
-
-/**
- * Which refIds a runner owns, so `cancelAllUploadRunners` can reach them
- * without the registry needing to read the session store.
- */
-const runnerItemRefIds = new Map<string, string[]>();
-
-export function setRunnerItemRefIds(sessionId: string, refIds: string[]): void {
-  runnerItemRefIds.set(sessionId, refIds);
+  runners.forEach((runner) => runner.cancelAll());
 }
 
 /** Test-only: drops every registered runner. */
 export function resetUploadRunners(): void {
   runners.clear();
-  runnerItemRefIds.clear();
 }

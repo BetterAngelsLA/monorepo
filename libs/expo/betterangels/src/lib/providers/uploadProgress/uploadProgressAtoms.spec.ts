@@ -35,9 +35,11 @@ const statuses = (id: string) =>
   getUploadSession(id)?.items.map((item) => item.status);
 
 function beginSession(id: string, names: string[]) {
-  startUploadSession(id, names, { clientId: 'client-1' });
-  // Stand in for the pipeline manifest so refIds are addressable.
-  return names.map((_, index) => `pending-${index}`);
+  const refIds = names.map((_, index) => `ref-${index}`);
+
+  startUploadSession(id, names, { clientId: 'client-1', refIds });
+
+  return refIds;
 }
 
 /** Reports a file's S3 upload finishing (pipeline status 'done'). */
@@ -190,7 +192,11 @@ describe('uploadProgressAtoms', () => {
 
   it('keeps session state serializable', () => {
     beginSession('s1', ['a.pdf', 'b.pdf']);
-    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: vi.fn() });
+    registerUploadRunner('s1', {
+      cancelItem: vi.fn(),
+      rerun: vi.fn(),
+      cancelAll: vi.fn(),
+    });
 
     const sessions = store.get(uploadSessionsAtom);
 
@@ -204,7 +210,7 @@ describe('uploadProgressAtoms', () => {
     const cancelItem = vi.fn();
     const rerun = vi.fn();
     const [a, b] = beginSession('s1', ['a.pdf', 'b.pdf']);
-    registerUploadRunner('s1', { cancelItem, rerun });
+    registerUploadRunner('s1', { cancelItem, rerun, cancelAll: vi.fn() });
 
     cancelUploadItemSession('s1', b);
     expect(cancelItem).toHaveBeenCalledWith(b);
@@ -216,7 +222,11 @@ describe('uploadProgressAtoms', () => {
 
   it('drops the runner when its session ends', () => {
     beginSession('s1', ['a.pdf']);
-    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: vi.fn() });
+    registerUploadRunner('s1', {
+      cancelItem: vi.fn(),
+      rerun: vi.fn(),
+      cancelAll: vi.fn(),
+    });
 
     endUploadSession('s1');
 

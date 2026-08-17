@@ -4,14 +4,15 @@ import { getDefaultStore } from 'jotai';
 import { ClientDocumentNamespaceEnum } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import {
-  deleteUploadManifest,
+  completeUploadSession,
+  createUploadSession,
+  endUploadSession,
   failUploadSession,
   getUploadSession,
   markUploadPartiallyFailed,
-  saveUploadManifest,
-  updateUploadManifestItems,
+  recordUploadCredentials,
+  updateUploadSession,
   uploadStageVisibleAtom,
-  useUploadSession,
 } from '../../../providers';
 import { useClientDocumentUpload } from './UploadModal/useClientDocumentUpload';
 
@@ -29,7 +30,6 @@ import { useClientDocumentUpload } from './UploadModal/useClientDocumentUpload';
  * is NOT open (the stage renders its own Done/Retry state).
  */
 export function useDocsUpload(clientProfileId?: string) {
-  const { begin, updateUpload, completeUpload, endUpload } = useUploadSession();
   const { uploadDocuments } = useClientDocumentUpload();
   const { showSnackbar } = useSnackbar();
 
@@ -53,55 +53,6 @@ export function useDocsUpload(clientProfileId?: string) {
     // retry — reports against the same rows.
     const refIds = files.map(() => randomUUID());
     const indexByRefId = new Map(refIds.map((refId, index) => [refId, index]));
-
-    // Persisted before anything is sent, so a crash at any point after this
-    // leaves a record that says what was being uploaded and for whom.
-    const sessionId = randomUUID();
-
-    void saveUploadManifest({
-      id: sessionId,
-      clientProfileId: clientId,
-      namespace,
-      label: title,
-      createdAt: Date.now(),
-      items: files.map((file, index) => ({
-        refId: refIds[index],
-        name: file.name,
-        uri: file.uri,
-        mimeType: file.type,
-        status: 'pending',
-      })),
-    });
-
-    /**
-     * Mirrors per-file outcomes into the persisted manifest so a resume
-     * knows which files still need bytes sent and which only need saving.
-     */
-    const recordItemProgress = (progress: {
-      refId?: string;
-      status?: string;
-    }) => {
-      if (!progress.refId || !progress.status) {
-        return;
-      }
-
-      const status =
-        progress.status === 'done'
-          ? 'uploaded'
-          : progress.status === 'error'
-            ? 'error'
-            : undefined;
-
-      if (!status) {
-        return;
-      }
-
-      void updateUploadManifestItems(sessionId, (items) =>
-        items.map((item) =>
-          item.refId === progress.refId ? { ...item, status } : item,
-        ),
-      );
-    };
 
     const runFiles = async (targetRefIds: string[]) => {
       const indexes = targetRefIds
@@ -130,33 +81,17 @@ export function useDocsUpload(clientProfileId?: string) {
           // items are already correlated. Letting the manifest rebuild them
           // would replace the whole item list with just this run's files —
           // wiping the rest of the session on every retry.
-          onPresigned: (uploads) =>
-            void updateUploadManifestItems(sessionId, (items) =>
-              items.map((item) => {
-                const issued = uploads.find(
-                  (upload) => upload.refId === item.refId,
-                );
-
-                return issued
-                  ? {
-                      ...item,
-                      presignedKey: issued.presignedKey,
-                      uploadToken: issued.uploadToken,
-                    }
-                  : item;
-              }),
-            ),
-          onProgress: (progress) => {
-            updateUpload(handle.id, progress);
-            recordItemProgress(progress);
-          },
+          // One write path: everything lands in the session, and
+          // `uploadManifestSync` projects it to disk.
+          onPresigned: (uploads) => recordUploadCredentials(handle.id, uploads),
+          onProgress: (progress) => updateUploadSession(handle.id, progress),
         });
 
         if (indexes.every((index) => signals[index]?.aborted)) {
           // Every file in this run was cancelled; the pipeline skipped them.
           // Nothing was saved, so don't report success.
           if (!getUploadSession(handle.id)?.items.length) {
-            endUpload(handle.id);
+            endUploadSession(handle.id);
           }
           return;
         }
@@ -167,7 +102,7 @@ export function useDocsUpload(clientProfileId?: string) {
 
         if (indexes.every((index) => signals[index]?.aborted)) {
           if (!getUploadSession(handle.id)?.items.length) {
-            endUpload(handle.id);
+            endUploadSession(handle.id);
           }
           return;
         }
@@ -187,15 +122,13 @@ export function useDocsUpload(clientProfileId?: string) {
      * from its own item state.
      */
     const settle = () => {
-      completeUpload(handle.id);
+      completeUploadSession(handle.id);
 
       const settled = getUploadSession(handle.id);
       const failedCount =
         settled?.items.filter((item) => item.status === 'error').length ?? 0;
 
       if (failedCount === 0) {
-        // Nothing left to recover.
-        void deleteUploadManifest(sessionId);
         notify('Upload complete', 'success');
         return;
       }
@@ -218,11 +151,13 @@ export function useDocsUpload(clientProfileId?: string) {
       }
     };
 
-    const handle = begin(
+    const handle = createUploadSession(
       files.map((file) => file.name),
       {
         label: title,
         clientId,
+        namespace,
+        createdAt: Date.now(),
         refIds,
         // Local file metadata so upload rows can preview the actual file.
         files: files.map((file) => ({ uri: file.uri, type: file.type })),
