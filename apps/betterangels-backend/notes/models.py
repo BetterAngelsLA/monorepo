@@ -18,6 +18,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .enums import ServiceRequestStatusEnum
 
@@ -174,16 +175,20 @@ class Note(BaseModel):
     def clean(self) -> None:
         """Reject a team from another organization.
 
-        The GraphQL write paths validate this in ``notes.services`` for a
-        friendlier message, but ``clean()`` also covers the Django admin
+        Delegates to ``teams.validators`` so the rule has one definition.
+        The services call the same validator for a friendlier top-level
+        GraphQL message; ``clean()`` is what covers the Django admin
         (``ModelForm`` calls ``full_clean``), whose ``team`` field would
         otherwise offer every team in every organization.
         """
         super().clean()
 
-        team = self.team
-        if team and self.organization_id and team.organization_id != self.organization_id:
-            raise ValidationError({"team": "Team must belong to the same organization as the note."})
+        # ``Note.organization`` is required, so there is no org-less case to
+        # skip here (unlike ``Task``).
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

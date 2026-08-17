@@ -8,7 +8,7 @@ from django.db import IntegrityError
 from hmis.models import HmisClientProfile, HmisNote
 from notes.models import Note
 from tasks.models import Task
-from teams.services import resolve_team_id_for_org
+from teams.validators import validate_team_in_org
 
 # ---------------------------------------------------------------------------
 # Task
@@ -30,10 +30,8 @@ def task_create(
 
     for item in data:
         # A team must belong to the task's organization.
-        team_id = resolve_team_id_for_org(
-            team_id=item.get("team_id"),
-            organization_id=permission_group.organization_id,
-        )
+        team_id = item.get("team_id")
+        validate_team_in_org(team_id=team_id, organization_id=permission_group.organization_id)
         try:
             task = Task.objects.create(
                 summary=item.get("summary", ""),
@@ -72,10 +70,7 @@ def task_update(
     """Update a Task. Caller is responsible for permission checks."""
     # A team must belong to the task's organization.
     if "team_id" in data:
-        data["team_id"] = resolve_team_id_for_org(
-            team_id=data["team_id"],
-            organization_id=task.organization_id,
-        )
+        validate_team_in_org(team_id=data["team_id"], organization_id=task.organization_id)
 
     for field, value in data.items():
         if field != "id":
