@@ -50,8 +50,8 @@ into `team_id` on the event tables first.
    | Migration | What it does |
    | --- | --- |
    | `notes.0003`, `tasks.0003` | drop the `old_team` columns |
-   | `teams.0003` | drop `Team.slug`; uniqueness moves to `(lower(name), organization)`, deduping first |
-   | `teams.0004` | add the `(id, organization)` unique constraint the composite FKs target |
+   | `teams.0002` | drop `Team.slug`; uniqueness moves to `(lower(name), organization)`, deduping first |
+   | `teams.0003` | add the `(id, organization)` unique constraint the composite FKs target |
    | `notes.0004`, `tasks.0004` | add the composite FK that makes a cross-org team unstorable, detaching any existing violation first |
 
    Every data step is idempotent and re-runnable.

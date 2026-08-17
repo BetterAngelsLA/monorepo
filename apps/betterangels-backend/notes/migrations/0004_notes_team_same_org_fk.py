@@ -39,7 +39,7 @@ def null_cross_org_teams(apps, schema_editor):  # type: ignore[no-untyped-def]
 class Migration(migrations.Migration):
     dependencies = [
         ("notes", "0003_remove_note_note_add_insert_and_more"),
-        ("teams", "0004_team_unique_team_id_per_org"),
+        ("teams", "0003_team_unique_team_id_per_org"),
     ]
 
     operations = [

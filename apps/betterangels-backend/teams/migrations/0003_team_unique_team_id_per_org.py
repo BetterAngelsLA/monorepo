@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0006_alter_organization_slug'),
-        ('teams', '0003_remove_team_unique_team_slug_per_org_and_more'),
+        ('teams', '0002_remove_team_unique_team_slug_per_org_and_more'),
     ]
 
     operations = [

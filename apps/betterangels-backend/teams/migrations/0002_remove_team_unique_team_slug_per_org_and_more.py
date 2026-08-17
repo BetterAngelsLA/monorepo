@@ -50,7 +50,7 @@ def dedupe_team_names(apps, schema_editor):  # type: ignore[no-untyped-def]
 class Migration(migrations.Migration):
     dependencies = [
         ("organizations", "0006_alter_organization_slug"),
-        ("teams", "0002_backfill_org_teams"),
+        ("teams", "0001_initial"),
     ]
 
     operations = [
