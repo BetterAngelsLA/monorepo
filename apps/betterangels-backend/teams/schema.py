@@ -65,6 +65,7 @@ class Mutation:
             team_update(
                 team=team,
                 name=maybe_value(data.name),
+                is_active=maybe_value(data.is_active),
             ),
         )
 
