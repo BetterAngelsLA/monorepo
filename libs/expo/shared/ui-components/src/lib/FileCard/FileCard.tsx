@@ -6,11 +6,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 interface IFileCardProps {
-  onPress?: () => void;
+  onPress: () => void;
   thumbnail?: ReactNode;
   filename?: string | null;
-  url?: string;
-  createdAt?: string | null;
+  url: string;
+  createdAt: string;
 }
 
 export function FileCard(props: IFileCardProps) {
@@ -21,14 +21,14 @@ export function FileCard(props: IFileCardProps) {
       <View style={styles.leading}>
         <View style={styles.thumbnail}>
           {!!thumbnail && thumbnail}
-          {!thumbnail && url ? (
+          {!thumbnail && (
             <Image
               style={{ width: 36, height: 36 }}
               source={{ uri: url }}
               contentFit="cover"
               accessibilityIgnoresInvertColors
             />
-          ) : null}
+          )}
         </View>
         <View style={styles.meta}>
           <TextRegular numberOfLines={1} size="sm">
@@ -37,11 +37,9 @@ export function FileCard(props: IFileCardProps) {
         </View>
       </View>
 
-      {createdAt ? (
-        <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
-          {format(new Date(createdAt), 'MM/dd/yyyy')}
-        </TextRegular>
-      ) : null}
+      <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
+        {format(new Date(createdAt), 'MM/dd/yyyy')}
+      </TextRegular>
     </>
   );
 
