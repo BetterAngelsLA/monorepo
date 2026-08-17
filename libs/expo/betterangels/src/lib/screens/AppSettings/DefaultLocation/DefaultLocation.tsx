@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.NEUTRAL_LIGHT,
   },
   container: {
-    flex: 1,
     alignItems: 'center',
     marginTop: Spacings.sm,
   },
