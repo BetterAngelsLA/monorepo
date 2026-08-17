@@ -1,11 +1,13 @@
 from unittest.mock import ANY
 
 import time_machine
+from accounts.role_manager import OrgRoleManager
 from clients.models import ClientProfile
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from hmis.models import HmisNote
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
@@ -188,6 +190,18 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
                 "teamId": str(self.org_1_team.pk),
             }
         )["data"]["createTask"]["id"]
+
+    def test_create_task_uses_active_org_not_first_match(self) -> None:
+        # The user is a caseworker in both org_1 and org_2.  First-match org
+        # resolution would pick org_1; the active header org must win.
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._set_active_org(self.org_2)
+
+        response = self.create_task_fixture({"summary": "Org 2 task"})
+
+        task_id = response["data"]["createTask"]["id"]
+        self.assertEqual(Task.objects.get(pk=task_id).organization_id, self.org_2.pk)
 
     def test_create_task_rejects_cross_org_team(self) -> None:
         org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
