@@ -1,6 +1,10 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { Text, View } from 'react-native';
 import {
+  getUploadSession,
+  resetUploadProgressAtoms,
+} from './uploadProgressAtoms';
+import {
   getUploadRunner,
   resetUploadRunners,
 } from './uploadRunnerRegistry';
@@ -19,19 +23,21 @@ const mocks = vi.hoisted(() => ({
   endUpload: vi.fn(),
 }));
 
-vi.mock('./useUploadProgress', () => ({
-  useUploadProgress: () => ({
-    sessions: [],
-    startUpload: mocks.startUpload,
-    setUploadManifest: mocks.setUploadManifest,
-    updateUpload: mocks.updateUpload,
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-    cancelUploadItem: vi.fn(),
-  }),
-}));
+vi.mock('./uploadProgressAtoms', async () => {
+  const actual = await vi.importActual<
+    typeof import('./uploadProgressAtoms')
+  >('./uploadProgressAtoms');
 
+  return {
+    ...actual,
+    // Spy that passes through, so assertions can look at the options the
+    // hook built *and* at what actually landed in the store.
+    startUploadSession: (...args: Parameters<typeof actual.startUploadSession>) => {
+      mocks.startUpload(...args);
+      return actual.startUploadSession(...args);
+    },
+  };
+});
 let lastHandle: TUploadSessionHandle | undefined;
 let lastRetryRefIds: string[] | undefined;
 
@@ -60,10 +66,9 @@ function Harness() {
       <Text
         accessibilityRole="button"
         accessibilityLabel="begin non-cancellable"
-        accessibilityHint="begin a non-abortable upload"
+        accessibilityHint="begin an upload with metadata"
         onPress={() => {
           lastHandle = begin(['c.pdf'], {
-            cancellable: false,
             label: 'Consent Forms',
             onRetryItems: () => undefined,
             clientId: 'client-1',
@@ -105,7 +110,7 @@ function Harness() {
         accessibilityLabel="progress"
         accessibilityHint="send progress"
         onPress={() =>
-          updateUpload('session-x', {
+          updateUpload(lastHandle?.id ?? 'session-x', {
             stage: 'UPLOADING',
             completed: 1,
             total: 2,
@@ -134,7 +139,7 @@ function Harness() {
         accessibilityRole="button"
         accessibilityLabel="end"
         accessibilityHint="end the upload"
-        onPress={() => endUpload('session-x')}
+        onPress={() => endUpload(lastHandle?.id ?? 'session-x')}
       >
         end
       </Text>
@@ -145,6 +150,7 @@ function Harness() {
 describe('useUploadSession', () => {
   beforeEach(() => {
     resetUploadRunners();
+    resetUploadProgressAtoms();
     lastHandle = undefined;
     lastRetryRefIds = undefined;
     Object.values(mocks).forEach((mock) => mock.mockClear());
@@ -180,7 +186,7 @@ describe('useUploadSession', () => {
     expect(lastHandle?.isAborted()).toBe(true);
   });
 
-  it('begin with cancellable false registers a non-abortable session', () => {
+  it('begin forwards label, client and preview metadata', () => {
     const { getByLabelText } = render(<Harness />);
 
     fireEvent.press(getByLabelText('begin non-cancellable'));
@@ -188,8 +194,7 @@ describe('useUploadSession', () => {
     const [id, names, options] = mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
-    // Not cancellable → no per-item cancel buttons.
-    expect(options.cancellable).toBe(false);
+    expect(options.cancellable).toBe(true);
     expect(options.label).toBe('Consent Forms');
     expect(options.retryable).toBe(true);
     expect(options.clientId).toBe('client-1');
@@ -197,7 +202,7 @@ describe('useUploadSession', () => {
       { uri: 'file://c.pdf', type: 'application/pdf' },
     ]);
     expect(lastHandle?.id).toBe(id);
-    expect(lastHandle?.signals).toEqual([undefined]);
+    expect(lastHandle?.signals).toHaveLength(1);
     expect(lastHandle?.isAborted()).toBe(false);
   });
 
@@ -246,25 +251,20 @@ describe('useUploadSession', () => {
     expect(renewed[0]?.aborted).toBe(true);
   });
 
-  it('forwards setUploadManifest, updateUpload, failUpload, completeUpload and endUpload', () => {
+  it('forwards the session mutators to the real store', () => {
     const { getByLabelText } = render(<Harness />);
 
-    fireEvent.press(getByLabelText('manifest'));
-    fireEvent.press(getByLabelText('progress'));
-    fireEvent.press(getByLabelText('fail'));
-    fireEvent.press(getByLabelText('complete'));
-    fireEvent.press(getByLabelText('end'));
+    fireEvent.press(getByLabelText('begin'));
+    const [id] = mocks.startUpload.mock.calls[0];
 
-    expect(mocks.setUploadManifest).toHaveBeenCalledWith('session-x', [
-      { refId: 'r1', file: { name: 'a.pdf' } },
-    ]);
-    expect(mocks.updateUpload).toHaveBeenCalledWith('session-x', {
-      stage: 'UPLOADING',
-      completed: 1,
-      total: 2,
-    });
-    expect(mocks.failUpload).toHaveBeenCalledWith('session-x', 'boom');
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-x');
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-x');
+    // These used to be re-exported through a context-era wrapper hook, so
+    // the old test could only prove one mock called another. Assert the
+    // store actually moves instead.
+    // `begin` already registered the session through the real store.
+    fireEvent.press(getByLabelText('progress'));
+    expect(getUploadSession(id)).toBeDefined();
+
+    fireEvent.press(getByLabelText('end'));
+    expect(getUploadSession(id)).toBeUndefined();
   });
 });

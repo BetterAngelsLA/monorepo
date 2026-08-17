@@ -7,7 +7,6 @@ import { Pressable, View } from 'react-native';
 // Imported by path, not through the hooks barrel: that barrel reaches into
 // screens, which import this component back through the ui-components index.
 import useSnackbar from '../../hooks/snackbar/useSnackbar';
-import { useUploadSession } from '../../providers';
 import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
 import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';
 
@@ -25,37 +24,22 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { uploadPhoto } = useClientProfilePhotoUpload();
   const { showSnackbar } = useSnackbar();
-  const { begin, setUploadManifest, updateUpload, completeUpload, endUpload } =
-    useUploadSession();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    // No upload session: this flow is modal and blocking, with the avatar
+    // spinner as its progress and a snackbar as its failure. The background
+    // session store is for work the user has navigated away from.
     setIsUploading(true);
-    const session = begin([file.name]);
 
     try {
-      await uploadPhoto({
-        clientProfileId: clientId,
-        file: { ...file, signal: session.signals[0] },
-        onManifest: (manifest) => setUploadManifest(session.id, manifest),
-        onProgress: (progress) => updateUpload(session.id, progress),
-      });
-
-      completeUpload(session.id);
+      await uploadPhoto({ clientProfileId: clientId, file });
     } catch (err) {
       console.error(`[ClientProfilePhotoUploader]: ${err}`);
 
-      // Cancelled sessions were already removed by the cancel action.
-      if (session.isAborted()) {
-        endUpload(session.id);
-      } else {
-        // The avatar spinner is the inline progress; the snackbar is the
-        // failure feedback now that the global drawer is gone.
-        showSnackbar({
-          message: 'Sorry, something went wrong. Please try again.',
-          type: 'error',
-        });
-        endUpload(session.id);
-      }
+      showSnackbar({
+        message: 'Sorry, something went wrong. Please try again.',
+        type: 'error',
+      });
     } finally {
       setIsUploading(false);
       setModalType(null);

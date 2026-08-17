@@ -12,7 +12,6 @@ import {
   ModelFilters,
   NoteCardHmis,
   TModelFilters,
-  UploadProgressBar,
   toModelFilterValues,
 } from '../../ui-components';
 
@@ -68,7 +67,6 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   return (
     <View style={styles.container}>
       <Header title="Notes" Logo={Logo} />
-      <UploadProgressBar />
       <HorizontalContainer
         style={{
           paddingTop: Spacings.sm,

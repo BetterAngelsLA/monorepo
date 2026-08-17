@@ -10,7 +10,6 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useClientHmis } from '../../../hooks/useClientHmis';
-import { useUploadSession } from '../../../providers';
 import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
 import { ProfilePhotoModalHmis } from './ProfilePhotoModalHmis';
 
@@ -35,21 +34,16 @@ export function ProfilePhotoUploaderHmis({
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { begin, updateUpload, completeUpload, endUpload } =
-    useUploadSession();
   const { showSnackbar } = useSnackbar();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    // No upload session: this flow is modal and blocking, with the avatar
+    // spinner as its progress and a snackbar as its failure. Registering it
+    // in the background-upload store only ever put a phantom row in the
+    // global progress bar for work the user was already watching.
     setUploading(true);
-    // HMIS uploads cannot be aborted, so the session is not cancellable.
-    const session = begin([file.name], { cancellable: false });
-    updateUpload(session.id, {
-      stage: 'UPLOADING',
-      completed: 0,
-      total: 1,
-    });
 
     try {
       const formData = buildFormData(file);
@@ -58,13 +52,9 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      completeUpload(session.id);
       setModalType(null);
     } catch {
-      // The avatar spinner is the inline progress; the snackbar is the
-      // failure feedback now that the global drawer is gone.
       showSnackbar({ message: 'Error uploading profile photo.', type: 'error' });
-      endUpload(session.id);
       setModalType(null);
     } finally {
       setUploading(false);

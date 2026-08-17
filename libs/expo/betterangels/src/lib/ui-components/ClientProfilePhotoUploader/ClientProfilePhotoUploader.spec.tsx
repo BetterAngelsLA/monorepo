@@ -4,11 +4,7 @@ import { ClientProfilePhotoUploader } from './ClientProfilePhotoUploader';
 
 const mocks = vi.hoisted(() => ({
   uploadPhoto: vi.fn(),
-  endUpload: vi.fn(),
-  completeUpload: vi.fn(),
-  failUpload: vi.fn(),
   showSnackbar: vi.fn(),
-  isAborted: false,
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -31,21 +27,6 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
     return null;
   },
-}));
-
-vi.mock('../../providers', () => ({
-  useUploadSession: () => ({
-    begin: vi.fn(() => ({
-      id: 'session-1',
-      signals: [new AbortController().signal],
-      isAborted: () => mocks.isAborted,
-    })),
-    setUploadManifest: vi.fn(),
-    updateUpload: vi.fn(),
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-  }),
 }));
 
 vi.mock('../../hooks/snackbar/useSnackbar', () => ({
@@ -78,38 +59,28 @@ function openPickerAndSelect(file: unknown) {
 describe('ClientProfilePhotoUploader', () => {
   beforeEach(() => {
     mocks.uploadPhoto.mockReset();
-    mocks.endUpload.mockClear();
-    mocks.completeUpload.mockClear();
-    mocks.failUpload.mockClear();
     mocks.showSnackbar.mockClear();
-    mocks.isAborted = false;
     mocks.mediaPickerProps.length = 0;
   });
 
-  it('starts a session and uploads with signal + progress callbacks', async () => {
+  it('uploads the selected photo', async () => {
     mocks.uploadPhoto.mockResolvedValue(undefined);
 
     render(<ClientProfilePhotoUploader clientId="client-1" />);
 
     await openPickerAndSelect(sampleFile);
 
-    expect(mocks.uploadPhoto).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clientProfileId: 'client-1',
-        file: expect.objectContaining({
-          ...sampleFile,
-          signal: expect.any(AbortSignal),
-        }),
-        onManifest: expect.any(Function),
-        onProgress: expect.any(Function),
-      }),
-    );
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-    expect(mocks.failUpload).not.toHaveBeenCalled();
+    // No background session: this flow blocks on its own avatar spinner, so
+    // registering it in the global store only ever produced a phantom row in
+    // the progress bar for work already on screen.
+    expect(mocks.uploadPhoto).toHaveBeenCalledWith({
+      clientProfileId: 'client-1',
+      file: expect.objectContaining(sampleFile),
+    });
+    expect(mocks.showSnackbar).not.toHaveBeenCalled();
   });
 
-  it('shows an error snackbar and ends the session when the upload errors', async () => {
+  it('shows an error snackbar when the upload fails', async () => {
     mocks.uploadPhoto.mockRejectedValue(new Error('boom'));
 
     render(<ClientProfilePhotoUploader clientId="client-1" />);
@@ -120,20 +91,6 @@ describe('ClientProfilePhotoUploader', () => {
       message: 'Sorry, something went wrong. Please try again.',
       type: 'error',
     });
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.failUpload).not.toHaveBeenCalled();
-  });
-
-  it('ends the session when the upload was aborted', async () => {
-    mocks.isAborted = true;
-    mocks.uploadPhoto.mockRejectedValue(new Error('aborted'));
-
-    render(<ClientProfilePhotoUploader clientId="client-1" />);
-
-    await openPickerAndSelect(sampleFile);
-
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
   it('passes through a captured camera file', async () => {

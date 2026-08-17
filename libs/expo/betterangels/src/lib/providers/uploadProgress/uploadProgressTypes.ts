@@ -1,7 +1,4 @@
-import type {
-  TUploadProgress,
-  TUploadStage,
-} from '@monorepo/expo/shared/services';
+import type { TUploadStage } from '@monorepo/expo/shared/services';
 import type { TUploadItemRowStatus } from '@monorepo/expo/shared/ui-components';
 
 /**
@@ -75,28 +72,3 @@ export type TStartUploadOptions = {
   files?: Array<{ uri?: string; type?: string }>;
 };
 
-export type TUploadProgressContextValue = {
-  sessions: TUploadSession[];
-  /** Registers a new upload session with the display names of its files. */
-  startUpload: (
-    id: string,
-    names: string[],
-    options?: TStartUploadOptions,
-  ) => void;
-  /** Pairs pipeline refIds with file names once the manifest is built. */
-  setUploadManifest: (id: string, manifest: TUploadManifestEntry[]) => void;
-  /** Applies a pipeline progress event to a session. */
-  updateUpload: (id: string, progress: TUploadProgress) => void;
-  /** Marks a session as failed (optionally with a flow-specific message). */
-  failUpload: (id: string, errorMessage?: string) => void;
-  /** Marks a session as completed. */
-  completeUpload: (id: string) => void;
-  /** Removes a session. */
-  endUpload: (id: string) => void;
-  /** Aborts and removes a single item from a session. */
-  cancelUploadItem: (sessionId: string, refId: string) => void;
-  /** Resets the given failed items and re-runs them inside their session. */
-  retryUploadItems: (sessionId: string, refIds: string[]) => void;
-  /** Clears a session's failed items (and the session, if none remain). */
-  dismissFailedUploadItems: (sessionId: string) => void;
-};

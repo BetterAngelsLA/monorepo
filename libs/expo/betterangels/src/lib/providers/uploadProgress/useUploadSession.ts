@@ -1,9 +1,16 @@
 import { randomUUID } from 'expo-crypto';
 import {
+  completeUploadSession,
+  endUploadSession,
+  failUploadSession,
+  setUploadManifestSession,
+  startUploadSession,
+  updateUploadSession,
+} from './uploadProgressAtoms';
+import {
   registerUploadRunner,
   type TUploadRunner,
 } from './uploadRunnerRegistry';
-import { useUploadProgress } from './useUploadProgress';
 
 type TUploadSessionHandle = {
   id: string;
@@ -23,8 +30,6 @@ type TUploadSessionHandle = {
 };
 
 type TBeginOptions = {
-  /** When false the session is not abortable (no per-item Cancel). */
-  cancellable?: boolean;
   /** Human-readable label (e.g. the doc type) shown in the queue. */
   label?: string;
   /** Re-runs the given files in place when their rows are retried. */
@@ -46,8 +51,12 @@ type TBeginOptions = {
 /**
  * Wraps the upload session API for a single upload, pairing the session with
  * an AbortController so the per-item cancel button actually aborts the
- * in-flight upload. Pass `{ cancellable: false }` for flows with no abort
- * support (e.g. HMIS base64/multipart uploads).
+ * in-flight upload.
+ *
+ * Only background, multi-file, cancellable work belongs here. Modal flows
+ * that block on their own overlay (HMIS documents, profile photos) manage
+ * their own state — putting them in this store only produced phantom rows in
+ * the global progress bar for uploads the user was already watching.
  *
  * The abort controllers and the retry callback go into the runner registry
  * rather than onto the session, so session state stays plain serializable
@@ -55,36 +64,24 @@ type TBeginOptions = {
  * it.
  */
 export function useUploadSession() {
-  const {
-    startUpload,
-    setUploadManifest,
-    updateUpload,
-    failUpload,
-    completeUpload,
-    endUpload,
-  } = useUploadProgress();
-
   const begin = (
     names: string[],
     options?: TBeginOptions,
   ): TUploadSessionHandle => {
     const id = randomUUID();
-    const cancellable = options?.cancellable !== false;
     // Mutable so a retry can swap in fresh controllers while the registry's
     // cancel lookup — which resolves by refId — keeps working.
-    const controllers = cancellable
-      ? names.map(() => new AbortController())
-      : undefined;
+    const controllers = names.map(() => new AbortController());
     const refIds = names.map(
       (_, index) => options?.refIds?.[index] ?? `pending-${index}`,
     );
 
-    startUpload(id, names, {
+    startUploadSession(id, names, {
       label: options?.label,
       clientId: options?.clientId,
       refIds: options?.refIds,
       files: options?.files,
-      cancellable,
+      cancellable: true,
       retryable: !!options?.onRetryItems,
     });
 
@@ -93,7 +90,7 @@ export function useUploadSession() {
         const index = refIds.indexOf(refId);
 
         if (index >= 0) {
-          controllers?.[index]?.abort();
+          controllers[index]?.abort();
         }
       },
       rerun: (retryRefIds) => options?.onRetryItems?.(retryRefIds),
@@ -103,31 +100,29 @@ export function useUploadSession() {
 
     return {
       id,
-      signals: names.map((_, index) => controllers?.[index]?.signal),
+      signals: names.map((_, index) => controllers[index]?.signal),
       isAborted: () =>
-        controllers
-          ? controllers.length > 0 &&
-            controllers.every((controller) => controller.signal.aborted)
-          : false,
+        controllers.length > 0 &&
+        controllers.every((controller) => controller.signal.aborted),
       renewSignals: (indexes: number[]) => {
         indexes.forEach((index) => {
-          if (controllers?.[index]) {
+          if (controllers[index]) {
             controllers[index] = new AbortController();
           }
         });
 
-        return names.map((_, index) => controllers?.[index]?.signal);
+        return names.map((_, index) => controllers[index]?.signal);
       },
     };
   };
 
   return {
     begin,
-    setUploadManifest,
-    updateUpload,
-    failUpload,
-    completeUpload,
-    endUpload,
+    setUploadManifest: setUploadManifestSession,
+    updateUpload: updateUploadSession,
+    failUpload: failUploadSession,
+    completeUpload: completeUploadSession,
+    endUpload: endUploadSession,
   };
 }
 

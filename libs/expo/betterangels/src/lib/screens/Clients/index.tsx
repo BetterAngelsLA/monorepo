@@ -13,7 +13,6 @@ import {
   Header,
   HorizontalContainer,
   ListClientsHmis,
-  UploadProgressBar,
 } from '../../ui-components';
 import { ClientProfilesQuery } from '../../ui-components/ClientProfileList/__generated__/ClientProfiles.generated';
 import { ClientProfilesHmisQuery } from '../../ui-components/ClientProfileList/__generated__/ListClientsHmis.generated';
@@ -72,7 +71,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   return (
     <View style={styles.container} testID="clients-screen">
       <Header title="Clients" Logo={Logo} />
-      <UploadProgressBar />
 
       <View style={styles.content}>
         <HorizontalContainer>

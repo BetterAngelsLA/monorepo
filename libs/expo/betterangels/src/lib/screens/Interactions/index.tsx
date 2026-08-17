@@ -11,7 +11,6 @@ import {
   ModelFilters,
   NoteCard,
   TModelFilters,
-  UploadProgressBar,
   toModelFilterValues,
 } from '../../ui-components';
 
@@ -58,7 +57,6 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   return (
     <View style={styles.container}>
       <Header title="Interactions" Logo={Logo} />
-      <UploadProgressBar />
       <HorizontalContainer
         style={{
           paddingTop: Spacings.sm,

@@ -5,15 +5,6 @@ const mocks = vi.hoisted(() => ({
   uploadClientPhoto: vi.fn(),
   refetchQueries: vi.fn(),
   incrementClientPhotoVersion: vi.fn(),
-  begin: vi.fn(() => ({
-    id: 'session-photo',
-    signals: [],
-    isAborted: () => false,
-  })),
-  updateUpload: vi.fn(),
-  failUpload: vi.fn(),
-  endUpload: vi.fn(),
-  completeUpload: vi.fn(),
   showSnackbar: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
@@ -59,17 +50,6 @@ vi.mock('../../../hooks', () => ({
   useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
 }));
 
-vi.mock('../../../providers', () => ({
-  useUploadSession: () => ({
-    begin: mocks.begin,
-    setUploadManifest: vi.fn(),
-    updateUpload: mocks.updateUpload,
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-  }),
-}));
-
 vi.mock('./ProfilePhotoModalHmis', () => ({
   ProfilePhotoModalHmis: () => null,
 }));
@@ -93,11 +73,6 @@ describe('ProfilePhotoUploaderHmis', () => {
     mocks.uploadClientPhoto.mockReset();
     mocks.refetchQueries.mockClear();
     mocks.incrementClientPhotoVersion.mockClear();
-    mocks.begin.mockClear();
-    mocks.updateUpload.mockClear();
-    mocks.failUpload.mockClear();
-    mocks.endUpload.mockClear();
-    mocks.completeUpload.mockClear();
     mocks.showSnackbar.mockClear();
     mocks.mediaPickerProps.length = 0;
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -107,7 +82,7 @@ describe('ProfilePhotoUploaderHmis', () => {
     vi.restoreAllMocks();
   });
 
-  it('drives a drawer session and ends it on success', async () => {
+  it('uploads the photo and refetches on success', async () => {
     mocks.uploadClientPhoto.mockResolvedValue(undefined);
 
     render(
@@ -118,15 +93,6 @@ describe('ProfilePhotoUploaderHmis', () => {
       />,
     );
     await selectFile(sampleFile);
-
-    expect(mocks.begin).toHaveBeenCalledWith(['photo.jpg'], {
-      cancellable: false,
-    });
-    expect(mocks.updateUpload).toHaveBeenCalledWith('session-photo', {
-      stage: 'UPLOADING',
-      completed: 0,
-      total: 1,
-    });
     expect(mocks.uploadClientPhoto).toHaveBeenCalledWith(
       'client-1',
       expect.any(FormData),
@@ -135,12 +101,9 @@ describe('ProfilePhotoUploaderHmis', () => {
       include: [expect.anything()],
     });
     expect(mocks.incrementClientPhotoVersion).toHaveBeenCalledWith('client-1');
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-photo');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
-  it('shows an error snackbar and ends the session when the upload errors', async () => {
+  it('shows an error snackbar when the upload errors', async () => {
     mocks.uploadClientPhoto.mockRejectedValue(new Error('boom'));
 
     render(
@@ -156,7 +119,5 @@ describe('ProfilePhotoUploaderHmis', () => {
       message: 'Error uploading profile photo.',
       type: 'error',
     });
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-photo');
-    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 });

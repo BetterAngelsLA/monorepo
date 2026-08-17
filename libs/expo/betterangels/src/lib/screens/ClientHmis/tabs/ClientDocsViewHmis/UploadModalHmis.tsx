@@ -19,7 +19,6 @@ import {
   useSnackbar,
 } from '../../../../hooks';
 import { getClientFilesQueryKey } from '../../../../hooks/fileMetadataHmis/useClientFiles';
-import { useUploadSession } from '../../../../providers';
 import { FileUploadsPreview } from '../../../../ui-components';
 import { FileCategorySelector } from './FileCategorySelector';
 
@@ -67,8 +66,6 @@ export default function UploadModalHmis(props: TProps) {
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { begin, updateUpload, completeUpload, endUpload } =
-    useUploadSession();
   const { showSnackbar } = useSnackbar();
   const { uploadClientFile } = useClientHmis();
   const queryClient = useQueryClient();
@@ -97,7 +94,6 @@ export default function UploadModalHmis(props: TProps) {
 
   async function onSubmit() {
     const clientHmisId = client?.uniqueIdentifier;
-    let session: ReturnType<typeof begin> | undefined;
 
     try {
       setIsUploading(true);
@@ -123,14 +119,6 @@ export default function UploadModalHmis(props: TProps) {
         throw new Error('No filename entered for subcategory_id [0]');
       }
 
-      // HMIS uploads cannot be aborted, so the session is not cancellable.
-      session = begin([name.trim()], { cancellable: false });
-      updateUpload(session.id, {
-        stage: 'UPLOADING',
-        completed: 0,
-        total: 1,
-      });
-
       const fileBase64 = await readFileAsBase64(uri);
 
       await uploadClientFile({
@@ -146,8 +134,6 @@ export default function UploadModalHmis(props: TProps) {
         isPrivate: false,
       });
 
-      completeUpload(session.id);
-
       if (client?.id && client?.hmisId) {
         queryClient.invalidateQueries({
           queryKey: getClientFilesQueryKey(client.id, client.hmisId),
@@ -159,14 +145,9 @@ export default function UploadModalHmis(props: TProps) {
       console.error('[UploadModalHmis onSubmit]', err);
 
       // The full-screen overlay is the inline progress; the snackbar is the
-      // failure feedback now that the global drawer is gone. The modal stays
-      // open so the user can retry or cancel.
-      if (session) {
-        const message = toErrorMessage(err);
-
-        showSnackbar({ message, type: 'error' });
-        endUpload(session.id);
-      }
+      // failure feedback. The modal stays open so the user can retry or
+      // cancel. No upload session: this flow blocks on its own overlay.
+      showSnackbar({ message: toErrorMessage(err), type: 'error' });
     } finally {
       setIsUploading(false);
     }

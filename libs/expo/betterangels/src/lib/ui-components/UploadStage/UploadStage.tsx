@@ -8,11 +8,15 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAtomValue } from 'jotai';
 import {
+  cancelUploadItemSession,
+  dismissFailedUploadItemsSession,
+  retryUploadItemsSession,
   setUploadStageVisible,
   uploadProgressPct,
   uploadSessionCounts,
-  useUploadProgress,
+  uploadSessionsAtom,
 } from '../../providers';
 // Imported by path, not through the ui-components barrel: the barrel also
 // exports UploadProgressBar, which imports this file.
@@ -42,12 +46,7 @@ type TStage = 'uploading' | 'done';
 export default function UploadStage(props: TUploadStageProps) {
   const { closeModal, resumeSessionIds } = props;
 
-  const {
-    sessions,
-    cancelUploadItem,
-    retryUploadItems,
-    dismissFailedUploadItems,
-  } = useUploadProgress();
+  const sessions = useAtomValue(uploadSessionsAtom);
 
   const [stage, setStage] = useState<TStage>('uploading');
 
@@ -104,10 +103,10 @@ export default function UploadStage(props: TUploadStageProps) {
   );
 
   const retryAll = () =>
-    failedBySession.forEach((entry) => retryUploadItems(entry.id, entry.refIds));
+    failedBySession.forEach((entry) => retryUploadItemsSession(entry.id, entry.refIds));
 
   const dismissAllFailed = () =>
-    failedBySession.forEach((entry) => dismissFailedUploadItems(entry.id));
+    failedBySession.forEach((entry) => dismissFailedUploadItemsSession(entry.id));
 
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):
@@ -223,12 +222,12 @@ export default function UploadStage(props: TUploadStageProps) {
                   }
                   onCancel={
                     session.cancellable
-                      ? () => cancelUploadItem(session.id, item.refId)
+                      ? () => cancelUploadItemSession(session.id, item.refId)
                       : undefined
                   }
                   onRetry={
                     item.status === 'error' && session.retryable
-                      ? () => retryUploadItems(session.id, [item.refId])
+                      ? () => retryUploadItemsSession(session.id, [item.refId])
                       : undefined
                   }
                 />

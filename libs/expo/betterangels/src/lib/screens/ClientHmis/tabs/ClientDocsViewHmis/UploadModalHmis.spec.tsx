@@ -27,17 +27,8 @@ const mocks = vi.hoisted(() => {
   return {
     uploadClientFile: vi.fn(),
     invalidateQueries: vi.fn(),
-    updateUpload: vi.fn(),
-    failUpload: vi.fn(),
-    endUpload: vi.fn(),
-    completeUpload: vi.fn(),
     showSnackbar: vi.fn(),
     readFileAsBase64: vi.fn(),
-    begin: vi.fn(() => ({
-      id: 'session-hmis',
-      signals: [],
-      isAborted: () => false,
-    })),
     ErrorHmis: MockErrorHmis,
     InvalidFileTypeErrorHmis: MockInvalidFileTypeErrorHmis,
     selectorProps: [] as Array<{ onSelect: (selection: unknown) => void }>,
@@ -115,17 +106,6 @@ vi.mock('../../../../hooks/fileMetadataHmis/useClientFiles', () => ({
   getClientFilesQueryKey: () => ['hmis-files'],
 }));
 
-vi.mock('../../../../providers', () => ({
-  useUploadSession: () => ({
-    begin: mocks.begin,
-    setUploadManifest: vi.fn(),
-    updateUpload: mocks.updateUpload,
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-  }),
-}));
-
 vi.mock('../../../../ui-components', () => ({
   FileUploadsPreview: () => null,
 }));
@@ -183,12 +163,7 @@ describe('UploadModalHmis', () => {
     mocks.uploadClientFile.mockReset();
     mocks.readFileAsBase64.mockResolvedValue('base64data');
     mocks.invalidateQueries.mockClear();
-    mocks.updateUpload.mockClear();
-    mocks.failUpload.mockClear();
-    mocks.endUpload.mockClear();
-    mocks.completeUpload.mockClear();
     mocks.showSnackbar.mockClear();
-    mocks.begin.mockClear();
     mocks.selectorProps.length = 0;
     mocks.mediaPickerProps.length = 0;
     mocks.formPageProps.length = 0;
@@ -199,7 +174,7 @@ describe('UploadModalHmis', () => {
     vi.restoreAllMocks();
   });
 
-  it('uploads the file, drives the drawer session, and closes on success', async () => {
+  it('uploads the file and closes on success', async () => {
     mocks.uploadClientFile.mockResolvedValue({ id: 'file-1' });
     const closeModal = vi.fn();
 
@@ -226,23 +201,13 @@ describe('UploadModalHmis', () => {
       customFileName: undefined,
       isPrivate: false,
     });
-    expect(mocks.begin).toHaveBeenCalledWith(['doc.pdf'], {
-      cancellable: false,
-    });
-    expect(mocks.updateUpload).toHaveBeenCalledWith('session-hmis', {
-      stage: 'UPLOADING',
-      completed: 0,
-      total: 1,
-    });
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-hmis');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
     expect(mocks.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['hmis-files'],
     });
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('marks the session failed with the specific file-type message on error', async () => {
+  it('shows the specific file-type message on error', async () => {
     mocks.uploadClientFile.mockRejectedValue(
       new mocks.InvalidFileTypeErrorHmis('Invalid file type', 400, {
         received: 'text/plain',
@@ -264,8 +229,6 @@ describe('UploadModalHmis', () => {
       message: 'Sorry, file type "text/plain" is not supported.',
       type: 'error',
     });
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-hmis');
-    expect(mocks.failUpload).not.toHaveBeenCalled();
     expect(closeModal).not.toHaveBeenCalled();
   });
 
@@ -287,8 +250,6 @@ describe('UploadModalHmis', () => {
       message: 'Your HMIS session has expired. Please log in again.',
       type: 'error',
     });
-    expect(mocks.endUpload).toHaveBeenCalledWith('session-hmis');
-    expect(mocks.failUpload).not.toHaveBeenCalled();
   });
 
   it('does not start a session when validation fails before upload', async () => {
@@ -305,8 +266,6 @@ describe('UploadModalHmis', () => {
     await submit();
 
     // Missing custom filename for subcategory 0 throws before startUpload.
-    expect(mocks.begin).not.toHaveBeenCalled();
-    expect(mocks.failUpload).not.toHaveBeenCalled();
     expect(closeModal).not.toHaveBeenCalled();
   });
 });
