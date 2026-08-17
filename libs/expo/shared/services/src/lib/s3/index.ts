@@ -3,6 +3,7 @@ import { uploadFileToS3WithPresignedPost as nativeUpload } from './s3Upload.nati
 import { uploadFileToS3WithPresignedPost as webUpload } from './s3Upload.web';
 
 export * from './types';
+export { S3TransportError, isTransientUploadFailure } from './errors';
 export { assertPresignedPost } from './presignedPost';
 
 /**
