@@ -44,7 +44,7 @@ def resolve_team_id_for_org(
     if team_id is None:
         return None
     if organization_id is None:
-        raise ValidationError(f"Team with id {team_id} does not exist: task has no organization.") from None
+        raise ValidationError(f"Team with id {team_id} cannot be set: the record has no organization.") from None
     try:
         return Team.objects.get(pk=team_id, organization_id=organization_id).pk
     except Team.DoesNotExist:
