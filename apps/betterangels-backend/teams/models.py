@@ -29,6 +29,15 @@ class Team(BaseModel):
                 "organization",
                 name="unique_team_name_per_org",
             ),
+            # Redundant on its own (``id`` is already unique) but required as
+            # the target of the composite foreign keys on Note.team and
+            # Task.team, which are what make a cross-org team reference
+            # impossible to store.  See notes/tasks migration 0004.
+            models.UniqueConstraint(
+                "id",
+                "organization",
+                name="unique_team_id_per_org",
+            ),
         ]
 
     def __str__(self) -> str:
