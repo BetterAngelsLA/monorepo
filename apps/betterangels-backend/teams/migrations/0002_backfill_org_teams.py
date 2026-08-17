@@ -9,7 +9,10 @@ For every organization whose notes/tasks still carry a legacy
 Idempotent — re-running is a no-op.  Safe to reverse (reverse is a no-op;
 the generated Team rows are left in place).
 
-REMOVE this migration when ``old_team`` is dropped (deprecation cleanup).
+Do NOT delete this migration once it has been applied anywhere: the
+``old_team`` removals depend on it, and the historical models it reads
+(``apps.get_model``) reflect the schema at this point in the graph, so it
+keeps working after the columns are dropped.
 """
 
 from django.db import migrations
