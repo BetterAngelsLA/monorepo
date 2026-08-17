@@ -11,7 +11,6 @@ from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import get_object_or_permission_error, maybe_int_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
 from notes.groups import CASEWORKER
@@ -120,11 +119,13 @@ class Mutation:
     )
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         org_id = get_current_organization(info)
+        qs: QuerySet[Task] = info.context.qs.filter(organization_id=org_id)
 
-        try:
-            task = info.context.qs.filter(organization_id=org_id).get(id=data.id)
-        except Task.DoesNotExist:
-            raise PermissionDenied("You do not have permission to delete this task.")
+        task = get_object_or_permission_error(
+            qs,
+            data.id,
+            error_message="You do not have permission to delete this task.",
+        )
 
         deleted_id = task_delete(task=task)
 
