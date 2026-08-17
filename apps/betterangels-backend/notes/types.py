@@ -239,13 +239,14 @@ class CreateNoteTaskInput:
 class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
-    Fields set to UNSET are left unchanged. Nested relation fields
+    Omitted fields are left unchanged — UNSET for the plain ``Optional``
+    fields, absent (``None``) for the ``Maybe`` ones. Nested relation fields
     use replace-all semantics (existing items are removed, new ones created).
     """
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team_id: Maybe[ID] = strawberry.UNSET  # FK-based team field; UNSET = leave unchanged
+    team_id: Maybe[ID]  # FK-based team field; absent = leave unchanged
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET

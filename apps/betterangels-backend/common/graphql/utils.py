@@ -3,6 +3,7 @@ from typing import Any, Callable, TypeVar
 import strawberry
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
+from strawberry.types.maybe import Some
 
 T = TypeVar("T", bound=Model)
 
@@ -25,26 +26,31 @@ def apply_maybe(
     data: dict[str, Any],
     field: str,
     maybe: Any,
-    convert: Callable[[Any], Any] = maybe_value,
+    convert: Callable[[Any], Any] = lambda value: value,
 ) -> None:
     """Apply a Strawberry ``Maybe`` field to an update dict, in place.
 
-    ``Maybe`` inputs are tri-state and the three states mean different things
-    to an update: UNSET is "leave it alone", an explicit value sets it, and
-    (once the input allows it) null clears it.  Resolvers have to strip the
-    Maybe wrapper out of ``asdict`` output before it reaches ``setattr``, then
-    put a real value back only when one was sent — easy to get subtly wrong,
-    and the mistake looks like "updates silently clear the field".
+    ``Maybe`` is tri-state, and each state means something different to an
+    update: absent is "leave it alone", ``Some(value)`` sets it, and
+    ``Some(None)`` — only reachable on a ``Maybe[T | None]`` field — clears it.
 
-    Keeps *field* out of *data* entirely when UNSET so ``"field" in data``
-    stays a reliable "was this sent?" test for the services.
+    Absent is ``None`` on an idiomatic ``Maybe[T]`` field and ``UNSET`` on one
+    declared ``= strawberry.UNSET``; both are treated as absent so the helper
+    is correct either way.  Getting this wrong is not a loud failure: reading
+    absent as "set to null" makes an update silently clear a field the caller
+    never mentioned.
+
+    Keeps *field* out of *data* entirely when absent, so ``"field" in data``
+    stays a reliable "was this sent?" test for the services.  *convert*
+    receives the unwrapped value and is not called for ``Some(None)``.
     """
     data.pop(field, None)
 
-    if maybe is strawberry.UNSET:
+    if maybe is None or maybe is strawberry.UNSET:
         return
 
-    data[field] = convert(maybe)
+    value = maybe.value if isinstance(maybe, Some) else maybe
+    data[field] = convert(value) if value is not None else None
 
 
 def get_object_or_permission_error(
