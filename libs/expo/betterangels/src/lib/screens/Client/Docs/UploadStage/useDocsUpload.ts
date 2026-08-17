@@ -35,6 +35,13 @@ export function useDocsUpload(clientProfileId?: string) {
     title: string,
     groupId: string = randomUUID(),
   ) => {
+    // Register nothing until the session can actually run: a session begun
+    // without a client id would never complete, never fail, and never be
+    // cleaned up, pinning the global progress bar at "Uploading 0 of N".
+    if (!clientProfileId) {
+      return;
+    }
+
     const handle = begin(
       files.map((file) => file.name),
       {
@@ -51,10 +58,6 @@ export function useDocsUpload(clientProfileId?: string) {
     );
 
     const runUpload = async () => {
-      if (!clientProfileId) {
-        return;
-      }
-
       try {
         await uploadDocuments({
           clientProfileId,
