@@ -10,11 +10,15 @@ template, effectively "any member holds every permission in their org".
 import uuid
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import User
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
+from common.permissions.utils import permissioned_queryset
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
+from django.contrib.auth.models import Permission
+from django.test import TestCase, ignore_warnings
 from model_bakery import baker
+from organizations.models import Organization
 from teams.models import Team
 
 CREATE_TEAM = """
@@ -61,3 +65,46 @@ class OrgPermSameGroupTestCase(GraphQLBaseTestCase):
         payload = (response.get("data") or {}).get("createTeam") or {}
         self.assertIsNone(payload.get("id"))
         self.assertEqual(Team.objects.filter(name="Caseworker Team").count(), 0)
+
+
+class PermissionedQuerysetSameGroupTestCase(TestCase):
+    """Direct coverage of the helper, independent of any app's mutations.
+
+    The end-to-end case above goes through ``createTeam``; this pins the same
+    rule at the level the fix lives, so it still holds if that mutation changes.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(name="perm_same_group_org")
+        self.user = baker.make(User, username=f"member_{uuid.uuid4()}")
+        self.org.add_user(self.user)
+
+        groups = list(PermissionGroup.objects.filter(organization=self.org).select_related("group")[:2])
+        assert len(groups) >= 2, "the org recipe should provision at least two permission groups"
+        self.member_group, self.holder_group = groups[0], groups[1]
+
+        permission = Permission.objects.exclude(pk__in=self.member_group.group.permissions.values("pk")).first()
+        assert permission is not None
+        self.permission = permission
+
+        # The permission lives in one group; the user belongs to the other.
+        self.holder_group.group.permissions.add(self.permission)
+        self.member_group.group.user_set.add(self.user)
+
+    def _matches(self) -> bool:
+        perm = f"{self.permission.content_type.app_label}.{self.permission.codename}"
+        return permissioned_queryset(
+            Organization.objects.all(),
+            user=self.user,
+            organization_id=str(self.org.pk),
+            perms=[perm],
+            organization_field="pk",
+        ).exists()
+
+    def test_membership_in_one_group_does_not_borrow_another_groups_permission(self) -> None:
+        self.assertFalse(self._matches())
+
+    def test_membership_in_the_holding_group_matches(self) -> None:
+        self.holder_group.group.user_set.add(self.user)
+
+        self.assertTrue(self._matches())
