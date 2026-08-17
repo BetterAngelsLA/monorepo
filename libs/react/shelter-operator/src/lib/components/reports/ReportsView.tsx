@@ -1,8 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { useShelterOccupancyMetrics } from '../../hooks/useShelterOccupancyMetrics';
-import { dateRangeFilterAtom } from '../date-range-filter';
+import { DateRangeFilterBar, dateRangeFilterAtom } from '../date-range-filter';
 import { BedStatusChart, DailyOccupancyChart } from './ReportCharts';
-import { ReportFilterBar } from './ReportFilterBar';
 import { ReservationStatusChanges } from './ReservationStatusChanges';
 
 /**
@@ -36,7 +35,7 @@ export function ReportsView({ shelterId }: { shelterId?: string }) {
 
   return (
     <div className="mt-6 flex flex-col gap-6 px-6 pb-10">
-      <ReportFilterBar />
+      <DateRangeFilterBar className="flex-wrap" />
 
       <ReservationStatusChanges
         metrics={metrics?.reservationMetrics}
