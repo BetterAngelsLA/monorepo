@@ -23,7 +23,8 @@ export function YearGrid({
 }: YearGridProps) {
   return (
     <div
-      role="grid"
+      role="group"
+      aria-label="Select year"
       className={mergeCss(['grid grid-cols-4 gap-2 font-sans', className])}
     >
       {YEARS.map((year) => {
@@ -33,8 +34,8 @@ export function YearGrid({
           <button
             key={year}
             type="button"
-            role="gridcell"
-            aria-selected={isSelected}
+            aria-pressed={isSelected}
+            aria-current={isCurrent ? 'date' : undefined}
             onClick={() => onSelect(year)}
             className={mergeCss([
               'h-10 rounded-full text-sm transition-colors',
