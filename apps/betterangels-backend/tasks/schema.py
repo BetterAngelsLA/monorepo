@@ -9,7 +9,7 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_int_value
+from common.graphql.utils import get_object_or_permission_error, maybe_int_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -93,8 +93,14 @@ class Mutation:
         org_id = get_current_organization(info)
         qs: QuerySet[Task] = info.context.qs.filter(organization_id=org_id)
 
-        # Resolve team before asdict.
-        task: Task = qs.get(pk=data.id)
+        # Resolve team before asdict.  A miss here means the task belongs to
+        # another organization (or the user lacks CHANGE), so surface it as a
+        # permission error rather than an unhandled DoesNotExist.
+        task: Task = get_object_or_permission_error(
+            qs,
+            data.id,
+            error_message="You do not have permission to update this task.",
+        )
 
         clean = asdict(data)
         clean.pop("team_id", None)

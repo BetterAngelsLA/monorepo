@@ -176,11 +176,18 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
 @ignore_warnings(category=UserWarning)
 class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
-    """Tasks must be created in the active (header) organization."""
+    """Tasks must be created, updated, and deleted in the active (header) organization."""
 
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.org_1_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        self.task_id = self.create_task_fixture(
+            {
+                "summary": "Org 1 task to amend",
+                "teamId": str(self.org_1_team.pk),
+            }
+        )["data"]["createTask"]["id"]
 
     def test_create_task_rejects_cross_org_team(self) -> None:
         org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
@@ -199,3 +206,58 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
             f"Team with id {org_2_team.pk} does not exist in organization {self.org_1.pk}.",
         )
         self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
+
+    def test_update_task_rejects_cross_org_team(self) -> None:
+        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+
+        response = self.update_task_fixture(
+            {
+                "id": self.task_id,
+                "teamId": str(org_2_team.pk),
+            }
+        )
+
+        messages = response["data"]["updateTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            f"Team with id {org_2_team.pk} does not exist in organization {self.org_1.pk}.",
+        )
+        self.assertEqual(Task.objects.get(pk=self.task_id).team_id, self.org_1_team.pk)
+
+    def test_update_task_preserves_team_when_team_id_omitted(self) -> None:
+        response = self.update_task_fixture({"id": self.task_id, "summary": "Amended summary"})
+
+        self.assertIsNotNone(response["data"]["updateTask"]["id"])
+
+        task = Task.objects.get(pk=self.task_id)
+        self.assertEqual(task.summary, "Amended summary")
+        self.assertEqual(task.team_id, self.org_1_team.pk)
+
+    def test_update_task_denied_when_active_org_differs(self) -> None:
+        # org_1_case_manager_1 is not a member of org_2.
+        self._set_active_org(self.org_2)
+
+        response = self.update_task_fixture({"id": self.task_id, "summary": "Should not update"})
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateTask",
+            "You do not have permission to update this task.",
+            kind="PERMISSION",
+        )
+        self.assertNotEqual(Task.objects.get(pk=self.task_id).summary, "Should not update")
+
+    def test_delete_task_denied_when_active_org_differs(self) -> None:
+        # org_1_case_manager_1 is not a member of org_2.
+        self._set_active_org(self.org_2)
+
+        response = self.delete_task_fixture(self.task_id)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteTask",
+            "You do not have permission to delete this task.",
+            kind="PERMISSION",
+        )
+        self.assertTrue(Task.objects.filter(pk=self.task_id).exists())
