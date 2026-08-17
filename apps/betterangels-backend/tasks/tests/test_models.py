@@ -30,8 +30,14 @@ class TaskTeamOrgValidationTestCase(TestCase):
         task.clean()
 
     def test_clean_rejects_a_team_from_another_org(self) -> None:
-        # The database does not enforce this, so a cross-org row can exist.
-        task = baker.make(Task, organization=self.org, team=self.other_team)
+        """Built unsaved on purpose.
+
+        The composite FK added later in this stack makes a cross-org row
+        unstorable, so the invalid state can only exist in memory — which is
+        exactly where ``clean()`` is meant to catch it, before the database has
+        to.
+        """
+        task = Task(organization=self.org, team=self.other_team)
 
         with self.assertRaises(ValidationError) as ctx:
             task.clean()
