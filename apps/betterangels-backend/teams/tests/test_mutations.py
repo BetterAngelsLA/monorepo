@@ -75,6 +75,15 @@ class TeamOrgScopingTestCase(GraphQLBaseTestCase):
         org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
         self.assertEqual(returned_ids, org_2_ids)
 
+    def test_teams_query_requires_the_active_org_header(self) -> None:
+        """The server must not guess — first-match is how other orgs leaked."""
+        del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
+
+        response = self._teams_query()
+
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone((response.get("data") or {}).get("teams"))
+
     # -- createTeam ---------------------------------------------------------
 
     def _create_team(self, name: str) -> Dict[str, Any]:

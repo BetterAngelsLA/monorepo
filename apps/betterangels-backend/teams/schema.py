@@ -5,13 +5,11 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
-from accounts.selectors import resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
-from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
@@ -30,14 +28,21 @@ class Query:
     )
     def teams(self, info: Info) -> QuerySet[Team]:
         org_id = info.context.request.organization_id
-        if org_id is not None:
-            org = Organization.objects.get(pk=str(org_id))
-        else:
-            # Temporary fallback: the mobile app does not yet call the
-            # Apollo orgLink to set the active organization on each request.
-            # Until that is wired up, resolve the user's Caseworker org.
-            pg = resolve_permission_group(info.context.request.user, template=CASEWORKER)
-            org = pg.organization
+
+        if org_id is None:
+            # Every user has an active organization: ActiveOrgProvider selects
+            # and persists one as soon as the org list loads, and the clients
+            # that query teams wait for it (see useOrgTeams / TeamsPage) rather
+            # than asking the server to guess.
+            #
+            # The server must not guess.  The previous fallback resolved an
+            # arbitrary first-match org, which for a multi-org user returned
+            # another organization's teams — and it resolved a Caseworker
+            # group, so an Org Admin who was not also a caseworker got an
+            # error instead of their teams.
+            raise PermissionError("Organization ID (X-Organization-ID header) is required.")
+
+        org = Organization.objects.get(pk=str(org_id))
         return team_list(organization=org)
 
 
