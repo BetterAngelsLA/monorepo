@@ -84,6 +84,30 @@ class TeamOrgScopingTestCase(GraphQLBaseTestCase):
         self.assertIsNotNone(response.get("errors"))
         self.assertIsNone((response.get("data") or {}).get("teams"))
 
+    def test_teams_query_denies_an_org_the_user_does_not_belong_to(self) -> None:
+        """The header names the org; it does not grant access to it.
+
+        Regression: the query trusted the header outright, so any authenticated
+        user could read any organization's teams by setting it. Every other
+        test here sets the header to an org the user belongs to, which is why
+        it went unnoticed.
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.assertFalse(self.org_2.users.filter(pk=self.org_1_case_manager_1.pk).exists())
+        self._set_active_org(self.org_2)
+
+        response = self._teams_query()
+
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone((response.get("data") or {}).get("teams"))
+
+    def test_teams_query_denies_a_malformed_header(self) -> None:
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
+
+        response = self._teams_query()
+
+        self.assertIsNotNone(response.get("errors"))
+
     # -- createTeam ---------------------------------------------------------
 
     def _create_team(self, name: str) -> Dict[str, Any]:

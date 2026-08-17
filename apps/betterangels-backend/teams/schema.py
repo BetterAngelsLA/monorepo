@@ -12,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from organizations.models import Organization
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 
 from .models import Team
@@ -27,22 +28,34 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info) -> QuerySet[Team]:
+        """List the active organization's teams.
+
+        The header *names* the organization; it does not grant access to it.
+        Membership is checked rather than a ``teams.*`` permission because
+        caseworkers must be able to list teams to pick one, and CASEWORKER
+        holds no Team perms — gating on ``Team.perms.VIEW`` would break the
+        team picker for exactly the people who use it.
+        """
+        user = get_current_user(info)
         org_id = info.context.request.organization_id
 
         if org_id is None:
             # Every user has an active organization: ActiveOrgProvider selects
             # and persists one as soon as the org list loads, and the clients
-            # that query teams wait for it (see useOrgTeams / TeamsPage) rather
-            # than asking the server to guess.
-            #
-            # The server must not guess.  The previous fallback resolved an
-            # arbitrary first-match org, which for a multi-org user returned
-            # another organization's teams — and it resolved a Caseworker
-            # group, so an Org Admin who was not also a caseworker got an
-            # error instead of their teams.
-            raise PermissionError("Organization ID (X-Organization-ID header) is required.")
+            # that query teams wait for it rather than asking the server to
+            # guess.  Guessing is how first-match resolution returned another
+            # organization's teams.
+            raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
 
-        org = Organization.objects.get(pk=str(org_id))
+        try:
+            org = Organization.objects.filter(pk=str(org_id), users=user).first()
+        except ValueError, TypeError:
+            # A malformed header should read as a denial, not a 500.
+            raise PermissionDenied("Organization ID (X-Organization-ID header) is not valid.") from None
+
+        if org is None:
+            raise PermissionDenied("You do not have access to this organization.")
+
         return team_list(organization=org)
 
 
