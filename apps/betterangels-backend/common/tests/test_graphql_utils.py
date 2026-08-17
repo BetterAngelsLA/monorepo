@@ -9,7 +9,7 @@ omitted instead.  ``Maybe[T | None]`` adds ``Some(None)`` for explicit null.
 from typing import Any
 
 import strawberry
-from common.graphql.utils import apply_maybe
+from common.graphql.utils import apply_maybe, maybe_int_value, maybe_value
 from django.test import SimpleTestCase
 from strawberry.types.maybe import Some
 
@@ -79,3 +79,33 @@ class ApplyMaybeTestCase(SimpleTestCase):
         apply_maybe(data, "summary", Some("hello"))
 
         self.assertEqual(data["summary"], "hello")
+
+
+class MaybeValueTestCase(SimpleTestCase):
+    """Regression: these must unwrap Some, not hand it back.
+
+    Returning the wrapper is silent at the call site and explodes downstream —
+    ``updateTeam`` passed the result into ``team_update``, which called
+    ``.strip()`` on it, so renaming a team failed with
+    ``'Some' object has no attribute 'strip'``.
+    """
+
+    def test_unwraps_some(self) -> None:
+        self.assertEqual(maybe_value(Some("WDI Onsite")), "WDI Onsite")
+
+    def test_absent_none_is_none(self) -> None:
+        self.assertIsNone(maybe_value(None))
+
+    def test_absent_unset_is_none(self) -> None:
+        self.assertIsNone(maybe_value(strawberry.UNSET))
+
+    def test_explicit_null_is_none(self) -> None:
+        self.assertIsNone(maybe_value(Some(None)))
+
+    def test_int_variant_unwraps_and_casts(self) -> None:
+        self.assertEqual(maybe_int_value(Some("7")), 7)
+
+    def test_int_variant_absent_is_none(self) -> None:
+        self.assertIsNone(maybe_int_value(None))
+        self.assertIsNone(maybe_int_value(strawberry.UNSET))
+        self.assertIsNone(maybe_int_value(Some(None)))
