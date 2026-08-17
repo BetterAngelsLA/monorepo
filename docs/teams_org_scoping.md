@@ -76,22 +76,59 @@ removing a column unused since June.
 - **Platform-shared by design**: client profiles, note/task **reads**
   (orgs coordinate on shared clients and see cross-org interactions).
 
-## Follow-up decisions (product)
+## Product decisions (decided)
 
-1. Can org B edit/delete org A's client profiles? (Today: yes, via global
-   perms. Suggested: edits shared, deletes admin-only.)
-2. Can org B complete/reassign a task on a shared client? (Today: no —
-   object-level perms are org-owned.)
-3. Are client documents shared-read or org-owned? (Today: shared read via
-   global `Attachment.VIEW`.)
+| Question | Decision | Matches today |
+| --- | --- | --- |
+| Can org B **edit** org A's client profile? | Yes — client profiles are global/shared | yes |
+| Can org B **complete/reassign** a task on a shared client? | No — tasks are org-specific | yes |
+| Are client **documents** shared-read? | Yes — shared read | yes |
+
+All three confirm current behavior, so no permission changes are needed —
+only encoding and tests (tracked in #2313 / #2314). The templates already
+implement the matrix:
+
+- `CASEWORKER` holds `ClientProfile` ADD/CHANGE/DELETE/VIEW → shared edits.
+- `Task.perms` is ADD + VIEW only, with CHANGE/DELETE granted per object at
+  creation → a task is write-owned by the org that created it.
+- `Attachment.perms` is ADD + VIEW only → documents are shared-read with no
+  cross-org delete.
+
+### Still open: cross-org **delete** of a client profile
+
+The decision above covers editing. Deletion is the case that matters most and
+is not settled: `delete_client_profile` filters on `ClientProfile.perms.DELETE`,
+which `CASEWORKER` holds globally, and `Note.client_profile` is
+`on_delete=CASCADE`. So one org deleting a shared client profile destroys
+**every other org's notes** for that client. (`Task.client_profile` is
+`SET_NULL`, so tasks survive orphaned.) Either restrict delete to org admins,
+or keep it global and make the cascade non-destructive.
+
+### Consequence to check in the app
+
+Note/task **reads** are shared but task **writes** are org-owned, so on a
+shared client one org sees another org's tasks and cannot complete or reassign
+them. The UI needs to distinguish those, or users meet permission errors on
+controls that look available.
 
 ## Known leftovers
 
 - `resolve_permission_group` first-match still used in
   `clients.create_client_document`, `referrals`, `hmis`, and the `teams`
-  query fallback (mobile pre-org-header). Migrate to header-driven org.
+  query fallback (mobile pre-org-header). Migrate to header-driven org
+  (#2315). Team *mutations* are already header-driven; only the query
+  fallback remains. Note the fallback resolves `CASEWORKER`, so an Org Admin
+  who is not also a caseworker cannot list teams without the header — and
+  document *ownership* on upload is still first-match, so "shared read,
+  org-owned write" for client documents is not guaranteed until this lands.
 - GraphQL `teamId` cannot be set to explicit `null` (strawberry
-  `Maybe[ID]` rejects it) — teams can't be cleared via the API. Use
-  `Maybe[ID | None]` if clearing is ever required.
+  `Maybe[ID]` rejects it) — teams can't be cleared via the API (#2316).
+  Smaller than it looks: `Maybe[ID]`, `Maybe[ID] = UNSET` and
+  `Maybe[ID | None]` all emit the same SDL, so it is not a breaking change
+  and needs no codegen, and `apply_maybe` already maps `Some(None)` to a
+  cleared field.
+- `HasOrgPerm` does not check that the user's group is the group holding the
+  permission — see the separate fix PR. Until that lands, any org member
+  effectively holds the union of every template's permissions in their org.
 - `scripts/archived/backfill_attachment_perms.py` is a retired one-off
   (hardcoded SELAH org) — kept for reference only.
