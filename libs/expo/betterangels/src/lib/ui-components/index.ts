@@ -50,5 +50,6 @@ export * from './TaskCountIndicator';
 export * from './TaskForm';
 export * from './TaskList';
 export { default as TaskStatusBtn } from './TaskStatusBtn';
+export { UploadProgressBar } from './UploadProgressBar/UploadProgressBar';
 export * from './UserPreferences';
 export { default as WebBrowserLink } from './WebBrowserLink';

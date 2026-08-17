@@ -1,3 +1,4 @@
+import { S3TransportError } from './errors';
 import { assertPresignedPost } from './presignedPost';
 import {
   type TS3UploadProgress,
@@ -54,18 +55,29 @@ export const uploadFileToS3WithPresignedPost: TS3UploadTransport = async ({
       }
 
       reject(
-        new Error(
+        new S3TransportError(
           `S3 upload failed with status ${request.status}: ${request.responseText}`,
+          {
+            kind: 'http',
+            status: request.status,
+            body: request.responseText,
+          },
         ),
       );
     };
 
     request.onerror = () => {
-      reject(new Error('S3 upload failed: network error'));
+      reject(
+        new S3TransportError('S3 upload failed: network error', {
+          kind: 'network',
+        }),
+      );
     };
 
     request.onabort = () => {
-      reject(new Error('S3 upload aborted'));
+      reject(
+        new S3TransportError('S3 upload aborted', { kind: 'abort' }),
+      );
     };
 
     signal?.addEventListener('abort', () => {

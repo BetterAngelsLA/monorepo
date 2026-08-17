@@ -8,6 +8,7 @@ import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
 import EmptyState from './EmptyState';
+import { DOC_FOLDER_TITLES } from './folders';
 import UploadModal from './UploadModal';
 
 export default function Docs({
@@ -74,35 +75,36 @@ export default function Docs({
           <>
             {hasDocReadyDocuments && (
               <Documents
-                title="Doc Ready"
+                title={DOC_FOLDER_TITLES.DOC_READY}
                 {...props}
                 data={
-                  client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+                  client?.clientProfile
+                    .docReadyDocuments as ClientDocumentType[]
                 }
-                clientId={client?.clientProfile.id}
+                clientId={client?.clientProfile.id ?? ''}
               />
             )}
 
             {hasConsentFormDocuments && (
               <Documents
-                title="Forms"
+                title={DOC_FOLDER_TITLES.FORMS}
                 {...props}
                 data={
                   client?.clientProfile
                     .consentFormDocuments as ClientDocumentType[]
                 }
-                clientId={client?.clientProfile.id}
+                clientId={client?.clientProfile.id ?? ''}
               />
             )}
 
             {hasOtherDocuments && (
               <Documents
-                title="Other"
+                title={DOC_FOLDER_TITLES.OTHER}
                 {...props}
                 data={
                   client?.clientProfile.otherDocuments as ClientDocumentType[]
                 }
-                clientId={client?.clientProfile.id}
+                clientId={client?.clientProfile.id ?? ''}
               />
             )}
           </>

@@ -174,17 +174,6 @@ jobs:
           fi
           EOF
 
-      - name: 🕵🏻‍♂️ GraphQL Inspector
-        uses: kamilkisiela/graphql-inspector@master
-        # Warning: This now skips schema breaking checks in forked repositories.
-        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: main:apps/betterangels-backend/schema.graphql
-          fail-on-breaking: true
-          approve-label: graphql-inspector:approved-breaking-change
-
       - name: 🔬 Typecheck
         run: |
           docker compose run better-angels bash <<'EOF'
@@ -197,6 +186,17 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t test
           EOF
+
+      - name: 🕵🏻‍♂️ GraphQL Inspector
+        uses: kamilkisiela/graphql-inspector@master
+        # Warning: This now skips schema breaking checks in forked repositories.
+        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/schema.graphql
+          fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
 
       - name: 🛠️ Build and Push Artifacts
         run: |

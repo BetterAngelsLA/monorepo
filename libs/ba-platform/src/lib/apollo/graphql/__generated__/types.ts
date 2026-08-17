@@ -2188,6 +2188,10 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OpenNowInput = {
+  scheduleType?: InputMaybe<Array<ScheduleTypeChoices>>;
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -3323,6 +3327,8 @@ export type ShelterFilter = {
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  /** @deprecated Use openNow instead */
   openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
@@ -3681,7 +3687,7 @@ export type TeamType = {
   id: Scalars['ID']['output'];
   isActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
-  slug: Scalars['String']['output'];
+  slug?: Maybe<Scalars['String']['output']>;
 };
 
 export type TeamTypeOffsetPaginated = {
