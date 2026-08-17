@@ -1,5 +1,9 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { Text, View } from 'react-native';
+import {
+  getUploadRunner,
+  resetUploadRunners,
+} from './uploadRunnerRegistry';
 import { useUploadSession, TUploadSessionHandle } from './useUploadSession';
 
 vi.mock('expo-crypto', () => ({
@@ -140,6 +144,7 @@ function Harness() {
 
 describe('useUploadSession', () => {
   beforeEach(() => {
+    resetUploadRunners();
     lastHandle = undefined;
     lastRetryRefIds = undefined;
     Object.values(mocks).forEach((mock) => mock.mockClear());
@@ -155,18 +160,23 @@ describe('useUploadSession', () => {
 
     expect(typeof id).toBe('string');
     expect(names).toEqual(['a.pdf', 'b.pdf']);
-    expect(typeof options.onCancelItem).toBe('function');
+    // Capability is a serializable flag on the session; the machinery that
+    // performs the cancel lives in the runner registry.
+    expect(options.cancellable).toBe(true);
     expect(lastHandle?.id).toBe(id);
     expect(lastHandle?.signals).toHaveLength(2);
     expect(lastHandle?.isAborted()).toBe(false);
 
-    // onCancelItem(index) aborts only that file's signal.
-    options.onCancelItem(0);
+    const runner = getUploadRunner(id);
+    expect(runner).toBeDefined();
+
+    // Cancelling by refId aborts only that file's signal.
+    runner?.cancelItem('pending-0');
     expect(lastHandle?.signals[0]?.aborted).toBe(true);
     expect(lastHandle?.signals[1]?.aborted).toBe(false);
     expect(lastHandle?.isAborted()).toBe(false);
 
-    options.onCancelItem(1);
+    runner?.cancelItem('pending-1');
     expect(lastHandle?.isAborted()).toBe(true);
   });
 
@@ -178,10 +188,10 @@ describe('useUploadSession', () => {
     const [id, names, options] = mocks.startUpload.mock.calls[0];
 
     expect(names).toEqual(['c.pdf']);
-    // No onCancelItem → no per-item cancel buttons.
-    expect(options.onCancelItem).toBeUndefined();
+    // Not cancellable → no per-item cancel buttons.
+    expect(options.cancellable).toBe(false);
     expect(options.label).toBe('Consent Forms');
-    expect(typeof options.onRetryItems).toBe('function');
+    expect(options.retryable).toBe(true);
     expect(options.clientId).toBe('client-1');
     expect(options.files).toEqual([
       { uri: 'file://c.pdf', type: 'application/pdf' },
@@ -200,14 +210,14 @@ describe('useUploadSession', () => {
 
     expect(names).toEqual(['x.pdf', 'y.pdf']);
     expect(options.label).toBeUndefined();
-    expect(typeof options.onCancelItem).toBe('function');
-    expect(typeof options.onRetryItems).toBe('function');
+    expect(options.cancellable).toBe(true);
+    expect(options.retryable).toBe(true);
     // Stable identity so a retry run reports against the same rows.
     expect(options.refIds).toEqual(['ref-x', 'ref-y']);
 
     // Retry hands back every refId being re-run, so several failed files
     // can be retried in a single transport run.
-    options.onRetryItems(['ref-x', 'ref-y']);
+    getUploadRunner(id)?.rerun(['ref-x', 'ref-y']);
     expect(lastRetryRefIds).toEqual(['ref-x', 'ref-y']);
     expect(lastHandle?.id).toBe(id);
   });
@@ -217,10 +227,10 @@ describe('useUploadSession', () => {
 
     fireEvent.press(getByLabelText('begin'));
 
-    const [, , options] = mocks.startUpload.mock.calls[0];
+    const [id] = mocks.startUpload.mock.calls[0];
     const original = lastHandle?.signals ?? [];
 
-    options.onCancelItem(0);
+    getUploadRunner(id)?.cancelItem('pending-0');
     expect(original[0]?.aborted).toBe(true);
 
     // A retried file needs a controller that is not already aborted, or the
@@ -232,7 +242,7 @@ describe('useUploadSession', () => {
     expect(renewed[1]).toBe(original[1]);
 
     // Cancel still aborts the run that is actually in flight.
-    options.onCancelItem(0);
+    getUploadRunner(id)?.cancelItem('pending-0');
     expect(renewed[0]?.aborted).toBe(true);
   });
 

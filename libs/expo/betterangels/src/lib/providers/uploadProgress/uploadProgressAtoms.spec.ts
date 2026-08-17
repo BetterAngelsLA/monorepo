@@ -3,14 +3,20 @@ import {
   cancelUploadItemSession,
   completeUploadSession,
   dismissFailedUploadItemsSession,
+  endUploadSession,
   failUploadSession,
   markUploadPartiallyFailed,
   getUploadSession,
   resetUploadProgressAtoms,
+  retryUploadItemsSession,
   startUploadSession,
   updateUploadSession,
   uploadSessionsAtom,
 } from './uploadProgressAtoms';
+import {
+  getUploadRunner,
+  registerUploadRunner,
+} from './uploadRunnerRegistry';
 import { uploadSessionCounts } from './uploadProgressUtils';
 
 const store = getDefaultStore();
@@ -180,6 +186,43 @@ describe('uploadProgressAtoms', () => {
     expect(getUploadSession('s1')?.errorMessage).toBeUndefined();
     // Now fully persisted, so the cleanup can prune it normally.
     expect(countsFor('s1').complete).toBe(true);
+  });
+
+  it('keeps session state serializable', () => {
+    beginSession('s1', ['a.pdf', 'b.pdf']);
+    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: vi.fn() });
+
+    const sessions = store.get(uploadSessionsAtom);
+
+    // The runner lives in the registry, not on the session. If a callback
+    // ever creeps back onto this shape it silently stops round-tripping,
+    // and persisting the manifest across app restarts becomes impossible.
+    expect(JSON.parse(JSON.stringify(sessions))).toEqual(sessions);
+  });
+
+  it('routes cancel and retry through the registered runner', () => {
+    const cancelItem = vi.fn();
+    const rerun = vi.fn();
+    const [a, b] = beginSession('s1', ['a.pdf', 'b.pdf']);
+    registerUploadRunner('s1', { cancelItem, rerun });
+
+    cancelUploadItemSession('s1', b);
+    expect(cancelItem).toHaveBeenCalledWith(b);
+
+    reportError('s1', a, 0);
+    retryUploadItemsSession('s1', [a]);
+    expect(rerun).toHaveBeenCalledWith([a]);
+  });
+
+  it('drops the runner when its session ends', () => {
+    beginSession('s1', ['a.pdf']);
+    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: vi.fn() });
+
+    endUploadSession('s1');
+
+    // Runners outlive the component that created them, so nothing else
+    // would ever release this.
+    expect(getUploadRunner('s1')).toBeUndefined();
   });
 
   it('leaves other sessions untouched', () => {

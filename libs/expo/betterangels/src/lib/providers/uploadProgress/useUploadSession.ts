@@ -1,4 +1,8 @@
 import { randomUUID } from 'expo-crypto';
+import {
+  registerUploadRunner,
+  type TUploadRunner,
+} from './uploadRunnerRegistry';
 import { useUploadProgress } from './useUploadProgress';
 
 type TUploadSessionHandle = {
@@ -44,6 +48,11 @@ type TBeginOptions = {
  * an AbortController so the per-item cancel button actually aborts the
  * in-flight upload. Pass `{ cancellable: false }` for flows with no abort
  * support (e.g. HMIS base64/multipart uploads).
+ *
+ * The abort controllers and the retry callback go into the runner registry
+ * rather than onto the session, so session state stays plain serializable
+ * data and the upload's lifetime is not tied to the component that started
+ * it.
  */
 export function useUploadSession() {
   const {
@@ -61,22 +70,36 @@ export function useUploadSession() {
   ): TUploadSessionHandle => {
     const id = randomUUID();
     const cancellable = options?.cancellable !== false;
-    // Mutable so a retry can swap in fresh controllers while the per-item
-    // cancel closures — which capture only the index — keep working.
+    // Mutable so a retry can swap in fresh controllers while the registry's
+    // cancel lookup — which resolves by refId — keeps working.
     const controllers = cancellable
       ? names.map(() => new AbortController())
       : undefined;
+    const refIds = names.map(
+      (_, index) => options?.refIds?.[index] ?? `pending-${index}`,
+    );
 
     startUpload(id, names, {
-      onCancelItem: controllers
-        ? (index: number) => controllers[index].abort()
-        : undefined,
       label: options?.label,
-      onRetryItems: options?.onRetryItems,
       clientId: options?.clientId,
       refIds: options?.refIds,
       files: options?.files,
+      cancellable,
+      retryable: !!options?.onRetryItems,
     });
+
+    const runner: TUploadRunner = {
+      cancelItem: (refId) => {
+        const index = refIds.indexOf(refId);
+
+        if (index >= 0) {
+          controllers?.[index]?.abort();
+        }
+      },
+      rerun: (retryRefIds) => options?.onRetryItems?.(retryRefIds),
+    };
+
+    registerUploadRunner(id, runner);
 
     return {
       id,

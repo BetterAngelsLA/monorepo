@@ -1,6 +1,12 @@
 import { atom, getDefaultStore } from 'jotai';
 import type { TUploadProgress } from '@monorepo/expo/shared/services';
 import {
+  getUploadRunner,
+  resetUploadRunners,
+  setRunnerItemRefIds,
+  unregisterUploadRunner,
+} from './uploadRunnerRegistry';
+import {
   TUploadItemStatus,
   TUploadManifestEntry,
   TUploadSession,
@@ -38,27 +44,26 @@ export function startUploadSession(
   names: string[],
   options?: TStartUploadOptions,
 ) {
-  const { onCancelItem, label, onRetryItems, clientId, refIds, files } =
+  const { label, clientId, refIds, files, cancellable, retryable } =
     options ?? {};
+
+  const items = names.map((name, index) => ({
+    refId: refIds?.[index] ?? `pending-${index}`,
+    name,
+    uri: files?.[index]?.uri,
+    mimeType: files?.[index]?.type,
+    status: 'pending' as TUploadItemStatus,
+  }));
+
+  setRunnerItemRefIds(
+    id,
+    items.map((item) => item.refId),
+  );
 
   // Uploads accumulate until dismissed so several can be in flight at once.
   commit([
     ...getSessions(),
-    {
-      id,
-      stage: 'GENERATING',
-      items: names.map((name, index) => ({
-        refId: refIds?.[index] ?? `pending-${index}`,
-        name,
-        uri: files?.[index]?.uri,
-        mimeType: files?.[index]?.type,
-        status: 'pending' as TUploadItemStatus,
-        onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
-      })),
-      label,
-      clientId,
-      onRetryItems,
-    },
+    { id, stage: 'GENERATING', items, label, clientId, cancellable, retryable },
   ]);
 }
 
@@ -80,7 +85,6 @@ export function setUploadManifestSession(
           uri: session.items[index]?.uri,
           mimeType: session.items[index]?.mimeType,
           status: session.items[index]?.status ?? 'pending',
-          onCancel: session.items[index]?.onCancel,
         })),
       };
     }),
@@ -184,6 +188,9 @@ export function getUploadSession(id: string): TUploadSession | undefined {
 }
 
 export function endUploadSession(id: string) {
+  // The runner outlives the React component that made it, so nothing else
+  // would ever drop it.
+  unregisterUploadRunner(id);
   commit(getSessions().filter((session) => session.id !== id));
 }
 
@@ -233,7 +240,7 @@ export function retryUploadItemsSession(sessionId: string, refIds: string[]) {
     ),
   );
 
-  session.onRetryItems?.([...retrying]);
+  getUploadRunner(sessionId)?.rerun([...retrying]);
 }
 
 export function cancelUploadItemSession(sessionId: string, refId: string) {
@@ -244,7 +251,7 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
     return;
   }
 
-  item.onCancel?.();
+  getUploadRunner(sessionId)?.cancelItem(refId);
 
   const items = session.items.filter((i) => i.refId !== refId);
 
@@ -295,6 +302,7 @@ export function setUploadStageVisible(visible: boolean) {
 
 /** Test-only: resets module state between test cases. */
 export function resetUploadProgressAtoms() {
+  resetUploadRunners();
   defaultStore.set(uploadSessionsAtom, []);
   defaultStore.set(uploadStageVisibleAtom, false);
 }

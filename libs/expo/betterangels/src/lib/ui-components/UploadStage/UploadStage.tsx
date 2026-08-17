@@ -221,9 +221,13 @@ export default function UploadStage(props: TUploadStageProps) {
                       />
                     ) : undefined
                   }
-                  onCancel={() => cancelUploadItem(session.id, item.refId)}
+                  onCancel={
+                    session.cancellable
+                      ? () => cancelUploadItem(session.id, item.refId)
+                      : undefined
+                  }
                   onRetry={
-                    item.status === 'error' && session.onRetryItems
+                    item.status === 'error' && session.retryable
                       ? () => retryUploadItems(session.id, [item.refId])
                       : undefined
                   }

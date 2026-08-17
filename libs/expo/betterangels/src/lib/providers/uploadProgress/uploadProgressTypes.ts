@@ -20,8 +20,6 @@ export type TUploadItem = {
   mimeType?: string;
   bytesSent?: number;
   totalBytes?: number;
-  /** Aborts this file's upload. Invoked by the per-item cancel action. */
-  onCancel?: () => void;
 };
 
 /**
@@ -45,12 +43,13 @@ export type TUploadSession = {
    */
   clientId?: string;
   /**
-   * Re-runs the given files inside this session. Retry is in-place: the
-   * items go back to `pending` and a fresh transport run reports against
-   * their existing refIds, so one user action stays one session no matter
-   * how many times its files are retried.
+   * What the attached runner supports, as plain booleans so the UI can gate
+   * on them reactively. The runner itself lives in the registry, not here —
+   * this type has to stay serializable so sessions can be persisted and
+   * reloaded after the app restarts.
    */
-  onRetryItems?: (refIds: string[]) => void;
+  cancellable?: boolean;
+  retryable?: boolean;
 };
 
 export type TUploadManifestEntry = {
@@ -59,10 +58,10 @@ export type TUploadManifestEntry = {
 };
 
 export type TStartUploadOptions = {
-  onCancelItem?: (index: number) => void;
   label?: string;
   clientId?: string;
-  onRetryItems?: (refIds: string[]) => void;
+  cancellable?: boolean;
+  retryable?: boolean;
   /**
    * Caller-owned refIds, aligned with `names`. Supply them when the flow
    * needs stable item identity across retry runs; omitted for flows that

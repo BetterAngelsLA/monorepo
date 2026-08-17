@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 import {
   completeUploadSession,
   failUploadSession,
+  registerUploadRunner,
   resetUploadProgressAtoms,
   startUploadSession,
   updateUploadSession,
@@ -167,6 +168,7 @@ describe('UploadStage', () => {
   it('renders the resumed session items with the uploading chrome', () => {
     startUploadSession('s1', ['a.pdf'], {
       clientId: 'client-1',
+      cancellable: true,
     });
 
     const { getByText, queryByText } = renderStage(['s1']);
@@ -180,6 +182,7 @@ describe('UploadStage', () => {
   it('previews the actual local file for items with uri and mime type', () => {
     startUploadSession('s1', ['photo.jpg'], {
       clientId: 'client-1',
+      cancellable: true,
       files: [{ uri: 'file://photo.jpg', type: 'image/jpeg' }],
     });
 
@@ -192,6 +195,7 @@ describe('UploadStage', () => {
   it('falls back to the default icon when no preview metadata exists', () => {
     startUploadSession('s1', ['scan.pdf'], {
       clientId: 'client-1',
+      cancellable: true,
     });
 
     renderStage(['s1']);
@@ -203,6 +207,7 @@ describe('UploadStage', () => {
   it('shows Done and stays open until the user closes it', () => {
     startUploadSession('s1', ['a.pdf'], {
       clientId: 'client-1',
+      cancellable: true,
     });
     const closeModal = vi.fn();
 
@@ -222,7 +227,8 @@ describe('UploadStage', () => {
     startUploadSession('s1', ['a.pdf'], {
       clientId: 'client-1',
       refIds: ['ref-a'],
-      onRetryItems: () => undefined,
+      cancellable: true,
+      retryable: true,
     });
     const closeModal = vi.fn();
 
@@ -241,6 +247,7 @@ describe('UploadStage', () => {
   it('closes when every file is cancelled individually', () => {
     startUploadSession('s1', ['a.pdf'], {
       clientId: 'client-1',
+      cancellable: true,
     });
     const closeModal = vi.fn();
 
@@ -260,8 +267,10 @@ describe('UploadStage', () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       clientId: 'client-1',
       refIds: ['ref-a', 'ref-b'],
-      onRetryItems,
+      cancellable: true,
+      retryable: true,
     });
+    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: onRetryItems });
     failItem('s1', 'ref-a');
 
     const { getByLabelText } = renderStage(['s1']);
@@ -286,8 +295,10 @@ describe('UploadStage', () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf', 'c.pdf'], {
       clientId: 'client-1',
       refIds: ['ref-a', 'ref-b', 'ref-c'],
-      onRetryItems,
+      cancellable: true,
+      retryable: true,
     });
+    registerUploadRunner('s1', { cancelItem: vi.fn(), rerun: onRetryItems });
     failItem('s1', 'ref-a');
     failItem('s1', 'ref-c');
 
@@ -307,7 +318,8 @@ describe('UploadStage', () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       clientId: 'client-1',
       refIds: ['ref-a', 'ref-b'],
-      onRetryItems: () => undefined,
+      cancellable: true,
+      retryable: true,
     });
     failItem('s1', 'ref-a');
 
@@ -339,7 +351,8 @@ describe('UploadStage', () => {
     startUploadSession('s1', ['a.pdf'], {
       clientId: 'client-1',
       refIds: ['ref-a'],
-      onRetryItems: () => undefined,
+      cancellable: true,
+      retryable: true,
     });
     const closeModal = vi.fn();
 
