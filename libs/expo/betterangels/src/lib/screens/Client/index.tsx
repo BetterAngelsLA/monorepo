@@ -142,6 +142,7 @@ export default function Client({
               accessible
               accessibilityHint="goes to previous screen"
               onPress={() => router.dismissTo(arrivedFrom || '/')}
+              testID="client-screen-back-btn"
             >
               <TextRegular color={Colors.WHITE}>Back</TextRegular>
             </Pressable>

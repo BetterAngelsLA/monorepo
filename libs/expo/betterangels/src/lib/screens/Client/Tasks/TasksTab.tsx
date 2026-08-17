@@ -167,7 +167,7 @@ export function TasksTab(props: TProps) {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="client-view-tasks">
       <SearchBar
         style={styles.searchBar}
         value={search}
