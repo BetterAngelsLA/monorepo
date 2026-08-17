@@ -2919,7 +2919,7 @@ type TeamType {
   id: ID!
   slug: String!
   name: String!
-  isActive: Boolean!
+  isActive: Boolean
   createdAt: DateTime!
 }
 

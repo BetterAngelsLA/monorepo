@@ -39,11 +39,29 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(team["name"], "new name")
         self.assertFalse(team["isActive"])
 
+    def test_update_team_mutation_invalid_name(self) -> None:
+        """Empty/whitespace-only names are rejected and no partial update occurs."""
+        team = baker.make(Team, name="old name", organization=self.org)
+        variables = {"id": team.pk, "name": "   "}
+
+        response = self.update_team_fixture(variables)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateTeam",
+            "Team name must contain at least one alphanumeric character.",
+            kind="VALIDATION",
+        )
+
+        team.refresh_from_db()
+        self.assertEqual(team.name, "old name")
+
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            self.delete_team_fixture(team.pk)
+            response = self.delete_team_fixture(team.pk)
 
+        self.assertEqual(response["data"]["deleteTeam"]["id"], str(team.pk))
         self.assertFalse(Team.objects.filter(id=team.pk).exists())

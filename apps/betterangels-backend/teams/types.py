@@ -1,7 +1,9 @@
 """Strawberry GraphQL types for the Team model."""
 
+from typing import Optional
+
 import strawberry_django
-from strawberry import ID, Maybe, auto
+from strawberry import ID, UNSET, Maybe, auto
 
 from .models import Team
 
@@ -14,9 +16,9 @@ class TeamFilter:
 @strawberry_django.type(Team, filters=TeamFilter)
 class TeamType:
     id: ID
-    slug: auto
+    slug: Optional[str]
     name: auto
-    is_active: auto
+    is_active: Optional[bool]
     created_at: auto
 
 
@@ -29,4 +31,4 @@ class CreateTeamInput:
 class UpdateTeamInput:
     id: ID
     name: Maybe[str]
-    is_active: Maybe[bool]
+    is_active: Maybe[bool] = UNSET
