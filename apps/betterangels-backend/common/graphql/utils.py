@@ -9,16 +9,26 @@ T = TypeVar("T", bound=Model)
 
 
 def maybe_value(maybe: Any) -> Any:
-    """Extract the value from a Strawberry ``Maybe[T]``, or ``None`` if UNSET/null."""
-    if maybe is strawberry.UNSET or maybe is None:
+    """Unwrap a Strawberry ``Maybe[T]``, or return ``None`` if absent/null.
+
+    A provided field arrives as ``Some(value)``, so it has to be unwrapped —
+    returning the ``Some`` itself makes callers fail on whatever they do next
+    (``'Some' object has no attribute 'strip'``).  Absent is ``None`` on a bare
+    ``Maybe[T]`` field and ``UNSET`` on one declared ``= strawberry.UNSET``.
+
+    Collapses absent and explicit null into ``None``, which suits callers where
+    both mean "no value".  Use ``apply_maybe`` where the two must stay distinct.
+    """
+    if maybe is None or maybe is strawberry.UNSET:
         return None
-    return maybe
+
+    return maybe.value if isinstance(maybe, Some) else maybe
 
 
 def maybe_int_value(maybe: Any) -> int | None:
-    """Extract an int from a Strawberry ``Maybe[ID]``, or ``None`` if UNSET/null."""
-    raw = maybe_value(maybe)
-    value = raw.value if raw is not None else None
+    """Unwrap a Strawberry ``Maybe[ID]`` to an int, or ``None`` if absent/null."""
+    value = maybe_value(maybe)
+
     return int(value) if value is not None else None
 
 
