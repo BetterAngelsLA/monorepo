@@ -3661,6 +3661,7 @@ export type TeamType = {
   __typename?: 'TeamType';
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   slug: Scalars['String']['output'];
 };
@@ -3956,6 +3957,7 @@ export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UpdateTeamInput = {
   id: Scalars['ID']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
