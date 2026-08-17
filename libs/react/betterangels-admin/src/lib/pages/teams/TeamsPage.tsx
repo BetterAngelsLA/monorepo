@@ -48,7 +48,7 @@ const COLUMNS: {
 
 export function TeamsPage(props: IProps) {
   const { className } = props;
-  const { activeOrg, hasPermission } = useActiveOrg();
+  const { hasPermission } = useActiveOrg();
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
@@ -65,11 +65,9 @@ export function TeamsPage(props: IProps) {
     openMenuRowId !== null,
   );
 
-  // Teams are org-scoped and the server requires the X-Organization-ID
-  // header rather than guessing, so wait for the active org to be selected.
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    { fetchPolicy: 'cache-and-network', skip: !activeOrg?.id },
+    { fetchPolicy: 'cache-and-network' },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
