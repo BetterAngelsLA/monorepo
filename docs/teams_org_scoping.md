@@ -11,13 +11,24 @@ org-scoped mutations, legacy-team backfill, permission sync).
    manage.py audit_team_org_scoping
    ```
 
-   Confirms current cross-org team references and legacy-team backfill status.
-   Expected on a pre-migration DB: zero teams per non-SELAH orgs, notes/tasks
-   possibly carrying legacy `old_team` values.
+   Reports the total team count, teams per organization, and any note/task
+   whose team belongs to a different organization; exits non-zero if it finds
+   one.  It does **not** report legacy `old_team` values — read the pre-migrate
+   baseline off the teams-per-org counts, which should be zero for orgs that
+   have never used teams.
 
 2. **Migrate** — applies `teams.0002_backfill_org_teams` (creates per-org
    `Team` rows from legacy values and backfills note/task FKs) and the
    `old_team` removals (`notes.0003`, `tasks.0003`). Idempotent.
+
+   > **No verification window if these ship together.** `notes.0003` /
+   > `tasks.0003` drop `old_team` in the same `migrate` run that reads from
+   > it, so a gap in the backfill destroys the evidence needed to diagnose
+   > it — and there is no way back (the backfill reverses to a no-op, and
+   > un-dropping the columns yields empty ones). To get a window, deploy
+   > the backfill + org-scoped mutations + audit tooling first, run step 4
+   > against production, then ship the `old_team` removals in a follow-up
+   > release.
 
 3. **Sync permission groups** — ensures every org's groups carry current
    template permissions (including `teams.*` for Org Admin):
