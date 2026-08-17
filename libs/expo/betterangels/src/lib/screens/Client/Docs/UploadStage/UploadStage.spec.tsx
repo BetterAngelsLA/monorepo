@@ -128,6 +128,17 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 
 const store = getDefaultStore();
 
+/** Reports a per-file failure the way the upload pipeline does. */
+function failItem(sessionId: string, refId: string) {
+  updateUploadSession(sessionId, {
+    stage: 'UPLOADING',
+    completed: 0,
+    total: 1,
+    refId,
+    status: 'error',
+  });
+}
+
 function renderStage(
   resumeSessionIds: string[],
   closeModal: () => void = vi.fn(),
@@ -149,7 +160,6 @@ describe('UploadStage', () => {
 
   it('renders the resumed session items with the uploading chrome', () => {
     startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
       clientId: 'client-1',
     });
 
@@ -163,7 +173,6 @@ describe('UploadStage', () => {
 
   it('previews the actual local file for items with uri and mime type', () => {
     startUploadSession('s1', ['photo.jpg'], {
-      groupId: 'g1',
       clientId: 'client-1',
       files: [{ uri: 'file://photo.jpg', type: 'image/jpeg' }],
     });
@@ -176,7 +185,6 @@ describe('UploadStage', () => {
 
   it('falls back to the default icon when no preview metadata exists', () => {
     startUploadSession('s1', ['scan.pdf'], {
-      groupId: 'g1',
       clientId: 'client-1',
     });
 
@@ -188,7 +196,6 @@ describe('UploadStage', () => {
 
   it('shows Done and stays open until the user closes it', () => {
     startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
       clientId: 'client-1',
     });
     const closeModal = vi.fn();
@@ -207,9 +214,9 @@ describe('UploadStage', () => {
 
   it('shows a failed state with Retry and no footer action', () => {
     startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
       clientId: 'client-1',
-      onRetryItem: () => undefined,
+      refIds: ['ref-a'],
+      onRetryItems: () => undefined,
     });
     const closeModal = vi.fn();
 
@@ -227,7 +234,6 @@ describe('UploadStage', () => {
 
   it('closes when every file is cancelled individually', () => {
     startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
       clientId: 'client-1',
     });
     const closeModal = vi.fn();
@@ -242,36 +248,85 @@ describe('UploadStage', () => {
     expect(closeModal).toHaveBeenCalled();
   });
 
-  it('retry starts a replacement session with the same group id', () => {
-    startUploadSession('s1', ['a.pdf'], {
-      groupId: 'g1',
-      clientId: 'client-1',
-      onRetryItem: () =>
-        startUploadSession('s2', ['a.pdf'], {
-          groupId: 'g1',
-          clientId: 'client-1',
-        }),
-    });
-    updateUploadSession('s1', {
-      stage: 'UPLOADING',
-      completed: 0,
-      total: 1,
-      refId: 'pending-0',
-      status: 'error',
-    });
+  it('retries a failed file in place, keeping one session', () => {
+    const onRetryItems = vi.fn();
 
-    const { getByLabelText, getByText } = renderStage(['s1']);
+    startUploadSession('s1', ['a.pdf', 'b.pdf'], {
+      clientId: 'client-1',
+      refIds: ['ref-a', 'ref-b'],
+      onRetryItems,
+    });
+    failItem('s1', 'ref-a');
+
+    const { getByLabelText } = renderStage(['s1']);
 
     act(() => {
       fireEvent.press(getByLabelText('retry-a.pdf'));
     });
 
-    // The failed session is replaced; the new session (same group) renders.
-    expect(store.get(uploadSessionsAtom).map((session) => session.id)).toEqual([
-      's2',
+    // No replacement session: the row the user tapped is the row that resets.
+    const sessions = store.get(uploadSessionsAtom);
+    expect(sessions.map((session) => session.id)).toEqual(['s1']);
+    expect(sessions[0].items.map((item) => item.status)).toEqual([
+      'pending',
+      'pending',
     ]);
+    expect(onRetryItems).toHaveBeenCalledWith(['ref-a']);
+  });
+
+  it('retries every failed file in one run', () => {
+    const onRetryItems = vi.fn();
+
+    startUploadSession('s1', ['a.pdf', 'b.pdf', 'c.pdf'], {
+      clientId: 'client-1',
+      refIds: ['ref-a', 'ref-b', 'ref-c'],
+      onRetryItems,
+    });
+    failItem('s1', 'ref-a');
+    failItem('s1', 'ref-c');
+
+    const { getByLabelText } = renderStage(['s1']);
+
+    act(() => {
+      fireEvent.press(getByLabelText('Retry all 2 failed files'));
+    });
+
+    // One call carrying both files, not one call per file — each call is a
+    // full generate/upload/save/refetch cycle.
+    expect(onRetryItems).toHaveBeenCalledTimes(1);
+    expect(onRetryItems).toHaveBeenCalledWith(['ref-a', 'ref-c']);
+  });
+
+  it('offers no bulk retry when only one file failed', () => {
+    startUploadSession('s1', ['a.pdf', 'b.pdf'], {
+      clientId: 'client-1',
+      refIds: ['ref-a', 'ref-b'],
+      onRetryItems: () => undefined,
+    });
+    failItem('s1', 'ref-a');
+
+    const { queryByLabelText } = renderStage(['s1']);
+
+    expect(queryByLabelText('Retry all 1 failed files')).toBeNull();
+    expect(queryByLabelText('retry-a.pdf')).toBeTruthy();
+  });
+
+  it('shows every resumed session, not just the first one', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      clientId: 'client-1',
+      refIds: ['ref-a'],
+    });
+    startUploadSession('s2', ['b.pdf'], {
+      clientId: 'client-2',
+      refIds: ['ref-b'],
+    });
+
+    const { getByText } = renderStage(['s1', 's2']);
+
+    // Concurrent uploads used to be scoped away by the first session's
+    // group id, so the bar counted files this screen never showed.
     expect(getByText('a.pdf')).toBeTruthy();
-    expect(getByText('Uploading…')).toBeTruthy();
+    expect(getByText('b.pdf')).toBeTruthy();
   });
 
   it('closes immediately when the resumed sessions no longer exist', () => {

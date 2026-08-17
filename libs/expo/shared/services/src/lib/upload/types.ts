@@ -4,6 +4,13 @@ export type TUploadFile = {
   type: string;
   /** Per-file abort signal (e.g. from a per-item cancel control). */
   signal?: AbortSignal;
+  /**
+   * Caller-owned correlation id. Supply it when the file already has an
+   * identity outside this run — a retry re-uploads one file from an
+   * existing session, and reusing its refId keeps progress events landing
+   * on the same row instead of orphaning it. Generated when omitted.
+   */
+  refId?: string;
 };
 
 /** Input sent to the backend to request presigned POSTs (correlated by refId). */

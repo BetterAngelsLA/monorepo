@@ -101,7 +101,12 @@ export async function runPresignedUpload<TResolve>(
   };
 
   // 1. Correlate files to refIds so server responses map back to originals.
-  const manifest = files.map((file) => ({ refId: generateRefId(), file }));
+  // A caller-supplied refId wins so a retry run reports against the row the
+  // file already occupies rather than creating a new one.
+  const manifest = files.map((file) => ({
+    refId: file.refId ?? generateRefId(),
+    file,
+  }));
   onManifest?.(manifest);
   const fileByRefId = new Map(
     manifest.map((entry) => [entry.refId, entry.file]),

@@ -68,6 +68,41 @@ describe('runPresignedUpload', () => {
     expect(result).toBe(2);
   });
 
+  it('uses a caller-supplied refId instead of generating one', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const progress: TUploadProgress[] = [];
+
+    // A retry re-runs one file from an existing session; reusing its refId
+    // keeps progress landing on the row that file already occupies.
+    await runPresignedUpload({
+      files: [{ ...file('a.pdf'), refId: 'session-ref-a' }],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async () => undefined,
+      onProgress: (event) => progress.push(event),
+    });
+
+    expect(progress.map((event) => event.refId)).toContain('session-ref-a');
+    expect(progress.map((event) => event.refId)).not.toContain('ref-0');
+  });
+
+  it('mixes caller-supplied and generated refIds', async () => {
+    uploadFileToS3.mockResolvedValue({ key: 'k' });
+    const manifests: Array<{ refId: string; file: TUploadFile }> = [];
+
+    await runPresignedUpload({
+      files: [{ ...file('a.pdf'), refId: 'kept' }, file('b.pdf')],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async () => undefined,
+      onManifest: (manifest) => manifests.push(...manifest),
+    });
+
+    expect(manifests.map((entry) => entry.refId)).toEqual(['kept', 'ref-0']);
+  });
+
   it('emits progress through the stages', async () => {
     uploadFileToS3.mockResolvedValue({ key: 'k' });
     const events: TUploadProgress[] = [];

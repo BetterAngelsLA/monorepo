@@ -29,7 +29,7 @@ vi.mock('./useUploadProgress', () => ({
 }));
 
 let lastHandle: TUploadSessionHandle | undefined;
-let lastRetryIndex: number | undefined;
+let lastRetryRefIds: string[] | undefined;
 
 function Harness() {
   const {
@@ -61,7 +61,7 @@ function Harness() {
           lastHandle = begin(['c.pdf'], {
             cancellable: false,
             label: 'Consent Forms',
-            onRetryItem: () => undefined,
+            onRetryItems: () => undefined,
             clientId: 'client-1',
             files: [{ uri: 'file://c.pdf', type: 'application/pdf' }],
           });
@@ -75,8 +75,9 @@ function Harness() {
         accessibilityHint="begin an upload with per-item retry"
         onPress={() => {
           lastHandle = begin(['x.pdf', 'y.pdf'], {
-            onRetryItem: (index) => {
-              lastRetryIndex = index;
+            refIds: ['ref-x', 'ref-y'],
+            onRetryItems: (refIds) => {
+              lastRetryRefIds = refIds;
             },
           });
         }}
@@ -140,7 +141,7 @@ function Harness() {
 describe('useUploadSession', () => {
   beforeEach(() => {
     lastHandle = undefined;
-    lastRetryIndex = undefined;
+    lastRetryRefIds = undefined;
     Object.values(mocks).forEach((mock) => mock.mockClear());
   });
 
@@ -180,7 +181,7 @@ describe('useUploadSession', () => {
     // No onCancelItem → no per-item cancel buttons.
     expect(options.onCancelItem).toBeUndefined();
     expect(options.label).toBe('Consent Forms');
-    expect(typeof options.onRetryItem).toBe('function');
+    expect(typeof options.onRetryItems).toBe('function');
     expect(options.clientId).toBe('client-1');
     expect(options.files).toEqual([
       { uri: 'file://c.pdf', type: 'application/pdf' },
@@ -190,7 +191,7 @@ describe('useUploadSession', () => {
     expect(lastHandle?.isAborted()).toBe(false);
   });
 
-  it('forwards per-item retry callbacks with the item index', () => {
+  it('forwards caller-owned refIds and the in-place retry callback', () => {
     const { getByLabelText } = render(<Harness />);
 
     fireEvent.press(getByLabelText('begin retryable'));
@@ -200,12 +201,39 @@ describe('useUploadSession', () => {
     expect(names).toEqual(['x.pdf', 'y.pdf']);
     expect(options.label).toBeUndefined();
     expect(typeof options.onCancelItem).toBe('function');
-    expect(typeof options.onRetryItem).toBe('function');
+    expect(typeof options.onRetryItems).toBe('function');
+    // Stable identity so a retry run reports against the same rows.
+    expect(options.refIds).toEqual(['ref-x', 'ref-y']);
 
-    // The in-flight row invokes onRetryItem with the failed item's index.
-    options.onRetryItem(1);
-    expect(lastRetryIndex).toBe(1);
+    // Retry hands back every refId being re-run, so several failed files
+    // can be retried in a single transport run.
+    options.onRetryItems(['ref-x', 'ref-y']);
+    expect(lastRetryRefIds).toEqual(['ref-x', 'ref-y']);
     expect(lastHandle?.id).toBe(id);
+  });
+
+  it('renewSignals swaps in fresh controllers for a retry run', () => {
+    const { getByLabelText } = render(<Harness />);
+
+    fireEvent.press(getByLabelText('begin'));
+
+    const [, , options] = mocks.startUpload.mock.calls[0];
+    const original = lastHandle?.signals ?? [];
+
+    options.onCancelItem(0);
+    expect(original[0]?.aborted).toBe(true);
+
+    // A retried file needs a controller that is not already aborted, or the
+    // pipeline would skip it as cancelled the moment it started.
+    const renewed = lastHandle?.renewSignals([0]) ?? [];
+    expect(renewed[0]?.aborted).toBe(false);
+    expect(renewed[0]).not.toBe(original[0]);
+    // Untouched files keep their existing controller.
+    expect(renewed[1]).toBe(original[1]);
+
+    // Cancel still aborts the run that is actually in flight.
+    options.onCancelItem(0);
+    expect(renewed[0]?.aborted).toBe(true);
   });
 
   it('forwards setUploadManifest, updateUpload, failUpload, completeUpload and endUpload', () => {

@@ -4,7 +4,7 @@ import {
   completeUploadSession,
   endUploadSession,
   failUploadSession,
-  retryUploadItemSession,
+  retryUploadItemsSession,
   setUploadManifestSession,
   startUploadSession,
   updateUploadSession,
@@ -29,6 +29,6 @@ export function useUploadProgress(): TUploadProgressContextValue {
     completeUpload: completeUploadSession,
     endUpload: endUploadSession,
     cancelUploadItem: cancelUploadItemSession,
-    retryUploadItem: retryUploadItemSession,
+    retryUploadItems: retryUploadItemsSession,
   };
 }

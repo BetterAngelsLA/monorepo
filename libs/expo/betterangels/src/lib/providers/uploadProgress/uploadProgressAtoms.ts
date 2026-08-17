@@ -38,7 +38,7 @@ export function startUploadSession(
   names: string[],
   options?: TStartUploadOptions,
 ) {
-  const { onCancelItem, label, onRetryItem, clientId, groupId, files } =
+  const { onCancelItem, label, onRetryItems, clientId, refIds, files } =
     options ?? {};
 
   // Uploads accumulate until dismissed so several can be in flight at once.
@@ -48,17 +48,16 @@ export function startUploadSession(
       id,
       stage: 'GENERATING',
       items: names.map((name, index) => ({
-        refId: `pending-${index}`,
+        refId: refIds?.[index] ?? `pending-${index}`,
         name,
         uri: files?.[index]?.uri,
         mimeType: files?.[index]?.type,
         status: 'pending' as TUploadItemStatus,
         onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
-        onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
       })),
       label,
       clientId,
-      groupId,
+      onRetryItems,
     },
   ]);
 }
@@ -82,7 +81,6 @@ export function setUploadManifestSession(
           mimeType: session.items[index]?.mimeType,
           status: session.items[index]?.status ?? 'pending',
           onCancel: session.items[index]?.onCancel,
-          onRetry: session.items[index]?.onRetry,
         })),
       };
     }),
@@ -189,29 +187,53 @@ export function endUploadSession(id: string) {
   commit(getSessions().filter((session) => session.id !== id));
 }
 
-export function retryUploadItemSession(sessionId: string, refId: string) {
+/**
+ * Retries failed items in place. The items go back to `pending` and the
+ * session re-runs them against their existing refIds, so one user action
+ * stays one session however many retries it takes — and retrying several
+ * files at once costs one transport run, not one per file.
+ */
+export function retryUploadItemsSession(sessionId: string, refIds: string[]) {
   const session = getSessions().find((s) => s.id === sessionId);
-  const item = session?.items.find((i) => i.refId === refId);
 
-  if (!session || !item) {
+  if (!session) {
     return;
   }
 
-  // Start the replacement session first so it surfaces as the latest session
-  // (sessions are appended, and consumers show the last).
-  item.onRetry?.();
+  const retrying = new Set(
+    session.items
+      .filter((item) => refIds.includes(item.refId) && item.status === 'error')
+      .map((item) => item.refId),
+  );
 
-  const items = session.items.filter((i) => i.refId !== refId);
-
-  if (!items.length) {
-    // The retried file was the only item → nothing left in this session.
-    commit(getSessions().filter((s) => s.id !== sessionId));
+  if (!retrying.size) {
     return;
   }
 
   commit(
-    getSessions().map((s) => (s.id !== sessionId ? s : { ...s, items })),
+    getSessions().map((s) =>
+      s.id !== sessionId
+        ? s
+        : {
+            ...s,
+            stage: 'GENERATING',
+            // The previous run's message no longer describes this attempt.
+            errorMessage: undefined,
+            items: s.items.map((item) =>
+              retrying.has(item.refId)
+                ? {
+                    ...item,
+                    status: 'pending' as TUploadItemStatus,
+                    bytesSent: undefined,
+                    totalBytes: undefined,
+                  }
+                : item,
+            ),
+          },
+    ),
   );
+
+  session.onRetryItems?.([...retrying]);
 }
 
 export function cancelUploadItemSession(sessionId: string, refId: string) {

@@ -22,8 +22,6 @@ export type TUploadItem = {
   totalBytes?: number;
   /** Aborts this file's upload. Invoked by the per-item cancel action. */
   onCancel?: () => void;
-  /** Re-runs this file's upload. Invoked by the per-item retry action. */
-  onRetry?: () => void;
 };
 
 /**
@@ -47,11 +45,12 @@ export type TUploadSession = {
    */
   clientId?: string;
   /**
-   * Groups sessions that belong to one logical upload (including retry
-   * replacement sessions) so a resumed upload screen can find all of them
-   * even after remounting.
+   * Re-runs the given files inside this session. Retry is in-place: the
+   * items go back to `pending` and a fresh transport run reports against
+   * their existing refIds, so one user action stays one session no matter
+   * how many times its files are retried.
    */
-  groupId?: string;
+  onRetryItems?: (refIds: string[]) => void;
 };
 
 export type TUploadManifestEntry = {
@@ -62,9 +61,14 @@ export type TUploadManifestEntry = {
 export type TStartUploadOptions = {
   onCancelItem?: (index: number) => void;
   label?: string;
-  onRetryItem?: (index: number) => void;
   clientId?: string;
-  groupId?: string;
+  onRetryItems?: (refIds: string[]) => void;
+  /**
+   * Caller-owned refIds, aligned with `names`. Supply them when the flow
+   * needs stable item identity across retry runs; omitted for flows that
+   * pair names to refIds later via `setUploadManifest`.
+   */
+  refIds?: string[];
   /**
    * Per-file source metadata, aligned with `names`, so upload rows can
    * preview the actual file (local image uri, pdf icon, etc.).
@@ -92,6 +96,6 @@ export type TUploadProgressContextValue = {
   endUpload: (id: string) => void;
   /** Aborts and removes a single item from a session. */
   cancelUploadItem: (sessionId: string, refId: string) => void;
-  /** Removes a failed item from its session and starts its per-item retry. */
-  retryUploadItem: (sessionId: string, refId: string) => void;
+  /** Resets the given failed items and re-runs them inside their session. */
+  retryUploadItems: (sessionId: string, refIds: string[]) => void;
 };

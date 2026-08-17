@@ -10,6 +10,12 @@ type TUploadSessionHandle = {
   signals: (AbortSignal | undefined)[];
   /** True once every cancellable file in the session has been cancelled. */
   isAborted: () => boolean;
+  /**
+   * Replaces the abort controllers for the given item indexes and returns
+   * their fresh signals. A retry run needs controllers that are not already
+   * aborted, and the per-item cancel button must abort the *current* run.
+   */
+  renewSignals: (indexes: number[]) => (AbortSignal | undefined)[];
 };
 
 type TBeginOptions = {
@@ -17,18 +23,15 @@ type TBeginOptions = {
   cancellable?: boolean;
   /** Human-readable label (e.g. the doc type) shown in the queue. */
   label?: string;
-  /** Starts a fresh single-file session when a failed item is retried. */
-  onRetryItem?: (index: number) => void;
+  /** Re-runs the given files in place when their rows are retried. */
+  onRetryItems?: (refIds: string[]) => void;
   /**
    * Owning client profile id (docs uploads) so global surfaces such as the
    * progress bar can attribute background sessions to a client.
    */
   clientId?: string;
-  /**
-   * Groups this session with its retry replacement sessions so an upload
-   * screen can find all of them (even after remounting).
-   */
-  groupId?: string;
+  /** Caller-owned refIds, aligned with `names`, stable across retry runs. */
+  refIds?: string[];
   /**
    * Per-file source metadata, aligned with `names`, so upload rows can
    * preview the actual file.
@@ -58,6 +61,8 @@ export function useUploadSession() {
   ): TUploadSessionHandle => {
     const id = randomUUID();
     const cancellable = options?.cancellable !== false;
+    // Mutable so a retry can swap in fresh controllers while the per-item
+    // cancel closures — which capture only the index — keep working.
     const controllers = cancellable
       ? names.map(() => new AbortController())
       : undefined;
@@ -67,9 +72,9 @@ export function useUploadSession() {
         ? (index: number) => controllers[index].abort()
         : undefined,
       label: options?.label,
-      onRetryItem: options?.onRetryItem,
+      onRetryItems: options?.onRetryItems,
       clientId: options?.clientId,
-      groupId: options?.groupId,
+      refIds: options?.refIds,
       files: options?.files,
     });
 
@@ -81,6 +86,15 @@ export function useUploadSession() {
           ? controllers.length > 0 &&
             controllers.every((controller) => controller.signal.aborted)
           : false,
+      renewSignals: (indexes: number[]) => {
+        indexes.forEach((index) => {
+          if (controllers?.[index]) {
+            controllers[index] = new AbortController();
+          }
+        });
+
+        return names.map((_, index) => controllers?.[index]?.signal);
+      },
     };
   };
 

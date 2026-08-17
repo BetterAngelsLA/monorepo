@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   TextBold,
+  TextButton,
   TextRegular,
   UploadItemRow,
 } from '@monorepo/expo/shared/ui-components';
@@ -39,11 +40,10 @@ type TStage = 'uploading' | 'done';
 export default function UploadStage(props: TUploadStageProps) {
   const { closeModal, resumeSessionIds } = props;
 
-  const { sessions, cancelUploadItem, retryUploadItem } = useUploadProgress();
+  const { sessions, cancelUploadItem, retryUploadItems } = useUploadProgress();
 
   const [stage, setStage] = useState<TStage>('uploading');
 
-  const resumeIdsRef = useRef<string[]>(resumeSessionIds);
   const hasShownSessionsRef = useRef(false);
 
   // Hide the global progress bar while this detail view is open.
@@ -52,25 +52,16 @@ export default function UploadStage(props: TUploadStageProps) {
     return () => setUploadStageVisible(false);
   }, []);
 
-  // Sessions shown here: everything sharing the resumed sessions' group id
-  // (including retry replacement sessions). Sessions without a group id
-  // fall back to the explicitly resumed ids.
-  const [groupId] = useState(() => {
-    const resumed = sessions.find((session) =>
-      resumeSessionIds.includes(session.id),
-    );
-    return resumed?.groupId;
-  });
-
-  const ownedSessions = useMemo(() => {
-    if (groupId) {
-      return sessions.filter((session) => session.groupId === groupId);
-    }
-
-    return sessions.filter((session) =>
-      resumeIdsRef.current.includes(session.id),
-    );
-  }, [sessions, groupId]);
+  // Exactly the sessions the progress bar counted when it opened this
+  // screen, so the bar's "Uploading 2 of 6" and this screen can never
+  // disagree. Retry is in-place, so this set is stable for the life of the
+  // screen — there are no replacement sessions to chase, and no group to
+  // scope by (which used to silently hide concurrent uploads).
+  const [resumeIds] = useState(() => resumeSessionIds);
+  const ownedSessions = useMemo(
+    () => sessions.filter((session) => resumeIds.includes(session.id)),
+    [sessions, resumeIds],
+  );
 
   const counts = useMemo(
     () => ownedSessions.map(uploadSessionCounts),
@@ -83,6 +74,30 @@ export default function UploadStage(props: TUploadStageProps) {
     (count) => !count.complete && !count.failed,
   );
   const anyFailed = counts.some((count) => count.failed);
+
+  // Failed items across every shown session, so one tap can re-run them all
+  // in one transport run each instead of forcing a tap (and a full
+  // generate/upload/save/refetch cycle) per file.
+  const failedBySession = useMemo(
+    () =>
+      ownedSessions
+        .map((session) => ({
+          id: session.id,
+          refIds: session.items
+            .filter((item) => item.status === 'error')
+            .map((item) => item.refId),
+        }))
+        .filter((entry) => entry.refIds.length > 0),
+    [ownedSessions],
+  );
+
+  const failedCount = failedBySession.reduce(
+    (total, entry) => total + entry.refIds.length,
+    0,
+  );
+
+  const retryAll = () =>
+    failedBySession.forEach((entry) => retryUploadItems(entry.id, entry.refIds));
 
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):
@@ -143,6 +158,17 @@ export default function UploadStage(props: TUploadStageProps) {
           : 'You can leave this screen — uploads continue in the background.'}
       </TextRegular>
 
+      {failedCount > 1 && (
+        <View style={styles.retryAll}>
+          <TextButton
+            title={`Retry all ${failedCount} failed files`}
+            fontSize="sm"
+            onPress={retryAll}
+            accessibilityHint="Retries every file that failed to upload"
+          />
+        </View>
+      )}
+
       <ScrollView style={styles.list}>
         <View style={styles.listContent}>
           {ownedSessions.map((session) => (
@@ -175,8 +201,8 @@ export default function UploadStage(props: TUploadStageProps) {
                   }
                   onCancel={() => cancelUploadItem(session.id, item.refId)}
                   onRetry={
-                    item.status === 'error' && item.onRetry
-                      ? () => retryUploadItem(session.id, item.refId)
+                    item.status === 'error' && session.onRetryItems
+                      ? () => retryUploadItems(session.id, [item.refId])
                       : undefined
                   }
                 />
@@ -209,5 +235,8 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     marginBottom: Spacings.xxs,
+  },
+  retryAll: {
+    alignSelf: 'flex-start',
   },
 });
