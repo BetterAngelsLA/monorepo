@@ -13,7 +13,7 @@ from django.db.models import Count, F
 
 
 class Command(BaseCommand):
-    help = "Audit org-scoped team data (cross-org refs, legacy backfill status)."
+    help = "Audit org-scoped team data (team counts per org, cross-org team references)."
 
     def handle(self, *args, **options):  # type: ignore[no-untyped-def]
         from notes.models import Note
