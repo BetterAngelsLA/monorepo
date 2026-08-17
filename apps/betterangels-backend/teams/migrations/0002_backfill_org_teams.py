@@ -1,7 +1,21 @@
-"""Backfill org-scoped Team rows from the deprecated SelahTeamEnum.
+"""Safety net for the SelahTeamEnum → Team backfill.
 
-For every organization whose notes/tasks still carry a legacy
-``old_team`` value without a ``team`` FK:
+**This is not the original backfill.**  That shipped in #2151 (June 2026) as
+``RunPython`` inside ``notes.0033`` and ``tasks.0006``, which created the
+per-org ``Team`` rows and copied ``old_team`` into the ``team`` FK.  Those
+files were later deleted by the migration squash in #2247 — after production
+had already applied them — so the *data* migration happened and only the
+*files* went away.  The squashed ``0001_initial`` / ``0002_initial`` carry
+schema operations only.
+
+So on any database that followed the normal path this migration finds nothing
+to do: rows backfilled in June have ``team`` set and are filtered out.  It
+exists for the cases that did not follow that path — a database restored from
+a pre-#2151 dump, or an environment rebuilt from the squashed migrations while
+holding legacy rows.
+
+For every organization whose notes/tasks still carry a legacy ``old_team``
+value without a ``team`` FK:
 
 1. Create the missing ``Team`` row scoped to that organization.
 2. Point the notes/tasks at it.
