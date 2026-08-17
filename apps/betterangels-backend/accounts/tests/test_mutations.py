@@ -259,6 +259,64 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.assertIsNotNone(response["data"]["addOrganizationMember"]["id"])
         self.assertEqual(initial_org_member_count, OrganizationUser.objects.count())
 
+    def test_add_organization_member_mixed_case_email(self) -> None:
+        """Adding with a mixed-case email finds the existing (lowercased) user
+        instead of creating a duplicate or raising IntegrityError."""
+        existing_member = baker.make(
+            User,
+            first_name="Mixed",
+            last_name="Case",
+            email="mixedcase@example.com",
+            is_active=False,
+        )
+
+        new_member = {
+            "email": "MixedCase@Example.com",
+            "firstName": "Mixed",
+            "middleName": "Ish",
+            "lastName": "Case",
+        }
+
+        mutation = """
+            mutation ($data: OrgInvitationInput!) {
+                addOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                        email
+                    }
+                }
+            }
+        """
+
+        variables = {
+            **new_member,
+            "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
+        }
+
+        with patch("accounts.backends.CustomInvitations.send_invitation"):
+            response = self.execute_graphql(mutation, {"data": variables})
+
+        # No IntegrityError / duplicate — the existing user is reused.
+        self.assertNotIn("messages", response["data"]["addOrganizationMember"])
+        self.assertEqual(
+            response["data"]["addOrganizationMember"]["id"],
+            str(existing_member.pk),
+        )
+        self.assertEqual(response["data"]["addOrganizationMember"]["email"], "mixedcase@example.com")
+        self.assertEqual(User.objects.filter(email="mixedcase@example.com").count(), 1)
+
+        # The deactivated user is reactivated by member_add.
+        existing_member.refresh_from_db()
+        self.assertTrue(existing_member.is_active)
+
     def test_remove_organization_member(self) -> None:
 
         removable_member = baker.make(
