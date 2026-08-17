@@ -9,7 +9,7 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import get_object_or_permission_error, maybe_int_value
+from common.graphql.utils import apply_maybe, get_object_or_permission_error, maybe_int_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
@@ -90,6 +90,9 @@ class Mutation:
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         org_id = get_current_organization(info)
+        # Load-bearing org filter — see the note in notes.schema.update_note:
+        # guardian's global permission fallback means object perms alone do not
+        # confine a write to the owning org.
         qs: QuerySet[Task] = info.context.qs.filter(organization_id=org_id)
 
         # Resolve team before asdict.  A miss here means the task belongs to
@@ -102,12 +105,9 @@ class Mutation:
         )
 
         clean = asdict(data)
-        clean.pop("team_id", None)
-        # Only touch the team when teamId was explicitly provided (UNSET
-        # leaves the current team unchanged).  Org validation happens in the
-        # task_update service.
-        if data.team_id is not strawberry.UNSET:
-            clean["team_id"] = maybe_int_value(data.team_id)
+        # UNSET leaves the current team unchanged; org validation happens in
+        # the task_update service.
+        apply_maybe(clean, "team_id", data.team_id, maybe_int_value)
 
         task = task_update(task=task, data=clean)
 

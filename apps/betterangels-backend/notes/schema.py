@@ -13,7 +13,7 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error, maybe_int_value
+from common.graphql.utils import apply_maybe, get_object_or_permission_error, maybe_int_value
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from common.services.types import UploadRequest, UploadConfirmation
@@ -171,18 +171,20 @@ class Mutation:
         org_id = get_current_organization(info)
         permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
-        # Object-level CHANGE perms already bind the note to the user's org;
-        # additionally scope to the active organization from the request header.
+        # Scope to the active organization from the request header, on top of
+        # object-level CHANGE perms.
+        #
+        # This filter is load-bearing, not belt-and-braces: cross-org access
+        # currently falls out of guardian's *global* permission fallback (see
+        # docs/teams_org_scoping.md), so object perms alone do not confine a
+        # write to the org that owns the record.  Do not remove it until that
+        # fallback is replaced with an explicit shared-vs-org-owned layer.
         qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
 
         clean = asdict(data)
-        # Pop the Maybe-wrapped team field so setattr doesn't choke on it.
-        clean.pop("team_id", None)
-        # Only touch the team when teamId was explicitly provided (UNSET
-        # leaves the current team unchanged).  Org validation happens in the
-        # note_update service.
-        if data.team_id is not strawberry.UNSET:
-            clean["team_id"] = maybe_int_value(data.team_id)
+        # UNSET leaves the current team unchanged; org validation happens in
+        # the note_update service.
+        apply_maybe(clean, "team_id", data.team_id, maybe_int_value)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(

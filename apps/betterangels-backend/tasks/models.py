@@ -8,6 +8,7 @@ from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from organizations.models import Organization
 from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .managers import TaskManager
 
@@ -62,18 +63,24 @@ class Task(BaseModel):
     def clean(self) -> None:
         """Reject a team from another organization.
 
-        The GraphQL write paths validate this in ``tasks.services`` for a
-        friendlier message, but ``clean()`` also covers the Django admin
+        Delegates to ``teams.validators`` so the rule has one definition.
+        The services call the same validator for a friendlier top-level
+        GraphQL message; ``clean()`` is what covers the Django admin
         (``ModelForm`` calls ``full_clean``), whose ``team`` field would
-        otherwise offer every team in every organization.  Only checks when
-        both sides are set — ``organization`` is nullable, and an org-less
-        task is a pre-existing state we should not block editing.
+        otherwise offer every team in every organization.
         """
         super().clean()
 
-        team = self.team
-        if team and self.organization_id and team.organization_id != self.organization_id:
-            raise ValidationError({"team": "Team must belong to the same organization as the task."})
+        if self.organization_id is None:
+            # ``organization`` is nullable, so org-less rows are a pre-existing
+            # state; the services reject writing one, but editing one that
+            # already exists should not be blocked here.
+            return
+
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     class Meta:
         ordering = ["-updated_at"]

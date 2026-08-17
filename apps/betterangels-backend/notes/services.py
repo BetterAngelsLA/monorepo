@@ -27,7 +27,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from tasks.services import task_create
-from teams.services import resolve_team_id_for_org
+from teams.validators import validate_team_in_org
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -80,10 +80,7 @@ def note_update(
 
     # A team must belong to the note's organization.
     if "team_id" in data:
-        data["team_id"] = resolve_team_id_for_org(
-            team_id=data["team_id"],
-            organization_id=note.organization_id,
-        )
+        validate_team_in_org(team_id=data["team_id"], organization_id=note.organization_id)
 
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
         for field, value in data.items():
@@ -261,10 +258,7 @@ def note_create(
     """
 
     # A team must belong to the note's organization.
-    team_id = resolve_team_id_for_org(
-        team_id=team_id,
-        organization_id=permission_group.organization_id,
-    )
+    validate_team_in_org(team_id=team_id, organization_id=permission_group.organization_id)
 
     location = None
     if location_data:
