@@ -9,6 +9,7 @@ from common.enums import SelahTeamEnum
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -169,6 +170,20 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return self.purpose or str(self.id)
+
+    def clean(self) -> None:
+        """Reject a team from another organization.
+
+        The GraphQL write paths validate this in ``notes.services`` for a
+        friendlier message, but ``clean()`` also covers the Django admin
+        (``ModelForm`` calls ``full_clean``), whose ``team`` field would
+        otherwise offer every team in every organization.
+        """
+        super().clean()
+
+        team = self.team
+        if team and self.organization_id and team.organization_id != self.organization_id:
+            raise ValidationError({"team": "Team must belong to the same organization as the note."})
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

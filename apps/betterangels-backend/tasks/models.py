@@ -3,6 +3,7 @@ from accounts.models import User
 from common.enums import SelahTeamEnum
 from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
+from django.core.exceptions import ValidationError
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from organizations.models import Organization
@@ -57,6 +58,22 @@ class Task(BaseModel):
 
     def __str__(self) -> str:
         return self.summary
+
+    def clean(self) -> None:
+        """Reject a team from another organization.
+
+        The GraphQL write paths validate this in ``tasks.services`` for a
+        friendlier message, but ``clean()`` also covers the Django admin
+        (``ModelForm`` calls ``full_clean``), whose ``team`` field would
+        otherwise offer every team in every organization.  Only checks when
+        both sides are set — ``organization`` is nullable, and an org-less
+        task is a pre-existing state we should not block editing.
+        """
+        super().clean()
+
+        team = self.team
+        if team and self.organization_id and team.organization_id != self.organization_id:
+            raise ValidationError({"team": "Team must belong to the same organization as the task."})
 
     class Meta:
         ordering = ["-updated_at"]
