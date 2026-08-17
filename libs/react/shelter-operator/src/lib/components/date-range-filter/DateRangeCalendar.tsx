@@ -99,6 +99,7 @@ export function DateRangeCalendar({
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const src = open ? draft : toRdp(value);
@@ -108,10 +109,13 @@ export function DateRangeCalendar({
     setToError(false);
   }, [open, draft, value]);
 
-  function setOpen(next: boolean) {
-    if (!isControlled) setInternalOpen(next);
-    onOpenChange?.(next);
-  }
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!isControlled) setInternalOpen(next);
+      onOpenChange?.(next);
+    },
+    [isControlled, onOpenChange]
+  );
 
   function openPopover() {
     const seeded = toRdp(value);
@@ -123,10 +127,23 @@ export function DateRangeCalendar({
     setOpen(true);
   }
 
-  function close() {
+  const close = useCallback(() => {
     setYearGridSide(null);
     setOpen(false);
-  }
+  }, [setOpen]);
+
+  // The date fields sit outside the popover, so Escape has to be caught at the
+  // document rather than on the panel.
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      close();
+      toggleRef.current?.focus();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, close]);
 
   const handleSelect = useCallback(
     (range: RdpDateRange | undefined) => {
@@ -252,8 +269,10 @@ export function DateRangeCalendar({
           onOpen={openOnFocus}
         />
         <button
+          ref={toggleRef}
           type="button"
           aria-label="Toggle calendar"
+          aria-expanded={open}
           onClick={() => (open ? close() : openPopover())}
           className="ml-auto shrink-0"
         >
@@ -269,7 +288,11 @@ export function DateRangeCalendar({
             onClose={close}
             align="left-auto"
           >
-            <div className="flex flex-col gap-3 p-3">
+            <div
+              role="dialog"
+              aria-label="Select date range"
+              className="flex flex-col gap-3 p-3"
+            >
               {yearGridSide ? (
                 renderPane(yearGridSide)
               ) : (
