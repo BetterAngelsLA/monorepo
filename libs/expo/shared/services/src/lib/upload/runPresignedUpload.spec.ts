@@ -14,9 +14,21 @@ vi.mock('expo-crypto', () => ({
   randomUUID: () => '00000000-0000-0000-0000-000000000000',
 }));
 
-vi.mock('../s3', () => ({
-  uploadFileToS3WithPresignedPost: uploadFileToS3,
-}));
+// Only the transport is faked. `isTransientUploadFailure` keeps its real
+// implementation: stubbing it out made every retry decision throw a
+// TypeError that the outer catch quietly reshaped into an S3UploadError, so
+// the retry path looked tested while never running.
+vi.mock('../s3', async () => {
+  const errors = await vi.importActual<typeof import('../s3/errors')>(
+    '../s3/errors',
+  );
+
+  return {
+    uploadFileToS3WithPresignedPost: uploadFileToS3,
+    isTransientUploadFailure: errors.isTransientUploadFailure,
+    S3TransportError: errors.S3TransportError,
+  };
+});
 
 const file = (name: string): TUploadFile => ({
   uri: `file://${name}`,
@@ -101,6 +113,143 @@ describe('runPresignedUpload', () => {
     });
 
     expect(manifests.map((entry) => entry.refId)).toEqual(['kept', 'ref-0']);
+  });
+
+  it('retries a transient failure and succeeds', async () => {
+    const { S3TransportError } = await import('../s3/errors');
+    uploadFileToS3
+      .mockRejectedValueOnce(
+        new S3TransportError('boom', { kind: 'network' }),
+      )
+      .mockResolvedValue({ key: 'k' });
+    const scheduleRetry = vi.fn(async () => undefined);
+
+    const result = await runPresignedUpload({
+      files: [file('a.pdf')],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async (saved) => saved.length,
+      scheduleRetry,
+    });
+
+    expect(uploadFileToS3).toHaveBeenCalledTimes(2);
+    expect(scheduleRetry).toHaveBeenCalledTimes(1);
+    expect(result).toBe(1);
+  });
+
+  it('does not retry a permanent failure', async () => {
+    const { S3TransportError } = await import('../s3/errors');
+    uploadFileToS3.mockRejectedValue(
+      new S3TransportError('denied', { kind: 'http', status: 403 }),
+    );
+    const scheduleRetry = vi.fn(async () => undefined);
+
+    await expect(
+      runPresignedUpload({
+        files: [file('a.pdf')],
+        generateRefId: sequentialRefId(),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload: async () => undefined,
+        scheduleRetry,
+      }),
+    ).rejects.toBeInstanceOf(S3UploadError);
+
+    // A 403 will fail identically every time; retrying only wastes the
+    // user's connection.
+    expect(uploadFileToS3).toHaveBeenCalledTimes(1);
+    expect(scheduleRetry).not.toHaveBeenCalled();
+  });
+
+  it('gives up after maxAttempts on a persistent transient failure', async () => {
+    const { S3TransportError } = await import('../s3/errors');
+    uploadFileToS3.mockRejectedValue(
+      new S3TransportError('flaky', { kind: 'http', status: 503 }),
+    );
+
+    await expect(
+      runPresignedUpload({
+        files: [file('a.pdf')],
+        generateRefId: sequentialRefId(),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload: async () => undefined,
+        maxAttempts: 3,
+        scheduleRetry: async () => undefined,
+      }),
+    ).rejects.toBeInstanceOf(S3UploadError);
+
+    expect(uploadFileToS3).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not retry a file that was cancelled mid-attempt', async () => {
+    const { S3TransportError } = await import('../s3/errors');
+    const controller = new AbortController();
+    uploadFileToS3.mockImplementation(async () => {
+      controller.abort();
+      throw new S3TransportError('dropped', { kind: 'network' });
+    });
+    const scheduleRetry = vi.fn(async () => undefined);
+
+    await runPresignedUpload({
+      files: [{ ...file('a.pdf'), signal: controller.signal }],
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async () => undefined,
+      scheduleRetry,
+    }).catch(() => undefined);
+
+    expect(scheduleRetry).not.toHaveBeenCalled();
+  });
+
+  it('caps how many files upload at once', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    uploadFileToS3.mockImplementation(async () => {
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      inFlight -= 1;
+      return { key: 'k' };
+    });
+
+    await runPresignedUpload({
+      files: Array.from({ length: 9 }, (_, i) => file(`f${i}.pdf`)),
+      generateRefId: sequentialRefId(),
+      generateUpload: async (inputs) =>
+        inputs.map((input) => presigned(input.refId)),
+      resolveUpload: async (saved) => saved.length,
+      concurrency: 3,
+    });
+
+    expect(peak).toBe(3);
+    expect(uploadFileToS3).toHaveBeenCalledTimes(9);
+  });
+
+  it('stops scheduling new uploads once a fail-fast batch has failed', async () => {
+    const { S3TransportError } = await import('../s3/errors');
+    uploadFileToS3
+      .mockRejectedValueOnce(
+        new S3TransportError('denied', { kind: 'http', status: 403 }),
+      )
+      .mockResolvedValue({ key: 'k' });
+
+    await expect(
+      runPresignedUpload({
+        files: Array.from({ length: 9 }, (_, i) => file(`f${i}.pdf`)),
+        generateRefId: sequentialRefId(),
+        generateUpload: async (inputs) =>
+          inputs.map((input) => presigned(input.refId)),
+        resolveUpload: async () => undefined,
+        concurrency: 2,
+      }),
+    ).rejects.toBeInstanceOf(S3UploadError);
+
+    // The whole batch is doomed, so the remaining files must not keep
+    // consuming the connection.
+    expect(uploadFileToS3.mock.calls.length).toBeLessThan(9);
   });
 
   it('emits progress through the stages', async () => {

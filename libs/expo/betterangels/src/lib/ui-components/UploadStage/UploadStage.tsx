@@ -165,7 +165,11 @@ export default function UploadStage(props: TUploadStageProps) {
           ? anyFailed
             ? 'Some files did not upload. Retry below or close this screen.'
             : 'Files are saved to the Doc Library.'
-          : 'You can leave this screen — uploads continue in the background.'}
+          : // Deliberately "while the app is open", not "in the background":
+            // Android has no background upload continuation, and even on iOS
+            // a terminated app loses the save step. Promising more than that
+            // would be a lie on most devices.
+            'You can leave this screen — uploads continue while the app is open.'}
       </TextRegular>
 
       {failedCount > 0 && (
