@@ -63,5 +63,5 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 
-        self.assertEqual(response["data"]["deleteTeam"]["id"], str(team.pk))
+        self.assertEqual(response["data"]["deleteTeam"]["id"], team.pk)
         self.assertFalse(Team.objects.filter(id=team.pk).exists())
