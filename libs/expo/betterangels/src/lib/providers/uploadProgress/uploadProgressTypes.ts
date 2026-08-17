@@ -98,4 +98,6 @@ export type TUploadProgressContextValue = {
   cancelUploadItem: (sessionId: string, refId: string) => void;
   /** Resets the given failed items and re-runs them inside their session. */
   retryUploadItems: (sessionId: string, refIds: string[]) => void;
+  /** Clears a session's failed items (and the session, if none remain). */
+  dismissFailedUploadItems: (sessionId: string) => void;
 };

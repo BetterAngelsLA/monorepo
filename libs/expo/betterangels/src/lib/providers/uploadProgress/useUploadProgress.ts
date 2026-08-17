@@ -2,6 +2,7 @@ import { useAtomValue } from 'jotai';
 import {
   cancelUploadItemSession,
   completeUploadSession,
+  dismissFailedUploadItemsSession,
   endUploadSession,
   failUploadSession,
   retryUploadItemsSession,
@@ -30,5 +31,6 @@ export function useUploadProgress(): TUploadProgressContextValue {
     endUpload: endUploadSession,
     cancelUploadItem: cancelUploadItemSession,
     retryUploadItems: retryUploadItemsSession,
+    dismissFailedUploadItems: dismissFailedUploadItemsSession,
   };
 }

@@ -40,7 +40,12 @@ type TStage = 'uploading' | 'done';
 export default function UploadStage(props: TUploadStageProps) {
   const { closeModal, resumeSessionIds } = props;
 
-  const { sessions, cancelUploadItem, retryUploadItems } = useUploadProgress();
+  const {
+    sessions,
+    cancelUploadItem,
+    retryUploadItems,
+    dismissFailedUploadItems,
+  } = useUploadProgress();
 
   const [stage, setStage] = useState<TStage>('uploading');
 
@@ -98,6 +103,9 @@ export default function UploadStage(props: TUploadStageProps) {
 
   const retryAll = () =>
     failedBySession.forEach((entry) => retryUploadItems(entry.id, entry.refIds));
+
+  const dismissAllFailed = () =>
+    failedBySession.forEach((entry) => dismissFailedUploadItems(entry.id));
 
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):
@@ -158,13 +166,21 @@ export default function UploadStage(props: TUploadStageProps) {
           : 'You can leave this screen — uploads continue in the background.'}
       </TextRegular>
 
-      {failedCount > 1 && (
-        <View style={styles.retryAll}>
+      {failedCount > 0 && (
+        <View style={styles.bulkActions}>
+          {failedCount > 1 && (
+            <TextButton
+              title={`Retry all ${failedCount} failed files`}
+              fontSize="sm"
+              onPress={retryAll}
+              accessibilityHint="Retries every file that failed to upload"
+            />
+          )}
           <TextButton
-            title={`Retry all ${failedCount} failed files`}
+            title="Dismiss failed"
             fontSize="sm"
-            onPress={retryAll}
-            accessibilityHint="Retries every file that failed to upload"
+            onPress={dismissAllFailed}
+            accessibilityHint="Clears the files that failed to upload"
           />
         </View>
       )}
@@ -236,7 +252,9 @@ const styles = StyleSheet.create({
   errorMessage: {
     marginBottom: Spacings.xxs,
   },
-  retryAll: {
-    alignSelf: 'flex-start',
+  bulkActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
   },
 });

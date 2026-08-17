@@ -259,6 +259,36 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
   );
 }
 
+/**
+ * Drops every failed item from a session, removing the session outright if
+ * that empties it.
+ *
+ * Failed sessions are deliberately never auto-pruned — their retry
+ * affordance has to survive navigation — so without an explicit dismissal a
+ * file that keeps failing would pin the global progress bar in its error
+ * state for the rest of the app session.
+ */
+export function dismissFailedUploadItemsSession(sessionId: string) {
+  const session = getSessions().find((s) => s.id === sessionId);
+
+  if (!session) {
+    return;
+  }
+
+  const items = session.items.filter((item) => item.status !== 'error');
+
+  if (!items.length) {
+    commit(getSessions().filter((s) => s.id !== sessionId));
+    return;
+  }
+
+  commit(
+    getSessions().map((s) =>
+      s.id !== sessionId ? s : { ...s, items, errorMessage: undefined },
+    ),
+  );
+}
+
 export function setUploadStageVisible(visible: boolean) {
   defaultStore.set(uploadStageVisibleAtom, visible);
 }

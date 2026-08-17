@@ -58,17 +58,23 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
   }) => {
     mocks.rows.push(props);
 
+    // Mirror the real component's gating; a stub that always renders Cancel
+    // would let the stage's tests pass on behaviour the row never shows.
+    const cancellable =
+      !!props.onCancel &&
+      ['pending', 'uploading', 'error'].includes(props.status);
+
     return (
       <View>
         <Text>{props.filename}</Text>
-        {props.onCancel ? (
+        {cancellable ? (
           <Text
             accessibilityRole="button"
             accessibilityLabel={`cancel-${props.filename}`}
             accessibilityHint="cancels the file upload"
             onPress={props.onCancel}
           >
-            Cancel
+            {props.status === 'error' ? 'Dismiss' : 'Cancel'}
           </Text>
         ) : null}
         {props.status === 'error' && props.onRetry ? (
@@ -327,6 +333,29 @@ describe('UploadStage', () => {
     // group id, so the bar counted files this screen never showed.
     expect(getByText('a.pdf')).toBeTruthy();
     expect(getByText('b.pdf')).toBeTruthy();
+  });
+
+  it('dismisses failed files and closes when nothing is left', () => {
+    startUploadSession('s1', ['a.pdf'], {
+      clientId: 'client-1',
+      refIds: ['ref-a'],
+      onRetryItems: () => undefined,
+    });
+    const closeModal = vi.fn();
+
+    const { getByLabelText } = renderStage(['s1'], closeModal);
+
+    act(() => {
+      failUploadSession('s1', 'boom');
+    });
+
+    act(() => {
+      fireEvent.press(getByLabelText('Dismiss failed'));
+    });
+
+    // The only escape from a repeatedly-failing upload.
+    expect(store.get(uploadSessionsAtom)).toHaveLength(0);
+    expect(closeModal).toHaveBeenCalled();
   });
 
   it('closes immediately when the resumed sessions no longer exist', () => {

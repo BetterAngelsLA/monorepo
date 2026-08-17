@@ -2,6 +2,7 @@ import { getDefaultStore } from 'jotai';
 import {
   cancelUploadItemSession,
   completeUploadSession,
+  dismissFailedUploadItemsSession,
   failUploadSession,
   markUploadPartiallyFailed,
   getUploadSession,
@@ -148,6 +149,36 @@ describe('uploadProgressAtoms', () => {
     });
 
     completeUploadSession('s1');
+    expect(countsFor('s1').complete).toBe(true);
+  });
+
+  it('dismissing the failed items clears a stuck session entirely', () => {
+    const [a, b] = beginSession('s1', ['a.pdf', 'b.pdf']);
+
+    reportError('s1', a, 0);
+    reportError('s1', b, 0);
+    failUploadSession('s1', 'boom');
+
+    // Failed sessions are never auto-pruned, so without this the global
+    // progress bar would stay in its error state for the whole app session.
+    dismissFailedUploadItemsSession('s1');
+
+    expect(store.get(uploadSessionsAtom)).toHaveLength(0);
+  });
+
+  it('dismissing failed items keeps the successful ones', () => {
+    const [a, b] = beginSession('s1', ['a.pdf', 'b.pdf']);
+
+    reportUploaded('s1', a, 1);
+    reportError('s1', b, 1);
+    completeUploadSession('s1');
+    markUploadPartiallyFailed('s1', '1 of 2 files failed to upload.');
+
+    dismissFailedUploadItemsSession('s1');
+
+    expect(statuses('s1')).toEqual(['done']);
+    expect(getUploadSession('s1')?.errorMessage).toBeUndefined();
+    // Now fully persisted, so the cleanup can prune it normally.
     expect(countsFor('s1').complete).toBe(true);
   });
 

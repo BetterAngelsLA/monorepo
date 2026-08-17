@@ -72,18 +72,73 @@ describe('UploadItemRow', () => {
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it('shows a Retry action for a failed item and no Cancel', () => {
+  it('offers both Retry and Dismiss for a failed item', () => {
     const onRetry = vi.fn();
+    const onCancel = vi.fn();
     const { getByText, queryByText } = render(
-      <UploadItemRow filename="a.pdf" status="error" onRetry={onRetry} />,
+      <UploadItemRow
+        filename="a.pdf"
+        status="error"
+        onRetry={onRetry}
+        onCancel={onCancel}
+      />,
     );
 
     expect(getByText('Failed')).toBeTruthy();
     expect(getByText('Retry')).toBeTruthy();
+    // A failed row must be clearable: retry can keep failing, and a session
+    // that can never be emptied pins the global progress bar in its error
+    // state for the rest of the app session.
+    expect(getByText('Dismiss')).toBeTruthy();
     expect(queryByText('Cancel')).toBeNull();
 
     fireEvent.press(getByText('Retry'));
     expect(onRetry).toHaveBeenCalled();
+
+    fireEvent.press(getByText('Dismiss'));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it('labels the in-flight removal Cancel and the settled one Dismiss', () => {
+    const uploading = render(
+      <UploadItemRow
+        filename="a.pdf"
+        status="uploading"
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(uploading.getByText('Cancel')).toBeTruthy();
+
+    const failed = render(
+      <UploadItemRow filename="a.pdf" status="error" onCancel={vi.fn()} />,
+    );
+    expect(failed.getByText('Dismiss')).toBeTruthy();
+  });
+
+  it('shows a saving label once the bytes are up but not yet persisted', () => {
+    const { getByText, queryByText } = render(
+      <UploadItemRow filename="a.pdf" status="uploaded" onCancel={vi.fn()} />,
+    );
+
+    // Not "Done": the file is in S3 but has no document record yet.
+    expect(getByText('Saving…')).toBeTruthy();
+    expect(queryByText('Done')).toBeNull();
+  });
+
+  it('keeps the row actions reachable to screen readers', () => {
+    const { getByLabelText } = render(
+      <UploadItemRow
+        filename="a.pdf"
+        status="error"
+        onRetry={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    // `accessible` on the row container would collapse these into the
+    // status label on iOS and make them unreachable.
+    expect(getByLabelText('Retry')).toBeTruthy();
+    expect(getByLabelText('Dismiss')).toBeTruthy();
   });
 
   it('shows Done for a finished item without actions', () => {

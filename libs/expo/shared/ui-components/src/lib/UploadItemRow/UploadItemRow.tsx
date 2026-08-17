@@ -44,7 +44,12 @@ interface IUploadItemRowProps {
   /** 0-100 progress for an uploading file; renders a progress bar. */
   progressPct?: number | null;
   thumbnail?: ReactNode;
-  /** Present to allow aborting the file while pending/uploading. */
+  /**
+   * Removes the file from its session: aborts it while in flight, and
+   * dismisses it once it has failed. A failed row needs this — without it a
+   * file that keeps failing can never be cleared, which pins the global
+   * progress bar in its error state forever.
+   */
   onCancel?: () => void;
   /** Present to allow re-running a failed file. */
   onRetry?: () => void;
@@ -59,7 +64,11 @@ export function UploadItemRow(props: IUploadItemRowProps) {
   const { filename, status, progressPct, thumbnail, onCancel, onRetry } = props;
 
   const cancellable =
-    !!onCancel && (status === 'pending' || status === 'uploading');
+    !!onCancel &&
+    (status === 'pending' || status === 'uploading' || status === 'error');
+  // Aborting work in flight and clearing a settled failure are different
+  // enough acts to name differently.
+  const cancelTitle = status === 'error' ? 'Dismiss' : 'Cancel';
   const pct =
     status === 'uploading' && progressPct != null
       ? Math.min(100, Math.round(progressPct))
@@ -67,13 +76,18 @@ export function UploadItemRow(props: IUploadItemRowProps) {
   const statusLabel = pct != null ? `${pct}%` : STATUS_LABELS[status];
 
   return (
-    <View
-      style={styles.row}
-      accessible
-      accessibilityLabel={`${filename}, ${statusLabel}`}
-      accessibilityHint="Shows the status of this file's upload"
-    >
-      <View style={styles.leading}>
+    <View style={styles.row}>
+      {/*
+       * `accessible` belongs on the status block, not the row: on iOS it
+       * collapses everything beneath it into one element, which made the
+       * Cancel/Retry buttons unreachable by VoiceOver.
+       */}
+      <View
+        style={styles.leading}
+        accessible
+        accessibilityLabel={`${filename}, ${statusLabel}`}
+        accessibilityHint="Shows the status of this file's upload"
+      >
         <View style={styles.thumbnail}>
           {!!thumbnail && thumbnail}
           {!thumbnail && (
@@ -105,10 +119,14 @@ export function UploadItemRow(props: IUploadItemRowProps) {
 
         {cancellable && (
           <TextButton
-            title="Cancel"
+            title={cancelTitle}
             fontSize="sm"
             onPress={onCancel}
-            accessibilityHint={`Cancels upload of ${filename}`}
+            accessibilityHint={
+              status === 'error'
+                ? `Dismisses the failed upload of ${filename}`
+                : `Cancels upload of ${filename}`
+            }
           />
         )}
 
