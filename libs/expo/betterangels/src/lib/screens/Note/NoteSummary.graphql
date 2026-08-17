@@ -9,7 +9,6 @@ query NoteSummary($id: ID!) {
       purpose
       currentTeam {
         id
-        slug
         name
       }
       clientProfile {

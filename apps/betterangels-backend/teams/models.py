@@ -2,18 +2,18 @@
 
 from common.models import BaseModel
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class Team(BaseModel):
     """Team, scoped per organization.
 
-    Teams are managed by org admins through the admin app.  *slug* is
-    the machine-readable identifier, unique per organization (see
-    ``unique_team_slug_per_org``).  Teams are referenced by ``id`` (FK)
-    on notes and tasks.
+    Teams are managed by org admins through the admin app and referenced by
+    ``id`` (FK) on notes and tasks.  *name* is the only identifier: it is what
+    users see and type, and it is unique per organization case-insensitively
+    (see ``unique_team_name_per_org``).
     """
 
-    slug = models.CharField(max_length=100)
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(
         "organizations.Organization",
@@ -25,9 +25,9 @@ class Team(BaseModel):
         ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
-                "slug",
+                Lower("name"),
                 "organization",
-                name="unique_team_slug_per_org",
+                name="unique_team_name_per_org",
             ),
         ]
 

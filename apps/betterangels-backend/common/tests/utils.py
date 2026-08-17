@@ -163,27 +163,6 @@ class NumQueriesWithoutCacheMixin:
         return _MaxNumQueriesContext(self, max_query_count)
 
 
-# (slug, name) for the teams the June data migration created in every
-# organization. Mirrors ``reports.management.commands.load_report_test_data``.
-SEED_TEAMS = [
-    ("bowtie_riverside_outreach", "Bowtie & Riverside Outreach"),
-    ("echo_park_on_site", "Echo Park On-site"),
-    ("echo_park_outreach", "Echo Park Outreach"),
-    ("hollywood_on_site", "Hollywood On-site"),
-    ("hollywood_outreach", "Hollywood Outreach"),
-    ("la_river_outreach", "LA River Outreach"),
-    ("los_feliz_outreach", "Los Feliz Outreach"),
-    ("northeast_hollywood_outreach", "Northeast Hollywood Outreach"),
-    ("selah_staff", "SELAH Staff"),
-    ("silver_lake_outreach", "Silver Lake Outreach"),
-    ("slcc_on_site", "SLCC On-site"),
-    ("sunday_social_atwater_on_site", "Sunday Social / Atwater On-site"),
-    ("sunday_social_atwater_outreach", "Sunday Social / Atwater Outreach"),
-    ("wdi_on_site", "WDI On-site"),
-    ("wdi_outreach", "WDI Outreach"),
-]
-
-
 class GraphQLBaseTestCase(
     GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
 ):
@@ -220,15 +199,32 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Every org gets the teams the June data migration created, spelled out
-        # rather than derived from ``SelahTeamEnum``. The enum is on its way out
-        # and nothing outside the ``old_team`` columns should depend on it — the
-        # same reason ``load_report_test_data`` carries its own ``SEED_TEAMS``.
-        # Tests identify these by name; ``slug`` is populated only because the
-        # column still exists and is dropped in a later PR.
-        for slug, name in SEED_TEAMS:
+        # Teams for both orgs so tests can exercise org-scoped assignment.
+        # Test-local list — product teams are created by org admins in the
+        # admin UI.  Names must be distinct per org: ``unique_team_name_per_org``
+        # is case-insensitive on name.
+        for team_name in (
+            "Bowtie & Riverside Outreach",
+            "Echo Park On-site",
+            "Echo Park Outreach",
+            "Hollywood On-site",
+            "Hollywood Outreach",
+            "LA River Outreach",
+            "Los Feliz Outreach",
+            "Northeast Hollywood Outreach",
+            "SELAH Staff",
+            "Silver Lake Outreach",
+            "SLCC On-site",
+            "Sunday Social / Atwater On-site",
+            "Sunday Social / Atwater Outreach",
+            "WDI On-site",
+            "WDI Outreach",
+        ):
             for org in (self.org_1, self.org_2):
-                Team.objects.get_or_create(slug=slug, organization=org, defaults={"name": name})
+                Team.objects.get_or_create(
+                    name=team_name,
+                    organization=org,
+                )
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of

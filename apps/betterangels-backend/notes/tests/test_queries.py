@@ -29,7 +29,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         note_id = self.note["id"]
         task = self.create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
         # Build LocationInput for the fixture
@@ -48,7 +47,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
-                "teamId": str(team.pk),
+                "teamId": str(Team.objects.get(name="WDI On-site", organization=self.org_1).pk),
             }
         )
         # Update location via dedicated mutation
@@ -85,7 +84,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "privateDetails": "Updated private details",
             "publicDetails": "Updated public details",
             "purpose": "Updated Note",
-            "currentTeam": {"id": str(team.pk), "name": team.name},
             "location": {
                 "id": ANY,
                 "address": {
@@ -215,6 +213,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
+        # Notes are created in the active organization — org_2 here.
+        self._set_active_org(self.org_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
@@ -249,24 +249,22 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertCountEqual(expected_ids, actual_ids)
 
     @parametrize(
-        ("team_names, expected_results_count, expected_note_labels"),
+        ("team_slugs, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
-            (["WDI On-site", "SLCC On-site"], 2, ["note_2", "note_3"]),
-            (["SLCC On-site"], 1, ["note_3"]),
+            (["wdi_on_site", "slcc_on_site"], 2, ["note_2", "note_3"]),
+            (["slcc_on_site"], 1, ["note_3"]),
         ],
     )
     def test_notes_query_teams_filter(
         self,
-        team_names: list[str],
+        team_slugs: list[str],
         expected_results_count: int,
         expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         slcc_team = Team.objects.get(name="SLCC On-site", organization=self.org_1)
-        teams_by_name = {team.name: team for team in (wdi_team, slcc_team)}
-
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
@@ -283,7 +281,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createNote"]
 
-        team_ids = [str(teams_by_name[name].pk) for name in team_names]
+        slug_to_team = {"wdi_on_site": wdi_team, "slcc_on_site": slcc_team}
+        team_ids = [str(slug_to_team[slug].pk) for slug in team_slugs]
         filters = {"teamIds": team_ids}
 
         query = """

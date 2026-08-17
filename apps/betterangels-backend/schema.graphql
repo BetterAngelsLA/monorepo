@@ -2875,7 +2875,6 @@ type TaskTypeOffsetPaginated {
 
 type TeamType {
   id: ID!
-  slug: String!
   name: String!
   createdAt: DateTime!
 }

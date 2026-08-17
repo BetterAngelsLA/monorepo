@@ -3640,7 +3640,6 @@ export type TeamType = {
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  slug: Scalars['String']['output'];
 };
 
 export type TeamTypeOffsetPaginated = {

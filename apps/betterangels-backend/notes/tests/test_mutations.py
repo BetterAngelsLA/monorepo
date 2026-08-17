@@ -1,13 +1,15 @@
 from unittest.mock import ANY, patch
 
 import time_machine
+from accounts.role_manager import OrgRoleManager
 from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from teams.models import Team
 from tasks.tests.utils import TaskGraphQLUtilsMixin
+from teams.models import Team
 from unittest_parametrize import parametrize
 
 
@@ -42,24 +44,23 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "purpose": "New note purpose",
             "requestedServices": [],
-            "currentTeam": None,
             "tasks": [],
         }
         self.assertEqual(created_note, expected_note)
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         json_address_input, _ = self._get_address_inputs()
         location_input = {
             "address": json_address_input,
             "point": self.point,
             "pointOfInterest": self.point_of_interest,
         }
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "teamId": str(team.pk),
+            "teamId": str(wdi_team.pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -75,7 +76,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "currentTeam": {"id": str(team.pk), "name": team.name},
             "tasks": [],
             "location": {
                 "id": ANY,
@@ -124,10 +124,18 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "requestedServices": [],
-            "currentTeam": None,
             "tasks": [],
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_update_note_omitted_team_id_preserves_team(self) -> None:
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(wdi_team.pk)})
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
+
+        self.assertIsNotNone(response["data"]["updateNote"])
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, wdi_team.pk)
 
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""
@@ -410,7 +418,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 21
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -991,3 +999,123 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
+
+
+@ignore_warnings(category=UserWarning)
+class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
+    """Notes must be created/updated in the active (header) organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _org_scoping_location_variables(self) -> dict:
+        json_address_input, _ = self._get_address_inputs()
+        return {
+            "id": self.note["id"],
+            "location": {
+                "address": json_address_input,
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
+        }
+
+    def test_create_note_uses_active_org_not_first_match(self) -> None:
+        # The user is a caseworker in both org_1 and org_2.  First-match org
+        # resolution would pick org_1; the active header org must win.
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._set_active_org(self.org_2)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 2 note",
+                "publicDetails": "Created under org_2",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )
+
+        note_id = response["data"]["createNote"]["id"]
+        self.assertEqual(Note.objects.get(pk=note_id).organization_id, self.org_2.pk)
+
+    def test_create_note_rejects_cross_org_team(self) -> None:
+        org_2_team = Team.objects.get(name="WDI On-site", organization=self.org_2)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "teamId": str(org_2_team.pk),
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            f"Team with id {org_2_team.pk} does not exist in organization {self.org_1.pk}.",
+        )
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_update_note_denied_when_active_org_differs(self) -> None:
+        # org_1_case_manager_1 is not a member of org_2.
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Should not update"})
+
+        messages = response["data"]["updateNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertNotEqual(Note.objects.get(pk=self.note["id"]).purpose, "Should not update")
+
+    def test_update_note_location_denied_when_active_org_differs(self) -> None:
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertIsNotNone(response["data"]["updateNoteLocation"]["messages"])
+
+    def test_update_note_location_denied_without_the_org_header(self) -> None:
+        """Regression: a missing header used to reach the filter as ``"None"``.
+
+        ``update_note_location`` has no ``HasOrgPerm`` to reject the request
+        up front, so the sentinel travelled all the way into
+        ``filter(organization_id="None")`` and came back as
+        ``ValueError: Field 'id' expected a number but got 'None'`` — a 500
+        that says nothing about the header.  It must read as a denial.
+
+        The denial is raised by the extension, so it lands in ``errors``
+        rather than as an ``OperationInfo`` — the same shape ``HasOrgPerm``
+        produces for a headerless request, and with the same message.
+        """
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertEqual(
+            response["errors"][0]["message"],
+            "You do not have permission to perform this action in this organization.",
+        )
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).location)
+
+    def test_delete_service_request_denied_when_active_org_differs(self) -> None:
+        """A service request inherits the organization of the note it hangs off.
+
+        Nothing scoped this before: ``PermissionedQuerySet`` was applied with
+        no organization filter, and guardian's global fallback let any holder
+        of ``delete_servicerequest`` delete any organization's.
+        """
+        service_request_id = self._create_note_service_request_fixture(
+            {
+                "serviceId": None,
+                "serviceOther": "A blanket",
+                "noteId": self.note["id"],
+                "serviceRequestType": "REQUESTED",
+            }
+        )["data"]["createNoteServiceRequest"]["id"]
+
+        self._set_active_org(self.org_2)
+        response = self._delete_service_request_fixture(service_request_id)
+
+        self.assertIsNotNone(response["data"]["deleteServiceRequest"]["messages"])
+        self.assertTrue(ServiceRequest.objects.filter(pk=service_request_id).exists())

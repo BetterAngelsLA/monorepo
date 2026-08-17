@@ -45,7 +45,6 @@ query ViewNoteHmis($id: ID!) {
         status
         currentTeam {
           id
-          slug
           name
         }
       }

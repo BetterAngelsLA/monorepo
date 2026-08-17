@@ -2,10 +2,13 @@ from datetime import datetime, timezone
 
 import time_machine
 from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
 from notes.enums import ServiceRequestStatusEnum
-from notes.models import OrganizationService, ServiceRequest
+from notes.models import Note, OrganizationService, ServiceRequest
+from teams.models import Team
 
 
 class ServiceRequestModelTestCase(TestCase):
@@ -44,3 +47,42 @@ class ServiceRequestModelTestCase(TestCase):
             service_request_to_do.completed_on,
             datetime(2024, 3, 11, 10, 11, 12, tzinfo=timezone.utc),
         )
+
+
+class NoteTeamOrgValidationTestCase(TestCase):
+    """A note's team must belong to the note's organization.
+
+    The service layer enforces this for GraphQL writes; ``clean()`` is what
+    covers the Django admin, which offers an unfiltered team dropdown.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(name="note_clean_org")
+        self.other_org = organization_recipe.make(name="note_clean_other_org")
+        self.own_team = baker.make(Team, organization=self.org, name="Own")
+        self.other_team = baker.make(Team, organization=self.other_org, name="Other")
+
+    def test_clean_allows_a_team_from_the_same_org(self) -> None:
+        note = baker.make(Note, organization=self.org, team=self.own_team)
+
+        note.clean()
+
+    def test_clean_allows_no_team(self) -> None:
+        note = baker.make(Note, organization=self.org, team=None)
+
+        note.clean()
+
+    def test_clean_rejects_a_team_from_another_org(self) -> None:
+        """Built unsaved on purpose.
+
+        The composite FK added later in this stack makes a cross-org row
+        unstorable, so the invalid state can only exist in memory — which is
+        exactly where ``clean()`` is meant to catch it, before the database has
+        to.
+        """
+        note = Note(organization=self.org, team=self.other_team)
+
+        with self.assertRaises(ValidationError) as ctx:
+            note.clean()
+
+        self.assertIn("team", ctx.exception.message_dict)

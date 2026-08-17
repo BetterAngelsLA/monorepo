@@ -2,10 +2,28 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.text import slugify
 from organizations.models import Organization
 
 from .models import Team
+
+
+def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
+    """Raise unless *name* is non-empty and free within *organization*.
+
+    Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``;
+    checking it here first turns an IntegrityError into a message the user can
+    act on.
+    """
+    if not name:
+        raise ValidationError("Team name cannot be blank.")
+
+    qs = Team.objects.filter(name__iexact=name, organization=organization)
+
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+
+    if qs.exists():
+        raise ValidationError(f'A team named "{name}" already exists in this organization.')
 
 
 def team_create(
@@ -13,21 +31,18 @@ def team_create(
     name: str,
     organization: Organization,
 ) -> Team:
-    """Create a new Team for *organization*. Slug is auto-generated from name."""
+    """Create a new Team for *organization*."""
     name = name.strip()
-    slug = slugify(name)
+    _validate_name(name=name, organization=organization)
 
-    if not slug:
-        raise ValidationError("Team name must contain at least one alphanumeric character.")
+    team = Team(name=name, organization=organization)
+    # full_clean() before save(), per the styleguide.  Not ceremony: nothing
+    # else bounds the name, so an over-long one reached Postgres and came back
+    # as DataError -- a 500 rather than a message the caller can act on.
+    team.full_clean()
+    team.save()
 
-    if Team.objects.filter(slug=slug, organization=organization).exists():
-        raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
-
-    return Team.objects.create(
-        slug=slug,
-        name=name,
-        organization=organization,
-    )
+    return team
 
 
 @transaction.atomic
@@ -36,17 +51,13 @@ def team_update(
     team: Team,
     name: str | None = None,
 ) -> Team:
-    """Update a Team's name. Slug is auto-generated from name."""
+    """Update a Team's name."""
     if name is not None:
         name = name.strip()
-        slug = slugify(name)
-        if not slug:
-            raise ValidationError("Team name must contain at least one alphanumeric character.")
-        if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
-            raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
+        _validate_name(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
-        team.slug = slug
 
+    team.full_clean()
     team.save()
     return team
 
