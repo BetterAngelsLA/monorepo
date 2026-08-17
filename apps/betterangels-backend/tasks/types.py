@@ -134,5 +134,5 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team_id: Maybe[ID] = strawberry.UNSET  # FK-based team field; UNSET = leave unchanged
+    team_id: Maybe[ID]  # FK-based team field; absent = leave unchanged
     status: Optional[TaskStatusEnum]

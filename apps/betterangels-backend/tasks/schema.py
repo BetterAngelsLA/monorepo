@@ -107,7 +107,7 @@ class Mutation:
         clean = asdict(data)
         # UNSET leaves the current team unchanged; org validation happens in
         # the task_update service.
-        apply_maybe(clean, "team_id", data.team_id, maybe_int_value)
+        apply_maybe(clean, "team_id", data.team_id, int)
 
         task = task_update(task=task, data=clean)
 
