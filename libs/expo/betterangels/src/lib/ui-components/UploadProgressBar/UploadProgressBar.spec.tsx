@@ -63,6 +63,7 @@ describe('UploadProgressBar', () => {
     const { getByText } = render(<UploadProgressBar />);
 
     expect(getByText('Uploading 1 of 2 files…')).toBeTruthy();
+    expect(getByText('Details')).toBeTruthy();
   });
 
   it('opens the upload screen in resume mode when tapped', () => {
@@ -70,7 +71,7 @@ describe('UploadProgressBar', () => {
 
     const { getByLabelText } = render(<UploadProgressBar />);
 
-    fireEvent.press(getByLabelText('Uploading 0 of 1 files…'));
+    fireEvent.press(getByLabelText('Uploading 0 of 1 files…. Details'));
 
     expect(mocks.showModalScreen).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -90,7 +91,8 @@ describe('UploadProgressBar', () => {
 
     const { getByText } = render(<UploadProgressBar />);
 
-    expect(getByText('Upload failed — tap to review')).toBeTruthy();
+    expect(getByText('Upload failed')).toBeTruthy();
+    expect(getByText('Details')).toBeTruthy();
   });
 
   it('hides while the upload screen is open', () => {

@@ -48,7 +48,7 @@ function UploadProgressBarContent({
       ? Math.min(100, Math.round((completedItems / totalItems) * 100))
       : 0;
   const label = failed
-    ? 'Upload failed — tap to review'
+    ? 'Upload failed'
     : `Uploading ${completedItems} of ${totalItems} files…`;
 
   const resumeSessionIds = sessions.map((session) => session.id);
@@ -68,8 +68,8 @@ function UploadProgressBarContent({
       style={styles.bar}
       onPress={openUploadStage}
       accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint="Opens the upload screen"
+      accessibilityLabel={`${label}. Details`}
+      accessibilityHint="Opens the upload details screen"
     >
       <View style={styles.row}>
         {failed && <FileOutlineIcon size="sm" color={Colors.ERROR} />}
@@ -80,6 +80,9 @@ function UploadProgressBarContent({
           color={failed ? Colors.ERROR : Colors.NEUTRAL_DARK}
         >
           {label}
+        </TextRegular>
+        <TextRegular size="sm" color={Colors.PRIMARY}>
+          Details
         </TextRegular>
       </View>
       <View style={styles.track}>
