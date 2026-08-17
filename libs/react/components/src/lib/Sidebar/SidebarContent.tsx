@@ -10,7 +10,6 @@ export function SidebarContent(props: TProps) {
   const { className, children } = props;
 
   const parentCss = [
-    'h-full',
     'flex',
     'flex-col',
     'gap-2',

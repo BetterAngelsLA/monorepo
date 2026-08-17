@@ -10,7 +10,7 @@ import { ComponentType, ReactElement, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { FeatureFlags } from '../../static';
-import { MainContainer } from '../../ui-components';
+import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
@@ -163,6 +163,7 @@ export default function Client({
         px={0}
       >
         {showHeader && <ClientHeader client={data?.clientProfile} />}
+        <UploadProgressBar />
         <ClientTabs selectedTab={tab} setTab={setTab} />
         {getTabComponent(tab, data, openCard)}
       </MainContainer>

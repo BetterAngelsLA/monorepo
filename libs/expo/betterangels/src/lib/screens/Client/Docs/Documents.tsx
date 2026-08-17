@@ -6,13 +6,14 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
 import { DocumentModal, FileThumbnail } from '../../../ui-components';
+import type { TDocFolder } from './folders';
 
 interface IDocumentsProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   data: ClientDocumentType[];
   clientId: string;
-  title: 'Other' | 'Doc Ready' | 'Forms';
+  title: TDocFolder;
 }
 
 export default function Documents(props: IDocumentsProps) {
