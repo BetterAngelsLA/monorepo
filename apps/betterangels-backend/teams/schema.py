@@ -9,6 +9,7 @@ from accounts.selectors import resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
+from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
@@ -58,7 +59,11 @@ class Mutation:
         org = Organization.objects.get(pk=get_current_organization(info))
         team = team_get(pk=int(data.id), organization=org)
         if team is None:
-            raise ValueError(f"Team with id {data.id} not found.")
+            # Unknown id, or a team belonging to another organization.  A bare
+            # ValueError is not one of the exceptions strawberry-django turns
+            # into OperationInfo, so it surfaced as an internal server error
+            # instead of a denial.
+            raise PermissionDenied("You do not have permission to update this team.")
 
         return cast(
             TeamType,
@@ -76,6 +81,6 @@ class Mutation:
         org = Organization.objects.get(pk=get_current_organization(info))
         team = team_get(pk=int(data.id), organization=org)
         if team is None:
-            raise ValueError(f"Team with id {data.id} not found.")
+            raise PermissionDenied("You do not have permission to delete this team.")
         team_delete(team=team)
         return DeletedObjectType(id=int(data.id))
