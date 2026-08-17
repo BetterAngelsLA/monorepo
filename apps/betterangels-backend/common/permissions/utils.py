@@ -249,15 +249,25 @@ def _org_perm_exists_across_fields(
     codename: str,
     fields: list[str],
 ) -> Q:
-    """Return a ``Q`` checking the user holds a permission on any of the org fields."""
+    """Return a ``Q`` checking the user holds a permission on any of the org fields.
+
+    Both conditions — that *user* is in the group, and that the group carries
+    the permission — MUST stay inside a single ``.filter()`` call.
+    ``Organization.permission_groups`` is multi-valued, so chaining them as two
+    ``.filter()`` calls builds two independent joins and lets them be satisfied
+    by *different* permission groups: "user is in some group of this org, and
+    some group of this org has the permission". Every organization is
+    provisioned with every template, so that reads as "any member holds every
+    permission any template in their org has".
+    """
     return reduce(
         or_,
         (
             Q(
                 Exists(
-                    Organization.objects.filter(pk=OuterRef(f))
-                    .filter(permission_groups__group__user=user)
-                    .filter(_perm_q(app_label, codename))
+                    Organization.objects.filter(pk=OuterRef(f)).filter(
+                        Q(permission_groups__group__user=user) & _perm_q(app_label, codename)
+                    )
                 )
             )
             for f in fields
