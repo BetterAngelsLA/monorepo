@@ -4,7 +4,9 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSnackbar } from '../../hooks';
+// Imported by path, not through the hooks barrel: that barrel reaches into
+// screens, which import this component back through the ui-components index.
+import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import { useUploadSession } from '../../providers';
 import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
 import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';

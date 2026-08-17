@@ -13,8 +13,10 @@ import {
   uploadProgressPct,
   uploadSessionCounts,
   useUploadProgress,
-} from '../../../../providers';
-import { FileThumbnail } from '../../../../ui-components';
+} from '../../providers';
+// Imported by path, not through the ui-components barrel: the barrel also
+// exports UploadProgressBar, which imports this file.
+import { FileThumbnail } from '../FileThumbnail/FileThumbnail';
 
 type TUploadStageProps = {
   closeModal: () => void;

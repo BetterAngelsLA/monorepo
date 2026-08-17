@@ -48,8 +48,9 @@ vi.mock('../../providers', () => ({
   }),
 }));
 
-vi.mock('../../hooks', () => ({
-  useSnackbar: () => ({ showSnackbar: mocks.showSnackbar }),
+vi.mock('../../hooks/snackbar/useSnackbar', () => ({
+  __esModule: true,
+  default: () => ({ showSnackbar: mocks.showSnackbar }),
 }));
 
 vi.mock('./useClientProfilePhotoUpload', () => ({

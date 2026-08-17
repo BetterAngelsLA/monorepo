@@ -19,7 +19,7 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-vi.mock('../UploadStage/useDocsUpload', () => ({
+vi.mock('../useDocsUpload', () => ({
   useDocsUpload: () => ({ startSession: mocks.startSession }),
 }));
 

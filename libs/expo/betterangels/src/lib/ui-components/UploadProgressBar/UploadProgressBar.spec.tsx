@@ -31,7 +31,7 @@ vi.mock('../../providers', () => ({
   useModalScreen: () => ({ showModalScreen: mocks.showModalScreen }),
 }));
 
-vi.mock('../../screens/Client/Docs/UploadStage/UploadStage', () => ({
+vi.mock('../UploadStage/UploadStage', () => ({
   __esModule: true,
   default: () => <Text>UploadStage</Text>,
 }));

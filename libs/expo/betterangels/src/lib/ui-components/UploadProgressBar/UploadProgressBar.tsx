@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { FileOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import UploadStage from '../../screens/Client/Docs/UploadStage/UploadStage';
+import UploadStage from '../UploadStage/UploadStage';
 import { useModalScreen } from '../../providers';
 import {
   aggregateUploadCounts,

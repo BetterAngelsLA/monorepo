@@ -1,16 +1,16 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { randomUUID } from 'expo-crypto';
 import { getDefaultStore } from 'jotai';
-import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useSnackbar } from '../../../../hooks';
+import { ClientDocumentNamespaceEnum } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import {
   failUploadSession,
   getUploadSession,
   markUploadPartiallyFailed,
   uploadStageVisibleAtom,
   useUploadSession,
-} from '../../../../providers';
-import { useClientDocumentUpload } from '../UploadModal/useClientDocumentUpload';
+} from '../../../providers';
+import { useClientDocumentUpload } from './UploadModal/useClientDocumentUpload';
 
 /**
  * Starts and runs client-doc upload sessions. Sessions are registered in the

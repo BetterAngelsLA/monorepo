@@ -9,7 +9,7 @@ import {
   startUploadSession,
   updateUploadSession,
   uploadSessionsAtom,
-} from '../../../../providers';
+} from '../../providers';
 import UploadStage from './UploadStage';
 
 const mocks = vi.hoisted(() => ({
@@ -33,15 +33,15 @@ vi.mock('react-native-safe-area-context', () => ({
 
 // The full providers index drags in expo-router and other native modules;
 // scope it to the upload-progress surface the stage actually uses.
-vi.mock('../../../../providers', async () => {
+vi.mock('../../providers', async () => {
   const actual = await vi.importActual<
-    typeof import('../../../../providers/uploadProgress')
-  >('../../../../providers/uploadProgress');
+    typeof import('../../providers/uploadProgress')
+  >('../../providers/uploadProgress');
 
   return actual;
 });
 
-vi.mock('../../../../ui-components', () => ({
+vi.mock('../FileThumbnail/FileThumbnail', () => ({
   FileThumbnail: (props: { uri: string; mimeType: string }) => (
     <Text>{`preview:${props.uri}`}</Text>
   ),
