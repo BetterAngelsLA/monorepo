@@ -6,7 +6,12 @@ from strawberry import ID, Maybe, auto
 from .models import Team
 
 
-@strawberry_django.type(Team)
+@strawberry_django.filter_type(Team, lookups=True)
+class TeamFilter:
+    is_active: auto
+
+
+@strawberry_django.type(Team, filters=TeamFilter)
 class TeamType:
     id: ID
     slug: auto

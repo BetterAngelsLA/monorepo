@@ -1,5 +1,7 @@
 """Team mutation services — per the Django Styleguide."""
 
+from typing import Any
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.text import slugify
@@ -34,22 +36,23 @@ def team_create(
 def team_update(
     *,
     team: Team,
-    name: str | None = None,
-    is_active: bool | None = None,
+    data: dict[str, Any],
 ) -> Team:
     """Update a Team's name and/or active flag. Slug is auto-generated from name."""
-    if name is not None:
-        name = name.strip()
-        slug = slugify(name)
-        if not slug:
+    if data["name"] is not None:
+        name = data["name"].strip()
+        if not name:
             raise ValidationError("Team name must contain at least one alphanumeric character.")
+
+        slug = slugify(name)
         if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
             raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
+
         team.name = name
         team.slug = slug
 
-    if is_active is not None:
-        team.is_active = is_active
+    if data["is_active"] is not None:
+        team.is_active = data["is_active"]
 
     team.save()
     return team

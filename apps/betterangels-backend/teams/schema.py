@@ -8,7 +8,6 @@ from accounts.extensions import HasOrgPerm
 from accounts.selectors import resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from common.team_shim import maybe_value
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
@@ -60,13 +59,11 @@ class Mutation:
         if team is None:
             raise ValueError(f"Team with id {data.id} not found.")
 
+        clean = strawberry.asdict(data)
+
         return cast(
             TeamType,
-            team_update(
-                team=team,
-                name=maybe_value(data.name),
-                is_active=maybe_value(data.is_active),
-            ),
+            team_update(team=team, data=clean),
         )
 
     @strawberry_django.mutation(
