@@ -1,7 +1,7 @@
 # Teams Org-Scoping — Deployment Runbook & Follow-ups
 
-Deployment checklist for the per-org teams work (team FK validation,
-org-scoped mutations, legacy-team backfill, permission sync).
+Deployment checklist for the per-org teams work (org-scoped mutations,
+legacy-column removal, team/organization enforcement, permission sync).
 
 ## Background: the enum → Team migration already happened
 
@@ -12,19 +12,36 @@ moved in June and only the files went away — the squashed `0001_initial` /
 `0002_initial` carry schema operations only.
 
 The FK has therefore been the live source of truth since June, and `old_team`
-has been vestigial. `teams.0002_backfill_org_teams` in this release is an
-idempotent **safety net**, not the original migration: it only touches rows
-with `old_team` set and no FK, which on a normally-migrated database is none.
+has been vestigial — nothing in application code writes it, so the set of rows
+carrying one has been frozen since then.
 
-Confirm that before deploying:
+**This release therefore contains no backfill.** An earlier draft added one as a
+safety net; production shows it would have been a no-op. `teams_team` holds 46
+rows: the 15 legacy enum teams for each of three organizations (created by the
+June migration, in three timestamp clusters seconds apart), plus one team an
+admin created through the Teams UI on 26 June. Every row the backfill would
+have created already exists.
+
+### Before dropping `old_team`, confirm nothing still needs it
+
+Without a backfill this check is more important, not less — the drop is
+irreversible:
 
 ```sql
-SELECT count(*) FROM notes_note WHERE old_team IS NOT NULL AND team_id IS NULL;
-SELECT count(*) FROM tasks_task WHERE old_team IS NOT NULL AND team_id IS NULL;
+SELECT count(*) FROM notes_note  WHERE old_team IS NOT NULL AND team_id IS NULL;
+SELECT count(*) FROM tasks_task  WHERE old_team IS NOT NULL AND team_id IS NULL;
+
+-- History tables: the June migration updated live rows, so pre-June event
+-- rows may carry old_team with no team_id. Dropping the column removes the
+-- only team attribution on that history.
+SELECT count(*) FROM notes_noteevent WHERE old_team IS NOT NULL AND team_id IS NULL;
+SELECT count(*) FROM tasks_taskevent WHERE old_team IS NOT NULL AND team_id IS NULL;
 ```
 
-Both zero means the backfill has nothing to do and dropping `old_team` is
-removing a column unused since June.
+If the live counts are non-zero, decide what those rows should be before
+deploying rather than guessing in a migration. If the *event* counts are
+non-zero and anyone reports on historical team attribution, copy `old_team`
+into `team_id` on the event tables first.
 
 ## Deploy steps
 
@@ -32,7 +49,6 @@ removing a column unused since June.
 
    | Migration | What it does |
    | --- | --- |
-   | `teams.0002` | safety-net backfill (see above); a no-op on a normally-migrated database |
    | `notes.0003`, `tasks.0003` | drop the `old_team` columns |
    | `teams.0003` | drop `Team.slug`; uniqueness moves to `(lower(name), organization)`, deduping first |
    | `teams.0004` | add the `(id, organization)` unique constraint the composite FKs target |
@@ -40,13 +56,12 @@ removing a column unused since June.
 
    Every data step is idempotent and re-runnable.
 
-   > Both run in the same `migrate`, so the backfill's source columns are gone
-   > by the time it finishes. That is fine **when the counts above are zero** —
-   > there is nothing to back up and nothing to verify. If either count is
-   > non-zero, deploy the backfill without the `old_team` removals first,
-   > confirm the counts have gone to zero, and ship the removals in a
-   > follow-up release; the removals reverse only to empty columns, so there
-   > is no recovering the values afterwards.
+   > The `old_team` drops are the only irreversible operations here — they
+   > reverse to empty columns, not to the values. Run the counts above first.
+   > Consider shipping the org-scoped mutations and permission sync on their
+   > own, confirming teams behave correctly in production, and dropping the
+   > columns in a follow-up release; nothing in the feature depends on them
+   > being gone.
 
 2. **Sync permission groups** — ensures every org's groups carry current
    template permissions (including `teams.*` for Org Admin):
@@ -58,9 +73,10 @@ removing a column unused since June.
 
 3. **Teams are org-admin created.** New orgs start with no teams; org
    admins create them through the admin UI (Teams page / `createTeam`).
-   The legacy-team backfill migration only creates teams for orgs that
-   already have notes/tasks carrying legacy `old_team` values. Test
-   fixtures (`load_report_test_data`) remain available for local data.
+   Nothing in this release creates teams. The three organizations that
+   already hold the 15 legacy enum teams keep them — they are ordinary
+   rows now, renameable and deletable like any other. Test fixtures
+   (`load_report_test_data`) remain available for local data.
 
 ## Why there is no cross-org team audit
 
