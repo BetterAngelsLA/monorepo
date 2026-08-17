@@ -1,10 +1,11 @@
-"""Tests for team services — slug stability and name uniqueness."""
+"""Tests for team services — name is the only identifier."""
 
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase
 from organizations.models import Organization
 from teams.models import Team
-from teams.services import team_create, team_update
+from teams.services import team_create, team_delete, team_update
 
 
 class TeamCreateTestCase(TestCase):
@@ -12,11 +13,11 @@ class TeamCreateTestCase(TestCase):
         self.org = Organization.objects.create(name="team_create_org")
         self.other_org = Organization.objects.create(name="team_create_other_org")
 
-    def test_slug_is_derived_from_the_name(self) -> None:
+    def test_creates_a_team_in_the_organization(self) -> None:
         team = team_create(name="WDI On-site", organization=self.org)
 
-        self.assertEqual(team.slug, "wdi-on-site")
         self.assertEqual(team.name, "WDI On-site")
+        self.assertEqual(team.organization_id, self.org.pk)
 
     def test_name_is_stripped(self) -> None:
         team = team_create(name="  Hollywood Outreach  ", organization=self.org)
@@ -39,23 +40,28 @@ class TeamCreateTestCase(TestCase):
         first = team_create(name="Hollywood Outreach", organization=self.org)
         second = team_create(name="Hollywood Outreach", organization=self.other_org)
 
-        self.assertEqual(first.slug, second.slug)
+        self.assertEqual(first.name, second.name)
         self.assertNotEqual(first.organization_id, second.organization_id)
 
-    def test_name_without_alphanumerics_is_rejected(self) -> None:
+    def test_blank_name_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
-            team_create(name="!!!", organization=self.org)
+            team_create(name="   ", organization=self.org)
 
-    def test_slug_held_by_a_renamed_team_does_not_block_the_name(self) -> None:
-        # A team renamed away from "Hollywood Outreach" keeps its original slug,
-        # so creating a new team with that name must still succeed.
+    def test_a_reused_name_is_available_after_the_holder_is_renamed(self) -> None:
         original = team_create(name="Hollywood Outreach", organization=self.org)
         team_update(team=original, name="Hollywood Outreach 2024")
 
         replacement = team_create(name="Hollywood Outreach", organization=self.org)
 
-        self.assertEqual(original.slug, "hollywood-outreach")
-        self.assertEqual(replacement.slug, "hollywood-outreach-2")
+        self.assertEqual(replacement.name, "Hollywood Outreach")
+        self.assertNotEqual(replacement.pk, original.pk)
+
+    def test_a_reused_name_is_available_after_the_holder_is_deleted(self) -> None:
+        original = team_create(name="Hollywood Outreach", organization=self.org)
+        team_delete(team=original)
+
+        replacement = team_create(name="Hollywood Outreach", organization=self.org)
+
         self.assertEqual(replacement.name, "Hollywood Outreach")
 
     def test_name_longer_than_the_column_is_a_validation_error(self) -> None:
@@ -72,23 +78,10 @@ class TeamCreateTestCase(TestCase):
         self.assertFalse(Team.objects.filter(organization=self.org).exists())
 
     def test_a_name_at_the_column_limit_is_accepted(self) -> None:
-        """The derived slug is shorter than the name column, so it is truncated.
-
-        Found by adding ``full_clean()``: a 150-character name is legal
-        (``name`` allows 255) but produced a 150-character slug against a
-        column that allows 100.
-        """
+        """The boundary the rejection above sits against."""
         team = team_create(name="x" * 255, organization=self.org)
 
         self.assertEqual(len(team.name), 255)
-        self.assertLessEqual(len(team.slug), 100)
-
-    def test_truncated_slugs_stay_unique_within_the_org(self) -> None:
-        first = team_create(name="y" * 250, organization=self.org)
-        second = team_create(name="y" * 250 + " two", organization=self.org)
-
-        self.assertNotEqual(first.slug, second.slug)
-        self.assertLessEqual(len(second.slug), 100)
 
 
 class TeamUpdateTestCase(TestCase):
@@ -96,13 +89,11 @@ class TeamUpdateTestCase(TestCase):
         self.org = Organization.objects.create(name="team_update_org")
         self.team = team_create(name="WDI On-site", organization=self.org)
 
-    def test_rename_does_not_move_the_slug(self) -> None:
-        """The slug is the stable identifier — report fixtures key off it."""
+    def test_renames_the_team(self) -> None:
         team_update(team=self.team, name="WDI Onsite")
 
         self.team.refresh_from_db()
         self.assertEqual(self.team.name, "WDI Onsite")
-        self.assertEqual(self.team.slug, "wdi-on-site")
 
     def test_rename_to_an_existing_name_is_rejected(self) -> None:
         team_create(name="Hollywood Outreach", organization=self.org)
@@ -110,11 +101,23 @@ class TeamUpdateTestCase(TestCase):
         with self.assertRaises(ValidationError):
             team_update(team=self.team, name="Hollywood Outreach")
 
+    def test_rename_to_an_existing_name_is_rejected_case_insensitively(self) -> None:
+        team_create(name="Hollywood Outreach", organization=self.org)
+
+        with self.assertRaises(ValidationError):
+            team_update(team=self.team, name="HOLLYWOOD OUTREACH")
+
     def test_rename_to_its_own_name_is_allowed(self) -> None:
         team_update(team=self.team, name="WDI On-site")
 
         self.team.refresh_from_db()
         self.assertEqual(self.team.name, "WDI On-site")
+
+    def test_recasing_its_own_name_is_allowed(self) -> None:
+        team_update(team=self.team, name="WDI ON-SITE")
+
+        self.team.refresh_from_db()
+        self.assertEqual(self.team.name, "WDI ON-SITE")
 
     def test_rename_to_a_blank_name_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
@@ -135,3 +138,16 @@ class TeamUpdateTestCase(TestCase):
 
         self.team.refresh_from_db()
         self.assertEqual(self.team.name, original)
+
+
+class TeamNameConstraintTestCase(TestCase):
+    """The database enforces it too, not just the service."""
+
+    def setUp(self) -> None:
+        self.org = Organization.objects.create(name="team_constraint_org")
+
+    def test_duplicate_name_is_rejected_by_the_database(self) -> None:
+        Team.objects.create(name="Hollywood Outreach", organization=self.org)
+
+        with self.assertRaises(IntegrityError):
+            Team.objects.create(name="hollywood outreach", organization=self.org)

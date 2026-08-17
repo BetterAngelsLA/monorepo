@@ -13,8 +13,8 @@ class ValidateTeamInOrgTestCase(TestCase):
     def setUp(self) -> None:
         self.org_1 = Organization.objects.create(name="validate_org_1")
         self.org_2 = Organization.objects.create(name="validate_org_2")
-        self.org_1_team = Team.objects.create(slug="wdi_on_site", name="WDI On-site", organization=self.org_1)
-        self.org_2_team = Team.objects.create(slug="wdi_on_site", name="WDI On-site", organization=self.org_2)
+        self.org_1_team = Team.objects.create(name="WDI On-site", organization=self.org_1)
+        self.org_2_team = Team.objects.create(name="WDI On-site", organization=self.org_2)
 
     def test_team_in_org_passes(self) -> None:
         validate_team_in_org(team_id=self.org_1_team.pk, organization_id=self.org_1.pk)

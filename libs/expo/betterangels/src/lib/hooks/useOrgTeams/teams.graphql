@@ -2,7 +2,6 @@ query Teams($pagination: OffsetPaginationInput) {
   teams(pagination: $pagination) {
     results {
       id
-      slug
       name
     }
     totalCount

@@ -362,8 +362,8 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_returns_correct_data(self) -> None:
         org, user = self._setup_org_user_with_access()
-        team_echo = baker.make(Team, slug="echo_park_outreach", name="Echo Park Outreach", organization=org)
-        team_hollywood = baker.make(Team, slug="hollywood_outreach", name="Hollywood Outreach", organization=org)
+        team_echo = baker.make(Team, name="Echo Park Outreach", organization=org)
+        team_hollywood = baker.make(Team, name="Hollywood Outreach", organization=org)
         baker.make(
             Note,
             organization=org,

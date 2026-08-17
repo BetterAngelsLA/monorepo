@@ -9,7 +9,6 @@ from .models import Team
 @strawberry_django.type(Team)
 class TeamType:
     id: ID
-    slug: auto
     name: auto
     created_at: auto
 

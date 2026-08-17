@@ -29,7 +29,6 @@ mutation CreateTask($data: CreateTaskInput!) {
       summary
       currentTeam {
         id
-        slug
         name
       }
       updatedAt

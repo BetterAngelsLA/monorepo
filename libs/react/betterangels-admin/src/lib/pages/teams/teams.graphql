@@ -2,7 +2,6 @@ query AdminTeams($pagination: OffsetPaginationInput) {
   teams(pagination: $pagination) {
     results {
       id
-      slug
       name
       createdAt
     }
@@ -14,7 +13,6 @@ mutation CreateTeam($data: CreateTeamInput!) {
   createTeam(data: $data) {
     ... on TeamType {
       id
-      slug
       name
       createdAt
     }
@@ -32,7 +30,6 @@ mutation UpdateTeam($data: UpdateTeamInput!) {
   updateTeam(data: $data) {
     ... on TeamType {
       id
-      slug
       name
       createdAt
     }

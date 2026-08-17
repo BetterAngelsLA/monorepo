@@ -2,40 +2,21 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.text import slugify
 from organizations.models import Organization
 
 from .models import Team
 
 
-def _unique_slug_for_org(*, name: str, organization: Organization) -> str:
-    """Derive a slug for *name* that is free within *organization*.
+def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
+    """Raise unless *name* is non-empty and free within *organization*.
 
-    Slugs are immutable once assigned, so a team renamed away from a name can
-    still be holding that name's slug.  Suffix rather than reject: the slug is
-    an internal identifier and must never block a name the user can see is
-    available.
+    Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``;
+    checking it here first turns an IntegrityError into a message the user can
+    act on.
     """
-    # slug is shorter than name (100 vs 255), so a long-but-legal name can
-    # derive an over-long slug.  Truncate rather than reject: the slug is
-    # internal, and a name the column accepts must not be refused because of
-    # an identifier the user never sees.
-    limit: int = Team._meta.get_field("slug").max_length or 100
+    if not name:
+        raise ValidationError("Team name cannot be blank.")
 
-    base = slugify(name)[:limit]
-    slug = base
-    suffix = 2
-
-    while Team.objects.filter(slug=slug, organization=organization).exists():
-        tail = f"-{suffix}"
-        slug = f"{base[: limit - len(tail)]}{tail}"
-        suffix += 1
-
-    return slug
-
-
-def _validate_name_available(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
-    """Raise unless *name* is free within *organization* (case-insensitive)."""
     qs = Team.objects.filter(name__iexact=name, organization=organization)
 
     if exclude_pk is not None:
@@ -50,27 +31,14 @@ def team_create(
     name: str,
     organization: Organization,
 ) -> Team:
-    """Create a new Team for *organization*.
-
-    The slug is derived from *name* once, at creation, and never changes after
-    that — notes, tasks, and report fixtures identify teams by it.
-    """
+    """Create a new Team for *organization*."""
     name = name.strip()
+    _validate_name(name=name, organization=organization)
 
-    if not slugify(name):
-        raise ValidationError("Team name must contain at least one alphanumeric character.")
-
-    _validate_name_available(name=name, organization=organization)
-
-    team = Team(
-        slug=_unique_slug_for_org(name=name, organization=organization),
-        name=name,
-        organization=organization,
-    )
+    team = Team(name=name, organization=organization)
     # full_clean() before save(), per the styleguide.  Not ceremony: nothing
-    # else bounds the field lengths, so a 300-character name reached Postgres
-    # and came back as DataError -- a 500 rather than a message the caller can
-    # act on.
+    # else bounds the name, so an over-long one reached Postgres and came back
+    # as DataError -- a 500 rather than a message the caller can act on.
     team.full_clean()
     team.save()
 
@@ -83,20 +51,10 @@ def team_update(
     team: Team,
     name: str | None = None,
 ) -> Team:
-    """Update a Team's name.
-
-    The slug is deliberately left alone: it is the stable identifier for the
-    team (report fixtures and the legacy-team backfill key off it), so a
-    rename must not move it out from under existing references.
-    """
+    """Update a Team's name."""
     if name is not None:
         name = name.strip()
-
-        if not slugify(name):
-            raise ValidationError("Team name must contain at least one alphanumeric character.")
-
-        _validate_name_available(name=name, organization=team.organization, exclude_pk=team.pk)
-
+        _validate_name(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
 
     team.full_clean()

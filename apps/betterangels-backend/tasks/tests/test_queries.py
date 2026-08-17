@@ -19,7 +19,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.client_profile = baker.make(ClientProfile)
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
-        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
 
         self.task = self.create_task_fixture(
             {
@@ -216,7 +216,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_teams_filter(self) -> None:
-        slcc_team = Team.objects.get(slug="slcc_on_site", organization=self.org_1)
+        slcc_team = Team.objects.get(name="SLCC On-site", organization=self.org_1)
         task_id = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),

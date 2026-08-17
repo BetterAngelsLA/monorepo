@@ -7,7 +7,6 @@ query Task($id: ID!) {
       status
       currentTeam {
         id
-        slug
         name
       }
       organization {

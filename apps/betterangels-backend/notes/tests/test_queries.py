@@ -47,7 +47,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
-                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+                "teamId": str(Team.objects.get(name="WDI On-site", organization=self.org_1).pk),
             }
         )
         # Update location via dedicated mutation
@@ -263,8 +263,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
-        slcc_team = Team.objects.get(slug="slcc_on_site", organization=self.org_1)
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        slcc_team = Team.objects.get(name="SLCC On-site", organization=self.org_1)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {

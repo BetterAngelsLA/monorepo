@@ -25,7 +25,6 @@ export const UPDATE_NOTE = gql`
         purpose
         currentTeam {
           id
-          slug
           name
         }
         publicDetails

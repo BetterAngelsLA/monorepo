@@ -10,7 +10,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from teams.models import Team
 
-TEAM_FIELDS = "id name slug"
+TEAM_FIELDS = "id name"
 
 
 class TeamGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -26,8 +26,8 @@ class TeamGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.org_1_admin = self._make_org_admin(org=self.org_1)
         self.org_2_admin = self._make_org_admin(org=self.org_2)
 
-        self.org_1_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
-        self.org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+        self.org_1_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        self.org_2_team = Team.objects.get(name="WDI On-site", organization=self.org_2)
 
         self.graphql_client.force_login(self.org_1_admin)
         self._set_active_org(self.org_1)

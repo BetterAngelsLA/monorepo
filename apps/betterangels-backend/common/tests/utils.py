@@ -199,29 +199,30 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Create Team objects matching the legacy enum slugs so tests can
-        # exercise org-scoped team assignment.  Test-local list — product
-        # teams are created by org admins via the admin UI.
-        for slug in (
-            "bowtie_riverside_outreach",
-            "echo_park_on_site",
-            "echo_park_outreach",
-            "hollywood_on_site",
-            "hollywood_outreach",
-            "la_river_outreach",
-            "los_feliz_outreach",
-            "northeast_hollywood_outreach",
-            "selah_staff",
-            "silver_lake_outreach",
-            "slcc_on_site",
-            "sunday_social_atwater_on_site",
-            "sunday_social_atwater_outreach",
-            "wdi_on_site",
-            "wdi_outreach",
+        # Teams for both orgs so tests can exercise org-scoped assignment.
+        # Test-local list — product teams are created by org admins in the
+        # admin UI.  Names must be distinct per org: ``unique_team_name_per_org``
+        # is case-insensitive on name.
+        for team_name in (
+            "Bowtie & Riverside Outreach",
+            "Echo Park On-site",
+            "Echo Park Outreach",
+            "Hollywood On-site",
+            "Hollywood Outreach",
+            "LA River Outreach",
+            "Los Feliz Outreach",
+            "Northeast Hollywood Outreach",
+            "SELAH Staff",
+            "Silver Lake Outreach",
+            "SLCC On-site",
+            "Sunday Social / Atwater On-site",
+            "Sunday Social / Atwater Outreach",
+            "WDI On-site",
+            "WDI Outreach",
         ):
             for org in (self.org_1, self.org_2):
                 Team.objects.get_or_create(
-                    slug=slug,
+                    name=team_name,
                     organization=org,
                 )
 

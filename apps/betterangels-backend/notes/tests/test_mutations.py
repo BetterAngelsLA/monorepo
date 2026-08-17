@@ -56,7 +56,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "point": self.point,
             "pointOfInterest": self.point_of_interest,
         }
-        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
@@ -129,7 +129,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(updated_note, expected_note)
 
     def test_update_note_omitted_team_id_preserves_team(self) -> None:
-        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         self._update_note_fixture({"id": self.note["id"], "teamId": str(wdi_team.pk)})
 
         response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
@@ -1039,7 +1039,7 @@ class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(Note.objects.get(pk=note_id).organization_id, self.org_2.pk)
 
     def test_create_note_rejects_cross_org_team(self) -> None:
-        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+        org_2_team = Team.objects.get(name="WDI On-site", organization=self.org_2)
 
         response = self._create_note_fixture(
             {

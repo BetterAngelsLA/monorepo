@@ -17,7 +17,6 @@ export const GET_NOTES = gql`
         purpose
         currentTeam {
           id
-          slug
           name
         }
         organization {
@@ -92,7 +91,6 @@ export const GET_NOTE = gql`
       purpose
       currentTeam {
         id
-        slug
         name
       }
       organization {
@@ -135,7 +133,6 @@ export const GET_NOTE = gql`
         summary
         currentTeam {
           id
-          slug
           name
         }
         description

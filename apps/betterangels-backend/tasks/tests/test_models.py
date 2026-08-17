@@ -16,8 +16,8 @@ class TaskTeamOrgValidationTestCase(TestCase):
     def setUp(self) -> None:
         self.org = organization_recipe.make(name="task_clean_org")
         self.other_org = organization_recipe.make(name="task_clean_other_org")
-        self.own_team = baker.make(Team, organization=self.org, slug="own", name="Own")
-        self.other_team = baker.make(Team, organization=self.other_org, slug="other", name="Other")
+        self.own_team = baker.make(Team, organization=self.org, name="Own")
+        self.other_team = baker.make(Team, organization=self.other_org, name="Other")
 
     def test_clean_allows_a_team_from_the_same_org(self) -> None:
         task = baker.make(Task, organization=self.org, team=self.own_team)

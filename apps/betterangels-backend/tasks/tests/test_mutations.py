@@ -31,7 +31,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+            wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
             variables = {
                 "clientProfile": str(client_profile.pk),
                 "description": "task description",
@@ -81,7 +81,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "description": "updated task description",
             "status": TaskStatusEnum.IN_PROGRESS.name,
             "summary": "updated task summary",
-            "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+            "teamId": str(Team.objects.get(name="WDI On-site", organization=self.org_1).pk),
         }
 
         expected_query_count = 7
@@ -112,7 +112,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(updated_task, expected_task)
 
     def test_update_task_omitted_team_id_preserves_team(self) -> None:
-        wdi_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        wdi_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(wdi_team.pk)})["data"][
             "createTask"
         ]["id"]
@@ -183,7 +183,7 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.org_1_team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        self.org_1_team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         self.task_id = self.create_task_fixture(
             {
                 "summary": "Org 1 task to amend",
@@ -204,7 +204,7 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(Task.objects.get(pk=task_id).organization_id, self.org_2.pk)
 
     def test_create_task_rejects_cross_org_team(self) -> None:
-        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+        org_2_team = Team.objects.get(name="WDI On-site", organization=self.org_2)
 
         response = self.create_task_fixture(
             {
@@ -222,7 +222,7 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
 
     def test_update_task_rejects_cross_org_team(self) -> None:
-        org_2_team = Team.objects.get(slug="wdi_on_site", organization=self.org_2)
+        org_2_team = Team.objects.get(name="WDI On-site", organization=self.org_2)
 
         response = self.update_task_fixture(
             {

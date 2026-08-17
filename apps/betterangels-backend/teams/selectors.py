@@ -10,7 +10,7 @@ from .models import Team
 
 def team_list(*, organization: Organization) -> QuerySet[Team]:
     """Return all teams for *organization*."""
-    return Team.objects.filter(organization=organization).order_by("slug")
+    return Team.objects.filter(organization=organization).order_by("name")
 
 
 def team_get(*, pk: int, organization: Organization) -> Optional[Team]:
