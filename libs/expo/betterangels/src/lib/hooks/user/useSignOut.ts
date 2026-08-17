@@ -2,6 +2,7 @@ import { gql } from '@apollo/client';
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
 import CookieManager from '@preeternal/react-native-cookie-manager';
+import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
 import { useUser } from '../../providers/user/UserProvider';
 
 export const LOGOUT_MUTATION = gql`
@@ -16,6 +17,11 @@ export default function useSignOut() {
   const { setUser } = useUser();
 
   const signOut = useCallback(async () => {
+    // Uploads outlive the screens that started them, so nothing else would
+    // stop them — and finishing one after sign-out would write to a client
+    // record this session no longer has any business touching.
+    cancelAllUploadRunners();
+
     try {
       await logout();
     } catch (err) {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { filter, isNonNullish, map, pipe } from 'remeda';
-import { uploadFileToS3WithPresignedPost } from '../s3';
+import { isTransientUploadFailure, uploadFileToS3WithPresignedPost } from '../s3';
 import { PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
 import {
   TPresignedUpload,
@@ -30,6 +30,13 @@ export type TRunPresignedUploadArgs<TResolve> = {
    * contacted. Useful for surfacing per-file state (e.g. names) in the UI.
    */
   onManifest?: (manifest: Array<{ refId: string; file: TUploadFile }>) => void;
+  /**
+   * Called with the presigned POSTs once the backend has issued them, so a
+   * caller can persist the credentials. A crash between S3 accepting a file
+   * and the save step recording it is otherwise unrecoverable: the object
+   * exists but nothing references it.
+   */
+  onPresigned?: (uploads: TPresignedUpload[]) => void;
   /** Aborts the pipeline between steps (and before each S3 upload). */
   signal?: AbortSignal;
   /**
@@ -41,6 +48,21 @@ export type TRunPresignedUploadArgs<TResolve> = {
   /** Injectable id generator (defaults to expo-crypto). Useful for tests. */
   generateRefId?: () => string;
   /**
+   * Maximum files uploading at once. Uploading every file simultaneously
+   * makes each one slower on a constrained connection and tends to make a
+   * whole batch time out together, so the default is deliberately small.
+   */
+  concurrency?: number;
+  /**
+   * How many times to re-attempt a file whose upload failed transiently
+   * (network drop, 408/429/5xx). Permanent failures are never retried.
+   */
+  maxAttempts?: number;
+  /** Base delay for the exponential backoff between attempts, in ms. */
+  retryBaseDelayMs?: number;
+  /** Injectable sleep + jitter, so tests do not wait on real backoff. */
+  scheduleRetry?: (attempt: number, baseDelayMs: number) => Promise<void>;
+  /**
    * TEST TOOLING ONLY: artificially delays each stage (GENERATING, per-file
    * UPLOADING, SAVING) so upload progress is visible while developing the UI.
    * Wired up only in tests — the shipped uploaders do not set it.
@@ -50,6 +72,65 @@ export type TRunPresignedUploadArgs<TResolve> = {
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Small on purpose: these uploads run on field connections, where firing
+ * every file at once makes each one slower and tends to time the whole batch
+ * out together rather than landing some of it.
+ */
+const DEFAULT_CONCURRENCY = 3;
+const DEFAULT_MAX_ATTEMPTS = 3;
+const DEFAULT_RETRY_BASE_DELAY_MS = 500;
+
+/** Exponential backoff with full jitter, to avoid a synchronised retry burst. */
+const defaultScheduleRetry = (attempt: number, baseDelayMs: number) =>
+  sleep(Math.random() * baseDelayMs * 2 ** (attempt - 1));
+
+/**
+ * Runs `task` over `items` with at most `limit` in flight, preserving input
+ * order in the results. Unlike `Promise.all`, `stopOnError` also stops
+ * *scheduling* further work once something has failed, so a fail-fast batch
+ * does not keep uploading files whose result is already going to be thrown
+ * away.
+ */
+async function runPool<TItem, TResult>(
+  items: TItem[],
+  limit: number,
+  task: (item: TItem) => Promise<TResult>,
+  options: { stopOnError: boolean },
+): Promise<PromiseSettledResult<TResult>[]> {
+  const results = new Array<PromiseSettledResult<TResult>>(items.length);
+  let nextIndex = 0;
+  let failed = false;
+
+  const worker = async () => {
+    for (;;) {
+      if (options.stopOnError && failed) {
+        return;
+      }
+
+      const index = nextIndex++;
+
+      if (index >= items.length) {
+        return;
+      }
+
+      try {
+        results[index] = { status: 'fulfilled', value: await task(items[index]) };
+      } catch (reason) {
+        failed = true;
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker),
+  );
+
+  // Items never scheduled because of an early failure leave holes.
+  return [...results].filter(Boolean);
+}
 
 /**
  * Orchestrates a presigned S3 upload: request presigned POSTs, upload each
@@ -68,10 +149,15 @@ export async function runPresignedUpload<TResolve>(
     resolveUpload,
     onProgress,
     onManifest,
+    onPresigned,
     signal,
     failFast = true,
     generateRefId = randomUUID,
     simulateDelayMs = 0,
+    concurrency = DEFAULT_CONCURRENCY,
+    maxAttempts = DEFAULT_MAX_ATTEMPTS,
+    retryBaseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS,
+    scheduleRetry = defaultScheduleRetry,
   } = args;
 
   if (!files.length) {
@@ -101,7 +187,12 @@ export async function runPresignedUpload<TResolve>(
   };
 
   // 1. Correlate files to refIds so server responses map back to originals.
-  const manifest = files.map((file) => ({ refId: generateRefId(), file }));
+  // A caller-supplied refId wins so a retry run reports against the row the
+  // file already occupies rather than creating a new one.
+  const manifest = files.map((file) => ({
+    refId: file.refId ?? generateRefId(),
+    file,
+  }));
   onManifest?.(manifest);
   const fileByRefId = new Map(
     manifest.map((entry) => [entry.refId, entry.file]),
@@ -125,6 +216,8 @@ export async function runPresignedUpload<TResolve>(
       'Upload response did not match requested files',
     );
   }
+
+  onPresigned?.(presignedUploads);
 
   // 3. Upload each file directly to S3 (parallel), reporting per-file progress.
   throwIfAborted();
@@ -153,32 +246,64 @@ export async function runPresignedUpload<TResolve>(
     try {
       let lastPercent = -1;
 
-      await uploadFileToS3WithPresignedPost({
-        presignedPost: {
-          url: upload.url,
-          fields: upload.fields,
-          key: upload.presignedKey,
-        },
-        file,
-        signal: file.signal ?? signal,
-        onProgress: ({ bytesSent, totalBytes }) => {
-          // Throttle to 1% steps so byte events don't flood React state.
-          const percent =
-            totalBytes > 0 ? Math.floor((bytesSent / totalBytes) * 100) : -1;
+      const sendOnce = () =>
+        uploadFileToS3WithPresignedPost({
+          presignedPost: {
+            url: upload.url,
+            fields: upload.fields,
+            key: upload.presignedKey,
+          },
+          file,
+          signal: file.signal ?? signal,
+          onProgress: ({ bytesSent, totalBytes }) => {
+            // Throttle to 1% steps so byte events don't flood React state.
+            const percent =
+              totalBytes > 0 ? Math.floor((bytesSent / totalBytes) * 100) : -1;
 
-          if (percent === lastPercent) {
-            return;
+            if (percent === lastPercent) {
+              return;
+            }
+
+            lastPercent = percent;
+            emit('UPLOADING', {
+              refId: upload.refId,
+              status: 'uploading',
+              bytesSent,
+              totalBytes,
+            });
+          },
+        });
+
+      // A dropped packet on a field connection is the common case, not an
+      // exceptional one, so transient failures are re-attempted here rather
+      // than surfaced as something the user has to act on.
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          await sendOnce();
+          break;
+        } catch (err) {
+          const canRetry =
+            attempt < maxAttempts &&
+            isTransientUploadFailure(err) &&
+            !file.signal?.aborted &&
+            !signal?.aborted;
+
+          if (!canRetry) {
+            throw err;
           }
 
-          lastPercent = percent;
+          // Restart the progress bar: the next attempt re-sends from zero.
+          lastPercent = -1;
           emit('UPLOADING', {
             refId: upload.refId,
             status: 'uploading',
-            bytesSent,
-            totalBytes,
+            bytesSent: 0,
+            totalBytes: 0,
           });
-        },
-      });
+
+          await scheduleRetry(attempt, retryBaseDelayMs);
+        }
+      }
 
       completed += 1;
       emit('UPLOADING', { refId: upload.refId, status: 'done' });
@@ -203,24 +328,23 @@ export async function runPresignedUpload<TResolve>(
     }
   };
 
-  let succeeded: TPresignedUpload[];
+  const settled = await runPool(presignedUploads, concurrency, uploadOne, {
+    stopOnError: failFast,
+  });
 
   if (failFast) {
-    const results = await Promise.all(presignedUploads.map(uploadOne));
-    succeeded = results.filter(
-      (upload): upload is TPresignedUpload => upload !== null,
-    );
-  } else {
-    const settled = await Promise.allSettled(presignedUploads.map(uploadOne));
+    const firstFailure = settled.find((result) => result.status === 'rejected');
 
-    succeeded = pipe(
-      settled,
-      map((result) =>
-        result.status === 'fulfilled' ? result.value : null,
-      ),
-      filter(isNonNullish),
-    );
+    if (firstFailure?.status === 'rejected') {
+      throw firstFailure.reason;
+    }
   }
+
+  const succeeded = pipe(
+    settled,
+    map((result) => (result.status === 'fulfilled' ? result.value : null)),
+    filter(isNonNullish),
+  );
 
   if (!succeeded.length) {
     // Every file was cancelled, not failed — surface an abort so the caller
