@@ -3,6 +3,29 @@
 Deployment checklist for the per-org teams work (team FK validation,
 org-scoped mutations, legacy-team backfill, permission sync).
 
+## Background: the enum → Team migration already happened
+
+`Team` and the `old_team` → `team` FK copy shipped in **#2151 (June 2026)**,
+as `RunPython` inside `notes.0033` and `tasks.0006`. The migration squash in
+**#2247** deleted those files *after* production had applied them, so the data
+moved in June and only the files went away — the squashed `0001_initial` /
+`0002_initial` carry schema operations only.
+
+The FK has therefore been the live source of truth since June, and `old_team`
+has been vestigial. `teams.0002_backfill_org_teams` in this release is an
+idempotent **safety net**, not the original migration: it only touches rows
+with `old_team` set and no FK, which on a normally-migrated database is none.
+
+Confirm that before deploying:
+
+```sql
+SELECT count(*) FROM notes_note WHERE old_team IS NOT NULL AND team_id IS NULL;
+SELECT count(*) FROM tasks_task WHERE old_team IS NOT NULL AND team_id IS NULL;
+```
+
+Both zero means the backfill has nothing to do and dropping `old_team` is
+removing a column unused since June.
+
 ## Deploy steps
 
 1. **Pre-deploy audit** (against production DB, before migrating):
@@ -17,18 +40,17 @@ org-scoped mutations, legacy-team backfill, permission sync).
    baseline off the teams-per-org counts, which should be zero for orgs that
    have never used teams.
 
-2. **Migrate** — applies `teams.0002_backfill_org_teams` (creates per-org
-   `Team` rows from legacy values and backfills note/task FKs) and the
-   `old_team` removals (`notes.0003`, `tasks.0003`). Idempotent.
+2. **Migrate** — applies `teams.0002_backfill_org_teams` (safety-net backfill,
+   see above) and the `old_team` removals (`notes.0003`, `tasks.0003`).
+   Idempotent.
 
-   > **No verification window if these ship together.** `notes.0003` /
-   > `tasks.0003` drop `old_team` in the same `migrate` run that reads from
-   > it, so a gap in the backfill destroys the evidence needed to diagnose
-   > it — and there is no way back (the backfill reverses to a no-op, and
-   > un-dropping the columns yields empty ones). To get a window, deploy
-   > the backfill + org-scoped mutations + audit tooling first, run step 4
-   > against production, then ship the `old_team` removals in a follow-up
-   > release.
+   > Both run in the same `migrate`, so the backfill's source columns are gone
+   > by the time it finishes. That is fine **when the counts above are zero** —
+   > there is nothing to back up and nothing to verify. If either count is
+   > non-zero, deploy the backfill without the `old_team` removals first,
+   > confirm the counts have gone to zero, and ship the removals in a
+   > follow-up release; the removals reverse only to empty columns, so there
+   > is no recovering the values afterwards.
 
 3. **Sync permission groups** — ensures every org's groups carry current
    template permissions (including `teams.*` for Org Admin):
