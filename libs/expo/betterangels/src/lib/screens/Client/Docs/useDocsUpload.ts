@@ -4,9 +4,12 @@ import { getDefaultStore } from 'jotai';
 import { ClientDocumentNamespaceEnum } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import {
+  deleteUploadManifest,
   failUploadSession,
   getUploadSession,
   markUploadPartiallyFailed,
+  saveUploadManifest,
+  updateUploadManifestItems,
   uploadStageVisibleAtom,
   useUploadSession,
 } from '../../../providers';
@@ -34,11 +37,15 @@ export function useDocsUpload(clientProfileId?: string) {
     files: ReactNativeFile[],
     namespace: ClientDocumentNamespaceEnum,
     title: string,
+    /** Overrides the hook's client, for resumed sessions from a manifest. */
+    forClientProfileId?: string,
   ) => {
+    const clientId = forClientProfileId ?? clientProfileId;
+
     // Register nothing until the session can actually run: a session begun
     // without a client id would never complete, never fail, and never be
     // cleaned up, pinning the global progress bar at "Uploading 0 of N".
-    if (!clientProfileId) {
+    if (!clientId) {
       return;
     }
 
@@ -46,6 +53,55 @@ export function useDocsUpload(clientProfileId?: string) {
     // retry — reports against the same rows.
     const refIds = files.map(() => randomUUID());
     const indexByRefId = new Map(refIds.map((refId, index) => [refId, index]));
+
+    // Persisted before anything is sent, so a crash at any point after this
+    // leaves a record that says what was being uploaded and for whom.
+    const sessionId = randomUUID();
+
+    void saveUploadManifest({
+      id: sessionId,
+      clientProfileId: clientId,
+      namespace,
+      label: title,
+      createdAt: Date.now(),
+      items: files.map((file, index) => ({
+        refId: refIds[index],
+        name: file.name,
+        uri: file.uri,
+        mimeType: file.type,
+        status: 'pending',
+      })),
+    });
+
+    /**
+     * Mirrors per-file outcomes into the persisted manifest so a resume
+     * knows which files still need bytes sent and which only need saving.
+     */
+    const recordItemProgress = (progress: {
+      refId?: string;
+      status?: string;
+    }) => {
+      if (!progress.refId || !progress.status) {
+        return;
+      }
+
+      const status =
+        progress.status === 'done'
+          ? 'uploaded'
+          : progress.status === 'error'
+            ? 'error'
+            : undefined;
+
+      if (!status) {
+        return;
+      }
+
+      void updateUploadManifestItems(sessionId, (items) =>
+        items.map((item) =>
+          item.refId === progress.refId ? { ...item, status } : item,
+        ),
+      );
+    };
 
     const runFiles = async (targetRefIds: string[]) => {
       const indexes = targetRefIds
@@ -62,7 +118,7 @@ export function useDocsUpload(clientProfileId?: string) {
 
       try {
         await uploadDocuments({
-          clientProfileId,
+          clientProfileId: clientId,
           // Each file carries its own abort signal so per-file cancel works.
           documents: indexes.map((index) => ({
             ...files[index],
@@ -74,7 +130,26 @@ export function useDocsUpload(clientProfileId?: string) {
           // items are already correlated. Letting the manifest rebuild them
           // would replace the whole item list with just this run's files —
           // wiping the rest of the session on every retry.
-          onProgress: (progress) => updateUpload(handle.id, progress),
+          onPresigned: (uploads) =>
+            void updateUploadManifestItems(sessionId, (items) =>
+              items.map((item) => {
+                const issued = uploads.find(
+                  (upload) => upload.refId === item.refId,
+                );
+
+                return issued
+                  ? {
+                      ...item,
+                      presignedKey: issued.presignedKey,
+                      uploadToken: issued.uploadToken,
+                    }
+                  : item;
+              }),
+            ),
+          onProgress: (progress) => {
+            updateUpload(handle.id, progress);
+            recordItemProgress(progress);
+          },
         });
 
         if (indexes.every((index) => signals[index]?.aborted)) {
@@ -119,6 +194,8 @@ export function useDocsUpload(clientProfileId?: string) {
         settled?.items.filter((item) => item.status === 'error').length ?? 0;
 
       if (failedCount === 0) {
+        // Nothing left to recover.
+        void deleteUploadManifest(sessionId);
         notify('Upload complete', 'success');
         return;
       }
@@ -145,7 +222,7 @@ export function useDocsUpload(clientProfileId?: string) {
       files.map((file) => file.name),
       {
         label: title,
-        clientId: clientProfileId,
+        clientId,
         refIds,
         // Local file metadata so upload rows can preview the actual file.
         files: files.map((file) => ({ uri: file.uri, type: file.type })),

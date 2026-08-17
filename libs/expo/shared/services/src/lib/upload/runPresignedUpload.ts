@@ -30,6 +30,13 @@ export type TRunPresignedUploadArgs<TResolve> = {
    * contacted. Useful for surfacing per-file state (e.g. names) in the UI.
    */
   onManifest?: (manifest: Array<{ refId: string; file: TUploadFile }>) => void;
+  /**
+   * Called with the presigned POSTs once the backend has issued them, so a
+   * caller can persist the credentials. A crash between S3 accepting a file
+   * and the save step recording it is otherwise unrecoverable: the object
+   * exists but nothing references it.
+   */
+  onPresigned?: (uploads: TPresignedUpload[]) => void;
   /** Aborts the pipeline between steps (and before each S3 upload). */
   signal?: AbortSignal;
   /**
@@ -142,6 +149,7 @@ export async function runPresignedUpload<TResolve>(
     resolveUpload,
     onProgress,
     onManifest,
+    onPresigned,
     signal,
     failFast = true,
     generateRefId = randomUUID,
@@ -208,6 +216,8 @@ export async function runPresignedUpload<TResolve>(
       'Upload response did not match requested files',
     );
   }
+
+  onPresigned?.(presignedUploads);
 
   // 3. Upload each file directly to S3 (parallel), reporting per-file progress.
   throwIfAborted();
