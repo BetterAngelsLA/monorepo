@@ -9,12 +9,23 @@ import TextRegular from '../TextRegular';
  * Canonical status union for an in-flight upload item. The app's upload
  * store mirrors this type (see `TUploadItemStatus` in the upload progress
  * lib) so row state and store state cannot drift apart.
+ *
+ * `uploaded` and `done` are deliberately distinct: a file's bytes reaching
+ * S3 does not mean it was persisted. Only the pipeline's save step turns an
+ * `uploaded` item into `done`, so a batch that dies before saving cannot
+ * show green rows for files that were never recorded.
  */
-export type TUploadItemRowStatus = 'pending' | 'uploading' | 'done' | 'error';
+export type TUploadItemRowStatus =
+  | 'pending'
+  | 'uploading'
+  | 'uploaded'
+  | 'done'
+  | 'error';
 
 const STATUS_LABELS: Record<TUploadItemRowStatus, string> = {
   pending: 'Queued',
   uploading: 'Uploading…',
+  uploaded: 'Saving…',
   done: 'Done',
   error: 'Failed',
 };
@@ -22,6 +33,7 @@ const STATUS_LABELS: Record<TUploadItemRowStatus, string> = {
 const STATUS_COLORS: Record<TUploadItemRowStatus, string> = {
   pending: Colors.NEUTRAL,
   uploading: Colors.PRIMARY,
+  uploaded: Colors.PRIMARY,
   done: Colors.SUCCESS,
   error: Colors.ERROR,
 };

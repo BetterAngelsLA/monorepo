@@ -138,6 +138,9 @@ export function failUploadSession(id: string, errorMessage?: string) {
             ...session,
             failed: true,
             errorMessage,
+            // Only 'done' items were persisted; anything still 'uploaded'
+            // reached S3 but was never saved, so it is a failure the user
+            // needs to retry rather than a success.
             items: session.items.map((item) =>
               item.status === 'done'
                 ? item
@@ -148,14 +151,55 @@ export function failUploadSession(id: string, errorMessage?: string) {
   );
 }
 
+/**
+ * Marks a session's save step as finished: every item that is not in error
+ * becomes `done` (persisted). Items that already failed stay failed, so a
+ * partially-successful batch settles as "some saved, some retryable"
+ * rather than reporting blanket success.
+ */
 export function completeUploadSession(id: string) {
+  commit(
+    getSessions().map((session) => {
+      if (session.id !== id) {
+        return session;
+      }
+
+      const items = session.items.map((item) =>
+        item.status === 'error'
+          ? item
+          : { ...item, status: 'done' as TUploadItemStatus },
+      );
+      const complete = items.every((item) => item.status === 'done');
+
+      return {
+        ...session,
+        items,
+        complete,
+        completed: items.filter((item) => item.status === 'done').length,
+      };
+    }),
+  );
+}
+
+/**
+ * Flags a session whose save step succeeded for some files but not all.
+ * Unlike `failUploadSession` this leaves item statuses alone — the files
+ * that were persisted stay `done`, and only the already-failed ones carry a
+ * retry affordance.
+ */
+export function markUploadPartiallyFailed(id: string, errorMessage?: string) {
   commit(
     getSessions().map((session) =>
       session.id !== id
         ? session
-        : { ...session, complete: true, completed: session.total },
+        : { ...session, failed: true, complete: false, errorMessage },
     ),
   );
+}
+
+/** Reads a session directly (for callers outside React, e.g. upload runners). */
+export function getUploadSession(id: string): TUploadSession | undefined {
+  return getSessions().find((session) => session.id === id);
 }
 
 export function endUploadSession(id: string) {
@@ -240,8 +284,12 @@ export function resetUploadProgressAtoms() {
 
 function toItemStatus(status: TUploadProgress['status']): TUploadItemStatus {
   switch (status) {
+    // The pipeline's 'done' means "bytes reached S3", not "persisted". Only
+    // `completeUploadSession` (called after the save step) promotes an item
+    // to 'done', so a batch that fails before saving never shows green rows
+    // for files that were not actually recorded.
     case 'done':
-      return 'done';
+      return 'uploaded';
     case 'error':
       return 'error';
     case 'uploading':

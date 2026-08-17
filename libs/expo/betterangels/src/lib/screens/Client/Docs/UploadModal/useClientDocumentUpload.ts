@@ -41,6 +41,11 @@ export function useClientDocumentUpload() {
 
     await runPresignedUpload({
       files: documents,
+      // Persist the files that made it. With fail-fast the save step is
+      // skipped entirely when any single file fails, which would strand the
+      // successful uploads in S3 with no document record — and per-file
+      // retry assumes the files it is not retrying were already saved.
+      failFast: false,
       onManifest,
       generateUpload: async (inputs) => {
         const result = await createUploads({

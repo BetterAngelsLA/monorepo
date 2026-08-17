@@ -4,6 +4,8 @@ import { getDefaultStore } from 'jotai';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import {
+  getUploadSession,
+  markUploadPartiallyFailed,
   uploadStageVisibleAtom,
   useUploadSession,
 } from '../../../../providers';
@@ -78,9 +80,32 @@ export function useDocsUpload(clientProfileId?: string) {
           return;
         }
 
+        // The save step ran, so everything not already in error is now
+        // persisted. With `failFast: false` the pipeline resolves even when
+        // some files failed, so the session decides between success and
+        // partial failure from its own item state.
         completeUpload(handle.id);
+
+        const settled = getUploadSession(handle.id);
+        const failedCount =
+          settled?.items.filter((item) => item.status === 'error').length ?? 0;
+
+        if (failedCount > 0) {
+          markUploadPartiallyFailed(
+            handle.id,
+            `${failedCount} of ${settled?.items.length} files failed to upload. Use Retry below.`,
+          );
+        }
+
         if (!getDefaultStore().get(uploadStageVisibleAtom)) {
-          showSnackbar({ message: 'Upload complete', type: 'success' });
+          showSnackbar(
+            failedCount > 0
+              ? {
+                  message: `${failedCount} file${failedCount === 1 ? '' : 's'} failed to upload.`,
+                  type: 'error',
+                }
+              : { message: 'Upload complete', type: 'success' },
+          );
         }
       } catch (err) {
         console.error(`[useDocsUpload upload error:] ${err}`);
