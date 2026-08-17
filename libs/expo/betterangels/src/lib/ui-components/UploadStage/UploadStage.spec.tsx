@@ -166,7 +166,8 @@ describe('UploadStage', () => {
   });
 
   it('renders the resumed session items with the uploading chrome', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
+    startUploadSession('s1', ['a.pdf'], {
+      refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
@@ -180,7 +181,8 @@ describe('UploadStage', () => {
   });
 
   it('previews the actual local file for items with uri and mime type', () => {
-    startUploadSession('s1', ['photo.jpg'], { refIds: ['ref-0'],
+    startUploadSession('s1', ['photo.jpg'], {
+      refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
       files: [{ uri: 'file://photo.jpg', type: 'image/jpeg' }],
@@ -193,7 +195,8 @@ describe('UploadStage', () => {
   });
 
   it('falls back to the default icon when no preview metadata exists', () => {
-    startUploadSession('s1', ['scan.pdf'], { refIds: ['ref-0'],
+    startUploadSession('s1', ['scan.pdf'], {
+      refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
@@ -205,7 +208,8 @@ describe('UploadStage', () => {
   });
 
   it('shows Done and stays open until the user closes it', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
+    startUploadSession('s1', ['a.pdf'], {
+      refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
@@ -224,9 +228,9 @@ describe('UploadStage', () => {
   });
 
   it('shows a failed state with Retry and no footer action', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
+      clientId: 'client-1',
       cancellable: true,
       retryable: true,
     });
@@ -245,7 +249,8 @@ describe('UploadStage', () => {
   });
 
   it('closes when every file is cancelled individually', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
+    startUploadSession('s1', ['a.pdf'], {
+      refIds: ['ref-a'],
       clientId: 'client-1',
       cancellable: true,
     });
@@ -264,9 +269,9 @@ describe('UploadStage', () => {
   it('retries a failed file in place, keeping one session', () => {
     const onRetryItems = vi.fn();
 
-    startUploadSession('s1', ['a.pdf', 'b.pdf'], { refIds: ['ref-0', 'ref-1'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       refIds: ['ref-a', 'ref-b'],
+      clientId: 'client-1',
       cancellable: true,
       retryable: true,
     });
@@ -296,9 +301,9 @@ describe('UploadStage', () => {
   it('retries every failed file in one run', () => {
     const onRetryItems = vi.fn();
 
-    startUploadSession('s1', ['a.pdf', 'b.pdf', 'c.pdf'], { refIds: ['ref-0', 'ref-1', 'ref-2'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf', 'b.pdf', 'c.pdf'], {
       refIds: ['ref-a', 'ref-b', 'ref-c'],
+      clientId: 'client-1',
       cancellable: true,
       retryable: true,
     });
@@ -323,9 +328,9 @@ describe('UploadStage', () => {
   });
 
   it('offers no bulk retry when only one file failed', () => {
-    startUploadSession('s1', ['a.pdf', 'b.pdf'], { refIds: ['ref-0', 'ref-1'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf', 'b.pdf'], {
       refIds: ['ref-a', 'ref-b'],
+      clientId: 'client-1',
       cancellable: true,
       retryable: true,
     });
@@ -338,13 +343,13 @@ describe('UploadStage', () => {
   });
 
   it('shows every resumed session, not just the first one', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
+      clientId: 'client-1',
     });
-    startUploadSession('s2', ['b.pdf'], { refIds: ['ref-0'],
+    startUploadSession('s2', ['b.pdf'], {
+      refIds: ['ref-a'],
       clientId: 'client-2',
-      refIds: ['ref-b'],
     });
 
     const { getByText } = renderStage(['s1', 's2']);
@@ -356,9 +361,9 @@ describe('UploadStage', () => {
   });
 
   it('dismisses failed files and closes when nothing is left', () => {
-    startUploadSession('s1', ['a.pdf'], { refIds: ['ref-0'],
-      clientId: 'client-1',
+    startUploadSession('s1', ['a.pdf'], {
       refIds: ['ref-a'],
+      clientId: 'client-1',
       cancellable: true,
       retryable: true,
     });
