@@ -1,5 +1,6 @@
 import { getDefaultStore } from 'jotai';
 import {
+  cancelUploadItemSession,
   completeUploadSession,
   failUploadSession,
   markUploadPartiallyFailed,
@@ -9,8 +10,19 @@ import {
   updateUploadSession,
   uploadSessionsAtom,
 } from './uploadProgressAtoms';
+import { uploadSessionCounts } from './uploadProgressUtils';
 
 const store = getDefaultStore();
+
+const countsFor = (id: string) => {
+  const session = getUploadSession(id);
+
+  if (!session) {
+    throw new Error(`no session ${id}`);
+  }
+
+  return uploadSessionCounts(session);
+};
 
 const statuses = (id: string) =>
   getUploadSession(id)?.items.map((item) => item.status);
@@ -68,7 +80,12 @@ describe('uploadProgressAtoms', () => {
     completeUploadSession('s1');
 
     expect(statuses('s1')).toEqual(['done', 'done']);
-    expect(getUploadSession('s1')?.complete).toBe(true);
+    expect(countsFor('s1')).toEqual({
+      total: 2,
+      completed: 2,
+      failed: false,
+      complete: true,
+    });
   });
 
   it('fails uploaded-but-unsaved items when the batch dies before saving', () => {
@@ -93,12 +110,16 @@ describe('uploadProgressAtoms', () => {
     markUploadPartiallyFailed('s1', '1 of 2 files failed to upload.');
 
     expect(statuses('s1')).toEqual(['done', 'error']);
-
-    const session = getUploadSession('s1');
-    expect(session?.failed).toBe(true);
-    // Not complete, so cleanup cannot prune the retry affordance away.
-    expect(session?.complete).toBe(false);
-    expect(session?.errorMessage).toBe('1 of 2 files failed to upload.');
+    expect(countsFor('s1')).toEqual({
+      total: 2,
+      completed: 1,
+      failed: true,
+      // Not complete, so cleanup cannot prune the retry affordance away.
+      complete: false,
+    });
+    expect(getUploadSession('s1')?.errorMessage).toBe(
+      '1 of 2 files failed to upload.',
+    );
   });
 
   it('does not strand simple flows that never report per-item progress', () => {
@@ -108,7 +129,26 @@ describe('uploadProgressAtoms', () => {
     completeUploadSession('s1');
 
     expect(statuses('s1')).toEqual(['done']);
-    expect(getUploadSession('s1')?.complete).toBe(true);
+    expect(countsFor('s1').complete).toBe(true);
+  });
+
+  it('keeps counts consistent when an item is cancelled mid-flight', () => {
+    const [a, b] = beginSession('s1', ['a.pdf', 'b.pdf']);
+
+    reportUploaded('s1', a, 1);
+    cancelUploadItemSession('s1', b);
+
+    // Derived from the surviving items, so the bar can never read
+    // "1 of 2" for a session that now holds a single file.
+    expect(countsFor('s1')).toEqual({
+      total: 1,
+      completed: 1,
+      failed: false,
+      complete: false,
+    });
+
+    completeUploadSession('s1');
+    expect(countsFor('s1').complete).toBe(true);
   });
 
   it('leaves other sessions untouched', () => {

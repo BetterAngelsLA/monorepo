@@ -54,10 +54,15 @@ describe('UploadProgressBar', () => {
 
   it('shows the aggregate progress of background sessions', () => {
     startUploadSession('s1', ['a.pdf', 'b.pdf'], { clientId: 'client-1' });
+    // Progress is derived from item statuses, not the pipeline's own
+    // counter — that counter describes the transport run, which diverges
+    // from the session as soon as an item is cancelled or retried.
     updateUploadSession('s1', {
       stage: 'UPLOADING',
       completed: 1,
       total: 2,
+      refId: 'pending-0',
+      status: 'done',
     });
 
     const { getByText } = render(<UploadProgressBar />);

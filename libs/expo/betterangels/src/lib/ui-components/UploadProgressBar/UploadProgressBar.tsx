@@ -8,6 +8,7 @@ import { useModalScreen } from '../../providers';
 import {
   aggregateUploadCounts,
   TUploadSession,
+  uploadSessionCounts,
   uploadSessionsAtom,
   uploadStageVisibleAtom,
 } from '../../providers/uploadProgress';
@@ -25,7 +26,9 @@ export function UploadProgressBar() {
   const sessions = useAtomValue(uploadSessionsAtom);
   const uploadStageVisible = useAtomValue(uploadStageVisibleAtom);
 
-  const activeSessions = sessions.filter((session) => !session.complete);
+  const activeSessions = sessions.filter(
+    (session) => !uploadSessionCounts(session).complete,
+  );
 
   if (uploadStageVisible || activeSessions.length === 0) {
     return null;

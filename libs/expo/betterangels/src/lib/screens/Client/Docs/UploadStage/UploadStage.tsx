@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   setUploadStageVisible,
   uploadProgressPct,
+  uploadSessionCounts,
   useUploadProgress,
 } from '../../../../providers';
 import { FileThumbnail } from '../../../../ui-components';
@@ -71,13 +72,17 @@ export default function UploadStage(props: TUploadStageProps) {
     );
   }, [sessions, groupId]);
 
-  const allComplete =
-    ownedSessions.length > 0 &&
-    ownedSessions.every((session) => session.complete);
-  const anyInFlight = ownedSessions.some(
-    (session) => !session.complete && !session.failed,
+  const counts = useMemo(
+    () => ownedSessions.map(uploadSessionCounts),
+    [ownedSessions],
   );
-  const anyFailed = ownedSessions.some((session) => session.failed);
+
+  const allComplete =
+    counts.length > 0 && counts.every((count) => count.complete);
+  const anyInFlight = counts.some(
+    (count) => !count.complete && !count.failed,
+  );
+  const anyFailed = counts.some((count) => count.failed);
 
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):

@@ -5,6 +5,7 @@ import {
   uploadSessionsAtom,
   uploadStageVisibleAtom,
 } from './uploadProgressAtoms';
+import { uploadSessionCounts } from './uploadProgressUtils';
 
 const COMPLETE_CLEANUP_DELAY_MS = 3000;
 
@@ -38,7 +39,9 @@ export function UploadProgressCleanup() {
     }
 
     for (const session of sessions) {
-      if (!session.complete || cleanupTimers.current.has(session.id)) {
+      const { complete } = uploadSessionCounts(session);
+
+      if (!complete || cleanupTimers.current.has(session.id)) {
         continue;
       }
 

@@ -26,15 +26,17 @@ export type TUploadItem = {
   onRetry?: () => void;
 };
 
+/**
+ * A logical upload. Progress counts (`total`, `completed`, `failed`,
+ * `complete`) are deliberately NOT stored here — they are derived from
+ * `items` by `uploadSessionCounts`. Keeping them as fields meant five
+ * separate places had to keep the arithmetic in sync whenever an item was
+ * added, cancelled, or retried, and they drifted.
+ */
 export type TUploadSession = {
   id: string;
   stage: TUploadStage;
   items: TUploadItem[];
-  completed: number;
-  total: number;
-  failed: boolean;
-  /** True once the session finished successfully and is awaiting cleanup. */
-  complete?: boolean;
   /** Human-readable label (e.g. the doc type). */
   label?: string;
   /** Optional, flow-specific failure detail shown with the failed items. */

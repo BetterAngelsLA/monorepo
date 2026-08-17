@@ -56,9 +56,6 @@ export function startUploadSession(
         onCancel: onCancelItem ? () => onCancelItem(index) : undefined,
         onRetry: onRetryItem ? () => onRetryItem(index) : undefined,
       })),
-      completed: 0,
-      total: names.length,
-      failed: false,
       label,
       clientId,
       groupId,
@@ -117,14 +114,10 @@ export function updateUploadSession(id: string, progress: TUploadProgress) {
           )
         : session.items;
 
-      return {
-        ...session,
-        stage: progress.stage,
-        // total stays authoritative in the store (per-item cancels shrink it).
-        completed: Math.min(progress.completed, session.total),
-        items,
-        failed: session.failed || progress.status === 'error',
-      };
+      // Counts come from `items` via `uploadSessionCounts`, so the pipeline's
+      // own completed/total are ignored here — they describe the transport
+      // run, which no longer matches the session once items are cancelled.
+      return { ...session, stage: progress.stage, items };
     }),
   );
 }
@@ -136,7 +129,6 @@ export function failUploadSession(id: string, errorMessage?: string) {
         ? session
         : {
             ...session,
-            failed: true,
             errorMessage,
             // Only 'done' items were persisted; anything still 'uploaded'
             // reached S3 but was never saved, so it is a failure the user
@@ -159,40 +151,31 @@ export function failUploadSession(id: string, errorMessage?: string) {
  */
 export function completeUploadSession(id: string) {
   commit(
-    getSessions().map((session) => {
-      if (session.id !== id) {
-        return session;
-      }
-
-      const items = session.items.map((item) =>
-        item.status === 'error'
-          ? item
-          : { ...item, status: 'done' as TUploadItemStatus },
-      );
-      const complete = items.every((item) => item.status === 'done');
-
-      return {
-        ...session,
-        items,
-        complete,
-        completed: items.filter((item) => item.status === 'done').length,
-      };
-    }),
+    getSessions().map((session) =>
+      session.id !== id
+        ? session
+        : {
+            ...session,
+            items: session.items.map((item) =>
+              item.status === 'error'
+                ? item
+                : { ...item, status: 'done' as TUploadItemStatus },
+            ),
+          },
+    ),
   );
 }
 
 /**
- * Flags a session whose save step succeeded for some files but not all.
- * Unlike `failUploadSession` this leaves item statuses alone — the files
- * that were persisted stay `done`, and only the already-failed ones carry a
- * retry affordance.
+ * Attaches the failure detail for a session whose save step succeeded for
+ * some files but not all. Item statuses are left alone — the persisted
+ * files stay `done` and only the already-failed ones carry a retry
+ * affordance — and `failed`/`complete` derive from those statuses.
  */
 export function markUploadPartiallyFailed(id: string, errorMessage?: string) {
   commit(
     getSessions().map((session) =>
-      session.id !== id
-        ? session
-        : { ...session, failed: true, complete: false, errorMessage },
+      session.id !== id ? session : { ...session, errorMessage },
     ),
   );
 }
@@ -227,16 +210,7 @@ export function retryUploadItemSession(sessionId: string, refId: string) {
   }
 
   commit(
-    getSessions().map((s) =>
-      s.id !== sessionId
-        ? s
-        : {
-            ...s,
-            items,
-            total: s.total - 1,
-            completed: item.status === 'done' ? s.completed - 1 : s.completed,
-          },
-    ),
+    getSessions().map((s) => (s.id !== sessionId ? s : { ...s, items })),
   );
 }
 
@@ -259,16 +233,7 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
   }
 
   commit(
-    getSessions().map((s) =>
-      s.id !== sessionId
-        ? s
-        : {
-            ...s,
-            items,
-            total: s.total - 1,
-            completed: item.status === 'done' ? s.completed - 1 : s.completed,
-          },
-    ),
+    getSessions().map((s) => (s.id !== sessionId ? s : { ...s, items })),
   );
 }
 
