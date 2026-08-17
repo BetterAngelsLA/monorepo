@@ -248,6 +248,20 @@ class TaskOrgScopingMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(task.summary, "Amended summary")
         self.assertEqual(task.team_id, self.org_1_team.pk)
 
+    def test_update_task_clears_the_team_when_team_id_is_null(self) -> None:
+        """Explicit null clears; distinct from omitting the field."""
+        response = self.update_task_fixture({"id": self.task_id, "teamId": None})
+
+        self.assertIsNotNone(response["data"]["updateTask"]["id"])
+        self.assertIsNone(Task.objects.get(pk=self.task_id).team_id)
+
+    def test_update_task_can_set_a_team_again_after_clearing(self) -> None:
+        self.update_task_fixture({"id": self.task_id, "teamId": None})
+
+        self.update_task_fixture({"id": self.task_id, "teamId": str(self.org_1_team.pk)})
+
+        self.assertEqual(Task.objects.get(pk=self.task_id).team_id, self.org_1_team.pk)
+
     def test_update_task_denied_when_active_org_differs(self) -> None:
         # org_1_case_manager_1 is not a member of org_2.
         self._set_active_org(self.org_2)

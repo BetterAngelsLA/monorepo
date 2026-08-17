@@ -1058,6 +1058,24 @@ class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
         )
         self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
 
+    def test_update_note_clears_the_team_when_team_id_is_null(self) -> None:
+        """Explicit null clears; distinct from omitting the field."""
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(team.pk)})
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, team.pk)
+
+        self._update_note_fixture({"id": self.note["id"], "teamId": None})
+
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).team_id)
+
+    def test_update_note_preserves_the_team_when_team_id_is_omitted(self) -> None:
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(team.pk)})
+
+        self._update_note_fixture({"id": self.note["id"], "purpose": "Renamed"})
+
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, team.pk)
+
     def test_update_note_denied_when_active_org_differs(self) -> None:
         # org_1_case_manager_1 is not a member of org_2.
         self._set_active_org(self.org_2)

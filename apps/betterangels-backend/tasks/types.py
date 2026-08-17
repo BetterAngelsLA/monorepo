@@ -134,5 +134,5 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team_id: Maybe[ID]  # FK-based team field; absent = leave unchanged
+    team_id: Maybe[ID | None]  # absent = leave unchanged; null = clear the team
     status: Optional[TaskStatusEnum]
