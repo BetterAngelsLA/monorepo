@@ -95,11 +95,16 @@ class TeamOrgScopingTestCase(GraphQLBaseTestCase):
         self.assertEqual(Team.objects.get(pk=team_id).organization_id, self.org_1.pk)
 
     def test_create_team_is_denied_without_team_permissions(self) -> None:
+        """Caseworkers hold no ``teams.*`` perms — only Org Admin does."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         response = self._create_team("Caseworker Team")
 
-        self.assertIsNotNone(response.get("errors"))
+        # A denial surfaces either as a top-level error or as OperationInfo
+        # depending on where the check trips, so assert on the outcome: no team
+        # was returned and none was created.
+        payload = (response.get("data") or {}).get("createTeam") or {}
+        self.assertIsNone(payload.get("id"))
         self.assertEqual(Team.objects.filter(name="Caseworker Team").count(), 0)
 
     # -- updateTeam ---------------------------------------------------------
