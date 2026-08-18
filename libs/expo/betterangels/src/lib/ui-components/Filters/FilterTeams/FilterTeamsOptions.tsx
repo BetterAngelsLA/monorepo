@@ -21,8 +21,7 @@ export function FilterTeamsOptions(props: TProps) {
   const [localSelected, setLocalSelected] =
     useState<TFilterOption[]>(initialSelected);
 
-  // Fetch all teams, including inactive ones
-  const { teams, error } = useOrgTeams({ isActive: null });
+  const { teams, error } = useOrgTeams();
 
   const options = useMemo<TFilterOption[]>(() => {
     return teams.map((t) => ({

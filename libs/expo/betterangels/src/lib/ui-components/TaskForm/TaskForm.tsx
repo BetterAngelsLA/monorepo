@@ -5,7 +5,7 @@ import {
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
 import { formatTeamDisplayName } from '@monorepo/ba-platform';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -40,7 +40,7 @@ export function TaskForm(props: TProps) {
   });
 
   const { teams } = useOrgTeams();
-  const [initialTeamId] = useState(initialValues?.teamId);
+  const initialTeamId = useMemo(() => initialValues?.teamId, []);
 
   const {
     control,

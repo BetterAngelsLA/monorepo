@@ -17,7 +17,7 @@ type UseOrgTeamsOptions = {
  * Only fetch active teams by default.
  */
 export function useOrgTeams(options: UseOrgTeamsOptions = {}) {
-  const { limit = 10000, offset = 0, isActive = true } = options;
+  const { limit = 10000, offset = 0, isActive } = options;
 
   const pagination: OffsetPaginationInput = { limit, offset };
 

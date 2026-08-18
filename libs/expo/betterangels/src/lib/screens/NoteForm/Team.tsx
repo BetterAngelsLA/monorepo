@@ -1,7 +1,7 @@
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
-import { formatTeamDisplayName } from '@monorepo/ba-platform';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useOrgTeams } from '../../hooks';
 
@@ -13,7 +13,7 @@ interface ITeamProps {
 export default function Team(props: ITeamProps) {
   const { teamId, onTeamChange } = props;
   const { teams } = useOrgTeams();
-  const [initialTeamId] = useState(teamId);
+  const initialTeamId = useMemo(() => teamId, []);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
