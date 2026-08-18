@@ -68,10 +68,7 @@ export function TeamsPage(props: IProps) {
 
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    {
-      variables: { filters: { isActive: null } },
-      fetchPolicy: 'cache-and-network',
-    },
+    { fetchPolicy: 'cache-and-network' },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
@@ -166,6 +163,9 @@ export function TeamsPage(props: IProps) {
 
   // Filter/search client-side
   let displayTeams = teams;
+  if (!showInactive) {
+    displayTeams = displayTeams.filter((t) => t.isActive !== false);
+  }
   if (search) {
     const lower = search.toLowerCase();
     displayTeams = displayTeams.filter((t) =>
@@ -239,7 +239,9 @@ export function TeamsPage(props: IProps) {
         <div className="text-center py-10 text-neutral-60">
           {search
             ? 'No teams match your search.'
-            : 'No teams in this organization.'}
+            : !showInactive
+              ? 'No active teams in this organization.'
+              : 'No teams in this organization.'}
         </div>
       )}
 
