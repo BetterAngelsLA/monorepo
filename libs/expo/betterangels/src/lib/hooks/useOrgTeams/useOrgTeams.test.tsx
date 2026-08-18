@@ -69,9 +69,7 @@ function createRecordingClient() {
 }
 
 describe('useOrgTeams', () => {
-  // Start every test from a store with nothing in it. Each test below
-  // installs its own storage anyway; this is what keeps a test that
-  // forgets to from inheriting the previous one's organization.
+  // So a test that doesn't install its own storage still starts empty.
   beforeEach(() => configureActiveOrgStorage(createSyncStorage()));
 
   function renderWith(organizations: readonly (typeof ORG)[]) {

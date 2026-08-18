@@ -78,12 +78,6 @@ const writePersisted = (id: string | null): void => {
  */
 export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
   persistence = next;
-  // Drop the value the previous backend supplied along with the seed flag, so
-  // `current` is never a leftover from storage that is no longer installed.
-  // No caller can observe the difference — every read goes through
-  // getActiveOrgId, which re-seeds first — but it keeps the invariant literal
-  // rather than a consequence of read ordering.
-  current = null;
   seeded = false;
 };
 
