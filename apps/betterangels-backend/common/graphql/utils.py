@@ -28,25 +28,29 @@ def get_object_or_permission_error(
         raise PermissionDenied(error_message)
 
 
-def maybe_value(maybe: Any) -> Any:
-    """Unwrap a Strawberry ``Maybe[T]``, or return ``None`` if absent/null.
+def maybe_int_value(maybe: Any) -> int | None:
+    """Unwrap a Strawberry ``Maybe[ID]`` to an int, or ``None`` if absent/null.
 
-    A provided field arrives as ``Some(value)``, so it has to be unwrapped —
-    returning the ``Some`` itself makes callers fail on whatever they do next
-    (``'Some' object has no attribute 'strip'``).  Absent is ``None`` on a bare
-    ``Maybe[T]`` field and ``UNSET`` on one declared ``= strawberry.UNSET``.
+    For the plain read, prefer the idiom over a helper — it is correct for both
+    absence spellings, since ``Some.__bool__`` is always ``True`` while ``None``
+    and ``UNSET`` are both falsy::
 
-    Collapses absent and explicit null into ``None``, which suits callers where
-    both mean "no value".  Use ``apply_maybe`` where the two must stay distinct.
+        name = data.name.value if data.name else None
+
+    This exists for the ``ID``-to-``int`` narrowing, which that idiom cannot do
+    safely on its own: ``int(None)`` raises. A bare ``Maybe[ID]`` cannot carry an
+    explicit null today — Strawberry rejects one at validation — but making
+    ``teamId`` clearable (#2316) means annotating it ``Maybe[ID | None]``, at
+    which point ``Some(None)`` becomes reachable. Keeping the narrowing in one
+    place is what makes that a one-line change.
+
+    Callers building an update dict should not use this at all: ``asdict``
+    already omits absent fields, and overriding it turns "not mentioned" into
+    "set to null".
     """
     if maybe is None or maybe is strawberry.UNSET:
         return None
 
-    return maybe.value if isinstance(maybe, Some) else maybe
-
-
-def maybe_int_value(maybe: Any) -> int | None:
-    """Unwrap a Strawberry ``Maybe[ID]`` to an int, or ``None`` if absent/null."""
-    value = maybe_value(maybe)
+    value = maybe.value if isinstance(maybe, Some) else maybe
 
     return int(value) if value is not None else None

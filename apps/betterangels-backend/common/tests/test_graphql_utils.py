@@ -9,7 +9,7 @@ a field declared ``= strawberry.UNSET`` is ``UNSET`` when omitted instead.
 from typing import Any, Optional
 
 import strawberry
-from common.graphql.utils import maybe_int_value, maybe_value
+from common.graphql.utils import maybe_int_value
 from django.test import SimpleTestCase
 from strawberry import ID, Maybe
 from strawberry.types.maybe import Some
@@ -59,35 +59,31 @@ class AsdictMaybeTestCase(SimpleTestCase):
         self.assertIsNone(data["clearable_id"])
 
 
-class MaybeValueTestCase(SimpleTestCase):
-    """Regression: these must unwrap ``Some``, not hand it back.
+class MaybeIntValueTestCase(SimpleTestCase):
+    """Regression: this must unwrap ``Some``, not hand it back.
 
     Returning the wrapper is silent at the call site and explodes downstream —
-    ``updateTeam`` passed the result into ``team_update``, which called
-    ``.strip()`` on it, so renaming a team failed with
+    ``updateTeam`` once passed an unwrapped result into ``team_update``, which
+    called ``.strip()`` on it, so renaming a team failed with
     ``'Some' object has no attribute 'strip'``.
 
-    Both collapse absent and explicit null into ``None``, so they suit callers
-    that pass the value on as a keyword argument and treat the two the same.
-    Callers building an update dict should let ``asdict`` do it instead.
+    It collapses absent and explicit null into ``None``, which suits its two
+    callers: both pass the result on as a keyword argument and treat the two the
+    same. Callers building an update dict should let ``asdict`` do it instead —
+    see :class:`AsdictMaybeTestCase`.
     """
 
-    def test_unwraps_some(self) -> None:
-        self.assertEqual(maybe_value(Some("WDI On-site")), "WDI On-site")
-
-    def test_absent_none_is_none(self) -> None:
-        self.assertIsNone(maybe_value(None))
-
-    def test_absent_unset_is_none(self) -> None:
-        self.assertIsNone(maybe_value(strawberry.UNSET))
-
-    def test_explicit_null_is_none(self) -> None:
-        self.assertIsNone(maybe_value(Some(None)))
-
-    def test_int_variant_unwraps_and_casts(self) -> None:
+    def test_unwraps_and_casts_some(self) -> None:
         self.assertEqual(maybe_int_value(Some("7")), 7)
 
-    def test_int_variant_absent_is_none(self) -> None:
+    def test_absent_none_is_none(self) -> None:
+        """A bare ``Maybe[T]`` field is ``None`` when omitted."""
         self.assertIsNone(maybe_int_value(None))
+
+    def test_absent_unset_is_none(self) -> None:
+        """A field declared ``= strawberry.UNSET`` is ``UNSET`` when omitted."""
         self.assertIsNone(maybe_int_value(strawberry.UNSET))
+
+    def test_explicit_null_is_none(self) -> None:
+        """Reachable once a field is annotated ``Maybe[T | None]`` — see #2316."""
         self.assertIsNone(maybe_int_value(Some(None)))
