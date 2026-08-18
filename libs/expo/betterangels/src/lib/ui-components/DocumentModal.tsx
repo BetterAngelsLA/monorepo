@@ -75,14 +75,14 @@ export default function DocumentModal({
         if (!pickedDir) {
           Alert.alert(
             'Permission Required',
-            'Storage access is required to save the file.'
+            'Storage access is required to save the file.',
           );
           return;
         }
 
         const outFile = pickedDir.createFile(
           originalFilename,
-          mimeType ?? null
+          mimeType ?? null,
         );
         const bytes = await downloaded.bytes();
         outFile.write(bytes, {});
@@ -102,7 +102,7 @@ export default function DocumentModal({
       console.error('Download failed', err);
       Alert.alert(
         'Download Error',
-        'An error occurred while downloading the file.'
+        'An error occurred while downloading the file.',
       );
     }
   };

@@ -26,7 +26,7 @@ export function HmisProfileDeleteBtn(props: TProps) {
   const { showSnackbar } = useSnackbar();
 
   const [deleteHmisProfile, { loading, error }] = useMutation(
-    DeleteHmisProfileDocument
+    DeleteHmisProfileDocument,
   );
 
   const onDelete = async () => {

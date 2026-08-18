@@ -29,7 +29,7 @@ export const dayScheduleSchema = z.object({
 
 export const weeklyFormStateSchema = z.record(
   z.enum(DayOfWeekChoices),
-  dayScheduleSchema
+  dayScheduleSchema,
 );
 
 // Exception Schedules

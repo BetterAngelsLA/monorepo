@@ -21,7 +21,7 @@ const fetchClient = createWebFetchClient();
 const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient });
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById('root') as HTMLElement,
 );
 
 root.render(
@@ -37,5 +37,5 @@ root.render(
         </BrowserRouter>
       </ApolloClientProvider>
     </ApiConfigProvider>
-  </StrictMode>
+  </StrictMode>,
 );

@@ -2,7 +2,7 @@ import { HmisClientProfileType } from '../../../../apollo';
 import { TImportantNotesFormSchema } from './formSchema';
 
 export function mapClientToImportantNotes(
-  client: HmisClientProfileType
+  client: HmisClientProfileType,
 ): TImportantNotesFormSchema {
   const { importantNotes } = client;
 

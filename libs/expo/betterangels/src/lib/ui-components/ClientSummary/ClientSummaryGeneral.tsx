@@ -30,7 +30,7 @@ interface IClientSummaryGeneralProps {
 }
 
 export default function ClientSummaryGeneral(
-  props: IClientSummaryGeneralProps
+  props: IClientSummaryGeneralProps,
 ) {
   const { client, arrivedFrom } = props;
 

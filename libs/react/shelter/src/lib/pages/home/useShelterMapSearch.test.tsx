@@ -28,7 +28,12 @@ vi.mock('@vis.gl/react-google-maps', () => ({
 }));
 
 function makeBounds(
-  overrides: Partial<{ west: number; north: number; east: number; south: number }> = {}
+  overrides: Partial<{
+    west: number;
+    north: number;
+    east: number;
+    south: number;
+  }> = {},
 ): FakeLatLngBounds {
   const bounds = {
     west: -118.5,
@@ -73,7 +78,7 @@ describe('useShelterMapSearch', () => {
     // the camera already centered and fires the search immediately.
     expect(getDefaultStore().get(shelterSearchTriggerAtom)).toBe(1);
     expect(getDefaultStore().get(shelterMapBoundsFilterAtom)).toEqual(
-      SAVED_BOUNDS
+      SAVED_BOUNDS,
     );
     expect(result.current.camera).toEqual({ center: LA_CENTER, zoom: 13 });
   });
@@ -84,7 +89,7 @@ describe('useShelterMapSearch', () => {
       configurable: true,
     });
     geolocationMock.mockImplementation((success: (p: object) => void) =>
-      success({ coords: { latitude: 34.1, longitude: -118.2 } })
+      success({ coords: { latitude: 34.1, longitude: -118.2 } }),
     );
 
     const { result } = renderHook(() => useShelterMapSearch());
@@ -100,7 +105,7 @@ describe('useShelterMapSearch', () => {
 
     expect(getDefaultStore().get(shelterSearchTriggerAtom)).toBe(1);
     expect(getDefaultStore().get(shelterMapBoundsFilterAtom)).toEqual(
-      SAVED_BOUNDS
+      SAVED_BOUNDS,
     );
   });
 
@@ -119,7 +124,7 @@ describe('useShelterMapSearch', () => {
     // already current (and the query would be an Apollo cache hit anyway).
     expect(getDefaultStore().get(shelterSearchTriggerAtom)).toBe(0);
     expect(getDefaultStore().get(shelterMapBoundsFilterAtom)).toEqual(
-      SAVED_BOUNDS
+      SAVED_BOUNDS,
     );
     expect(getDefaultStore().get(savedMapViewportAtom)).toBeNull();
     expect(result.current.camera).toEqual({ center: LA_CENTER, zoom: 13 });

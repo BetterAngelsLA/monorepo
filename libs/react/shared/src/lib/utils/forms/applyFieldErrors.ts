@@ -4,7 +4,7 @@ type FieldError = { field: string; message: string };
 
 export function applyFieldErrors<T extends FieldValues>(
   errors: FieldError[],
-  setError: UseFormSetError<T>
+  setError: UseFormSetError<T>,
 ) {
   errors.forEach(({ field, message }) => {
     if (!field) {

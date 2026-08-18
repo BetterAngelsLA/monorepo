@@ -21,7 +21,7 @@ import {
 } from './useShelterPhotoUploads';
 
 const PHOTO_TYPE_OPTIONS = toDropdownOptions(
-  enumDisplayShelterPhotoTypeChoices
+  enumDisplayShelterPhotoTypeChoices,
 );
 
 type TProps = {

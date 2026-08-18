@@ -35,7 +35,10 @@ export function ShelterProfileLinks(props: IProps) {
           Basic Info
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, profileRouteConfig.children.details)}
+          to={shelterProfileRoute(
+            shelterId,
+            profileRouteConfig.children.details,
+          )}
           isActive={isShelterProfileRoute(pathname, {
             segment: profileRouteConfig.children.details,
           })}
@@ -47,7 +50,7 @@ export function ShelterProfileLinks(props: IProps) {
         <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
-            profileRouteConfig.children.operatingHours
+            profileRouteConfig.children.operatingHours,
           )}
           isActive={isShelterProfileRoute(pathname, {
             segment: profileRouteConfig.children.operatingHours,
@@ -58,7 +61,10 @@ export function ShelterProfileLinks(props: IProps) {
           Operating Hours
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, profileRouteConfig.children.policies)}
+          to={shelterProfileRoute(
+            shelterId,
+            profileRouteConfig.children.policies,
+          )}
           isActive={isShelterProfileRoute(pathname, {
             segment: profileRouteConfig.children.policies,
           })}
@@ -68,7 +74,10 @@ export function ShelterProfileLinks(props: IProps) {
           Policies
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, profileRouteConfig.children.services)}
+          to={shelterProfileRoute(
+            shelterId,
+            profileRouteConfig.children.services,
+          )}
           isActive={isShelterProfileRoute(pathname, {
             segment: profileRouteConfig.children.services,
           })}
@@ -78,7 +87,10 @@ export function ShelterProfileLinks(props: IProps) {
           Services
         </Sidebar.Link>
         <Sidebar.Link
-          to={shelterProfileRoute(shelterId, profileRouteConfig.children.ecosystem)}
+          to={shelterProfileRoute(
+            shelterId,
+            profileRouteConfig.children.ecosystem,
+          )}
           isActive={isShelterProfileRoute(pathname, {
             segment: profileRouteConfig.children.ecosystem,
           })}

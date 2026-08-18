@@ -72,15 +72,14 @@ export function InteractionsMap(props: TProps) {
   }
 
   const renderClusterIconFn = useMemo(
-    () => (cluster: TClusterPoint) =>
-      (
-        <MapClusterMarker
-          label={cluster.properties['mostRecent'] ? 'Last Seen' : undefined}
-          itemCount={cluster.properties.point_count}
-        />
-      ),
+    () => (cluster: TClusterPoint) => (
+      <MapClusterMarker
+        label={cluster.properties['mostRecent'] ? 'Last Seen' : undefined}
+        itemCount={cluster.properties.point_count}
+      />
+    ),
 
-    []
+    [],
   );
 
   const renderPointWithLabel = useCallback(
@@ -89,7 +88,7 @@ export function InteractionsMap(props: TProps) {
         label={point.properties.mostRecent ? 'Last Seen' : undefined}
       />
     ),
-    []
+    [],
   );
 
   if (loading) {
@@ -163,7 +162,7 @@ export function InteractionsMap(props: TProps) {
     // maxZoomLeaves means we cannot break down cluster any further
     // so set mapState maxZoomLeaves as selectedInteractions
     const selectedIntIds: string[] = maxZoomLeaves.map((leaf) =>
-      String(leaf.properties.id)
+      String(leaf.properties.id),
     );
 
     const selectedInteractions =

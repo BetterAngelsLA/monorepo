@@ -71,7 +71,7 @@ export function HomePage() {
         closeOnMaskClick: true,
       });
     },
-    [setModal, shelters]
+    [setModal, shelters],
   );
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export function HomePage() {
           label: shelter.name,
           onClick: () => handleClick(shelter.id),
           type: shelter.shelterTypes?.find(
-            (t) => t.name === ShelterChoices.AccessCenter
+            (t) => t.name === ShelterChoices.AccessCenter,
           )
             ? 'purple'
             : 'secondary',

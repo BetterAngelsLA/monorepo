@@ -15,13 +15,13 @@ function noopUnsubscribe() {
 }
 
 export function useClientPhotoVersionHmis(
-  clientId: string | number | null | undefined
+  clientId: string | number | null | undefined,
 ) {
   const id = clientId != null ? String(clientId) : null;
 
   return useSyncExternalStore(
     (onChange) => (id ? subscribeForClient(id, onChange) : noopUnsubscribe),
     () => (id ? getClientPhotoVersion(id) : 0),
-    () => 0 // optional server snapshot
+    () => 0, // optional server snapshot
   );
 }

@@ -1,7 +1,7 @@
 import { IClusterGeoJson, TClusterPoint } from '../types';
 
 export function generateClusterHash<P extends IClusterGeoJson>(
-  cluster: TClusterPoint<P>
+  cluster: TClusterPoint<P>,
 ): string {
   const { cluster_id, point_count } = cluster.properties;
   const [lng, lat] = cluster.geometry.coordinates;

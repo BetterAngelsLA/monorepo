@@ -314,8 +314,8 @@ export default function RestDebugHmis() {
             fileId: deleteFileId,
           },
           null,
-          2
-        )
+          2,
+        ),
       );
       setDeleteStatus('success');
     } catch (err) {
@@ -358,7 +358,7 @@ export default function RestDebugHmis() {
         parseInt(updateCategoryId, 10),
         parseInt(updateFileNameId, 10),
         null, // no file content - just update metadata
-        false
+        false,
       );
 
       setUpdateOutput(JSON.stringify(result, null, 2));
@@ -418,8 +418,8 @@ export default function RestDebugHmis() {
           err instanceof ErrorHmis && err.data
             ? JSON.stringify(err.data, null, 2)
             : err instanceof Error
-            ? err.message
-            : 'Photo upload failed. See logs.';
+              ? err.message
+              : 'Photo upload failed. See logs.';
         setPhotoError(err instanceof ErrorHmis ? err.message : message);
 
         if (err instanceof ErrorHmis && err.data) {
@@ -429,7 +429,7 @@ export default function RestDebugHmis() {
         setPhotoStatus('error');
       }
     },
-    [photoClientId, clientHmis]
+    [photoClientId, clientHmis],
   );
 
   const clearPhotoOutput = useCallback(() => {
@@ -471,8 +471,8 @@ export default function RestDebugHmis() {
         err instanceof ErrorHmis && err.data
           ? JSON.stringify(err.data, null, 2)
           : err instanceof Error
-          ? err.message
-          : 'Photo crop failed. See logs.';
+            ? err.message
+            : 'Photo crop failed. See logs.';
       setCropError(err instanceof ErrorHmis ? err.message : message);
 
       if (err instanceof ErrorHmis && err.data) {

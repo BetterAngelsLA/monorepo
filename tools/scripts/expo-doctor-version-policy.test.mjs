@@ -23,16 +23,28 @@ import {
 
 describe('coerceVersion', () => {
   it('coerces a tilde range to its base version', () => {
-    assert.deepEqual(coerceVersion('~57.0.11'), { major: 57, minor: 0, patch: 11 });
+    assert.deepEqual(coerceVersion('~57.0.11'), {
+      major: 57,
+      minor: 0,
+      patch: 11,
+    });
   });
 
   it('coerces a caret range to its base version', () => {
-    assert.deepEqual(coerceVersion('^2.32.0'), { major: 2, minor: 32, patch: 0 });
+    assert.deepEqual(coerceVersion('^2.32.0'), {
+      major: 2,
+      minor: 32,
+      patch: 0,
+    });
   });
 
   it('coerces a bare semver', () => {
     assert.deepEqual(coerceVersion('3.1.0'), { major: 3, minor: 1, patch: 0 });
-    assert.deepEqual(coerceVersion('0.86.2'), { major: 0, minor: 86, patch: 2 });
+    assert.deepEqual(coerceVersion('0.86.2'), {
+      major: 0,
+      minor: 86,
+      patch: 2,
+    });
   });
 
   it('coerces a leading-v version', () => {
@@ -45,7 +57,11 @@ describe('coerceVersion', () => {
   });
 
   it('ignores prerelease/build metadata (like semver.coerce)', () => {
-    assert.deepEqual(coerceVersion('57.0.9-canary.1'), { major: 57, minor: 0, patch: 9 });
+    assert.deepEqual(coerceVersion('57.0.9-canary.1'), {
+      major: 57,
+      minor: 0,
+      patch: 9,
+    });
   });
 
   it('returns null for uncoercible input', () => {
@@ -64,36 +80,51 @@ describe('coerceVersion', () => {
 describe('classifyMismatch', () => {
   it('buckets a major version mismatch (the gesture-handler CI failure)', () => {
     assert.equal(
-      classifyMismatch({ expectedVersionOrRange: '~3.1.0', actualVersion: '2.32.0' }),
-      BUCKETS.MAJOR
+      classifyMismatch({
+        expectedVersionOrRange: '~3.1.0',
+        actualVersion: '2.32.0',
+      }),
+      BUCKETS.MAJOR,
     );
   });
 
   it('buckets a minor version mismatch', () => {
     assert.equal(
-      classifyMismatch({ expectedVersionOrRange: '~57.1.0', actualVersion: '57.0.9' }),
-      BUCKETS.MINOR
+      classifyMismatch({
+        expectedVersionOrRange: '~57.1.0',
+        actualVersion: '57.0.9',
+      }),
+      BUCKETS.MINOR,
     );
   });
 
   it('buckets a patch version mismatch (expo released a new patch)', () => {
     assert.equal(
-      classifyMismatch({ expectedVersionOrRange: '~57.0.11', actualVersion: '57.0.10' }),
-      BUCKETS.PATCH
+      classifyMismatch({
+        expectedVersionOrRange: '~57.0.11',
+        actualVersion: '57.0.10',
+      }),
+      BUCKETS.PATCH,
     );
   });
 
   it('returns null when versions match (defensive; should not appear in output)', () => {
     assert.equal(
-      classifyMismatch({ expectedVersionOrRange: '~57.0.9', actualVersion: '57.0.9' }),
-      null
+      classifyMismatch({
+        expectedVersionOrRange: '~57.0.9',
+        actualVersion: '57.0.9',
+      }),
+      null,
     );
   });
 
   it('buckets uncoercible versions as unknown', () => {
     assert.equal(
-      classifyMismatch({ expectedVersionOrRange: '~57.0.9', actualVersion: 'not-a-version' }),
-      BUCKETS.UNKNOWN
+      classifyMismatch({
+        expectedVersionOrRange: '~57.0.9',
+        actualVersion: 'not-a-version',
+      }),
+      BUCKETS.UNKNOWN,
     );
   });
 });
@@ -195,7 +226,9 @@ describe('evaluateVersionPolicy', () => {
   });
 
   it('fails on major mismatches only', () => {
-    const { fail, warn } = evaluateVersionPolicy([mismatch('a', BUCKETS.MAJOR)]);
+    const { fail, warn } = evaluateVersionPolicy([
+      mismatch('a', BUCKETS.MAJOR),
+    ]);
     assert.equal(fail.length, 1);
     assert.equal(fail[0].packageName, 'a');
     assert.deepEqual(warn, []);
@@ -210,7 +243,7 @@ describe('evaluateVersionPolicy', () => {
     assert.deepEqual(fail, []);
     assert.deepEqual(
       warn.map((m) => m.packageName),
-      ['minor-pkg', 'patch-pkg', 'unknown-pkg']
+      ['minor-pkg', 'patch-pkg', 'unknown-pkg'],
     );
   });
 
@@ -219,8 +252,14 @@ describe('evaluateVersionPolicy', () => {
       mismatch('drifted', BUCKETS.MAJOR),
       mismatch('out-of-date', BUCKETS.PATCH),
     ]);
-    assert.deepEqual(fail.map((m) => m.packageName), ['drifted']);
-    assert.deepEqual(warn.map((m) => m.packageName), ['out-of-date']);
+    assert.deepEqual(
+      fail.map((m) => m.packageName),
+      ['drifted'],
+    );
+    assert.deepEqual(
+      warn.map((m) => m.packageName),
+      ['out-of-date'],
+    );
   });
 
   it('returns empty lists for no mismatches', () => {
@@ -241,7 +280,7 @@ describe('evaluateVersionPolicy', () => {
             actualVersion: '2.32.0',
           },
         ],
-      })
+      }),
     );
     const { fail } = evaluateVersionPolicy(payload.mismatches);
     assert.equal(fail.length, 1);
@@ -254,7 +293,12 @@ describe('evaluateVersionPolicy', () => {
 // ---------------------------------------------------------------------------
 
 describe('formatMismatchSections', () => {
-  const mismatch = (packageName, bucket, expected = '~1.0.0', actual = '1.0.0') => ({
+  const mismatch = (
+    packageName,
+    bucket,
+    expected = '~1.0.0',
+    actual = '1.0.0',
+  ) => ({
     packageName,
     expectedVersionOrRange: expected,
     actualVersion: actual,
@@ -262,7 +306,9 @@ describe('formatMismatchSections', () => {
   });
 
   it('formats a patch mismatch section with icon, header and table', () => {
-    const out = formatMismatchSections([mismatch('expo', BUCKETS.PATCH, '~57.0.11', '57.0.10')]);
+    const out = formatMismatchSections([
+      mismatch('expo', BUCKETS.PATCH, '~57.0.11', '57.0.10'),
+    ]);
     assert.ok(out.includes('🔧 Patch version mismatches'));
     assert.ok(out.includes('expo'));
     assert.ok(out.includes('~57.0.11'));

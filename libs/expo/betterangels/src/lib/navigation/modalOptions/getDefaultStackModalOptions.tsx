@@ -11,9 +11,7 @@ type TProps = {
   onClose?: null | (() => void);
 };
 
-export function getDefaultStackModalOptions(
-  props?: TProps
-) {
+export function getDefaultStackModalOptions(props?: TProps) {
   const { presentation, hideHeader, title, onClose } = props || {};
 
   if (hideHeader) {

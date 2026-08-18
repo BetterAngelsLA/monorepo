@@ -19,7 +19,7 @@ export function BaFeatureControlProvider({
     GetBaFeatureControlsDocument,
     {
       fetchPolicy: 'network-only',
-    }
+    },
   );
 
   const featureControls = data?.featureControls

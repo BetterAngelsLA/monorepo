@@ -5,12 +5,12 @@
  */
 export function displayListWithOther<
   TEnum extends string,
-  TItem extends { name?: TEnum | null }
+  TItem extends { name?: TEnum | null },
 >(
   items: readonly TItem[] | null | undefined,
   otherText: string | null | undefined,
   displayMap: Record<TEnum, string>,
-  otherKey: TEnum
+  otherKey: TEnum,
 ): string[] {
   const list = items ?? [];
   const hasOther = list.some((item) => item.name === otherKey);

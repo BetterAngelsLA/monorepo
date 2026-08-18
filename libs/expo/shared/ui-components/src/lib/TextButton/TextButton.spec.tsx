@@ -4,7 +4,7 @@ import { TextButton } from './TextButton';
 describe('TextButton Component', () => {
   it('renders with correct title', () => {
     const { getByText } = render(
-      <TextButton accessibilityHint={''} title="Click Me" color="blue" />
+      <TextButton accessibilityHint={''} title="Click Me" color="blue" />,
     );
     expect(getByText('Click Me')).toBeTruthy();
   });
@@ -17,7 +17,7 @@ describe('TextButton Component', () => {
         title="Press Me"
         onPress={mockOnPress}
         color="blue"
-      />
+      />,
     );
 
     fireEvent.press(getByText('Press Me'));
@@ -33,7 +33,7 @@ describe('TextButton Component', () => {
         onPress={mockOnPress}
         disabled
         color="blue"
-      />
+      />,
     );
 
     fireEvent.press(getByText('Disabled Button'));
@@ -46,7 +46,7 @@ describe('TextButton Component', () => {
         title="Accessible Button"
         color="blue"
         accessibilityHint={''}
-      />
+      />,
     );
     expect(getByRole('button')).toBeTruthy();
   });

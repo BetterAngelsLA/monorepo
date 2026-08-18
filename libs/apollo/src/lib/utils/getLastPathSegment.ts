@@ -10,7 +10,7 @@
 import { toPathArray } from './toPathArray';
 
 export function getLastPathSegment(
-  path?: string | ReadonlyArray<string>
+  path?: string | ReadonlyArray<string>,
 ): string | undefined {
   const pathParts = toPathArray(path);
 

@@ -12,7 +12,7 @@ export default function NoteCardClientHmis(props: INoteCardClientHmisProps) {
   const { clientProfile } = props;
 
   const { thumbnailUri, headers } = useClientPhotoContentUriHmis(
-    clientProfile?.hmisId
+    clientProfile?.hmisId,
   );
 
   return (

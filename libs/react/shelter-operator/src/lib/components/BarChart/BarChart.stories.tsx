@@ -44,8 +44,8 @@ const dailyTotalPercentageData = DAYS.map((date, i) => ({
       0,
       55 +
         Math.floor(Math.sin(i * 0.7) * 20) +
-        Math.floor(Math.cos(i * 0.3) * 10)
-    )
+        Math.floor(Math.cos(i * 0.3) * 10),
+    ),
   ),
 }));
 

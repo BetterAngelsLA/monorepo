@@ -1,4 +1,9 @@
-import { ApolloClient, ApolloLink, InMemoryCache, TypePolicies } from '@apollo/client';
+import {
+  ApolloClient,
+  ApolloLink,
+  InMemoryCache,
+  TypePolicies,
+} from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { createApolloCache } from '@monorepo/apollo';
 import { ReactNode, useEffect, useMemo, useRef } from 'react';
@@ -10,10 +15,15 @@ type TProps = {
   cache?: InMemoryCache;
 };
 
-export const ApolloClientProvider = ({ children, link, cache, typePolicies }: TProps) => {
+export const ApolloClientProvider = ({
+  children,
+  link,
+  cache,
+  typePolicies,
+}: TProps) => {
   const resolvedCache = useMemo(
     () => cache ?? createApolloCache({ typePolicies }),
-    [cache, typePolicies]
+    [cache, typePolicies],
   );
 
   const client = useMemo(
@@ -23,7 +33,7 @@ export const ApolloClientProvider = ({ children, link, cache, typePolicies }: TP
         cache: resolvedCache,
         defaultOptions: { watchQuery: { notifyOnNetworkStatusChange: false } },
       }),
-    [link, resolvedCache]
+    [link, resolvedCache],
   );
 
   // Stop in-flight queries when the client is replaced (e.g. on env switch)

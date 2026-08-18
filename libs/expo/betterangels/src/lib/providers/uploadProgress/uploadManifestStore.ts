@@ -101,7 +101,10 @@ export async function updateUploadManifestItems(
     return;
   }
 
-  sessions[index] = { ...sessions[index], items: update(sessions[index].items) };
+  sessions[index] = {
+    ...sessions[index],
+    items: update(sessions[index].items),
+  };
   await writeAll(sessions);
 }
 

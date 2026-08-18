@@ -22,7 +22,7 @@ type TProps = {
   values?: Partial<EcosystemFormData>;
   onSubmit: (
     data: EcosystemFormData,
-    setError: UseFormSetError<EcosystemFormData>
+    setError: UseFormSetError<EcosystemFormData>,
   ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
@@ -47,7 +47,7 @@ export function ShelterEcosystemForm(props: TProps) {
 
   const initialValues = useMemo(
     () => ({ ...defaultFormValues, ...values }),
-    [values]
+    [values],
   );
 
   const {
@@ -97,7 +97,7 @@ export function ShelterEcosystemForm(props: TProps) {
                   }
                   onChange={(option) => {
                     field.onChange(
-                      option ? { id: option.value, name: option.label } : null
+                      option ? { id: option.value, name: option.label } : null,
                     );
                   }}
                   isViewMode={isViewMode}
@@ -128,7 +128,7 @@ export function ShelterEcosystemForm(props: TProps) {
                       (options ?? []).map((option) => ({
                         id: option.value,
                         name: option.label,
-                      }))
+                      })),
                     );
                   }}
                   isViewMode={isViewMode}
@@ -158,7 +158,7 @@ export function ShelterEcosystemForm(props: TProps) {
                   }
                   onChange={(option) => {
                     field.onChange(
-                      option ? { id: option.value, name: option.label } : null
+                      option ? { id: option.value, name: option.label } : null,
                     );
                   }}
                   isViewMode={isViewMode}
@@ -189,7 +189,7 @@ export function ShelterEcosystemForm(props: TProps) {
                       (options ?? []).map((option) => ({
                         id: option.value,
                         name: option.label,
-                      }))
+                      })),
                     );
                   }}
                   isViewMode={isViewMode}
@@ -209,7 +209,7 @@ export function ShelterEcosystemForm(props: TProps) {
                   placeholder="Select a district"
                   value={
                     LA_CITY_COUNCIL_DISTRICT_OPTIONS.find(
-                      (option) => option.value === field.value
+                      (option) => option.value === field.value,
                     ) ?? null
                   }
                   options={LA_CITY_COUNCIL_DISTRICT_OPTIONS}
@@ -231,7 +231,7 @@ export function ShelterEcosystemForm(props: TProps) {
                   placeholder="Select a district"
                   value={
                     LA_SUPERVISORIAL_DISTRICT_OPTIONS.find(
-                      (option) => option.value === field.value
+                      (option) => option.value === field.value,
                     ) ?? null
                   }
                   options={LA_SUPERVISORIAL_DISTRICT_OPTIONS}
@@ -255,7 +255,7 @@ export function ShelterEcosystemForm(props: TProps) {
                   isMulti={true}
                   isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
                   value={SHELTER_PROGRAMS_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={SHELTER_PROGRAMS_OPTIONS}
                   onChange={(options) => {

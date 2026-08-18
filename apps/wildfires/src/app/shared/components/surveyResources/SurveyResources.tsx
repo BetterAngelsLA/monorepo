@@ -57,13 +57,13 @@ type TCategoryResources = {
 export function groupResources(resources: TResource[]): TCategoryResources[] {
   const resourcesWithCategories = resources.flatMap((resource) =>
     (resource.tags || []).flatMap((tag) =>
-      tag.category ? [{ category: tag.category, resource }] : []
-    )
+      tag.category ? [{ category: tag.category, resource }] : [],
+    ),
   );
 
   const grouped = groupBy(
     resourcesWithCategories,
-    (entry) => entry.category.slug
+    (entry) => entry.category.slug,
   );
 
   const categoryResources: TCategoryResources[] = Object.entries(grouped).map(
@@ -71,9 +71,9 @@ export function groupResources(resources: TResource[]): TCategoryResources[] {
       category: entries[0].category,
       resources: uniqueBy(
         entries.map((entry) => entry.resource),
-        (r) => r.slug
+        (r) => r.slug,
       ),
-    })
+    }),
   );
 
   return sortBy(categoryResources, (cr) => cr.category.priority ?? -Infinity);

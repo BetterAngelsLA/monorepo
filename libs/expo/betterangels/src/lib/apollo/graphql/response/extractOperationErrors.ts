@@ -21,7 +21,7 @@ type TProps = {
 };
 
 export function extractOperationErrors(
-  props: TProps
+  props: TProps,
 ): TOperationErrorsResponse {
   const { response, queryKey, fields, resultTypename } = props;
 
@@ -34,7 +34,7 @@ export function extractOperationErrors(
 
   const operationInfo: OperationInfo | null = extractOperationInfo(
     response,
-    queryKey
+    queryKey,
   );
 
   const operationMessages = operationInfo?.messages || [];
