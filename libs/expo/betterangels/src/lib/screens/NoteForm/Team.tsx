@@ -1,5 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { useOrgTeams } from '../../hooks';
 
@@ -11,6 +12,7 @@ interface ITeamProps {
 export default function Team(props: ITeamProps) {
   const { teamId, onTeamChange } = props;
   const { teams } = useOrgTeams();
+  const [initialTeamId] = useState(teamId);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
@@ -18,7 +20,12 @@ export default function Team(props: ITeamProps) {
         allowSelectNone
         placeholder="Select Team"
         selectedValue={teamId ?? undefined}
-        items={teams.map((t) => ({ value: t.id, displayValue: t.name }))}
+        items={teams
+          .filter((t) => t.isActive || t.id === initialTeamId)
+          .map((t) => ({
+            value: t.id,
+            displayValue: t.isActive ? t.name : `${t.name} (Inactive)`,
+          }))}
         onChange={(t) => onTeamChange((t as string) || null)}
       />
     </View>
