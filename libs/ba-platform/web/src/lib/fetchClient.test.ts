@@ -13,8 +13,6 @@ if (typeof Response === 'undefined') {
   } as unknown as typeof Response;
 }
 
-import { configureActiveOrgStorage } from '@monorepo/ba-platform';
-import { webActiveOrgStorage } from './activeOrgStorage';
 import { createWebFetchClient } from './fetchClient';
 
 describe('createWebFetchClient', () => {
@@ -47,7 +45,6 @@ describe('createWebFetchClient', () => {
 
   it('injects X-Organization-ID header from the active-org store', async () => {
     window.localStorage.setItem('betterangels_active_org_id', 'org-1');
-    configureActiveOrgStorage(webActiveOrgStorage);
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
     const fetchClient = createWebFetchClient();
@@ -62,7 +59,6 @@ describe('createWebFetchClient', () => {
   });
 
   it('omits X-Organization-ID header when there is no active org', async () => {
-    configureActiveOrgStorage(webActiveOrgStorage);
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
     const fetchClient = createWebFetchClient();

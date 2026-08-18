@@ -57,8 +57,8 @@ const inMemoryPersistence = (): ActiveOrgPersistence => {
 };
 
 let persistence: ActiveOrgPersistence = inMemoryPersistence();
-let configured = false;
 let current: string | null = null;
+let seeded = false;
 const listeners = new Set<() => void>();
 
 const notify = (): void => {
@@ -85,23 +85,34 @@ const writePersisted = (id: string | null): void => {
 };
 
 /**
- * Install the platform's persistence and seed from it.
+ * Install the platform's persistence.
  *
- * Call once during bootstrap, before the fetch client issues anything. Seeding
- * here rather than in a provider effect is what makes a remembered
- * organization available to the very first request.
+ * Does no I/O: it marks the seed stale and the next read pulls. That makes the
+ * call order-independent — it can run before or after anything has read the
+ * id, so no caller has to sequence itself against it. The platform fetch
+ * clients call it, so applications do not.
  */
 export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
   persistence = next;
-  configured = true;
-  const seeded = readPersisted();
-  if (seeded === current) return;
-  current = seeded;
-  notify();
+  seeded = false;
 };
 
-/** Read the active organization id. Safe from anywhere, including interceptors. */
-export const getActiveOrgId = (): string | null => current;
+/**
+ * Read the active organization id. Safe from anywhere, including interceptors.
+ *
+ * Pulls from persistence on the first read after an install. Reading during
+ * render is fine — persistence is synchronous by contract, and repeated reads
+ * return the same value, which is what ``useSyncExternalStore`` requires of a
+ * snapshot.
+ */
+export const getActiveOrgId = (): string | null => {
+  if (!seeded) {
+    seeded = true;
+    current = readPersisted();
+  }
+
+  return current;
+};
 
 /**
  * Set the active organization id and persist it, synchronously.
@@ -110,17 +121,10 @@ export const getActiveOrgId = (): string | null => current;
  * that knows which organizations the user belongs to.
  */
 export const setActiveOrgId = (id: string | null): void => {
-  if (id === current) return;
-
-  if (!configured && process.env['NODE_ENV'] !== 'production') {
-    // Otherwise the remembered organization silently stops working: everything
-    // behaves normally for the session and nothing survives a restart.
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[activeOrgStore] No persistence installed — call configureActiveOrgStorage() during bootstrap. ' +
-        'The active organization will not survive a reload.',
-    );
-  }
+  // Compare against the seeded value rather than the field: an unseeded store
+  // reads null, which would make clearActiveOrgId() a no-op that leaves the
+  // persisted copy behind.
+  if (id === getActiveOrgId()) return;
 
   current = id;
   writePersisted(id);
@@ -152,7 +156,7 @@ export const subscribeActiveOrgId = (listener: () => void): (() => void) => {
  */
 export const resetActiveOrgStoreForTests = (): void => {
   persistence = inMemoryPersistence();
-  configured = false;
   current = null;
+  seeded = false;
   listeners.clear();
 };

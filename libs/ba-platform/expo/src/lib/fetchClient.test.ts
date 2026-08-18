@@ -6,8 +6,6 @@
 
 import type { FetchInterceptor } from '@monorepo/fetch';
 
-import { configureActiveOrgStorage } from '@monorepo/ba-platform';
-
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
@@ -50,7 +48,6 @@ vi.mock('@monorepo/expo/shared/clients', () => ({
   }) as FetchInterceptor,
 }));
 
-import { expoActiveOrgStorage } from './activeOrgStorage';
 import { createExpoFetchClient } from './fetchClient';
 
 // ---------------------------------------------------------------------------
@@ -73,7 +70,6 @@ describe('createExpoFetchClient', () => {
 
   it('injects X-Organization-ID header from the active-org store', async () => {
     mockMmkv['betterangels_active_org_id'] = 'org-expo';
-    configureActiveOrgStorage(expoActiveOrgStorage);
 
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'POST' });
@@ -86,7 +82,6 @@ describe('createExpoFetchClient', () => {
   });
 
   it('omits X-Organization-ID header when there is no active org', async () => {
-    configureActiveOrgStorage(expoActiveOrgStorage);
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'GET' });
 

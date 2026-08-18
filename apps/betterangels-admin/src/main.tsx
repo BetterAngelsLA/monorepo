@@ -1,4 +1,6 @@
-import { ApolloClientProvider } from '@monorepo/ba-platform';
+import { HttpLink } from '@apollo/client';
+import { createWebFetchClient } from '@monorepo/ba-platform/web';
+import { ApolloClientProvider, getGraphqlUrl } from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   AuthProvider,
@@ -9,7 +11,14 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { apiUrl } from '../config';
 import App from './app/app';
-import { apolloLink, basename, fetchClient } from './init';
+
+const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+// createWebFetchClient() is URL-agnostic — CSRF cookies are origin-scoped
+// and the token lives on the same domain as the API.  The buildFetch factory
+// signature exists for the Expo env-switching case; web ignores the apiUrl
+// parameter.
+const fetchClient = createWebFetchClient();
+const link = new HttpLink({ uri: getGraphqlUrl(apiUrl), fetch: fetchClient });
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -18,7 +27,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApiConfigProvider apiUrl={apiUrl} buildFetch={() => fetchClient}>
-      <ApolloClientProvider link={apolloLink}>
+      <ApolloClientProvider link={link}>
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>

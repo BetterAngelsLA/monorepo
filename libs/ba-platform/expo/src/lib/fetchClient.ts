@@ -7,6 +7,7 @@ import {
   type FetchInterceptor,
 } from '@monorepo/fetch';
 import {
+  configureActiveOrgStorage,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
   createOrgInterceptor,
@@ -17,6 +18,7 @@ import {
 } from '@monorepo/ba-platform';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 
+import { expoActiveOrgStorage } from './activeOrgStorage';
 import { createNativeTokenReader } from './csrfTokenProvider';
 
 /**
@@ -38,8 +40,14 @@ import { createNativeTokenReader } from './csrfTokenProvider';
 export const createExpoFetchClient = (
   apiUrl: string,
   extraInterceptors: FetchInterceptor[] = [],
-) =>
-  composeFetchInterceptors(
+) => {
+  // The active-org store lives in the platform-agnostic package and cannot
+  // reach MMKV itself, so this is where the native-backed implementation goes
+  // in — alongside createNativeTokenReader, for the same reason. Safe to
+  // re-enter on an environment switch: installing does no I/O.
+  configureActiveOrgStorage(expoActiveOrgStorage);
+
+  return composeFetchInterceptors(
     createOrgInterceptor(getActiveOrgId),
     createCsrfInterceptor(
       createNativeTokenReader(apiUrl),
@@ -52,3 +60,4 @@ export const createExpoFetchClient = (
     includeCredentialsInterceptor,
     ...extraInterceptors,
   );
+};

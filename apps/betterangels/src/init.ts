@@ -6,11 +6,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { configureActiveOrgStorage } from '@monorepo/ba-platform';
-import {
-  createExpoFetchClient,
-  expoActiveOrgStorage,
-} from '@monorepo/ba-platform/expo';
+import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
 import { createBaTypePolicies } from '@monorepo/expo/betterangels';
 import {
   createRefererInterceptor,
@@ -28,9 +24,6 @@ export const isGqlDebug =
   process.env['NODE_ENV'] !== 'production';
 
 // ---- One-time side effects ----
-
-// Before anything can issue a request — the interceptor reads this.
-configureActiveOrgStorage(expoActiveOrgStorage);
 
 // Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
 // (overlaps `nav-menu-btn`). No-op in production / store builds and on
