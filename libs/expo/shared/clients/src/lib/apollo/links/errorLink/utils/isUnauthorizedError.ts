@@ -5,12 +5,12 @@ type TErrorExtensions = { code?: string };
 
 export function isUnauthorizedError(
   graphQLErrors?: readonly any[],
-  networkError?: unknown
+  networkError?: unknown,
 ): boolean {
   const hasGraphql401 = graphQLErrors?.some(
     (e) =>
       (e.extensions as TErrorExtensions | undefined)?.code ===
-      API_ERROR_CODES.UNAUTHENTICATED
+      API_ERROR_CODES.UNAUTHENTICATED,
   );
 
   const serverStatus = isServerError(networkError)

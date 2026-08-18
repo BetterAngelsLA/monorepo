@@ -18,7 +18,7 @@ describe('Checkbox Component', () => {
         }
         onCheck={() => console.log('Checkbox checked')}
         isChecked={false}
-      />
+      />,
     );
     expect(getByText('Check Me')).toBeTruthy();
   });
@@ -36,7 +36,7 @@ describe('Checkbox Component', () => {
         }
         onCheck={mockOnCheck}
         isChecked={false}
-      />
+      />,
     );
 
     fireEvent.press(getByText('Check Me'));
@@ -55,7 +55,7 @@ describe('Checkbox Component', () => {
         }
         onCheck={() => console.log('Checkbox checked')}
         isChecked={false}
-      />
+      />,
     );
     expect(getByRole('button')).toBeTruthy();
   });

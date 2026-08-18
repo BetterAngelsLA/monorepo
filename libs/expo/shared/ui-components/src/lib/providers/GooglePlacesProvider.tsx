@@ -25,7 +25,7 @@ export function GooglePlacesProvider({
 }: GooglePlacesProviderProps) {
   const client = useMemo(
     () => new GooglePlacesClient(apiKey, platformHeaders),
-    [apiKey]
+    [apiKey],
   );
 
   return (
@@ -39,7 +39,7 @@ export function useGooglePlaces(): GooglePlacesClient {
   const client = useContext(GooglePlacesContext);
   if (!client) {
     throw new Error(
-      'useGooglePlaces must be used within a <GooglePlacesProvider>'
+      'useGooglePlaces must be used within a <GooglePlacesProvider>',
     );
   }
   return client;

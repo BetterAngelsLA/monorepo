@@ -8,14 +8,19 @@ from .models import Team
 
 
 def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
-    """Raise unless *name* is non-empty and free within *organization*.
+    """Raise unless *name* has real content and is free within *organization*.
 
     Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``;
     checking it here first turns an IntegrityError into a message the user can
     act on.
+
+    The alphanumeric requirement predates the removal of ``Team.slug``, where it
+    fell out of ``slugify("---")`` being empty. It is kept deliberately: a team
+    called "---" is indistinguishable from a blank one to anyone reading a list,
+    and name is now the only identifier there is.
     """
-    if not name:
-        raise ValidationError("Team name cannot be blank.")
+    if not any(character.isalnum() for character in name):
+        raise ValidationError("Team name must contain at least one alphanumeric character.")
 
     qs = Team.objects.filter(name__iexact=name, organization=organization)
 
@@ -50,12 +55,16 @@ def team_update(
     *,
     team: Team,
     name: str | None = None,
+    is_active: bool | None = None,
 ) -> Team:
-    """Update a Team's name."""
+    """Update a Team's name and/or active flag."""
     if name is not None:
         name = name.strip()
         _validate_name(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
+
+    if is_active is not None:
+        team.is_active = is_active
 
     team.full_clean()
     team.save()

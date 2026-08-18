@@ -17,5 +17,5 @@ export const ImportantNotesFormSchemaOut = ImportantNotesFormSchema.transform(
     return {
       importantNotes,
     };
-  }
+  },
 );

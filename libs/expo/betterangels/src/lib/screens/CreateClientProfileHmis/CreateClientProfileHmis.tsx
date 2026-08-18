@@ -25,7 +25,7 @@ export function CreateClientProfileHmis() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisClientProfileMutation] = useMutation(
-    CreateClientProfileHmisDocument
+    CreateClientProfileHmisDocument,
   );
 
   const methods = useForm<TFullNameFormSchema>({
@@ -70,7 +70,7 @@ export function CreateClientProfileHmis() {
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(
           error,
-          FullNameFormFieldNames
+          FullNameFormFieldNames,
         );
 
         if (fieldErrors.length) {

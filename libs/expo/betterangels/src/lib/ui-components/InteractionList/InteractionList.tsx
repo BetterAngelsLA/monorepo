@@ -68,7 +68,7 @@ export function InteractionList(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: NoteType) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   if (error) {

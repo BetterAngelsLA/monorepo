@@ -101,11 +101,7 @@ describe('UploadItemRow', () => {
 
   it('labels the in-flight removal Cancel and the settled one Dismiss', () => {
     const uploading = render(
-      <UploadItemRow
-        filename="a.pdf"
-        status="uploading"
-        onCancel={vi.fn()}
-      />,
+      <UploadItemRow filename="a.pdf" status="uploading" onCancel={vi.fn()} />,
     );
     expect(uploading.getByText('Cancel')).toBeTruthy();
 

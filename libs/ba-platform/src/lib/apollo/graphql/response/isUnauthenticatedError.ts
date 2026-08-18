@@ -8,11 +8,11 @@ import type { GraphQLError } from './types';
  * @param errors - The `errors` array from a GraphQL response.
  */
 export function isUnauthenticatedError(
-  errors?: readonly GraphQLError[]
+  errors?: readonly GraphQLError[],
 ): boolean {
   return (
     errors?.some(
-      (e) => e.extensions?.code === BE_PROTOCOL_ERROR_CODE.UNAUTHENTICATED
+      (e) => e.extensions?.code === BE_PROTOCOL_ERROR_CODE.UNAUTHENTICATED,
     ) ?? false
   );
 }

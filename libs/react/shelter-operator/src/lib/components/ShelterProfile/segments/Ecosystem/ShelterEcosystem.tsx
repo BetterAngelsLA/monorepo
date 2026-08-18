@@ -18,7 +18,7 @@ import {
 
 function toUpdateInput(
   shelterId: string,
-  data: EcosystemFormData
+  data: EcosystemFormData,
 ): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
@@ -50,7 +50,7 @@ export function ShelterEcosystem(props: TProps) {
 
   async function onSubmit(
     data: EcosystemFormData,
-    setError: UseFormSetError<EcosystemFormData>
+    setError: UseFormSetError<EcosystemFormData>,
   ) {
     try {
       const response = await updateShelter({

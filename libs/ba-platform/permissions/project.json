@@ -3,14 +3,9 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/ba-platform/permissions/src",
   "projectType": "library",
-  "tags": [
-    "type:util",
-    "scope:ba-platform"
-  ],
+  "tags": ["type:util", "scope:ba-platform"],
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*"
-    ]
+    "default": ["{projectRoot}/**/*"]
   },
   "targets": {
     "generate-graphql-types": {

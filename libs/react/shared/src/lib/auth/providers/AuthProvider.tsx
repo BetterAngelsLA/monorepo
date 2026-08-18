@@ -22,10 +22,10 @@ type AccessType = 'safe' | 'unsafe' | 'neutral';
 
 function getRouteAccess(
   pathname: string,
-  routeAccess: Record<string, AccessType>
+  routeAccess: Record<string, AccessType>,
 ): AccessType {
   const sortedRoutes = Object.keys(routeAccess).sort(
-    (a, b) => b.length - a.length
+    (a, b) => b.length - a.length,
   );
   for (const route of sortedRoutes) {
     if (pathname.startsWith(route)) {

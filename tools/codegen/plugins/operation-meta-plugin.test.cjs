@@ -24,7 +24,7 @@ describe('operation-meta-plugin', () => {
       {},
       {
         outputFile: path.join(tmpDir, `${filename}.generated.ts`),
-      }
+      },
     );
     assert.strictEqual(result, '');
     const metaPath = path.join(tmpDir, `${filename}_meta.generated.ts`);
@@ -65,15 +65,15 @@ describe('operation-meta-plugin', () => {
             ... on OperationInfo { messages { message } }
           }
         }
-      `)
+      `),
       );
 
       assert.ok(
-        content.includes('export const updateShelterProfileOperationKey')
+        content.includes('export const updateShelterProfileOperationKey'),
       );
       assert.ok(content.includes("'updateShelter'"));
       assert.ok(
-        content.includes('export const updateShelterProfileSuccessTypename')
+        content.includes('export const updateShelterProfileSuccessTypename'),
       );
       assert.ok(content.includes("'ShelterType'"));
       assert.ok(content.includes('export const updateShelterProfileMeta'));
@@ -95,7 +95,7 @@ describe('operation-meta-plugin', () => {
             ... on OperationInfo { messages { message } }
           }
         }
-      `)
+      `),
       );
 
       assert.ok(content.includes('generateUploadsOperationKey'));
@@ -117,7 +117,7 @@ describe('operation-meta-plugin', () => {
           shelter(pk: $id) { id name }
         }
       `),
-        shelterSchema
+        shelterSchema,
       );
 
       assert.ok(content.includes('export const getShelterOperationKey'));
@@ -138,7 +138,7 @@ describe('operation-meta-plugin', () => {
         query GetShelter($id: ID!) {
           shelter(pk: $id) { id name }
         }
-      `)
+      `),
       );
 
       assert.ok(content.includes('export const getShelterOperationKey'));
@@ -152,7 +152,7 @@ describe('operation-meta-plugin', () => {
       const content = invokePlugin(
         parse(`
         mutation { updateShelter(data: {}) { ... on ShelterType { id } } }
-      `)
+      `),
       );
 
       assert.strictEqual(content, null);
@@ -166,7 +166,7 @@ describe('operation-meta-plugin', () => {
             ... on OperationInfo { messages { message } }
           }
         }
-      `)
+      `),
       );
 
       assert.ok(content.includes('export const fooOperationKey'));

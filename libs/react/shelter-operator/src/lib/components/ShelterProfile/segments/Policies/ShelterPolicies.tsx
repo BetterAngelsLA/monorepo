@@ -18,7 +18,7 @@ import {
 
 function toUpdateInput(
   shelterId: string,
-  data: PoliciesFormData
+  data: PoliciesFormData,
 ): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
@@ -48,7 +48,7 @@ export function ShelterPolicies(props: TProps) {
 
   async function onSubmit(
     data: PoliciesFormData,
-    setError: UseFormSetError<PoliciesFormData>
+    setError: UseFormSetError<PoliciesFormData>,
   ) {
     try {
       const response = await updateShelter({

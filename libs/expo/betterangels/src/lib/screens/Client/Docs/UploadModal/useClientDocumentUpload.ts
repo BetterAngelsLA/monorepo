@@ -36,7 +36,11 @@ export function useClientDocumentUpload() {
       manifest: Array<{ refId: string; file: ReactNativeFile }>,
     ) => void;
     onPresigned?: (
-      uploads: Array<{ refId: string; presignedKey: string; uploadToken: string }>,
+      uploads: Array<{
+        refId: string;
+        presignedKey: string;
+        uploadToken: string;
+      }>,
     ) => void;
   }) {
     if (!documents.length) {

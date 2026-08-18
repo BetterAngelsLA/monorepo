@@ -22,7 +22,7 @@ export function toFormState(props: TProps): THouseholdMemberFormState {
   }
 
   const householdMember = clientProfile?.householdMembers?.find(
-    (member) => member.id === relationId
+    (member) => member.id === relationId,
   );
 
   const { name, gender, dateOfBirth, relationshipToClient } =

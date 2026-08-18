@@ -13,12 +13,12 @@ describe('sameMapBounds', () => {
   });
 
   it('returns false when any edge differs', () => {
-    expect(
-      sameMapBounds(BOUNDS, { ...BOUNDS, eastLng: -118.2000001 })
-    ).toBe(false);
-    expect(
-      sameMapBounds(BOUNDS, { ...BOUNDS, northLat: 34.1000001 })
-    ).toBe(false);
+    expect(sameMapBounds(BOUNDS, { ...BOUNDS, eastLng: -118.2000001 })).toBe(
+      false,
+    );
+    expect(sameMapBounds(BOUNDS, { ...BOUNDS, northLat: 34.1000001 })).toBe(
+      false,
+    );
   });
 
   it('returns false when either side is undefined', () => {

@@ -17,7 +17,7 @@ export function useCapturePicture(params: UseCapturePictureParams) {
 
   const capture = useCallback(
     async (
-      cameraRef: RefObject<ExpoCamera | null>
+      cameraRef: RefObject<ExpoCamera | null>,
     ): Promise<CapturePictureResult> => {
       if (!cameraRef.current) {
         return { type: 'error', error: new Error('Camera not ready') };
@@ -56,7 +56,7 @@ export function useCapturePicture(params: UseCapturePictureParams) {
         };
       }
     },
-    [imageType]
+    [imageType],
   );
 
   return { capture };

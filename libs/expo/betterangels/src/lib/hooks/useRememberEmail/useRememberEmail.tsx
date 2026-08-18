@@ -28,7 +28,7 @@ export function useRememberedEmail(storageKey: string) {
         await SecureStore.deleteItemAsync(storageKey);
       }
     },
-    [rememberMe, storageKey]
+    [rememberMe, storageKey],
   );
 
   return {

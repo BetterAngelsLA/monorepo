@@ -278,9 +278,7 @@ export function cancelUploadItemSession(sessionId: string, refId: string) {
     return;
   }
 
-  commit(
-    getSessions().map((s) => (s.id !== sessionId ? s : { ...s, items })),
-  );
+  commit(getSessions().map((s) => (s.id !== sessionId ? s : { ...s, items })));
 }
 
 /**

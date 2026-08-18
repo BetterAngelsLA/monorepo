@@ -1,6 +1,10 @@
 import { ReactNode } from 'react';
 import { type StorageAdapter } from '@monorepo/react/shared';
-import { useActiveOrgState, type ActiveOrgState, type Org } from './useActiveOrgState';
+import {
+  useActiveOrgState,
+  type ActiveOrgState,
+  type Org,
+} from './useActiveOrgState';
 
 export interface ActiveOrgProviderProps {
   children: ReactNode;
@@ -14,7 +18,9 @@ export interface ActiveOrgProviderProps {
 /**
  * Create an ``ActiveOrgProvider`` component bound to a specific React context.
  */
-export function createActiveOrgProvider(OrgContext: React.Context<ActiveOrgState | undefined>) {
+export function createActiveOrgProvider(
+  OrgContext: React.Context<ActiveOrgState | undefined>,
+) {
   return function ActiveOrgProvider({
     children,
     organizations,
@@ -23,8 +29,6 @@ export function createActiveOrgProvider(OrgContext: React.Context<ActiveOrgState
   }: ActiveOrgProviderProps) {
     const value = useActiveOrgState(organizations, { storage, storageKey });
 
-    return (
-      <OrgContext.Provider value={value}>{children}</OrgContext.Provider>
-    );
+    return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
   };
 }

@@ -8,7 +8,7 @@ import { extractPagination } from './extractPagination';
 
 export function resolvePerPagePagination(
   variables: unknown,
-  config: PerPagePaginationVariables = DEFAULT_PER_PAGE_PAGINATION_VARS
+  config: PerPagePaginationVariables = DEFAULT_PER_PAGE_PAGINATION_VARS,
 ): MergePaginationArgs {
   const pagination = extractPagination(variables, config);
 

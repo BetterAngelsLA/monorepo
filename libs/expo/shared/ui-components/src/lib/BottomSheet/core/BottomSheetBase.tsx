@@ -139,7 +139,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         </ContentContainer>
       </GbsBottomSheetModal>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

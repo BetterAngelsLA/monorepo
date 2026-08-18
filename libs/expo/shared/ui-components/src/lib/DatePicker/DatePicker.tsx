@@ -8,7 +8,7 @@ import {
 } from './types';
 
 export function DatePicker<T extends FieldValues = FieldValues>(
-  props: IDatePickerProps<T>
+  props: IDatePickerProps<T>,
 ) {
   const { type, control, name, rules, ...rest } = props;
 

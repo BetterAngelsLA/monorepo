@@ -20,7 +20,7 @@ export interface UploadFileToS3Input {
  * Accepts any Blob (web File, expo-file-system File, etc.).
  */
 export async function uploadFileToS3WithPresignedPost(
-  input: UploadFileToS3Input
+  input: UploadFileToS3Input,
 ): Promise<{ key: string }> {
   const { presignedPost, file } = input;
 

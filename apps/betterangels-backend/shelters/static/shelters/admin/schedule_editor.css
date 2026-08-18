@@ -162,7 +162,9 @@ label.day-pill.required::after {
   background: #f8fafc;
   color: #1e293b;
   width: 120px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .sched-time input[type='time']:focus {
   outline: none;

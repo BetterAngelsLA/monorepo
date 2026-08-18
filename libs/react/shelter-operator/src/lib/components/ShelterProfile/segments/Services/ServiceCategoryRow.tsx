@@ -26,7 +26,7 @@ type ServiceCategoryRowProps = {
 const replaceCategoryServiceSelection = (
   selectedServiceIds: string[],
   subsetServiceIds: string[],
-  nextSubsetServiceIds: string[]
+  nextSubsetServiceIds: string[],
 ) => {
   const subsetIds = new Set(subsetServiceIds);
   const nextSelectedIds = selectedServiceIds.filter((id) => !subsetIds.has(id));
@@ -64,25 +64,25 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
     selectedOtherByCategory,
   } = useMemo(() => {
     const officialServices = category.services.filter(
-      (service) => !service.isOther
+      (service) => !service.isOther,
     );
 
     const otherServices = category.services.filter(
-      (service) => service.isOther
+      (service) => service.isOther,
     );
 
     const nextOptions: DropdownOption<string>[] = officialServices.map(
       (service) => ({
         value: service.id,
         label: service.displayName,
-      })
+      }),
     );
 
     const otherOptionsFromApi: DropdownOption<string>[] = otherServices.map(
       (service) => ({
         value: service.id,
         label: service.displayName,
-      })
+      }),
     );
 
     const nextOtherOptions: DropdownOption<string>[] = [
@@ -91,16 +91,16 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
     ];
 
     const nextOfficialServiceIds = officialServices.map(
-      (service) => service.id
+      (service) => service.id,
     );
     const nextOtherServiceIds = nextOtherOptions.map((option) => option.value);
 
     const selectedByCategory = selectedServiceIds.filter((serviceId) =>
-      nextOfficialServiceIds.includes(serviceId)
+      nextOfficialServiceIds.includes(serviceId),
     );
 
     const nextSelectedOtherByCategory = selectedServiceIds.filter((serviceId) =>
-      nextOtherServiceIds.includes(serviceId)
+      nextOtherServiceIds.includes(serviceId),
     );
 
     return {
@@ -109,10 +109,10 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
       officialServiceIds: nextOfficialServiceIds,
       otherServiceIds: nextOtherServiceIds,
       selectedOptions: nextOptions.filter((option) =>
-        selectedByCategory.includes(option.value)
+        selectedByCategory.includes(option.value),
       ),
       selectedOtherOptions: nextOtherOptions.filter((option) =>
-        nextSelectedOtherByCategory.includes(option.value)
+        nextSelectedOtherByCategory.includes(option.value),
       ),
       selectedOtherByCategory: nextSelectedOtherByCategory,
     };
@@ -128,11 +128,11 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
         replaceCategoryServiceSelection(
           selectedServiceIds,
           officialServiceIds,
-          nextSubsetIds
-        )
+          nextSubsetIds,
+        ),
       );
     },
-    [onSelectedServiceIdsChange, selectedServiceIds, officialServiceIds]
+    [onSelectedServiceIdsChange, selectedServiceIds, officialServiceIds],
   );
 
   const handleOtherChange = useCallback(
@@ -145,11 +145,11 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
         replaceCategoryServiceSelection(
           selectedServiceIds,
           otherServiceIds,
-          nextSubsetIds
-        )
+          nextSubsetIds,
+        ),
       );
     },
-    [onSelectedServiceIdsChange, selectedServiceIds, otherServiceIds]
+    [onSelectedServiceIdsChange, selectedServiceIds, otherServiceIds],
   );
 
   const handleCreateOtherOption = useCallback(
@@ -161,7 +161,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
 
       const normalizedLabel = normalize(trimmedLabel);
       const alreadyExists = otherOptions.some(
-        (option) => normalize(option.label) === normalizedLabel
+        (option) => normalize(option.label) === normalizedLabel,
       );
 
       if (alreadyExists) {
@@ -179,7 +179,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
         replaceCategoryServiceSelection(selectedServiceIds, otherServiceIds, [
           ...selectedOtherByCategory,
           createdOption.value,
-        ])
+        ]),
       );
     },
     [
@@ -191,7 +191,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
       selectedOtherByCategory,
       selectedServiceIds,
       setCreatedOtherOptions,
-    ]
+    ],
   );
 
   return (

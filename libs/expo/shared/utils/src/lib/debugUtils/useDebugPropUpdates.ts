@@ -33,7 +33,7 @@ const isDev =
 
 export function useDebugPropUpdates(
   componentName: string,
-  props: Record<string, unknown>
+  props: Record<string, unknown>,
 ): void {
   const previousPropsRef = useRef<Record<string, any> | null>(null);
 

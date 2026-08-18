@@ -16,11 +16,13 @@ export type CurrentUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: readonly {
-    id: string;
-    name: string;
-    permissions: readonly PermissionEnum[];
-  }[] | null;
+  organizations:
+    | readonly {
+        id: string;
+        name: string;
+        permissions: readonly PermissionEnum[];
+      }[]
+    | null;
 };
 
 // ---------------------------------------------------------------------------

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { symmetricBoundsAroundPinCentroid } from './symmetricBoundsAroundPinCentroid';
 
 class FakeLatLngBounds {
-  constructor(public sw: { lat: number; lng: number }, public ne: { lat: number; lng: number }) {}
+  constructor(
+    public sw: { lat: number; lng: number },
+    public ne: { lat: number; lng: number },
+  ) {}
 }
 
 beforeEach(() => {

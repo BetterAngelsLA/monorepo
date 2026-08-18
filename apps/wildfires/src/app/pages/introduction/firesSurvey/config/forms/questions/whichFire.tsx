@@ -36,4 +36,4 @@ export const qWhichFire: TQuestion = {
   },
 };
 
-export const wildfireLabels = qWhichFire.options.map(option => option.label);
+export const wildfireLabels = qWhichFire.options.map((option) => option.label);

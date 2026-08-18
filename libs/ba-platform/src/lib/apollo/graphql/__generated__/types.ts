@@ -2832,6 +2832,7 @@ export type QueryTasksArgs = {
 
 
 export type QueryTeamsArgs = {
+  filters?: InputMaybe<TeamFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -3635,10 +3636,19 @@ export type TaskTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type TeamFilter = {
+  AND?: InputMaybe<TeamFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TeamFilter>;
+  OR?: InputMaybe<TeamFilter>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type TeamType = {
   __typename?: 'TeamType';
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  isActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
 };
 
@@ -3931,6 +3941,7 @@ export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UpdateTeamInput = {
   id: Scalars['ID']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 

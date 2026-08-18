@@ -17,7 +17,14 @@ export interface IStatCardProps {
 }
 
 /** A single stat card: optional icon, title, value, and an optional secondary row. */
-export function StatCard({ icon, title, value, testId, className, subRow }: IStatCardProps) {
+export function StatCard({
+  icon,
+  title,
+  value,
+  testId,
+  className,
+  subRow,
+}: IStatCardProps) {
   return (
     <div
       className={mergeCss([
@@ -29,11 +36,19 @@ export function StatCard({ icon, title, value, testId, className, subRow }: ISta
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2.5">
           {icon}
-          <Text variant="body" textColor="text-[#747A82]" className="text-[15px]">
+          <Text
+            variant="body"
+            textColor="text-[#747A82]"
+            className="text-[15px]"
+          >
             {title}
           </Text>
         </div>
-        <Text variant="header-lg" textColor="text-black" className="text-[25px] leading-none">
+        <Text
+          variant="header-lg"
+          textColor="text-black"
+          className="text-[25px] leading-none"
+        >
           {value}
         </Text>
       </div>
@@ -48,9 +63,15 @@ export interface IPreviouslyOverdueRowProps {
 }
 
 /** "Previously Overdue x / y" pill shown under the Newly Checked In stat. */
-function PreviouslyOverdueRow({ overdueCount, totalCount }: IPreviouslyOverdueRowProps) {
+function PreviouslyOverdueRow({
+  overdueCount,
+  totalCount,
+}: IPreviouslyOverdueRowProps) {
   return (
-    <div className="flex items-center justify-between" data-testid="stat-previously-overdue">
+    <div
+      className="flex items-center justify-between"
+      data-testid="stat-previously-overdue"
+    >
       <Text
         variant="body"
         textColor="text-[#747A82]"
@@ -91,7 +112,8 @@ export function ReservationStatusChanges({
           title="Newly Checked In"
           value={metrics?.checkedIn != null ? String(metrics.checkedIn) : '—'}
           subRow={
-            metrics?.checkInOverdueToCheckedIn != null && metrics?.checkedIn != null ? (
+            metrics?.checkInOverdueToCheckedIn != null &&
+            metrics?.checkedIn != null ? (
               <PreviouslyOverdueRow
                 overdueCount={metrics.checkInOverdueToCheckedIn}
                 totalCount={metrics.checkedIn}
@@ -109,7 +131,11 @@ export function ReservationStatusChanges({
         />
         <StatCard
           title="Newly Overdue"
-          value={metrics?.checkInOverdue != null ? String(metrics.checkInOverdue) : '—'}
+          value={
+            metrics?.checkInOverdue != null
+              ? String(metrics.checkInOverdue)
+              : '—'
+          }
           testId="stat-newly-overdue"
           className="basis-0 lg:flex-1"
         />

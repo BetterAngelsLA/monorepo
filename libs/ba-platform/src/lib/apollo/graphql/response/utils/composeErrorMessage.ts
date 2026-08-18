@@ -7,7 +7,7 @@ import { DEFAULT_GENERIC_ERROR_MESSAGE } from '../../constants';
  * @param messages - Messages from `response.errors` to join.
  */
 export function composeErrorMessage(
-  messages: (string | null | undefined)[] = []
+  messages: (string | null | undefined)[] = [],
 ): string {
   const filtered = messages
     .map((m) => m?.trim())

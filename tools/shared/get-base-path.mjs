@@ -19,9 +19,7 @@ export function getBranchBasePath() {
     branch = process.env.BRANCH_NAME.replace(/\//g, '-');
   } else {
     try {
-      branch = execSync('git rev-parse --abbrev-ref HEAD')
-        .toString()
-        .trim();
+      branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
       // Detached HEAD (common in CI checkouts without BRANCH_NAME) → 'main'
       if (branch === 'HEAD') branch = 'main';
       branch = branch.replace(/\//g, '-');

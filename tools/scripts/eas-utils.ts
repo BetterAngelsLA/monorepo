@@ -56,7 +56,7 @@ export function getOptionalEnv(name: string): string | undefined {
  */
 export function run(
   cmd: string,
-  opts?: { cwd?: string; silent?: boolean }
+  opts?: { cwd?: string; silent?: boolean },
 ): string {
   const cwd = opts?.cwd ?? process.cwd();
   if (!opts?.silent) console.log(`> ${cmd}`);
@@ -107,7 +107,7 @@ export function runJson<T>(cmd: string, opts?: { cwd?: string }): T {
   }
 
   throw new Error(
-    `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`
+    `Could not parse JSON from output:\n${cleaned.slice(0, 500)}`,
   );
 }
 
@@ -136,7 +136,7 @@ export function resolveProjectDir(project: string): string {
  */
 export function setupEnvAndFingerprint(
   projectDir: string,
-  profile: string
+  profile: string,
 ): string {
   console.log(`\n=== Setting up env for profile: ${profile} ===`);
 
@@ -179,7 +179,7 @@ export function setupEnvAndFingerprint(
   console.log('Computing fingerprint...');
   const fingerprintJson = run(
     `node -e "const fp = require('@expo/fingerprint'); fp.createFingerprintAsync('.').then(r => console.log(JSON.stringify(r)));"`,
-    { cwd: projectDir }
+    { cwd: projectDir },
   );
   const hash = JSON.parse(fingerprintJson).hash as string;
   console.log(`Runtime version (fingerprint): ${hash}`);

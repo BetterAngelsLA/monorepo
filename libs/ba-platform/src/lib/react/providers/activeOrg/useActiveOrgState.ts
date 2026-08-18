@@ -35,12 +35,9 @@ export interface ActiveOrgState {
  */
 export function useActiveOrgState(
   organizations: Org[],
-  options: UseActiveOrgStateOptions
+  options: UseActiveOrgStateOptions,
 ): ActiveOrgState {
-  const {
-    storage,
-    storageKey = DEFAULT_ORG_STORAGE_KEY,
-  } = options;
+  const { storage, storageKey = DEFAULT_ORG_STORAGE_KEY } = options;
 
   const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
     () => {
@@ -53,7 +50,7 @@ export function useActiveOrgState(
         // storage may be unavailable
       }
       return organizations[0]?.id;
-    }
+    },
   );
 
   // Persist the active org ID to storage so that orgLink (Apollo link)
@@ -97,7 +94,7 @@ export function useActiveOrgState(
 
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
-    [organizations, activeOrgId]
+    [organizations, activeOrgId],
   );
 
   const setActiveOrgId = useCallback(
@@ -106,21 +103,21 @@ export function useActiveOrgState(
         setActiveOrgIdState(orgId);
       }
     },
-    [organizations]
+    [organizations],
   );
 
   const permSet = useMemo(
     () => new Set(activeOrg?.permissions ?? []),
-    [activeOrg?.permissions]
+    [activeOrg?.permissions],
   );
 
   const hasPermission = useCallback(
     (permission: PermissionEnum): boolean => permSet.has(permission),
-    [permSet]
+    [permSet],
   );
 
   return useMemo(
     () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    [activeOrg, organizations, setActiveOrgId, hasPermission],
   );
 }

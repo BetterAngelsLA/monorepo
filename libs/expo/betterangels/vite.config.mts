@@ -7,8 +7,20 @@ export default defineConfig({
   plugins: [reactNative()],
   resolve: {
     alias: [
-      { find: /^expo-file-system(?:\/.*)?$/, replacement: path.resolve(__dirname, 'src/__mocks__/expo-file-system.ts') },
-      { find: /^expo-modules-core(?:\/.*)?$/, replacement: path.resolve(__dirname, 'src/__mocks__/expo-modules-core.ts') },
+      {
+        find: /^expo-file-system(?:\/.*)?$/,
+        replacement: path.resolve(
+          __dirname,
+          'src/__mocks__/expo-file-system.ts',
+        ),
+      },
+      {
+        find: /^expo-modules-core(?:\/.*)?$/,
+        replacement: path.resolve(
+          __dirname,
+          'src/__mocks__/expo-modules-core.ts',
+        ),
+      },
     ],
     tsconfigPaths: true,
   },
