@@ -13,7 +13,6 @@ import {
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,15 +52,6 @@ export interface UserProviderConfig<TUser, TQuery> {
       | readonly { message: string; extensions?: Record<string, unknown> }[]
       | undefined,
   ) => boolean;
-
-  /**
-   * Default storage adapter for the embedded :component:`ActiveOrgProvider`.
-   *
-   * If provided, consumers do not need to pass ``storage`` as a prop -
-   * the provider uses this default. Individual apps can still override
-   * via the ``storage`` prop when needed.
-   */
-  defaultStorage?: StorageAdapter;
 
   /**
    * Optional custom mapping from user organizations to the
@@ -110,7 +100,6 @@ export function createUserProvider<
     document,
     parseUser,
     isUnauthenticated,
-    defaultStorage,
     mapOrganizations: customMapOrganizations,
   } = config;
 
@@ -141,20 +130,7 @@ export function createUserProvider<
     return ctx;
   }
 
-  function UserProvider({
-    children,
-    storage,
-  }: {
-    children: ReactNode;
-    /** Storage adapter — defaults to :attr:`defaultStorage` from config. */
-    storage?: StorageAdapter;
-  }) {
-    const resolvedStorage = storage ?? defaultStorage;
-    if (!resolvedStorage) {
-      throw new Error(
-        'UserProvider requires a storage adapter. Pass it as a prop or set defaultStorage in createUserProvider config.',
-      );
-    }
+  function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -220,7 +196,6 @@ export function createUserProvider<
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          storage={resolvedStorage}
           organizations={
             user?.organizations ? mapOrganizations(user.organizations) : []
           }

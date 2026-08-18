@@ -10,9 +10,6 @@ export type FetchInterceptor = (
 
 export type TokenReader = (name: string) => Promise<string | null>;
 export type TokenRefresher = (url: string) => Promise<void>;
-export type StorageReader = {
-  getItem: (key: string) => string | null | Promise<string | null>;
-};
 
 /**
  * Callback invoked after a CSRF token refresh so that the platform can
@@ -126,15 +123,15 @@ export const createCsrfInterceptor =
 // ---------------------------------------------------------------------------
 
 /**
- * Inject the ``X-Organization-ID`` header from a storage backend.
+ * Inject the ``X-Organization-ID`` header, read per request.
+ *
+ * *readOrgId* must not do I/O — see ``getActiveOrgId`` in
+ * ``@monorepo/ba-platform``.
  */
 export const createOrgInterceptor =
-  (
-    storage: StorageReader,
-    storageKey = 'betterangels_active_org_id',
-  ): FetchInterceptor =>
+  (readOrgId: () => string | null): FetchInterceptor =>
   async (_input, init, next) => {
-    const orgId = await storage.getItem(storageKey);
+    const orgId = readOrgId();
     if (!orgId) return next(_input, init);
     const headers = new Headers(init.headers);
     headers.set('X-Organization-ID', orgId);

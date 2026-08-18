@@ -46,7 +46,7 @@ describe('createWebFetchClient', () => {
     global.fetch = originalFetch;
   });
 
-  it('injects X-Organization-ID header when org is stored', async () => {
+  it('injects X-Organization-ID header from the active-org store', async () => {
     window.localStorage.setItem('betterangels_active_org_id', 'org-1');
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
@@ -61,7 +61,7 @@ describe('createWebFetchClient', () => {
     expect(headers.get('x-csrftoken')).toBe('csrf-abc');
   });
 
-  it('omits X-Organization-ID header when no org stored', async () => {
+  it('omits X-Organization-ID header when there is no active org', async () => {
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
     const fetchClient = createWebFetchClient();
