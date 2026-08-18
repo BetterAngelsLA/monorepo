@@ -10,9 +10,10 @@ from .models import Team
 def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
     """Raise unless *name* has real content and is free within *organization*.
 
-    Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``;
-    checking it here first turns an IntegrityError into a message the user can
-    act on.
+    Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``,
+    which ``full_clean()`` does validate -- but it reports only that the
+    constraint was violated, naming the constraint rather than the team.
+    Checking here first is what produces a message the caller can act on.
 
     The alphanumeric requirement predates the removal of ``Team.slug``, where it
     fell out of ``slugify("---")`` being empty. It is kept deliberately: a team

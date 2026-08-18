@@ -1,4 +1,4 @@
-from typing import Any, Optional, cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -12,9 +12,8 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error
+from common.graphql.utils import get_object_or_permission_error, maybe_int_value
 from common.models import Attachment
-from common.graphql.utils import maybe_int_value
 from common.permissions.utils import IsAuthenticated
 from common.services.types import UploadRequest, UploadConfirmation
 from django.db import transaction
@@ -176,12 +175,12 @@ class Mutation:
 
         qs: QuerySet[Note] = info.context.qs
 
-        clean: dict[str, Any] = asdict(data)
-        # ``asdict`` already resolves the tri-state: it unwraps ``Some``, keeps an
-        # explicit null, and omits the key entirely when the field was absent.
-        # Only the ID needs narrowing from str to int.
-        if clean.get("team_id") is not None:
-            clean["team_id"] = int(clean["team_id"])
+        clean = asdict(data)
+        # Narrow the team ID from GraphQL's str to the FK's int.  Guarded on the
+        # input field so an unmentioned team stays unmentioned: assigning
+        # unconditionally would turn "not sent" into "set to null".
+        if data.team_id:
+            clean["team_id"] = maybe_int_value(data.team_id)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(

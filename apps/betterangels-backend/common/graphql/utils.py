@@ -44,9 +44,10 @@ def maybe_int_value(maybe: Any) -> int | None:
     which point ``Some(None)`` becomes reachable. Keeping the narrowing in one
     place is what makes that a one-line change.
 
-    Callers building an update dict should not use this at all: ``asdict``
-    already omits absent fields, and overriding it turns "not mentioned" into
-    "set to null".
+    Assigning the result into a dict of fields to update needs a presence check
+    on the input field first (``if data.team_id:``).  Absent and explicitly-null
+    both come back as ``None``, so an unconditional assignment turns "not
+    mentioned" into "set to null".
     """
     if maybe is None or maybe is strawberry.UNSET:
         return None

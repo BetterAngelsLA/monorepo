@@ -9,8 +9,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('notes', '0002_initial'),
-        # Must run after the backfill in teams.0002, which reads old_team.
-        ('teams', '0001_initial'),
     ]
 
     operations = [
