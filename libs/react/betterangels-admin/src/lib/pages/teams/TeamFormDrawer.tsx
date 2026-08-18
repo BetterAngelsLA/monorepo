@@ -6,7 +6,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { Input, mergeCss } from '@monorepo/react/shared';
+import { Dropdown, Input, mergeCss } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import {
@@ -98,18 +98,17 @@ export function TeamFormDrawer(props: TProps) {
         />
 
         {isEditing && (
-          <div className="flex flex-col">
-            <label className="text-sm ml-1 mb-2 flex flex-row">Status</label>
-            <select
-              value={isActive ? 'active' : 'inactive'}
-              onChange={(e) => setIsActive(e.target.value === 'active')}
-              disabled={disabled}
-              className="bg-neutral-99 rounded-lg focus:outline-hidden px-4 py-4 w-96 cursor-pointer"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+          <Dropdown
+            label="Status"
+            value={isActive ? 'active' : 'inactive'}
+            onChange={(v) => setIsActive(v === 'active')}
+            disabled={disabled}
+            selectClassname="w-96"
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+            ]}
+          />
         )}
       </div>
 
