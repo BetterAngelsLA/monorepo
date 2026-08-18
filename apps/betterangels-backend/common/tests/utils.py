@@ -163,6 +163,27 @@ class NumQueriesWithoutCacheMixin:
         return _MaxNumQueriesContext(self, max_query_count)
 
 
+# (slug, name) for the teams the June data migration created in every
+# organization. Mirrors ``reports.management.commands.load_report_test_data``.
+SEED_TEAMS = [
+    ("bowtie_riverside_outreach", "Bowtie & Riverside Outreach"),
+    ("echo_park_on_site", "Echo Park On-site"),
+    ("echo_park_outreach", "Echo Park Outreach"),
+    ("hollywood_on_site", "Hollywood On-site"),
+    ("hollywood_outreach", "Hollywood Outreach"),
+    ("la_river_outreach", "LA River Outreach"),
+    ("los_feliz_outreach", "Los Feliz Outreach"),
+    ("northeast_hollywood_outreach", "Northeast Hollywood Outreach"),
+    ("selah_staff", "SELAH Staff"),
+    ("silver_lake_outreach", "Silver Lake Outreach"),
+    ("slcc_on_site", "SLCC On-site"),
+    ("sunday_social_atwater_on_site", "Sunday Social / Atwater On-site"),
+    ("sunday_social_atwater_outreach", "Sunday Social / Atwater Outreach"),
+    ("wdi_on_site", "WDI On-site"),
+    ("wdi_outreach", "WDI Outreach"),
+]
+
+
 class GraphQLBaseTestCase(
     GraphQLTestCaseMixin, GraphQLAssertionsMixin, NumQueriesWithoutCacheMixin, ParametrizedTestCase, TestCase
 ):
@@ -196,23 +217,18 @@ class GraphQLBaseTestCase(
         from notes.groups import CASEWORKER
         from teams.models import Team
 
-        from common.enums import SelahTeamEnum
-
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Every org gets one team per legacy enum member, named exactly as the
-        # June data migration named them (``SelahTeamEnum.label``), so fixtures
-        # match production. Tests identify these teams by name: ``slug`` exists
-        # only for the enum-to-FK migration and is dropped in a later PR, so
-        # nothing here should depend on it.
-        for org in (self.org_1, self.org_2):
-            for team in SelahTeamEnum:
-                Team.objects.get_or_create(
-                    slug=team.value,
-                    organization=org,
-                    defaults={"name": team.label},
-                )
+        # Every org gets the teams the June data migration created, spelled out
+        # rather than derived from ``SelahTeamEnum``. The enum is on its way out
+        # and nothing outside the ``old_team`` columns should depend on it — the
+        # same reason ``load_report_test_data`` carries its own ``SEED_TEAMS``.
+        # Tests identify these by name; ``slug`` is populated only because the
+        # column still exists and is dropped in a later PR.
+        for slug, name in SEED_TEAMS:
+            for org in (self.org_1, self.org_2):
+                Team.objects.get_or_create(slug=slug, organization=org, defaults={"name": name})
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of
