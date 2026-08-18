@@ -199,32 +199,13 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Teams for both orgs so tests can exercise org-scoped assignment.
-        # Test-local list — product teams are created by org admins in the
-        # admin UI.  Names must be distinct per org: ``unique_team_name_per_org``
-        # is case-insensitive on name.
-        for team_name in (
-            "Bowtie & Riverside Outreach",
-            "Echo Park On-site",
-            "Echo Park Outreach",
-            "Hollywood On-site",
-            "Hollywood Outreach",
-            "LA River Outreach",
-            "Los Feliz Outreach",
-            "Northeast Hollywood Outreach",
-            "SELAH Staff",
-            "Silver Lake Outreach",
-            "SLCC On-site",
-            "Sunday Social / Atwater On-site",
-            "Sunday Social / Atwater Outreach",
-            "WDI On-site",
-            "WDI Outreach",
-        ):
+        # A couple of teams per org so tests can exercise org-scoped assignment.
+        # Test-local names — real teams are created by org admins in the admin
+        # UI. Both orgs get the same names so a test asserting "only my org's"
+        # is asserting scoping rather than a difference in the data.
+        for team_name in ("WDI On-site", "SLCC On-site"):
             for org in (self.org_1, self.org_2):
-                Team.objects.get_or_create(
-                    name=team_name,
-                    organization=org,
-                )
+                Team.objects.get_or_create(name=team_name, organization=org)
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of
