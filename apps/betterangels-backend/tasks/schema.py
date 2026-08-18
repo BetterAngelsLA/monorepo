@@ -86,14 +86,10 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
+        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE], organization_field="organization_id")],
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
-        org_id = get_current_organization(info)
-        # Load-bearing org filter — see the note in notes.schema.update_note:
-        # guardian's global permission fallback means object perms alone do not
-        # confine a write to the owning org.
-        qs: QuerySet[Task] = info.context.qs.filter(organization_id=org_id)
+        qs: QuerySet[Task] = info.context.qs
 
         # Resolve team before asdict.  A miss here means the task belongs to
         # another organization (or the user lacks CHANGE), so surface it as a
@@ -115,11 +111,10 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.DELETE])],
+        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.DELETE], organization_field="organization_id")],
     )
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        org_id = get_current_organization(info)
-        qs: QuerySet[Task] = info.context.qs.filter(organization_id=org_id)
+        qs: QuerySet[Task] = info.context.qs
 
         task = get_object_or_permission_error(
             qs,

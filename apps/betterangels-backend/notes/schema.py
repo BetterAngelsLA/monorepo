@@ -120,10 +120,11 @@ class Query:
 @strawberry.type
 class Mutation:
     # NOTE(permission model): Writes are org-owned — mutations resolve the
-    # active organization from the X-Organization-ID header (HasOrgPerm +
-    # get_current_organization) and the Caseworker PermissionGroup within
-    # that org.  Reads (notes/note via HasRetvalPerm) are platform-shared by
-    # design — all orgs can see client interactions across orgs.
+    # active organization from the X-Organization-ID header, either via
+    # HasOrgPerm (no object yet, e.g. create) or via PermissionedQuerySet's
+    # organization_field (scoping an existing record).  Reads (notes/note via
+    # HasRetvalPerm) are platform-shared by design — all orgs can see client
+    # interactions across orgs.  See docs/teams_org_scoping.md.
 
     # Notes
     @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(NotePermissions.ADD)])
@@ -164,22 +165,16 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
-        # Scope to the active organization from the request header, on top of
-        # object-level CHANGE perms.
-        #
-        # This filter is load-bearing, not belt-and-braces: cross-org access
-        # currently falls out of guardian's *global* permission fallback (see
-        # docs/teams_org_scoping.md), so object perms alone do not confine a
-        # write to the org that owns the record.  Do not remove it until that
-        # fallback is replaced with an explicit shared-vs-org-owned layer.
-        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
+        qs: QuerySet[Note] = info.context.qs
 
         clean = asdict(data)
         # UNSET leaves the current team unchanged; org validation happens in
@@ -199,10 +194,12 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs.filter(organization_id=get_current_organization(info))
+        qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.id)
 
         location_data = cast(dict, strawberry.asdict(data)["location"])
@@ -212,10 +209,12 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs.filter(organization_id=get_current_organization(info))
+        qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, data.id)
 
         NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
@@ -227,12 +226,13 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE], organization_field="organization_id")
+        ],
     )
     def delete_note(self, info: Info, data: DeleteDjangoObjectInput) -> NoteType:
         """Delete a note, scoped to the active organization."""
-        org_id = get_current_organization(info)
-        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
+        qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(
             qs,
             data.id,
@@ -247,7 +247,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasOrgPerm(ServiceRequestPermissions.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
@@ -255,7 +255,7 @@ class Mutation:
         org_id = get_current_organization(info)
         permission_group = permission_group_for_user(user, org_id=org_id, template_name=CASEWORKER.name)
 
-        qs: QuerySet[Note] = info.context.qs.filter(organization_id=org_id)
+        qs: QuerySet[Note] = info.context.qs
         note = get_object_or_permission_error(qs, str(data.note_id))
 
         service_requests = note_service_request_create(
@@ -275,7 +275,16 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.DELETE])],
+        extensions=[
+            PermissionedQuerySet(
+                model=ServiceRequest,
+                perms=[ServiceRequestPermissions.DELETE],
+                # A ServiceRequest has no organization of its own; it takes the
+                # one from the note it hangs off, and a note references it as
+                # either provided or requested.
+                organization_field=["provided_notes__organization_id", "requested_notes__organization_id"],
+            )
+        ],
     )
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
@@ -399,7 +408,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def generate_note_file_uploads(
@@ -428,7 +437,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def resolve_note_file_uploads(

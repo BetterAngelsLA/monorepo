@@ -12,6 +12,7 @@ from guardian.shortcuts import assign_perm
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import DjangoNoPermission
 
 from common.errors import UnauthenticatedGQLError
 
@@ -238,6 +239,29 @@ def get_current_organization(info: Info) -> str:
         error.
     """
     return str(info.context.request.organization_id)
+
+
+def require_organization_id(info: Info) -> str:
+    """Return the active organization ID, for use *inside a permission extension*.
+
+    Raises ``DjangoNoPermission`` when the ``X-Organization-ID`` header is
+    absent.  That exception is strawberry-django's internal signal: it is
+    caught in ``DjangoPermissionExtension.resolve`` and turned into the
+    extension's configured denial.  It is only caught around the call to
+    ``resolve_for_user``, so it must be raised from within that call stack —
+    raised anywhere else (an ``__init__``, a ``resolve`` override running
+    before ``super()``) it escapes the framework and surfaces as a raw
+    error instead of a typed one.
+
+    Resolver *bodies* want ``get_current_organization`` instead, which
+    reports the same condition with an exception the resolver layer knows
+    how to render.
+    """
+    org_id = info.context.request.organization_id
+    if org_id is None:
+        raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
+
+    return str(org_id)
 
 
 _T = TypeVar("_T", bound=Model)

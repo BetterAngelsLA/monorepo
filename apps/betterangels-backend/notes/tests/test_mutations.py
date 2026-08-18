@@ -1009,6 +1009,17 @@ class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
+    def _org_scoping_location_variables(self) -> dict:
+        json_address_input, _ = self._get_address_inputs()
+        return {
+            "id": self.note["id"],
+            "location": {
+                "address": json_address_input,
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
+        }
+
     def test_create_note_uses_active_org_not_first_match(self) -> None:
         # The user is a caseworker in both org_1 and org_2.  First-match org
         # resolution would pick org_1; the active header org must win.
@@ -1056,3 +1067,55 @@ class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
         messages = response["data"]["updateNote"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertNotEqual(Note.objects.get(pk=self.note["id"]).purpose, "Should not update")
+
+    def test_update_note_location_denied_when_active_org_differs(self) -> None:
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertIsNotNone(response["data"]["updateNoteLocation"]["messages"])
+
+    def test_update_note_location_denied_without_the_org_header(self) -> None:
+        """Regression: a missing header used to reach the filter as ``"None"``.
+
+        ``update_note_location`` has no ``HasOrgPerm`` to reject the request
+        up front, so the sentinel travelled all the way into
+        ``filter(organization_id="None")`` and came back as
+        ``ValueError: Field 'id' expected a number but got 'None'`` — a 500
+        that says nothing about the header.  It must read as a denial.
+
+        The denial is raised by the extension, so it lands in ``errors``
+        rather than as an ``OperationInfo`` — the same shape ``HasOrgPerm``
+        produces for a headerless request, and with the same message.
+        """
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertEqual(
+            response["errors"][0]["message"],
+            "You do not have permission to perform this action in this organization.",
+        )
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).location)
+
+    def test_delete_service_request_denied_when_active_org_differs(self) -> None:
+        """A service request inherits the organization of the note it hangs off.
+
+        Nothing scoped this before: ``PermissionedQuerySet`` was applied with
+        no organization filter, and guardian's global fallback let any holder
+        of ``delete_servicerequest`` delete any organization's.
+        """
+        service_request_id = self._create_note_service_request_fixture(
+            {
+                "serviceId": None,
+                "serviceOther": "A blanket",
+                "noteId": self.note["id"],
+                "serviceRequestType": "REQUESTED",
+            }
+        )["data"]["createNoteServiceRequest"]["id"]
+
+        self._set_active_org(self.org_2)
+        response = self._delete_service_request_fixture(service_request_id)
+
+        self.assertIsNotNone(response["data"]["deleteServiceRequest"]["messages"])
+        self.assertTrue(ServiceRequest.objects.filter(pk=service_request_id).exists())
