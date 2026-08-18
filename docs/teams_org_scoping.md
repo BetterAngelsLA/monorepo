@@ -69,10 +69,14 @@ into `team_id` on the event tables first.
    already did it.
 
    There is deliberately no management command for this. Running one would
-   take the same code path, so it could only fail the same way; see #2311,
-   which made that handler fail loudly instead. If the sync cannot complete,
-   the migrate itself fails — an apparently successful deploy means the
-   permissions are current.
+   call the same function, so it could only fail the same way a failed
+   automatic run did — it would report success without telling you anything
+   the migrate had not already determined.
+
+   Known gap: the handler currently catches broadly, so a failure there is
+   quiet rather than fatal. If org admins report missing `teams.*`
+   permissions after this deploy, check the migrate logs before assuming the
+   feature is broken.
 
 3. **Teams are org-admin created.** New orgs start with no teams; org
    admins create them through the admin UI (Teams page / `createTeam`).
