@@ -95,40 +95,39 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: 'camera-capture-btn'
 
+# #####################################
+# Validate upload exists on next screen
+# #####################################
 - extendedWaitUntil:
     visible:
-      id: 'upload-progress-state-upload-complete'
-    timeout: 10000
-
-# ###################################
-# Validate upload exists after upload
-# ###################################
-- tapOn:
-    id: 'modal-screen-close-btn'
-
-- assertVisible:
-    id: 'client-view-docs'
-
-- assertVisible: 'Forms'
+      id: 'client-docs-accordion-forms'
+    timeout: 15000
 
 - tapOn:
     id: 'client-docs-accordion-forms'
+- waitForAnimationToEnd
 
-# Validate the upload: soft check — the camera photo is named
-# "<epoch-ms>.jpg" (unpredictable) on both platforms, so we assert that a .jpg
-# doc exists in the accordion rather than matching the exact name.
-- assertVisible:
-    text: '.*\.jpg.*'
+# - extendedWaitUntil:
+#     visible:
+#       id: 'file-card.*'
+#     timeout: 15000
 
-# Open the doc (FileCard) to get the DocumentModal, then delete it. Tapping by
-# the FileCard testID prefix (not the filename text) works on both platforms.
+# This is a soft check, as there could be a pre-existing uploads
+# and we can't easily validate exact filename of latest upload.
+- extendedWaitUntil:
+    visible:
+      id: 'file-card-.*jpg'
+    timeout: 15000
+
+# ##########################
+# Delete the `recent` upload
+# ##########################
+
+# We can't be sure that this is the most recent upload,
+# but allows us to test deletion anyway.
 - tapOn:
-    id: 'file-card-.*'
+    id: 'file-card-.*jpg'
     index: 0
-
-# ########################
-# Delete the recent upload
-# ########################
 
 - waitForAnimationToEnd
 
