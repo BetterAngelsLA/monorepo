@@ -8,21 +8,18 @@ from .models import Team
 
 
 def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
-    """Raise unless *name* has real content and is free within *organization*.
+    """Raise if *name* is already taken within *organization*.
 
-    Uniqueness is enforced case-insensitively by ``unique_team_name_per_org``,
-    which ``full_clean()`` does validate -- but it reports only that the
-    constraint was violated, naming the constraint rather than the team.
-    Checking here first is what produces a message the caller can act on.
+    This duplicates a check ``full_clean()`` already performs: it validates
+    ``unique_team_name_per_org`` and rejects the duplicate on its own.  What it
+    cannot do is name the team -- it reports only that the constraint was
+    violated -- so this exists for the message, not for the guarantee.  The
+    constraint is the guarantee; the query below is check-then-insert and two
+    concurrent creates can both pass it.
 
-    The alphanumeric requirement predates the removal of ``Team.slug``, where it
-    fell out of ``slugify("---")`` being empty. It is kept deliberately: a team
-    called "---" is indistinguishable from a blank one to anyone reading a list,
-    and name is now the only identifier there is.
+    Content rules on the name itself are field validators on the model, so they
+    hold for the Django admin too (see ``teams.validators``).
     """
-    if not any(character.isalnum() for character in name):
-        raise ValidationError("Team name must contain at least one alphanumeric character.")
-
     qs = Team.objects.filter(name__iexact=name, organization=organization)
 
     if exclude_pk is not None:

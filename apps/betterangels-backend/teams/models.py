@@ -4,6 +4,8 @@ from common.models import BaseModel
 from django.db import models
 from django.db.models.functions import Lower
 
+from .validators import validate_has_alphanumeric
+
 
 class Team(BaseModel):
     """Team, scoped per organization.
@@ -14,7 +16,7 @@ class Team(BaseModel):
     (see ``unique_team_name_per_org``).
     """
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, validators=[validate_has_alphanumeric])
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,

@@ -14,6 +14,7 @@ name) before the constraint is added, so this cannot fail on real data.
 """
 
 import django.db.models.functions.text
+import teams.validators
 from django.db import migrations, models
 from django.db.models.functions import Lower
 
@@ -72,5 +73,11 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name="team",
             name="slug",
+        ),
+        # State only -- validators are not enforced by the database.
+        migrations.AlterField(
+            model_name="team",
+            name="name",
+            field=models.CharField(max_length=255, validators=[teams.validators.validate_has_alphanumeric]),
         ),
     ]

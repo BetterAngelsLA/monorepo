@@ -151,3 +151,9 @@ class TeamNameConstraintTestCase(TestCase):
 
         with self.assertRaises(IntegrityError):
             Team.objects.create(name="hollywood outreach", organization=self.org)
+
+    def test_name_without_alphanumerics_is_rejected_by_the_model(self) -> None:
+        """Declared as a field validator, so writers that never reach the
+        services -- the Django admin, where name is free text -- are covered."""
+        with self.assertRaises(ValidationError):
+            Team(name="---", organization=self.org).full_clean()

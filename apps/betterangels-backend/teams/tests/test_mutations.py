@@ -57,14 +57,20 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(team[field], value)
 
     @parametrize(
-        "new_name",
+        "new_name, expected_message",
         [
-            ("---",),
-            ("   ",),
+            ("---", "Team name must contain at least one alphanumeric character."),
+            ("   ", "This field cannot be blank."),
         ],
     )
-    def test_update_team_mutation_invalid_name(self, new_name: str) -> None:
-        """Empty/whitespace-only names are rejected and no partial update occurs."""
+    def test_update_team_mutation_invalid_name(self, new_name: str, expected_message: str) -> None:
+        """A name with no readable content is rejected and no partial update occurs.
+
+        The two inputs trip different rules: "---" the ``validate_has_alphanumeric``
+        field validator, and a whitespace-only name ``blank=False``, since
+        ``team_update`` strips it to the empty string first and ``full_clean()``
+        skips validators for an empty value.
+        """
         team = baker.make(Team, name="name", organization=self.org)
         variables = {"id": team.pk, "name": new_name}
 
@@ -73,7 +79,7 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.assertGraphQLOperationInfo(
             response,
             "updateTeam",
-            "Team name must contain at least one alphanumeric character.",
+            expected_message,
             kind="VALIDATION",
         )
 
