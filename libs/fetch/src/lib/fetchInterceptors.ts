@@ -122,14 +122,10 @@ export const createCsrfInterceptor = (
 // ---------------------------------------------------------------------------
 
 /**
- * Inject the ``X-Organization-ID`` header from a synchronous reader.
+ * Inject the ``X-Organization-ID`` header, read per request.
  *
- * Takes a reader rather than a storage adapter deliberately. Reading storage
- * here made the header lag the UI: the active organization is chosen in React,
- * and on React Native the write to ``AsyncStorage`` completes a round trip
- * later, so requests fired in between went out header-less. The reader is
- * expected to return the id the application currently considers active,
- * without I/O — see ``getActiveOrgId`` in ``@monorepo/ba-platform``.
+ * *readOrgId* must not do I/O — see ``getActiveOrgId`` in
+ * ``@monorepo/ba-platform``.
  */
 export const createOrgInterceptor = (
   readOrgId: () => string | null,

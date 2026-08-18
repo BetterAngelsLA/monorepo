@@ -6,16 +6,7 @@ export interface ActiveOrgProviderProps {
   organizations: Org[];
 }
 
-/**
- * Create an ``ActiveOrgProvider`` component bound to a specific React context.
- *
- * Takes no storage adapter: the active organization id is held in the
- * module-level store (``@monorepo/ba-platform`` → ``activeOrg``), whose
- * synchronous backing each app installs once at bootstrap via
- * ``configureActiveOrgStorage``. That is what lets the fetch interceptor read
- * the id without an await, and it is why this provider no longer threads a
- * storage adapter down from the app.
- */
+/** Create an ``ActiveOrgProvider`` bound to a specific React context. */
 export function createActiveOrgProvider(OrgContext: React.Context<ActiveOrgState | undefined>) {
   return function ActiveOrgProvider({ children, organizations }: ActiveOrgProviderProps) {
     const value = useActiveOrgState(organizations);

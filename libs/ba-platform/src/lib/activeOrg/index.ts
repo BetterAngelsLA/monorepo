@@ -1,9 +1,9 @@
 export {
   clearActiveOrgId,
   configureActiveOrgStorage,
+  createActiveOrgPersistence,
   getActiveOrgId,
   setActiveOrgId,
   subscribeActiveOrgId,
-  resetActiveOrgStoreForTests,
 } from './activeOrgStore';
-export type { SyncOrgStorage } from './activeOrgStore';
+export type { ActiveOrgPersistence } from './activeOrgStore';

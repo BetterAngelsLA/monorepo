@@ -174,8 +174,6 @@ describe('createOrgInterceptor', () => {
   });
 
   it('does not await — the reader must be synchronous', async () => {
-    // A promise-returning reader would stringify into the header, which is how
-    // the original AsyncStorage bug would have manifested if the type allowed it.
     const interceptor = createOrgInterceptor(() => 'org-1');
     const next = vi.fn().mockResolvedValue(new Response());
 

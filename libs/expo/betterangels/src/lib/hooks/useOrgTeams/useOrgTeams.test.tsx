@@ -9,24 +9,18 @@ import {
   ActiveOrgProvider,
   configureActiveOrgStorage,
   getActiveOrgId,
-  resetActiveOrgStoreForTests,
-  type SyncOrgStorage,
+  type ActiveOrgPersistence,
 } from '@monorepo/ba-platform';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { ReactNode } from 'react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { useOrgTeams } from './useOrgTeams';
 
 /**
- * Teams are org-scoped and the server requires the ``X-Organization-ID`` header
- * rather than guessing, so a request must never be issued without one.
- *
- * The hook has no readiness gate — it does not need one. The active org id is
- * published to a synchronously-written store before React renders, so by the
- * time this query runs the interceptor already has a header to attach. These
- * tests pin that: they assert what the *store* holds at the moment a request is
- * issued, counted at the link rather than inferred from loading flags.
+ * Asserts what the store holds at the moment each request is issued — counted
+ * at the link, rather than inferred from loading flags, which look identical
+ * for "skipped" and "in flight".
  */
 
 const ORG = { id: 'org-1', name: 'Test Org', permissions: [] as const };
@@ -41,7 +35,7 @@ const TEAMS_RESULT = {
   },
 };
 
-function createSyncStorage(initial: string | null = null): SyncOrgStorage {
+function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,
@@ -69,9 +63,6 @@ function createRecordingClient() {
 }
 
 describe('useOrgTeams', () => {
-  beforeEach(() => {
-    resetActiveOrgStoreForTests();
-  });
 
   function renderWith(organizations: readonly typeof ORG[]) {
     const { client, orgIdPerOperation } = createRecordingClient();

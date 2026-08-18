@@ -5,10 +5,10 @@ import {
   resetActiveOrgStoreForTests,
   setActiveOrgId,
   subscribeActiveOrgId,
-  type SyncOrgStorage,
+  type ActiveOrgPersistence,
 } from './activeOrgStore';
 
-function createSyncStorage(initial: string | null = null): SyncOrgStorage {
+function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,
@@ -28,8 +28,6 @@ describe('activeOrgStore', () => {
   });
 
   it('seeds synchronously from the configured storage', () => {
-    // The whole point: readable before any React code runs, so the fetch
-    // interceptor can attach a header on the first request after launch.
     configureActiveOrgStorage(createSyncStorage('org-7'));
 
     expect(getActiveOrgId()).toBe('org-7');
@@ -55,8 +53,6 @@ describe('activeOrgStore', () => {
   });
 
   it('does not notify when the id is unchanged', () => {
-    // getSnapshot returns a primitive, so an unnecessary notify would be a
-    // wasted render rather than a loop — but still worth not doing.
     configureActiveOrgStorage(createSyncStorage('org-2'));
     const listener = vi.fn();
     subscribeActiveOrgId(listener);
@@ -78,8 +74,6 @@ describe('activeOrgStore', () => {
   });
 
   it('clear forgets the id and the persisted copy', () => {
-    // Logout and environment switches rely on this: a stale id would otherwise
-    // keep being sent as a header until a new org list reconciled it.
     const storage = createSyncStorage('org-2');
     configureActiveOrgStorage(storage);
 

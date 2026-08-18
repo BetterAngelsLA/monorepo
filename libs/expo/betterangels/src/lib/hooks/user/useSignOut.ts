@@ -30,8 +30,7 @@ export default function useSignOut() {
     }
     await CookieManager.clearAll();
     await client.clearStore();
-    // The next user on this device must not inherit this one's active
-    // organization, and the header must stop being sent immediately.
+    // The next user must not inherit this one's organization.
     clearActiveOrgId();
     setUser(undefined);
   }, [logout, setUser, client]);

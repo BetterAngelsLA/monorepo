@@ -16,8 +16,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { apiUrl } from '../config';
 import App from './app/app';
 
-// Install the active-org backing before anything can issue a request, so the
-// X-Organization-ID interceptor can read the remembered org synchronously.
+// Before anything can issue a request — the interceptor reads this.
 configureActiveOrgStorage(webActiveOrgStorage);
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';

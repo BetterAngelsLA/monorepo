@@ -6,26 +6,11 @@
 
 import type { FetchInterceptor } from '@monorepo/fetch';
 
-import {
-  configureActiveOrgStorage,
-  resetActiveOrgStoreForTests,
-} from '@monorepo/ba-platform';
+import { configureActiveOrgStorage } from '@monorepo/ba-platform';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
-
-const mockAsyncStorage: Record<string, string> = {};
-
-vi.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: vi.fn((key: string) =>
-    Promise.resolve(mockAsyncStorage[key] ?? null),
-  ),
-  setItem: vi.fn((key: string, value: string) => {
-    mockAsyncStorage[key] = value;
-    return Promise.resolve();
-  }),
-}));
 
 const mockMmkv: Record<string, string> = {};
 vi.mock('react-native-mmkv', () => ({
@@ -46,13 +31,6 @@ vi.mock('@preeternal/react-native-cookie-manager', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/utils', () => ({
-  asyncStorageAdapter: {
-    getItem: (key: string) => Promise.resolve(mockAsyncStorage[key] ?? null),
-    setItem: (key: string, value: string) => {
-      mockAsyncStorage[key] = value;
-      return Promise.resolve();
-    },
-  },
 }));
 
 vi.mock('@monorepo/expo/shared/clients', () => ({
@@ -86,18 +64,14 @@ describe('createExpoFetchClient', () => {
     originalFetch = global.fetch;
     global.fetch = vi.fn().mockResolvedValue(new Response());
     // Clear mock storage
-    Object.keys(mockAsyncStorage).forEach((k) => delete mockAsyncStorage[k]);
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
-    resetActiveOrgStoreForTests();
     Object.keys(mockMmkv).forEach((k) => delete mockMmkv[k]);
   });
 
   it('injects X-Organization-ID header from the active-org store', async () => {
-    // Seeded through MMKV, the synchronous backing — not AsyncStorage, whose
-    // round trip is what used to make the header lag the UI.
     mockMmkv['betterangels_active_org_id'] = 'org-expo';
     configureActiveOrgStorage(expoActiveOrgStorage);
 

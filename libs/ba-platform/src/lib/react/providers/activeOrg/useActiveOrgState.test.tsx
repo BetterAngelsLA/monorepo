@@ -3,9 +3,9 @@ import { ActiveOrgProvider } from './index';
 import {
   configureActiveOrgStorage,
   getActiveOrgId,
-  resetActiveOrgStoreForTests,
-  type SyncOrgStorage,
+  type ActiveOrgPersistence,
 } from '../../../activeOrg';
+import { resetActiveOrgStoreForTests } from '../../../activeOrg/activeOrgStore';
 import { useActiveOrgState, type Org } from './useActiveOrgState';
 
 function makeOrg(overrides: Partial<Org> = {}): Org {
@@ -22,7 +22,7 @@ function makeOrg(overrides: Partial<Org> = {}): Org {
 }
 
 /** Synchronous backing, the way both platforms now provide one. */
-function createSyncStorage(initial: string | null = null): SyncOrgStorage {
+function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,
@@ -83,18 +83,13 @@ describe('useActiveOrgState', () => {
   });
 
   it('the remembered organization is live before any component renders', () => {
-    // Regression: the interceptor reads the store, so a request fired by the
-    // very first render must already carry the remembered org. Previously the
-    // id only reached the interceptor's source after an effect (web) or an
-    // AsyncStorage round trip (native).
     configureActiveOrgStorage(createSyncStorage('org-2'));
 
     expect(getActiveOrgId()).toBe('org-2');
   });
 
   it('discards a remembered organization the user no longer belongs to', () => {
-    // e.g. a different user on the same device, or an org they were removed
-    // from. The store holds whatever it was told; this hook owns validation.
+    // e.g. a different user on the same device, or one they were removed from.
     configureActiveOrgStorage(createSyncStorage('org-stale'));
     const orgs = [makeOrg({ id: 'org-1' })];
 
@@ -138,14 +133,7 @@ describe('useActiveOrgState', () => {
   });
 
   it('the org is live before a child renders, not one effect later', () => {
-    // The property the whole design rests on, and the reason the reconcile
-    // above happens during render rather than in an effect.
-    //
-    // Most org-scoped queries in the app fire unconditionally — they have no
-    // skip to hide behind. React runs effects child-before-parent, so an
-    // effect-based reconcile would let those children issue a request before
-    // the provider had chosen an organization, and it would go out with no
-    // X-Organization-ID header.
+    // Most org-scoped queries fire unconditionally — no skip to hide behind.
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' })];
     const seenDuringChildRender: (string | null)[] = [];

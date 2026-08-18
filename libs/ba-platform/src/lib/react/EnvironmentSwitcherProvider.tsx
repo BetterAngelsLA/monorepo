@@ -90,9 +90,8 @@ export const EnvironmentSwitcherProvider = ({
     async (env: string) => {
       if (env === envName) return;
       await storage.setItem(storageKey, env);
-      // Organization ids are per-environment: the remembered one names a row
-      // in the old environment's database and would be sent as a header
-      // against the new one until the org list reloads and reconciles.
+      // Organization ids are per-environment — this one names a row in the
+      // database we are leaving.
       clearActiveOrgId();
       setEnvName(env);
     },

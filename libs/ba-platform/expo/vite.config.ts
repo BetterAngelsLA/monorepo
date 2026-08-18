@@ -7,8 +7,8 @@ import {
 
 export default mergeConfig(baseVitestConfig, {
   resolve: {
-    // See the web config: aliases are needed for @monorepo/* imports from test
-    // files, which `tsconfigPaths` does not cover.
+    // `tsconfigPaths` resolves @monorepo/* from source but not from test files
+    // here; explicit aliases are what Rolldown respects. See monorepo-aliases.ts.
     alias: monorepoTsconfigAliases(path.resolve(__dirname, '../../..')),
     tsconfigPaths: true,
   },

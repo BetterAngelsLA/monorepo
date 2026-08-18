@@ -13,8 +13,7 @@ export default function useSignOut() {
     try {
       await logout();
       await client.clearStore();
-      // The next user on this browser must not inherit this one's active
-      // organization, and the header must stop being sent immediately.
+      // The next user must not inherit this one's organization.
       clearActiveOrgId();
       setUser(undefined);
     } catch (err) {

@@ -1,35 +1,52 @@
 /**
  * The active organization id, held outside React.
  *
- * Why this is not React state
- * ---------------------------
- * The ``X-Organization-ID`` header is attached by a fetch interceptor, which
- * is not a component and cannot read React state. Modelling the id as React
- * state and mirroring it into storage means the interceptor reads a copy that
- * lags the UI by an effect — on React Native, by an ``AsyncStorage`` round
- * trip. Requests then go out header-less while the UI already shows an
- * organization, and every consumer has to guess when the two agree.
+ * The ``X-Organization-ID`` header is attached by a fetch interceptor, which is
+ * not a component and cannot read React state. Holding the id as React state
+ * and mirroring it into storage gave the interceptor a copy that lagged the UI
+ * — by a commit on web, by an ``AsyncStorage`` round trip on React Native — so
+ * requests went out header-less while an organization was already on screen.
  *
- * So the id lives here: one value, written synchronously, readable
- * synchronously by both React (via ``useSyncExternalStore``) and the
- * interceptor (via :func:`getActiveOrgId`).
+ * One value, written synchronously, read synchronously by React (via
+ * ``useSyncExternalStore``) and by the interceptor (via :func:`getActiveOrgId`).
+ * Persistence is a write-behind detail, not a channel between the two.
  *
- * The snapshot is a primitive, which sidesteps ``useSyncExternalStore``'s main
- * hazard — a ``getSnapshot`` that returns a fresh object each call re-renders
- * forever. ``subscribe`` is defined here rather than inline in a component so
- * React does not resubscribe on every render.
+ * Scope: per JavaScript context. Two browser tabs each keep their own active
+ * organization and do not follow each other, which is deliberate — a tab's UI
+ * and its request headers now always agree, where previously a switch in one
+ * tab changed the other's headers without changing what it displayed. Add a
+ * ``storage`` event listener here if cross-tab following is ever wanted.
  */
 
-/** Synchronous key-value backing. Both platforms have one: ``localStorage`` on
- * web, MMKV on React Native. Synchronous is the requirement, not the mechanism —
- * an async store cannot be read during ``getSnapshot`` or by the interceptor. */
-export interface SyncOrgStorage {
+/**
+ * Somewhere to persist the id across launches.
+ *
+ * Must be synchronous: the value is read during ``getSnapshot`` and on every
+ * request, neither of which can await. ``localStorage`` qualifies; MMKV
+ * qualifies; ``AsyncStorage`` does not.
+ */
+export interface ActiveOrgPersistence {
   get(): string | null;
   set(value: string | null): void;
 }
 
-/** Used until a platform installs a real one, and in tests. */
-const inMemoryStorage = (): SyncOrgStorage => {
+/**
+ * Build an :type:`ActiveOrgPersistence` from a platform's key-value calls.
+ *
+ * Shape adaptation only — ``undefined`` becomes ``null``, and ``null`` means
+ * remove. Resilience lives in the store, which guards every implementation
+ * rather than only the ones built here.
+ */
+export const createActiveOrgPersistence = (backing: {
+  read: () => string | null | undefined;
+  write: (value: string) => void;
+  remove: () => void;
+}): ActiveOrgPersistence => ({
+  get: () => backing.read() ?? null,
+  set: (value) => (value === null ? backing.remove() : backing.write(value)),
+});
+
+const inMemoryPersistence = (): ActiveOrgPersistence => {
   let value: string | null = null;
   return {
     get: () => value,
@@ -39,7 +56,8 @@ const inMemoryStorage = (): SyncOrgStorage => {
   };
 };
 
-let storage: SyncOrgStorage = inMemoryStorage();
+let persistence: ActiveOrgPersistence = inMemoryPersistence();
+let configured = false;
 let current: string | null = null;
 const listeners = new Set<() => void>();
 
@@ -47,17 +65,36 @@ const notify = (): void => {
   listeners.forEach((listener) => listener());
 };
 
+// Persistence is best-effort in both directions: an unavailable or failing
+// backend costs the remembered organization on the next launch, never the
+// correctness of the running session.
+const readPersisted = (): string | null => {
+  try {
+    return persistence.get();
+  } catch {
+    return null;
+  }
+};
+
+const writePersisted = (id: string | null): void => {
+  try {
+    persistence.set(id);
+  } catch {
+    // ignored — see above
+  }
+};
+
 /**
- * Install the platform's synchronous storage and seed from it.
+ * Install the platform's persistence and seed from it.
  *
- * Call once during bootstrap, before the fetch client issues anything — web
- * from ``main.tsx``, Expo from the app entry. Seeding here rather than in a
- * provider effect is what makes the remembered organization available to the
- * very first request instead of one commit later.
+ * Call once during bootstrap, before the fetch client issues anything. Seeding
+ * here rather than in a provider effect is what makes a remembered
+ * organization available to the very first request.
  */
-export const configureActiveOrgStorage = (next: SyncOrgStorage): void => {
-  storage = next;
-  const seeded = storage.get();
+export const configureActiveOrgStorage = (next: ActiveOrgPersistence): void => {
+  persistence = next;
+  configured = true;
+  const seeded = readPersisted();
   if (seeded === current) return;
   current = seeded;
   notify();
@@ -69,19 +106,24 @@ export const getActiveOrgId = (): string | null => current;
 /**
  * Set the active organization id and persist it, synchronously.
  *
- * Callers are responsible for passing an id the user actually belongs to;
- * this does not validate. ``useActiveOrgState`` owns that check, because it is
- * the thing that knows the organization list.
+ * Does not validate — ``useActiveOrgState`` owns that, because it is the thing
+ * that knows which organizations the user belongs to.
  */
 export const setActiveOrgId = (id: string | null): void => {
   if (id === current) return;
-  current = id;
-  try {
-    storage.set(id);
-  } catch {
-    // Persistence is best-effort — a failed write costs the remembered
-    // organization on next launch, not the correctness of this session.
+
+  if (!configured && process.env['NODE_ENV'] !== 'production') {
+    // Otherwise the remembered organization silently stops working: everything
+    // behaves normally for the session and nothing survives a restart.
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[activeOrgStore] No persistence installed — call configureActiveOrgStorage() during bootstrap. ' +
+        'The active organization will not survive a reload.',
+    );
   }
+
+  current = id;
+  writePersisted(id);
   notify();
 };
 
@@ -89,8 +131,8 @@ export const setActiveOrgId = (id: string | null): void => {
  * Forget the active organization.
  *
  * Call on logout and when switching API environments: an id from one user or
- * one environment means nothing in another, and leaving it set sends a stale
- * header until the new organization list loads and reconciles.
+ * environment means nothing in another, and leaving it set sends a stale header
+ * until a new organization list reconciles it.
  */
 export const clearActiveOrgId = (): void => {
   setActiveOrgId(null);
@@ -104,9 +146,13 @@ export const subscribeActiveOrgId = (listener: () => void): (() => void) => {
   };
 };
 
-/** Reset store *and* backing to a clean in-memory state. Tests only. */
+/**
+ * Reset to a clean state. Tests only — deliberately absent from the package
+ * barrel so it cannot be reached from application code.
+ */
 export const resetActiveOrgStoreForTests = (): void => {
-  storage = inMemoryStorage();
+  persistence = inMemoryPersistence();
+  configured = false;
   current = null;
   listeners.clear();
 };

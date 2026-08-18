@@ -11,14 +11,9 @@ type UseOrgTeamsOptions = {
 /**
  * Fetch teams for the active organization.
  *
- * Teams are org-scoped and the server resolves the organization from the
- * ``X-Organization-ID`` header, which is always present by the time this runs —
- * the active org is published to a synchronously-written store before any
- * component renders, so there is no readiness flag to wait on.
- *
- * The one case worth skipping is a user who belongs to no organization at all:
- * there is no header to send and the server would rightly refuse, so asking is
- * a wasted round trip that surfaces as an error.
+ * The ``skip`` is not a readiness gate — the ``X-Organization-ID`` header is
+ * always live by the time this runs. It covers a user who belongs to no
+ * organization at all, where there is nothing to send and nothing to ask for.
  *
  * Passes a high default limit (10000) to ensure all teams are available
  * in dropdowns and selects. Handles loading and error states internally.

@@ -29,9 +29,7 @@ export const isGqlDebug =
 
 // ---- One-time side effects ----
 
-// Install the active-org backing before anything can issue a request, so the
-// X-Organization-ID interceptor can read the remembered org synchronously.
-// MMKV rather than AsyncStorage precisely because that read cannot await.
+// Before anything can issue a request — the interceptor reads this.
 configureActiveOrgStorage(expoActiveOrgStorage);
 
 // Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
