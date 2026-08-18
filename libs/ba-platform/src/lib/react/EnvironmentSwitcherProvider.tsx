@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { clearActiveOrgId } from '../activeOrg';
 import { ApiConfigProvider } from './ApiConfigProvider';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +102,9 @@ export const EnvironmentSwitcherProvider = ({
     async (env: string) => {
       if (env === envName) return;
       await storage.setItem(storageKey, env);
+      // Organization ids are per-environment — this one names a row in the
+      // database we are leaving.
+      clearActiveOrgId();
       setEnvName(env);
     },
     [envName, storage, storageKey],

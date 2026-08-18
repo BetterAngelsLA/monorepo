@@ -2,7 +2,6 @@ import {
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
-  DEFAULT_ORG_STORAGE_KEY,
   getGraphqlUrl,
 } from './constants';
 
@@ -11,7 +10,6 @@ export {
   type FetchInterceptor,
   type TokenReader,
   type TokenRefresher,
-  type StorageReader,
   type CookiePersister,
   composeFetchInterceptors,
   createCsrfInterceptor,
@@ -21,10 +19,4 @@ export {
 } from '@monorepo/fetch';
 
 // Re-export for convenience so consumers don't need both imports.
-export {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-  CSRF_LOGIN_PATH,
-  DEFAULT_ORG_STORAGE_KEY,
-  getGraphqlUrl,
-};
+export { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, CSRF_LOGIN_PATH, getGraphqlUrl };
