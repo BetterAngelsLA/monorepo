@@ -39,6 +39,7 @@ export function TaskForm(props: TProps) {
   });
 
   const { teams } = useOrgTeams();
+  const [initialTeamId] = useState(initialValues?.teamId);
 
   const {
     control,
@@ -98,10 +99,14 @@ export function TaskForm(props: TProps) {
                   maxRadioItems={0}
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={teams.map((t) => ({
-                    value: t.id,
-                    displayValue: t.name,
-                  }))}
+                  items={teams
+                    .filter((t) => t.isActive || t.id === initialTeamId)
+                    .map((t) => ({
+                      value: t.id,
+                      displayValue: t.isActive
+                        ? t.name
+                        : `${t.name} (Inactive)`,
+                    }))}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
                   error={errors.teamId?.message}
