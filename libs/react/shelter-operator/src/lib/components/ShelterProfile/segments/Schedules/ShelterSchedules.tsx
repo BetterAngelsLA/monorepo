@@ -33,7 +33,7 @@ export function ShelterSchedules(props: TProps) {
 
   async function onSave(
     scheduleType: ScheduleTypeChoices,
-    scheduleInputs: ScheduleInput[]
+    scheduleInputs: ScheduleInput[],
   ) {
     if (!shelter) {
       return;
@@ -94,7 +94,7 @@ export function ShelterSchedules(props: TProps) {
   }
 
   const existingTypes = SCHEDULE_TABS.filter((type) =>
-    shelter.schedules.some((s) => s.scheduleType === type)
+    shelter.schedules.some((s) => s.scheduleType === type),
   );
 
   const missingTypes = SCHEDULE_TABS.filter((t) => !existingTypes.includes(t));

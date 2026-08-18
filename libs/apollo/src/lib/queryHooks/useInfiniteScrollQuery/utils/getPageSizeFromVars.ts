@@ -11,7 +11,7 @@ type TProps<TVars> = {
 };
 
 export function getPageSizeFromVars<TVars extends OperationVariables>(
-  props: TProps<TVars>
+  props: TProps<TVars>,
 ): number {
   const {
     paginationMode,

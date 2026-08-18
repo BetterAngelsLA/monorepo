@@ -21,7 +21,7 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
   const [forms] = useState<TSurveyForm[]>(surveyForms);
   const [formHistory, setFormHistory] = useState<TSurveyForm[]>([initialForm]);
   const [currentForm, setCurrentForm] = useState<TSurveyForm | null>(
-    initialForm
+    initialForm,
   );
   const [answers, setAnswers] = useState<TAnswer[]>([]);
 

@@ -35,7 +35,7 @@ const typePolicies = createShelterTypePolicies({
 });
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById('root') as HTMLElement,
 );
 
 root.render(
@@ -51,5 +51,5 @@ root.render(
         </ShelterFeatureControlProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
-  </StrictMode>
+  </StrictMode>,
 );

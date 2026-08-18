@@ -16,7 +16,7 @@ export function Header({ shelter }: { shelter: ViewShelterQuery['shelter'] }) {
     }[],
     shelter?.demographicsOther,
     enumDisplayDemographics,
-    DemographicChoices.Other
+    DemographicChoices.Other,
   );
 
   const demographicsDisplay = demographics

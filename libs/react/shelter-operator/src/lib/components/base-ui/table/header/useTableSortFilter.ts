@@ -26,17 +26,17 @@ export function useTableSortFilter<TItem>({
   const isSortControlled = onSortChange !== undefined;
 
   const [internalSortColumn, setInternalSortColumn] = useState<string | null>(
-    null
+    null,
   );
   const [internalSortDirection, setInternalSortDirection] =
     useState<SortDirection | null>(null);
 
   const sortColumn = isSortControlled
-    ? controlledSortColumn ?? null
+    ? (controlledSortColumn ?? null)
     : internalSortColumn;
 
   const sortDirection = isSortControlled
-    ? controlledSortDirection ?? null
+    ? (controlledSortDirection ?? null)
     : internalSortDirection;
 
   const handleSortToggle = useCallback(
@@ -68,7 +68,7 @@ export function useTableSortFilter<TItem>({
         setInternalSortDirection(nextDirection);
       }
     },
-    [columns, sortColumn, sortDirection, isSortControlled, onSortChange]
+    [columns, sortColumn, sortDirection, isSortControlled, onSortChange],
   );
 
   // filter state
@@ -79,8 +79,8 @@ export function useTableSortFilter<TItem>({
   >({});
 
   const filters = useMemo(
-    () => (isFilterControlled ? controlledFilters ?? {} : internalFilters),
-    [isFilterControlled, controlledFilters, internalFilters]
+    () => (isFilterControlled ? (controlledFilters ?? {}) : internalFilters),
+    [isFilterControlled, controlledFilters, internalFilters],
   );
 
   const handleFilterChange = useCallback(
@@ -91,7 +91,7 @@ export function useTableSortFilter<TItem>({
         setInternalFilters((prev) => ({ ...prev, [columnKey]: value }));
       }
     },
-    [isFilterControlled, onFilterChange]
+    [isFilterControlled, onFilterChange],
   );
 
   // filter options: explicit list > auto-derived > none
@@ -133,7 +133,7 @@ export function useTableSortFilter<TItem>({
   // pipeline: filter → sort
   const filteredRows = useMemo(() => {
     const activeFilters = Object.entries(filters).filter(
-      ([, v]) => v.trim() !== ''
+      ([, v]) => v.trim() !== '',
     );
 
     if (activeFilters.length === 0) {
@@ -149,7 +149,7 @@ export function useTableSortFilter<TItem>({
         }
 
         return matchesFilter(column.filterValue(item), filterText);
-      })
+      }),
     );
   }, [rows, filters, columns]);
 

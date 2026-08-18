@@ -3,8 +3,14 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { monorepoTsconfigAliases, svgTestResolver } from '../../libs/vite-utils/src/index';
-import { baseHrefPlugin, getBranchBasePath } from '../../tools/shared/get-base-path.mjs';
+import {
+  monorepoTsconfigAliases,
+  svgTestResolver,
+} from '../../libs/vite-utils/src/index';
+import {
+  baseHrefPlugin,
+  getBranchBasePath,
+} from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');

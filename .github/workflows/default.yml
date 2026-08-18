@@ -114,7 +114,7 @@ jobs:
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
-      - name:  Spin up monorepo environment
+      - name: Spin up monorepo environment
         run: |
           docker compose up -d
 

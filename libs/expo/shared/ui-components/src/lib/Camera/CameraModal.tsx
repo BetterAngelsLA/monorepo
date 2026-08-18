@@ -46,7 +46,7 @@ export function CameraModal({ onClose, onCapture }: Props) {
       if (!result.granted) {
         Alert.alert(
           'Permission Denied',
-          'You need to grant camera permission to use this feature.'
+          'You need to grant camera permission to use this feature.',
         );
 
         onClose();

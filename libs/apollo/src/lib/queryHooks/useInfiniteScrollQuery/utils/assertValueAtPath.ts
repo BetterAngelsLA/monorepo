@@ -30,7 +30,7 @@ import { readAtPath } from '../../../utils';
 
 function valueDefinedAtPath(
   source: unknown,
-  path: string | readonly string[]
+  path: string | readonly string[],
 ): boolean {
   const value = readAtPath(source, path);
 
@@ -50,7 +50,7 @@ export function assertValueAtPath(props: TProps): void {
 
   if (!valueExists) {
     const msg = `[assertValueAtPath] Could not find value at path ${JSON.stringify(
-      path
+      path,
     )}`;
 
     const err = new Error(msg);

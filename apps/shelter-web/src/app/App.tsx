@@ -1,7 +1,4 @@
-import {
-  MainLayout,
-  operatorPath,
-} from '@monorepo/react/shelter';
+import { MainLayout, operatorPath } from '@monorepo/react/shelter';
 import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
 import { Route, Routes } from 'react-router-dom';
@@ -20,10 +17,7 @@ export function App() {
     <MapsApiProvider apiKey={googleMapsApiKey} onError={onMapsProviderError}>
       <Routes>
         <Route element={<MainLayout />}>{shelterRoutes}</Route>
-        <Route
-          path={`${operatorPath}/*`}
-          element={<OperatorApp />}
-        />
+        <Route path={`${operatorPath}/*`} element={<OperatorApp />} />
       </Routes>
     </MapsApiProvider>
   );

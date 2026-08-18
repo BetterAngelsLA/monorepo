@@ -27,11 +27,11 @@ describe('assemblePolicyRegistry', () => {
       ] as const,
       {
         isDevEnv: true,
-      }
+      },
     );
 
     expect(spy).toHaveBeenCalledWith(
-      '[apollo assemblePolicyRegistry] Duplicate key "dup" – later one will override.'
+      '[apollo assemblePolicyRegistry] Duplicate key "dup" – later one will override.',
     );
   });
 
@@ -45,7 +45,7 @@ describe('assemblePolicyRegistry', () => {
       ] as const,
       {
         isDevEnv: false,
-      }
+      },
     );
 
     expect(spy).not.toHaveBeenCalled();

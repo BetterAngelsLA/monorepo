@@ -11,7 +11,7 @@ function mimeTypeToLabel(mime: TMimeType): string {
 }
 
 export function getSupportedFilesText(
-  acceptedMimeTypes: TMimeType[] | undefined
+  acceptedMimeTypes: TMimeType[] | undefined,
 ): string | undefined {
   if (!acceptedMimeTypes) {
     return undefined;

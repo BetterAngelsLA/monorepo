@@ -14,12 +14,9 @@
         - [Bugfix](https://github.com/BetterAngelsLA/monorepo/pull/298)
    1. Assign the PR to yourself
 1. :hammer_and_wrench: For **engineering** reviews (required for **all** PRs):
-
    1. For the PR author:
-
       1. in Jira, move ticket from "In Progress" to "Review"
       1. in [#tech-team-engineering](#), paste a link to the PR and tag someone from eng - e.g., [@mike Revert saved note on cancel (DEV-142)](#)
-
          1. if the PR is for something simple that needs to go out quickly (e.g., bumping expo dependencies), you can tag the whole team. - i.e., [@engineering](#)
 
       1. request a review from that person in the PR

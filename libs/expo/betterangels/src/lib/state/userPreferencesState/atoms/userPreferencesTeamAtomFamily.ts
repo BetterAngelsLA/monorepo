@@ -14,6 +14,6 @@ export const userPreferencesTeamAtomFamily = atomFamily((userId: string) => {
         ...prev,
         teamId: nextTeamId,
       }));
-    }
+    },
   );
 });

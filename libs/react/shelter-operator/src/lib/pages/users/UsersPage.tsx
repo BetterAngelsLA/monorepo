@@ -121,7 +121,7 @@ function useOrganizationMembers(
   page: number,
   sort: { field: keyof OrganizationMemberOrdering; direction: Ordering },
   search?: string,
-  orgType?: OrgTypeEnum
+  orgType?: OrgTypeEnum,
 ) {
   const { data, loading, previousData, refetch } = useQuery(
     OrganizationMembersDocument,
@@ -135,7 +135,7 @@ function useOrganizationMembers(
       },
       skip: !orgId,
       fetchPolicy: 'cache-and-network',
-    }
+    },
   );
 
   const activeData = data ?? previousData;
@@ -174,11 +174,17 @@ export function UsersPage() {
   const organizationId = activeOrg?.id ?? '';
 
   const [removeOrganizationMember, { loading: isRemoving }] = useMutation(
-    RemoveOrganizationMemberDocument
+    RemoveOrganizationMemberDocument,
   );
 
   const { members, totalPages, loading, isInitialLoad, refetch } =
-    useOrganizationMembers(organizationId, page, sort, search, OrgTypeEnum.Shelter);
+    useOrganizationMembers(
+      organizationId,
+      page,
+      sort,
+      search,
+      OrgTypeEnum.Shelter,
+    );
 
   const canView = hasPermission(UserOrganizationPermissions.ViewOrgMembers);
   const canAdd = hasPermission(UserOrganizationPermissions.AddOrgMember);
@@ -203,7 +209,7 @@ export function UsersPage() {
         direction: direction === 'asc' ? Ordering.Asc : Ordering.Desc,
       });
     },
-    []
+    [],
   );
 
   const handleRemoveMember = useCallback(
@@ -234,7 +240,7 @@ export function UsersPage() {
         setRemoveConfirmation({ isOpen: false, member: null });
       }
     },
-    [organizationId, removeOrganizationMember, showToast]
+    [organizationId, removeOrganizationMember, showToast],
   );
 
   const handleAddSuccess = useCallback(() => {
@@ -262,7 +268,7 @@ export function UsersPage() {
         />
       );
     },
-    [currentUser]
+    [currentUser],
   );
 
   if (!organizationId) return null;

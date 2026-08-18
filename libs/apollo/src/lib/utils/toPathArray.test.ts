@@ -34,15 +34,15 @@ describe('toPathArrayStrict', () => {
 
   it('throws for undefined or empty inputs', () => {
     expect(() => toPathArrayStrict(undefined)).toThrowError(
-      /Expected a non-empty string or string\[\]/
+      /Expected a non-empty string or string\[\]/,
     );
     // empty array → also invalid
     expect(() => toPathArrayStrict([])).toThrowError(
-      /Expected a non-empty string or string\[\]/
+      /Expected a non-empty string or string\[\]/,
     );
     // empty string → toPathArray(undefined) → throws
     expect(() => toPathArrayStrict('')).toThrowError(
-      /Expected a non-empty string or string\[\]/
+      /Expected a non-empty string or string\[\]/,
     );
   });
 

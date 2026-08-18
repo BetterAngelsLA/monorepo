@@ -65,7 +65,7 @@ export function PersonalInfoFormHmis() {
               placeholder="Select quality"
               maxRadioItems={0}
               items={Object.entries(enumDobQualityHmis).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
@@ -84,7 +84,7 @@ export function PersonalInfoFormHmis() {
               placeholder="Select status"
               maxRadioItems={0}
               items={Object.entries(enumVeteranStatusHmis).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
@@ -118,7 +118,7 @@ export function PersonalInfoFormHmis() {
               placeholder="Select situation"
               maxRadioItems={0}
               items={Object.entries(enumDisplayLivingSituation).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
@@ -151,7 +151,7 @@ export function PersonalInfoFormHmis() {
               placeholder="Select language"
               maxRadioItems={0}
               items={Object.entries(enumDisplayLanguage).map(
-                ([val, displayValue]) => ({ value: val, displayValue })
+                ([val, displayValue]) => ({ value: val, displayValue }),
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}

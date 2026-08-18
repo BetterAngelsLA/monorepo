@@ -36,7 +36,7 @@ export const WheelPicker = memo(function WheelPicker({
       setLocal(val);
       onDraftChange?.(val);
     },
-    [onDraftChange]
+    [onDraftChange],
   );
 
   return (

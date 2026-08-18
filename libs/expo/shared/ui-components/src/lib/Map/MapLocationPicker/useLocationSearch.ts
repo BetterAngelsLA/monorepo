@@ -29,7 +29,7 @@ export function useLocationSearch({ onSelect }: UseLocationSearchOptions) {
           console.error('Error fetching suggestions:', err);
         }
       }, 400),
-    [places]
+    [places],
   );
 
   useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
@@ -64,7 +64,7 @@ export function useLocationSearch({ onSelect }: UseLocationSearchOptions) {
         console.error('Error selecting suggestion:', err);
       }
     },
-    [places, onSelect]
+    [places, onSelect],
   );
 
   const clear = useCallback(() => {

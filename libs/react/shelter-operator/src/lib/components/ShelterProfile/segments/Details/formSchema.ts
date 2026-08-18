@@ -15,7 +15,7 @@ export const formSchema = z.object({
   demographics: z.array(z.enum(DemographicChoices)),
   demographicsOther: z.string().nullable().optional(),
   specialSituationRestrictions: z.array(
-    z.enum(SpecialSituationRestrictionChoices)
+    z.enum(SpecialSituationRestrictionChoices),
   ),
   shelterTypes: z.array(z.enum(ShelterChoices)),
   shelterTypesOther: z.string().nullable().optional(),
@@ -48,7 +48,7 @@ export function toFormData(shelter: ShelterProfileType): DetailsFormData {
     demographics: toDropdownValues(shelter.demographics),
     demographicsOther: shelter.demographicsOther,
     specialSituationRestrictions: toDropdownValues(
-      shelter.specialSituationRestrictions
+      shelter.specialSituationRestrictions,
     ),
     shelterTypes: toDropdownValues(shelter.shelterTypes),
     shelterTypesOther: shelter.shelterTypesOther,

@@ -52,7 +52,7 @@ function toHHMMSS(time: string): string {
 export function buildScheduleInputs(
   scheduleType: ScheduleTypeChoices,
   weekly: WeeklyFormState,
-  exceptions: ExceptionEntry[]
+  exceptions: ExceptionEntry[],
 ): ScheduleInput[] {
   const inputs: ScheduleInput[] = [];
 

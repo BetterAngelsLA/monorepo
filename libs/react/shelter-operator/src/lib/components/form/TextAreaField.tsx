@@ -29,7 +29,11 @@ export function TextAreaField({
   onBlur,
   required,
 }: TextAreaFieldProps) {
-  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+  const messageId = error
+    ? `${id}-error`
+    : helperText
+      ? `${id}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -46,7 +50,7 @@ export function TextAreaField({
         rows={rows}
         value={value}
         placeholder={placeholder}
-        onChange={event => onChange(event.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         className={clsx(TEXTAREA_CLASS, error && INPUT_ERROR_CLASS)}
         aria-invalid={error ? 'true' : undefined}

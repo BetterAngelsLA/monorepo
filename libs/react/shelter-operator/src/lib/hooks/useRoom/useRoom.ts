@@ -13,7 +13,7 @@ export function useRoom(roomId: string) {
     {
       variables: { id: roomId },
       skip: !roomId,
-    }
+    },
   );
 
   return {

@@ -59,21 +59,21 @@ class ClientProfile(AbstractClientProfile):
 
 ## 3. Relationship Map — All Objects Re-pointed During Merge
 
-| # | Model | Relationship | `on_delete` | Re-point method |
-|---|---|---|---|---|
-| 1 | `HmisProfile` | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 2 | `SocialMediaProfile` | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 3 | `ClientContact` | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 4 | `ClientHouseholdMember` | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 5 | `Note` (notes app) | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 6 | `ServiceRequest` (notes app) | FK → ClientProfile | CASCADE | `update(client_profile_id=target_id)` |
-| 7 | `Referral` (referrals app) | FK → ClientProfile | SET_NULL | `update(client_profile_id=target_id)` |
-| 8 | `ReservationClient` (shelters) | FK → ClientProfile | CASCADE | `update` + dedup on unique constraint |
-| 9 | `Attachment` (common) | GFK → ClientProfile | CASCADE | `update(object_id=target_id)` where content_type matches |
-| 10 | `PhoneNumber` (common) | GFK → ClientProfile | CASCADE | `update(object_id=target_id)` where content_type matches |
-| 11 | `ClientProfileImportRecord` | FK → ClientProfile | SET_NULL | `update(client_profile_id=target_id)` |
-| 12 | `BigUserObjectPermission` (guardian) | GFK → ClientProfile | CASCADE | `update(object_pk=target_id)` where content_type matches |
-| 13 | `BigGroupObjectPermission` (guardian) | GFK → ClientProfile | CASCADE | `update(object_pk=target_id)` where content_type matches |
+| #   | Model                                 | Relationship        | `on_delete` | Re-point method                                          |
+| --- | ------------------------------------- | ------------------- | ----------- | -------------------------------------------------------- |
+| 1   | `HmisProfile`                         | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 2   | `SocialMediaProfile`                  | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 3   | `ClientContact`                       | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 4   | `ClientHouseholdMember`               | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 5   | `Note` (notes app)                    | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 6   | `ServiceRequest` (notes app)          | FK → ClientProfile  | CASCADE     | `update(client_profile_id=target_id)`                    |
+| 7   | `Referral` (referrals app)            | FK → ClientProfile  | SET_NULL    | `update(client_profile_id=target_id)`                    |
+| 8   | `ReservationClient` (shelters)        | FK → ClientProfile  | CASCADE     | `update` + dedup on unique constraint                    |
+| 9   | `Attachment` (common)                 | GFK → ClientProfile | CASCADE     | `update(object_id=target_id)` where content_type matches |
+| 10  | `PhoneNumber` (common)                | GFK → ClientProfile | CASCADE     | `update(object_id=target_id)` where content_type matches |
+| 11  | `ClientProfileImportRecord`           | FK → ClientProfile  | SET_NULL    | `update(client_profile_id=target_id)`                    |
+| 12  | `BigUserObjectPermission` (guardian)  | GFK → ClientProfile | CASCADE     | `update(object_pk=target_id)` where content_type matches |
+| 13  | `BigGroupObjectPermission` (guardian) | GFK → ClientProfile | CASCADE     | `update(object_pk=target_id)` where content_type matches |
 
 **Discovery method:** `FK` relations auto-discovered via `ClientProfile._meta.related_objects`. `GFK` relations are hardcoded (only 3: `Attachment`, `PhoneNumber`, guardian permissions) — new GFKs require adding to the list.
 
@@ -219,13 +219,13 @@ class ClientProfileAdmin(...):
 
 ### 5.2 Views (via `get_urls`)
 
-| URL | Method | Action |
-|---|---|---|
-| `merge/` | GET | Show client cards, radio select target |
-| `merge/` | POST (preview) | Generate & render MergePreview |
-| `merge/` | POST (confirm) | Execute merge, redirect to target detail |
-| `<id>/merge/undo/` | GET | Undo confirmation page |
-| `<id>/merge/undo/` | POST | Execute undo |
+| URL                | Method         | Action                                   |
+| ------------------ | -------------- | ---------------------------------------- |
+| `merge/`           | GET            | Show client cards, radio select target   |
+| `merge/`           | POST (preview) | Generate & render MergePreview           |
+| `merge/`           | POST (confirm) | Execute merge, redirect to target detail |
+| `<id>/merge/undo/` | GET            | Undo confirmation page                   |
+| `<id>/merge/undo/` | POST           | Execute undo                             |
 
 ### 5.3 List View Changes
 
@@ -298,10 +298,12 @@ list_filter = [..., "merged_into"]
 ## 6. Undo
 
 ### Trigger
+
 - From target's detail page: "Undo Last Merge" button (visible only when `merged_from` is non-empty)
 - From list view: merged profiles show "Merged → #89" badge with undo link
 
 ### Mechanism
+
 1. Read `merged_from.all()` on the target
 2. For each source, read `source.merged_data["moved_objects"]`
 3. Re-point objects back using the stored IDs
@@ -309,6 +311,7 @@ list_filter = [..., "merged_into"]
 5. Clear `merged_into`, `merged_at`, `merged_data`
 
 ### Constraints
+
 - Only undoes the LAST merge (sources with `merged_into == target`)
 - If target itself was merged into another profile → error
 - If objects were deleted post-merge → skip, log warning, continue
@@ -317,17 +320,17 @@ list_filter = [..., "merged_into"]
 
 ## 7. Data Integrity & Constraints
 
-| Concern | Handling |
-|---|---|
-| **Unique fields** (`email`, `california_id`) | Target's value wins. Source's cleared to `None`. Undo restores from snapshot. |
-| **ReservationClient duplicate** | Delete source's row if target already in same reservation. |
-| **Concurrent merges** | `select_for_update` on all involved profiles in transaction. |
-| **Source already merged** | Validation error — `merged_into__isnull` required. |
-| **Target in source list** | Validation error. |
-| **Nested merges** (A→B, then B→C) | Prevented: target must have `merged_into__isnull`. |
-| **Transaction atomicity** | `@transaction.atomic` on both merge and undo. |
-| **pghistory** | Bulk `.update()` won't fire pghistory signals. `merged_data` snapshot serves as audit trail. |
-| **S3 files (Attachments)** | Not affected — only `object_id` DB column changes. |
+| Concern                                      | Handling                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Unique fields** (`email`, `california_id`) | Target's value wins. Source's cleared to `None`. Undo restores from snapshot.                |
+| **ReservationClient duplicate**              | Delete source's row if target already in same reservation.                                   |
+| **Concurrent merges**                        | `select_for_update` on all involved profiles in transaction.                                 |
+| **Source already merged**                    | Validation error — `merged_into__isnull` required.                                           |
+| **Target in source list**                    | Validation error.                                                                            |
+| **Nested merges** (A→B, then B→C)            | Prevented: target must have `merged_into__isnull`.                                           |
+| **Transaction atomicity**                    | `@transaction.atomic` on both merge and undo.                                                |
+| **pghistory**                                | Bulk `.update()` won't fire pghistory signals. `merged_data` snapshot serves as audit trail. |
+| **S3 files (Attachments)**                   | Not affected — only `object_id` DB column changes.                                           |
 
 ---
 
@@ -343,23 +346,23 @@ clients/tests/
 
 ### 8.2 Unit Tests (`test_merge_service.py`)
 
-| Category | Tests |
-|---|---|
-| **Preview** | two clean sources, no changes when all null, source can't be target, already-merged rejection, counts per relation type |
-| **Execute** | basic merge (all relation types), scalar merge rules, GFK re-pointing, ReservationClient dedup, guardian permission re-pointing, snapshot storage, transaction atomicity, unique field clearing |
-| **Undo** | restore relations, restore scalars, clear merged_into, target-already-merged error, handles deleted objects gracefully |
-| **Edge cases** | single source, empty list, email conflict, california_id conflict, nested merge prevention |
+| Category       | Tests                                                                                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Preview**    | two clean sources, no changes when all null, source can't be target, already-merged rejection, counts per relation type                                                                         |
+| **Execute**    | basic merge (all relation types), scalar merge rules, GFK re-pointing, ReservationClient dedup, guardian permission re-pointing, snapshot storage, transaction atomicity, unique field clearing |
+| **Undo**       | restore relations, restore scalars, clear merged_into, target-already-merged error, handles deleted objects gracefully                                                                          |
+| **Edge cases** | single source, empty list, email conflict, california_id conflict, nested merge prevention                                                                                                      |
 
 ### 8.3 Integration Tests (`test_merge_admin.py`)
 
-| Category | Tests |
-|---|---|
-| **Action** | appears in dropdown, <2 selected error, redirect to intermediate |
-| **Intermediate page** | client cards rendered, radio default/change, preview button |
-| **Preview page** | field changes rendered, conflict highlighting, relation counts |
-| **Confirm** | executes merge, success message, redirect |
-| **Undo** | link visibility, confirmation page, execute, success |
-| **List view** | merged hidden by default, show-merged filter toggle |
+| Category              | Tests                                                            |
+| --------------------- | ---------------------------------------------------------------- |
+| **Action**            | appears in dropdown, <2 selected error, redirect to intermediate |
+| **Intermediate page** | client cards rendered, radio default/change, preview button      |
+| **Preview page**      | field changes rendered, conflict highlighting, relation counts   |
+| **Confirm**           | executes merge, success message, redirect                        |
+| **Undo**              | link visibility, confirmation page, execute, success             |
+| **List view**         | merged hidden by default, show-merged filter toggle              |
 
 ### 8.4 Test Helper
 
@@ -373,30 +376,30 @@ def create_client_with_related(*, first_name: str, **kwargs) -> ClientProfile:
 
 ## 9. File Plan
 
-| File | Action | Lines (est.) |
-|---|---|---|
-| `clients/models.py` | Add `merged_into`, `merged_at`, `merged_data` fields | +8 |
-| `clients/migrations/XXXX_merge_fields.py` | Auto-generated migration | ~30 |
-| `clients/services/merge.py` | New: dataclasses + preview + execute + undo | ~250 |
-| `clients/admin.py` | Add merge action, views, queryset filter, list_filter | ~150 |
-| `templates/admin/clients/clientprofile/merge_intermediate.html` | New template | ~60 |
-| `templates/admin/clients/clientprofile/merge_preview.html` | New template | ~80 |
-| `templates/admin/clients/clientprofile/merge_undo.html` | New template | ~50 |
-| `clients/tests/test_merge_service.py` | New: ~25 tests | ~400 |
-| `clients/tests/test_merge_admin.py` | New: ~10 tests | ~200 |
-| `clients/tests/utils.py` | Add `create_client_with_related` helper | ~40 |
-| **Total** | | **~1,270** |
+| File                                                            | Action                                                | Lines (est.) |
+| --------------------------------------------------------------- | ----------------------------------------------------- | ------------ |
+| `clients/models.py`                                             | Add `merged_into`, `merged_at`, `merged_data` fields  | +8           |
+| `clients/migrations/XXXX_merge_fields.py`                       | Auto-generated migration                              | ~30          |
+| `clients/services/merge.py`                                     | New: dataclasses + preview + execute + undo           | ~250         |
+| `clients/admin.py`                                              | Add merge action, views, queryset filter, list_filter | ~150         |
+| `templates/admin/clients/clientprofile/merge_intermediate.html` | New template                                          | ~60          |
+| `templates/admin/clients/clientprofile/merge_preview.html`      | New template                                          | ~80          |
+| `templates/admin/clients/clientprofile/merge_undo.html`         | New template                                          | ~50          |
+| `clients/tests/test_merge_service.py`                           | New: ~25 tests                                        | ~400         |
+| `clients/tests/test_merge_admin.py`                             | New: ~10 tests                                        | ~200         |
+| `clients/tests/utils.py`                                        | Add `create_client_with_related` helper               | ~40          |
+| **Total**                                                       |                                                       | **~1,270**   |
 
 ---
 
 ## 10. Dependencies Used
 
-| Tool | Usage |
-|---|---|
-| `deepdiff` (already installed) | Field-level diff in `preview_merge()` |
-| `dataclasses` (stdlib) | Typed `MergePreview`, `FieldChange`, `RelatedChange` |
-| `django.db.models.fields.reverse_related.ManyToOneRel` | Dynamic FK discovery |
-| `django.contrib.contenttypes.models.ContentType` | GFK lookups |
-| `django.template.response.TemplateResponse` | Admin intermediate pages |
-| `transaction.atomic()` | Merge/undo atomicity |
-| `select_for_update` | Concurrency safety |
+| Tool                                                   | Usage                                                |
+| ------------------------------------------------------ | ---------------------------------------------------- |
+| `deepdiff` (already installed)                         | Field-level diff in `preview_merge()`                |
+| `dataclasses` (stdlib)                                 | Typed `MergePreview`, `FieldChange`, `RelatedChange` |
+| `django.db.models.fields.reverse_related.ManyToOneRel` | Dynamic FK discovery                                 |
+| `django.contrib.contenttypes.models.ContentType`       | GFK lookups                                          |
+| `django.template.response.TemplateResponse`            | Admin intermediate pages                             |
+| `transaction.atomic()`                                 | Merge/undo atomicity                                 |
+| `select_for_update`                                    | Concurrency safety                                   |

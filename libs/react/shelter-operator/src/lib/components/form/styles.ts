@@ -1,4 +1,5 @@
-export const SECTION_CLASS = 'bg-white border border-gray-200 rounded-lg p-6 space-y-4';
+export const SECTION_CLASS =
+  'bg-white border border-gray-200 rounded-lg p-6 space-y-4';
 export const SECTION_TITLE_CLASS = 'text-xl font-semibold text-gray-900';
 export const FIELD_WRAPPER_CLASS = 'space-y-1';
 export const LABEL_CLASS = 'block text-sm font-medium text-gray-700';

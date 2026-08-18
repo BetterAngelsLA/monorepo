@@ -14,7 +14,7 @@ import { type DetailsFormData, formFieldNames, toFormData } from './formSchema';
 
 function toUpdateInput(
   shelterId: string,
-  data: DetailsFormData
+  data: DetailsFormData,
 ): UseUpdateShelterProfileInput {
   return {
     id: shelterId,
@@ -47,7 +47,7 @@ export function ShelterDetails(props: TProps) {
 
   async function onSubmit(
     data: DetailsFormData,
-    setError: UseFormSetError<DetailsFormData>
+    setError: UseFormSetError<DetailsFormData>,
   ) {
     try {
       const response = await updateShelter({

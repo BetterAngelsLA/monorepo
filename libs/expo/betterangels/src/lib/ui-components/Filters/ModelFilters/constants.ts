@@ -39,7 +39,7 @@ export const modelFilterConfigDefault: Record<
 };
 
 export const taskStatusOptions: TFilterOption[] = Object.entries(
-  enumDisplayTaskStatus
+  enumDisplayTaskStatus,
 ).map(([key, value]) => ({
   id: key,
   label: value,

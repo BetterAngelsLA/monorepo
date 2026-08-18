@@ -42,7 +42,7 @@ export function ShelterSearch(props: TProps) {
   const setNameSearchInput = useSetAtom(shelterNameSearchInputAtom);
   const setLocationSearchInput = useSetAtom(shelterLocationSearchInputAtom);
   const [appliedLocation, setAppliedLocation] = useAtom(
-    shelterSearchAppliedLocationAtom
+    shelterSearchAppliedLocationAtom,
   );
   const [searchRequest, setSearchRequest] = useAtom(shelterSearchRequestAtom);
 

@@ -15,7 +15,7 @@ describe('mapViewportFromMap', () => {
 
   it('returns null when the map has no center', () => {
     expect(
-      mapViewportFromMap({ getCenter: () => null, getZoom: () => 12 })
+      mapViewportFromMap({ getCenter: () => null, getZoom: () => 12 }),
     ).toBeNull();
   });
 
@@ -24,7 +24,7 @@ describe('mapViewportFromMap', () => {
       mapViewportFromMap({
         getCenter: () => ({ lat: () => 34.1, lng: () => -118.3 }),
         getZoom: () => undefined,
-      })
+      }),
     ).toBeNull();
   });
 });

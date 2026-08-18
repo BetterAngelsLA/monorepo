@@ -54,7 +54,10 @@ export function ProfilePhotoUploaderHmis({
       incrementClientPhotoVersion(clientId);
       setModalType(null);
     } catch {
-      showSnackbar({ message: 'Error uploading profile photo.', type: 'error' });
+      showSnackbar({
+        message: 'Error uploading profile photo.',
+        type: 'error',
+      });
       setModalType(null);
     } finally {
       setUploading(false);

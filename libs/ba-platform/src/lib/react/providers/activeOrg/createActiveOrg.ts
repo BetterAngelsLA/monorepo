@@ -7,7 +7,9 @@ export function createActiveOrgContext() {
 }
 
 /** Create a ``useActiveOrg`` hook bound to a specific React context. */
-export function createUseActiveOrg(OrgContext: Context<ActiveOrgState | undefined>) {
+export function createUseActiveOrg(
+  OrgContext: Context<ActiveOrgState | undefined>,
+) {
   return function useActiveOrg(): ActiveOrgState {
     const context = useContext(OrgContext);
     if (!context) {

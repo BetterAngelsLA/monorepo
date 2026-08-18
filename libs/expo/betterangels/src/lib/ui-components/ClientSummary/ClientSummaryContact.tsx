@@ -19,14 +19,15 @@ interface IClientSummaryContactProps {
 }
 
 export default function ClientSummaryContact(
-  props: IClientSummaryContactProps
+  props: IClientSummaryContactProps,
 ) {
   const { client } = props;
 
   const caseManagers =
     client?.contacts?.filter(
       (contact) =>
-        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+        contact.relationshipToClient ===
+        RelationshipTypeEnum.CurrentCaseManager,
     ) || [];
 
   const primaryCCM = caseManagers[0];
