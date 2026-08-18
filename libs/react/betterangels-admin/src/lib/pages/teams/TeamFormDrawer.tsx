@@ -93,7 +93,6 @@ export function TeamFormDrawer(props: TProps) {
           label="Team Name"
           placeholder="e.g. Outreach Team Alpha"
           autoCapitalize="none"
-          // eslint-disable-next-line jsx-a11y/no-autofocus -- drawer just opened; primary input should receive focus
           autoFocus
         />
 
@@ -128,7 +127,7 @@ export function TeamFormDrawer(props: TProps) {
           onClick={() => void handleSubmit()}
           disabled={disabled || !name.trim()}
         >
-          {isEditing ? 'Save' : 'Create'}
+          Save
         </Button>
       </div>
     </div>

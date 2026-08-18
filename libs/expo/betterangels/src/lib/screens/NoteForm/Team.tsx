@@ -1,5 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useOrgTeams } from '../../hooks';
@@ -24,7 +25,7 @@ export default function Team(props: ITeamProps) {
           .filter((t) => t.isActive || t.id === initialTeamId)
           .map((t) => ({
             value: t.id,
-            displayValue: t.isActive ? t.name : `${t.name} (Inactive)`,
+            displayValue: formatTeamDisplayName(t),
           }))}
         onChange={(t) => onTeamChange((t as string) || null)}
       />

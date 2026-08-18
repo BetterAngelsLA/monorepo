@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client/react';
-import { useActiveOrg } from '@monorepo/ba-platform';
+import { formatTeamDisplayName, useActiveOrg } from '@monorepo/ba-platform';
 import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { Ordering, TeamType } from '@monorepo/ba-platform/types';
 import {
@@ -27,15 +27,12 @@ type IProps = {
 
 type SortField = 'name' | 'createdAt';
 
-const teamDisplayName = (t: TeamType) =>
-  t.isActive === false ? `${t.name} (Inactive)` : t.name;
-
 const COLUMNS: {
   label: string;
   field: SortField;
   render: (t: TeamType) => string | JSX.Element;
 }[] = [
-  { label: 'Name', field: 'name', render: (t) => teamDisplayName(t) },
+  { label: 'Name', field: 'name', render: (t) => formatTeamDisplayName(t) },
   {
     label: 'Created',
     field: 'createdAt',
@@ -72,7 +69,7 @@ export function TeamsPage(props: IProps) {
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
     {
-      variables: { filters: { isActive: showInactive ? null : true } },
+      variables: { filters: { isActive: null } },
       fetchPolicy: 'cache-and-network',
     },
   );
@@ -262,7 +259,7 @@ export function TeamsPage(props: IProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 text-sm truncate">
-                        {teamDisplayName(team)}
+                        {formatTeamDisplayName(team)}
                       </div>
                       <div className="text-xs text-gray-500">
                         Created {formatCreatedDate(team.createdAt)}

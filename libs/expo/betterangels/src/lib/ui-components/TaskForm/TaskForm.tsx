@@ -4,6 +4,7 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
 import { useEffect, useState } from 'react';
 import {
   Controller,
@@ -103,9 +104,7 @@ export function TaskForm(props: TProps) {
                     .filter((t) => t.isActive || t.id === initialTeamId)
                     .map((t) => ({
                       value: t.id,
-                      displayValue: t.isActive
-                        ? t.name
-                        : `${t.name} (Inactive)`,
+                      displayValue: formatTeamDisplayName(t),
                     }))}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
