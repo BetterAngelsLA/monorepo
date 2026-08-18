@@ -53,7 +53,7 @@ import {
 import { getPaginationVarsPerMode } from './getPaginationVarsPerMode';
 
 export function generateQueryPolicyConfig(
-  input: QueryPolicyConfigInput
+  input: QueryPolicyConfigInput,
 ): QueryPolicyConfig {
   const {
     itemsPath = [DEFAULT_QUERY_RESULTS_KEY],
@@ -66,7 +66,7 @@ export function generateQueryPolicyConfig(
 
   if (!resolvedItemsPath?.length) {
     throw new Error(
-      '[buildQueryPolicyConfig] itemsPath must be a non-empty string or string[]'
+      '[buildQueryPolicyConfig] itemsPath must be a non-empty string or string[]',
     );
   }
 
@@ -74,7 +74,7 @@ export function generateQueryPolicyConfig(
 
   const paginationVars = getPaginationVarsPerMode(
     paginationMode,
-    paginationVariables
+    paginationVariables,
   );
 
   if (paginationVars.mode === PaginationModeEnum.Offset) {

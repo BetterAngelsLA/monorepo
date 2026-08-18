@@ -14,7 +14,7 @@ export function useAppDrawer() {
     (props: Omit<TAppDrawerProps, 'visible'>) => {
       setDrawer({ ...props, visible: true });
     },
-    [setDrawer]
+    [setDrawer],
   );
 
   return {

@@ -8,7 +8,7 @@ import type { ExtensionError, GraphQLResponse } from '../types';
  * objects in `response.errors[0].extensions.errors`.
  */
 export function getExtensionErrors(
-  response: GraphQLResponse
+  response: GraphQLResponse,
 ): ExtensionError[] {
   return response.errors?.[0]?.extensions?.errors ?? [];
 }

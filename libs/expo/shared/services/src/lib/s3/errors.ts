@@ -13,7 +13,11 @@ export class S3TransportError extends Error {
 
   constructor(
     message: string,
-    options: { kind: 'network' | 'http' | 'abort'; status?: number; body?: string },
+    options: {
+      kind: 'network' | 'http' | 'abort';
+      status?: number;
+      body?: string;
+    },
   ) {
     super(message);
     this.kind = options.kind;

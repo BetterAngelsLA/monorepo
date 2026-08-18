@@ -63,7 +63,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
     if (currentPath !== SCREEN_PATH_NAME) {
       console.warn(
-        `[ModalScreenProvider close] closing modal when pathname is ${currentPath}.`
+        `[ModalScreenProvider close] closing modal when pathname is ${currentPath}.`,
       );
     }
 
@@ -91,14 +91,14 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
       router.push(SCREEN_PATH_NAME);
     },
-    [router]
+    [router],
   );
 
   const api: TRenderContentApi = useMemo(
     () => ({
       close: closeModal,
     }),
-    [closeModal]
+    [closeModal],
   );
 
   const resolvedContent = useMemo(() => {

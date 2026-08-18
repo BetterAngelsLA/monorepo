@@ -26,7 +26,7 @@ import { toDropdownOptions } from '../base-ui/dropdown';
 export const SEARCHABLE_DROPDOWN_MIN = 5;
 
 export const ACCESSIBILITY_OPTIONS = toDropdownOptions(
-  enumDisplayAccessibilityChoices
+  enumDisplayAccessibilityChoices,
 );
 
 export const STATUS_OPTIONS = toDropdownOptions(enumStatusChoices);
@@ -37,12 +37,12 @@ export const DEMOGRAPHICS_OPTIONS = toDropdownOptions(enumDisplayDemographics, [
 
 export const SPECIAL_SITUATION_OPTIONS = toDropdownOptions(
   enumDisplaySpecialSituationRestrictionChoices,
-  [SpecialSituationRestrictionChoices.None]
+  [SpecialSituationRestrictionChoices.None],
 );
 
 export const SHELTER_TYPE_OPTIONS = toDropdownOptions(
   enumDisplayShelterChoices,
-  [ShelterChoices.Other]
+  [ShelterChoices.Other],
 );
 
 export const STORAGE_OPTIONS = toDropdownOptions(enumDisplayStorageChoices, [
@@ -59,12 +59,12 @@ export const PARKING_OPTIONS = toDropdownOptions(enumDisplayParkingChoices, [
 
 export const EXIT_POLICY_OPTIONS = toDropdownOptions(
   enumDisplayExitPolicyChoices,
-  [ExitPolicyChoices.Other]
+  [ExitPolicyChoices.Other],
 );
 
 export const SHELTER_PROGRAMS_OPTIONS = toDropdownOptions(
   enumDisplayShelterProgramChoices,
-  [ShelterProgramChoices.Other]
+  [ShelterProgramChoices.Other],
 );
 
 export const FUNDERS_OPTIONS = toDropdownOptions(enumDisplayFunderChoices, [

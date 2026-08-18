@@ -132,7 +132,7 @@ export function TaskForm(props: TProps) {
                   disabled={isSubmitting}
                   maxRadioItems={0}
                   items={Object.entries(enumDisplayTaskStatus).map(
-                    ([value, displayValue]) => ({ value, displayValue })
+                    ([value, displayValue]) => ({ value, displayValue }),
                   )}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}

@@ -71,7 +71,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
 
   getClusters(
     bbox: [number, number, number, number],
-    zoom: number
+    zoom: number,
   ): Array<ClusterOrPoint<P>> {
     const raw = this.clusterIndex.getClusters(bbox, zoom);
 
@@ -85,7 +85,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       const cluster = feat as TClusterPoint<P>;
 
       const expansion = this.clusterIndex.getClusterExpansionZoom(
-        cluster.properties.cluster_id
+        cluster.properties.cluster_id,
       );
 
       const clusterCanZoomMore = expansion < this.maxZoom;
@@ -120,7 +120,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
     return this.clusterIndex.getLeaves(
       clusterId,
       limit,
-      offset
+      offset,
     ) as PointFeature<P>[];
   }
 
@@ -129,7 +129,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
   }
 
   getClusterChildren(
-    clusterId: number
+    clusterId: number,
   ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
     return this.clusterIndex.getChildren(clusterId);
   }
@@ -140,7 +140,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       paddingMultiplier?: number;
       animateDuration?: number;
       fallbackDelta?: number;
-    }
+    },
   ) {
     const { paddingMultiplier = 2, fallbackDelta = 0.02 } = options || {};
     const leaves = this.getLeaves(clusterId);
@@ -172,7 +172,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       paddingMultiplier?: number;
       fallbackDelta?: number;
       animateDuration?: number;
-    }
+    },
   ) {
     if (!mapRef.current) {
       return;
@@ -185,7 +185,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
 
     mapRef.current.animateToRegion(
       region,
-      options?.animateDuration ?? defaultAnimationDuration
+      options?.animateDuration ?? defaultAnimationDuration,
     );
   }
 

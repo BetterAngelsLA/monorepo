@@ -21,5 +21,5 @@ type TSurveyContext = {
 };
 
 export const SurveyContext = createContext<TSurveyContext | undefined>(
-  undefined
+  undefined,
 );

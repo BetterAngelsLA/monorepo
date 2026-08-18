@@ -37,7 +37,11 @@ export function FieldWrapper({
       </label>
       {children}
       {error ? (
-        <p id={messageId} className={ERROR_TEXT_CLASS} data-testid="field-error">
+        <p
+          id={messageId}
+          className={ERROR_TEXT_CLASS}
+          data-testid="field-error"
+        >
           {error}
         </p>
       ) : helperText ? (

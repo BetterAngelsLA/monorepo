@@ -27,7 +27,7 @@ export const BUCKETS = Object.freeze({
 /** Buckets that fail CI. Everything else is a warning. */
 export const FAIL_BUCKETS = Object.freeze(new Set([BUCKETS.MAJOR]));
 export const WARN_BUCKETS = Object.freeze(
-  new Set([BUCKETS.MINOR, BUCKETS.PATCH, BUCKETS.UNKNOWN])
+  new Set([BUCKETS.MINOR, BUCKETS.PATCH, BUCKETS.UNKNOWN]),
 );
 
 const BUCKET_META = Object.freeze({
@@ -37,7 +37,12 @@ const BUCKET_META = Object.freeze({
   [BUCKETS.UNKNOWN]: { icon: '➿', title: 'Other/prerelease mismatches' },
 });
 
-const BUCKET_ORDER = [BUCKETS.MAJOR, BUCKETS.MINOR, BUCKETS.PATCH, BUCKETS.UNKNOWN];
+const BUCKET_ORDER = [
+  BUCKETS.MAJOR,
+  BUCKETS.MINOR,
+  BUCKETS.PATCH,
+  BUCKETS.UNKNOWN,
+];
 
 /**
  * Minimal subset of `semver.coerce`: extract the leading x.y.z (or x.y / x)
@@ -106,11 +111,15 @@ export function parseInstallCheckJson(stdout) {
   try {
     output = extractJsonPayload(stdout);
   } catch {
-    throw new Error('Could not parse JSON from expo install --check --json output');
+    throw new Error(
+      'Could not parse JSON from expo install --check --json output',
+    );
   }
 
   if (!Array.isArray(output?.dependencies)) {
-    throw new Error('expo install --check --json output is missing the dependencies array');
+    throw new Error(
+      'expo install --check --json output is missing the dependencies array',
+    );
   }
 
   const mismatches = output.dependencies
@@ -196,14 +205,17 @@ export function formatMismatchSections(mismatches) {
     const rows = grouped.get(bucket);
     if (!rows?.length) continue;
 
-    const nameWidth = Math.max('package'.length, ...rows.map((r) => String(r.packageName).length));
+    const nameWidth = Math.max(
+      'package'.length,
+      ...rows.map((r) => String(r.packageName).length),
+    );
     const expectedWidth = Math.max(
       'expected'.length,
-      ...rows.map((r) => String(r.expectedVersionOrRange ?? '').length)
+      ...rows.map((r) => String(r.expectedVersionOrRange ?? '').length),
     );
     const foundWidth = Math.max(
       'found'.length,
-      ...rows.map((r) => String(r.actualVersion ?? '').length)
+      ...rows.map((r) => String(r.actualVersion ?? '').length),
     );
 
     const meta = BUCKET_META[bucket];
@@ -213,8 +225,8 @@ export function formatMismatchSections(mismatches) {
         (r) =>
           `${pad(r.packageName, nameWidth)}${pad(
             r.expectedVersionOrRange ?? '',
-            expectedWidth
-          )}${pad(r.actualVersion ?? '', foundWidth)}`
+            expectedWidth,
+          )}${pad(r.actualVersion ?? '', foundWidth)}`,
       ),
     ];
 

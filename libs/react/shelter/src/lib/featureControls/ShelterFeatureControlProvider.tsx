@@ -20,7 +20,7 @@ export function ShelterFeatureControlProvider({
       GetShelterFeatureControlsDocument,
       {
         fetchPolicy: 'network-only',
-      }
+      },
     );
 
   const featureControls = data?.featureControls

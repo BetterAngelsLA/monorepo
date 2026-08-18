@@ -38,7 +38,9 @@ export function useCreateOrganization(): UseCreateOrganizationReturn {
       setError(null);
       try {
         await mutate({
-          variables: { data: { organizationName: orgName.trim(), orgType: 'shelter' } },
+          variables: {
+            data: { organizationName: orgName.trim(), orgType: 'shelter' },
+          },
         });
         return true;
       } catch (err: unknown) {
@@ -50,7 +52,7 @@ export function useCreateOrganization(): UseCreateOrganizationReturn {
         setSubmitting(false);
       }
     },
-    [mutate]
+    [mutate],
   );
 
   const clearError = useCallback(() => setError(null), []);

@@ -98,7 +98,7 @@ export function ColumnHeader<TItem>({
             onClick={(e) => {
               e.stopPropagation();
               setOpenFilterColumn((prev) =>
-                prev === column.key ? null : column.key
+                prev === column.key ? null : column.key,
               );
             }}
           >

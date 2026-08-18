@@ -76,7 +76,7 @@ export default function Contact() {
                     {linkText}
                   </a>
                 </div>
-              )
+              ),
             )}
           </div>
         </div>

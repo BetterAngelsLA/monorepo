@@ -13,10 +13,7 @@ import {
   updateUploadSession,
   uploadSessionsAtom,
 } from './uploadProgressAtoms';
-import {
-  getUploadRunner,
-  registerUploadRunner,
-} from './uploadRunnerRegistry';
+import { getUploadRunner, registerUploadRunner } from './uploadRunnerRegistry';
 import { uploadSessionCounts } from './uploadProgressUtils';
 
 const store = getDefaultStore();

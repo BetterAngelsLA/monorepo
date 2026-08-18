@@ -32,12 +32,12 @@ type UseBottomSheetSharedBackdropParams = {
 };
 
 export function useBottomSheetSharedBackdrop(
-  params: UseBottomSheetSharedBackdropParams
+  params: UseBottomSheetSharedBackdropParams,
 ): UseBottomSheetSharedBackdropResult {
   const { enabled, Container, sheets, closingSheetIds, popTopSheet } = params;
 
   const backdropVisible = sheets.some(
-    (sheet) => !closingSheetIds.has(sheet.id)
+    (sheet) => !closingSheetIds.has(sheet.id),
   );
 
   const render = useCallback(() => {

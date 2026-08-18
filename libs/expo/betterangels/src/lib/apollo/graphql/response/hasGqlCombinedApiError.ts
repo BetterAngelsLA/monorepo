@@ -4,7 +4,7 @@ import { ApiErrorCode } from '@monorepo/expo/shared/clients';
 
 export function hasGqlCombinedApiError(
   code: ApiErrorCode,
-  error?: ErrorLike
+  error?: ErrorLike,
 ): boolean {
   if (!CombinedGraphQLErrors.is(error)) {
     return false;

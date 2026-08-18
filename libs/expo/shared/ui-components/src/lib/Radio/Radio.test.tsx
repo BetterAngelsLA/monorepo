@@ -9,7 +9,7 @@ describe('Radio component', () => {
         onPress={vi.fn()}
         value="test"
         selectedValue="other"
-      />
+      />,
     );
     expect(getByText('Option Test')).toBeTruthy();
   });
@@ -22,7 +22,7 @@ describe('Radio component', () => {
         onPress={mockOnPress}
         value="value1"
         selectedValue="notValue1"
-      />
+      />,
     );
     fireEvent.press(getByText('Pressable Option'));
     expect(mockOnPress).toHaveBeenCalledWith('value1');
@@ -35,7 +35,7 @@ describe('Radio component', () => {
         onPress={vi.fn()}
         value="test"
         selectedValue="other"
-      />
+      />,
     );
 
     const button = getByA11yHint('selects test');

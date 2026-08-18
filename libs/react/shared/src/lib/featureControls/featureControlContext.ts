@@ -17,7 +17,7 @@ export function useFeatureControls(): FeatureControlContextValue {
 
   if (!context) {
     throw new Error(
-      'useFeatureControls must be used within a FeatureControlProvider'
+      'useFeatureControls must be used within a FeatureControlProvider',
     );
   }
 

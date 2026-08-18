@@ -131,7 +131,7 @@ describe('filterRecoverableOperationMessages', () => {
   it.each(testCases.map((tc) => [tc.name, tc] as const))('%s', (_, tc) => {
     const result = filterRecoverableOperationMessages(
       tc.messages,
-      tc.allowedFields
+      tc.allowedFields,
     );
     expect(result.recoverable).toEqual(tc.recoverable);
     expect(result.unrecoverable).toEqual(tc.unrecoverable);

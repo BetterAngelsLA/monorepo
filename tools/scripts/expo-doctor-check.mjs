@@ -34,10 +34,14 @@ const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const group = (label) => console.log(`::group::${label}`);
 const endgroup = () => console.log('::endgroup::');
 const ok = (msg) => console.log(`  ✓ ${msg}`);
-const err = (msg) => { console.error(msg); process.exit(1); };
+const err = (msg) => {
+  console.error(msg);
+  process.exit(1);
+};
 
 // Wraps execSync to always use ROOT_DIR and inherit stdio for visibility
-const run = (cmd, opts = {}) => execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit', ...opts });
+const run = (cmd, opts = {}) =>
+  execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit', ...opts });
 
 // Run a command and capture stdout, even when it exits non-zero.
 // `expo install --check --json` exits 1 when deps are out of date (normal).
@@ -79,7 +83,7 @@ run(`yarn nx run ${appName}:sync-deps --skip-nx-cache`);
 if (readFileSync(appPkgPath, 'utf-8') !== snapshot) {
   err(
     `ERROR: sync-deps modified ${appRel}/package.json!\n` +
-    `Dependencies are out of sync. Run 'yarn nx run ${appName}:sync-deps' locally and commit.`
+      `Dependencies are out of sync. Run 'yarn nx run ${appName}:sync-deps' locally and commit.`,
   );
 }
 ok('Package deps in sync');
@@ -120,7 +124,7 @@ try {
   // Anything else means the check itself is broken — fail closed.
   if (check.status !== 0 && check.status !== 1) {
     console.error(
-      `ERROR: 'npx expo install --check --json' failed with status ${check.status}.`
+      `ERROR: 'npx expo install --check --json' failed with status ${check.status}.`,
     );
     if (check.stdout) console.error(check.stdout);
     if (check.stderr) console.error(check.stderr);
@@ -134,10 +138,10 @@ try {
         console.warn(formatMismatchSections(policyWarnings));
         console.warn(
           'SDK dependencies are out of date (minor/patch). This is usually because Expo\n' +
-          'shipped an update — not a PR regression — so CI does not fail on this.'
+            'shipped an update — not a PR regression — so CI does not fail on this.',
         );
         console.warn(
-          '::warning::Expo SDK dependencies are out of date (minor/patch) — not failing CI.'
+          '::warning::Expo SDK dependencies are out of date (minor/patch) — not failing CI.',
         );
         ok('SDK dependency versions reviewed (warnings only)');
       } else if (fail.length === 0) {
@@ -148,12 +152,14 @@ try {
         console.error(formatMismatchSections(fail));
         console.error(
           'ERROR: unexpected major version drift vs the installed Expo SDK.\n' +
-            "Run 'npx expo install --check' to review, or add intentional overrides to 'expo.install.exclude'."
+            "Run 'npx expo install --check' to review, or add intentional overrides to 'expo.install.exclude'.",
         );
         exitCode = exitCode || 1;
       }
     } catch (e) {
-      console.error(`ERROR: could not evaluate SDK dependency versions: ${e.message}`);
+      console.error(
+        `ERROR: could not evaluate SDK dependency versions: ${e.message}`,
+      );
       exitCode = exitCode || 1;
     }
   }
@@ -162,7 +168,9 @@ try {
   // ---- cleanup: always restore ----
   writeFileSync(appPkgPath, originalPkg);
   // Remove lockfile if filled-star-deps copied it into the app dir
-  try { rmSync(resolve(appDir, 'yarn.lock')); } catch {}
+  try {
+    rmSync(resolve(appDir, 'yarn.lock'));
+  } catch {}
   ok('Restored original package.json');
 }
 

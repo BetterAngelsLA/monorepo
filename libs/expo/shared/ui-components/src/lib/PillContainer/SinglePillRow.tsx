@@ -21,7 +21,7 @@ const overflowWidthCache = new Map<string, number>(); // key: `${fontScale}|+ ${
 const makePillKey = (
   variant: IPillProps['variant'],
   fontScale: number,
-  label: string
+  label: string,
 ) => `${variant}|${fontScale}|${label}`;
 
 const makeOverflowKey = (fontScale: number, remaining: number) =>
@@ -141,7 +141,7 @@ export const SinglePillRow = React.memo(
     // 2) Estimate width for unknown labels to avoid blank-first-pass
     const estimateWidth = useCallback(
       (label: string) => estimateBasePadding + estimateCharWidth * label.length,
-      [estimateBasePadding, estimateCharWidth]
+      [estimateBasePadding, estimateCharWidth],
     );
 
     // 3) Compute the array we’ll *display* (optionally shortest-first).
@@ -153,11 +153,11 @@ export const SinglePillRow = React.memo(
         basePills,
         (label: string) => {
           const cached = pillWidthCache.get(
-            makePillKey(pillVariant, fontScale, label)
+            makePillKey(pillVariant, fontScale, label),
           );
           return cached ?? estimateWidth(label);
         },
-        (label: string) => label // stable tiebreaker
+        (label: string) => label, // stable tiebreaker
       );
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [baseKey, sortMode, fontScale, pillVariant, estimateWidth]);
@@ -167,18 +167,18 @@ export const SinglePillRow = React.memo(
       () =>
         displayPills.filter(
           (label) =>
-            !pillWidthCache.has(makePillKey(pillVariant, fontScale, label))
+            !pillWidthCache.has(makePillKey(pillVariant, fontScale, label)),
         ),
-      [displayPills, pillVariant, fontScale]
+      [displayPills, pillVariant, fontScale],
     );
 
     // Are all current labels measured?
     const allMeasured = useMemo(
       () =>
         displayPills.every((label) =>
-          pillWidthCache.has(makePillKey(pillVariant, fontScale, label))
+          pillWidthCache.has(makePillKey(pillVariant, fontScale, label)),
         ),
-      [displayPills, pillVariant, fontScale]
+      [displayPills, pillVariant, fontScale],
     );
 
     // 5) Recalc fit — hybrid (cached widths preferred, estimates for unknowns)
@@ -253,7 +253,7 @@ export const SinglePillRow = React.memo(
           queueRecalc(recalc);
         }
       },
-      [queueRecalc, recalc]
+      [queueRecalc, recalc],
     );
 
     const onPillWidth = useCallback(
@@ -264,7 +264,7 @@ export const SinglePillRow = React.memo(
           queueRecalc(recalc);
         }
       },
-      [queueRecalc, recalc, pillVariant, fontScale]
+      [queueRecalc, recalc, pillVariant, fontScale],
     );
 
     const onOverflowWidth = useCallback(
@@ -277,7 +277,7 @@ export const SinglePillRow = React.memo(
           queueRecalc(recalc);
         }
       },
-      [queueRecalc, recalc, fontScale]
+      [queueRecalc, recalc, fontScale],
     );
 
     // 7) Reset fit when content/order changes
@@ -329,5 +329,5 @@ export const SinglePillRow = React.memo(
         )}
       </View>
     );
-  }
+  },
 );

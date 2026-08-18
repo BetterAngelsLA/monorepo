@@ -4,7 +4,9 @@ import { StorageAdapter } from './types';
 export const localStorageAdapter: StorageAdapter = {
   getItem(key: string) {
     try {
-      return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+      return typeof localStorage !== 'undefined'
+        ? localStorage.getItem(key)
+        : null;
     } catch {
       return null;
     }

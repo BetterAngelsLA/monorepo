@@ -40,7 +40,7 @@ export type CheckboxOption<T extends string = string> = SelectOption<T>;
 
 const toOptions = <T extends string>(
   labels: Record<T, string>,
-  lastValues: T[] = []
+  lastValues: T[] = [],
 ): CheckboxOption<T>[] => {
   const entries = Object.entries(labels) as [T, string][];
   const tail = new Set(lastValues);
@@ -51,10 +51,10 @@ const toOptions = <T extends string>(
 
 export function getSelectedOptions<T extends string>(
   values: ReadonlyArray<{ name?: T | null }>,
-  options: ReadonlyArray<{ value: T; label: string }>
+  options: ReadonlyArray<{ value: T; label: string }>,
 ) {
   const selected = new Set(
-    values.map((v) => v.name).filter((n): n is T => n != null)
+    values.map((v) => v.name).filter((n): n is T => n != null),
   );
 
   return options.filter((option) => selected.has(option.value));
@@ -138,7 +138,7 @@ export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [
   DemographicChoices.Other,
 ]);
 export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(
-  enumDisplayEntryRequirementChoices
+  enumDisplayEntryRequirementChoices,
 );
 export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [
   ExitPolicyChoices.Other,
@@ -179,14 +179,14 @@ export const PETS_OPTIONS = toOptions(enumDisplayPetChoices, [
   PetChoices.NoPetsAllowed,
 ]);
 export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(
-  REFERRAL_REQUIREMENT_LABELS
+  REFERRAL_REQUIREMENT_LABELS,
 );
 export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [
   RoomStyleChoices.Other,
 ]);
 export const SHELTER_PROGRAMS_OPTIONS = toOptions(
   enumDisplayShelterProgramChoices,
-  [ShelterProgramChoices.Other]
+  [ShelterProgramChoices.Other],
 );
 export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [
   ShelterChoices.Other,

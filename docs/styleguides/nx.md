@@ -104,16 +104,16 @@ From the [NX docs](https://nx.dev/docs/concepts/decisions/project-dependency-rul
 While `type:*` describes _what kind_ of code a library contains, `scope:*`
 describes _which domain_ it belongs to. This is NX's second tagging dimension.
 
-| Tag                      | Domain                                                                                   | Rule                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `scope:shared`           | Generic code reusable across any project. No BA-specific logic, no backend conventions.  | Must never depend on domain-specific libraries                              |
-| `scope:ba-platform`      | BA-specific platform glue shared across BA apps (org headers, permissions, storage keys) | Can depend on `scope:ba-platform`, `scope:shared`                           |
-| `scope:betterangels`     | BetterAngels mobile app (React Native / Expo)                                           | Can depend on `scope:betterangels`, `scope:ba-platform`, `scope:shared`      |
-| `scope:betterangels-admin` | BetterAngels admin portal (React / Vite)                                             | Can depend on `scope:betterangels-admin`, `scope:ba-platform`, `scope:shared` |
-| `scope:shelter-web`      | Shelter public search (React / Vite)                                                    | Can depend on `scope:shelter-web`, `scope:ba-platform`, `scope:shared`       |
-| `scope:shelter-operator` | Shelter operator portal (React / Vite)                                                  | Can depend on `scope:shelter-operator`, `scope:ba-platform`, `scope:shared`  |
-| `scope:ba-backend`       | Django backend                                                                            | Can depend on `scope:ba-backend`, `scope:shared`                            |
-| `scope:wildfires`        | Wildfires application                                                                     | Can depend on `scope:wildfires`, `scope:shared`                             |
+| Tag                        | Domain                                                                                   | Rule                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `scope:shared`             | Generic code reusable across any project. No BA-specific logic, no backend conventions.  | Must never depend on domain-specific libraries                                |
+| `scope:ba-platform`        | BA-specific platform glue shared across BA apps (org headers, permissions, storage keys) | Can depend on `scope:ba-platform`, `scope:shared`                             |
+| `scope:betterangels`       | BetterAngels mobile app (React Native / Expo)                                            | Can depend on `scope:betterangels`, `scope:ba-platform`, `scope:shared`       |
+| `scope:betterangels-admin` | BetterAngels admin portal (React / Vite)                                                 | Can depend on `scope:betterangels-admin`, `scope:ba-platform`, `scope:shared` |
+| `scope:shelter-web`        | Shelter public search (React / Vite)                                                     | Can depend on `scope:shelter-web`, `scope:ba-platform`, `scope:shared`        |
+| `scope:shelter-operator`   | Shelter operator portal (React / Vite)                                                   | Can depend on `scope:shelter-operator`, `scope:ba-platform`, `scope:shared`   |
+| `scope:ba-backend`         | Django backend                                                                           | Can depend on `scope:ba-backend`, `scope:shared`                              |
+| `scope:wildfires`          | Wildfires application                                                                    | Can depend on `scope:wildfires`, `scope:shared`                               |
 
 **The `scope:shared` isolation rule is critical.** If `libs/react/shared` (tagged
 `scope:shared`) imports from `libs/ba-platform` (tagged `scope:ba-platform`),
@@ -290,25 +290,25 @@ Order of operations:
 
 Tags to apply to existing projects:
 
-| Current path                    | Type tag                   | Scope tag                   |
-| ------------------------------- | -------------------------- | --------------------------- |
-| `libs/ba-platform`              | `type:data-access` ✅ done | `scope:ba-platform` ✅ done |
-| `libs/apollo`                   | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/assets`                   | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/tailwind`                 | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/components`         | `type:ui` ✅ done          | `scope:shared` ✅ done      |
-| `libs/react/icons`              | `type:ui` ✅ done          | `scope:shared` ✅ done      |
-| `libs/react/shared`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/storybook`          | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/shelter`            | `type:feature` ✅ done     | `scope:shelter-web` ✅ done    |
-| `libs/shared/places`            | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/shared/units`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/react/betterangels-admin` | `type:feature` ✅ done     | `scope:betterangels-admin` ✅ done |
-| `libs/react/shelter-operator`   | `type:feature` ✅ done     | `scope:shelter-operator` ✅ done |
-| `libs/expo/betterangels`        | `type:feature` ✅ done     | `scope:betterangels` ✅ done    |
-| `libs/expo/shared/*`            | `type:ui` / `type:util` ✅ done | `scope:shared` ✅ done  |
-| `libs/expo/modules/*`           | `type:util` ✅ done        | `scope:shared` ✅ done      |
-| `libs/python/stubs`             | `type:util` ✅ done        | `scope:shared` ✅ done      |
+| Current path                    | Type tag                        | Scope tag                          |
+| ------------------------------- | ------------------------------- | ---------------------------------- |
+| `libs/ba-platform`              | `type:data-access` ✅ done      | `scope:ba-platform` ✅ done        |
+| `libs/apollo`                   | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/assets`                   | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/tailwind`                 | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/react/components`         | `type:ui` ✅ done               | `scope:shared` ✅ done             |
+| `libs/react/icons`              | `type:ui` ✅ done               | `scope:shared` ✅ done             |
+| `libs/react/shared`             | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/react/storybook`          | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/react/shelter`            | `type:feature` ✅ done          | `scope:shelter-web` ✅ done        |
+| `libs/shared/places`            | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/shared/units`             | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/react/betterangels-admin` | `type:feature` ✅ done          | `scope:betterangels-admin` ✅ done |
+| `libs/react/shelter-operator`   | `type:feature` ✅ done          | `scope:shelter-operator` ✅ done   |
+| `libs/expo/betterangels`        | `type:feature` ✅ done          | `scope:betterangels` ✅ done       |
+| `libs/expo/shared/*`            | `type:ui` / `type:util` ✅ done | `scope:shared` ✅ done             |
+| `libs/expo/modules/*`           | `type:util` ✅ done             | `scope:shared` ✅ done             |
+| `libs/python/stubs`             | `type:util` ✅ done             | `scope:shared` ✅ done             |
 
 ---
 
@@ -329,53 +329,53 @@ rules are active:
         // TYPE constraints (what kind of code)
         {
           "sourceTag": "type:feature",
-          "onlyDependOnLibsWithTags": ["type:feature", "type:data-access", "type:ui", "type:util"]
+          "onlyDependOnLibsWithTags": ["type:feature", "type:data-access", "type:ui", "type:util"],
         },
         {
           "sourceTag": "type:data-access",
-          "onlyDependOnLibsWithTags": ["type:data-access", "type:util"]
+          "onlyDependOnLibsWithTags": ["type:data-access", "type:util"],
         },
         {
           "sourceTag": "type:ui",
-          "onlyDependOnLibsWithTags": ["type:ui", "type:util"]
+          "onlyDependOnLibsWithTags": ["type:ui", "type:util"],
         },
         {
           "sourceTag": "type:util",
-          "onlyDependOnLibsWithTags": ["type:util"]
+          "onlyDependOnLibsWithTags": ["type:util"],
         },
         // SCOPE constraints (which domain)
         // **Strict:** shared is the foundation — no BA dependencies allowed
         {
           "sourceTag": "scope:shared",
-          "onlyDependOnLibsWithTags": ["scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:shared"],
         },
         // **Strict:** ba-platform — the gate Tom asked for
         {
           "sourceTag": "scope:ba-platform",
-          "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:ba-platform", "scope:shared"],
         },
         // **Liberal (intentional):** app scopes can import from each other
         // while shared code (enum types, hooks) migrates into ba-platform.
         // TODO: tighten to own scope + ba-platform + shared once resolved.
         {
           "sourceTag": "scope:betterangels",
-          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"],
         },
         {
           "sourceTag": "scope:betterangels-admin",
-          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"],
         },
         {
           "sourceTag": "scope:shelter-web",
-          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"],
         },
         {
           "sourceTag": "scope:shelter-operator",
-          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"]
+          "onlyDependOnLibsWithTags": ["scope:betterangels", "scope:betterangels-admin", "scope:shelter-web", "scope:shelter-operator", "scope:ba-platform", "scope:shared"],
         },
-      ]
-    }
-  ]
+      ],
+    },
+  ],
 }
 ```
 
@@ -389,23 +389,23 @@ that migration happens.
 
 **Target state** (no cross-scope app imports):
 
-| Scope | Current (liberal) | Target (tight) |
-|---|---|---|
-| `scope:shared` | `shared` | `shared` *(already strict)* |
-| `scope:ba-platform` | `ba-platform`, `shared` | `ba-platform`, `shared` *(already strict)* |
-| `scope:betterangels` | all app scopes + `ba-platform` + `shared` | `betterangels`, `ba-platform`, `shared` |
+| Scope                      | Current (liberal)                         | Target (tight)                                |
+| -------------------------- | ----------------------------------------- | --------------------------------------------- |
+| `scope:shared`             | `shared`                                  | `shared` _(already strict)_                   |
+| `scope:ba-platform`        | `ba-platform`, `shared`                   | `ba-platform`, `shared` _(already strict)_    |
+| `scope:betterangels`       | all app scopes + `ba-platform` + `shared` | `betterangels`, `ba-platform`, `shared`       |
 | `scope:betterangels-admin` | all app scopes + `ba-platform` + `shared` | `betterangels-admin`, `ba-platform`, `shared` |
-| `scope:shelter-web` | all app scopes + `ba-platform` + `shared` | `shelter-web`, `ba-platform`, `shared` |
-| `scope:shelter-operator` | all app scopes + `ba-platform` + `shared` | `shelter-operator`, `ba-platform`, `shared` |
+| `scope:shelter-web`        | all app scopes + `ba-platform` + `shared` | `shelter-web`, `ba-platform`, `shared`        |
+| `scope:shelter-operator`   | all app scopes + `ba-platform` + `shared` | `shelter-operator`, `ba-platform`, `shared`   |
 
 **What needs to move:**
 
-| Code currently shared across app scopes | Move to |
-|---|---|
-| `enumDisplay*` enums in `@monorepo/react/shelter` | `@monorepo/ba-platform` (BA-specific display logic) |
-| `useUser` hook in `@monorepo/react/shelter` | `@monorepo/ba-platform` (already planned in PR #2202) |
-| Shared form validation schemas | `@monorepo/ba-platform/ts` (pure TS, BA-specific) |
-| Generic UI patterns reused across apps | `libs/react/components` (`scope:shared`, `type:ui`) |
+| Code currently shared across app scopes           | Move to                                               |
+| ------------------------------------------------- | ----------------------------------------------------- |
+| `enumDisplay*` enums in `@monorepo/react/shelter` | `@monorepo/ba-platform` (BA-specific display logic)   |
+| `useUser` hook in `@monorepo/react/shelter`       | `@monorepo/ba-platform` (already planned in PR #2202) |
+| Shared form validation schemas                    | `@monorepo/ba-platform/ts` (pure TS, BA-specific)     |
+| Generic UI patterns reused across apps            | `libs/react/components` (`scope:shared`, `type:ui`)   |
 
 Once these migrations are complete, update the `depConstraints` in
 `.eslintrc.json` to the target state and remove the TODO comments.
@@ -438,6 +438,7 @@ nx g @nx/js:lib expo --directory ba-platform/expo --tags "type:data-access,scope
 ```
 
 Benefits of separate projects over entry points:
+
 - **Mechanical safety** — depConstraints prevent `ba-platform-web` from importing `ba-platform-expo` (entry points rely on barrel discipline)
 - **Faster CI** — changes to expo code only rebuild expo consumers
 - **Clearer `nx graph`** — dependency relationships visible as separate nodes
@@ -494,21 +495,21 @@ From the [NX docs on project size](https://nx.dev/docs/concepts/decisions/projec
   "projectType": "library",
   "tags": ["type:data-access", "scope:ba-platform"],
   "namedInputs": {
-    "default": ["{projectRoot}/**/*"]
+    "default": ["{projectRoot}/**/*"],
   },
   "targets": {
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": ["{options.outputFile}"],
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/my-library/jest.config.ts"
-      }
-    }
-  }
+        "jestConfig": "libs/my-library/jest.config.ts",
+      },
+    },
+  },
 }
 ```
 

@@ -24,7 +24,7 @@ const CREATE_OPTION_VALUE = '__dropdown_create__';
 const OTHER_OPTION_VALUE = '__dropdown_other__';
 
 export function Dropdown<T extends string | number = string | number>(
-  props: DropdownProps<T>
+  props: DropdownProps<T>,
 ) {
   const {
     label,
@@ -90,14 +90,14 @@ export function Dropdown<T extends string | number = string | number>(
           ? value
           : [value]
         : []) as DropdownOption<T>[],
-    [value]
+    [value],
   );
 
   const hasSelection = selectedValues.length > 0;
 
   const otherSelected = useMemo(
     () => selectedValues.some((v) => String(v.value) === OTHER_OPTION_VALUE),
-    [selectedValues]
+    [selectedValues],
   );
 
   const prevOtherSelectedRef = useRef(otherSelected);
@@ -118,12 +118,12 @@ export function Dropdown<T extends string | number = string | number>(
 
   const selectedSet = useMemo(
     () => new Set(selectedValues.map((v) => v.value)),
-    [selectedValues]
+    [selectedValues],
   );
 
   const selectedLabelSet = useMemo(
     () => new Set(selectedValues.map((v) => v.label.trim().toLowerCase())),
-    [selectedValues]
+    [selectedValues],
   );
 
   const trimmedSearchQuery = searchQuery.trim();
@@ -132,9 +132,9 @@ export function Dropdown<T extends string | number = string | number>(
   const hasExactOptionLabel = useMemo(
     () =>
       options.some(
-        (option) => option.label.trim().toLowerCase() === normalizedSearchQuery
+        (option) => option.label.trim().toLowerCase() === normalizedSearchQuery,
       ),
-    [options, normalizedSearchQuery]
+    [options, normalizedSearchQuery],
   );
 
   const showCreateOption =
@@ -145,13 +145,13 @@ export function Dropdown<T extends string | number = string | number>(
 
   const menuOptionsWithoutOther = useMemo(
     () => options.filter((o) => String(o.value) !== OTHER_OPTION_VALUE),
-    [options]
+    [options],
   );
 
   const filteredOptions = useMemo(() => {
     const query = searchQuery.toLowerCase();
     const main = menuOptionsWithoutOther.filter((o) =>
-      o.label.toLowerCase().includes(query)
+      o.label.toLowerCase().includes(query),
     );
 
     const withOther = onOtherTextChange
@@ -191,10 +191,10 @@ export function Dropdown<T extends string | number = string | number>(
   const emitChange = useCallback(
     (values: DropdownOption<T>[]) => {
       onChange(
-        isMulti ? (values.length > 0 ? values : null) : values[0] ?? null
+        isMulti ? (values.length > 0 ? values : null) : (values[0] ?? null),
       );
     },
-    [onChange, isMulti]
+    [onChange, isMulti],
   );
 
   const handleCreateOption = useCallback(() => {
@@ -235,14 +235,14 @@ export function Dropdown<T extends string | number = string | number>(
       emitChange,
       close,
       handleCreateOption,
-    ]
+    ],
   );
 
   const handleRemoveChip = useCallback(
     (option: DropdownOption<T>) => {
       emitChange(selectedValues.filter((v) => v.value !== option.value));
     },
-    [selectedValues, emitChange]
+    [selectedValues, emitChange],
   );
 
   const handleKeyDown = useCallback(
@@ -281,8 +281,8 @@ export function Dropdown<T extends string | number = string | number>(
               filteredOptions.length === 0
                 ? -1
                 : i < filteredOptions.length - 1
-                ? i + 1
-                : 0
+                  ? i + 1
+                  : 0,
             );
           }
           break;
@@ -293,14 +293,14 @@ export function Dropdown<T extends string | number = string | number>(
               filteredOptions.length === 0
                 ? -1
                 : i > 0
-                ? i - 1
-                : filteredOptions.length - 1
+                  ? i - 1
+                  : filteredOptions.length - 1,
             );
           }
           break;
       }
     },
-    [close, isOpen, focusedIndex, filteredOptions, handleOptionClick]
+    [close, isOpen, focusedIndex, filteredOptions, handleOptionClick],
   );
 
   // ── Render ─────────────────────────────────────────────────────────────
@@ -442,7 +442,7 @@ export function Dropdown<T extends string | number = string | number>(
           />,
           // When inside a <dialog> (showModal top-layer), portal into the dialog
           // so the menu isn't clipped behind the top-layer stacking context.
-          menuAnchorRef.current?.closest('dialog') ?? document.body
+          menuAnchorRef.current?.closest('dialog') ?? document.body,
         )}
 
       {!!error && (

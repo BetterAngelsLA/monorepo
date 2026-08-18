@@ -69,7 +69,7 @@ export function InteractionListHmis(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: HmisNoteType) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   if (error) {

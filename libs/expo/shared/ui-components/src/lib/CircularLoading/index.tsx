@@ -18,7 +18,7 @@ const CircularLoading = () => {
       easing: Easing.linear,
     }),
     -1,
-    false
+    false,
   );
 
   const animatedStyle = useAnimatedStyle(() => ({

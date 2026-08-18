@@ -23,11 +23,19 @@ import { resolve } from 'path';
  * @param {{ silent?: boolean }} [options]
  * @returns {{ appPkg: object, rootPkg: object }} the parsed package.json objects
  */
-export function resolveStarDeps(workspaceRoot, appDir, { silent = false } = {}) {
+export function resolveStarDeps(
+  workspaceRoot,
+  appDir,
+  { silent = false } = {},
+) {
   const log = silent ? () => {} : console.log;
 
-  const rootPkg = JSON.parse(readFileSync(resolve(workspaceRoot, 'package.json'), 'utf-8'));
-  const appPkg = JSON.parse(readFileSync(resolve(appDir, 'package.json'), 'utf-8'));
+  const rootPkg = JSON.parse(
+    readFileSync(resolve(workspaceRoot, 'package.json'), 'utf-8'),
+  );
+  const appPkg = JSON.parse(
+    readFileSync(resolve(appDir, 'package.json'), 'utf-8'),
+  );
 
   let resolved = 0;
   let unresolved = [];
@@ -56,7 +64,10 @@ export function resolveStarDeps(workspaceRoot, appDir, { silent = false } = {}) 
     if (version === '*') resolved += resolveOne(name, appPkg.devDependencies);
   }
 
-  writeFileSync(resolve(appDir, 'package.json'), JSON.stringify(appPkg, null, 2) + '\n');
+  writeFileSync(
+    resolve(appDir, 'package.json'),
+    JSON.stringify(appPkg, null, 2) + '\n',
+  );
 
   const lockfileSrc = resolve(workspaceRoot, 'yarn.lock');
   const lockfileDst = resolve(appDir, 'yarn.lock');
@@ -66,7 +77,9 @@ export function resolveStarDeps(workspaceRoot, appDir, { silent = false } = {}) 
     log(`  ✓ ${resolved} star dep(s) filled in ${appDir}/package.json`);
   }
   if (unresolved.length > 0) {
-    log(`  ✖ ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`);
+    log(
+      `  ✖ ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`,
+    );
     log(`  → Add them to root package.json dependencies or devDependencies.`);
   }
   log(`  ✓ Lockfile copied to ${appDir}/yarn.lock`);

@@ -27,7 +27,7 @@ export default function useInfiniteScroll({
         onLoadMore();
       }
     },
-    [loading, hasMore, onLoadMore, threshold]
+    [loading, hasMore, onLoadMore, threshold],
   );
 
   return { handleScroll };

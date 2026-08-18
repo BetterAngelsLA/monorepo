@@ -2,7 +2,7 @@ import { useFeatureControls } from './featureControlContext';
 
 export function useFeatureFlagActive(
   flagName: string,
-  defaultValue = false
+  defaultValue = false,
 ): boolean {
   const context = useFeatureControls();
   const flagValue = context.flags[flagName]?.isActive;

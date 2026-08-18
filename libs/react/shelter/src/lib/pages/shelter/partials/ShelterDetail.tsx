@@ -26,28 +26,28 @@ export function ShelterDetail({
           title="Accessibility:"
           items={shelter?.accessibility.map(
             (i) =>
-              enumDisplayAccessibilityChoices[i.name as AccessibilityChoices]
+              enumDisplayAccessibilityChoices[i.name as AccessibilityChoices],
           )}
         />
 
         <InlineList
           title="Storage:"
           items={shelter?.storage.map(
-            (i) => enumDisplayStorageChoices[i.name as StorageChoices]
+            (i) => enumDisplayStorageChoices[i.name as StorageChoices],
           )}
         />
 
         <InlineList
           title="Pets:"
           items={shelter?.pets.map(
-            (i) => enumDisplayPetChoices[i.name as PetChoices]
+            (i) => enumDisplayPetChoices[i.name as PetChoices],
           )}
         />
 
         <InlineList
           title="Parking:"
           items={shelter?.parking.map(
-            (i) => enumDisplayParkingChoices[i.name as ParkingChoices]
+            (i) => enumDisplayParkingChoices[i.name as ParkingChoices],
           )}
         />
       </div>

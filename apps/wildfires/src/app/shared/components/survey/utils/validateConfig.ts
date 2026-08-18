@@ -106,7 +106,7 @@ function validateConditions(forms: TSurveyForm[]): string[] {
   if (withInvalidConditions.length) {
     return [
       `form IDs with invalid questionId in rules: [${withInvalidConditions.join(
-        ', '
+        ', ',
       )}]`,
     ];
   }
@@ -132,7 +132,7 @@ export function validateConfig(forms: TSurveyForm[]): string[] {
   if (duplicateFormIds.length) {
     return [
       `survey config errors: duplicate formIds: [${duplicateFormIds.join(
-        ', '
+        ', ',
       )}]`,
     ];
   }
@@ -150,7 +150,7 @@ export function validateConfig(forms: TSurveyForm[]): string[] {
   if (invalidFormIds.length) {
     return [
       `survey config errors: invalid nextFormIds: [${invalidFormIds.join(
-        ', '
+        ', ',
       )}]`,
     ];
   }

@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
 
 function buildFullName(
   firstName?: string | null,
-  lastName?: string | null
+  lastName?: string | null,
 ): string {
   const nameParts = [];
 

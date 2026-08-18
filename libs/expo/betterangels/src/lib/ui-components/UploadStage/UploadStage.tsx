@@ -76,9 +76,7 @@ export default function UploadStage(props: TUploadStageProps) {
 
   const allComplete =
     counts.length > 0 && counts.every((count) => count.complete);
-  const anyInFlight = counts.some(
-    (count) => !count.complete && !count.failed,
-  );
+  const anyInFlight = counts.some((count) => !count.complete && !count.failed);
   const anyFailed = counts.some((count) => count.failed);
 
   // Failed items across every shown session, so one tap can re-run them all
@@ -103,10 +101,14 @@ export default function UploadStage(props: TUploadStageProps) {
   );
 
   const retryAll = () =>
-    failedBySession.forEach((entry) => retryUploadItemsSession(entry.id, entry.refIds));
+    failedBySession.forEach((entry) =>
+      retryUploadItemsSession(entry.id, entry.refIds),
+    );
 
   const dismissAllFailed = () =>
-    failedBySession.forEach((entry) => dismissFailedUploadItemsSession(entry.id));
+    failedBySession.forEach((entry) =>
+      dismissFailedUploadItemsSession(entry.id),
+    );
 
   // Stage transitions driven by session state (so the screen reacts to
   // sessions that finish or fail while it is open):

@@ -21,7 +21,7 @@ type TUseFitMapToPlaceViewportOptions = {
  * pattern (useMap + geometry.viewport).
  */
 export function useFitMapToPlaceViewport(
-  options: TUseFitMapToPlaceViewportOptions
+  options: TUseFitMapToPlaceViewportOptions,
 ): void {
   const { viewport, onFitted } = options;
   const map = useMap();

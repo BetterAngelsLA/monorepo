@@ -87,7 +87,7 @@ module.exports = {
         OperationDefinition(node) {
           if (!node.name) {
             console.warn(
-              '[operation-meta] Skipping unnamed operation — operations must be named to generate meta.'
+              '[operation-meta] Skipping unnamed operation — operations must be named to generate meta.',
             );
             return;
           }
@@ -95,11 +95,11 @@ module.exports = {
           const operationName = node.name.value;
 
           const field = node.selectionSet.selections.find(
-            (s) => s.kind === Kind.FIELD
+            (s) => s.kind === Kind.FIELD,
           );
           if (!field || !field.name) {
             console.warn(
-              `[operation-meta] Skipping ${operationName} — no field found in selection set.`
+              `[operation-meta] Skipping ${operationName} — no field found in selection set.`,
             );
             return;
           }
@@ -124,12 +124,12 @@ module.exports = {
           // Warn if inline fragments exist but all are OperationInfo.
           if (!successTypename) {
             const hasFragments = field.selectionSet?.selections.some(
-              (s) => s.kind === Kind.INLINE_FRAGMENT
+              (s) => s.kind === Kind.INLINE_FRAGMENT,
             );
             if (hasFragments) {
               console.warn(
                 `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
-                  `all inline fragments are OperationInfo.`
+                  `all inline fragments are OperationInfo.`,
               );
             }
           }
@@ -152,12 +152,12 @@ module.exports = {
                         `return type "${type.name}" is a ${
                           isUnionType(type) ? 'union' : 'interface'
                         }, ` +
-                        `add inline fragments to disambiguate.`
+                        `add inline fragments to disambiguate.`,
                     );
                   } else if (type.name === 'OperationInfo') {
                     console.warn(
                       `[operation-meta] Field ${operationName}:${fieldName} resolves to OperationInfo — ` +
-                        `this likely indicates a schema issue or missing inline fragments.`
+                        `this likely indicates a schema issue or missing inline fragments.`,
                     );
                   } else {
                     successTypename = type.name;
@@ -171,7 +171,7 @@ module.exports = {
           if (!successTypename && !schema) {
             console.warn(
               `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
-                `schema unavailable and no inline fragments found.`
+                `schema unavailable and no inline fragments found.`,
             );
           }
 
@@ -198,7 +198,7 @@ module.exports = {
       if (!seenTypes.has(typeName)) {
         seenTypes.add(typeName);
         imports.push(
-          `import type { ${typeName} } from './${baseName}.generated';`
+          `import type { ${typeName} } from './${baseName}.generated';`,
         );
       }
     }
@@ -211,7 +211,7 @@ module.exports = {
 
       sections.push(
         '',
-        `export const ${camelName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`
+        `export const ${camelName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`,
       );
 
       if (op.successTypename) {
@@ -224,7 +224,7 @@ module.exports = {
           `export const ${camelName}Meta = {`,
           `  operationKey: ${camelName}OperationKey,`,
           `  successTypename: ${camelName}SuccessTypename,`,
-          `} as const;`
+          `} as const;`,
         );
       }
     }

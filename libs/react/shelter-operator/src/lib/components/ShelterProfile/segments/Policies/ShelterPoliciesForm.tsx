@@ -19,7 +19,7 @@ type TProps = {
   values?: Partial<PoliciesFormData>;
   onSubmit: (
     data: PoliciesFormData,
-    setError: UseFormSetError<PoliciesFormData>
+    setError: UseFormSetError<PoliciesFormData>,
   ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
@@ -41,7 +41,7 @@ export function ShelterPoliciesForm(props: TProps) {
 
   const initialValues = useMemo(
     () => ({ ...defaultFormValues, ...values }),
-    [values]
+    [values],
   );
 
   const {

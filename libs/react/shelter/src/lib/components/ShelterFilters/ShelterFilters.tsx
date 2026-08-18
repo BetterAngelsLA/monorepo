@@ -41,8 +41,9 @@ export function ShelterFilters(props: IProps) {
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
   const initialOpenNowForTypes = filters.openNowFor ?? [];
-  const [openNowForTypes, setOpenNowForTypes] =
-    useState<ScheduleTypeChoices[]>(initialOpenNowForTypes);
+  const [openNowForTypes, setOpenNowForTypes] = useState<ScheduleTypeChoices[]>(
+    initialOpenNowForTypes,
+  );
 
   useEffect(() => {
     setOpenNowForTypes(filters.openNowFor ?? []);
@@ -52,7 +53,7 @@ export function ShelterFilters(props: IProps) {
 
   function onFilterChange(
     filterName: TFilterConfig['name'],
-    selected: string[]
+    selected: string[],
   ) {
     onFiltersChange({
       ...filters,
@@ -62,7 +63,7 @@ export function ShelterFilters(props: IProps) {
 
   function onOpenNowForTypeChange(
     scheduleType: ScheduleTypeChoices,
-    checked: boolean
+    checked: boolean,
   ) {
     const newTypes = checked
       ? [...openNowForTypes, scheduleType]

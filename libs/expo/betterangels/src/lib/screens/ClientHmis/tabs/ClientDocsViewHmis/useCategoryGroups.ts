@@ -9,7 +9,7 @@ export type CategoryGroup = {
 
 export function useCategoryGroups(
   categories: FileCategory[],
-  subCategories: FileName[]
+  subCategories: FileName[],
 ): CategoryGroup[] {
   return useMemo(() => {
     return categories

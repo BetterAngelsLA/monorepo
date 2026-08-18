@@ -2,6 +2,5 @@ import { UseShelterOperatorProfileResultType } from '../../hooks/useShelterOpera
 
 export type ShelterProfileType = UseShelterOperatorProfileResultType;
 
-export type ShelterProfilePhotoType = NonNullable<
-  UseShelterOperatorProfileResultType
->['photos'][number];
+export type ShelterProfilePhotoType =
+  NonNullable<UseShelterOperatorProfileResultType>['photos'][number];

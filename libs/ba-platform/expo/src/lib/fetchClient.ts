@@ -44,7 +44,9 @@ export const createExpoFetchClient = (
     createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
     createCsrfInterceptor(
       createNativeTokenReader(apiUrl),
-      createCsrfTokenRefresher((header) => CookieManager.setFromResponse(apiUrl, header)),
+      createCsrfTokenRefresher((header) =>
+        CookieManager.setFromResponse(apiUrl, header),
+      ),
       CSRF_COOKIE_NAME,
       CSRF_HEADER_NAME,
       CSRF_LOGIN_PATH,

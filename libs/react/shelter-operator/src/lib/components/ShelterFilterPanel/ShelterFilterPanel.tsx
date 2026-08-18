@@ -66,7 +66,7 @@ export function ShelterFilterPanel() {
       {filterGroups.map((group) => {
         const visibleOptions = normalizedSearch
           ? group.options.filter((opt) =>
-              opt.label.toLowerCase().includes(normalizedSearch)
+              opt.label.toLowerCase().includes(normalizedSearch),
             )
           : group.options;
 
