@@ -25,7 +25,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 summary
             }
-            team
             location {
                 id
                 address {

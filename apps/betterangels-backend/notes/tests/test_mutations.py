@@ -1,7 +1,7 @@
+from teams.models import Team
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.enums import SelahTeamEnum
 from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
@@ -43,7 +43,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": "New note purpose",
             "requestedServices": [],
             "tasks": [],
-            "team": None,
         }
         self.assertEqual(created_note, expected_note)
 
@@ -58,7 +57,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -66,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -75,7 +74,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "tasks": [],
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "location": {
                 "id": ANY,
                 "address": {
@@ -124,7 +122,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "requestedServices": [],
             "tasks": [],
-            "team": None,
         }
         self.assertEqual(updated_note, expected_note)
 

@@ -16,7 +16,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             organization { id name }
             status
             summary
-            team
             updatedAt
         """
 

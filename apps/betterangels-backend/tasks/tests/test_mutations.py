@@ -1,8 +1,8 @@
+from teams.models import Team
 from unittest.mock import ANY
 
 import time_machine
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from hmis.models import HmisNote
@@ -27,14 +27,14 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
             }
 
             self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -42,7 +42,10 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         created_task = response["data"]["createTask"]
         expected_task = {
-            **variables,
+            # teamId is an input-only field: the response exposes the team as
+            # ``currentTeam``.  The deprecated ``team`` enum used the same name
+            # on both sides, which is why spreading variables used to work.
+            **{k: v for k, v in variables.items() if k != "teamId"},
             "id": ANY,
             "clientProfile": {
                 "id": str(client_profile.pk),
@@ -77,16 +80,19 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "description": "updated task description",
             "status": TaskStatusEnum.IN_PROGRESS.name,
             "summary": "updated task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
         }
 
-        expected_query_count = 8
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
         expected_task = {
-            **variables,
+            # teamId is an input-only field: the response exposes the team as
+            # ``currentTeam``.  The deprecated ``team`` enum used the same name
+            # on both sides, which is why spreading variables used to work.
+            **{k: v for k, v in variables.items() if k != "teamId"},
             "id": ANY,
             "clientProfile": None,
             "createdAt": "2025-07-31T10:11:12+00:00",

@@ -652,7 +652,6 @@ export type CreateNoteInput = {
   purpose?: InputMaybe<Scalars['String']['input']>;
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -676,7 +675,6 @@ export type CreateNoteTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -802,7 +800,6 @@ export type CreateTaskInput = {
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -1416,7 +1413,6 @@ export type ImportNoteDataInput = {
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -2100,7 +2096,6 @@ export type NoteFilter = {
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export type NoteImportRecordType = {
@@ -2137,8 +2132,6 @@ export type NoteType = {
   purpose?: Maybe<Scalars['String']['output']>;
   requestedServices: Array<ServiceRequestType>;
   tasks: Array<TaskType>;
-  /** @deprecated Use currentTeam instead */
-  team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
 };
 
@@ -3211,24 +3204,6 @@ export enum ScheduleTypeChoices {
   StaffAvailability = 'STAFF_AVAILABILITY'
 }
 
-export enum SelahTeamEnum {
-  BowtieRiversideOutreach = 'BOWTIE_RIVERSIDE_OUTREACH',
-  EchoParkOnSite = 'ECHO_PARK_ON_SITE',
-  EchoParkOutreach = 'ECHO_PARK_OUTREACH',
-  HollywoodOnSite = 'HOLLYWOOD_ON_SITE',
-  HollywoodOutreach = 'HOLLYWOOD_OUTREACH',
-  LaRiverOutreach = 'LA_RIVER_OUTREACH',
-  LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
-  NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
-  SelahStaff = 'SELAH_STAFF',
-  SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
-  SlccOnSite = 'SLCC_ON_SITE',
-  SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
-  SundaySocialAtwaterOutreach = 'SUNDAY_SOCIAL_ATWATER_OUTREACH',
-  WdiOnSite = 'WDI_ON_SITE',
-  WdiOutreach = 'WDI_OUTREACH'
-}
-
 export type ServiceCategoryType = {
   __typename?: 'ServiceCategoryType';
   displayName: Scalars['String']['output'];
@@ -3619,7 +3594,6 @@ export type TaskFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
   teamIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export type TaskOrder = {
@@ -3649,8 +3623,6 @@ export type TaskType = {
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
   summary?: Maybe<Scalars['String']['output']>;
-  /** @deprecated Use currentTeam instead */
-  team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -3835,7 +3807,6 @@ export type UpdateNoteInput = {
   purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
   requestedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   tasks?: InputMaybe<Array<CreateNoteTaskInput>>;
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -3954,7 +3925,6 @@ export type UpdateTaskInput = {
   id: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
-  team?: InputMaybe<SelahTeamEnum>;
   teamId?: InputMaybe<Scalars['ID']['input']>;
 };
 
