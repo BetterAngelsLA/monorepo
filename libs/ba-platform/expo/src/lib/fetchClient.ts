@@ -23,7 +23,7 @@ import { createNativeTokenReader } from './csrfTokenProvider';
  * Pre-composed Expo / React Native fetch client.
  *
  * Chains (in order):
- * 1. Org-ID injection (from ``AsyncStorage``)
+ * 1. Org-ID injection (from the active-org store)
  * 2. Proactive CSRF header injection (via ``CookieManager``)
  * 3. Body serialisation
  * 4. Credentials include
