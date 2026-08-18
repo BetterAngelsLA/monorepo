@@ -25,6 +25,7 @@ class Team(BaseModel):
         on_delete=models.CASCADE,
         related_name="teams",
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta(BaseModel.Meta):
         ordering = ["name"]

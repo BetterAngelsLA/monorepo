@@ -35,17 +35,24 @@ def team_update(
     *,
     team: Team,
     name: str | None = None,
+    is_active: bool | None = None,
 ) -> Team:
-    """Update a Team's name. Slug is auto-generated from name."""
+    """Update a Team's name and/or active flag. Slug is auto-generated from name."""
     if name is not None:
         name = name.strip()
         slug = slugify(name)
+
         if not slug:
             raise ValidationError("Team name must contain at least one alphanumeric character.")
+
         if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
             raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
+
         team.name = name
         team.slug = slug
+
+    if is_active is not None:
+        team.is_active = is_active
 
     team.save()
     return team
