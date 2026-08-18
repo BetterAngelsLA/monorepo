@@ -1,7 +1,7 @@
 # Teams Org-Scoping — Deployment Runbook & Follow-ups
 
 Deployment checklist for the per-org teams work (org-scoped mutations,
-legacy-column removal, team/organization enforcement, permission sync).
+legacy-column removal, team/organization enforcement).
 
 ## Background: the enum → Team migration already happened
 
@@ -58,18 +58,21 @@ into `team_id` on the event tables first.
 
    > The `old_team` drops are the only irreversible operations here — they
    > reverse to empty columns, not to the values. Run the counts above first.
-   > Consider shipping the org-scoped mutations and permission sync on their
-   > own, confirming teams behave correctly in production, and dropping the
+   > Consider shipping the org-scoped mutations on their own, confirming
+   > teams behave correctly in production, and dropping the
    > columns in a follow-up release; nothing in the feature depends on them
    > being gone.
 
-2. **Sync permission groups** — ensures every org's groups carry current
-   template permissions (including `teams.*` for Org Admin):
+2. **Permission groups sync themselves — no step required.** Every org's
+   groups are reconciled against their templates (including `teams.*` for Org
+   Admin) by the `post_migrate` handler in `accounts/signals.py`, so step 1
+   already did it.
 
-   ```bash
-   manage.py sync_org_permission_groups          # write
-   manage.py sync_org_permission_groups --check  # verify-only
-   ```
+   There is deliberately no management command for this. Running one would
+   take the same code path, so it could only fail the same way; see #2311,
+   which made that handler fail loudly instead. If the sync cannot complete,
+   the migrate itself fails — an apparently successful deploy means the
+   permissions are current.
 
 3. **Teams are org-admin created.** New orgs start with no teams; org
    admins create them through the admin UI (Teams page / `createTeam`).
