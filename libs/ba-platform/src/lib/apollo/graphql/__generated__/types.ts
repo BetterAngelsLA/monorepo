@@ -180,15 +180,6 @@ export type BedTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type BoolBaseFilterLookup = {
-  /** Exact match. Filter will be skipped on `null` value */
-  exact?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Exact match of items in a given list. Filter will be skipped on `null` value */
-  inList?: InputMaybe<Array<Scalars['Boolean']['input']>>;
-  /** Assignment test. Filter will be skipped on `null` value */
-  isNull?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
 export type BulkDeleteInput = {
   ids: Array<Scalars['ID']['input']>;
 };
@@ -3678,7 +3669,7 @@ export type TeamFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TeamFilter>;
   OR?: InputMaybe<TeamFilter>;
-  isActive?: InputMaybe<BoolBaseFilterLookup>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type TeamType = {

@@ -183,19 +183,6 @@ type BedTypeOffsetPaginated {
   results: [BedType!]!
 }
 
-input BoolBaseFilterLookup {
-  """Exact match. Filter will be skipped on `null` value"""
-  exact: Boolean
-
-  """Assignment test. Filter will be skipped on `null` value"""
-  isNull: Boolean
-
-  """
-  Exact match of items in a given list. Filter will be skipped on `null` value
-  """
-  inList: [Boolean!]
-}
-
 input BulkDeleteInput {
   ids: [ID!]!
 }
@@ -2106,7 +2093,7 @@ type Query {
   reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  teams(filters: TeamFilter, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
+  teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
@@ -2913,7 +2900,7 @@ type TaskTypeOffsetPaginated {
 }
 
 input TeamFilter {
-  isActive: BoolBaseFilterLookup
+  isActive: Boolean
   AND: TeamFilter
   OR: TeamFilter
   NOT: TeamFilter
