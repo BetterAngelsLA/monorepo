@@ -29,7 +29,7 @@ export const FullNameFormSchema = z
   // validate nameQuality values
   .superRefine((data, ctx) => {
     const invalidNDQ = invalidNameDataQuality.includes(
-      data.nameQuality as HmisNameQualityEnum
+      data.nameQuality as HmisNameQualityEnum,
     );
 
     if (invalidNDQ) {
@@ -44,5 +44,5 @@ export const FullNameFormSchema = z
 type FullNameFormFieldName = keyof typeof FullNameFormSchema.shape;
 
 export const FullNameFormFieldNames = Object.keys(
-  FullNameFormSchema.shape
+  FullNameFormSchema.shape,
 ) as FullNameFormFieldName[];

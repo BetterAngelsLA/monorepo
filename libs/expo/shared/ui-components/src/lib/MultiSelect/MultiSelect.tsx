@@ -32,7 +32,7 @@ export interface TMultiSelect<T> {
   renderOption?: (
     option: T,
     props: TMultiSelectItem,
-    index: number
+    index: number,
   ) => ReactNode;
 }
 

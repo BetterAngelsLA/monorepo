@@ -54,7 +54,7 @@ function runScenarios(cases: TestCase[]) {
         getFieldErrorsOrThrow({
           response: tc.response,
           ...mergedParams,
-        })
+        }),
       ).toThrow(tc.throws.type);
 
       try {
@@ -72,7 +72,7 @@ function runScenarios(cases: TestCase[]) {
         getFieldErrorsOrThrow({
           response: tc.response,
           ...mergedParams,
-        })
+        }),
       ).toEqual(tc.returns ?? []);
     }
   });
@@ -178,7 +178,7 @@ describe('getFieldErrorsOrThrow', () => {
             name: 'multiple messages: returns matching messages',
             response: responseWithOpInfo(
               { kind: 'VALIDATION', field: 'name', message: 'Required' },
-              { kind: 'VALIDATION', field: 'email', message: 'Invalid' }
+              { kind: 'VALIDATION', field: 'email', message: 'Invalid' },
             ),
             params: { fields: ['name', 'email', 'other'] },
             returns: [
@@ -374,7 +374,7 @@ describe('getFieldErrorsOrThrow', () => {
             name: 'joins server error messages',
             response: responseWithErrors(
               { message: 'server error 1' },
-              { message: 'server error 2' }
+              { message: 'server error 2' },
             ),
             params: { fields: ['name'] },
             throws: { type: Error, message: 'server error 1; server error 2' },
@@ -392,7 +392,7 @@ describe('getFieldErrorsOrThrow', () => {
             name: 'non-VALIDATION message present: throws Error',
             response: responseWithOpInfo(
               { kind: 'ERROR', message: 'Something failed' },
-              { kind: 'VALIDATION', field: 'name', message: 'Required' }
+              { kind: 'VALIDATION', field: 'name', message: 'Required' },
             ),
             params: { fields: ['name'] },
             throws: {
@@ -408,7 +408,7 @@ describe('getFieldErrorsOrThrow', () => {
                 field: 'email',
                 message: 'Invalid format',
               },
-              { kind: 'VALIDATION', field: 'phone', message: 'Required' }
+              { kind: 'VALIDATION', field: 'phone', message: 'Required' },
             ),
             params: { fields: ['unmatchedField'] },
             throws: {

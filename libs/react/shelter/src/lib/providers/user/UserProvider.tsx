@@ -7,9 +7,7 @@ import type { TUser } from './UserContext';
 
 const { UserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
-  parseUser: (
-    data
-  ): TUser | undefined => {
+  parseUser: (data): TUser | undefined => {
     const user = data as CurrentOrgUserQuery['currentUser'] | undefined;
     if (!user) return undefined;
     return {

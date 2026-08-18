@@ -16,7 +16,7 @@ export const userPreferencesLocationAtomFamily = atomFamily(
           ...prev,
           location: nextLocation,
         }));
-      }
+      },
     );
-  }
+  },
 );

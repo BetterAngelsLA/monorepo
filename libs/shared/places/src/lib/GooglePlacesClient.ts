@@ -91,7 +91,7 @@ export class GooglePlacesClient {
 
   async autocomplete(
     query: string,
-    options?: TAutocompleteOptions
+    options?: TAutocompleteOptions,
   ): Promise<TPlacePrediction[]> {
     const {
       boundsCenter = DEFAULT_BOUNDS_CENTER,
@@ -122,7 +122,7 @@ export class GooglePlacesClient {
           },
           includedRegionCodes,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -134,12 +134,12 @@ export class GooglePlacesClient {
     return (data.suggestions || [])
       .filter(
         (
-          s
+          s,
         ): s is {
           placePrediction: NonNullable<
             TPlacePredictionResponse['suggestions'][number]['placePrediction']
           >;
-        } => !!s.placePrediction
+        } => !!s.placePrediction,
       )
       .map((s) => {
         const { placeId, structuredFormat } = s.placePrediction;
@@ -157,7 +157,7 @@ export class GooglePlacesClient {
 
   async getDetails(
     placeId: string,
-    options?: TGetDetailsOptions
+    options?: TGetDetailsOptions,
   ): Promise<TPlaceDetails> {
     const {
       fields = 'displayName,formattedAddress,location,addressComponents',
@@ -170,7 +170,7 @@ export class GooglePlacesClient {
         headers: {
           'X-Goog-FieldMask': fields,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -179,40 +179,40 @@ export class GooglePlacesClient {
 
     const data = await response.json();
 
-      return {
-        displayName: data.displayName?.text || undefined,
-        formattedAddress: data.formattedAddress || undefined,
-        location: data.location
-          ? {
-              latitude: data.location.latitude,
-              longitude: data.location.longitude,
-            }
-          : undefined,
-        viewport: data.viewport
-          ? {
-              low: {
-                latitude: data.viewport.low.latitude,
-                longitude: data.viewport.low.longitude,
-              },
-              high: {
-                latitude: data.viewport.high.latitude,
-                longitude: data.viewport.high.longitude,
-              },
-            }
-          : undefined,
-        addressComponents: data.addressComponents?.map(
+    return {
+      displayName: data.displayName?.text || undefined,
+      formattedAddress: data.formattedAddress || undefined,
+      location: data.location
+        ? {
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+          }
+        : undefined,
+      viewport: data.viewport
+        ? {
+            low: {
+              latitude: data.viewport.low.latitude,
+              longitude: data.viewport.low.longitude,
+            },
+            high: {
+              latitude: data.viewport.high.latitude,
+              longitude: data.viewport.high.longitude,
+            },
+          }
+        : undefined,
+      addressComponents: data.addressComponents?.map(
         (c: { longText: string; shortText: string; types: string[] }) => ({
           longText: c.longText,
           shortText: c.shortText,
           types: c.types,
-        })
+        }),
       ),
     };
   }
 
   async reverseGeocode(
     latitude: number,
-    longitude: number
+    longitude: number,
   ): Promise<TReverseGeocodeResult> {
     const params = new URLSearchParams({
       latlng: `${latitude},${longitude}`,
@@ -226,7 +226,7 @@ export class GooglePlacesClient {
 
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`,
-      { headers }
+      { headers },
     );
 
     if (!response.ok) {
@@ -249,7 +249,7 @@ export class GooglePlacesClient {
           longText: c.long_name,
           shortText: c.short_name,
           types: c.types,
-        })
+        }),
       ),
     };
   }
@@ -261,7 +261,7 @@ export class GooglePlacesClient {
    */
   private async placesFetch(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<Response> {
     const headers = new Headers(options.headers);
     headers.set('X-Goog-Api-Key', this.apiKey);

@@ -1,7 +1,14 @@
 import { randomUUID } from 'expo-crypto';
 import { filter, isNonNullish, map, pipe } from 'remeda';
-import { isTransientUploadFailure, uploadFileToS3WithPresignedPost } from '../s3';
-import { PresignedUploadError, S3UploadError, UploadAbortedError } from './errors';
+import {
+  isTransientUploadFailure,
+  uploadFileToS3WithPresignedPost,
+} from '../s3';
+import {
+  PresignedUploadError,
+  S3UploadError,
+  UploadAbortedError,
+} from './errors';
 import {
   TPresignedUpload,
   TUploadFile,
@@ -22,7 +29,10 @@ export type TRunPresignedUploadArgs<TResolve> = {
    * Persists the successfully uploaded files and returns the caller's result.
    * Receives the pipeline's abort signal so the save itself can be cancelled.
    */
-  resolveUpload: (saved: TSavedUpload[], signal?: AbortSignal) => Promise<TResolve>;
+  resolveUpload: (
+    saved: TSavedUpload[],
+    signal?: AbortSignal,
+  ) => Promise<TResolve>;
   /** Called on stage changes and per-file upload progress. */
   onProgress?: (progress: TUploadProgress) => void;
   /**
@@ -116,7 +126,10 @@ async function runPool<TItem, TResult>(
       }
 
       try {
-        results[index] = { status: 'fulfilled', value: await task(items[index]) };
+        results[index] = {
+          status: 'fulfilled',
+          value: await task(items[index]),
+        };
       } catch (reason) {
         failed = true;
         results[index] = { status: 'rejected', reason };

@@ -39,7 +39,9 @@ const TEAMS_RESULT = {
   },
 };
 
-function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
+function createSyncStorage(
+  initial: string | null = null,
+): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,
@@ -67,8 +69,7 @@ function createRecordingClient() {
 }
 
 describe('useOrgTeams', () => {
-
-  function renderWith(organizations: readonly typeof ORG[]) {
+  function renderWith(organizations: readonly (typeof ORG)[]) {
     const { client, orgIdPerOperation } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ApolloProvider client={client}>
@@ -77,7 +78,10 @@ describe('useOrgTeams', () => {
         </ActiveOrgProvider>
       </ApolloProvider>
     );
-    return { ...renderHook(() => useOrgTeams(), { wrapper }), orgIdPerOperation };
+    return {
+      ...renderHook(() => useOrgTeams(), { wrapper }),
+      orgIdPerOperation,
+    };
   }
 
   it('every request it issues carries an active org', async () => {

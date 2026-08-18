@@ -3,7 +3,7 @@ import { RefObject, useEffect, useRef } from 'react';
 export default function useOutsideClick<T extends HTMLElement>(
   ref: RefObject<T | null>,
   onOutside: () => void,
-  enabled = true
+  enabled = true,
 ) {
   const onOutsideRef = useRef(onOutside);
 

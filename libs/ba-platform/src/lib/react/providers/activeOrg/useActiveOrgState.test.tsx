@@ -22,7 +22,9 @@ function makeOrg(overrides: Partial<Org> = {}): Org {
 }
 
 /** Synchronous backing, the way both platforms now provide one. */
-function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
+function createSyncStorage(
+  initial: string | null = null,
+): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,
@@ -105,7 +107,9 @@ describe('useActiveOrgState', () => {
 
     const { result } = renderHook(() => useActiveOrgState(orgs));
 
-    expect(result.current.hasPermission('organizations.add_org_member')).toBe(true);
+    expect(result.current.hasPermission('organizations.add_org_member')).toBe(
+      true,
+    );
     expect(result.current.hasPermission('shelters.view_shelter')).toBe(true);
     expect(result.current.hasPermission('shelters.delete_shelter')).toBe(false);
   });
@@ -171,7 +175,9 @@ describe('useActiveOrgState', () => {
     expect(getActiveOrgId()).toBe('org-2');
     expect(storage.get()).toBe('org-2');
 
-    rerender(<ActiveOrgProvider organizations={orgs}>{null}</ActiveOrgProvider>);
+    rerender(
+      <ActiveOrgProvider organizations={orgs}>{null}</ActiveOrgProvider>,
+    );
 
     expect(getActiveOrgId()).toBe('org-2');
   });

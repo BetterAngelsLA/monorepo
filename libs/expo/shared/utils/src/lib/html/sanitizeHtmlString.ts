@@ -8,7 +8,7 @@ const defaultSanitizeOptions: SanitizeHtmlOptions = {
 
 export function sanitizeHtmlString(
   htmlInput?: string | null,
-  overrideOptions?: SanitizeHtmlOptions
+  overrideOptions?: SanitizeHtmlOptions,
 ): string {
   if (!htmlInput) {
     return '';

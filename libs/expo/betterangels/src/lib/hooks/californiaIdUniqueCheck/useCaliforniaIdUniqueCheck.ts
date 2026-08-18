@@ -4,7 +4,7 @@ import { ClientCaliforniaUniqueCheckDocument } from './__generated__/ClientCalif
 
 export default function useCaliforniaIdUniqueCheck(
   californiaId: string,
-  clientProfileId?: string
+  clientProfileId?: string,
 ) {
   const { data } = useQuery(ClientCaliforniaUniqueCheckDocument, {
     skip: !Regex.californiaId.test(californiaId),

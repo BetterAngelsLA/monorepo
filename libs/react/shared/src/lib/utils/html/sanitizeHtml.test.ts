@@ -27,7 +27,7 @@ describe('sanitizeHtml', () => {
     const html = '<p>paragraph</p><span>inline</span><strong>bold</strong>';
 
     expect(sanitizeHtml(html, { allowedTags: ['p', 'strong'] })).toBe(
-      '<p>paragraph</p>inline<strong>bold</strong>'
+      '<p>paragraph</p>inline<strong>bold</strong>',
     );
   });
 });

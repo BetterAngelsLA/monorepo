@@ -55,7 +55,7 @@ export function TaskList(props: TProps) {
 
   const renderItemFn = useCallback(
     (item: TaskType) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   if (error) {

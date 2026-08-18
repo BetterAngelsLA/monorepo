@@ -4,7 +4,7 @@
  */
 export function fitMapToPlaceViewport(
   map: google.maps.Map,
-  viewport: google.maps.LatLngBounds
+  viewport: google.maps.LatLngBounds,
 ): void {
   const bounds = new google.maps.LatLngBounds();
   bounds.extend(viewport.getNorthEast());

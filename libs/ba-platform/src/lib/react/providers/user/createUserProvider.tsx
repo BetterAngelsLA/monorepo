@@ -33,10 +33,7 @@ export interface UserState<TUser> {
  * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
  */
-export interface UserProviderConfig<
-  TUser,
-  TQuery,
-> {
+export interface UserProviderConfig<TUser, TQuery> {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
 
@@ -108,9 +105,7 @@ export function createUserProvider<
 
   // ---- Helpers -------------------------------------------------------
 
-  const defaultMapOrganizations = (
-    orgs: readonly OrgLike[],
-  ) =>
+  const defaultMapOrganizations = (orgs: readonly OrgLike[]) =>
     orgs.map((org) => ({
       id: org.id,
       name: org.name,
@@ -135,11 +130,7 @@ export function createUserProvider<
     return ctx;
   }
 
-  function UserProvider({
-    children,
-  }: {
-    children: ReactNode;
-  }) {
+  function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -174,7 +165,10 @@ export function createUserProvider<
         // with graphQLErrors — narrow via runtime check.
         const gqlErrors =
           error && 'graphQLErrors' in error
-            ? (error.graphQLErrors as readonly { message: string; extensions?: Record<string, unknown> }[])
+            ? (error.graphQLErrors as readonly {
+                message: string;
+                extensions?: Record<string, unknown>;
+              }[])
             : undefined;
         updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
@@ -202,7 +196,9 @@ export function createUserProvider<
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          organizations={user?.organizations ? mapOrganizations(user.organizations) : []}
+          organizations={
+            user?.organizations ? mapOrganizations(user.organizations) : []
+          }
         >
           {children}
         </ActiveOrgProvider>

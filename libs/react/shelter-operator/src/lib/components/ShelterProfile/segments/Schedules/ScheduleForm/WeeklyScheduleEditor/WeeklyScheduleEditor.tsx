@@ -16,7 +16,7 @@ export function WeeklyScheduleEditor(props: TProps) {
   const setDay = (
     day: DayOfWeekChoices,
     schedule: DaySchedule,
-    validate?: boolean
+    validate?: boolean,
   ) => {
     onChange({ ...value, [day]: schedule }, validate);
   };

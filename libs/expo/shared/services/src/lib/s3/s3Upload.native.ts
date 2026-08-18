@@ -1,10 +1,7 @@
 import { File, UploadType } from 'expo-file-system';
 import { S3TransportError } from './errors';
 import { assertPresignedPost } from './presignedPost';
-import {
-  type TS3UploadProgress,
-  type TS3UploadTransport,
-} from './types';
+import { type TS3UploadProgress, type TS3UploadTransport } from './types';
 
 /**
  * Native S3 transport: uploads a file directly to S3 using a presigned POST

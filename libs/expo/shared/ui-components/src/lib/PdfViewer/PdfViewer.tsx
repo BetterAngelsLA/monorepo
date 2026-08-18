@@ -63,7 +63,7 @@ export default function PdfViewer({
             cacheKey ??
             (await Crypto.digestStringAsync(
               Crypto.CryptoDigestAlgorithm.SHA256,
-              url
+              url,
             ));
 
           const finalFile = new File(cacheDir, `${key}.pdf`);
@@ -99,7 +99,7 @@ export default function PdfViewer({
           // temp (non-persistent) unique file
           const tempDir = ensureDir(new Directory(Paths.cache, 'pdf-temp'));
           const name = `pdf-${Date.now()}-${Math.floor(
-            Math.random() * 1e6
+            Math.random() * 1e6,
           )}.pdf`;
           const tmp = new File(tempDir, name);
           tempFileRef.current = tmp;
@@ -217,6 +217,6 @@ function enforceCacheLimit(dir: Directory, limit: number) {
         // eslint-disable-next-line no-console
         console.debug('Cache delete failed (ignored):', f.uri, e);
       }
-    })
+    }),
   );
 }

@@ -19,7 +19,7 @@ export type MergePaginationArgs = { offset: number; limit: number };
 
 /** Read variables and return the effective { offset, limit } for merging. */
 export type ResolveMergePagination<TVars> = (
-  variables: TVars | undefined
+  variables: TVars | undefined,
 ) => MergePaginationArgs;
 
 // -------------------- Merge -------------------- //

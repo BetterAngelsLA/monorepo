@@ -1,4 +1,9 @@
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, CSRF_LOGIN_PATH, getGraphqlUrl } from './constants';
+import {
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
+  CSRF_LOGIN_PATH,
+  getGraphqlUrl,
+} from './constants';
 
 // Re-export everything from the canonical shared location.
 export {

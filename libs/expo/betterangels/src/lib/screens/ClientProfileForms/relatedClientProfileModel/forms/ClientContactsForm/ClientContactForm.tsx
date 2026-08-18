@@ -79,7 +79,7 @@ export function ClientContactForm(props: TProps) {
                   label="Relevant contact type"
                   placeholder="Select the relevant contact type"
                   items={Object.entries(clientRelevantContactEnumDisplay).map(
-                    ([value, displayValue]) => ({ value, displayValue })
+                    ([value, displayValue]) => ({ value, displayValue }),
                   )}
                   selectedValue={value}
                   onChange={(value) => onChange(value)}

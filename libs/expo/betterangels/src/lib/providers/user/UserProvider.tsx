@@ -19,7 +19,11 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: { id: string; name: string; permissions: readonly PermissionEnum[] }[];
+  organizations: {
+    id: string;
+    name: string;
+    permissions: readonly PermissionEnum[];
+  }[];
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
@@ -32,9 +36,7 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  parseUser: (
-    data: unknown
-  ): TUser | undefined => {
+  parseUser: (data: unknown): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {

@@ -8,7 +8,9 @@ import {
   type ActiveOrgPersistence,
 } from './activeOrgStore';
 
-function createSyncStorage(initial: string | null = null): ActiveOrgPersistence {
+function createSyncStorage(
+  initial: string | null = null,
+): ActiveOrgPersistence {
   let value = initial;
   return {
     get: () => value,

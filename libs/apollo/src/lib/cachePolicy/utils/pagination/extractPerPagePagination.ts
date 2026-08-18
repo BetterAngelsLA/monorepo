@@ -13,7 +13,7 @@ type TExtractPerPagePagination = {
 };
 
 export function extractPerPagePagination(
-  opts: TExtractPerPagePagination
+  opts: TExtractPerPagePagination,
 ): PaginationVars | undefined {
   const { variables, pagePath, perPagePath } = opts;
 
@@ -24,7 +24,7 @@ export function extractPerPagePagination(
   const page = readAtPath(variables, pagePath || DEFAULT_PAGINATION_PAGE_PATH);
   const perPage = readAtPath(
     variables,
-    perPagePath || DEFAULT_PAGINATION_PER_PAGE_PATH
+    perPagePath || DEFAULT_PAGINATION_PER_PAGE_PATH,
   );
 
   return {

@@ -155,7 +155,7 @@ describe('MultiSelect component', () => {
           {...defaultProps}
           withFilter
           filterPlaceholder="Search options"
-        />
+        />,
       );
 
       const input = getByPlaceholderText('Search options');
@@ -173,7 +173,7 @@ describe('MultiSelect component', () => {
 
     defaultProps.renderOption = (
       option,
-      { isChecked, onClick, testId, accessibilityHint }
+      { isChecked, onClick, testId, accessibilityHint },
     ) => {
       return (
         <Pressable

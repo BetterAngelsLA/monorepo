@@ -17,17 +17,17 @@ interface IServiceOtherCheckboxProps {
       serviceOther: string | null;
       serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
-    }[]
+    }[],
   ) => void;
 }
 
 export default function ServiceOtherCheckbox(
-  props: IServiceOtherCheckboxProps
+  props: IServiceOtherCheckboxProps,
 ) {
   const { service, idx, serviceRequests, setServiceRequests } = props;
 
   const serviceEntry = serviceRequests.find(
-    (s) => s.serviceRequestId === service.serviceRequestId
+    (s) => s.serviceRequestId === service.serviceRequestId,
   );
   const isChecked = (serviceEntry && !serviceEntry.markedForDeletion) || false;
 
@@ -37,16 +37,16 @@ export default function ServiceOtherCheckbox(
         serviceRequests.map((s) =>
           s.serviceRequestId === service.serviceRequestId
             ? { ...s, markedForDeletion: true }
-            : s
-        )
+            : s,
+        ),
       );
     } else if (serviceEntry) {
       setServiceRequests(
         serviceRequests.map((s) =>
           s.serviceRequestId === service.serviceRequestId
             ? { ...s, markedForDeletion: false }
-            : s
-        )
+            : s,
+        ),
       );
     } else {
       setServiceRequests([

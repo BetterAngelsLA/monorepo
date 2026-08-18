@@ -117,11 +117,11 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
   const providerDefaults = useMemo<BottomSheetOptions>(
     () => defaultOptions ?? EMPTY_SHEET_OPTIONS,
-    [defaultOptions]
+    [defaultOptions],
   );
 
   const [closingSheetIds, setClosingSheetIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   /**
@@ -189,7 +189,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
         addSheet(instance, stackBehavior);
       },
-      [providerDefaults, enableSharedBackdrop, addSheet]
+      [providerDefaults, enableSharedBackdrop, addSheet],
     );
 
   /**
@@ -222,7 +222,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
       showBottomSheet,
       popTopSheet,
     }),
-    [showBottomSheet, popTopSheet]
+    [showBottomSheet, popTopSheet],
   );
 
   const sharedBackdrop = useBottomSheetSharedBackdrop({

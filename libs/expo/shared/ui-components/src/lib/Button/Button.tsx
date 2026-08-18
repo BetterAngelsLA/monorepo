@@ -214,15 +214,15 @@ export function Button(props: IButtonProps) {
             backgroundColor: disabled
               ? Colors.NEUTRAL_LIGHT
               : pressed
-              ? PRESSED_VARIANTS[variant].bg
-              : VARIANTS[variant].bg,
+                ? PRESSED_VARIANTS[variant].bg
+                : VARIANTS[variant].bg,
             borderColor: disabled
               ? Colors.NEUTRAL_LIGHT
               : borderColor
-              ? borderColor
-              : pressed
-              ? PRESSED_VARIANTS[variant].border
-              : VARIANTS[variant].border,
+                ? borderColor
+                : pressed
+                  ? PRESSED_VARIANTS[variant].border
+                  : VARIANTS[variant].border,
             marginBottom: mb && Spacings[mb],
             marginTop: mt && Spacings[mt],
             marginLeft: ml && Spacings[ml],

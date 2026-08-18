@@ -12,7 +12,7 @@ export function getMergeOptions(
   paths: Pick<
     ObjectMergeMode,
     'itemIdPath' | 'itemsPath' | 'totalCountPath'
-  > = {}
+  > = {},
 ): TCacheMergeOpts {
   const opts = mergeOpts ?? { mode: MergeModeEnum.Object };
 

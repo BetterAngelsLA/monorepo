@@ -91,7 +91,7 @@ export default function ConsentModal({
             hasAcceptedTos: checkedItems.isTosChecked,
             hasAcceptedPrivacyPolicy: checkedItems.isPrivacyPolicyChecked,
           }
-        : prev
+        : prev,
     );
   };
 

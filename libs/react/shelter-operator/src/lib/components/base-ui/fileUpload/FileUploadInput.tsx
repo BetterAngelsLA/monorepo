@@ -76,7 +76,7 @@ export function FileUploadInput({
           ? `File${
               oversizedFilenames.length > 1 ? 's' : ''
             } too large: ${oversizedFilenames.join(', ')}`
-          : null
+          : null,
       );
     },
   });
@@ -113,8 +113,8 @@ export function FileUploadInput({
           shouldShowError
             ? 'border-red-500 bg-red-50'
             : isDragActive
-            ? 'border-[#008CEE] bg-blue-50'
-            : 'border-gray-300 bg-white',
+              ? 'border-[#008CEE] bg-blue-50'
+              : 'border-gray-300 bg-white',
           disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         ])}
       >

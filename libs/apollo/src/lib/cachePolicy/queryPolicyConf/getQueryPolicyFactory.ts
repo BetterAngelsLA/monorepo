@@ -106,7 +106,7 @@ type TgetQueryPolicyFactory<
   TQuery,
   TVariables,
   TFieldKey extends keyof TQuery & string,
-  TItem = ResultItemOf<TQuery, TFieldKey>
+  TItem = ResultItemOf<TQuery, TFieldKey>,
 > = {
   /** query field on Query */
   key: TFieldKey;
@@ -122,7 +122,9 @@ type TgetQueryPolicyFactory<
    * variables that affect cache key
    * can accept KeyArgsFunction, but not fully tested here
    */
-  cacheKeyVariables: KeyArgsFor<TVariables> | NonNullable<FieldPolicy['keyArgs']>;
+  cacheKeyVariables:
+    | KeyArgsFor<TVariables>
+    | NonNullable<FieldPolicy['keyArgs']>;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
@@ -150,7 +152,7 @@ export function getQueryPolicyFactory<
   TQuery,
   TVariables,
   TFieldKey extends keyof TQuery & string = keyof TQuery & string,
-  TItem = ResultItemOf<TQuery, TFieldKey>
+  TItem = ResultItemOf<TQuery, TFieldKey>,
 >({
   key,
   entityTypename,
@@ -175,7 +177,7 @@ export function getQueryPolicyFactory<
 
   if (isArrayMergeMode) {
     console.warn(
-      '[getQueryPolicyFactory]: array mode is not yet fully supported.'
+      '[getQueryPolicyFactory]: array mode is not yet fully supported.',
     );
   }
 

@@ -14,7 +14,11 @@ type TFeedback = {
   showSnackbar: (opts: { message: string; type: 'success' | 'error' }) => void;
 };
 
-async function copyToClipboard(text: string, feedback: TFeedback, label: string) {
+async function copyToClipboard(
+  text: string,
+  feedback: TFeedback,
+  label: string,
+) {
   try {
     await Clipboard.setStringAsync(text);
     feedback.showSnackbar({ message: `${label} copied`, type: 'success' });
@@ -27,7 +31,11 @@ async function copyToClipboard(text: string, feedback: TFeedback, label: string)
   }
 }
 
-async function openExternalUrl(url: string, feedback: TFeedback, failureMsg: string) {
+async function openExternalUrl(
+  url: string,
+  feedback: TFeedback,
+  failureMsg: string,
+) {
   try {
     await Linking.openURL(url);
   } catch (err) {
@@ -38,7 +46,7 @@ async function openExternalUrl(url: string, feedback: TFeedback, failureMsg: str
 
 export function getAddressActions(
   address: string | TAddress,
-  feedback: TFeedback
+  feedback: TFeedback,
 ): TContactActionItem[] {
   const fullAddress =
     typeof address === 'string'
@@ -79,7 +87,7 @@ export function getAddressActions(
 export function getPhoneActions(
   displayNumber: string,
   dialNumber: string,
-  feedback: TFeedback
+  feedback: TFeedback,
 ): TContactActionItem[] {
   return [
     {
@@ -91,18 +99,14 @@ export function getPhoneActions(
       action: 'call',
       label: 'Call',
       onPress: () =>
-        openExternalUrl(
-          `tel:${dialNumber}`,
-          feedback,
-          'Unable to place call'
-        ),
+        openExternalUrl(`tel:${dialNumber}`, feedback, 'Unable to place call'),
     },
   ];
 }
 
 export function getEmailActions(
   email: string,
-  feedback: TFeedback
+  feedback: TFeedback,
 ): TContactActionItem[] {
   return [
     {
@@ -117,7 +121,7 @@ export function getEmailActions(
         openExternalUrl(
           `mailto:${email}`,
           feedback,
-          'Unable to open email client'
+          'Unable to open email client',
         ),
     },
   ];

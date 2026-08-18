@@ -44,7 +44,10 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
   // then would discard the organization restored from persistence and replace
   // it with the first one once the list arrived.
   const currentId = getActiveOrgId();
-  if (organizations.length > 0 && !organizations.some((o) => o.id === currentId)) {
+  if (
+    organizations.length > 0 &&
+    !organizations.some((o) => o.id === currentId)
+  ) {
     commitActiveOrgId(organizations[0].id);
   }
 

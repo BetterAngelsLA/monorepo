@@ -28,8 +28,7 @@ vi.mock('@preeternal/react-native-cookie-manager', () => ({
   setFromResponse: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock('@monorepo/expo/shared/utils', () => ({
-}));
+vi.mock('@monorepo/expo/shared/utils', () => ({}));
 
 vi.mock('@monorepo/expo/shared/clients', () => ({
   bodyInterceptor: (async (

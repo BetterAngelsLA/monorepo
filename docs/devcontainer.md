@@ -80,5 +80,3 @@ docker volume rm <project>_venv
 
 Replace `<project>` with the Compose project name (usually the directory name, e.g.
 `monorepo`). Run `docker volume ls` to see the actual names.
-
-
