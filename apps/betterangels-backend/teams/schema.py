@@ -1,6 +1,6 @@
 """Team GraphQL Query + Mutation — thin delegation to services + selectors."""
 
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -17,7 +17,7 @@ from strawberry_django.pagination import OffsetPaginated
 from .models import Team
 from .selectors import team_get, team_list
 from .services import team_create, team_delete, team_update
-from .types import CreateTeamInput, TeamType, UpdateTeamInput
+from .types import CreateTeamInput, TeamFilter, TeamType, UpdateTeamInput
 
 
 @strawberry.type
@@ -26,7 +26,7 @@ class Query:
         OffsetPaginated[TeamType],
         permission_classes=[IsAuthenticated],
     )
-    def teams(self, info: Info) -> QuerySet[Team]:
+    def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
         org_id = info.context.request.organization_id
         if org_id is not None:
             org = Organization.objects.get(pk=str(org_id))

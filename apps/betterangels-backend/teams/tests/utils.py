@@ -13,8 +13,8 @@ class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
 
     def get_teams_query(self, fields: Optional[str] = None) -> str:
         return f"""
-            query {{
-                teams {{
+            query ($filters: TeamFilter) {{
+                teams (filters: $filters) {{
                     totalCount
                     results {{
                         {fields or self.get_team_fields()}

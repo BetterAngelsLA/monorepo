@@ -53,3 +53,19 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         teams = response["data"]["teams"]["results"]
         self.assertIn(str(other_org_team.pk), [team["id"] for team in teams])
         self.assertNotIn(str(self.team.pk), [team["id"] for team in teams])
+
+    def test_teams_query_filter(self) -> None:
+        inactive_team = baker.make(Team, name="inactive team", organization=self.org)
+
+        variables = {"filters": {"isActive": True}}
+        response = self.execute_graphql(self.get_teams_query(), variables)
+
+        self.assertEqual(response["data"]["teams"]["totalCount"], 2)
+
+        inactive_team.is_active = False
+        inactive_team.save()
+
+        variables = {"filters": {"isActive": True}}
+        response = self.execute_graphql(self.get_teams_query(), variables)
+
+        self.assertEqual(response["data"]["teams"]["totalCount"], 1)
