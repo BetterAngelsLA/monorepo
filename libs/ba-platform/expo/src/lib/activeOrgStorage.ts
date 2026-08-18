@@ -21,10 +21,8 @@ const mmkv = () => (store ??= createMMKV());
  * keeps a shared device honest instead.
  *
  * Reaches MMKV directly rather than through the repo's other MMKV consumer,
- * ``createPersistentSynchronousStorage``: that is only exposed via the
- * ``@monorepo/expo/shared/utils`` barrel, which drags in React Native globals
- * the platform layer does not have. Giving it its own entry point would let
- * both share one MMKV chokepoint.
+ * ``createPersistentSynchronousStorage``, which is only exposed via a barrel
+ * that the platform layer cannot import.
  *
  * Values previously written to ``AsyncStorage`` under this key are not
  * migrated: users land on their first organization once, then it sticks.

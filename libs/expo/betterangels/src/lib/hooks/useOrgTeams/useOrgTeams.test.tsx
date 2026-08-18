@@ -19,8 +19,12 @@ import { useOrgTeams } from './useOrgTeams';
 
 /**
  * Asserts what the store holds at the moment each request is issued — counted
- * at the link, rather than inferred from loading flags, which look identical
- * for "skipped" and "in flight".
+ * at the link, rather than inferred from loading flags, which cannot
+ * distinguish a request that never went out from one still in flight.
+ *
+ * ``useOrgTeams`` itself is unchanged by this PR; it stands in for any
+ * org-scoped query, and these are the cross-project tests that exercise the
+ * store, the provider and the interceptor together.
  */
 
 const ORG = { id: 'org-1', name: 'Test Org', permissions: [] as const };
@@ -98,8 +102,8 @@ describe('useOrgTeams', () => {
 
   it('queries with the remembered org before the org list has loaded', async () => {
     // UserProvider renders children with organizations={[]} while the user
-    // query resolves. The store is already seeded from persistence, so the
-    // request is correctly attributed — no reason to hold it back.
+    // query resolves. The store already holds the remembered organization, so
+    // the request is correctly attributed.
     configureActiveOrgStorage(createSyncStorage('org-1'));
 
     const { orgIdPerOperation } = renderWith([]);

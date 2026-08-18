@@ -133,7 +133,8 @@ describe('useActiveOrgState', () => {
   });
 
   it('the org is live before a child renders, not one effect later', () => {
-    // Most org-scoped queries fire unconditionally — no skip to hide behind.
+    // A child that queries on mount reads the store during its own render, so
+    // the organization has to be live by then rather than one commit later.
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ id: 'org-1' })];
     const seenDuringChildRender: (string | null)[] = [];
@@ -176,9 +177,9 @@ describe('useActiveOrgState', () => {
   });
 
   it('keeps sending the remembered org before the org list loads', () => {
-    // The header comes from the store, which is seeded at bootstrap — so a
-    // returning user's requests are correctly attributed during the window
-    // before the user query resolves. This is why consumers need no skip.
+    // An empty list means the user query has not resolved yet, not that the
+    // user belongs to nothing. The store already holds the remembered
+    // organization, so requests in that window are correctly attributed.
     configureActiveOrgStorage(createSyncStorage('org-2'));
     const seen: (string | null)[] = [];
 

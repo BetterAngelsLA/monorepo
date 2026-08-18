@@ -5,9 +5,8 @@
  * importing this module does not touch the native module. Nothing else asserts
  * that, and inlining the handle would go unnoticed.
  */
-// Hoisted so they exist before the mock factory runs. Without this, creating
-// the handle at module scope crashes with a TDZ error instead of failing the
-// assertion below, which is a far less legible signal.
+// Hoisted so they exist before the mock factory runs, which lets the first
+// test fail on its assertion rather than on a temporal-dead-zone error.
 const { created, mockMmkv } = vi.hoisted(() => ({
   created: [] as unknown[],
   mockMmkv: {} as Record<string, string>,
