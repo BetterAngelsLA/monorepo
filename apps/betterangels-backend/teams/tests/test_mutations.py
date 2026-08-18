@@ -63,7 +63,7 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_update_team_mutation_invalid_name(self, new_name: str) -> None:
         """Empty/whitespace-only names are rejected and no partial update occurs."""
         team = baker.make(Team, name="name", organization=self.org)
-        variables = {"id": team.pk, "name": "   "}
+        variables = {"id": team.pk, "name": new_name}
 
         response = self.update_team_fixture(variables)
 
