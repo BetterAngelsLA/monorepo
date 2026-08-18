@@ -18,7 +18,7 @@ import {
   AdminTeamsDocument,
   DeleteTeamDocument,
 } from './__generated__/teams.generated';
-import { AddTeamDrawer } from './AddTeamDrawer';
+import { TeamFormDrawer } from './TeamFormDrawer';
 import { ThreeDotMenu } from './ThreeDotMenu';
 
 type IProps = {
@@ -96,6 +96,20 @@ export function TeamsPage(props: IProps) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+  };
+
+  const handleEdit = (team: TeamType) => {
+    showDrawer({
+      content: (
+        <TeamFormDrawer
+          team={team}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      ),
+      contentClassName: 'p-0',
+    });
   };
 
   const handleDelete = async (team: TeamType) => {
@@ -202,7 +216,7 @@ export function TeamsPage(props: IProps) {
             onClick={() =>
               showDrawer({
                 content: (
-                  <AddTeamDrawer
+                  <TeamFormDrawer
                     onSuccess={() => {
                       refetch();
                     }}
@@ -259,6 +273,7 @@ export function TeamsPage(props: IProps) {
                       openMenuRowId={openMenuRowId}
                       setOpenMenuRowId={setOpenMenuRowId}
                       menuRef={menuRef}
+                      onEdit={handleEdit}
                       onDelete={handleDelete}
                       deleting={deleting}
                     />
@@ -276,6 +291,7 @@ export function TeamsPage(props: IProps) {
                     openMenuRowId={openMenuRowId}
                     setOpenMenuRowId={setOpenMenuRowId}
                     menuRef={menuRef}
+                    onEdit={handleEdit}
                     onDelete={handleDelete}
                     deleting={deleting}
                   />

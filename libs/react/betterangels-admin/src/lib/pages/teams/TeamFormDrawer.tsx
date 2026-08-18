@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { TeamType } from '@monorepo/ba-platform/types';
 import {
   AppDrawer,
   Button,
@@ -8,32 +9,54 @@ import {
 import { Input, mergeCss } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
-import { CreateTeamDocument } from '../teams/__generated__/teams.generated';
+import {
+  CreateTeamDocument,
+  UpdateTeamDocument,
+} from './__generated__/teams.generated';
 
 type TProps = {
   className?: string;
+  team?: TeamType;
   onSuccess: () => void;
 };
 
-export function AddTeamDrawer(props: TProps) {
-  const { className, onSuccess } = props;
+export function TeamFormDrawer(props: TProps) {
+  const { className, team, onSuccess } = props;
+  const isEditing = !!team;
   const { closeDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(team?.name ?? '');
+  const [isActive, setIsActive] = useState<boolean>(team?.isActive !== false);
   const [disabled, setDisabled] = useState(false);
 
   const [createTeam] = useMutation(CreateTeamDocument);
+  const [updateTeam] = useMutation(UpdateTeamDocument);
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     if (!name.trim()) return;
     setDisabled(true);
     try {
-      const response = await createTeam({
-        variables: { data: { name: name.trim() } },
-      });
-      const error = extractOperationInfoMessage(response, 'createTeam');
-      if (error) throw new Error(error);
-      showAlert({ type: 'success', content: `Team "${name.trim()}" created.` });
+      if (isEditing) {
+        const response = await updateTeam({
+          variables: { data: { id: team.id, name: name.trim(), isActive } },
+        });
+        const error = extractOperationInfoMessage(response, 'updateTeam');
+        if (error) throw new Error(error);
+        showAlert({
+          type: 'success',
+          content: `Team "${name.trim()}" updated.`,
+        });
+      } else {
+        const response = await createTeam({
+          variables: { data: { name: name.trim() } },
+        });
+        const error = extractOperationInfoMessage(response, 'createTeam');
+        if (error) throw new Error(error);
+        showAlert({
+          type: 'success',
+          content: `Team "${name.trim()}" created.`,
+        });
+      }
       closeDrawer();
       onSuccess();
     } catch (err) {
@@ -53,16 +76,16 @@ export function AddTeamDrawer(props: TProps) {
     <div className={mergeCss(parentCss)}>
       <AppDrawer.Header>
         <div className="text-xl font-semibold text-neutral-20 leading-6">
-          Add Team
+          {isEditing ? 'Edit Team' : 'Add Team'}
         </div>
       </AppDrawer.Header>
 
-      <div className="p-6">
+      <div className="p-6 flex flex-col gap-4">
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') handleCreate();
+            if (e.key === 'Enter') void handleSubmit();
           }}
           disabled={disabled}
           type="text"
@@ -73,6 +96,21 @@ export function AddTeamDrawer(props: TProps) {
           // eslint-disable-next-line jsx-a11y/no-autofocus -- drawer just opened; primary input should receive focus
           autoFocus
         />
+
+        {isEditing && (
+          <div className="flex flex-col">
+            <label className="text-sm ml-1 mb-2 flex flex-row">Status</label>
+            <select
+              value={isActive ? 'active' : 'inactive'}
+              onChange={(e) => setIsActive(e.target.value === 'active')}
+              disabled={disabled}
+              className="bg-neutral-99 rounded-lg focus:outline-hidden px-4 py-4 w-96 cursor-pointer"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
@@ -88,10 +126,10 @@ export function AddTeamDrawer(props: TProps) {
         <Button
           size="2xl"
           variant="accent"
-          onClick={handleCreate}
+          onClick={() => void handleSubmit()}
           disabled={disabled || !name.trim()}
         >
-          Create
+          {isEditing ? 'Save' : 'Create'}
         </Button>
       </div>
     </div>
