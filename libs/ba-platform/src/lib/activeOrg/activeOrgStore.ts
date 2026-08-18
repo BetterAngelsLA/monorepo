@@ -30,22 +30,6 @@ export interface ActiveOrgPersistence {
   set(value: string | null): void;
 }
 
-/**
- * Build an :type:`ActiveOrgPersistence` from a platform's key-value calls.
- *
- * Shape adaptation only — ``undefined`` becomes ``null``, and ``null`` means
- * remove. Resilience lives in the store, which guards every implementation
- * rather than only the ones built here.
- */
-export const createActiveOrgPersistence = (backing: {
-  read: () => string | null | undefined;
-  write: (value: string) => void;
-  remove: () => void;
-}): ActiveOrgPersistence => ({
-  get: () => backing.read() ?? null,
-  set: (value) => (value === null ? backing.remove() : backing.write(value)),
-});
-
 const inMemoryPersistence = (): ActiveOrgPersistence => {
   let value: string | null = null;
   return {

@@ -1,7 +1,6 @@
 export {
   clearActiveOrgId,
   configureActiveOrgStorage,
-  createActiveOrgPersistence,
   getActiveOrgId,
   setActiveOrgId,
   subscribeActiveOrgId,
