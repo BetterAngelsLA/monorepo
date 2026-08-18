@@ -153,4 +153,55 @@ describe('useActiveOrgState', () => {
     expect(seenDuringChildRender.length).toBeGreaterThan(0);
     expect(seenDuringChildRender).not.toContain(null);
   });
+
+  it('survives the empty first render UserProvider does', () => {
+    // UserProvider renders children with organizations={[]} while the user
+    // query loads. Treating that as "belongs to nothing" discarded the
+    // remembered organization *and* deleted it from persistence, so every
+    // launch reset the user to their first org.
+    const storage = createSyncStorage('org-2');
+    configureActiveOrgStorage(storage);
+    const orgs = [makeOrg({ id: 'org-1' }), makeOrg({ id: 'org-2' })];
+
+    const { rerender } = render(
+      <ActiveOrgProvider organizations={[]}>{null}</ActiveOrgProvider>,
+    );
+
+    expect(getActiveOrgId()).toBe('org-2');
+    expect(storage.get()).toBe('org-2');
+
+    rerender(<ActiveOrgProvider organizations={orgs}>{null}</ActiveOrgProvider>);
+
+    expect(getActiveOrgId()).toBe('org-2');
+  });
+
+  it('keeps sending the remembered org before the org list loads', () => {
+    // The header comes from the store, which is seeded at bootstrap — so a
+    // returning user's requests are correctly attributed during the window
+    // before the user query resolves. This is why consumers need no skip.
+    configureActiveOrgStorage(createSyncStorage('org-2'));
+    const seen: (string | null)[] = [];
+
+    function Child() {
+      seen.push(getActiveOrgId());
+      return null;
+    }
+
+    render(
+      <ActiveOrgProvider organizations={[]}>
+        <Child />
+      </ActiveOrgProvider>,
+    );
+
+    expect(seen).not.toContain(null);
+  });
+
+  it('still defaults a genuinely org-less user to nothing', () => {
+    configureActiveOrgStorage(createSyncStorage());
+
+    const { result } = renderHook(() => useActiveOrgState([]));
+
+    expect(result.current.activeOrg).toBeUndefined();
+    expect(getActiveOrgId()).toBeNull();
+  });
 });

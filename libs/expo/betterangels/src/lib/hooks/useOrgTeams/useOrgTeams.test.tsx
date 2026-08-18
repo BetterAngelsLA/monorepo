@@ -96,13 +96,15 @@ describe('useOrgTeams', () => {
     expect(orgIdPerOperation.every((id) => id === 'org-2')).toBe(true);
   });
 
-  it('issues nothing for a user with no organizations', async () => {
-    configureActiveOrgStorage(createSyncStorage());
+  it('queries with the remembered org before the org list has loaded', async () => {
+    // UserProvider renders children with organizations={[]} while the user
+    // query resolves. The store is already seeded from persistence, so the
+    // request is correctly attributed — no reason to hold it back.
+    configureActiveOrgStorage(createSyncStorage('org-1'));
 
-    const { result, orgIdPerOperation } = renderWith([]);
+    const { orgIdPerOperation } = renderWith([]);
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(orgIdPerOperation).toHaveLength(0);
-    expect(result.current.teams).toEqual([]);
+    await waitFor(() => expect(orgIdPerOperation.length).toBeGreaterThan(0));
+    expect(orgIdPerOperation.every((id) => id === 'org-1')).toBe(true);
   });
 });

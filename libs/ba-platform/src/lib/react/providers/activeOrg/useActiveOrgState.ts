@@ -38,9 +38,14 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
   // React runs effects child-before-parent, so a child would query before this
   // provider had chosen an organization and the request would go out with no
   // header. Safe here because it is idempotent and derived purely from props.
+  //
+  // An empty list means "not loaded yet", not "belongs to nothing" —
+  // UserProvider renders children before the user query resolves. Reconciling
+  // then would discard the organization restored from persistence and replace
+  // it with the first one once the list arrived.
   const currentId = getActiveOrgId();
-  if (!currentId || !organizations.some((o) => o.id === currentId)) {
-    commitActiveOrgId(organizations[0]?.id ?? null);
+  if (organizations.length > 0 && !organizations.some((o) => o.id === currentId)) {
+    commitActiveOrgId(organizations[0].id);
   }
 
   const activeOrgId = useSyncExternalStore(
