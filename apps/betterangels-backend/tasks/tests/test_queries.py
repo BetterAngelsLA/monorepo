@@ -20,7 +20,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
 
-        self.team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        self.team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         self.task = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
@@ -221,11 +221,11 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             {
                 "clientProfile": str(self.client_profile.pk),
                 "summary": "task 2 summary",
-                "teamId": str(Team.objects.get(slug="slcc_on_site", organization=self.org_1).pk),
+                "teamId": str(Team.objects.get(name="SLCC On-site", organization=self.org_1).pk),
             }
         )["data"]["createTask"]["id"]
 
-        team = Team.objects.get(slug="slcc_on_site", organization=self.org_1)
+        team = Team.objects.get(name="SLCC On-site", organization=self.org_1)
         filters = {"teamIds": [team.pk]}
         variables = {"filters": filters}
 

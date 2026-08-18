@@ -201,16 +201,17 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Every org gets one team per legacy enum value. The enum is only a
-        # convenient list of slugs here — nothing in the API exposes it any
-        # more — and it keeps these fixtures aligned with the teams the June
-        # data migration created in production.
+        # Every org gets one team per legacy enum member, named exactly as the
+        # June data migration named them (``SelahTeamEnum.label``), so fixtures
+        # match production. Tests identify these teams by name: ``slug`` exists
+        # only for the enum-to-FK migration and is dropped in a later PR, so
+        # nothing here should depend on it.
         for org in (self.org_1, self.org_2):
-            for team_value in SelahTeamEnum.values:
+            for team in SelahTeamEnum:
                 Team.objects.get_or_create(
-                    slug=team_value,
+                    slug=team.value,
                     organization=org,
-                    defaults={"name": team_value.replace("_", " ").title()},
+                    defaults={"name": team.label},
                 )
 
         # Permission groups are created by create_organization_with_presets

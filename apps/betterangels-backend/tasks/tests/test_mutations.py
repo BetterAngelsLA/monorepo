@@ -27,7 +27,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
 
         expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -75,7 +75,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_update_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
         assert self.org
-        team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
 
         variables = {
             "id": task_id,

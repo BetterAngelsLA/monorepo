@@ -49,7 +49,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
-        team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         json_address_input, _ = self._get_address_inputs()
         location_input = {
             "address": json_address_input,
