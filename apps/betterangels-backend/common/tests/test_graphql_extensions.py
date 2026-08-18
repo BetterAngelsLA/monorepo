@@ -1,4 +1,4 @@
-"""Organization scoping in ``PermissionedQuerySet``.
+"""Organization scoping in ``PermissionedQuerySet`` (``common/graphql/extensions.py``).
 
 These exercise ``_prepare_qs`` directly rather than through GraphQL so the
 organization filter can be isolated from the object-permission filter that
@@ -16,14 +16,11 @@ End-to-end coverage of the same behaviour, including the denial a client
 actually sees, lives with the mutations in ``notes`` and ``referrals``.
 """
 
-from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
-from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from common.graphql.extensions import PermissionedQuerySet
-from common.permissions.utils import require_organization_id
-from django.contrib.auth.models import Permission
+from common.tests.permission_fixtures import stub_info, user_with_global_perm
 from django.test import TestCase
 from model_bakery import baker
 from notes.models import Note, ServiceRequest
@@ -31,62 +28,18 @@ from notes.permissions import NotePermissions, ServiceRequestPermissions
 from strawberry_django.permissions import DjangoNoPermission
 
 
-def _stub_info(user: Optional[User] = None, organization_id: Any = None) -> Any:
-    """Minimum shape ``_prepare_qs`` reads: ``info.context.request``."""
-    return SimpleNamespace(
-        context=SimpleNamespace(
-            request=SimpleNamespace(user=user, organization_id=organization_id),
-        )
-    )
-
-
-def _user_with_global_perm(perm: str) -> User:
-    """A user holding *perm* model-wide, the way the guardian fallback grants it."""
-    app_label, codename = perm.split(".", 1)
-    user = baker.make(User, is_active=True)
-    user.user_permissions.add(
-        Permission.objects.get(content_type__app_label=app_label, codename=codename),
-    )
-    return user
-
-
-class RequireOrganizationIdTestCase(TestCase):
-    def test_returns_a_string_id(self) -> None:
-        self.assertEqual(require_organization_id(_stub_info(organization_id="42")), "42")
-
-    def test_coerces_a_non_string_id(self) -> None:
-        """The middleware reads a header, but tests and other callers pass ints."""
-        self.assertEqual(require_organization_id(_stub_info(organization_id=42)), "42")
-
-    def test_raises_when_the_header_is_absent(self) -> None:
-        with self.assertRaises(DjangoNoPermission) as ctx:
-            require_organization_id(_stub_info(organization_id=None))
-
-        self.assertIn("X-Organization-ID", str(ctx.exception))
-
-    def test_never_returns_the_string_none(self) -> None:
-        """Regression: ``str(None)`` used to reach queryset filters as ``"None"``.
-
-        That is not a valid organization id, so the request failed anyway —
-        but as ``ValueError: Field 'id' expected a number but got 'None'``,
-        an unhandled 500 rather than a denial.
-        """
-        with self.assertRaises(DjangoNoPermission):
-            require_organization_id(_stub_info(organization_id=None))
-
-
 class PermissionedQuerySetOrgScopingTestCase(TestCase):
     def setUp(self) -> None:
         self.org_1 = organization_recipe.make(name="pqs_org_1")
         self.org_2 = organization_recipe.make(name="pqs_org_2")
 
-        self.user = _user_with_global_perm(NotePermissions.CHANGE)
+        self.user = user_with_global_perm(NotePermissions.CHANGE)
 
         self.note_1 = baker.make(Note, organization=self.org_1)
         self.note_2 = baker.make(Note, organization=self.org_2)
 
     def _prepare(self, extension: PermissionedQuerySet, organization_id: Any) -> Any:
-        return extension._prepare_qs(_stub_info(self.user, organization_id))
+        return extension._prepare_qs(stub_info(self.user, organization_id))
 
     def test_scopes_to_the_active_organization(self) -> None:
         extension = PermissionedQuerySet(
@@ -134,7 +87,7 @@ class PermissionedQuerySetMultiPathTestCase(TestCase):
     def setUp(self) -> None:
         self.org_1 = organization_recipe.make(name="pqs_multi_org_1")
         self.org_2 = organization_recipe.make(name="pqs_multi_org_2")
-        self.user = _user_with_global_perm(ServiceRequestPermissions.DELETE)
+        self.user = user_with_global_perm(ServiceRequestPermissions.DELETE)
 
         self.note_1 = baker.make(Note, organization=self.org_1)
         self.note_2 = baker.make(Note, organization=self.org_2)
@@ -154,7 +107,7 @@ class PermissionedQuerySetMultiPathTestCase(TestCase):
             perms=[ServiceRequestPermissions.DELETE],
             organization_field=self.ORG_FIELDS,
         )
-        return extension._prepare_qs(_stub_info(self.user, organization_id))
+        return extension._prepare_qs(stub_info(self.user, organization_id))
 
     def test_matches_on_either_path(self) -> None:
         qs = self._prepare(self.org_1.pk)

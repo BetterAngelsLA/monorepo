@@ -20,6 +20,28 @@ logger = logging.getLogger(__name__)
 # ── Single-entity lookups ─────────────────────────────────────────────
 
 
+def organization_get_for_member(
+    *,
+    user: Union[AbstractBaseUser, AnonymousUser],
+    organization_id: object,
+) -> Optional[Organization]:
+    """Return the organization *organization_id* names, if *user* belongs to it.
+
+    ``None`` covers every way the lookup can fail — the id names no
+    organization, names one the user is not a member of, or is not a usable
+    id at all.  They are deliberately not distinguished: the caller reports a
+    single denial, so an unauthorised probe cannot use the error to learn
+    which organizations exist.
+
+    Membership, not permission.  Callers that need a permission on the
+    organization should use ``HasOrgPerm`` or ``permissioned_queryset``.
+    """
+    try:
+        return Organization.objects.filter(pk=str(organization_id), users=user).first()
+    except ValueError, TypeError:
+        return None
+
+
 def permission_group_for_user(user: User, org_id: str, template_name: str) -> PermissionGroup:
     """Return the ``PermissionGroup`` matching *template_name* for *user* in org *org_id*.
 

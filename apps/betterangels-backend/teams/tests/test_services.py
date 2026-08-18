@@ -58,6 +58,38 @@ class TeamCreateTestCase(TestCase):
         self.assertEqual(replacement.slug, "hollywood-outreach-2")
         self.assertEqual(replacement.name, "Hollywood Outreach")
 
+    def test_name_longer_than_the_column_is_a_validation_error(self) -> None:
+        """Services call ``full_clean()`` before ``save()``, per the styleguide.
+
+        Nothing else bounds the length — the GraphQL input is an unbounded
+        String — so without it the value reached Postgres and came back as
+        ``DataError: value too long for type character varying(255)``, a 500
+        rather than a message the caller can act on.
+        """
+        with self.assertRaises(ValidationError):
+            team_create(name="x" * 256, organization=self.org)
+
+        self.assertFalse(Team.objects.filter(organization=self.org).exists())
+
+    def test_a_name_at_the_column_limit_is_accepted(self) -> None:
+        """The derived slug is shorter than the name column, so it is truncated.
+
+        Found by adding ``full_clean()``: a 150-character name is legal
+        (``name`` allows 255) but produced a 150-character slug against a
+        column that allows 100.
+        """
+        team = team_create(name="x" * 255, organization=self.org)
+
+        self.assertEqual(len(team.name), 255)
+        self.assertLessEqual(len(team.slug), 100)
+
+    def test_truncated_slugs_stay_unique_within_the_org(self) -> None:
+        first = team_create(name="y" * 250, organization=self.org)
+        second = team_create(name="y" * 250 + " two", organization=self.org)
+
+        self.assertNotEqual(first.slug, second.slug)
+        self.assertLessEqual(len(second.slug), 100)
+
 
 class TeamUpdateTestCase(TestCase):
     def setUp(self) -> None:
@@ -94,3 +126,12 @@ class TeamUpdateTestCase(TestCase):
         self.team.refresh_from_db()
         self.assertEqual(self.team.name, "WDI On-site")
         self.assertEqual(Team.objects.filter(organization=self.org).count(), 1)
+
+    def test_rename_longer_than_the_column_is_a_validation_error(self) -> None:
+        original = self.team.name
+
+        with self.assertRaises(ValidationError):
+            team_update(team=self.team, name="y" * 256)
+
+        self.team.refresh_from_db()
+        self.assertEqual(self.team.name, original)

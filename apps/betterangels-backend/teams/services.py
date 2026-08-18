@@ -16,12 +16,19 @@ def _unique_slug_for_org(*, name: str, organization: Organization) -> str:
     an internal identifier and must never block a name the user can see is
     available.
     """
-    base = slugify(name)
+    # slug is shorter than name (100 vs 255), so a long-but-legal name can
+    # derive an over-long slug.  Truncate rather than reject: the slug is
+    # internal, and a name the column accepts must not be refused because of
+    # an identifier the user never sees.
+    limit: int = Team._meta.get_field("slug").max_length or 100
+
+    base = slugify(name)[:limit]
     slug = base
     suffix = 2
 
     while Team.objects.filter(slug=slug, organization=organization).exists():
-        slug = f"{base}-{suffix}"
+        tail = f"-{suffix}"
+        slug = f"{base[: limit - len(tail)]}{tail}"
         suffix += 1
 
     return slug
@@ -55,11 +62,19 @@ def team_create(
 
     _validate_name_available(name=name, organization=organization)
 
-    return Team.objects.create(
+    team = Team(
         slug=_unique_slug_for_org(name=name, organization=organization),
         name=name,
         organization=organization,
     )
+    # full_clean() before save(), per the styleguide.  Not ceremony: nothing
+    # else bounds the field lengths, so a 300-character name reached Postgres
+    # and came back as DataError -- a 500 rather than a message the caller can
+    # act on.
+    team.full_clean()
+    team.save()
+
+    return team
 
 
 @transaction.atomic
@@ -84,6 +99,7 @@ def team_update(
 
         team.name = name
 
+    team.full_clean()
     team.save()
     return team
 

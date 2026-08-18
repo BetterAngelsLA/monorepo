@@ -5,6 +5,7 @@ from typing import cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
+from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
@@ -36,7 +37,6 @@ class Query:
         holds no Team perms — gating on ``Team.perms.VIEW`` would break the
         team picker for exactly the people who use it.
         """
-        user = get_current_user(info)
         org_id = info.context.request.organization_id
 
         if org_id is None:
@@ -47,13 +47,11 @@ class Query:
             # organization's teams.
             raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
 
-        try:
-            org = Organization.objects.filter(pk=str(org_id), users=user).first()
-        except ValueError, TypeError:
-            # A malformed header should read as a denial, not a 500.
-            raise PermissionDenied("Organization ID (X-Organization-ID header) is not valid.") from None
+        org = organization_get_for_member(user=get_current_user(info), organization_id=org_id)
 
         if org is None:
+            # Unknown org, an org the user does not belong to, and a malformed
+            # header all report the same way — see the selector.
             raise PermissionDenied("You do not have access to this organization.")
 
         return team_list(organization=org)
