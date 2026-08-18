@@ -20,13 +20,14 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
 
+        self.team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
         self.task = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+                "teamId": str(self.team.pk),
             }
         )["data"]["createTask"]
 
@@ -60,6 +61,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "currentTeam": {"id": str(self.team.pk), "name": self.team.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
@@ -81,7 +83,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task 2 description",
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
-                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+                "teamId": str(self.team.pk),
             }
         )["data"]["createTask"]
 
@@ -102,6 +104,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "currentTeam": {"id": str(self.team.pk), "name": self.team.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},

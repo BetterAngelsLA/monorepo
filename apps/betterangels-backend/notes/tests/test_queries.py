@@ -29,6 +29,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
+        team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
         note_id = self.note["id"]
         task = self.create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
         # Build LocationInput for the fixture
@@ -47,7 +48,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
-                "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+                "teamId": str(team.pk),
             }
         )
         # Update location via dedicated mutation
@@ -84,6 +85,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "privateDetails": "Updated private details",
             "publicDetails": "Updated public details",
             "purpose": "Updated Note",
+            "currentTeam": {"id": str(team.pk), "name": team.name},
             "location": {
                 "id": ANY,
                 "address": {

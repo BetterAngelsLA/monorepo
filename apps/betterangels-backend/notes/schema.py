@@ -144,7 +144,7 @@ class Mutation:
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
-        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+        team_id = resolve_team_id_from_input(data)
 
         note = note_create(
             user=user,
@@ -176,13 +176,11 @@ class Mutation:
 
         qs: QuerySet[Note] = info.context.qs
 
-        # Resolve deprecated team enum / new teamId → FK before asdict.
-        team_id = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
+        # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
+        # make setattr store the wrapper rather than the id.
+        team_id = resolve_team_id_from_input(data)
 
         clean = asdict(data)
-        # Pop Maybe-wrapped team fields so setattr doesn't choke on them.
-        clean.pop("team", None)
-        clean.pop("team_id", None)
         clean["team_id"] = team_id
 
         note = get_object_or_permission_error(qs, data.id)
@@ -338,7 +336,7 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=resolve_team_id_from_input(data.note, organization_id=permission_group.organization_id),
+                    team_id=resolve_team_id_from_input(data.note),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

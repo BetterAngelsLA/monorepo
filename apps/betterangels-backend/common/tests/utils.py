@@ -201,13 +201,16 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Create Team objects matching SelahTeamEnum values for backward
-        # compatibility with the deprecated ``team`` GraphQL field.
+        # Every org gets one team per legacy enum value. The enum is only a
+        # convenient list of slugs here — nothing in the API exposes it any
+        # more — and it keeps these fixtures aligned with the teams the June
+        # data migration created in production.
         for org in (self.org_1, self.org_2):
             for team_value in SelahTeamEnum.values:
                 Team.objects.get_or_create(
                     slug=team_value,
                     organization=org,
+                    defaults={"name": team_value.replace("_", " ").title()},
                 )
 
         # Permission groups are created by create_organization_with_presets

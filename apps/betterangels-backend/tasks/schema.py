@@ -53,9 +53,7 @@ class Mutation:
 
         task_data = asdict(data)
 
-        # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
-        task_data["team_id"] = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
-        task_data.pop("team", None)
+        task_data["team_id"] = resolve_team_id_from_input(data)
 
         # Resolve FK references
         note = None
@@ -93,13 +91,13 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
-        # Resolve team before asdict.
         task: Task = qs.get(pk=data.id)
-        team_id = resolve_team_id_from_input(data, organization_id=task.organization_id or 0)
+
+        # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
+        # make setattr store the wrapper rather than the id.
+        team_id = resolve_team_id_from_input(data)
 
         clean = asdict(data)
-        clean.pop("team", None)
-        clean.pop("team_id", None)
         clean["team_id"] = team_id
 
         task = task_update(task=task, data=clean)

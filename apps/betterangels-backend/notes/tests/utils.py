@@ -16,6 +16,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             createdBy {
                 id
             }
+            currentTeam {
+                id
+                name
+            }
             interactedAt
             isSubmitted
             privateDetails

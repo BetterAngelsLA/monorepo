@@ -1,17 +1,18 @@
-"""TEMPORARY SHIM — REMOVE WITH THE ``old_team`` COLUMNS.
+"""Strawberry ``Maybe`` unwrapping for team references.
 
-The deprecated ``team`` enum inputs are gone from the API, so this no longer
-resolves slugs; it only unwraps Strawberry's ``Maybe[ID]`` for ``team_id``.
-``resolve_team_id`` keeps its slug argument for the database-level migration
-that still reads ``old_team``.  Delete the module once that lands.
+Named a shim because it began as one: it translated the deprecated
+``SelahTeamEnum`` ``team`` input into a ``teams.Team`` FK.  That input is gone
+from the API, so nothing here resolves slugs any more — what remains unwraps
+``Maybe[ID]`` into the ``int | None`` the note/task services expect.
+
+Both remaining helpers are superseded by ``common.graphql.utils`` and this
+module is deleted once its callers migrate.
 """
 
 from typing import Any, Protocol
 
 import strawberry
 from strawberry import ID, Maybe
-
-from teams.models import Team
 
 
 class HasTeamFields(Protocol):
@@ -28,45 +29,18 @@ def maybe_value(maybe: Any) -> Any:
     return maybe
 
 
-def resolve_team_id_from_input(
-    data: HasTeamFields,
-    *,
-    organization_id: int,
-) -> int | None:
-    """TEMPORARY: Resolve the team FK from a Strawberry mutation input.
+def resolve_team_id_from_input(data: HasTeamFields) -> int | None:
+    """Unwrap ``team_id`` from a Strawberry mutation input.
 
-    Unwraps ``Maybe[ID]`` for ``team_id``.
+    Returns ``None`` when the field was omitted *and* when it was explicitly
+    set to null — callers that need to tell those apart should read
+    ``data.team_id`` directly.
 
     Usage in mutations::
 
-        team_id = resolve_team_id_from_input(data, organization_id=org_id)
+        team_id = resolve_team_id_from_input(data)
     """
-    team_id: int | None = None
-
-    if (raw_team_id := maybe_value(data.team_id)) is not None:
-        team_id = int(raw_team_id.value) if raw_team_id.value is not None else None  # type: ignore[union-attr]
-
-    return resolve_team_id(team_id=team_id, organization_id=organization_id)
-
-
-def resolve_team_id(
-    team_slug: str | None = None,
-    team_id: int | None = None,
-    *,
-    organization_id: int,
-) -> int | None:
-    """TEMPORARY: Resolve a team reference to a Team FK, preferring *team_id*.
-
-    Callers should pass the slug extracted from the deprecated ``team`` enum's
-    ``.value`` (e.g. ``"wdi_on_site"``).  Remove when the deprecated ``team``
-    field is dropped from the schema.
-    """
-    if team_id is not None:
-        return team_id
-    if team_slug is None:
+    if (raw_team_id := maybe_value(data.team_id)) is None:
         return None
 
-    try:
-        return Team.objects.get(slug=team_slug, organization_id=organization_id).pk
-    except Team.DoesNotExist:
-        return None
+    return int(raw_team_id.value) if raw_team_id.value is not None else None  # type: ignore[union-attr]

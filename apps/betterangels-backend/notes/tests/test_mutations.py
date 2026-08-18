@@ -1,4 +1,3 @@
-from teams.models import Team
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -7,6 +6,7 @@ from django.test import ignore_warnings
 from django.utils import timezone
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
+from teams.models import Team
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
@@ -42,12 +42,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "purpose": "New note purpose",
             "requestedServices": [],
+            "currentTeam": None,
             "tasks": [],
         }
         self.assertEqual(created_note, expected_note)
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
+        team = Team.objects.get(slug="wdi_on_site", organization=self.org_1)
         json_address_input, _ = self._get_address_inputs()
         location_input = {
             "address": json_address_input,
@@ -57,7 +59,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "teamId": str(Team.objects.get(slug="wdi_on_site", organization=self.org_1).pk),
+            "teamId": str(team.pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -65,7 +67,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 20
+        expected_query_count = 21
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -73,6 +75,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
+            "currentTeam": {"id": str(team.pk), "name": team.name},
             "tasks": [],
             "location": {
                 "id": ANY,
@@ -121,6 +124,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "requestedServices": [],
+            "currentTeam": None,
             "tasks": [],
         }
         self.assertEqual(updated_note, expected_note)
