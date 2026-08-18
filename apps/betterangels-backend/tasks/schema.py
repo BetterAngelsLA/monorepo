@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -8,7 +8,6 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_int_value
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -51,9 +50,11 @@ class Mutation:
         current_user = cast(User, get_current_user(info))
         permission_group = resolve_permission_group(current_user, template=CASEWORKER)
 
-        task_data = asdict(data)
+        task_data: dict[str, Any] = asdict(data)
 
-        task_data["team_id"] = maybe_int_value(data.team_id)
+        # See update_task: asdict handles the Maybe states; narrow the id only.
+        if task_data.get("team_id") is not None:
+            task_data["team_id"] = int(task_data["team_id"])
 
         # Resolve FK references
         note = None
@@ -93,12 +94,12 @@ class Mutation:
 
         task: Task = qs.get(pk=data.id)
 
-        # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
-        # make setattr store the wrapper rather than the id.
-        team_id = maybe_int_value(data.team_id)
-
-        clean = asdict(data)
-        clean["team_id"] = team_id
+        clean: dict[str, Any] = asdict(data)
+        # ``asdict`` already resolves the tri-state: it unwraps ``Some``, keeps an
+        # explicit null, and omits the key entirely when the field was absent.
+        # Only the ID needs narrowing from str to int.
+        if clean.get("team_id") is not None:
+            clean["team_id"] = int(clean["team_id"])
 
         task = task_update(task=task, data=clean)
 

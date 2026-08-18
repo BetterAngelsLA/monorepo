@@ -112,6 +112,18 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         }
         self.assertEqual(updated_task, expected_task)
 
+    def test_update_task_omitted_team_id_preserves_team(self) -> None:
+        """Regression: an update that never mentions teamId used to clear it."""
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(team.pk)})["data"]["createTask"][
+            "id"
+        ]
+
+        response = self.update_task_fixture({"id": task_id, "summary": "updated summary"})
+
+        self.assertIsNotNone(response["data"]["updateTask"])
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, team.pk)
+
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 

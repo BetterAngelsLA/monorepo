@@ -129,6 +129,16 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(updated_note, expected_note)
 
+    def test_update_note_omitted_team_id_preserves_team(self) -> None:
+        """Regression: an update that never mentions teamId used to clear it."""
+        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(team.pk)})
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
+
+        self.assertIsNotNone(response["data"]["updateNote"])
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, team.pk)
+
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")

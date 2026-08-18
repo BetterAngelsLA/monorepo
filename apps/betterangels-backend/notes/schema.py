@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -176,12 +176,12 @@ class Mutation:
 
         qs: QuerySet[Note] = info.context.qs
 
-        # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
-        # make setattr store the wrapper rather than the id.
-        team_id = maybe_int_value(data.team_id)
-
-        clean = asdict(data)
-        clean["team_id"] = team_id
+        clean: dict[str, Any] = asdict(data)
+        # ``asdict`` already resolves the tri-state: it unwraps ``Some``, keeps an
+        # explicit null, and omits the key entirely when the field was absent.
+        # Only the ID needs narrowing from str to int.
+        if clean.get("team_id") is not None:
+            clean["team_id"] = int(clean["team_id"])
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
