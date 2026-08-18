@@ -5,6 +5,7 @@ import { TeamsDocument, TeamsQuery } from './__generated__/teams.generated';
 type UseOrgTeamsOptions = {
   limit?: number;
   offset?: number;
+  isActive?: boolean | null;
 };
 
 /**
@@ -12,14 +13,16 @@ type UseOrgTeamsOptions = {
  *
  * Passes a high default limit (10000) to ensure all teams are available
  * in dropdowns and selects. Handles loading and error states internally.
+ *
+ * Only fetch active teams by default.
  */
 export function useOrgTeams(options: UseOrgTeamsOptions = {}) {
-  const { limit = 10000, offset = 0 } = options;
+  const { limit = 10000, offset = 0, isActive = true } = options;
 
   const pagination: OffsetPaginationInput = { limit, offset };
 
   const { data, loading, error } = useQuery<TeamsQuery>(TeamsDocument, {
-    variables: { pagination },
+    variables: { pagination, filters: { isActive } },
     fetchPolicy: 'cache-and-network',
   });
 
