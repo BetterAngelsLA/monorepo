@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.db import transaction
+from django.db import OperationalError, ProgrammingError, transaction
 from organizations.models import Organization
 
 from .models import PermissionGroupTemplate, User
@@ -96,12 +96,24 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
-    # The accounts app tables may not be ready when this fires for other
-    # apps; skip gracefully until the final post_migrate run.
+    # A full `migrate` applies every migration before emitting post_migrate,
+    # so the tables always exist by the time this runs.  A *targeted*
+    # `migrate <app>` can fire it against a database where another app's
+    # tables are still missing -- tolerate only that, and only loudly.
+    #
+    # Anything else must propagate.  This used to swallow every exception and
+    # return, which also skipped _sync_template_permissions() below: a deploy
+    # could silently leave every organization on stale permissions and still
+    # report success.
     try:
         for org in Organization.objects.all():
             reconcile(org)
-    except Exception:
+    except ProgrammingError, OperationalError:
+        logger.warning(
+            "Skipping organization permission sync: the schema is incomplete. "
+            "Expected only during a targeted `migrate <app>`; a full migrate should never reach this.",
+            exc_info=True,
+        )
         return
 
     _sync_template_permissions()
@@ -133,7 +145,9 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
             permission_templates=(SHELTER_OPERATOR, CASEWORKER),
         )
     except Exception:
-        pass
+        # Local-dev convenience only -- never fail a migrate for it, but do
+        # not hide it either.
+        logger.warning("Could not assign local dev test-agent roles.", exc_info=True)
 
 
 def _sync_template_permissions() -> None:
