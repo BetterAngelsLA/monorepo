@@ -8,8 +8,8 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import maybe_int_value
 from common.permissions.utils import IsAuthenticated
-from common.team_shim import resolve_team_id_from_input
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
@@ -53,7 +53,7 @@ class Mutation:
 
         task_data = asdict(data)
 
-        task_data["team_id"] = resolve_team_id_from_input(data)
+        task_data["team_id"] = maybe_int_value(data.team_id)
 
         # Resolve FK references
         note = None
@@ -95,7 +95,7 @@ class Mutation:
 
         # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
         # make setattr store the wrapper rather than the id.
-        team_id = resolve_team_id_from_input(data)
+        team_id = maybe_int_value(data.team_id)
 
         clean = asdict(data)
         clean["team_id"] = team_id

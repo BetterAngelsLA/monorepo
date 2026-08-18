@@ -14,8 +14,8 @@ from common.graphql.types import (
 )
 from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment
+from common.graphql.utils import maybe_int_value
 from common.permissions.utils import IsAuthenticated
-from common.team_shim import resolve_team_id_from_input
 from common.services.types import UploadRequest, UploadConfirmation
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -144,7 +144,7 @@ class Mutation:
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
-        team_id = resolve_team_id_from_input(data)
+        team_id = maybe_int_value(data.team_id)
 
         note = note_create(
             user=user,
@@ -178,7 +178,7 @@ class Mutation:
 
         # Unwrap team_id before asdict, which would leave it Maybe-wrapped and
         # make setattr store the wrapper rather than the id.
-        team_id = resolve_team_id_from_input(data)
+        team_id = maybe_int_value(data.team_id)
 
         clean = asdict(data)
         clean["team_id"] = team_id
@@ -336,7 +336,7 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=resolve_team_id_from_input(data.note),
+                    team_id=maybe_int_value(data.note.team_id),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""
