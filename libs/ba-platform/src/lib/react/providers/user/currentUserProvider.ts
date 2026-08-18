@@ -1,5 +1,4 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { localStorageAdapter } from '@monorepo/react/shared';
 import { createUserProvider } from './createUserProvider';
 import {
   CurrentOrgUserDocument,
@@ -29,7 +28,6 @@ export type CurrentUser = {
 
 const { UserProvider, useUser } = createUserProvider({
   document: CurrentOrgUserDocument,
-  defaultStorage: localStorageAdapter,
   parseUser: (data): CurrentUser | undefined => {
     const user = data as CurrentOrgUserQuery['currentUser'] | undefined;
     if (!user) return undefined;

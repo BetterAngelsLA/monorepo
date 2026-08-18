@@ -1,6 +1,10 @@
 import { HttpLink } from '@apollo/client';
-import { createWebFetchClient } from '@monorepo/ba-platform/web';
-import { ApolloClientProvider, getGraphqlUrl } from '@monorepo/ba-platform';
+import { createWebFetchClient, webActiveOrgStorage } from '@monorepo/ba-platform/web';
+import {
+  ApolloClientProvider,
+  configureActiveOrgStorage,
+  getGraphqlUrl,
+} from '@monorepo/ba-platform';
 import {
   ApiConfigProvider,
   AuthProvider,
@@ -11,6 +15,10 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { apiUrl } from '../config';
 import App from './app/app';
+
+// Install the active-org backing before anything can issue a request, so the
+// X-Organization-ID interceptor can read the remembered org synchronously.
+configureActiveOrgStorage(webActiveOrgStorage);
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 // createWebFetchClient() is URL-agnostic — CSRF cookies are origin-scoped

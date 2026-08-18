@@ -1,6 +1,5 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { createUserProvider } from '@monorepo/ba-platform';
-import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -33,7 +32,6 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  defaultStorage: asyncStorageAdapter,
   parseUser: (
     data: unknown
   ): TUser | undefined => {

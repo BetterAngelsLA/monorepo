@@ -6,7 +6,11 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
-import { createExpoFetchClient } from '@monorepo/ba-platform/expo';
+import { configureActiveOrgStorage } from '@monorepo/ba-platform';
+import {
+  createExpoFetchClient,
+  expoActiveOrgStorage,
+} from '@monorepo/ba-platform/expo';
 import { createBaTypePolicies } from '@monorepo/expo/betterangels';
 import {
   createRefererInterceptor,
@@ -24,6 +28,11 @@ export const isGqlDebug =
   process.env['NODE_ENV'] !== 'production';
 
 // ---- One-time side effects ----
+
+// Install the active-org backing before anything can issue a request, so the
+// X-Organization-ID interceptor can read the remembered org synchronously.
+// MMKV rather than AsyncStorage precisely because that read cannot await.
+configureActiveOrgStorage(expoActiveOrgStorage);
 
 // Hide the expo-dev-menu floating "Tools" FAB on iOS dev clients
 // (overlaps `nav-menu-btn`). No-op in production / store builds and on

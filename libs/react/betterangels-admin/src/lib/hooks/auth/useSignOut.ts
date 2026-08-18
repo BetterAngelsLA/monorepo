@@ -1,4 +1,5 @@
 import { useApolloClient, useMutation } from '@apollo/client/react';
+import { clearActiveOrgId } from '@monorepo/ba-platform';
 import { useCallback } from 'react';
 import { useUser } from '../../providers';
 import { LogoutDocument } from './__generated__/auth.generated';
@@ -12,6 +13,9 @@ export default function useSignOut() {
     try {
       await logout();
       await client.clearStore();
+      // The next user on this browser must not inherit this one's active
+      // organization, and the header must stop being sent immediately.
+      clearActiveOrgId();
       setUser(undefined);
     } catch (err) {
       console.error(err);

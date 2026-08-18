@@ -1,4 +1,5 @@
 import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { clearActiveOrgId } from '../activeOrg';
 import { ApiConfigProvider } from './ApiConfigProvider';
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,10 @@ export const EnvironmentSwitcherProvider = ({
     async (env: string) => {
       if (env === envName) return;
       await storage.setItem(storageKey, env);
+      // Organization ids are per-environment: the remembered one names a row
+      // in the old environment's database and would be sent as a header
+      // against the new one until the org list reloads and reconciles.
+      clearActiveOrgId();
       setEnvName(env);
     },
     [envName, storage, storageKey]

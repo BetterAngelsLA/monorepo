@@ -10,7 +10,6 @@ export type FetchInterceptor = (
 
 export type TokenReader = (name: string) => Promise<string | null>;
 export type TokenRefresher = (url: string) => Promise<void>;
-export type StorageReader = { getItem: (key: string) => string | null | Promise<string | null> };
 
 /**
  * Callback invoked after a CSRF token refresh so that the platform can
@@ -123,14 +122,20 @@ export const createCsrfInterceptor = (
 // ---------------------------------------------------------------------------
 
 /**
- * Inject the ``X-Organization-ID`` header from a storage backend.
+ * Inject the ``X-Organization-ID`` header from a synchronous reader.
+ *
+ * Takes a reader rather than a storage adapter deliberately. Reading storage
+ * here made the header lag the UI: the active organization is chosen in React,
+ * and on React Native the write to ``AsyncStorage`` completes a round trip
+ * later, so requests fired in between went out header-less. The reader is
+ * expected to return the id the application currently considers active,
+ * without I/O — see ``getActiveOrgId`` in ``@monorepo/ba-platform``.
  */
 export const createOrgInterceptor = (
-  storage: StorageReader,
-  storageKey = 'betterangels_active_org_id',
+  readOrgId: () => string | null,
 ): FetchInterceptor =>
   async (_input, init, next) => {
-    const orgId = await storage.getItem(storageKey);
+    const orgId = readOrgId();
     if (!orgId) return next(_input, init);
     const headers = new Headers(init.headers);
     headers.set('X-Organization-ID', orgId);

@@ -1,22 +1,18 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
-import { type StorageAdapter } from '@monorepo/react/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import { DEFAULT_ORG_STORAGE_KEY } from '../../../constants';
+import {
+  getActiveOrgId,
+  setActiveOrgId as commitActiveOrgId,
+  subscribeActiveOrgId,
+} from '../../../activeOrg';
 
 /** Minimal org shape consumed by the active-org state. */
 export interface Org {
   id: string;
   name: string;
   permissions: readonly PermissionEnum[];
-}
-
-interface UseActiveOrgStateOptions {
-  /** Storage adapter (e.g. :const:`localStorageAdapter` for web, :const:`asyncStorageAdapter` for Expo). */
-  storage: StorageAdapter;
-  /** Storage key — defaults to ``'betterangels_active_org_id'``. */
-  storageKey?: string;
 }
 
 export interface ActiveOrgState {
@@ -31,96 +27,66 @@ export interface ActiveOrgState {
 }
 
 /**
- * Shared state management for active organization selection.
+ * Active organization selection, backed by the module-level active-org store.
+ *
+ * The id itself lives in ``../../../activeOrg`` rather than in ``useState``,
+ * because the ``X-Organization-ID`` fetch interceptor has to read it and is not
+ * a component. Keeping one synchronously-written value means a request can
+ * never go out with a header that disagrees with what the UI is showing, so
+ * consumers can query on ``activeOrg`` alone — no readiness flag to wait on.
+ *
+ * This hook owns *validation*: the store holds whatever it is told, and this is
+ * the only thing that knows which organizations the user belongs to.
  */
-export function useActiveOrgState(
-  organizations: Org[],
-  options: UseActiveOrgStateOptions
-): ActiveOrgState {
-  const {
-    storage,
-    storageKey = DEFAULT_ORG_STORAGE_KEY,
-  } = options;
+export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
+  // Reconcile the store against the organizations the user actually has —
+  // during render, deliberately, *before* reading the snapshot below.
+  //
+  // This cannot be an effect. React runs effects child-before-parent, so a
+  // child's query would fire before this provider's effect had chosen an
+  // organization, and the request would go out with no header — the exact bug
+  // this store exists to remove. Running here means the store is correct
+  // before any child renders.
+  //
+  // Safe as a render-phase write because it is idempotent and derived purely
+  // from props: a discarded render can only publish the value a committed
+  // render would have published anyway, and running twice under StrictMode
+  // changes nothing.
+  const currentId = getActiveOrgId();
+  if (!currentId || !organizations.some((o) => o.id === currentId)) {
+    commitActiveOrgId(organizations[0]?.id ?? null);
+  }
 
-  const [activeOrgId, setActiveOrgIdState] = useState<string | undefined>(
-    () => {
-      try {
-        const stored = storage.getItem(storageKey) as string | null;
-        if (stored && organizations.some((o) => o.id === stored)) {
-          return stored;
-        }
-      } catch {
-        // storage may be unavailable
-      }
-      return organizations[0]?.id;
-    }
+  const activeOrgId = useSyncExternalStore(
+    subscribeActiveOrgId,
+    getActiveOrgId,
+    getActiveOrgId,
   );
 
-  // Persist the active org ID to storage so that orgLink (Apollo link)
-  // can attach the X-Organization-ID header on every GraphQL request.
-  useEffect(() => {
-    if (activeOrgId) {
-      try {
-        storage.setItem(storageKey, activeOrgId);
-      } catch {
-        // storage may be unavailable
-      }
-    }
-  }, [activeOrgId, storage, storageKey]);
-
-  // Re-validate when the organizations list changes (e.g. after async load)
-  useEffect(() => {
-    if (activeOrgId && organizations.some((o) => o.id === activeOrgId)) {
-      return;
-    }
-    try {
-      const stored = storage.getItem(storageKey) as string | null;
-      if (stored && organizations.some((o) => o.id === stored)) {
-        setActiveOrgIdState(stored);
-        return;
-      }
-    } catch {
-      // storage may be unavailable
-    }
-    setActiveOrgIdState(organizations[0]?.id);
-    if (organizations[0]?.id) {
-      try {
-        storage.setItem(storageKey, organizations[0].id);
-      } catch {
-        // storage may be unavailable
-      }
-    }
-    // Intentionally omitting activeOrgId from deps to avoid a re-validation
-    // loop: this effect only needs to run when the organizations list changes
-    // (e.g. after the user query loads), not on every activeOrgId update.
-  }, [organizations, storage, storageKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const activeOrg = useMemo(
-    () => organizations.find((o) => o.id === activeOrgId) ?? organizations[0],
-    [organizations, activeOrgId]
+    () => organizations.find((o) => o.id === activeOrgId),
+    [organizations, activeOrgId],
   );
 
   const setActiveOrgId = useCallback(
     (orgId: string) => {
-      if (organizations.some((o) => o.id === orgId)) {
-        setActiveOrgIdState(orgId);
-      }
+      if (organizations.some((o) => o.id === orgId)) commitActiveOrgId(orgId);
     },
-    [organizations]
+    [organizations],
   );
 
   const permSet = useMemo(
     () => new Set(activeOrg?.permissions ?? []),
-    [activeOrg?.permissions]
+    [activeOrg?.permissions],
   );
 
   const hasPermission = useCallback(
     (permission: PermissionEnum): boolean => permSet.has(permission),
-    [permSet]
+    [permSet],
   );
 
   return useMemo(
     () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission]
+    [activeOrg, organizations, setActiveOrgId, hasPermission],
   );
 }

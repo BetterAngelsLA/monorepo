@@ -5,7 +5,6 @@ export {
   type FetchInterceptor,
   type TokenReader,
   type TokenRefresher,
-  type StorageReader,
   type CookiePersister,
   composeFetchInterceptors,
   createCsrfInterceptor,

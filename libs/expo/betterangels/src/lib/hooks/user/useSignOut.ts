@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
 import { useApolloClient, useMutation } from '@apollo/client/react';
+import { clearActiveOrgId } from '@monorepo/ba-platform';
 import { useCallback } from 'react';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
@@ -29,6 +30,9 @@ export default function useSignOut() {
     }
     await CookieManager.clearAll();
     await client.clearStore();
+    // The next user on this device must not inherit this one's active
+    // organization, and the header must stop being sent immediately.
+    clearActiveOrgId();
     setUser(undefined);
   }, [logout, setUser, client]);
 

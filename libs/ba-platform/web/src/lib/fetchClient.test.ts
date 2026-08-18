@@ -13,6 +13,11 @@ if (typeof Response === 'undefined') {
   } as unknown as typeof Response;
 }
 
+import {
+  configureActiveOrgStorage,
+  resetActiveOrgStoreForTests,
+} from '@monorepo/ba-platform';
+import { webActiveOrgStorage } from './activeOrgStorage';
 import { createWebFetchClient } from './fetchClient';
 
 describe('createWebFetchClient', () => {
@@ -41,10 +46,14 @@ describe('createWebFetchClient', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    resetActiveOrgStoreForTests();
   });
 
-  it('injects X-Organization-ID header when org is stored', async () => {
+  it('injects X-Organization-ID header from the active-org store', async () => {
+    // Seeded through the store's own backing, which is what the interceptor
+    // reads — localStorage is now only how that backing persists.
     window.localStorage.setItem('betterangels_active_org_id', 'org-1');
+    configureActiveOrgStorage(webActiveOrgStorage);
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
     const fetchClient = createWebFetchClient();
@@ -58,7 +67,8 @@ describe('createWebFetchClient', () => {
     expect(headers.get('x-csrftoken')).toBe('csrf-abc');
   });
 
-  it('omits X-Organization-ID header when no org stored', async () => {
+  it('omits X-Organization-ID header when there is no active org', async () => {
+    configureActiveOrgStorage(webActiveOrgStorage);
     document.cookie = 'csrftoken=csrf-abc; Path=/';
 
     const fetchClient = createWebFetchClient();

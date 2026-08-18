@@ -132,27 +132,59 @@ describe('createCsrfInterceptor', () => {
 });
 
 describe('createOrgInterceptor', () => {
-  it('injects Org header when stored', async () => {
-    const storage = { getItem: vi.fn().mockResolvedValue('org-1') };
+  it('injects the Org header from the reader', async () => {
     const next = vi.fn().mockResolvedValue(new Response());
 
-    const interceptor = createOrgInterceptor(storage, 'org_key');
+    const interceptor = createOrgInterceptor(() => 'org-1');
     await interceptor('/api', {}, next);
 
     const init = next.mock.calls[0][1] as RequestInit;
     expect(new Headers(init.headers).get('X-Organization-ID')).toBe('org-1');
   });
 
-  it('passes through when no org stored', async () => {
-    const storage = { getItem: vi.fn().mockResolvedValue(null) };
+  it('passes through when there is no active org', async () => {
     const next = vi.fn().mockResolvedValue(new Response());
 
-    const interceptor = createOrgInterceptor(storage, 'org_key');
+    const interceptor = createOrgInterceptor(() => null);
     await interceptor('/api', { headers: { Authorization: 'Bearer x' } }, next);
 
     const init = next.mock.calls[0][1] as RequestInit;
     const h = new Headers(init.headers);
     expect(h.get('X-Organization-ID')).toBeNull();
     expect(h.get('Authorization')).toBe('Bearer x');
+  });
+
+  it('reads the current value per request, not once at construction', async () => {
+    // Switching organizations must affect the very next request; the reader is
+    // called per request precisely so a long-lived client picks up the change.
+    let orgId: string | null = 'org-1';
+    const interceptor = createOrgInterceptor(() => orgId);
+    const next = vi.fn().mockResolvedValue(new Response());
+
+    await interceptor('/api', {}, next);
+    orgId = 'org-2';
+    await interceptor('/api', {}, next);
+
+    const headerFor = (call: number) =>
+      new Headers((next.mock.calls[call][1] as RequestInit).headers).get(
+        'X-Organization-ID',
+      );
+    expect(headerFor(0)).toBe('org-1');
+    expect(headerFor(1)).toBe('org-2');
+  });
+
+  it('does not await — the reader must be synchronous', async () => {
+    // A promise-returning reader would stringify into the header, which is how
+    // the original AsyncStorage bug would have manifested if the type allowed it.
+    const interceptor = createOrgInterceptor(() => 'org-1');
+    const next = vi.fn().mockResolvedValue(new Response());
+
+    await interceptor('/api', {}, next);
+
+    const value = new Headers(
+      (next.mock.calls[0][1] as RequestInit).headers,
+    ).get('X-Organization-ID');
+    expect(value).not.toContain('Promise');
+    expect(value).toBe('org-1');
   });
 });

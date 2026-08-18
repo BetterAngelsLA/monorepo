@@ -6,6 +6,11 @@
 
 import type { FetchInterceptor } from '@monorepo/fetch';
 
+import {
+  configureActiveOrgStorage,
+  resetActiveOrgStoreForTests,
+} from '@monorepo/ba-platform';
+
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
@@ -19,6 +24,19 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
   setItem: vi.fn((key: string, value: string) => {
     mockAsyncStorage[key] = value;
     return Promise.resolve();
+  }),
+}));
+
+const mockMmkv: Record<string, string> = {};
+vi.mock('react-native-mmkv', () => ({
+  createMMKV: () => ({
+    getString: (key: string) => mockMmkv[key],
+    set: (key: string, value: string) => {
+      mockMmkv[key] = value;
+    },
+    remove: (key: string) => {
+      delete mockMmkv[key];
+    },
   }),
 }));
 
@@ -54,6 +72,7 @@ vi.mock('@monorepo/expo/shared/clients', () => ({
   }) as FetchInterceptor,
 }));
 
+import { expoActiveOrgStorage } from './activeOrgStorage';
 import { createExpoFetchClient } from './fetchClient';
 
 // ---------------------------------------------------------------------------
@@ -72,10 +91,15 @@ describe('createExpoFetchClient', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    resetActiveOrgStoreForTests();
+    Object.keys(mockMmkv).forEach((k) => delete mockMmkv[k]);
   });
 
-  it('injects X-Organization-ID header when org is stored', async () => {
-    mockAsyncStorage['betterangels_active_org_id'] = 'org-expo';
+  it('injects X-Organization-ID header from the active-org store', async () => {
+    // Seeded through MMKV, the synchronous backing — not AsyncStorage, whose
+    // round trip is what used to make the header lag the UI.
+    mockMmkv['betterangels_active_org_id'] = 'org-expo';
+    configureActiveOrgStorage(expoActiveOrgStorage);
 
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'POST' });
@@ -87,7 +111,8 @@ describe('createExpoFetchClient', () => {
     expect(headers.get('X-Organization-ID')).toBe('org-expo');
   });
 
-  it('omits X-Organization-ID header when no org stored', async () => {
+  it('omits X-Organization-ID header when there is no active org', async () => {
+    configureActiveOrgStorage(expoActiveOrgStorage);
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'GET' });
 
