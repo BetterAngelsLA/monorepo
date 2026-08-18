@@ -27,6 +27,9 @@
       "@monorepo/ba-platform/permissions": [
         "./libs/ba-platform/permissions/src/index.ts"
       ],
+      "@monorepo/ba-platform/testing": [
+        "./libs/ba-platform/src/testing.ts"
+      ],
       "@monorepo/ba-platform/types": ["./libs/ba-platform/src/types.ts"],
       "@monorepo/ba-platform/web": ["./libs/ba-platform/web/src/index.ts"],
       "@monorepo/ba-platform/expo": ["./libs/ba-platform/expo/src/index.ts"],

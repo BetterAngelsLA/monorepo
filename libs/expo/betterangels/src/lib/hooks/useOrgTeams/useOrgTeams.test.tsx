@@ -11,9 +11,10 @@ import {
   getActiveOrgId,
   type ActiveOrgPersistence,
 } from '@monorepo/ba-platform';
+import { resetActiveOrgStoreForTests } from '@monorepo/ba-platform/testing';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useOrgTeams } from './useOrgTeams';
 
@@ -69,6 +70,12 @@ function createRecordingClient() {
 }
 
 describe('useOrgTeams', () => {
+  // Each test configures its own storage, which also marks the store
+  // unseeded -- but relying on that would make isolation a side effect of
+  // the lazy-seed design. Reset explicitly so a test that reads the store
+  // before the first seed still starts clean.
+  beforeEach(resetActiveOrgStoreForTests);
+
   function renderWith(organizations: readonly (typeof ORG)[]) {
     const { client, orgIdPerOperation } = createRecordingClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
