@@ -1,4 +1,3 @@
-import { jsPDF } from 'jspdf';
 import { RefObject, useCallback, useState } from 'react';
 
 /**
@@ -17,8 +16,13 @@ export function useExportPdf(
 
     setIsExporting(true);
     try {
-      // Dynamic import keeps html2canvas-pro out of the initial bundle.
-      const { default: html2canvas } = await import('html2canvas-pro');
+      // Both libraries are heavy and only needed on export, so they stay out
+      // of the initial bundle and load together when the user asks for a PDF.
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf'),
+      ]);
+
       const canvas = await html2canvas(node, {
         scale: 2,
         backgroundColor: '#ffffff',
