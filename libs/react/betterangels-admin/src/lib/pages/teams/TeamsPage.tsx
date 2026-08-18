@@ -27,12 +27,15 @@ type IProps = {
 
 type SortField = 'name' | 'createdAt';
 
+const teamDisplayName = (t: TeamType) =>
+  t.isActive === false ? `${t.name} (Inactive)` : t.name;
+
 const COLUMNS: {
   label: string;
   field: SortField;
   render: (t: TeamType) => string | JSX.Element;
 }[] = [
-  { label: 'Name', field: 'name', render: (t) => t.name },
+  { label: 'Name', field: 'name', render: (t) => teamDisplayName(t) },
   {
     label: 'Created',
     field: 'createdAt',
@@ -52,6 +55,7 @@ export function TeamsPage(props: IProps) {
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [sort, setSort] = useState<{
     field: SortField;
     direction: Ordering;
@@ -67,7 +71,10 @@ export function TeamsPage(props: IProps) {
 
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    { fetchPolicy: 'cache-and-network' },
+    {
+      variables: { filters: { isActive: showInactive ? null : true } },
+      fetchPolicy: 'cache-and-network',
+    },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
@@ -178,8 +185,17 @@ export function TeamsPage(props: IProps) {
       </div>
 
       <div className="flex items-center justify-between gap-5 mb-6">
-        <div>
+        <div className="flex items-center gap-4">
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+            />
+            Show inactive teams
+          </label>
         </div>
         {hasPermission(TeamPermissions.Add) && (
           <button
@@ -232,7 +248,7 @@ export function TeamsPage(props: IProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 text-sm truncate">
-                        {team.name}
+                        {teamDisplayName(team)}
                       </div>
                       <div className="text-xs text-gray-500">
                         Created {formatCreatedDate(team.createdAt)}
