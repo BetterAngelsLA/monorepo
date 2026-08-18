@@ -59,11 +59,13 @@ class Mutation:
         if team is None:
             raise ValueError(f"Team with id {data.id} not found.")
 
-        clean = strawberry.asdict(data)
-
         return cast(
             TeamType,
-            team_update(team=team, data=clean),
+            team_update(
+                team=team,
+                name=data.name.value if data.name else None,
+                is_active=data.is_active.value if data.is_active else None,
+            ),
         )
 
     @strawberry_django.mutation(

@@ -1,5 +1,6 @@
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
+from unittest_parametrize import parametrize
 
 from teams.models import Team
 
@@ -39,9 +40,29 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(team["name"], "new name")
         self.assertFalse(team["isActive"])
 
-    def test_update_team_mutation_invalid_name(self) -> None:
+    @parametrize(
+        "field, value",
+        [("name", "new name"), ("isActive", False)],
+    )
+    def test_update_team_mutation_partial(self, field: str, value: str | bool) -> None:
+        team = baker.make(Team, name="name", organization=self.org)
+        variables = {"id": team.pk, field: value}
+
+        response = self.update_team_fixture(variables)
+        team = response["data"]["updateTeam"]
+
+        self.assertEqual(team[field], value)
+
+    @parametrize(
+        "new_name",
+        [
+            ("---",),
+            ("   ",),
+        ],
+    )
+    def test_update_team_mutation_invalid_name(self, new_name: str) -> None:
         """Empty/whitespace-only names are rejected and no partial update occurs."""
-        team = baker.make(Team, name="old name", organization=self.org)
+        team = baker.make(Team, name="name", organization=self.org)
         variables = {"id": team.pk, "name": "   "}
 
         response = self.update_team_fixture(variables)
@@ -54,7 +75,7 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         )
 
         team.refresh_from_db()
-        self.assertEqual(team.name, "old name")
+        self.assertEqual(team.name, "name")
 
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
