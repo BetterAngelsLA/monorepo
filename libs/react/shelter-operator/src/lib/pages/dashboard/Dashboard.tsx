@@ -207,7 +207,7 @@ export function Dashboard() {
           />
         </label>
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <ShelterFilterPanel />
+          <ShelterFilterPanel sort={sort} onSortChange={handleSortChange} />
         </div>
       </form>
 

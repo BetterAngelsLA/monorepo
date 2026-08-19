@@ -1,21 +1,49 @@
+import { Ordering } from '@monorepo/ba-platform/types';
 import {
   FilterChip,
-  FilterDropdown,
   FilterSection,
+  useAppDrawer,
 } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { Filter, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Filter } from 'lucide-react';
 import {
   operatorShelterFiltersAtom,
   TOperatorShelterFilters,
 } from '../../atoms/shelterFiltersAtom';
+import type { SortDirection } from '../base-ui/table';
 import { Button } from '../base-ui/buttons';
 import { filterGroups } from './filterConfig';
 
-export function ShelterFilterPanel() {
+type SortableColumn = 'name' | 'capacity' | 'status';
+
+interface SortState {
+  column: SortableColumn;
+  direction: Ordering;
+}
+
+interface ShelterFilterPanelProps {
+  sort: SortState;
+  onSortChange: (column: string | null, direction: SortDirection | null) => void;
+}
+
+const SORT_OPTIONS: {
+  label: string;
+  column: SortableColumn;
+  direction: Ordering;
+}[] = [
+  { label: 'Name Ascending', column: 'name', direction: Ordering.Asc },
+  { label: 'Name Descending', column: 'name', direction: Ordering.Desc },
+  { label: 'Capacity Low to High', column: 'capacity', direction: Ordering.Asc },
+  { label: 'Capacity High to Low', column: 'capacity', direction: Ordering.Desc },
+];
+
+interface DrawerContentProps {
+  sort: SortState;
+  onSortChange: (column: string | null, direction: SortDirection | null) => void;
+}
+
+function SortFilterDrawerContent({ sort, onSortChange }: DrawerContentProps) {
   const [filters, setFilters] = useAtom(operatorShelterFiltersAtom);
-  const [searchTerm, setSearchTerm] = useState('');
 
   function toggleValue(group: string, value: string) {
     setFilters((prev: TOperatorShelterFilters) => {
@@ -34,44 +62,29 @@ export function ShelterFilterPanel() {
     }));
   }
 
-  const normalizedSearch = searchTerm.toLowerCase().trim();
-
   return (
-    <FilterDropdown
-      position="dropdown-end"
-      title={
-        <Button
-          variant="primary"
-          leftIcon={<Filter size={20} />}
-          rightIcon={false}
-        >
-          Filter
-        </Button>
-      }
-    >
-      <div className="relative mb-3">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-warm-70"
-        />
-        <input
-          type="text"
-          placeholder="Search"
-          className="w-full pl-8 pr-3 py-1.5 rounded-full border border-neutral-90 text-xs outline-none text-neutral-warm-70"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+    <div className="flex flex-col gap-4">
+      <FilterSection header="Sort">
+        {SORT_OPTIONS.map((opt) => {
+          const isActive =
+            sort.column === opt.column && sort.direction === opt.direction;
+          return (
+            <FilterChip
+              key={`${opt.column}-${opt.direction}`}
+              label={opt.label}
+              active={isActive}
+              onClick={() =>
+                onSortChange(
+                  opt.column,
+                  opt.direction === Ordering.Asc ? 'asc' : 'desc',
+                )
+              }
+            />
+          );
+        })}
+      </FilterSection>
 
       {filterGroups.map((group) => {
-        const visibleOptions = normalizedSearch
-          ? group.options.filter((opt) =>
-              opt.label.toLowerCase().includes(normalizedSearch),
-            )
-          : group.options;
-
-        if (normalizedSearch && visibleOptions.length === 0) return null;
-
         const groupValues =
           filters[group.name as keyof TOperatorShelterFilters] ?? [];
 
@@ -83,7 +96,7 @@ export function ShelterFilterPanel() {
               groupValues.length > 0 ? () => clearGroup(group.name) : undefined
             }
           >
-            {visibleOptions.map((opt) => (
+            {group.options.map((opt) => (
               <FilterChip
                 key={opt.value}
                 label={opt.label}
@@ -95,6 +108,31 @@ export function ShelterFilterPanel() {
           </FilterSection>
         );
       })}
-    </FilterDropdown>
+    </div>
+  );
+}
+
+export function ShelterFilterPanel({ sort, onSortChange }: ShelterFilterPanelProps) {
+  const { showDrawer } = useAppDrawer();
+
+  function openDrawer() {
+    showDrawer({
+      placement: 'right',
+      header: 'Sort & Filter',
+      content: (
+        <SortFilterDrawerContent sort={sort} onSortChange={onSortChange} />
+      ),
+    });
+  }
+
+  return (
+    <Button
+      variant="primary"
+      leftIcon={<Filter size={20} />}
+      rightIcon={false}
+      onClick={openDrawer}
+    >
+      Sort & Filter
+    </Button>
   );
 }
