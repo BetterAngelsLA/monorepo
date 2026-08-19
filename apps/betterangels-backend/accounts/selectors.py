@@ -25,16 +25,7 @@ def organization_get_for_member(
     user: Union[AbstractBaseUser, AnonymousUser],
     organization_id: str | int | None,
 ) -> Optional[Organization]:
-    """Return the organization *organization_id* names, if *user* belongs to it.
-
-    ``None`` covers every way the lookup can fail — unknown id, an
-    organization the user is not a member of, or an unusable id. They are
-    deliberately not distinguished, so a single denial cannot be used to probe
-    for which organizations exist.
-
-    Membership, not permission: callers needing a permission on the
-    organization should use ``HasOrgPerm`` or ``permissioned_queryset``.
-    """
+    """Return the organization *organization_id* names, if *user* belongs to it."""
     try:
         return Organization.objects.filter(pk=str(organization_id), users=user).first()
     except ValueError, TypeError:

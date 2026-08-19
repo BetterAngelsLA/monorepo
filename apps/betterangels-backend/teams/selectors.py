@@ -14,12 +14,7 @@ def team_list(*, organization: Organization) -> QuerySet[Team]:
 
 
 def team_get(*, pk: int | str, organization: Organization) -> Optional[Team]:
-    """Return a single team by PK, scoped to *organization*.
-
-    ``None`` covers an unknown id, another organization's team, and an id that
-    is not usable as a primary key, so callers report one denial rather than
-    letting a junk id surface as a server error.
-    """
+    """Return a single team by PK, scoped to *organization*."""
     try:
         return Team.objects.filter(pk=pk, organization=organization).first()
     except ValueError, TypeError:
