@@ -40,7 +40,10 @@ from shelters.enums import (
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
+    StorageChoices,
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
@@ -87,6 +90,12 @@ class ShelterPropertyInput:
     room_styles_include_null: Optional[bool] = False
     parking: Optional[List[ParkingChoices]] = None
     parking_include_null: Optional[bool] = False
+    storage: Optional[List[StorageChoices]] = None
+    storage_include_null: Optional[bool] = False
+    shelter_programs: Optional[List[ShelterProgramChoices]] = None
+    shelter_programs_include_null: Optional[bool] = False
+    funders: Optional[List[FunderChoices]] = None
+    funders_include_null: Optional[bool] = False
 
 
 @strawberry.input
@@ -187,6 +196,9 @@ class ShelterFilter:
             "shelter_types",
             "room_styles",
             "parking",
+            "storage",
+            "shelter_programs",
+            "funders",
         ]
 
         value_dict = asdict(value)
@@ -294,6 +306,60 @@ class ShelterFilter:
             return queryset, Q()
 
         return queryset.filter(spa_id__in=value).select_related("spa"), Q()
+
+    @strawberry_django.filter_field
+    def on_site_security(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        if value is None:
+            return Q()
+        return Q(**{f"{prefix}on_site_security": value})
+
+    @strawberry_django.filter_field
+    def status(self, info: Info, value: Optional[List[StatusChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}status__in": value})
+
+    @strawberry_django.filter_field
+    def city(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}city__in": value})
+
+    @strawberry_django.filter_field
+    def cities_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}cities_served__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def spas_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}spas_served__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def services(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}services__in": value}).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def city_council_district(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}city_council_district__in": value})
+
+    @strawberry_django.filter_field
+    def supervisorial_district(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}supervisorial_district__in": value})
+
+    @strawberry_django.filter_field
+    def overall_rating(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}overall_rating__in": value})
 
 
 @strawberry_django.order_type(models.Shelter, one_of=False)

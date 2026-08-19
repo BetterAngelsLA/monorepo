@@ -5,13 +5,17 @@ import {
   type AccessibilityChoices,
   type DemographicChoices,
   type EntryRequirementChoices,
+  type FunderChoices,
   type ParkingChoices,
   type PetChoices,
   type ReferralRequirementChoices,
   type RoomStyleChoices,
   type ShelterChoices,
   type ShelterOrder,
+  type ShelterProgramChoices,
   type SpecialSituationRestrictionChoices,
+  type StatusChoices,
+  type StorageChoices,
 } from '@monorepo/ba-platform/types';
 import { useDebounce } from '@monorepo/react/shared';
 import { useAtom, useAtomValue } from 'jotai';
@@ -119,6 +123,15 @@ export function Dashboard() {
     const parking = selectedFilters.parking?.length
       ? (selectedFilters.parking as ParkingChoices[])
       : undefined;
+    const storage = selectedFilters.storage?.length
+      ? (selectedFilters.storage as StorageChoices[])
+      : undefined;
+    const shelterPrograms = selectedFilters.shelterPrograms?.length
+      ? (selectedFilters.shelterPrograms as ShelterProgramChoices[])
+      : undefined;
+    const funders = selectedFilters.funders?.length
+      ? (selectedFilters.funders as FunderChoices[])
+      : undefined;
     if (
       !accessibility &&
       !demographics &&
@@ -128,7 +141,10 @@ export function Dashboard() {
       !entryRequirements &&
       !referralRequirement &&
       !roomStyles &&
-      !parking
+      !parking &&
+      !storage &&
+      !shelterPrograms &&
+      !funders
     ) {
       return undefined;
     }
@@ -136,12 +152,15 @@ export function Dashboard() {
       accessibility,
       demographics,
       entryRequirements,
+      funders,
       parking,
       pets,
       referralRequirement,
       roomStyles,
+      shelterPrograms,
       shelterTypes,
       specialSituationRestrictions,
+      storage,
     };
   }, [selectedFilters]);
 
@@ -157,7 +176,45 @@ export function Dashboard() {
         filters: {
           search: debouncedSearch || undefined,
           properties: propertyFilters,
-          organizations: [selectedOrganizationId],
+          organizations: selectedFilters.organizations.length
+            ? selectedFilters.organizations
+            : [selectedOrganizationId],
+          spa: selectedFilters.spa.length ? selectedFilters.spa : undefined,
+          spasServed: selectedFilters.spasServed.length
+            ? selectedFilters.spasServed
+            : undefined,
+          city: selectedFilters.city.length ? selectedFilters.city : undefined,
+          citiesServed: selectedFilters.citiesServed.length
+            ? selectedFilters.citiesServed
+            : undefined,
+          services: selectedFilters.services.length
+            ? selectedFilters.services
+            : undefined,
+          onSiteSecurity: selectedFilters.onSiteSecurity.includes('true')
+            ? true
+            : selectedFilters.onSiteSecurity.includes('false')
+              ? false
+              : undefined,
+          isPrivate: selectedFilters.isPrivate.includes('true')
+            ? true
+            : selectedFilters.isPrivate.includes('false')
+              ? false
+              : undefined,
+          status: selectedFilters.status.length
+            ? (selectedFilters.status as StatusChoices[])
+            : undefined,
+          overallRating: selectedFilters.overallRating.length
+            ? selectedFilters.overallRating.map(Number)
+            : undefined,
+          cityCouncilDistrict: selectedFilters.cityCouncilDistrict.length
+            ? selectedFilters.cityCouncilDistrict.map(Number)
+            : undefined,
+          supervisorialDistrict: selectedFilters.supervisorialDistrict.length
+            ? selectedFilters.supervisorialDistrict.map(Number)
+            : undefined,
+          maxStay: selectedFilters.maxStayDays
+            ? { days: Number(selectedFilters.maxStayDays) }
+            : undefined,
         },
         pagination: {
           offset: (page - 1) * PAGE_SIZE,

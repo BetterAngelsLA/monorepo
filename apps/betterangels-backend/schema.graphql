@@ -2554,6 +2554,15 @@ input ShelterFilter {
   geolocation: GeolocationInput
   hasAvailableBeds: Boolean
   spa: [ID!]
+  onSiteSecurity: Boolean
+  status: [StatusChoices!]
+  city: [ID!]
+  citiesServed: [ID!]
+  spasServed: [ID!]
+  services: [ID!]
+  cityCouncilDistrict: [Int!]
+  supervisorialDistrict: [Int!]
+  overallRating: [Int!]
 }
 
 type ShelterHeroImageType {
@@ -2660,6 +2669,12 @@ input ShelterPropertyInput {
   roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
   parkingIncludeNull: Boolean = false
+  storage: [StorageChoices!] = null
+  storageIncludeNull: Boolean = false
+  shelterPrograms: [ShelterProgramChoices!] = null
+  shelterProgramsIncludeNull: Boolean = false
+  funders: [FunderChoices!] = null
+  fundersIncludeNull: Boolean = false
 }
 
 type ShelterType {

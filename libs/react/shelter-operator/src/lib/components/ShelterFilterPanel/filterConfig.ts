@@ -1,22 +1,31 @@
 import {
   AccessibilityChoices,
+  CITY_COUNCIL_DISTRICT_UNINCORPORATED,
   DemographicChoices,
   EntryRequirementChoices,
   enumDisplayAccessibilityChoices,
   enumDisplayDemographics,
   enumDisplayEntryRequirementChoices,
+  enumDisplayFunderChoices,
   enumDisplayParkingChoices,
   enumDisplayPetChoices,
   enumDisplayReferralRequirementChoices,
   enumDisplayRoomStyles,
   enumDisplayShelterChoices,
+  enumDisplayShelterProgramChoices,
   enumDisplaySpecialSituationRestrictionChoices,
+  enumDisplayStorageChoices,
+  enumStatusChoices,
+  FunderChoices,
   ParkingChoices,
   PetChoices,
   ReferralRequirementChoices,
   RoomStyleChoices,
   ShelterChoices,
+  ShelterProgramChoices,
   SpecialSituationRestrictionChoices,
+  StatusChoices,
+  StorageChoices,
 } from '@monorepo/react/shelter';
 
 export type TFilterOption = {
@@ -126,6 +135,72 @@ const accessibilityOptions: TFilterOption[] = [
   AccessibilityChoices.WheelchairAccessible,
 ].map((v) => ({ label: enumDisplayAccessibilityChoices[v], value: v }));
 
+const storageOptions: TFilterOption[] = [
+  StorageChoices.AmnestyLockers,
+  StorageChoices.StandardLockers,
+  StorageChoices.SharedStorage,
+  StorageChoices.UnitStorage,
+  StorageChoices.PersonalBin,
+  StorageChoices.NoStorage,
+].map((v) => ({ label: enumDisplayStorageChoices[v], value: v }));
+
+const shelterProgramOptions: TFilterOption[] = [
+  ShelterProgramChoices.EmergencyShelter,
+  ShelterProgramChoices.InterimHousing,
+  ShelterProgramChoices.TransitionalHousing,
+  ShelterProgramChoices.PermanentHousing,
+  ShelterProgramChoices.RapidRehousing,
+  ShelterProgramChoices.BridgeHome,
+  ShelterProgramChoices.CrisisHousing,
+  ShelterProgramChoices.FaithBased,
+  ShelterProgramChoices.ProjectHomeKey,
+  ShelterProgramChoices.RecuperativeCare,
+  ShelterProgramChoices.RoadmapHome,
+  ShelterProgramChoices.SafeParkLa,
+  ShelterProgramChoices.SoberLiving,
+  ShelterProgramChoices.TinyHomeVillage,
+  ShelterProgramChoices.WinterShelter,
+  ShelterProgramChoices.Other,
+].map((v) => ({ label: enumDisplayShelterProgramChoices[v], value: v }));
+
+const funderOptions: TFilterOption[] = [
+  FunderChoices.Lahsa,
+  FunderChoices.CityOfLosAngeles,
+  FunderChoices.Dhs,
+  FunderChoices.Dmh,
+  FunderChoices.FederalFunding,
+  FunderChoices.Hopwa,
+  FunderChoices.Private,
+  FunderChoices.Other,
+].map((v) => ({ label: enumDisplayFunderChoices[v], value: v }));
+
+const statusOptions: TFilterOption[] = [
+  StatusChoices.Approved,
+  StatusChoices.Pending,
+  StatusChoices.Draft,
+  StatusChoices.Inactive,
+].map((v) => ({ label: enumStatusChoices[v], value: v }));
+
+const overallRatingOptions: TFilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  label: String(n),
+  value: String(n),
+}));
+
+// 0 = Unincorporated, 1–15 = districts (matches CITY_COUNCIL_DISTRICT_CHOICES on backend)
+const cityCouncilDistrictOptions: TFilterOption[] = [
+  { label: 'Unincorporated', value: String(CITY_COUNCIL_DISTRICT_UNINCORPORATED) },
+  ...Array.from({ length: 15 }, (_, i) => ({
+    label: String(i + 1),
+    value: String(i + 1),
+  })),
+];
+
+// 1–5 (matches SUPERVISORIAL_DISTRICT_CHOICES on backend)
+const supervisorialDistrictOptions: TFilterOption[] = Array.from(
+  { length: 5 },
+  (_, i) => ({ label: String(i + 1), value: String(i + 1) }),
+);
+
 export const filterGroups: TFilterGroupConfig[] = [
   {
     name: 'demographics',
@@ -180,5 +255,47 @@ export const filterGroups: TFilterGroupConfig[] = [
     header: 'Parking',
     options: parkingOptions,
     activeClassName: 'bg-tags-purple text-black',
+  },
+  {
+    name: 'storage',
+    header: 'Storage',
+    options: storageOptions,
+    activeClassName: 'bg-tags-blue text-black',
+  },
+  {
+    name: 'shelterPrograms',
+    header: 'Shelter Program',
+    options: shelterProgramOptions,
+    activeClassName: 'bg-tags-pink text-black',
+  },
+  {
+    name: 'funders',
+    header: 'Funder',
+    options: funderOptions,
+    activeClassName: 'bg-tags-main text-black',
+  },
+  {
+    name: 'status',
+    header: 'Status',
+    options: statusOptions,
+    activeClassName: 'bg-tags-yellow text-black',
+  },
+  {
+    name: 'overallRating',
+    header: 'Overall Rating',
+    options: overallRatingOptions,
+    activeClassName: 'bg-tags-purple text-black',
+  },
+  {
+    name: 'cityCouncilDistrict',
+    header: 'LA City Council District',
+    options: cityCouncilDistrictOptions,
+    activeClassName: 'bg-tags-blue text-black',
+  },
+  {
+    name: 'supervisorialDistrict',
+    header: 'Supervisorial District',
+    options: supervisorialDistrictOptions,
+    activeClassName: 'bg-tags-pink text-black',
   },
 ];

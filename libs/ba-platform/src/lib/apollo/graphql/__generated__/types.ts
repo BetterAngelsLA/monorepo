@@ -3288,6 +3288,9 @@ export type ShelterFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
   geolocation?: InputMaybe<GeolocationInput>;
   hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3295,13 +3298,19 @@ export type ShelterFilter = {
   mapBounds?: InputMaybe<MapBoundsInput>;
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   openNow?: InputMaybe<OpenNowInput>;
   /** @deprecated Use openNow instead */
   openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   search?: InputMaybe<Scalars['String']['input']>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  status?: InputMaybe<Array<StatusChoices>>;
+  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 export type ShelterHeroImageType = {
@@ -3402,6 +3411,8 @@ export type ShelterPropertyInput = {
   demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   entryRequirementsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  fundersIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   parkingIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;
@@ -3410,10 +3421,14 @@ export type ShelterPropertyInput = {
   referralRequirementIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   roomStylesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  shelterProgramsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   shelterTypesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
   specialSituationRestrictionsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+  storageIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ShelterType = {
