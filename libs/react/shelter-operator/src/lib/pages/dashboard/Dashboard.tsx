@@ -8,11 +8,16 @@ import {
   type SpecialSituationRestrictionChoices,
 } from '@monorepo/ba-platform/types';
 import { useDebounce } from '@monorepo/react/shared';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
+import {
+  DEFAULT_SHELTER_SORT,
+  operatorShelterSortAtom,
+  type SortableColumn,
+} from '../../atoms/shelterSortAtom';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import { Pagination } from '../../components/base-ui/pagination';
 import type { SortDirection } from '../../components/base-ui/table';
@@ -31,17 +36,12 @@ import type { Shelter } from '../../types/shelter';
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 20;
 
-/** Table columns whose header can trigger a server-side sort. */
-type SortableColumn = 'name' | 'capacity' | 'status';
-
 /** Maps table column keys to backend `ShelterOrder` fields. */
 const SORT_FIELD_MAP: Record<SortableColumn, keyof ShelterOrder> = {
   name: 'name',
   capacity: 'bedCount',
   status: 'status',
 };
-
-const DEFAULT_SORT = { column: 'name', direction: Ordering.Asc } as const;
 
 const poppinsStyle = { fontFamily: 'Poppins, sans-serif' } as const;
 
@@ -69,6 +69,7 @@ export function Dashboard() {
 
   // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+  const [sort, setSort] = useAtom(operatorShelterSortAtom);
   const [pendingShelter, setPendingShelter] = useState<{
     id: string;
     name: string;
@@ -77,10 +78,6 @@ export function Dashboard() {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<{
-    column: SortableColumn;
-    direction: Ordering;
-  }>(DEFAULT_SORT);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -169,7 +166,7 @@ export function Dashboard() {
     (column: string | null, direction: SortDirection | null) => {
       setPage(1);
       if (!column || !direction || !(column in SORT_FIELD_MAP)) {
-        setSort(DEFAULT_SORT);
+        setSort(DEFAULT_SHELTER_SORT);
         return;
       }
       setSort({
@@ -177,7 +174,7 @@ export function Dashboard() {
         direction: direction === 'asc' ? Ordering.Asc : Ordering.Desc,
       });
     },
-    [],
+    [setSort],
   );
   // ── End hooks ──────────────────────────────────────────────────────────────
 
@@ -207,7 +204,7 @@ export function Dashboard() {
           />
         </label>
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <ShelterFilterPanel sort={sort} onSortChange={handleSortChange} />
+          <ShelterFilterPanel />
         </div>
       </form>
 

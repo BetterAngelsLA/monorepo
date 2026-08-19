@@ -10,40 +10,44 @@ import {
   operatorShelterFiltersAtom,
   TOperatorShelterFilters,
 } from '../../atoms/shelterFiltersAtom';
-import type { SortDirection } from '../base-ui/table';
+import {
+  DEFAULT_SHELTER_SORT,
+  operatorShelterSortAtom,
+} from '../../atoms/shelterSortAtom';
 import { Button } from '../base-ui/buttons';
+import { Dropdown } from '../base-ui/dropdown/Dropdown';
+import type { DropdownOption } from '../base-ui/dropdown/types';
 import { filterGroups } from './filterConfig';
 
-type SortableColumn = 'name' | 'capacity' | 'status';
-
-interface SortState {
-  column: SortableColumn;
-  direction: Ordering;
-}
-
-interface ShelterFilterPanelProps {
-  sort: SortState;
-  onSortChange: (column: string | null, direction: SortDirection | null) => void;
-}
-
-const SORT_OPTIONS: {
-  label: string;
-  column: SortableColumn;
-  direction: Ordering;
-}[] = [
-  { label: 'Name Ascending', column: 'name', direction: Ordering.Asc },
-  { label: 'Name Descending', column: 'name', direction: Ordering.Desc },
-  { label: 'Capacity Low to High', column: 'capacity', direction: Ordering.Asc },
-  { label: 'Capacity High to Low', column: 'capacity', direction: Ordering.Desc },
+const SORT_OPTIONS: DropdownOption<string>[] = [
+  { label: 'Name: Ascending', value: 'name-asc' },
+  { label: 'Name: Descending', value: 'name-desc' },
+  { label: 'Capacity: Low to High', value: 'capacity-asc' },
+  { label: 'Capacity: High to Low', value: 'capacity-desc' },
 ];
 
-interface DrawerContentProps {
-  sort: SortState;
-  onSortChange: (column: string | null, direction: SortDirection | null) => void;
-}
-
-function SortFilterDrawerContent({ sort, onSortChange }: DrawerContentProps) {
+function SortFilterDrawerContent() {
+  const [sort, setSort] = useAtom(operatorShelterSortAtom);
   const [filters, setFilters] = useAtom(operatorShelterFiltersAtom);
+
+  const sortValue =
+    SORT_OPTIONS.find(
+      (o) =>
+        o.value ===
+        `${sort.column}-${sort.direction === Ordering.Asc ? 'asc' : 'desc'}`,
+    ) ?? null;
+
+  function handleSortChange(opt: DropdownOption<string> | null) {
+    if (!opt) {
+      setSort(DEFAULT_SHELTER_SORT);
+      return;
+    }
+    const [column, dir] = opt.value.split('-');
+    setSort({
+      column: column as typeof sort.column,
+      direction: dir === 'asc' ? Ordering.Asc : Ordering.Desc,
+    });
+  }
 
   function toggleValue(group: string, value: string) {
     setFilters((prev: TOperatorShelterFilters) => {
@@ -63,26 +67,16 @@ function SortFilterDrawerContent({ sort, onSortChange }: DrawerContentProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <FilterSection header="Sort">
-        {SORT_OPTIONS.map((opt) => {
-          const isActive =
-            sort.column === opt.column && sort.direction === opt.direction;
-          return (
-            <FilterChip
-              key={`${opt.column}-${opt.direction}`}
-              label={opt.label}
-              active={isActive}
-              onClick={() =>
-                onSortChange(
-                  opt.column,
-                  opt.direction === Ordering.Asc ? 'asc' : 'desc',
-                )
-              }
-            />
-          );
-        })}
-      </FilterSection>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-gray-700">Sort</span>
+        <Dropdown
+          options={SORT_OPTIONS}
+          value={sortValue}
+          onChange={handleSortChange}
+          placeholder="Select sort order"
+        />
+      </div>
 
       {filterGroups.map((group) => {
         const groupValues =
@@ -112,16 +106,14 @@ function SortFilterDrawerContent({ sort, onSortChange }: DrawerContentProps) {
   );
 }
 
-export function ShelterFilterPanel({ sort, onSortChange }: ShelterFilterPanelProps) {
+export function ShelterFilterPanel() {
   const { showDrawer } = useAppDrawer();
 
   function openDrawer() {
     showDrawer({
       placement: 'right',
       header: 'Sort & Filter',
-      content: (
-        <SortFilterDrawerContent sort={sort} onSortChange={onSortChange} />
-      ),
+      content: <SortFilterDrawerContent />,
     });
   }
 
