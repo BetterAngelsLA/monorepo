@@ -185,7 +185,7 @@ export default function DocumentModal({
             // MainModal must fully close (animation + unmount) before DeleteModal
             // mounts: RN can only present one Modal at a time, and mounting
             // DeleteModal while MainModal is still up causes the confirm modal to
-            // be dropped and the actions sheet to reappear. Can possilbly use BottomSheetModal.
+            // be dropped and the actions sheet to reappear. Can possibly use BottomSheetModal.
             if (modalState === 'deleteRequested') {
               setTimeout(() => {
                 setModalState('deleteVisible');
