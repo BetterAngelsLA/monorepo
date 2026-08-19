@@ -2,7 +2,13 @@ import { useQuery } from '@apollo/client/react';
 import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   Ordering,
+  type AccessibilityChoices,
   type DemographicChoices,
+  type EntryRequirementChoices,
+  type ParkingChoices,
+  type PetChoices,
+  type ReferralRequirementChoices,
+  type RoomStyleChoices,
   type ShelterChoices,
   type ShelterOrder,
   type SpecialSituationRestrictionChoices,
@@ -85,6 +91,9 @@ export function Dashboard() {
   }, [selectedFilters]);
 
   const propertyFilters = useMemo(() => {
+    const accessibility = selectedFilters.accessibility?.length
+      ? (selectedFilters.accessibility as AccessibilityChoices[])
+      : undefined;
     const demographics = selectedFilters.demographics?.length
       ? (selectedFilters.demographics as DemographicChoices[])
       : undefined;
@@ -95,10 +104,45 @@ export function Dashboard() {
     const shelterTypes = selectedFilters.shelterTypes?.length
       ? (selectedFilters.shelterTypes as ShelterChoices[])
       : undefined;
-    if (!demographics && !specialSituationRestrictions && !shelterTypes) {
+    const pets = selectedFilters.pets?.length
+      ? (selectedFilters.pets as PetChoices[])
+      : undefined;
+    const entryRequirements = selectedFilters.entryRequirements?.length
+      ? (selectedFilters.entryRequirements as EntryRequirementChoices[])
+      : undefined;
+    const referralRequirement = selectedFilters.referralRequirement?.length
+      ? (selectedFilters.referralRequirement as ReferralRequirementChoices[])
+      : undefined;
+    const roomStyles = selectedFilters.roomStyles?.length
+      ? (selectedFilters.roomStyles as RoomStyleChoices[])
+      : undefined;
+    const parking = selectedFilters.parking?.length
+      ? (selectedFilters.parking as ParkingChoices[])
+      : undefined;
+    if (
+      !accessibility &&
+      !demographics &&
+      !specialSituationRestrictions &&
+      !shelterTypes &&
+      !pets &&
+      !entryRequirements &&
+      !referralRequirement &&
+      !roomStyles &&
+      !parking
+    ) {
       return undefined;
     }
-    return { demographics, specialSituationRestrictions, shelterTypes };
+    return {
+      accessibility,
+      demographics,
+      entryRequirements,
+      parking,
+      pets,
+      referralRequirement,
+      roomStyles,
+      shelterTypes,
+      specialSituationRestrictions,
+    };
   }, [selectedFilters]);
 
   // Reset page when organization changes

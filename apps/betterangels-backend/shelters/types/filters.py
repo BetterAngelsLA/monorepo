@@ -70,6 +70,7 @@ class MapBoundsInput:
 
 @strawberry.input
 class ShelterPropertyInput:
+    accessibility: Optional[List[AccessibilityChoices]] = None
     pets: Optional[List[PetChoices]] = None
     pets_include_null: Optional[bool] = False
     demographics: Optional[List[DemographicChoices]] = None
@@ -101,6 +102,8 @@ class OpenNowInput:
 
 @strawberry_django.filter_type(models.Shelter)
 class ShelterFilter:
+    name = make_icontains_filter("name")
+
     @strawberry_django.filter_field
     def is_access_center(self, info: Info, value: Optional[bool], prefix: str) -> Q:
         if not value:
@@ -118,8 +121,6 @@ class ShelterFilter:
             conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
 
         return conditions
-
-    name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
     def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -177,6 +178,7 @@ class ShelterFilter:
 
         # Fields that have corresponding include_null flags
         property_fields = [
+            "accessibility",
             "pets",
             "demographics",
             "entry_requirements",
