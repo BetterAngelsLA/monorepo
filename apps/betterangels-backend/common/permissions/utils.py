@@ -224,26 +224,10 @@ def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_grou
 
 
 def get_current_organization(info: Info) -> str:
-    """Return the organization ID from the current request context.
+    """Return the organization ID from the ``X-Organization-ID`` header.
 
-    Reads ``request.organization_id``, which is set by
-    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header.
-
-    Companion to ``get_current_user(info)`` — use it anywhere a schema
-    method needs the active organization for selector/service calls.
-
-    Raises:
-        ``PermissionDenied`` if the header is absent.  Returning ``str(None)``
-        — the literal ``"None"`` — used to push the failure downstream into a
-        queryset filter, where it surfaced as ``Field 'id' expected a number
-        but got 'None'``.  Fields behind ``@HasOrgPerm`` never get here (that
-        extension rejects the request first), but type-level ``get_queryset``
-        hooks are not gated and can.  Django's ``PermissionDenied`` rather than
-        the builtin ``PermissionError`` because it is one of the three
-        exceptions strawberry-django turns into ``OperationInfo``, so a
-        mutation reports it as a message rather than an unstructured error.
-        ``AttributeError`` if the middleware is not installed, which is a
-        configuration error.
+    Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
+    if ``OrganizationMiddleware`` is not installed.
     """
     org_id = info.context.request.organization_id
 
