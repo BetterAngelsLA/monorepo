@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client/react';
+import { BaError, throwOnMutationFail } from '@monorepo/ba-platform';
 import {
   DeleteIcon,
   DownloadIcon,
@@ -56,27 +57,34 @@ export default function DocumentModal({
     setModalHidden(true);
 
     try {
-      const { data } = await deleteDocument({
+      const result = await deleteDocument({
         variables: { id: document.id },
       });
 
-      const result = data?.deleteClientDocument;
-
-      if (result?.__typename === 'OperationInfo') {
-        throw new Error(String(result.messages));
-      }
+      throwOnMutationFail({
+        response: result,
+        operationKey: 'deleteClientDocument',
+        successTypename: 'ClientDocumentType',
+      });
 
       showSnackbar({
         message: `${convertCapitalize(fileTypeText)} deleted.`,
         type: 'success',
-        durationMs: 3000,
+        durationMs: 2000,
       });
     } catch (err) {
-      console.error('Error deleting document', err);
+      console.error('Delete file error:', err);
+
+      let errorMessage = 'An error occurred while deleting the document';
+
+      if (err instanceof BaError) {
+        errorMessage = err.message;
+      }
 
       showSnackbar({
-        message: 'An error occurred while deleting the document',
+        message: errorMessage,
         type: 'error',
+        persist: true,
       });
     } finally {
       closeModal();
