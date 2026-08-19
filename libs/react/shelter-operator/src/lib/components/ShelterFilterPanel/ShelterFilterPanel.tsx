@@ -276,27 +276,46 @@ function SortFilterDrawerContent() {
       )}
 
       {/* ── City ── */}
-      {sectionVisible('City', cityOptions) && cityOptions.length > 0 && (
-        <FilterSection
-          header="City"
-          onClear={
-            filters.city.length > 0 ? () => clearGroup('city') : undefined
-          }
-        >
-          {filterOptions('City', cityOptions).map((city) => (
-            <FilterChip
-              key={city.id}
-              label={city.label}
-              active={filters.city.includes(city.id)}
-              activeClassName="bg-tags-blue text-black"
-              onClick={() => toggleValue('city', city.id)}
+      {(!normalizedSearch ||
+        'city'.includes(normalizedSearch)) &&
+        cityOptions.length > 0 && (
+          <FilterSection
+            header="City"
+            onClear={
+              filters.city.length > 0 ? () => clearGroup('city') : undefined
+            }
+          >
+            <Dropdown
+              isMulti
+              isSearchable
+              placeholder="Select cities…"
+              options={cityOptions.map((c) => ({
+                label: c.label,
+                value: c.id,
+              }))}
+              value={
+                filters.city.length > 0
+                  ? (cityOptions
+                      .filter((c) => filters.city.includes(c.id))
+                      .map((c) => ({
+                        label: c.label,
+                        value: c.id,
+                      })) as DropdownOption<string>[])
+                  : null
+              }
+              onChange={(selected) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  city: selected ? selected.map((o) => o.value) : [],
+                }));
+              }}
             />
-          ))}
-        </FilterSection>
-      )}
+          </FilterSection>
+        )}
 
       {/* ── Cities Served ── */}
-      {sectionVisible('Cities Served', cityOptions) &&
+      {(!normalizedSearch ||
+        'cities served'.includes(normalizedSearch)) &&
         cityOptions.length > 0 && (
           <FilterSection
             header="Cities Served"
@@ -306,15 +325,31 @@ function SortFilterDrawerContent() {
                 : undefined
             }
           >
-            {filterOptions('Cities Served', cityOptions).map((city) => (
-              <FilterChip
-                key={city.id}
-                label={city.label}
-                active={filters.citiesServed.includes(city.id)}
-                activeClassName="bg-tags-blue text-black"
-                onClick={() => toggleValue('citiesServed', city.id)}
-              />
-            ))}
+            <Dropdown
+              isMulti
+              isSearchable
+              placeholder="Select cities…"
+              options={cityOptions.map((c) => ({
+                label: c.label,
+                value: c.id,
+              }))}
+              value={
+                filters.citiesServed.length > 0
+                  ? (cityOptions
+                      .filter((c) => filters.citiesServed.includes(c.id))
+                      .map((c) => ({
+                        label: c.label,
+                        value: c.id,
+                      })) as DropdownOption<string>[])
+                  : null
+              }
+              onChange={(selected) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  citiesServed: selected ? selected.map((o) => o.value) : [],
+                }));
+              }}
+            />
           </FilterSection>
         )}
 
