@@ -6,6 +6,7 @@ from typing import Any, Sequence, Tuple, Type, TypeVar
 
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, Group
+from django.core.exceptions import PermissionDenied
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
@@ -232,12 +233,24 @@ def get_current_organization(info: Info) -> str:
     method needs the active organization for selector/service calls.
 
     Raises:
-        ``AttributeError`` if the request does not have ``organization_id``
-        set.  This only happens when a field/mutation uses ``@HasOrgPerm``
-        without the middleware being installed — which is a configuration
-        error.
+        ``PermissionDenied`` if the header is absent.  Returning ``str(None)``
+        — the literal ``"None"`` — used to push the failure downstream into a
+        queryset filter, where it surfaced as ``Field 'id' expected a number
+        but got 'None'``.  Fields behind ``@HasOrgPerm`` never get here (that
+        extension rejects the request first), but type-level ``get_queryset``
+        hooks are not gated and can.  Django's ``PermissionDenied`` rather than
+        the builtin ``PermissionError`` because it is one of the three
+        exceptions strawberry-django turns into ``OperationInfo``, so a
+        mutation reports it as a message rather than an unstructured error.
+        ``AttributeError`` if the middleware is not installed, which is a
+        configuration error.
     """
-    return str(info.context.request.organization_id)
+    org_id = info.context.request.organization_id
+
+    if org_id is None:
+        raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
+
+    return str(org_id)
 
 
 _T = TypeVar("_T", bound=Model)
