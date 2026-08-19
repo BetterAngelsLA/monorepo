@@ -292,18 +292,23 @@ export function Dashboard() {
         className="my-1 flex w-full flex-wrap items-center gap-3 bg-white px-3"
         style={{ fontFamily: 'Poppins, sans-serif' }}
       >
-        <label className="flex h-11 w-full max-w-[380px] items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2">
-          <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
-            <Search size={20} />
+        <div className="flex w-full max-w-[380px] flex-col gap-1">
+          <label className="flex h-11 w-full items-center gap-2 rounded-full border border-[#D3D9E3] bg-white px-2 mb-2">
+            <span className="flex h-8 w-9 items-center justify-center rounded-full bg-[#FCF500] text-[#1E3342]">
+              <Search size={20} />
+            </span>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search shelters"
+              className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
+            />
+          </label>
+          <span className="pl-2 text-base text-[#4A4F57]">
+            {totalCount} results
           </span>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search shelters"
-            className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
-          />
-        </label>
+        </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <ShelterFilterPanel />
         </div>
@@ -329,7 +334,6 @@ export function Dashboard() {
         <Pagination
           page={page}
           totalPages={totalPages}
-          resultCount={totalCount}
           onPageChange={setPage}
         />
       )}
