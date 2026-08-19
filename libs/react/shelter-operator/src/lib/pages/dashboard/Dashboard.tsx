@@ -89,10 +89,14 @@ export function Dashboard() {
   const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
   const [page, setPage] = useState(1);
 
-  // Reset to first page when filters change
+  // Reset to first page when filters or sort change
   useEffect(() => {
     setPage(1);
   }, [selectedFilters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [sort]);
 
   const propertyFilters = useMemo(() => {
     const accessibility = selectedFilters.accessibility?.length

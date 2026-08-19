@@ -379,10 +379,13 @@ class ShelterOrder:
         """Order by the count of beds related to the shelter.
 
         Mirrors the ``bedCounts.total`` value displayed in the operator
-        dashboard: both use the ``_bed_total`` subquery annotation.
+        dashboard: both use the same ``shelter_count_subquery(Bed)`` expression.
+        Uses a distinct annotation name (``_order_bed_total``) to avoid
+        conflicting with the ``_bed_total`` annotation added by the bedCounts
+        resolver when both are requested in the same query.
         """
-        queryset = queryset.annotate(**{f"{prefix}_bed_total": shelter_count_subquery(models.Bed)})
-        return queryset, [value.resolve(f"{prefix}_bed_total")]
+        queryset = queryset.annotate(**{f"{prefix}_order_bed_total": shelter_count_subquery(models.Bed)})
+        return queryset, [value.resolve(f"{prefix}_order_bed_total")]
 
 
 @strawberry_django.order_type(models.Bed, one_of=False)

@@ -84,6 +84,21 @@ function SortFilterDrawerContent() {
     setFilters((prev) => ({ ...prev, [group]: [] }));
   }
 
+  /**
+   * Radio-style toggle for boolean filters (onSiteSecurity, isPrivate).
+   * Selecting an already-active value clears it; selecting the other value
+   * replaces it, preventing the contradictory ["true","false"] state.
+   */
+  function toggleBooleanFilter(
+    group: keyof TOperatorShelterFilters,
+    value: 'true' | 'false',
+  ) {
+    setFilters((prev) => {
+      const current = (prev[group] as string[]) ?? [];
+      return { ...prev, [group]: current.includes(value) ? [] : [value] };
+    });
+  }
+
   function setMaxStay(value: string) {
     setFilters((prev) => ({ ...prev, maxStayDays: value }));
   }
@@ -446,13 +461,13 @@ function SortFilterDrawerContent() {
             label="Yes"
             active={filters.onSiteSecurity.includes('true')}
             activeClassName="bg-tags-main text-black"
-            onClick={() => toggleValue('onSiteSecurity', 'true')}
+            onClick={() => toggleBooleanFilter('onSiteSecurity', 'true')}
           />
           <FilterChip
             label="No"
             active={filters.onSiteSecurity.includes('false')}
             activeClassName="bg-tags-main text-black"
-            onClick={() => toggleValue('onSiteSecurity', 'false')}
+            onClick={() => toggleBooleanFilter('onSiteSecurity', 'false')}
           />
         </FilterSection>
       )}
@@ -473,13 +488,13 @@ function SortFilterDrawerContent() {
             label="Yes"
             active={filters.isPrivate.includes('true')}
             activeClassName="bg-tags-pink text-black"
-            onClick={() => toggleValue('isPrivate', 'true')}
+            onClick={() => toggleBooleanFilter('isPrivate', 'true')}
           />
           <FilterChip
             label="No"
             active={filters.isPrivate.includes('false')}
             activeClassName="bg-tags-pink text-black"
-            onClick={() => toggleValue('isPrivate', 'false')}
+            onClick={() => toggleBooleanFilter('isPrivate', 'false')}
           />
         </FilterSection>
       )}
