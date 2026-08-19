@@ -1,0 +1,8 @@
+query ShelterOperatorOrganizations {
+  shelterOperatorOrganizations {
+    results {
+      id
+      name
+    }
+  }
+}

@@ -1,5 +1,4 @@
 import { useQuery } from '@apollo/client/react';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import { Ordering } from '@monorepo/ba-platform/types';
 import {
   FilterChip,
@@ -20,6 +19,7 @@ import {
   operatorShelterSortAtom,
 } from '../../atoms/shelterSortAtom';
 import { useShelterCities } from '../../hooks/useShelterCities/useShelterCities';
+import { useShelterOperatorOrganizations } from '../../hooks/useShelterOperatorOrganizations/useShelterOperatorOrganizations';
 import { useShelterSpas } from '../../hooks/useShelterSpas/useShelterSpas';
 import { Button } from '../base-ui/buttons';
 import { Dropdown } from '../base-ui/dropdown/Dropdown';
@@ -42,7 +42,7 @@ function SortFilterDrawerContent() {
   const [filters, setFilters] = useAtom(operatorShelterFiltersAtom);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { activeOrg, organizations } = useActiveOrg();
+  const { organizations: shelterOperatorOrgs } = useShelterOperatorOrganizations();
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
   const { data: serviceCategoriesData } = useQuery(
@@ -117,14 +117,14 @@ function SortFilterDrawerContent() {
     );
   }
 
-  // Build organization options from the active org's sibling orgs
-  const orgOptions = organizations
-    .filter((org) => org.id !== undefined)
-    .map((org) => ({ id: String(org.id), label: org.name ?? String(org.id) }));
+  const orgOptions = shelterOperatorOrgs.map((org) => ({
+    id: String(org.id),
+    label: org.name,
+  }));
 
   const spaOptions = spas.map((s) => ({ id: s.id, label: s.name }));
   const cityOptions = cities.map((c) => ({ id: c.id, label: c.name }));
-
+  console.log(orgOptions);
   return (
     <div className="flex flex-col gap-3">
       {/* ── Sort ── */}
@@ -212,26 +212,40 @@ function SortFilterDrawerContent() {
       })}
 
       {/* ── Organizations ── */}
-      {sectionVisible('Organization', orgOptions) && orgOptions.length > 1 && (
-        <FilterSection
-          header="Organization"
-          onClear={
-            filters.organizations.length > 0
-              ? () => clearGroup('organizations')
-              : undefined
-          }
-        >
-          {filterOptions('Organization', orgOptions).map((org) => (
-            <FilterChip
-              key={org.id}
-              label={org.label}
-              active={filters.organizations.includes(org.id)}
-              activeClassName="bg-tags-main text-black"
-              onClick={() => toggleValue('organizations', org.id)}
+      {(!normalizedSearch || 'organization'.includes(normalizedSearch)) &&
+        orgOptions.length > 1 && (
+          <FilterSection
+            header="Organization"
+            onClear={
+              filters.organizations.length > 0
+                ? () => clearGroup('organizations')
+                : undefined
+            }
+          >
+            <Dropdown
+              isMulti
+              isSearchable
+              placeholder="Select organizations…"
+              options={orgOptions.map((o) => ({ label: o.label, value: o.id }))}
+              value={
+                filters.organizations.length > 0
+                  ? (orgOptions
+                      .filter((o) => filters.organizations.includes(o.id))
+                      .map((o) => ({
+                        label: o.label,
+                        value: o.id,
+                      })) as DropdownOption<string>[])
+                  : null
+              }
+              onChange={(selected) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  organizations: selected ? selected.map((o) => o.value) : [],
+                }));
+              }}
             />
-          ))}
-        </FilterSection>
-      )}
+          </FilterSection>
+        )}
 
       {/* ── SPA ── */}
       {sectionVisible('SPA', spaOptions) && spaOptions.length > 0 && (
