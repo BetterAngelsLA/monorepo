@@ -26,7 +26,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 23
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
@@ -81,7 +81,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "teamId": str(self.org_1_team_1.pk),
         }
 
-        expected_query_count = 8
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
@@ -169,9 +169,10 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(created_task["hmisNote"]["pk"], str(self.hmis_note.pk))
 
     def test_create_task_fails_when_linking_both_note_types(self) -> None:
-        """
-        Verify the API raises a ValidationError if we try to link
-        both a Regular Note AND an HMIS Note.
+        """A task links to one note, and ``task_single_parent_check`` is what enforces it.
+
+        ``full_clean()`` checks the constraint before the insert, so the caller
+        gets the constraint's own message rather than the Postgres text.
         """
         variables = {
             "summary": "Illegal Task",
@@ -181,12 +182,13 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         response = self.create_task_fixture(variables)
 
-        payload = response["data"]["createTask"]
-        self.assertIsNotNone(payload["messages"])
-        self.assertTrue(len(payload["messages"]) > 0)
-        error_message = payload["messages"][0]["message"]
-        self.assertIn("task_single_parent_check", error_message)
-        self.assertIn("violates", error_message)
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            "A task belongs to one note, not both a note and an HMIS note.",
+        )
+        self.assertFalse(Task.objects.filter(summary="Illegal Task").exists())
 
 
 class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
@@ -202,6 +204,7 @@ class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
         messages = response["data"]["createTask"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
         self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
 
     def test_update_task_rejects_a_team_from_another_org(self) -> None:
@@ -217,4 +220,5 @@ class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
         messages = response["data"]["updateTask"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
         self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
