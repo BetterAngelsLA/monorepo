@@ -11,6 +11,7 @@ import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import { ClientDocumentType } from '../apollo';
+import { convertCapitalize } from '../helpers';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
@@ -19,8 +20,8 @@ import {
 import { MainModal } from './MainModal';
 
 type ModalState =
-  | 'mainVisible'
-  | 'mainClosing'
+  | 'menuVisible'
+  | 'menuClosing'
   | 'deleteRequested'
   | 'deleteVisible';
 
@@ -35,8 +36,14 @@ export default function DocumentModal({
   document,
   clientId,
 }: IDocumentModalProps) {
+  const fileTypeText = getFileTypeText(document.mimeType);
+
   const { showSnackbar } = useSnackbar();
-  const [modalState, setModalState] = useState<ModalState>('mainVisible');
+  const [modalState, setModalState] = useState<ModalState>('menuVisible');
+  // Hidden (but still mounted) while the delete mutation is in flight: the
+  // parent only unmounts us via closeModal(), which we call once the mutation
+  // settles — so the mutation always runs with the component alive.
+  const [modalHidden, setModalHidden] = useState(false);
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -45,15 +52,34 @@ export default function DocumentModal({
   });
 
   const deleteFile = async () => {
-    closeModal();
+    // Hide immediately but stay mounted; unmount only after the mutation settles.
+    setModalHidden(true);
+
     try {
-      await deleteDocument({ variables: { id: document.id } });
+      const { data } = await deleteDocument({
+        variables: { id: document.id },
+      });
+
+      const result = data?.deleteClientDocument;
+
+      if (result?.__typename === 'OperationInfo') {
+        throw new Error(String(result.messages));
+      }
+
+      showSnackbar({
+        message: `${convertCapitalize(fileTypeText)} deleted.`,
+        type: 'success',
+        durationMs: 3000,
+      });
     } catch (err) {
       console.error('Error deleting document', err);
+
       showSnackbar({
         message: 'An error occurred while deleting the document',
         type: 'error',
       });
+    } finally {
+      closeModal();
     }
   };
 
@@ -107,8 +133,6 @@ export default function DocumentModal({
     }
   };
 
-  const fileTypeText = getFileTypeText(document.mimeType);
-
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
@@ -132,6 +156,10 @@ export default function DocumentModal({
     },
   ];
 
+  if (modalHidden) {
+    return null;
+  }
+
   return (
     <>
       {modalState === 'deleteVisible' && (
@@ -140,22 +168,24 @@ export default function DocumentModal({
           body={`All data associated with this ${fileTypeText} will be deleted.`}
           title={`Delete ${fileTypeText}?`}
           onDelete={deleteFile}
-          onCancel={() => setModalState('mainVisible')}
+          onCancel={() => setModalState('menuVisible')}
           deleteableItemName={fileTypeText}
         />
       )}
 
       {modalState !== 'deleteVisible' && (
         <MainModal
-          isModalVisible={modalState === 'mainVisible'}
+          isModalVisible={modalState === 'menuVisible'}
           closeButton
           vertical
           actions={ACTIONS}
-          closeModal={() => setModalState('mainClosing')}
+          closeModal={() => setModalState('menuClosing')}
           opacity={0.5}
           onCloseComplete={() => {
-            // onCloseComplete, modalState/intent and setTimeout are needed to avoid
-            // modal stacking context issues, as only one can be vialble at at time
+            // MainModal must fully close (animation + unmount) before DeleteModal
+            // mounts: RN can only present one Modal at a time, and mounting
+            // DeleteModal while MainModal is still up causes the confirm modal to
+            // be dropped and the actions sheet to reappear. Can possilbly use BottomSheetModal.
             if (modalState === 'deleteRequested') {
               setTimeout(() => {
                 setModalState('deleteVisible');
