@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
+import { Pagination } from '../../components/base-ui/pagination';
 import type { SortDirection } from '../../components/base-ui/table';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import {
@@ -28,7 +29,7 @@ import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
 const SEARCH_DEBOUNCE_MS = 300;
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 20;
 
 /** Table columns whose header can trigger a server-side sort. */
 type SortableColumn = 'name' | 'capacity' | 'status';
@@ -208,12 +209,6 @@ export function Dashboard() {
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <ShelterFilterPanel />
         </div>
-
-        {/* SEARCH BAR + FILTERING */}
-
-        <div className="flex w-full items-center justify-between mb-4">
-          <div className="text-sm text-gray-600">{totalCount} Results</div>
-        </div>
       </form>
 
       {/* TABLE */}
@@ -236,32 +231,10 @@ export function Dashboard() {
         <Pagination
           page={page}
           totalPages={totalPages}
+          resultCount={totalCount}
           onPageChange={setPage}
         />
       )}
-      <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
-        <div>
-          Page {page} of {totalPages}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Prev
-          </button>
-
-          <button
-            className="px-3 py-1 border border-gray-300 rounded-lg bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            Next
-          </button>
-        </div>
-      </div>
 
       {error && (
         <div className="mt-2 text-xs text-red-500">
