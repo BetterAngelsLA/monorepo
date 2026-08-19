@@ -13,9 +13,9 @@ import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
-import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import type { SortDirection } from '../../components/base-ui/table';
+import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
 import {
   ShelterTable,
   type ShelterRowObject,
@@ -160,12 +160,9 @@ export function Dashboard() {
   const totalCount = activeData?.operatorShelters?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const handleRowClick = useCallback(
-    (row: ShelterRowObject) => {
-      setPendingShelter({ id: row.id, name: row.name });
-    },
-    [],
-  );
+  const handleRowClick = useCallback((row: ShelterRowObject) => {
+    setPendingShelter({ id: row.id, name: row.name });
+  }, []);
 
   const handleSortChange = useCallback(
     (column: string | null, direction: SortDirection | null) => {
@@ -208,14 +205,14 @@ export function Dashboard() {
             className="h-full w-full rounded-full bg-transparent pr-3 text-base text-[#4A4F57] outline-none transition-colors placeholder:text-[#7A818A]"
           />
         </label>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <ShelterFilterPanel />
+        </div>
 
         {/* SEARCH BAR + FILTERING */}
 
         <div className="flex w-full items-center justify-between mb-4">
           <div className="text-sm text-gray-600">{totalCount} Results</div>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <ShelterFilterPanel />
-          </div>
         </div>
       </form>
 
@@ -235,6 +232,13 @@ export function Dashboard() {
       />
 
       {/* PAGINATION */}
+      {totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
       <div className="flex items-center justify-between mt-8 mx-4 text-sm text-gray-600">
         <div>
           Page {page} of {totalPages}
