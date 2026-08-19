@@ -195,12 +195,6 @@ class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.task_id = self.create_task_fixture(
-            {
-                "summary": "Org 1 task to amend",
-                "teamId": str(self.org_1_team_1.pk),
-            }
-        )["data"]["createTask"]["id"]
 
     def test_create_task_rejects_a_team_from_another_org(self) -> None:
         response = self.create_task_fixture({"summary": "Org 1 task", "teamId": str(self.org_2_team_1.pk)})
@@ -211,9 +205,16 @@ class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
         self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
 
     def test_update_task_rejects_a_team_from_another_org(self) -> None:
-        response = self.update_task_fixture({"id": self.task_id, "teamId": str(self.org_2_team_1.pk)})
+        task_id = self.create_task_fixture(
+            {
+                "summary": "Org 1 task to amend",
+                "teamId": str(self.org_1_team_1.pk),
+            }
+        )["data"]["createTask"]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "teamId": str(self.org_2_team_1.pk)})
 
         messages = response["data"]["updateTask"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
-        self.assertEqual(Task.objects.get(pk=self.task_id).team_id, self.org_1_team_1.pk)
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
