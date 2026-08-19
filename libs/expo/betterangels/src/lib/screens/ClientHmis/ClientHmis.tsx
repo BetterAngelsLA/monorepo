@@ -71,7 +71,7 @@ export function ClientHmis(props: TProps) {
 
     const hasClientNotFoundError = hasGqlCombinedApiError(
       API_ERROR_CODES.NOT_FOUND,
-      error
+      error,
     );
 
     const message = hasClientNotFoundError

@@ -39,7 +39,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
 
   const { content, markerSize, showSubscript } = useMemo(
     () => getContentAndSize({ text, itemCount, size }),
-    [text, itemCount, size]
+    [text, itemCount, size],
   );
 
   // Build the full label in a *single* Text node (avoids nested Text snapshot issues)

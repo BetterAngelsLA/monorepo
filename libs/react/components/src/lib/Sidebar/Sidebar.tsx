@@ -56,7 +56,7 @@ export function Sidebar(props: TProps) {
   const collapsedWidth = variant === 'basic' ? 'w-[0px]' : 'w-[40px]';
 
   const parentCss = [
-    'h-screen',
+    'h-full',
     'border-r',
     'border-neutral-90',
     'bg-neutral-99',

@@ -33,7 +33,7 @@ export const HMIS_REST_API_MAX_PER_PAGE = 50;
 class ClientHmis {
   private composedFetch: (
     input: RequestInfo | URL,
-    init?: RequestInit
+    init?: RequestInit,
   ) => Promise<Response>;
 
   constructor() {
@@ -42,7 +42,7 @@ class ClientHmis {
       userAgentInterceptor,
       interceptorHmis,
       bodyInterceptor,
-      includeCredentialsInterceptor
+      includeCredentialsInterceptor,
     );
   }
   /**
@@ -53,7 +53,7 @@ class ClientHmis {
     if (!apiUrlHmis) {
       throw new ErrorHmis(
         'HMIS API URL not found. Please log in to HMIS first.',
-        401
+        401,
       );
     }
     return apiUrlHmis;
@@ -89,7 +89,7 @@ class ClientHmis {
         throw new ErrorHmis(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
-          data
+          data,
         );
     }
   }
@@ -99,7 +99,7 @@ class ClientHmis {
    */
   async request<T = unknown>(
     path: string,
-    options: RequestOptionsHmis = {}
+    options: RequestOptionsHmis = {},
   ): Promise<T> {
     const baseUrl = await this.getBaseUrl();
 
@@ -176,7 +176,7 @@ class ClientHmis {
    */
   async postMultipart<T = unknown>(
     path: string,
-    formData: FormData
+    formData: FormData,
   ): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
@@ -231,7 +231,7 @@ class ClientHmis {
  * ```
  */
   async uploadClientFile(
-    props: UploadClientFileParams
+    props: UploadClientFileParams,
   ): Promise<ClientFileUploadResponse> {
     const {
       clientId,
@@ -274,7 +274,7 @@ class ClientHmis {
     // Make POST request to client-files endpoint
     return this.post<ClientFileUploadResponse>(
       `/clients/${clientId}/client-files`,
-      payload
+      payload,
     );
   }
 
@@ -324,7 +324,7 @@ class ClientHmis {
     categoryId: number,
     fileNameId: number,
     file?: { content: string; name: string; mimeType: string } | null,
-    isPrivate: boolean | null = null
+    isPrivate: boolean | null = null,
   ): Promise<ClientFileUploadResponse> {
     const clientFile: Record<string, unknown> = {
       id: fileId,
@@ -346,7 +346,7 @@ class ClientHmis {
 
     return this.post<ClientFileUploadResponse>(
       `/clients/${clientId}/client-files/${fileId}`,
-      payload
+      payload,
     );
   }
 
@@ -368,7 +368,7 @@ class ClientHmis {
    * ```
    */
   async getFileCategories(
-    params?: HttpQueryParamsHmis
+    params?: HttpQueryParamsHmis,
   ): Promise<FileCategoriesResponse> {
     return this.get<FileCategoriesResponse>('/client-file-categories', params);
   }
@@ -422,7 +422,7 @@ class ClientHmis {
    */
   async getClientFiles(
     clientId: string | number,
-    params?: ClientFilesListParams
+    params?: ClientFilesListParams,
   ): Promise<ClientFilesResponse> {
     const queryParams: Record<string, string> = {};
 
@@ -439,7 +439,7 @@ class ClientHmis {
 
     return this.get<ClientFilesResponse>(
       `/clients/${clientId}/client-files`,
-      queryParams
+      queryParams,
     );
   }
 
@@ -459,7 +459,7 @@ class ClientHmis {
    */
   async deleteClientFile(
     clientId: string | number,
-    fileId: string | number
+    fileId: string | number,
   ): Promise<void> {
     await this.delete(`/clients/${clientId}/client-files/${fileId}`);
   }
@@ -483,11 +483,11 @@ class ClientHmis {
    */
   async uploadClientPhoto(
     clientId: string | number,
-    formData: FormData
+    formData: FormData,
   ): Promise<ClientPhotoUploadResponse> {
     return this.postMultipart<ClientPhotoUploadResponse>(
       `/clients/${clientId}/photo/upload`,
-      formData
+      formData,
     );
   }
 }
@@ -495,7 +495,7 @@ class ClientHmis {
 export const getFileUrlsHmis = (
   baseUrl: string,
   clientId: string | number,
-  fileId: string | number
+  fileId: string | number,
 ) => {
   return {
     thumbnail: `${baseUrl}/clients/${clientId}/client-files/${fileId}/thumb`,

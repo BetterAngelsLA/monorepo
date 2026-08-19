@@ -23,7 +23,7 @@ export default function useEmailEnvironment(email: string): {
 
   const isPasswordLogin = useMemo(
     () => email.endsWith('@example.com'),
-    [email]
+    [email],
   );
 
   const targetEnv = useMemo<Environment | null>(() => {

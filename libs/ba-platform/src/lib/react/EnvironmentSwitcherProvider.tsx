@@ -1,4 +1,13 @@
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { clearActiveOrgId } from '../activeOrg';
 import { ApiConfigProvider } from './ApiConfigProvider';
 
 // ---------------------------------------------------------------------------
@@ -51,14 +60,18 @@ export interface EnvironmentSwitcherProviderProps {
    * For single-environment web apps that don't need the URL parameter,
    * pass ``() => createWebFetchClient()``.
    */
-  buildFetch: (apiUrl: string) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  buildFetch: (
+    apiUrl: string,
+  ) => (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
-const ApiEnvironmentContext = createContext<ApiEnvironmentContextType | undefined>(undefined);
+const ApiEnvironmentContext = createContext<
+  ApiEnvironmentContextType | undefined
+>(undefined);
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -89,9 +102,12 @@ export const EnvironmentSwitcherProvider = ({
     async (env: string) => {
       if (env === envName) return;
       await storage.setItem(storageKey, env);
+      // Organization ids are per-environment — this one names a row in the
+      // database we are leaving.
+      clearActiveOrgId();
       setEnvName(env);
     },
-    [envName, storage, storageKey]
+    [envName, storage, storageKey],
   );
 
   // ---- Resolve base URL ----
@@ -108,7 +124,7 @@ export const EnvironmentSwitcherProvider = ({
   // ---- Environment context value ----
   const envValue = useMemo<ApiEnvironmentContextType | undefined>(
     () => (envName ? { environment: envName, switchEnvironment } : undefined),
-    [envName, switchEnvironment]
+    [envName, switchEnvironment],
   );
 
   // ---- Pending state (after all hooks) ----
@@ -131,7 +147,7 @@ export const useEnvironment = () => {
   const context = useContext(ApiEnvironmentContext);
   if (!context) {
     throw new Error(
-      'useEnvironment must be used within an EnvironmentSwitcherProvider'
+      'useEnvironment must be used within an EnvironmentSwitcherProvider',
     );
   }
   return context;

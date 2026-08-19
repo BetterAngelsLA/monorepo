@@ -24,7 +24,7 @@ function buildFullUrl(origin: string, ...pathSegments: string[]): string {
 const lambdaTranslateEndpoint = buildFullUrl(
   window.location.origin,
   'api',
-  'generatePdf'
+  'generatePdf',
 );
 
 /**
@@ -33,7 +33,7 @@ const lambdaTranslateEndpoint = buildFullUrl(
  */
 async function inlineExternalCSS(headElement: HTMLElement): Promise<void> {
   const promises = Array.from(
-    headElement.querySelectorAll('link[rel="stylesheet"]')
+    headElement.querySelectorAll('link[rel="stylesheet"]'),
   ).map(async (link) => {
     const href = link.getAttribute('href');
     if (!href) return;
@@ -57,7 +57,7 @@ async function inlineExternalCSS(headElement: HTMLElement): Promise<void> {
  */
 async function extractFullHTMLFromPrintContainer(
   printContainer: HTMLElement,
-  baseUrl: string
+  baseUrl: string,
 ): Promise<string> {
   // Clone the head and remove unnecessary elements.
   const headClone = document.head.cloneNode(true) as HTMLElement;
@@ -123,7 +123,7 @@ async function extractFullHTMLFromPrintContainer(
 /** Retrieves the current language from the Google Translate widget */
 function getCurrentGoogleTranslateLanguage(): string | null {
   const combo = document.querySelector(
-    '.goog-te-combo'
+    '.goog-te-combo',
   ) as HTMLSelectElement | null;
   return combo ? combo.value : null;
 }
@@ -134,7 +134,7 @@ function getCurrentGoogleTranslateLanguage(): string | null {
  */
 async function callTranslateLambda(
   html: string,
-  targetLanguage: string
+  targetLanguage: string,
 ): Promise<string> {
   const response = await fetch(lambdaTranslateEndpoint, {
     method: 'POST',
@@ -189,7 +189,7 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
         // Extract the full HTML (waiting for fonts to load or timeout).
         const fullHtml = await extractFullHTMLFromPrintContainer(
           printRef.current,
-          window.location.origin
+          window.location.origin,
         );
 
         // Generate the PDF via Lambda and retrieve its URL.
@@ -209,7 +209,7 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
         setIsGenerating(false);
       }
     },
-    [printRef]
+    [printRef],
   );
 
   return (

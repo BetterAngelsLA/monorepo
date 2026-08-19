@@ -21,14 +21,20 @@ if (!process.env.CI) {
 
 const [workspaceRoot, projectRoot] = process.argv.slice(2);
 const appDir = resolve(workspaceRoot, projectRoot);
-const rootPkg = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'));
+const rootPkg = JSON.parse(
+  readFileSync(join(workspaceRoot, 'package.json'), 'utf-8'),
+);
 
 // Resolve * deps using the canonical implementation (shared with expo-doctor)
 const { unresolved } = resolveStarDeps(workspaceRoot, appDir);
 
 if (unresolved.length > 0) {
-  console.error(`[eas-build-pre-install] ERROR: ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`);
-  console.error('Add them to root package.json dependencies or devDependencies.');
+  console.error(
+    `[eas-build-pre-install] ERROR: ${unresolved.length} star dep(s) could not be resolved: ${unresolved.join(', ')}`,
+  );
+  console.error(
+    'Add them to root package.json dependencies or devDependencies.',
+  );
   process.exit(1);
 }
 
@@ -40,10 +46,16 @@ if (rootPkg.packageManager) appPkg.packageManager = rootPkg.packageManager;
 if (rootPkg.overrides) appPkg.overrides = rootPkg.overrides;
 else if (rootPkg.resolutions) appPkg.resolutions = rootPkg.resolutions;
 
-writeFileSync(join(appDir, 'package.json'), JSON.stringify(appPkg, null, 2) + '\n');
+writeFileSync(
+  join(appDir, 'package.json'),
+  JSON.stringify(appPkg, null, 2) + '\n',
+);
 
 // Tell EAS this is a Yarn workspace so it runs install from root
 rootPkg.workspaces = [projectRoot];
-writeFileSync(join(workspaceRoot, 'package.json'), JSON.stringify(rootPkg, null, 2) + '\n');
+writeFileSync(
+  join(workspaceRoot, 'package.json'),
+  JSON.stringify(rootPkg, null, 2) + '\n',
+);
 
 console.log('[eas-build-pre-install] Star deps resolved + EAS config applied.');

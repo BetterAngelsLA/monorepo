@@ -24,7 +24,7 @@ type ComboBoxSharedProps<T extends string | number = string | number> = Omit<
 /** RHF-controlled mode: pass control + field names and ComboBox wires itself. */
 type ComboBoxControlledProps<
   T extends string | number = string | number,
-  TForm extends FieldValues = FieldValues
+  TForm extends FieldValues = FieldValues,
 > = ComboBoxSharedProps<T> & {
   /** react-hook-form control object. */
   control: Control<TForm>;
@@ -56,12 +56,12 @@ type ComboBoxUncontrolledProps<T extends string | number = string | number> =
 
 type ComboBoxProps<
   T extends string | number = string | number,
-  TForm extends FieldValues = FieldValues
+  TForm extends FieldValues = FieldValues,
 > = ComboBoxControlledProps<T, TForm> | ComboBoxUncontrolledProps<T>;
 
 export function ComboBox<
   T extends string | number = string | number,
-  TForm extends FieldValues = FieldValues
+  TForm extends FieldValues = FieldValues,
 >(props: ComboBoxProps<T, TForm>) {
   if (props.control) {
     return (
@@ -74,7 +74,7 @@ export function ComboBox<
 /** Internal: hooks into react-hook-form then delegates to ComboBoxInner. */
 function ControlledComboBox<
   T extends string | number = string | number,
-  TForm extends FieldValues = FieldValues
+  TForm extends FieldValues = FieldValues,
 >(props: ComboBoxControlledProps<T, TForm>) {
   const { control, name, inputName, options, ...rest } = props;
 
@@ -84,16 +84,16 @@ function ControlledComboBox<
   const value = useMemo(
     () =>
       (options as DropdownOption<T>[]).filter((o) =>
-        (field.value as T[]).includes(o.value)
+        (field.value as T[]).includes(o.value),
       ),
-    [options, field.value]
+    [options, field.value],
   );
 
   const handleChange = useCallback(
     (opts: DropdownOption<T>[] | null) => {
       field.onChange(opts ? opts.map((o) => o.value) : []);
     },
-    [field]
+    [field],
   );
 
   return (
@@ -115,7 +115,7 @@ function ComboBoxInner<T extends string | number = string | number>(
     onChange: (value: DropdownOption<T>[] | null) => void;
     inputValue: string | null | undefined;
     onInputChange: (value: string | null) => void;
-  }
+  },
 ) {
   const {
     triggerValue,
@@ -133,7 +133,7 @@ function ComboBoxInner<T extends string | number = string | number>(
 
   const showInput = useMemo(
     () => Array.isArray(value) && value.some((v) => v.value === triggerValue),
-    [value, triggerValue]
+    [value, triggerValue],
   );
 
   const handleDropdownChange = useCallback(
@@ -146,7 +146,7 @@ function ComboBoxInner<T extends string | number = string | number>(
         onInputChange(null);
       }
     },
-    [onChange, onInputChange, triggerValue]
+    [onChange, onInputChange, triggerValue],
   );
 
   return (

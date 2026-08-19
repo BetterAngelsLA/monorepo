@@ -14,7 +14,7 @@ export function ShelterTypes({
       {shelter.shelterTypes
         .filter(
           (shelterType): shelterType is { name: ShelterChoices } =>
-            !!shelterType.name
+            !!shelterType.name,
         )
         .map((shelterType) => enumDisplayShelterChoices[shelterType.name])
         .join(', ')}

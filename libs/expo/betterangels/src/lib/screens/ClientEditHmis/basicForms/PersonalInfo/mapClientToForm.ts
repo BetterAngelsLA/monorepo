@@ -6,7 +6,7 @@ import {
 } from './formSchema';
 
 export function mapClientToPersonalInfoSchema(
-  client: HmisClientProfileType
+  client: HmisClientProfileType,
 ): TPersonalInfoFormSchema {
   const {
     birthDate,

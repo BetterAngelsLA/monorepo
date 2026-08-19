@@ -22,7 +22,7 @@ import { isoToDateSafe } from '../isoToDateSafe';
 
 export function toLocalCalendarDate(
   value?: string | Date | null,
-  inputFormat?: string
+  inputFormat?: string,
 ): Date | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -51,7 +51,7 @@ export function toLocalCalendarDate(
     return new Date(
       validIsoDate.getFullYear(),
       validIsoDate.getMonth(),
-      validIsoDate.getDate()
+      validIsoDate.getDate(),
     );
   }
 
@@ -63,7 +63,7 @@ export function toLocalCalendarDate(
       return new Date(
         parsed.getFullYear(),
         parsed.getMonth(),
-        parsed.getDate()
+        parsed.getDate(),
       );
     }
   }

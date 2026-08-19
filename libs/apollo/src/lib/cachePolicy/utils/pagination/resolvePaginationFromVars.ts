@@ -7,7 +7,7 @@ import { resolvePerPagePagination } from './resolvePerPagePagination';
 
 export function resolvePaginationFromVars<TVars = unknown>(
   variables: TVars | undefined,
-  paginationVars?: TPaginationVariables
+  paginationVars?: TPaginationVariables,
 ): MergePaginationArgs {
   if (!paginationVars) {
     // auto-detect with default paths

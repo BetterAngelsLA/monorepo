@@ -45,7 +45,7 @@ const unknownOption: TShelterFilterOption = {
 
 type TSelectableFilterName = Exclude<
   keyof TShelterPropertyFilters,
-  'openNow' | 'openNowScheduleTypes' | 'isAccessCenter' | 'maxStay'
+  'openNowFor' | 'isAccessCenter' | 'maxStay'
 >;
 
 export type TFilterConfig = {
@@ -56,7 +56,7 @@ export type TFilterConfig = {
 
 export function getFilterLabel(
   category: keyof TShelterPropertyFilters,
-  value: TFilterOptionType
+  value: TFilterOptionType,
 ): string | null {
   if (value === UNKNOWN_FILTER_VALUE) {
     const config = filterConfigs.find((c) => c.name === category);
@@ -64,8 +64,6 @@ export function getFilterLabel(
   }
 
   switch (category) {
-    case 'openNow':
-      return 'Open now';
     case 'maxStay':
       return 'Max stay';
     case 'demographics':
@@ -119,7 +117,7 @@ const demographicOptionList: TShelterFilterOption[] = demographicOptions.map(
       label: enumDisplayDemographics[option],
       value: option,
     };
-  }
+  },
 );
 
 export const demographicFilter: TFilterConfig = {
@@ -168,7 +166,7 @@ const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
       label: enumDisplayParkingChoices[option],
       value: option,
     };
-  }
+  },
 );
 
 export const parkingFilter: TFilterConfig = {
@@ -241,7 +239,7 @@ const roomStyleOptionsList: TShelterFilterOption[] = roomStyleOptions.map(
       label: enumDisplayRoomStyles[option],
       value: option,
     };
-  }
+  },
 );
 
 export const roomStyleFilter: TFilterConfig = {
@@ -267,7 +265,7 @@ const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
       label: enumDisplayShelterChoices[option],
       value: option,
     };
-  }
+  },
 );
 
 export const shelterTypeFilter: TFilterConfig = {

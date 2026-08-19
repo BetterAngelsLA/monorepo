@@ -16,16 +16,16 @@ export interface FilteredPropertyOptions {
 
 function filterPropertyOptions<T extends string>(
   shelterProperties: { name?: T | null }[] | undefined,
-  allProperties: { label: string; value: T }[]
+  allProperties: { label: string; value: T }[],
 ): { label: string; value: T }[] {
   const shelterValues = new Set(
-    (shelterProperties ?? []).map((i) => i.name).filter(Boolean)
+    (shelterProperties ?? []).map((i) => i.name).filter(Boolean),
   );
   return allProperties.filter((opt) => shelterValues.has(opt.value));
 }
 
 export function useFilteredPropertyOptions(
-  shelterId: string
+  shelterId: string,
 ): FilteredPropertyOptions & { loading: boolean } {
   const { shelterProperties, loading } = useShelterProperties(shelterId);
 
@@ -42,15 +42,15 @@ export function useFilteredPropertyOptions(
     return {
       accessibility: filterPropertyOptions(
         shelterProperties.accessibility,
-        ACCESSIBILITY_OPTIONS
+        ACCESSIBILITY_OPTIONS,
       ),
       demographics: filterPropertyOptions(
         shelterProperties.demographics,
-        DEMOGRAPHICS_OPTIONS
+        DEMOGRAPHICS_OPTIONS,
       ),
       funders: filterPropertyOptions(
         shelterProperties.funders,
-        FUNDERS_OPTIONS
+        FUNDERS_OPTIONS,
       ),
       pets: filterPropertyOptions(shelterProperties.pets, PETS_OPTIONS),
     };

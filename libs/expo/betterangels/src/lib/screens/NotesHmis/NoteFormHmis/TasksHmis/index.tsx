@@ -53,7 +53,7 @@ export default function TasksHmis(props: TasksHmisProps) {
                         return { ...t, markedForDeletion: true };
                       }
                       return t;
-                    })
+                    }),
                   )
               : undefined
           }

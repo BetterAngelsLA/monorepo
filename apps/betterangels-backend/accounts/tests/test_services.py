@@ -8,8 +8,10 @@ from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
     create_organization_with_presets,
+    get_or_create_user_by_email,
     member_add,
     organization_remove_member,
+    reactivate_user,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -109,6 +111,53 @@ def test_create_org_atomic() -> None:
     assert not OrgModel.objects.filter(name="Atomic Org").exists()
 
 
+# ── get_or_create_user_by_email ───────────────────────────────────────
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_by_email_new_user() -> None:
+    """Brand-new email yields an active user with an unusable password and a
+    normalized (lowercased, stripped) email."""
+    user, created = get_or_create_user_by_email(" NewUser@Example.com ")
+
+    assert created
+    assert user.email == "newuser@example.com"
+    assert user.is_active
+    assert not user.has_usable_password()
+    assert User.objects.filter(email="newuser@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_by_email_leaves_inactive_user_unchanged() -> None:
+    """The provisioning service has no side effects on existing users: a
+    deactivated account is returned unchanged (reactivation is an explicit,
+    authorized step via reactivate_user)."""
+    existing = baker.make(User, email="sleepy@example.com", is_active=False)
+
+    user, created = get_or_create_user_by_email("Sleepy@Example.com")
+
+    assert not created
+    assert user.pk == existing.pk
+    assert not user.is_active  # left as-is
+    assert User.objects.filter(email="sleepy@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_reactivate_user() -> None:
+    """reactivate_user reactivates a deactivated account and is a no-op for
+    an active one."""
+    inactive = baker.make(User, email="sleepy@example.com", is_active=False)
+    active = baker.make(User, email="awake@example.com", is_active=True)
+
+    reactivate_user(inactive)
+    reactivate_user(active)
+
+    inactive.refresh_from_db()
+    active.refresh_from_db()
+    assert inactive.is_active
+    assert active.is_active
+
+
 # ── member_add ─────────────────────────────────────────────────────────
 
 
@@ -174,6 +223,48 @@ def test_member_add_existing_user_different_org() -> None:
     assert User.objects.filter(email=user.email).count() == 1
     cw_org2 = Group.objects.get(permissiongroup__organization=org_2, permissiongroup__template__name=CASEWORKER.name)
     assert cw_org2 in user.groups.all()
+
+
+@pytest.mark.django_db
+def test_member_add_reactivates_inactive_user() -> None:
+    """Re-adding an existing-but-deactivated user reactivates them without
+    creating a duplicate row."""
+    org = create_organization_with_presets("Reactivate Org", ["outreach"], owner=baker.make(User))
+    existing = baker.make(User, email="revive@example.com", is_active=False)
+
+    user = member_add(
+        email="revive@example.com",
+        first_name="Revive",
+        last_name="User",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert user.pk == existing.pk
+    assert User.objects.filter(email="revive@example.com").count() == 1
+    user.refresh_from_db()
+    assert user.is_active
+
+
+@pytest.mark.django_db
+def test_member_add_mixed_case_email_finds_existing_user() -> None:
+    """Mixed-case email input finds the existing (lowercased) user instead of
+    creating a duplicate or raising IntegrityError."""
+    org = create_organization_with_presets("Mixed Case Org", ["outreach"], owner=baker.make(User))
+    existing = baker.make(User, email="mixedcase@example.com")
+
+    user = member_add(
+        email="MixedCase@Example.com",
+        first_name="Mixed",
+        last_name="Case",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert user.pk == existing.pk
+    assert User.objects.filter(email="mixedcase@example.com").count() == 1
 
 
 @pytest.mark.django_db

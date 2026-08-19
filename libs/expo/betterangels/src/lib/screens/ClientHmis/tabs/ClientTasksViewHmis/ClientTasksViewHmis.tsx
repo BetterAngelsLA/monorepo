@@ -59,7 +59,7 @@ export function ClientTasksViewHmis(props: TProps) {
 
   const [filtersKey, setFiltersKey] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialTaskFilters()
+    getInitialTaskFilters(),
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -115,7 +115,7 @@ export function ClientTasksViewHmis(props: TProps) {
     (task: TaskType) => (
       <TaskCard task={task} onPress={handleTaskPress} variant="withoutClient" />
     ),
-    [handleTaskPress]
+    [handleTaskPress],
   );
 
   function renderListHeaderText(visible: number, total: number | undefined) {

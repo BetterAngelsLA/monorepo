@@ -66,7 +66,7 @@ export function useBottomSheetStack(params: TParams) {
         return [instance];
       });
     },
-    [setSheets, sheetRefs]
+    [setSheets, sheetRefs],
   );
 
   return {

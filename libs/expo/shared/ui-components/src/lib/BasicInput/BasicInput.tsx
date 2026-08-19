@@ -65,7 +65,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
       errorMessage,
       ...rest
     },
-    ref
+    ref,
   ) {
     const isControlled = value !== undefined;
     const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
@@ -84,7 +84,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
         marginHorizontal: mx && Spacings[mx],
         marginVertical: my && Spacings[my],
       }),
-      [mb, mt, ml, mr, mx, my]
+      [mb, mt, ml, mr, mx, my],
     );
 
     return (
@@ -162,7 +162,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
         )}
       </View>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

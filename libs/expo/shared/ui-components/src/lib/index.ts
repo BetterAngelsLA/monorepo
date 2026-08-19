@@ -38,6 +38,8 @@ export { default as EmailBtn } from './EmailBtn';
 export { default as ExpandableContainer } from './ExpandableContainer';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
+export { UploadItemRow } from './UploadItemRow/UploadItemRow';
+export type { TUploadItemRowStatus } from './UploadItemRow/UploadItemRow';
 export * from './Filters';
 export { default as Form } from './Form';
 export { default as FormCard } from './FormCard';

@@ -45,7 +45,7 @@ export function ProfilePhotoModal({
       refetchQueries: [
         { query: ClientProfileDocument, variables: { id: clientId } },
       ],
-    }
+    },
   );
 
   const deleteFile = async () => {

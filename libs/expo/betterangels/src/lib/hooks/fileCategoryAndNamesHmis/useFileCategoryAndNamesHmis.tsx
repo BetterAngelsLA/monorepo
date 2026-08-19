@@ -58,7 +58,7 @@ export function useFileCategoryAndNamesHmis(): TResult {
       if (validationError) {
         console.error(
           '[useFileCategoryAndNamesHmis] Cross-reference validation failed',
-          validationError
+          validationError,
         );
         throw validationError;
       }

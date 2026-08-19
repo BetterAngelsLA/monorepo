@@ -5,6 +5,15 @@ from unittest.mock import ANY
 import time_machine
 import waffle
 from accounts.tests.baker_recipes import organization_recipe
+from common.enums import ImagePresetEnum
+from common.imgproxy import IMGPROXY_SWITCH
+from django.contrib.contenttypes.models import ContentType
+from django.test import override_settings
+from model_bakery import baker
+from notes.models import Note
+from unittest_parametrize import parametrize
+from waffle.testutils import override_switch
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -32,14 +41,6 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS, MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
-from common.enums import ImagePresetEnum
-from common.imgproxy import IMGPROXY_SWITCH
-from django.contrib.contenttypes.models import ContentType
-from django.test import override_settings
-from model_bakery import baker
-from notes.models import Note
-from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
@@ -275,6 +276,15 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("HMISid", 2),  # hmis_id search matching two clients
             ("HMISidL", 1),  # hmis_id search matching one client
             ("HMISidP", 2),  # hmis_id search matching two clients
+            ("2125551212", 1),  # exact phone match on client 1
+            ("(212) 555-1212", 1),  # formatted phone match on client 1
+            ("212-555-1212", 1),  # hyphenated phone match on client 1
+            ("718", 1),  # partial phone match on client 1 secondary phone
+            ("347", 1),  # partial phone match on client 2 phone
+            ("5551212", 2),  # partial phone match on both clients
+            ("tod 5551212", 1),  # name + phone match on same client
+            ("tod 347", 0),  # phone term matches a different client than name term
+            ("pea 718", 0),  # phone term matches a different client than name term
         ],
     )
     def test_client_profiles_query_text_search(self, search_value: str, expected_client_profile_count: int) -> None:
@@ -296,6 +306,51 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+    @parametrize(
+        ("date_format, expected_client_profile_count"),
+        [
+            ("%m/%d/%Y", 1),  # MM/DD/YYYY matches client 1
+            ("%m-%d-%Y", 1),  # MM-DD-YYYY matches client 1
+        ],
+    )
+    def test_client_profiles_query_dob_search(self, date_format: str, expected_client_profile_count: int) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        search_value = self.date_of_birth.strftime(date_format)
+        response = self.execute_graphql(query, variables={"search": f"tod {search_value}"})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+        if expected_client_profile_count:
+            self.assertEqual(response["data"]["clientProfiles"]["results"][0]["id"], self.client_profile_1["id"])
+
+    def test_client_profiles_query_dob_search_requires_all_terms_match(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
+                    totalCount
+                }
+            }
+        """
+
+        # "zzz" matches no field, so the dob-only match must not return client 1
+        search_value = f"zzz {self.date_of_birth.strftime('%m/%d/%Y')}"
+        response = self.execute_graphql(query, variables={"search": search_value})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], 0)
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),

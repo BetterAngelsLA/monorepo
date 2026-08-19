@@ -10,15 +10,16 @@ import type { FetchInterceptor } from '@monorepo/fetch';
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockAsyncStorage: Record<string, string> = {};
-
-vi.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: vi.fn((key: string) =>
-    Promise.resolve(mockAsyncStorage[key] ?? null),
-  ),
-  setItem: vi.fn((key: string, value: string) => {
-    mockAsyncStorage[key] = value;
-    return Promise.resolve();
+const mockMmkv: Record<string, string> = {};
+vi.mock('react-native-mmkv', () => ({
+  createMMKV: () => ({
+    getString: (key: string) => mockMmkv[key],
+    set: (key: string, value: string) => {
+      mockMmkv[key] = value;
+    },
+    remove: (key: string) => {
+      delete mockMmkv[key];
+    },
   }),
 }));
 
@@ -27,15 +28,7 @@ vi.mock('@preeternal/react-native-cookie-manager', () => ({
   setFromResponse: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock('@monorepo/expo/shared/utils', () => ({
-  asyncStorageAdapter: {
-    getItem: (key: string) => Promise.resolve(mockAsyncStorage[key] ?? null),
-    setItem: (key: string, value: string) => {
-      mockAsyncStorage[key] = value;
-      return Promise.resolve();
-    },
-  },
-}));
+vi.mock('@monorepo/expo/shared/utils', () => ({}));
 
 vi.mock('@monorepo/expo/shared/clients', () => ({
   bodyInterceptor: (async (
@@ -67,15 +60,15 @@ describe('createExpoFetchClient', () => {
     originalFetch = global.fetch;
     global.fetch = vi.fn().mockResolvedValue(new Response());
     // Clear mock storage
-    Object.keys(mockAsyncStorage).forEach((k) => delete mockAsyncStorage[k]);
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    Object.keys(mockMmkv).forEach((k) => delete mockMmkv[k]);
   });
 
-  it('injects X-Organization-ID header when org is stored', async () => {
-    mockAsyncStorage['betterangels_active_org_id'] = 'org-expo';
+  it('injects X-Organization-ID header from the active-org store', async () => {
+    mockMmkv['betterangels_active_org_id'] = 'org-expo';
 
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'POST' });
@@ -87,7 +80,7 @@ describe('createExpoFetchClient', () => {
     expect(headers.get('X-Organization-ID')).toBe('org-expo');
   });
 
-  it('omits X-Organization-ID header when no org stored', async () => {
+  it('omits X-Organization-ID header when there is no active org', async () => {
     const fetchClient = createExpoFetchClient('https://api.example.com');
     await fetchClient('/graphql', { method: 'GET' });
 

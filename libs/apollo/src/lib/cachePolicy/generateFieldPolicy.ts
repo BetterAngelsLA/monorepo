@@ -105,7 +105,7 @@ export function generateFieldPolicy<TItem = unknown, TVars = unknown>(opts: {
 }
 
 function toPaginationVariables(
-  queryPolicyConfig: QueryPolicyConfig
+  queryPolicyConfig: QueryPolicyConfig,
 ): TPaginationVariables {
   const { paginationMode } = queryPolicyConfig;
 

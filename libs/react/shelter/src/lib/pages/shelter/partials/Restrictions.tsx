@@ -30,7 +30,7 @@ export function Restrictions({
     shelter.exitPolicy as readonly { name?: ExitPolicyChoices.Other | null }[],
     shelter.exitPolicyOther,
     enumDisplayExitPolicyChoices,
-    ExitPolicyChoices.Other
+    ExitPolicyChoices.Other,
   );
 
   return (

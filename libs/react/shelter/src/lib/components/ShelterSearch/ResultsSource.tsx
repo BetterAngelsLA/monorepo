@@ -1,3 +1,4 @@
+import { ScheduleTypeChoices } from '../../apollo';
 import { TMapBounds } from '../Map';
 import { TShelterPropertyFilters } from './types';
 
@@ -5,18 +6,18 @@ type TProps = {
   className?: string;
   nameFilter?: string;
   mapBoundsFilter?: TMapBounds | null;
-  openNowFilter?: boolean | null;
+  openNowForFilter?: ScheduleTypeChoices[] | null;
   propertyFilters?: TShelterPropertyFilters | null;
 };
 
 function propertyFiltersAffectQuery(
-  propertyFilters?: TShelterPropertyFilters | null
+  propertyFilters?: TShelterPropertyFilters | null,
 ): boolean {
   if (!propertyFilters) {
     return false;
   }
 
-  const { openNow, openNowScheduleTypes, ...propertyOnly } = propertyFilters;
+  const { openNowFor, ...propertyOnly } = propertyFilters;
 
   return Object.keys(propertyOnly).length > 0;
 }
@@ -37,7 +38,7 @@ export function ResultsSource(props: TProps) {
   const {
     nameFilter,
     mapBoundsFilter,
-    openNowFilter,
+    openNowForFilter,
     propertyFilters,
     className = '',
   } = props;
@@ -47,7 +48,10 @@ export function ResultsSource(props: TProps) {
   if (mapBoundsFilter) {
     resultSourceParts.push('map area');
   }
-  if (openNowFilter || propertyFiltersAffectQuery(propertyFilters)) {
+  if (
+    (openNowForFilter && openNowForFilter.length > 0) ||
+    propertyFiltersAffectQuery(propertyFilters)
+  ) {
     resultSourceParts.push('filters');
   }
   if (nameFilter?.trim()) {

@@ -13,7 +13,7 @@ export function useBed(bedId: string) {
     {
       variables: { id: bedId },
       skip: !bedId,
-    }
+    },
   );
 
   return {

@@ -23,6 +23,7 @@ export default function Purpose(props: IPurposeProps) {
   return (
     <FieldCard
       scrollRef={scrollRef}
+      testId="note-purpose-field"
       expanded={expanded}
       mb="xs"
       setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
@@ -40,6 +41,7 @@ export default function Purpose(props: IPurposeProps) {
         }}
       >
         <BasicInput
+          testID="note-purpose-input"
           placeholder="Enter purpose"
           maxLength={100}
           onDelete={() => onPurposeChange(null)}

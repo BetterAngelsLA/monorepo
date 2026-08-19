@@ -11,7 +11,7 @@ import {
   MapControl,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,
@@ -26,22 +26,27 @@ import { useFitMapToPlaceViewport } from './useFitMapToPlaceViewport';
 import {
   TLatLng,
   TMapBounds,
+  TMapCamera,
   TMapGestureHandling,
-  TMapZoom,
   TMarker,
 } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
+import { toMapBounds } from './utils/toMapBounds';
 
 type TMap = {
   mapId: string;
   className?: string;
-  defaultCenter?: TLatLng | google.maps.LatLngLiteral | null;
-  defaultZoom?: TMapZoom;
+  /** Controlled camera: the Map renders exactly this center + zoom. */
+  center?: TLatLng | null;
+  zoom?: number;
+  /** Reports camera changes (user pan/zoom, fitBounds results) back up. */
+  onCameraChange?: (camera: TMapCamera) => void;
+  /** Fires whenever the map settles, with the actual rendered bounds. */
+  onMapIdle?: (bounds: TMapBounds | null) => void;
   gestureHandling?: TMapGestureHandling;
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
   showSearchButton?: boolean;
-  setShowSearchButton: Dispatch<SetStateAction<boolean>>;
   userLocation?: TLatLng | null;
   showCurrentLocationBtn?: boolean;
   onCenterSelect?: (center: TLatLng) => void;
@@ -56,13 +61,14 @@ export function Map(props: TMap) {
   const {
     mapId,
     className = '',
-    defaultZoom = DEFAULT_MAP_ZOOM,
-    defaultCenter = LA_COUNTY_CENTER,
+    center,
+    zoom,
+    onCameraChange,
+    onMapIdle,
     gestureHandling = DEFAULT_GESTURE_HANDLING,
     disableDefaultUI = true,
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
     showSearchButton = false,
-    setShowSearchButton,
     userLocation,
     showCurrentLocationBtn = false,
     onCenterSelect,
@@ -78,35 +84,32 @@ export function Map(props: TMap) {
     onFitted: onPlaceViewportFitted,
   });
 
-  const [cameraProps, setCameraProps] = useState<MapCameraProps>({
-    center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
-    zoom: defaultZoom,
-  });
+  const camera: MapCameraProps = {
+    center: (center
+      ? toGoogleLatLng(center)
+      : LA_COUNTY_CENTER) as google.maps.LatLngLiteral,
+    zoom: zoom ?? DEFAULT_MAP_ZOOM,
+  };
 
-  const handleCameraChange = useCallback((event: MapCameraChangedEvent) => {
-    setCameraProps(event.detail);
-  }, []);
+  const handleCameraChange = useCallback(
+    (event: MapCameraChangedEvent) => {
+      const { center: c, zoom: z } = event.detail;
+      onCameraChange?.({
+        center: { latitude: c.lat, longitude: c.lng },
+        zoom: z,
+      });
+    },
+    [onCameraChange],
+  );
+
+  const handleIdle = useCallback(() => {
+    const bounds = map?.getBounds();
+    onMapIdle?.(bounds ? toMapBounds(bounds) : null);
+  }, [map, onMapIdle]);
 
   function handleCenterToUserLocation(location: TLatLng) {
-    if (!map) {
-      console.warn('[map::handleCenterToUserLocation] map missing.');
-
-      return;
-    }
-
-    const { latitude, longitude } = location;
-
-    const newCenter = {
-      lat: latitude,
-      lng: longitude,
-    };
-
-    onCenterSelect?.({
-      latitude,
-      longitude,
-    });
-
-    map.setCenter(newCenter);
+    // The camera is controlled by the parent; just notify it of the new center.
+    onCenterSelect?.(location);
   }
 
   const userLocationLatLng = toGoogleLatLng(userLocation);
@@ -118,9 +121,10 @@ export function Map(props: TMap) {
       className={mergeCss(mapCss)}
       disableDefaultUI={disableDefaultUI}
       gestureHandling={gestureHandling}
+      center={camera.center}
+      zoom={camera.zoom}
       onCameraChanged={handleCameraChange}
-      onIdle={() => setShowSearchButton(true)}
-      {...cameraProps}
+      onIdle={handleIdle}
     >
       {userLocationLatLng && (
         <AdvancedMarker position={userLocationLatLng} zIndex={999}>

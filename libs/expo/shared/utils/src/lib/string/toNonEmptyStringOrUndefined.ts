@@ -1,5 +1,5 @@
 export function toNonEmptyStringOrUndefined(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): string | undefined {
   if (typeof value !== 'string') {
     return undefined;

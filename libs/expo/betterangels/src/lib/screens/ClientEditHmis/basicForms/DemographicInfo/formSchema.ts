@@ -81,5 +81,5 @@ export const DemographicInfoFormSchemaOut = DemographicInfoFormSchema.transform(
       heightInInches:
         Number(heightInInches) > 0 ? Number(heightInInches) : null,
     };
-  }
+  },
 );

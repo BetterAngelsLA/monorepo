@@ -202,7 +202,7 @@ export const enumDisplayShelterPhotoTypeChoices: {
  */
 export const CITY_COUNCIL_DISTRICT_UNINCORPORATED = 0;
 export function formatCityCouncilDistrict(
-  district: number | null | undefined
+  district: number | null | undefined,
 ): string {
   if (district == null) return '';
   if (district === CITY_COUNCIL_DISTRICT_UNINCORPORATED)

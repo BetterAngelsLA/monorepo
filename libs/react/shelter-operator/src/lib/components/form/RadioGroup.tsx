@@ -27,7 +27,11 @@ export function RadioGroup<T>({
   error,
   required,
 }: RadioGroupProps<T>) {
-  const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
+  const messageId = error
+    ? `${name}-error`
+    : helperText
+      ? `${name}-helper`
+      : undefined;
 
   return (
     <FieldWrapper
@@ -44,7 +48,7 @@ export function RadioGroup<T>({
         aria-describedby={messageId}
         aria-required={required ? 'true' : undefined}
       >
-        {options.map(option => {
+        {options.map((option) => {
           const id = `${name}-${String(option.value)}`;
           return (
             <label key={id} htmlFor={id} className={OPTION_ITEM_CLASS}>

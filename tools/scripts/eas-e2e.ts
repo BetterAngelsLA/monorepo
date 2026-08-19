@@ -58,11 +58,11 @@ console.log(`\nChecking for builds with runtime version: ${fingerprint}`);
 function findBuildId(platform: string, profile: string): string | undefined {
   try {
     const builds = runJson<Array<{ id: string; status: string }>>(
-      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --non-interactive`
+      `yarn nx run ${project}:build-list --platform ${platform} --buildProfile ${profile} --runtimeVersion ${fingerprint} --limit 1 --json --non-interactive`,
     );
     if (builds.length > 0) {
       console.log(
-        `Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`
+        `Found existing ${platform} build: ${builds[0].id} (${builds[0].status})`,
       );
       return builds[0].id;
     }
@@ -78,20 +78,20 @@ let iosBuildId = findBuildId('ios', iosProfile);
 // Trigger missing builds separately (different profiles per platform)
 if (!androidBuildId) {
   console.log(
-    `\nTriggering android build (profile: ${androidProfile}, --wait false)...`
+    `\nTriggering android build (profile: ${androidProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`
+    `yarn nx run ${project}:eas-build --profile ${androidProfile} --platform android --freeze-credentials --non-interactive --json --no-wait`,
   );
   androidBuildId = newBuilds[0]?.id;
   console.log(`Triggered android build: ${androidBuildId}`);
 }
 if (!iosBuildId) {
   console.log(
-    `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`
+    `\nTriggering ios build (profile: ${iosProfile}, --wait false)...`,
   );
   const newBuilds = runJson<Array<{ id: string; platform: string }>>(
-    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`
+    `yarn nx run ${project}:eas-build --profile ${iosProfile} --platform ios --freeze-credentials --non-interactive --json --no-wait`,
   );
   iosBuildId = newBuilds[0]?.id;
   console.log(`Triggered ios build: ${iosBuildId}`);
@@ -112,7 +112,7 @@ console.log(`\nPublishing update on branch: ${branch}`);
 process.env['EXPO_PUBLIC_E2E_MODE'] = '1';
 
 const updates = runJson<Array<{ group: string; platform: string }>>(
-  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`
+  `yarn nx run ${project}:eas-update --branch "${branch}" --auto --json --non-interactive`,
 );
 const groupId = updates[0]?.group;
 if (!groupId) {
@@ -138,7 +138,7 @@ if (githubRepository && githubStatusSha) {
   console.log(`\nWrote GitHub status metadata to .env`);
 } else {
   console.log(
-    '\nSkipping GitHub status metadata (GITHUB_REPOSITORY or GITHUB_STATUS_SHA not set)'
+    '\nSkipping GitHub status metadata (GITHUB_REPOSITORY or GITHUB_STATUS_SHA not set)',
   );
 }
 
@@ -155,7 +155,7 @@ run(
     `-F android_profile=${androidProfile} ` +
     `-F ios_profile=${iosProfile} ` +
     `--non-interactive`,
-  { cwd: projectDir }
+  { cwd: projectDir },
 );
 
 console.log('\nE2E tests triggered on EAS');

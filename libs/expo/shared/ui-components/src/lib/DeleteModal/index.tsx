@@ -73,7 +73,7 @@ export default function DeleteModal(props: TProps) {
             <TextButton
               title="Cancel"
               accessibilityHint="cancel the delete action"
-              testID="delete-modal-cancel-btn"
+              testId="delete-modal-cancel-btn"
               color={Colors.PRIMARY}
               fontSize="sm"
               onPress={() => {
