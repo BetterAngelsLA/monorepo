@@ -124,7 +124,7 @@ function SortFilterDrawerContent() {
 
   const spaOptions = spas.map((s) => ({ id: s.id, label: s.name }));
   const cityOptions = cities.map((c) => ({ id: c.id, label: c.name }));
-  console.log(orgOptions);
+
   return (
     <div className="flex flex-col gap-3">
       {/* ── Sort ── */}

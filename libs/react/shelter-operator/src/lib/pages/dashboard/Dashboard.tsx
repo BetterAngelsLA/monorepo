@@ -252,6 +252,9 @@ export function Dashboard() {
           },
           tags: null,
           status: s.status,
+          organization: s.organization
+            ? { id: String(s.organization.id), name: s.organization.name }
+            : null,
         })) ?? []
     );
   }, [activeData?.operatorShelters?.results]);

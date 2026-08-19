@@ -41,6 +41,10 @@ query OperatorShelters(
         id
         name
       }
+      organization {
+        id
+        name
+      }
     }
   }
 }

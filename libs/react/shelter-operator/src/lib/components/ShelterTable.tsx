@@ -114,6 +114,15 @@ export function ShelterTable({
         sortValue: (shelter) => shelter.bedCounts.total,
       },
       {
+        key: 'organization',
+        label: 'Organization',
+        width: '1fr',
+        cellClassName:
+          'text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap',
+        render: (shelter) => shelter.organization?.name ?? '—',
+        sortValue: (shelter) => shelter.organization?.name ?? '',
+      },
+      {
         key: 'status',
         label: 'Status',
         width: '0.8fr',
