@@ -20,11 +20,11 @@ export default function NoteTitle({
         {' @ '}
         {format(new Date(note?.interactedAt), 'hh:mm a')}
       </TextRegular>
-      {!!note?.currentTeam?.name && (
+      {!!note?.team?.name && (
         <>
           <TextBold size="sm">Team</TextBold>
           <TextRegular selectable size="sm">
-            {note.currentTeam.name}
+            {note.team.name}
           </TextRegular>
         </>
       )}

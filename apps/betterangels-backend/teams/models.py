@@ -2,24 +2,21 @@
 
 from common.models import BaseModel
 from django.db import models
+from django.db.models.functions import Lower
+
+from .validators import validate_has_alphanumeric
 
 
 class Team(BaseModel):
     """Team, scoped per organization.
 
-    Teams are managed by org admins through the admin app and replace
-    the deprecated ``SelahTeamEnum``.
-
-    *slug* is the machine-readable identifier (maps to
-    ``SelahTeamEnum.value`` during migration).
-
-    TEMPORARY — remove after ``SelahTeamEnum`` deprecation window.
-    Teams are identified by ``id`` (FK); *slug* exists only for the
-    enum-to-FK migration shim.
+    Teams are managed by org admins through the admin app and referenced by
+    ``id`` (FK) on notes and tasks.  *name* is the only identifier: it is what
+    users see and type, and it is unique per organization case-insensitively
+    (see ``unique_team_name_per_org``).
     """
 
-    slug = models.CharField(max_length=100)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, validators=[validate_has_alphanumeric])
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,
@@ -31,9 +28,9 @@ class Team(BaseModel):
         ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
-                "slug",
+                Lower("name"),
                 "organization",
-                name="unique_team_slug_per_org",
+                name="unique_team_name_per_org",
             ),
         ]
 

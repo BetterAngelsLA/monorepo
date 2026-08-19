@@ -1,7 +1,6 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.enums import SelahTeamEnum
 from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
@@ -42,8 +41,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "purpose": "New note purpose",
             "requestedServices": [],
-            "tasks": [],
             "team": None,
+            "tasks": [],
         }
         self.assertEqual(created_note, expected_note)
 
@@ -58,7 +57,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "teamId": str(self.org_1_team_1.pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -66,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 21
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -74,8 +73,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "tasks": [],
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "location": {
                 "id": ANY,
                 "address": {
@@ -123,10 +122,51 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "requestedServices": [],
-            "tasks": [],
             "team": None,
+            "tasks": [],
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_update_note_omitted_team_id_preserves_team(self) -> None:
+        """Regression: an update that never mentions teamId used to clear it."""
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
+
+        self.assertIsNotNone(response["data"]["updateNote"])
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, self.org_1_team_1.pk)
+
+    def test_update_note_explicit_null_team_id_clears_team(self) -> None:
+        """The team picker offers "none", so the mutation has to accept an explicit null.
+
+        A bare ``Maybe[ID]`` rejects one during argument conversion, which failed
+        the whole mutation rather than clearing the team.
+        """
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
+
+        response = self._update_note_fixture({"id": self.note["id"], "teamId": None})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["updateNote"]["team"])
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).team_id)
+
+    def test_nested_task_team_id_is_assigned(self) -> None:
+        """A team on a nested task reaches the FK.
+
+        Nested tasks go through ``asdict``, so ``task_create`` receives the raw
+        GraphQL string rather than the narrowed int the top-level paths pass. This
+        pins that the assignment still lands.
+        """
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "tasks": [{"summary": "Follow up call", "teamId": str(self.org_1_team_1.pk)}],
+            }
+        )
+
+        self.assertIsNone(response.get("errors"))
+        task = Note.objects.get(pk=self.note["id"]).tasks.get()
+        self.assertEqual(task.team_id, self.org_1_team_1.pk)
 
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""

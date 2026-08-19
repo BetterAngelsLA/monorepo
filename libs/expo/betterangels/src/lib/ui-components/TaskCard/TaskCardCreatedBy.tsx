@@ -9,12 +9,12 @@ import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
 
 type TaskCardCreatedByProps = {
   createdBy: TasksQuery['tasks']['results'][number]['createdBy'];
-  currentTeam?: { name?: string | null } | null;
+  team?: { name?: string | null } | null;
   organization?: TasksQuery['tasks']['results'][number]['organization'];
 };
 
 export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
-  const { createdBy, currentTeam, organization } = props;
+  const { createdBy, team, organization } = props;
 
   return (
     <View
@@ -35,7 +35,7 @@ export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
           {createdBy?.firstName} {createdBy?.lastName}
         </TextBold>
         <TextRegular size="sm">
-          {organization?.name} {currentTeam?.name && ` - ${currentTeam.name}`}
+          {organization?.name} {team?.name && ` - ${team.name}`}
         </TextRegular>
       </View>
     </View>

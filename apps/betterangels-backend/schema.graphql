@@ -642,7 +642,6 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
   purpose: String = null
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
@@ -675,7 +674,6 @@ input CreateNoteTaskInput {
   summary: String!
   description: String = null
   status: Int = null
-  team: SelahTeamEnum = null
   teamId: ID
 }
 
@@ -799,7 +797,6 @@ input CreateTaskInput {
   note: ID
   hmisNote: ID
   summary: String!
-  team: SelahTeamEnum
   teamId: ID
   status: TaskStatusEnum
 }
@@ -1386,7 +1383,6 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String
@@ -1676,7 +1672,6 @@ input NoteFilter {
   DISTINCT: Boolean
   authors: [ID!]
   organizations: [ID!]
-  teams: [SelahTeamEnum!]
   teamIds: [ID!]
   search: String
 }
@@ -1711,8 +1706,8 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  currentTeam: TeamType
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -2468,24 +2463,6 @@ enum ScheduleTypeChoices {
   STAFF_AVAILABILITY
 }
 
-enum SelahTeamEnum {
-  BOWTIE_RIVERSIDE_OUTREACH
-  ECHO_PARK_ON_SITE
-  ECHO_PARK_OUTREACH
-  HOLLYWOOD_ON_SITE
-  HOLLYWOOD_OUTREACH
-  LA_RIVER_OUTREACH
-  LOS_FELIZ_OUTREACH
-  NORTHEAST_HOLLYWOOD_OUTREACH
-  SELAH_STAFF
-  SILVER_LAKE_OUTREACH
-  SLCC_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_OUTREACH
-  WDI_ON_SITE
-  WDI_OUTREACH
-}
-
 type ServiceCategoryType {
   id: ID!
   name: String!
@@ -2852,7 +2829,6 @@ input TaskFilter {
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
-  teams: [SelahTeamEnum!]
   teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
@@ -2884,9 +2860,9 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  currentTeam: TeamType
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   updatedAt: DateTime!
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
 }
 
 type TaskTypeOffsetPaginated {
@@ -2909,10 +2885,10 @@ input TeamFilter {
 
 type TeamType {
   id: ID!
-  slug: String
   name: String!
   isActive: Boolean
   createdAt: DateTime!
+  slug: String @deprecated(reason: "Always null. Team.name is the only identifier.")
 }
 
 type TeamTypeOffsetPaginated {
@@ -3077,7 +3053,6 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String
@@ -3203,7 +3178,6 @@ input UpdateTaskInput {
   id: ID!
   description: String
   summary: String
-  team: SelahTeamEnum
   teamId: ID
   status: TaskStatusEnum
 }
