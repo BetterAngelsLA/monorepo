@@ -8,6 +8,7 @@ import { useAtom } from 'jotai';
 import { Filter, Search } from 'lucide-react';
 import { useState } from 'react';
 import {
+  nullOperatorShelterFilters,
   operatorShelterFiltersAtom,
   TOperatorShelterFilters,
 } from '../../atoms/shelterFiltersAtom';
@@ -67,9 +68,15 @@ function SortFilterDrawerContent() {
     }));
   }
   const normalizedSearch = searchTerm.toLowerCase().trim();
+  const hasActiveFilters = Object.values(filters).some((v) => v.length > 0);
+
+  function clearAllFilters() {
+    setFilters(nullOperatorShelterFilters);
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 mb-2">
         <span className="text-sm font-semibold text-gray-700">Sort</span>
         <Dropdown
           options={SORT_OPTIONS}
@@ -78,24 +85,42 @@ function SortFilterDrawerContent() {
           placeholder="Select sort order"
         />
       </div>
-      <div className="relative mb-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-gray-700">Filter</span>
+        {hasActiveFilters && (
+          <button
+          type="button"
+          onClick={clearAllFilters}
+          className="inline-flex items-center gap-0.5 text-[12px] text-neutral-warm-70 cursor-pointer"
+          >
+          Clear all
+        </button>
+        )}
+      </div>
+      <div className="relative mb-1">
         <Search
           size={14}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-warm-70"
         />
         <input
           type="text"
-          placeholder="Search"
+          placeholder="Search filters"
           className="w-full pl-8 pr-3 py-1.5 rounded-full border border-neutral-90 text-xs outline-none text-neutral-warm-70"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
       {filterGroups.map((group) => {
+        const headerMatches =
+          normalizedSearch &&
+          group.header.toLowerCase().includes(normalizedSearch);
         const visibleOptions = normalizedSearch
-          ? group.options.filter((opt) =>
-              opt.label.toLowerCase().includes(normalizedSearch),
-            )
+          ? headerMatches
+            ? group.options
+            : group.options.filter((opt) =>
+                opt.label.toLowerCase().includes(normalizedSearch),
+              )
           : group.options;
 
         if (normalizedSearch && visibleOptions.length === 0) return null;
