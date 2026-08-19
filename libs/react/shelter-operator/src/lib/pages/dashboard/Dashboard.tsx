@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ShelterFilterPanel } from '../../components/ShelterFilterPanel/ShelterFilterPanel';
+import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
 import type { SortDirection } from '../../components/base-ui/table';
 import {
   ShelterTable,
@@ -67,6 +68,10 @@ export function Dashboard() {
 
   // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+  const [pendingShelter, setPendingShelter] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
@@ -157,9 +162,9 @@ export function Dashboard() {
 
   const handleRowClick = useCallback(
     (row: ShelterRowObject) => {
-      navigate(`shelter/${row.id}/manage`);
+      setPendingShelter({ id: row.id, name: row.name });
     },
-    [navigate],
+    [],
   );
 
   const handleSortChange = useCallback(
@@ -259,6 +264,30 @@ export function Dashboard() {
           Failed to load shelters.
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={pendingShelter !== null}
+        onClose={() => setPendingShelter(null)}
+        variant="info"
+        title="Switch shelter?"
+        description={
+          pendingShelter
+            ? `You are now managing ${pendingShelter.name}. Any changes you make will be applied to this shelter. Continue?`
+            : undefined
+        }
+        primaryAction={{
+          label: 'Continue',
+          onClick: () => {
+            if (!pendingShelter) return;
+            navigate(`shelter/${pendingShelter.id}/manage`);
+            setPendingShelter(null);
+          },
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: () => setPendingShelter(null),
+        }}
+      />
     </div>
   );
 }
