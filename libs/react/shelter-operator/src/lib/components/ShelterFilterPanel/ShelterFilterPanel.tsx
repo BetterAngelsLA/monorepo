@@ -5,7 +5,8 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { useAtom } from 'jotai';
-import { Filter } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
+import { useState } from 'react';
 import {
   operatorShelterFiltersAtom,
   TOperatorShelterFilters,
@@ -29,7 +30,7 @@ const SORT_OPTIONS: DropdownOption<string>[] = [
 function SortFilterDrawerContent() {
   const [sort, setSort] = useAtom(operatorShelterSortAtom);
   const [filters, setFilters] = useAtom(operatorShelterFiltersAtom);
-
+  const [searchTerm, setSearchTerm] = useState('');
   const sortValue =
     SORT_OPTIONS.find(
       (o) =>
@@ -65,7 +66,7 @@ function SortFilterDrawerContent() {
       [group]: [],
     }));
   }
-
+  const normalizedSearch = searchTerm.toLowerCase().trim();
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -77,8 +78,27 @@ function SortFilterDrawerContent() {
           placeholder="Select sort order"
         />
       </div>
-
+      <div className="relative mb-3">
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-warm-70"
+        />
+        <input
+          type="text"
+          placeholder="Search"
+          className="w-full pl-8 pr-3 py-1.5 rounded-full border border-neutral-90 text-xs outline-none text-neutral-warm-70"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {filterGroups.map((group) => {
+        const visibleOptions = normalizedSearch
+          ? group.options.filter((opt) =>
+              opt.label.toLowerCase().includes(normalizedSearch),
+            )
+          : group.options;
+
+        if (normalizedSearch && visibleOptions.length === 0) return null;
         const groupValues =
           filters[group.name as keyof TOperatorShelterFilters] ?? [];
 
@@ -90,7 +110,7 @@ function SortFilterDrawerContent() {
               groupValues.length > 0 ? () => clearGroup(group.name) : undefined
             }
           >
-            {group.options.map((opt) => (
+            {visibleOptions.map((opt) => (
               <FilterChip
                 key={opt.value}
                 label={opt.label}
