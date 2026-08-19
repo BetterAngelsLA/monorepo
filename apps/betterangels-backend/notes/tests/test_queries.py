@@ -251,7 +251,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         Every ``currentTeam`` block in those builds is ``{ id slug name }``, so
         ``currentTeam`` and ``slug`` have to survive together — removing either one
-        fails the whole document. Both go in #2341, once no build selects them.
+        fails the whole document. Both go in #2342, once no build selects them.
         """
         self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
 

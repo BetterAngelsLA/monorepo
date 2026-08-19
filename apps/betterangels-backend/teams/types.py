@@ -24,7 +24,7 @@ class TeamType:
     def slug(self) -> Optional[str]:
         # Kept so documents shipped in native app builds still validate; every
         # ``currentTeam`` selection in those builds is ``{ id slug name }``.
-        # Removed together with ``currentTeam`` -- see #2341.
+        # Removed together with ``currentTeam`` -- see #2342.
         return None
 
 

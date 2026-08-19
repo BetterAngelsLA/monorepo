@@ -218,7 +218,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """The exact selection shipped in native app builds must keep validating.
 
         See the note counterpart: ``currentTeam`` and ``slug`` are removed together
-        in #2341, because every shipped block selects both.
+        in #2342, because every shipped block selects both.
         """
         task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
             "createTask"
