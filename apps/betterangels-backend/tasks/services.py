@@ -66,13 +66,7 @@ def task_update(
     task: Task,
     data: Dict[str, Any],
 ) -> Task:
-    """Update a Task. Caller is responsible for permission checks.
-
-    ``"team_id" in data`` is the presence test because ``strawberry.asdict``
-    omits keys for fields the client did not send. The team validation below
-    duplicates ``Task.clean()``, which this path never reaches; #2335 adds
-    ``full_clean()`` and the explicit call goes away.
-    """
+    """Update a Task. Caller is responsible for permission checks."""
     if "team_id" in data:
         validate_team_in_org(team_id=data["team_id"], organization_id=task.organization_id)
 

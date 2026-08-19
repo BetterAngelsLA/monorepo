@@ -71,11 +71,6 @@ def note_update(
     Core fields are updated in-place. Nested relation fields use
     replace-all semantics: existing items are removed and new ones created.
     Caller is responsible for permission checks.
-
-    ``"team_id" in data`` is the presence test because ``strawberry.asdict``
-    omits keys for fields the client did not send. The team validation below
-    duplicates ``Note.clean()``, which this path never reaches; #2335 adds
-    ``full_clean()`` and the explicit call goes away.
     """
     # Extract nested relation data (handle separately)
     location_data = data.pop("location", None)

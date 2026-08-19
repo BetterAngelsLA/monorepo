@@ -30,15 +30,7 @@ def validate_has_alphanumeric(value: str) -> None:
 
 
 def validate_team_in_org(*, team_id: int | str | None, organization_id: int | None) -> None:
-    """Raise unless *team_id* names a team belonging to *organization_id*.
-
-    *team_id* is a ``str`` when it arrives from ``create_note``'s nested tasks,
-    which pass ``asdict`` output through without narrowing it.
-
-    A ``None`` *team_id* is always allowed — the team is optional. An unknown
-    team and a team owned by another organization are reported identically, so
-    the message cannot be used to probe for team ids.
-    """
+    """Raise unless *team_id* names a team belonging to *organization_id*."""
     from .models import Team
 
     if team_id is None:

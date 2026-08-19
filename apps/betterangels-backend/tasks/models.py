@@ -59,9 +59,7 @@ class Task(BaseModel):
     def clean(self) -> None:
         """Reject a team from another organization.
 
-        Runs from the Django admin's ``ModelForm``, whose ``team`` field offers
-        every team in every organization. The services call the same validator
-        directly; that call is the redundant one once #2335 adds
+        The services' explicit call is the duplicate to delete once #2335 adds
         ``full_clean()``.
         """
         super().clean()
