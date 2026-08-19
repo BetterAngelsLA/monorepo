@@ -27,6 +27,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from tasks.services import task_create
+from teams.validators import validate_team_in_org
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -70,12 +71,20 @@ def note_update(
     Core fields are updated in-place. Nested relation fields use
     replace-all semantics: existing items are removed and new ones created.
     Caller is responsible for permission checks.
+
+    ``"team_id" in data`` is the presence test because ``strawberry.asdict``
+    omits keys for fields the client did not send. The team validation below
+    duplicates ``Note.clean()``, which this path never reaches; #2335 adds
+    ``full_clean()`` and the explicit call goes away.
     """
     # Extract nested relation data (handle separately)
     location_data = data.pop("location", None)
     provided_services_data = data.pop("provided_services", None)
     requested_services_data = data.pop("requested_services", None)
     tasks_data = data.pop("tasks", None)
+
+    if "team_id" in data:
+        validate_team_in_org(team_id=data["team_id"], organization_id=note.organization_id)
 
     with pghistory.context(note_id=str(note.id), timestamp=timezone.now(), label="note_update"):
         for field, value in data.items():
@@ -251,6 +260,8 @@ def note_create(
     All nested params (location, services, tasks) are optional,
     making this backward-compatible with callers that only send core fields.
     """
+
+    validate_team_in_org(team_id=team_id, organization_id=permission_group.organization_id)
 
     location = None
     if location_data:

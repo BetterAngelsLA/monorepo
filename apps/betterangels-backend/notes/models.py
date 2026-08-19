@@ -8,6 +8,7 @@ from betterangels_backend import settings
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -16,6 +17,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .enums import ServiceRequestStatusEnum
 
@@ -165,6 +167,21 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return self.purpose or str(self.id)
+
+    def clean(self) -> None:
+        """Reject a team from another organization.
+
+        Runs from the Django admin's ``ModelForm``, whose ``team`` field offers
+        every team in every organization. The services call the same validator
+        directly; that call is the redundant one once #2335 adds
+        ``full_clean()``.
+        """
+        super().clean()
+
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
