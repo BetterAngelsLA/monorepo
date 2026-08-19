@@ -3654,6 +3654,8 @@ export type TeamType = {
   id: Scalars['ID']['output'];
   isActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
+  /** @deprecated Always null. Team.name is the only identifier. */
+  slug?: Maybe<Scalars['String']['output']>;
 };
 
 export type TeamTypeOffsetPaginated = {

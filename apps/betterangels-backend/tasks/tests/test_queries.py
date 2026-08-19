@@ -214,11 +214,11 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
-    def test_task_query_deprecated_current_team_still_resolves(self) -> None:
-        """Shipped app builds select ``currentTeam``; it must keep working.
+    def test_task_query_legacy_team_selection_still_resolves(self) -> None:
+        """The exact selection shipped in native app builds must keep validating.
 
-        It is a deprecated alias for ``team`` and resolves the same FK. Delete it
-        only once no deployed client selects it.
+        See the note counterpart: ``currentTeam`` and ``slug`` are removed together
+        in #2341, because every shipped block selects both.
         """
         task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
             "createTask"
@@ -228,16 +228,18 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             query ($id: ID!) {
                 task(pk: $id) {
                     team { id name }
-                    currentTeam { id name }
+                    currentTeam { id slug name }
                 }
             }
         """
         response = self.execute_graphql(query, {"id": task_id})
 
         task = response["data"]["task"]
-        expected = {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name}
-        self.assertEqual(task["team"], expected)
-        self.assertEqual(task["currentTeam"], expected)
+        self.assertEqual(task["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
+        self.assertEqual(
+            task["currentTeam"],
+            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
+        )
 
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(

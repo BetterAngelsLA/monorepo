@@ -246,11 +246,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
         self.assertCountEqual(expected_ids, actual_ids)
 
-    def test_note_query_deprecated_current_team_still_resolves(self) -> None:
-        """Shipped app builds select ``currentTeam``; it must keep working.
+    def test_note_query_legacy_team_selection_still_resolves(self) -> None:
+        """The exact selection shipped in native app builds must keep validating.
 
-        It is a deprecated alias for ``team`` and resolves the same FK. Delete it
-        only once no deployed client selects it.
+        Every ``currentTeam`` block in those builds is ``{ id slug name }``, so
+        ``currentTeam`` and ``slug`` have to survive together — removing either one
+        fails the whole document. Both go in #2341, once no build selects them.
         """
         self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
 
@@ -258,16 +259,18 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             query ($id: ID!) {
                 note(pk: $id) {
                     team { id name }
-                    currentTeam { id name }
+                    currentTeam { id slug name }
                 }
             }
         """
         response = self.execute_graphql(query, {"id": self.note["id"]})
 
         note = response["data"]["note"]
-        expected = {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name}
-        self.assertEqual(note["team"], expected)
-        self.assertEqual(note["currentTeam"], expected)
+        self.assertEqual(note["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
+        self.assertEqual(
+            note["currentTeam"],
+            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
+        )
 
     @parametrize(
         ("team_labels, expected_results_count, expected_note_labels"),
