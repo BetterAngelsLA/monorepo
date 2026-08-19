@@ -150,6 +150,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIsNone(response["data"]["updateNote"]["team"])
         self.assertIsNone(Note.objects.get(pk=self.note["id"]).team_id)
 
+    def test_nested_task_team_id_is_assigned(self) -> None:
+        """A team on a nested task reaches the FK.
+
+        Nested tasks go through ``asdict``, so ``task_create`` receives the raw
+        GraphQL string rather than the narrowed int the top-level paths pass. This
+        pins that the assignment still lands.
+        """
+        response = self._update_note_fixture(
+            {
+                "id": self.note["id"],
+                "tasks": [{"summary": "Follow up call", "teamId": str(self.org_1_team_1.pk)}],
+            }
+        )
+
+        self.assertIsNone(response.get("errors"))
+        task = Note.objects.get(pk=self.note["id"]).tasks.get()
+        self.assertEqual(task.team_id, self.org_1_team_1.pk)
+
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""
         bag_svc = OrganizationService.objects.get(label="Bag(s)")

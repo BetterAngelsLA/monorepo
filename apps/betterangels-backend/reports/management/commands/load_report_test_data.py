@@ -200,7 +200,6 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
-        # get_or_create so the command needs no pre-existing teams.
         teams = []
         for team_name in SEED_TEAMS:
             team, _ = Team.objects.get_or_create(name=team_name, organization=org)

@@ -270,7 +270,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(note["currentTeam"], expected)
 
     @parametrize(
-        ("team_attrs, expected_results_count, expected_note_labels"),
+        ("team_labels, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
             (["org_1_team_1", "org_1_team_2"], 2, ["note_2", "note_3"]),
@@ -279,7 +279,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     )
     def test_notes_query_teams_filter(
         self,
-        team_attrs: list[str],
+        team_labels: list[str],
         expected_results_count: int,
         expected_note_labels: list[str],
     ) -> None:
@@ -301,7 +301,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createNote"]
 
-        team_ids = [str(getattr(self, attr).pk) for attr in team_attrs]
+        team_ids = [str(getattr(self, label).pk) for label in team_labels]
         filters = {"teamIds": team_ids}
 
         query = """

@@ -10,7 +10,12 @@ organization)``.  Existing rows may not satisfy it: the previous constraint was
 on ``slug``, and the Django admin exposes ``slug`` as an editable field, so an
 organization could hold both "Hollywood Outreach" and "hollywood outreach" with
 different slugs.  The data step below resolves any such collision (and any blank
-name) before the constraint is added, so this cannot fail on real data.
+name) before the constraint is added, so the constraint cannot fail on real data.
+
+It does not normalise names for the ``validate_has_alphanumeric`` validator this
+migration also attaches.  That ``AlterField`` is state-only, so a legacy name like
+``"---"`` is left in place; the next admin or service write reports it, which is a
+correct and actionable error rather than something to repair blindly here.
 """
 
 import django.db.models.functions.text

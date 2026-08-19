@@ -66,10 +66,10 @@ class MaybeIntValueTestCase(SimpleTestCase):
     called ``.strip()`` on it, so renaming a team failed with
     ``'Some' object has no attribute 'strip'``.
 
-    It collapses absent and explicit null into ``None``, which suits its two
-    callers: both pass the result on as a keyword argument and treat the two the
-    same. Callers building an update dict should let ``asdict`` do it instead —
-    see :class:`AsdictMaybeTestCase`.
+    It collapses absent and explicit null into ``None``.  Callers passing the
+    result on as a keyword argument want exactly that.  Callers assigning it into
+    an update dict need a presence check on the input field first, or an absent
+    field becomes an explicit null — see :class:`AsdictMaybeTestCase`.
     """
 
     def test_unwraps_and_casts_some(self) -> None:

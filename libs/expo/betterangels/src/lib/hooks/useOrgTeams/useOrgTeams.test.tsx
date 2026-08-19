@@ -22,9 +22,9 @@ import { useOrgTeams } from './useOrgTeams';
  * at the link, rather than inferred from loading flags, which cannot
  * distinguish a request that never went out from one still in flight.
  *
- * ``useOrgTeams`` itself is unchanged by this PR; it stands in for any
- * org-scoped query, and these are the cross-project tests that exercise the
- * store, the provider and the interceptor together.
+ * ``useOrgTeams`` stands in for any org-scoped query; these are the
+ * cross-project tests that exercise the store, the provider and the interceptor
+ * together.
  */
 
 const ORG = { id: 'org-1', name: 'Test Org', permissions: [] as const };
@@ -34,7 +34,7 @@ const TEAMS_RESULT = {
     teams: {
       __typename: 'TeamTypeOffsetPaginated',
       totalCount: 1,
-      results: [{ __typename: 'TeamType', id: 'team-1', name: 'WDI On-site' }],
+      results: [{ __typename: 'TeamType', id: 'team-1', name: 'Team One' }],
     },
   },
 };

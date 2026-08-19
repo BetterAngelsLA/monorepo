@@ -31,14 +31,9 @@ def get_object_or_permission_error(
 def maybe_int_value(maybe: Any) -> int | None:
     """Unwrap a Strawberry ``Maybe[ID]`` to an int, or ``None`` if absent/null.
 
-    For the plain read, prefer the idiom over a helper — it is correct for both
-    absence spellings, since ``Some.__bool__`` is always ``True`` while ``None``
-    and ``UNSET`` are both falsy::
-
-        name = data.name.value if data.name else None
-
-    This exists for the ``ID``-to-``int`` narrowing, which that idiom cannot do
-    safely on its own: ``int(None)`` raises. The ``teamId`` inputs are annotated
+    This exists for the ``ID``-to-``int`` narrowing, which the plain
+    ``data.field.value if data.field else None`` read cannot do safely on its
+    own: ``int(None)`` raises. The ``teamId`` inputs are annotated
     ``Maybe[ID | None]``, so an explicit null arrives here as ``Some(None)`` and
     collapses to ``None``, which clears the FK. A bare ``Maybe[ID]`` would reject
     the null during argument conversion instead of clearing anything.

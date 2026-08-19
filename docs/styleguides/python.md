@@ -22,9 +22,32 @@ as the API layer instead of Django REST Framework.
   `common/permissions/utils.py`) replace the old per-file `permissions.py` pattern.
   See the `@monorepo/ba-platform/permissions` package for the matching frontend permission enums.
 - **Models** — inherit `BaseModel` (from `common/models.py`) which provides
-  `created_at`/`updated_at` and a `PermissionSet` hook. Use `clean()` for
-  multi-field validation and Django `Meta.constraints` for database-level checks.
-  Keep models lean — push logic to services, queries to selectors.
+  `created_at`/`updated_at` and a `PermissionSet` hook. Keep models lean — push
+  logic to services, queries to selectors, and see Validation below for what
+  belongs on the model.
+
+### Validation
+
+Push each rule to the lowest layer that can express it.
+
+- **Single-field content or format** — a field validator (`validators=[...]`), defined in
+  `<app>/validators.py`. It runs from ModelForm field cleaning too, so the admin is
+  covered by one definition. Note it is not a database guarantee.
+- **Consistency of what is already on the instance** — `clean()`. Comparing two fields, or
+  two FKs the caller has already chosen, belongs here.
+- **Anything that needs a query, or decides using data the caller did not supply** — the
+  service. Existence and uniqueness checks are the common cases; HackSoft moves these out
+  of `clean()` because they span relations and fetch additional data.
+- **Must hold for every writer, including concurrent ones** — `Meta.constraints`, with
+  `violation_error_message` set; the default message only names the constraint. An
+  expression-based `UniqueConstraint` (e.g. on `Lower("name")`) cannot name the field, so
+  pair it with a service check when the message matters.
+- Duplicate the **call**, never the **rule**. A shared function in `validators.py` may be
+  called from both a service and `clean()` when a non-service writer can violate it. Say in
+  the docstring which call is the redundant one, so the right one is deleted later.
+- **Services call `full_clean()` before `save()`.** Without it, none of the model-side rules
+  above are reachable from the API — only from the admin's ModelForm. `clean()` does not run
+  on `objects.create()`, `bulk_create()`, `queryset.update()`, `loaddata`, or in the shell.
 
 ## Testing
 

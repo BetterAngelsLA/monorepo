@@ -7,7 +7,7 @@ from organizations.models import Organization
 from .models import Team
 
 
-def _validate_name(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
+def _validate_name_is_unique(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
     """Raise if *name* is already taken within *organization*.
 
     This duplicates a check ``full_clean()`` already performs: it validates
@@ -16,9 +16,6 @@ def _validate_name(*, name: str, organization: Organization, exclude_pk: int | N
     violated -- so this exists for the message, not for the guarantee.  The
     constraint is the guarantee; the query below is check-then-insert and two
     concurrent creates can both pass it.
-
-    Content rules on the name itself are field validators on the model, so they
-    hold for the Django admin too (see ``teams.validators``).
     """
     qs = Team.objects.filter(name__iexact=name, organization=organization)
 
@@ -36,7 +33,7 @@ def team_create(
 ) -> Team:
     """Create a new Team for *organization*."""
     name = name.strip()
-    _validate_name(name=name, organization=organization)
+    _validate_name_is_unique(name=name, organization=organization)
 
     team = Team(name=name, organization=organization)
     # full_clean() before save(), per the styleguide.  Not ceremony: nothing
@@ -58,7 +55,7 @@ def team_update(
     """Update a Team's name and/or active flag."""
     if name is not None:
         name = name.strip()
-        _validate_name(name=name, organization=team.organization, exclude_pk=team.pk)
+        _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
 
     if is_active is not None:

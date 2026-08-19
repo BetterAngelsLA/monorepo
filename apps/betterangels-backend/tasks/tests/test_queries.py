@@ -220,17 +220,24 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         It is a deprecated alias for ``team`` and resolves the same FK. Delete it
         only once no deployed client selects it.
         """
-        response = self.execute_graphql(
-            self.get_tasks_query("id team { id name } currentTeam { id name }"),
-            {"filters": {"teamIds": [self.org_1_team_1.pk]}},
-        )
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
 
-        results = response["data"]["tasks"]["results"]
+        query = """
+            query ($id: ID!) {
+                task(pk: $id) {
+                    team { id name }
+                    currentTeam { id name }
+                }
+            }
+        """
+        response = self.execute_graphql(query, {"id": task_id})
+
+        task = response["data"]["task"]
         expected = {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name}
-        self.assertTrue(results)
-        for task in results:
-            self.assertEqual(task["team"], expected)
-            self.assertEqual(task["currentTeam"], expected)
+        self.assertEqual(task["team"], expected)
+        self.assertEqual(task["currentTeam"], expected)
 
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(

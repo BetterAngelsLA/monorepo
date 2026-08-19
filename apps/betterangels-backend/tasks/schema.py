@@ -53,9 +53,7 @@ class Mutation:
 
         task_data = asdict(data)
 
-        # Narrow the team ID from GraphQL's str to the FK's int.
-        if data.team_id:
-            task_data["team_id"] = maybe_int_value(data.team_id)
+        task_data["team_id"] = maybe_int_value(data.team_id)
 
         # Resolve FK references
         note = None
@@ -96,9 +94,8 @@ class Mutation:
         task: Task = qs.get(pk=data.id)
 
         clean = asdict(data)
-        # Narrow the team ID from GraphQL's str to the FK's int.  Guarded on the
-        # input field so an unmentioned team stays unmentioned: assigning
-        # unconditionally would turn "not sent" into "set to null".
+        # Guarded on the input field so an unmentioned team stays unmentioned:
+        # assigning unconditionally would turn "not sent" into "set to null".
         if data.team_id:
             clean["team_id"] = maybe_int_value(data.team_id)
 
