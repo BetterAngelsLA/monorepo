@@ -45,7 +45,7 @@ export default function Task({
           <TaskCreatedBy
             organization={task.organization}
             createdBy={task.createdBy}
-            currentTeam={task.currentTeam}
+            team={task.team}
           />
         </View>
         {task.description && <TaskBody description={task.description} />}

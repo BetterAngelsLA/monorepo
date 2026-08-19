@@ -14,7 +14,7 @@ query Tasks(
       summary
       description
       status
-      currentTeam {
+      team {
         id
         name
       }

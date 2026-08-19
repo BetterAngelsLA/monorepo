@@ -61,7 +61,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
   return {
     purpose: note.purpose,
     interactedAt: note.interactedAt,
-    teamId: note.currentTeam?.id as string | undefined,
+    teamId: note.team?.id as string | undefined,
     publicNote: note.publicDetails || '',
     location: note.location?.point
       ? {
@@ -115,7 +115,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
       summary: task.summary ?? null,
       description: task.description ?? null,
       status: task.status ?? null,
-      teamId: task.currentTeam?.id ?? null,
+      teamId: task.team?.id ?? null,
     })),
   };
 }

@@ -169,8 +169,7 @@ class NoteType:
     purpose: auto
     requested_services: List[ServiceRequestType]
     tasks: list[TaskType]
-
-    current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
+    team: Optional[TeamType]
 
     @strawberry_django.field(
         annotate={
@@ -232,7 +231,7 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team_id: Maybe[ID]  # FK-based team field
+    team_id: Maybe[ID]
 
 
 @strawberry.input
@@ -246,7 +245,7 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team_id: Maybe[ID]  # FK-based team field; absent = leave unchanged
+    team_id: Maybe[ID]
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
@@ -281,7 +280,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team_id: Maybe[ID]  # FK-based team field
+    team_id: Maybe[ID]
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -352,7 +351,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team_id: Maybe[ID]  # FK-based team field
+    team_id: Maybe[ID]
     public_details: auto
     private_details: auto
     client_profile: ID | None

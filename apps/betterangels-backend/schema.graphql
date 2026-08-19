@@ -1706,7 +1706,7 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  currentTeam: TeamType
+  team: TeamType
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -2859,7 +2859,7 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  currentTeam: TeamType
+  team: TeamType
   updatedAt: DateTime!
 }
 

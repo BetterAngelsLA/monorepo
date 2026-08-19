@@ -10,7 +10,6 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from teams.models import Team
 
 
 @ignore_warnings(category=UserWarning)
@@ -27,8 +26,6 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
-
         expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
@@ -36,7 +33,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "teamId": str(team.pk),
+                "teamId": str(self.org_1_team_1.pk),
             }
 
             self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -44,9 +41,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         created_task = response["data"]["createTask"]
         expected_task = {
-            # teamId is input-only — the response exposes the team as currentTeam.
+            # teamId is input-only — the response exposes the team object.
             **{k: v for k, v in variables.items() if k != "teamId"},
-            "currentTeam": {"id": str(team.pk), "name": team.name},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "id": ANY,
             "clientProfile": {
                 "id": str(client_profile.pk),
@@ -75,14 +72,13 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_update_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
         assert self.org
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
 
         variables = {
             "id": task_id,
             "description": "updated task description",
             "status": TaskStatusEnum.IN_PROGRESS.name,
             "summary": "updated task summary",
-            "teamId": str(team.pk),
+            "teamId": str(self.org_1_team_1.pk),
         }
 
         expected_query_count = 7
@@ -91,9 +87,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         updated_task = response["data"]["updateTask"]
         expected_task = {
-            # teamId is input-only — the response exposes the team as currentTeam.
+            # teamId is input-only — the response exposes the team object.
             **{k: v for k, v in variables.items() if k != "teamId"},
-            "currentTeam": {"id": str(team.pk), "name": team.name},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "id": ANY,
             "clientProfile": None,
             "createdAt": "2025-07-31T10:11:12+00:00",
@@ -114,15 +110,14 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_update_task_omitted_team_id_preserves_team(self) -> None:
         """Regression: an update that never mentions teamId used to clear it."""
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
-        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(team.pk)})["data"]["createTask"][
-            "id"
-        ]
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
 
         response = self.update_task_fixture({"id": task_id, "summary": "updated summary"})
 
         self.assertIsNotNone(response["data"]["updateTask"])
-        self.assertEqual(Task.objects.get(pk=task_id).team_id, team.pk)
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
 
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]

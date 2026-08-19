@@ -112,8 +112,7 @@ class TaskType:
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
-
-    current_team: Optional[TeamType] = strawberry_django.field(field_name="team")
+    team: Optional[TeamType]
     updated_at: auto
 
 
@@ -125,14 +124,20 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team_id: Maybe[ID]  # FK-based team field
+    team_id: Maybe[ID]
     status: Optional[TaskStatusEnum]
 
 
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
+    """
+    Input for updating a task.
+    Omitted fields are left unchanged — UNSET for the plain ``Optional``
+    fields, absent (``None``) for the ``Maybe`` ones.
+    """
+
     id: ID
     description: auto
     summary: auto
-    team_id: Maybe[ID]  # FK-based team field; absent = leave unchanged
+    team_id: Maybe[ID]
     status: Optional[TaskStatusEnum]

@@ -153,21 +153,12 @@ LAST_NAMES = [
 # Seed teams for local dev, created via get_or_create so the command is
 # self-contained and re-runnable.
 SEED_TEAMS = [
-    "Bowtie & Riverside Outreach",
-    "Echo Park On-site",
-    "Echo Park Outreach",
-    "Hollywood On-site",
-    "Hollywood Outreach",
-    "LA River Outreach",
-    "Los Feliz Outreach",
-    "Northeast Hollywood Outreach",
-    "SELAH Staff",
-    "Silver Lake Outreach",
-    "SLCC On-site",
-    "Sunday Social / Atwater On-site",
-    "Sunday Social / Atwater Outreach",
-    "WDI On-site",
-    "WDI Outreach",
+    "Morning Outreach",
+    "Evening Outreach",
+    "Drop-in Center",
+    "Street Medicine",
+    "Housing Navigation",
+    "Shelter Operations",
 ]
 
 
@@ -209,8 +200,7 @@ class Command(BaseCommand):
             count, _ = Note.objects.filter(organization=org).delete()
             self.stdout.write(self.style.WARNING(f"Deleted {count} existing objects for test_org."))
 
-        # Seed teams (replaces old SelahTeamEnum).  get_or_create so the
-        # fixture is self-contained — no pre-existing teams required.
+        # get_or_create so the command needs no pre-existing teams.
         teams = []
         for team_name in SEED_TEAMS:
             team, _ = Team.objects.get_or_create(name=team_name, organization=org)

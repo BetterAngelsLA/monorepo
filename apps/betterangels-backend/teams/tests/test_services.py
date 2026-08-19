@@ -14,31 +14,31 @@ class TeamCreateTestCase(TestCase):
         self.other_org = Organization.objects.create(name="team_create_other_org")
 
     def test_creates_a_team_in_the_organization(self) -> None:
-        team = team_create(name="WDI On-site", organization=self.org)
+        team = team_create(name="Morning Outreach", organization=self.org)
 
-        self.assertEqual(team.name, "WDI On-site")
+        self.assertEqual(team.name, "Morning Outreach")
         self.assertEqual(team.organization_id, self.org.pk)
 
     def test_name_is_stripped(self) -> None:
-        team = team_create(name="  Hollywood Outreach  ", organization=self.org)
+        team = team_create(name="  Drop-in Center  ", organization=self.org)
 
-        self.assertEqual(team.name, "Hollywood Outreach")
+        self.assertEqual(team.name, "Drop-in Center")
 
     def test_duplicate_name_in_the_same_org_is_rejected(self) -> None:
-        team_create(name="Hollywood Outreach", organization=self.org)
+        team_create(name="Drop-in Center", organization=self.org)
 
         with self.assertRaises(ValidationError):
-            team_create(name="Hollywood Outreach", organization=self.org)
+            team_create(name="Drop-in Center", organization=self.org)
 
     def test_duplicate_name_is_rejected_case_insensitively(self) -> None:
-        team_create(name="Hollywood Outreach", organization=self.org)
+        team_create(name="Drop-in Center", organization=self.org)
 
         with self.assertRaises(ValidationError):
-            team_create(name="hollywood outreach", organization=self.org)
+            team_create(name="drop-in center", organization=self.org)
 
     def test_same_name_in_another_org_is_allowed(self) -> None:
-        first = team_create(name="Hollywood Outreach", organization=self.org)
-        second = team_create(name="Hollywood Outreach", organization=self.other_org)
+        first = team_create(name="Drop-in Center", organization=self.org)
+        second = team_create(name="Drop-in Center", organization=self.other_org)
 
         self.assertEqual(first.name, second.name)
         self.assertNotEqual(first.organization_id, second.organization_id)
@@ -48,21 +48,21 @@ class TeamCreateTestCase(TestCase):
             team_create(name="   ", organization=self.org)
 
     def test_a_reused_name_is_available_after_the_holder_is_renamed(self) -> None:
-        original = team_create(name="Hollywood Outreach", organization=self.org)
-        team_update(team=original, name="Hollywood Outreach 2024")
+        original = team_create(name="Drop-in Center", organization=self.org)
+        team_update(team=original, name="Drop-in Center 2024")
 
-        replacement = team_create(name="Hollywood Outreach", organization=self.org)
+        replacement = team_create(name="Drop-in Center", organization=self.org)
 
-        self.assertEqual(replacement.name, "Hollywood Outreach")
+        self.assertEqual(replacement.name, "Drop-in Center")
         self.assertNotEqual(replacement.pk, original.pk)
 
     def test_a_reused_name_is_available_after_the_holder_is_deleted(self) -> None:
-        original = team_create(name="Hollywood Outreach", organization=self.org)
+        original = team_create(name="Drop-in Center", organization=self.org)
         team_delete(team=original)
 
-        replacement = team_create(name="Hollywood Outreach", organization=self.org)
+        replacement = team_create(name="Drop-in Center", organization=self.org)
 
-        self.assertEqual(replacement.name, "Hollywood Outreach")
+        self.assertEqual(replacement.name, "Drop-in Center")
 
     def test_name_longer_than_the_column_is_a_validation_error(self) -> None:
         """Services call ``full_clean()`` before ``save()``, per the styleguide.
@@ -87,37 +87,37 @@ class TeamCreateTestCase(TestCase):
 class TeamUpdateTestCase(TestCase):
     def setUp(self) -> None:
         self.org = Organization.objects.create(name="team_update_org")
-        self.team = team_create(name="WDI On-site", organization=self.org)
+        self.team = team_create(name="Morning Outreach", organization=self.org)
 
     def test_renames_the_team(self) -> None:
-        team_update(team=self.team, name="WDI Onsite")
+        team_update(team=self.team, name="Morning Outreach Team")
 
         self.team.refresh_from_db()
-        self.assertEqual(self.team.name, "WDI Onsite")
+        self.assertEqual(self.team.name, "Morning Outreach Team")
 
     def test_rename_to_an_existing_name_is_rejected(self) -> None:
-        team_create(name="Hollywood Outreach", organization=self.org)
+        team_create(name="Drop-in Center", organization=self.org)
 
         with self.assertRaises(ValidationError):
-            team_update(team=self.team, name="Hollywood Outreach")
+            team_update(team=self.team, name="Drop-in Center")
 
     def test_rename_to_an_existing_name_is_rejected_case_insensitively(self) -> None:
-        team_create(name="Hollywood Outreach", organization=self.org)
+        team_create(name="Drop-in Center", organization=self.org)
 
         with self.assertRaises(ValidationError):
-            team_update(team=self.team, name="HOLLYWOOD OUTREACH")
+            team_update(team=self.team, name="DROP-IN CENTER")
 
     def test_rename_to_its_own_name_is_allowed(self) -> None:
-        team_update(team=self.team, name="WDI On-site")
+        team_update(team=self.team, name="Morning Outreach")
 
         self.team.refresh_from_db()
-        self.assertEqual(self.team.name, "WDI On-site")
+        self.assertEqual(self.team.name, "Morning Outreach")
 
     def test_recasing_its_own_name_is_allowed(self) -> None:
-        team_update(team=self.team, name="WDI ON-SITE")
+        team_update(team=self.team, name="MORNING OUTREACH")
 
         self.team.refresh_from_db()
-        self.assertEqual(self.team.name, "WDI ON-SITE")
+        self.assertEqual(self.team.name, "MORNING OUTREACH")
 
     def test_rename_to_a_blank_name_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
@@ -127,7 +127,7 @@ class TeamUpdateTestCase(TestCase):
         team_update(team=self.team)
 
         self.team.refresh_from_db()
-        self.assertEqual(self.team.name, "WDI On-site")
+        self.assertEqual(self.team.name, "Morning Outreach")
         self.assertEqual(Team.objects.filter(organization=self.org).count(), 1)
 
     def test_rename_longer_than_the_column_is_a_validation_error(self) -> None:
@@ -147,10 +147,10 @@ class TeamNameConstraintTestCase(TestCase):
         self.org = Organization.objects.create(name="team_constraint_org")
 
     def test_duplicate_name_is_rejected_by_the_database(self) -> None:
-        Team.objects.create(name="Hollywood Outreach", organization=self.org)
+        Team.objects.create(name="Drop-in Center", organization=self.org)
 
         with self.assertRaises(IntegrityError):
-            Team.objects.create(name="hollywood outreach", organization=self.org)
+            Team.objects.create(name="drop-in center", organization=self.org)
 
     def test_name_without_alphanumerics_is_rejected_by_the_model(self) -> None:
         """Declared as a field validator, so writers that never reach the

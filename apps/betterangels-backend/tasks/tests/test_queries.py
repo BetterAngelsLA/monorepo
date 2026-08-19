@@ -7,7 +7,6 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from teams.models import Team
 
 
 class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
@@ -20,14 +19,13 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
 
-        self.team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         self.task = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "teamId": str(self.team.pk),
+                "teamId": str(self.org_1_team_1.pk),
             }
         )["data"]["createTask"]
 
@@ -61,7 +59,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
-            "currentTeam": {"id": str(self.team.pk), "name": self.team.name},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
@@ -83,7 +81,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "description": "task 2 description",
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
-                "teamId": str(self.team.pk),
+                "teamId": str(self.org_1_team_1.pk),
             }
         )["data"]["createTask"]
 
@@ -104,7 +102,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
-            "currentTeam": {"id": str(self.team.pk), "name": self.team.name},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "description": "task description",
             "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
@@ -221,12 +219,11 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             {
                 "clientProfile": str(self.client_profile.pk),
                 "summary": "task 2 summary",
-                "teamId": str(Team.objects.get(name="SLCC On-site", organization=self.org_1).pk),
+                "teamId": str(self.org_1_team_2.pk),
             }
         )["data"]["createTask"]["id"]
 
-        team = Team.objects.get(name="SLCC On-site", organization=self.org_1)
-        filters = {"teamIds": [team.pk]}
+        filters = {"teamIds": [self.org_1_team_2.pk]}
         variables = {"filters": filters}
 
         expected_query_count = 4

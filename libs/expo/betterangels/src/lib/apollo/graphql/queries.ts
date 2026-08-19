@@ -15,7 +15,7 @@ export const GET_NOTES = gql`
       results {
         id
         purpose
-        currentTeam {
+        team {
           id
           name
         }
@@ -89,7 +89,7 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       purpose
-      currentTeam {
+      team {
         id
         name
       }
@@ -131,7 +131,7 @@ export const GET_NOTE = gql`
       tasks {
         id
         summary
-        currentTeam {
+        team {
           id
           name
         }

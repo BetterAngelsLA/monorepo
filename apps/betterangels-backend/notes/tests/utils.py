@@ -16,7 +16,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             createdBy {
                 id
             }
-            currentTeam {
+            team {
                 id
                 name
             }

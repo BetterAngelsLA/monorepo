@@ -12,7 +12,7 @@ query Interactions(
     results {
       id
       purpose
-      currentTeam {
+      team {
         id
         name
       }

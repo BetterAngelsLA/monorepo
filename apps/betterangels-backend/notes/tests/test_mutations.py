@@ -6,7 +6,6 @@ from django.test import ignore_warnings
 from django.utils import timezone
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from teams.models import Team
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
@@ -42,14 +41,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "purpose": "New note purpose",
             "requestedServices": [],
-            "currentTeam": None,
+            "team": None,
             "tasks": [],
         }
         self.assertEqual(created_note, expected_note)
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
         json_address_input, _ = self._get_address_inputs()
         location_input = {
             "address": json_address_input,
@@ -59,7 +57,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "teamId": str(team.pk),
+            "teamId": str(self.org_1_team_1.pk),
             "location": location_input,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -75,7 +73,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
-            "currentTeam": {"id": str(team.pk), "name": team.name},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "tasks": [],
             "location": {
                 "id": ANY,
@@ -124,20 +122,19 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "requestedServices": [],
-            "currentTeam": None,
+            "team": None,
             "tasks": [],
         }
         self.assertEqual(updated_note, expected_note)
 
     def test_update_note_omitted_team_id_preserves_team(self) -> None:
         """Regression: an update that never mentions teamId used to clear it."""
-        team = Team.objects.get(name="WDI On-site", organization=self.org_1)
-        self._update_note_fixture({"id": self.note["id"], "teamId": str(team.pk)})
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
 
         response = self._update_note_fixture({"id": self.note["id"], "purpose": "Changed purpose only"})
 
         self.assertIsNotNone(response["data"]["updateNote"])
-        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, team.pk)
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).team_id, self.org_1_team_1.pk)
 
     def test_update_note_with_nested_relations_mutation(self) -> None:
         """Test that updateNote can create nested services and tasks via replace-all semantics."""
