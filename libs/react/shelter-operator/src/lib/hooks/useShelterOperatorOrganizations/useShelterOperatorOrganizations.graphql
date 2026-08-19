@@ -1,5 +1,5 @@
 query ShelterOperatorOrganizations {
-  shelterOperatorOrganizations {
+  shelterOperatorOrganizations(pagination: { limit: 500 }) {
     results {
       id
       name

@@ -1,6 +1,7 @@
 import datetime
 from typing import Any, cast
 
+from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from model_bakery import baker
@@ -501,3 +502,74 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
             }
         )
         self.assertEqual(len(results), 2)
+
+
+class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
+    """Tests for the shelterOperatorOrganizations query."""
+
+    QUERY = """
+        query ShelterOperatorOrganizations {
+            shelterOperatorOrganizations {
+                results { id name }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Grant view_shelter to the CASEWORKER group in org_1 so
+        # org_1_case_manager_1 passes the HasOrgPerm(Shelter.perms.VIEW) check.
+        from notes.groups import CASEWORKER
+
+        app_label, codename = Shelter.perms.VIEW.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+
+    def test_returns_only_shelter_operator_orgs(self) -> None:
+        """Returns orgs with a SHELTER_OPERATOR permission group; outreach-only orgs are excluded."""
+        shelter_org_a = organization_recipe.make(name="Alpha Shelter", preset_names=["shelter"])
+        shelter_org_b = organization_recipe.make(name="Beta Shelter", preset_names=["shelter"])
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        response = self.execute_graphql(self.QUERY)
+
+        self.assertIsNone(response.get("errors"))
+        result_ids = {r["id"] for r in response["data"]["shelterOperatorOrganizations"]["results"]}
+
+        # org_1 and org_2 use the outreach preset — no SHELTER_OPERATOR group
+        self.assertNotIn(str(self.org_1.id), result_ids)
+        self.assertNotIn(str(self.org_2.id), result_ids)
+
+        # Shelter preset orgs must appear
+        self.assertIn(str(shelter_org_a.id), result_ids)
+        self.assertIn(str(shelter_org_b.id), result_ids)
+
+    def test_results_ordered_by_name(self) -> None:
+        """Results are sorted alphabetically by name by default."""
+        organization_recipe.make(name="Zebra Shelter", preset_names=["shelter"])
+        organization_recipe.make(name="Alpha Shelter", preset_names=["shelter"])
+        organization_recipe.make(name="Middle Shelter", preset_names=["shelter"])
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        response = self.execute_graphql(self.QUERY)
+
+        self.assertIsNone(response.get("errors"))
+        names = [r["name"] for r in response["data"]["shelterOperatorOrganizations"]["results"]]
+        self.assertEqual(names, sorted(names))
+
+    def test_unauthenticated_is_rejected(self) -> None:
+        """Unauthenticated requests return an authentication error."""
+        self.graphql_client.logout()
+        response = self.execute_graphql(self.QUERY)
+        self.assertGraphQLUnauthenticated(response)
+
+    def test_user_without_shelter_view_permission_is_rejected(self) -> None:
+        """Users whose org lacks shelter view permission cannot access the endpoint."""
+        self.graphql_client.force_login(self.non_case_manager_user)
+        response = self.execute_graphql(self.QUERY)
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertIn(
+            "You do not have permission to perform this action in this organization.",
+            response["errors"][0]["message"],
+        )
