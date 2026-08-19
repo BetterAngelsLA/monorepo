@@ -1,81 +1,13 @@
 import type { ColumnConfig } from '@ant-design/plots';
 import { Column } from '@ant-design/plots';
 import { mergeCss } from '@monorepo/react/shared';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { chunk, groupBy, meanBy, mergeDeep, unique } from 'remeda';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { mergeDeep, unique } from 'remeda';
+import { bucketData } from './bucketData';
+
 const FONT_FAMILY = "'Poppins', ui-sans-serif, system-ui, sans-serif";
 const RESIZE_DEBOUNCE_MS = 150;
 const DEFAULT_MAX_BARS = 40;
-
-/**
- * Groups chart data into at most `maxBars` buckets and averages the y-values
- * within each bucket. For multi-series (stacked/grouped) charts, values are
- * averaged per series (colorField) within each bucket.
- *
- * The x-axis label for a bucket with more than one point becomes
- * "firstLabel - lastLabel".
- *
- * **Ordering**: bucket boundaries are derived from the insertion order of
- * unique x-values in `data`. Callers must pass data in the intended display
- * order (e.g. chronological for date series) so bucket ranges are meaningful.
- */
-function bucketData(
-  data: Record<string, unknown>[],
-  xField: string,
-  yField: string,
-  colorField: string | undefined,
-  maxBars: number,
-): Record<string, unknown>[] {
-  const xValues = unique(data.map((d) => d[xField]));
-
-  if (xValues.length <= maxBars) return data;
-
-  // Build a lookup map from x-value → rows once (O(n)) so each bucket can
-  // retrieve its rows in O(bucket-size) rather than re-scanning all data.
-  const rowsByX = new Map<unknown, Record<string, unknown>[]>();
-  for (const d of data) {
-    const x = d[xField];
-    const bucket = rowsByX.get(x);
-    if (bucket) {
-      bucket.push(d);
-    } else {
-      rowsByX.set(x, [d]);
-    }
-  }
-
-  const bucketSize = Math.ceil(xValues.length / maxBars);
-
-  return chunk(xValues, bucketSize).flatMap((bucketXValues) => {
-    const label =
-      bucketXValues.length === 1
-        ? String(bucketXValues[0])
-        : `${bucketXValues[0]} - ${bucketXValues[bucketXValues.length - 1]}`;
-
-    const bucketRows = bucketXValues.flatMap((x) => rowsByX.get(x) ?? []);
-
-    if (!colorField) {
-      const avg = meanBy(bucketRows, (d) => Number(d[yField]) || 0) ?? 0;
-      return [
-        {
-          ...bucketRows[0],
-          [xField]: label,
-          [yField]: Math.round(avg * 10) / 10,
-        },
-      ];
-    }
-
-    return Object.values(groupBy(bucketRows, (d) => String(d[colorField]))).map(
-      (colorRows) => {
-        const avg = meanBy(colorRows, (d) => Number(d[yField]) || 0) ?? 0;
-        return {
-          ...colorRows[0],
-          [xField]: label,
-          [yField]: Math.round(avg * 10) / 10,
-        };
-      },
-    );
-  });
-}
 function darkenHex(hex: string, amount = 0.18): string {
   const h = hex.replace('#', '');
   const full =
@@ -224,10 +156,13 @@ export function BarChart({
     ((displayConfig as Record<string, unknown>)['data'] as
       | Record<string, unknown>[]
       | undefined) ?? [];
-  const finalData =
-    xField && yField
-      ? bucketData(displayData, xField, yField, colorField, normalizedMaxBars)
-      : displayData;
+  const finalData = useMemo(
+    () =>
+      xField && yField
+        ? bucketData(displayData, xField, yField, colorField, normalizedMaxBars)
+        : displayData,
+    [displayData, xField, yField, colorField, normalizedMaxBars],
+  );
 
   const activeFill = (datum: Record<string, unknown>): string => {
     if (colorField && range.length) {
