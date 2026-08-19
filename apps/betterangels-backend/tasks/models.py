@@ -2,10 +2,12 @@ import pghistory
 from accounts.models import User
 from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
+from django.core.exceptions import ValidationError
 from django.db import models
 from django_choices_field import IntegerChoicesField
 from organizations.models import Organization
 from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .managers import TaskManager
 
@@ -53,6 +55,19 @@ class Task(BaseModel):
 
     def __str__(self) -> str:
         return self.summary
+
+    def clean(self) -> None:
+        """Reject a team from another organization.
+
+        The services' explicit call is the duplicate to delete once #2335 adds
+        ``full_clean()``.
+        """
+        super().clean()
+
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     class Meta:
         ordering = ["-updated_at"]
