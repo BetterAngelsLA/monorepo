@@ -199,8 +199,8 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Two teams in org_1 so a multi-value ``teamIds`` filter has something to
-        # sort; one in org_2 so cross-org tests have a team to be excluded.
+        # Two in org_1 so a multi-value ``teamIds`` filter has something to sort;
+        # one in org_2 for cross-org tests.
         self.org_1_team_1 = baker.make(Team, organization=self.org_1)
         self.org_1_team_2 = baker.make(Team, organization=self.org_1)
         self.org_2_team_1 = baker.make(Team, organization=self.org_2)
