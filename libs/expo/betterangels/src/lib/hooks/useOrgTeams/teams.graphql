@@ -1,8 +1,9 @@
-query Teams($pagination: OffsetPaginationInput) {
-  teams(pagination: $pagination) {
+query Teams($filters: TeamFilter, $pagination: OffsetPaginationInput) {
+  teams(filters: $filters, pagination: $pagination) {
     results {
       id
       name
+      isActive
     }
     totalCount
   }

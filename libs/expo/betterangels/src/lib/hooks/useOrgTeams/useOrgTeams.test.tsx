@@ -34,7 +34,14 @@ const TEAMS_RESULT = {
     teams: {
       __typename: 'TeamTypeOffsetPaginated',
       totalCount: 1,
-      results: [{ __typename: 'TeamType', id: 'team-1', name: 'Team One' }],
+      results: [
+        {
+          __typename: 'TeamType',
+          id: 'team-1',
+          name: 'Team One',
+          isActive: true,
+        },
+      ],
     },
   },
 };

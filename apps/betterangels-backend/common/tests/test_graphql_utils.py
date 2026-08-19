@@ -21,10 +21,6 @@ class TeamRefInput:
 
     id: ID
     summary: Optional[str] = strawberry.UNSET
-    # ``| None`` is what makes the FK clearable: a bare ``Maybe[ID]`` rejects an
-    # explicit null during argument conversion, so the mutation fails instead of
-    # clearing the team. The annotation is the only place that decision is
-    # recorded, since both spellings emit identical SDL.
     team_id: Maybe[ID | None]
 
 
@@ -33,10 +29,7 @@ class AsdictMaybeTestCase(SimpleTestCase):
 
     ``update_note`` and ``update_task`` pass ``asdict(data)`` straight to their
     services, which ``setattr`` whatever keys they find.  That is only correct
-    because absent fields do not appear in the dict at all.  An earlier version
-    unwrapped ``team_id`` by hand and assigned the result unconditionally, which
-    turned "not mentioned" into "set to null" and silently cleared the team on
-    any unrelated update.
+    because absent fields do not appear in the dict at all.
     """
 
     def test_absent_maybe_is_omitted_entirely(self) -> None:

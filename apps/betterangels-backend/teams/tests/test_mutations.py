@@ -18,8 +18,6 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_create_team_mutation(self) -> None:
         variables = {"name": "team 1"}
 
-        # Two more than the write itself needs: full_clean() validates the
-        # organization FK, per the styleguide's full_clean-before-save rule.
         expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.create_team_fixture(variables)
@@ -33,7 +31,6 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="old name", organization=self.org)
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
-        # See test_create_team_mutation: full_clean() adds the FK validation.
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)

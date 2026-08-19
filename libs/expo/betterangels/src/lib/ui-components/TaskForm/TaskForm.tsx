@@ -4,7 +4,8 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { formatTeamDisplayName } from '@monorepo/ba-platform';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   FormProvider,
@@ -39,6 +40,7 @@ export function TaskForm(props: TProps) {
   });
 
   const { teams } = useOrgTeams();
+  const initialTeamId = useMemo(() => initialValues?.teamId, []);
 
   const {
     control,
@@ -98,10 +100,12 @@ export function TaskForm(props: TProps) {
                   maxRadioItems={0}
                   placeholder="Select team"
                   disabled={isSubmitting}
-                  items={teams.map((t) => ({
-                    value: t.id,
-                    displayValue: t.name,
-                  }))}
+                  items={teams
+                    .filter((t) => t.isActive || t.id === initialTeamId)
+                    .map((t) => ({
+                      value: t.id,
+                      displayValue: formatTeamDisplayName(t),
+                    }))}
                   selectedValue={field.value}
                   onChange={(value) => field.onChange(value || '')}
                   error={errors.teamId?.message}

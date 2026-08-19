@@ -36,9 +36,6 @@ def team_create(
     _validate_name_is_unique(name=name, organization=organization)
 
     team = Team(name=name, organization=organization)
-    # full_clean() before save(), per the styleguide.  Not ceremony: nothing
-    # else bounds the name, so an over-long one reached Postgres and came back
-    # as DataError -- a 500 rather than a message the caller can act on.
     team.full_clean()
     team.save()
 
