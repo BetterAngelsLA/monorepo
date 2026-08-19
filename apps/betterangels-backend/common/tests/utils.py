@@ -199,15 +199,14 @@ class GraphQLBaseTestCase(
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Two teams per org so tests can exercise org-scoped assignment. The
-        # names are fixture-local; real teams are created by org admins through
-        # the Teams UI. Both orgs get the same two names so a test asserting
-        # "only my org's teams" is asserting scoping rather than a difference in
-        # the data.
-        self.org_1_team_1 = Team.objects.create(name="Morning Outreach", organization=self.org_1)
-        self.org_1_team_2 = Team.objects.create(name="Drop-in Center", organization=self.org_1)
-        self.org_2_team_1 = Team.objects.create(name="Morning Outreach", organization=self.org_2)
-        self.org_2_team_2 = Team.objects.create(name="Drop-in Center", organization=self.org_2)
+        # Two teams per org so tests can exercise org-scoped assignment. Names
+        # are baker-generated: nothing asserts a team name literally, only
+        # ``.name`` off these objects, so inventing names would just be data
+        # waiting to be mistaken for meaningful.
+        self.org_1_team_1 = baker.make(Team, organization=self.org_1)
+        self.org_1_team_2 = baker.make(Team, organization=self.org_1)
+        self.org_2_team_1 = baker.make(Team, organization=self.org_2)
+        self.org_2_team_2 = baker.make(Team, organization=self.org_2)
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of

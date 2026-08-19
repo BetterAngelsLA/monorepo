@@ -21,12 +21,11 @@ class TeamRefInput:
 
     id: ID
     summary: Optional[str] = strawberry.UNSET
-    team_id: Maybe[ID]
-    # A clearable FK has to say ``| None``; a bare ``Maybe[ID]`` rejects an
-    # explicit null at validation. That is why ``teamId`` cannot currently be
-    # cleared through the API (#2316) — the annotation is the only place that
-    # decision is recorded, since both spellings emit identical SDL.
-    clearable_id: Maybe[ID | None]
+    # ``| None`` is what makes the FK clearable: a bare ``Maybe[ID]`` rejects an
+    # explicit null during argument conversion, so the mutation fails instead of
+    # clearing the team. The annotation is the only place that decision is
+    # recorded, since both spellings emit identical SDL.
+    team_id: Maybe[ID | None]
 
 
 class AsdictMaybeTestCase(SimpleTestCase):
@@ -41,22 +40,22 @@ class AsdictMaybeTestCase(SimpleTestCase):
     """
 
     def test_absent_maybe_is_omitted_entirely(self) -> None:
-        self.assertNotIn("team_id", strawberry.asdict(TeamRefInput(id=ID("1"), team_id=None, clearable_id=None)))
+        self.assertNotIn("team_id", strawberry.asdict(TeamRefInput(id=ID("1"), team_id=None)))
 
     def test_absent_unset_is_omitted_entirely(self) -> None:
-        self.assertNotIn("summary", strawberry.asdict(TeamRefInput(id=ID("1"), team_id=None, clearable_id=None)))
+        self.assertNotIn("summary", strawberry.asdict(TeamRefInput(id=ID("1"), team_id=None)))
 
     def test_provided_value_is_unwrapped(self) -> None:
-        data: dict[str, Any] = strawberry.asdict(TeamRefInput(id=ID("1"), team_id=Some(ID("7")), clearable_id=None))
+        data: dict[str, Any] = strawberry.asdict(TeamRefInput(id=ID("1"), team_id=Some(ID("7"))))
 
         self.assertEqual(data["team_id"], "7")
 
     def test_explicit_null_is_kept_as_none(self) -> None:
-        """Only reachable on a ``Maybe[T | None]`` field — see ``clearable_id``."""
-        data: dict[str, Any] = strawberry.asdict(TeamRefInput(id=ID("1"), team_id=None, clearable_id=Some(None)))
+        """Explicit null survives as a ``None`` value, which is what clears the FK."""
+        data: dict[str, Any] = strawberry.asdict(TeamRefInput(id=ID("1"), team_id=Some(None)))
 
-        self.assertIn("clearable_id", data)
-        self.assertIsNone(data["clearable_id"])
+        self.assertIn("team_id", data)
+        self.assertIsNone(data["team_id"])
 
 
 class MaybeIntValueTestCase(SimpleTestCase):
@@ -85,5 +84,5 @@ class MaybeIntValueTestCase(SimpleTestCase):
         self.assertIsNone(maybe_int_value(strawberry.UNSET))
 
     def test_explicit_null_is_none(self) -> None:
-        """Reachable once a field is annotated ``Maybe[T | None]`` — see #2316."""
+        """This is how a cleared team reaches the service layer."""
         self.assertIsNone(maybe_int_value(Some(None)))

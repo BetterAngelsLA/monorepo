@@ -38,11 +38,10 @@ def maybe_int_value(maybe: Any) -> int | None:
         name = data.name.value if data.name else None
 
     This exists for the ``ID``-to-``int`` narrowing, which that idiom cannot do
-    safely on its own: ``int(None)`` raises. A bare ``Maybe[ID]`` cannot carry an
-    explicit null today — Strawberry rejects one at validation — but making
-    ``teamId`` clearable (#2316) means annotating it ``Maybe[ID | None]``, at
-    which point ``Some(None)`` becomes reachable. Keeping the narrowing in one
-    place is what makes that a one-line change.
+    safely on its own: ``int(None)`` raises. The ``teamId`` inputs are annotated
+    ``Maybe[ID | None]``, so an explicit null arrives here as ``Some(None)`` and
+    collapses to ``None``, which clears the FK. A bare ``Maybe[ID]`` would reject
+    the null during argument conversion instead of clearing anything.
 
     Assigning the result into a dict of fields to update needs a presence check
     on the input field first (``if data.team_id:``).  Absent and explicitly-null

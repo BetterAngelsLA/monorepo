@@ -1707,6 +1707,7 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
   team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -2860,6 +2861,7 @@ type TaskType {
   status: TaskStatusEnum
   summary: String
   team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   updatedAt: DateTime!
 }
 

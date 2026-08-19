@@ -171,6 +171,11 @@ class NoteType:
     tasks: list[TaskType]
     team: Optional[TeamType]
 
+    # Deprecated alias for ``team``.  Shipped app builds select
+    # ``currentTeam``, so both names resolve the same FK until those builds
+    # have rolled over.  Delete this field, not ``team``.
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
+
     @strawberry_django.field(
         annotate={
             "_can_edit": lambda info: Case(
@@ -231,7 +236,7 @@ class CreateNoteTaskInput:
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
 
 
 @strawberry.input
@@ -245,7 +250,7 @@ class UpdateNoteInput:
 
     id: ID
     purpose: Optional[NonBlankString] = strawberry.UNSET
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
     public_details: Optional[str] = strawberry.UNSET
     private_details: Optional[str] = strawberry.UNSET
     is_submitted: Optional[bool] = strawberry.UNSET
@@ -280,7 +285,7 @@ class CreateNoteInput:
 
     # Core note fields
     purpose: Optional[str] = None
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
     public_details: Optional[str] = ""
     private_details: Optional[str] = ""
     client_profile: Optional[ID] = None
@@ -351,7 +356,7 @@ class ImportNoteDataInput:
     """Core note fields used by the import pipeline."""
 
     purpose: auto
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
     public_details: auto
     private_details: auto
     client_profile: ID | None

@@ -113,6 +113,9 @@ class TaskType:
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
     team: Optional[TeamType]
+
+    # Deprecated alias for ``team`` — see ``NoteType.current_team``.
+    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
     updated_at: auto
 
 
@@ -124,7 +127,7 @@ class CreateTaskInput:
     note: Optional[ID]
     hmis_note: Optional[ID]
     summary: str
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
 
 
@@ -139,5 +142,5 @@ class UpdateTaskInput:
     id: ID
     description: auto
     summary: auto
-    team_id: Maybe[ID]
+    team_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]

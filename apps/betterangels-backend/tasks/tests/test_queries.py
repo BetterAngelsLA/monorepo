@@ -214,6 +214,24 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
+    def test_task_query_deprecated_current_team_still_resolves(self) -> None:
+        """Shipped app builds select ``currentTeam``; it must keep working.
+
+        It is a deprecated alias for ``team`` and resolves the same FK. Delete it
+        only once no deployed client selects it.
+        """
+        response = self.execute_graphql(
+            self.get_tasks_query("id team { id name } currentTeam { id name }"),
+            {"filters": {"teamIds": [self.org_1_team_1.pk]}},
+        )
+
+        results = response["data"]["tasks"]["results"]
+        expected = {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name}
+        self.assertTrue(results)
+        for task in results:
+            self.assertEqual(task["team"], expected)
+            self.assertEqual(task["currentTeam"], expected)
+
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(
             {

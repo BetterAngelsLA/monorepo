@@ -246,6 +246,29 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
         self.assertCountEqual(expected_ids, actual_ids)
 
+    def test_note_query_deprecated_current_team_still_resolves(self) -> None:
+        """Shipped app builds select ``currentTeam``; it must keep working.
+
+        It is a deprecated alias for ``team`` and resolves the same FK. Delete it
+        only once no deployed client selects it.
+        """
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
+
+        query = """
+            query ($id: ID!) {
+                note(pk: $id) {
+                    team { id name }
+                    currentTeam { id name }
+                }
+            }
+        """
+        response = self.execute_graphql(query, {"id": self.note["id"]})
+
+        note = response["data"]["note"]
+        expected = {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name}
+        self.assertEqual(note["team"], expected)
+        self.assertEqual(note["currentTeam"], expected)
+
     @parametrize(
         ("team_attrs, expected_results_count, expected_note_labels"),
         [

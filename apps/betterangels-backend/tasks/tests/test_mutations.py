@@ -119,6 +119,22 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertIsNotNone(response["data"]["updateTask"])
         self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
 
+    def test_update_task_explicit_null_team_id_clears_team(self) -> None:
+        """The team picker offers "none", so the mutation has to accept an explicit null.
+
+        A bare ``Maybe[ID]`` rejects one during argument conversion, which failed
+        the whole mutation rather than clearing the team.
+        """
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "teamId": None})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["updateTask"]["team"])
+        self.assertIsNone(Task.objects.get(pk=task_id).team_id)
+
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
