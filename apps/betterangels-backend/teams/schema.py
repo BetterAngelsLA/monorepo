@@ -44,8 +44,8 @@ class Query:
             # queried teams since #2167 -- denying them removes the team picker
             # from every one still installed.  First-match resolution can still
             # return the wrong organization's teams to a multi-org user on such
-            # a build; a follow-up PR replaces this with a denial once builds have
-            # rolled over.
+            # a build; #2345 replaces this with a denial once builds have rolled
+            # over.
             permission_group = resolve_permission_group(info.context.request.user, template=CASEWORKER)
             return team_list(organization=permission_group.organization)
 
