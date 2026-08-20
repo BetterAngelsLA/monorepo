@@ -1,11 +1,12 @@
 from typing import Any, TypeVar
 
-from strawberry import ID, Maybe
+from strawberry import Maybe
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
+V = TypeVar("V")
 
 
 def get_object_or_permission_error(
@@ -30,15 +31,15 @@ def get_object_or_permission_error(
         raise PermissionDenied(error_message)
 
 
-def maybe_value(maybe: Maybe[ID | None]) -> ID | None:
-    """Narrow a ``Maybe[ID | None]``, collapsing absent and null.
+def maybe_value(maybe: Maybe[V]) -> V | None:
+    """Unbox a ``Maybe``, collapsing absent and null to ``None``.
 
-    For resolvers passing explicit keyword arguments, where absent and null both
-    mean "no value". Anything building a dict of fields to update wants
-    ``strawberry.asdict`` instead, which omits an absent field rather than
-    collapsing it -- the distinction an update needs.
+    For resolvers passing explicit keyword arguments to a service, where a field
+    that was not sent and one sent as null mean the same thing. Anything building
+    a dict of fields to update wants ``strawberry.asdict`` instead, which omits
+    an absent field rather than collapsing it -- the distinction an update needs.
 
-    The value stays the string GraphQL parsed. Django coerces it for whichever
-    column it is bound for, so nothing here assumes an integer primary key.
+    Null is only reachable for ``Maybe[T | None]``; strawberry rejects an
+    explicit null for ``Maybe[T]`` before the resolver runs.
     """
     return maybe.value if maybe is not None else None

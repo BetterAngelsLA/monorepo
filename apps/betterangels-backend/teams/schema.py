@@ -7,6 +7,7 @@ import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.selectors import organization_get_for_member, resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -70,8 +71,8 @@ class Mutation:
             TeamType,
             team_update(
                 team=team,
-                name=data.name.value if data.name else None,
-                is_active=data.is_active.value if data.is_active else None,
+                name=maybe_value(data.name),
+                is_active=maybe_value(data.is_active),
             ),
         )
 
