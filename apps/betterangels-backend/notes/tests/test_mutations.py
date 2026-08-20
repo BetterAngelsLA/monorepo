@@ -18,7 +18,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 30
+        expected_query_count = 33
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -65,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -105,7 +105,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 12
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -1052,6 +1052,7 @@ class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
         messages = response["data"]["createNote"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
         self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
 
     def test_create_note_rejects_a_nested_task_team_from_another_org(self) -> None:
@@ -1067,6 +1068,7 @@ class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
         messages = response["data"]["createNote"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
         self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
 
     def test_update_note_rejects_a_team_from_another_org(self) -> None:
@@ -1075,4 +1077,5 @@ class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
         messages = response["data"]["updateNote"]["messages"]
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
         self.assertIsNone(Note.objects.get(pk=self.note["id"]).team_id)
