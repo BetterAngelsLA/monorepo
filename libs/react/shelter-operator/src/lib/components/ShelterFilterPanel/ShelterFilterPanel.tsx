@@ -6,7 +6,7 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { ShelterServiceCategoriesDocument } from '@monorepo/react/shelter';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Filter, Search } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -277,6 +277,11 @@ function SortFilterDrawerContent() {
 
 export function ShelterFilterPanel() {
   const { showDrawer } = useAppDrawer();
+  const filters = useAtomValue(operatorShelterFiltersAtom);
+  const activeFilterCount = Object.values(filters).reduce(
+    (count, value) => count + (hasActiveFilter(value) ? 1 : 0),
+    0,
+  );
 
   // Warm Apollo cache on page load so the drawer rarely shows empty dropdowns.
   useShelterOperatorOrganizations();
@@ -293,13 +298,20 @@ export function ShelterFilterPanel() {
   }
 
   return (
-    <Button
-      variant="primary"
-      leftIcon={<Filter size={20} />}
-      rightIcon={false}
-      onClick={openDrawer}
-    >
-      Sort & Filter
-    </Button>
+    <div className="relative w-fit">
+      <Button
+        variant="primary"
+        leftIcon={<Filter size={20} />}
+        rightIcon={false}
+        onClick={openDrawer}
+      >
+        Sort & Filter
+      </Button>
+      {activeFilterCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#008CEE] px-1 text-[11px] font-semibold text-white">
+          {activeFilterCount}
+        </span>
+      )}
+    </div>
   );
 }

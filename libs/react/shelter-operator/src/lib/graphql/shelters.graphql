@@ -25,22 +25,6 @@ query OperatorShelters(
         reserved
         total
       }
-      demographics {
-        name
-      }
-      specialSituationRestrictions {
-        name
-      }
-      shelterTypes {
-        name
-      }
-      city {
-        name
-      }
-      spa {
-        id
-        name
-      }
       organization {
         id
         name

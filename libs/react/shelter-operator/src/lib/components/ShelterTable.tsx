@@ -125,8 +125,6 @@ export function ShelterTable({
         cellClassName: 'text-gray-600',
         render: (shelter) => shelter.status,
         sortValue: (shelter) => shelter.status,
-        filterValue: (shelter) => shelter.status,
-        autoFilterOptions: true,
       },
     ],
     [],

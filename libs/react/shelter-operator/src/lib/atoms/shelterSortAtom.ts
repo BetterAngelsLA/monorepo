@@ -1,5 +1,5 @@
 import { Ordering } from '@monorepo/ba-platform/types';
-import { atom } from 'jotai';
+import { atomWithReset } from 'jotai/utils';
 
 export type SortableColumn = 'name' | 'capacity' | 'status' | 'organization';
 
@@ -14,4 +14,4 @@ export const DEFAULT_SHELTER_SORT: TOperatorShelterSort = {
 };
 
 export const operatorShelterSortAtom =
-  atom<TOperatorShelterSort>(DEFAULT_SHELTER_SORT);
+  atomWithReset<TOperatorShelterSort>(DEFAULT_SHELTER_SORT);
