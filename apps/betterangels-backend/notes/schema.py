@@ -176,10 +176,6 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
 
         clean = asdict(data)
-        # Guarded on the input field so an unmentioned team stays unmentioned:
-        # assigning unconditionally would turn "not sent" into "set to null".
-        if data.team_id:
-            clean["team_id"] = maybe_value(data.team_id)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(

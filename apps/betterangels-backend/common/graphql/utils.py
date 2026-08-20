@@ -33,8 +33,10 @@ def get_object_or_permission_error(
 def maybe_value(maybe: Maybe[ID | None]) -> ID | None:
     """Narrow a ``Maybe[ID | None]``, collapsing absent and null.
 
-    Callers assigning the result into a dict of fields to update need a presence
-    check on the input field first, or an absent field becomes an explicit null.
+    For resolvers passing explicit keyword arguments, where absent and null both
+    mean "no value". Anything building a dict of fields to update wants
+    ``strawberry.asdict`` instead, which omits an absent field rather than
+    collapsing it -- the distinction an update needs.
 
     The value stays the string GraphQL parsed. Django coerces it for whichever
     column it is bound for, so nothing here assumes an integer primary key.

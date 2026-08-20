@@ -8,9 +8,8 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_value
+from common.graphql.utils import get_object_or_permission_error
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
 from notes.groups import CASEWORKER
@@ -53,8 +52,6 @@ class Mutation:
 
         task_data = asdict(data)
 
-        task_data["team_id"] = maybe_value(data.team_id)
-
         # Resolve FK references
         note = None
         if note_id := task_data.pop("note", None):
@@ -91,13 +88,9 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
-        task: Task = qs.get(pk=data.id)
+        task = get_object_or_permission_error(qs, data.id)
 
         clean = asdict(data)
-        # Guarded on the input field so an unmentioned team stays unmentioned:
-        # assigning unconditionally would turn "not sent" into "set to null".
-        if data.team_id:
-            clean["team_id"] = maybe_value(data.team_id)
 
         task = task_update(task=task, data=clean)
 
@@ -107,14 +100,11 @@ class Mutation:
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         current_user = get_current_user(info)
 
-        try:
-            task = filter_for_user(
-                Task.objects.all(),
-                current_user,
-                [Task.perms.DELETE],
-            ).get(id=data.id)
-        except Task.DoesNotExist:
-            raise PermissionDenied("You do not have permission to delete this task.")
+        task = get_object_or_permission_error(
+            filter_for_user(Task.objects.all(), current_user, [Task.perms.DELETE]),
+            data.id,
+            "You do not have permission to delete this task.",
+        )
 
         deleted_id = task_delete(task=task)
 
