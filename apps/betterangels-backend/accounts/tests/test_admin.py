@@ -18,8 +18,8 @@ from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import TestCase
-from django.urls import reverse
+from django.test import SimpleTestCase, TestCase
+from django.urls import NoReverseMatch, reverse
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
@@ -557,8 +557,7 @@ class OrganizationAdminLinksTestCase(TestCase):
         self.membership = OrganizationUser.objects.get(organization=self.organization)
 
     def test_the_organization_page_offers_no_view_on_site_link(self) -> None:
-        """django-organizations' get_absolute_url points at generic views we do not use,
-        resolved through an unconfigured example.com Site."""
+        """``get_absolute_url`` reverses a route accounts/urls.py no longer includes."""
         page = self.client.get(
             reverse("admin:organizations_organization_change", args=[self.organization.pk])
         ).content.decode()
@@ -632,3 +631,45 @@ class OrganizationAdminLinksTestCase(TestCase):
             rendered,
         )
         self.assertNotIn("change_roles", model_admin.readonly_fields)
+
+
+class OrganizationsGenericViewsNotRoutedTestCase(SimpleTestCase):
+    """django-organizations' generic CRUD views must not be reachable.
+
+    They rendered an unstyled parallel admin: any authenticated user could create or
+    list organizations, any member could enumerate an organization's members, its
+    owner could delete it, and a membership could be deleted without clearing the
+    user's roles or created with no role at all — the state that made an
+    organization unusable. Nothing in this project routes to them.
+
+    Asserted against the URLconf rather than over the test client: a 404 would also
+    pass if a view had merely started refusing, instead of the route being absent.
+    """
+
+    UNROUTED = [
+        ("organization_list", {}),
+        ("organization_add", {}),
+        ("organization_detail", {"organization_pk": 1}),
+        ("organization_edit", {"organization_pk": 1}),
+        ("organization_delete", {"organization_pk": 1}),
+        ("organization_user_list", {"organization_pk": 1}),
+        ("organization_user_add", {"organization_pk": 1}),
+        ("organization_user_detail", {"organization_pk": 1, "user_pk": 1}),
+        ("organization_user_edit", {"organization_pk": 1, "user_pk": 1}),
+        ("organization_user_delete", {"organization_pk": 1, "user_pk": 1}),
+    ]
+
+    def test_none_of_the_generic_organization_views_resolve(self) -> None:
+        for name, kwargs in self.UNROUTED:
+            with self.subTest(url_name=name):
+                with self.assertRaises(NoReverseMatch):
+                    reverse(name, kwargs=kwargs)
+
+    def test_the_invitation_route_still_resolves(self) -> None:
+        """It comes from invitation_backend().get_urls(), which stays mounted.
+
+        Its view raises Http404 — invitations are accepted immediately rather than
+        through an activation step — but the route must survive, because
+        ``ExtendedOrganizationInvitation.get_absolute_url`` reverses it.
+        """
+        self.assertEqual(reverse("invitations_register", kwargs={"user_id": 1, "token": "abc"}), "/invitations/1-abc/")

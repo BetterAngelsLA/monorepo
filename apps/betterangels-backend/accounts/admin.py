@@ -107,8 +107,8 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
     can_delete = False
     verbose_name_plural = "Members"
     # django-organizations' models define get_absolute_url against its own generic
-    # views, which this project does not use, and admin "View on site" resolves it
-    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    # views, which accounts/urls.py deliberately does not route, so reversing it
+    # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
     fields = ("member", "roles", "owner", "created", "change_roles")
@@ -234,8 +234,8 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     readonly_fields = ("slug",)
     change_form_template = "admin/organizations/organization/change_form.html"
     # django-organizations' models define get_absolute_url against its own generic
-    # views, which this project does not use, and admin "View on site" resolves it
-    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    # views, which accounts/urls.py deliberately does not route, so reversing it
+    # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
@@ -340,8 +340,8 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
     list_filter = ("organization",)
     search_fields = ("user__email", "organization__name")
     # django-organizations' models define get_absolute_url against its own generic
-    # views, which this project does not use, and admin "View on site" resolves it
-    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    # views, which accounts/urls.py deliberately does not route, so reversing it
+    # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
     # Excludes django-organizations' own ``is_admin``: nothing in this codebase
@@ -444,9 +444,9 @@ class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitat
     list_display = ("invited_by", "invitee", "organization", "accepted")
     search_fields = ("invited_by__username", "invitee__username", "organization__name")
     list_filter = ("organization", "accepted")
-    # Unlike the other django-organizations models, this one's get_absolute_url
-    # resolves — to the invitation acceptance flow — so "View on site" would act on
-    # the invitee's behalf, against whatever domain the Site row happens to hold.
+    # get_absolute_url reverses invitations_register, which is routed but whose view
+    # raises Http404 — this project accepts invitations immediately instead of via an
+    # activation step. The link resolves and then always 404s.
     view_on_site = False
 
 
