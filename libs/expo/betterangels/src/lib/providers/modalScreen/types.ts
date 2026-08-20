@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { THeaderVariant } from '../../navigation/types';
 
 export type noOpFn = () => void;
 
@@ -17,6 +18,12 @@ export type TShowModalScreenProps = {
   onClose?: null | noOpFn;
   /** Replaces the default "×" icon with a text label (e.g. "Done"). */
   headerCloseLabel?: string;
+  /**
+   * Renders the in-app `ScreenHeader` in this variant. Opt-in: without it no
+   * in-app header is drawn. Pair it with `hideHeader: true`, which turns the
+   * native header off — otherwise the screen gets both.
+   */
+  headerVariant?: THeaderVariant;
 };
 export interface IModalScreenContext {
   showModalScreen: (props: TShowModalScreenProps) => void;
@@ -26,6 +33,7 @@ export interface IModalScreenContext {
   title?: string;
   /** If set, renders a text button instead of the "×" icon in the header. */
   headerCloseLabel?: string;
+  headerVariant?: THeaderVariant;
 }
 
 export type IModalScreenState = {
@@ -34,4 +42,5 @@ export type IModalScreenState = {
   hideHeader: boolean;
   renderContent: ((api: TRenderContentApi) => ReactNode) | null;
   headerCloseLabel?: string;
+  headerVariant?: THeaderVariant;
 };

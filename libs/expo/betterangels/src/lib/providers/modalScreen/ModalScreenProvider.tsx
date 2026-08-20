@@ -79,6 +79,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
         hideHeader,
         onClose,
         headerCloseLabel,
+        headerVariant,
       } = props;
 
       setModal({
@@ -87,6 +88,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
         title: title ?? '',
         hideHeader: !!hideHeader,
         headerCloseLabel,
+        headerVariant,
       });
 
       onCloseCallbackRef.current = onClose ?? null;
@@ -131,6 +133,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
         hideHeader: modal.hideHeader,
         title: modal.title,
         headerCloseLabel: modal.headerCloseLabel,
+        headerVariant: modal.headerVariant,
       }}
     >
       {children}

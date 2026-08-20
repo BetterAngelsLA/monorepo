@@ -1,7 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TModalPresentationType } from '../../providers';
 import { HeaderLeftButton } from '../HeaderLeftButton';
-import { defaultModalNavOpts } from './config';
+import { THeaderVariant } from '../types';
+import { getNativeHeaderOptions } from '../utils';
 import { getModalCloseBtn } from './getModalCloseBtn';
 
 type TProps = {
@@ -12,33 +13,41 @@ type TProps = {
   headerCloseLabel?: string;
 };
 
-export function getDefaultStackModalOptions(props?: TProps) {
-  const { presentation, hideHeader, title, onClose, headerCloseLabel } =
-    props || {};
+/**
+ * Which header a modal presentation gets. `card` is a pushed screen, so it takes
+ * the default bar (with Close in place of Back); both modal presentations take
+ * the modal bar.
+ */
+function getHeaderVariant(props: TProps): THeaderVariant {
+  const { presentation, hideHeader } = props;
 
   if (hideHeader) {
+    return 'none';
+  }
+
+  return presentation === 'card' ? 'default' : 'modal';
+}
+
+export function getDefaultStackModalOptions(props?: TProps) {
+  const { presentation, title, onClose, headerCloseLabel } = props || {};
+
+  const variant = getHeaderVariant(props || {});
+
+  if (variant === 'none') {
     return {
       presentation,
       headerShown: false,
     };
   }
 
-  if (presentation === 'modal') {
+  if (variant === 'modal') {
     return {
-      ...defaultModalNavOpts.modal,
+      ...getNativeHeaderOptions(variant),
       presentation,
       title: title || '',
-      headerRight: onClose
-        ? () => getModalCloseBtn({ onClose, label: headerCloseLabel })
-        : undefined,
-    };
-  }
-
-  if (presentation === 'fullScreenModal') {
-    return {
-      ...defaultModalNavOpts.fullScreenModal,
-      presentation,
-      title: title || '',
+      // Native-header-only: suppresses the back chevron expo-router would
+      // otherwise draw for a pushed route.
+      headerBackVisible: false,
       headerRight: onClose
         ? () => getModalCloseBtn({ onClose, label: headerCloseLabel })
         : undefined,
@@ -46,7 +55,7 @@ export function getDefaultStackModalOptions(props?: TProps) {
   }
 
   return {
-    ...defaultModalNavOpts.card,
+    ...getNativeHeaderOptions('default'),
     presentation,
     title: title || '',
     headerLeft: () => <HeaderLeftButton title="Close" color={Colors.WHITE} />,

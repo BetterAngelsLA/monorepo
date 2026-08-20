@@ -1,0 +1,1 @@
+export { getNativeHeaderOptions } from './getNativeHeaderOptions';
