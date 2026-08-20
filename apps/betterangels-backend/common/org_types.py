@@ -109,17 +109,25 @@ class Registry:
         return sorted(self._invitable_templates_by_name.keys())
 
     def get_template_or_raise(self, name: str, org: Organization) -> TemplateConfig:
-        """Look up a template by *name* and raise ``ValidationError`` if not found for *org*.
+        """Return the template *name* that *org* can grant, or raise ``ValidationError``.
 
-        DRY helper for mutations that accept a ``permission_template`` input
-        and need to validate it against the org's available invitable templates.
+        Validates against the invitable templates *org*'s org types actually allow,
+        not merely against the registry.  Resolving *name* globally would accept a
+        role the organization cannot hold — ``Caseworker`` for a shelter-only org —
+        which then failed downstream in
+        :meth:`accounts.role_manager.OrgRoleManager.add_roles` with
+        ``PermissionGroup.DoesNotExist`` instead of a validation error.
+
+        Callers pass a ``PermissionTemplateEnum`` value, which is built from
+        :meth:`invitable_template_names`, so restricting to invitable roles here
+        rejects nothing a caller could legitimately ask for.
         """
         from django.core.exceptions import ValidationError
 
+        available = self.invitable_template_names_for(org)
         template = self.template(name)
-        if template is None:
-            valid = self.invitable_template_names_for(org)
-            raise ValidationError(f"Invalid permission template '{name}'. Available: {', '.join(valid)}")
+        if template is None or name not in available:
+            raise ValidationError(f"Invalid permission template '{name}'. Available: {', '.join(available) or 'none'}")
         return template
 
     def invitable_template_names_for(self, org: Organization) -> list[str]:
