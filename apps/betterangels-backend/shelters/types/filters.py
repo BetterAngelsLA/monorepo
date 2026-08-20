@@ -19,7 +19,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value
+from django.db.models import Case, Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value, When
 from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -331,15 +331,8 @@ class OperatorShelterFilter(PublicShelterFilter):
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        user = get_current_user(info)
-
-        if user is None or not user.is_authenticated:
-            if not value:
-                return Q()
-
-            return Q(**{f"{prefix}organization__in": value})
-
-        current_user = cast(User, user)
+        """Scope to orgs the authenticated user belongs to (intersected with *value* if set)."""
+        current_user = cast(User, get_current_user(info))
         allowed_organizations = current_user.organizations_organization.all()
         if value:
             allowed_organizations = allowed_organizations.filter(pk__in=value)
@@ -375,7 +368,29 @@ class OperatorShelterFilter(PublicShelterFilter):
 class ShelterOrder:
     name: auto
     created_at: auto
-    status: auto
+
+    @strawberry_django.order_field
+    def status(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        """Order by shelter lifecycle: draft → pending → approved → inactive."""
+        queryset = queryset.annotate(
+            **{
+                f"{prefix}_status_rank": Case(
+                    When(**{f"{prefix}status": StatusChoices.DRAFT}, then=Value(0)),
+                    When(**{f"{prefix}status": StatusChoices.PENDING}, then=Value(1)),
+                    When(**{f"{prefix}status": StatusChoices.APPROVED}, then=Value(2)),
+                    When(**{f"{prefix}status": StatusChoices.INACTIVE}, then=Value(3)),
+                    default=Value(4),
+                    output_field=IntegerField(),
+                )
+            }
+        )
+        return queryset, [value.resolve(f"{prefix}_status_rank")]
 
     @strawberry_django.order_field
     def organization(

@@ -285,7 +285,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             )
 
     def test_operator_shelters_order_by_status(self) -> None:
-        """operatorShelters orders by status via ``ShelterOrder.status``."""
+        """operatorShelters orders by lifecycle rank via ``ShelterOrder.status``."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.shelter.status = StatusChoices.APPROVED
         self.shelter.save()
@@ -300,19 +300,29 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        response = self.execute_graphql(
+        workflow_order = [
+            StatusChoices.DRAFT.name,
+            StatusChoices.PENDING.name,
+            StatusChoices.APPROVED.name,
+            StatusChoices.INACTIVE.name,
+        ]
+
+        asc_response = self.execute_graphql(
             query,
             variables={"orgIds": [str(self.org_1.id)], "ordering": {"status": "ASC"}},
         )
-        results = response["data"]["operatorShelters"]["results"]
         self.assertEqual(
-            [r["status"] for r in results],
-            [
-                StatusChoices.APPROVED.name,
-                StatusChoices.DRAFT.name,
-                StatusChoices.INACTIVE.name,
-                StatusChoices.PENDING.name,
-            ],
+            [r["status"] for r in asc_response["data"]["operatorShelters"]["results"]],
+            workflow_order,
+        )
+
+        desc_response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "ordering": {"status": "DESC"}},
+        )
+        self.assertEqual(
+            [r["status"] for r in desc_response["data"]["operatorShelters"]["results"]],
+            list(reversed(workflow_order)),
         )
 
     def test_operator_shelters_order_by_bed_count(self) -> None:

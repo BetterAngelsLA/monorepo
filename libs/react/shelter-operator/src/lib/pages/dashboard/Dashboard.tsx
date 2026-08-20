@@ -285,7 +285,6 @@ export function Dashboard() {
 
   const handleSortChange = useCallback(
     (column: string | null, direction: SortDirection | null) => {
-      setPage(1);
       if (!column || !direction || !(column in SORT_FIELD_MAP)) {
         setSort(DEFAULT_SHELTER_SORT);
         return;
