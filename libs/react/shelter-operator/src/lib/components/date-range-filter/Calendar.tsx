@@ -1,7 +1,12 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { addMonths, format, subMonths } from 'date-fns';
+import {
+  addMonths,
+  differenceInCalendarDays,
+  format,
+  subMonths,
+} from 'date-fns';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext } from 'react';
 import {
   DayPicker,
   type DateRange as RdpDateRange,
@@ -101,6 +106,22 @@ const customComponents = {
   Nav: EmptyNav,
 };
 
+/**
+ * react-day-picker moves the end endpoint for any click after the start, so
+ * clicking near the start of a completed range collapses it from the wrong
+ * side. Move whichever endpoint is closer to the clicked day instead.
+ */
+function nearestEndpointRange(from: Date, to: Date, date: Date): RdpDateRange {
+  if (differenceInCalendarDays(date, from) < 0) return { from: date, to };
+  if (differenceInCalendarDays(date, to) > 0) return { from, to: date };
+
+  const distanceToStart = Math.abs(differenceInCalendarDays(date, from));
+  const distanceToEnd = Math.abs(differenceInCalendarDays(date, to));
+  return distanceToStart < distanceToEnd
+    ? { from: date, to }
+    : { from, to: date };
+}
+
 export function Calendar({
   selected,
   onSelect,
@@ -109,12 +130,23 @@ export function Calendar({
   onMonthLabelClick,
   className,
 }: CalendarProps) {
+  const handleSelect = useCallback(
+    (next: RdpDateRange | undefined, triggerDate: Date) => {
+      if (selected?.from && selected?.to && triggerDate) {
+        onSelect?.(nearestEndpointRange(selected.from, selected.to, triggerDate));
+        return;
+      }
+      onSelect?.(next);
+    },
+    [onSelect, selected]
+  );
+
   return (
     <CalendarContext.Provider value={{ onMonthChange, onMonthLabelClick }}>
       <DayPicker
         mode="range"
         selected={selected}
-        onSelect={onSelect}
+        onSelect={handleSelect}
         month={month}
         onMonthChange={onMonthChange}
         showOutsideDays
