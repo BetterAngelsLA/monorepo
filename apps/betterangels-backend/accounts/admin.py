@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any, Type, cast
 
 from common.org_types import REGISTRY
@@ -9,7 +10,7 @@ from django.contrib.auth.models import User as DefaultUser
 from django.contrib.sites.models import Site
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
+from django.db.models import Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -24,6 +25,7 @@ from .forms import (
     UserChangeForm,
     UserCreationForm,
 )
+from .selectors import member_role_names, role_names_by_organization
 from .models import (
     ExtendedOrganizationInvitation,
     OrganizationProfile,
@@ -38,6 +40,14 @@ from .services import (
     organization_remove_member,
     reconcile_org_groups,
 )
+
+
+def _change_roles_link(obj: OrganizationUser) -> str:
+    url = reverse(
+        "admin:organizations_organization_change_member_roles",
+        args=[obj.organization_id, obj.user_id],
+    )
+    return format_html('<a href="{}" class="changelink">Change roles</a>', url)
 
 
 def _invited_message(email: str, organization: Organization, role_templates: tuple[TemplateConfig, ...]) -> str:
@@ -86,7 +96,7 @@ class PermissionGroupInline(admin.TabularInline):
 class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organization]):
     """Who belongs to this organization, and with which roles.
 
-    Read-only: adding goes through **Add member** so a role is always chosen, and
+    Read-only: adding goes through **Add member** so roles are always chosen, and
     removing stays on the Organization user page, where the owner guard lives.  An
     inline could not gate deletion per row anyway — ``has_delete_permission``
     receives the parent organization, not the member.
@@ -96,6 +106,11 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
     extra = 0
     can_delete = False
     verbose_name_plural = "Members"
+    # django-organizations' models define get_absolute_url against its own generic
+    # views, which this project does not use, and admin "View on site" resolves it
+    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    view_on_site = False
+
     fields = ("member", "roles", "owner", "created", "change_roles")
     readonly_fields = fields
 
@@ -105,12 +120,7 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
         return False
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[OrganizationUser]:
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("user")
-            .prefetch_related("user__groups__permissiongroup__template")
-        )
+        return super().get_queryset(request).select_related("user").prefetch_related("user__groups__permissiongroup")
 
     @admin.display(description="Member")
     def member(self, obj: OrganizationUser) -> str:
@@ -119,13 +129,20 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
 
     @admin.display(description="Roles")
     def roles(self, obj: OrganizationUser) -> str:
-        names = sorted(
-            permission_group.name
-            for group in obj.user.groups.all()
-            for permission_group in [getattr(group, "permissiongroup", None)]
-            if permission_group is not None and permission_group.organization_id == obj.organization_id
-        )
-        return ", ".join(names) or "—"
+        """Read off the prefetch rather than via ``accounts.selectors.member_role_names``.
+
+        The change forms use that selector, but they read one object; this renders a
+        row per member, so a per-row query would be an N+1 — production has an
+        organization with 90 members.
+        """
+        names = []
+        for group in obj.user.groups.all():
+            if not hasattr(group, "permissiongroup"):
+                continue
+            permission_group = group.permissiongroup
+            if permission_group.organization_id == obj.organization_id:
+                names.append(permission_group.name)
+        return ", ".join(sorted(names)) or "—"
 
     @admin.display(description="Owner", boolean=True)
     def owner(self, obj: OrganizationUser) -> bool:
@@ -133,11 +150,7 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
 
     @admin.display(description="")
     def change_roles(self, obj: OrganizationUser) -> str:
-        url = reverse(
-            "admin:organizations_organization_change_member_roles",
-            args=[obj.organization_id, obj.user_id],
-        )
-        return format_html('<a href="{}" class="changelink">Change roles</a>', url)
+        return _change_roles_link(obj)
 
 
 class OrganizationProfileInline(admin.StackedInline):
@@ -149,69 +162,22 @@ class OrganizationProfileInline(admin.StackedInline):
     verbose_name_plural = "Profile"
 
 
-@admin.register(Organization)
-class CustomOrganizationAdmin(admin.ModelAdmin):
-    inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
-    list_display = ("name",)
-    search_fields = ("name",)
-    fields = ("name", "is_active", "slug")
-    readonly_fields = ("slug",)
-    change_form_template = "admin/organizations/organization/change_form.html"
+class MemberInviteAdminMixin:
+    """Shared invite handling for the two admin pages that offer it.
 
-    def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
-        """Reconcile permission groups once the profile's org types are saved."""
-        super().save_related(request, form, formsets, change)
-        reconcile_org_groups(form.instance)
+    The organization's page fixes the organization; the Organization users page
+    asks for it.  Everything after the form validates is identical.
+    """
 
-    def get_urls(self) -> list[URLPattern]:
-        custom_urls = [
-            path(
-                "<path:object_id>/add-member/",
-                self.admin_site.admin_view(self.add_member_view),
-                name="organizations_organization_add_member",
-            ),
-            path(
-                "<path:object_id>/change-roles/<int:user_id>/",
-                self.admin_site.admin_view(self.change_member_roles_view),
-                name="organizations_organization_change_member_roles",
-            ),
-        ]
-        return custom_urls + super().get_urls()
+    # What the mixin needs from the ModelAdmin it is mixed into.
+    admin_site: admin.AdminSite
+    model: type[Model]
+    message_user: Callable[..., None]
 
-    def add_member_view(self, request: HttpRequest, object_id: str) -> HttpResponse:
-        """Invite a person into this organization with a single role."""
-        organization = get_object_or_404(Organization, pk=object_id)
-
-        if not REGISTRY.invitable_template_names_for(organization):
-            self.message_user(
-                request,
-                f"Set an org type on {organization.name} before adding members — "
-                "it determines which roles its members can hold.",
-                messages.ERROR,
-            )
-            return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
-
-        if request.method == "POST":
-            form = OrganizationMemberInviteForm(request.POST, organization=organization)
-            if form.is_valid():
-                return self._invite_member(request, organization, form)
-        else:
-            form = OrganizationMemberInviteForm(organization=organization)
-
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "organization": organization,
-            "form": form,
-            "title": f"Add member to {organization.name}",
-            "help_text": (
-                "The person is invited by email and given the roles you select. If they already have an "
-                "account it is reused, and reactivated if it was disabled."
-            ),
-            "submit_label": "Send invitation",
-            "cancel_url": reverse("admin:organizations_organization_change", args=[organization.pk]),
-        }
-        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
+    INVITE_HELP_TEXT = (
+        "The person is invited by email and given the roles you select. If they already have an "
+        "account it is reused, and reactivated if it was disabled."
+    )
 
     def _invite_member(
         self,
@@ -235,8 +201,91 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
             return redirect(request.get_full_path())
 
         self.message_user(request, _invited_message(email, organization, role_templates), messages.SUCCESS)
-        # Back to the organization, where the Members inline now lists them.
+        # Back to the organization, where the Members inline lists them.
         return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
+    def _invite_context(
+        self,
+        request: HttpRequest,
+        form: OrganizationMemberInviteForm,
+        *,
+        title: str,
+        cancel_url: str,
+        organization: Organization | None = None,
+    ) -> dict[str, Any]:
+        return {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "form": form,
+            "title": title,
+            "help_text": self.INVITE_HELP_TEXT,
+            "submit_label": "Send invitation",
+            "cancel_url": cancel_url,
+        }
+
+
+@admin.register(Organization)
+class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
+    inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
+    list_display = ("name",)
+    search_fields = ("name",)
+    fields = ("name", "is_active", "slug")
+    readonly_fields = ("slug",)
+    change_form_template = "admin/organizations/organization/change_form.html"
+    # django-organizations' models define get_absolute_url against its own generic
+    # views, which this project does not use, and admin "View on site" resolves it
+    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    view_on_site = False
+
+    def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
+        """Reconcile permission groups once the profile's org types are saved."""
+        super().save_related(request, form, formsets, change)
+        reconcile_org_groups(form.instance)
+
+    def get_urls(self) -> list[URLPattern]:
+        custom_urls = [
+            path(
+                "<path:object_id>/add-member/",
+                self.admin_site.admin_view(self.add_member_view),
+                name="organizations_organization_add_member",
+            ),
+            path(
+                "<path:object_id>/change-roles/<int:user_id>/",
+                self.admin_site.admin_view(self.change_member_roles_view),
+                name="organizations_organization_change_member_roles",
+            ),
+        ]
+        return custom_urls + super().get_urls()
+
+    def add_member_view(self, request: HttpRequest, object_id: str) -> HttpResponse:
+        """Invite a person into this organization with one or more roles."""
+        organization = get_object_or_404(Organization, pk=object_id)
+
+        if not REGISTRY.invitable_template_names_for(organization):
+            self.message_user(
+                request,
+                f"Set an org type on {organization.name} before adding members — "
+                "it determines which roles its members can hold.",
+                messages.ERROR,
+            )
+            return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
+        if request.method == "POST":
+            form = OrganizationMemberInviteForm(request.POST, organization=organization)
+            if form.is_valid():
+                return self._invite_member(request, organization, form)
+        else:
+            form = OrganizationMemberInviteForm(organization=organization)
+
+        context = self._invite_context(
+            request,
+            form,
+            title=f"Add member to {organization.name}",
+            cancel_url=reverse("admin:organizations_organization_change", args=[organization.pk]),
+            organization=organization,
+        )
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
     def change_member_roles_view(self, request: HttpRequest, object_id: str, user_id: int) -> HttpResponse:
         """Set exactly which roles an existing member holds.
@@ -286,22 +335,35 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 
 
 @admin.register(OrganizationUser)
-class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
-    list_display = ("user", "organization")
+class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[OrganizationUser]):
+    list_display = ("user", "organization", "change_roles")
     list_filter = ("organization",)
     search_fields = ("user__email", "organization__name")
+    # django-organizations' models define get_absolute_url against its own generic
+    # views, which this project does not use, and admin "View on site" resolves it
+    # through django.contrib.sites — an unconfigured example.com. Dead link.
+    view_on_site = False
+
     # Excludes django-organizations' own ``is_admin``: nothing in this codebase
     # reads it, so it renders as a checkbox that looks like it grants admin and
     # does not.  Org Admin is a permission group, shown read-only below.
-    fields = ("organization", "user", "roles")
-    readonly_fields = ("roles",)
+    fields = ("organization", "user", "roles", "change_roles")
+    readonly_fields = ("roles", "change_roles")
+
+    @admin.display(description="")
+    def change_roles(self, obj: OrganizationUser) -> str:
+        """Link to the organization admin's role editor rather than repeat it here.
+
+        Editing roles on this form would mean a second implementation, and
+        ``organization`` is editable here — changing it and the roles in one save
+        would validate the new organization against choices rendered for the old.
+        """
+        return _change_roles_link(obj)
 
     @admin.display(description="Roles in this organization")
     def roles(self, obj: OrganizationUser) -> str:
-        names = PermissionGroup.objects.filter(
-            organization_id=obj.organization_id, group__user=obj.user_id
-        ).values_list("name", flat=True)
-        return ", ".join(sorted(names)) or "—"
+        names = member_role_names(user_id=obj.user_id, organization_id=obj.organization_id)
+        return ", ".join(names) or "—"
 
     def add_view(
         self, request: HttpRequest, form_url: str = "", extra_context: dict[str, Any] | None = None
@@ -314,38 +376,16 @@ class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
         if request.method == "POST":
             form = OrganizationMemberInviteForm(request.POST)
             if form.is_valid():
-                organization = form.cleaned_data["organization"]
-                email = form.cleaned_data["email"]
-                role_templates = form.selected_templates()
-                try:
-                    member_invite(
-                        organization=organization,
-                        email=email,
-                        permission_templates=role_templates,
-                        invited_by=cast(User, request.user),
-                        site=Site.objects.get(pk=settings.SITE_ID),
-                    )
-                except ValidationError as error:
-                    self.message_user(request, "; ".join(error.messages), messages.ERROR)
-                    return redirect(request.get_full_path())
-
-                self.message_user(request, _invited_message(email, organization, role_templates), messages.SUCCESS)
-                return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
+                return self._invite_member(request, form.cleaned_data["organization"], form)
         else:
             form = OrganizationMemberInviteForm()
 
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "form": form,
-            "title": "Add member",
-            "help_text": (
-                "The person is invited by email and given the roles you select. If they already have an "
-                "account it is reused, and reactivated if it was disabled."
-            ),
-            "submit_label": "Send invitation",
-            "cancel_url": reverse("admin:organizations_organizationuser_changelist"),
-        }
+        context = self._invite_context(
+            request,
+            form,
+            title="Add member",
+            cancel_url=reverse("admin:organizations_organizationuser_changelist"),
+        )
         return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
     def has_delete_permission(self, request: HttpRequest, obj: OrganizationUser | None = None) -> bool:
@@ -436,16 +476,9 @@ class UserAdmin(BaseUserAdmin):
         Read-only: roles are granted per organization, so they are changed from
         the organization's Add member page or its permission groups.
         """
-        rows = (
-            PermissionGroup.objects.filter(group__user=obj.pk)
-            .select_related("organization")
-            .values_list("organization__name", "name")
-        )
-        by_org: dict[str, list[str]] = {}
-        for organization_name, role_name in rows:
-            by_org.setdefault(organization_name, []).append(role_name)
-        if not by_org:
+        by_organization = role_names_by_organization(user_id=obj.pk)
+        if not by_organization:
             return "—"
         return format_html_join(
-            "", "<div>{}: {}</div>", ((name, ", ".join(sorted(roles))) for name, roles in sorted(by_org.items()))
+            "", "<div>{}: {}</div>", ((name, ", ".join(roles)) for name, roles in by_organization.items())
         )

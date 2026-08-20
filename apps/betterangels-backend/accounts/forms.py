@@ -145,7 +145,6 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
 
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
-        self.member = member
         # Clearing every role is a real state — it is what a member starts as
         # before any role is granted — so revoking the last one is allowed here,
         # unlike on the invite form where it would send a pointless invitation.

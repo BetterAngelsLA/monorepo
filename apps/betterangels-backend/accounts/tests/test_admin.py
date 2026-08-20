@@ -539,3 +539,67 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
             ),
             {CASEWORKER.name},
         )
+
+
+class OrganizationAdminLinksTestCase(TestCase):
+    """The admin must not offer links it cannot honour, and must offer the role editor."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_links_tests", email="admin_links_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.membership = OrganizationUser.objects.get(organization=self.organization)
+
+    def test_the_organization_page_offers_no_view_on_site_link(self) -> None:
+        """django-organizations' get_absolute_url points at generic views we do not use,
+        resolved through an unconfigured example.com Site."""
+        page = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk])
+        ).content.decode()
+
+        self.assertNotIn("viewsitelink", page)
+        self.assertNotIn("/people/", page)
+
+    def test_the_membership_page_offers_no_view_on_site_link(self) -> None:
+        page = self.client.get(
+            reverse("admin:organizations_organizationuser_change", args=[self.membership.pk])
+        ).content.decode()
+
+        self.assertNotIn("viewsitelink", page)
+        self.assertNotIn("/people/", page)
+
+    def test_the_organization_page_links_to_the_filtered_member_list(self) -> None:
+        """The Members inline has no pagination, and production has an org with 90."""
+        page = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk])
+        ).content.decode()
+
+        expected = (
+            f"{reverse('admin:organizations_organizationuser_changelist')}"
+            f"?organization__id__exact={self.organization.pk}"
+        )
+        self.assertIn(expected, page)
+
+    def test_the_membership_list_links_to_the_role_editor(self) -> None:
+        expected = reverse(
+            "admin:organizations_organization_change_member_roles",
+            args=[self.organization.pk, self.membership.user_id],
+        )
+
+        page = self.client.get(reverse("admin:organizations_organizationuser_changelist")).content.decode()
+
+        self.assertIn(expected, page)
+
+    def test_the_membership_page_links_to_the_role_editor(self) -> None:
+        expected = reverse(
+            "admin:organizations_organization_change_member_roles",
+            args=[self.organization.pk, self.membership.user_id],
+        )
+
+        page = self.client.get(
+            reverse("admin:organizations_organizationuser_change", args=[self.membership.pk])
+        ).content.decode()
+
+        self.assertIn(expected, page)
