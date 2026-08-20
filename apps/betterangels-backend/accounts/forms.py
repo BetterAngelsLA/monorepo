@@ -5,7 +5,7 @@ from django import forms
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from organizations.models import Organization
 
-from .models import OrganizationProfile, OrgTypeChoices, User
+from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -57,6 +57,27 @@ class OrganizationProfileForm(forms.ModelForm):
     def clean_org_types(self) -> list[OrgTypeChoices]:
         """Return enum members, matching what the services write."""
         return [OrgTypeChoices(value) for value in self.cleaned_data["org_types"]]
+
+
+class PermissionGroupInlineForm(forms.ModelForm):
+    """Admin inline form for an organization's permission groups.
+
+    ``template`` is fixed once the row exists.  Repointing it leaves the row
+    holding a group still named after the old role, so reconciliation's
+    ``get_or_create`` for that role tries to create a second ``auth.Group`` with
+    the same name and hits ``auth_group_name_key`` — the admin's transaction rolls
+    back, so nothing is lost, but the save 500s.  ``main`` refused it outright.
+    ``disabled`` rather than ``readonly`` so submitted data is ignored entirely.
+    """
+
+    class Meta:
+        model = PermissionGroup
+        fields = ("template", "name")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["template"].disabled = True
 
 
 class OrganizationMemberInviteForm(forms.Form):

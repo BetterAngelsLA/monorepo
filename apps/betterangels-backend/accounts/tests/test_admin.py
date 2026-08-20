@@ -63,6 +63,35 @@ class OrganizationAdminTestCase(TestCase):
             "permission_groups-MAX_NUM_FORMS": "1000",
         }
 
+    def _change_payload(
+        self, organization: Organization, permission_group: PermissionGroup, *, template_id: int
+    ) -> dict:
+        """POST body for the org change form, repointing one inline row's template."""
+        rows = list(PermissionGroup.objects.filter(organization=organization).order_by("pk"))
+        payload = {
+            "name": organization.name,
+            "is_active": "on",
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(organization.profile.pk),
+            "profile-0-organization": str(organization.pk),
+            "profile-0-org_types": [t.value for t in organization.profile.org_types],
+            "permission_groups-TOTAL_FORMS": str(len(rows)),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+        }
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-id"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(organization.pk)
+            payload[f"permission_groups-{index}-name"] = row.name
+            payload[f"permission_groups-{index}-template"] = str(
+                template_id if row.pk == permission_group.pk else (row.template_id or "")
+            )
+        return payload
+
     def test_creating_an_organization_sets_org_types_and_permission_groups(self) -> None:
         response = self.client.post(
             reverse("admin:organizations_organization_add"),
@@ -133,6 +162,49 @@ class OrganizationAdminTestCase(TestCase):
 
         granted = set(hand_granted.group.permissions.values_list("content_type__app_label", "codename"))
         self.assertSetEqual(granted, {tuple(entry.split(".", 1)) for entry in GLOBAL_SHELTER_OPERATOR.permissions})
+
+    def test_repointing_an_existing_rows_template_cannot_drop_its_members(self) -> None:
+        """``template`` is fixed once the row exists, or saving the org 500s.
+
+        Repointing it leaves the row holding a group still named after the old
+        role, so reconciliation's ``get_or_create`` for that role tries to create a
+        second ``auth.Group`` with the same name and hits
+        ``auth_group_name_key`` — before it reaches the delete that would have
+        freed the name. The admin's transaction rolls back, so nothing is lost, but
+        a plausible edit crashes. ``main`` refused the save outright with a
+        ValidationError; the field is now disabled instead.
+        """
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        caseworker = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
+        group_id = caseworker.group_id
+        member = baker.make(User)
+        member.groups.add(caseworker.group)
+        shelter_operator = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR.name)
+
+        payload = self._change_payload(organization, caseworker, template_id=shelter_operator.pk)
+        response = self.client.post(reverse("admin:organizations_organization_change", args=[organization.pk]), payload)
+
+        self.assertEqual(response.status_code, 302)
+        caseworker.refresh_from_db()
+        self.assertEqual(
+            PermissionGroup.objects.filter(pk=caseworker.pk).values_list("template__name", flat=True).first(),
+            CASEWORKER.name,
+        )
+        self.assertTrue(Group.objects.filter(pk=group_id).exists())
+        self.assertTrue(member.groups.filter(pk=group_id).exists())
+
+    def test_the_inline_offers_template_on_a_new_row_but_not_an_existing_one(self) -> None:
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[organization.pk]),
+        )
+
+        formset = next(
+            f.formset for f in response.context["inline_admin_formsets"] if f.formset.model is PermissionGroup
+        )
+        self.assertFalse(formset.empty_form.fields["template"].disabled)
+        self.assertTrue(all(form.fields["template"].disabled for form in formset.initial_forms))
 
     def test_the_permission_group_inline_does_not_offer_the_group_field(self) -> None:
         """``group`` is created and torn down by code, so staff must not pick one.

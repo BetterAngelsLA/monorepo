@@ -18,6 +18,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 
 from .forms import (
     OrganizationMemberInviteForm,
+    PermissionGroupInlineForm,
     OrganizationProfileForm,
     UserChangeForm,
     UserCreationForm,
@@ -57,6 +58,7 @@ class PermissionGroupTemplateAdmin(admin.ModelAdmin):
 
 class PermissionGroupInline(admin.TabularInline):
     model = PermissionGroup
+    form = PermissionGroupInlineForm
     extra = 1
     fields = ("template", "name")
 
