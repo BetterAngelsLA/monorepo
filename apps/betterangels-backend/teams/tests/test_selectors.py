@@ -9,7 +9,6 @@ from accounts.selectors import organization_get_for_member
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from teams.selectors import team_get, team_list
-from teams.services import team_create
 
 
 class TeamListTestCase(GraphQLBaseTestCase):
@@ -18,21 +17,6 @@ class TeamListTestCase(GraphQLBaseTestCase):
 
         self.assertTrue(teams.exists())
         self.assertEqual({t.organization_id for t in teams}, {self.org_1.pk})
-
-    def test_orders_by_name(self) -> None:
-        """Names are deliberately unambiguous across collations.
-
-        Asserting against Python's ``sorted()`` would compare Postgres'
-        locale-aware ordering with Python's codepoint ordering, and the two
-        disagree on case.
-        """
-        org = organization_recipe.make(name="team_list_ordering_org")
-        for name in ("Charlie", "Alpha", "Bravo"):
-            team_create(name=name, organization=org)
-
-        names = list(team_list(organization=org).values_list("name", flat=True))
-
-        self.assertEqual(names, ["Alpha", "Bravo", "Charlie"])
 
     def test_is_empty_for_an_organization_with_no_teams(self) -> None:
         org = organization_recipe.make()

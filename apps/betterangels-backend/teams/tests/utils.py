@@ -8,8 +8,6 @@ from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 
-TEAM_FIELDS = "id name isActive"
-
 
 class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
     def get_team_fields(self) -> str:

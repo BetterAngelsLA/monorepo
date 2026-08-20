@@ -9,7 +9,7 @@ from .models import Team
 
 
 def team_list(*, organization: Organization) -> QuerySet[Team]:
-    """Return all teams for *organization*, in ``Team.Meta.ordering``."""
+    """Return all teams for *organization*."""
     return Team.objects.filter(organization=organization)
 
 

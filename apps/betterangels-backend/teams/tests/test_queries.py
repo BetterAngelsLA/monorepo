@@ -15,7 +15,7 @@ from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
 from teams.models import Team
 
-from .utils import TEAM_FIELDS, TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
+from .utils import TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
 
 
 class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
@@ -83,23 +83,12 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
 
 
 class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
-    def _teams_query(self) -> Dict[str, Any]:
-        query = f"""
-            query {{
-                teams {{
-                    totalCount
-                    results {{ {TEAM_FIELDS} }}
-                }}
-            }}
-        """
-        return self.execute_graphql(query)
-
     def _assert_denied(self, response: Dict[str, Any]) -> None:
         self.assertIsNotNone(response.get("errors"))
         self.assertIsNone((response.get("data") or {}).get("teams"))
 
     def test_returns_only_the_active_orgs_teams(self) -> None:
-        response = self._teams_query()
+        response = self.execute_graphql(self.get_teams_query())
 
         results = response["data"]["teams"]["results"]
         returned_ids = {int(row["id"]) for row in results}
@@ -115,7 +104,7 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         OrgRoleManager(self.org_2).add_roles(self.org_1_admin, ORG_ADMIN)
         self._set_active_org(self.org_2)
 
-        results = self._teams_query()["data"]["teams"]["results"]
+        results = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"]
 
         returned_ids = {int(row["id"]) for row in results}
         org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
@@ -125,7 +114,7 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         """The server must not guess — first-match is how other orgs leaked."""
         del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
 
-        self._assert_denied(self._teams_query())
+        self._assert_denied(self.execute_graphql(self.get_teams_query()))
 
     def test_denies_an_org_the_user_does_not_belong_to(self) -> None:
         """The header names the org; it does not grant access to it.
@@ -139,9 +128,9 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertFalse(self.org_2.users.filter(pk=self.org_1_case_manager_1.pk).exists())
         self._set_active_org(self.org_2)
 
-        self._assert_denied(self._teams_query())
+        self._assert_denied(self.execute_graphql(self.get_teams_query()))
 
     def test_denies_a_malformed_header(self) -> None:
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
 
-        self._assert_denied(self._teams_query())
+        self._assert_denied(self.execute_graphql(self.get_teams_query()))
