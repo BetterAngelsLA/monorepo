@@ -213,9 +213,12 @@ export function Dashboard() {
           supervisorialDistrict: selectedFilters.supervisorialDistrict.length
             ? selectedFilters.supervisorialDistrict.map(Number)
             : undefined,
-          maxStay: selectedFilters.maxStayDays
-            ? { days: Number(selectedFilters.maxStayDays) }
-            : undefined,
+          maxStay: (() => {
+            const days = Number(selectedFilters.maxStayDays);
+            return selectedFilters.maxStayDays && Number.isFinite(days)
+              ? { days }
+              : undefined;
+          })(),
         },
         pagination: {
           offset: (page - 1) * PAGE_SIZE,
