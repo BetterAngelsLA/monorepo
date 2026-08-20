@@ -10,22 +10,28 @@ from places import Places
 from unittest_parametrize import parametrize
 
 from shelters.enums import (
+    AccessibilityChoices,
     DayOfWeekChoices,
     ParkingChoices,
     PetChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    ShelterProgramChoices,
     StatusChoices,
+    StorageChoices,
 )
 from shelters.models import (
     SPA,
+    Accessibility,
     City,
     Parking,
     Pet,
     Service,
     ServiceCategory,
     Shelter,
+    ShelterProgram,
     ShelterType,
+    Storage,
 )
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
@@ -1812,6 +1818,48 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"filters": {"onSiteSecurity": True}})
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(with_security.id)})
+
+    def test_accessibility_filter(self) -> None:
+        ada = Accessibility.objects.get_or_create(name=AccessibilityChoices.ADA_ROOMS)[0]
+        wheelchair = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, accessibility=[ada])
+        shelter_recipe.make(status=StatusChoices.APPROVED, accessibility=[wheelchair])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"accessibility": [AccessibilityChoices.ADA_ROOMS.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_storage_filter(self) -> None:
+        lockers = Storage.objects.get_or_create(name=StorageChoices.STANDARD_LOCKERS)[0]
+        shared = Storage.objects.get_or_create(name=StorageChoices.SHARED_STORAGE)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, storage=[lockers])
+        shelter_recipe.make(status=StatusChoices.APPROVED, storage=[shared])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"storage": [StorageChoices.STANDARD_LOCKERS.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_shelter_programs_filter(self) -> None:
+        emergency = ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.EMERGENCY_SHELTER)[0]
+        interim = ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.INTERIM_HOUSING)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, shelter_programs=[emergency])
+        shelter_recipe.make(status=StatusChoices.APPROVED, shelter_programs=[interim])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"shelterPrograms": [ShelterProgramChoices.EMERGENCY_SHELTER.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
 
     def test_city_filter(self) -> None:
         city_a = City.objects.get_or_create(name="Filter City A")[0]

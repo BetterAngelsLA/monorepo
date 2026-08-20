@@ -2,7 +2,6 @@ import { atomWithReset } from 'jotai/utils';
 
 export type TOperatorShelterFilters = {
   // ShelterPropertyInput fields
-  accessibility: string[];
   demographics: string[];
   entryRequirements: string[];
   funders: string[];
@@ -10,11 +9,10 @@ export type TOperatorShelterFilters = {
   pets: string[];
   referralRequirement: string[];
   roomStyles: string[];
-  shelterPrograms: string[];
   shelterTypes: string[];
   specialSituationRestrictions: string[];
-  storage: string[];
   // Top-level OperatorShelterFilter fields
+  accessibility: string[];
   city: string[];
   citiesServed: string[];
   cityCouncilDistrict: string[];
@@ -23,15 +21,16 @@ export type TOperatorShelterFilters = {
   organizations: string[];
   overallRating: string[];
   services: string[];
+  shelterPrograms: string[];
   spa: string[];
   spasServed: string[];
   status: string[];
+  storage: string[];
   supervisorialDistrict: string[];
   maxStayDays: string; // "" means unset
 };
 
 export const nullOperatorShelterFilters: TOperatorShelterFilters = {
-  accessibility: [],
   demographics: [],
   entryRequirements: [],
   funders: [],
@@ -39,10 +38,9 @@ export const nullOperatorShelterFilters: TOperatorShelterFilters = {
   pets: [],
   referralRequirement: [],
   roomStyles: [],
-  shelterPrograms: [],
   shelterTypes: [],
   specialSituationRestrictions: [],
-  storage: [],
+  accessibility: [],
   city: [],
   citiesServed: [],
   cityCouncilDistrict: [],
@@ -51,9 +49,11 @@ export const nullOperatorShelterFilters: TOperatorShelterFilters = {
   organizations: [],
   overallRating: [],
   services: [],
+  shelterPrograms: [],
   spa: [],
   spasServed: [],
   status: [],
+  storage: [],
   supervisorialDistrict: [],
   maxStayDays: '',
 };

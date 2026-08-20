@@ -1772,6 +1772,9 @@ input OperatorShelterFilter {
   NOT: OperatorShelterFilter
   DISTINCT: Boolean
   name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
   isAccessCenter: Boolean
   maxStay: MaxStayInput
   properties: ShelterPropertyInput
@@ -2092,6 +2095,9 @@ input PublicShelterFilter {
   NOT: PublicShelterFilter
   DISTINCT: Boolean
   name: String
+  accessibility: [AccessibilityChoices!]
+  storage: [StorageChoices!]
+  shelterPrograms: [ShelterProgramChoices!]
   isAccessCenter: Boolean
   maxStay: MaxStayInput
   properties: ShelterPropertyInput
@@ -2678,7 +2684,6 @@ type ShelterProgramType {
 }
 
 input ShelterPropertyInput {
-  accessibility: [AccessibilityChoices!] = null
   pets: [PetChoices!] = null
   petsIncludeNull: Boolean = false
   demographics: [DemographicChoices!] = null
@@ -2695,10 +2700,6 @@ input ShelterPropertyInput {
   roomStylesIncludeNull: Boolean = false
   parking: [ParkingChoices!] = null
   parkingIncludeNull: Boolean = false
-  storage: [StorageChoices!] = null
-  storageIncludeNull: Boolean = false
-  shelterPrograms: [ShelterProgramChoices!] = null
-  shelterProgramsIncludeNull: Boolean = false
   funders: [FunderChoices!] = null
   fundersIncludeNull: Boolean = false
 }

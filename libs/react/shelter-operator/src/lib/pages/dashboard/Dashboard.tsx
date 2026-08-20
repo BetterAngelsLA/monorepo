@@ -112,9 +112,6 @@ export function Dashboard() {
   }, [selectedOrganizationId, resetFilters, resetSort]);
 
   const propertyFilters = useMemo(() => {
-    const accessibility = selectedFilters.accessibility?.length
-      ? (selectedFilters.accessibility as AccessibilityChoices[])
-      : undefined;
     const demographics = selectedFilters.demographics?.length
       ? (selectedFilters.demographics as DemographicChoices[])
       : undefined;
@@ -140,17 +137,10 @@ export function Dashboard() {
     const parking = selectedFilters.parking?.length
       ? (selectedFilters.parking as ParkingChoices[])
       : undefined;
-    const storage = selectedFilters.storage?.length
-      ? (selectedFilters.storage as StorageChoices[])
-      : undefined;
-    const shelterPrograms = selectedFilters.shelterPrograms?.length
-      ? (selectedFilters.shelterPrograms as ShelterProgramChoices[])
-      : undefined;
     const funders = selectedFilters.funders?.length
       ? (selectedFilters.funders as FunderChoices[])
       : undefined;
     if (
-      !accessibility &&
       !demographics &&
       !specialSituationRestrictions &&
       !shelterTypes &&
@@ -159,14 +149,11 @@ export function Dashboard() {
       !referralRequirement &&
       !roomStyles &&
       !parking &&
-      !storage &&
-      !shelterPrograms &&
       !funders
     ) {
       return undefined;
     }
     return {
-      accessibility,
       demographics,
       entryRequirements,
       funders,
@@ -174,10 +161,8 @@ export function Dashboard() {
       pets,
       referralRequirement,
       roomStyles,
-      shelterPrograms,
       shelterTypes,
       specialSituationRestrictions,
-      storage,
     };
   }, [selectedFilters]);
 
@@ -188,6 +173,15 @@ export function Dashboard() {
         filters: {
           search: debouncedSearch || undefined,
           properties: propertyFilters,
+          accessibility: selectedFilters.accessibility.length
+            ? (selectedFilters.accessibility as AccessibilityChoices[])
+            : undefined,
+          storage: selectedFilters.storage.length
+            ? (selectedFilters.storage as StorageChoices[])
+            : undefined,
+          shelterPrograms: selectedFilters.shelterPrograms.length
+            ? (selectedFilters.shelterPrograms as ShelterProgramChoices[])
+            : undefined,
           organizations: selectedFilters.organizations.length
             ? selectedFilters.organizations
             : [selectedOrganizationId],

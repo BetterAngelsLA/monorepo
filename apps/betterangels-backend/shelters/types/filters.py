@@ -73,7 +73,6 @@ class MapBoundsInput:
 
 @strawberry.input
 class ShelterPropertyInput:
-    accessibility: Optional[List[AccessibilityChoices]] = None
     pets: Optional[List[PetChoices]] = None
     pets_include_null: Optional[bool] = False
     demographics: Optional[List[DemographicChoices]] = None
@@ -90,10 +89,6 @@ class ShelterPropertyInput:
     room_styles_include_null: Optional[bool] = False
     parking: Optional[List[ParkingChoices]] = None
     parking_include_null: Optional[bool] = False
-    storage: Optional[List[StorageChoices]] = None
-    storage_include_null: Optional[bool] = False
-    shelter_programs: Optional[List[ShelterProgramChoices]] = None
-    shelter_programs_include_null: Optional[bool] = False
     funders: Optional[List[FunderChoices]] = None
     funders_include_null: Optional[bool] = False
 
@@ -112,6 +107,9 @@ class OpenNowInput:
 @strawberry_django.filter_type(models.Shelter)
 class PublicShelterFilter:
     name = make_icontains_filter("name")
+    accessibility = make_m2m_in_filter("accessibility", "name", AccessibilityChoices)
+    storage = make_m2m_in_filter("storage", "name", StorageChoices)
+    shelter_programs = make_m2m_in_filter("shelter_programs", "name", ShelterProgramChoices)
 
     @strawberry_django.filter_field
     def is_access_center(self, info: Info, value: Optional[bool], prefix: str) -> Q:
@@ -140,7 +138,6 @@ class PublicShelterFilter:
 
         # Fields that have corresponding include_null flags
         property_fields = [
-            "accessibility",
             "pets",
             "demographics",
             "entry_requirements",
@@ -149,8 +146,6 @@ class PublicShelterFilter:
             "shelter_types",
             "room_styles",
             "parking",
-            "storage",
-            "shelter_programs",
             "funders",
         ]
 

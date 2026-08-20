@@ -2209,6 +2209,7 @@ export type OperatorShelterFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<OperatorShelterFilter>;
   OR?: InputMaybe<OperatorShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   city?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
@@ -2228,9 +2229,11 @@ export type OperatorShelterFilter = {
   properties?: InputMaybe<ShelterPropertyInput>;
   search?: InputMaybe<Scalars['String']['input']>;
   services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
   spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   status?: InputMaybe<Array<StatusChoices>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
   supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
@@ -2549,6 +2552,7 @@ export type PublicShelterFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<PublicShelterFilter>;
   OR?: InputMaybe<PublicShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   city?: InputMaybe<Array<Scalars['ID']['input']>>;
   geolocation?: InputMaybe<GeolocationInput>;
@@ -2564,8 +2568,10 @@ export type PublicShelterFilter = {
   openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
   spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
 };
 
 export type Query = {
@@ -3440,7 +3446,6 @@ export type ShelterProgramType = {
 };
 
 export type ShelterPropertyInput = {
-  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
@@ -3455,14 +3460,10 @@ export type ShelterPropertyInput = {
   referralRequirementIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   roomStylesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
-  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
-  shelterProgramsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   shelterTypesIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
   specialSituationRestrictionsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
-  storage?: InputMaybe<Array<StorageChoices>>;
-  storageIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type ShelterType = {
