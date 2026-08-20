@@ -65,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 21
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -1030,3 +1030,49 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
+
+
+class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
+    """A note may only reference a team from its own organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_note_rejects_a_team_from_another_org(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "teamId": str(self.org_2_team_1.pk),
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_create_note_rejects_a_nested_task_team_from_another_org(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "tasks": [{"summary": "Follow up", "teamId": str(self.org_2_team_1.pk)}],
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_update_note_rejects_a_team_from_another_org(self) -> None:
+        response = self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_2_team_1.pk)})
+
+        messages = response["data"]["updateNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).team_id)
