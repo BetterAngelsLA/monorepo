@@ -27,14 +27,25 @@ import {
   StatusChoices,
   StorageChoices,
 } from '@monorepo/react/shelter';
+import type { TOperatorShelterFilters } from '../../atoms/shelterFiltersAtom';
 
 export type TFilterOption = {
   label: string;
   value: string;
 };
 
+/** Static chip groups map onto string[] keys on the filters atom. */
+export type TFilterGroupName = Exclude<
+  {
+    [K in keyof TOperatorShelterFilters]: TOperatorShelterFilters[K] extends string[]
+      ? K
+      : never;
+  }[keyof TOperatorShelterFilters],
+  never
+>;
+
 export type TFilterGroupConfig = {
-  name: string;
+  name: TFilterGroupName;
   header: string;
   options: TFilterOption[];
   activeClassName: string;

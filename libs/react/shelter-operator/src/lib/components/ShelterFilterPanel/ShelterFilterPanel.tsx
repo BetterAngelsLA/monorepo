@@ -12,7 +12,6 @@ import { useState } from 'react';
 import {
   nullOperatorShelterFilters,
   operatorShelterFiltersAtom,
-  TOperatorShelterFilters,
 } from '../../atoms/shelterFiltersAtom';
 import {
   DEFAULT_SHELTER_SORT,
@@ -24,7 +23,11 @@ import { useShelterSpas } from '../../hooks/useShelterSpas/useShelterSpas';
 import { Button } from '../base-ui/buttons';
 import { Dropdown } from '../base-ui/dropdown/Dropdown';
 import type { DropdownOption } from '../base-ui/dropdown/types';
+import { BooleanFilterSection } from './BooleanFilterSection';
+import { ChipFilterSection } from './ChipFilterSection';
 import { filterGroups } from './filterConfig';
+import { getVisibleOptions, headerMatches } from './filterSearch';
+import { MultiSelectFilterSection } from './MultiSelectFilterSection';
 
 const SORT_OPTIONS: DropdownOption<string>[] = [
   { label: 'Name: Ascending', value: 'name-asc' },
@@ -77,35 +80,6 @@ function SortFilterDrawerContent({
     });
   }
 
-  function toggleValue(group: keyof TOperatorShelterFilters, value: string) {
-    setFilters((prev) => {
-      const current = (prev[group] as string[]) ?? [];
-      const next = current.includes(value)
-        ? current.filter((v) => v !== value)
-        : [...current, value];
-      return { ...prev, [group]: next };
-    });
-  }
-
-  function clearGroup(group: keyof TOperatorShelterFilters) {
-    setFilters((prev) => ({ ...prev, [group]: [] }));
-  }
-
-  /**
-   * Radio-style toggle for boolean filters (onSiteSecurity, isPrivate).
-   * Selecting an already-active value clears it; selecting the other value
-   * replaces it, preventing the contradictory ["true","false"] state.
-   */
-  function toggleBooleanFilter(
-    group: keyof TOperatorShelterFilters,
-    value: 'true' | 'false',
-  ) {
-    setFilters((prev) => {
-      const current = (prev[group] as string[]) ?? [];
-      return { ...prev, [group]: current.includes(value) ? [] : [value] };
-    });
-  }
-
   function setMaxStay(value: string) {
     setFilters((prev) => ({ ...prev, maxStayDays: value }));
   }
@@ -113,43 +87,15 @@ function SortFilterDrawerContent({
   const normalizedSearch = searchTerm.toLowerCase().trim();
   const hasActiveFilters = Object.values(filters).some(hasActiveFilter);
 
-  function clearAllFilters() {
-    setFilters(nullOperatorShelterFilters);
-  }
-
-  function sectionVisible(
-    header: string,
-    options: { id: string; label: string }[],
-  ) {
-    if (!normalizedSearch) return options.length > 0;
-    return (
-      header.toLowerCase().includes(normalizedSearch) ||
-      options.some((o) => o.label.toLowerCase().includes(normalizedSearch))
-    );
-  }
-
-  function filterOptions(
-    header: string,
-    options: { id: string; label: string }[],
-  ): { id: string; label: string }[] {
-    if (!normalizedSearch) return options;
-    if (header.toLowerCase().includes(normalizedSearch)) return options;
-    return options.filter((o) =>
-      o.label.toLowerCase().includes(normalizedSearch),
-    );
-  }
-
   const orgOptions = shelterOperatorOrgs.map((org) => ({
     id: String(org.id),
     label: org.name,
   }));
-
   const spaOptions = spas.map((s) => ({ id: s.id, label: s.name }));
   const cityOptions = cities.map((c) => ({ id: c.id, label: c.name }));
 
   return (
     <div className="flex flex-col gap-3">
-      {/* ── Sort ── */}
       <div className="flex flex-col gap-2 mb-2">
         <span className="text-sm font-semibold text-gray-700">Sort</span>
         <Dropdown
@@ -160,13 +106,12 @@ function SortFilterDrawerContent({
         />
       </div>
 
-      {/* ── Filter header + clear all ── */}
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-700">Filter</span>
         {hasActiveFilters && (
           <button
             type="button"
-            onClick={clearAllFilters}
+            onClick={() => setFilters(nullOperatorShelterFilters)}
             className="inline-flex items-center gap-0.5 text-[12px] text-neutral-warm-70 cursor-pointer"
           >
             Clear all
@@ -174,7 +119,6 @@ function SortFilterDrawerContent({
         )}
       </div>
 
-      {/* ── Search filters ── */}
       <div className="relative mb-1">
         <Search
           size={14}
@@ -189,216 +133,72 @@ function SortFilterDrawerContent({
         />
       </div>
 
-      {/* ── Static enum chip groups ── */}
-      {filterGroups.map((group) => {
-        const headerMatches =
-          normalizedSearch &&
-          group.header.toLowerCase().includes(normalizedSearch);
-        const visibleOpts = normalizedSearch
-          ? headerMatches
-            ? group.options
-            : group.options.filter((opt) =>
-                opt.label.toLowerCase().includes(normalizedSearch),
-              )
-          : group.options;
-        if (normalizedSearch && visibleOpts.length === 0) return null;
-        const groupValues =
-          (filters[group.name as keyof TOperatorShelterFilters] as string[]) ??
-          [];
-        return (
-          <FilterSection
-            key={group.name}
-            header={group.header}
-            onClear={
-              groupValues.length > 0
-                ? () => clearGroup(group.name as keyof TOperatorShelterFilters)
-                : undefined
-            }
-          >
-            {visibleOpts.map((opt) => (
-              <FilterChip
-                key={opt.value}
-                label={opt.label}
-                active={groupValues.includes(opt.value)}
-                activeClassName={group.activeClassName}
-                onClick={() =>
-                  toggleValue(
-                    group.name as keyof TOperatorShelterFilters,
-                    opt.value,
-                  )
-                }
-              />
-            ))}
-          </FilterSection>
-        );
-      })}
+      {filterGroups.map((group) => (
+        <ChipFilterSection
+          key={group.name}
+          header={group.header}
+          filterKey={group.name}
+          options={group.options.map((o) => ({ id: o.value, label: o.label }))}
+          activeClassName={group.activeClassName}
+          search={normalizedSearch}
+        />
+      ))}
 
-      {/* ── Organizations ── */}
-      {(!normalizedSearch || 'organization'.includes(normalizedSearch)) &&
-        orgOptions.length > 1 && (
-          <FilterSection
-            header="Organization"
-            onClear={
-              filters.organizations.length > 0
-                ? () => clearGroup('organizations')
-                : undefined
-            }
-          >
-            <Dropdown
-              isMulti
-              isSearchable
-              placeholder="Select organizations…"
-              options={orgOptions.map((o) => ({ label: o.label, value: o.id }))}
-              value={
-                filters.organizations.length > 0
-                  ? (orgOptions
-                      .filter((o) => filters.organizations.includes(o.id))
-                      .map((o) => ({
-                        label: o.label,
-                        value: o.id,
-                      })) as DropdownOption<string>[])
-                  : null
-              }
-              onChange={(selected) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  organizations: selected ? selected.map((o) => o.value) : [],
-                }));
-              }}
-            />
-          </FilterSection>
-        )}
+      <MultiSelectFilterSection
+        header="Organization"
+        filterKey="organizations"
+        options={orgOptions}
+        placeholder="Select organizations…"
+        search={normalizedSearch}
+        searchTerms={['organization']}
+        minOptions={2}
+      />
 
-      {/* ── SPA ── */}
-      {sectionVisible('SPA', spaOptions) && spaOptions.length > 0 && (
-        <FilterSection
-          header="SPA"
-          onClear={
-            filters.spa.length > 0 ? () => clearGroup('spa') : undefined
-          }
-        >
-          {filterOptions('SPA', spaOptions).map((spa) => (
-            <FilterChip
-              key={spa.id}
-              label={spa.label}
-              active={filters.spa.includes(spa.id)}
-              activeClassName="bg-tags-yellow text-black"
-              onClick={() => toggleValue('spa', spa.id)}
-            />
-          ))}
-        </FilterSection>
-      )}
+      <ChipFilterSection
+        header="SPA"
+        filterKey="spa"
+        options={spaOptions}
+        activeClassName="bg-tags-yellow text-black"
+        search={normalizedSearch}
+      />
 
-      {/* ── SPAs Served ── */}
-      {sectionVisible('SPAs Served', spaOptions) && spaOptions.length > 0 && (
-        <FilterSection
-          header="SPAs Served"
-          onClear={
-            filters.spasServed.length > 0
-              ? () => clearGroup('spasServed')
-              : undefined
-          }
-        >
-          {filterOptions('SPAs Served', spaOptions).map((spa) => (
-            <FilterChip
-              key={spa.id}
-              label={spa.label}
-              active={filters.spasServed.includes(spa.id)}
-              activeClassName="bg-tags-yellow text-black"
-              onClick={() => toggleValue('spasServed', spa.id)}
-            />
-          ))}
-        </FilterSection>
-      )}
+      <ChipFilterSection
+        header="SPAs Served"
+        filterKey="spasServed"
+        options={spaOptions}
+        activeClassName="bg-tags-yellow text-black"
+        search={normalizedSearch}
+      />
 
-      {/* ── City ── */}
-      {(!normalizedSearch ||
-        'city'.includes(normalizedSearch)) &&
-        cityOptions.length > 0 && (
-          <FilterSection
-            header="City"
-            onClear={
-              filters.city.length > 0 ? () => clearGroup('city') : undefined
-            }
-          >
-            <Dropdown
-              isMulti
-              isSearchable
-              placeholder="Select cities…"
-              options={cityOptions.map((c) => ({
-                label: c.label,
-                value: c.id,
-              }))}
-              value={
-                filters.city.length > 0
-                  ? (cityOptions
-                      .filter((c) => filters.city.includes(c.id))
-                      .map((c) => ({
-                        label: c.label,
-                        value: c.id,
-                      })) as DropdownOption<string>[])
-                  : null
-              }
-              onChange={(selected) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  city: selected ? selected.map((o) => o.value) : [],
-                }));
-              }}
-            />
-          </FilterSection>
-        )}
+      <MultiSelectFilterSection
+        header="City"
+        filterKey="city"
+        options={cityOptions}
+        placeholder="Select cities…"
+        search={normalizedSearch}
+        searchTerms={['city']}
+      />
 
-      {/* ── Cities Served ── */}
-      {(!normalizedSearch ||
-        'cities served'.includes(normalizedSearch)) &&
-        cityOptions.length > 0 && (
-          <FilterSection
-            header="Cities Served"
-            onClear={
-              filters.citiesServed.length > 0
-                ? () => clearGroup('citiesServed')
-                : undefined
-            }
-          >
-            <Dropdown
-              isMulti
-              isSearchable
-              placeholder="Select cities…"
-              options={cityOptions.map((c) => ({
-                label: c.label,
-                value: c.id,
-              }))}
-              value={
-                filters.citiesServed.length > 0
-                  ? (cityOptions
-                      .filter((c) => filters.citiesServed.includes(c.id))
-                      .map((c) => ({
-                        label: c.label,
-                        value: c.id,
-                      })) as DropdownOption<string>[])
-                  : null
-              }
-              onChange={(selected) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  citiesServed: selected ? selected.map((o) => o.value) : [],
-                }));
-              }}
-            />
-          </FilterSection>
-        )}
+      <MultiSelectFilterSection
+        header="Cities Served"
+        filterKey="citiesServed"
+        options={cityOptions}
+        placeholder="Select cities…"
+        search={normalizedSearch}
+        searchTerms={['cities served']}
+      />
 
-      {/* ── Services (grouped by category) ── */}
       {serviceCategories.map((category) => {
         const categoryServiceOptions = (category.services ?? []).map((s) => ({
           id: s.id,
           label: s.displayName,
         }));
-        if (!sectionVisible(category.displayName, categoryServiceOptions))
-          return null;
-        const visible = filterOptions(category.displayName, categoryServiceOptions);
-        if (visible.length === 0) return null;
+        const visible = getVisibleOptions(
+          category.displayName,
+          categoryServiceOptions,
+          normalizedSearch,
+        );
+        if (!visible) return null;
         const categoryIds = categoryServiceOptions.map((s) => s.id);
         return (
           <FilterSection
@@ -422,23 +222,29 @@ function SortFilterDrawerContent({
                 label={svc.label}
                 active={filters.services.includes(svc.id)}
                 activeClassName="bg-tags-purple text-black"
-                onClick={() => toggleValue('services', svc.id)}
+                onClick={() =>
+                  setFilters((prev) => {
+                    const current = prev.services;
+                    const next = current.includes(svc.id)
+                      ? current.filter((v) => v !== svc.id)
+                      : [...current, svc.id];
+                    return { ...prev, services: next };
+                  })
+                }
               />
             ))}
           </FilterSection>
         );
       })}
 
-      {/* ── Max Stay (days) ── */}
-      {(!normalizedSearch ||
-        'max stay'.includes(normalizedSearch) ||
-        'days'.includes(normalizedSearch)) && (
+      {headerMatches('Max Stay (days)', normalizedSearch, [
+        'max stay',
+        'days',
+      ]) && (
         <FilterSection
           header="Max Stay (days)"
           onClear={
-            filters.maxStayDays !== ''
-              ? () => setMaxStay('')
-              : undefined
+            filters.maxStayDays !== '' ? () => setMaxStay('') : undefined
           }
         >
           <input
@@ -452,59 +258,21 @@ function SortFilterDrawerContent({
         </FilterSection>
       )}
 
-      {/* ── On-Site Security ── */}
-      {(!normalizedSearch ||
-        'on-site security'.includes(normalizedSearch) ||
-        'security'.includes(normalizedSearch)) && (
-        <FilterSection
-          header="On-Site Security"
-          onClear={
-            filters.onSiteSecurity.length > 0
-              ? () => clearGroup('onSiteSecurity')
-              : undefined
-          }
-        >
-          <FilterChip
-            label="Yes"
-            active={filters.onSiteSecurity.includes('true')}
-            activeClassName="bg-tags-main text-black"
-            onClick={() => toggleBooleanFilter('onSiteSecurity', 'true')}
-          />
-          <FilterChip
-            label="No"
-            active={filters.onSiteSecurity.includes('false')}
-            activeClassName="bg-tags-main text-black"
-            onClick={() => toggleBooleanFilter('onSiteSecurity', 'false')}
-          />
-        </FilterSection>
-      )}
+      <BooleanFilterSection
+        header="On-Site Security"
+        filterKey="onSiteSecurity"
+        activeClassName="bg-tags-main text-black"
+        search={normalizedSearch}
+        searchTerms={['on-site security', 'security']}
+      />
 
-      {/* ── Private Shelter ── */}
-      {(!normalizedSearch ||
-        'private'.includes(normalizedSearch) ||
-        'private shelter'.includes(normalizedSearch)) && (
-        <FilterSection
-          header="Private Shelter"
-          onClear={
-            filters.isPrivate.length > 0
-              ? () => clearGroup('isPrivate')
-              : undefined
-          }
-        >
-          <FilterChip
-            label="Yes"
-            active={filters.isPrivate.includes('true')}
-            activeClassName="bg-tags-pink text-black"
-            onClick={() => toggleBooleanFilter('isPrivate', 'true')}
-          />
-          <FilterChip
-            label="No"
-            active={filters.isPrivate.includes('false')}
-            activeClassName="bg-tags-pink text-black"
-            onClick={() => toggleBooleanFilter('isPrivate', 'false')}
-          />
-        </FilterSection>
-      )}
+      <BooleanFilterSection
+        header="Private Shelter"
+        filterKey="isPrivate"
+        activeClassName="bg-tags-pink text-black"
+        search={normalizedSearch}
+        searchTerms={['private', 'private shelter']}
+      />
     </div>
   );
 }
@@ -517,7 +285,9 @@ export function ShelterFilterPanel() {
   const { organizations } = useShelterOperatorOrganizations();
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
-  const { data: serviceCategoriesData } = useQuery(ShelterServiceCategoriesDocument);
+  const { data: serviceCategoriesData } = useQuery(
+    ShelterServiceCategoriesDocument,
+  );
   const serviceCategories =
     serviceCategoriesData?.shelterServiceCategories?.results ?? [];
 
