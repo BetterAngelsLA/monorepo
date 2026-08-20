@@ -127,7 +127,12 @@ class Query:
                 template__name=SHELTER_OPERATOR.name,
             )
         )
-        return Organization.objects.filter(has_shelter_operator_group).order_by("name")
+
+        queryset: QuerySet[Organization] = Organization.objects.filter(
+            has_shelter_operator_group
+        ).order_by("name")
+
+        return queryset
 
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:
