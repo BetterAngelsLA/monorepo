@@ -11,8 +11,10 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .groups import ORG_ADMIN
@@ -150,6 +152,49 @@ def member_add(
 
     if new_templates:
         OrgRoleManager(organization).add_roles(user, *new_templates)
+
+    return user
+
+
+def member_invite(
+    *,
+    organization: Organization,
+    email: str,
+    permission_template: TemplateConfig,
+    invited_by: UserModel,
+    site: Site,
+) -> UserModel:
+    """Add someone to *organization* with one role and email them an invitation.
+
+    The invitation is sent on commit, so a rolled-back membership never produces
+    an email promising access the person does not have.
+
+    Returns the invited :class:`~accounts.models.User`.
+    """
+    user = member_add(
+        email=email,
+        first_name="",
+        last_name="",
+        middle_name=None,
+        organization=organization,
+        permission_templates=(permission_template,),
+    )
+
+    def send_invitation() -> None:
+        invitation_backend().create_organization_invite(
+            organization=organization,
+            invited_by_user=invited_by,
+            invitee_user=user,
+        )
+        invitation_backend().send_invitation(
+            user=user,
+            sender=invited_by,
+            organization=organization,
+            domain=site,
+            role_template=permission_template,
+        )
+
+    transaction.on_commit(send_invitation)
 
     return user
 

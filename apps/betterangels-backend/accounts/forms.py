@@ -60,18 +60,55 @@ class OrganizationProfileForm(forms.ModelForm):
 
 
 class OrganizationMemberInviteForm(forms.Form):
-    """Invite a person into *organization* with a single role."""
+    """Invite a person into an organization with a single role.
+
+    Pass *organization* to fix it — the roles offered are then the ones that
+    organization can hold.  Pass ``None`` and the form asks which organization,
+    offering every invitable role and validating the pair once it knows both.
+    """
 
     email = forms.EmailField()
     permission_template = forms.ChoiceField(label="Role")
 
-    def __init__(self, *args: Any, organization: Organization, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, organization: Organization | None = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.organization = organization
-        permission_template = cast(forms.ChoiceField, self.fields["permission_template"])
-        permission_template.choices = [(name, name) for name in REGISTRY.invitable_template_names_for(organization)]
 
-    def clean_permission_template(self) -> str:
-        name: str = self.cleaned_data["permission_template"]
-        REGISTRY.get_template_or_raise(name, self.organization)
-        return name
+        if organization is None:
+            self.fields["organization"] = forms.ModelChoiceField(
+                queryset=Organization.objects.order_by("name"),
+                help_text="Its org types decide which of the roles below it can grant.",
+            )
+            self.order_fields(["organization", "email", "permission_template"])
+            names = REGISTRY.invitable_template_names()
+        else:
+            names = REGISTRY.invitable_template_names_for(organization)
+
+        permission_template = cast(forms.ChoiceField, self.fields["permission_template"])
+        permission_template.choices = [(name, name) for name in names]
+
+    def clean(self) -> dict[str, Any]:
+        """Reject a role the chosen organization cannot hold.
+
+        Both fields are needed to check the pair, so this cannot be a
+        ``clean_permission_template``: when the organization is picked on the
+        form, it is not resolved until here.
+
+        Checks membership of ``invitable_template_names_for`` rather than calling
+        ``get_template_or_raise``, which despite its signature resolves the name
+        against the whole registry and uses the organization only to word its
+        error — so it accepts a role the organization cannot grant.
+        """
+        cleaned_data = super().clean() or {}
+        organization = self.organization or cleaned_data.get("organization")
+        name = cleaned_data.get("permission_template")
+
+        if organization is not None and name:
+            available = REGISTRY.invitable_template_names_for(organization)
+            if name not in available:
+                self.add_error(
+                    "permission_template",
+                    f"{organization.name} cannot grant {name}. Available: {', '.join(available) or 'none'}.",
+                )
+
+        return cleaned_data
