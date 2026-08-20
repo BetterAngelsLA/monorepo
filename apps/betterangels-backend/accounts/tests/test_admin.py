@@ -4,6 +4,9 @@ Creating an organization in the admin used to produce one that could hold no
 roles and accept no members, and adding a member to it returned a 500.
 """
 
+from typing import cast
+
+from accounts.admin import CustomOrganizationUserAdmin
 from accounts.models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -12,6 +15,7 @@ from accounts.models import (
     User,
 )
 from accounts.services import invitation_role, member_add, reconcile_org_groups
+from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
@@ -603,3 +607,28 @@ class OrganizationAdminLinksTestCase(TestCase):
         ).content.decode()
 
         self.assertIn(expected, page)
+
+    def test_the_roles_field_carries_the_editor_link_itself(self) -> None:
+        """One field, so the link sits beside the roles rather than on its own row."""
+        member = member_add(
+            email="sameline@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        membership = OrganizationUser.objects.get(organization=self.organization, user=member)
+        model_admin = cast(CustomOrganizationUserAdmin, admin.site.get_model_admin(OrganizationUser))
+
+        rendered = model_admin.roles(membership)
+
+        self.assertIn(CASEWORKER.name, rendered)
+        self.assertIn(
+            reverse(
+                "admin:organizations_organization_change_member_roles",
+                args=[self.organization.pk, member.pk],
+            ),
+            rendered,
+        )
+        self.assertNotIn("change_roles", model_admin.readonly_fields)

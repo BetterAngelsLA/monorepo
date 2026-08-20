@@ -347,12 +347,12 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
     # Excludes django-organizations' own ``is_admin``: nothing in this codebase
     # reads it, so it renders as a checkbox that looks like it grants admin and
     # does not.  Org Admin is a permission group, shown read-only below.
-    fields = ("organization", "user", "roles", "change_roles")
-    readonly_fields = ("roles", "change_roles")
+    fields = ("organization", "user", "roles")
+    readonly_fields = ("roles",)
 
     @admin.display(description="")
     def change_roles(self, obj: OrganizationUser) -> str:
-        """Link to the organization admin's role editor rather than repeat it here.
+        """Changelist column linking to the organization admin's role editor.
 
         Editing roles on this form would mean a second implementation, and
         ``organization`` is editable here — changing it and the roles in one save
@@ -362,8 +362,13 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
 
     @admin.display(description="Roles in this organization")
     def roles(self, obj: OrganizationUser) -> str:
+        """The roles held, with the editor link on the same row.
+
+        One field rather than two, so the link sits beside what it edits instead
+        of on its own labelless row beneath it.
+        """
         names = member_role_names(user_id=obj.user_id, organization_id=obj.organization_id)
-        return ", ".join(names) or "—"
+        return format_html("{} {}", ", ".join(names) or "—", _change_roles_link(obj))
 
     def add_view(
         self, request: HttpRequest, form_url: str = "", extra_context: dict[str, Any] | None = None
