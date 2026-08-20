@@ -7,12 +7,14 @@ Replaces RunPython data migrations. Called by:
 
 Uses ``get_or_create`` throughout — idempotent, safe to re-run.
 
-``PermissionGroupTemplate`` is a name only: the permission set for a role lives
-in its :class:`~common.permissions.config.TemplateConfig` and is written
-straight onto the ``auth.Group`` that actually grants it.
+A role's permission set lives in its
+:class:`~common.permissions.config.TemplateConfig` when the code defines the role,
+and on the ``PermissionGroupTemplate`` row itself when someone defined it in the
+admin.  Either way it is written onto the ``auth.Group`` that actually grants it.
 """
 
 from logging import getLogger
+from typing import cast
 
 from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
@@ -78,34 +80,50 @@ def seed_permission_templates() -> None:
 
 
 def sync_group_permissions(*, organization: Organization | None = None) -> None:
-    """Reconcile ``PermissionGroup`` rows' ``auth.Group`` permissions against config.
+    """Apply each role's permissions to the ``auth.Group`` that grants them.
 
-    The config in :data:`common.org_types.REGISTRY` is the only source of truth
-    for which permissions a role carries, so this is what picks up a permission
-    change on the next ``migrate``.  Groups whose template is not registered are
-    left alone — they are managed by hand.
+    A role's permissions come from its template, resolved by tier:
 
-    Pass *organization* to scope the sync to one org, which is how a newly
-    created group gets its permissions without waiting for the next ``migrate``.
+    * **Managed** — the template is named in :data:`common.org_types.REGISTRY`, so its
+      ``TemplateConfig`` is authoritative and the template's own ``permissions`` are
+      refreshed to match.  This is what picks up a permission change in code on the
+      next ``migrate``.
+    * **Hand-defined** — the template was created in the admin and the code knows
+      nothing about it, so its ``permissions`` *are* the definition and are read, not
+      written.  This is what lets one admin-defined role reach every organization
+      holding it.
+
+    Pass *organization* to scope the sync to one org, which is how a newly created
+    group gets its permissions without waiting for the next ``migrate``.
     """
-    wanted_by_template: dict[str, set[int]] = {}
+    configured: dict[str, set[int]] = {}
     for name in REGISTRY.template_names():
         template_config = REGISTRY.template(name)
         if template_config is None:
             continue
-        wanted_by_template[name] = set(_resolve_permissions(template_config.permissions))
+        configured[name] = set(_resolve_permissions(template_config.permissions))
 
     with transaction.atomic():
-        permission_groups = PermissionGroup.objects.filter(template__name__in=wanted_by_template).prefetch_related(
+        templates = PermissionGroupTemplate.objects.prefetch_related("permissions")
+        wanted_by_template: dict[int, set[int]] = {}
+        for template in templates:
+            wanted = configured.get(template.name)
+            if wanted is None:
+                # Hand-defined: the template row is the definition.
+                wanted_by_template[template.pk] = {p.pk for p in template.permissions.all()}
+                continue
+            wanted_by_template[template.pk] = wanted
+            if {p.pk for p in template.permissions.all()} != wanted:
+                template.permissions.set(wanted)
+
+        permission_groups = PermissionGroup.objects.filter(template__isnull=False).prefetch_related(
             "group__permissions"
         )
         if organization is not None:
             permission_groups = permission_groups.filter(organization=organization)
 
         for permission_group in permission_groups:
-            template = permission_group.template
-            assert template is not None
-            wanted = wanted_by_template[template.name]
+            wanted = wanted_by_template.get(cast(int, permission_group.template_id), set())
             if {p.pk for p in permission_group.group.permissions.all()} != wanted:
                 permission_group.group.permissions.set(wanted)
                 logger.info("Synced permissions for group %s (%d perms)", permission_group.group.name, len(wanted))

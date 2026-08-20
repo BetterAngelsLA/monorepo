@@ -3,7 +3,7 @@ from typing import Any, cast
 import pghistory
 from accounts.managers import UserManager
 from common.models import BaseModel
-from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -121,14 +121,23 @@ class BigUserObjectPermission(UserObjectPermissionAbstract):
 
 
 class PermissionGroupTemplate(models.Model):
-    """The name of a role, used as the FK target for :class:`PermissionGroup`.
+    """A role that :class:`PermissionGroup` scopes to an organization.
 
-    Permissions are not stored here — they live in the role's
-    :class:`~common.permissions.config.TemplateConfig` and are written onto the
-    ``auth.Group`` that grants them.  See :func:`accounts.seed.sync_group_permissions`.
+    Where its permissions come from depends on whether the code knows the role:
+
+    * named in :data:`common.org_types.REGISTRY` — its
+      :class:`~common.permissions.config.TemplateConfig` is authoritative, and
+      ``permissions`` here is kept as a mirror of it.
+    * created by hand in the admin — ``permissions`` here *is* the definition, and
+      is left alone.
+
+    Either way :func:`accounts.seed.sync_group_permissions` is what applies it to
+    the ``auth.Group`` that actually grants the access, so a role defined once
+    reaches every organization holding it.
     """
 
     name = models.CharField(max_length=255)
+    permissions = models.ManyToManyField(Permission, blank=True)
 
     objects = models.Manager()
 

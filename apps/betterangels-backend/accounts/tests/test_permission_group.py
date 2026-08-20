@@ -1,7 +1,7 @@
 from accounts.models import PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from notes.groups import CASEWORKER
@@ -116,3 +116,46 @@ class PermissionGroupTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             PermissionGroup(organization=organization).full_clean()
+
+
+class TemplatePermissionSourceTestCase(TestCase):
+    """Where a role's permissions come from depends on whether the code defines it."""
+
+    def test_a_hand_defined_template_propagates_its_own_permissions(self) -> None:
+        """The point of a template: define a role once, apply it across organizations.
+
+        The code knows nothing about this role, so the template row is the
+        definition and ``sync_group_permissions`` reads it rather than writing it.
+        """
+        template = PermissionGroupTemplate.objects.create(name="Report Viewer")
+        permission = Permission.objects.first()
+        assert permission is not None
+        template.permissions.add(permission)
+
+        first = organization_recipe.make(owner_roles=())
+        second = organization_recipe.make(owner_roles=())
+        groups = [
+            PermissionGroup.objects.create(organization=organization, template=template)
+            for organization in (first, second)
+        ]
+
+        sync_group_permissions()
+
+        for permission_group in groups:
+            permission_group.group.refresh_from_db()
+            self.assertEqual(list(permission_group.group.permissions.all()), [permission])
+
+    def test_a_managed_templates_permissions_are_overwritten_from_config(self) -> None:
+        """For a role the code defines, ``TemplateConfig`` wins over the stored copy."""
+        template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        stray = Permission.objects.exclude(
+            codename__in=[entry.split(".", 1)[1] for entry in CASEWORKER.permissions]
+        ).first()
+        assert stray is not None
+        template.permissions.add(stray)
+
+        sync_group_permissions()
+
+        expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
+        self.assertSetEqual(set(template.permissions.values_list("content_type__app_label", "codename")), expected)
+        self.assertNotIn(stray, template.permissions.all())

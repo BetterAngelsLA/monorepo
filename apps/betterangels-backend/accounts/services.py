@@ -232,8 +232,9 @@ def reconcile_org_groups(org: Organization) -> None:
     Group names are refreshed from the organization's current name, and each
     removed row's ``auth.Group`` is torn down by
     :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
-    their permissions applied from config — without this a newly created group
-    would grant nothing until the next ``migrate``.
+    their permissions applied by :func:`accounts.seed.sync_group_permissions` —
+    without this a newly created group would grant nothing until the next
+    ``migrate``.
 
     Safe to call repeatedly — all operations are idempotent.
     """
