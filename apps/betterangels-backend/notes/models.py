@@ -169,11 +169,7 @@ class Note(BaseModel):
         return self.purpose or str(self.id)
 
     def clean(self) -> None:
-        """Reject a team from another organization.
-
-        The services' explicit call is the duplicate to delete once #2335 adds
-        ``full_clean()``.
-        """
+        """Reject a team from another organization."""
         super().clean()
 
         try:
