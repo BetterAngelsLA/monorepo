@@ -1,4 +1,4 @@
-import { parseToDate } from '@monorepo/expo/shared/ui-components';
+import { fromDateString } from '@monorepo/shared/scalars';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { THouseholdMemberFormState } from './types';
 
@@ -28,10 +28,7 @@ export function toFormState(props: TProps): THouseholdMemberFormState {
   const { name, gender, dateOfBirth, relationshipToClient } =
     householdMember || {};
 
-  const dobAsDate = parseToDate({
-    date: dateOfBirth,
-    inputFormat: 'yyyy-MM-dd',
-  });
+  const dobAsDate = fromDateString(dateOfBirth);
 
   return {
     name: name || '',

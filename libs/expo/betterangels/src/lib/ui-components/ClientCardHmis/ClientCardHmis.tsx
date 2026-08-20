@@ -9,12 +9,12 @@ import {
   Avatar,
   TextBold,
   TextRegular,
-  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { HmisClientProfileType, HmisSuffixEnum } from '../../apollo';
 import { enumDisplaySuffixHmis } from '../../static';
 import { formatHeight } from '../ClientCard/utils/formatHeight';
+import { formatDateString } from '@monorepo/shared/scalars';
 export interface IClientCardProps {
   client: HmisClientProfileType;
   onPress?: () => void;
@@ -71,11 +71,7 @@ export function ClientCardHmis(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!birthDate && (
               <TextRegular size="xs">
-                {formatDateStatic({
-                  date: birthDate,
-                  inputFormat: 'yyyy-MM-dd',
-                  outputFormat: 'MM/dd/yyyy',
-                })}{' '}
+                {formatDateString(birthDate, 'MM/dd/yyyy')}{' '}
                 ({age})
               </TextRegular>
             )}

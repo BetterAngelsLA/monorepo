@@ -8,7 +8,6 @@ import {
   Avatar,
   TextBold,
   TextRegular,
-  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +15,7 @@ import { CardMenuBtn } from './CardMenuBtn';
 import { IClientCardProps } from './ClientCard';
 import { formatHeight } from './utils/formatHeight';
 import { getLahsaHmisId } from './utils/getLahsaHmisId';
+import { formatDateString } from '@monorepo/shared/scalars';
 
 export function ClientCardBase(props: IClientCardProps) {
   const { client, onMenuPress } = props;
@@ -53,11 +53,7 @@ export function ClientCardBase(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {formatDateStatic({
-                  date: client.dateOfBirth,
-                  inputFormat: 'yyyy-MM-dd',
-                  outputFormat: 'MM/dd/yyyy',
-                })}{' '}
+                {formatDateString(client.dateOfBirth, 'MM/dd/yyyy')}{' '}
                 ({client.age})
               </TextRegular>
             )}
