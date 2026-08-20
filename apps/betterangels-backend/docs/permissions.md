@@ -243,6 +243,42 @@ organization.
 
 The global fallback is still a real hazard wherever a template *does* grant a
 model-level permission — it makes `filter_for_user` match every row in the
-table. Replacing it with an explicit shared-vs-org-owned layer is tracked in
-**#2313**; the required `organization_field` is what makes that migration
-mechanical, since every call site's intended layer is now written down.
+table. Retiring it means auditing which templates grant model-level
+permissions, deciding per model whether it is shared or org-owned, and dropping
+the fallback so `filter_for_user` cannot match rows the caller holds no object
+grant on. The required `organization_field` is what makes that mechanical, since
+every call site's intended layer is now written down. Until it lands, that
+filter is the only thing standing between a model-level grant and every row in
+its table.
+
+### Outstanding: mutations that still resolve the org by first match
+
+`resolve_permission_group(user, template=...)` called without an organization id
+picks whichever `PermissionGroup` the database returns first, so for a multi-org
+caller it can pick the wrong organization. Still doing that:
+
+| Call site | Consequence |
+| --- | --- |
+| `clients/schema.py` `create_client_document`, and `clients/services/client_document.py` | document *ownership* on upload is first-match, so "shared read, org-owned write" is not guaranteed for client documents |
+| `referrals/schema.py` `create_referral` | a referral can be attributed to the wrong organization |
+| `hmis/schema.py` `create_hmis_note_service_request` | same |
+
+Each moves to the pattern this document describes: `HasOrgPerm` plus
+`active_organization(info)`, or `permission_group_for_user(user, org_id=...,
+template_name=...)` where the group itself is needed.
+
+### Accepted risk: cross-org delete of a client profile
+
+`delete_client_profile` filters on `ClientProfile.perms.DELETE`, which
+`CASEWORKER` holds globally, and `Note.client_profile` is `on_delete=CASCADE`.
+So a caseworker in any organization can delete a shared client profile, and
+doing so **also deletes every other organization's notes** for that client —
+note rows are org-owned, so this destroys data outside the deleting
+organization's own layer. (`Task.client_profile` is `SET_NULL`, so tasks survive
+with no client, which is its own inconsistency.)
+
+Left as-is deliberately: clients are shared and there is no ownership concept,
+and changing delete rights now would change app behaviour. Recorded here so it
+is a known risk rather than a surprise. The cheapest mitigations that preserve
+today's rights are soft-deleting the profile, or `PROTECT`ing the cascade when
+another organization holds notes.
