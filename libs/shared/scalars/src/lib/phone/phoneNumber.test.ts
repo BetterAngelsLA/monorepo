@@ -52,6 +52,21 @@ describe('parsePhoneNumber', () => {
       expect(parsePhoneNumber(asScalar(input))).toEqual({ formatted: '' });
     },
   );
+
+  it('does not split unrecognised input into number and extension', () => {
+    // The metadata will not vouch for "123", so the value is shown as given
+    // rather than presented as a number with an extension.
+    expect(parsePhoneNumber(asScalar('123x45'))).toEqual({
+      formatted: '123x45',
+    });
+  });
+
+  it('formats a possible number the metadata has not allocated', () => {
+    // 222 is not an assigned area code; it still has to display.
+    expect(parsePhoneNumber(asScalar('2223334444')).formatted).toBe(
+      '(222) 333-4444',
+    );
+  });
 });
 
 describe('formatPhoneNumber', () => {
@@ -68,6 +83,10 @@ describe('formatPhoneNumber', () => {
   it('returns an empty string for no value', () => {
     expect(formatPhoneNumber(asScalar(undefined))).toBe('');
   });
+
+  it('agrees with parsePhoneNumber on unrecognised input', () => {
+    expect(formatPhoneNumber(asScalar('123x45'))).toBe('123x45');
+  });
 });
 
 describe('toPhoneDialString', () => {
@@ -79,10 +98,16 @@ describe('toPhoneDialString', () => {
     expect(toPhoneDialString(asScalar(input))).toBe(expected);
   });
 
-  it.each([[null], [undefined], [''], ['abc']])(
+  it.each([[null], [undefined], [''], ['abc'], ['abcx1']])(
     'returns an empty string for %s',
     (input) => {
       expect(toPhoneDialString(asScalar(input))).toBe('');
     },
   );
+
+  it('still separates an extension the number cannot be validated against', () => {
+    // Dialling is a different concern from display: the extension is kept out
+    // of the digits so the dialer pauses in the right place.
+    expect(toPhoneDialString(asScalar('123x45'))).toBe('123,45');
+  });
 });

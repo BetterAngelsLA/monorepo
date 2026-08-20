@@ -11,8 +11,8 @@ import {
   InstagramIcon,
   LocationIcon,
 } from '@monorepo/react/icons';
-import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../../__generated__/shelter.generated';
+import { formatPhoneNumber } from '@monorepo/shared/scalars';
 
 function renderLabel(
   label?: string | null,
@@ -97,7 +97,7 @@ export function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: parsePhoneNumber(shelter?.phone ?? '', 'US')?.formatNational(),
+      label: formatPhoneNumber(shelter?.phone),
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },

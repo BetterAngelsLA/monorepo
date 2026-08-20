@@ -3,11 +3,10 @@ import type { PhoneNumberString } from '../branded';
 
 /**
  * The API serializes phone numbers as national digits with an optional
- * `x`-delimited extension — `"2135551234"`, `"2135551234x22"`. Since the
- * country code is already stripped server-side, parsing assumes US.
+ * `x`-delimited extension — `"2135551234"`, `"2135551234x22"`. The country code
+ * is stripped server-side, so parsing assumes US.
  */
 const DEFAULT_REGION = 'US';
-const EXTENSION_PATTERN = /^(.*?)\s*x\s*(\d+)\s*$/i;
 
 export type ParsedPhoneNumber = {
   /** Display form of the number itself, without the extension. */
@@ -16,58 +15,51 @@ export type ParsedPhoneNumber = {
   extension?: string;
 };
 
-type Parsed = ParsedPhoneNumber & {
-  /** Bare digits, for a `tel:` target. */
-  digits: string;
-};
-
 /**
- * Formatting keys off `isPossible` rather than `isValid`: an unallocated area
- * code is still a renderable number, and refusing to format it would lose
- * ground against the hand-rolled formatter this replaces. Genuine junk comes
- * back trimmed but untouched, so it displays instead of vanishing.
- */
-function parse(value: PhoneNumberString | null | undefined): Parsed | undefined {
-  const trimmed = value?.trim();
-
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const match = trimmed.match(EXTENSION_PATTERN);
-  const core = (match ? match[1] : trimmed).trim();
-  const extension = match ? match[2] : undefined;
-  const parsed = parsePhoneNumberFromString(core, DEFAULT_REGION);
-
-  return parsed?.isPossible()
-    ? {
-        formatted: parsed.formatNational(),
-        digits: parsed.nationalNumber,
-        extension,
-      }
-    : { formatted: core, digits: core.replace(/\D/g, ''), extension };
-}
-
-/**
- * Split a phone scalar into a display number and its extension.
+ * Parsing, extension handling and national formatting all come from
+ * libphonenumber-js — it reads `"2135551234x22"` natively.
  *
- * Returns a record rather than a tuple on purpose: a tuple invites callers to
- * render the whole thing where a single string belongs, which is how the raw
- * array once ended up in a text prop.
+ * Display keys off `isPossible` rather than `isValid`: an unallocated area code
+ * is still a renderable number, and refusing to format it would lose ground
+ * against the hand-rolled formatter this replaces. Genuine junk is returned
+ * trimmed but untouched, so it displays instead of vanishing.
  */
 export function parsePhoneNumber(
   value: PhoneNumberString | null | undefined,
 ): ParsedPhoneNumber {
-  const parsed = parse(value);
+  const trimmed = value?.trim();
 
-  if (!parsed) {
+  if (!trimmed) {
     return { formatted: '' };
   }
 
-  return { formatted: parsed.formatted, extension: parsed.extension };
+  const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_REGION);
+
+  if (!parsed?.isPossible()) {
+    // Unrecognised input is handed back as given rather than split apart, so a
+    // number the metadata does not know still displays.
+    return { formatted: trimmed };
+  }
+
+  // `formatNational()` appends " ext. NN", but some callers render the extension
+  // in its own element — so format the bare national number.
+  const withoutExtension = parsePhoneNumberFromString(
+    parsed.nationalNumber,
+    DEFAULT_REGION,
+  );
+
+  return {
+    formatted: withoutExtension?.formatNational() ?? parsed.nationalNumber,
+    extension: parsed.ext,
+  };
 }
 
-/** Display a phone scalar as one string, extension included when present. */
+/**
+ * Display a phone scalar as one string, extension included when present.
+ *
+ * Built on `parsePhoneNumber` so the two can never disagree about what counts
+ * as the number and what counts as the extension.
+ */
 export function formatPhoneNumber(
   value: PhoneNumberString | null | undefined,
 ): string {
@@ -82,19 +74,27 @@ export function formatPhoneNumber(
 
 /**
  * Build the number part of a `tel:` URI — digits, with `,<extension>` appended
- * so the dialer pauses before sending it. Digits rather than the formatted
- * form: punctuation is tolerated by most dialers but meaningless to all of them.
+ * so the dialer pauses before sending it.
+ *
+ * Not `getURI()`, which emits the RFC 3966 `;ext=` form: iOS documents `tel:`
+ * support for digits, `+`, `*`, `#`, `,` and `;` and does not parse `ext=`, and
+ * Android's dialer honours the pause characters rather than RFC parameters.
  */
 export function toPhoneDialString(
   value: PhoneNumberString | null | undefined,
 ): string {
-  const parsed = parse(value);
+  const trimmed = value?.trim();
 
-  if (!parsed?.digits) {
+  if (!trimmed) {
     return '';
   }
 
-  return parsed.extension
-    ? `${parsed.digits},${parsed.extension}`
-    : parsed.digits;
+  const parsed = parsePhoneNumberFromString(trimmed, DEFAULT_REGION);
+  const digits = parsed?.nationalNumber;
+
+  if (!digits) {
+    return '';
+  }
+
+  return parsed.ext ? `${digits},${parsed.ext}` : digits;
 }
