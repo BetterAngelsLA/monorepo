@@ -1,10 +1,27 @@
-"""Rename permission groups to ``org:<pk>:<template>``.
+"""Rename permission groups to ``<organization> [<pk>] · <role>``.
 
 ``auth.Group.name`` is unique and limited to 150 characters, while
 ``Organization.name`` is neither unique nor short.  Deriving the group name from
-the organization's name therefore collided outright between two organizations
-sharing a name, and left every group stale after a rename.  Keying on the
-organization's pk makes the name unique by construction and stable.
+the organization's name alone therefore collided outright between two
+organizations sharing a name.  Including the pk makes it unique by construction,
+while keeping the organization's name makes the label readable where it is shown
+— the group picker on a user, and the ``auth.Group`` changelist.  Organization
+first so those lists sort alphabetically by organization rather than by
+pk-as-string, and truncated because ``Organization.name`` allows more characters
+than ``auth.Group.name`` does.
+
+The name carries a copy of the organization's, kept current by
+``accounts.services.reconcile_org_groups``.  Nothing reads it as data — every
+lookup goes through ``PermissionGroup`` — so it is a label, not a key.
+
+Because that reconcile also runs on ``post_migrate``, this rename is belt and
+braces: the next migrate would relabel everything anyway.  It is kept so the
+migration does not depend on signal wiring, and because it is what reports the
+orphans below.  The same coupling means **reversing this migration while running
+this code does not restore the legacy names** — ``restore_group_names`` writes
+them and ``post_migrate`` immediately writes the new ones back.  Reversing is
+only meaningful alongside a rollback to code without that reconcile, where it
+behaves as written.
 
 Groups with no ``PermissionGroup`` row are reported, not modified.  The old
 reconcile could orphan one by deleting through a queryset, which bypassed the
@@ -18,8 +35,13 @@ found and let a human decide.
 from django.db import migrations
 
 
-def new_group_name(organization_id, template_name):
-    return f"org:{organization_id}:{template_name}"
+GROUP_NAME_MAX_LENGTH = 150
+
+
+def new_group_name(organization_name, organization_id, template_name):
+    suffix = f" [{organization_id}] · {template_name}"
+    budget = max(GROUP_NAME_MAX_LENGTH - len(suffix), 0)
+    return f"{organization_name[:budget]}{suffix}"[:GROUP_NAME_MAX_LENGTH]
 
 
 def legacy_group_name(organization_name, template_name):
@@ -31,9 +53,11 @@ def rename_groups(apps, schema_editor):
     PermissionGroup = apps.get_model("accounts", "PermissionGroup")
 
     renamed = 0
-    for permission_group in PermissionGroup.objects.select_related("group", "template"):
+    for permission_group in PermissionGroup.objects.select_related("group", "template", "organization"):
         template_name = permission_group.template.name if permission_group.template_id else permission_group.name
-        wanted = new_group_name(permission_group.organization_id, template_name)
+        wanted = new_group_name(
+            permission_group.organization.name, permission_group.organization_id, template_name
+        )
         if permission_group.group.name != wanted:
             permission_group.group.name = wanted
             permission_group.group.save(update_fields=["name"])

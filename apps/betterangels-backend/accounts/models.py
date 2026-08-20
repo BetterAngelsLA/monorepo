@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pghistory
 from accounts.managers import UserManager
@@ -167,8 +167,8 @@ class PermissionGroup(models.Model):
         """Require a template or a name to identify the role.
 
         Both are optional individually, so the admin inline could otherwise save
-        a row with neither — naming its group ``org:<pk>:`` and colliding with the
-        next such row on the unique ``auth.Group.name``.
+        a row with neither — leaving its group's role segment empty and colliding
+        with the next such row on the unique ``auth.Group.name``.
         """
         if not self.template_id and not self.name:
             raise ValidationError("A permission group needs either a template or a name.")
@@ -187,14 +187,27 @@ class PermissionGroup(models.Model):
         super().save(*args, **kwargs)
 
     def group_name(self) -> str:
-        """Return the deterministic ``auth.Group`` name for this row.
+        """Return the ``auth.Group`` name for this row, e.g. ``Acme Housing [3] · Caseworker``.
 
-        Keyed on the organization's pk rather than its name: ``auth.Group.name``
-        is unique and only 150 characters, while ``Organization.name`` is neither
-        unique nor short, so a name-derived value both collides between
-        same-named orgs and goes stale on rename.
+        The pk is what makes the name unique — ``auth.Group.name`` is unique and
+        ``Organization.name`` is not — and the organization's name rides alongside
+        it because this string is the label in the group picker and the
+        ``auth.Group`` changelist.  Organization first so those lists sort
+        alphabetically by organization rather than by pk-as-string.
+
+        Truncated to fit: ``Organization.name`` allows 200 characters and a
+        hand-entered role name 255, against ``auth.Group.name``'s 150.
+
+        Nothing reads this as data — every lookup goes through ``PermissionGroup``
+        — so :func:`accounts.services.reconcile_org_groups` refreshing it is
+        enough.  A rename outside that path leaves the label stale until the next
+        reconcile, which is only acceptable while nothing keys off it.
         """
-        return f"org:{self.organization_id}:{self.template.name if self.template else self.name}"
+        max_length = cast(int, Group._meta.get_field("name").max_length)
+        role = self.template.name if self.template else self.name
+        suffix = f" [{self.organization_id}] · {role}"
+        budget = max(max_length - len(suffix), 0)
+        return f"{self.organization.name[:budget]}{suffix}"[:max_length]
 
 
 class OrgTypeChoices(models.TextChoices):

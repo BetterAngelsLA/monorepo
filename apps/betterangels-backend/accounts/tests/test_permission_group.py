@@ -1,5 +1,6 @@
 from accounts.models import PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
+from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -10,19 +11,29 @@ from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class PermissionGroupTestCase(TestCase):
-    def test_group_name_is_scoped_to_the_organization_id(self) -> None:
-        """The name must key on the org's pk, not its name.
+    def test_group_name_reads_as_organization_pk_and_role(self) -> None:
+        """Readable label, made unique by the pk.
 
-        ``auth.Group.name`` is unique and capped at 150 characters, while
-        ``Organization.name`` is neither, so a name-derived value collides
-        between same-named orgs and goes stale on rename.
+        ``auth.Group.name`` is unique and capped at 150 characters while
+        ``Organization.name`` is neither, so the pk is what prevents a collision —
+        but the name is what makes the group picker legible, so it carries both.
         """
         permission_group = permission_group_recipe.make(template=None)
 
         self.assertEqual(
             permission_group.group.name,
-            f"org:{permission_group.organization_id}:{permission_group.name}",
+            f"{permission_group.organization.name} [{permission_group.organization_id}] · {permission_group.name}",
         )
+
+    def test_a_long_organization_name_is_truncated_to_fit(self) -> None:
+        """``Organization.name`` allows 200 characters, ``auth.Group.name`` 150."""
+        organization = Organization.objects.create(name="L" * 200)
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
+
+        permission_group = PermissionGroup.objects.create(organization=organization, template=template)
+
+        self.assertLessEqual(len(permission_group.group.name), 150)
+        self.assertTrue(permission_group.group.name.endswith(f"[{organization.pk}] · {CASEWORKER.name}"))
 
     def test_two_organizations_may_share_a_name(self) -> None:
         first = Organization.objects.create(name="Acme")
@@ -34,16 +45,24 @@ class PermissionGroupTestCase(TestCase):
 
         self.assertNotEqual(first_group.group.name, second_group.group.name)
 
-    def test_renaming_an_organization_leaves_its_group_names_intact(self) -> None:
-        permission_group = permission_group_recipe.make(template=None)
-        original_name = permission_group.group.name
+    def test_renaming_an_organization_refreshes_its_group_names_on_reconcile(self) -> None:
+        """The label carries a copy of the name, so reconcile has to re-apply it.
 
+        A rename outside a reconcile leaves it stale, which is tolerable only
+        because nothing reads the group name as data.
+        """
+        permission_group = permission_group_recipe.make(template=None)
         organization = permission_group.organization
+
         organization.name = "Renamed Organization"
         organization.save()
+        reconcile_org_groups(organization)
 
         permission_group.group.refresh_from_db()
-        self.assertEqual(permission_group.group.name, original_name)
+        self.assertEqual(
+            permission_group.group.name,
+            f"Renamed Organization [{organization.pk}] · {permission_group.name}",
+        )
 
     def test_group_receives_the_permissions_configured_for_its_template(self) -> None:
         organization = organization_recipe.make(owner_roles=())

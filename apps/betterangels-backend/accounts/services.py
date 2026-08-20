@@ -229,7 +229,8 @@ def reconcile_org_groups(org: Organization) -> None:
     permissions are still applied, so this function always leaves *org*
     consistent with config and is the only pass any caller needs to make.
 
-    Each removed row's ``auth.Group`` is torn down by
+    Group names are refreshed from the organization's current name, and each
+    removed row's ``auth.Group`` is torn down by
     :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
     their permissions applied from config — without this a newly created group
     would grant nothing until the next ``migrate``.
@@ -264,7 +265,24 @@ def reconcile_org_groups(org: Organization) -> None:
             template__name__in=derived - expected,
         ).delete()
 
+    _refresh_group_names(org)
     sync_group_permissions(organization=org)
+
+
+def _refresh_group_names(org: Organization) -> None:
+    """Re-label *org*'s groups, so a renamed organization is not left stale.
+
+    ``PermissionGroup.group_name`` carries the organization's name, which is a
+    copy — this is what keeps it current.  Runs for hand-managed groups too: the
+    label is wrong for them in exactly the same way.
+    """
+    for permission_group in PermissionGroup.objects.filter(organization=org).select_related(
+        "group", "template", "organization"
+    ):
+        wanted = permission_group.group_name()
+        if permission_group.group.name != wanted:
+            permission_group.group.name = wanted
+            permission_group.group.save(update_fields=["name"])
 
 
 # ── Member removal ───────────────────────────────────────────────────
