@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/postcss';
 import { resolve } from 'path';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
 import { getBranchBasePath } from '../../../tools/shared/get-base-path.mjs';
-import { monorepoTsconfigAliases } from '../../../tools/vite/monorepo-aliases';
+import { monorepoTsconfigAliases } from '../../../libs/vite-utils/src/index';
 import svgr from 'vite-plugin-svgr';
 import {
   PLATFORM_STORIES,
@@ -82,7 +82,7 @@ const config: StorybookConfig = {
       plugins: [
         // we handle SVGs differently across libs, hence the separate plugins
         appendReactQueryForRnSvg(
-          resolve(workspaceRoot, 'libs/expo') // adjust per RN libs root
+          resolve(workspaceRoot, 'libs/expo'), // adjust per RN libs root
         ),
         // handles SVGs with ?react appended by appendReactQueryForRnSvg
         svgr({

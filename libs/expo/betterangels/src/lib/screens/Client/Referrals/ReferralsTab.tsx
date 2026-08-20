@@ -32,7 +32,7 @@ export function ReferralsTab({ client }: TProps) {
     {
       variables: { clientId },
       skip: !clientId,
-    }
+    },
   );
 
   const [createReferral] = useMutation(CreateReferralDocument);
@@ -47,7 +47,7 @@ export function ReferralsTab({ client }: TProps) {
   const onSubmit = async (
     shelterId: string,
     notes: string | undefined,
-    closeForm: () => void
+    closeForm: () => void,
   ) => {
     try {
       const result = await createReferral({
@@ -177,8 +177,8 @@ function ReferralCard({ referral }: ReferralCardProps) {
     referral.status === 'ACCEPTED'
       ? Colors.SUCCESS
       : referral.status === 'DECLINED'
-      ? Colors.ERROR
-      : Colors.WARNING;
+        ? Colors.ERROR
+        : Colors.WARNING;
 
   return (
     <View style={styles.card}>

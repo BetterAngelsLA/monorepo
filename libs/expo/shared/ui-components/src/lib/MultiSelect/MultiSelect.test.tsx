@@ -7,7 +7,7 @@ interface TTestItem {
   label: string;
 }
 
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 const mockOptions: TTestItem[] = [
   { id: '1', label: 'Option A' },
@@ -155,7 +155,7 @@ describe('MultiSelect component', () => {
           {...defaultProps}
           withFilter
           filterPlaceholder="Search options"
-        />
+        />,
       );
 
       const input = getByPlaceholderText('Search options');
@@ -173,7 +173,7 @@ describe('MultiSelect component', () => {
 
     defaultProps.renderOption = (
       option,
-      { isChecked, onClick, testId, accessibilityHint }
+      { isChecked, onClick, testId, accessibilityHint },
     ) => {
       return (
         <Pressable

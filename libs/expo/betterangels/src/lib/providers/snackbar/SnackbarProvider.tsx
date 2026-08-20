@@ -29,7 +29,7 @@ type TSnackbarProvider = {
 };
 
 export default function SnackbarProvider(
-  props: TSnackbarProvider
+  props: TSnackbarProvider,
 ): ReactElement {
   const { children } = props;
 
@@ -37,7 +37,7 @@ export default function SnackbarProvider(
   const [message, setMessage] = useState<string>('');
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [snackbarType, setSnackbarType] = useState<TSnackbarType | undefined>(
-    undefined
+    undefined,
   );
 
   const showSnackbar = (props: TShowSnackbar) => {

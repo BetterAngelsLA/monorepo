@@ -35,7 +35,7 @@ type TProps<T extends string | number = string> = Omit<
 };
 
 export function ButtonDropdown<T extends string | number = string>(
-  props: TProps<T>
+  props: TProps<T>,
 ) {
   const {
     children,
@@ -104,7 +104,7 @@ export function ButtonDropdown<T extends string | number = string>(
               ))}
             </div>
           </MenuPanel>,
-          document.body
+          document.body,
         )}
     </div>
   );

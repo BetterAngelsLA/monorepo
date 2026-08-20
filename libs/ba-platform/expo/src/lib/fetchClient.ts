@@ -7,24 +7,25 @@ import {
   type FetchInterceptor,
 } from '@monorepo/fetch';
 import {
+  configureActiveOrgStorage,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
   createOrgInterceptor,
+  getActiveOrgId,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
-  DEFAULT_ORG_STORAGE_KEY,
 } from '@monorepo/ba-platform';
 import CookieManager from '@preeternal/react-native-cookie-manager';
-import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
+import { expoActiveOrgStorage } from './activeOrgStorage';
 import { createNativeTokenReader } from './csrfTokenProvider';
 
 /**
  * Pre-composed Expo / React Native fetch client.
  *
  * Chains (in order):
- * 1. Org-ID injection (from ``AsyncStorage``)
+ * 1. Org-ID injection (from the active-org store)
  * 2. Proactive CSRF header injection (via ``CookieManager``)
  * 3. Body serialisation
  * 4. Credentials include
@@ -39,12 +40,20 @@ import { createNativeTokenReader } from './csrfTokenProvider';
 export const createExpoFetchClient = (
   apiUrl: string,
   extraInterceptors: FetchInterceptor[] = [],
-) =>
-  composeFetchInterceptors(
-    createOrgInterceptor(asyncStorageAdapter, DEFAULT_ORG_STORAGE_KEY),
+) => {
+  // The active-org store lives in the platform-agnostic package and cannot
+  // reach MMKV itself, so this is where the native-backed implementation goes
+  // in — alongside createNativeTokenReader, for the same reason. Safe to
+  // re-enter on an environment switch: installing does no I/O.
+  configureActiveOrgStorage(expoActiveOrgStorage);
+
+  return composeFetchInterceptors(
+    createOrgInterceptor(getActiveOrgId),
     createCsrfInterceptor(
       createNativeTokenReader(apiUrl),
-      createCsrfTokenRefresher((header) => CookieManager.setFromResponse(apiUrl, header)),
+      createCsrfTokenRefresher((header) =>
+        CookieManager.setFromResponse(apiUrl, header),
+      ),
       CSRF_COOKIE_NAME,
       CSRF_HEADER_NAME,
       CSRF_LOGIN_PATH,
@@ -53,3 +62,4 @@ export const createExpoFetchClient = (
     includeCredentialsInterceptor,
     ...extraInterceptors,
   );
+};

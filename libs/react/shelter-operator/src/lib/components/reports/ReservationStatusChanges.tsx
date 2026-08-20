@@ -1,115 +1,158 @@
-import {
-  ArrowRight,
-  CalendarCheck2,
-  CalendarClock,
-  CalendarX2,
-  Clock,
-} from 'lucide-react';
+import { mergeCss } from '@monorepo/react/shared';
+import { Clock } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { ReservationMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { Text } from '../base-ui/text/text';
 
-const ICON_SIZE = 22;
+const ICON_SIZE = 18;
 const iconClass = 'shrink-0 text-[#747A82]';
 
-/** A single stat box: icon + label + value. Placeholder value for now. */
-function StatCardPlaceholder({
-  icon,
-  label,
-  value,
-  testId,
-}: {
-  icon: ReactNode;
-  label: ReactNode;
+export interface IStatCardProps {
+  icon?: ReactNode;
+  title: ReactNode;
   value: string;
   testId?: string;
-}) {
+  className?: string;
+  subRow?: ReactNode;
+}
+
+/** A single stat card: optional icon, title, value, and an optional secondary row. */
+export function StatCard({
+  icon,
+  title,
+  value,
+  testId,
+  className,
+  subRow,
+}: IStatCardProps) {
   return (
     <div
-      className="flex min-h-[109px] flex-1 flex-col gap-3 rounded-[20px] bg-white p-3"
+      className={mergeCss([
+        'flex min-h-[120px] flex-col gap-3 rounded-[20px] bg-white p-4 shadow-[0_0_4px_rgba(154,154,154,0.13)]',
+        className ?? 'flex-1',
+      ])}
       data-testid={testId}
     >
-      <div className="flex items-start gap-2.5">
-        {icon}
-        <Text variant="body" textColor="text-[#747A82]">
-          {label}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2.5">
+          {icon}
+          <Text
+            variant="body"
+            textColor="text-[#747A82]"
+            className="text-[15px]"
+          >
+            {title}
+          </Text>
+        </div>
+        <Text
+          variant="header-lg"
+          textColor="text-black"
+          className="text-[25px] leading-none"
+        >
+          {value}
         </Text>
       </div>
-      <Text variant="header-lg" textColor="text-black" className="leading-none">
-        {value}
-      </Text>
+      {subRow}
     </div>
   );
 }
 
-/** Thin divider used between the paired stat cards. */
-function CardDivider() {
+export interface IPreviouslyOverdueRowProps {
+  overdueCount: number;
+  totalCount: number;
+}
+
+/** "Previously Overdue x / y" pill shown under the Newly Checked In stat. */
+function PreviouslyOverdueRow({
+  overdueCount,
+  totalCount,
+}: IPreviouslyOverdueRowProps) {
   return (
     <div
-      role="separator"
-      aria-orientation="vertical"
-      className="my-3 w-[3px] shrink-0 rounded-full bg-[#F3F3F3]"
-    />
+      className="flex items-center justify-between"
+      data-testid="stat-previously-overdue"
+    >
+      <Text
+        variant="body"
+        textColor="text-[#747A82]"
+        className="whitespace-nowrap text-[13px] leading-[150%]"
+      >
+        Previously Overdue
+      </Text>
+      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#F3F3F9] px-6 py-0.5 text-[13px] leading-[150%] text-[#383B40]">
+        {overdueCount} / {totalCount}
+      </span>
+    </div>
   );
 }
 
+export interface IReservationStatusChangesProps {
+  metrics?: ReservationMetrics | null;
+  avgDaysToOccupancy?: number | null;
+}
+
 /**
- * "Reservation Status Changes" section — heading plus the reservation stat
- * boxes. Per the design, four transition stats sit grouped in one rounded grey
- * container (the first two paired behind a divider) and "Average days to
- * occupancy" is a separated container. Values are placeholders until wired up.
+ * "Reservation Status Changes" section — heading plus four equal-width stat
+ * cards. The first card shows a "Previously Overdue" ratio pill beneath its
+ * value, and a vertical divider separates "Average days to occupancy" from
+ * the rest.
  */
-export function ReservationStatusChanges() {
+export function ReservationStatusChanges({
+  metrics,
+  avgDaysToOccupancy,
+}: IReservationStatusChangesProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <Text variant="subheading" textColor="text-[#111827]">
+    <div className="flex flex-col gap-4">
+      <Text variant="subheading" textColor="text-[#111827]" className="pl-2">
         Reservation Status Changes
       </Text>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
-        <div className="flex flex-[4] flex-wrap items-stretch gap-3 rounded-[28px] bg-[#F3F3F3] p-3">
-          <div className="flex min-w-[300px] flex-[1.6] items-stretch rounded-[20px] bg-white">
-            <StatCardPlaceholder
-              icon={<CalendarCheck2 size={ICON_SIZE} className={iconClass} />}
-              label="Newly Checked In"
-              value="8"
-              testId="stat-newly-checked-in-placeholder"
-            />
-            <CardDivider />
-            <StatCardPlaceholder
-              icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
-              label={
-                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                  Overdue
-                  <ArrowRight size={16} className={iconClass} />
-                  Checked In
-                </span>
-              }
-              value="3"
-              testId="stat-overdue-to-checked-in-placeholder"
-            />
-          </div>
-          <StatCardPlaceholder
-            icon={<CalendarX2 size={ICON_SIZE} className={iconClass} />}
-            label="Newly Canceled"
-            value="7"
-            testId="stat-newly-canceled-placeholder"
-          />
-          <StatCardPlaceholder
-            icon={<CalendarClock size={ICON_SIZE} className={iconClass} />}
-            label="Newly Overdue"
-            value="12"
-            testId="stat-newly-overdue-placeholder"
-          />
-        </div>
+        <StatCard
+          title="Newly Checked In"
+          value={metrics?.checkedIn != null ? String(metrics.checkedIn) : '—'}
+          subRow={
+            metrics?.checkInOverdueToCheckedIn != null &&
+            metrics?.checkedIn != null ? (
+              <PreviouslyOverdueRow
+                overdueCount={metrics.checkInOverdueToCheckedIn}
+                totalCount={metrics.checkedIn}
+              />
+            ) : undefined
+          }
+          testId="stat-newly-checked-in"
+          className="basis-0 lg:flex-1"
+        />
+        <StatCard
+          title="Newly Canceled"
+          value={metrics?.cancelled != null ? String(metrics.cancelled) : '—'}
+          testId="stat-newly-canceled"
+          className="basis-0 lg:flex-1"
+        />
+        <StatCard
+          title="Newly Overdue"
+          value={
+            metrics?.checkInOverdue != null
+              ? String(metrics.checkInOverdue)
+              : '—'
+          }
+          testId="stat-newly-overdue"
+          className="basis-0 lg:flex-1"
+        />
 
-        <div className="flex rounded-[28px] bg-[#F3F3F3] p-3 lg:flex-1">
-          <StatCardPlaceholder
-            icon={<Clock size={ICON_SIZE} className={iconClass} />}
-            label="Average days to occupancy"
-            value="10"
-            testId="stat-average-days-to-occupancy-placeholder"
-          />
-        </div>
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          className="hidden w-[3px] shrink-0 self-stretch rounded-full bg-[#D0CFCF] lg:block"
+        />
+
+        <StatCard
+          icon={<Clock size={ICON_SIZE} className={iconClass} />}
+          title="Average days to occupancy"
+          value={avgDaysToOccupancy != null ? String(avgDaysToOccupancy) : '—'}
+          testId="stat-average-days-to-occupancy"
+          className="basis-0 lg:flex-1"
+        />
       </div>
     </div>
   );

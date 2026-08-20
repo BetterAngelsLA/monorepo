@@ -5,7 +5,7 @@ import {
 } from './formSchema';
 
 export function mapClientToFullNameSchema(
-  client: HmisClientProfileType
+  client: HmisClientProfileType,
 ): TFullNameFormSchema {
   const { firstName, lastName, nameMiddle, alias, nameSuffix, nameQuality } =
     client;

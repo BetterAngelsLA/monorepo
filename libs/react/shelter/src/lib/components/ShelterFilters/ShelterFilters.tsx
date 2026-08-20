@@ -58,16 +58,16 @@ export function ShelterFilters(props: IProps) {
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
-  const initialOpenNowTypes = filters.openNowScheduleTypes ?? [];
-
-  const [openNowTypes, setOpenNowTypes] =
-    useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
+  const initialOpenNowForTypes = filters.openNowFor ?? [];
+  const [openNowForTypes, setOpenNowForTypes] = useState<ScheduleTypeChoices[]>(
+    initialOpenNowForTypes,
+  );
 
   const [showMoreCategories, setShowMoreCategories] = useState(false);
 
   useEffect(() => {
-    setOpenNowTypes(filters.openNowScheduleTypes ?? []);
-  }, [filters.openNowScheduleTypes]);
+    setOpenNowForTypes(filters.openNowFor ?? []);
+  }, [filters.openNowFor]);
 
   const parentCss = ['pb-24', className];
 
@@ -81,20 +81,19 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
-  function onOpenNowScheduleTypeChange(
+  function onOpenNowForTypeChange(
     scheduleType: ScheduleTypeChoices,
     checked: boolean,
   ) {
     const newTypes = checked
-      ? [...openNowTypes, scheduleType]
-      : openNowTypes.filter((type) => type !== scheduleType);
+      ? [...openNowForTypes, scheduleType]
+      : openNowForTypes.filter((t) => t !== scheduleType);
 
-    setOpenNowTypes(newTypes);
+    setOpenNowForTypes(newTypes);
 
     onFiltersChange({
       ...filters,
-      openNow: newTypes.length > 0 ? true : undefined,
-      openNowScheduleTypes: newTypes.length > 0 ? newTypes : undefined,
+      openNowFor: newTypes.length > 0 ? newTypes : undefined,
     });
   }
 
@@ -169,9 +168,9 @@ export function ShelterFilters(props: IProps) {
                 <Checkbox
                   key={option.key}
                   label={option.label}
-                  checked={openNowTypes.includes(option.key)}
+                  checked={openNowForTypes.includes(option.key)}
                   onChange={(checked) =>
-                    onOpenNowScheduleTypeChange(option.key, checked)
+                    onOpenNowForTypeChange(option.key, checked)
                   }
                 />
               ))}

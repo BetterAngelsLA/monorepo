@@ -24,7 +24,7 @@ type TProps = {
   values?: Partial<BasicInfoFormData>;
   onSubmit: (
     data: BasicInfoFormData,
-    setError: UseFormSetError<BasicInfoFormData>
+    setError: UseFormSetError<BasicInfoFormData>,
   ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
@@ -46,7 +46,7 @@ export function ShelterBasicInfoForm(props: TProps) {
 
   const initialValues = useMemo(
     () => ({ ...defaultFormValues, ...values }),
-    [values]
+    [values],
   );
 
   const {

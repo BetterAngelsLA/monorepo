@@ -1,6 +1,5 @@
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { createUserProvider } from '@monorepo/ba-platform';
-import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 import { API_ERROR_CODES } from '@monorepo/expo/shared/clients';
 import { ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -20,7 +19,11 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
-  organizations: { id: string; name: string; permissions: readonly PermissionEnum[] }[];
+  organizations: {
+    id: string;
+    name: string;
+    permissions: readonly PermissionEnum[];
+  }[];
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
@@ -33,10 +36,7 @@ export type TUser = {
 
 const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   document: CurrentUserDocument,
-  defaultStorage: asyncStorageAdapter,
-  parseUser: (
-    data: unknown
-  ): TUser | undefined => {
+  parseUser: (data: unknown): TUser | undefined => {
     const userData = data as CurrentUserQuery['currentUser'] | undefined;
     return userData
       ? {
@@ -59,7 +59,7 @@ const { UserProvider: BaseUserProvider, useUser } = createUserProvider({
   },
   isUnauthenticated: (errors) =>
     errors?.some(
-      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED
+      (e) => e.extensions?.['code'] === API_ERROR_CODES.UNAUTHENTICATED,
     ) ?? false,
 });
 
@@ -90,8 +90,8 @@ function ExpoShell({ children }: ExpoShellProps) {
         !settled
           ? 'authorized-pending'
           : user
-          ? 'authorized-root'
-          : 'unauthorized-root'
+            ? 'authorized-root'
+            : 'unauthorized-root'
       }
       style={{ flex: 1 }}
     >

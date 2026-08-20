@@ -38,7 +38,7 @@ export function extractErrorsHmis(hmisError?: string): TErrorsHmis | null {
           field,
           message: fieldMessages.join(', '),
         };
-      }
+      },
     );
 
     return {

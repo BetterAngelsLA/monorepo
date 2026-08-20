@@ -26,6 +26,6 @@ export async function panMap(props: TProps) {
       ...currentCamera,
       center,
     },
-    { duration }
+    { duration },
   );
 }

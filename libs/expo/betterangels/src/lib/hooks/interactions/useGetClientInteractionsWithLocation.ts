@@ -6,6 +6,10 @@ import {
   TNotesQueryInteraction,
 } from '../../apollo';
 
+type TInteractionWithLocation = TNotesQueryInteraction & {
+  location: NonNullable<TNotesQueryInteraction['location']>;
+};
+
 const defaultSortOrder: NoteOrder = {
   interactedAt: Ordering.Desc,
   id: Ordering.Desc,
@@ -30,11 +34,12 @@ export function useGetClientInteractionsWithLocation(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  let interactions: TNotesQueryInteraction[] | undefined = undefined;
+  let interactions: TInteractionWithLocation[] | undefined = undefined;
 
   if (data) {
-    interactions =
-      data.notes.results.filter((n) => Boolean(n.location?.point)) ?? [];
+    interactions = (data.notes.results.filter((n) =>
+      Boolean(n.location?.point),
+    ) ?? []) as TInteractionWithLocation[];
   }
 
   if (error) {

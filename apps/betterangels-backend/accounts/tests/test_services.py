@@ -8,8 +8,10 @@ from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
     create_organization_with_presets,
+    get_or_create_user_by_email,
     member_add,
     organization_remove_member,
+    reactivate_user,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -21,7 +23,7 @@ from shelters.groups import SHELTER_OPERATOR
 # ── create_organization_with_presets ──────────────────────────────────
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_create_outreach_org() -> None:
     """Outreach org gets Caseworker + Org Admin + Org Superuser groups."""
     org = create_organization_with_presets("Outreach Org", ["outreach"], owner=baker.make(User))
@@ -35,7 +37,7 @@ def test_create_outreach_org() -> None:
     assert names == {CASEWORKER.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_create_shelter_org() -> None:
     """Shelter org gets Shelter Operator + Org Admin + Org Superuser groups."""
     org = create_organization_with_presets("Shelter Org", ["shelter"], owner=baker.make(User))
@@ -49,7 +51,7 @@ def test_create_shelter_org() -> None:
     assert names == {SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_create_dual_type_org() -> None:
     """Dual-type org deduplicates shared templates."""
     org = create_organization_with_presets("Dual Org", ["outreach", "shelter"], owner=baker.make(User))
@@ -63,14 +65,14 @@ def test_create_dual_type_org() -> None:
     assert names == {CASEWORKER.name, SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_create_org_invalid_preset() -> None:
     """Invalid preset name raises ValidationError."""
     with pytest.raises(ValidationError, match="Unknown org-type preset"):
         create_organization_with_presets("Bad Org", ["nonexistent"], owner=baker.make(User))
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_create_org_with_owner_roles() -> None:
     """Owner gets explicitly specified roles (not just defaults)."""
     owner = baker.make(User, email="owner@example.com")
@@ -96,7 +98,12 @@ def test_create_org_with_owner_roles() -> None:
 
 @pytest.mark.django_db(transaction=True)
 def test_create_org_atomic() -> None:
-    """If a preset throws mid-creation, nothing is persisted."""
+    """If a preset throws mid-creation, nothing is persisted.
+
+    Uses ``transaction=True`` because this test intentionally triggers a
+    ``ValidationError`` inside an atomic block — without a real transaction
+    the DB state would leak between rollback attempts.
+    """
     from organizations.models import Organization as OrgModel
 
     with pytest.raises(ValidationError):
@@ -104,10 +111,57 @@ def test_create_org_atomic() -> None:
     assert not OrgModel.objects.filter(name="Atomic Org").exists()
 
 
+# ── get_or_create_user_by_email ───────────────────────────────────────
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_by_email_new_user() -> None:
+    """Brand-new email yields an active user with an unusable password and a
+    normalized (lowercased, stripped) email."""
+    user, created = get_or_create_user_by_email(" NewUser@Example.com ")
+
+    assert created
+    assert user.email == "newuser@example.com"
+    assert user.is_active
+    assert not user.has_usable_password()
+    assert User.objects.filter(email="newuser@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_get_or_create_user_by_email_leaves_inactive_user_unchanged() -> None:
+    """The provisioning service has no side effects on existing users: a
+    deactivated account is returned unchanged (reactivation is an explicit,
+    authorized step via reactivate_user)."""
+    existing = baker.make(User, email="sleepy@example.com", is_active=False)
+
+    user, created = get_or_create_user_by_email("Sleepy@Example.com")
+
+    assert not created
+    assert user.pk == existing.pk
+    assert not user.is_active  # left as-is
+    assert User.objects.filter(email="sleepy@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_reactivate_user() -> None:
+    """reactivate_user reactivates a deactivated account and is a no-op for
+    an active one."""
+    inactive = baker.make(User, email="sleepy@example.com", is_active=False)
+    active = baker.make(User, email="awake@example.com", is_active=True)
+
+    reactivate_user(inactive)
+    reactivate_user(active)
+
+    inactive.refresh_from_db()
+    active.refresh_from_db()
+    assert inactive.is_active
+    assert active.is_active
+
+
 # ── member_add ─────────────────────────────────────────────────────────
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_member_add_new_user() -> None:
     """member_add creates a new user and assigns them to the org with roles."""
     org = create_organization_with_presets("Member Org", ["outreach"], owner=baker.make(User))
@@ -134,7 +188,7 @@ def test_member_add_new_user() -> None:
     assert caseworker_group in user.groups.all()
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_member_add_existing_user_different_org() -> None:
     """Adding an existing user to a new org assigns them that org's roles."""
     user = baker.make(User, email="dual_citizen@example.com")
@@ -171,7 +225,49 @@ def test_member_add_existing_user_different_org() -> None:
     assert cw_org2 in user.groups.all()
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
+def test_member_add_reactivates_inactive_user() -> None:
+    """Re-adding an existing-but-deactivated user reactivates them without
+    creating a duplicate row."""
+    org = create_organization_with_presets("Reactivate Org", ["outreach"], owner=baker.make(User))
+    existing = baker.make(User, email="revive@example.com", is_active=False)
+
+    user = member_add(
+        email="revive@example.com",
+        first_name="Revive",
+        last_name="User",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert user.pk == existing.pk
+    assert User.objects.filter(email="revive@example.com").count() == 1
+    user.refresh_from_db()
+    assert user.is_active
+
+
+@pytest.mark.django_db
+def test_member_add_mixed_case_email_finds_existing_user() -> None:
+    """Mixed-case email input finds the existing (lowercased) user instead of
+    creating a duplicate or raising IntegrityError."""
+    org = create_organization_with_presets("Mixed Case Org", ["outreach"], owner=baker.make(User))
+    existing = baker.make(User, email="mixedcase@example.com")
+
+    user = member_add(
+        email="MixedCase@Example.com",
+        first_name="Mixed",
+        last_name="Case",
+        middle_name=None,
+        organization=org,
+        permission_templates=(CASEWORKER,),
+    )
+
+    assert user.pk == existing.pk
+    assert User.objects.filter(email="mixedcase@example.com").count() == 1
+
+
+@pytest.mark.django_db
 def test_member_add_already_member() -> None:
     """member_add does NOT raise when user is already in the org — it skips
     duplicate templates."""
@@ -198,7 +294,7 @@ def test_member_add_already_member() -> None:
     assert user.email == "already@here.com"
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_member_add_cross_portal_reinvite() -> None:
     """Adding an existing member through a different portal adds the new
     permission template without raising an error.
@@ -242,7 +338,7 @@ def test_member_add_cross_portal_reinvite() -> None:
     assert cw_group in user2.groups.all()  # still has original role
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_member_add_multiple_templates() -> None:
     """member_add can assign multiple permission templates at once."""
     owner = baker.make(User)
@@ -264,7 +360,7 @@ def test_member_add_multiple_templates() -> None:
     assert admin in user.groups.all()
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_member_add_persists_new_name() -> None:
     """When an existing user (by email) is added with different name fields,
     the new name values are NOT overwritten (the old user record is reused)."""
@@ -288,7 +384,7 @@ def test_member_add_persists_new_name() -> None:
 # ── permission_group_for_user ─────────────────────────────────────────
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_caseworker() -> None:
     """Returns the Caseworker PermissionGroup for a user in their outreach org."""
     org = create_organization_with_presets("Outreach PM", ["outreach"], owner=baker.make(User))
@@ -301,7 +397,7 @@ def test_permission_group_caseworker() -> None:
     assert pg.organization == org
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_shelter_operator() -> None:
     """Returns the Shelter Operator PermissionGroup for a user in their shelter org."""
     org = create_organization_with_presets("Shelter PM", ["shelter"], owner=baker.make(User))
@@ -314,7 +410,7 @@ def test_permission_group_shelter_operator() -> None:
     assert pg.organization == org
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_dual_type() -> None:
     """User in a dual-type org can look up both member templates."""
     org = create_organization_with_presets("Dual PM", ["outreach", "shelter"], owner=baker.make(User))
@@ -330,7 +426,7 @@ def test_permission_group_dual_type() -> None:
     assert pg2.template.name == SHELTER_OPERATOR.name
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_org_not_found() -> None:
     """Raises ValidationError if org_id doesn't exist."""
     user = baker.make(User, username="ghost", email="ghost@example.com")
@@ -338,7 +434,7 @@ def test_permission_group_org_not_found() -> None:
         permission_group_for_user(user, "99999", CASEWORKER.name)
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_user_not_member() -> None:
     """Raises ValidationError if user doesn't belong to the org."""
     org = create_organization_with_presets("Not Member Org", ["outreach"], owner=baker.make(User))
@@ -348,7 +444,7 @@ def test_permission_group_user_not_member() -> None:
         permission_group_for_user(user, str(org.pk), CASEWORKER.name)
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_permission_group_template_not_found() -> None:
     """Raises ValidationError if the requested template doesn't exist on the org."""
     org = create_organization_with_presets("Outreach Only", ["outreach"], owner=baker.make(User))
@@ -362,7 +458,7 @@ def test_permission_group_template_not_found() -> None:
 # ── organization_remove_member ────────────────────────────────────────
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 class TestOrganizationRemoveMember:
     """Tests for organization_remove_member."""
 

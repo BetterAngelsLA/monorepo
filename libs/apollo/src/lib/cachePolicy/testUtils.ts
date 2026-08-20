@@ -7,6 +7,6 @@ export function getPolicyMergeFn(policy: FieldPolicy) {
   return policy.merge as (
     existing: unknown,
     incoming: unknown,
-    context: unknown
+    context: unknown,
   ) => unknown;
 }

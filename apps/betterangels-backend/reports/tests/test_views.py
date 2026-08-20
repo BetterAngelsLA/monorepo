@@ -362,14 +362,14 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
 
     def test_summary_returns_correct_data(self) -> None:
         org, user = self._setup_org_user_with_access()
-        team_echo = baker.make(Team, slug="echo_park_outreach", name="Echo Park Outreach", organization=org)
-        team_hollywood = baker.make(Team, slug="hollywood_outreach", name="Hollywood Outreach", organization=org)
+        team_morning = baker.make(Team, name="Morning Outreach", organization=org)
+        team_dropin = baker.make(Team, name="Drop-in Center", organization=org)
         baker.make(
             Note,
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 10, 12, 0, 0)),
             purpose="Outreach",
-            team=team_echo,
+            team=team_morning,
             _quantity=3,
         )
         baker.make(
@@ -377,7 +377,7 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
             organization=org,
             interacted_at=timezone.make_aware(datetime(2025, 1, 20, 12, 0, 0)),
             purpose="Follow-up",
-            team=team_hollywood,
+            team=team_dropin,
             _quantity=2,
         )
         self._set_active_org(org)

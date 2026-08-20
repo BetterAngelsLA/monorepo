@@ -24,6 +24,7 @@ export { default as CheckIcon } from './components/CheckIcon';
 export { default as ChevronLeftIcon } from './components/ChevronLeftIcon';
 export { default as CircleSolidIcon } from './components/CircleSolidIcon';
 export { default as ClockIcon } from './components/ClockIcon';
+export { default as CopyIcon } from './components/CopyIcon';
 export { default as DeleteIcon } from './components/DeleteIcon';
 export { default as DownloadIcon } from './components/DownloadIcon';
 export { default as EmailIcon } from './components/EmailIcon';
@@ -44,6 +45,7 @@ export { default as FaceRollingEyesIcon } from './components/FaceRollingEyesIcon
 export { default as FaceSmileBeamIcon } from './components/FaceSmileBeamIcon';
 export { default as FaceSmileIcon } from './components/FaceSmileIcon';
 export { default as FaceTiredIcon } from './components/FaceTiredIcon';
+export { default as FileOutlineIcon } from './components/FileOutlineIcon';
 export { default as FilePdfIcon } from './components/FilePdfIcon';
 export { default as FilePlusIcon } from './components/FilePlusIcon';
 export { default as FileSearchIcon } from './components/FileSearchIcon';

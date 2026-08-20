@@ -30,7 +30,7 @@ export function ClientContactDeleteBtn(props: TProps) {
   const { showSnackbar } = useSnackbar();
 
   const [deleteClientContact, { loading }] = useMutation(
-    DeleteClientContactDocument
+    DeleteClientContactDocument,
   );
 
   const onDelete = async () => {
@@ -65,7 +65,7 @@ export function ClientContactDeleteBtn(props: TProps) {
           OperationMessageKind.Error,
           OperationMessageKind.Validation,
           OperationMessageKind.Permission,
-        ]
+        ],
       );
 
       if (operationErrors?.length) {
@@ -82,7 +82,7 @@ export function ClientContactDeleteBtn(props: TProps) {
       router.replace(returnRoute);
     } catch (e) {
       console.error(
-        `Error deleting Relevant Contact Id [${relationId}] for clientProfileId [${clientProfileId}]: ${e}`
+        `Error deleting Relevant Contact Id [${relationId}] for clientProfileId [${clientProfileId}]: ${e}`,
       );
 
       showSnackbar({

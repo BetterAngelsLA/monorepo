@@ -82,42 +82,42 @@ describe('getShelterVisibility', () => {
 
     it('is visible when visitorsAllowed is set (even false)', () => {
       const result = getShelterVisibility(
-        makeShelter({ visitorsAllowed: false })
+        makeShelter({ visitorsAllowed: false }),
       );
       expect(result.restrictions).toBe(true);
     });
 
     it('is visible when emergencySurge is set (even false)', () => {
       const result = getShelterVisibility(
-        makeShelter({ emergencySurge: false })
+        makeShelter({ emergencySurge: false }),
       );
       expect(result.restrictions).toBe(true);
     });
 
     it('is visible when onSiteSecurity is set (even false)', () => {
       const result = getShelterVisibility(
-        makeShelter({ onSiteSecurity: false })
+        makeShelter({ onSiteSecurity: false }),
       );
       expect(result.restrictions).toBe(true);
     });
 
     it('is visible when otherRules has real content', () => {
       const result = getShelterVisibility(
-        makeShelter({ otherRules: '<p>No smoking</p>' })
+        makeShelter({ otherRules: '<p>No smoking</p>' }),
       );
       expect(result.restrictions).toBe(true);
     });
 
     it('is hidden when otherRules is empty HTML', () => {
       const result = getShelterVisibility(
-        makeShelter({ otherRules: '<p></p>' })
+        makeShelter({ otherRules: '<p></p>' }),
       );
       expect(result.restrictions).toBe(false);
     });
 
     it('is hidden when otherRules is only &nbsp;', () => {
       const result = getShelterVisibility(
-        makeShelter({ otherRules: '<p>&nbsp;</p>' })
+        makeShelter({ otherRules: '<p>&nbsp;</p>' }),
       );
       expect(result.restrictions).toBe(false);
     });
@@ -131,21 +131,21 @@ describe('getShelterVisibility', () => {
 
     it('is visible when services array has items', () => {
       const result = getShelterVisibility(
-        makeShelter({ services: [{ id: '1' }] })
+        makeShelter({ services: [{ id: '1' }] }),
       );
       expect(result.services).toBe(true);
     });
 
     it('is visible when otherServices has real content', () => {
       const result = getShelterVisibility(
-        makeShelter({ otherServices: '<p>Laundry available</p>' })
+        makeShelter({ otherServices: '<p>Laundry available</p>' }),
       );
       expect(result.services).toBe(true);
     });
 
     it('is hidden when otherServices is empty HTML', () => {
       const result = getShelterVisibility(
-        makeShelter({ otherServices: '<p>&nbsp;</p>' })
+        makeShelter({ otherServices: '<p>&nbsp;</p>' }),
       );
       expect(result.services).toBe(false);
     });
@@ -154,14 +154,14 @@ describe('getShelterVisibility', () => {
   describe('description section', () => {
     it('is hidden when description is empty HTML', () => {
       const result = getShelterVisibility(
-        makeShelter({ description: '<p></p>' })
+        makeShelter({ description: '<p></p>' }),
       );
       expect(result.description).toBe(false);
     });
 
     it('is visible when description has content', () => {
       const result = getShelterVisibility(
-        makeShelter({ description: '<p>A great shelter</p>' })
+        makeShelter({ description: '<p>A great shelter</p>' }),
       );
       expect(result.description).toBe(true);
     });
@@ -177,14 +177,14 @@ describe('getShelterVisibility', () => {
       const result = getShelterVisibility(
         makeShelter({
           photos: [{ id: '1', file: { url: 'http://example.com/photo.jpg' } }],
-        })
+        }),
       );
       expect(result.media).toBe(true);
     });
 
     it('is visible when mediaLinks has items', () => {
       const result = getShelterVisibility(
-        makeShelter({ mediaLinks: [{ id: '1' }] })
+        makeShelter({ mediaLinks: [{ id: '1' }] }),
       );
       expect(result.media).toBe(true);
     });
@@ -213,112 +213,112 @@ describe('getRestrictionsFieldVisibility', () => {
 
   it('hides maxStay when it is null', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ maxStay: null })
+      makeShelter({ maxStay: null }),
     );
     expect(result.maxStay).toBe(false);
   });
 
   it('always shows curfew (renders "No" when empty)', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ curfew: null })
+      makeShelter({ curfew: null }),
     );
     expect(result.curfew).toBe(true);
   });
 
   it('shows exitPolicy when array has items', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ exitPolicy: [{ name: 'VOLUNTARY' }] })
+      makeShelter({ exitPolicy: [{ name: 'VOLUNTARY' }] }),
     );
     expect(result.exitPolicy).toBe(true);
   });
 
   it('hides exitPolicy when array is empty', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ exitPolicy: [] })
+      makeShelter({ exitPolicy: [] }),
     );
     expect(result.exitPolicy).toBe(false);
   });
 
   it('shows visitorsAllowed when explicitly true', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ visitorsAllowed: true })
+      makeShelter({ visitorsAllowed: true }),
     );
     expect(result.visitorsAllowed).toBe(true);
   });
 
   it('shows visitorsAllowed when explicitly false', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ visitorsAllowed: false })
+      makeShelter({ visitorsAllowed: false }),
     );
     expect(result.visitorsAllowed).toBe(true);
   });
 
   it('hides visitorsAllowed when null', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ visitorsAllowed: null })
+      makeShelter({ visitorsAllowed: null }),
     );
     expect(result.visitorsAllowed).toBe(false);
   });
 
   it('shows emergencySurge when explicitly false', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ emergencySurge: false })
+      makeShelter({ emergencySurge: false }),
     );
     expect(result.emergencySurge).toBe(true);
   });
 
   it('hides emergencySurge when null', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ emergencySurge: null })
+      makeShelter({ emergencySurge: null }),
     );
     expect(result.emergencySurge).toBe(false);
   });
 
   it('shows onSiteSecurity when true', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ onSiteSecurity: true })
+      makeShelter({ onSiteSecurity: true }),
     );
     expect(result.onSiteSecurity).toBe(true);
   });
 
   it('shows onSiteSecurity when false', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ onSiteSecurity: false })
+      makeShelter({ onSiteSecurity: false }),
     );
     expect(result.onSiteSecurity).toBe(true);
   });
 
   it('hides onSiteSecurity when null', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ onSiteSecurity: null })
+      makeShelter({ onSiteSecurity: null }),
     );
     expect(result.onSiteSecurity).toBe(false);
   });
 
   it('shows otherRules when content is real text', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ otherRules: '<p>No visitors after 10pm</p>' })
+      makeShelter({ otherRules: '<p>No visitors after 10pm</p>' }),
     );
     expect(result.otherRules).toBe(true);
   });
 
   it('hides otherRules when content is empty HTML', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ otherRules: '<p></p>' })
+      makeShelter({ otherRules: '<p></p>' }),
     );
     expect(result.otherRules).toBe(false);
   });
 
   it('hides otherRules when content is only &nbsp;', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ otherRules: '<p>&nbsp;</p>' })
+      makeShelter({ otherRules: '<p>&nbsp;</p>' }),
     );
     expect(result.otherRules).toBe(false);
   });
 
   it('hides otherRules when null', () => {
     const result = getRestrictionsFieldVisibility(
-      makeShelter({ otherRules: null })
+      makeShelter({ otherRules: null }),
     );
     expect(result.otherRules).toBe(false);
   });

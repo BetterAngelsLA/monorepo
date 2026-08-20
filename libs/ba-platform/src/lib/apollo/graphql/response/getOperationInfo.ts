@@ -11,7 +11,7 @@ import type { GraphQLResponse } from './types';
  */
 export function getOperationInfo(
   response: GraphQLResponse,
-  operationName: string
+  operationName: string,
 ): OperationInfo | null {
   const result = response.data?.[operationName];
 

@@ -4,7 +4,6 @@ from unittest.mock import ANY
 import time_machine
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
-from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
@@ -18,7 +17,6 @@ from notes.models import (
 )
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from teams.models import Team
 from unittest_parametrize import parametrize
 
 
@@ -48,7 +46,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "privateDetails": "Updated private details",
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(self.org_1_team_1.pk),
             }
         )
         # Update location via dedicated mutation
@@ -70,7 +68,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 8
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -85,7 +83,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "privateDetails": "Updated private details",
             "publicDetails": "Updated public details",
             "purpose": "Updated Note",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "location": {
                 "id": ANY,
                 "address": {
@@ -138,7 +136,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 }}
             }}
         """
-        expected_query_count = 8
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -161,7 +159,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     )
     def test_notes_query_authors_filter(
         self,
-        authors: list[SelahTeamEnum],
+        authors: list[str],
         expected_results_count: int,
         expected_note_labels: list[str],
     ) -> None:
@@ -210,7 +208,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     )
     def test_notes_query_organizations_filter(
         self,
-        organizations: list[SelahTeamEnum],
+        organizations: list[str],
         expected_results_count: int,
         expected_note_labels: list[str],
     ) -> None:
@@ -248,45 +246,65 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
         self.assertCountEqual(expected_ids, actual_ids)
 
+    def test_note_query_legacy_team_selection_still_resolves(self) -> None:
+        """The exact selection shipped in native app builds must keep validating.
+
+        Every ``currentTeam`` block in those builds is ``{ id slug name }``, so
+        ``currentTeam`` and ``slug`` have to survive together — removing either one
+        fails the whole document. Both go in #2342, once no build selects them.
+        """
+        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
+
+        query = """
+            query ($id: ID!) {
+                note(pk: $id) {
+                    team { id name }
+                    currentTeam { id slug name }
+                }
+            }
+        """
+        response = self.execute_graphql(query, {"id": self.note["id"]})
+
+        note = response["data"]["note"]
+        self.assertEqual(note["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
+        self.assertEqual(
+            note["currentTeam"],
+            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
+        )
+
     @parametrize(
-        ("teams, expected_results_count, expected_note_labels"),
+        ("team_labels, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
-            ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"]),
-            ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"]),
+            (["org_1_team_1", "org_1_team_2"], 2, ["note_2", "note_3"]),
+            (["org_1_team_2"], 1, ["note_3"]),
         ],
     )
     def test_notes_query_teams_filter(
         self,
-        teams: list[SelahTeamEnum],
+        team_labels: list[str],
         expected_results_count: int,
         expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
+
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
                 "clientProfile": self.client_profile_1.pk,
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(self.org_1_team_1.pk),
             }
         )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
                 "clientProfile": self.client_profile_2.pk,
-                "team": SelahTeamEnum.SLCC_ON_SITE.name,
+                "teamId": str(self.org_1_team_2.pk),
             }
         )["data"]["createNote"]
 
-        # TEMPORARY: Convert enum names (e.g. "WDI_ON_SITE") to slugs (e.g. "wdi_on_site").
-        # Remove this shim once SelahTeamEnum is fully deprecated and old_team is removed.
-        slugs = [SelahTeamEnum[t].value for t in teams] if teams else []
-        team_ids = (
-            list(Team.objects.filter(slug__in=slugs, organization=self.org_1).values_list("pk", flat=True))
-            if slugs
-            else []
-        )
+        team_ids = [str(getattr(self, label).pk) for label in team_labels]
         filters = {"teamIds": team_ids}
 
         query = """
@@ -502,7 +520,8 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
             {s.label: {"priority": s.priority, "category": s.category.name if s.category else None}} for s in services
         ]
         actual_services = [
-            {s["label"]: {"priority": s["priority"], "category": s["category"]["name"]}} for s in results
+            {s["label"]: {"priority": s["priority"], "category": s["category"]["name"] if s["category"] else None}}
+            for s in results
         ]
         self.assertCountEqual(expected_services, actual_services)
 

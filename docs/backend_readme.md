@@ -50,7 +50,6 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
-
   - email: `admin@example.com`
   - psw: `password`
 
@@ -108,10 +107,10 @@ To run tests with breakpoints via the terminal, you'll need to use a `uv shell` 
    from IPython import embed; embed()
    ```
 
-1. Run tests using `python manage.py test`. Example:
+1. Run tests using `uv run pytest`. Example:
 
    ```bash
-   python manage.py test accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
+   uv run pytest accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
    ```
 
 To use VSCode's debugger:

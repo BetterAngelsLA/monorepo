@@ -10,7 +10,7 @@ export function extractTotalCount(props: TProps): number | undefined {
   const { primaryObject, fallbackObject, totalCountPath } = props;
 
   const primaryVal = toNonNegativeInteger(
-    readAtPath<unknown>(primaryObject, totalCountPath)
+    readAtPath<unknown>(primaryObject, totalCountPath),
   );
 
   if (typeof primaryVal === 'number') {
@@ -18,7 +18,7 @@ export function extractTotalCount(props: TProps): number | undefined {
   }
 
   const fallbackVal = toNonNegativeInteger(
-    readAtPath<unknown>(fallbackObject, totalCountPath)
+    readAtPath<unknown>(fallbackObject, totalCountPath),
   );
 
   return fallbackVal;

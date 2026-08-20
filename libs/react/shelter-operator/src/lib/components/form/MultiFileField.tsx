@@ -27,14 +27,16 @@ export function MultiFileField({
         type="file"
         multiple
         accept={accept}
-        onChange={event => {
-          const files = event.target.files ? Array.from(event.target.files) : [];
+        onChange={(event) => {
+          const files = event.target.files
+            ? Array.from(event.target.files)
+            : [];
           onChange(files);
         }}
       />
       {values.length > 0 ? (
         <ul className="text-sm text-gray-600 list-disc list-inside">
-          {values.map(file => (
+          {values.map((file) => (
             <li key={file.name}>{file.name}</li>
           ))}
         </ul>

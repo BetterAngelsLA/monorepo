@@ -10,9 +10,9 @@ import { ComponentType, ReactElement, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { FeatureFlags } from '../../static';
-import { MainContainer } from '../../ui-components';
+import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
-import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
+import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
@@ -50,7 +50,7 @@ const tabComponents: Record<
 const getTabComponent = (
   key: ClientViewTabEnum,
   client: ClientProfileQuery | undefined,
-  openCard?: ClientProfileSectionEnum
+  openCard?: ClientProfileSectionEnum,
 ): ReactElement | null => {
   if (key === ClientViewTabEnum.Profile) {
     return <ClientProfileView client={client} openCard={openCard} />;
@@ -79,7 +79,7 @@ export default function Client({
     {
       variables: { id: clientProfileId },
       fetchPolicy: 'cache-and-network',
-    }
+    },
   );
 
   const [tab, setTab] = useState<ClientViewTabEnum>(ClientViewTabEnum.Profile);
@@ -142,6 +142,7 @@ export default function Client({
               accessible
               accessibilityHint="goes to previous screen"
               onPress={() => router.dismissTo(arrivedFrom || '/')}
+              testID="client-screen-back-btn"
             >
               <TextRegular color={Colors.WHITE}>Back</TextRegular>
             </Pressable>
@@ -158,6 +159,7 @@ export default function Client({
       />
       <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
         {showHeader && <ClientHeader client={data?.clientProfile} />}
+        <UploadProgressBar />
         <ClientTabs selectedTab={tab} setTab={setTab} />
         {getTabComponent(tab, data, openCard)}
       </MainContainer>

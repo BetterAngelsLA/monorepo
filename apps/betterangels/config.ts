@@ -1,6 +1,6 @@
 // config.ts
 import Constants from 'expo-constants';
-import { requireOptionalNativeModule } from 'expo-modules-core';
+import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 /**
@@ -50,7 +50,7 @@ function loadConfig() {
           !googlePlacesApiKey && 'Google Places API key',
         ]
           .filter(Boolean)
-          .join(', ')
+          .join(', '),
     );
   }
 

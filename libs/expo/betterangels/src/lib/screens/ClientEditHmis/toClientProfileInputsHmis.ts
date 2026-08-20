@@ -37,7 +37,7 @@ type TRequiredHmisFields = Required<
 
 export function toUpdateClientProfileInputHmis(
   client: HmisClientProfileType,
-  inputs: Partial<UpdateHmisClientProfileInput>
+  inputs: Partial<UpdateHmisClientProfileInput>,
 ): UpdateHmisClientProfileInput | null {
   if (!inputs || !client) {
     return null;
@@ -58,7 +58,7 @@ export function toUpdateClientProfileInputHmis(
 
     raceEthnicity: firstNonEmptyArray(
       safeInputs.raceEthnicity,
-      client.raceEthnicity
+      client.raceEthnicity,
     ) ?? [FALLBACK_RACE_ETHNICITY],
 
     nameSuffix:

@@ -14,13 +14,13 @@ export function SpecialSituationRestrictions({
       {shelter.specialSituationRestrictions
         .filter(
           (
-            restriction
+            restriction,
           ): restriction is { name: SpecialSituationRestrictionChoices } =>
-            !!restriction.name
+            !!restriction.name,
         )
         .map(
           (restriction) =>
-            enumDisplaySpecialSituationRestrictionChoices[restriction.name]
+            enumDisplaySpecialSituationRestrictionChoices[restriction.name],
         )
         .join(', ')}
     </Card>

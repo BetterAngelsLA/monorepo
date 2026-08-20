@@ -6,23 +6,23 @@ describe('Radio component', () => {
     const { getByText } = render(
       <Radio
         displayValue="Option Test"
-        onPress={jest.fn()}
+        onPress={vi.fn()}
         value="test"
         selectedValue="other"
-      />
+      />,
     );
     expect(getByText('Option Test')).toBeTruthy();
   });
 
   it('calls onPress with value when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <Radio
         displayValue="Pressable Option"
         onPress={mockOnPress}
         value="value1"
         selectedValue="notValue1"
-      />
+      />,
     );
     fireEvent.press(getByText('Pressable Option'));
     expect(mockOnPress).toHaveBeenCalledWith('value1');
@@ -32,10 +32,10 @@ describe('Radio component', () => {
     const { getByA11yHint } = render(
       <Radio
         displayValue="Accessibility Test"
-        onPress={jest.fn()}
+        onPress={vi.fn()}
         value="test"
         selectedValue="other"
-      />
+      />,
     );
 
     const button = getByA11yHint('selects test');

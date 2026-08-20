@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, PlusIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BaseModal,
@@ -8,6 +8,7 @@ import {
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronIcon } from './ChevronIcon';
 
 type SelectStatusProps = {
   value: string;
@@ -31,7 +32,7 @@ export function SelectStatus({
 
   const current = useMemo(
     () => options.find((o) => o.value === value),
-    [value, options]
+    [value, options],
   );
 
   const openSheet = () => {
@@ -40,14 +41,6 @@ export function SelectStatus({
   };
 
   const closeSheet = () => setOpen(false);
-
-  const Chevron = ({ up = false }: { up?: boolean }) => (
-    <ChevronLeftIcon
-      size="sm"
-      color={current?.text || Colors.WHITE}
-      rotate={up ? '90deg' : '270deg'}
-    />
-  );
 
   return (
     <>
@@ -69,7 +62,7 @@ export function SelectStatus({
         <TextBold size="sm" color={current?.text}>
           {current?.displayValue}
         </TextBold>
-        <Chevron up={open} />
+        <ChevronIcon up={open} color={current?.text} />
       </Pressable>
 
       <BaseModal

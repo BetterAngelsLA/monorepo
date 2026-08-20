@@ -1,9 +1,9 @@
-query AdminTeams($pagination: OffsetPaginationInput) {
-  teams(pagination: $pagination) {
+query AdminTeams($filters: TeamFilter, $pagination: OffsetPaginationInput) {
+  teams(filters: $filters, pagination: $pagination) {
     results {
       id
-      slug
       name
+      isActive
       createdAt
     }
     totalCount
@@ -14,8 +14,8 @@ mutation CreateTeam($data: CreateTeamInput!) {
   createTeam(data: $data) {
     ... on TeamType {
       id
-      slug
       name
+      isActive
       createdAt
     }
     ... on OperationInfo {
@@ -32,8 +32,8 @@ mutation UpdateTeam($data: UpdateTeamInput!) {
   updateTeam(data: $data) {
     ... on TeamType {
       id
-      slug
       name
+      isActive
       createdAt
     }
     ... on OperationInfo {

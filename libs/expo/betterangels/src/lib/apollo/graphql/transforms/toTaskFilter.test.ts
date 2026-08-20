@@ -1,5 +1,4 @@
 /**
- * @jest-environment node
  */
 
 import type { IdFilterLookup, TaskFilter } from '@monorepo/ba-platform/types';
@@ -195,7 +194,7 @@ describe('toTaskFilter', () => {
     const input = {
       search: ' hello ',
       authors: ['a1', 'a2'],
-      teams: ['ECHO_PARK_ON_SITE'],
+      teamIds: ['team-1'],
     };
 
     const snapshot = JSON.parse(JSON.stringify(input));

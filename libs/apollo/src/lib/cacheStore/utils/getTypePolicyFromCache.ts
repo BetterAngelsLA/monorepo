@@ -3,7 +3,7 @@ import { getTypePoliciesFromCache } from './getTypePoliciesFromCache';
 
 export function getTypePolicyFromCache(
   cache: ApolloCache,
-  typename: string
+  typename: string,
 ): TypePolicy | undefined {
   const typePolicies = getTypePoliciesFromCache(cache);
 

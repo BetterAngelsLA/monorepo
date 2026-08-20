@@ -1,0 +1,69 @@
+# Visits the fixture client's Profile Summary screen, creating the client if needed.
+# Precondition: on the clients screen.
+# Input env vars:
+#   FIXTURE_CLIENT_NAME — name to search/create (default: "e2e-test-client")
+# Output:
+#   output.fixtureClientName — the client name
+# Side effects: navigates from the clients list to the client's Profile Summary screen.
+
+appId: ${MAESTRO_APP_ID}
+---
+# Precondition: on the clients screen
+- assertVisible:
+    id: clients-screen
+
+# define define fixtureClientName by platform to avoid parallel issues in CI
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-ios-client'}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - evalScript: ${output.fixtureClientName = FIXTURE_CLIENT_NAME || 'e2e-test-android-client'}
+
+# Search and try to select the client
+- runFlow:
+    file: search_and_select_client.yml
+    env:
+      CLIENT_NAME: ${output.fixtureClientName}
+
+# If not found, create it
+- runFlow:
+    when:
+      visible: 'No results'
+    commands:
+      # Open create client modal
+      - tapOn:
+          id: 'main-plus-tab-btn'
+      - tapOn: 'Add client'
+      - assertVisible: 'Create Client Profile'
+
+      # Fill in first name
+      - tapOn:
+          id: 'firstName'
+      - inputText: ${output.fixtureClientName}
+      - hideKeyboard
+
+      # Submit — navigates to profile
+      - tapOn:
+          id: 'action-btn-primary'
+      - waitForAnimationToEnd
+      - assertVisible: ${output.fixtureClientName}
+      - assertVisible:
+          id: 'client-tab-profile'
+
+      # Go back to clients list and re-select
+      - tapOn:
+          id: 'client-screen-back-btn'
+
+      - runFlow:
+          file: search_and_select_client.yml
+          env:
+            CLIENT_NAME: ${output.fixtureClientName}
+
+# Assert we're on the correct profile summary screen
+- assertVisible: 'Profile Summary'
+- assertVisible: ${output.fixtureClientName}

@@ -4,20 +4,20 @@ import { TextButton } from './TextButton';
 describe('TextButton Component', () => {
   it('renders with correct title', () => {
     const { getByText } = render(
-      <TextButton accessibilityHint={''} title="Click Me" color="blue" />
+      <TextButton accessibilityHint={''} title="Click Me" color="blue" />,
     );
     expect(getByText('Click Me')).toBeTruthy();
   });
 
   it('calls onPress when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <TextButton
         accessibilityHint={''}
         title="Press Me"
         onPress={mockOnPress}
         color="blue"
-      />
+      />,
     );
 
     fireEvent.press(getByText('Press Me'));
@@ -25,7 +25,7 @@ describe('TextButton Component', () => {
   });
 
   it('does not call onPress when disabled and pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <TextButton
         title="Disabled Button"
@@ -33,7 +33,7 @@ describe('TextButton Component', () => {
         onPress={mockOnPress}
         disabled
         color="blue"
-      />
+      />,
     );
 
     fireEvent.press(getByText('Disabled Button'));
@@ -46,7 +46,7 @@ describe('TextButton Component', () => {
         title="Accessible Button"
         color="blue"
         accessibilityHint={''}
-      />
+      />,
     );
     expect(getByRole('button')).toBeTruthy();
   });

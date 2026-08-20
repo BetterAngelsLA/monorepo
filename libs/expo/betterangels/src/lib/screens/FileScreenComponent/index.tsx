@@ -64,7 +64,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           },
         },
       ],
-    }
+    },
   );
 
   async function handleUpdateClientDocument() {

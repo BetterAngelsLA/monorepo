@@ -1,4 +1,7 @@
-import { shelterProfileSegments } from './routePaths';
+import { mgmtRouteConfig, profileRouteConfig } from './routePaths';
 
 export type TShelterProfileSegment =
-  (typeof shelterProfileSegments)[keyof typeof shelterProfileSegments];
+  (typeof profileRouteConfig.children)[keyof typeof profileRouteConfig.children];
+
+export type TShelterMgmtSegment =
+  (typeof mgmtRouteConfig.children)[keyof typeof mgmtRouteConfig.children];

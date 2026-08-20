@@ -9,13 +9,13 @@ describe('Button Component', () => {
         title="Click Me"
         variant="primary"
         size="sm"
-      />
+      />,
     );
     expect(getByText('Click Me')).toBeTruthy();
   });
 
   it('calls onPress when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <Button
         title="Press Me"
@@ -23,7 +23,7 @@ describe('Button Component', () => {
         variant="primary"
         size="sm"
         accessibilityHint={''}
-      />
+      />,
     );
 
     fireEvent.press(getByText('Press Me'));
@@ -31,7 +31,7 @@ describe('Button Component', () => {
   });
 
   it('does not call onPress when disabled and pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByText } = render(
       <Button
         accessibilityHint={''}
@@ -40,7 +40,7 @@ describe('Button Component', () => {
         disabled
         variant="primary"
         size="sm"
-      />
+      />,
     );
 
     fireEvent.press(getByText('Disabled Button'));
@@ -60,7 +60,7 @@ describe('Button Component', () => {
           variant={variant}
           size="sm"
           testID={testID}
-        />
+        />,
       );
       expect(getByTestId(testID)).toBeTruthy();
     });
@@ -73,7 +73,7 @@ describe('Button Component', () => {
         title="Accessible Button"
         variant="primary"
         size="sm"
-      />
+      />,
     );
     expect(getByRole('button')).toBeTruthy();
   });

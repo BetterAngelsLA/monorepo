@@ -2,7 +2,7 @@ import { BottomSheetOptions } from '../../types';
 
 export function resolveBackdropSheetOptions(
   singleBackdrop: boolean,
-  options?: BottomSheetOptions
+  options?: BottomSheetOptions,
 ): BottomSheetOptions {
   if (!singleBackdrop) {
     return options ?? {};

@@ -1,6 +1,11 @@
-export { nullShelterPropertyFilters, shelterPropertyFiltersAtom } from './shelterPropertyFiltersAtom';
+export {
+  nullShelterPropertyFilters,
+  shelterPropertyFiltersAtom,
+} from './shelterPropertyFiltersAtom';
+export { savedMapViewportAtom } from './mapViewportAtom';
 export {
   shelterLocationSearchInputAtom,
+  shelterMapBoundsFilterAtom,
   shelterNameSearchAtom,
   shelterNameSearchInputAtom,
   shelterSearchAppliedLocationAtom,

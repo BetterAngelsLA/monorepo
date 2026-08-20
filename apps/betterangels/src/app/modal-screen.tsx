@@ -1,6 +1,5 @@
 import {
   KeyboardToolbarProvider,
-  SnackbarProvider,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -15,19 +14,17 @@ export default function BaseModalScreen() {
   }
 
   return (
-    <SnackbarProvider>
-      <BottomSheetModalProvider>
-        <KeyboardToolbarProvider>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: Colors.WHITE,
-            }}
-          >
-            {content}
-          </View>
-        </KeyboardToolbarProvider>
-      </BottomSheetModalProvider>
-    </SnackbarProvider>
+    <BottomSheetModalProvider>
+      <KeyboardToolbarProvider>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: Colors.WHITE,
+          }}
+        >
+          {content}
+        </View>
+      </KeyboardToolbarProvider>
+    </BottomSheetModalProvider>
   );
 }

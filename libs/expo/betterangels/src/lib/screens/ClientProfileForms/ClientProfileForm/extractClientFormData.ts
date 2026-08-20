@@ -25,7 +25,7 @@ const defaultSocialMedias = [
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
-  clientProfile: GetClientProfileQuery['clientProfile']
+  clientProfile: GetClientProfileQuery['clientProfile'],
 ): Partial<FormStateMapping[typeof formType]> => {
   switch (formType) {
     case ClientProfileSectionEnum.FullName: {
@@ -112,7 +112,7 @@ export const extractClientFormData = (
       const updatedSocialMediaProfiles = defaultSocialMedias.map(
         (defaultProfile) => {
           const existingProfile = socialMediaProfiles?.find(
-            (profile) => profile.platform === defaultProfile.platform
+            (profile) => profile.platform === defaultProfile.platform,
           );
 
           if (existingProfile) {
@@ -121,7 +121,7 @@ export const extractClientFormData = (
           }
 
           return defaultProfile;
-        }
+        },
       );
 
       return {

@@ -7,7 +7,7 @@
  *   normalizePath(['meta', 'totalCount']) → ['meta', 'totalCount']
  */
 export function toPathArray(
-  path?: string | ReadonlyArray<string>
+  path?: string | ReadonlyArray<string>,
 ): string[] | undefined {
   if (!path) {
     return undefined;
@@ -25,13 +25,13 @@ export function toPathArray(
 }
 
 export function toPathArrayStrict(
-  path?: string | ReadonlyArray<string>
+  path?: string | ReadonlyArray<string>,
 ): string[] {
   const result = toPathArray(path);
 
   if (!result?.length) {
     throw new Error(
-      `[toPathArrayStrict] Expected a non-empty string or string[]. Received invalid path input: [${path}].`
+      `[toPathArrayStrict] Expected a non-empty string or string[]. Received invalid path input: [${path}].`,
     );
   }
 

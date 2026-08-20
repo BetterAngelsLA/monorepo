@@ -3,7 +3,7 @@ import { Select } from './Select';
 
 describe('Select Component', () => {
   const mockData = ['Option 1', 'Option 2', 'Option 3'];
-  const mockSetExternalValue = jest.fn();
+  const mockSetExternalValue = vi.fn();
 
   it('renders correctly with placeholder', () => {
     const { getByText } = render(
@@ -11,7 +11,7 @@ describe('Select Component', () => {
         items={mockData.map((item) => ({ title: item }))}
         onValueChange={mockSetExternalValue}
         placeholder="Select an option"
-      />
+      />,
     );
     expect(getByText('Select an option')).toBeTruthy();
   });
@@ -23,7 +23,7 @@ describe('Select Component', () => {
         onValueChange={mockSetExternalValue}
         label="Select Label"
         placeholder="Select an option"
-      />
+      />,
     );
     expect(getByText('Select Label')).toBeTruthy();
   });

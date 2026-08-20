@@ -10,11 +10,11 @@ import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 interface INoteBylineProps {
   createdBy?: NoteSummaryQuery['note']['createdBy'];
   organization: NoteSummaryQuery['note']['organization'];
-  currentTeam?: { name?: string | null } | null;
+  team?: { name?: string | null } | null;
 }
 
 export default function NoteByline(props: INoteBylineProps) {
-  const { createdBy, organization, currentTeam } = props;
+  const { createdBy, organization, team } = props;
 
   const authorName = createdBy
     ? `${createdBy.firstName} ${createdBy.lastName}`
@@ -47,10 +47,10 @@ export default function NoteByline(props: INoteBylineProps) {
         </TextMedium>
         <TextRegular selectable size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {currentTeam?.name && (
+          {team?.name && (
             <TextRegular selectable size="xs">
               {' - '}
-              {currentTeam.name}
+              {team.name}
             </TextRegular>
           )}
         </TextRegular>

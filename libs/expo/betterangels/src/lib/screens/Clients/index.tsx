@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -23,10 +23,17 @@ type TClientProfileHmis =
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
-    null
+    null,
   );
   const [search, setSearch] = useState('');
   const { user } = useUser();
+
+  // reset search query every time the screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      setSearch('');
+    }, []),
+  );
 
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
@@ -36,7 +43,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         onMenuPress={setCurrentClient}
       />
     ),
-    [setCurrentClient]
+    [setCurrentClient],
   );
 
   const handleClientPress = useCallback((id: string) => {
@@ -46,17 +53,20 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     });
   }, []);
 
-  const renderClientItemHmis = useCallback((client: TClientProfileHmis) => {
-    const { id } = client;
+  const renderClientItemHmis = useCallback(
+    (client: TClientProfileHmis) => {
+      const { id } = client;
 
-    if (!id) {
-      return null;
-    }
+      if (!id) {
+        return null;
+      }
 
-    return (
-      <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
-    );
-  }, []);
+      return (
+        <ClientCardHmis onPress={() => handleClientPress(id)} client={client} />
+      );
+    },
+    [handleClientPress],
+  );
 
   return (
     <View style={styles.container} testID="clients-screen">
@@ -66,7 +76,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         <HorizontalContainer>
           <SearchBar
             value={search}
-            placeholder="Search by name clients"
+            placeholder="Search name, phone, DOB, HMIS ID"
+            testID="clients-search-input"
             onChange={(text) => setSearch(text)}
             onClear={() => setSearch('')}
             style={{ marginBottom: Spacings.xs }}

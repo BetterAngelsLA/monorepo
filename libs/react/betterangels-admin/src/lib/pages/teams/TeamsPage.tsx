@@ -1,27 +1,25 @@
 import { useMutation, useQuery } from '@apollo/client/react';
+import { formatTeamDisplayName, useActiveOrg } from '@monorepo/ba-platform';
+import { TeamPermissions } from '@monorepo/ba-platform/permissions';
+import { Ordering, TeamType } from '@monorepo/ba-platform/types';
 import {
   SearchInput,
   Table,
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { GroupsIcon, PlusIcon, ThreeDotIcon } from '@monorepo/react/icons';
+import { GroupsIcon, PlusIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
-import {
-  Ordering,
-  TeamType,
-} from '@monorepo/ba-platform/types';
-import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useOutsideClick } from '../../hooks';
-import { useActiveOrg } from '@monorepo/ba-platform';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
 } from './__generated__/teams.generated';
-import { AddTeamDrawer } from './AddTeamDrawer';
+import { TeamFormDrawer } from './TeamFormDrawer';
+import { ThreeDotMenu } from './ThreeDotMenu';
 
 type IProps = {
   className?: string;
@@ -34,7 +32,7 @@ const COLUMNS: {
   field: SortField;
   render: (t: TeamType) => string | JSX.Element;
 }[] = [
-  { label: 'Name', field: 'name', render: (t) => t.name },
+  { label: 'Name', field: 'name', render: (t) => formatTeamDisplayName(t) },
   {
     label: 'Created',
     field: 'createdAt',
@@ -54,6 +52,7 @@ export function TeamsPage(props: IProps) {
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [sort, setSort] = useState<{
     field: SortField;
     direction: Ordering;
@@ -64,12 +63,12 @@ export function TeamsPage(props: IProps) {
   useOutsideClick(
     menuRef,
     () => setOpenMenuRowId(null),
-    openMenuRowId !== null
+    openMenuRowId !== null,
   );
 
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    { fetchPolicy: 'cache-and-network' }
+    { fetchPolicy: 'cache-and-network' },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
@@ -91,6 +90,20 @@ export function TeamsPage(props: IProps) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+  };
+
+  const handleEdit = (team: TeamType) => {
+    showDrawer({
+      content: (
+        <TeamFormDrawer
+          team={team}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      ),
+      contentClassName: 'p-0',
+    });
   };
 
   const handleDelete = async (team: TeamType) => {
@@ -150,10 +163,13 @@ export function TeamsPage(props: IProps) {
 
   // Filter/search client-side
   let displayTeams = teams;
+  if (!showInactive) {
+    displayTeams = displayTeams.filter((t) => t.isActive !== false);
+  }
   if (search) {
     const lower = search.toLowerCase();
     displayTeams = displayTeams.filter((t) =>
-      t.name.toLowerCase().includes(lower)
+      t.name.toLowerCase().includes(lower),
     );
   }
   // Sort client-side
@@ -169,37 +185,6 @@ export function TeamsPage(props: IProps) {
     return sort.direction === Ordering.Asc ? cmp : -cmp;
   });
 
-  const ThreeDotMenu = ({ team }: { team: TeamType }) => {
-    const isOpen = openMenuRowId === team.id;
-    return (
-      <div className="relative">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenMenuRowId((prev) => (prev === team.id ? null : team.id));
-          }}
-          className="flex items-center justify-center h-8 w-8 rounded-[8px] bg-neutral-99 relative z-0"
-        >
-          <ThreeDotIcon className="w-6" fill="#052b73" />
-        </button>
-        {isOpen && (
-          <div
-            ref={menuRef}
-            className="absolute flex flex-col items-start top-full right-0 shadow-md bg-white z-10 p-2 rounded-lg"
-          >
-            <button
-              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
-              onClick={() => void handleDelete(team)}
-              disabled={deleting}
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="h-full flex flex-col">
       <div className="mb-10">
@@ -211,15 +196,24 @@ export function TeamsPage(props: IProps) {
       </div>
 
       <div className="flex items-center justify-between gap-5 mb-6">
-        <div>
+        <div className="flex items-center gap-4">
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+            />
+            Show inactive teams
+          </label>
         </div>
         {hasPermission(TeamPermissions.Add) && (
           <button
             onClick={() =>
               showDrawer({
                 content: (
-                  <AddTeamDrawer
+                  <TeamFormDrawer
                     onSuccess={() => {
                       refetch();
                     }}
@@ -245,48 +239,68 @@ export function TeamsPage(props: IProps) {
         <div className="text-center py-10 text-neutral-60">
           {search
             ? 'No teams match your search.'
-            : 'No teams in this organization.'}
+            : !showInactive
+              ? 'No active teams in this organization.'
+              : 'No teams in this organization.'}
         </div>
       )}
 
       {hasPermission(TeamPermissions.View) && displayTeams.length > 0 && (
         <>
-            <>
-              {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
-              <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
-                {displayTeams.map((team) => (
-                  <div
-                    key={team.id}
-                    className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-95 flex items-center justify-center">
-                        <GroupsIcon className="w-4 h-4 text-primary-40" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-sm truncate">
-                          {team.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Created {formatCreatedDate(team.createdAt)}
-                        </div>
-                      </div>
-                      <ThreeDotMenu team={team} />
+          <>
+            {/* ── Mobile: card layout (shown < lg, i.e. < 1024px) ── */}
+            <div className="lg:hidden space-y-2 overflow-y-auto flex-1 min-h-0">
+              {displayTeams.map((team) => (
+                <div
+                  key={team.id}
+                  className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-95 flex items-center justify-center">
+                      <GroupsIcon className="w-4 h-4 text-primary-40" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900 text-sm truncate">
+                        {formatTeamDisplayName(team)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Created {formatCreatedDate(team.createdAt)}
+                      </div>
+                    </div>
+                    <ThreeDotMenu
+                      team={team}
+                      openMenuRowId={openMenuRowId}
+                      setOpenMenuRowId={setOpenMenuRowId}
+                      menuRef={menuRef}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      deleting={deleting}
+                    />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
-              {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
-              <div className={mergeCss(['hidden lg:flex', parentCss])}>
-                <Table<TeamType>
-                  action={(row) => <ThreeDotMenu team={row} />}
-                  data={displayTeams}
-                  header={headerButtons}
-                  renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
-                />
-              </div>
-            </>
+            {/* ── Desktop: table layout (shown ≥ lg, i.e. ≥ 1024px) ── */}
+            <div className={mergeCss(['hidden lg:flex', parentCss])}>
+              <Table<TeamType>
+                action={(row) => (
+                  <ThreeDotMenu
+                    team={row}
+                    openMenuRowId={openMenuRowId}
+                    setOpenMenuRowId={setOpenMenuRowId}
+                    menuRef={menuRef}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    deleting={deleting}
+                  />
+                )}
+                data={displayTeams}
+                header={headerButtons}
+                renderCell={(row, colIndex) => COLUMNS[colIndex].render(row)}
+              />
+            </div>
+          </>
         </>
       )}
     </div>

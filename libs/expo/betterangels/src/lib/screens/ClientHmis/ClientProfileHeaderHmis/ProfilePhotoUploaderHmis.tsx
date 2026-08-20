@@ -17,7 +17,6 @@ interface ProfilePhotoUploaderHmisProps {
   clientId: string;
   imageUrl: string | null;
   headers?: Record<string, string> | null;
-  onUploadSuccess?: () => void;
 }
 
 type ModalType = 'picker' | 'profile' | null;
@@ -32,7 +31,6 @@ export function ProfilePhotoUploaderHmis({
   clientId,
   imageUrl,
   headers,
-  onUploadSuccess,
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,7 +39,12 @@ export function ProfilePhotoUploaderHmis({
   const apolloClient = useApolloClient();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    // No upload session: this flow is modal and blocking, with the avatar
+    // spinner as its progress and a snackbar as its failure. Registering it
+    // in the background-upload store only ever put a phantom row in the
+    // global progress bar for work the user was already watching.
     setUploading(true);
+
     try {
       const formData = buildFormData(file);
       await uploadClientPhoto(clientId, formData);
@@ -49,13 +52,13 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      onUploadSuccess?.();
       setModalType(null);
     } catch {
       showSnackbar({
         message: 'Error uploading profile photo.',
         type: 'error',
       });
+      setModalType(null);
     } finally {
       setUploading(false);
       setModalType(null);

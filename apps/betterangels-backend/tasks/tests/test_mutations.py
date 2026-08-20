@@ -2,7 +2,6 @@ from unittest.mock import ANY
 
 import time_machine
 from clients.models import ClientProfile
-from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from hmis.models import HmisNote
@@ -27,14 +26,14 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 23
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
                 "summary": "task summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "teamId": str(self.org_1_team_1.pk),
             }
 
             self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -42,7 +41,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         created_task = response["data"]["createTask"]
         expected_task = {
-            **variables,
+            # teamId is input-only — the response exposes the team object.
+            **{k: v for k, v in variables.items() if k != "teamId"},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "id": ANY,
             "clientProfile": {
                 "id": str(client_profile.pk),
@@ -77,16 +78,18 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "description": "updated task description",
             "status": TaskStatusEnum.IN_PROGRESS.name,
             "summary": "updated task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "teamId": str(self.org_1_team_1.pk),
         }
 
-        expected_query_count = 8
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
         expected_task = {
-            **variables,
+            # teamId is input-only — the response exposes the team object.
+            **{k: v for k, v in variables.items() if k != "teamId"},
+            "team": {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name},
             "id": ANY,
             "clientProfile": None,
             "createdAt": "2025-07-31T10:11:12+00:00",
@@ -104,6 +107,33 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "updatedAt": "2025-07-31T10:11:12+00:00",
         }
         self.assertEqual(updated_task, expected_task)
+
+    def test_update_task_omitted_team_id_preserves_team(self) -> None:
+        """Regression: an update that never mentions teamId used to clear it."""
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "summary": "updated summary"})
+
+        self.assertIsNotNone(response["data"]["updateTask"])
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)
+
+    def test_update_task_explicit_null_team_id_clears_team(self) -> None:
+        """The team picker offers "none", so the mutation has to accept an explicit null.
+
+        A bare ``Maybe[ID]`` rejects one during argument conversion, which failed
+        the whole mutation rather than clearing the team.
+        """
+        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
+            "createTask"
+        ]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "teamId": None})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["updateTask"]["team"])
+        self.assertIsNone(Task.objects.get(pk=task_id).team_id)
 
     def test_delete_task_mutation(self) -> None:
         task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
@@ -139,9 +169,10 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(created_task["hmisNote"]["pk"], str(self.hmis_note.pk))
 
     def test_create_task_fails_when_linking_both_note_types(self) -> None:
-        """
-        Verify the API raises a ValidationError if we try to link
-        both a Regular Note AND an HMIS Note.
+        """A task links to one note, and ``task_single_parent_check`` is what enforces it.
+
+        ``full_clean()`` checks the constraint before the insert, so the caller
+        gets the constraint's own message rather than the Postgres text.
         """
         variables = {
             "summary": "Illegal Task",
@@ -151,9 +182,43 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         response = self.create_task_fixture(variables)
 
-        payload = response["data"]["createTask"]
-        self.assertIsNotNone(payload["messages"])
-        self.assertTrue(len(payload["messages"]) > 0)
-        error_message = payload["messages"][0]["message"]
-        self.assertIn("task_single_parent_check", error_message)
-        self.assertIn("violates", error_message)
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(
+            messages[0]["message"],
+            "A task belongs to one note, not both a note and an HMIS note.",
+        )
+        self.assertFalse(Task.objects.filter(summary="Illegal Task").exists())
+
+
+class TaskTeamValidationMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    """A task may only reference a team from its own organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_create_task_rejects_a_team_from_another_org(self) -> None:
+        response = self.create_task_fixture({"summary": "Org 1 task", "teamId": str(self.org_2_team_1.pk)})
+
+        messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
+        self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
+
+    def test_update_task_rejects_a_team_from_another_org(self) -> None:
+        task_id = self.create_task_fixture(
+            {
+                "summary": "Org 1 task to amend",
+                "teamId": str(self.org_1_team_1.pk),
+            }
+        )["data"]["createTask"]["id"]
+
+        response = self.update_task_fixture({"id": task_id, "teamId": str(self.org_2_team_1.pk)})
+
+        messages = response["data"]["updateTask"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "The selected team does not belong to this organization.")
+        self.assertEqual(messages[0]["field"], "team")
+        self.assertEqual(Task.objects.get(pk=task_id).team_id, self.org_1_team_1.pk)

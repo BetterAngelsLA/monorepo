@@ -31,14 +31,14 @@ export function ClientDocsViewHmis({
     if (meta.error) {
       console.error(
         '[ClientDocsViewHmis] File categories/names failed to load:',
-        meta.error
+        meta.error,
       );
     }
   }, [meta.error]);
 
   const filesQuery = useClientFiles(
     client?.id,
-    client?.hmisId as string | undefined
+    client?.hmisId as string | undefined,
   );
 
   const isLoading = meta.loading || filesQuery.isLoading;
@@ -48,7 +48,7 @@ export function ClientDocsViewHmis({
 
   const filesByCategory = useMemo(
     () => groupFilesByCategory(files, meta.categories),
-    [files, meta.categories]
+    [files, meta.categories],
   );
   const showEmpty = !isLoading && !filesQuery.isError && files.length === 0;
 

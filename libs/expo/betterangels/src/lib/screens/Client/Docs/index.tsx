@@ -7,6 +7,8 @@ import { ClientDocumentType } from '../../../apollo';
 import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
+import EmptyState from './EmptyState';
+import { DOC_FOLDER_TITLES } from './folders';
 import UploadModal from './UploadModal';
 
 export default function Docs({
@@ -22,12 +24,24 @@ export default function Docs({
     setExpanded,
   };
 
+  const hasDocReadyDocuments =
+    !!client?.clientProfile.docReadyDocuments?.length;
+
+  const hasConsentFormDocuments =
+    !!client?.clientProfile.consentFormDocuments?.length;
+
+  const hasOtherDocuments = !!client?.clientProfile.otherDocuments?.length;
+
+  const hasAnyDocuments =
+    hasDocReadyDocuments || hasConsentFormDocuments || hasOtherDocuments;
+
   return (
     <ScrollView
       contentContainerStyle={{ paddingVertical: Spacings.lg }}
       style={{ paddingHorizontal: Spacings.sm }}
     >
       <View
+        testID="client-view-docs"
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -53,41 +67,48 @@ export default function Docs({
           <PlusIcon />
         </IconButton>
       </View>
+
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
-        {client?.clientProfile.docReadyDocuments &&
-          client?.clientProfile.docReadyDocuments?.length > 0 && (
-            <Documents
-              title="Doc Ready"
-              {...props}
-              data={
-                client?.clientProfile.docReadyDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
-        {client?.clientProfile.consentFormDocuments &&
-          client?.clientProfile.consentFormDocuments?.length > 0 && (
-            <Documents
-              title="Forms"
-              {...props}
-              data={
-                client?.clientProfile
-                  .consentFormDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
-        {client?.clientProfile.otherDocuments &&
-          client?.clientProfile.otherDocuments?.length > 0 && (
-            <Documents
-              title="Other"
-              {...props}
-              data={
-                client?.clientProfile.otherDocuments as ClientDocumentType[]
-              }
-              clientId={client?.clientProfile.id}
-            />
-          )}
+        {!hasAnyDocuments ? (
+          <EmptyState />
+        ) : (
+          <>
+            {hasDocReadyDocuments && (
+              <Documents
+                title={DOC_FOLDER_TITLES.DOC_READY}
+                {...props}
+                data={
+                  client?.clientProfile
+                    .docReadyDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id ?? ''}
+              />
+            )}
+
+            {hasConsentFormDocuments && (
+              <Documents
+                title={DOC_FOLDER_TITLES.FORMS}
+                {...props}
+                data={
+                  client?.clientProfile
+                    .consentFormDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id ?? ''}
+              />
+            )}
+
+            {hasOtherDocuments && (
+              <Documents
+                title={DOC_FOLDER_TITLES.OTHER}
+                {...props}
+                data={
+                  client?.clientProfile.otherDocuments as ClientDocumentType[]
+                }
+                clientId={client?.clientProfile.id ?? ''}
+              />
+            )}
+          </>
+        )}
       </View>
     </ScrollView>
   );

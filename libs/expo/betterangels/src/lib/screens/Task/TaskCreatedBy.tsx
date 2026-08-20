@@ -9,12 +9,12 @@ import { TaskQuery } from './__generated__/Task.generated';
 
 type TaskCreatedByProps = {
   createdBy: TaskQuery['task']['createdBy'];
-  currentTeam?: TaskQuery['task']['currentTeam'];
+  team?: TaskQuery['task']['team'];
   organization?: TaskQuery['task']['organization'];
 };
 
 export default function TaskCreatedBy(props: TaskCreatedByProps) {
-  const { createdBy, currentTeam, organization } = props;
+  const { createdBy, team, organization } = props;
 
   return (
     <View
@@ -34,7 +34,7 @@ export default function TaskCreatedBy(props: TaskCreatedByProps) {
           {createdBy?.firstName} {createdBy?.lastName}
         </TextBold>
         <TextRegular size="sm">
-          {organization?.name} {currentTeam?.name && ` - ${currentTeam.name}`}
+          {organization?.name} {team?.name && ` - ${team.name}`}
         </TextRegular>
       </View>
     </View>

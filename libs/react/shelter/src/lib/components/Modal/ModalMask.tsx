@@ -40,6 +40,6 @@ export function ModalMask(props: IProps) {
     <div className={mergeCss(parentCss)} onClick={onMaskClick}>
       {children}
     </div>,
-    document.body
+    document.body,
   );
 }

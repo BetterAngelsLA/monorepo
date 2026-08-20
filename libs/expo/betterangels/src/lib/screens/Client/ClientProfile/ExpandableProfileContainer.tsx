@@ -5,6 +5,7 @@ import {
   ExpandableContainer,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
@@ -66,6 +67,7 @@ function Header(props: THeader) {
       {isOpen && (
         <EditButton
           onClick={onEditClick}
+          testId={toTestId(['edit', title])}
           style={styles.editButton}
           accessibilityHint={`edit ${ClientProfileCardTitles[card]}`}
         />
@@ -93,9 +95,12 @@ function OpenCloseButton(props: TOpenCloseButton) {
     ? `close ${title} section`
     : `open ${title} section`;
 
+  const testId = isOpen ? `collapse-${title}` : `expand-${title}`;
+
   return (
     <Pressable
       onPress={onClick}
+      testID={toTestId([testId])}
       accessible
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}

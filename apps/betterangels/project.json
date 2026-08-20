@@ -3,19 +3,14 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": [
-    "type:app",
-    "scope:betterangels"
-  ],
+  "tags": ["type:app", "scope:betterangels"],
   "targets": {
     "start": {
       "command": "expo start --port 8081",
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps"
-      ]
+      "dependsOn": ["sync-deps"]
     },
     "serve": {
       "command": "expo start --web",
@@ -28,18 +23,14 @@
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps"
-      ]
+      "dependsOn": ["sync-deps"]
     },
     "run-android": {
       "command": "expo run:android",
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps"
-      ]
+      "dependsOn": ["sync-deps"]
     },
     "build-list": {
       "command": "eas build:list",
@@ -52,29 +43,21 @@
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps",
-        "copy-lockfile"
-      ]
+      "dependsOn": ["sync-deps", "copy-lockfile"]
     },
     "prebuild": {
       "command": "expo prebuild --no-install",
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps"
-      ]
+      "dependsOn": ["sync-deps"]
     },
     "eas-update": {
       "command": "eas update",
       "options": {
         "cwd": "apps/betterangels"
       },
-      "dependsOn": [
-        "sync-deps",
-        "copy-lockfile"
-      ]
+      "dependsOn": ["sync-deps", "copy-lockfile"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -97,14 +80,10 @@
         "outputDir": "../../dist/apps/betterangels",
         "platform": "all"
       },
-      "dependsOn": [
-        "sync-deps"
-      ]
+      "dependsOn": ["sync-deps"]
     },
     "test": {
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "passWithNoTests": true
       }
@@ -156,6 +135,13 @@
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
       "options": {}
+    },
+    "expo-doctor": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../tools/scripts/expo-doctor-check.mjs apps/betterangels",
+        "cwd": "apps/betterangels"
+      }
     }
   }
 }

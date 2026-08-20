@@ -4,7 +4,9 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSnackbar } from '../../hooks';
+// Imported by path, not through the hooks barrel: that barrel reaches into
+// screens, which import this component back through the ui-components index.
+import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import { ProfilePhotoModal } from '../../screens/Client/ClientHeader/ProfilePhotoModal';
 import { useClientProfilePhotoUpload } from './useClientProfilePhotoUpload';
 
@@ -19,15 +21,18 @@ export function ClientProfilePhotoUploader(props: TProps) {
   const { clientId, imageUrl } = props;
 
   const [modalType, setModalType] = useState<ModalType>(null);
-  const { uploadPhoto, loading } = useClientProfilePhotoUpload();
+  const [isUploading, setIsUploading] = useState(false);
+  const { uploadPhoto } = useClientProfilePhotoUpload();
   const { showSnackbar } = useSnackbar();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    // No upload session: this flow is modal and blocking, with the avatar
+    // spinner as its progress and a snackbar as its failure. The background
+    // session store is for work the user has navigated away from.
+    setIsUploading(true);
+
     try {
-      await uploadPhoto({
-        clientProfileId: clientId,
-        file,
-      });
+      await uploadPhoto({ clientProfileId: clientId, file });
     } catch (err) {
       console.error(`[ClientProfilePhotoUploader]: ${err}`);
 
@@ -36,6 +41,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
         type: 'error',
       });
     } finally {
+      setIsUploading(false);
       setModalType(null);
     }
   };
@@ -54,7 +60,7 @@ export function ClientProfilePhotoUploader(props: TProps) {
       >
         <View style={{ position: 'relative' }}>
           <Avatar
-            loading={loading}
+            loading={isUploading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}

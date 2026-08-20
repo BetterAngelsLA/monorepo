@@ -10,12 +10,12 @@ from .models import Team
 
 def team_list(*, organization: Organization) -> QuerySet[Team]:
     """Return all teams for *organization*."""
-    return Team.objects.filter(organization=organization).order_by("slug")
+    return Team.objects.filter(organization=organization)
 
 
-def team_get(*, pk: int, organization: Organization) -> Optional[Team]:
+def team_get(*, pk: int | str, organization: Organization) -> Optional[Team]:
     """Return a single team by PK, scoped to *organization*."""
     try:
-        return Team.objects.get(pk=pk, organization=organization)
-    except Team.DoesNotExist:
+        return Team.objects.filter(pk=pk, organization=organization).first()
+    except ValueError, TypeError:
         return None

@@ -73,6 +73,7 @@ export default function DeleteModal(props: TProps) {
             <TextButton
               title="Cancel"
               accessibilityHint="cancel the delete action"
+              testId="delete-modal-cancel-btn"
               color={Colors.PRIMARY}
               fontSize="sm"
               onPress={() => {
@@ -84,6 +85,7 @@ export default function DeleteModal(props: TProps) {
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               title="Delete"
+              testID="delete-modal-confirm-btn"
               accessibilityHint={
                 deleteableItemName ? `delete ${deleteableItemName}` : 'delete'
               }

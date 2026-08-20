@@ -1,5 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, RefObject, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useCallback, useEffect, useState } from 'react';
 import {
   DimensionValue,
   Pressable,
@@ -16,6 +16,7 @@ interface IFieldCardProps {
   children: ReactNode;
   title: string;
   actionName: ReactNode;
+  testId?: string;
   required?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -36,6 +37,7 @@ export function FieldCard(props: IFieldCardProps) {
   const {
     children,
     title,
+    testId,
     mb,
     mt,
     mr,
@@ -54,7 +56,7 @@ export function FieldCard(props: IFieldCardProps) {
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
-  const scrollToElement = () => {
+  const scrollToElement = useCallback(() => {
     if (!place || !scrollRef) return;
 
     scrollRef.current?.scrollTo({
@@ -62,18 +64,19 @@ export function FieldCard(props: IFieldCardProps) {
       y: place,
       animated: true,
     });
-  };
+  }, [place, scrollRef]);
 
   useEffect(() => {
     if (!place) return;
     scrollToElement();
-  }, [place]);
+  }, [place, scrollToElement]);
 
   return (
     <Pressable
       onPress={() => {
         setExpanded();
       }}
+      testID={testId}
       onLayout={(event) => {
         const layout = event.nativeEvent.layout;
         expanded === title && scrollRef
@@ -82,9 +85,11 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
-      accessible
-      accessibilityRole="button"
-      accessibilityHint={`expands ${title} field`}
+      // accessible - these a11y fields are commented out and
+      // accessible is set to FALSE pending: DEV-2513: Make FieldCard a11y compliant
+      // accessibilityRole="button"
+      // accessibilityHint={`expands ${title} field`}
+      accessible={false}
       style={({ pressed }) => [
         styles.container,
         {

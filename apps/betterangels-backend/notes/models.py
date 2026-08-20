@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
-from common.enums import SelahTeamEnum
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -17,6 +17,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from teams.models import Team
+from teams.validators import validate_team_in_org
 
 from .enums import ServiceRequestStatusEnum
 
@@ -156,9 +157,6 @@ class Note(BaseModel):
     purpose = models.CharField(max_length=100, null=True, blank=True)
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
-    # TEMPORARY — preserved from the old SelahTeamEnum field; remove in a subsequent PR
-    # once the data migration (0033) has been deployed and verified.
-    old_team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
 
     objects = models.Manager()
 
@@ -169,6 +167,15 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return self.purpose or str(self.id)
+
+    def clean(self) -> None:
+        """Reject a team from another organization."""
+        super().clean()
+
+        try:
+            validate_team_in_org(team_id=self.team_id, organization_id=self.organization_id)
+        except ValidationError as exc:
+            raise ValidationError({"team": exc.messages}) from exc
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

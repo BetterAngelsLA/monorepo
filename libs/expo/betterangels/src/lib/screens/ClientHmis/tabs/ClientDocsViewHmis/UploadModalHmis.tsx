@@ -59,7 +59,6 @@ type TProps = {
 export default function UploadModalHmis(props: TProps) {
   const { client, closeModal } = props;
 
-  const { showSnackbar } = useSnackbar();
   const [document, setDocument] = useState<ReactNativeFile | undefined>();
   const [fileSelection, setFileSelection] =
     useState<TFileCategorySelection | null>(null);
@@ -67,6 +66,7 @@ export default function UploadModalHmis(props: TProps) {
   const [mediaPickerVisible, setMediaPickerVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const { showSnackbar } = useSnackbar();
   const { uploadClientFile } = useClientHmis();
   const queryClient = useQueryClient();
 
@@ -89,16 +89,6 @@ export default function UploadModalHmis(props: TProps) {
 
   function onCancel() {
     setDocument(undefined);
-    closeModal();
-  }
-
-  function onUploadSuccess() {
-    if (client?.id && client?.hmisId) {
-      queryClient.invalidateQueries({
-        queryKey: getClientFilesQueryKey(client.id, client.hmisId),
-      });
-    }
-
     closeModal();
   }
 
@@ -144,15 +134,20 @@ export default function UploadModalHmis(props: TProps) {
         isPrivate: false,
       });
 
-      onUploadSuccess();
+      if (client?.id && client?.hmisId) {
+        queryClient.invalidateQueries({
+          queryKey: getClientFilesQueryKey(client.id, client.hmisId),
+        });
+      }
+
+      closeModal();
     } catch (err) {
       console.error('[UploadModalHmis onSubmit]', err);
 
-      showSnackbar({
-        message: toErrorMessage(err),
-        type: 'error',
-        persist: true,
-      });
+      // The full-screen overlay is the inline progress; the snackbar is the
+      // failure feedback. The modal stays open so the user can retry or
+      // cancel. No upload session: this flow blocks on its own overlay.
+      showSnackbar({ message: toErrorMessage(err), type: 'error' });
     } finally {
       setIsUploading(false);
     }

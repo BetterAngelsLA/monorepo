@@ -4,7 +4,7 @@ import { SelectButton } from './SelectButton';
 describe('SelectButton Component', () => {
   it('renders with default label when no selection is made', () => {
     const { getByText } = render(
-      <SelectButton selected={[]} onPress={jest.fn()} />
+      <SelectButton selected={[]} onPress={vi.fn()} />,
     );
 
     expect(getByText('All')).toBeTruthy();
@@ -15,8 +15,8 @@ describe('SelectButton Component', () => {
       <SelectButton
         defaultLabel="All"
         selected={['Team A']}
-        onPress={jest.fn()}
-      />
+        onPress={vi.fn()}
+      />,
     );
 
     expect(getByText('Team A')).toBeTruthy();
@@ -27,8 +27,8 @@ describe('SelectButton Component', () => {
       <SelectButton
         defaultLabel="All"
         selected={['Team A', 'Team B', 'Team C']}
-        onPress={jest.fn()}
-      />
+        onPress={vi.fn()}
+      />,
     );
 
     expect(getByText('Team A + (2)')).toBeTruthy();
@@ -36,16 +36,16 @@ describe('SelectButton Component', () => {
 
   it('renders with "All" selected', () => {
     const { getByText } = render(
-      <SelectButton defaultLabel="All" selected={['All']} onPress={jest.fn()} />
+      <SelectButton defaultLabel="All" selected={['All']} onPress={vi.fn()} />,
     );
 
     expect(getByText('All')).toBeTruthy();
   });
 
   it('triggers onPress when pressed', () => {
-    const mockOnPress = jest.fn();
+    const mockOnPress = vi.fn();
     const { getByRole } = render(
-      <SelectButton defaultLabel="All" selected={[]} onPress={mockOnPress} />
+      <SelectButton defaultLabel="All" selected={[]} onPress={mockOnPress} />,
     );
 
     const button = getByRole('button');

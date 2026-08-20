@@ -1,10 +1,25 @@
-from datetime import timedelta
+import re
+from datetime import date, datetime, timedelta
 from functools import reduce
 from operator import and_, or_
 from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from common.graphql.types import (
+    AttachmentInterface,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberScalar,
+    PhoneNumberType,
+)
+from common.models import Attachment, PhoneNumber
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import CharField, Exists, F, Func, Max, OuterRef, Q, QuerySet, Value
+from django.utils import timezone
+from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
+
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentGroupEnum,
@@ -13,18 +28,6 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import (
-    AttachmentInterface,
-    NonBlankString,
-    PhoneNumberInput,
-    PhoneNumberScalar,
-    PhoneNumberType,
-)
-from common.models import Attachment
-from django.db.models import Exists, Max, OuterRef, Q, QuerySet
-from django.utils import timezone
-from strawberry import ID, Info, auto
-from strawberry.file_uploads import Upload
 
 from .models import (
     ClientContact,
@@ -37,6 +40,40 @@ from .models import (
 )
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
+MIN_PHONE_SEARCH_DIGITS = 3
+DOB_SEARCH_FORMATS = ("%m/%d/%Y", "%m-%d-%Y")
+
+
+def _parse_dob_search_value(value: str) -> Optional[date]:
+    for fmt in DOB_SEARCH_FORMATS:
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _phone_number_matching_query(digits_only: str) -> Q:
+    related_phone_digits = Func(
+        F("number"),
+        Value(r"[^0-9]"),
+        Value(""),
+        Value("g"),
+        function="regexp_replace",
+        output_field=CharField(),
+    )
+    client_profile_ct = ContentType.objects.get_for_model(ClientProfile)
+    return Q(
+        Exists(
+            PhoneNumber.objects.annotate(digits=related_phone_digits).filter(
+                content_type=client_profile_ct,
+                object_id=OuterRef("pk"),
+                digits__contains=digits_only,
+            )
+        )
+    )
+
+
 CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
     ClientDocumentGroupEnum.DOC_READY: [
         ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
@@ -133,33 +170,60 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
+        value = value.strip()
+        if not value:
+            return queryset, Q()
+
         search_terms = value.split()
 
-        searchable_fields = [
-            "california_id",
-            "first_name",
-            "last_name",
-            "middle_name",
-            "nickname",
-        ]
+        searchable_fields = ["california_id", "first_name", "last_name", "middle_name", "nickname"]
 
-        # Build queries for direct fields
-        direct_queries = [
-            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
-        ]
-        direct_query = reduce(and_, direct_queries) if direct_queries else Q()
+        # Pure numeric/date searches (e.g. a formatted phone number) are matched
+        # against the whole value so that formatted numbers like "(212) 555-1212"
+        # are not fragmented into sub-terms that cause false positives.
+        if not re.search(r"[A-Za-z]", value):
+            digits_only = re.sub(r"\D", "", value)
+            dob = _parse_dob_search_value(value)
+            combined_query = Q()
 
-        # Build related queries
-        related_query = reduce(
-            and_,
-            [
+            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+                combined_query |= _phone_number_matching_query(digits_only)
+            if dob is not None:
+                combined_query |= Q(date_of_birth=dob)
+            if combined_query:
+                return queryset.filter(combined_query), Q()
+            return queryset.none(), Q()
+
+        # Each search term must match at least one searched field (direct fields,
+        # HMIS id, date of birth, or phone number). Terms are combined with AND so
+        # a single term matching a phone number or date of birth cannot bypass the
+        # other terms' requirements.
+        term_queries: List[Q] = []
+        for term in search_terms:
+            # Direct field partial matches
+            term_query = reduce(
+                or_,
+                [Q(**{f"{field}__istartswith": term}) for field in searchable_fields],
+            )
+
+            # HMIS id partial match
+            term_query |= Q(
                 Exists(HmisProfile.objects.filter(client_profile_id=OuterRef("pk"), hmis_id__istartswith=term))
-                for term in search_terms
-            ],
-            Q(),
-        )
+            )
 
-        combined_query = direct_query | related_query
+            # Date of birth exact match (MM/DD/YYYY or MM-DD-YYYY)
+            dob = _parse_dob_search_value(term)
+            if dob is not None:
+                term_query |= Q(date_of_birth=dob)
+
+            # Phone number partial match on digits only (like HMIS ID partial search)
+            digits_only = re.sub(r"\D", "", term)
+            if len(digits_only) >= MIN_PHONE_SEARCH_DIGITS:
+                term_query |= _phone_number_matching_query(digits_only)
+
+            term_queries.append(term_query)
+
+        combined_query = reduce(and_, term_queries)
 
         return queryset.filter(combined_query), Q()
 

@@ -17,8 +17,8 @@ import {
   DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
 } from '../../apollo';
-import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 import { useSnackbar } from '../../hooks';
+import { NoteFormServiceItem } from '../../screens/NoteForm/schema';
 
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
@@ -97,14 +97,14 @@ export default function ServicesModal(props: IServicesModalProps) {
     [...arr].sort(
       (a, b) =>
         (a.priority ?? 0) - (b.priority ?? 0) ||
-        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
     );
 
   const sortServices = (arr: ApiService[]) =>
     [...arr].sort(
       (a, b) =>
         (a.priority ?? 0) - (b.priority ?? 0) ||
-        a.label.toLowerCase().localeCompare(b.label.toLowerCase())
+        a.label.toLowerCase().localeCompare(b.label.toLowerCase()),
     );
 
   const toServicesByCategory = useCallback(
@@ -116,12 +116,12 @@ export default function ServicesModal(props: IServicesModalProps) {
             title: cat.name,
             items: pipe(
               sortServices((cat.services ?? []) as ApiService[]),
-              rmap((s: ApiService): TItem => ({ id: s.id, label: s.label }))
+              rmap((s: ApiService): TItem => ({ id: s.id, label: s.label })),
             ),
-          })
-        )
+          }),
+        ),
       ),
-    []
+    [],
   );
 
   const filterServicesByText = useCallback(
@@ -134,30 +134,30 @@ export default function ServicesModal(props: IServicesModalProps) {
           (cat: TCategory): TCategory => ({
             ...cat,
             items: (cat.items || []).filter((i) =>
-              i.label.toLowerCase().includes(q)
+              i.label.toLowerCase().includes(q),
             ),
-          })
+          }),
         ),
-        rfilter((cat: TCategory) => cat.items.length > 0)
+        rfilter((cat: TCategory) => cat.items.length > 0),
       );
     },
-    []
+    [],
   );
 
   // Type predicates so we don’t need non-null assertions
   const hasService = useCallback(
     (
-      it: IServicesModalProps['initialServiceRequests'][number]
+      it: IServicesModalProps['initialServiceRequests'][number],
     ): it is { id: string; service: { id: string; label?: string } } =>
       Boolean(it.service?.id),
-    []
+    [],
   );
 
   const hasOther = useCallback(
     (
-      it: IServicesModalProps['initialServiceRequests'][number]
+      it: IServicesModalProps['initialServiceRequests'][number],
     ): it is { id: string; serviceOther: string } => Boolean(it.serviceOther),
-    []
+    [],
   );
 
   const computeInitial = useCallback(() => {
@@ -166,7 +166,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       const existing: SelectedService[] = initialLocalServices
         .filter((s) => s.serviceId)
         .map((s) => ({
-          serviceId: s.serviceId!,
+          serviceId: s.serviceId as string,
           label: s.label || '',
           markedForDeletion: false,
         }));
@@ -174,7 +174,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       const others = initialLocalServices
         .filter((s) => s.serviceOther)
         .map((s) => ({
-          serviceOther: s.serviceOther!,
+          serviceOther: s.serviceOther as string,
           serviceRequestId: undefined,
           markedForDeletion: false,
         }));
@@ -191,7 +191,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceId: it.service.id,
         label: it.service.label ?? '',
         markedForDeletion: false,
-      }))
+      })),
     );
 
     const others = pipe(
@@ -201,7 +201,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceRequestId: it.id,
         serviceOther: it.serviceOther,
         markedForDeletion: false,
-      }))
+      })),
     );
 
     return { existing, others };
@@ -240,14 +240,15 @@ export default function ServicesModal(props: IServicesModalProps) {
   const categories = useMemo(
     () =>
       toServicesByCategory(
-        (availableCategories?.serviceCategories?.results ?? []) as ApiCategory[]
+        (availableCategories?.serviceCategories?.results ??
+          []) as ApiCategory[],
       ),
-    [availableCategories, toServicesByCategory]
+    [availableCategories, toServicesByCategory],
   );
 
   const filteredServices = useMemo(
     () => filterServicesByText(categories, searchText),
-    [categories, filterServicesByText, searchText]
+    [categories, filterServicesByText, searchText],
   );
 
   const hasResults = filteredServices.some((c) => c.items.length > 0);
@@ -279,19 +280,26 @@ export default function ServicesModal(props: IServicesModalProps) {
         return;
       }
 
+      // Server mode requires a noteId
+      if (!noteId) {
+        throw new Error('[ServicesModal] submitServices called without noteId');
+      }
+
       // Server mode: create/delete via mutations
       const toCreate = serviceRequests.filter(
-        (s) => !s.serviceRequestId && !s.markedForDeletion
+        (s) => !s.serviceRequestId && !s.markedForDeletion,
       );
       const toDelete = serviceRequests.filter(
-        (s) => Boolean(s.serviceRequestId) && Boolean(s.markedForDeletion)
+        (s) => Boolean(s.serviceRequestId) && Boolean(s.markedForDeletion),
       );
       const toRemoveOtherServices = serviceRequestsOthers.filter(
-        (o) => Boolean(o.serviceRequestId) && Boolean(o.markedForDeletion)
+        (o) => Boolean(o.serviceRequestId) && Boolean(o.markedForDeletion),
       );
       const toCreateOtherServices = serviceRequestsOthers.filter(
         (o) =>
-          Boolean(o.serviceOther) && !o.serviceRequestId && !o.markedForDeletion
+          Boolean(o.serviceOther) &&
+          !o.serviceRequestId &&
+          !o.markedForDeletion,
       );
 
       // Sequential awaits (safer with server constraints)
@@ -300,7 +308,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           variables: {
             data: {
               serviceId: s.serviceId,
-              noteId: noteId!,
+              noteId: noteId,
               serviceRequestType: type,
             },
           },
@@ -318,7 +326,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           variables: {
             data: {
               serviceOther: o.serviceOther,
-              noteId: noteId!,
+              noteId: noteId,
               serviceRequestType: type,
             },
           },
@@ -356,14 +364,14 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServiceRequests(
       pipe(
         existing,
-        rmap((s) => ({ ...s, markedForDeletion: true }))
-      )
+        rmap((s) => ({ ...s, markedForDeletion: true })),
+      ),
     );
     setServiceRequestsOthers(
       pipe(
         others,
-        rmap((o) => ({ ...o, markedForDeletion: true }))
-      )
+        rmap((o) => ({ ...o, markedForDeletion: true })),
+      ),
     );
   }, [computeInitial]);
 
@@ -405,7 +413,7 @@ export default function ServicesModal(props: IServicesModalProps) {
                   {category.items.map((item, idx) => {
                     const entry = rfind(
                       serviceRequests,
-                      (s) => s.serviceId === item.id
+                      (s) => s.serviceId === item.id,
                     );
                     const checked =
                       !!entry &&
@@ -422,7 +430,7 @@ export default function ServicesModal(props: IServicesModalProps) {
                     );
                   })}
                 </View>
-              ) : null
+              ) : null,
             )
           ) : (
             <View style={{ alignItems: 'center' }}>

@@ -5,6 +5,7 @@ import { MainModalActionBtnBody } from './MainModalActionBtnBody';
 
 type TProps = {
   title: string | ReactNode;
+  testId?: string;
   Icon: ElementType;
   onPress: () => void;
   disabled?: boolean;
@@ -12,11 +13,12 @@ type TProps = {
 };
 
 export function MainModalActionBtn(props: TProps) {
-  const { title, Icon, onPress, disabled, style } = props;
+  const { title, testId, Icon, onPress, disabled, style } = props;
 
   return (
     <Pressable
       disabled={disabled}
+      testID={testId}
       onPress={onPress}
       accessibilityRole="button"
       style={[styles.container, style]}

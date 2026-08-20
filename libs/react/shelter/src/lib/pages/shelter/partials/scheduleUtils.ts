@@ -68,7 +68,7 @@ function formatDateISO(date: Date): string {
 function dateInRange(
   dateStr: string,
   start?: string | null,
-  end?: string | null
+  end?: string | null,
 ): boolean {
   if (start && dateStr < start) return false;
   if (end && dateStr > end) return false;
@@ -78,7 +78,7 @@ function dateInRange(
 /** Subtract exception windows from base windows */
 function subtractWindows(
   bases: TimeWindow[],
-  exceptions: TimeWindow[]
+  exceptions: TimeWindow[],
 ): TimeWindow[] {
   let current = [...bases];
   for (const exc of exceptions) {
@@ -127,7 +127,7 @@ export interface AggregateStatus {
 export function getAggregateStatus(
   schedules: Schedule[],
   scheduleTypes: ScheduleTypeChoices[],
-  now: Date = new Date()
+  now: Date = new Date(),
 ): AggregateStatus {
   if (scheduleTypes.length === 0) {
     return { tone: 'closed', statusText: 'Closed' };
@@ -153,7 +153,7 @@ export function getAggregateStatus(
 function getEffectiveTimeWindows(
   schedules: Schedule[],
   date: Date,
-  scheduleType: ScheduleTypeChoices
+  scheduleType: ScheduleTypeChoices,
 ): TimeWindow[] {
   const dateStr = formatDateISO(date);
   const dayEnum = JS_DAY_TO_ENUM[date.getDay()];
@@ -166,18 +166,18 @@ function getEffectiveTimeWindows(
       (s.day === dayEnum || !s.day) &&
       s.startTime &&
       s.endTime &&
-      dateInRange(dateStr, s.startDate, s.endDate)
+      dateInRange(dateStr, s.startDate, s.endDate),
   );
 
   const baseWindows = baseEntries.map((s) =>
-    normalizeWindow(s.startTime ?? '00:00:00', s.endTime ?? '00:00:00')
+    normalizeWindow(s.startTime ?? '00:00:00', s.endTime ?? '00:00:00'),
   );
 
   const activeExceptions = typed.filter(
     (s) =>
       s.isException &&
       (s.day === dayEnum || !s.day) &&
-      dateInRange(dateStr, s.startDate, s.endDate)
+      dateInRange(dateStr, s.startDate, s.endDate),
   );
 
   if (activeExceptions.some((e) => !e.startTime || !e.endTime)) {
@@ -185,7 +185,7 @@ function getEffectiveTimeWindows(
   }
 
   const excWindows = activeExceptions.map((e) =>
-    normalizeWindow(e.startTime ?? '00:00:00', e.endTime ?? '00:00:00')
+    normalizeWindow(e.startTime ?? '00:00:00', e.endTime ?? '00:00:00'),
   );
 
   const effective = subtractWindows(baseWindows, excWindows);
@@ -196,7 +196,7 @@ function getEffectiveTimeWindows(
 function getConcreteWindows(
   schedules: Schedule[],
   date: Date,
-  scheduleType: ScheduleTypeChoices
+  scheduleType: ScheduleTypeChoices,
 ): ConcreteWindow[] {
   const dayStart = new Date(date);
   dayStart.setHours(0, 0, 0, 0);
@@ -205,7 +205,7 @@ function getConcreteWindows(
     (window) => ({
       start: new Date(dayStart.getTime() + window.open * 60_000),
       end: new Date(dayStart.getTime() + window.close * 60_000),
-    })
+    }),
   );
 }
 
@@ -220,7 +220,7 @@ function formatClock(date: Date): string {
 export function getEffectiveWindows(
   schedules: Schedule[],
   date: Date,
-  scheduleType: ScheduleTypeChoices
+  scheduleType: ScheduleTypeChoices,
 ): EffectiveWindow[] {
   return getEffectiveTimeWindows(schedules, date, scheduleType).map((w) => ({
     startTime: minutesToTime(w.open),
@@ -237,7 +237,7 @@ function getWeekDaysMondayFirst(today?: Date): Date[] {
 export function getWeeklySchedule(
   schedules: Schedule[],
   scheduleType: ScheduleTypeChoices,
-  today?: Date
+  today?: Date,
 ): WeeklyScheduleDay[] {
   const reference = today ?? new Date();
 
@@ -253,21 +253,21 @@ export function getWeeklySchedule(
 export function getOperatingStatus(
   schedules: Schedule[],
   now: Date = new Date(),
-  scheduleType: ScheduleTypeChoices = ScheduleTypeChoices.Operating
+  scheduleType: ScheduleTypeChoices = ScheduleTypeChoices.Operating,
 ): OperatingStatus {
   const concreteWindows = Array.from({ length: 9 }, (_, index) => index - 1)
     .flatMap((offset) =>
-      getConcreteWindows(schedules, addDays(now, offset), scheduleType)
+      getConcreteWindows(schedules, addDays(now, offset), scheduleType),
     )
     .sort((left, right) => left.start.getTime() - right.start.getTime());
 
   const currentWindow = concreteWindows.find(
-    (window) => now >= window.start && now < window.end
+    (window) => now >= window.start && now < window.end,
   );
 
   if (currentWindow) {
     const remainingMinutes = Math.floor(
-      (currentWindow.end.getTime() - now.getTime()) / 60_000
+      (currentWindow.end.getTime() - now.getTime()) / 60_000,
     );
 
     if (remainingMinutes <= CLOSING_SOON_MINUTES) {
@@ -300,7 +300,7 @@ export function getOperatingStatus(
     detailText: isSameDay(nextWindow.start, now)
       ? `Opens ${formatClock(nextWindow.start)}`
       : `Opens ${format(nextWindow.start, 'EEEE')} ${formatClock(
-          nextWindow.start
+          nextWindow.start,
         )}`,
   };
 }

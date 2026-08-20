@@ -18,13 +18,13 @@ describe('Checkbox Component', () => {
         }
         onCheck={() => console.log('Checkbox checked')}
         isChecked={false}
-      />
+      />,
     );
     expect(getByText('Check Me')).toBeTruthy();
   });
 
   it('calls onCheck when pressed', () => {
-    const mockOnCheck = jest.fn();
+    const mockOnCheck = vi.fn();
     const { getByText } = render(
       <Checkbox
         accessibilityHint=""
@@ -36,7 +36,7 @@ describe('Checkbox Component', () => {
         }
         onCheck={mockOnCheck}
         isChecked={false}
-      />
+      />,
     );
 
     fireEvent.press(getByText('Check Me'));
@@ -55,7 +55,7 @@ describe('Checkbox Component', () => {
         }
         onCheck={() => console.log('Checkbox checked')}
         isChecked={false}
-      />
+      />,
     );
     expect(getByRole('button')).toBeTruthy();
   });

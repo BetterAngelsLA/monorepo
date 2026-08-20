@@ -20,6 +20,18 @@ logger = logging.getLogger(__name__)
 # ── Single-entity lookups ─────────────────────────────────────────────
 
 
+def organization_get_for_member(
+    *,
+    user: Union[AbstractBaseUser, AnonymousUser],
+    organization_id: str | int | None,
+) -> Optional[Organization]:
+    """Return the organization *organization_id* names, if *user* belongs to it."""
+    try:
+        return Organization.objects.filter(pk=str(organization_id), users=user).first()
+    except ValueError, TypeError:
+        return None
+
+
 def permission_group_for_user(user: User, org_id: str, template_name: str) -> PermissionGroup:
     """Return the ``PermissionGroup`` matching *template_name* for *user* in org *org_id*.
 

@@ -102,7 +102,7 @@ Run the following on the host machine—**not in the container**:
 1. Optional: add a `.env.local` file:
    - See `.env.local.sample` file for refernce
    - .env.local file should override the .env values on your local machine
-     - usage example: seting ` EXPO_PUBLIC_API_URL`` and  `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
+     - usage example: seting `EXPO_PUBLIC_API_URL`` and `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
    - NX docs on [Environment Variables](https://nx.dev/recipes/tips-n-tricks/define-environment-variables)
 
 ### Running the Frontend: Nx Workspace with Expo Application
@@ -289,7 +289,6 @@ Before you begin, ensure you have the following installed on your Windows machin
 **Setting Up the Environment**
 
 1. **Configure WSL2**
-
    - Open a WSL2 terminal (e.g., Ubuntu).
    - Set up your SSH key for GitHub or other version control systems.
 
@@ -351,7 +350,6 @@ Before you begin, ensure you have the following installed on your Windows machin
    **The Issue:** The WSL "Interop" service (which allows Linux to run Windows executables) has stalled or crashed. This often happens after Windows updates or long uptimes.
 
    **The Fix:** You must fully restart the WSL subsystem. Closing the terminal is not enough.
-
    1. Close all WSL terminals and VS Code windows.
    2. Open PowerShell or Command Prompt in Windows.
    3. Run: `wsl --shutdown`
@@ -368,7 +366,6 @@ Before you begin, ensure you have the following installed on your Windows machin
    Success: You should see output similar to `Android Debug Bridge version x.x.x.`
 
 7. **Launch the Application**
-
    - Ensure your Android Emulator is running on Windows.
    - Start the development server and launch the app:
 
