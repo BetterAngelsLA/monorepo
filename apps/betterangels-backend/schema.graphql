@@ -1707,7 +1707,6 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
   team: TeamType
-  currentTeam: TeamType @deprecated(reason: "Use team instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -2861,7 +2860,6 @@ type TaskType {
   status: TaskStatusEnum
   summary: String
   team: TeamType
-  currentTeam: TeamType @deprecated(reason: "Use team instead")
   updatedAt: DateTime!
 }
 
@@ -2888,7 +2886,6 @@ type TeamType {
   name: String!
   isActive: Boolean
   createdAt: DateTime!
-  slug: String @deprecated(reason: "Always null. Team.name is the only identifier.")
 }
 
 type TeamTypeOffsetPaginated {

@@ -171,11 +171,6 @@ class NoteType:
     tasks: list[TaskType]
     team: Optional[TeamType]
 
-    # Deprecated alias for ``team``.  Shipped app builds select
-    # ``currentTeam``, so both names resolve the same FK until those builds
-    # have rolled over.  Delete this field, not ``team``.
-    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
-
     @strawberry_django.field(
         annotate={
             "_can_edit": lambda info: Case(

@@ -20,13 +20,6 @@ class TeamType:
     is_active: Optional[bool]
     created_at: auto
 
-    @strawberry_django.field(deprecation_reason="Always null. Team.name is the only identifier.")
-    def slug(self) -> Optional[str]:
-        # Kept so documents shipped in native app builds still validate; every
-        # ``currentTeam`` selection in those builds is ``{ id slug name }``.
-        # Removed together with ``currentTeam`` -- see #2342.
-        return None
-
 
 @strawberry_django.input(Team, partial=True)
 class CreateTeamInput:
