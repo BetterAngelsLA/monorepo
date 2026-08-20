@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateTaskMutationVariables = Types.Exact<{
   data: Types.CreateTaskInput;
@@ -8,7 +9,7 @@ export type CreateTaskMutationVariables = Types.Exact<{
 
 export type CreateTaskMutation = { __typename?: 'Mutation', createTask:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TaskType', id: string, createdAt: any, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, updatedAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, team?: { __typename?: 'TeamType', id: string, name: string } | null }
+    | { __typename?: 'TaskType', id: string, createdAt: DateTimeString, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, updatedAt: DateTimeString, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, team?: { __typename?: 'TeamType', id: string, name: string } | null }
    };
 
 

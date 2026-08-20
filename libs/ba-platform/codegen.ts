@@ -1,4 +1,5 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
+import { SCALAR_IMPORT_PLUGIN, SHARED_SCALAR_CONFIG } from '../../tools/codegen/scalars';
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -9,20 +10,20 @@ const config: CodegenConfig = {
   ],
   generates: {
     'src/lib/apollo/graphql/__generated__/types.ts': {
-      plugins: ['typescript'],
+      plugins: [SCALAR_IMPORT_PLUGIN, 'typescript'],
       config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
+        ...SHARED_SCALAR_CONFIG,
       },
     },
     'src/': {
       preset: 'near-operation-file',
-      plugins: ['typescript-operations', 'typed-document-node'],
+      plugins: [
+        SCALAR_IMPORT_PLUGIN,
+        'typescript-operations',
+        'typed-document-node',
+      ],
       config: {
-        scalars: {
-          NonBlankString: 'string',
-        },
+        ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },
       presetConfig: {
