@@ -47,6 +47,7 @@ from shelters.enums import (
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
 
@@ -324,19 +325,25 @@ class ShelterFilter:
         return Q(**{f"{prefix}city__in": value})
 
     @strawberry_django.filter_field
-    def cities_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+    def cities_served(
+        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}cities_served__in": value}).distinct(), Q()
 
     @strawberry_django.filter_field
-    def spas_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+    def spas_served(
+        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}spas_served__in": value}).distinct(), Q()
 
     @strawberry_django.filter_field
-    def services(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+    def services(
+        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}services__in": value}).distinct(), Q()
