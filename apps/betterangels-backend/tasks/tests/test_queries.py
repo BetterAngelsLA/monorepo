@@ -161,6 +161,8 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
+        # Tasks are created in the active organization — org_2 here.
+        self._set_active_org(self.org_2)
 
         task_id = self.create_task_fixture(
             {

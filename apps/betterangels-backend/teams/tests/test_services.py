@@ -47,6 +47,11 @@ class TeamCreateTestCase(TestCase):
         with self.assertRaises(ValidationError):
             team_create(name="   ", organization=self.org)
 
+    def test_name_without_alphanumerics_is_rejected(self) -> None:
+        """Reaches the model validator through full_clean() in team_create."""
+        with self.assertRaises(ValidationError):
+            team_create(name="!!!", organization=self.org)
+
     def test_a_reused_name_is_available_after_the_holder_is_renamed(self) -> None:
         original = team_create(name="Drop-in Center", organization=self.org)
         team_update(team=original, name="Drop-in Center 2024")

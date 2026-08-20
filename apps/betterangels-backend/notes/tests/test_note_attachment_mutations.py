@@ -528,3 +528,53 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
             self.assertIn("attachments", response["data"]["resolveNoteFileUploads"])
         else:
             self.assertIn("messages", response["data"]["resolveNoteFileUploads"])
+
+
+class NoteAttachmentOrgScopingTest(NoteGraphQLBaseTestCase):
+    """Attachment mutations must respect the active organization header.
+
+    Both mutations reach their note through ``PermissionedQuerySet``, and
+    guardian's object permissions are granted to the permission group that
+    created the note — they say nothing about which organization the caller
+    is *currently acting as*.  So the note's own author could attach files to
+    it while their active organization was a different one, even though
+    ``updateNote`` on the very same record is refused.  These pin the two
+    halves together.
+    """
+
+    UPLOAD = {"refId": "ref-1", "filename": "doc.pdf", "contentType": "application/pdf"}
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        # The note belongs to org_1; act as org_2.
+        self._set_active_org(self.org_2)
+
+    def test_generate_uploads_denied_when_active_org_differs(self) -> None:
+        response = self.execute_graphql(
+            GenerateNoteFileUploadsMutationTest.MUTATION,
+            {"data": {"noteId": self.note["id"], "uploads": [self.UPLOAD]}},
+        )
+
+        self.assertIn("messages", response["data"]["generateNoteFileUploads"])
+
+    def test_resolve_uploads_denied_when_active_org_differs(self) -> None:
+        response = self.execute_graphql(
+            ResolveNoteFileUploadsMutationTest.MUTATION,
+            {
+                "data": {
+                    "noteId": self.note["id"],
+                    "attachments": [
+                        {
+                            "presignedKey": "media/note_attachments/abc.pdf",
+                            "uploadToken": "valid-token",
+                            "filename": "doc.pdf",
+                            "contentType": "application/pdf",
+                        }
+                    ],
+                }
+            },
+        )
+
+        self.assertIn("messages", response["data"]["resolveNoteFileUploads"])
+        self.assertEqual(Attachment.objects.count(), 0)

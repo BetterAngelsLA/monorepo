@@ -213,6 +213,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
+        # Notes are created in the active organization — org_2 here.
+        self._set_active_org(self.org_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}

@@ -193,3 +193,56 @@ The frontend `hasPermission()` helper checks across all domains with O(1) lookup
 - `shelters/permissions.py` is a 3-line bridge that delegates to `Shelter.perms.as_text_choices()` for GraphQL schema generation — `model.perms` is the single source of truth.
 - The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — they've been replaced by `permissioned_queryset()` + selectors + `HasOrgPerm`, which provide the same org-scoping in a single, shared function.
 - The `adminShelters`/`adminShelter` GraphQL queries have been renamed to `operatorShelters`/`operatorShelter` and `AdminShelterType` → `OperatorShelterType` to reflect their role as operator-facing endpoints.
+
+## Org-owned vs platform-shared
+
+- **Org-owned**: teams, members, reports, shelter operations, and
+  note/task **writes** (header-driven via `HasOrgPerm`).
+- **Platform-shared by design**: client profiles, note/task **reads**
+  (orgs coordinate on shared clients and see cross-org interactions).
+
+### Where a mutation declares which one it is
+
+Every `PermissionedQuerySet` takes a **required** `organization_field`:
+
+```python
+extensions=[
+    PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE],
+                         organization_field="organization_id"),   # org-owned
+]
+```
+
+`None` opts out and means the records are deliberately shared. Because the
+argument is required, adding a mutation forces an answer, and reviewing one
+means reading the decorator rather than hunting for a filter in the body.
+
+`allow_implicit_org=True` — on both `PermissionedQuerySet` and `HasOrgPerm` —
+adopts the caller's only organization when the header is absent, and refuses
+when there is not exactly one. It exists for app builds predating the
+`X-Organization-ID` interceptor (#2330) and is removed by #2345.
+
+This replaced a hand-written `.filter(organization_id=...)` in each resolver.
+Four of eleven call sites did not have it — `generateNoteFileUploads`,
+`resolveNoteFileUploads`, `deleteServiceRequest` and `updateReferral` — so
+those records could be written while the caller's active organization was a
+different one than the record's owner. Guardian grants object permissions to
+the permission group that *created* the record, and that grant says nothing
+about the header, so nothing else was confining them.
+
+### Why the org filter is load-bearing, and what it is not
+
+It is **not** compensating for guardian's global fallback in the usual case:
+in practice `CASEWORKER` does not hold `notes.change_note` globally, so
+`filter_for_user` already refuses a stranger's note.
+
+What it does confine is the **multi-org caller**. Object permissions follow
+the record's creating group, so a user who legitimately reaches a record
+through org A can act on it while their active organization header says org
+B. Without the filter, the action is accepted and attributed to the wrong
+organization.
+
+The global fallback is still a real hazard wherever a template *does* grant a
+model-level permission — it makes `filter_for_user` match every row in the
+table. Replacing it with an explicit shared-vs-org-owned layer is tracked in
+**#2313**; the required `organization_field` is what makes that migration
+mechanical, since every call site's intended layer is now written down.

@@ -32,7 +32,14 @@ def organization_get_for_member(
         return None
 
 
-def permission_group_for_user(user: User, org_id: str, template_name: str) -> PermissionGroup:
+def organization_get_sole_for_member(*, user: Union[AbstractBaseUser, AnonymousUser]) -> Optional[Organization]:
+    """Return the organization *user* belongs to, or ``None`` unless there is exactly one."""
+    organizations = list(Organization.objects.filter(users=user)[:2])
+
+    return organizations[0] if len(organizations) == 1 else None
+
+
+def permission_group_for_user(*, user: User, org_id: str, template_name: str) -> PermissionGroup:
     """Return the ``PermissionGroup`` matching *template_name* for *user* in org *org_id*.
 
     Validates that the organization exists, the user is a member, and a

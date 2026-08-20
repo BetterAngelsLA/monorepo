@@ -24,7 +24,7 @@ from collections.abc import Callable
 from typing import Any
 
 from accounts.models import Organization
-from common.permissions.utils import permissioned_queryset
+from common.permissions.utils import permissioned_queryset, resolve_organization_id
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
@@ -50,19 +50,23 @@ class HasOrgPerm(HasPerm):
     Honors the parent ``any_perm`` flag:
     - ``any_perm=True`` (default): user must hold at least one of the given perms.
     - ``any_perm=False``: user must hold **all** of the given perms.
+
+    ``allow_implicit_org=True`` adopts the caller's only organization when the
+    header is absent, for app builds predating #2330.  Removed by #2345.
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
         "Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header."
     )
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, allow_implicit_org: bool = False, **kwargs: Any) -> None:
         kwargs.setdefault("fail_silently", False)
         kwargs.setdefault(
             "message",
             "You do not have permission to perform this action in this organization.",
         )
         super().__init__(*args, **kwargs)
+        self.allow_implicit_org = allow_implicit_org
 
     def resolve_for_user(
         self,
@@ -75,11 +79,7 @@ class HasOrgPerm(HasPerm):
         if not user or not user.is_authenticated:
             raise DjangoNoPermission("Authentication required.")
 
-        org_id_raw = info.context.request.organization_id
-
-        if org_id_raw is None:
-            raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
-        org_id = str(org_id_raw)
+        org_id = resolve_organization_id(info, allow_implicit=self.allow_implicit_org)
 
         if not self.perms:
             raise DjangoNoPermission("No permissions specified for this operation.")
