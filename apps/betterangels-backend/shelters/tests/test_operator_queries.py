@@ -316,7 +316,11 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_operator_shelters_order_by_bed_count(self) -> None:
-        """operatorShelters orders by bed count matching ``bedCounts.total``."""
+        """operatorShelters orders by bed count matching ``bedCounts.total``.
+
+        Zero-bed shelters must sort as 0 (not NULL), so DESC puts them last
+        and ASC puts them first.
+        """
         self.graphql_client.force_login(self.org_1_case_manager_1)
         # self.shelter has no beds (total 0); give the others distinct counts.
         shelters = [
@@ -335,13 +339,13 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        response = self.execute_graphql(
+        desc_response = self.execute_graphql(
             query,
             variables={"orgIds": [str(self.org_1.id)], "ordering": {"bedCount": "DESC"}},
         )
-        results = response["data"]["operatorShelters"]["results"]
+        desc_results = desc_response["data"]["operatorShelters"]["results"]
         self.assertEqual(
-            [r["id"] for r in results],
+            [r["id"] for r in desc_results],
             [
                 str(shelters[0].id),
                 str(shelters[2].id),
@@ -350,8 +354,27 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             ],
         )
         self.assertEqual(
-            [r["bedCounts"]["total"] for r in results],
+            [r["bedCounts"]["total"] for r in desc_results],
             [5, 3, 1, 0],
+        )
+
+        asc_response = self.execute_graphql(
+            query,
+            variables={"orgIds": [str(self.org_1.id)], "ordering": {"bedCount": "ASC"}},
+        )
+        asc_results = asc_response["data"]["operatorShelters"]["results"]
+        self.assertEqual(
+            [r["id"] for r in asc_results],
+            [
+                str(self.shelter.id),
+                str(shelters[1].id),
+                str(shelters[2].id),
+                str(shelters[0].id),
+            ],
+        )
+        self.assertEqual(
+            [r["bedCounts"]["total"] for r in asc_results],
+            [0, 1, 3, 5],
         )
 
     def test_operator_shelters_order_by_bed_count_with_m2m_filter(self) -> None:
@@ -364,15 +387,9 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         # Ensure setUp shelter does not match the citiesServed filter.
         self.shelter.cities_served.set([other_city])
 
-        high = shelter_recipe.make(
-            organization=self.org_1, name="High Beds", cities_served=[city]
-        )
-        mid = shelter_recipe.make(
-            organization=self.org_1, name="Mid Beds", cities_served=[city]
-        )
-        low = shelter_recipe.make(
-            organization=self.org_1, name="Low Beds", cities_served=[city]
-        )
+        high = shelter_recipe.make(organization=self.org_1, name="High Beds", cities_served=[city])
+        mid = shelter_recipe.make(organization=self.org_1, name="Mid Beds", cities_served=[city])
+        low = shelter_recipe.make(organization=self.org_1, name="Low Beds", cities_served=[city])
         # Extra M2M rows that would inflate a JOIN-based Count if used for ordering.
         high.cities_served.add(other_city)
         mid.cities_served.add(other_city)
@@ -380,9 +397,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         baker.make(Bed, shelter=mid, _quantity=3)
         baker.make(Bed, shelter=low, _quantity=1)
         # Shelter that matches org but not the citiesServed filter.
-        excluded = shelter_recipe.make(
-            organization=self.org_1, name="Excluded", cities_served=[other_city]
-        )
+        excluded = shelter_recipe.make(organization=self.org_1, name="Excluded", cities_served=[other_city])
         baker.make(Bed, shelter=excluded, _quantity=10)
 
         query = """

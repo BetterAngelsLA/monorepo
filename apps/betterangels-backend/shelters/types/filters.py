@@ -19,7 +19,8 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value
+from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -414,8 +415,15 @@ class ShelterOrder:
             .annotate(c=Count("pk"))
             .values("c")
         )
+        # Coalesce NULL (no related beds) to 0 so DESC/ASC match bedCounts.total
+        # and PostgreSQL does not sort empty shelters first under DESC.
         queryset = queryset.annotate(
-            **{f"{prefix}_order_bed_total": Subquery(bed_count_subq, output_field=IntegerField())}
+            **{
+                f"{prefix}_order_bed_total": Coalesce(
+                    Subquery(bed_count_subq, output_field=IntegerField()),
+                    Value(0),
+                )
+            }
         )
         return queryset, [value.resolve(f"{prefix}_order_bed_total")]
 

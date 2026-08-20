@@ -226,7 +226,9 @@ export function Dashboard() {
             : undefined,
           maxStay: (() => {
             const days = Number(selectedFilters.maxStayDays);
-            return selectedFilters.maxStayDays && Number.isFinite(days)
+            return selectedFilters.maxStayDays &&
+              Number.isFinite(days) &&
+              days >= 1
               ? { days }
               : undefined;
           })(),

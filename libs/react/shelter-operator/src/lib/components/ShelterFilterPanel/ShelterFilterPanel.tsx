@@ -36,8 +36,8 @@ const SORT_OPTIONS: DropdownOption<string>[] = [
   { label: 'Name: Descending', value: 'name-desc' },
   { label: 'Status: Ascending', value: 'status-asc' },
   { label: 'Status: Descending', value: 'status-desc' },
-  { label: 'Organization: Low to High', value: 'organization-asc' },
-  { label: 'Organization: High to Low', value: 'organization-desc' },
+  { label: 'Organization: A to Z', value: 'organization-asc' },
+  { label: 'Organization: Z to A', value: 'organization-desc' },
   { label: 'Capacity: Low to High', value: 'capacity-asc' },
   { label: 'Capacity: High to Low', value: 'capacity-desc' },
 ];
@@ -82,6 +82,14 @@ function SortFilterDrawerContent() {
   }
 
   function setMaxStay(value: string) {
+    if (value === '') {
+      setFilters((prev) => ({ ...prev, maxStayDays: '' }));
+      return;
+    }
+    const days = Number(value);
+    if (!Number.isFinite(days) || days < 1) {
+      return;
+    }
     setFilters((prev) => ({ ...prev, maxStayDays: value }));
   }
 
