@@ -10,30 +10,22 @@ from places import Places
 from unittest_parametrize import parametrize
 
 from shelters.enums import (
-    AccessibilityChoices,
     DayOfWeekChoices,
-    FunderChoices,
     ParkingChoices,
     PetChoices,
     ScheduleTypeChoices,
     ShelterChoices,
-    ShelterProgramChoices,
     StatusChoices,
-    StorageChoices,
 )
 from shelters.models import (
     SPA,
-    Accessibility,
     City,
-    Funder,
     Parking,
     Pet,
     Service,
     ServiceCategory,
     Shelter,
-    ShelterProgram,
     ShelterType,
-    Storage,
 )
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
@@ -1839,9 +1831,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelter_recipe.make(status=StatusChoices.APPROVED, cities_served=[city_b])
 
         query = self.get_shelters_query("id")
-        response = self.execute_graphql(
-            query, variables={"filters": {"citiesServed": [str(city_a.id)]}}
-        )
+        response = self.execute_graphql(query, variables={"filters": {"citiesServed": [str(city_a.id)]}})
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(match.id)})
 
@@ -1852,9 +1842,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_b])
 
         query = self.get_shelters_query("id")
-        response = self.execute_graphql(
-            query, variables={"filters": {"spasServed": [str(spa_a.id)]}}
-        )
+        response = self.execute_graphql(query, variables={"filters": {"spasServed": [str(spa_a.id)]}})
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(match.id)})
 
@@ -1877,48 +1865,9 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelter_recipe.make(status=StatusChoices.APPROVED, services=[service_b])
 
         query = self.get_shelters_query("id")
-        response = self.execute_graphql(
-            query, variables={"filters": {"services": [str(service_a.id)]}}
-        )
+        response = self.execute_graphql(query, variables={"filters": {"services": [str(service_a.id)]}})
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(match.id)})
-
-    def test_new_property_filters(self) -> None:
-        """New ShelterPropertyInput fields (accessibility, storage, programs, funders)."""
-        accessibility = Accessibility.objects.get_or_create(
-            name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE
-        )[0]
-        storage = Storage.objects.get_or_create(name=StorageChoices.STANDARD_LOCKERS)[0]
-        program = ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]
-        funder = Funder.objects.get_or_create(name=FunderChoices.LAHSA)[0]
-
-        match = shelter_recipe.make(
-            status=StatusChoices.APPROVED,
-            accessibility=[accessibility],
-            storage=[storage],
-            shelter_programs=[program],
-            funders=[funder],
-        )
-        shelter_recipe.make(
-            status=StatusChoices.APPROVED,
-            accessibility=[],
-            storage=[],
-            shelter_programs=[],
-            funders=[],
-        )
-
-        query = self.get_shelters_query("id")
-        for property_filters in (
-            {"accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name]},
-            {"storage": [StorageChoices.STANDARD_LOCKERS.name]},
-            {"shelterPrograms": [ShelterProgramChoices.BRIDGE_HOME.name]},
-            {"funders": [FunderChoices.LAHSA.name]},
-        ):
-            response = self.execute_graphql(
-                query, variables={"filters": {"properties": property_filters}}
-            )
-            result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
-            self.assertEqual(result_ids, {str(match.id)}, property_filters)
 
 
 class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):

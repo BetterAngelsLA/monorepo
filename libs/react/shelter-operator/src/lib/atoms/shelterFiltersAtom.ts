@@ -14,7 +14,7 @@ export type TOperatorShelterFilters = {
   shelterTypes: string[];
   specialSituationRestrictions: string[];
   storage: string[];
-  // Top-level ShelterFilter fields
+  // Top-level OperatorShelterFilter fields
   city: string[];
   citiesServed: string[];
   cityCouncilDistrict: string[];
