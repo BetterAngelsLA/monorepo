@@ -2,6 +2,7 @@ import { Ordering } from '../../../../../../apollo';
 import { useGetClientInteractionsWithLocationHmis } from '../../../../../../hooks';
 
 import { toPointFeature } from '@monorepo/expo/shared/ui-components';
+import { fromDateString } from '@monorepo/shared/scalars';
 import { useMemo } from 'react';
 import { PointFeature } from 'supercluster';
 import { TClusterInteraction } from '../types';
@@ -26,7 +27,7 @@ export function useInteractionPointFeatures(clientProfileId: string) {
         latitude: i.location!.point[1],
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         longitude: i.location!.point[0],
-        interactedAt: new Date(i.date),
+        interactedAt: fromDateString(i.date),
         // mostRecent prop is dependent on interactions NotesQuery sort order
         mostRecent: index === 0,
       }),

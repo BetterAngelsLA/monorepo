@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateNoteHmisMutationVariables = Types.Exact<{
   data: Types.UpdateHmisNoteInput;
@@ -7,7 +8,7 @@ export type UpdateNoteHmisMutationVariables = Types.Exact<{
 
 
 export type UpdateNoteHmisMutation = { __typename?: 'Mutation', updateHmisNote:
-    | { __typename?: 'HmisNoteType', id: string, addedDate?: any | null, lastUpdated?: any | null, title?: string | null, note: string, date?: any | null, refClientProgram?: string | null, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
+    | { __typename?: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
