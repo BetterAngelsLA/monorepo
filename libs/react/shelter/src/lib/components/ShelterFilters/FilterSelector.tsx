@@ -1,4 +1,7 @@
-import { CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
+import {
+  CheckboxGroup,
+  ExpandableContainer,
+} from '@monorepo/react/components';
 import { ChevronLeftIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useId, useMemo, useState } from 'react';
@@ -15,19 +18,28 @@ type IProps = {
   options: TShelterFilterOption[];
   values?: TFilterOptionType[] | null;
   expanded?: boolean;
-  onChange: (name: TFilterConfig['name'], selected: string[]) => void;
+  onChange: (
+    name: TFilterConfig['name'],
+    selected: string[],
+  ) => void;
 };
 
-const MAX_VISIBLE_ROWS = 7;
+const VISIBLE_ROW_COUNT = 7;
 const SELECT_ALL_ROW_COUNT = 1;
-const INITIAL_OPTION_COUNT = MAX_VISIBLE_ROWS - SELECT_ALL_ROW_COUNT;
+const VISIBLE_OPTION_COUNT =
+  VISIBLE_ROW_COUNT - SELECT_ALL_ROW_COUNT;
 
-export function FilterSelector(props: IProps) {
-  const { header, name, options, values, expanded, onChange, className } =
-    props;
-
+function useFilterOptions(
+  options: TShelterFilterOption[],
+  values: TFilterOptionType[] | null | undefined,
+  visibleOptionCount = VISIBLE_OPTION_COUNT,
+) {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const optionsId = useId();
+
+  const normalizedValues = useMemo(
+    () => (values ?? []).map(String),
+    [values],
+  );
 
   const sortedOptions = useMemo(
     () =>
@@ -39,31 +51,84 @@ export function FilterSelector(props: IProps) {
     [options],
   );
 
-  const hasAdditionalOptions = sortedOptions.length > INITIAL_OPTION_COUNT;
+  const hasAdditionalOptions =
+    sortedOptions.length > visibleOptionCount;
 
-  const visibleOptions = showMoreOptions
-    ? sortedOptions
-    : sortedOptions.slice(0, INITIAL_OPTION_COUNT);
+  const visibleOptions = useMemo(
+    () =>
+      showMoreOptions
+        ? sortedOptions
+        : sortedOptions.slice(0, visibleOptionCount),
+    [showMoreOptions, sortedOptions, visibleOptionCount],
+  );
 
-  function handleOptionsChange(selected: string[]) {
-    const visibleValues = new Set(
-      visibleOptions.map((option) => String(option.value)),
+  const visibleValueSet = useMemo(
+    () =>
+      new Set(
+        visibleOptions.map((option) => String(option.value)),
+      ),
+    [visibleOptions],
+  );
+
+  function getMergedSelection(
+    selectedVisible: string[],
+  ): string[] {
+    const hiddenSelectedValues = normalizedValues.filter(
+      (value) => !visibleValueSet.has(value),
     );
 
-    const hiddenSelectedValues = (values ?? [])
-      .map(String)
-      .filter((value) => !visibleValues.has(value));
+    return [...hiddenSelectedValues, ...selectedVisible];
+  }
 
-    onChange(name, [...hiddenSelectedValues, ...selected]);
+  return {
+    showMoreOptions,
+    setShowMoreOptions,
+    visibleOptions,
+    normalizedValues,
+    hasAdditionalOptions,
+    getMergedSelection,
+  };
+}
+
+export function FilterSelector(props: IProps) {
+  const {
+    header,
+    name,
+    options,
+    values,
+    expanded,
+    onChange,
+    className,
+  } = props;
+
+  const optionsId = useId();
+
+  const {
+    showMoreOptions,
+    setShowMoreOptions,
+    visibleOptions,
+    normalizedValues,
+    hasAdditionalOptions,
+    getMergedSelection,
+  } = useFilterOptions(options, values);
+
+  function handleOptionsChange(selectedVisible: string[]) {
+    onChange(
+      name,
+      getMergedSelection(selectedVisible),
+    );
   }
 
   return (
     <div className={className}>
-      <ExpandableContainer header={header} open={!!expanded}>
+      <ExpandableContainer
+        header={header}
+        open={!!expanded}
+      >
         <div id={optionsId}>
           <CheckboxGroup
             options={visibleOptions}
-            values={(values ?? []).map(String)}
+            values={normalizedValues}
             onChange={handleOptionsChange}
             selectAll="Select All"
           />
@@ -75,16 +140,22 @@ export function FilterSelector(props: IProps) {
             className="mt-8 flex w-full items-center justify-end gap-2 text-primary-20"
             aria-expanded={showMoreOptions}
             aria-controls={optionsId}
-            onClick={() => setShowMoreOptions((current) => !current)}
+            onClick={() =>
+              setShowMoreOptions((current) => !current)
+            }
           >
             <span>
-              {showMoreOptions ? 'Show Less Options' : 'Show More Options'}
+              {showMoreOptions
+                ? 'Show Less Options'
+                : 'Show More Options'}
             </span>
 
             <ChevronLeftIcon
               className={mergeCss([
                 'w-3',
-                showMoreOptions ? 'rotate-90' : '-rotate-90',
+                showMoreOptions
+                  ? 'rotate-90'
+                  : '-rotate-90',
                 'text-primary-20',
                 'transition-transform',
               ])}
