@@ -1,6 +1,6 @@
 query ShelterOperatorOrganizations {
   shelterOperatorOrganizations(
-    pagination: { limit: 500 }
+    pagination: { limit: 1000 }
     ordering: [{ name: ASC }]
   ) {
     results {

@@ -19,9 +19,9 @@ import { UNKNOWN_FILTER_VALUE } from '../ShelterFilters/config';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
-type TViewShelter = PublicSheltersQuery['shelters']['results'][number];
+type TPublicShelter = PublicSheltersQuery['shelters']['results'][number];
 
-function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
+function publicShelterToCardShelter(shelter: TPublicShelter): TShelter {
   return {
     id: shelter.id,
     name: shelter.name,
@@ -133,7 +133,7 @@ export function SheltersDisplay(props: TProps) {
 
   const shelters = useMemo(() => data?.shelters.results ?? [], [data]);
   const sheltersForList = useMemo(
-    () => shelters.map(viewShelterToCardShelter),
+    () => shelters.map(publicShelterToCardShelter),
     [shelters],
   );
   const total = data?.shelters.totalCount;

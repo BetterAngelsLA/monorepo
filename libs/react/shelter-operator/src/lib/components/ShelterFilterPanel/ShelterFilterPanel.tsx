@@ -17,9 +17,11 @@ import {
   DEFAULT_SHELTER_SORT,
   operatorShelterSortAtom,
 } from '../../atoms/shelterSortAtom';
-import { useShelterCities } from '../../hooks/useShelterCities/useShelterCities';
-import { useShelterOperatorOrganizations } from '../../hooks/useShelterOperatorOrganizations/useShelterOperatorOrganizations';
-import { useShelterSpas } from '../../hooks/useShelterSpas/useShelterSpas';
+import {
+  useShelterCities,
+  useShelterOperatorOrganizations,
+  useShelterSpas,
+} from '../../hooks';
 import { Button } from '../base-ui/buttons';
 import { Dropdown } from '../base-ui/dropdown/Dropdown';
 import type { DropdownOption } from '../base-ui/dropdown/types';
@@ -50,7 +52,8 @@ function SortFilterDrawerContent() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Subscribe here so the drawer updates when prefetch resolves (or cache updates).
-  const { organizations: shelterOperatorOrgs } = useShelterOperatorOrganizations();
+  const { organizations: shelterOperatorOrgs } =
+    useShelterOperatorOrganizations();
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
   const { data: serviceCategoriesData } = useQuery(
