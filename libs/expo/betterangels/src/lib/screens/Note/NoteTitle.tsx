@@ -1,4 +1,5 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { fromDateTimeString } from '@monorepo/shared/scalars';
 import { format } from 'date-fns';
 import { View } from 'react-native';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
@@ -8,6 +9,8 @@ export default function NoteTitle({
 }: {
   note: NoteSummaryQuery['note'] | undefined;
 }) {
+  const interactedAt = fromDateTimeString(note?.interactedAt);
+
   return (
     <View>
       {note?.purpose && (
@@ -15,11 +18,13 @@ export default function NoteTitle({
           {note?.purpose}
         </TextBold>
       )}
-      <TextRegular selectable mb="sm" size="sm">
-        {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
-        {' @ '}
-        {format(new Date(note?.interactedAt), 'hh:mm a')}
-      </TextRegular>
+      {interactedAt && (
+        <TextRegular selectable mb="sm" size="sm">
+          {format(interactedAt, 'MM/dd/yyyy')}
+          {' @ '}
+          {format(interactedAt, 'hh:mm a')}
+        </TextRegular>
+      )}
       {!!note?.team?.name && (
         <>
           <TextBold size="sm">Team</TextBold>

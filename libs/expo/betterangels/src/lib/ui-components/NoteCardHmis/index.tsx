@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format, parseISO, startOfDay } from 'date-fns';
+import { formatDateString } from '@monorepo/shared/scalars';
 import { Pressable, StyleSheet } from 'react-native';
 import { InteractionListHmisQuery } from '../InteractionListHmis/__generated__/interactionListHmis.generated';
 import NoteCardBylineHmis from './NoteCardBylineHmis';
@@ -17,7 +17,7 @@ interface INoteCardProps {
 
 export default function NoteCardHmis(props: INoteCardProps) {
   const { hmisNote, variant, hasBorder, onPress } = props;
-  const date = startOfDay(parseISO(hmisNote.date));
+  const date = formatDateString(hmisNote.date, 'MM/dd/yyyy');
 
   return (
     <Pressable
@@ -44,8 +44,8 @@ export default function NoteCardHmis(props: INoteCardProps) {
         !!hmisNote.requestedServices?.length) && (
         <NoteCardServicesHmis note={hmisNote} />
       )}
-      {hmisNote.date && (
-        <TextRegular size="sm">{format(date, 'MM/dd/yyyy')}</TextRegular>
+      {date && (
+        <TextRegular size="sm">{date}</TextRegular>
       )}
     </Pressable>
   );

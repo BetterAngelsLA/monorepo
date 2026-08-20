@@ -9,6 +9,7 @@ export type {
 export {
   formatDateString,
   fromDateString,
+  fromDateTimeString,
   isoToDateSafe,
   toDateString,
 } from './lib/date';

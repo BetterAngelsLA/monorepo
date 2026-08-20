@@ -7,6 +7,7 @@ import {
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
 import { useFeatureFlagActive } from '@monorepo/react/shared';
+import { fromDateString, toDateString } from '@monorepo/shared/scalars';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Keyboard } from 'react-native';
@@ -170,9 +171,9 @@ export function PersonalInfoForm() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dateOfBirth || undefined}
+          value={fromDateString(dateOfBirth)}
           onChange={(date) => {
-            setValue('dateOfBirth', date);
+            setValue('dateOfBirth', date ? toDateString(date) : null);
           }}
           onDelete={() => {
             setValue('dateOfBirth', null);
@@ -224,9 +225,9 @@ export function PersonalInfoForm() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={unhousedStartDate || undefined}
+          value={fromDateString(unhousedStartDate)}
           onChange={(date) => {
-            setValue('unhousedStartDate', date);
+            setValue('unhousedStartDate', date ? toDateString(date) : null);
           }}
           onDelete={() => {
             setValue('unhousedStartDate', null);

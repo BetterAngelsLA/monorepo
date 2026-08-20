@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type AdminTeamsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.TeamFilter>;
@@ -7,7 +8,7 @@ export type AdminTeamsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AdminTeamsQuery = { __typename?: 'Query', teams: { __typename?: 'TeamTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: any }> } };
+export type AdminTeamsQuery = { __typename?: 'Query', teams: { __typename?: 'TeamTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }> } };
 
 export type CreateTeamMutationVariables = Types.Exact<{
   data: Types.CreateTeamInput;
@@ -16,7 +17,7 @@ export type CreateTeamMutationVariables = Types.Exact<{
 
 export type CreateTeamMutation = { __typename?: 'Mutation', createTeam:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: any }
+    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
    };
 
 export type UpdateTeamMutationVariables = Types.Exact<{
@@ -26,7 +27,7 @@ export type UpdateTeamMutationVariables = Types.Exact<{
 
 export type UpdateTeamMutation = { __typename?: 'Mutation', updateTeam:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: any }
+    | { __typename?: 'TeamType', id: string, name: string, isActive?: boolean | null, createdAt: DateTimeString }
    };
 
 export type DeleteTeamMutationVariables = Types.Exact<{
