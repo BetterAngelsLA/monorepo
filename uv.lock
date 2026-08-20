@@ -54,7 +54,6 @@ dependencies = [
     { name = "django-admin-rangefilter" },
     { name = "django-admin-sortable2" },
     { name = "django-allauth" },
-    { name = "django-annoying" },
     { name = "django-choices-field" },
     { name = "django-ckeditor-5" },
     { name = "django-cleanup" },
@@ -105,7 +104,6 @@ requires-dist = [
     { name = "django-admin-rangefilter", specifier = ">=0.13.5,<0.14" },
     { name = "django-admin-sortable2", specifier = ">=2.3.1,<3" },
     { name = "django-allauth", specifier = ">=65.14.0,<66" },
-    { name = "django-annoying", specifier = ">=0.10.8,<0.11" },
     { name = "django-choices-field", specifier = ">=4.0.0,<5" },
     { name = "django-ckeditor-5", specifier = ">=0.2.19,<0.3" },
     { name = "django-cleanup", specifier = ">=9.0.0,<10" },
@@ -623,19 +621,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d7/10/2d33c5bc3c0f9d7db1276a1babcaadd147e73eb416ccb1bd9523c6ac925f/django_allauth-65.18.0.tar.gz", hash = "sha256:afb82e2c545b9a5539370ad120468faaed84715e095a7b6e76972dacdc6376fe", size = 2246988, upload-time = "2026-05-29T13:01:26.071Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/75/5a4c2bf050e38ab16549395a7cd751ddcf3a18305bff4852cfd6c0d94998/django_allauth-65.18.0-py3-none-any.whl", hash = "sha256:e508640c83b94eaf1a9b4e9ac5332dc310dcdc83fca40d58a3f670e15bad1e84", size = 2061080, upload-time = "2026-05-29T13:01:16.532Z" },
-]
-
-[[package]]
-name = "django-annoying"
-version = "0.10.8"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/89/82/1de515b5cdb0a16f9c9c011697fe555aefefd2d8945910994cb9e1d40191/django_annoying-0.10.8.tar.gz", hash = "sha256:4166b55eff3f1296a64c12ee0e5cfe71a5aa4b81c2788c72529478c370ad8550", size = 11723, upload-time = "2025-04-03T12:32:21.293Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/34/964849658d6d15927bd15d2e8f4235b37f036d1600ee3852416f9991805b/django_annoying-0.10.8-py2.py3-none-any.whl", hash = "sha256:ed258ba8a100138515f6cdb8e9d1620a6e93e441ec1e10f0d02b7242b3b4efff", size = 9847, upload-time = "2025-04-03T12:32:19.833Z" },
 ]
 
 [[package]]

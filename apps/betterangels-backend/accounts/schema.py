@@ -227,7 +227,7 @@ class Mutation:
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
         org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        organization = Organization.objects.select_related("profile").get(pk=org_id)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
@@ -313,7 +313,7 @@ class Mutation:
         permission.
         """
         org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        organization = Organization.objects.select_related("profile").get(pk=org_id)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 

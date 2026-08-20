@@ -23,7 +23,6 @@
 # Similarly, if you add a ``migrations.AddIndex``, ``migrations.AlterUniqueTogether``,
 # or other operation that references an org-dependent model, put it here.
 
-import annoying.fields
 import django.contrib.postgres.fields
 import django.contrib.postgres.indexes
 import django.db.models.deletion
@@ -59,7 +58,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('org_types', django.contrib.postgres.fields.ArrayField(base_field=django_choices_field.fields.TextChoicesField(choices=[('outreach', 'Outreach'), ('shelter', 'Shelter')], max_length=8), blank=True, default=list)),
-                ('organization', annoying.fields.AutoOneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to='organizations.organization')),
+                ('organization', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to='organizations.organization')),
             ],
         ),
 

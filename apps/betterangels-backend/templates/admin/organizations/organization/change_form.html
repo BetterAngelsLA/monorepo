@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {% if original %}
+    <li>
+      <a href="{% url 'admin:organizations_organization_add_member' original.pk %}" class="addlink">
+        Add member
+      </a>
+    </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

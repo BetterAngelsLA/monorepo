@@ -66,6 +66,15 @@ def test_create_dual_type_org() -> None:
 
 
 @pytest.mark.django_db
+def test_create_org_deduplicates_repeated_presets() -> None:
+    """The same preset twice stores one org type, not two."""
+    org = create_organization_with_presets("Repeated Org", ["outreach", "outreach"], owner=baker.make(User))
+
+    profile = OrganizationProfile.objects.get(organization=org)
+    assert [t.value for t in profile.org_types] == ["outreach"]
+
+
+@pytest.mark.django_db
 def test_create_org_invalid_preset() -> None:
     """Invalid preset name raises ValidationError."""
     with pytest.raises(ValidationError, match="Unknown org-type preset"):
