@@ -2557,6 +2557,7 @@ export type Query = {
   shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterOccupancyMetrics: ShelterOccupancyMetricsType;
+  shelterOperatorOrganizations: OrganizationTypeOffsetPaginated;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
@@ -2791,6 +2792,13 @@ export type QueryShelterOccupancyMetricsArgs = {
   endDate?: InputMaybe<Scalars['Date']['input']>;
   shelterId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryShelterOperatorOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: InputMaybe<Array<OrganizationOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -3407,6 +3415,7 @@ export type ShelterProgramType = {
 };
 
 export type ShelterPropertyInput = {
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
