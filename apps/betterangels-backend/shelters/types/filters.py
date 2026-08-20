@@ -385,9 +385,7 @@ class ShelterOrder:
         prefix: str,
     ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
         """Order by organization name; direction comes from ``value.resolve``."""
-        queryset = queryset.annotate(
-            **{f"{prefix}_organization_name": F(f"{prefix}organization__name")}
-        )
+        queryset = queryset.annotate(**{f"{prefix}_organization_name": F(f"{prefix}organization__name")})
         return queryset, [value.resolve(f"{prefix}_organization_name")]
 
     @strawberry_django.order_field

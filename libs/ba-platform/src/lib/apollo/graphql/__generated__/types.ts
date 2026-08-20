@@ -2551,7 +2551,6 @@ export type PublicShelterFilter = {
   OR?: InputMaybe<PublicShelterFilter>;
   citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   city?: InputMaybe<Array<Scalars['ID']['input']>>;
-  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
   geolocation?: InputMaybe<GeolocationInput>;
   hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2563,13 +2562,10 @@ export type PublicShelterFilter = {
   openNow?: InputMaybe<OpenNowInput>;
   /** @deprecated Use openNow instead */
   openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
-  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   services?: InputMaybe<Array<Scalars['ID']['input']>>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
   spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
-  status?: InputMaybe<Array<StatusChoices>>;
-  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 export type Query = {

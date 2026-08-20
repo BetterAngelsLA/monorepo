@@ -570,6 +570,7 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
             [n for n in names if n in {"Alpha", "Middle", "Zebra"}],
             ["Alpha", "Middle", "Zebra"],
         )
+
     def test_unauthenticated_is_rejected(self) -> None:
         """Unauthenticated requests return an authentication error."""
         self.graphql_client.logout()

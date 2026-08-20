@@ -1,9 +1,9 @@
 import datetime
-from typing import Any, cast
+from typing import Any
 from unittest.mock import patch
 
-from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
@@ -20,7 +20,6 @@ from shelters.enums import (
 from shelters.models import SPA, Parking, Pet, Shelter, ShelterType
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
-from shelters.types.filters import OperatorShelterFilter
 
 
 class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
@@ -1802,6 +1801,12 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        from notes.groups import CASEWORKER
+
+        app_label, codename = Shelter.perms.VIEW.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def get_shelters_query(self, fields: str) -> str:
         return f"""
@@ -1813,57 +1818,62 @@ class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
             }}
         """
 
+    def _result_ids(self, filters: dict[str, Any]) -> set[str]:
+        response = self.execute_graphql(
+            self.get_shelters_query("id"),
+            variables={"filters": filters},
+        )
+        self.assertIsNone(response.get("errors"))
+        return {r["id"] for r in response["data"]["operatorShelters"]["results"]}
+
     def test_search_filter(self) -> None:
-        """Search matches name, org name, description, or subjective review uniquely."""
-        # Distinct fixtures so each search term hits exactly one shelter.
-        alpha_org = organization_recipe.make(name="Alpha House Network")
-        name_match = shelter_recipe.make(
+        """Search matches name, org name, description, or subjective review."""
+        self.org_1.name = "Alpha House Network"
+        self.org_1.save()
+        shelter = shelter_recipe.make(
             organization=self.org_1,
             name="Safe Haven",
-            description="",
-            subjective_review="",
-        )
-        org_match = shelter_recipe.make(
-            organization=alpha_org,
-            name="Distant Place",
-            description="",
-            subjective_review="",
-        )
-        desc_match = shelter_recipe.make(
-            organization=self.org_1,
-            name="Another Shelter",
             description="offers free breakfast every morning",
-            subjective_review="",
-        )
-        review_match = shelter_recipe.make(
-            organization=self.org_1,
-            name="Yet Another Shelter",
-            description="",
             subjective_review="exceptionally clean facility",
         )
-        shelter_recipe.make(
-            organization=self.org_1,
-            name="Unrelated Name",
-            description="",
-            subjective_review="",
-        )
+        expected = {str(shelter.id)}
 
-        # Call the filter field directly so org-name matching isn't masked by
-        # operatorShelters' active-org queryset scoping.
-        search_filter = OperatorShelterFilter()
-
-        def search_ids(term: str | None) -> set[str]:
-            q = search_filter.search(cast(Any, None), term, prefix="")
-            return {str(pk) for pk in Shelter.objects.filter(q).values_list("pk", flat=True)}
-
-        self.assertEqual(search_ids("safe haven"), {str(name_match.id)})
-        self.assertEqual(search_ids("alpha house"), {str(org_match.id)})
-        self.assertEqual(search_ids("free breakfast"), {str(desc_match.id)})
-        self.assertEqual(search_ids("exceptionally clean"), {str(review_match.id)})
-        self.assertEqual(search_ids("nonexistent-term"), set())
+        self.assertEqual(self._result_ids({"search": "safe haven"}), expected)
+        self.assertEqual(self._result_ids({"search": "alpha house"}), expected)
+        self.assertEqual(self._result_ids({"search": "free breakfast"}), expected)
+        self.assertEqual(self._result_ids({"search": "exceptionally clean"}), expected)
+        self.assertEqual(self._result_ids({"search": "nonexistent-term"}), set())
 
         # Empty / whitespace / absent search is a no-op.
-        all_ids = {str(pk) for pk in Shelter.objects.values_list("pk", flat=True)}
-        self.assertEqual(search_ids(""), all_ids)
-        self.assertEqual(search_ids("   "), all_ids)
-        self.assertEqual(search_ids(None), all_ids)
+        all_ids = self._result_ids({})
+        self.assertEqual(self._result_ids({"search": ""}), all_ids)
+        self.assertEqual(self._result_ids({"search": "   "}), all_ids)
+        self.assertEqual(self._result_ids({"search": None}), all_ids)
+
+    def test_status_filter(self) -> None:
+        approved = shelter_recipe.make(organization=self.org_1, status=StatusChoices.APPROVED)
+        draft = shelter_recipe.make(organization=self.org_1, status=StatusChoices.DRAFT)
+
+        self.assertEqual(
+            self._result_ids({"status": [StatusChoices.DRAFT.name]}),
+            {str(draft.id)},
+        )
+        self.assertIn(str(approved.id), self._result_ids({"status": [StatusChoices.APPROVED.name]}))
+
+    def test_city_council_district_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, city_council_district=5)
+        shelter_recipe.make(organization=self.org_1, city_council_district=12)
+
+        self.assertEqual(self._result_ids({"cityCouncilDistrict": [5]}), {str(match.id)})
+
+    def test_supervisorial_district_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, supervisorial_district=2)
+        shelter_recipe.make(organization=self.org_1, supervisorial_district=4)
+
+        self.assertEqual(self._result_ids({"supervisorialDistrict": [2]}), {str(match.id)})
+
+    def test_overall_rating_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, overall_rating=5)
+        shelter_recipe.make(organization=self.org_1, overall_rating=2)
+
+        self.assertEqual(self._result_ids({"overallRating": [5]}), {str(match.id)})

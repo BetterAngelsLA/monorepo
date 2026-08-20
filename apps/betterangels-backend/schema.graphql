@@ -1782,16 +1782,16 @@ input OperatorShelterFilter {
   hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
-  status: [StatusChoices!]
   city: [ID!]
   citiesServed: [ID!]
   spasServed: [ID!]
   services: [ID!]
+  search: String
+  organizations: [ID!]
+  status: [StatusChoices!]
   cityCouncilDistrict: [Int!]
   supervisorialDistrict: [Int!]
   overallRating: [Int!]
-  search: String
-  organizations: [ID!]
 }
 
 type OperatorShelterType {
@@ -2102,14 +2102,10 @@ input PublicShelterFilter {
   hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
-  status: [StatusChoices!]
   city: [ID!]
   citiesServed: [ID!]
   spasServed: [ID!]
   services: [ID!]
-  cityCouncilDistrict: [Int!]
-  supervisorialDistrict: [Int!]
-  overallRating: [Int!]
 }
 
 type Query {
