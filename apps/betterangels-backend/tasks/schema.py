@@ -2,16 +2,19 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.extensions import HasOrgPerm
 from accounts.models import User
-from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_int_value
+from common.graphql.utils import (
+    get_object_or_permission_error,
+    maybe_int_value,
+    permission_group_for_request,
+    permissioned_qs,
+)
 from common.permissions.utils import IsAuthenticated
-from django.core.exceptions import PermissionDenied
-from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
 from notes.groups import CASEWORKER
 from notes.models import Note
@@ -19,8 +22,7 @@ from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
-from strawberry_django.utils.query import filter_for_user
+from strawberry_django.permissions import HasRetvalPerm
 from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
 
@@ -46,10 +48,12 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(Task.perms.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Task.perms.ADD, allow_implicit_org=True)]
+    )
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         current_user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(current_user, template=CASEWORKER)
+        permission_group = permission_group_for_request(info, template=CASEWORKER)
 
         task_data = asdict(data)
 
@@ -86,12 +90,26 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(
+                model=Task,
+                perms=[Task.perms.CHANGE],
+                organization_field="organization_id",
+                allow_implicit_org=True,
+            )
+        ],
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
-        qs: QuerySet[Task] = info.context.qs
+        qs = permissioned_qs(info, Task)
 
-        task: Task = qs.get(pk=data.id)
+        # A miss here means the task belongs to another organization (or the
+        # user lacks CHANGE), so surface it as a permission error rather than
+        # an unhandled DoesNotExist.
+        task: Task = get_object_or_permission_error(
+            qs,
+            data.id,
+            error_message="You do not have permission to update this task.",
+        )
 
         clean = asdict(data)
         # Guarded on the input field so an unmentioned team stays unmentioned:
@@ -103,18 +121,25 @@ class Mutation:
 
         return cast(TaskType, task)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[
+            PermissionedQuerySet(
+                model=Task,
+                perms=[Task.perms.DELETE],
+                organization_field="organization_id",
+                allow_implicit_org=True,
+            )
+        ],
+    )
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        current_user = get_current_user(info)
+        qs = permissioned_qs(info, Task)
 
-        try:
-            task = filter_for_user(
-                Task.objects.all(),
-                current_user,
-                [Task.perms.DELETE],
-            ).get(id=data.id)
-        except Task.DoesNotExist:
-            raise PermissionDenied("You do not have permission to delete this task.")
+        task = get_object_or_permission_error(
+            qs,
+            data.id,
+            error_message="You do not have permission to delete this task.",
+        )
 
         deleted_id = task_delete(task=task)
 

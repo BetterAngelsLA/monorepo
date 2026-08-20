@@ -60,6 +60,13 @@ class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTeam(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                     ... on DeletedObjectType {
                         id
                     }

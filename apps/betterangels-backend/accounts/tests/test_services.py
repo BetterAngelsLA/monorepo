@@ -391,7 +391,7 @@ def test_permission_group_caseworker() -> None:
     user = baker.make(User, username="pmuser", email="pm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), CASEWORKER.name)
+    pg = permission_group_for_user(user=user, org_id=str(org.pk), template_name=CASEWORKER.name)
     assert pg.template is not None
     assert pg.template.name == CASEWORKER.name
     assert pg.organization == org
@@ -404,7 +404,7 @@ def test_permission_group_shelter_operator() -> None:
     user = baker.make(User, username="spmuser", email="spm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
+    pg = permission_group_for_user(user=user, org_id=str(org.pk), template_name=SHELTER_OPERATOR.name)
     assert pg.template is not None
     assert pg.template.name == SHELTER_OPERATOR.name
     assert pg.organization == org
@@ -417,11 +417,11 @@ def test_permission_group_dual_type() -> None:
     user = baker.make(User, username="dualuser", email="dual@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), CASEWORKER.name)
+    pg = permission_group_for_user(user=user, org_id=str(org.pk), template_name=CASEWORKER.name)
     assert pg.template is not None
     assert pg.template.name == CASEWORKER.name
 
-    pg2 = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
+    pg2 = permission_group_for_user(user=user, org_id=str(org.pk), template_name=SHELTER_OPERATOR.name)
     assert pg2.template is not None
     assert pg2.template.name == SHELTER_OPERATOR.name
 
@@ -431,7 +431,7 @@ def test_permission_group_org_not_found() -> None:
     """Raises ValidationError if org_id doesn't exist."""
     user = baker.make(User, username="ghost", email="ghost@example.com")
     with pytest.raises(ValidationError, match="not found"):
-        permission_group_for_user(user, "99999", CASEWORKER.name)
+        permission_group_for_user(user=user, org_id="99999", template_name=CASEWORKER.name)
 
 
 @pytest.mark.django_db
@@ -441,7 +441,7 @@ def test_permission_group_user_not_member() -> None:
     user = baker.make(User, username="outsider", email="outsider@example.com")
 
     with pytest.raises(ValidationError, match="is not a member"):
-        permission_group_for_user(user, str(org.pk), CASEWORKER.name)
+        permission_group_for_user(user=user, org_id=str(org.pk), template_name=CASEWORKER.name)
 
 
 @pytest.mark.django_db
@@ -452,7 +452,7 @@ def test_permission_group_template_not_found() -> None:
     baker.make(OrganizationUser, user=user, organization=org)
 
     with pytest.raises(ValidationError, match="not found"):
-        permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
+        permission_group_for_user(user=user, org_id=str(org.pk), template_name=SHELTER_OPERATOR.name)
 
 
 # ── organization_remove_member ────────────────────────────────────────

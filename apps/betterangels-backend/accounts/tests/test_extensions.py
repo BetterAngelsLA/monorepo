@@ -38,6 +38,14 @@ class HasOrgPermTestCase(TestCase):
         self.group.permissions.add(self.perm)
         self.group.user_set.add(self.user)
 
+    def _grant_perm_in(self, org: Organization) -> None:
+        """Add ``self.user`` to *org* with the same permission they hold in ``self.org``."""
+        perm_group = PermissionGroup.objects.create(organization=org, name="test-perm-group")
+        assert perm_group.group is not None
+        perm_group.group.permissions.add(self.perm)
+        perm_group.group.user_set.add(self.user)
+        org.add_user(self.user)
+
     def _make_extension(self, perm: str = Shelter.perms.VIEW) -> HasOrgPerm:
         return HasOrgPerm(perm, fail_silently=False)
 
@@ -82,6 +90,35 @@ class HasOrgPermTestCase(TestCase):
                 info=info,
                 source=None,
             )
+
+    # ── Missing header, with the implicit-org fallback ─────────────────
+
+    def test_implicit_org_uses_the_callers_only_organization(self) -> None:
+        extension = HasOrgPerm(Shelter.perms.VIEW, fail_silently=False, allow_implicit_org=True)
+        info = self._make_info(org_id=None)
+
+        try:
+            extension.resolve_for_user(resolver=lambda: None, user=self.user, info=info, source=None)
+        except DjangoNoPermission:
+            self.fail("HasOrgPerm should fall back to the caller's only organization")
+
+    def test_implicit_org_raises_when_the_caller_belongs_to_more_than_one(self) -> None:
+        """Two memberships name no organization, and the caller holds the permission
+        in both — so a first-match fallback would pass this rather than refuse.
+        """
+        self._grant_perm_in(Organization.objects.create(name="Second Org"))
+        extension = HasOrgPerm(Shelter.perms.VIEW, fail_silently=False, allow_implicit_org=True)
+        info = self._make_info(org_id=None)
+
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(resolver=lambda: None, user=self.user, info=info, source=None)
+
+    def test_implicit_org_does_not_excuse_a_malformed_header(self) -> None:
+        extension = HasOrgPerm(Shelter.perms.VIEW, fail_silently=False, allow_implicit_org=True)
+        info = self._make_info(org_id="not-an-id")
+
+        with self.assertRaises(DjangoNoPermission):
+            extension.resolve_for_user(resolver=lambda: None, user=self.user, info=info, source=None)
 
     # ── Wrong org ──────────────────────────────────────────────────────
 

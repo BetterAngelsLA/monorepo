@@ -7,11 +7,11 @@ import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.selectors import organization_get_for_member, resolve_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from common.graphql.utils import active_organization
+from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from notes.groups import CASEWORKER
-from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
@@ -53,7 +53,7 @@ class Mutation:
         extensions=[HasOrgPerm(Team.perms.ADD)],
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = active_organization(info)
         return cast(TeamType, team_create(name=data.name, organization=org))
 
     @strawberry_django.mutation(
@@ -61,7 +61,7 @@ class Mutation:
         extensions=[HasOrgPerm(Team.perms.CHANGE)],
     )
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = active_organization(info)
         team = team_get(pk=data.id, organization=org)
         if team is None:
             raise PermissionDenied("You do not have permission to update this team.")
@@ -80,7 +80,7 @@ class Mutation:
         extensions=[HasOrgPerm(Team.perms.DELETE)],
     )
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = active_organization(info)
         team = team_get(pk=data.id, organization=org)
         if team is None:
             raise PermissionDenied("You do not have permission to delete this team.")

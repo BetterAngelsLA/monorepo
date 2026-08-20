@@ -7,9 +7,9 @@ from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import get_object_or_permission_error, permissioned_qs
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import QuerySet
 from notes.groups import CASEWORKER
 from referrals.models import Referral
 from referrals.selectors import referral_list
@@ -80,12 +80,24 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Referral, perms=[Referral.perms.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(
+                model=Referral,
+                perms=[Referral.perms.CHANGE],
+                organization_field="organization_id",
+                allow_implicit_org=True,
+            )
+        ],
     )
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
-        qs: QuerySet[Referral] = info.context.qs
+        qs = permissioned_qs(info, Referral)
         clean = asdict(data)
-        referral = qs.get(pk=data.id)
+        # A bare qs.get() surfaced a miss as an unhandled DoesNotExist — a 500
+        # rather than a denial.  Now that the queryset is also scoped to the
+        # active organization, a miss is the ordinary cross-org case.
+        referral = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to update this referral."
+        )
         referral = referral_update(referral=referral, data=clean)
         return cast(ReferralType, referral)
 

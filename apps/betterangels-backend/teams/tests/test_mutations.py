@@ -1,10 +1,18 @@
+"""Mutation tests for teams — the CRUD surface, and who may use it.
+
+``TeamMutationTestCase`` covers create, update and delete with their
+validation.  ``TeamMutationOrgScopingTestCase`` covers the editing half of the
+acceptance criterion for org-managed teams: the admin app edits teams for the
+active organization, and another organization's teams cannot be renamed or
+deleted.  The visibility half lives in ``test_queries.py``.
+"""
+
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
+from teams.models import Team
 from unittest_parametrize import parametrize
 
-from teams.models import Team
-
-from .utils import TeamGraphQLUtilsMixin
+from .utils import TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
 
 
 class TeamMutationTestCase(TeamGraphQLUtilsMixin):
@@ -92,3 +100,55 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["deleteTeam"]["id"], team.pk)
         self.assertFalse(Team.objects.filter(id=team.pk).exists())
+
+
+class TeamMutationOrgScopingTestCase(TeamGraphQLBaseTestCase):
+    # -- createTeam ---------------------------------------------------------
+
+    def test_create_team_lands_in_the_active_org(self) -> None:
+        response = self.create_team_fixture({"name": "Night Outreach"})
+
+        team_id = response["data"]["createTeam"]["id"]
+        self.assertEqual(Team.objects.get(pk=team_id).organization_id, self.org_1.pk)
+
+    # -- updateTeam ---------------------------------------------------------
+
+    def test_update_team_renames_a_team_in_the_active_org(self) -> None:
+        response = self.update_team_fixture({"id": str(self.org_1_team_1.pk), "name": "WDI Onsite"})
+
+        self.assertEqual(response["data"]["updateTeam"]["name"], "WDI Onsite")
+        self.org_1_team_1.refresh_from_db()
+        self.assertEqual(self.org_1_team_1.name, "WDI Onsite")
+
+    def test_update_team_cannot_touch_another_orgs_team(self) -> None:
+        original_name = self.org_2_team_1.name
+
+        response = self.update_team_fixture({"id": str(self.org_2_team_1.pk), "name": "Renamed by org 1"})
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateTeam",
+            "You do not have permission to update this team.",
+            kind="PERMISSION",
+        )
+        self.org_2_team_1.refresh_from_db()
+        self.assertEqual(self.org_2_team_1.name, original_name)
+
+    # -- deleteTeam ---------------------------------------------------------
+
+    def test_delete_team_removes_a_team_in_the_active_org(self) -> None:
+        response = self.delete_team_fixture(self.org_1_team_1.pk)
+
+        self.assertIsNotNone(response["data"]["deleteTeam"]["id"])
+        self.assertFalse(Team.objects.filter(pk=self.org_1_team_1.pk).exists())
+
+    def test_delete_team_cannot_touch_another_orgs_team(self) -> None:
+        response = self.delete_team_fixture(self.org_2_team_1.pk)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteTeam",
+            "You do not have permission to delete this team.",
+            kind="PERMISSION",
+        )
+        self.assertTrue(Team.objects.filter(pk=self.org_2_team_1.pk).exists())

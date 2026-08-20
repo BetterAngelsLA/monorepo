@@ -1,11 +1,44 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from strawberry import ID, Maybe
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from accounts.models import PermissionGroup, User
+from accounts.selectors import permission_group_for_user
+from common.permissions.config import TemplateConfig
+from common.permissions.utils import get_current_organization
+from organizations.models import Organization
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
+
+
+def active_organization(info: Info) -> Organization:
+    """Return the ``Organization`` the active-org header names."""
+    return Organization.objects.get(pk=get_current_organization(info))
+
+
+def permission_group_for_request(info: Info, *, template: TemplateConfig) -> PermissionGroup:
+    """Return the caller's *template* permission group in the active organization."""
+    return permission_group_for_user(
+        user=cast(User, get_current_user(info)),
+        org_id=get_current_organization(info),
+        template_name=template.name,
+    )
+
+
+def permissioned_qs(info: Info, model: type[T]) -> QuerySet[T]:
+    """Return the queryset ``PermissionedQuerySet`` prepared for this resolver."""
+    qs = info.context.qs
+
+    if qs.model is not model:
+        raise ImproperlyConfigured(
+            f"PermissionedQuerySet is configured for {qs.model.__name__}, but the resolver expects {model.__name__}."
+        )
+
+    return cast(QuerySet[T], qs)
 
 
 def get_object_or_permission_error(

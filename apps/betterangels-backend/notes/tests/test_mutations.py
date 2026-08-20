@@ -1,9 +1,12 @@
 from unittest.mock import ANY, patch
 
 import time_machine
+from accounts.role_manager import OrgRoleManager
 from common.models import Location
 from django.test import ignore_warnings
 from django.utils import timezone
+from model_bakery import baker
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
@@ -449,7 +452,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 21
+        expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -1030,6 +1033,166 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         # Verify atomicity: the note should remain in its pre-revert state
         note = Note.objects.get(pk=note_id)
         self.assertEqual(note.purpose, "Discarded Purpose")
+
+
+class NoteOrgScopingMutationTestCase(NoteGraphQLBaseTestCase):
+    """Notes must be created/updated in the active (header) organization."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def _org_scoping_location_variables(self) -> dict:
+        json_address_input, _ = self._get_address_inputs()
+        return {
+            "id": self.note["id"],
+            "location": {
+                "address": json_address_input,
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
+            },
+        }
+
+    def test_create_note_uses_active_org_not_first_match(self) -> None:
+        # The user is a caseworker in both org_1 and org_2.  First-match org
+        # resolution would pick org_1; the active header org must win.
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._set_active_org(self.org_2)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 2 note",
+                "publicDetails": "Created under org_2",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )
+
+        note_id = response["data"]["createNote"]["id"]
+        self.assertEqual(Note.objects.get(pk=note_id).organization_id, self.org_2.pk)
+
+    def test_create_note_without_the_org_header_adopts_the_callers_only_organization(self) -> None:
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Headerless note",
+                "publicDetails": "Created by a build predating #2330",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )
+
+        note_id = response["data"]["createNote"]["id"]
+        self.assertEqual(Note.objects.get(pk=note_id).organization_id, self.org_1.pk)
+
+    def test_create_note_without_the_org_header_denied_for_a_multi_org_caller(self) -> None:
+        """A create has to name one organization, and two memberships name none."""
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._create_note_fixture(
+            {
+                "purpose": "Ambiguous note",
+                "publicDetails": "No header, two organizations",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )
+
+        self.assertEqual(
+            response["errors"][0]["message"],
+            "You do not have permission to perform this action in this organization.",
+        )
+        self.assertFalse(Note.objects.filter(purpose="Ambiguous note").exists())
+
+    def test_update_note_without_the_org_header_adopts_the_callers_organization(self) -> None:
+        """``update_note`` re-reads the organization to resolve a permission group,
+        so adoption has to reach the resolver body and not just the queryset.
+        """
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Headerless amendment"})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(Note.objects.get(pk=self.note["id"]).purpose, "Headerless amendment")
+
+    def test_update_note_denied_when_active_org_differs(self) -> None:
+        # org_1_case_manager_1 is not a member of org_2.
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_fixture({"id": self.note["id"], "purpose": "Should not update"})
+
+        messages = response["data"]["updateNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertNotEqual(Note.objects.get(pk=self.note["id"]).purpose, "Should not update")
+
+    def test_update_note_location_denied_when_active_org_differs(self) -> None:
+        self._set_active_org(self.org_2)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertIsNotNone(response["data"]["updateNoteLocation"]["messages"])
+
+    def test_update_note_location_without_the_org_header_adopts_the_callers_organization(self) -> None:
+        """App builds predating #2330 send no header; ``allow_implicit_org`` keeps them working."""
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNotNone(Note.objects.get(pk=self.note["id"]).location)
+
+    def test_update_note_location_without_the_org_header_still_denies_another_organizations_note(self) -> None:
+        """Adoption picks the caller's organization, which is not the note's."""
+        other_org_note = baker.make(Note, organization=self.org_2)
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        variables = self._org_scoping_location_variables()
+        variables["id"] = str(other_org_note.pk)
+        response = self._update_note_location_fixture(variables)
+
+        self.assertIsNotNone(response["data"]["updateNoteLocation"]["messages"])
+        self.assertIsNone(Note.objects.get(pk=other_org_note.pk).location)
+
+    def test_update_note_location_denied_with_a_malformed_org_header(self) -> None:
+        """The header is client-supplied, so it need not be a usable id at all.
+
+        Same failure mode as the missing header above — an unusable value
+        reaches ``filter(organization_id=...)`` and raises ``ValueError`` from
+        inside the query — but it survives the ``is None`` check, so it needs
+        its own rejection and its own test.
+        """
+        self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
+
+        response = self._update_note_location_fixture(self._org_scoping_location_variables())
+
+        self.assertEqual(
+            response["errors"][0]["message"],
+            "You do not have permission to perform this action in this organization.",
+        )
+        self.assertIsNone(Note.objects.get(pk=self.note["id"]).location)
+
+    def test_delete_service_request_denied_when_active_org_differs(self) -> None:
+        """A service request inherits the organization of the note it hangs off.
+
+        Nothing scoped this before: ``PermissionedQuerySet`` was applied with
+        no organization filter, and guardian's global fallback let any holder
+        of ``delete_servicerequest`` delete any organization's.
+        """
+        service_request_id = self._create_note_service_request_fixture(
+            {
+                "serviceId": None,
+                "serviceOther": "A blanket",
+                "noteId": self.note["id"],
+                "serviceRequestType": "REQUESTED",
+            }
+        )["data"]["createNoteServiceRequest"]["id"]
+
+        self._set_active_org(self.org_2)
+        response = self._delete_service_request_fixture(service_request_id)
+
+        self.assertIsNotNone(response["data"]["deleteServiceRequest"]["messages"])
+        self.assertTrue(ServiceRequest.objects.filter(pk=service_request_id).exists())
 
 
 class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
