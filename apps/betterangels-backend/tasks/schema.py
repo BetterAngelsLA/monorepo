@@ -8,7 +8,7 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import maybe_int_value
+from common.graphql.utils import maybe_value
 from common.permissions.utils import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
@@ -53,7 +53,7 @@ class Mutation:
 
         task_data = asdict(data)
 
-        task_data["team_id"] = maybe_int_value(data.team_id)
+        task_data["team_id"] = maybe_value(data.team_id)
 
         # Resolve FK references
         note = None
@@ -97,7 +97,7 @@ class Mutation:
         # Guarded on the input field so an unmentioned team stays unmentioned:
         # assigning unconditionally would turn "not sent" into "set to null".
         if data.team_id:
-            clean["team_id"] = maybe_int_value(data.team_id)
+            clean["team_id"] = maybe_value(data.team_id)
 
         task = task_update(task=task, data=clean)
 

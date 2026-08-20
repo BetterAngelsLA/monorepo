@@ -12,7 +12,7 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error, maybe_int_value
+from common.graphql.utils import get_object_or_permission_error, maybe_value
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.services.types import UploadRequest, UploadConfirmation
@@ -143,7 +143,7 @@ class Mutation:
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
-        team_id = maybe_int_value(data.team_id)
+        team_id = maybe_value(data.team_id)
 
         note = note_create(
             user=user,
@@ -179,7 +179,7 @@ class Mutation:
         # Guarded on the input field so an unmentioned team stays unmentioned:
         # assigning unconditionally would turn "not sent" into "set to null".
         if data.team_id:
-            clean["team_id"] = maybe_int_value(data.team_id)
+            clean["team_id"] = maybe_value(data.team_id)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -334,7 +334,7 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=maybe_int_value(data.note.team_id),
+                    team_id=maybe_value(data.note.team_id),
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

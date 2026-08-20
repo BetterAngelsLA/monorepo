@@ -1032,6 +1032,61 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         self.assertEqual(note.purpose, "Discarded Purpose")
 
 
+class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
+    """An id the column cannot hold names no row, so it is a miss, not a crash.
+
+    ``teamId`` and ``id`` are GraphQL ``ID``s, which accept any string. Nothing
+    in the write path converts one, so Django's field decides what the value
+    means -- which is what keeps this correct if a primary key ever becomes a
+    UUID.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_note_rejects_an_unmatchable_team_id(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "teamId": "abc",
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "\u201cabc\u201d value must be an integer.")
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_create_note_rejects_an_unmatchable_team_id_on_a_nested_task(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "purpose": "Org 1 note",
+                "publicDetails": "Should not be created",
+                "clientProfile": self.client_profile_1.pk,
+                "tasks": [{"summary": "Follow up", "teamId": "abc"}],
+            }
+        )
+
+        messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["message"], "\u201cabc\u201d value must be an integer.")
+        self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
+
+    def test_update_note_denies_an_unmatchable_id(self) -> None:
+        """The same answer an id that simply does not exist gets."""
+        unmatchable = self._update_note_fixture({"id": "abc", "purpose": "Amended"})
+        missing = self._update_note_fixture({"id": "99999999", "purpose": "Amended"})
+
+        self.assertEqual(
+            unmatchable["data"]["updateNote"]["messages"],
+            missing["data"]["updateNote"]["messages"],
+        )
+        self.assertEqual(unmatchable["data"]["updateNote"]["messages"][0]["kind"], "PERMISSION")
+
+
 class NoteTeamValidationMutationTestCase(NoteGraphQLBaseTestCase):
     """A note may only reference a team from its own organization."""
 
