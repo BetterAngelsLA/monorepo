@@ -444,6 +444,10 @@ class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitat
     list_display = ("invited_by", "invitee", "organization", "accepted")
     search_fields = ("invited_by__username", "invitee__username", "organization__name")
     list_filter = ("organization", "accepted")
+    # Unlike the other django-organizations models, this one's get_absolute_url
+    # resolves — to the invitation acceptance flow — so "View on site" would act on
+    # the invitee's behalf, against whatever domain the Site row happens to hold.
+    view_on_site = False
 
 
 @admin.register(User)

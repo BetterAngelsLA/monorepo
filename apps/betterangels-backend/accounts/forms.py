@@ -85,10 +85,9 @@ class OrganizationRoleSelectionForm(forms.Form):
     def clean(self) -> dict[str, Any]:
         """Reject roles the chosen organization cannot hold.
 
-        Checks membership of ``invitable_template_names_for`` rather than calling
-        ``get_template_or_raise``, which despite its signature resolves names
-        against the whole registry and uses the organization only to word its
-        error — so it accepts a role the organization cannot grant.
+        Checks the whole selection against ``invitable_template_names_for`` rather
+        than calling ``get_template_or_raise`` per name, so every rejected role is
+        named in one error instead of only the first.
         """
         cleaned_data = super().clean() or {}
         organization = self.organization or cleaned_data.get("organization")
