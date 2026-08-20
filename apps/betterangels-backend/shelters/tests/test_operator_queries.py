@@ -354,6 +354,64 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             [5, 3, 1, 0],
         )
 
+    def test_operator_shelters_order_by_bed_count_with_m2m_filter(self) -> None:
+        """bedCount ordering stays correct when an M2M filter would inflate JOINs."""
+        from shelters.models import City
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        city = City.objects.get_or_create(name="Bed Count Filter City")[0]
+        other_city = City.objects.get_or_create(name="Other Bed Count City")[0]
+        # Ensure setUp shelter does not match the citiesServed filter.
+        self.shelter.cities_served.set([other_city])
+
+        high = shelter_recipe.make(
+            organization=self.org_1, name="High Beds", cities_served=[city]
+        )
+        mid = shelter_recipe.make(
+            organization=self.org_1, name="Mid Beds", cities_served=[city]
+        )
+        low = shelter_recipe.make(
+            organization=self.org_1, name="Low Beds", cities_served=[city]
+        )
+        # Extra M2M rows that would inflate a JOIN-based Count if used for ordering.
+        high.cities_served.add(other_city)
+        mid.cities_served.add(other_city)
+        baker.make(Bed, shelter=high, _quantity=5)
+        baker.make(Bed, shelter=mid, _quantity=3)
+        baker.make(Bed, shelter=low, _quantity=1)
+        # Shelter that matches org but not the citiesServed filter.
+        excluded = shelter_recipe.make(
+            organization=self.org_1, name="Excluded", cities_served=[other_city]
+        )
+        baker.make(Bed, shelter=excluded, _quantity=10)
+
+        query = """
+            query OperatorShelters(
+                $orgIds: [ID!], $cityIds: [ID!], $ordering: [ShelterOrder!]! = []
+            ) {
+                operatorShelters(
+                    filters: { organizations: $orgIds, citiesServed: $cityIds }
+                    ordering: $ordering
+                ) {
+                    results { id bedCounts { total } }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            query,
+            variables={
+                "orgIds": [str(self.org_1.id)],
+                "cityIds": [str(city.id)],
+                "ordering": {"bedCount": "DESC"},
+            },
+        )
+        results = response["data"]["operatorShelters"]["results"]
+        self.assertEqual(
+            [r["id"] for r in results],
+            [str(high.id), str(mid.id), str(low.id)],
+        )
+        self.assertEqual([r["bedCounts"]["total"] for r in results], [5, 3, 1])
+
     def test_operator_shelters_order_by_organization(self) -> None:
         """``ShelterOrder.organization`` sorts by org name ASC and DESC.
 
