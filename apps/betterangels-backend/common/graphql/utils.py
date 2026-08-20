@@ -1,11 +1,12 @@
 from typing import Any, TypeVar
 
-from strawberry import ID, Maybe
+from strawberry import Maybe
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
+V = TypeVar("V")
 
 
 def get_object_or_permission_error(
@@ -20,20 +21,25 @@ def get_object_or_permission_error(
     since the queryset is already filtered by row-level permissions,
     a DoesNotExist exception usually implies a permission denial (even if
     technically it could be a 404). Cross-org protection relies on this explicit error.
+
+    ``pk`` comes from a GraphQL ``ID`` and may be any string, so a value the
+    column cannot hold raises instead of missing. It names no row either.
     """
     try:
         return qs.get(pk=pk)
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist, ValueError, TypeError:
         raise PermissionDenied(error_message)
 
 
-def maybe_int_value(maybe: Maybe[ID | None]) -> int | None:
-    """Narrow a ``Maybe[ID | None]`` to the FK's int, collapsing absent and null.
+def maybe_value(maybe: Maybe[V]) -> V | None:
+    """Unbox a ``Maybe``, collapsing absent and null to ``None``.
 
-    Callers assigning the result into a dict of fields to update need a presence
-    check on the input field first, or an absent field becomes an explicit null.
+    For resolvers passing explicit keyword arguments to a service, where a field
+    that was not sent and one sent as null mean the same thing. Anything building
+    a dict of fields to update wants ``strawberry.asdict`` instead, which omits
+    an absent field rather than collapsing it -- the distinction an update needs.
+
+    Null is only reachable for ``Maybe[T | None]``; strawberry rejects an
+    explicit null for ``Maybe[T]`` before the resolver runs.
     """
-    if maybe is None or maybe.value is None:
-        return None
-
-    return int(maybe.value)
+    return maybe.value if maybe is not None else None

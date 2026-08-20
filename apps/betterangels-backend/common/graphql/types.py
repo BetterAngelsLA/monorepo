@@ -9,6 +9,7 @@ from common.enums import ImagePresetEnum
 from common.images import build_img_url
 from common.models import Address, Attachment, Location, PhoneNumber
 from common.services.types import AuthorizedPresignedUploadBatch
+from django.core.exceptions import ValidationError
 from django.db.models import Q, QuerySet, Subquery
 from django.db.models.fields.files import FieldFile
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
@@ -21,15 +22,40 @@ from strawberry.types.scalar import ScalarDefinition
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
     @strawberry_django.filter_field
-    def _filter(info: Info, value: Optional[list[value_type]], prefix: str) -> Q:
+    def _filter(queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str) -> Q:
         if not value:
             return Q()
 
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
+        # An empty list is not the same as no filter: Django renders ``__in []``
+        # as matching nothing, which is what an all-unmatchable list should do.
+        matchable = _matchable_values(queryset.model, field_name, normalized_value)
 
-        return Q(**{f"{prefix}{field_name}__in": normalized_value})
+        return Q(**{f"{prefix}{field_name}__in": matchable})
 
     return _filter
+
+
+def _matchable_values(model: Any, field_name: str, values: list[Any]) -> list[Any]:
+    """Drop values the column cannot hold, which therefore match no row.
+
+    ``ID`` accepts any string, so a filter list can contain one the column would
+    reject -- and Django raises from inside the lookup rather than returning
+    nothing. Asking the field itself keeps this correct for any primary-key type
+    rather than assuming an integer.
+    """
+    field = model._meta.get_field(field_name)
+    matchable = []
+
+    for candidate in values:
+        try:
+            field.get_prep_value(candidate)
+        except ValueError, TypeError, ValidationError:
+            continue
+
+        matchable.append(candidate)
+
+    return matchable
 
 
 def make_icontains_filter(field_name: str) -> StrawberryField:
