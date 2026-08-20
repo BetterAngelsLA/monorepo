@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
-import { Upload } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../base-ui/buttons';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -53,7 +53,7 @@ export function DateRangeFilterBar({
 
       <Button
         variant="primary"
-        leftIcon={<Upload size={20} color="black" />}
+        leftIcon={<Download size={20} color="black" />}
         rightIcon={false}
         className="text-black"
         disabled={!onExportData}
