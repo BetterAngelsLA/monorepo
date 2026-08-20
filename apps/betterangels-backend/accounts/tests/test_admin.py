@@ -171,6 +171,17 @@ class OrganizationAddMemberViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(email="escalate@example.com").exists())
 
+    def test_an_unconfigured_organization_refuses_members(self) -> None:
+        """Its role list is empty, so the page must say why instead of offering nothing."""
+        OrganizationProfile.objects.filter(organization=self.organization).delete()
+
+        response = self.client.post(
+            self.url, {"email": "unconfigured@example.com", "permission_template": CASEWORKER.name}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(email="unconfigured@example.com").exists())
+
     def test_organization_user_cannot_be_added_directly(self) -> None:
         response = self.client.get(reverse("admin:organizations_organizationuser_add"))
 

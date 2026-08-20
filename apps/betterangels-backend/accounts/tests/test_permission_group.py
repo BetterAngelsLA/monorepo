@@ -1,6 +1,5 @@
-from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate
+from accounts.models import PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
-from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -98,11 +97,3 @@ class PermissionGroupTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             PermissionGroup(organization=organization).full_clean()
-
-    def test_reconcile_surfaces_a_missing_profile_instead_of_swallowing_it(self) -> None:
-        """post_migrate used to catch every exception and abandon the whole loop."""
-        organization = organization_recipe.make(owner_roles=())
-        OrganizationProfile.objects.filter(organization=organization).delete()
-
-        with self.assertRaises(OrganizationProfile.DoesNotExist):
-            reconcile_org_groups(organization)

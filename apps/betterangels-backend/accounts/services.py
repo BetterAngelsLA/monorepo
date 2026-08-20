@@ -228,6 +228,9 @@ def reconcile_org_groups(org: Organization) -> None:
     template at all, both of which are granted through the Django admin and
     would otherwise be destroyed on the next reconcile.
 
+    An organization with no profile is skipped: it is unconfigured, which is not
+    the same as having no roles, so its groups are left alone.
+
     Each removed row's ``auth.Group`` is torn down by
     :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
     their permissions applied from config — without this a newly created group
@@ -235,7 +238,11 @@ def reconcile_org_groups(org: Organization) -> None:
 
     Safe to call repeatedly — all operations are idempotent.
     """
-    org_types = OrganizationProfile.objects.values_list("org_types", flat=True).get(organization=org)
+    org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
+    if org_types is None:
+        # No profile means the organization has not been configured as a tenant.
+        # Reconciling it would read as "no roles allowed" and delete any it has.
+        return
 
     expected: set[str] = set()
     for org_type_value in org_types:

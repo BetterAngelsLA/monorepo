@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from django.db import DatabaseError
 from organizations.models import Organization
 
-from .models import OrganizationProfile, PermissionGroup, User
+from .models import PermissionGroup, User
 
 logger = logging.getLogger(__name__)
 
@@ -130,13 +130,7 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
         return
 
     for org in organizations:
-        # An organization with no profile predates the profile requirement or was
-        # created outside the services.  Reconciling it is impossible, but it must
-        # not take down `migrate` for every other organization.
-        try:
-            reconcile(org)
-        except OrganizationProfile.DoesNotExist:
-            logger.warning("Organization %s (%s) has no profile; skipping reconciliation.", org.pk, org.name)
+        reconcile(org)
 
     sync_group_permissions()
 

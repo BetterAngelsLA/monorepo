@@ -95,6 +95,15 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
         organization = get_object_or_404(Organization, pk=object_id)
         changelist_url = reverse("admin:organizations_organization_changelist")
 
+        if not REGISTRY.invitable_template_names_for(organization):
+            self.message_user(
+                request,
+                f"Set an org type on {organization.name} before adding members — "
+                "it determines which roles its members can hold.",
+                messages.ERROR,
+            )
+            return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
         if request.method == "POST":
             form = OrganizationMemberInviteForm(request.POST, organization=organization)
             if form.is_valid():

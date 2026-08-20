@@ -133,7 +133,13 @@ class Registry:
 
         Used by utilities that need the complete config (permissions,
         invite paths, etc.) rather than just the template name.
+
+        An organization with no profile has not been configured as a tenant and
+        can hold no roles, so the result is empty rather than an error.
         """
+        if not hasattr(org, "profile"):
+            return []
+
         result: list[TemplateConfig] = []
         seen: set[str] = set()
         for org_type in org.profile.org_types:

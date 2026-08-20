@@ -1,87 +1,53 @@
-"""Tests for migration 0005's orphaned-group recovery.
+"""Tests for the org-type backfill and group renaming migrations.
 
-Deciding which organization an orphaned ``auth.Group`` belongs to is an
-access-control decision made once, against production data, so the resolution is
-tested directly rather than only via a migration re-run.  The migration keeps the
-logic in a pure function so it can be imported without an ORM.
+The backfill decides, per organization, whether it is configured as a tenant at
+all.  That rule reads a data state the check constraint forbids once applied — a
+profile with no org types — so the decision is tested as a pure function and its
+database effects are verified by running the migration itself.
 """
 
 import importlib
 
-from accounts.models import PermissionGroup, PermissionGroupTemplate
+from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate
+from django.apps import apps
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
 
-migration = importlib.import_module("accounts.migrations.0005_deterministic_permission_group_names")
-resolve_orphans = migration.resolve_orphans
-legacy_group_name = migration.legacy_group_name
+from .baker_recipes import organization_recipe
+
+backfill = importlib.import_module("accounts.migrations.0004_require_org_type_on_profile")
+renaming = importlib.import_module("accounts.migrations.0005_deterministic_permission_group_names")
 
 
-class ResolveOrphansTestCase(TestCase):
+def _grant_template(organization: Organization, template_name: str) -> PermissionGroup:
+    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
+    return PermissionGroup.objects.create(organization=organization, template=template)
+
+
+class DecideOrgTypesTestCase(TestCase):
     """Pure-function tests — no database."""
 
-    def test_a_single_claimant_is_resolved(self) -> None:
-        unique, ambiguous, unclaimed = resolve_orphans(
-            organizations=[(1, "Acme")],
-            template_names=["Caseworker"],
-            orphan_names={"Acme_Caseworker"},
-            taken=set(),
-        )
+    def test_an_existing_type_is_kept(self) -> None:
+        self.assertEqual(backfill.decide_org_types(["shelter"], {"outreach"}, True), ["shelter"])
 
-        self.assertEqual(unique, {"Acme_Caseworker": (1, "Caseworker")})
-        self.assertEqual(ambiguous, {})
-        self.assertEqual(unclaimed, set())
+    def test_a_caseworker_group_infers_outreach(self) -> None:
+        self.assertEqual(backfill.decide_org_types([], {"outreach"}, False), ["outreach"])
 
-    def test_two_same_named_organizations_are_never_guessed_between(self) -> None:
-        """The case the old regex-and-name-dict implementation got silently wrong.
+    def test_a_shelter_operator_group_infers_shelter(self) -> None:
+        self.assertEqual(backfill.decide_org_types([], {"shelter"}, False), ["shelter"])
 
-        Only one group carries the name, so attaching it to either organization
-        would hand one org's members a role scoped to the other.
-        """
-        unique, ambiguous, unclaimed = resolve_orphans(
-            organizations=[(1, "Acme"), (2, "Acme")],
-            template_names=["Caseworker"],
-            orphan_names={"Acme_Caseworker"},
-            taken=set(),
-        )
+    def test_both_signals_infer_both(self) -> None:
+        self.assertEqual(backfill.decide_org_types([], {"shelter", "outreach"}, False), ["outreach", "shelter"])
 
-        self.assertEqual(unique, {})
-        self.assertEqual(ambiguous, {"Acme_Caseworker": [(1, "Caseworker"), (2, "Caseworker")]})
-        self.assertEqual(unclaimed, set())
+    def test_members_but_no_signal_falls_back(self) -> None:
+        """The only branch that guesses, which is why the migration prints it."""
+        self.assertEqual(backfill.decide_org_types([], set(), True), ["outreach"])
 
-    def test_a_pair_that_already_has_a_permission_group_does_not_claim(self) -> None:
-        unique, ambiguous, unclaimed = resolve_orphans(
-            organizations=[(1, "Acme"), (2, "Acme")],
-            template_names=["Caseworker"],
-            orphan_names={"Acme_Caseworker"},
-            taken={(1, "Caseworker")},
-        )
-
-        self.assertEqual(unique, {"Acme_Caseworker": (2, "Caseworker")})
-        self.assertEqual(ambiguous, {})
-
-    def test_a_name_no_pair_accounts_for_is_unclaimed(self) -> None:
-        _, _, unclaimed = resolve_orphans(
-            organizations=[(1, "Acme")],
-            template_names=["Caseworker"],
-            orphan_names={"Bare Legacy Group"},
-            taken=set(),
-        )
-
-        self.assertEqual(unclaimed, {"Bare Legacy Group"})
-
-    def test_a_template_less_orphan_is_unclaimed(self) -> None:
-        """Its legacy name embedded an arbitrary label, so the role is unknowable."""
-        _, _, unclaimed = resolve_orphans(
-            organizations=[(1, "Acme")],
-            template_names=["Caseworker"],
-            orphan_names={legacy_group_name("Acme", "some ad-hoc label")},
-            taken=set(),
-        )
-
-        self.assertEqual(unclaimed, {"Acme_some ad-hoc label"})
+    def test_no_members_and_no_signal_keeps_no_profile(self) -> None:
+        """Do not invent a type for an organization nobody uses."""
+        self.assertIsNone(backfill.decide_org_types([], set(), False))
 
 
 class RestoreGroupNamesTestCase(TestCase):
@@ -91,15 +57,12 @@ class RestoreGroupNamesTestCase(TestCase):
         The reverse must keep one deterministic name rather than raising
         IntegrityError.
         """
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
         first = Organization.objects.create(name="Acme")
         second = Organization.objects.create(name="Acme")
-        first_group = PermissionGroup.objects.create(organization=first, template=template)
-        second_group = PermissionGroup.objects.create(organization=second, template=template)
+        first_group = _grant_template(first, CASEWORKER.name)
+        second_group = _grant_template(second, CASEWORKER.name)
 
-        from django.apps import apps
-
-        migration.restore_group_names(apps, None)
+        renaming.restore_group_names(apps, None)
 
         first_group.group.refresh_from_db()
         second_group.group.refresh_from_db()
@@ -107,3 +70,32 @@ class RestoreGroupNamesTestCase(TestCase):
         self.assertIn("Acme_Caseworker", names)
         self.assertEqual(len(names), 2, "the two groups must not both take the legacy name")
         self.assertEqual(Group.objects.filter(name="Acme_Caseworker").count(), 1)
+
+
+class UnconfiguredOrganizationTestCase(TestCase):
+    """An organization with no profile is a supported state, not a broken one.
+
+    82 production organizations legitimately hold none: they exist as records but
+    have never been configured as tenants.
+    """
+
+    def test_reconcile_skips_it_rather_than_stripping_its_roles(self) -> None:
+        from accounts.services import reconcile_org_groups
+
+        organization = organization_recipe.make(owner_roles=())
+        OrganizationProfile.objects.filter(organization=organization).delete()
+        before = set(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
+        self.assertEqual(len(before), 3)
+
+        reconcile_org_groups(organization)
+
+        after = set(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
+        self.assertSetEqual(after, before, "unconfigured must not mean 'no roles allowed'")
+
+    def test_templates_for_is_empty_and_creates_nothing(self) -> None:
+        from common.org_types import REGISTRY
+
+        organization = Organization.objects.create(name="No Profile")
+
+        self.assertEqual(REGISTRY.templates_for(organization), [])
+        self.assertFalse(OrganizationProfile.objects.filter(organization=organization).exists())
