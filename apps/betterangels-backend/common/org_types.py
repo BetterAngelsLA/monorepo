@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from common.permissions.config import TemplateConfig
 from notes.groups import CASEWORKER
-from shelters.groups import SHELTER_OPERATOR
+from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 
 if TYPE_CHECKING:
     from organizations.models import Organization
@@ -55,6 +55,15 @@ class Registry:
     outreach: OrgTypeConfig
     shelter: OrgTypeConfig
 
+    unscoped: tuple[TemplateConfig, ...] = ()
+    """Templates that belong to no org type.
+
+    These are granted by hand (via the Django admin) rather than derived from
+    ``profile.org_types``, so :func:`accounts.services.reconcile_org_groups`
+    must leave their ``PermissionGroup`` rows alone.  They are still listed
+    here so that :meth:`template_names` knows every template that exists.
+    """
+
     _by_name: dict[str, OrgTypeConfig] = field(init=False, repr=False)
     _templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
     _invitable_templates_by_name: dict[str, TemplateConfig] = field(init=False, repr=False)
@@ -69,6 +78,10 @@ class Registry:
                 templates_by_name[template_config.name] = template_config
                 if template_config.is_invitable:
                     invitable_templates_by_name[template_config.name] = template_config
+        for template_config in self.unscoped:
+            templates_by_name[template_config.name] = template_config
+            if template_config.is_invitable:
+                invitable_templates_by_name[template_config.name] = template_config
         object.__setattr__(self, "_by_name", by_name)
         object.__setattr__(self, "_templates_by_name", templates_by_name)
         object.__setattr__(self, "_invitable_templates_by_name", invitable_templates_by_name)
@@ -91,16 +104,6 @@ class Registry:
         """Return all registered template names (e.g. "Caseworker", "Shelter Operator")."""
         return sorted(self._templates_by_name.keys())
 
-    def template_names_for(self, org: Organization) -> list[str]:
-        """All template names available for *org*, based on ``profile.org_types``."""
-        org_types = org.profile.org_types if hasattr(org, "profile") else []
-        names: list[str] = []
-        for org_type in org_types:
-            org_config = self._by_name.get(org_type.value)
-            if org_config:
-                names.extend(template_config.name for template_config in org_config.templates)
-        return sorted(set(names))
-
     def invitable_template_names(self) -> list[str]:
         """Return invitable-only template names (is_invitable=True)."""
         return sorted(self._invitable_templates_by_name.keys())
@@ -121,15 +124,7 @@ class Registry:
 
     def invitable_template_names_for(self, org: Organization) -> list[str]:
         """Invitable template names available for *org*, based on ``profile.org_types``."""
-        org_types = org.profile.org_types if hasattr(org, "profile") else []
-        names: list[str] = []
-        for org_type in org_types:
-            org_config = self._by_name.get(org_type.value)
-            if org_config:
-                names.extend(
-                    template_config.name for template_config in org_config.templates if template_config.is_invitable
-                )
-        return sorted(set(names))
+        return sorted(t.name for t in self.templates_for(org) if t.is_invitable)
 
     # ── Typed query methods ─────────────────────────────────────────────
 
@@ -139,10 +134,9 @@ class Registry:
         Used by utilities that need the complete config (permissions,
         invite paths, etc.) rather than just the template name.
         """
-        org_types = org.profile.org_types if hasattr(org, "profile") else []
         result: list[TemplateConfig] = []
         seen: set[str] = set()
-        for org_type in org_types:
+        for org_type in org.profile.org_types:
             org_config = self._by_name.get(org_type.value)
             if org_config:
                 for template_config in org_config.templates:
@@ -150,23 +144,6 @@ class Registry:
                         seen.add(template_config.name)
                         result.append(template_config)
         return result
-
-    def invitable_templates_for(self, org: Organization) -> list[TemplateConfig]:
-        """Return the invitable ``TemplateConfig`` objects for *org*."""
-        return [t for t in self.templates_for(org) if t.is_invitable]
-
-    # ── Invite email template ───────────────────────────────────────────
-
-    def invite_template(self, template: TemplateConfig) -> dict[str, str]:
-        """Return ``{html, txt}`` template paths for *template*.
-
-        Raises ``ValueError`` if the template is invitable but has no
-        ``invite_html`` or ``invite_txt`` defined — every invitable
-        role must explicitly specify its invite email templates.
-        """
-        if template.invite_html and template.invite_txt:
-            return {"html": template.invite_html, "txt": template.invite_txt}
-        raise ValueError(f"Template '{template.name}' is invitable but has no invite_html/invite_txt.")
 
 
 # ---------------------------------------------------------------------------
@@ -187,4 +164,5 @@ REGISTRY = Registry(
         member_template=SHELTER_OPERATOR,
         allow_public_signup=True,
     ),
+    unscoped=(GLOBAL_SHELTER_OPERATOR,),
 )

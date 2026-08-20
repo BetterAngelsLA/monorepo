@@ -1,20 +1,14 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any
 
 import pghistory
 from accounts.managers import UserManager
-from annoying.fields import AutoOneToOneField
 from common.models import BaseModel
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    Group,
-    Permission,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -126,13 +120,24 @@ class BigUserObjectPermission(UserObjectPermissionAbstract):
 
 
 class PermissionGroupTemplate(models.Model):
+    """The name of a role, used as the FK target for :class:`PermissionGroup`.
+
+    Permissions are not stored here — they live in the role's
+    :class:`~common.permissions.config.TemplateConfig` and are written onto the
+    ``auth.Group`` that grants them.  See :func:`accounts.seed.sync_group_permissions`.
+    """
+
     name = models.CharField(max_length=255)
-    permissions = models.ManyToManyField(Permission, blank=True)
 
     objects = models.Manager()
 
     def __str__(self) -> str:
         return self.name
+
+
+def group_name_for(organization_id: int, template_name: str) -> str:
+    """Return the ``auth.Group`` name for *template_name* within *organization_id*."""
+    return f"org:{organization_id}:{template_name}"
 
 
 class PermissionGroup(models.Model):
@@ -162,29 +167,28 @@ class PermissionGroup(models.Model):
     class Meta:
         unique_together = (("organization", "group"), ("organization", "template"))
 
-    def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
-        self.group.delete()
-        return super().delete(*args, **kwargs)
-
     def save(self, *args: Any, **kwargs: Any) -> None:
-        if self.pk and self.template:
-            raise ValidationError("Updating a PermissionGroup with a template is not allowed.")
-        # TODO: Update the admin so that when a template is defined you can't enter in a
-        # name. Also make it clear that the name of the group will be prefixed by the
-        # org name.
-        if hasattr(self, "template"):
-            permissions_to_apply: Iterable[Permission] = []
-            if self.template:
-                group_name = f"{self.organization.name}_{self.template.name}"
-                permissions_to_apply = self.template.permissions.all()
-                self.name = self.template.name
-            else:
-                group_name = f"{self.organization.name}_{self.name}"
+        """Create the backing ``auth.Group`` on first save.
 
-            self.group = Group.objects.create(name=group_name)
-            self.group.permissions.set(permissions_to_apply)
-
+        Group lifecycle otherwise belongs to
+        :func:`accounts.services.reconcile_org_groups`, which is the only caller
+        that can keep the group, its permissions and this row consistent.
+        """
+        if not self.pk and not self.group_id:
+            self.group = Group.objects.create(name=self.group_name())
+        if self.template and not self.name:
+            self.name = self.template.name
         super().save(*args, **kwargs)
+
+    def group_name(self) -> str:
+        """Return the deterministic ``auth.Group`` name for this row.
+
+        Keyed on the organization's pk rather than its name: ``auth.Group.name``
+        is unique and only 150 characters, while ``Organization.name`` is neither
+        unique nor short, so a name-derived value both collides between
+        same-named orgs and goes stale on rename.
+        """
+        return group_name_for(self.organization_id, self.template.name if self.template else self.name)
 
 
 class OrgTypeChoices(models.TextChoices):
@@ -193,21 +197,26 @@ class OrgTypeChoices(models.TextChoices):
 
 
 class OrganizationProfile(BaseModel):
-    organization = AutoOneToOneField(
+    organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
         related_name="profile",
     )
     org_types = ArrayField(
         base_field=TextChoicesField(choices_enum=OrgTypeChoices),
-        blank=True,
-        default=list,
     )
 
     objects = models.Manager()
 
     class Meta:
         indexes = [GinIndex(fields=["org_types"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(org_types__len__gt=0),
+                name="org_profile_has_org_type",
+                violation_error_message="An organization must have at least one org type.",
+            )
+        ]
 
     def __str__(self) -> str:
         types = ", ".join(t.label for t in self.org_types)

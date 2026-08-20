@@ -1,56 +1,87 @@
-from accounts.models import PermissionGroup
-from django.contrib.auth.models import Group, Permission
+from accounts.models import PermissionGroup, PermissionGroupTemplate
+from accounts.seed import sync_group_permissions
+from django.contrib.auth.models import Group
 from django.test import TestCase
-from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 
-from .baker_recipes import (
-    permission_group_recipe,
-    permission_group_template_recipe,
-)
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class PermissionGroupTestCase(TestCase):
-    def test_group_creation_inherits_template_permissions(self) -> None:
-        permissions = baker.make(Permission, _quantity=2)
-        permission_template = permission_group_template_recipe.make(permissions=permissions)
+    def test_group_name_is_scoped_to_the_organization_id(self) -> None:
+        """The name must key on the org's pk, not its name.
 
-        permission_group = permission_group_recipe.make(template=permission_template)
-        assert permission_group.organization is not None and permission_group.template is not None
-        expected_group_name = f"{permission_group.organization.name}_{permission_group.template.name}"
-
-        created_group = Group.objects.get(name=expected_group_name)
-        self.assertTrue(created_group.permissions.filter(id=permissions[0].id).exists())
-        self.assertTrue(created_group.permissions.filter(id=permissions[1].id).exists())
-
-    def test_group_creation_without_template_has_no_permissions(self) -> None:
+        ``auth.Group.name`` is unique and capped at 150 characters, while
+        ``Organization.name`` is neither, so a name-derived value collides
+        between same-named orgs and goes stale on rename.
+        """
         permission_group = permission_group_recipe.make(template=None)
-        created_group = Group.objects.get(name=f"{permission_group.organization.name}_{permission_group.name}")
-        self.assertEqual(created_group.permissions.count(), 0)
+
+        self.assertEqual(
+            permission_group.group.name,
+            f"org:{permission_group.organization_id}:{permission_group.name}",
+        )
+
+    def test_two_organizations_may_share_a_name(self) -> None:
+        first = Organization.objects.create(name="Acme")
+        second = Organization.objects.create(name="Acme")
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
+
+        first_group = PermissionGroup.objects.create(organization=first, template=template)
+        second_group = PermissionGroup.objects.create(organization=second, template=template)
+
+        self.assertNotEqual(first_group.group.name, second_group.group.name)
+
+    def test_renaming_an_organization_leaves_its_group_names_intact(self) -> None:
+        permission_group = permission_group_recipe.make(template=None)
+        original_name = permission_group.group.name
+
+        organization = permission_group.organization
+        organization.name = "Renamed Organization"
+        organization.save()
+
+        permission_group.group.refresh_from_db()
+        self.assertEqual(permission_group.group.name, original_name)
+
+    def test_group_receives_the_permissions_configured_for_its_template(self) -> None:
+        organization = organization_recipe.make(owner_roles=())
+        permission_group = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
+
+        sync_group_permissions()
+
+        granted = set(permission_group.group.permissions.values_list("content_type__app_label", "codename"))
+        expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
+        self.assertSetEqual(granted, expected)
+
+    def test_group_without_a_template_has_no_permissions(self) -> None:
+        permission_group = permission_group_recipe.make(template=None)
+
+        sync_group_permissions()
+
+        self.assertEqual(permission_group.group.permissions.count(), 0)
 
     def test_deleting_permission_group_also_deletes_associated_group(self) -> None:
         permission_group = permission_group_recipe.make()
-        group_id = permission_group.group.id
+        group_id = permission_group.group_id
+
         permission_group.delete()
+
         self.assertFalse(Group.objects.filter(id=group_id).exists())
 
     def test_deleting_organization_deletes_permission_groups_and_associated_groups(
         self,
     ) -> None:
-        organization = Organization.objects.create(name="Plain Org")
-        _ = permission_group_recipe.make(_quantity=3, organization=organization)
-
-        organization_pk = organization.pk
-        permission_groups_before_delete = PermissionGroup.objects.filter(organization=organization_pk).count()
-        groups_before_delete = Group.objects.filter(permissiongroup__organization=organization_pk).count()
-
-        self.assertEqual(permission_groups_before_delete, 3)
-        self.assertEqual(groups_before_delete, 3)
+        organization = organization_recipe.make(owner_roles=())
+        permission_group_ids = list(
+            PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True)
+        )
+        # Captured up front: once the rows are gone, a join through them matches
+        # nothing whether or not the groups were actually deleted.
+        group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("group_id", flat=True))
+        self.assertEqual(len(group_ids), 3)
 
         organization.delete()
 
-        permission_groups_after_delete = PermissionGroup.objects.filter(organization=organization_pk).exists()
-        groups_after_delete = Group.objects.filter(permissiongroup__organization=organization_pk).exists()
-
-        self.assertFalse(permission_groups_after_delete)
-        self.assertFalse(groups_after_delete)
+        self.assertFalse(PermissionGroup.objects.filter(pk__in=permission_group_ids).exists())
+        self.assertFalse(Group.objects.filter(pk__in=group_ids).exists())

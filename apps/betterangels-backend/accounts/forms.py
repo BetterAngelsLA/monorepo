@@ -2,15 +2,10 @@ from typing import Any, cast
 
 from common.org_types import REGISTRY
 from django import forms
-from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
-from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
-from organizations.backends import invitation_backend
-from organizations.models import OrganizationUser
+from organizations.models import Organization
 
-from .models import User
-from .services import member_add
+from .models import OrganizationProfile, OrgTypeChoices, User
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -40,81 +35,43 @@ class UserChangeForm(BaseUserChangeForm):
         fields = ("email",)
 
 
-class OrganizationUserForm(forms.ModelForm):
-    """Form class for editing OrganizationUsers *and* the linked user model.
+class OrganizationProfileForm(forms.ModelForm):
+    """Admin form for an organization's profile.
 
-    When creating a new member, automatically assigns all invitable
-    permission templates for the selected organization.  The invite email
-    uses the first template's ``invite_html``/``invite_txt`` paths.
-
-    When editing, the organization field serves as a read-only identifier;
-    role changes should be made via the GraphQL API or the User admin.
+    ``org_types`` is declared explicitly because the default form field for an
+    ``ArrayField`` is a comma-separated text input.
     """
 
-    email = forms.EmailField()
+    org_types = forms.MultipleChoiceField(
+        choices=OrgTypeChoices.choices,
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Org types",
+        help_text="Determines which roles this organization's members can hold.",
+    )
 
     class Meta:
-        exclude = ("user", "is_admin")
+        model = OrganizationProfile
+        fields = ("org_types",)
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        self.request = kwargs.pop("request", None)
+    def clean_org_types(self) -> list[OrgTypeChoices]:
+        """Return enum members, matching what the services write."""
+        return [OrgTypeChoices(value) for value in self.cleaned_data["org_types"]]
+
+
+class OrganizationMemberInviteForm(forms.Form):
+    """Invite a person into *organization* with a single role."""
+
+    email = forms.EmailField()
+    permission_template = forms.ChoiceField(label="Role")
+
+    def __init__(self, *args: Any, organization: Organization, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if self.instance.pk is not None:
-            self.fields["email"].initial = self.instance.user.email
+        self.organization = organization
+        permission_template = cast(forms.ChoiceField, self.fields["permission_template"])
+        permission_template.choices = [(name, name) for name in REGISTRY.invitable_template_names_for(organization)]
 
-    def save(self, *args: Any, **kwargs: Any) -> User:
-        """Create or update the linked user model."""
-        organization = self.cleaned_data["organization"]
-
-        if self.instance.pk is None:
-            # ── New member ────────────────────────────────────────────
-            invitable_templates = tuple(REGISTRY.invitable_templates_for(organization))
-            if not invitable_templates:
-                raise ValidationError(
-                    f"Organization '{organization.name}' has no invitable "
-                    f"permission templates.  Ensure the org has a profile "
-                    f"with org_types set."
-                )
-
-            user = member_add(
-                email=self.cleaned_data["email"],
-                first_name="",
-                last_name="",
-                middle_name=None,
-                organization=organization,
-                permission_templates=invitable_templates,
-            )
-
-            # The member template drives the invite email.
-            org_type_name = organization.profile.org_types[0].value
-            org_config = REGISTRY.org_type(org_type_name)
-            if not org_config:
-                raise ValidationError(f"No org type config for '{org_type_name}'.")
-            role_template = org_config.member_template
-
-            site = Site.objects.get(pk=settings.SITE_ID)
-            invitation_backend().create_organization_invite(
-                organization=organization,
-                invited_by_user=self.request.user,
-                invitee_user=user,
-            )
-            invitation_backend().send_invitation(
-                user=user,
-                sender=self.request.user,
-                organization=organization,
-                domain=site,
-                role_template=role_template,
-            )
-
-            self.instance.user = user
-
-            # member_add already created the OrganizationUser row via
-            # organization.add_user().  Point the form instance at it so
-            # super().save() sees an existing record (update, not insert).
-            org_user = OrganizationUser.objects.get(organization=organization, user=user)
-            self.instance.pk = org_user.pk
-
-        self.instance.user.email = self.cleaned_data["email"]
-        self.instance.user.save()
-
-        return cast(User, super().save(*args, **kwargs))
+    def clean_permission_template(self) -> str:
+        name: str = self.cleaned_data["permission_template"]
+        REGISTRY.get_template_or_raise(name, self.organization)
+        return name

@@ -13,10 +13,10 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .groups import ORG_ADMIN
+from .seed import sync_group_permissions
 from .models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -215,31 +215,36 @@ def create_organization_with_presets(
 # ── Group reconciliation ──────────────────────────────────────────────
 
 
+@transaction.atomic
 def reconcile_org_groups(org: Organization) -> None:
     """Create missing and delete stale ``PermissionGroup`` records for *org*.
 
-    Expected templates are derived from the org's ``profile.org_types``
-    via :data:`common.org_types.REGISTRY`.  Groups whose template is no
-    longer in the org's presets are deleted.
+    Expected templates are derived from the org's ``profile.org_types`` via
+    :data:`common.org_types.REGISTRY`.
+
+    Only *derived* groups are reconciled — those whose template belongs to an
+    org type.  Hand-managed groups are left untouched: templates outside any org
+    type (``REGISTRY.unscoped``, e.g. Global Shelter Operator) and rows with no
+    template at all, both of which are granted through the Django admin and
+    would otherwise be destroyed on the next reconcile.
+
+    Each removed row's ``auth.Group`` is torn down by
+    :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
+    their permissions applied from config — without this a newly created group
+    would grant nothing until the next ``migrate``.
 
     Safe to call repeatedly — all operations are idempotent.
     """
-    from .models import PermissionGroup
+    org_types = OrganizationProfile.objects.values_list("org_types", flat=True).get(organization=org)
 
-    # Expected template names from current org-type presets.
     expected: set[str] = set()
-    org_type_values = org.profile.org_types if hasattr(org, "profile") else []
-    for org_type_value in org_type_values:
+    for org_type_value in org_types:
         org_config = REGISTRY.org_type(org_type_value.value)
         if org_config is None:
             continue
         for template_config in org_config.templates:
             expected.add(template_config.name)
 
-    if not expected:
-        return
-
-    # Create missing.
     for template_name in expected:
         permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
             name=template_name,
@@ -249,10 +254,15 @@ def reconcile_org_groups(org: Organization) -> None:
             template=permission_group_template,
         )
 
-    # Delete stale (including groups whose template was set to NULL).
-    PermissionGroup.objects.filter(organization=org).filter(
-        Q(template__isnull=True) | ~Q(template__name__in=expected),
+    unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+    derived = {name for name in REGISTRY.template_names() if name not in unscoped}
+
+    PermissionGroup.objects.filter(
+        organization=org,
+        template__name__in=derived - expected,
     ).delete()
+
+    sync_group_permissions(organization=org)
 
 
 # ── Member removal ───────────────────────────────────────────────────
@@ -294,21 +304,6 @@ def organization_remove_member(
     org_user.delete()
 
     return user_id
-
-
-# ── Organization-level permission group management ────────────────────
-
-
-def create_default_org_permission_groups(organization: Organization) -> None:
-    """Create ``PermissionGroup`` rows for every template in *organization*.
-
-    Uses :meth:`Registry.templates_for` so the result is org-type-aware —
-    an outreach org gets Caseworker, Org Admin, Org Superuser; a shelter org
-    gets Shelter Operator, Org Admin, Org Superuser.
-    """
-    for template_config in REGISTRY.templates_for(organization):
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
-        PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
 
 # ── Self-signup ───────────────────────────────────────────────────────
