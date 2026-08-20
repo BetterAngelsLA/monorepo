@@ -21,6 +21,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
+    PermissionGroupInlineForm,
     OrganizationProfileForm,
     UserChangeForm,
     UserCreationForm,
@@ -89,6 +90,7 @@ class PermissionGroupTemplateAdmin(admin.ModelAdmin):
 
 class PermissionGroupInline(admin.TabularInline):
     model = PermissionGroup
+    form = PermissionGroupInlineForm
     extra = 1
     fields = ("template", "name")
 
@@ -122,8 +124,15 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
     def get_queryset(self, request: HttpRequest) -> QuerySet[OrganizationUser]:
         return super().get_queryset(request).select_related("user").prefetch_related("user__groups__permissiongroup")
 
+    # Django renders a blank row for this formset — its ``empty_form``, and any
+    # extra the management form declares when the page re-renders after a
+    # validation error. That row's instance is unsaved, so every display below has
+    # to tolerate a missing user rather than reverse a URL with ``None`` in it.
+
     @admin.display(description="Member")
     def member(self, obj: OrganizationUser) -> str:
+        if obj.user_id is None:
+            return ""
         url = reverse("admin:accounts_user_change", args=[obj.user_id])
         return format_html('<a href="{}">{}</a>', url, obj.user.email or obj.user)
 
@@ -135,6 +144,8 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
         row per member, so a per-row query would be an N+1 — production has an
         organization with 90 members.
         """
+        if obj.user_id is None:
+            return ""
         names = []
         for group in obj.user.groups.all():
             if not hasattr(group, "permissiongroup"):
@@ -150,6 +161,8 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
 
     @admin.display(description="")
     def change_roles(self, obj: OrganizationUser) -> str:
+        if obj.user_id is None:
+            return ""
         return _change_roles_link(obj)
 
 
