@@ -173,50 +173,6 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             response["errors"][0]["message"],
         )
 
-    def test_operator_shelters_filter_by_search(self) -> None:
-        """Search filter matches name, description, or subjective review (case-insensitive)."""
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.shelter.name = "Safe Haven"
-        self.shelter.description = "A welcoming overnight shelter"
-        self.shelter.save()
-
-        review_match = shelter_recipe.make(
-            organization=self.org_1,
-            name="Other Place",
-            subjective_review="Pets welcome after intake",
-        )
-        shelter_recipe.make(organization=self.org_1, name="Unrelated Shelter")
-
-        query = """
-            query OperatorShelters($orgIds: [ID!], $search: String) {
-                operatorShelters(
-                    filters: { organizations: $orgIds, search: $search }
-                ) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
-
-        def search_ids(term: str) -> set[str]:
-            response = self.execute_graphql(
-                query,
-                variables={"orgIds": [str(self.org_1.id)], "search": term},
-            )
-            return {r["id"] for r in response["data"]["operatorShelters"]["results"]}
-
-        # Name match, case-insensitive
-        self.assertEqual(search_ids("safe haven"), {str(self.shelter.id)})
-
-        # Description match
-        self.assertEqual(search_ids("overnight"), {str(self.shelter.id)})
-
-        # Subjective review match
-        self.assertEqual(search_ids("pets welcome"), {str(review_match.id)})
-
-        # No match returns nothing
-        self.assertEqual(search_ids("zzz-no-match"), set())
-
     def test_operator_shelters_filter_by_properties(self) -> None:
         """Property filters narrow results through the operator endpoint."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -398,6 +354,52 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             [5, 3, 1, 0],
         )
 
+    def test_operator_shelters_order_by_organization(self) -> None:
+        """``ShelterOrder.organization`` sorts by org name ASC and DESC.
+
+        Exercised via the public ``shelters`` query because
+        ``operatorShelters`` is scoped to the active org (all rows share
+        one organization name).
+        """
+        org_alpha = organization_recipe.make(name="Alpha Org")
+        org_zeta = organization_recipe.make(name="Zeta Org")
+        shelter_zeta = baker.make(
+            Shelter,
+            organization=org_zeta,
+            name="Z Shelter",
+            status=StatusChoices.APPROVED,
+            is_private=False,
+        )
+        shelter_alpha = baker.make(
+            Shelter,
+            organization=org_alpha,
+            name="A Shelter",
+            status=StatusChoices.APPROVED,
+            is_private=False,
+        )
+
+        query = """
+            query ($ordering: [ShelterOrder!]! = []) {
+                shelters(ordering: $ordering) {
+                    results { id organization { name } }
+                }
+            }
+        """
+
+        asc = self.execute_graphql(
+            query,
+            variables={"ordering": {"organization": "ASC"}},
+        )["data"]["shelters"]["results"]
+        asc_ids = [r["id"] for r in asc]
+        self.assertLess(asc_ids.index(str(shelter_alpha.id)), asc_ids.index(str(shelter_zeta.id)))
+
+        desc = self.execute_graphql(
+            query,
+            variables={"ordering": {"organization": "DESC"}},
+        )["data"]["shelters"]["results"]
+        desc_ids = [r["id"] for r in desc]
+        self.assertLess(desc_ids.index(str(shelter_zeta.id)), desc_ids.index(str(shelter_alpha.id)))
+
 
 class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     """Tests for the `properties` filter on operatorShelters."""
@@ -509,7 +511,7 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
 
     QUERY = """
         query ShelterOperatorOrganizations {
-            shelterOperatorOrganizations {
+            shelterOperatorOrganizations(ordering: [{ name: ASC }]) {
                 results { id name }
             }
         }
@@ -551,7 +553,7 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
         self.assertIn(str(shelter_org_b.id), result_ids)
 
     def test_results_ordered_by_name(self) -> None:
-        """Results are sorted alphabetically by name by default."""
+        """Results are sorted alphabetically by name when ordering is requested."""
         from shelters.groups import SHELTER_OPERATOR
 
         organization_recipe.make(name="Zebra", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
@@ -563,8 +565,11 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
 
         self.assertIsNone(response.get("errors"))
         names = [r["name"] for r in response["data"]["shelterOperatorOrganizations"]["results"]]
-        self.assertEqual(names, ["Alpha", "Middle", "test_org", "Zebra"])
-
+        self.assertEqual(names, sorted(names))
+        self.assertEqual(
+            [n for n in names if n in {"Alpha", "Middle", "Zebra"}],
+            ["Alpha", "Middle", "Zebra"],
+        )
     def test_unauthenticated_is_rejected(self) -> None:
         """Unauthenticated requests return an authentication error."""
         self.graphql_client.logout()

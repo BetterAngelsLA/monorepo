@@ -384,9 +384,11 @@ class ShelterOrder:
         value: auto,
         prefix: str,
     ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
-        return queryset.annotate(organization_name=F("organization__name")).order_by("organization_name"), [
-            value.resolve("organization_name")
-        ]
+        """Order by organization name; direction comes from ``value.resolve``."""
+        queryset = queryset.annotate(
+            **{f"{prefix}_organization_name": F(f"{prefix}organization__name")}
+        )
+        return queryset, [value.resolve(f"{prefix}_organization_name")]
 
     @strawberry_django.order_field
     def bed_count(
