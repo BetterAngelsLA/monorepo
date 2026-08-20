@@ -19,8 +19,9 @@ import {
 } from '@monorepo/ba-platform/types';
 import { useDebounce } from '@monorepo/react/shared';
 import { useAtom, useAtomValue } from 'jotai';
+import { useResetAtom } from 'jotai/utils';
 import { Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import {
@@ -80,7 +81,9 @@ export function Dashboard() {
 
   // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);
+  const resetFilters = useResetAtom(operatorShelterFiltersAtom);
   const [sort, setSort] = useAtom(operatorShelterSortAtom);
+  const resetSort = useResetAtom(operatorShelterSortAtom);
   const [pendingShelter, setPendingShelter] = useState<{
     id: string;
     name: string;
@@ -94,6 +97,19 @@ export function Dashboard() {
   useEffect(() => {
     setPage(1);
   }, [selectedFilters, debouncedSearch, sort]);
+
+  // Reset filters/sort/search/page when the active org changes (skip initial mount)
+  const previousOrgIdRef = useRef(selectedOrganizationId);
+  useEffect(() => {
+    if (previousOrgIdRef.current === selectedOrganizationId) {
+      return;
+    }
+    previousOrgIdRef.current = selectedOrganizationId;
+    resetFilters();
+    resetSort();
+    setSearchInput('');
+    setPage(1);
+  }, [selectedOrganizationId, resetFilters, resetSort]);
 
   const propertyFilters = useMemo(() => {
     const accessibility = selectedFilters.accessibility?.length
@@ -164,11 +180,6 @@ export function Dashboard() {
       storage,
     };
   }, [selectedFilters]);
-
-  // Reset page when organization changes
-  useEffect(() => {
-    setPage(1);
-  }, [selectedOrganizationId]);
 
   const { data, loading, error, previousData } = useQuery(
     OperatorSheltersDocument,
@@ -245,7 +256,7 @@ export function Dashboard() {
           id: String(s.id),
           name: s.name ?? null,
           address: s.location?.place ?? null,
-          totalBeds: s.totalBeds ?? null,
+          totalBeds: s.bedCounts.total ?? null,
           bedCounts: {
             available: s.bedCounts.available ?? 0,
             inTurnaround: s.bedCounts.inTurnaround ?? 0,

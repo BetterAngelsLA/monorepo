@@ -1,3 +1,5 @@
+import type { StatusChoices } from '@monorepo/ba-platform/types';
+import { enumStatusChoices } from '@monorepo/react/shelter';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { Shelter } from '../types/shelter';
@@ -123,7 +125,8 @@ export function ShelterTable({
         label: 'Status',
         width: '0.8fr',
         cellClassName: 'text-gray-600',
-        render: (shelter) => shelter.status,
+        render: (shelter) =>
+          enumStatusChoices[shelter.status as StatusChoices] ?? shelter.status,
         sortValue: (shelter) => shelter.status,
       },
     ],

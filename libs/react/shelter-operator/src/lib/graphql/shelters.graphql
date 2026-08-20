@@ -16,7 +16,6 @@ query OperatorShelters(
         place
       }
       status
-      totalBeds
       bedCounts {
         available
         inTurnaround
