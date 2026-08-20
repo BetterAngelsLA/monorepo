@@ -9,9 +9,9 @@ import {
   shelterSearchTriggerAtom,
 } from '../../atoms';
 import {
-  ViewSheltersDocument,
-  ViewSheltersQuery,
-  ViewSheltersQueryVariables,
+  PublicSheltersDocument,
+  PublicSheltersQuery,
+  PublicSheltersQueryVariables,
 } from '../../pages';
 import { TLatLng, TMapBounds } from '../Map';
 import { ShelterCard, TShelter } from '../ShelterCard';
@@ -19,7 +19,7 @@ import { UNKNOWN_FILTER_VALUE } from '../ShelterFilters/config';
 import { ResultsSource } from './ResultsSource';
 import { TShelterPropertyFilters } from './types';
 
-type TViewShelter = ViewSheltersQuery['shelters']['results'][number];
+type TViewShelter = PublicSheltersQuery['shelters']['results'][number];
 
 function viewShelterToCardShelter(shelter: TViewShelter): TShelter {
   return {
@@ -53,8 +53,10 @@ export function SheltersDisplay(props: TProps) {
   const [searchTrigger] = useAtom(shelterSearchTriggerAtom);
   const nameSearch = useAtomValue(shelterNameSearchAtom);
 
-  const queryVariables = useMemo<ViewSheltersQueryVariables | undefined>(() => {
-    let vars: ViewSheltersQueryVariables | undefined;
+  const queryVariables = useMemo<
+    PublicSheltersQueryVariables | undefined
+  >(() => {
+    let vars: PublicSheltersQueryVariables | undefined;
 
     if (mapBoundsFilter) {
       vars = vars || {};
@@ -109,7 +111,7 @@ export function SheltersDisplay(props: TProps) {
   // intermediate filter-state updates (e.g. name search set before the map
   // settles) never fire a premature query.
   const lastTriggerRef = useRef(-1);
-  const activeVarsRef = useRef<ViewSheltersQueryVariables | undefined>(
+  const activeVarsRef = useRef<PublicSheltersQueryVariables | undefined>(
     undefined,
   );
 
@@ -119,9 +121,9 @@ export function SheltersDisplay(props: TProps) {
   }
 
   const { data, loading, error } = useQuery<
-    ViewSheltersQuery,
-    ViewSheltersQueryVariables
-  >(ViewSheltersDocument, {
+    PublicSheltersQuery,
+    PublicSheltersQueryVariables
+  >(PublicSheltersDocument, {
     variables: {
       ...activeVarsRef.current,
       pagination: { limit: 5000, offset: 0 },

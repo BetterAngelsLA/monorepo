@@ -109,7 +109,7 @@ class OpenNowInput:
 
 
 @strawberry_django.filter_type(models.Shelter)
-class ShelterFilter:
+class PublicShelterFilter:
     name = make_icontains_filter("name")
 
     @strawberry_django.filter_field
@@ -129,53 +129,6 @@ class ShelterFilter:
             conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
 
         return conditions
-
-    @strawberry_django.filter_field
-    def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
-        """
-        Free-text search across name, organization name, description, and subjective review.
-
-        Each search term must match at least one searched field; terms are combined
-        with AND so a single term matching one field cannot bypass the other terms'
-        requirements.
-        """
-        if value is None:
-            return Q()
-
-        value = value.strip()
-        if not value:
-            return Q()
-
-        search_terms = value.split()
-        searchable_fields = ["name", "organization__name", "description", "subjective_review"]
-
-        # Each search term must match at least one searched field.
-        term_queries: list[Q] = []
-        for term in search_terms:
-            term_query = reduce(
-                or_,
-                [Q(**{f"{prefix}{field}__icontains": term}) for field in searchable_fields],
-            )
-            term_queries.append(term_query)
-
-        return reduce(and_, term_queries)
-
-    @strawberry_django.filter_field
-    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        user = get_current_user(info)
-
-        if user is None or not user.is_authenticated:
-            if not value:
-                return Q()
-
-            return Q(**{f"{prefix}organization__in": value})
-
-        current_user = cast(User, user)
-        allowed_organizations = current_user.organizations_organization.all()
-        if value:
-            allowed_organizations = allowed_organizations.filter(pk__in=value)
-
-        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
     @strawberry_django.filter_field
     def properties(
@@ -313,12 +266,6 @@ class ShelterFilter:
         return Q(**{f"{prefix}on_site_security": value})
 
     @strawberry_django.filter_field
-    def status(self, info: Info, value: Optional[List[StatusChoices]], prefix: str) -> Q:
-        if not value:
-            return Q()
-        return Q(**{f"{prefix}status__in": value})
-
-    @strawberry_django.filter_field
     def city(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
             return Q()
@@ -347,6 +294,62 @@ class ShelterFilter:
         if not value:
             return queryset, Q()
         return queryset.filter(**{f"{prefix}services__in": value}).distinct(), Q()
+
+
+@strawberry_django.filter_type(models.Shelter)
+class OperatorShelterFilter(PublicShelterFilter):
+    @strawberry_django.filter_field
+    def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
+        """
+        Free-text search across name, organization name, description, and subjective review.
+
+        Each search term must match at least one searched field; terms are combined
+        with AND so a single term matching one field cannot bypass the other terms'
+        requirements.
+        """
+        if value is None:
+            return Q()
+
+        value = value.strip()
+        if not value:
+            return Q()
+
+        search_terms = value.split()
+        searchable_fields = ["name", "organization__name", "description", "subjective_review"]
+
+        # Each search term must match at least one searched field.
+        term_queries: list[Q] = []
+        for term in search_terms:
+            term_query = reduce(
+                or_,
+                [Q(**{f"{prefix}{field}__icontains": term}) for field in searchable_fields],
+            )
+            term_queries.append(term_query)
+
+        return reduce(and_, term_queries)
+
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        user = get_current_user(info)
+
+        if user is None or not user.is_authenticated:
+            if not value:
+                return Q()
+
+            return Q(**{f"{prefix}organization__in": value})
+
+        current_user = cast(User, user)
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
+
+    @strawberry_django.filter_field
+    def status(self, info: Info, value: Optional[List[StatusChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}status__in": value})
 
     @strawberry_django.filter_field
     def city_council_district(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:

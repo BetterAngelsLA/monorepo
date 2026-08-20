@@ -2204,6 +2204,36 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export type OperatorShelterFilter = {
+  AND?: InputMaybe<OperatorShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OperatorShelterFilter>;
+  OR?: InputMaybe<OperatorShelterFilter>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  /** @deprecated Use openNow instead */
+  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  status?: InputMaybe<Array<StatusChoices>>;
+  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
 export type OperatorShelterType = {
   __typename?: 'OperatorShelterType';
   HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
@@ -2514,6 +2544,34 @@ export enum PronounEnum {
   TheyThemTheirs = 'THEY_THEM_THEIRS'
 }
 
+export type PublicShelterFilter = {
+  AND?: InputMaybe<PublicShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<PublicShelterFilter>;
+  OR?: InputMaybe<PublicShelterFilter>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  /** @deprecated Use openNow instead */
+  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
+  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  status?: InputMaybe<Array<StatusChoices>>;
+  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
 export type Query = {
   __typename?: 'Query';
   bed: BedType;
@@ -2702,7 +2760,7 @@ export type QueryOperatorShelterArgs = {
 
 
 export type QueryOperatorSheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<OperatorShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2813,7 +2871,7 @@ export type QueryShelterSpasArgs = {
 
 
 export type QuerySheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<PublicShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -3290,36 +3348,6 @@ export enum ShelterChoices {
   SingleFamilyHouse = 'SINGLE_FAMILY_HOUSE',
   TinyHomes = 'TINY_HOMES'
 }
-
-export type ShelterFilter = {
-  AND?: InputMaybe<ShelterFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ShelterFilter>;
-  OR?: InputMaybe<ShelterFilter>;
-  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
-  city?: InputMaybe<Array<Scalars['ID']['input']>>;
-  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
-  geolocation?: InputMaybe<GeolocationInput>;
-  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
-  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
-  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
-  mapBounds?: InputMaybe<MapBoundsInput>;
-  maxStay?: InputMaybe<MaxStayInput>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
-  openNow?: InputMaybe<OpenNowInput>;
-  /** @deprecated Use openNow instead */
-  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
-  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
-  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
-  properties?: InputMaybe<ShelterPropertyInput>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  services?: InputMaybe<Array<Scalars['ID']['input']>>;
-  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
-  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
-  status?: InputMaybe<Array<StatusChoices>>;
-  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
-};
 
 export type ShelterHeroImageType = {
   __typename?: 'ShelterHeroImageType';

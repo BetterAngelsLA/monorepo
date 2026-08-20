@@ -131,7 +131,7 @@ class Query:
             )
         )
 
-        queryset: QuerySet[Organization] = Organization.objects.filter(has_shelter_operator_group).order_by("name")
+        queryset: QuerySet[Organization] = Organization.objects.filter(has_shelter_operator_group)
 
         return queryset
 

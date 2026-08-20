@@ -1,6 +1,6 @@
 query OperatorShelters(
   $pagination: OffsetPaginationInput
-  $filters: ShelterFilter
+  $filters: OperatorShelterFilter
   $ordering: [ShelterOrder!]! = []
 ) {
   operatorShelters(
