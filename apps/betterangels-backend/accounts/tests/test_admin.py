@@ -11,7 +11,7 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
-from accounts.services import member_add, reconcile_org_groups
+from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
@@ -165,10 +165,10 @@ class OrganizationAddMemberViewTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
         self.url = reverse("admin:organizations_organization_add_member", args=[self.organization.pk])
 
-    def test_adding_a_member_assigns_only_the_chosen_role(self) -> None:
+    def test_adding_a_member_assigns_only_the_chosen_roles(self) -> None:
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.post(
-                self.url, {"email": "newmember@example.com", "permission_template": CASEWORKER.name}
+                self.url, {"email": "newmember@example.com", "permission_templates": [CASEWORKER.name]}
             )
 
         self.assertEqual(response.status_code, 302)
@@ -187,7 +187,7 @@ class OrganizationAddMemberViewTestCase(TestCase):
         """It used to redirect to the changelist, where the new member is invisible."""
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.post(
-                self.url, {"email": "listed@example.com", "permission_template": CASEWORKER.name}
+                self.url, {"email": "listed@example.com", "permission_templates": [CASEWORKER.name]}
             )
 
         organization_url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
@@ -199,14 +199,14 @@ class OrganizationAddMemberViewTestCase(TestCase):
 
     def test_adding_a_member_sends_the_invitation_only_on_commit(self) -> None:
         with self.captureOnCommitCallbacks() as callbacks:
-            self.client.post(self.url, {"email": "oncommit@example.com", "permission_template": CASEWORKER.name})
+            self.client.post(self.url, {"email": "oncommit@example.com", "permission_templates": [CASEWORKER.name]})
 
         self.assertEqual(len(callbacks), 1)
 
     def test_a_role_the_organization_cannot_hold_is_rejected(self) -> None:
         response = self.client.post(
             self.url,
-            {"email": "wrongrole@example.com", "permission_template": SHELTER_OPERATOR.name},
+            {"email": "wrongrole@example.com", "permission_templates": [SHELTER_OPERATOR.name]},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -215,7 +215,7 @@ class OrganizationAddMemberViewTestCase(TestCase):
     def test_a_non_invitable_role_is_rejected(self) -> None:
         response = self.client.post(
             self.url,
-            {"email": "escalate@example.com", "permission_template": "Organization Superuser"},
+            {"email": "escalate@example.com", "permission_templates": ["Organization Superuser"]},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -226,7 +226,7 @@ class OrganizationAddMemberViewTestCase(TestCase):
         OrganizationProfile.objects.filter(organization=self.organization).delete()
 
         response = self.client.post(
-            self.url, {"email": "unconfigured@example.com", "permission_template": CASEWORKER.name}
+            self.url, {"email": "unconfigured@example.com", "permission_templates": [CASEWORKER.name]}
         )
 
         self.assertEqual(response.status_code, 302)
@@ -364,7 +364,7 @@ class OrganizationUserAddViewTestCase(TestCase):
         form = response.context["form"]
         self.assertIn("organization", form.fields)
         self.assertEqual(
-            [choice[0] for choice in form.fields["permission_template"].choices],
+            [choice[0] for choice in form.fields["permission_templates"].choices],
             [CASEWORKER.name, SHELTER_OPERATOR.name],
         )
 
@@ -375,7 +375,7 @@ class OrganizationUserAddViewTestCase(TestCase):
                 {
                     "organization": str(self.organization.pk),
                     "email": "crossorg@example.com",
-                    "permission_template": CASEWORKER.name,
+                    "permission_templates": [CASEWORKER.name],
                 },
             )
 
@@ -421,10 +421,121 @@ class OrganizationUserAddViewTestCase(TestCase):
             {
                 "organization": str(self.organization.pk),
                 "email": "wrongrole@example.com",
-                "permission_template": SHELTER_OPERATOR.name,
+                "permission_templates": [SHELTER_OPERATOR.name],
             },
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("permission_template", response.context["form"].errors)
+        self.assertIn("permission_templates", response.context["form"].errors)
         self.assertFalse(User.objects.filter(email="wrongrole@example.com").exists())
+
+
+class OrganizationMemberMultipleRolesTestCase(TestCase):
+    """Inviting with several roles, and editing a member's roles afterwards."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_roles_tests", email="admin_roles_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
+
+    def _roles_of(self, member: User) -> set[str]:
+        return set(
+            PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+                "template__name", flat=True
+            )
+        )
+
+    def test_inviting_with_two_roles_grants_both(self) -> None:
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                reverse("admin:organizations_organization_add_member", args=[self.organization.pk]),
+                {
+                    "email": "dual@example.com",
+                    "permission_templates": [CASEWORKER.name, SHELTER_OPERATOR.name],
+                },
+            )
+
+        member = User.objects.get(email="dual@example.com")
+        self.assertSetEqual(self._roles_of(member), {CASEWORKER.name, SHELTER_OPERATOR.name})
+
+    def test_the_invitation_email_uses_the_role_that_has_its_own_template(self) -> None:
+        """Only one email is sent, so the role-specific body beats the generic fallback."""
+        self.assertEqual(invitation_role((CASEWORKER, SHELTER_OPERATOR)), SHELTER_OPERATOR)
+        self.assertEqual(invitation_role((SHELTER_OPERATOR, CASEWORKER)), SHELTER_OPERATOR)
+        self.assertEqual(invitation_role((CASEWORKER,)), CASEWORKER)
+
+    def test_changing_roles_revokes_the_ones_unchecked(self) -> None:
+        member = member_add(
+            email="demote@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER, SHELTER_OPERATOR),
+        )
+        self.assertSetEqual(self._roles_of(member), {CASEWORKER.name, SHELTER_OPERATOR.name})
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        response = self.client.post(url, {"permission_templates": [SHELTER_OPERATOR.name]})
+
+        self.assertRedirects(response, reverse("admin:organizations_organization_change", args=[self.organization.pk]))
+        self.assertSetEqual(self._roles_of(member), {SHELTER_OPERATOR.name})
+
+    def test_the_role_form_is_prefilled_with_the_roles_held(self) -> None:
+        member = member_add(
+            email="prefilled@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].fields["permission_templates"].initial, [CASEWORKER.name])
+
+    def test_clearing_every_role_is_allowed_and_leaves_membership(self) -> None:
+        """A member with no roles is a real state — it is what Add member starts from."""
+        member = member_add(
+            email="noroles@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        self.client.post(url, {"permission_templates": []})
+
+        self.assertSetEqual(self._roles_of(member), set())
+        self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
+
+    def test_a_role_the_organization_cannot_hold_is_rejected(self) -> None:
+        outreach_only = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        member = member_add(
+            email="outreachonly@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=outreach_only,
+            permission_templates=(CASEWORKER,),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[outreach_only.pk, member.pk])
+        response = self.client.post(url, {"permission_templates": [SHELTER_OPERATOR.name]})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("permission_templates", response.context["form"].errors)
+        self.assertSetEqual(
+            set(
+                PermissionGroup.objects.filter(organization=outreach_only, group__user=member).values_list(
+                    "template__name", flat=True
+                )
+            ),
+            {CASEWORKER.name},
+        )

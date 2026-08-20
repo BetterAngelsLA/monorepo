@@ -1,6 +1,7 @@
 from typing import Any, Type, cast
 
 from common.org_types import REGISTRY
+from common.permissions.config import TemplateConfig
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -18,6 +19,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 
 from .forms import (
     OrganizationMemberInviteForm,
+    OrganizationMemberRoleForm,
     OrganizationProfileForm,
     UserChangeForm,
     UserCreationForm,
@@ -29,7 +31,27 @@ from .models import (
     PermissionGroupTemplate,
     User,
 )
-from .services import member_invite, organization_remove_member, reconcile_org_groups
+from .services import (
+    invitation_role,
+    member_invite,
+    member_roles_replace,
+    organization_remove_member,
+    reconcile_org_groups,
+)
+
+
+def _invited_message(email: str, organization: Organization, role_templates: tuple[TemplateConfig, ...]) -> str:
+    """Name the roles granted, and which one the invitation email came from.
+
+    Only one email is sent, so when several roles are granted the choice is
+    stated rather than left to be guessed.
+    """
+    roles = ", ".join(template.name for template in role_templates)
+    message = f"Invited {email} to {organization.name} as {roles}."
+    if len(role_templates) > 1:
+        message += f" Invitation email sent for {invitation_role(role_templates).name}."
+    return message
+
 
 admin.site.unregister(Organization)
 admin.site.unregister(OrganizationUser)
@@ -74,7 +96,7 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
     extra = 0
     can_delete = False
     verbose_name_plural = "Members"
-    fields = ("member", "roles", "owner", "created")
+    fields = ("member", "roles", "owner", "created", "change_roles")
     readonly_fields = fields
 
     # django-stubs declares this two-arg form on InlineModelAdmin carrying its own
@@ -109,6 +131,14 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
     def owner(self, obj: OrganizationUser) -> bool:
         return hasattr(obj, "organizationowner")
 
+    @admin.display(description="")
+    def change_roles(self, obj: OrganizationUser) -> str:
+        url = reverse(
+            "admin:organizations_organization_change_member_roles",
+            args=[obj.organization_id, obj.user_id],
+        )
+        return format_html('<a href="{}" class="changelink">Change roles</a>', url)
+
 
 class OrganizationProfileInline(admin.StackedInline):
     model = OrganizationProfile
@@ -140,6 +170,11 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.add_member_view),
                 name="organizations_organization_add_member",
             ),
+            path(
+                "<path:object_id>/change-roles/<int:user_id>/",
+                self.admin_site.admin_view(self.change_member_roles_view),
+                name="organizations_organization_change_member_roles",
+            ),
         ]
         return custom_urls + super().get_urls()
 
@@ -169,8 +204,14 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
             "organization": organization,
             "form": form,
             "title": f"Add member to {organization.name}",
+            "help_text": (
+                "The person is invited by email and given the roles you select. If they already have an "
+                "account it is reused, and reactivated if it was disabled."
+            ),
+            "submit_label": "Send invitation",
+            "cancel_url": reverse("admin:organizations_organization_change", args=[organization.pk]),
         }
-        return TemplateResponse(request, "admin/organizations/organization/add_member.html", context)
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
     def _invite_member(
         self,
@@ -179,13 +220,13 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
         form: OrganizationMemberInviteForm,
     ) -> HttpResponseRedirect:
         email = form.cleaned_data["email"]
-        role_template = REGISTRY.get_template_or_raise(form.cleaned_data["permission_template"], organization)
+        role_templates = form.selected_templates()
 
         try:
             member_invite(
                 organization=organization,
                 email=email,
-                permission_template=role_template,
+                permission_templates=role_templates,
                 invited_by=cast(User, request.user),
                 site=Site.objects.get(pk=settings.SITE_ID),
             )
@@ -193,13 +234,55 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
             self.message_user(request, "; ".join(error.messages), messages.ERROR)
             return redirect(request.get_full_path())
 
-        self.message_user(
-            request,
-            f"Invited {email} to {organization.name} as {role_template.name}.",
-            messages.SUCCESS,
-        )
+        self.message_user(request, _invited_message(email, organization, role_templates), messages.SUCCESS)
         # Back to the organization, where the Members inline now lists them.
         return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
+    def change_member_roles_view(self, request: HttpRequest, object_id: str, user_id: int) -> HttpResponse:
+        """Set exactly which roles an existing member holds.
+
+        Unchecking a role revokes it — the admin had no way to do this, leaving
+        the raw ``auth.Group`` picker on the user page as the only route.
+        """
+        organization = get_object_or_404(Organization, pk=object_id)
+        member = get_object_or_404(User, pk=user_id)
+        organization_url = reverse("admin:organizations_organization_change", args=[organization.pk])
+
+        if request.method == "POST":
+            form = OrganizationMemberRoleForm(request.POST, organization=organization, member=member)
+            if form.is_valid():
+                role_templates = form.selected_templates()
+                try:
+                    member_roles_replace(
+                        organization=organization,
+                        user_id=member.pk,
+                        permission_templates=role_templates,
+                    )
+                except ValidationError as error:
+                    self.message_user(request, "; ".join(error.messages), messages.ERROR)
+                    return redirect(request.get_full_path())
+
+                roles = ", ".join(template.name for template in role_templates) or "no roles"
+                self.message_user(
+                    request,
+                    f"{member.email or member} now holds {roles} in {organization.name}.",
+                    messages.SUCCESS,
+                )
+                return redirect(organization_url)
+        else:
+            form = OrganizationMemberRoleForm(organization=organization, member=member)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "form": form,
+            "title": f"Roles for {member.email or member} in {organization.name}",
+            "help_text": "Unchecking a role revokes it. Clearing them all leaves the person a member with no access.",
+            "submit_label": "Save roles",
+            "cancel_url": organization_url,
+        }
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
 
 @admin.register(OrganizationUser)
@@ -232,12 +315,13 @@ class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
             form = OrganizationMemberInviteForm(request.POST)
             if form.is_valid():
                 organization = form.cleaned_data["organization"]
-                role_template = REGISTRY.get_template_or_raise(form.cleaned_data["permission_template"], organization)
+                email = form.cleaned_data["email"]
+                role_templates = form.selected_templates()
                 try:
                     member_invite(
                         organization=organization,
-                        email=form.cleaned_data["email"],
-                        permission_template=role_template,
+                        email=email,
+                        permission_templates=role_templates,
                         invited_by=cast(User, request.user),
                         site=Site.objects.get(pk=settings.SITE_ID),
                     )
@@ -245,11 +329,7 @@ class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
                     self.message_user(request, "; ".join(error.messages), messages.ERROR)
                     return redirect(request.get_full_path())
 
-                self.message_user(
-                    request,
-                    f"Invited {form.cleaned_data['email']} to {organization.name} as {role_template.name}.",
-                    messages.SUCCESS,
-                )
+                self.message_user(request, _invited_message(email, organization, role_templates), messages.SUCCESS)
                 return redirect(reverse("admin:organizations_organization_change", args=[organization.pk]))
         else:
             form = OrganizationMemberInviteForm()
@@ -259,8 +339,14 @@ class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
             "opts": self.model._meta,
             "form": form,
             "title": "Add member",
+            "help_text": (
+                "The person is invited by email and given the roles you select. If they already have an "
+                "account it is reused, and reactivated if it was disabled."
+            ),
+            "submit_label": "Send invitation",
+            "cancel_url": reverse("admin:organizations_organizationuser_changelist"),
         }
-        return TemplateResponse(request, "admin/organizations/organization/add_member.html", context)
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
     def has_delete_permission(self, request: HttpRequest, obj: OrganizationUser | None = None) -> bool:
         """Withhold deletion for the rows ``organization_remove_member`` refuses.

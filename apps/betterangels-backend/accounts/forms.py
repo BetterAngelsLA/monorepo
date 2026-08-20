@@ -5,7 +5,9 @@ from django import forms
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from organizations.models import Organization
 
-from .models import OrganizationProfile, OrgTypeChoices, User
+from common.permissions.config import TemplateConfig
+
+from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -59,8 +61,61 @@ class OrganizationProfileForm(forms.ModelForm):
         return [OrgTypeChoices(value) for value in self.cleaned_data["org_types"]]
 
 
-class OrganizationMemberInviteForm(forms.Form):
-    """Invite a person into an organization with a single role.
+class OrganizationRoleSelectionForm(forms.Form):
+    """Base for the admin forms that choose an organization member's roles."""
+
+    permission_templates = forms.MultipleChoiceField(
+        label="Roles",
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Only the roles this organization's org types allow are listed.",
+    )
+
+    def __init__(self, *args: Any, organization: Organization | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.organization = organization
+        names = (
+            REGISTRY.invitable_template_names()
+            if organization is None
+            else REGISTRY.invitable_template_names_for(organization)
+        )
+        self.role_names = names
+        permission_templates = cast(forms.MultipleChoiceField, self.fields["permission_templates"])
+        permission_templates.choices = [(name, name) for name in names]
+
+    def clean(self) -> dict[str, Any]:
+        """Reject roles the chosen organization cannot hold.
+
+        Checks membership of ``invitable_template_names_for`` rather than calling
+        ``get_template_or_raise``, which despite its signature resolves names
+        against the whole registry and uses the organization only to word its
+        error — so it accepts a role the organization cannot grant.
+        """
+        cleaned_data = super().clean() or {}
+        organization = self.organization or cleaned_data.get("organization")
+        names = cleaned_data.get("permission_templates") or []
+
+        if organization is not None and names:
+            available = REGISTRY.invitable_template_names_for(organization)
+            rejected = [name for name in names if name not in available]
+            if rejected:
+                self.add_error(
+                    "permission_templates",
+                    f"{organization.name} cannot grant {', '.join(rejected)}. "
+                    f"Available: {', '.join(available) or 'none'}.",
+                )
+
+        return cleaned_data
+
+    def selected_templates(self) -> tuple[TemplateConfig, ...]:
+        """The chosen roles as configs, in the order the form offered them."""
+        chosen = set(self.cleaned_data["permission_templates"])
+        return tuple(
+            template for name in self.role_names if name in chosen and (template := REGISTRY.template(name)) is not None
+        )
+
+
+class OrganizationMemberInviteForm(OrganizationRoleSelectionForm):
+    """Invite a person into an organization with one or more roles.
 
     Pass *organization* to fix it — the roles offered are then the ones that
     organization can hold.  Pass ``None`` and the form asks which organization,
@@ -68,47 +123,33 @@ class OrganizationMemberInviteForm(forms.Form):
     """
 
     email = forms.EmailField()
-    permission_template = forms.ChoiceField(label="Role")
 
     def __init__(self, *args: Any, organization: Organization | None = None, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.organization = organization
+        super().__init__(*args, organization=organization, **kwargs)
 
         if organization is None:
             self.fields["organization"] = forms.ModelChoiceField(
                 queryset=Organization.objects.order_by("name"),
                 help_text="Its org types decide which of the roles below it can grant.",
             )
-            self.order_fields(["organization", "email", "permission_template"])
-            names = REGISTRY.invitable_template_names()
-        else:
-            names = REGISTRY.invitable_template_names_for(organization)
 
-        permission_template = cast(forms.ChoiceField, self.fields["permission_template"])
-        permission_template.choices = [(name, name) for name in names]
+        self.order_fields(["organization", "email", "permission_templates"])
 
-    def clean(self) -> dict[str, Any]:
-        """Reject a role the chosen organization cannot hold.
 
-        Both fields are needed to check the pair, so this cannot be a
-        ``clean_permission_template``: when the organization is picked on the
-        form, it is not resolved until here.
+class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
+    """Set exactly which roles an existing member holds in *organization*.
 
-        Checks membership of ``invitable_template_names_for`` rather than calling
-        ``get_template_or_raise``, which despite its signature resolves the name
-        against the whole registry and uses the organization only to word its
-        error — so it accepts a role the organization cannot grant.
-        """
-        cleaned_data = super().clean() or {}
-        organization = self.organization or cleaned_data.get("organization")
-        name = cleaned_data.get("permission_template")
+    Unchecking a role revokes it, so this is one edit of what the person can do
+    here rather than an additive grant.
+    """
 
-        if organization is not None and name:
-            available = REGISTRY.invitable_template_names_for(organization)
-            if name not in available:
-                self.add_error(
-                    "permission_template",
-                    f"{organization.name} cannot grant {name}. Available: {', '.join(available) or 'none'}.",
-                )
-
-        return cleaned_data
+    def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
+        super().__init__(*args, organization=organization, **kwargs)
+        self.member = member
+        # Clearing every role is a real state — it is what a member starts as
+        # before any role is granted — so revoking the last one is allowed here,
+        # unlike on the invite form where it would send a pointless invitation.
+        self.fields["permission_templates"].required = False
+        self.fields["permission_templates"].initial = sorted(
+            PermissionGroup.objects.filter(organization=organization, group__user=member).values_list("name", flat=True)
+        )
