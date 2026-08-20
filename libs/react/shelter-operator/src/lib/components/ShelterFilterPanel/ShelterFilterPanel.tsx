@@ -32,6 +32,10 @@ import { MultiSelectFilterSection } from './MultiSelectFilterSection';
 const SORT_OPTIONS: DropdownOption<string>[] = [
   { label: 'Name: Ascending', value: 'name-asc' },
   { label: 'Name: Descending', value: 'name-desc' },
+  { label: 'Status: Ascending', value: 'status-asc' },
+  { label: 'Status: Descending', value: 'status-desc' },
+  { label: 'Organization: Low to High', value: 'organization-asc' },
+  { label: 'Organization: High to Low', value: 'organization-desc' },
   { label: 'Capacity: Low to High', value: 'capacity-asc' },
   { label: 'Capacity: High to Low', value: 'capacity-desc' },
 ];

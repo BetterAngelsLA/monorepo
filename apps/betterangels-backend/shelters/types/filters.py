@@ -19,7 +19,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, IntegerField, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -372,6 +372,18 @@ class ShelterOrder:
     name: auto
     created_at: auto
     status: auto
+
+    @strawberry_django.order_field
+    def organization(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        return queryset.annotate(organization_name=F("organization__name")).order_by("organization_name"), [
+            value.resolve("organization_name")
+        ]
 
     @strawberry_django.order_field
     def bed_count(

@@ -3355,6 +3355,7 @@ export type ShelterOrder = {
   bedCount?: InputMaybe<Ordering>;
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
+  organization?: InputMaybe<Ordering>;
   status?: InputMaybe<Ordering>;
 };
 

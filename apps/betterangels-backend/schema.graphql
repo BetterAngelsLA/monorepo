@@ -2597,6 +2597,7 @@ input ShelterOrder {
   name: Ordering
   createdAt: Ordering
   status: Ordering
+  organization: Ordering
   bedCount: Ordering
 }
 

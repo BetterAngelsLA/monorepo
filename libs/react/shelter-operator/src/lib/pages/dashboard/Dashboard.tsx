@@ -51,7 +51,7 @@ const SORT_FIELD_MAP: Record<SortableColumn, keyof ShelterOrder> = {
   name: 'name',
   capacity: 'bedCount',
   status: 'status',
-  org: 'organization',
+  organization: 'organization',
 };
 
 const poppinsStyle = { fontFamily: 'Poppins, sans-serif' } as const;

@@ -1,11 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { Shelter } from '../types/shelter';
-import {
-  Table,
-  type SortDirection,
-  type TableColumn,
-} from './base-ui/table';
+import { Table, type SortDirection, type TableColumn } from './base-ui/table';
 
 export type ShelterRowObject = {
   id: string;
@@ -35,7 +31,7 @@ type ShelterTableProps = {
   /** Called when the user clicks a sortable column header. */
   onSortChange?: (
     column: string | null,
-    direction: SortDirection | null
+    direction: SortDirection | null,
   ) => void;
 };
 
