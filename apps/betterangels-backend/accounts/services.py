@@ -178,19 +178,15 @@ def create_organization_with_presets(
 
     Returns the new :class:`~organizations.models.Organization`.
     """
-    for preset_name in preset_names:
-        if REGISTRY.org_type(preset_name) is None:
-            raise ValidationError(f"Unknown org-type preset: {preset_name}")
-
-    org, _ = Organization.objects.get_or_create(name=name)
-
-    # Collect unique templates from all requested presets (deduplicate by name).
     org_types: list[str] = []
-
     for preset_name in preset_names:
         org_config = REGISTRY.org_type(preset_name)
-        assert org_config is not None
-        org_types.append(org_config.name)
+        if org_config is None:
+            raise ValidationError(f"Unknown org-type preset: {preset_name}")
+        if org_config.name not in org_types:
+            org_types.append(org_config.name)
+
+    org, _ = Organization.objects.get_or_create(name=name)
 
     # Profile with org types — update_or_create to fill in on existing orgs too.
     OrganizationProfile.objects.update_or_create(
@@ -228,8 +224,10 @@ def reconcile_org_groups(org: Organization) -> None:
     template at all, both of which are granted through the Django admin and
     would otherwise be destroyed on the next reconcile.
 
-    An organization with no profile is skipped: it is unconfigured, which is not
-    the same as having no roles, so its groups are left alone.
+    An organization with no profile has no derived groups to reconcile, so none
+    are created or deleted — unconfigured is not the same as having no roles.  Its
+    permissions are still applied, so this function always leaves *org*
+    consistent with config and is the only pass any caller needs to make.
 
     Each removed row's ``auth.Group`` is torn down by
     :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
@@ -239,35 +237,32 @@ def reconcile_org_groups(org: Organization) -> None:
     Safe to call repeatedly — all operations are idempotent.
     """
     org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
-    if org_types is None:
-        # No profile means the organization has not been configured as a tenant.
-        # Reconciling it would read as "no roles allowed" and delete any it has.
-        return
 
-    expected: set[str] = set()
-    for org_type_value in org_types:
-        org_config = REGISTRY.org_type(org_type_value.value)
-        if org_config is None:
-            continue
-        for template_config in org_config.templates:
-            expected.add(template_config.name)
+    if org_types is not None:
+        expected: set[str] = set()
+        for org_type_value in org_types:
+            org_config = REGISTRY.org_type(org_type_value.value)
+            if org_config is None:
+                continue
+            for template_config in org_config.templates:
+                expected.add(template_config.name)
 
-    for template_name in expected:
-        permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=template_name,
-        )
-        PermissionGroup.objects.get_or_create(
+        for template_name in expected:
+            permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+                name=template_name,
+            )
+            PermissionGroup.objects.get_or_create(
+                organization=org,
+                template=permission_group_template,
+            )
+
+        unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+        derived = {name for name in REGISTRY.template_names() if name not in unscoped}
+
+        PermissionGroup.objects.filter(
             organization=org,
-            template=permission_group_template,
-        )
-
-    unscoped = {template_config.name for template_config in REGISTRY.unscoped}
-    derived = {name for name in REGISTRY.template_names() if name not in unscoped}
-
-    PermissionGroup.objects.filter(
-        organization=org,
-        template__name__in=derived - expected,
-    ).delete()
+            template__name__in=derived - expected,
+        ).delete()
 
     sync_group_permissions(organization=org)
 

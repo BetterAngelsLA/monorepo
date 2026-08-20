@@ -40,6 +40,9 @@ admin.site.unregister(OrganizationInvitation)
 class PermissionGroupAdmin(admin.ModelAdmin):
     list_display = ("name", "organization", "group", "template")
     list_filter = ("organization", "template")
+    # Excludes ``group``: picking an existing one means deleting this row takes that
+    # group's members with it.
+    fields = ("organization", "template", "name")
 
 
 @admin.register(PermissionGroupTemplate)
@@ -55,6 +58,7 @@ class PermissionGroupTemplateAdmin(admin.ModelAdmin):
 class PermissionGroupInline(admin.TabularInline):
     model = PermissionGroup
     extra = 1
+    fields = ("template", "name")
 
 
 class OrganizationProfileInline(admin.StackedInline):

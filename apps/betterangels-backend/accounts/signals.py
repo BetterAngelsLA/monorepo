@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
 from organizations.models import Organization
 
@@ -114,7 +115,6 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     Also assigns test-agent roles on local dev (safe to call repeatedly
     — ``member_add`` is idempotent).
     """
-    from accounts.seed import sync_group_permissions
     from accounts.services import member_add, reconcile_org_groups as reconcile
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
@@ -131,8 +131,6 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
 
     for org in organizations:
         reconcile(org)
-
-    sync_group_permissions()
 
     if not settings.IS_LOCAL_DEV:
         return
@@ -160,5 +158,8 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
             organization=test_org,
             permission_templates=(SHELTER_OPERATOR, CASEWORKER),
         )
-    except Exception:
-        pass
+    except ObjectDoesNotExist, DatabaseError:
+        # The test org, its users, or its permission groups may not exist yet on an
+        # early post_migrate run.  Scoped like the reconcile guard above so a logic
+        # error here surfaces instead of leaving the dev fixtures silently roleless.
+        logger.warning("Skipping local dev role assignment — test org or users not ready yet.", exc_info=True)

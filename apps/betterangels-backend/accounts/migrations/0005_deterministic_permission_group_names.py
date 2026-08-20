@@ -1,4 +1,4 @@
-"""Rename permission groups to ``org:<pk>:<template>`` and re-attach orphans.
+"""Rename permission groups to ``org:<pk>:<template>``.
 
 ``auth.Group.name`` is unique and limited to 150 characters, while
 ``Organization.name`` is neither unique nor short.  Deriving the group name from
@@ -52,9 +52,6 @@ def restore_group_names(apps, schema_editor):
     Two same-named organizations reconstruct to the same string, which
     ``auth.Group.name`` forbids, so a taken name leaves the deterministic name in
     place.  Nothing is lost — the legacy name was always derived from the data.
-
-    Re-attached ``PermissionGroup`` rows are kept: they represent access the
-    members already hold.
     """
     Group = apps.get_model("auth", "Group")
     PermissionGroup = apps.get_model("accounts", "PermissionGroup")

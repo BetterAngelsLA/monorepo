@@ -11,6 +11,7 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
+from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
@@ -50,7 +51,6 @@ class OrganizationAdminTestCase(TestCase):
         return {
             "name": name,
             "is_active": "on",
-            "org_types": org_types,
             # Management form for the required profile inline.
             "profile-TOTAL_FORMS": "1",
             "profile-INITIAL_FORMS": "0",
@@ -92,7 +92,6 @@ class OrganizationAdminTestCase(TestCase):
         group_id = shelter_group.group_id
 
         OrganizationProfile.objects.filter(organization=organization).update(org_types=[OrgTypeChoices.OUTREACH])
-        from accounts.services import reconcile_org_groups
 
         reconcile_org_groups(organization)
 
@@ -112,12 +111,45 @@ class OrganizationAdminTestCase(TestCase):
         member = baker.make(User)
         member.groups.add(hand_granted.group)
 
-        from accounts.services import reconcile_org_groups
-
         reconcile_org_groups(organization)
 
         self.assertTrue(PermissionGroup.objects.filter(pk=hand_granted.pk).exists())
         self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+
+    def test_an_unconfigured_organization_still_has_its_permissions_synced(self) -> None:
+        """No profile means no *derived* groups — not that config stops applying.
+
+        Reconciliation used to return before syncing permissions for such an
+        organization, which is why a second unscoped sync had to run after the
+        per-org loop on every ``migrate``.
+        """
+        organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
+        hand_granted = PermissionGroup.objects.create(organization=organization, template=template)
+        hand_granted.group.permissions.clear()
+        OrganizationProfile.objects.filter(organization=organization).delete()
+
+        reconcile_org_groups(organization)
+
+        granted = set(hand_granted.group.permissions.values_list("content_type__app_label", "codename"))
+        self.assertSetEqual(granted, {tuple(entry.split(".", 1)) for entry in GLOBAL_SHELTER_OPERATOR.permissions})
+
+    def test_the_permission_group_inline_does_not_offer_the_group_field(self) -> None:
+        """``group`` is created and torn down by code, so staff must not pick one.
+
+        Binding a row to a group used for something else means deleting the row
+        takes that group's members with it.
+        """
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[organization.pk]),
+        )
+
+        inline_formset = next(
+            formset for formset in response.context["inline_admin_formsets"] if formset.formset.model is PermissionGroup
+        )
+        self.assertNotIn("group", inline_formset.formset.empty_form.fields)
 
 
 class OrganizationAddMemberViewTestCase(TestCase):
