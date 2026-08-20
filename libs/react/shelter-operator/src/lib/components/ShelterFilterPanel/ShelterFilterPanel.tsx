@@ -37,19 +37,26 @@ function hasActiveFilter(value: string[] | string): boolean {
   return Array.isArray(value) ? value.length > 0 : value !== '';
 }
 
-function SortFilterDrawerContent() {
+type DrawerData = {
+  cities: { id: string; name: string }[];
+  organizations: { id: string; name: string }[];
+  serviceCategories: Array<{
+    id: string;
+    displayName: string;
+    services?: Array<{ id: string; displayName: string }> | null;
+  }>;
+  spas: { id: string; name: string }[];
+};
+
+function SortFilterDrawerContent({
+  cities,
+  organizations: shelterOperatorOrgs,
+  serviceCategories,
+  spas,
+}: DrawerData) {
   const [sort, setSort] = useAtom(operatorShelterSortAtom);
   const [filters, setFilters] = useAtom(operatorShelterFiltersAtom);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const { organizations: shelterOperatorOrgs } = useShelterOperatorOrganizations();
-  const { cities } = useShelterCities();
-  const { spas } = useShelterSpas();
-  const { data: serviceCategoriesData } = useQuery(
-    ShelterServiceCategoriesDocument,
-  );
-  const serviceCategories =
-    serviceCategoriesData?.shelterServiceCategories?.results ?? [];
 
   const sortValue =
     SORT_OPTIONS.find(
@@ -505,11 +512,27 @@ function SortFilterDrawerContent() {
 export function ShelterFilterPanel() {
   const { showDrawer } = useAppDrawer();
 
+  // Fetch reference data here so it loads on page initialization rather than
+  // on the first drawer open, eliminating the 4-request waterfall at open time.
+  const { organizations } = useShelterOperatorOrganizations();
+  const { cities } = useShelterCities();
+  const { spas } = useShelterSpas();
+  const { data: serviceCategoriesData } = useQuery(ShelterServiceCategoriesDocument);
+  const serviceCategories =
+    serviceCategoriesData?.shelterServiceCategories?.results ?? [];
+
   function openDrawer() {
     showDrawer({
       placement: 'right',
       header: 'Sort & Filter',
-      content: <SortFilterDrawerContent />,
+      content: (
+        <SortFilterDrawerContent
+          cities={cities}
+          organizations={organizations}
+          serviceCategories={serviceCategories}
+          spas={spas}
+        />
+      ),
     });
   }
 

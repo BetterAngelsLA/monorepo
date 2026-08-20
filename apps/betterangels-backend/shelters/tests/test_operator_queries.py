@@ -352,10 +352,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(
             [r["status"] for r in results],
             [
-                StatusChoices.APPROVED.value,
-                StatusChoices.DRAFT.value,
-                StatusChoices.INACTIVE.value,
-                StatusChoices.PENDING.value,
+                StatusChoices.APPROVED.name,
+                StatusChoices.DRAFT.name,
+                StatusChoices.INACTIVE.name,
+                StatusChoices.PENDING.name,
             ],
         )
 
@@ -527,8 +527,14 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_returns_only_shelter_operator_orgs(self) -> None:
         """Returns orgs with a SHELTER_OPERATOR permission group; outreach-only orgs are excluded."""
-        shelter_org_a = organization_recipe.make(name="Alpha Shelter", preset_names=["shelter"])
-        shelter_org_b = organization_recipe.make(name="Beta Shelter", preset_names=["shelter"])
+        from shelters.groups import SHELTER_OPERATOR
+
+        shelter_org_a = organization_recipe.make(
+            name="Alpha Shelter", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,)
+        )
+        shelter_org_b = organization_recipe.make(
+            name="Beta Shelter", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,)
+        )
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
         response = self.execute_graphql(self.QUERY)
@@ -546,16 +552,18 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_results_ordered_by_name(self) -> None:
         """Results are sorted alphabetically by name by default."""
-        organization_recipe.make(name="Zebra Shelter", preset_names=["shelter"])
-        organization_recipe.make(name="Alpha Shelter", preset_names=["shelter"])
-        organization_recipe.make(name="Middle Shelter", preset_names=["shelter"])
+        from shelters.groups import SHELTER_OPERATOR
+
+        organization_recipe.make(name="Zebra", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        organization_recipe.make(name="Alpha", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        organization_recipe.make(name="Middle", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
         response = self.execute_graphql(self.QUERY)
 
         self.assertIsNone(response.get("errors"))
         names = [r["name"] for r in response["data"]["shelterOperatorOrganizations"]["results"]]
-        self.assertEqual(names, sorted(names))
+        self.assertEqual(names, ["Alpha", "Middle", "test_org", "Zebra"])
 
     def test_unauthenticated_is_rejected(self) -> None:
         """Unauthenticated requests return an authentication error."""
