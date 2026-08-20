@@ -110,11 +110,31 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         org_2_ids = set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
         self.assertEqual(returned_ids, org_2_ids)
 
-    def test_requires_the_active_org_header(self) -> None:
-        """The server must not guess — first-match is how other orgs leaked."""
+    def test_headerless_denies_a_caller_in_more_than_one_organization(self) -> None:
+        """The server must not guess — first-match is how other orgs leaked.
+
+        The caller has to belong to both organizations, or a denial here proves
+        only that they held no group anywhere.
+        """
+        self.org_2.add_user(self.org_1_admin)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_admin, ORG_ADMIN)
         del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
 
         self._assert_denied(self.execute_graphql(self.get_teams_query()))
+
+    def test_headerless_serves_the_callers_only_organization(self) -> None:
+        """What keeps app builds older than #2330 working.
+
+        One organization to belong to is not a guess, so those builds keep
+        their team pickers until the header is mandatory.
+        """
+        del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
+
+        results = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"]
+
+        returned_ids = {int(row["id"]) for row in results}
+        org_1_ids = set(Team.objects.filter(organization=self.org_1).values_list("pk", flat=True))
+        self.assertEqual(returned_ids, org_1_ids)
 
     def test_denies_an_org_the_user_does_not_belong_to(self) -> None:
         """The header names the org; it does not grant access to it.
