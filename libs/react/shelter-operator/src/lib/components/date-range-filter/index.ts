@@ -4,3 +4,5 @@ export {
   dateRangeFilterAtom,
   initialDateRangeFilter,
 } from './dateRangeFilterAtom';
+export { Calendar } from './Calendar';
+export type { CalendarProps, RdpDateRange } from './Calendar';
