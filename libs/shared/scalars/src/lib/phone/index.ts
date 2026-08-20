@@ -1,6 +1,6 @@
 export {
   formatPhoneNumber,
-  parsePhoneNumber,
   toPhoneDialString,
+  toPhoneParts,
 } from './phoneNumber';
-export type { ParsedPhoneNumber } from './phoneNumber';
+export type { PhoneNumberParts } from './phoneNumber';

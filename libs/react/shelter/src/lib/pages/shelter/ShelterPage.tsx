@@ -20,7 +20,6 @@ import {
   SpecialSituationRestrictions,
 } from './partials';
 import { getShelterVisibility } from './utils';
-import { formatPhoneNumber } from '@monorepo/shared/scalars';
 
 export function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useQuery(ViewShelterDocument, {
@@ -57,7 +56,7 @@ export function ShelterPage({ id }: { id: string }) {
       )}
       <Actions
         location={shelter.location}
-        phone={formatPhoneNumber(shelter.phone)}
+        phone={shelter.phone}
         shelterName={shelter.name}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 -mb-6 flex flex-col gap-2">

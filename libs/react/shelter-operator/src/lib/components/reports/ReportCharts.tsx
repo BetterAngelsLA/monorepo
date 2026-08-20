@@ -1,14 +1,23 @@
-import { formatDateString } from '@monorepo/shared/scalars';
+import { formatDateString, type DateString } from '@monorepo/shared/scalars';
 import type {
   DailyBedStatusMetrics,
   DailyOccupancyMetrics,
 } from '../../hooks/useShelterOccupancyMetrics';
 import { BarChart, type ViewMode } from '../BarChart/BarChart';
 
+/**
+ * Short x-axis label, e.g. "Jun 1". A date we cannot parse keeps its raw value:
+ * the label is the chart's grouping key, so falling back to '' would merge
+ * every unreadable day into a single bar.
+ */
+function dateLabel(date: DateString): string {
+  return formatDateString(date, 'MMM d') || date;
+}
+
 /** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */
 function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateString(d.date, 'MMM d');
+    const date = dateLabel(d.date);
     return [
       { date, status: 'Occupied', count: d.occupied },
       { date, status: 'Available', count: d.available },
@@ -22,7 +31,7 @@ function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
 /** Same pivot but each count is expressed as a percentage of the daily total. */
 function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateString(d.date, 'MMM d');
+    const date = dateLabel(d.date);
     const total =
       d.occupied + d.available + d.reserved + d.outOfService + d.inTurnaround;
     const pct = (n: number) => {
@@ -41,14 +50,14 @@ function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
 
 function toDailyOccupancyCountData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateString(d.date, 'MMM d'),
+    date: dateLabel(d.date),
     count: d.occupiedCount,
   }));
 }
 
 function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateString(d.date, 'MMM d'),
+    date: dateLabel(d.date),
     count: Math.round(d.occupancyPct * 10) / 10,
   }));
 }

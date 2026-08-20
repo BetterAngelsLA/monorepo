@@ -34,13 +34,7 @@ export function RelevantContactCard(props: TProps) {
     },
     {
       header: ['Phone number'],
-      rows: [
-        [
-          phoneNumber && (
-            <PhoneNumberBtn number={phoneNumber} />
-          ),
-        ],
-      ],
+      rows: [[phoneNumber && <PhoneNumberBtn number={phoneNumber} />]],
     },
     {
       header: ['Mailing Address'],

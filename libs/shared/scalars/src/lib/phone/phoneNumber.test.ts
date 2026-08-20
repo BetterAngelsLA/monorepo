@@ -1,71 +1,93 @@
 import type { PhoneNumberString } from '../branded';
 import {
   formatPhoneNumber,
-  parsePhoneNumber,
   toPhoneDialString,
+  toPhoneParts,
 } from './phoneNumber';
 
 const asScalar = (value: unknown) => value as PhoneNumberString;
 
-describe('parsePhoneNumber', () => {
+describe('toPhoneParts', () => {
   it.each([
-    ['2223334444', '(222) 333-4444'],
-    ['  2223334444  ', '(222) 333-4444'],
-    ['222-333-4444', '(222) 333-4444'],
-    ['222 333 4444', '(222) 333-4444'],
-    ['(222) 333-4444', '(222) 333-4444'],
-  ])('formats the national number %s', (input, expected) => {
-    expect(parsePhoneNumber(asScalar(input))).toEqual({
-      formatted: expected,
-      extension: undefined,
-    });
-  });
-
-  it.each([
-    ['2223334444x555', '555'],
-    ['2223334444 x 555', '555'],
-  ])('separates the extension in %s', (input, extension) => {
-    expect(parsePhoneNumber(asScalar(input))).toEqual({
+    ['2223334444'],
+    ['  2223334444  '],
+    ['222-333-4444'],
+    ['222 333 4444'],
+    ['(222) 333-4444'],
+  ])('formats the national number %s', (input) => {
+    expect(toPhoneParts(asScalar(input))).toEqual({
       formatted: '(222) 333-4444',
-      extension,
+      extension: undefined,
+      display: '(222) 333-4444',
+      dial: '2223334444',
     });
   });
 
-  it('keeps the country code out of the display form', () => {
-    // The API strips it, but a value that still carries one must not double up.
-    expect(parsePhoneNumber(asScalar('+12223334444')).formatted).toBe(
-      '(222) 333-4444',
-    );
-  });
-
-  it.each([
-    ['123', '123'],
-    ['123-456', '123-456'],
-    ['abc', 'abc'],
-  ])('returns %s unchanged when it cannot be parsed', (input, expected) => {
-    expect(parsePhoneNumber(asScalar(input)).formatted).toBe(expected);
-  });
-
-  it.each([[null], [undefined], ['']])(
-    'returns an empty string for %s',
+  it.each([['2223334444x555'], ['2223334444 x 555']])(
+    'separates the extension in %s',
     (input) => {
-      expect(parsePhoneNumber(asScalar(input))).toEqual({ formatted: '' });
+      expect(toPhoneParts(asScalar(input))).toEqual({
+        formatted: '(222) 333-4444',
+        extension: '555',
+        display: '(222) 333-4444 ext. 555',
+        dial: '2223334444,555',
+      });
     },
   );
 
-  it('does not split unrecognised input into number and extension', () => {
-    // The metadata will not vouch for "123", so the value is shown as given
-    // rather than presented as a number with an extension.
-    expect(parsePhoneNumber(asScalar('123x45'))).toEqual({
-      formatted: '123x45',
+  it('keeps the country code out of the display form', () => {
+    // The API strips it, but a value that still carries one must not double up.
+    expect(toPhoneParts(asScalar('+12223334444')).formatted).toBe(
+      '(222) 333-4444',
+    );
+  });
+
+  it.each([[null], [undefined], ['']])(
+    'returns empty parts for %s',
+    (input) => {
+      expect(toPhoneParts(asScalar(input))).toEqual({
+        formatted: '',
+        display: '',
+        dial: '',
+      });
+    },
+  );
+
+  it('hands back input the parser rejects, with nothing to dial', () => {
+    expect(toPhoneParts(asScalar('abc'))).toEqual({
+      formatted: 'abc',
+      display: 'abc',
+      dial: '',
     });
   });
 
-  it('formats a possible number the metadata has not allocated', () => {
-    // 222 is not an assigned area code; it still has to display.
-    expect(parsePhoneNumber(asScalar('2223334444')).formatted).toBe(
-      '(222) 333-4444',
-    );
+  it.each([
+    ['5551234', '5551234', '5551234'],
+    ['911', '911', '911'],
+    ['2223334444', '(222) 333-4444', '2223334444'],
+  ])(
+    'still formats and dials %s, which the metadata will not vouch for',
+    (input, formatted, dial) => {
+      // A seven-digit local number, an N11 code and an unallocated area code
+      // are all isPossible() === false, and all have to work.
+      expect(toPhoneParts(asScalar(input))).toEqual({
+        formatted,
+        extension: undefined,
+        display: formatted,
+        dial,
+      });
+    },
+  );
+
+  it('agrees with itself about where the extension ends, even on junk', () => {
+    // The display and the dial string come from one parse, so they cannot
+    // disagree: showing "123 ext. 45" while dialling 12345 was the old bug.
+    expect(toPhoneParts(asScalar('123x45'))).toEqual({
+      formatted: '123',
+      extension: '45',
+      display: '123 ext. 45',
+      dial: '123,45',
+    });
   });
 });
 
@@ -84,8 +106,8 @@ describe('formatPhoneNumber', () => {
     expect(formatPhoneNumber(asScalar(undefined))).toBe('');
   });
 
-  it('agrees with parsePhoneNumber on unrecognised input', () => {
-    expect(formatPhoneNumber(asScalar('123x45'))).toBe('123x45');
+  it('shows unparseable input rather than dropping it', () => {
+    expect(formatPhoneNumber(asScalar('abc'))).toBe('abc');
   });
 });
 
@@ -105,9 +127,14 @@ describe('toPhoneDialString', () => {
     },
   );
 
-  it('still separates an extension the number cannot be validated against', () => {
-    // Dialling is a different concern from display: the extension is kept out
-    // of the digits so the dialer pauses in the right place.
-    expect(toPhoneDialString(asScalar('123x45'))).toBe('123,45');
+  it('matches the extension boundary the display form uses', () => {
+    const { formatted, extension, dial } = toPhoneParts(
+      asScalar('2135551234x22'),
+    );
+
+    expect(formatted).toBe('(213) 555-1234');
+    expect(extension).toBe('22');
+    expect(dial).toBe('2135551234,22');
+    expect(toPhoneDialString(asScalar('2135551234x22'))).toBe(dial);
   });
 });

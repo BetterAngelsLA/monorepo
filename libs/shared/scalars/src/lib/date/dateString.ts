@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import type { DateString } from '../branded';
+import type { DateString, DateTimeString } from '../branded';
 import { isoToDateSafe } from './isoToDateSafe';
 import { toLocalCalendarDate } from './toLocalCalendarDate/toLocalCalendarDate';
 
@@ -21,15 +21,13 @@ export function toDateString(date: Date): DateString {
  * `new Date('2026-05-05')` would anchor to UTC midnight, which renders as the
  * previous day anywhere west of UTC.
  */
-export function fromDateString(
-  value?: DateString | null,
-): Date | undefined {
+export function fromDateString(value?: DateString | null): Date | undefined {
   return toLocalCalendarDate(value ?? undefined);
 }
 
 /** Format a `Date` or `DateTime` scalar for display. `''` when unparseable. */
 export function formatDateString(
-  value: string | null | undefined,
+  value: DateString | DateTimeString | null | undefined,
   pattern: string,
 ): string {
   const date = isoToDateSafe(value);

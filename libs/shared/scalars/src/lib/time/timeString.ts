@@ -3,44 +3,55 @@ import type { TimeString } from '../branded';
 
 const MINUTES_PER_DAY = 24 * 60;
 
+/** `HH:mm` or `HH:mm:ss`, and nothing else. */
+const TIME_PATTERN = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$/;
+
+/**
+ * A day with no UTC-offset change in any IANA zone, so a `Date` built from
+ * wall-clock parts below always carries the time it was built with. On a
+ * spring-forward day it would not: 02:30 does not exist, and the runtime
+ * silently returns 03:30.
+ */
+const REFERENCE_YEAR = 2001;
+const REFERENCE_MONTH = 5; // June
+const REFERENCE_DAY = 15;
+
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /**
  * Serialize minutes-since-midnight for the `Time` GraphQL scalar.
  *
- * Clamped to a single day, so `1500` becomes `"24:00:00"` rather than wrapping
- * into the next morning.
+ * Clamped to 23:59 rather than 24:00, because `"24:00:00"` does not survive the
+ * round trip: Python's `time.fromisoformat` folds it to midnight without
+ * complaining, so a window ending at 24:00 comes back ending at 00:00 and reads
+ * as finishing before it started.
  */
 export function toTimeString(minutesSinceMidnight: number): TimeString {
-  const total = Math.max(0, Math.min(MINUTES_PER_DAY, Math.round(minutesSinceMidnight)));
+  const total = Math.max(
+    0,
+    Math.min(MINUTES_PER_DAY - 1, Math.round(minutesSinceMidnight)),
+  );
 
   return `${pad(Math.floor(total / 60))}:${pad(total % 60)}:00`;
 }
 
 /**
- * Parse a `Time` scalar into minutes since midnight.
+ * Parse a `Time` scalar into minutes since midnight. Seconds are dropped.
  *
- * Accepts `HH:mm` and `HH:mm:ss`. Returns `undefined` for anything else, so a
- * malformed value can never silently become `NaN` minutes.
+ * Accepts `HH:mm` and `HH:mm:ss` within a single day and nothing else, so a
+ * malformed value cannot arrive as `NaN` minutes, nor as an out-of-range number
+ * that formats back out as a plausible-looking time.
  */
-export function fromTimeString(
-  value?: TimeString | null,
-): number | undefined {
-  const trimmed = value?.trim();
+export function fromTimeString(value?: TimeString | null): number | undefined {
+  const match = value?.trim().match(TIME_PATTERN);
 
-  if (!trimmed) {
+  if (!match) {
     return undefined;
   }
 
-  const [hourRaw, minuteRaw = '0'] = trimmed.split(':');
-  const hour = Number(hourRaw);
-  const minute = Number(minuteRaw);
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
 
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return undefined;
-  }
-
-  return hour * 60 + minute;
+  return minutes < MINUTES_PER_DAY ? minutes : undefined;
 }
 
 /**
@@ -57,8 +68,13 @@ export function formatTimeString(
     return value?.trim() ?? '';
   }
 
-  const midnight = new Date();
-  midnight.setHours(0, minutes, 0, 0);
+  const at = new Date(
+    REFERENCE_YEAR,
+    REFERENCE_MONTH,
+    REFERENCE_DAY,
+    0,
+    minutes,
+  );
 
-  return format(midnight, pattern);
+  return format(at, pattern);
 }

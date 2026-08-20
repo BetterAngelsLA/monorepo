@@ -13,11 +13,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import {
-  formatDateString,
-  parsePhoneNumber,
-  toPhoneDialString,
-} from '@monorepo/shared/scalars';
+import { formatDateString, toPhoneParts } from '@monorepo/shared/scalars';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
@@ -55,8 +51,11 @@ export default function ClientSummaryGeneral(
     client.phoneNumbers?.find((item) => item.isPrimary)?.number ||
     client.phoneNumbers?.[0]?.number;
 
-  const { formatted, extension } = parsePhoneNumber(clientPhoneNumber);
-  const phoneNumberUrl = toPhoneDialString(clientPhoneNumber);
+  const {
+    formatted,
+    extension,
+    dial: phoneNumberUrl,
+  } = toPhoneParts(clientPhoneNumber);
 
   const total = data?.tasks.totalCount || 0;
 

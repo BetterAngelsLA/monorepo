@@ -1,4 +1,8 @@
-import { fromTimeString, toDateString, toTimeString } from '@monorepo/shared/scalars';
+import {
+  fromTimeString,
+  toDateString,
+  toTimeString,
+} from '@monorepo/shared/scalars';
 import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import {
   DayOfWeekChoices,
@@ -36,9 +40,20 @@ function wrapIntoDay(minutes: number): number {
   return ((minutes % 1440) + 1440) % 1440;
 }
 
-function normalizeWindow(startTime: string, endTime: string): TimeWindow {
-  const open = fromTimeString(startTime) ?? 0;
-  let close = fromTimeString(endTime) ?? 0;
+/**
+ * `undefined` for a time we cannot read — a window we cannot place is not a
+ * window that opens at midnight.
+ */
+function normalizeWindow(
+  startTime?: string | null,
+  endTime?: string | null,
+): TimeWindow | undefined {
+  const open = fromTimeString(startTime);
+  let close = fromTimeString(endTime);
+
+  if (open === undefined || close === undefined) {
+    return undefined;
+  }
 
   // Overnight shifts stay attached to the start day.
   if (close <= open) {
@@ -153,8 +168,8 @@ function getEffectiveTimeWindows(
       dateInRange(dateStr, s.startDate, s.endDate),
   );
 
-  const baseWindows = baseEntries.map((s) =>
-    normalizeWindow(s.startTime ?? '00:00:00', s.endTime ?? '00:00:00'),
+  const baseWindows = baseEntries.flatMap(
+    (s) => normalizeWindow(s.startTime, s.endTime) ?? [],
   );
 
   const activeExceptions = typed.filter(
@@ -168,8 +183,8 @@ function getEffectiveTimeWindows(
     return [];
   }
 
-  const excWindows = activeExceptions.map((e) =>
-    normalizeWindow(e.startTime ?? '00:00:00', e.endTime ?? '00:00:00'),
+  const excWindows = activeExceptions.flatMap(
+    (e) => normalizeWindow(e.startTime, e.endTime) ?? [],
   );
 
   const effective = subtractWindows(baseWindows, excWindows);

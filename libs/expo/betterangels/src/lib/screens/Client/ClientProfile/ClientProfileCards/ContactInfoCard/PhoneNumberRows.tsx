@@ -1,10 +1,7 @@
 import { StarIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
-import {
-  formatPhoneNumber,
-  toPhoneDialString,
-} from '@monorepo/shared/scalars';
+import { toPhoneParts } from '@monorepo/shared/scalars';
 import { ReactElement } from 'react';
 import { View } from 'react-native';
 import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
@@ -61,13 +58,11 @@ function PhoneNumberRow(props: TPhoneNumber) {
     return null;
   }
 
-  const displayText = formatPhoneNumber(number);
+  const { display: displayText, dial: dialNumber } = toPhoneParts(number);
 
   if (!displayText) {
     return null;
   }
-
-  const dialNumber = toPhoneDialString(number);
 
   return (
     <ContactInfoRow
