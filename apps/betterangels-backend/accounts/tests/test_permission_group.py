@@ -1,6 +1,8 @@
-from accounts.models import PermissionGroup, PermissionGroupTemplate
+from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
+from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
@@ -85,3 +87,22 @@ class PermissionGroupTestCase(TestCase):
 
         self.assertFalse(PermissionGroup.objects.filter(pk__in=permission_group_ids).exists())
         self.assertFalse(Group.objects.filter(pk__in=group_ids).exists())
+
+    def test_a_group_with_neither_template_nor_name_is_rejected(self) -> None:
+        """The admin inline leaves both optional, but one is needed to name the group.
+
+        Without this the group is named ``org:<pk>:`` and the next such row
+        collides on the unique ``auth.Group.name``.
+        """
+        organization = organization_recipe.make(owner_roles=())
+
+        with self.assertRaises(ValidationError):
+            PermissionGroup(organization=organization).full_clean()
+
+    def test_reconcile_surfaces_a_missing_profile_instead_of_swallowing_it(self) -> None:
+        """post_migrate used to catch every exception and abandon the whole loop."""
+        organization = organization_recipe.make(owner_roles=())
+        OrganizationProfile.objects.filter(organization=organization).delete()
+
+        with self.assertRaises(OrganizationProfile.DoesNotExist):
+            reconcile_org_groups(organization)

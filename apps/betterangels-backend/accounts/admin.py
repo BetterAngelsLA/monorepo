@@ -1,5 +1,6 @@
 from typing import Any, Type, cast
 
+from common.org_types import REGISTRY
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -117,8 +118,6 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
         form: OrganizationMemberInviteForm,
         changelist_url: str,
     ) -> HttpResponseRedirect:
-        from common.org_types import REGISTRY
-
         email = form.cleaned_data["email"]
         role_template = REGISTRY.get_template_or_raise(form.cleaned_data["permission_template"], organization)
 

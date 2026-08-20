@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django_choices_field import TextChoicesField
@@ -135,11 +136,6 @@ class PermissionGroupTemplate(models.Model):
         return self.name
 
 
-def group_name_for(organization_id: int, template_name: str) -> str:
-    """Return the ``auth.Group`` name for *template_name* within *organization_id*."""
-    return f"org:{organization_id}:{template_name}"
-
-
 class PermissionGroup(models.Model):
     name = models.CharField(
         max_length=255,
@@ -167,6 +163,16 @@ class PermissionGroup(models.Model):
     class Meta:
         unique_together = (("organization", "group"), ("organization", "template"))
 
+    def clean(self) -> None:
+        """Require a template or a name to identify the role.
+
+        Both are optional individually, so the admin inline could otherwise save
+        a row with neither — naming its group ``org:<pk>:`` and colliding with the
+        next such row on the unique ``auth.Group.name``.
+        """
+        if not self.template_id and not self.name:
+            raise ValidationError("A permission group needs either a template or a name.")
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Create the backing ``auth.Group`` on first save.
 
@@ -188,7 +194,7 @@ class PermissionGroup(models.Model):
         unique nor short, so a name-derived value both collides between
         same-named orgs and goes stale on rename.
         """
-        return group_name_for(self.organization_id, self.template.name if self.template else self.name)
+        return f"org:{self.organization_id}:{self.template.name if self.template else self.name}"
 
 
 class OrgTypeChoices(models.TextChoices):

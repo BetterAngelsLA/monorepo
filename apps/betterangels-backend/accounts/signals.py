@@ -2,9 +2,10 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.db import DatabaseError
 from organizations.models import Organization
 
-from .models import PermissionGroup, User
+from .models import OrganizationProfile, PermissionGroup, User
 
 logger = logging.getLogger(__name__)
 
@@ -118,13 +119,24 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     from notes.groups import CASEWORKER
     from shelters.groups import SHELTER_OPERATOR
 
-    # The accounts app tables may not be ready when this fires for other
-    # apps; skip gracefully until the final post_migrate run.
+    # The accounts app tables may not be ready when this fires for other apps;
+    # skip gracefully until the final post_migrate run.  Scoped to DatabaseError
+    # so a logic error surfaces instead of silently abandoning reconciliation for
+    # every remaining organization.
     try:
-        for org in Organization.objects.all():
-            reconcile(org)
-    except Exception:
+        organizations = list(Organization.objects.all())
+    except DatabaseError:
+        logger.warning("Skipping org permission sync — accounts tables not ready yet.", exc_info=True)
         return
+
+    for org in organizations:
+        # An organization with no profile predates the profile requirement or was
+        # created outside the services.  Reconciling it is impossible, but it must
+        # not take down `migrate` for every other organization.
+        try:
+            reconcile(org)
+        except OrganizationProfile.DoesNotExist:
+            logger.warning("Organization %s (%s) has no profile; skipping reconciliation.", org.pk, org.name)
 
     sync_group_permissions()
 
