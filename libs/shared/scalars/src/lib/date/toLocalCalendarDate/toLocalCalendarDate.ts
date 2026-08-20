@@ -17,12 +17,11 @@
  * that should stay the same calendar day everywhere.
  */
 
-import { isValid, parse } from 'date-fns';
+import { isValid } from 'date-fns';
 import { isoToDateSafe } from '../isoToDateSafe';
 
 export function toLocalCalendarDate(
   value?: string | Date | null,
-  inputFormat?: string,
 ): Date | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -44,7 +43,6 @@ export function toLocalCalendarDate(
   // value is a string
   const trimmed = value.trim();
 
-  // Try ISO first
   const validIsoDate = isoToDateSafe(trimmed);
 
   if (validIsoDate) {
@@ -53,19 +51,6 @@ export function toLocalCalendarDate(
       validIsoDate.getMonth(),
       validIsoDate.getDate(),
     );
-  }
-
-  // Try custom format
-  if (inputFormat) {
-    const parsed = parse(trimmed, inputFormat, new Date());
-
-    if (isValid(parsed)) {
-      return new Date(
-        parsed.getFullYear(),
-        parsed.getMonth(),
-        parsed.getDate(),
-      );
-    }
   }
 
   return undefined;

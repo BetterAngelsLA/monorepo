@@ -9,12 +9,15 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  formatDateStatic,
   PressablePanel,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import {
+  formatDateString,
+  parsePhoneNumber,
+  toPhoneDialString,
+} from '@monorepo/shared/scalars';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
@@ -52,14 +55,8 @@ export default function ClientSummaryGeneral(
     client.phoneNumbers?.find((item) => item.isPrimary)?.number ||
     client.phoneNumbers?.[0]?.number;
 
-  const formattedNumber =
-    clientPhoneNumber && formatPhoneNumber(clientPhoneNumber);
-
-  const [phoneNumber, extension] = formattedNumber || [];
-
-  const phoneNumberUrl = extension
-    ? `${phoneNumber},${extension}`
-    : phoneNumber;
+  const { formatted, extension } = parsePhoneNumber(clientPhoneNumber);
+  const phoneNumberUrl = toPhoneDialString(clientPhoneNumber);
 
   const total = data?.tasks.totalCount || 0;
 
@@ -76,11 +73,7 @@ export default function ClientSummaryGeneral(
           flex={3}
           title={
             client.dateOfBirth
-              ? formatDateStatic({
-                  date: client.dateOfBirth,
-                  inputFormat: 'yyyy-MM-dd',
-                  outputFormat: 'MM/dd/yyyy',
-                })
+              ? formatDateString(client.dateOfBirth, 'MM/dd/yyyy')
               : 'N/A'
           }
           subtitle="DOB"
@@ -102,14 +95,12 @@ export default function ClientSummaryGeneral(
           onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
           disabled={!phoneNumberUrl}
           flex={3}
-          title={formattedNumber || 'N/A'}
+          title={formatted || 'N/A'}
           extension={extension}
           subtitle="CONTACT"
           icon={<CallOutlinedIcon color={Colors.PRIMARY} />}
           actionIcon={
-            formattedNumber && (
-              <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
-            )
+            formatted && <ExternalLinkOutlinedIcon color={Colors.PRIMARY} />
           }
         />
         <PressablePanelContainer

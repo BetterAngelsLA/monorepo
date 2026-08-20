@@ -9,7 +9,10 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import {
+  parsePhoneNumber,
+  toPhoneDialString,
+} from '@monorepo/shared/scalars';
 import { Linking, View } from 'react-native';
 import { RelationshipTypeEnum } from '../../apollo';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
@@ -32,18 +35,13 @@ export default function ClientSummaryContact(
 
   const primaryCCM = caseManagers[0];
 
-  const formattedNumber =
-    primaryCCM?.phoneNumber && formatPhoneNumber(primaryCCM?.phoneNumber);
-
-  const [phoneNumber, extension] = formattedNumber || [];
+  const { formatted, extension } = parsePhoneNumber(primaryCCM?.phoneNumber);
   const mailingAddress = primaryCCM?.mailingAddress;
   const email = primaryCCM?.email;
 
-  const phoneNumberUrl = extension
-    ? `${phoneNumber},${extension}`
-    : phoneNumber;
+  const phoneNumberUrl = toPhoneDialString(primaryCCM?.phoneNumber);
 
-  const showPhone = !!phoneNumber;
+  const showPhone = !!formatted;
   const showEmail = !showPhone && !!email;
   const showAddress = !showPhone && !showEmail && !!mailingAddress;
 
@@ -99,7 +97,7 @@ export default function ClientSummaryContact(
             {showPhone && (
               <>
                 <TextBold textDecorationLine="underline" size="sm">
-                  {phoneNumber}
+                  {formatted}
                 </TextBold>
                 {extension && (
                   <TextBold size="sm">

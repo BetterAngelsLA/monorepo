@@ -1,23 +1,14 @@
-import { format, parseISO } from 'date-fns';
+import { formatDateString } from '@monorepo/shared/scalars';
 import type {
   DailyBedStatusMetrics,
   DailyOccupancyMetrics,
 } from '../../hooks/useShelterOccupancyMetrics';
 import { BarChart, type ViewMode } from '../BarChart/BarChart';
 
-/** Format YYYY-MM-DD date strings into short labels (e.g. "Jun 1") for clean x-axis rendering. */
-function formatDateLabel(dateStr: string): string {
-  try {
-    return format(parseISO(String(dateStr)), 'MMM d');
-  } catch {
-    return String(dateStr);
-  }
-}
-
 /** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */
 function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateLabel(String(d.date));
+    const date = formatDateString(d.date, 'MMM d');
     return [
       { date, status: 'Occupied', count: d.occupied },
       { date, status: 'Available', count: d.available },
@@ -31,7 +22,7 @@ function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
 /** Same pivot but each count is expressed as a percentage of the daily total. */
 function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateLabel(String(d.date));
+    const date = formatDateString(d.date, 'MMM d');
     const total =
       d.occupied + d.available + d.reserved + d.outOfService + d.inTurnaround;
     const pct = (n: number) => {
@@ -50,14 +41,14 @@ function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
 
 function toDailyOccupancyCountData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateLabel(String(d.date)),
+    date: formatDateString(d.date, 'MMM d'),
     count: d.occupiedCount,
   }));
 }
 
 function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateLabel(String(d.date)),
+    date: formatDateString(d.date, 'MMM d'),
     count: Math.round(d.occupancyPct * 10) / 10,
   }));
 }

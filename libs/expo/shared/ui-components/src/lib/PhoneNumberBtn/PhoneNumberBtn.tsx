@@ -1,19 +1,18 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import type { PhoneNumberString } from '@monorepo/shared/scalars';
+import { parsePhoneNumber, toPhoneDialString } from '@monorepo/shared/scalars';
 import { Linking, Pressable, View } from 'react-native';
 import TextBold from '../TextBold';
 
 interface IPhoneNumberBtnProps {
-  number: Array<string | undefined>;
+  number: PhoneNumberString | null | undefined;
   label?: string;
 }
 
 export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
   const { number, label } = props;
-  const [phoneNumber, extension] = number;
-
-  const phoneNumberUrl = extension
-    ? `${phoneNumber},${extension}`
-    : phoneNumber;
+  const { formatted, extension } = parsePhoneNumber(number);
+  const phoneNumberUrl = toPhoneDialString(number);
 
   return (
     <Pressable
@@ -30,7 +29,7 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
             color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
             size="sm"
           >
-            {label || phoneNumber}
+            {label || formatted}
           </TextBold>
           {extension && (
             <TextBold

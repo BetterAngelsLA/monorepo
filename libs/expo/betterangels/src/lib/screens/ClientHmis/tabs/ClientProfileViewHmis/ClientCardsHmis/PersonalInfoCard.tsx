@@ -1,4 +1,3 @@
-import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import {
   HmisClientProfileType,
   HmisDobQualityEnum,
@@ -15,6 +14,7 @@ import {
   ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
+import { formatDateString } from '@monorepo/shared/scalars';
 
 type TProps = {
   client?: HmisClientProfileType;
@@ -35,17 +35,11 @@ export function PersonalInfoCardHmis(props: TProps) {
 
   const formattedDob =
     birthDate &&
-    formatDateStatic({
-      date: birthDate,
-      inputFormat: 'yyyy-MM-dd',
-    });
+    formatDateString(birthDate, 'MM/dd/yyyy');
 
   const formattedUnhousedStartDate =
     unhousedStartDate &&
-    formatDateStatic({
-      date: unhousedStartDate,
-      inputFormat: 'yyyy-MM-dd',
-    });
+    formatDateString(unhousedStartDate, 'MM/dd/yyyy');
 
   const content: TClientProfileCardItem[] = [
     {
