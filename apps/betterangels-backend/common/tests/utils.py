@@ -196,19 +196,14 @@ class GraphQLBaseTestCase(
         from notes.groups import CASEWORKER
         from teams.models import Team
 
-        from common.enums import SelahTeamEnum
-
         self.org_1 = organization_recipe.make(name="org_1")
         self.org_2 = organization_recipe.make(name="org_2")
 
-        # Create Team objects matching SelahTeamEnum values for backward
-        # compatibility with the deprecated ``team`` GraphQL field.
-        for org in (self.org_1, self.org_2):
-            for team_value in SelahTeamEnum.values:
-                Team.objects.get_or_create(
-                    slug=team_value,
-                    organization=org,
-                )
+        # Two in org_1 so a multi-value ``teamIds`` filter has something to sort;
+        # one in org_2 for cross-org tests.
+        self.org_1_team_1 = baker.make(Team, organization=self.org_1)
+        self.org_1_team_2 = baker.make(Team, organization=self.org_1)
+        self.org_2_team_1 = baker.make(Team, organization=self.org_2)
 
         # Permission groups are created by create_organization_with_presets
         # (via the recipe helper). Roles are assigned explicitly instead of

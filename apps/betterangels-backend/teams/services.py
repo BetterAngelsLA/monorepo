@@ -2,10 +2,28 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.text import slugify
 from organizations.models import Organization
 
 from .models import Team
+
+
+def _validate_name_is_unique(*, name: str, organization: Organization, exclude_pk: int | None = None) -> None:
+    """Raise if *name* is already taken within *organization*.
+
+    This duplicates a check ``full_clean()`` already performs: it validates
+    ``unique_team_name_per_org`` and rejects the duplicate on its own.  What it
+    cannot do is name the team -- it reports only that the constraint was
+    violated -- so this exists for the message, not for the guarantee.  The
+    constraint is the guarantee; the query below is check-then-insert and two
+    concurrent creates can both pass it.
+    """
+    qs = Team.objects.filter(name__iexact=name, organization=organization)
+
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+
+    if qs.exists():
+        raise ValidationError(f'A team named "{name}" already exists in this organization.')
 
 
 def team_create(
@@ -13,21 +31,15 @@ def team_create(
     name: str,
     organization: Organization,
 ) -> Team:
-    """Create a new Team for *organization*. Slug is auto-generated from name."""
+    """Create a new Team for *organization*."""
     name = name.strip()
-    slug = slugify(name)
+    _validate_name_is_unique(name=name, organization=organization)
 
-    if not slug:
-        raise ValidationError("Team name must contain at least one alphanumeric character.")
+    team = Team(name=name, organization=organization)
+    team.full_clean()
+    team.save()
 
-    if Team.objects.filter(slug=slug, organization=organization).exists():
-        raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
-
-    return Team.objects.create(
-        slug=slug,
-        name=name,
-        organization=organization,
-    )
+    return team
 
 
 @transaction.atomic
@@ -35,18 +47,18 @@ def team_update(
     *,
     team: Team,
     name: str | None = None,
+    is_active: bool | None = None,
 ) -> Team:
-    """Update a Team's name. Slug is auto-generated from name."""
+    """Update a Team's name and/or active flag."""
     if name is not None:
         name = name.strip()
-        slug = slugify(name)
-        if not slug:
-            raise ValidationError("Team name must contain at least one alphanumeric character.")
-        if Team.objects.filter(slug=slug, organization=team.organization).exclude(pk=team.pk).exists():
-            raise ValidationError(f'A team with slug "{slug}" already exists in this organization.')
+        _validate_name_is_unique(name=name, organization=team.organization, exclude_pk=team.pk)
         team.name = name
-        team.slug = slug
 
+    if is_active is not None:
+        team.is_active = is_active
+
+    team.full_clean()
     team.save()
     return team
 

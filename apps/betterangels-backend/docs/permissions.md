@@ -4,10 +4,10 @@
 
 BetterAngels uses a **two-layer permission model** — org-scoped permissions gate access at the organization level, and object-level permissions (via django-guardian) provide fine-grained per-object access control.
 
-| Layer | Mechanism | Scope | Used for |
-|---|---|---|---|
-| **Org-scoped** | `HasOrgPerm` extension + `permissioned_queryset()` | "Can this user perform action X in organization Y?" | Mutations, operator queries (shelters, rooms, beds) |
-| **Object-level** | django-guardian + `HasRetvalPerm` | "Can this user access this specific object?" | Notes, tasks, referrals, client documents |
+| Layer            | Mechanism                                          | Scope                                               | Used for                                            |
+| ---------------- | -------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| **Org-scoped**   | `HasOrgPerm` extension + `permissioned_queryset()` | "Can this user perform action X in organization Y?" | Mutations, operator queries (shelters, rooms, beds) |
+| **Object-level** | django-guardian + `HasRetvalPerm`                  | "Can this user access this specific object?"        | Notes, tasks, referrals, client documents           |
 
 Both layers are backed by Django's permission system (Groups + Permissions), but they ask different questions and are checked independently.
 
@@ -31,6 +31,7 @@ def create_shelter(self, info, data):
 ```
 
 How it validates:
+
 1. Reads `info.context.request.organization_id` (set by middleware).
 2. If `None`, raises `DjangoNoPermission` immediately.
 3. Delegates to `permissioned_queryset(Organization.objects.all(), ...)` with `organization_field="pk"` — checking that the user belongs to the org AND holds the required permission(s) via their `PermissionGroup` → `Group` → `Permission` chain.
@@ -46,6 +47,7 @@ How it validates:
 - `organization_field` controls the FK path: use `"organization_id"` for direct-FK models (Shelter), `"shelter__organization_id"` for indirect (Bed, Room), or `"pk"` for Organization itself.
 
 This single function is shared by:
+
 - **`HasOrgPerm.resolve_for_user`** — permission validation at the GraphQL extension level.
 - **`shelter_queryset` / `room_queryset` / `bed_queryset`** — selector wrappers that scope list queries and entity lookups.
 - **`OperatorShelterType.get_queryset`** — the `strawberry_django` type hook that scopes returned data.
@@ -139,23 +141,24 @@ Each `groups.py` imports `TemplateConfig` and defines one or more template confi
 
 ## Key Files
 
-| File | Purpose |
-|---|---|
-| `common/permissions/utils.py` | `permissioned_queryset()`, `_perm_q()`, `PermissionSet`, `get_current_organization()` |
-| `accounts/extensions.py` | `HasOrgPerm` Strawberry extension |
-| `accounts/permissions.py` | `get_user_permitted_org()`, `permission_annotations()`, `GrantedPermissions` factory |
-| `common/middleware/organization.py` | `OrganizationMiddleware` — sets `request.organization_id` |
-| `shelters/selectors/operator.py` | `shelter_queryset`, `room_queryset`, `bed_queryset` wrappers; `_get` selectors |
-| `shelters/selectors/reports.py` | Report aggregation functions |
-| `shelters/selectors/__init__.py` | Re-exports from operator.py and reports.py |
-| `shelters/open_at.py` | `shelters_open_at` helper (extracted from models to break circular imports) |
-| `shelters/schema.py` | GraphQL Query/Mutation — thin layer delegating to services + `HasOrgPerm` |
-| `shelters/services/` | Business logic (shelter/room/bed create/update/delete/clone) |
-| `shelters/types/outputs.py` | `OperatorShelterType` with `get_queryset` hook |
+| File                                | Purpose                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `common/permissions/utils.py`       | `permissioned_queryset()`, `_perm_q()`, `PermissionSet`, `get_current_organization()` |
+| `accounts/extensions.py`            | `HasOrgPerm` Strawberry extension                                                     |
+| `accounts/permissions.py`           | `get_user_permitted_org()`, `permission_annotations()`, `GrantedPermissions` factory  |
+| `common/middleware/organization.py` | `OrganizationMiddleware` — sets `request.organization_id`                             |
+| `shelters/selectors/operator.py`    | `shelter_queryset`, `room_queryset`, `bed_queryset` wrappers; `_get` selectors        |
+| `shelters/selectors/reports.py`     | Report aggregation functions                                                          |
+| `shelters/selectors/__init__.py`    | Re-exports from operator.py and reports.py                                            |
+| `shelters/open_at.py`               | `shelters_open_at` helper (extracted from models to break circular imports)           |
+| `shelters/schema.py`                | GraphQL Query/Mutation — thin layer delegating to services + `HasOrgPerm`             |
+| `shelters/services/`                | Business logic (shelter/room/bed create/update/delete/clone)                          |
+| `shelters/types/outputs.py`         | `OperatorShelterType` with `get_queryset` hook                                        |
 
 ## Testing
 
 `accounts/tests/test_extensions.py::HasOrgPermTestCase` tests the `HasOrgPerm` extension in isolation (no GraphQL round-trips), covering:
+
 - Happy path (valid org + permission)
 - Missing `X-Organization-ID` header
 - User not a member of the organization

@@ -42,7 +42,7 @@ export function toErrorMessage(value: unknown): string | undefined {
     if (looksLikeBrokenArrayishString(trimmed)) {
       console.warn(
         '[toErrorMessage] Received malformed array-like error message:',
-        trimmed
+        trimmed,
       );
 
       return undefined;
@@ -55,7 +55,7 @@ export function toErrorMessage(value: unknown): string | undefined {
   // 3. Any other non-string scalar or object is considered invalid
   console.warn(
     '[toErrorMessage] Received non-string, non-array error value. Ignoring:',
-    value
+    value,
   );
 
   return undefined;
@@ -73,7 +73,7 @@ function arrayToMessage(array: unknown[]): string | undefined {
 
     console.warn(
       '[toErrorMessage] Skipping non-string element in error message array:',
-      element
+      element,
     );
   }
 

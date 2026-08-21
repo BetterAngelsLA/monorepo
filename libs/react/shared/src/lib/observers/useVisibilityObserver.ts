@@ -46,7 +46,7 @@ export function useVisibilityObserver(options: VisibilityObserverOptions) {
         root,
         rootMargin,
         threshold,
-      }
+      },
     );
 
     observer.observe(element);

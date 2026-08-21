@@ -295,7 +295,7 @@ const LONG_CONTENT_PARAGRAPHS = Array.from(
   (_, i) =>
     `Paragraph ${
       i + 1
-    }: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`
+    }: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.`,
 );
 
 export const ScrollableContent: Story = {
@@ -320,7 +320,7 @@ export const ScrollableContent: Story = {
       const [isOpen, setIsOpen] = useState(true);
       const content = Array.from(
         { length: typedArgs.paragraphs },
-        (_, i) => LONG_CONTENT_PARAGRAPHS[i % LONG_CONTENT_PARAGRAPHS.length]
+        (_, i) => LONG_CONTENT_PARAGRAPHS[i % LONG_CONTENT_PARAGRAPHS.length],
       );
 
       return (

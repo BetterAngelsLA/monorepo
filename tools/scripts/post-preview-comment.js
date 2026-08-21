@@ -82,7 +82,7 @@ async function main() {
   const fullComment = `${commentPrefix} [${previewUrl}](${previewUrl})\n\n_Last updated: ${timestamp}_`;
 
   console.log(
-    `For project "${project}", PR #${prNumber} preview URL is: ${previewUrl}`
+    `For project "${project}", PR #${prNumber} preview URL is: ${previewUrl}`,
   );
 
   // Fetch existing comments (handling pagination)
@@ -117,7 +117,7 @@ async function main() {
           Accept: 'application/vnd.github+json',
         },
         body: JSON.stringify({ body: fullComment }),
-      }
+      },
     );
     if (!createRes.ok) {
       const errText = await createRes.text();

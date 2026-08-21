@@ -46,7 +46,7 @@ export const Input = forwardRef<
     value,
     ...inputProps
   },
-  ref
+  ref,
 ) {
   const [isFocused, setIsFocused] = useState(false);
   const isViewEditMode = typeof isViewMode === 'boolean';
@@ -61,14 +61,14 @@ export const Input = forwardRef<
   const shouldShowError = Boolean(error) && !isFocused;
 
   const handleFocus = (
-    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setIsFocused(true);
     externalOnFocus?.(e);
   };
 
   const handleBlur = (
-    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setIsFocused(false);
 

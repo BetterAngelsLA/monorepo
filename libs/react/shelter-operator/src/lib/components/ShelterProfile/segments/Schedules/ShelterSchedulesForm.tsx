@@ -23,7 +23,7 @@ export function ShelterSchedulesForm(props: TProps) {
         key={scheduleType}
         scheduleType={scheduleType}
         initialSchedules={schedules.filter(
-          (s) => s.scheduleType === scheduleType
+          (s) => s.scheduleType === scheduleType,
         )}
         onSave={onSave}
         onDelete={onDelete}

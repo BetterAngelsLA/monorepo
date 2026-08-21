@@ -60,7 +60,7 @@ export function BottomSheetLayoutProvider(props: TProps) {
         };
       });
     },
-    [containerLayoutState]
+    [containerLayoutState],
   );
 
   const onLayout = useCallback(
@@ -83,7 +83,7 @@ export function BottomSheetLayoutProvider(props: TProps) {
         setContainerHeight(activeHeight);
       }
     },
-    [setContainerHeight]
+    [setContainerHeight],
   );
 
   const registerContainer = useCallback(
@@ -104,7 +104,7 @@ export function BottomSheetLayoutProvider(props: TProps) {
         setContainerHeight(activeHeight);
       }
     },
-    [setContainerHeight]
+    [setContainerHeight],
   );
 
   const unregisterContainer = useCallback(
@@ -123,7 +123,7 @@ export function BottomSheetLayoutProvider(props: TProps) {
         setContainerHeight(activeHeight);
       }
     },
-    [setContainerHeight]
+    [setContainerHeight],
   );
 
   return (

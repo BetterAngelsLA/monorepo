@@ -47,7 +47,7 @@ export function MapLocationPicker({
   const animateMap = useCallback((lat: number, lng: number) => {
     mapRef.current?.animateToRegion(
       { latitude: lat, longitude: lng, ...DELTA },
-      500
+      500,
     );
   }, []);
 
@@ -99,7 +99,7 @@ export function MapLocationPicker({
       lat: number,
       lng: number,
       poiName?: string,
-      placeId?: string
+      placeId?: string,
     ): Promise<TLocationData> => {
       try {
         if (placeId) {
@@ -131,7 +131,7 @@ export function MapLocationPicker({
         };
       }
     },
-    [places]
+    [places],
   );
 
   // Handlers
@@ -149,7 +149,7 @@ export function MapLocationPicker({
       setLocation(await geocode(latitude, longitude, name, placeId));
       setMinimized(false);
     },
-    [geocode]
+    [geocode],
   );
 
   const clear = useCallback(() => {
@@ -194,7 +194,7 @@ export function MapLocationPicker({
       }
       setShowIosDirections(false);
     },
-    [location]
+    [location],
   );
 
   return (

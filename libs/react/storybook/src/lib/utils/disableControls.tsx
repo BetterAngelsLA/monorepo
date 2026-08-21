@@ -3,6 +3,6 @@ export function disableControls(propNames: string[]) {
     propNames.map((name) => [
       name,
       { control: false, table: { disable: true } },
-    ])
+    ]),
   );
 }

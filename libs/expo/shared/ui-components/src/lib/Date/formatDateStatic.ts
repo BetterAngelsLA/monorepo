@@ -21,7 +21,7 @@ export function formatDateStatic(props: TProps): string {
     return format(parsed, outputFormat);
   } catch {
     console.error(
-      `[formatDateStatic]: failed to format date: [${date}] with inputFormat [${inputFormat}] and outputFormat [${outputFormat}]`
+      `[formatDateStatic]: failed to format date: [${date}] with inputFormat [${inputFormat}] and outputFormat [${outputFormat}]`,
     );
 
     return '';

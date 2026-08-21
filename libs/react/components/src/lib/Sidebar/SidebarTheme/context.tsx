@@ -5,13 +5,13 @@ import { SidebarContextValue, SidebarTheme, SidebarVariant } from './types';
 function mergeSidebarTheme(
   base: SidebarContextValue,
   theme?: Partial<SidebarTheme>,
-  variant?: SidebarVariant
+  variant?: SidebarVariant,
 ): SidebarContextValue {
   return { ...base, ...theme, variant: variant ?? base.variant };
 }
 
 const SidebarThemeContext = createContext<SidebarContextValue>(
-  DEFAULT_SIDEBAR_CONTEXT_VALUE
+  DEFAULT_SIDEBAR_CONTEXT_VALUE,
 );
 
 export function SidebarThemeProvider({

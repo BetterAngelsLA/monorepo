@@ -30,7 +30,7 @@ export function EntryRequirements({
             (requirement) =>
               enumDisplayEntryRequirementChoices[
                 requirement.name as EntryRequirementChoices
-              ]
+              ],
           )}
         />
 
@@ -48,7 +48,7 @@ export function EntryRequirements({
             (requirement) =>
               enumDisplayReferralRequirementChoices[
                 requirement.name as ReferralRequirementChoices
-              ]
+              ],
           )}
         />
         <InlineList
@@ -57,7 +57,7 @@ export function EntryRequirements({
             (vaccination) =>
               enumDisplayVaccinationRequirementChoices[
                 vaccination.name as VaccinationRequirementChoices
-              ]
+              ],
           )}
         />
         {hasNotesContent && (

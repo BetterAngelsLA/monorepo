@@ -23,7 +23,7 @@
     }
 
     var $list = jq(
-      '.grouped-service-pending-list[data-category-id="' + categoryId + '"]'
+      '.grouped-service-pending-list[data-category-id="' + categoryId + '"]',
     );
     if (!$list.length) {
       return false;
@@ -33,7 +33,7 @@
     var $otherSelect = jq(
       '.grouped-service-select[data-category-id="' +
         categoryId +
-        '"][data-role="other"]'
+        '"][data-role="other"]',
     );
 
     $otherSelect.find('option').each(function () {
@@ -71,15 +71,15 @@
 
     var hiddenInputName = String(
       $list.closest('.grouped-service-widget').data('new-input-name') ||
-        'services__new'
+        'services__new',
     );
     var $item = jq('<div class="grouped-service-pending-item"></div>');
     var $label = jq('<span></span>').text(trimmedValue);
     var $remove = jq(
-      '<button type="button" class="grouped-service-pending-remove" aria-label="Remove service">&times;</button>'
+      '<button type="button" class="grouped-service-pending-remove" aria-label="Remove service">&times;</button>',
     );
     var $hidden = jq(
-      '<input type="hidden" class="grouped-service-hidden-input">'
+      '<input type="hidden" class="grouped-service-hidden-input">',
     );
     $hidden.attr('name', hiddenInputName);
     $hidden.val(categoryId + '::' + trimmedValue);
@@ -184,7 +184,7 @@
           }
 
           event.stopPropagation();
-        }
+        },
       );
   }
 
@@ -196,7 +196,7 @@
         '.grouped-service-pending-remove',
         function () {
           jq(this).closest('.grouped-service-pending-item').remove();
-        }
+        },
       );
   }
 

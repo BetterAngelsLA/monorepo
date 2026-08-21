@@ -99,7 +99,7 @@ export function Map(props: TMap) {
         zoom: z,
       });
     },
-    [onCameraChange]
+    [onCameraChange],
   );
 
   const handleIdle = useCallback(() => {

@@ -23,13 +23,13 @@ type SubmissionStatus = 'idle' | 'loading' | 'success' | 'error';
 const useSurveySubmission = (
   surveyResults: TSurveyResults | null,
   maxRetries = 3,
-  retryDelay = 1000
+  retryDelay = 1000,
 ): SubmissionStatus => {
   const [storedData, setStoredDataState] = useState<StoredSurveyData | null>(
     () => {
       const data = localStorage.getItem(LOCAL_STORAGE_KEY);
       return data ? JSON.parse(data) : null;
-    }
+    },
   );
 
   const [status, setStatus] = useState<SubmissionStatus>('idle');
@@ -61,7 +61,7 @@ const useSurveySubmission = (
               timestamp: new Date(),
               referrer_base: import.meta.env.VITE_APP_BASE_PATH || '/',
             }),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -83,7 +83,7 @@ const useSurveySubmission = (
         if (retries < maxRetries) {
           setTimeout(
             () => attemptSubmission(survey, surveyID, retries + 1),
-            retryDelay
+            retryDelay,
           );
         } else {
           setStatus('error');
@@ -93,7 +93,7 @@ const useSurveySubmission = (
         isSubmitting.current = false;
       }
     },
-    [maxRetries, retryDelay]
+    [maxRetries, retryDelay],
   );
 
   useEffect(() => {

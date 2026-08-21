@@ -10,7 +10,7 @@ const modules = import.meta.glob<SvgModule>(
   {
     eager: true,
     query: { react: '' }, // to be used by SVGR only (until convert all to SVGR)
-  }
+  },
 );
 
 type TSvgItem = {

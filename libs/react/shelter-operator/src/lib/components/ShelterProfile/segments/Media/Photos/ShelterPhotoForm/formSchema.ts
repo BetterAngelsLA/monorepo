@@ -6,7 +6,7 @@ export const formSchema = z.object({
     [ShelterPhotoTypeChoices.Interior, ShelterPhotoTypeChoices.Exterior],
     {
       message: 'Photo type is required',
-    }
+    },
   ),
 });
 

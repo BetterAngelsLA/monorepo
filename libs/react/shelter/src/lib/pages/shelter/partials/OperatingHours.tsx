@@ -39,7 +39,7 @@ const TYPE_LABELS: Record<ScheduleTypeChoices, string> = {
 };
 
 function getInitialScheduleType(
-  scheduleTypes: ScheduleTypeChoices[]
+  scheduleTypes: ScheduleTypeChoices[],
 ): ScheduleTypeChoices {
   if (scheduleTypes.includes(ScheduleTypeChoices.Operating)) {
     return ScheduleTypeChoices.Operating;
@@ -109,12 +109,12 @@ function OperatingHoursDialog({
   scheduleTypes: ScheduleTypeChoices[];
 }) {
   const [selectedType, setSelectedType] = useState<ScheduleTypeChoices>(
-    getInitialScheduleType(scheduleTypes)
+    getInitialScheduleType(scheduleTypes),
   );
 
   const selectedWeek = useMemo(
     () => getWeeklySchedule(schedules, selectedType),
-    [schedules, selectedType]
+    [schedules, selectedType],
   );
 
   const selectedStatus = useMemo(() => {
@@ -247,7 +247,7 @@ export function OperatingHours({
     return [
       ScheduleTypeChoices.Operating,
       ...types.filter(
-        (scheduleType) => scheduleType !== ScheduleTypeChoices.Operating
+        (scheduleType) => scheduleType !== ScheduleTypeChoices.Operating,
       ),
     ];
   }, [entries]);
@@ -260,7 +260,7 @@ export function OperatingHours({
 
   const aggregateStatus = useMemo(
     () => getAggregateStatus(entries, scheduleTypes, now),
-    [entries, scheduleTypes, now]
+    [entries, scheduleTypes, now],
   );
 
   const [_modal, setModal] = useAtom(modalAtom);

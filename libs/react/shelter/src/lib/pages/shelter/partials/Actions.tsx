@@ -36,7 +36,7 @@ export function Actions({ location, phone, shelterName }: TProps) {
         alert('Link copied to clipboard!');
       } catch {
         alert(
-          'Could not share — please copy the link manually from the URL bar.'
+          'Could not share — please copy the link manually from the URL bar.',
         );
       }
     }

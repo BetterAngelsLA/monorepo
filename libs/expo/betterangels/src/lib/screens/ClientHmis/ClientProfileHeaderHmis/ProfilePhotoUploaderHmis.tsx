@@ -8,8 +8,8 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, MediaPicker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { useSnackbar } from '../../../hooks';
 import { useClientHmis } from '../../../hooks/useClientHmis';
-import { useUploadSession } from '../../../providers';
 import { ClientProfileHmisDocument } from '../__generated__/getClientHmis.generated';
 import { ProfilePhotoModalHmis } from './ProfilePhotoModalHmis';
 
@@ -34,20 +34,16 @@ export function ProfilePhotoUploaderHmis({
 }: ProfilePhotoUploaderHmisProps) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [uploading, setUploading] = useState(false);
-  const { begin, updateUpload, failUpload, completeUpload } =
-    useUploadSession();
+  const { showSnackbar } = useSnackbar();
   const { uploadClientPhoto } = useClientHmis();
   const apolloClient = useApolloClient();
 
   const handleUpload = async (file: ReactNativeFile) => {
+    // No upload session: this flow is modal and blocking, with the avatar
+    // spinner as its progress and a snackbar as its failure. Registering it
+    // in the background-upload store only ever put a phantom row in the
+    // global progress bar for work the user was already watching.
     setUploading(true);
-    // HMIS uploads cannot be aborted, so the session is not cancellable.
-    const session = begin([file.name], { cancellable: false });
-    updateUpload(session.id, {
-      stage: 'UPLOADING',
-      completed: 0,
-      total: 1,
-    });
 
     try {
       const formData = buildFormData(file);
@@ -56,10 +52,12 @@ export function ProfilePhotoUploaderHmis({
         include: [ClientProfileHmisDocument],
       });
       incrementClientPhotoVersion(clientId);
-      completeUpload(session.id);
       setModalType(null);
     } catch {
-      failUpload(session.id, 'Error uploading profile photo.');
+      showSnackbar({
+        message: 'Error uploading profile photo.',
+        type: 'error',
+      });
       setModalType(null);
     } finally {
       setUploading(false);

@@ -27,10 +27,10 @@ export function HeroCarousel(props: TProps) {
   const imageUrls = [
     ...(heroImage?.url ? [heroImage.url] : []),
     ...(photosByType[ShelterPhotoTypeChoices.Exterior] ?? []).map(
-      (p) => p.file.url
+      (p) => p.file.url,
     ),
     ...(photosByType[ShelterPhotoTypeChoices.Interior] ?? []).map(
-      (p) => p.file.url
+      (p) => p.file.url,
     ),
   ].filter((u): u is string => Boolean(u));
 
@@ -48,7 +48,7 @@ export function HeroCarousel(props: TProps) {
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<TYouTubeVideo | null>(
-    null
+    null,
   );
 
   const parentCss = ['bg-white', 'h-[200px]', className];

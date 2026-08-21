@@ -3,7 +3,7 @@ import type { SortDirection } from './types';
 export function compareValues(
   a: string | number,
   b: string | number,
-  direction: SortDirection
+  direction: SortDirection,
 ): number {
   const multiplier = direction === 'asc' ? 1 : -1;
   if (typeof a === 'number' && typeof b === 'number') {

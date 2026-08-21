@@ -375,6 +375,38 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
         self.assertEqual(shelters[1]["heroImage"]["id"], str(interior_photo_1.pk))
 
 
+class PublicShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
+    """The shelter directory is public: no login, no organization header.
+
+    Every other test here inherits an active organization from
+    ``GraphQLBaseTestCase.setUp``, so nothing else would notice the public
+    queries starting to require one.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.logout()
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+        self.shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+    def test_shelters_query_is_public(self) -> None:
+        response = self.execute_graphql("{ shelters { totalCount results { id name } } }")
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(
+            response["data"]["shelters"]["results"],
+            [{"id": str(self.shelter.pk), "name": self.shelter.name}],
+        )
+
+    def test_shelter_query_is_public(self) -> None:
+        response = self.execute_graphql(
+            "query ($pk: ID!) { shelter(pk: $pk) { id name } }", {"pk": str(self.shelter.pk)}
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelter"]["id"], str(self.shelter.pk))
+
+
 class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def test_shelter_max_stay_query(self) -> None:
         shelter_recipe.make(max_stay=None, status=StatusChoices.APPROVED)

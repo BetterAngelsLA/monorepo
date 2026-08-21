@@ -23,7 +23,7 @@ export default function NoteServicesHmis({
             maxVisible={5}
             pillVariant={'warning'}
             pills={note['requestedServices'].map(
-              (item) => item.service?.label || ''
+              (item) => item.service?.label || '',
             )}
             variant={'expandable'}
           />
@@ -38,7 +38,7 @@ export default function NoteServicesHmis({
             maxVisible={5}
             pillVariant={'success'}
             pills={note['providedServices'].map(
-              (item) => item.service?.label || ''
+              (item) => item.service?.label || '',
             )}
             variant={'expandable'}
           />

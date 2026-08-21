@@ -15,7 +15,8 @@ import {
   KeyboardToolbarProvider,
   ModalScreenProvider,
   SnackbarProvider,
-  UploadProgressProvider,
+  UploadProgressCleanup,
+  UploadResume,
   UserProvider,
 } from '@monorepo/expo/betterangels';
 import { createErrorLink, loggerLink } from '@monorepo/expo/shared/clients';
@@ -42,7 +43,8 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
   }, [apiUrl, rawFetch]);
 
   return (
-    <UploadProgressProvider>
+    <>
+      <UploadProgressCleanup />
       <QueryClientProvider client={reactQueryClient}>
         <ApolloClientProvider typePolicies={baTypePolicies} link={link}>
           <BaFeatureControlProvider>
@@ -50,6 +52,12 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
               <KeyboardToolbarProvider>
                 <SnackbarProvider>
                   <UserProvider>
+                    {/*
+                      Inside Apollo + UserProvider: finishing an interrupted
+                      upload means authenticated GraphQL calls, so it cannot
+                      live alongside UploadProgressCleanup at the root.
+                    */}
+                    <UploadResume />
                     <BlockingScreenProvider>
                       <ModalScreenProvider>{children}</ModalScreenProvider>
                     </BlockingScreenProvider>
@@ -60,6 +68,6 @@ export function BaDataProviders({ children }: { children: ReactNode }) {
           </BaFeatureControlProvider>
         </ApolloClientProvider>
       </QueryClientProvider>
-    </UploadProgressProvider>
+    </>
   );
 }

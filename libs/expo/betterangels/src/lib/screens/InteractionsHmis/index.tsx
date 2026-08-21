@@ -28,7 +28,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState<string>('');
   const [filtersKey, setFiltersKey] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
-    getInitialFilterValues(user)
+    getInitialFilterValues(user),
   );
 
   function onFilterChange(selectedFilters: TModelFilters) {
@@ -56,7 +56,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
         hmisNote={item}
       />
     ),
-    []
+    [],
   );
 
   const serverFilters = toNoteFilterHmis({

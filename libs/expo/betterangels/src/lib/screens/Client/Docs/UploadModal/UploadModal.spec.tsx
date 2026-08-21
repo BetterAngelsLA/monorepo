@@ -6,15 +6,7 @@ import { ClientProfileQuery } from '../../__generated__/Client.generated';
 import UploadModal from './index';
 
 const mocks = vi.hoisted(() => ({
-  uploadDocuments: vi.fn(),
-  begin: vi.fn(() => ({
-    id: 'session-1',
-    signals: [new AbortController().signal],
-    isAborted: () => false,
-  })),
-  endUpload: vi.fn(),
-  completeUpload: vi.fn(),
-  failUpload: vi.fn(),
+  startSession: vi.fn(),
   mediaPickerProps: [] as Array<{
     isOpen: boolean;
     onFilesSelected?: (files: unknown[]) => void;
@@ -27,19 +19,8 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: ReactNode }) => children,
 }));
 
-vi.mock('./useClientDocumentUpload', () => ({
-  useClientDocumentUpload: () => ({ uploadDocuments: mocks.uploadDocuments }),
-}));
-
-vi.mock('../../../../providers', () => ({
-  useUploadSession: () => ({
-    begin: mocks.begin,
-    setUploadManifest: vi.fn(),
-    updateUpload: vi.fn(),
-    failUpload: mocks.failUpload,
-    completeUpload: mocks.completeUpload,
-    endUpload: mocks.endUpload,
-  }),
+vi.mock('../useDocsUpload', () => ({
+  useDocsUpload: () => ({ startSession: mocks.startSession }),
 }));
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
@@ -104,12 +85,18 @@ const sampleFile = {
   uri: 'file://consent.pdf',
 };
 
+const secondFile = {
+  name: 'consent-2.pdf',
+  type: 'application/pdf',
+  uri: 'file://consent-2.pdf',
+};
+
 function renderModal(overrides?: { closeModal?: () => void }) {
   return render(
     <UploadModal
       client={client}
       closeModal={overrides?.closeModal ?? vi.fn()}
-    />
+    />,
   );
 }
 
@@ -123,16 +110,18 @@ async function selectFiles(files: unknown[]) {
 
 describe('UploadModal', () => {
   beforeEach(() => {
-    mocks.uploadDocuments.mockReset();
-    mocks.begin.mockClear();
-    mocks.endUpload.mockClear();
-    mocks.completeUpload.mockClear();
-    mocks.failUpload.mockClear();
-    mocks.mediaPickerProps.length = 0;
+    mocks.startSession.mockClear();
+    mocks.mediaPickerProps = [];
   });
 
-  it('starts a labelled session, uploads, and keeps the form open', async () => {
-    mocks.uploadDocuments.mockResolvedValue(undefined);
+  it('is a pure picker: nothing uploads until files are picked', () => {
+    const { getByText } = renderModal();
+
+    expect(getByText('Consent Forms')).toBeTruthy();
+    expect(mocks.startSession).not.toHaveBeenCalled();
+  });
+
+  it('starts the upload immediately and closes the form', async () => {
     const closeModal = vi.fn();
 
     const { getByText } = renderModal({ closeModal });
@@ -140,67 +129,24 @@ describe('UploadModal', () => {
     fireEvent.press(getByText('Consent Forms'));
     await selectFiles([sampleFile]);
 
-    expect(mocks.begin).toHaveBeenCalledWith(['consent.pdf'], {
-      label: 'Consent Forms',
-      onRetryItem: expect.any(Function),
-    });
-    expect(mocks.uploadDocuments).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clientProfileId: 'client-1',
-        documents: [expect.objectContaining(sampleFile)],
-        namespace: ClientDocumentNamespaceEnum.ConsentForm,
-      }),
+    expect(mocks.startSession).toHaveBeenCalledWith(
+      [sampleFile],
+      ClientDocumentNamespaceEnum.ConsentForm,
+      'Consent Forms',
     );
-    expect(mocks.completeUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-    // The form stays open so the user can upload more documents; they dismiss
-    // it with Done. Progress is visible in the drawer.
-    expect(closeModal).not.toHaveBeenCalled();
+    expect(closeModal).toHaveBeenCalled();
   });
 
-  it('keeps the form open when the upload fails so the drawer can show retry', async () => {
-    mocks.uploadDocuments.mockRejectedValue(new Error('upload failed'));
-    const closeModal = vi.fn();
-
-    const { getByText } = renderModal({ closeModal });
-
-    fireEvent.press(getByText('Consent Forms'));
-    await selectFiles([sampleFile]);
-
-    expect(closeModal).not.toHaveBeenCalled();
-    expect(mocks.failUpload).toHaveBeenCalledWith('session-1');
-    expect(mocks.endUpload).not.toHaveBeenCalled();
-  });
-
-  it('retries only the failed file in a fresh single-file session', async () => {
-    mocks.uploadDocuments.mockResolvedValue(undefined);
-
+  it('passes every picked file for multi-file doc types', async () => {
     const { getByText } = renderModal();
 
     fireEvent.press(getByText('Consent Forms'));
-    await selectFiles([sampleFile]);
+    await selectFiles([sampleFile, secondFile]);
 
-    const beginCall = mocks.begin.mock.calls[0];
-    const options = beginCall[1] as { onRetryItem?: (index: number) => void };
-    expect(options.onRetryItem).toBeDefined();
-
-    // The drawer's per-item Retry invokes onRetryItem with the item index.
-    await act(async () => {
-      options.onRetryItem?.(0);
-    });
-
-    // A fresh session is started with just the retried file — not the whole
-    // batch — and that single file is re-uploaded.
-    expect(mocks.begin).toHaveBeenCalledTimes(2);
-    expect(mocks.begin.mock.calls[1][0]).toEqual(['consent.pdf']);
-
-    expect(mocks.uploadDocuments).toHaveBeenCalledTimes(2);
-    const retryUpload = mocks.uploadDocuments.mock.calls[1][0] as {
-      documents: unknown[];
-    };
-    expect(retryUpload.documents).toHaveLength(1);
-    expect(retryUpload.documents[0]).toEqual(
-      expect.objectContaining(sampleFile),
+    expect(mocks.startSession).toHaveBeenCalledWith(
+      [sampleFile, secondFile],
+      ClientDocumentNamespaceEnum.ConsentForm,
+      'Consent Forms',
     );
   });
 

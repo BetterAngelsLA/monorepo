@@ -7,7 +7,7 @@ import { extractSize } from './utils';
 // Higher Order Component to create SVG icons
 const createSvgIcon = (
   SvgComponent: React.ComponentType<SvgProps>,
-  useStroke = false
+  useStroke = false,
 ) => {
   const IconComponent = (props: IIconProps): React.ReactElement => {
     const {

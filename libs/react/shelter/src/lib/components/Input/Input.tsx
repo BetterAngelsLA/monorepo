@@ -14,12 +14,12 @@ interface IInput<T extends AllowedTypes = string>
 }
 
 export const Input = forwardRef(InputInner) as <T extends AllowedTypes>(
-  props: IInput<T> & React.RefAttributes<HTMLInputElement>
+  props: IInput<T> & React.RefAttributes<HTMLInputElement>,
 ) => JSX.Element;
 
 function InputInner<T extends AllowedTypes>(
   props: IInput<T>,
-  ref: Ref<HTMLInputElement>
+  ref: Ref<HTMLInputElement>,
 ) {
   const {
     className = '',

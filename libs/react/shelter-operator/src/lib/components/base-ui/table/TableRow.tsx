@@ -10,7 +10,7 @@ export type TableRowCell = {
 
 export type TableRowClickHandler<TRowObject> = (
   rowObject: TRowObject,
-  rowIndex: number
+  rowIndex: number,
 ) => void;
 
 export type TableRowProps<TRowObject> = {

@@ -51,7 +51,7 @@ export function CurrentLocation(props: ICurrentLocation) {
     navigator.geolocation.getCurrentPosition(
       onLocationSuccess,
       onLocationError,
-      options
+      options,
     );
   };
 
