@@ -1,7 +1,12 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { Provider } from 'jotai';
+import { useHydrateAtoms } from 'jotai/utils';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { GetShelterOperatorOverviewDocument } from '../../components/overview/__generated__/overview.generated';
+import { dateRangeFilterAtom } from '../../components/date-range-filter';
+import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
+import { ShelterOccupancyMetricsDocument } from '../../hooks/useShelterOccupancyMetrics/__generated__/useShelterOccupancyMetrics.generated';
 import { ShelterReportPage } from './ShelterReportPage';
 
 // The page only orchestrates; the PDF itself is covered in useExportPdf.test.
@@ -9,111 +14,161 @@ vi.mock('./useExportPdf', () => ({
   useExportPdf: () => ({ exportPdf: vi.fn(), isExporting: false }),
 }));
 
-const SHELTER_ID = '1';
+// @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
+// provide; section inclusion is covered in ShelterReportPrint.test.
+vi.mock('../../components/reports/ReportCharts', () => ({
+  BedStatusChart: () => <div data-testid="bed-status-chart" />,
+  DailyOccupancyChart: () => <div data-testid="daily-occupancy-chart" />,
+}));
 
-const OVERVIEW = {
+const SHELTER_ID = '1';
+const FROM = new Date(2026, 6, 1);
+const TO = new Date(2026, 6, 7);
+
+const SHELTER_SUMMARY = {
   __typename: 'OperatorShelterType',
   id: SHELTER_ID,
   name: 'Downtown Emergency Shelter',
-  organization: {
-    __typename: 'OrganizationType',
-    id: '1',
-    name: 'Test Organization',
-  },
-  location: {
-    __typename: 'ShelterLocationType',
-    place: '1234 S Main St, Los Angeles, CA 90015',
-  },
-  bedCounts: {
-    __typename: 'BedCountType',
-    total: 185,
-    available: 42,
-    occupied: 118,
-    reserved: 13,
-    inTurnaround: 7,
-    outOfService: 5,
-  },
-  roomCounts: {
-    __typename: 'RoomCountType',
-    total: 47,
-    available: 9,
-    occupied: 31,
-    reserved: 4,
-    inTurnaround: 2,
-    outOfService: 1,
+  location: { __typename: 'ShelterLocationType', place: '1234 S Main St' },
+};
+
+const METRICS = {
+  __typename: 'ShelterOccupancyMetricsType',
+  shelterId: SHELTER_ID,
+  startDate: '2026-07-01',
+  endDate: '2026-07-07',
+  avgDaysToOccupancy: 10,
+  dailyOccupancy: [],
+  dailyBedStatus: [],
+  reservationMetrics: {
+    __typename: 'ReservationMetricsType',
+    checkInOverdue: 12,
+    cancelled: 7,
+    checkedIn: 8,
+    checkInOverdueToCheckedIn: 1,
   },
 };
 
-const request = {
-  query: GetShelterOperatorOverviewDocument,
-  variables: { shelterId: SHELTER_ID },
+const summaryRequest = {
+  query: GetShelterSummaryDocument,
+  variables: { id: SHELTER_ID },
 };
 
-function renderPage(mocks: Parameters<typeof MockedProvider>[0]['mocks']) {
+const metricsRequest = {
+  query: ShelterOccupancyMetricsDocument,
+  variables: {
+    shelterId: SHELTER_ID,
+    startDate: '2026-07-01',
+    endDate: '2026-07-07',
+  },
+};
+
+function HydrateAtoms({
+  range,
+  children,
+}: {
+  range: { from: Date | null; to: Date | null };
+  children: ReactNode;
+}) {
+  useHydrateAtoms([
+    [dateRangeFilterAtom, { preset: 'CUSTOM' as const, range }],
+  ]);
+  return children;
+}
+
+function renderPage(
+  mocks: Parameters<typeof MockedProvider>[0]['mocks'],
+  range: { from: Date | null; to: Date | null } = { from: FROM, to: TO },
+) {
   return render(
     <MockedProvider mocks={mocks}>
-      <MemoryRouter initialEntries={[`/operator/shelter/${SHELTER_ID}/report`]}>
-        <Routes>
-          <Route
-            path="/operator/shelter/:shelterId/report"
-            element={<ShelterReportPage />}
-          />
-        </Routes>
-      </MemoryRouter>
-    </MockedProvider>
+      <Provider>
+        <HydrateAtoms range={range}>
+          <MemoryRouter
+            initialEntries={[`/operator/shelter/${SHELTER_ID}/report`]}
+          >
+            <Routes>
+              <Route
+                path="/operator/shelter/:shelterId/report"
+                element={<ShelterReportPage />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </HydrateAtoms>
+      </Provider>
+    </MockedProvider>,
   );
 }
 
 const exportButton = () => screen.getByRole('button', { name: /export pdf/i });
 
+const HAPPY_MOCKS = [
+  {
+    request: summaryRequest,
+    result: { data: { operatorShelter: SHELTER_SUMMARY } },
+  },
+  {
+    request: metricsRequest,
+    result: { data: { shelterOccupancyMetrics: METRICS } },
+  },
+];
+
 describe('ShelterReportPage', () => {
-  it('shows a loading message while the query is in flight', () => {
-    renderPage([{ request, result: { data: { operatorShelter: OVERVIEW } } }]);
+  it('shows a loading message while the queries are in flight', () => {
+    renderPage(HAPPY_MOCKS);
 
     expect(screen.getByText('Loading report…')).toBeTruthy();
   });
 
-  it('disables the export button until the data arrives', async () => {
-    renderPage([{ request, result: { data: { operatorShelter: OVERVIEW } } }]);
+  it('disables the export button until both queries resolve', async () => {
+    renderPage(HAPPY_MOCKS);
 
     expect(exportButton().hasAttribute('disabled')).toBe(true);
 
     await waitFor(() =>
-      expect(screen.getByText('Test Organization')).toBeTruthy()
+      expect(screen.getByText('Downtown Emergency Shelter')).toBeTruthy(),
     );
 
     expect(exportButton().hasAttribute('disabled')).toBe(false);
   });
 
-  it('renders the report once the query resolves', async () => {
-    renderPage([{ request, result: { data: { operatorShelter: OVERVIEW } } }]);
+  it('renders the report once both queries resolve', async () => {
+    renderPage(HAPPY_MOCKS);
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Bed Summary' })).toBeTruthy()
+      expect(screen.getByText('Operational Summary')).toBeTruthy(),
     );
 
-    expect(screen.getByRole('heading', { name: 'Room Summary' })).toBeTruthy();
+    expect(screen.getByText('Downtown Emergency Shelter')).toBeTruthy();
     expect(screen.queryByText('Loading report…')).toBeNull();
   });
 
-  it('reports a failure instead of an empty report when the query errors', async () => {
-    renderPage([{ request, error: new Error('network down') }]);
-
-    await waitFor(() =>
-      expect(screen.getByText('Failed to load the shelter report.')).toBeTruthy()
-    );
-
-    expect(exportButton().hasAttribute('disabled')).toBe(true);
-    expect(screen.queryByRole('heading', { name: 'Bed Summary' })).toBeNull();
-  });
-
-  it('explains an empty result rather than rendering a blank report', async () => {
-    renderPage([{ request, result: { data: { operatorShelter: null } } }]);
+  it('reports a failure instead of an empty report when the metrics query errors', async () => {
+    renderPage([
+      {
+        request: summaryRequest,
+        result: { data: { operatorShelter: SHELTER_SUMMARY } },
+      },
+      { request: metricsRequest, error: new Error('network down') },
+    ]);
 
     await waitFor(() =>
       expect(
-        screen.getByText('No shelter data available for this report.')
-      ).toBeTruthy()
+        screen.getByText('Failed to load the shelter report.'),
+      ).toBeTruthy(),
+    );
+
+    expect(exportButton().hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByText('Operational Summary')).toBeNull();
+  });
+
+  it('asks for a date range instead of rendering a blank report when none is set', async () => {
+    renderPage(HAPPY_MOCKS, { from: null, to: null });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Select a date range to generate a report.'),
+      ).toBeTruthy(),
     );
 
     expect(exportButton().hasAttribute('disabled')).toBe(true);

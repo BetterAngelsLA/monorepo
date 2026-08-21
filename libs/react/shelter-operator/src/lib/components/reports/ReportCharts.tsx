@@ -82,7 +82,14 @@ const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
  *
  * Renders empty (no data) until `data` is provided.
  */
-export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
+export function BedStatusChart({
+  data,
+  showViewToggle = true,
+}: {
+  data?: DailyBedStatusMetrics[];
+  /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
+  showViewToggle?: boolean;
+}) {
   const countData = data ? toBedStatusCountData(data) : [];
   const percentData = data ? toBedStatusPercentData(data) : [];
 
@@ -90,7 +97,7 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
     <section className={chartCardClassName} data-testid="bed-status-chart">
       <BarChart
         chartTitle="Bed Status"
-        showViewToggle
+        showViewToggle={showViewToggle}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
@@ -128,8 +135,11 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
  */
 export function DailyOccupancyChart({
   data,
+  showViewToggle = true,
 }: {
   data?: DailyOccupancyMetrics[];
+  /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
+  showViewToggle?: boolean;
 }) {
   const countData = data ? toDailyOccupancyCountData(data) : [];
   const percentData = data ? toDailyOccupancyPercentData(data) : [];
@@ -138,7 +148,7 @@ export function DailyOccupancyChart({
     <section className={chartCardClassName} data-testid="daily-occupancy-chart">
       <BarChart
         chartTitle="Daily Occupancy"
-        showViewToggle
+        showViewToggle={showViewToggle}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {

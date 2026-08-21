@@ -1,87 +1,204 @@
+import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { format } from 'date-fns';
 import type { ReactNode, Ref } from 'react';
+import {
+  BedStatusChart,
+  DailyOccupancyChart,
+} from '../../components/reports/ReportCharts';
 import { Text } from '../../components/base-ui/text/text';
-import './report.css';
-import { ShelterReportData } from './types';
+import type {
+  DailyBedStatusMetrics,
+  DailyOccupancyMetrics,
+  ReservationMetrics,
+} from '../../hooks/useShelterOccupancyMetrics';
+import { ReportOperationalStats } from './ReportOperationalStats';
 
-const cardClassName = 'rounded-xl border border-[#E5E7EB] bg-white p-5';
+export type ExportMetric =
+  | 'average-days-to-occupancy'
+  | 'reservation-status-changes'
+  | 'bed-status'
+  | 'daily-occupancy';
 
-/** Bed and room counts share a shape, so both render the same rows. */
-const COUNT_ROWS = [
-  { key: 'total', label: 'Total' },
-  { key: 'available', label: 'Available' },
-  { key: 'occupied', label: 'Occupied' },
-  { key: 'reserved', label: 'Reserved' },
-  { key: 'inTurnaround', label: 'In Turnaround' },
-  { key: 'outOfService', label: 'Out of Service' },
-] as const;
+// US Letter, portrait, at 96dpi (8.5in x 11in). Fixed so each page's raster
+// capture is identical regardless of the browser window that generated it.
+const PAGE_WIDTH = 816;
+const PAGE_HEIGHT = 1056;
+const PAGE_PADDING = 48;
 
-type Counts = Record<(typeof COUNT_ROWS)[number]['key'], number>;
+export interface IShelterReportPrintProps {
+  shelterName?: string;
+  shelterAddress?: string;
+  range: { from: Date; to: Date };
+  generatedAt: Date;
+  includedMetrics: ExportMetric[];
+  metrics?: ReservationMetrics | null;
+  avgDaysToOccupancy?: number | null;
+  dailyBedStatus?: DailyBedStatusMetrics[];
+  dailyOccupancy?: DailyOccupancyMetrics[];
+  ref?: Ref<HTMLDivElement>;
+}
 
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+interface IReportPageProps {
+  pageNumber: number;
+  totalPages: number;
+  children: ReactNode;
+}
+
+/** One physical printed page: fixed Letter size, repeated footer (logo + page number). */
+function ReportPage({ pageNumber, totalPages, children }: IReportPageProps) {
   return (
-    <div className="flex items-center justify-between py-2 text-sm">
-      <span className="text-[#6B7280]">{label}</span>
-      <span className="font-medium text-[#111827]">{value}</span>
+    <div
+      data-report-page="true"
+      className="report-page relative flex flex-col bg-white"
+      style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT, padding: PAGE_PADDING }}
+    >
+      {children}
+
+      <div className="absolute bottom-6 left-12 right-12 flex items-center justify-between">
+        <BetterAngelsLogoIcon fill="#D1D5DB" className="h-4 w-auto" />
+        <Text variant="body" textColor="text-[#9CA3AF]" className="text-[13px]">
+          {pageNumber} of {totalPages}
+        </Text>
+      </div>
     </div>
   );
 }
 
-function SummarySection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className={cardClassName}>
-      <h3 className="text-base font-semibold text-[#111827]">{title}</h3>
-      <div className="mt-3 divide-y divide-[#F3F4F6]">{children}</div>
-    </section>
-  );
+interface IReportPageHeaderProps {
+  variant: 'primary' | 'compact';
+  shelterName?: string;
+  shelterAddress?: string;
+  range: { from: Date; to: Date };
+  generatedAt: Date;
 }
 
-function CountsSection({ title, counts }: { title: string; counts: Counts }) {
-  return (
-    <SummarySection title={title}>
-      {COUNT_ROWS.map(({ key, label }) => (
-        <SummaryRow key={key} label={label} value={counts[key]} />
-      ))}
-    </SummarySection>
-  );
-}
-
-export function ShelterReportPrint({
-  data,
-  ref,
-}: {
-  data: ShelterReportData;
-  ref?: Ref<HTMLDivElement>;
-}) {
-  const { name, organization, location, bedCounts, roomCounts } = data;
+function ReportPageHeader({
+  variant,
+  shelterName,
+  shelterAddress,
+  range,
+  generatedAt,
+}: IReportPageHeaderProps) {
+  const rangeText = `${format(range.from, 'MM/dd/yyyy')} – ${format(range.to, 'MM/dd/yyyy')}`;
+  const exportedText = `${format(generatedAt, 'MM/dd/yyyy')} at ${format(generatedAt, 'h:mm a')}`;
 
   return (
-    <div ref={ref} className="shelter-report-print">
-      <div className="grid gap-4 p-6">
-        <header>
-          <Text variant="header-md">{name}</Text>
-        </header>
-
-        <SummarySection title="Shelter Summary">
-          <SummaryRow label="Name" value={name} />
-          <SummaryRow label="Organization" value={organization?.name ?? '—'} />
-          <SummaryRow label="Address" value={location?.place ?? '—'} />
-        </SummarySection>
-
-        <CountsSection title="Bed Summary" counts={bedCounts} />
-        <CountsSection title="Room Summary" counts={roomCounts} />
+    <div className="flex flex-shrink-0 items-start justify-between border-b border-[#E5E7EB] pb-4">
+      <div>
+        {variant === 'primary' ? (
+          <>
+            <Text
+              variant="header-md"
+              className="block leading-none text-[#111827]"
+            >
+              Operational Summary
+            </Text>
+            <Text variant="body" className="mt-2 block text-[#6B7280]">
+              {shelterName ?? 'Shelter Name'}
+              {shelterAddress ? ` [${shelterAddress}]` : ''}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text
+              variant="header-md"
+              className="block leading-none text-[#111827]"
+            >
+              {shelterName ?? 'Shelter Name'}
+            </Text>
+            {shelterAddress && (
+              <Text variant="body" className="mt-2 block text-[#6B7280]">
+                {shelterAddress}
+              </Text>
+            )}
+          </>
+        )}
       </div>
+
+      <div className="text-right">
+        <Text variant="body" className="block text-[13px] text-[#9CA3AF]">
+          {variant === 'primary' && (
+            <span className="text-[#9CA3AF]">Reporting Period </span>
+          )}
+          <span className="font-medium text-[#111827]">{rangeText}</span>
+        </Text>
+        <Text variant="body" className="mt-1 block text-[13px] text-[#9CA3AF]">
+          <span className="text-[#9CA3AF]">Exported </span>
+          <span className="font-medium text-[#111827]">{exportedText}</span>
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Presentational, chrome-less multi-page report captured by html2canvas-pro
+ * (see useExportPdf.ts) — one canvas per `.report-page` node, assembled into
+ * a matching multi-page PDF, so section breaks land exactly where they do on
+ * screen instead of an arbitrary pixel-height slice. Every page is a fixed
+ * Letter size (see PAGE_WIDTH/PAGE_HEIGHT above) so the raster output is
+ * identical regardless of the browser window that generated it.
+ */
+export function ShelterReportPrint({
+  shelterName,
+  shelterAddress,
+  range,
+  generatedAt,
+  includedMetrics,
+  metrics,
+  avgDaysToOccupancy,
+  dailyBedStatus,
+  dailyOccupancy,
+  ref,
+}: IShelterReportPrintProps) {
+  const showReservationStatusChanges = includedMetrics.includes(
+    'reservation-status-changes',
+  );
+  const showAvgDaysToOccupancy = includedMetrics.includes(
+    'average-days-to-occupancy',
+  );
+  const showStats = showReservationStatusChanges || showAvgDaysToOccupancy;
+  const showBedStatus = includedMetrics.includes('bed-status');
+  const showDailyOccupancy = includedMetrics.includes('daily-occupancy');
+
+  const hasPageOne = showStats || showBedStatus;
+  const hasPageTwo = showDailyOccupancy;
+  const totalPages = (hasPageOne ? 1 : 0) + (hasPageTwo ? 1 : 0);
+
+  const headerProps = { shelterName, shelterAddress, range, generatedAt };
+
+  return (
+    <div
+      ref={ref}
+      className="flex flex-col items-center gap-6 bg-[#E5E7EB] p-10"
+    >
+      {hasPageOne && (
+        <ReportPage pageNumber={1} totalPages={totalPages}>
+          <ReportPageHeader variant="primary" {...headerProps} />
+          <div className="mt-6 flex flex-col gap-6">
+            {showStats && (
+              <ReportOperationalStats
+                showReservationStatusChanges={showReservationStatusChanges}
+                showAvgDaysToOccupancy={showAvgDaysToOccupancy}
+                metrics={metrics}
+                avgDaysToOccupancy={avgDaysToOccupancy}
+              />
+            )}
+            {showBedStatus && (
+              <BedStatusChart data={dailyBedStatus} showViewToggle={false} />
+            )}
+          </div>
+        </ReportPage>
+      )}
+
+      {hasPageTwo && (
+        <ReportPage pageNumber={hasPageOne ? 2 : 1} totalPages={totalPages}>
+          <ReportPageHeader variant="compact" {...headerProps} />
+          <div className="mt-6 flex flex-col gap-6">
+            <DailyOccupancyChart data={dailyOccupancy} showViewToggle={false} />
+          </div>
+        </ReportPage>
+      )}
     </div>
   );
 }
