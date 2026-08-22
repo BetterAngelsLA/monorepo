@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { CheckCircle, X, XCircle } from 'lucide-react';
-import { Text } from '../../../components/base-ui/text/text';
+import { Text } from '../base-ui/text/text';
 
 type ExportStatusNotificationProps = {
   success: boolean;

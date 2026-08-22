@@ -20,7 +20,6 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -100,10 +99,6 @@ export function OperatorApp() {
                 element={<ShelterMediaPage />}
               />
             </Route>
-            <Route
-              path={routePath(paths.shelterReport)}
-              element={<ShelterReportPage />}
-            />
             <Route path={routePath(mgmtRouteConfig.root)}>
               <Route
                 index

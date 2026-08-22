@@ -29,33 +29,36 @@ function DatePresetPlaceholder() {
   );
 }
 
-/** Placeholder for the export action — replaced by the real export flow later. */
-function ExportDataButtonPlaceholder() {
-  return (
-    <Button
-      variant="primary"
-      leftIcon={<Download size={20} color="black" />}
-      rightIcon={false}
-      className="text-black opacity-50 pointer-events-none"
-      aria-disabled
-    >
-      Export Data
-    </Button>
-  );
+export interface IReportFilterBarProps {
+  onExportClick: () => void;
+  exportDisabled?: boolean;
 }
 
 /**
- * Top toolbar of the reporting Overview tab: date-range + preset filters on the
- * left, export on the right. All controls are non-interactive placeholders.
+ * Top toolbar of the reporting Overview tab: date-range + preset filters on
+ * the left (still non-interactive placeholders), export on the right. Export
+ * opens the ExportShelterModal.
  */
-export function ReportFilterBar() {
+export function ReportFilterBar({
+  onExportClick,
+  exportDisabled,
+}: IReportFilterBarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <DateRangeFilterPlaceholder />
         <DatePresetPlaceholder />
       </div>
-      <ExportDataButtonPlaceholder />
+      <Button
+        variant="primary"
+        leftIcon={<Download size={20} color="black" />}
+        rightIcon={false}
+        className="text-black"
+        disabled={exportDisabled}
+        onClick={onExportClick}
+      >
+        Export Data
+      </Button>
     </div>
   );
 }
