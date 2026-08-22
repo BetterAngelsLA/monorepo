@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { format, parseISO } from 'date-fns';
 import type {
   DailyBedStatusMetrics,
@@ -85,16 +86,22 @@ const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
 export function BedStatusChart({
   data,
   showViewToggle = true,
+  containerClassName,
 }: {
   data?: DailyBedStatusMetrics[];
   /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
   showViewToggle?: boolean;
+  /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
+  containerClassName?: string;
 }) {
   const countData = data ? toBedStatusCountData(data) : [];
   const percentData = data ? toBedStatusPercentData(data) : [];
 
   return (
-    <section className={chartCardClassName} data-testid="bed-status-chart">
+    <section
+      className={mergeCss([chartCardClassName, containerClassName])}
+      data-testid="bed-status-chart"
+    >
       <BarChart
         chartTitle="Bed Status"
         showViewToggle={showViewToggle}
@@ -136,16 +143,22 @@ export function BedStatusChart({
 export function DailyOccupancyChart({
   data,
   showViewToggle = true,
+  containerClassName,
 }: {
   data?: DailyOccupancyMetrics[];
   /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
   showViewToggle?: boolean;
+  /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
+  containerClassName?: string;
 }) {
   const countData = data ? toDailyOccupancyCountData(data) : [];
   const percentData = data ? toDailyOccupancyPercentData(data) : [];
 
   return (
-    <section className={chartCardClassName} data-testid="daily-occupancy-chart">
+    <section
+      className={mergeCss([chartCardClassName, containerClassName])}
+      data-testid="daily-occupancy-chart"
+    >
       <BarChart
         chartTitle="Daily Occupancy"
         showViewToggle={showViewToggle}

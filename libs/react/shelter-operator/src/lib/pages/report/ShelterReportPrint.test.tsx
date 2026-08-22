@@ -99,6 +99,18 @@ describe('ShelterReportPrint', () => {
     expect(pageFooters()).toEqual(['1 of 1']);
   });
 
+  it('moves Daily Occupancy up to page 1 when Bed Status is not included, instead of giving it its own page', () => {
+    render(
+      <ShelterReportPrint
+        {...baseProps(['reservation-status-changes', 'daily-occupancy'])}
+      />,
+    );
+
+    expect(screen.queryByTestId('bed-status-chart')).toBeNull();
+    expect(screen.getByTestId('daily-occupancy-chart')).toBeTruthy();
+    expect(pageFooters()).toEqual(['1 of 1']);
+  });
+
   it('renders nothing when no metrics are included', () => {
     const { container } = render(<ShelterReportPrint {...baseProps([])} />);
 

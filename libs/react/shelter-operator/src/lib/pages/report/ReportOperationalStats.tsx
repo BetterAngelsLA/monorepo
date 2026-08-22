@@ -119,20 +119,23 @@ export function ReportOperationalStats({
 
   if (reservationCards.length === 0 && !avgDaysCard) return null;
 
-  // Only metric included: a flat label/value row, no card/tray chrome.
+  // Only metric included: a flat label/value row, still in the grey tray so
+  // it matches the other cards' chrome instead of a plain bordered box.
   if (reservationCards.length === 0 && avgDaysCard) {
     return (
-      <div className="flex items-center justify-between rounded-2xl border border-[#E5E7EB] bg-white px-6 py-4">
-        <Text variant="body" textColor="text-[#6B7280]">
-          {avgDaysCard.label}
-        </Text>
-        <Text
-          variant="header-lg"
-          textColor="text-black"
-          className="text-[22px]"
-        >
-          {avgDaysCard.value}
-        </Text>
+      <div className="rounded-2xl bg-[#F9F9F9] p-1">
+        <div className="flex items-center justify-between rounded-xl bg-white px-6 py-4">
+          <Text variant="body" textColor="text-[#6B7280]">
+            {avgDaysCard.label}
+          </Text>
+          <Text
+            variant="header-lg"
+            textColor="text-black"
+            className="text-[22px]"
+          >
+            {avgDaysCard.value}
+          </Text>
+        </div>
       </div>
     );
   }
@@ -141,8 +144,10 @@ export function ReportOperationalStats({
     <div className="flex items-stretch gap-2 rounded-2xl bg-[#F9F9F9] p-1">
       {/* Weighted 3:1 against the single avg-days card below so each of the
           three reservation cards ends up roughly the same width as it, not
-          squeezed to a third of a half-width group. */}
-      <div className="flex flex-[3] items-stretch">
+          squeezed to a third of a half-width group. A small gap between them
+          lets the grey tray show through as a thin divider, matching the
+          Figma rather than one seamless touching pill. */}
+      <div className="flex flex-[3] items-stretch gap-1">
         {reservationCards.map((card, index) => (
           <StatCard
             key={card.key}

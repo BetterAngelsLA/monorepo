@@ -25,6 +25,10 @@ const PAGE_WIDTH = 816;
 const PAGE_HEIGHT = 1056;
 const PAGE_PADDING = 48;
 
+// Matches the stat tray's grey background instead of the live dashboard's
+// white shadowed chart card.
+const CHART_CONTAINER_CLASSNAME = 'bg-[#F9F9F9] shadow-none';
+
 export interface IShelterReportPrintProps {
   shelterName?: string;
   shelterAddress?: string;
@@ -161,8 +165,14 @@ export function ShelterReportPrint({
   const showBedStatus = includedMetrics.includes('bed-status');
   const showDailyOccupancy = includedMetrics.includes('daily-occupancy');
 
-  const hasPageOne = showStats || showBedStatus;
-  const hasPageTwo = showDailyOccupancy;
+  // Daily Occupancy only gets its own page when Bed Status is also shown —
+  // otherwise it moves up onto page 1 with the stats instead of leaving page
+  // 1 mostly empty and forcing a second page for a single chart.
+  const showBothCharts = showBedStatus && showDailyOccupancy;
+  const dailyOccupancyOnPageOne = showDailyOccupancy && !showBothCharts;
+
+  const hasPageOne = showStats || showBedStatus || dailyOccupancyOnPageOne;
+  const hasPageTwo = showBothCharts;
   const totalPages = (hasPageOne ? 1 : 0) + (hasPageTwo ? 1 : 0);
 
   const headerProps = { shelterName, shelterAddress, range, generatedAt };
@@ -185,7 +195,18 @@ export function ShelterReportPrint({
               />
             )}
             {showBedStatus && (
-              <BedStatusChart data={dailyBedStatus} showViewToggle={false} />
+              <BedStatusChart
+                data={dailyBedStatus}
+                showViewToggle={false}
+                containerClassName={CHART_CONTAINER_CLASSNAME}
+              />
+            )}
+            {dailyOccupancyOnPageOne && (
+              <DailyOccupancyChart
+                data={dailyOccupancy}
+                showViewToggle={false}
+                containerClassName={CHART_CONTAINER_CLASSNAME}
+              />
             )}
           </div>
         </ReportPage>
@@ -195,7 +216,11 @@ export function ShelterReportPrint({
         <ReportPage pageNumber={hasPageOne ? 2 : 1} totalPages={totalPages}>
           <ReportPageHeader variant="compact" {...headerProps} />
           <div className="mt-6 flex flex-col gap-6">
-            <DailyOccupancyChart data={dailyOccupancy} showViewToggle={false} />
+            <DailyOccupancyChart
+              data={dailyOccupancy}
+              showViewToggle={false}
+              containerClassName={CHART_CONTAINER_CLASSNAME}
+            />
           </div>
         </ReportPage>
       )}
