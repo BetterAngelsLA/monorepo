@@ -2,7 +2,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BottomSheetModalControlled } from '../BottomSheet';
 import { BOTTOM_SHEET_PADDING } from '../BottomSheet/constants';
-import { CameraModal } from '../Camera';
+import { CameraSheet } from '../Camera/CameraSheet';
 import { MediaPickerMenu } from './MediaPickerMenu';
 import { useDocumentPicker } from './useDocumentPicker';
 import { useImagePicker } from './useImagePicker';
@@ -95,6 +95,24 @@ export function MediaPicker(props: MediaPickerModalProps) {
     }
   }
 
+  const handleCameraCapture = useCallback(
+    (file: ReactNativeFile) => {
+      // Capture always closes the picker, even if the handler throws. The
+      // camera is a sheet, so closing it is a plain unmount — the caller is
+      // free to navigate immediately.
+      try {
+        onCameraCapture(file);
+      } finally {
+        onMediaPickerClose();
+      }
+    },
+    [onCameraCapture, onMediaPickerClose],
+  );
+
+  const handleCameraClose = useCallback(() => {
+    setCurrentMode('menu');
+  }, []);
+
   const handleMenuSheetClose = useCallback(() => {
     if (currentModeRef.current !== 'menu') {
       return;
@@ -115,6 +133,12 @@ export function MediaPicker(props: MediaPickerModalProps) {
             paddingTop: 0,
           },
           enablePanDownToClose: false,
+          // 'replace' is the honest semantic here: the menu and camera are
+          // mutually exclusive, so the stack should never hold both. The
+          // provider now defers removal of the outgoing sheet until its
+          // dismiss completes (`onDismiss` still runs), so the menu slides
+          // away under the arriving camera with no stale bookkeeping.
+          stackBehavior: 'replace',
         }}
       >
         <MediaPickerMenu
@@ -126,19 +150,11 @@ export function MediaPicker(props: MediaPickerModalProps) {
         />
       </BottomSheetModalControlled>
 
-      {mediaPickerActive && currentMode === 'imageCapture' && (
-        <CameraModal
-          onClose={() => setCurrentMode('menu')}
-          onCapture={(file) => {
-            // Capture always closes the picker, even if the handler throws.
-            try {
-              onCameraCapture(file);
-            } finally {
-              onMediaPickerClose();
-            }
-          }}
-        />
-      )}
+      <CameraSheet
+        isOpen={mediaPickerActive && currentMode === 'imageCapture'}
+        onClose={handleCameraClose}
+        onCapture={handleCameraCapture}
+      />
     </>
   );
 }

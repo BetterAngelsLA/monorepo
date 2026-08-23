@@ -34,7 +34,7 @@ export function MediaPickerMenu(props: MediaPickerMenuProps) {
   };
 
   return (
-    <View>
+    <View testID="media-picker-menu">
       <View
         style={{
           backgroundColor: Colors.WHITE,
@@ -45,6 +45,7 @@ export function MediaPickerMenu(props: MediaPickerMenuProps) {
       >
         <Pressable
           onPress={onImageOption}
+          testID="media-picker-image-btn"
           style={[styles.optionButton, styles.dividerBottom]}
           accessibilityRole="button"
           accessibilityHint="opens photo library"
@@ -54,6 +55,7 @@ export function MediaPickerMenu(props: MediaPickerMenuProps) {
 
         <Pressable
           onPress={onCameraOption}
+          testID="media-picker-camera-btn"
           style={[styles.optionButton, styles.dividerTop]}
           accessibilityRole="button"
           accessibilityHint="opens camera"
@@ -63,6 +65,7 @@ export function MediaPickerMenu(props: MediaPickerMenuProps) {
 
         <Pressable
           onPress={onDocumentsOption}
+          testID="media-picker-file-btn"
           style={[styles.optionButton, styles.dividerTop]}
           accessibilityRole="button"
           accessibilityHint="opens file library"
@@ -72,6 +75,7 @@ export function MediaPickerMenu(props: MediaPickerMenuProps) {
       </View>
 
       <Pressable
+        testID="media-picker-cancel-btn"
         accessibilityRole="button"
         style={{
           backgroundColor: Colors.WHITE,

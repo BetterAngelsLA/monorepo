@@ -10,6 +10,12 @@ appId: ${MAESTRO_APP_ID}
 # started via `openLink` (Expo deep link), so we grant explicitly here.
 # `setPermissions` values can't be JS-interpolated on older Maestro CLIs
 # (< 2.8.0), so the value is hardcoded per platform via `when: platform:`.
+#
+# Camera is NOT set on iOS: iOS `setPermissions` drives the Settings app via
+# XCUITest, which has been flaky in CI (Device became unreachable during
+# inputText) and doesn't reliably grant anyway. The camera flow instead
+# accepts the system prompt inline with a conditional "Allow" tap — reliable
+# on fresh CI installs. Android `camera: allow` seems to work, so it's set there.
 - runFlow:
     when:
       platform: ios
@@ -25,6 +31,9 @@ appId: ${MAESTRO_APP_ID}
       - setPermissions:
           permissions:
             location: allow
+      - setPermissions:
+          permissions:
+            camera: allow
 
 - runFlow: ./launch_app.yml
 - runFlow: ./auth/ensure_logged_in_ba.yml

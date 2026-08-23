@@ -26,6 +26,7 @@ interface ITextButtonProps {
   accessibilityHint: string;
   testId?: string;
   regular?: boolean;
+  pressedBackgroundColor?: string;
 }
 
 export function TextButton(props: ITextButtonProps) {
@@ -46,6 +47,7 @@ export function TextButton(props: ITextButtonProps) {
     testId,
     accessibilityHint,
     regular = false,
+    pressedBackgroundColor = Colors.GRAY_PRESSED,
   } = props;
 
   return (
@@ -65,7 +67,7 @@ export function TextButton(props: ITextButtonProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
-          backgroundColor: pressed ? Colors.GRAY_PRESSED : 'transparent',
+          backgroundColor: pressed ? pressedBackgroundColor : 'transparent',
         },
       ]}
       onPress={onPress}

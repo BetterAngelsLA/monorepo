@@ -112,21 +112,25 @@ export default function DocumentModal({
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
+      testId: 'view-file-btn',
       Icon: ViewIcon,
       route: `/file/${document.id}`,
     },
     {
       title: `Edit ${fileTypeText} name`,
+      testId: 'edit-file-btn',
       Icon: WFEdit,
       route: `/file/${document.id}?editing=true&clientId=${clientId}`,
     },
     {
       title: `Download ${fileTypeText}`,
+      testId: 'download-file-btn',
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
       title: `Delete ${fileTypeText}`,
+      testId: 'delete-file-btn',
       Icon: DeleteIcon,
       onPress: () => setModalState('deleteRequested'),
     },

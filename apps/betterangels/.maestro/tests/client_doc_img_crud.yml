@@ -1,0 +1,147 @@
+# client_doc_img_crud.yml
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-screen'
+
+# #######################
+# Go to Docs Tab ########
+# #######################
+
+# Tabs are in a horizontal ScrollView — Docs may be off-screen on narrower
+# devices. scrollUntilVisible ensures it's in view before tapping.
+- scrollUntilVisible:
+    element:
+      id: 'client-tab-docs'
+    direction: RIGHT
+- tapOn:
+    id: 'client-tab-docs'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-view-docs'
+
+# ################################
+# Go to Docs Uploads Screen ######
+# ################################
+- tapOn:
+    id: 'open-client-docs-upload-screen-btn'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-docs-upload-screen'
+
+# We are uploading types that can accept multiple uploads
+# so as to avoid being blocked during tests.
+# Driver's License accepts 1 upload, so may not be clickable
+# if there is a pre-existing upload.
+# Should we create fixture profiles unique to each test run,
+# as per ticket DEV-2498, then we can update.
+- tapOn: 'Consent Forms'
+
+- assertVisible:
+    id: 'media-picker-menu'
+
+# ###########################
+# Capture Camera Image ######
+# ###########################
+- tapOn:
+    id: 'media-picker-camera-btn'
+
+# Camera permission: iOS has NO setPermissions (flaky in CI + unreliable), so
+# the system prompt appears on fresh installs — it MUST be accepted inline.
+# These runFlows are skipped when no prompt shows (e.g. Android, already
+# granted via setPermissions).
+#   - iOS camera prompt: Allow / Don't Allow
+#   - Android 11+ camera prompt: "While using the app" / "Only this time" /
+#     "Don't allow"
+- runFlow:
+    when:
+      visible:
+        text: 'Allow'
+    commands:
+      - tapOn: 'Allow'
+- runFlow:
+    when:
+      visible:
+        text: 'While using the app'
+    commands:
+      - tapOn: 'While using the app'
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible:
+      id: 'camera-view'
+    timeout: 4000
+
+- tapOn:
+    id: 'camera-capture-btn'
+
+# #####################################
+# Validate upload exists on next screen
+# #####################################
+- extendedWaitUntil:
+    visible:
+      id: 'client-docs-accordion-forms'
+    timeout: 15000
+
+- tapOn:
+    id: 'client-docs-accordion-forms'
+- waitForAnimationToEnd
+
+# - extendedWaitUntil:
+#     visible:
+#       id: 'file-card.*'
+#     timeout: 15000
+
+# This is a soft check, as there could be a pre-existing uploads
+# and we can't easily validate exact filename of latest upload.
+- extendedWaitUntil:
+    visible:
+      id: 'file-card-.*jpg'
+    timeout: 15000
+
+# ##########################
+# Delete the `recent` upload
+# ##########################
+
+# We can't be sure that this is the most recent upload,
+# but allows us to test deletion anyway.
+- tapOn:
+    id: 'file-card-.*jpg'
+    index: 0
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'delete-file-btn'
+
+- extendedWaitUntil:
+    visible:
+      id: 'delete-modal-confirm-btn'
+    timeout: 3000
+
+- tapOn:
+    id: 'delete-modal-confirm-btn'
+- waitForAnimationToEnd
+# Note: there is no success/fail indicator that the file was deleted; the
+# post-delete accordion re-check is a future improvement (DEV-2498).
