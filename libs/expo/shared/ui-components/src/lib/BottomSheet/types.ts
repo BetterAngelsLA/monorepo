@@ -34,7 +34,7 @@ export type BottomSheetProviderConfig = {
    * When enabled, the provider renders a single shared backdrop
    * instead of one backdrop per sheet.
    *
-   * This is useful when using `FullWindowOverlay`, where multiple
+   * This is useful with a window-level `containerComponent`, where multiple
    * Gorhom backdrops can race and render above sheets.
    */
   enableSharedBackdrop?: boolean;
@@ -71,7 +71,11 @@ export type BottomSheetVariant = 'default' | 'bare';
  */
 export type BottomSheetGorhomOptions = Pick<
   BottomSheetModalProps,
-  'snapPoints' | 'enableDynamicSizing' | 'enablePanDownToClose' | 'accessible'
+  | 'snapPoints'
+  | 'enableDynamicSizing'
+  | 'enablePanDownToClose'
+  | 'accessible'
+  | 'overDragResistanceFactor'
 >;
 
 /**
@@ -231,6 +235,14 @@ export type BottomSheetRenderApi = {
    * Imperatively closes the current sheet.
    */
   closeSheet: () => void;
+
+  /**
+   * Stable id for this sheet instance. The provider generates a fresh id per
+   * `showBottomSheet()` call, so a rapid re-open yields a NEW id while the
+   * previous sheet is still dismissing — consumers can use it to keep each
+   * sheet generation's lifecycle bookkeeping isolated.
+   */
+  id: string;
 };
 
 /**

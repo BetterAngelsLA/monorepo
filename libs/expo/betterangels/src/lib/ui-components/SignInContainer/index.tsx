@@ -59,7 +59,7 @@ export default function SignInContainer({
           Welcome!
         </TextBold>
         <TextRegular size="sm" mb="xl">
-          Log in for Better Angels and start making a difference in the LA
+          xxx Log in for Better Angels and start making a difference in the LA
           community.
         </TextRegular>
         {children}

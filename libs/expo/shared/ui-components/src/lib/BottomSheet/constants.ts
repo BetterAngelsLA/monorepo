@@ -48,8 +48,13 @@ export const DEFAULT_BOTTOM_SHEET_OPTIONS: Partial<BottomSheetOptions> = {
 
   /**
    * Default stacking behavior replaces existing sheets.
+   *
+   * Resolved like any other option, so a sheet can override it per edge —
+   * see resolveBottomSheetOptions.
    */
   stackBehavior: 'replace',
+
+  contentStyle: BOTTOM_SHEET_PADDING,
 };
 
 /**
@@ -84,7 +89,10 @@ export const BOTTOM_SHEET_VARIANT_OPTIONS: Record<
       borderTopRightRadius: 0,
     },
     contentStyle: {
-      padding: 0,
+      paddingTop: 0,
+      paddingRight: 0,
+      paddingBottom: 0,
+      paddingLeft: 0,
     },
   },
 };

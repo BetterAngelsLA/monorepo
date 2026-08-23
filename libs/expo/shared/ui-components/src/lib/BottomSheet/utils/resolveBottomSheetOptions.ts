@@ -9,7 +9,7 @@
  * This file is the single source of truth for option resolution.
  */
 
-import { StyleProp, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import {
   BOTTOM_SHEET_VARIANT_OPTIONS,
   DEFAULT_BOTTOM_SHEET_OPTIONS,
@@ -23,7 +23,12 @@ import { resolveShowHandle } from './resolveShowHandle';
  * Accepts any number of style objects and:
  * - Filters out undefined values
  * - Returns undefined if no styles remain
- * - Otherwise returns a merged array-style prop
+ * - Otherwise returns a single flattened style object
+ *
+ * Flattened, not an array, and that matters: gorhom resolves the content
+ * style with `StyleSheet.compose(...style)`, and `compose` accepts only TWO
+ * arguments — so a three-layer array silently drops its third layer, which is
+ * the caller's own overrides. Handing gorhom one object keeps every layer.
  *
  * This ensures consistent style resolution across:
  * - containerStyle
@@ -32,14 +37,43 @@ import { resolveShowHandle } from './resolveShowHandle';
  */
 function mergeViewStyles(
   ...styles: Array<StyleProp<ViewStyle> | undefined>
-): StyleProp<ViewStyle> | undefined {
+): ViewStyle | undefined {
   const filtered = styles.filter(Boolean);
 
   if (filtered.length === 0) {
     return undefined;
   }
 
-  return filtered as StyleProp<ViewStyle>;
+  return StyleSheet.flatten(filtered);
+}
+
+/**
+ * Expands a `padding` shorthand into its four edges.
+ *
+ * Yoga resolves edge-specific properties over the shorthand regardless of the
+ * order they were merged in, so a sheet passing `padding: 0` would silently
+ * lose to a default's `paddingLeft`. Expanding each layer *before* merging
+ * makes later layers win, which is what a style merge is expected to do.
+ *
+ * Edge values within the same layer still beat that layer's own shorthand,
+ * matching Yoga.
+ */
+function expandPadding(style?: StyleProp<ViewStyle>): ViewStyle | undefined {
+  const flattened = StyleSheet.flatten(style);
+
+  if (!flattened || flattened.padding === undefined) {
+    return flattened;
+  }
+
+  const { padding, ...rest } = flattened;
+
+  return {
+    paddingTop: padding,
+    paddingRight: padding,
+    paddingBottom: padding,
+    paddingLeft: padding,
+    ...rest,
+  };
 }
 
 /**
@@ -56,7 +90,7 @@ function mergeViewStyles(
  */
 
 export function resolveBottomSheetOptions(
-  options?: BottomSheetOptions
+  options?: BottomSheetOptions,
 ): BottomSheetOptions {
   const user = options ?? {};
   const variant: BottomSheetVariant = user.variant ?? 'default';
@@ -73,17 +107,17 @@ export function resolveBottomSheetOptions(
     containerStyle: mergeViewStyles(
       base.containerStyle,
       variantOptions.containerStyle,
-      user.containerStyle
+      user.containerStyle,
     ),
     sheetStyle: mergeViewStyles(
       base.sheetStyle,
       variantOptions.sheetStyle,
-      user.sheetStyle
+      user.sheetStyle,
     ),
     contentStyle: mergeViewStyles(
-      base.contentStyle,
-      variantOptions.contentStyle,
-      user.contentStyle
+      expandPadding(base.contentStyle),
+      expandPadding(variantOptions.contentStyle),
+      expandPadding(user.contentStyle),
     ),
   };
 

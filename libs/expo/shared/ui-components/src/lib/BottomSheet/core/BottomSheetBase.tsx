@@ -31,7 +31,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { forwardRef, ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import { BOTTOM_SHEET_PADDING, BOTTOM_SHEET_RADIUS } from '../constants';
+import { BOTTOM_SHEET_RADIUS } from '../constants';
 import { BottomSheetOptions } from '../types';
 import { BottomSheetBackdrop } from './BottomSheetBackdrop';
 import { BottomSheetHeader } from './BottomSheetHeader';
@@ -71,6 +71,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       enablePanDownToClose,
       enableDynamicSizing,
       snapPoints,
+      overDragResistanceFactor,
       containerComponent,
       // default accessible to false
       // iOS e2e test runner (maestro) collapses accessible elements making them
@@ -124,15 +125,20 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         accessible={accessible}
         {...gorhomProps}
         snapPoints={snapPoints}
+        overDragResistanceFactor={overDragResistanceFactor}
         enablePanDownToClose={enablePanDownToClose}
         enableDynamicSizing={enableDynamicSizing}
         handleComponent={resolvedHandleComponent}
         containerComponent={containerComponent}
         backdropComponent={backdropComponent}
+        // DEBUG: outlines the hosting container — StyleSheet.absoluteFill with
+        // overflow: hidden, i.e. the actual visible box. Unlike `style` (the
+        // sheet body, whose height is content-driven and overflows the screen),
+        // all four edges of this one are on screen.
         style={[styles.container, containerStyle]}
         backgroundStyle={[styles.sheet, sheetStyle]}
       >
-        <ContentContainer style={[styles.content, contentStyle]}>
+        <ContentContainer style={contentStyle}>
           <BottomSheetHeader
             onClose={showCloseButton ? onRequestClose : undefined}
             style={headerStyle}
@@ -166,14 +172,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BOTTOM_SHEET_RADIUS,
     borderTopLeftRadius: BOTTOM_SHEET_RADIUS,
     overflow: 'hidden',
-  },
-
-  /**
-   * Inner content layout (padding/spacing).
-   * Override via `contentStyle`.
-   */
-  content: {
-    ...BOTTOM_SHEET_PADDING,
   },
 });
 

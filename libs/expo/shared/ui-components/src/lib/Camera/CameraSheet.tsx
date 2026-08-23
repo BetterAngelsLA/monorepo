@@ -139,11 +139,12 @@ const CAMERA_SHEET_OPTIONS: BottomSheetOptions = {
   disableBackdrop: true,
   showHandle: false,
 
-  // 'push' rather than the default 'replace': replace drops the outgoing sheet
-  // from the stack in the same update, so it never animates out. Pushing lets
-  // the picker menu slide away under its own close while the camera arrives on
-  // top — and being appended last is what puts it above any open sheet.
-  stackBehavior: 'push',
+  // 'replace' is the honest semantic here: the menu and camera are mutually
+  // exclusive, so the stack should never hold both. The provider defers
+  // removal of the outgoing sheet until its dismiss completes, so the menu
+  // still slides away under the arriving camera — and the camera is appended
+  // last, which is what puts it above the outgoing sheet.
+  stackBehavior: 'replace',
 
   sheetStyle: {
     backgroundColor: Colors.BLACK,

@@ -6,67 +6,77 @@
  * Applies `stackBehavior` when adding a new sheet:
  *
  * - 'push'    → append to stack
- * - 'switch'  → dismiss top sheet, replace it
- * - 'replace' → dismiss all sheets, keep only new one
+ * - 'switch'  → dismiss top sheet, add new one on top
+ * - 'replace' → dismiss all existing sheets, add new one on top (default)
  *
- * Dismissals are performed imperatively via Gorhom refs.
+ * 'switch'/'replace' dismiss the outgoing sheet(s) but KEEP them in the stack
+ * until each one reports `onDismiss` (deferred removal). That lets the dismiss
+ * animation finish and the lifecycle cleanup run — dropping them from state in
+ * the same update (the old behavior) unmounted them mid-animation, skipped
+ * `onDismiss`, and left the provider's bookkeeping stale, which corrupted the
+ * next open/close cycle.
  *
- * This hook does not render anything — it only mutates
- * the sheet list state.
+ * This hook does not render anything — it only mutates the sheet list state.
  *
  * Upstream:
  * - Invoked by `BottomSheetModalProvider`
  * - Behavior configured via `BottomSheetOptions.stackBehavior`
  */
 
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Dispatch, RefObject, useCallback } from 'react';
+import { Dispatch, RefObject, SetStateAction, useCallback } from 'react';
 import { StackBehavior } from '../../types';
 import { TBottomSheetInstance } from './types.internal';
 
 type TParams = {
-  sheetRefs: RefObject<Map<string, BottomSheetModal>>;
-  setSheets: Dispatch<React.SetStateAction<TBottomSheetInstance[]>>;
+  /**
+   * Live mirror of the stack. Mutators keep it in sync synchronously so that
+   * several `addSheet`/`removeSheet` calls within the same tick chain
+   * correctly — a ref that only updated via the render effect would let a
+   * second mutation in the same tick read stale state.
+   */
+  sheetsRef: RefObject<TBottomSheetInstance[]>;
+  setSheets: Dispatch<SetStateAction<TBottomSheetInstance[]>>;
+  /**
+   * Requests dismissal of an existing sheet (marks it closing, dismisses the
+   * gorhom instance, arms the safety valve). The sheet is left in the stack
+   * until it reports `onDismiss`.
+   */
+  dismissSheet: (id: string) => void;
 };
 
 export function useBottomSheetStack(params: TParams) {
-  const { sheetRefs, setSheets } = params;
+  const { sheetsRef, setSheets, dismissSheet } = params;
 
   const addSheet = useCallback(
     (instance: TBottomSheetInstance, stackBehavior: StackBehavior) => {
-      setSheets((previousSheets) => {
-        // Push: add stack on top
-        if (stackBehavior === 'push') {
-          return [...previousSheets, instance];
-        }
+      const previousSheets = sheetsRef.current;
 
-        // Switch: replace the top sheet only
-        if (stackBehavior === 'switch') {
-          if (previousSheets.length > 0) {
-            const top = previousSheets[previousSheets.length - 1];
-            const topInstance = sheetRefs.current.get(top.id);
+      // Push: add stack on top, leave everything else alone.
+      if (stackBehavior === 'push') {
+        const next = [...previousSheets, instance];
 
-            if (topInstance) {
-              topInstance.dismiss();
-            }
-          }
+        sheetsRef.current = next;
+        setSheets(next);
 
-          return [...previousSheets.slice(0, -1), instance];
-        }
+        return;
+      }
 
-        // Replace: dismiss all existing sheets (default)
-        previousSheets.forEach((sheet) => {
-          const existing = sheetRefs.current.get(sheet.id);
+      // Switch: dismiss only the top sheet.
+      // Replace: dismiss all existing sheets (default).
+      if (stackBehavior === 'switch' && previousSheets.length > 0) {
+        dismissSheet(previousSheets[previousSheets.length - 1].id);
+      } else if (stackBehavior === 'replace') {
+        previousSheets.forEach((sheet) => dismissSheet(sheet.id));
+      }
 
-          if (existing) {
-            existing.dismiss();
-          }
-        });
+      // The outgoing sheet(s) stay in the stack (deferred removal): each one
+      // is removed by the provider when it reports `onDismiss`.
+      const next = [...previousSheets, instance];
 
-        return [instance];
-      });
+      sheetsRef.current = next;
+      setSheets(next);
     },
-    [setSheets, sheetRefs]
+    [sheetsRef, setSheets, dismissSheet],
   );
 
   return {

@@ -11,18 +11,41 @@ vi.mock('./providers/BottomSheetModal/useBottomSheet', () => ({
   useBottomSheet: () => ({ showBottomSheet: mocks.showBottomSheet }),
 }));
 
-type TRenderArgs = { closeSheet: () => void };
+type TRenderArgs = { closeSheet: () => void; id: string };
 
-function Controlled({ isOpen }: { isOpen: boolean }) {
+type TShowCall = {
+  render: (args: TRenderArgs) => ReactNode;
+  options: { onClose?: () => void };
+};
+
+function lastCall(): TShowCall {
+  const calls = mocks.showBottomSheet.mock.calls;
+
+  return calls[calls.length - 1][0];
+}
+
+function Controlled({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose?: () => void;
+}) {
   return (
-    <BottomSheetModalControlled isOpen={isOpen}>
+    <BottomSheetModalControlled isOpen={isOpen} onClose={onClose}>
       <Text>menu</Text>
     </BottomSheetModalControlled>
   );
 }
 
-function mountSheetRender(): (args: TRenderArgs) => ReactNode {
-  return mocks.showBottomSheet.mock.calls[0][0].render;
+function mountSheet(call: TShowCall, id: string) {
+  const closeSheet = vi.fn();
+
+  act(() => {
+    call.render({ closeSheet, id });
+  });
+
+  return closeSheet;
 }
 
 describe('BottomSheetModalControlled', () => {
@@ -40,7 +63,7 @@ describe('BottomSheetModalControlled', () => {
     // Sheet mounts while isOpen is true → it stays open.
     const closeSheet = vi.fn();
     act(() => {
-      mountSheetRender()({ closeSheet });
+      lastCall().render({ closeSheet, id: 'sheet-1' });
     });
     expect(closeSheet).not.toHaveBeenCalled();
   });
@@ -51,7 +74,7 @@ describe('BottomSheetModalControlled', () => {
 
     const closeSheet = vi.fn();
     act(() => {
-      mountSheetRender()({ closeSheet });
+      lastCall().render({ closeSheet, id: 'sheet-1' });
     });
 
     rerender(<Controlled isOpen={false} />);
@@ -68,7 +91,7 @@ describe('BottomSheetModalControlled', () => {
 
     const closeSheet = vi.fn();
     act(() => {
-      mountSheetRender()({ closeSheet });
+      lastCall().render({ closeSheet, id: 'sheet-1' });
     });
 
     // The close is scheduled on a microtask to avoid a render-phase setState.
@@ -77,5 +100,78 @@ describe('BottomSheetModalControlled', () => {
     });
 
     expect(closeSheet).toHaveBeenCalled();
+  });
+
+  it('ignores a stale onClose from an older sheet after a rapid reopen', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Controlled isOpen={false} onClose={onClose} />,
+    );
+
+    // Open → first sheet generation mounts.
+    rerender(<Controlled isOpen={true} onClose={onClose} />);
+    const firstCall = lastCall();
+    const firstClose = mountSheet(firstCall, 'sheet-1');
+
+    // Close → first sheet starts dismissing.
+    rerender(<Controlled isOpen={false} onClose={onClose} />);
+    expect(firstClose).toHaveBeenCalled();
+
+    // Reopen quickly → a second sheet generation mounts while the first is
+    // still dismissing.
+    rerender(<Controlled isOpen={true} onClose={onClose} />);
+    expect(mocks.showBottomSheet).toHaveBeenCalledTimes(2);
+    const secondCall = lastCall();
+    const secondClose = mountSheet(secondCall, 'sheet-2');
+
+    // The first sheet's onDismiss fires AFTER the second sheet mounted. It
+    // must not clobber the second sheet's close handle nor notify the parent
+    // (that orphaned the newer sheet and leaked the camera).
+    act(() => {
+      firstCall.options.onClose?.();
+    });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // The second sheet is still fully closable via state.
+    rerender(<Controlled isOpen={false} onClose={onClose} />);
+    expect(secondClose).toHaveBeenCalled();
+  });
+
+  it('does not notify the parent when the close was driven by isOpen', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Controlled isOpen={false} onClose={onClose} />,
+    );
+    rerender(<Controlled isOpen={true} onClose={onClose} />);
+
+    const call = lastCall();
+    mountSheet(call, 'sheet-1');
+
+    rerender(<Controlled isOpen={false} onClose={onClose} />);
+
+    // onDismiss arrives after the state-driven close.
+    act(() => {
+      call.options.onClose?.();
+    });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('notifies the parent when the current sheet is dismissed externally', () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <Controlled isOpen={false} onClose={onClose} />,
+    );
+    rerender(<Controlled isOpen={true} onClose={onClose} />);
+
+    const call = lastCall();
+    mountSheet(call, 'sheet-1');
+
+    // gorhom reports a dismissal that was not driven by isOpen (e.g. the
+    // provider replaced the sheet, or a gesture dismissed it).
+    act(() => {
+      call.options.onClose?.();
+    });
+
+    expect(onClose).toHaveBeenCalled();
   });
 });
