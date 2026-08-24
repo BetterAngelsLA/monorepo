@@ -1,8 +1,8 @@
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.groups import ORG_SUPERUSER
-from accounts.models import User
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.types import PermissionTemplateEnum
@@ -283,6 +283,49 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         messages = response["data"]["changeOrganizationMemberRole"]["messages"]
         self.assertIn("Shelter Operator", messages[0]["message"])
+
+    def test_change_organization_member_role_keeps_a_role_it_cannot_name(self) -> None:
+        """``ORG_ADMIN`` is ``is_invitable=False``, so ``PermissionTemplateEnum`` omits it.
+
+        Replacing every org-scoped group therefore demoted an org admin on any
+        call — including one only meant to grant them Caseworker as well.
+        """
+        member = baker.make(User, email="keepsadmin@example.com")
+        self.org.add_user(member)
+        OrgRoleManager(self.org).add_roles(member, ORG_ADMIN)
+        # Only Organization Superuser carries CHANGE_ORG_MEMBER_ROLE.
+        OrgRoleManager(self.org).add_roles(self.org_admin, ORG_SUPERUSER)
+
+        mutation = """
+            mutation ($data: ChangeOrganizationMemberRoleInput!) {
+                changeOrganizationMemberRole(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "userId": member.pk,
+            "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
+        }
+
+        self.execute_graphql(mutation, {"data": variables})
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.org, group__user=member).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(
