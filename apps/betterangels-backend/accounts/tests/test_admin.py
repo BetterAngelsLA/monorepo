@@ -290,3 +290,26 @@ class OrganizationAddMemberViewTestCase(TestCase):
         response = self.client.get(reverse("admin:organizations_organizationuser_add"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_the_membership_form_does_not_offer_is_admin(self) -> None:
+        """django-organizations' own field; nothing here reads it."""
+        membership = OrganizationUser.objects.get(organization=self.organization)
+
+        response = self.client.get(reverse("admin:organizations_organizationuser_change", args=[membership.pk]))
+
+        self.assertNotIn("is_admin", response.context["adminform"].form.fields)
+
+    def test_the_membership_cannot_be_repointed_at_another_organization(self) -> None:
+        """Moving the row by FK would strand the org-scoped groups on the old pair."""
+        membership = OrganizationUser.objects.get(organization=self.organization)
+        elsewhere = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        url = reverse("admin:organizations_organizationuser_change", args=[membership.pk])
+
+        response = self.client.get(url)
+        self.assertNotIn("organization", response.context["adminform"].form.fields)
+        self.assertNotIn("user", response.context["adminform"].form.fields)
+
+        self.client.post(url, {"organization": str(elsewhere.pk), "user": str(self.superuser.pk)})
+
+        membership.refresh_from_db()
+        self.assertEqual(membership.organization_id, self.organization.pk)

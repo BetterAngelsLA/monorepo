@@ -180,10 +180,28 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 class CustomOrganizationUserAdmin(ModelAdmin[OrganizationUser]):
     list_display = ("user", "organization")
     list_filter = ("organization",)
+    # Excludes django-organizations' own ``is_admin``: nothing in this codebase
+    # reads it, so it renders as a checkbox that looks like it grants admin and
+    # does not.  ``annotations.py``'s ``is_admin`` is a local variable testing for
+    # the Org Admin permission group.
+    fields = ("organization", "user")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Members are added from the organization's "Add member" page."""
         return False
+
+    def get_readonly_fields(self, request: HttpRequest, obj: OrganizationUser | None = None) -> tuple[str, ...]:
+        """Fix the membership's own foreign keys once the row exists.
+
+        Repointing either moves the membership while its org-scoped groups stay
+        on the old pair, leaving a user holding every ``org:<pk>:<role>`` group
+        for an organization they are no longer in.  The form this admin replaced
+        excluded ``user`` for the same reason; the default ModelForm this branch
+        fell back to offered both.
+        """
+        if obj is None:
+            return tuple(self.readonly_fields)
+        return ("organization", "user", *self.readonly_fields)
 
 
 @admin.register(ExtendedOrganizationInvitation)
