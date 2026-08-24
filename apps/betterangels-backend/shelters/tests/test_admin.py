@@ -1,6 +1,12 @@
+from typing import Any
+from unittest.mock import patch
+
+from accounts.tests.baker_recipes import organization_recipe
+from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.test import TestCase
-from shelters.admin import GroupedServiceWidget, ShelterForm
+from organizations.models import Organization
+from shelters.admin import GroupedServiceWidget, ShelterForm, ShelterResource
 from shelters.models import Service, ServiceCategory, Shelter
 
 
@@ -86,3 +92,66 @@ class ShelterFormPendingServicesTestCase(TestCase):
         self.assertEqual(Service.objects.filter(category=self.category, display_name__iexact="Showers").count(), 1)
         self.assertEqual(Service.objects.filter(category=self.category, name="showers", is_other=True).count(), 1)
         self.assertEqual(self.shelter.services.count(), 2)
+
+
+class ShelterResourceOrganizationTestCase(TestCase):
+    """The Shelter import resolves organizations, it does not create them."""
+
+    CUSTOM_FIELDS = (
+        "demographics",
+        "special_situation_restrictions",
+        "shelter_types",
+        "shelter_programs",
+        "room_styles",
+        "funders",
+        "entry_requirements",
+        "vaccination_requirement",
+        "storage",
+        "pets",
+        "cities_served",
+        "accessibility",
+        "parking",
+    )
+
+    def _row(self, **overrides: Any) -> dict[str, Any]:
+        row: dict[str, Any] = {"organization": "", "status": "", "location": "", "additional_contacts": ""}
+        row.update({field: "" for field in self.CUSTOM_FIELDS})
+        row.update(overrides)
+        return row
+
+    def test_known_organization_is_reused(self) -> None:
+        organization_recipe.make(name="Alpha Housing")
+        row = self._row(organization="Alpha Housing")
+
+        ShelterResource().before_import_row(row)
+
+        self.assertFalse(row["jumpthis"])
+        self.assertEqual(Organization.objects.filter(name="Alpha Housing").count(), 1)
+
+    def test_unknown_organization_skips_the_row(self) -> None:
+        resource = ShelterResource()
+        resource.skip_row_not_val_error = True
+        row = self._row(organization="Nowhere Housing")
+
+        resource.before_import_row(row)
+
+        self.assertTrue(row["jumpthis"])
+        self.assertFalse(Organization.objects.filter(name="Nowhere Housing").exists())
+
+    def test_unknown_organization_raises_when_not_skipping(self) -> None:
+        resource = ShelterResource()
+        resource.skip_row_not_val_error = False
+
+        with self.assertRaises(ValidationError):
+            resource.before_import_row(self._row(organization="Nowhere Housing"))
+
+        self.assertFalse(Organization.objects.filter(name="Nowhere Housing").exists())
+
+    def test_unknown_organization_stops_before_geocoding(self) -> None:
+        resource = ShelterResource()
+        row = self._row(organization="Nowhere Housing", location="123 Main Street")
+
+        with patch.object(ShelterResource, "process_address_import") as process_address:
+            resource.before_import_row(row)
+
+        process_address.assert_not_called()

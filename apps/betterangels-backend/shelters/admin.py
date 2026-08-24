@@ -814,7 +814,12 @@ class ShelterResource(resources.ModelResource):
         for column in row.keys():
             rowInDict[column] = row.get(column)
         if rowInDict["organization"]:
-            org, created = Organization.objects.get_or_create(name=rowInDict["organization"])
+            if not Organization.objects.filter(name=rowInDict["organization"]).exists():
+                # Returning matters here where the other checks fall through: the
+                # processing below geocodes against a billable API and creates
+                # Address rows, neither of which a skipped row should pay for.
+                self.skip_or_raise(row, "organization")
+                return
             # This process SPA name considering the ManyToMany nature of the field
             # Gets existing object or makes it if one doesn't exist
             if rowInDict["status"] and rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
