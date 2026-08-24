@@ -125,6 +125,19 @@ class PermissionGroupTestCase(TestCase):
         with self.assertRaises(IntegrityError), transaction.atomic():
             PermissionGroup.objects.create(organization=organization)
 
+    def test_deleting_through_a_queryset_still_deletes_the_group(self) -> None:
+        """The production bug was a queryset delete, which skips ``Model.delete()``.
+
+        Group teardown hangs off ``post_delete`` for exactly this reason — it is
+        the only mechanism a queryset delete and a cascade both reach.
+        """
+        permission_group = permission_group_recipe.make()
+        group_id = permission_group.group_id
+
+        PermissionGroup.objects.filter(pk=permission_group.pk).delete()
+
+        self.assertFalse(Group.objects.filter(id=group_id).exists())
+
 
 class TemplatePermissionSourceTestCase(TestCase):
     """Where a role's permissions come from depends on whether the code defines it."""
