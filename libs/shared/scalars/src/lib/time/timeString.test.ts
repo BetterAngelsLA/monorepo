@@ -1,5 +1,5 @@
 import type { TimeString } from '../branded';
-import { formatTimeString, fromTimeString, toTimeString } from './timeString';
+import { formatTimeString, parseTimeString, toTimeString } from './timeString';
 
 const asTime = (value: unknown) => value as TimeString;
 
@@ -20,12 +20,12 @@ describe('toTimeString', () => {
     expect(toTimeString(-30)).toBe('00:00:00');
   });
 
-  it('round trips through fromTimeString at the end of the day', () => {
-    expect(fromTimeString(toTimeString(1440))).toBe(1439);
+  it('round trips through parseTimeString at the end of the day', () => {
+    expect(parseTimeString(toTimeString(1440))).toBe(1439);
   });
 });
 
-describe('fromTimeString', () => {
+describe('parseTimeString', () => {
   it.each([
     ['00:00:00', 0],
     ['01:30:00', 90],
@@ -33,7 +33,7 @@ describe('fromTimeString', () => {
     ['23:59:00', 1439],
     ['  09:15  ', 555],
   ])('parses %s as %s minutes', (value, expected) => {
-    expect(fromTimeString(asTime(value))).toBe(expected);
+    expect(parseTimeString(asTime(value))).toBe(expected);
   });
 
   it.each([
@@ -44,14 +44,14 @@ describe('fromTimeString', () => {
     (value, expected) => {
       // Strawberry's Time scalar serializes time(22, 0, 0, 500000) as
       // "22:00:00.500000", and curfew/start_time/end_time are all TimeFields.
-      expect(fromTimeString(asTime(value))).toBe(expected);
+      expect(parseTimeString(asTime(value))).toBe(expected);
     },
   );
 
   it.each([[null], [undefined], [''], ['abc'], ['ab:cd']])(
     'returns undefined for %s instead of NaN',
     (input) => {
-      expect(fromTimeString(asTime(input))).toBeUndefined();
+      expect(parseTimeString(asTime(input))).toBeUndefined();
     },
   );
 
@@ -71,7 +71,7 @@ describe('fromTimeString', () => {
   ])('rejects %s, which is not a time of day', (input) => {
     // Number() accepts hex and exponent notation, and nothing bounds the
     // result, so without a real pattern these all parse into a minute count.
-    expect(fromTimeString(asTime(input))).toBeUndefined();
+    expect(parseTimeString(asTime(input))).toBeUndefined();
   });
 });
 

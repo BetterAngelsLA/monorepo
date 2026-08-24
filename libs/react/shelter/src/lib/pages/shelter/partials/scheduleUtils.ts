@@ -1,5 +1,5 @@
 import {
-  fromTimeString,
+  parseTimeString,
   toDateString,
   toTimeString,
 } from '@monorepo/shared/scalars';
@@ -48,8 +48,8 @@ function normalizeWindow(
   startTime?: string | null,
   endTime?: string | null,
 ): TimeWindow | undefined {
-  const open = fromTimeString(startTime);
-  let close = fromTimeString(endTime);
+  const open = parseTimeString(startTime);
+  let close = parseTimeString(endTime);
 
   if (open === undefined || close === undefined) {
     return undefined;

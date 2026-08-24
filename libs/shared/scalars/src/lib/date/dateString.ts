@@ -21,7 +21,7 @@ export function toDateString(date: Date): DateString {
  * `new Date('2026-05-05')` would anchor to UTC midnight, which renders as the
  * previous day anywhere west of UTC.
  */
-export function fromDateString(value?: DateString | null): Date | undefined {
+export function parseDateString(value?: DateString | null): Date | undefined {
   return toLocalCalendarDate(value ?? undefined);
 }
 

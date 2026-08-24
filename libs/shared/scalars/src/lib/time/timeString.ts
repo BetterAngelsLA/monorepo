@@ -46,7 +46,7 @@ export function toTimeString(minutesSinceMidnight: number): TimeString {
  * malformed value cannot arrive as `NaN` minutes, nor as an out-of-range number
  * that formats back out as a plausible-looking time.
  */
-export function fromTimeString(value?: TimeString | null): number | undefined {
+export function parseTimeString(value?: TimeString | null): number | undefined {
   const match = value?.trim().match(TIME_PATTERN);
 
   if (!match) {
@@ -66,7 +66,7 @@ export function formatTimeString(
   value: TimeString | null | undefined,
   pattern: string,
 ): string {
-  const minutes = fromTimeString(value);
+  const minutes = parseTimeString(value);
 
   if (minutes === undefined) {
     return value?.trim() ?? '';

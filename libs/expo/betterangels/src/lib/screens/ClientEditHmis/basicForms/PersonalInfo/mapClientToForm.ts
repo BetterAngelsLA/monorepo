@@ -1,4 +1,4 @@
-import { fromDateString } from '@monorepo/shared/scalars';
+import { parseDateString } from '@monorepo/shared/scalars';
 import { HmisClientProfileType } from '../../../../apollo';
 import {
   personalInfoFormEmptyState as emptyState,
@@ -19,7 +19,7 @@ export function mapClientToPersonalInfoSchema(
   } = client;
 
   const mappedBirthDate =
-    fromDateString(birthDate ?? undefined) ?? emptyState.birthDate;
+    parseDateString(birthDate ?? undefined) ?? emptyState.birthDate;
 
   return {
     birthDate: mappedBirthDate,

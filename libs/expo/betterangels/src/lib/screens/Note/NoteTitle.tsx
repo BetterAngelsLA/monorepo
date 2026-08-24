@@ -1,5 +1,5 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { fromDateTimeString } from '@monorepo/shared/scalars';
+import { parseDateTimeString } from '@monorepo/shared/scalars';
 import { format } from 'date-fns';
 import { View } from 'react-native';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
@@ -9,7 +9,7 @@ export default function NoteTitle({
 }: {
   note: NoteSummaryQuery['note'] | undefined;
 }) {
-  const interactedAt = fromDateTimeString(note?.interactedAt);
+  const interactedAt = parseDateTimeString(note?.interactedAt);
 
   return (
     <View>

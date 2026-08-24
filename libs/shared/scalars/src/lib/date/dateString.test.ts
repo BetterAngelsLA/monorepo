@@ -1,5 +1,5 @@
 import type { DateString, DateTimeString } from '../branded';
-import { formatScalarDate, fromDateString, toDateString } from './dateString';
+import { formatScalarDate, parseDateString, toDateString } from './dateString';
 
 const asDate = (value: unknown) => value as DateString;
 const asDateTime = (value: unknown) => value as DateTimeString;
@@ -16,9 +16,9 @@ describe('toDateString', () => {
   });
 });
 
-describe('fromDateString', () => {
+describe('parseDateString', () => {
   it('anchors a date-only value to local midnight', () => {
-    const parsed = fromDateString(asDate('1990-05-05'));
+    const parsed = parseDateString(asDate('1990-05-05'));
 
     expect(parsed?.getFullYear()).toBe(1990);
     expect(parsed?.getMonth()).toBe(4);
@@ -29,7 +29,7 @@ describe('fromDateString', () => {
   it.each([[null], [undefined], [''], ['not-a-date']])(
     'returns undefined for %s rather than an invalid Date',
     (input) => {
-      expect(fromDateString(asDate(input))).toBeUndefined();
+      expect(parseDateString(asDate(input))).toBeUndefined();
     },
   );
 });
@@ -38,7 +38,7 @@ describe('round trip', () => {
   it.each(['1990-05-05', '2026-01-01', '2026-12-31', '2024-02-29'])(
     'preserves the calendar day for %s',
     (value) => {
-      const parsed = fromDateString(asDate(value));
+      const parsed = parseDateString(asDate(value));
 
       expect(parsed).toBeDefined();
       expect(toDateString(parsed as Date)).toBe(value);
