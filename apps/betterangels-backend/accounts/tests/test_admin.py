@@ -680,6 +680,13 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.assertEqual(response.context["form"].locked_role_names, [ORG_ADMIN.name])
         self.assertContains(response, f"Also holds, and keeps: {ORG_ADMIN.name}.")
 
+    def test_the_role_editor_is_not_offered_for_someone_who_is_not_a_member(self) -> None:
+        stranger = baker.make(User)
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, stranger.pk])
+
+        self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_a_role_the_organization_cannot_hold_is_rejected(self) -> None:
         outreach_only = organization_recipe.make(preset_names=["outreach"], owner_roles=())
         member = member_add(

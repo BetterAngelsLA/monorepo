@@ -316,7 +316,13 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         the raw ``auth.Group`` picker on the user page as the only route.
         """
         organization = get_object_or_404(Organization, pk=object_id)
-        member = get_object_or_404(User, pk=user_id)
+        # By membership, not by user: there are no roles to edit for someone who
+        # does not belong here, and only the POST was refused.
+        member = get_object_or_404(
+            OrganizationUser.objects.select_related("user"),
+            organization=organization,
+            user_id=user_id,
+        ).user
         organization_url = reverse("admin:organizations_organization_change", args=[organization.pk])
 
         if request.method == "POST":

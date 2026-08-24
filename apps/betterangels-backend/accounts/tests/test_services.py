@@ -576,6 +576,15 @@ class TestMemberRolesReplace:
 
         assert _role_names(org, member) == {ORG_ADMIN.name}
 
+    def test_raises_when_the_user_is_not_a_member(self) -> None:
+        owner = baker.make(User)
+        org = create_organization_with_presets("Stranger Org", ["outreach"], owner=owner)
+
+        stranger = baker.make(User)
+
+        with pytest.raises(ValidationError, match="not a member"):
+            member_roles_replace(organization=org, user_id=stranger.pk, permission_templates=(CASEWORKER,))
+
 
 def _role_names(org: Organization, member: User) -> set[str]:
     return set(
