@@ -11,8 +11,10 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
 from .groups import ORG_ADMIN
@@ -150,6 +152,68 @@ def member_add(
 
     if new_templates:
         OrgRoleManager(organization).add_roles(user, *new_templates)
+
+    return user
+
+
+def invitation_role(permission_templates: tuple[TemplateConfig, ...]) -> TemplateConfig:
+    """Pick which role's invitation email to send.
+
+    One email goes out however many roles are granted, so prefer a role whose
+    invite template is *not* the generic organization invitation — that body says
+    nothing role-specific, while e.g. the Shelter Operator one carries the link to
+    the shelter app.  Note Caseworker names the generic template explicitly, so
+    "has an ``invite_html``" does not distinguish them; it has to be compared
+    against the backend's default.  Ties fall to the given order.
+    """
+    generic_body = invitation_backend().invitation_body_html
+    role_specific = [
+        template for template in permission_templates if template.invite_html and template.invite_html != generic_body
+    ]
+    return (role_specific or list(permission_templates))[0]
+
+
+def member_invite(
+    *,
+    organization: Organization,
+    email: str,
+    permission_templates: tuple[TemplateConfig, ...],
+    invited_by: UserModel,
+    site: Site,
+) -> UserModel:
+    """Add someone to *organization* with the given roles and email them an invitation.
+
+    The invitation is sent on commit, so a rolled-back membership never produces
+    an email promising access the person does not have.  Which role's email is
+    used is decided by :func:`invitation_role`.
+
+    Returns the invited :class:`~accounts.models.User`.
+    """
+    permission_template = invitation_role(permission_templates)
+    user = member_add(
+        email=email,
+        first_name="",
+        last_name="",
+        middle_name=None,
+        organization=organization,
+        permission_templates=permission_templates,
+    )
+
+    def send_invitation() -> None:
+        invitation_backend().create_organization_invite(
+            organization=organization,
+            invited_by_user=invited_by,
+            invitee_user=user,
+        )
+        invitation_backend().send_invitation(
+            user=user,
+            sender=invited_by,
+            organization=organization,
+            domain=site,
+            role_template=permission_template,
+        )
+
+    transaction.on_commit(send_invitation)
 
     return user
 
@@ -325,6 +389,56 @@ def organization_remove_member(
     org_user.delete()
 
     return user_id
+
+
+@transaction.atomic
+def member_roles_replace(
+    *,
+    organization: Organization,
+    user_id: int,
+    permission_templates: tuple[TemplateConfig, ...],
+) -> UserModel:
+    """Set which of *organization*'s invitable roles a member holds.
+
+    An invitable role not listed is revoked, which makes this a single edit of
+    "what this person can do here" rather than an additive grant.
+
+    Every other org-scoped group is left alone: ``Organization Admin`` and
+    ``Organization Superuser``, the ``REGISTRY.unscoped`` templates, and rows
+    created by hand in the admin with a name and no template.  None of those are
+    offered by the surfaces that call this, so clearing every group and re-adding
+    the listed ones would revoke them invisibly — and a template-less row could
+    not be re-added at all, since
+    :meth:`accounts.role_manager.OrgRoleManager.add_roles` resolves a
+    ``PermissionGroup`` by template name.  They are granted and revoked from the
+    user page's group picker.
+
+    Raises :class:`~django.core.exceptions.ValidationError` if the user is not a
+    member of *organization*.
+    """
+    try:
+        org_user = OrganizationUser.objects.select_related("user").get(
+            organization=organization,
+            user_id=user_id,
+        )
+    except OrganizationUser.DoesNotExist:
+        raise ValidationError("User is not a member of this organization.")
+
+    member: UserModel = org_user.user
+    granted = {template.name for template in permission_templates}
+    # reconcile_org_groups creates a PermissionGroup for every template the org's
+    # org types name, so remove_roles' lookup of each of these resolves.
+    revoked = tuple(
+        template
+        for name in REGISTRY.invitable_template_names_for(organization)
+        if name not in granted and (template := REGISTRY.template(name)) is not None
+    )
+
+    role_manager = OrgRoleManager(organization)
+    role_manager.add_roles(member, *permission_templates)
+    role_manager.remove_roles(member, *revoked)
+
+    return member
 
 
 # ── Self-signup ───────────────────────────────────────────────────────

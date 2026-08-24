@@ -7,6 +7,13 @@
         Add member
       </a>
     </li>
+    <li>
+      {# The Members inline renders every row; this list is filterable and paginated. #}
+      <a href="{% url 'admin:organizations_organizationuser_changelist' %}?organization__id__exact={{ original.pk }}"
+         class="viewlink">
+        See all members
+      </a>
+    </li>
   {% endif %}
   {{ block.super }}
 {% endblock %}

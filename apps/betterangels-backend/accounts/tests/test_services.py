@@ -4,12 +4,13 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 
 import pytest
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
+from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
     create_organization_with_presets,
     get_or_create_user_by_email,
     member_add,
+    member_roles_replace,
     organization_remove_member,
     reactivate_user,
 )
@@ -17,7 +18,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import OrganizationUser
+from organizations.models import Organization, OrganizationUser
 from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────
@@ -534,3 +535,58 @@ class TestOrganizationRemoveMember:
 
         with pytest.raises(ValidationError, match="not a member"):
             organization_remove_member(organization=org, user_id=ghost.pk, removed_by=owner)
+
+
+@pytest.mark.django_db
+class TestMemberRolesReplace:
+    """Tests for member_roles_replace."""
+
+    def test_replaces_the_roles_the_organization_offers(self) -> None:
+        owner = baker.make(User)
+        org = create_organization_with_presets("Replace Org", ["outreach", "shelter"], owner=owner)
+
+        member = member_add(
+            email="replace@example.com",
+            first_name="Replace",
+            last_name="Me",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+
+        member_roles_replace(organization=org, user_id=member.pk, permission_templates=(SHELTER_OPERATOR,))
+
+        assert _role_names(org, member) == {SHELTER_OPERATOR.name}
+
+    def test_leaves_a_role_the_organization_does_not_offer_by_invitation(self) -> None:
+        """Org Admin is ``is_invitable=False``, so no caller of this can name it."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Promotion Org", ["outreach"], owner=owner)
+
+        member = member_add(
+            email="promoted@example.com",
+            first_name="Promoted",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        member_roles_replace(organization=org, user_id=member.pk, permission_templates=())
+
+        assert _role_names(org, member) == {ORG_ADMIN.name}
+
+    def test_raises_when_the_user_is_not_a_member(self) -> None:
+        owner = baker.make(User)
+        org = create_organization_with_presets("Stranger Org", ["outreach"], owner=owner)
+
+        stranger = baker.make(User)
+
+        with pytest.raises(ValidationError, match="not a member"):
+            member_roles_replace(organization=org, user_id=stranger.pk, permission_templates=(CASEWORKER,))
+
+
+def _role_names(org: Organization, member: User) -> set[str]:
+    return set(
+        PermissionGroup.objects.filter(organization=org, group__user=member).values_list("template__name", flat=True)
+    )

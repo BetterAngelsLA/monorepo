@@ -113,3 +113,27 @@ def resolve_permission_group(
         raise PermissionError(f"User does not hold a '{template_name}' permission group in any organization")
 
     return permission_group
+
+
+# ── Role reporting ────────────────────────────────────────────────────
+
+
+def member_role_names(*, user_id: int, organization_id: int) -> list[str]:
+    """Names of the roles *user_id* holds in *organization_id*, sorted."""
+    return sorted(
+        PermissionGroup.objects.filter(organization_id=organization_id, group__user=user_id).values_list(
+            "name", flat=True
+        )
+    )
+
+
+def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
+    """Roles *user_id* holds, grouped by organization name and sorted within each."""
+    by_organization: dict[str, list[str]] = {}
+    for organization_name, role_name in (
+        PermissionGroup.objects.filter(group__user=user_id)
+        .select_related("organization")
+        .values_list("organization__name", "name")
+    ):
+        by_organization.setdefault(organization_name, []).append(role_name)
+    return {name: sorted(roles) for name, roles in sorted(by_organization.items())}

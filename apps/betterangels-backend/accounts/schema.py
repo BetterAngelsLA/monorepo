@@ -22,13 +22,13 @@ from strawberry_django.permissions import HasPerm
 from accounts.emails import send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
-from accounts.role_manager import OrgRoleManager
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
 from .models import Organization, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
+    member_roles_replace,
     organization_remove_member,
 )
 from .types import (
@@ -306,11 +306,14 @@ class Mutation:
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
     ) -> OrganizationMemberType:
-        """Promote or demote a member within an organization.
+        """Set which of the organization's invitable roles a member holds.
 
-        Replaces all of the member's current org-scoped roles with the
-        single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
-        permission.
+        The member ends up holding the single requested template and no other
+        role the organization grants by invitation.  Roles it does not —
+        ``Organization Admin``, ``Organization Superuser``, and anything granted
+        by hand — are left alone; ``PermissionTemplateEnum`` cannot name them, so
+        replacing every group would have demoted an org admin on any call.
+        Requires the ``CHANGE_ORG_MEMBER_ROLE`` permission.
         """
         org_id = get_current_organization(info)
         organization = Organization.objects.select_related("profile").get(pk=org_id)
@@ -324,7 +327,9 @@ class Mutation:
         if not target_user:
             raise PermissionDenied("Target user is not a member of this organization.")
 
-        OrgRoleManager(organization).replace_roles(target_user, template)
+        # The membership check above stays: it answers with PermissionDenied, which
+        # is the error this mutation has always returned for a non-member.
+        member_roles_replace(organization=organization, user_id=target_user.pk, permission_templates=(template,))
 
         if hasattr(target_user, "_member_role"):
             object.__delattr__(target_user, "_member_role")
