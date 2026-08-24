@@ -1,1 +1,1 @@
-export { toTimeString, fromTimeString, formatTimeString } from './timeString';
+export { toTimeString, parseTimeString, formatTimeString } from './timeString';

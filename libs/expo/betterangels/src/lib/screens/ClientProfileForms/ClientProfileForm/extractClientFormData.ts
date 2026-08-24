@@ -1,4 +1,3 @@
-import { fromDateString } from '@monorepo/shared/scalars';
 import { SocialMediaEnum } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { GetClientProfileQuery } from './__generated__/clientProfile.generated';
@@ -50,17 +49,14 @@ export const extractClientFormData = (
         veteranStatus,
       } = clientProfile;
 
-      const dobAsDate = fromDateString(dateOfBirth);
-      const unhousedStartDateAsDate = fromDateString(unhousedStartDate);
-
       return {
         id,
         californiaId,
-        dateOfBirth: dobAsDate,
+        dateOfBirth,
         livingSituation,
         preferredLanguage,
         profilePhoto,
-        unhousedStartDate: unhousedStartDateAsDate,
+        unhousedStartDate,
         veteranStatus,
       };
     }

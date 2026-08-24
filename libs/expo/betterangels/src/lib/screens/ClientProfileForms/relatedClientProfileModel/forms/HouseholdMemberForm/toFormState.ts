@@ -1,4 +1,4 @@
-import { fromDateString } from '@monorepo/shared/scalars';
+import { parseDateString } from '@monorepo/shared/scalars';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { THouseholdMemberFormState } from './types';
 
@@ -28,7 +28,7 @@ export function toFormState(props: TProps): THouseholdMemberFormState {
   const { name, gender, dateOfBirth, relationshipToClient } =
     householdMember || {};
 
-  const dobAsDate = fromDateString(dateOfBirth);
+  const dobAsDate = parseDateString(dateOfBirth);
 
   return {
     name: name || '',

@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateServiceRequestHmisMutationVariables = Types.Exact<{
   data: Types.CreateHmisNoteServiceRequestInput;
@@ -8,7 +9,7 @@ export type CreateServiceRequestHmisMutationVariables = Types.Exact<{
 
 export type CreateServiceRequestHmisMutation = { __typename?: 'Mutation', createHmisNoteServiceRequest:
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: any | null, completedOn?: any | null, createdAt: any, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
+    | { __typename?: 'ServiceRequestType', id: string, status: Types.ServiceRequestStatusEnum, dueBy?: DateTimeString | null, completedOn?: DateTimeString | null, createdAt: DateTimeString, service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
    };
 
 export type RemoveServiceRequestHmisMutationVariables = Types.Exact<{

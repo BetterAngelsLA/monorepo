@@ -1,6 +1,6 @@
 import {
   formatTimeString,
-  fromTimeString,
+  parseTimeString,
   toTimeString,
 } from '@monorepo/shared/scalars';
 import { useEffect, useMemo, useState } from 'react';
@@ -33,8 +33,8 @@ const parseValueToSelection = (value: string): Selection => {
     const [startRaw, endRaw] = rangeStr
       .split('-')
       .map((part) => part?.trim() ?? '');
-    const startMinutes = fromTimeString(startRaw);
-    const endMinutes = fromTimeString(endRaw);
+    const startMinutes = parseTimeString(startRaw);
+    const endMinutes = parseTimeString(endRaw);
     if (
       startMinutes === undefined ||
       endMinutes === undefined ||
