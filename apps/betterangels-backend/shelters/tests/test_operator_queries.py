@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
@@ -592,14 +592,6 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
 class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
     """Tests for the shelterOperatorOrganizations query."""
 
-    QUERY = """
-        query ShelterOperatorOrganizations {
-            shelterOperatorOrganizations(ordering: [{ name: ASC }]) {
-                results { id name }
-            }
-        }
-    """
-
     def setUp(self) -> None:
         super().setUp()
         # Grant view_shelter to the CASEWORKER group in org_1 so
@@ -609,6 +601,23 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+
+    def get_org_fields(self) -> str:
+        return """
+            id
+            name
+        """
+
+    def get_shelter_operator_orgs_query(self, fields: Optional[str] = None) -> str:
+        return f"""
+            query ShelterOperatorOrganizations($filters: OrganizationFilter, $ordering: [OrganizationOrder!]) {{
+                shelterOperatorOrganizations(filters: $filters, ordering: $ordering) {{
+                    results {{
+                        {fields or self.get_org_fields()}
+                    }}
+                }}
+            }}
+    """
 
     def test_returns_only_shelter_operator_orgs(self) -> None:
         """Returns orgs with a SHELTER_OPERATOR permission group; outreach-only orgs are excluded."""
@@ -622,7 +631,7 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
         )
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        response = self.execute_graphql(self.QUERY)
+        response = self.execute_graphql(self.get_shelter_operator_orgs_query())
 
         self.assertIsNone(response.get("errors"))
         result_ids = {r["id"] for r in response["data"]["shelterOperatorOrganizations"]["results"]}
@@ -644,26 +653,33 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
         organization_recipe.make(name="Middle", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        response = self.execute_graphql(self.QUERY)
+        response = self.execute_graphql(
+            self.get_shelter_operator_orgs_query(), variables={"ordering": [{"name": "DESC"}]}
+        )
 
         self.assertIsNone(response.get("errors"))
         names = [r["name"] for r in response["data"]["shelterOperatorOrganizations"]["results"]]
-        self.assertEqual(names, ["Alpha", "Middle", "test_org", "Zebra"])
+        self.assertEqual(
+            names,
+            ["Zebra", "test_org", "Middle", "Alpha"],
+        )
         self.assertEqual(
             [n for n in names if n in {"Alpha", "Middle", "Zebra"}],
-            ["Alpha", "Middle", "Zebra"],
+            ["Zebra", "Middle", "Alpha"],
         )
 
     def test_unauthenticated_is_rejected(self) -> None:
         """Unauthenticated requests return an authentication error."""
         self.graphql_client.logout()
-        response = self.execute_graphql(self.QUERY)
+        response = self.execute_graphql(
+            self.get_shelter_operator_orgs_query(), variables={"ordering": [{"name": "ASC"}]}
+        )
         self.assertGraphQLUnauthenticated(response)
 
     def test_user_without_shelter_view_permission_is_rejected(self) -> None:
         """Users whose org lacks shelter view permission cannot access the endpoint."""
         self.graphql_client.force_login(self.non_case_manager_user)
-        response = self.execute_graphql(self.QUERY)
+        response = self.execute_graphql(self.get_shelter_operator_orgs_query())
         self.assertIsNone(response["data"])
         self.assertEqual(len(response["errors"]), 1)
         self.assertIn(
