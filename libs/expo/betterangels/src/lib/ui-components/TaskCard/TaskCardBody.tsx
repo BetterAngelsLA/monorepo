@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { View } from 'react-native';
 import { TaskType } from '../../apollo';
 
@@ -29,7 +29,7 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
         </>
       )}
       <TextRegular color={Colors.NEUTRAL_DARK} size="sm">
-        {format(new Date(createdAt), 'MM/dd/yyyy')}
+        {formatScalarDate(createdAt, 'MM/dd/yyyy')}
       </TextRegular>
     </View>
   );
