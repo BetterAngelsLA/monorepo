@@ -9,7 +9,7 @@ import {
   TClientProfileCardItem,
 } from '../../../../ui-components';
 import { TClientProfile } from '../types';
-import { formatDateString } from '@monorepo/shared/scalars';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -27,8 +27,11 @@ export function PersonalInfoCard(props: TProps) {
     unhousedStartDate,
   } = clientProfile || {};
 
-  const formattedDob = formatDateString(dateOfBirth, 'MM/dd/yyyy');
-  const formattedUnhousedStartDate = formatDateString(unhousedStartDate, 'MM/dd/yyyy');
+  const formattedDob = formatScalarDate(dateOfBirth, 'MM/dd/yyyy');
+  const formattedUnhousedStartDate = formatScalarDate(
+    unhousedStartDate,
+    'MM/dd/yyyy',
+  );
 
   const content: TClientProfileCardItem[] = [
     {

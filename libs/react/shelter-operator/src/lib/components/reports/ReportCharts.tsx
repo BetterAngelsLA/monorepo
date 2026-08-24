@@ -1,4 +1,4 @@
-import { formatDateString, type DateString } from '@monorepo/shared/scalars';
+import { formatScalarDate, type DateString } from '@monorepo/shared/scalars';
 import type {
   DailyBedStatusMetrics,
   DailyOccupancyMetrics,
@@ -11,7 +11,7 @@ import { BarChart, type ViewMode } from '../BarChart/BarChart';
  * every unreadable day into a single bar.
  */
 function dateLabel(date: DateString): string {
-  return formatDateString(date, 'MMM d') || date;
+  return formatScalarDate(date, 'MMM d') || date;
 }
 
 /** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */

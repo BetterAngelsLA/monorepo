@@ -1,5 +1,5 @@
 import type { DateString, DateTimeString } from '../branded';
-import { formatDateString, fromDateString, toDateString } from './dateString';
+import { formatScalarDate, fromDateString, toDateString } from './dateString';
 
 const asDate = (value: unknown) => value as DateString;
 const asDateTime = (value: unknown) => value as DateTimeString;
@@ -46,13 +46,13 @@ describe('round trip', () => {
   );
 });
 
-describe('formatDateString', () => {
+describe('formatScalarDate', () => {
   it('formats a date-only scalar', () => {
-    expect(formatDateString(asDate('2026-06-01'), 'MMM d')).toBe('Jun 1');
+    expect(formatScalarDate(asDate('2026-06-01'), 'MMM d')).toBe('Jun 1');
   });
 
   it('formats a datetime scalar', () => {
-    expect(formatDateString(asDateTime('2026-06-01T18:30:00Z'), 'yyyy')).toBe(
+    expect(formatScalarDate(asDateTime('2026-06-01T18:30:00Z'), 'yyyy')).toBe(
       '2026',
     );
   });
@@ -60,7 +60,7 @@ describe('formatDateString', () => {
   it.each([[null], [undefined], [''], ['nonsense']])(
     'returns an empty string for %s',
     (input) => {
-      expect(formatDateString(asDate(input), 'MMM d')).toBe('');
+      expect(formatScalarDate(asDate(input), 'MMM d')).toBe('');
     },
   );
 });

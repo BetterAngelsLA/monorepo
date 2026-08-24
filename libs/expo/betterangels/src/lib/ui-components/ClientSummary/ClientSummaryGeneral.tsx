@@ -13,7 +13,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { formatDateString, toPhoneParts } from '@monorepo/shared/scalars';
+import { formatScalarDate, toPhoneParts } from '@monorepo/shared/scalars';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
@@ -72,7 +72,7 @@ export default function ClientSummaryGeneral(
           flex={3}
           title={
             client.dateOfBirth
-              ? formatDateString(client.dateOfBirth, 'MM/dd/yyyy')
+              ? formatScalarDate(client.dateOfBirth, 'MM/dd/yyyy')
               : 'N/A'
           }
           subtitle="DOB"

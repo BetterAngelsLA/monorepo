@@ -26,7 +26,7 @@ export function fromDateString(value?: DateString | null): Date | undefined {
 }
 
 /** Format a `Date` or `DateTime` scalar for display. `''` when unparseable. */
-export function formatDateString(
+export function formatScalarDate(
   value: DateString | DateTimeString | null | undefined,
   pattern: string,
 ): string {

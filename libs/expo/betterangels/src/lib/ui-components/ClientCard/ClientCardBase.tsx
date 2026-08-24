@@ -15,7 +15,7 @@ import { CardMenuBtn } from './CardMenuBtn';
 import { IClientCardProps } from './ClientCard';
 import { formatHeight } from './utils/formatHeight';
 import { getLahsaHmisId } from './utils/getLahsaHmisId';
-import { formatDateString } from '@monorepo/shared/scalars';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 export function ClientCardBase(props: IClientCardProps) {
   const { client, onMenuPress } = props;
@@ -53,8 +53,8 @@ export function ClientCardBase(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {formatDateString(client.dateOfBirth, 'MM/dd/yyyy')}{' '}
-                ({client.age})
+                {formatScalarDate(client.dateOfBirth, 'MM/dd/yyyy')} (
+                {client.age})
               </TextRegular>
             )}
             {!!client.dateOfBirth && !!client.heightInInches && (

@@ -1,2 +1,2 @@
 export { isoToDateSafe } from './isoToDateSafe';
-export { toDateString, fromDateString, formatDateString } from './dateString';
+export { toDateString, fromDateString, formatScalarDate } from './dateString';

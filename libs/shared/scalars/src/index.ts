@@ -7,7 +7,7 @@ export type {
 } from './lib/branded';
 
 export {
-  formatDateString,
+  formatScalarDate,
   fromDateString,
   isoToDateSafe,
   toDateString,

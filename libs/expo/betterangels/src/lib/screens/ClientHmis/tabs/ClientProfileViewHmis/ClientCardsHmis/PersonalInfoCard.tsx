@@ -14,7 +14,7 @@ import {
   ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { formatDateString } from '@monorepo/shared/scalars';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 type TProps = {
   client?: HmisClientProfileType;
@@ -33,13 +33,10 @@ export function PersonalInfoCardHmis(props: TProps) {
     unhousedStartDate,
   } = client || {};
 
-  const formattedDob =
-    birthDate &&
-    formatDateString(birthDate, 'MM/dd/yyyy');
+  const formattedDob = birthDate && formatScalarDate(birthDate, 'MM/dd/yyyy');
 
   const formattedUnhousedStartDate =
-    unhousedStartDate &&
-    formatDateString(unhousedStartDate, 'MM/dd/yyyy');
+    unhousedStartDate && formatScalarDate(unhousedStartDate, 'MM/dd/yyyy');
 
   const content: TClientProfileCardItem[] = [
     {

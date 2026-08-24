@@ -100,7 +100,7 @@ export default function ClientSummaryContact(
                 </TextBold>
                 {extension && (
                   <TextBold size="sm">
-                    {' ext.'}
+                    {' ext. '}
                     {extension}
                   </TextBold>
                 )}

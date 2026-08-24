@@ -26,7 +26,7 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
           color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
           size="sm"
         >
-          {' ext.'}
+          {' ext. '}
           {extension}
         </TextBold>
       )}

@@ -9,7 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { View } from 'react-native';
 import { enumDisplayLivingSituation } from '../../static';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
-import { formatDateString } from '@monorepo/shared/scalars';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 
 interface IClientSummaryIdentityProps {
   client: ClientProfilesQuery['clientProfiles']['results'][number];
@@ -54,8 +54,7 @@ export default function ClientSummaryIdentity(
               Approx. Date Homelessness Started
             </TextRegular>
             <TextBold size="sm">
-              {formatDateString(client.unhousedStartDate, 'MMM yyyy')}{' '}
-              (
+              {formatScalarDate(client.unhousedStartDate, 'MMM yyyy')} (
               {formatDistanceToNow(client.unhousedStartDate, {
                 addSuffix: false,
               })}
