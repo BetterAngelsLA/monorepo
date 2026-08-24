@@ -3,8 +3,12 @@ import type { TimeString } from '../branded';
 
 const MINUTES_PER_DAY = 24 * 60;
 
-/** `HH:mm` or `HH:mm:ss`, and nothing else. */
-const TIME_PATTERN = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$/;
+/**
+ * `HH:mm` or `HH:mm:ss`, and nothing else. Fractional seconds are tolerated
+ * because Strawberry's `Time` scalar emits them whenever the stored value has
+ * microseconds — `time(22, 0, 0, 500000)` serializes as `"22:00:00.500000"`.
+ */
+const TIME_PATTERN = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d(?:\.\d+)?)?$/;
 
 /**
  * A day with no UTC-offset change in any IANA zone, so a `Date` built from

@@ -15,9 +15,5 @@ export {
 
 export { formatTimeString, fromTimeString, toTimeString } from './lib/time';
 
-export {
-  formatPhoneNumber,
-  toPhoneDialString,
-  toPhoneParts,
-} from './lib/phone';
+export { toPhoneParts } from './lib/phone';
 export type { PhoneNumberParts } from './lib/phone';

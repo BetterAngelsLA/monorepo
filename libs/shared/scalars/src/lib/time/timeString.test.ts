@@ -36,6 +36,18 @@ describe('fromTimeString', () => {
     expect(fromTimeString(asTime(value))).toBe(expected);
   });
 
+  it.each([
+    ['22:00:00.500000', 1320],
+    ['07:30:00.000000', 450],
+  ])(
+    'parses %s, which the API sends when the value has microseconds',
+    (value, expected) => {
+      // Strawberry's Time scalar serializes time(22, 0, 0, 500000) as
+      // "22:00:00.500000", and curfew/start_time/end_time are all TimeFields.
+      expect(fromTimeString(asTime(value))).toBe(expected);
+    },
+  );
+
   it.each([[null], [undefined], [''], ['abc'], ['ab:cd']])(
     'returns undefined for %s instead of NaN',
     (input) => {
@@ -55,6 +67,7 @@ describe('fromTimeString', () => {
     ['0x10:00'],
     ['1e2:00'],
     ['2026-05-05'],
+    ['22:00:00.'],
   ])('rejects %s, which is not a time of day', (input) => {
     // Number() accepts hex and exponent notation, and nothing bounds the
     // result, so without a real pattern these all parse into a minute count.

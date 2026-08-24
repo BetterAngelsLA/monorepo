@@ -5,11 +5,10 @@ import TextBold from '../TextBold';
 
 interface IPhoneNumberBtnProps {
   number: PhoneNumberString | null | undefined;
-  label?: string;
 }
 
 export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
-  const { number, label } = props;
+  const { number } = props;
   const { formatted, extension, display, dial } = toPhoneParts(number);
 
   const content = (pressed: boolean) => (
@@ -19,7 +18,7 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
         color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         size="sm"
       >
-        {label || formatted}
+        {formatted}
       </TextBold>
       {extension && (
         <TextBold
@@ -41,7 +40,7 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
     <Pressable
       accessibilityRole="button"
       accessibilityHint="Opens your phone dialer to call the number"
-      accessibilityLabel={`Call ${label || display}`}
+      accessibilityLabel={`Call ${display}`}
       onPress={() => Linking.openURL(`tel:${dial}`)}
       android_ripple={null}
     >

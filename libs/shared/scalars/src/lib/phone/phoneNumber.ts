@@ -72,17 +72,3 @@ export function toPhoneParts(
     dial: ext ? `${nationalNumber},${ext}` : nationalNumber,
   };
 }
-
-/** Display a phone scalar as one string. See {@link PhoneNumberParts.display}. */
-export function formatPhoneNumber(
-  value: PhoneNumberString | null | undefined,
-): string {
-  return toPhoneParts(value).display;
-}
-
-/** The `tel:` number for a phone scalar. See {@link PhoneNumberParts.dial}. */
-export function toPhoneDialString(
-  value: PhoneNumberString | null | undefined,
-): string {
-  return toPhoneParts(value).dial;
-}
