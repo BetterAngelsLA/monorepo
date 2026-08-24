@@ -5,14 +5,14 @@ import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
 from accounts.models import Organization, User
-from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
+from accounts.types import OrganizationType
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     BulkDeleteInput,
     BulkDeleteResult,
 )
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.db.models import Exists, Max, OuterRef, QuerySet
+from django.db.models import Max, QuerySet
 from django.utils import timezone
 from strawberry import ID
 from strawberry.types import Info
@@ -23,6 +23,7 @@ from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.selectors import shelter_get
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
+from shelters.selectors import shelter_operator_organization_list
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
@@ -113,27 +114,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
-    def shelter_operator_organizations(
-        self,
-        info: Info,
-        ordering: Optional[list[OrganizationOrder]] = None,
-        filters: Optional[OrganizationFilter] = None,
-    ) -> QuerySet[Organization]:
+    def shelter_operator_organizations(self, info: Info) -> QuerySet[Organization]:
         """Return all organizations that have a Shelter Operator permission group."""
-        from accounts.models import PermissionGroup
-
-        from shelters.groups import SHELTER_OPERATOR
-
-        has_shelter_operator_group = Exists(
-            PermissionGroup.objects.filter(
-                organization=OuterRef("pk"),
-                template__name=SHELTER_OPERATOR.name,
-            )
-        )
-
-        queryset: QuerySet[Organization] = Organization.objects.filter(has_shelter_operator_group)
-
-        return queryset
+        return shelter_operator_organization_list()
 
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:

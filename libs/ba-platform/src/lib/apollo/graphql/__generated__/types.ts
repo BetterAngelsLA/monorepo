@@ -2858,7 +2858,7 @@ export type QueryShelterOccupancyMetricsArgs = {
 
 export type QueryShelterOperatorOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-  ordering?: InputMaybe<Array<OrganizationOrder>>;
+  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
