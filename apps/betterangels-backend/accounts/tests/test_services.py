@@ -12,13 +12,14 @@ from accounts.services import (
     member_add,
     member_roles_replace,
     organization_remove_member,
+    organization_transfer_ownership,
     reactivate_user,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import Organization, OrganizationUser
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────
@@ -590,3 +591,64 @@ def _role_names(org: Organization, member: User) -> set[str]:
     return set(
         PermissionGroup.objects.filter(organization=org, group__user=member).values_list("template__name", flat=True)
     )
+
+
+@pytest.mark.django_db
+class TestOrganizationTransferOwnership:
+    """Tests for organization_transfer_ownership."""
+
+    def _org_with_member(self, name: str) -> tuple[User, User, "Organization"]:
+        owner = baker.make(User)
+        org = create_organization_with_presets(name, ["outreach"], owner=owner)
+        member = member_add(
+            email=f"{name.replace(' ', '').lower()}@example.com",
+            first_name="A",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+        return owner, member, org
+
+    def test_moves_ownership_to_another_member(self) -> None:
+        owner, member, org = self._org_with_member("Transfer Org")
+
+        returned = organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert returned == member
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == member
+
+    def test_the_previous_owner_keeps_membership_and_roles(self) -> None:
+        owner, member, org = self._org_with_member("Keeps Org")
+        before = set(
+            PermissionGroup.objects.filter(organization=org, group__user=owner).values_list("template__name", flat=True)
+        )
+
+        organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert OrganizationUser.objects.filter(organization=org, user=owner).exists()
+        after = set(
+            PermissionGroup.objects.filter(organization=org, group__user=owner).values_list("template__name", flat=True)
+        )
+        assert after == before
+
+    def test_the_previous_owner_can_then_be_removed(self) -> None:
+        """The whole point: an owner was un-removable with no way to stop being one."""
+        owner, member, org = self._org_with_member("Unstick Org")
+
+        with pytest.raises(ValidationError, match="cannot remove the organization owner"):
+            organization_remove_member(organization=org, user_id=owner.pk, removed_by=member)
+
+        organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+        organization_remove_member(organization=org, user_id=owner.pk, removed_by=member)
+
+        assert not OrganizationUser.objects.filter(organization=org, user=owner).exists()
+
+    def test_a_non_member_cannot_own_the_organization(self) -> None:
+        owner, member, org = self._org_with_member("Stranger Owner Org")
+        stranger = baker.make(User)
+
+        with pytest.raises(ValidationError, match="Only a member"):
+            organization_transfer_ownership(organization=org, new_owner_user_id=stranger.pk)
+
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == owner

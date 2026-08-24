@@ -156,6 +156,29 @@ class OrganizationMemberInviteForm(OrganizationRoleSelectionForm):
         self.order_fields(["organization", "email", "permission_templates"])
 
 
+class OrganizationOwnerTransferForm(forms.Form):
+    """Choose which member of *organization* becomes its owner.
+
+    Only members are offered, because ``organization_transfer_ownership`` refuses
+    anyone else — the choices and the rule agree rather than the form promising
+    something the service rejects.
+    """
+
+    new_owner = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label="New owner",
+        help_text="The current owner keeps their membership and roles; they simply stop owning.",
+    )
+
+    def __init__(self, *args: Any, organization: Organization, current_owner: User | None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        members = User.objects.filter(organizations_organization=organization).order_by("email")
+        if current_owner is not None:
+            members = members.exclude(pk=current_owner.pk)
+        new_owner = cast(forms.ModelChoiceField, self.fields["new_owner"])
+        new_owner.queryset = members
+
+
 class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
     """Set which of *organization*'s invitable roles an existing member holds.
 

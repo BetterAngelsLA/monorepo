@@ -380,7 +380,7 @@ def organization_remove_member(
         organization=organization,
         organization_user=org_user,
     ).exists():
-        raise ValidationError("You cannot remove the organization owner. Transfer ownership first.")
+        raise ValidationError("You cannot remove the organization owner. Transfer ownership to another member first.")
 
     if user_id == removed_by.pk:
         raise ValidationError("You cannot remove yourself from the organization.")
@@ -389,6 +389,45 @@ def organization_remove_member(
     org_user.delete()
 
     return user_id
+
+
+@transaction.atomic
+def organization_transfer_ownership(
+    *,
+    organization: Organization,
+    new_owner_user_id: int,
+) -> UserModel:
+    """Make *new_owner_user_id* the owner of *organization*.
+
+    ``Organization.add_user`` makes the first member the owner and
+    :func:`organization_remove_member` refuses to remove an owner, so without a
+    way to move ownership the first person invited to a new organization could
+    never be removed from it.  This is that way.
+
+    Ownership is a single row, so the previous owner simply stops being one; they
+    keep their membership and their roles.  Delegates the move to
+    ``Organization.change_owner`` so django-organizations' ``owner_changed``
+    signal still fires.
+
+    Raises :class:`~django.core.exceptions.ValidationError` if the new owner is
+    not a member of *organization*.
+    """
+    try:
+        new_owner = OrganizationUser.objects.select_related("user").get(
+            organization=organization,
+            user_id=new_owner_user_id,
+        )
+    except OrganizationUser.DoesNotExist:
+        raise ValidationError("Only a member of this organization can own it.")
+
+    if OrganizationOwner.objects.filter(organization=organization).exists():
+        organization.change_owner(new_owner)
+    else:
+        # An organization built without add_user has no owner row to move.
+        OrganizationOwner.objects.create(organization=organization, organization_user=new_owner)
+
+    member: UserModel = new_owner.user
+    return member
 
 
 @transaction.atomic
