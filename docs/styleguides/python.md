@@ -57,6 +57,29 @@ Push each rule to the lowest layer that can express it.
 - Use VCR cassettes (`test_utils/vcr_config.py`) for external HTTP calls
 - Test files mirror source structure: `tests/test_services.py`, `tests/test_queries.py`
 
+### Give each checkout its own test database
+
+Django derives the test database name from `POSTGRES_NAME`, which is `postgres` in
+every `.env` — so every worktree, container shell and coding-agent session shares
+one `test_postgres`. `addopts = "--reuse-db"` hides that most of the time, but
+`pytest --create-db` drops and recreates it underneath anyone else mid-run.
+
+The symptom is failures that escalate and move between runs of *unchanged* code —
+5, then 14, then every test in the suite erroring, in apps you never touched.
+That is not a defect in your branch. Set `POSTGRES_TEST_NAME` before concluding
+anything about a failure you cannot reproduce:
+
+```bash
+POSTGRES_TEST_NAME=test_myworktree uv run pytest -q --create-db
+```
+
+Pass it on the command that needs it rather than writing it into `.env`. The
+shared database is the default on purpose: it is what a developer gets running
+the same command by hand, and a checkout permanently pointed elsewhere both
+hides that and leaves stale databases behind. Reach for the override when a
+clash is actually possible — a second checkout, a concurrent session — and
+always before `--create-db`, which is the flag that destroys another run.
+
 ## Type Checking
 
 - Strict `mypy` via `mypy.ini` (disallow untyped defs, no implicit optional, etc.)
