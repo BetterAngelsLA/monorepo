@@ -19,7 +19,9 @@ from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import NoReverseMatch, reverse
 from model_bakery import baker
 from notes.groups import CASEWORKER
@@ -702,6 +704,42 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
             ),
             {CASEWORKER.name},
         )
+
+
+class OrganizationMemberInlineQueryCountTestCase(TestCase):
+    """The Members inline renders every row, so its cost must not grow per member."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_inline_tests", email="admin_inline_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _add_members(self, count: int) -> None:
+        for index in range(count):
+            member_add(
+                email=f"inline{index}-{count}@example.com",
+                first_name="",
+                last_name="",
+                middle_name=None,
+                organization=self.organization,
+                permission_templates=(CASEWORKER,),
+            )
+
+    def test_rendering_the_members_inline_does_not_query_per_member(self) -> None:
+        self._add_members(2)
+        # Warm the content type cache, which is per process, not per member.
+        self.client.get(self.url)
+        with CaptureQueriesContext(connection) as few:
+            self.client.get(self.url)
+
+        self._add_members(6)
+        with CaptureQueriesContext(connection) as many:
+            self.client.get(self.url)
+
+        self.assertEqual(len(many), len(few))
 
 
 class OrganizationAdminLinksTestCase(TestCase):

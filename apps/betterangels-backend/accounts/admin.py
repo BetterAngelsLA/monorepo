@@ -122,7 +122,16 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
         return False
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[OrganizationUser]:
-        return super().get_queryset(request).select_related("user").prefetch_related("user__groups__permissiongroup")
+        # Both relations are one query per row otherwise: ``owner`` does a hasattr
+        # on the reverse of a OneToOneField, and django-organizations'
+        # ``AbstractOrganizationUser.__str__`` — which the inline renders per row —
+        # reads ``self.organization.name``.
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("user", "organization", "organizationowner")
+            .prefetch_related("user__groups__permissiongroup")
+        )
 
     # Django renders a blank row for this formset — its ``empty_form``, and any
     # extra the management form declares when the page re-renders after a
