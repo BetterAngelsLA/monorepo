@@ -1,4 +1,4 @@
-import { parseToDate } from '@monorepo/expo/shared/ui-components';
+import { fromDateString } from '@monorepo/shared/scalars';
 import { SocialMediaEnum } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { GetClientProfileQuery } from './__generated__/clientProfile.generated';
@@ -50,23 +50,8 @@ export const extractClientFormData = (
         veteranStatus,
       } = clientProfile;
 
-      let dobAsDate: Date | null | undefined;
-
-      if (dateOfBirth) {
-        dobAsDate = parseToDate({
-          date: dateOfBirth,
-          inputFormat: 'yyyy-MM-dd',
-        });
-      }
-
-      let unhousedStartDateAsDate: Date | null | undefined;
-
-      if (unhousedStartDate) {
-        unhousedStartDateAsDate = parseToDate({
-          date: unhousedStartDate,
-          inputFormat: 'yyyy-MM-dd',
-        });
-      }
+      const dobAsDate = fromDateString(dateOfBirth);
+      const unhousedStartDateAsDate = fromDateString(unhousedStartDate);
 
       return {
         id,

@@ -10,6 +10,7 @@ import {
   UpdateClientHouseholdMemberMutationVariables,
 } from './__generated__/householdMember.generated';
 import { THouseholdMemberFormState } from './types';
+import { toDateString } from '@monorepo/shared/scalars';
 
 type HouseholdMutationResult =
   | ApolloLink.Result<CreateClientHouseholdMemberMutation>
@@ -97,20 +98,12 @@ function toApiInputs(values: THouseholdMemberFormState) {
     return null;
   }
 
-  // make a copy so we don't mutate RHF's form state
-  const next: THouseholdMemberFormState = { ...values };
-
-  if (next.dateOfBirth instanceof Date) {
-    next.dateOfBirth = next.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
-  } else if (next.dateOfBirth === null) {
-    next.dateOfBirth = null;
-  } else if (next.dateOfBirth === undefined) {
-    delete next.dateOfBirth;
-  }
-
-  return next;
+  return {
+    name,
+    gender,
+    dateOfBirth: dateOfBirth && toDateString(dateOfBirth),
+    relationshipToClient,
+  };
 }
 
 function isSuccessMutationResponse(response: HouseholdMutationResult): boolean {

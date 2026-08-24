@@ -1,3 +1,8 @@
+import {
+  formatTimeString,
+  fromTimeString,
+  toTimeString,
+} from '@monorepo/shared/scalars';
 import { useEffect, useMemo, useState } from 'react';
 import { FieldWrapper } from './FieldWrapper';
 
@@ -17,35 +22,8 @@ type Selection = boolean[];
 const SLICES = 48; // 24 hours / 30 minute slices
 const MINUTES_PER_SLICE = 30;
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
-const minutesTo24h = (minutes: number) => {
-  const total = Math.max(0, Math.min(24 * 60, minutes));
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  return `${pad(hours)}:${pad(mins)}:00`;
-};
-
-const minutesToDisplay = (minutes: number) => {
-  const total = minutes % (24 * 60);
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  const meridiem = hours >= 12 ? 'PM' : 'AM';
-  const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
-  return `${twelveHour}:${pad(mins)} ${meridiem}`;
-};
-
-const parseTimeToMinutes = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const [hourRaw, minuteRaw = '0'] = trimmed.split(':');
-  const hour = Number(hourRaw);
-  const minute = Number(minuteRaw);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return null;
-  }
-  return hour * 60 + minute;
-};
+const minutesToDisplay = (minutes: number) =>
+  formatTimeString(toTimeString(minutes), 'h:mm a');
 
 const parseValueToSelection = (value: string): Selection => {
   const selected = Array(SLICES).fill(false) as boolean[];
@@ -55,11 +33,11 @@ const parseValueToSelection = (value: string): Selection => {
     const [startRaw, endRaw] = rangeStr
       .split('-')
       .map((part) => part?.trim() ?? '');
-    const startMinutes = parseTimeToMinutes(startRaw);
-    const endMinutes = parseTimeToMinutes(endRaw);
+    const startMinutes = fromTimeString(startRaw);
+    const endMinutes = fromTimeString(endRaw);
     if (
-      startMinutes === null ||
-      endMinutes === null ||
+      startMinutes === undefined ||
+      endMinutes === undefined ||
       endMinutes <= startMinutes
     ) {
       return;
@@ -96,7 +74,7 @@ const selectionToValue = (selection: Selection) => {
     ranges.push([start * MINUTES_PER_SLICE, end * MINUTES_PER_SLICE]);
   }
   return ranges
-    .map(([start, end]) => `${minutesTo24h(start)}-${minutesTo24h(end)}`)
+    .map(([start, end]) => `${toTimeString(start)}-${toTimeString(end)}`)
     .join(',');
 };
 
