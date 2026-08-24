@@ -72,13 +72,23 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
   const showModalScreen = useCallback(
     (props: TShowModalScreenProps) => {
-      const { renderContent, presentation, title, hideHeader, onClose } = props;
+      const {
+        renderContent,
+        presentation,
+        title,
+        hideHeader,
+        onClose,
+        headerCloseLabel,
+        headerVariant,
+      } = props;
 
       setModal({
         renderContent,
         presentation: presentation ?? DEFAULT_PRESENTATION,
         title: title ?? '',
         hideHeader: !!hideHeader,
+        headerCloseLabel,
+        headerVariant,
       });
 
       onCloseCallbackRef.current = onClose ?? null;
@@ -122,6 +132,8 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
         content: resolvedContent,
         hideHeader: modal.hideHeader,
         title: modal.title,
+        headerCloseLabel: modal.headerCloseLabel,
+        headerVariant: modal.headerVariant,
       }}
     >
       {children}
