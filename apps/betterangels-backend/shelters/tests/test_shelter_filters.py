@@ -3,25 +3,54 @@ from typing import Any
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from places import Places
 from unittest_parametrize import parametrize
 
 from shelters.enums import (
+    AccessibilityChoices,
     DayOfWeekChoices,
     ParkingChoices,
     PetChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    ShelterProgramChoices,
     StatusChoices,
+    StorageChoices,
 )
-from shelters.models import SPA, Parking, Pet, Shelter, ShelterType
+from shelters.models import (
+    SPA,
+    Accessibility,
+    City,
+    Parking,
+    Pet,
+    Service,
+    ServiceCategory,
+    Shelter,
+    ShelterProgram,
+    ShelterType,
+    Storage,
+)
 from shelters.models.schedule import Schedule
 from shelters.tests.baker_recipes import shelter_recipe
 
 
-class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
+class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def get_shelters_query(self, fields: str) -> str:
+        return f"""
+            query ($filters: PublicShelterFilter, $ordering: [ShelterOrder!]) {{
+                shelters (filters: $filters, ordering: $ordering) {{
+                    totalCount
+                    results {{{fields}}}
+                }}
+            }}
+        """
+
     def test_shelter_location_filter(self) -> None:
         reference_point = {
             "latitude": 34,
@@ -42,24 +71,14 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             for i in range(3, 0, -1)
         ]
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                        distanceInMiles
-                    }
-                }
-            }
-        """
-
         filters: dict[str, Any] = {}
         filters["geolocation"] = {
             "latitude": reference_point["latitude"],
             "longitude": reference_point["longitude"],
             "rangeInMiles": search_range_in_miles,
         }
+
+        query = self.get_shelters_query("id distanceInMiles")
 
         with CaptureQueriesContext(connection) as context:
             response = self.execute_graphql(query, variables={"filters": filters})
@@ -122,16 +141,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             for i in range(8, -2, -2)
         ]
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {
             "mapBounds": {
@@ -178,15 +188,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             status=StatusChoices.APPROVED,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {
             "mapBounds": {
@@ -223,16 +225,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             for i in range(8, -2, -2)
         ]
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {
             "mapBounds": {
@@ -259,16 +252,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(result_ids, expected_ids)
 
     def test_shelter_map_bounds_filter_validation(self) -> None:
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {
             "mapBounds": {
@@ -299,16 +283,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         access_center, _ = ShelterType.objects.get_or_create(name=ShelterChoices.ACCESS_CENTER)
         shelters = shelter_recipe.make(status=StatusChoices.APPROVED, shelter_types=[access_center], _quantity=2)
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
         filters: dict[str, Any] = {"isAccessCenter": True}
 
         expected_query_count = 2
@@ -335,16 +310,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelter_recipe.make(max_stay=3, status=StatusChoices.APPROVED)
         shelter_recipe.make(max_stay=7, status=StatusChoices.PENDING)
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {"maxStay": {"days": days, "includeNull": include_null}}
 
@@ -383,16 +349,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             status=StatusChoices.APPROVED,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {}
         filters["properties"] = property_filters
@@ -467,16 +424,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             status=StatusChoices.APPROVED,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {}
         filters["properties"] = property_filters
@@ -495,16 +443,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
         shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         filters: dict[str, Any] = {"spa": [str(spa_one.pk)]}
 
@@ -546,16 +485,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -611,14 +541,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             end_date=None,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -680,14 +603,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             end_date=None,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -730,14 +646,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -803,14 +712,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=True,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -885,14 +787,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -959,14 +854,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=True,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1061,14 +949,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1155,14 +1036,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1211,7 +1085,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         )
 
         query = """
-            query ($filters: ShelterFilter) {
+            query ($filters: PublicShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -1272,14 +1146,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             end_date=None,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1332,14 +1199,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             end_date=None,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1380,14 +1240,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1449,14 +1302,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=True,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1530,14 +1376,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1598,14 +1437,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=True,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1694,14 +1526,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1789,14 +1614,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1837,14 +1655,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         with patch(
             "shelters.types.filters.get_current_shelter_schedule_datetime",
@@ -1875,14 +1686,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             is_exception=False,
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         tuesday_early = datetime.datetime(
             2026,
@@ -1951,14 +1755,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             non_restricted_beds=0, restricted_beds=0
         )
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         response = self.execute_graphql(
             query,
@@ -1980,14 +1777,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ShelterAvailability.objects.filter(shelter=shelter_with_beds).update(non_restricted_beds=2, restricted_beds=1)
         ShelterAvailability.objects.filter(shelter=shelter_no_beds).update(non_restricted_beds=0, restricted_beds=0)
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         response = self.execute_graphql(
             query,
@@ -2008,14 +1798,7 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         ShelterAvailability.objects.filter(shelter=shelter_with_beds).update(non_restricted_beds=3, restricted_beds=0)
         ShelterAvailability.objects.filter(shelter=shelter_no_beds).update(non_restricted_beds=0, restricted_beds=0)
 
-        query = """
-            query ($filters: ShelterFilter) {
-                shelters(filters: $filters) {
-                    totalCount
-                    results { id }
-                }
-            }
-        """
+        query = self.get_shelters_query("id")
 
         response = self.execute_graphql(
             query,
@@ -2026,3 +1809,193 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertIn(str(shelter_with_beds.pk), result_ids)
         self.assertIn(str(shelter_no_beds.pk), result_ids)
+
+    def test_on_site_security_filter(self) -> None:
+        with_security = shelter_recipe.make(status=StatusChoices.APPROVED, on_site_security=True)
+        shelter_recipe.make(status=StatusChoices.APPROVED, on_site_security=False)
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(query, variables={"filters": {"onSiteSecurity": True}})
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(with_security.id)})
+
+    def test_accessibility_filter(self) -> None:
+        ada = Accessibility.objects.get_or_create(name=AccessibilityChoices.ADA_ROOMS)[0]
+        wheelchair = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, accessibility=[ada])
+        shelter_recipe.make(status=StatusChoices.APPROVED, accessibility=[wheelchair])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"accessibility": [AccessibilityChoices.ADA_ROOMS.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_storage_filter(self) -> None:
+        lockers = Storage.objects.get_or_create(name=StorageChoices.STANDARD_LOCKERS)[0]
+        shared = Storage.objects.get_or_create(name=StorageChoices.SHARED_STORAGE)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, storage=[lockers])
+        shelter_recipe.make(status=StatusChoices.APPROVED, storage=[shared])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"storage": [StorageChoices.STANDARD_LOCKERS.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_shelter_programs_filter(self) -> None:
+        emergency = ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.EMERGENCY_SHELTER)[0]
+        interim = ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.INTERIM_HOUSING)[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, shelter_programs=[emergency])
+        shelter_recipe.make(status=StatusChoices.APPROVED, shelter_programs=[interim])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(
+            query,
+            variables={"filters": {"shelterPrograms": [ShelterProgramChoices.EMERGENCY_SHELTER.name]}},
+        )
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_city_filter(self) -> None:
+        city_a = City.objects.get_or_create(name="Filter City A")[0]
+        city_b = City.objects.get_or_create(name="Filter City B")[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, city=city_a)
+        shelter_recipe.make(status=StatusChoices.APPROVED, city=city_b)
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(query, variables={"filters": {"city": [str(city_a.id)]}})
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_cities_served_filter(self) -> None:
+        city_a = City.objects.get_or_create(name="Served City A")[0]
+        city_b = City.objects.get_or_create(name="Served City B")[0]
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, cities_served=[city_a])
+        shelter_recipe.make(status=StatusChoices.APPROVED, cities_served=[city_b])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(query, variables={"filters": {"citiesServed": [str(city_a.id)]}})
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_spas_served_filter(self) -> None:
+        spa_a, _ = SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")
+        spa_b, _ = SPA.objects.get_or_create(short_name="2", long_name="2 - San Fernando Valley")
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_a])
+        shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_b])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(query, variables={"filters": {"spasServed": [str(spa_a.id)]}})
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+    def test_services_filter(self) -> None:
+        category, _ = ServiceCategory.objects.get_or_create(
+            name="filter_general",
+            defaults={"display_name": "Filter General", "priority": 0},
+        )
+        service_a, _ = Service.objects.get_or_create(
+            category=category,
+            name="filter_service_a",
+            defaults={"display_name": "Filter Service A", "priority": 0},
+        )
+        service_b, _ = Service.objects.get_or_create(
+            category=category,
+            name="filter_service_b",
+            defaults={"display_name": "Filter Service B", "priority": 1},
+        )
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, services=[service_a])
+        shelter_recipe.make(status=StatusChoices.APPROVED, services=[service_b])
+
+        query = self.get_shelters_query("id")
+        response = self.execute_graphql(query, variables={"filters": {"services": [str(service_a.id)]}})
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertEqual(result_ids, {str(match.id)})
+
+
+class OperatorShelterFilterQueryTestCase(GraphQLBaseTestCase):
+    """Tests for filters that exist only on ``OperatorShelterFilter``."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        from notes.groups import CASEWORKER
+
+        app_label, codename = Shelter.perms.VIEW.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def get_shelters_query(self, fields: str) -> str:
+        return f"""
+            query ($filters: OperatorShelterFilter, $ordering: [ShelterOrder!]) {{
+                operatorShelters (filters: $filters, ordering: $ordering) {{
+                    totalCount
+                    results {{{fields}}}
+                }}
+            }}
+        """
+
+    def _result_ids(self, filters: dict[str, Any]) -> set[str]:
+        response = self.execute_graphql(
+            self.get_shelters_query("id"),
+            variables={"filters": filters},
+        )
+        self.assertIsNone(response.get("errors"))
+        return {r["id"] for r in response["data"]["operatorShelters"]["results"]}
+
+    def test_search_filter(self) -> None:
+        """Search matches name, org name, description, or subjective review."""
+        self.org_1.name = "Alpha House Network"
+        self.org_1.save()
+        shelter = shelter_recipe.make(
+            organization=self.org_1,
+            name="Safe Haven",
+            description="offers free breakfast every morning",
+            subjective_review="exceptionally clean facility",
+        )
+        expected = {str(shelter.id)}
+
+        self.assertEqual(self._result_ids({"search": "safe haven"}), expected)
+        self.assertEqual(self._result_ids({"search": "alpha house"}), expected)
+        self.assertEqual(self._result_ids({"search": "free breakfast"}), expected)
+        self.assertEqual(self._result_ids({"search": "exceptionally clean"}), expected)
+        self.assertEqual(self._result_ids({"search": "nonexistent-term"}), set())
+
+        # Empty / whitespace / absent search is a no-op.
+        all_ids = self._result_ids({})
+        self.assertEqual(self._result_ids({"search": ""}), all_ids)
+        self.assertEqual(self._result_ids({"search": "   "}), all_ids)
+        self.assertEqual(self._result_ids({"search": None}), all_ids)
+
+    def test_status_filter(self) -> None:
+        approved = shelter_recipe.make(organization=self.org_1, status=StatusChoices.APPROVED)
+        draft = shelter_recipe.make(organization=self.org_1, status=StatusChoices.DRAFT)
+
+        self.assertEqual(
+            self._result_ids({"status": [StatusChoices.DRAFT.name]}),
+            {str(draft.id)},
+        )
+        self.assertIn(str(approved.id), self._result_ids({"status": [StatusChoices.APPROVED.name]}))
+
+    def test_city_council_district_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, city_council_district=5)
+        shelter_recipe.make(organization=self.org_1, city_council_district=12)
+
+        self.assertEqual(self._result_ids({"cityCouncilDistrict": [5]}), {str(match.id)})
+
+    def test_supervisorial_district_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, supervisorial_district=2)
+        shelter_recipe.make(organization=self.org_1, supervisorial_district=4)
+
+        self.assertEqual(self._result_ids({"supervisorialDistrict": [2]}), {str(match.id)})
+
+    def test_overall_rating_filter(self) -> None:
+        match = shelter_recipe.make(organization=self.org_1, overall_rating=5)
+        shelter_recipe.make(organization=self.org_1, overall_rating=2)
+
+        self.assertEqual(self._result_ids({"overallRating": [5]}), {str(match.id)})

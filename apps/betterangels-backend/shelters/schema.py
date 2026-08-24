@@ -4,25 +4,31 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
-from accounts.models import User
+from accounts.models import Organization, User
+from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     BulkDeleteInput,
     BulkDeleteResult,
 )
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.db.models import Max
+from django.db.models import Exists, Max, OuterRef, QuerySet
 from django.utils import timezone
+from strawberry import ID
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors import shelter_get, shelter_occupancy_metrics as shelter_occupancy_metrics_selector
+from shelters.selectors import shelter_get
+from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
-from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
-from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
+from shelters.services.shelter_photo import ShelterPhotoResolveItem, UploadRequest
 from shelters.types import (
     BedType,
     CityType,
@@ -47,10 +53,7 @@ from shelters.types import (
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
-from strawberry import ID
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
+from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
 
 
 @strawberry.type
@@ -104,6 +107,33 @@ class Query:
     shelter_spas: OffsetPaginated[SPAType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
+    )
+    def shelter_operator_organizations(
+        self,
+        info: Info,
+        ordering: Optional[list[OrganizationOrder]] = None,
+        filters: Optional[OrganizationFilter] = None,
+    ) -> QuerySet[Organization]:
+        """Return all organizations that have a Shelter Operator permission group."""
+        from accounts.models import PermissionGroup
+
+        from shelters.groups import SHELTER_OPERATOR
+
+        has_shelter_operator_group = Exists(
+            PermissionGroup.objects.filter(
+                organization=OuterRef("pk"),
+                template__name=SHELTER_OPERATOR.name,
+            )
+        )
+
+        queryset: QuerySet[Organization] = Organization.objects.filter(has_shelter_operator_group)
+
+        return queryset
 
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:

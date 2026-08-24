@@ -2204,6 +2204,39 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export type OperatorShelterFilter = {
+  AND?: InputMaybe<OperatorShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OperatorShelterFilter>;
+  OR?: InputMaybe<OperatorShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  cityCouncilDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  /** @deprecated Use openNow instead */
+  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  status?: InputMaybe<Array<StatusChoices>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+  supervisorialDistrict?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
 export type OperatorShelterType = {
   __typename?: 'OperatorShelterType';
   HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
@@ -2514,6 +2547,33 @@ export enum PronounEnum {
   TheyThemTheirs = 'THEY_THEM_THEIRS'
 }
 
+export type PublicShelterFilter = {
+  AND?: InputMaybe<PublicShelterFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<PublicShelterFilter>;
+  OR?: InputMaybe<PublicShelterFilter>;
+  accessibility?: InputMaybe<Array<AccessibilityChoices>>;
+  citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  city?: InputMaybe<Array<Scalars['ID']['input']>>;
+  geolocation?: InputMaybe<GeolocationInput>;
+  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
+  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
+  maxStay?: InputMaybe<MaxStayInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  openNow?: InputMaybe<OpenNowInput>;
+  /** @deprecated Use openNow instead */
+  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
+  properties?: InputMaybe<ShelterPropertyInput>;
+  services?: InputMaybe<Array<Scalars['ID']['input']>>;
+  shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
+  spasServed?: InputMaybe<Array<Scalars['ID']['input']>>;
+  storage?: InputMaybe<Array<StorageChoices>>;
+};
+
 export type Query = {
   __typename?: 'Query';
   bed: BedType;
@@ -2557,6 +2617,7 @@ export type Query = {
   shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterOccupancyMetrics: ShelterOccupancyMetricsType;
+  shelterOperatorOrganizations: OrganizationTypeOffsetPaginated;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
@@ -2701,7 +2762,7 @@ export type QueryOperatorShelterArgs = {
 
 
 export type QueryOperatorSheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<OperatorShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2794,6 +2855,13 @@ export type QueryShelterOccupancyMetricsArgs = {
 };
 
 
+export type QueryShelterOperatorOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  ordering?: InputMaybe<Array<OrganizationOrder>>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryShelterServiceCategoriesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2805,7 +2873,7 @@ export type QueryShelterSpasArgs = {
 
 
 export type QuerySheltersArgs = {
-  filters?: InputMaybe<ShelterFilter>;
+  filters?: InputMaybe<PublicShelterFilter>;
   ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -3283,26 +3351,6 @@ export enum ShelterChoices {
   TinyHomes = 'TINY_HOMES'
 }
 
-export type ShelterFilter = {
-  AND?: InputMaybe<ShelterFilter>;
-  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ShelterFilter>;
-  OR?: InputMaybe<ShelterFilter>;
-  geolocation?: InputMaybe<GeolocationInput>;
-  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
-  isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
-  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
-  mapBounds?: InputMaybe<MapBoundsInput>;
-  maxStay?: InputMaybe<MaxStayInput>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  openNow?: InputMaybe<OpenNowInput>;
-  /** @deprecated Use openNow instead */
-  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
-  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
-  properties?: InputMaybe<ShelterPropertyInput>;
-  spa?: InputMaybe<Array<Scalars['ID']['input']>>;
-};
-
 export type ShelterHeroImageType = {
   __typename?: 'ShelterHeroImageType';
   id: Scalars['ID']['output'];
@@ -3334,8 +3382,11 @@ export type ShelterOccupancyMetricsType = {
 };
 
 export type ShelterOrder = {
+  bedCount?: InputMaybe<Ordering>;
   createdAt?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
+  organization?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
 };
 
 export type ShelterPhotoFromUploadInput = {
@@ -3399,6 +3450,8 @@ export type ShelterPropertyInput = {
   demographicsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   entryRequirements?: InputMaybe<Array<EntryRequirementChoices>>;
   entryRequirementsIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
+  funders?: InputMaybe<Array<FunderChoices>>;
+  fundersIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   parkingIncludeNull?: InputMaybe<Scalars['Boolean']['input']>;
   pets?: InputMaybe<Array<PetChoices>>;

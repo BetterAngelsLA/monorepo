@@ -58,11 +58,12 @@ from shelters.types.lookups import (
 from .filters import (
     BedFilter,
     BedOrder,
+    OperatorShelterFilter,
+    PublicShelterFilter,
     ReservationFilter,
     ReservationOrder,
     RoomFilter,
     RoomOrder,
-    ShelterFilter,
     ShelterOrder,
 )
 
@@ -270,7 +271,7 @@ class ShelterTypeMixin:
         )
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+@strawberry_django.type(models.Shelter, filters=PublicShelterFilter, ordering=ShelterOrder)
 class ShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
@@ -278,7 +279,7 @@ class ShelterType(ShelterTypeMixin):
         return shelter_list(queryset, user=user)
 
 
-@strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
+@strawberry_django.type(models.Shelter, filters=OperatorShelterFilter, ordering=ShelterOrder)
 class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
