@@ -19,6 +19,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
+    OrganizationOwnerTransferForm,
     PermissionGroupInlineForm,
     OrganizationProfileForm,
     UserChangeForm,
@@ -37,6 +38,7 @@ from .services import (
     member_invite,
     member_roles_replace,
     organization_remove_member,
+    organization_transfer_ownership,
     reconcile_org_groups,
 )
 
@@ -278,6 +280,11 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
                 self.admin_site.admin_view(self.change_member_roles_view),
                 name="organizations_organization_change_member_roles",
             ),
+            path(
+                "<path:object_id>/transfer-ownership/",
+                self.admin_site.admin_view(self.transfer_ownership_view),
+                name="organizations_organization_transfer_ownership",
+            ),
         ]
         return custom_urls + super().get_urls()
 
@@ -360,6 +367,57 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             "title": f"Roles for {member.email or member} in {organization.name}",
             "help_text": "Unchecking a role revokes it. Clearing them all leaves the person a member with no access.",
             "submit_label": "Save roles",
+            "cancel_url": organization_url,
+        }
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
+
+    def transfer_ownership_view(self, request: HttpRequest, object_id: str) -> HttpResponse:
+        """Hand ownership of this organization to another member.
+
+        Without this the first person invited to a new organization is stuck:
+        ``Organization.add_user`` makes them the owner and
+        ``organization_remove_member`` refuses to remove an owner.  Editing the
+        ``OrganizationOwner`` row by hand was the only way out.
+        """
+        organization = get_object_or_404(Organization, pk=object_id)
+        organization_url = reverse("admin:organizations_organization_change", args=[organization.pk])
+        owner = (
+            OrganizationOwner.objects.filter(organization=organization)
+            .select_related("organization_user__user")
+            .first()
+        )
+        current_owner = owner.organization_user.user if owner else None
+
+        if request.method == "POST":
+            form = OrganizationOwnerTransferForm(request.POST, organization=organization, current_owner=current_owner)
+            if form.is_valid():
+                try:
+                    member = organization_transfer_ownership(
+                        organization=organization,
+                        new_owner_user_id=form.cleaned_data["new_owner"].pk,
+                    )
+                except ValidationError as error:
+                    self.message_user(request, "; ".join(error.messages), messages.ERROR)
+                    return redirect(request.get_full_path())
+
+                self.message_user(
+                    request,
+                    f"{member.email or member} now owns {organization.name}.",
+                    messages.SUCCESS,
+                )
+                return redirect(organization_url)
+        else:
+            form = OrganizationOwnerTransferForm(organization=organization, current_owner=current_owner)
+
+        current = current_owner.email or str(current_owner) if current_owner else "nobody"
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "form": form,
+            "title": f"Transfer ownership of {organization.name}",
+            "help_text": f"Currently owned by {current}. Only a member can own an organization.",
+            "submit_label": "Transfer ownership",
             "cancel_url": organization_url,
         }
         return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)

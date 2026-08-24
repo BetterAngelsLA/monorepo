@@ -713,6 +713,59 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         )
 
 
+class OrganizationOwnershipTransferTestCase(TestCase):
+    """The owner cannot be removed, so there has to be a way to stop being one."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_owner_tests", email="admin_owner_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"])
+        self.owner_membership = OrganizationOwner.objects.get(organization=self.organization).organization_user
+        self.member = member_add(
+            email="successor@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.url = reverse("admin:organizations_organization_transfer_ownership", args=[self.organization.pk])
+
+    def test_the_organization_page_offers_the_transfer(self) -> None:
+        page = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk])
+        ).content.decode()
+
+        self.assertIn(self.url, page)
+
+    def test_the_form_offers_members_but_not_the_current_owner(self) -> None:
+        response = self.client.get(self.url)
+
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertNotIn(self.owner_membership.user, offered)
+
+    def test_transferring_moves_ownership_and_frees_the_old_owner(self) -> None:
+        old_owner = self.owner_membership.user
+
+        response = self.client.post(self.url, {"new_owner": str(self.member.pk)})
+
+        self.assertRedirects(response, reverse("admin:organizations_organization_change", args=[self.organization.pk]))
+        self.assertEqual(
+            OrganizationOwner.objects.get(organization=self.organization).organization_user.user, self.member
+        )
+        # The old owner's row is now deletable, which it was not before.
+        old_membership = OrganizationUser.objects.get(organization=self.organization, user=old_owner)
+        deleted = self.client.post(
+            reverse("admin:organizations_organizationuser_delete", args=[old_membership.pk]),
+            {"post": "yes"},
+        )
+        self.assertEqual(deleted.status_code, 302)
+        self.assertFalse(OrganizationUser.objects.filter(pk=old_membership.pk).exists())
+
+
 class OrganizationMemberInlineQueryCountTestCase(TestCase):
     """The Members inline renders every row, so its cost must not grow per member."""
 

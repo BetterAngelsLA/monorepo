@@ -548,7 +548,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.assertEqual(len(response["data"]["removeOrganizationMember"]["messages"]), 1)
         self.assertEqual(
             response["data"]["removeOrganizationMember"]["messages"][0]["message"],
-            "You cannot remove the organization owner. Transfer ownership first.",
+            "You cannot remove the organization owner. Transfer ownership to another member first.",
         )
 
         self.assertTrue(
