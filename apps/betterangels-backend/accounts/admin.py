@@ -9,7 +9,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from django.contrib.sites.models import Site
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -157,16 +157,20 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
             return ""
         names = []
         for group in obj.user.groups.all():
-            if not hasattr(group, "permissiongroup"):
+            try:
+                permission_group = group.permissiongroup
+            except ObjectDoesNotExist:
                 continue
-            permission_group = group.permissiongroup
             if permission_group.organization_id == obj.organization_id:
                 names.append(permission_group.name)
         return ", ".join(sorted(names)) or "—"
 
     @admin.display(description="Owner", boolean=True)
     def owner(self, obj: OrganizationUser) -> bool:
-        return hasattr(obj, "organizationowner")
+        try:
+            return obj.organizationowner is not None
+        except ObjectDoesNotExist:
+            return False
 
     @admin.display(description="")
     def change_roles(self, obj: OrganizationUser) -> str:

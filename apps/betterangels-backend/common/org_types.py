@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from django.core.exceptions import ObjectDoesNotExist
+
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from common.permissions.config import TemplateConfig
 from notes.groups import CASEWORKER
@@ -145,12 +147,14 @@ class Registry:
         An organization with no profile has not been configured as a tenant and
         can hold no roles, so the result is empty rather than an error.
         """
-        if not hasattr(org, "profile"):
+        try:
+            profile = org.profile
+        except ObjectDoesNotExist:
             return []
 
         result: list[TemplateConfig] = []
         seen: set[str] = set()
-        for org_type in org.profile.org_types:
+        for org_type in profile.org_types:
             org_config = self._by_name.get(org_type.value)
             if org_config:
                 for template_config in org_config.templates:
