@@ -398,10 +398,20 @@ def member_roles_replace(
     user_id: int,
     permission_templates: tuple[TemplateConfig, ...],
 ) -> UserModel:
-    """Replace a member's org-scoped roles with exactly *permission_templates*.
+    """Set which of *organization*'s invitable roles a member holds.
 
-    Roles not listed are revoked, which is what makes this a single edit of "what
-    this person can do here" rather than an additive grant.
+    An invitable role not listed is revoked, which makes this a single edit of
+    "what this person can do here" rather than an additive grant.
+
+    Every other org-scoped group is left alone: ``Organization Admin`` and
+    ``Organization Superuser``, the ``REGISTRY.unscoped`` templates, and rows
+    created by hand in the admin with a name and no template.  None of those are
+    offered by the surfaces that call this, so clearing every group and re-adding
+    the listed ones would revoke them invisibly — and a template-less row could
+    not be re-added at all, since
+    :meth:`accounts.role_manager.OrgRoleManager.add_roles` resolves a
+    ``PermissionGroup`` by template name.  They are granted and revoked from the
+    user page's group picker.
 
     Raises :class:`~django.core.exceptions.ValidationError` if the user is not a
     member of *organization*.
@@ -415,7 +425,18 @@ def member_roles_replace(
         raise ValidationError("User is not a member of this organization.")
 
     member: UserModel = org_user.user
-    OrgRoleManager(organization).replace_roles(member, *permission_templates)
+    granted = {template.name for template in permission_templates}
+    # reconcile_org_groups creates a PermissionGroup for every template the org's
+    # org types name, so remove_roles' lookup of each of these resolves.
+    revoked = tuple(
+        template
+        for name in REGISTRY.invitable_template_names_for(organization)
+        if name not in granted and (template := REGISTRY.template(name)) is not None
+    )
+
+    role_manager = OrgRoleManager(organization)
+    role_manager.add_roles(member, *permission_templates)
+    role_manager.remove_roles(member, *revoked)
 
     return member
 

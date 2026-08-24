@@ -157,18 +157,23 @@ class OrganizationMemberInviteForm(OrganizationRoleSelectionForm):
 
 
 class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
-    """Set exactly which roles an existing member holds in *organization*.
+    """Set which of *organization*'s invitable roles an existing member holds.
 
     Unchecking a role revokes it, so this is one edit of what the person can do
-    here rather than an additive grant.
+    here rather than an additive grant.  Roles the organization does not offer by
+    invitation are held but not editable here; they are listed in
+    ``locked_role_names`` so the page says what it is not showing checkboxes for.
     """
 
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
+        held = sorted(
+            PermissionGroup.objects.filter(organization=organization, group__user=member).values_list("name", flat=True)
+        )
+        offered = set(self.role_names)
+        self.locked_role_names = [name for name in held if name not in offered]
         # Clearing every role is a real state — it is what a member starts as
         # before any role is granted — so revoking the last one is allowed here,
         # unlike on the invite form where it would send a pointless invitation.
         self.fields["permission_templates"].required = False
-        self.fields["permission_templates"].initial = sorted(
-            PermissionGroup.objects.filter(organization=organization, group__user=member).values_list("name", flat=True)
-        )
+        self.fields["permission_templates"].initial = [name for name in held if name in offered]

@@ -7,6 +7,7 @@ roles and accept no members, and adding a member to it returned a 500.
 from typing import cast
 
 from accounts.admin import CustomOrganizationUserAdmin
+from accounts.groups import ORG_ADMIN
 from accounts.models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -25,7 +26,7 @@ from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 
-from .baker_recipes import organization_recipe
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class OrganizationProfileAccessTestCase(TestCase):
@@ -615,6 +616,67 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
 
         self.assertSetEqual(self._roles_of(member), set())
         self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
+
+    def test_changing_roles_keeps_a_role_the_form_never_offered(self) -> None:
+        """Org Admin is ``is_invitable=False``, so it has no checkbox to keep ticked.
+
+        Clearing every org-scoped group and re-adding the posted ones revoked it on
+        any save, including one that changed nothing — and the owner, who holds it,
+        is offered this form from the Members inline.
+        """
+        member = member_add(
+            email="promoted@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        self.client.post(url, {"permission_templates": [CASEWORKER.name]})
+
+        self.assertSetEqual(self._roles_of(member), {CASEWORKER.name, ORG_ADMIN.name})
+
+    def test_changing_roles_keeps_a_group_created_by_hand(self) -> None:
+        """A row with a name and no template cannot be re-added, only left alone.
+
+        ``add_roles`` resolves a ``PermissionGroup`` by template name, so clearing
+        this one would have destroyed the grant with nothing able to restore it.
+        """
+        member = member_add(
+            email="handgranted@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        hand_granted = permission_group_recipe.make(organization=self.organization, template=None)
+        member.groups.add(hand_granted.group)
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        self.client.post(url, {"permission_templates": [SHELTER_OPERATOR.name]})
+
+        self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+        self.assertNotIn(CASEWORKER.name, self._roles_of(member))
+        self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
+
+    def test_the_role_form_names_the_roles_it_does_not_offer(self) -> None:
+        member = member_add(
+            email="locked@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].locked_role_names, [ORG_ADMIN.name])
+        self.assertContains(response, f"Also holds, and keeps: {ORG_ADMIN.name}.")
 
     def test_a_role_the_organization_cannot_hold_is_rejected(self) -> None:
         outreach_only = organization_recipe.make(preset_names=["outreach"], owner_roles=())

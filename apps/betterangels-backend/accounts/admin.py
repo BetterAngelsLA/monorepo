@@ -324,7 +324,9 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
                     self.message_user(request, "; ".join(error.messages), messages.ERROR)
                     return redirect(request.get_full_path())
 
-                roles = ", ".join(template.name for template in role_templates) or "no roles"
+                roles = (
+                    ", ".join([*(template.name for template in role_templates), *form.locked_role_names]) or "no roles"
+                )
                 self.message_user(
                     request,
                     f"{member.email or member} now holds {roles} in {organization.name}.",
