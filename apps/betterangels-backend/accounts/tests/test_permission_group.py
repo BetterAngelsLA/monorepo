@@ -3,6 +3,7 @@ from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
@@ -116,6 +117,26 @@ class PermissionGroupTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             PermissionGroup(organization=organization).full_clean()
+
+    def test_a_writer_that_skips_validation_is_rejected_by_the_database(self) -> None:
+        """``objects.create`` never reaches ``clean()``, so the rule lives in a constraint."""
+        organization = organization_recipe.make(owner_roles=())
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            PermissionGroup.objects.create(organization=organization)
+
+    def test_deleting_through_a_queryset_still_deletes_the_group(self) -> None:
+        """The production bug was a queryset delete, which skips ``Model.delete()``.
+
+        Group teardown hangs off ``post_delete`` for exactly this reason — it is
+        the only mechanism a queryset delete and a cascade both reach.
+        """
+        permission_group = permission_group_recipe.make()
+        group_id = permission_group.group_id
+
+        PermissionGroup.objects.filter(pk=permission_group.pk).delete()
+
+        self.assertFalse(Group.objects.filter(id=group_id).exists())
 
 
 class TemplatePermissionSourceTestCase(TestCase):

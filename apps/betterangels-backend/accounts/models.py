@@ -171,6 +171,13 @@ class PermissionGroup(models.Model):
 
     class Meta:
         unique_together = (("organization", "group"), ("organization", "template"))
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(template__isnull=False) | ~Q(name=""),
+                name="permission_group_has_template_or_name",
+                violation_error_message="A permission group needs either a template or a name.",
+            )
+        ]
 
     def clean(self) -> None:
         """Require a template or a name to identify the role.
@@ -178,6 +185,12 @@ class PermissionGroup(models.Model):
         Both are optional individually, so the admin inline could otherwise save
         a row with neither — leaving its group's role segment empty and colliding
         with the next such row on the unique ``auth.Group.name``.
+
+        Duplicates the *call* of the constraint above, not the rule: ``clean()``
+        is what words the error on the inline, because ``_post_clean`` runs with
+        ``validate_constraints=False``.  The constraint is the one that holds for
+        ``objects.create()`` and ``get_or_create``, which never reach this.  Delete
+        this method if the admin ever stops needing the field-level message.
         """
         if not self.template_id and not self.name:
             raise ValidationError("A permission group needs either a template or a name.")

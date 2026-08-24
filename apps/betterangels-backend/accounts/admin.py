@@ -367,9 +367,9 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
     def change_roles(self, obj: OrganizationUser) -> str:
         """Changelist column linking to the organization admin's role editor.
 
-        Editing roles on this form would mean a second implementation, and
-        ``organization`` is editable here — changing it and the roles in one save
-        would validate the new organization against choices rendered for the old.
+        Editing roles on this form would mean a second implementation of the role
+        editor, against a form that does not know which organization's roles it is
+        offering until it reads the row.
         """
         return _change_roles_link(obj)
 
@@ -450,6 +450,19 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
         """
         for membership in queryset.select_related("organization"):
             self.delete_model(request, membership)
+
+    def get_readonly_fields(self, request: HttpRequest, obj: OrganizationUser | None = None) -> tuple[str, ...]:
+        """Fix the membership's own foreign keys once the row exists.
+
+        Repointing either moves the membership while its org-scoped groups stay
+        on the old pair, leaving a user holding every ``org:<pk>:<role>`` group
+        for an organization they are no longer in.  The form this admin replaced
+        excluded ``user`` for the same reason; the default ModelForm this branch
+        fell back to offered both.
+        """
+        if obj is None:
+            return tuple(self.readonly_fields)
+        return ("organization", "user", *self.readonly_fields)
 
 
 @admin.register(ExtendedOrganizationInvitation)

@@ -485,6 +485,21 @@ class OrganizationUserAddViewTestCase(TestCase):
 
         self.assertNotIn("is_admin", response.context["adminform"].form.fields)
 
+    def test_the_membership_cannot_be_repointed_at_another_organization(self) -> None:
+        """Moving the row by FK would strand the org-scoped groups on the old pair."""
+        membership = OrganizationUser.objects.get(organization=self.organization)
+        elsewhere = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        url = reverse("admin:organizations_organizationuser_change", args=[membership.pk])
+
+        response = self.client.get(url)
+        self.assertNotIn("organization", response.context["adminform"].form.fields)
+        self.assertNotIn("user", response.context["adminform"].form.fields)
+
+        self.client.post(url, {"organization": str(elsewhere.pk), "user": str(self.superuser.pk)})
+
+        membership.refresh_from_db()
+        self.assertEqual(membership.organization_id, self.organization.pk)
+
     def test_the_user_page_lists_the_organizations_and_roles(self) -> None:
         member = member_add(
             email="rolesonuser@example.com",
