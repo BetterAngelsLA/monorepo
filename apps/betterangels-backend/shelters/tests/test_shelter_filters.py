@@ -438,7 +438,7 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelter_spa_filter(self) -> None:
-        spa_one, _ = SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")
+        spa_one, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
 
         shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
         shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)
@@ -1884,8 +1884,8 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(result_ids, {str(match.id)})
 
     def test_spas_served_filter(self) -> None:
-        spa_a, _ = SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")
-        spa_b, _ = SPA.objects.get_or_create(short_name="2", long_name="2 - San Fernando Valley")
+        spa_a, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
+        spa_b, _ = SPA.objects.get_or_create(short_name="2", defaults={"long_name": "2 - San Fernando Valley"})
         match = shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_a])
         shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_b])
 

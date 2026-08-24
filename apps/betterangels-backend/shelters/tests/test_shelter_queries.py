@@ -8,6 +8,8 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.test import override_settings
 from model_bakery.recipe import seq
 from places import Places
+from waffle.testutils import override_switch
+
 from shelters.enums import (
     AccessibilityChoices,
     DemographicChoices,
@@ -48,7 +50,6 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
-from waffle.testutils import override_switch
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
@@ -126,8 +127,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0],
-            spas_served=[SPA.objects.get_or_create(short_name="1", long_name="1 - Antelope Valley")[0]],
+            spa=SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})[0],
+            spas_served=[SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})[0]],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
