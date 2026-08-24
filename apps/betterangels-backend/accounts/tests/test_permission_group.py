@@ -3,6 +3,7 @@ from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
@@ -116,6 +117,13 @@ class PermissionGroupTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             PermissionGroup(organization=organization).full_clean()
+
+    def test_a_writer_that_skips_validation_is_rejected_by_the_database(self) -> None:
+        """``objects.create`` never reaches ``clean()``, so the rule lives in a constraint."""
+        organization = organization_recipe.make(owner_roles=())
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            PermissionGroup.objects.create(organization=organization)
 
 
 class TemplatePermissionSourceTestCase(TestCase):
