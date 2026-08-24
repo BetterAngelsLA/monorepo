@@ -648,7 +648,7 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
 
         self.assertIsNone(response.get("errors"))
         names = [r["name"] for r in response["data"]["shelterOperatorOrganizations"]["results"]]
-        self.assertEqual(names, sorted(names))
+        self.assertEqual(names, ["Alpha", "Middle", "test_org", "Zebra"])
         self.assertEqual(
             [n for n in names if n in {"Alpha", "Middle", "Zebra"}],
             ["Alpha", "Middle", "Zebra"],
