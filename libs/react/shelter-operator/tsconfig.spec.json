@@ -6,6 +6,6 @@
     "declaration": true,
     "outDir": "../../../dist/out-tsc",
     "module": "commonjs",
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   }
 }
