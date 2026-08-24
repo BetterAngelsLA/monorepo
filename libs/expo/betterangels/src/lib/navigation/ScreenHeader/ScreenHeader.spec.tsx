@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { ReactNode } from 'react';
 import { Text } from 'react-native';
+import { ScreenHeaderCloseButton } from './buttons';
 import { ScreenHeader } from './ScreenHeader';
 
 const mocks = vi.hoisted(() => ({
@@ -110,13 +111,16 @@ describe('ScreenHeader', () => {
       expect(mocks.back).toHaveBeenCalledTimes(1);
     });
 
-    it('renders nothing for none', () => {
+    it('renders a text label on the close button when one is given', () => {
       render(
-        <ScreenHeader variant="none" title="Upload Files" testID="header" />,
+        <ScreenHeader
+          variant="modal"
+          title="Upload Files"
+          buttonRight={<ScreenHeaderCloseButton label="Done" />}
+        />,
       );
 
-      expect(screen.queryByTestId('header')).toBeNull();
-      expect(screen.queryByText('Upload Files')).toBeNull();
+      expect(screen.getByText('Done')).toBeTruthy();
     });
 
     it('renders only the inset background for minimal', () => {

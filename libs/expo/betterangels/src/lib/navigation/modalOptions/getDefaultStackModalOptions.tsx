@@ -1,63 +1,52 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TModalPresentationType } from '../../providers';
+import { TModalHeaderConfig, TModalPresentationType } from '../../providers';
 import { HeaderLeftButton } from '../HeaderLeftButton';
-import { THeaderVariant } from '../types';
 import { getNativeHeaderOptions } from '../utils';
 import { getModalCloseBtn } from './getModalCloseBtn';
 
 type TProps = {
   title?: string;
   presentation?: TModalPresentationType;
-  hideHeader?: boolean;
   onClose?: null | (() => void);
-  headerCloseLabel?: string;
+  /** Header configuration, as passed to `showModalScreen`. */
+  header?: TModalHeaderConfig;
 };
 
-/**
- * Which header a modal presentation gets. `card` is a pushed screen, so it takes
- * the default bar (with Close in place of Back); both modal presentations take
- * the modal bar.
- */
-function getHeaderVariant(props: TProps): THeaderVariant {
-  const { presentation, hideHeader } = props;
-
-  if (hideHeader) {
-    return 'none';
-  }
-
-  return presentation === 'card' ? 'default' : 'modal';
-}
-
 export function getDefaultStackModalOptions(props?: TProps) {
-  const { presentation, title, onClose, headerCloseLabel } = props || {};
+  const { presentation, title, onClose, header } = props || {};
 
-  const variant = getHeaderVariant(props || {});
+  const headerMode = header?.mode;
 
-  if (variant === 'none') {
+  // Anything but `native` is rendered by the screen itself (or not at all) —
+  // the native bar stays off.
+  if (headerMode !== undefined && headerMode !== 'native') {
     return {
       presentation,
       headerShown: false,
     };
   }
 
-  if (variant === 'modal') {
+  // Native header. Its look comes from the shared `screen` style; the buttons
+  // follow the presentation: a pushed `card` screen gets Close on the left,
+  // both modal presentations get a close on the right.
+  if (presentation === 'card') {
     return {
-      ...getNativeHeaderOptions(variant),
+      ...getNativeHeaderOptions('screen'),
       presentation,
       title: title || '',
-      // Native-header-only: suppresses the back chevron expo-router would
-      // otherwise draw for a pushed route.
-      headerBackVisible: false,
-      headerRight: onClose
-        ? () => getModalCloseBtn({ onClose, label: headerCloseLabel })
-        : undefined,
+      headerLeft: () => <HeaderLeftButton title="Close" color={Colors.WHITE} />,
     };
   }
 
   return {
-    ...getNativeHeaderOptions('default'),
+    ...getNativeHeaderOptions('screen'),
     presentation,
     title: title || '',
-    headerLeft: () => <HeaderLeftButton title="Close" color={Colors.WHITE} />,
+    // Native-header-only: suppresses the back chevron expo-router would
+    // otherwise draw for a pushed route.
+    headerBackVisible: false,
+    headerRight: onClose
+      ? () => getModalCloseBtn({ onClose, label: header?.closeLabel })
+      : undefined,
   };
 }

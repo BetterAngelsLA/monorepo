@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { THeaderVariant } from '../../navigation/types';
+import { THeaderMode, THeaderVariant } from '../../navigation/types';
 
 export type noOpFn = () => void;
 
@@ -9,38 +9,50 @@ export type TRenderContentApi = {
   close: () => void;
 };
 
+/**
+ * The modal's header, as one unit. `mode` picks which header renders; the rest
+ * configure it. Both header renderers read the same object — the native bar via
+ * `getDefaultStackModalOptions`, the in-app bar via the `modal-screen` route.
+ */
+export type TModalHeaderConfig = {
+  /**
+   * Which header this modal gets. Defaults to `'native'` — the platform bar.
+   * `'custom'` draws the in-app `ScreenHeader` instead (styled by `variant`);
+   * `'none'` draws no bar at all.
+   */
+  mode?: THeaderMode;
+  /** Which style from `headerVariants`. Only used when `mode` is `'custom'`. */
+  variant?: THeaderVariant;
+  /** Left slot. Same tri-state as `ScreenHeader`'s `buttonLeft`: omit for the
+   *  variant's default, `null` for no button, a node for custom content. */
+  buttonLeft?: ReactNode | null;
+  /** Replaces the default "×" icon with a text label (e.g. "Done"). */
+  closeLabel?: string;
+  /** Draws the close button in a `'custom'` header. Defaults to `true`; pass
+   *  `false` for a surface that must not be dismissed from the bar. */
+  closeButton?: boolean;
+};
+
 export type TShowModalScreenProps = {
   renderContent: (api: TRenderContentApi) => ReactNode;
   presentation?: TModalPresentationType;
   title?: string;
-  hideHeader?: boolean;
   /** Fires when the modal is dismissed (pathname changes away). */
   onClose?: null | noOpFn;
-  /** Replaces the default "×" icon with a text label (e.g. "Done"). */
-  headerCloseLabel?: string;
-  /**
-   * Renders the in-app `ScreenHeader` in this variant. Opt-in: without it no
-   * in-app header is drawn. Pair it with `hideHeader: true`, which turns the
-   * native header off — otherwise the screen gets both.
-   */
-  headerVariant?: THeaderVariant;
+  /** Header configuration. Defaults to a `'native'` header. */
+  header?: TModalHeaderConfig;
 };
 export interface IModalScreenContext {
   showModalScreen: (props: TShowModalScreenProps) => void;
   content: ReactNode | null;
   presentation: TModalPresentationType;
-  hideHeader?: boolean;
   title?: string;
-  /** If set, renders a text button instead of the "×" icon in the header. */
-  headerCloseLabel?: string;
-  headerVariant?: THeaderVariant;
+  header?: TModalHeaderConfig;
 }
 
 export type IModalScreenState = {
   presentation: TModalPresentationType;
   title: string;
-  hideHeader: boolean;
   renderContent: ((api: TRenderContentApi) => ReactNode) | null;
-  headerCloseLabel?: string;
-  headerVariant?: THeaderVariant;
+  header?: TModalHeaderConfig;
 };

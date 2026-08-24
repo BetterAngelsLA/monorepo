@@ -16,17 +16,15 @@ type THeaderVariantConfig = {
 };
 
 /**
- * What each header variant is made of. The single definition both header
- * implementations read — the in-app `ScreenHeader` renders it directly, native
- * headers project it through `getNativeHeaderOptions`.
+ * What each header style is made of. The single definition every header
+ * implementation reads — the in-app `ScreenHeader` renders it directly,
+ * native headers project it through `getNativeHeaderOptions`.
  *
- * `none` has no entry: there is nothing to describe.
+ * Keys are the pure `THeaderVariant` styles. Which header a surface gets
+ * (native, custom, or none) is a separate decision: `THeaderMode`.
  */
-export const headerVariants: Record<
-  Exclude<THeaderVariant, 'none'>,
-  THeaderVariantConfig
-> = {
-  default: {
+export const headerVariants: Record<THeaderVariant, THeaderVariantConfig> = {
+  screen: {
     backgroundColor: Colors.BRAND_DARK_BLUE,
     textColor: Colors.WHITE,
     ButtonLeft: ScreenHeaderBackButton,

@@ -56,7 +56,7 @@ type TProps = {
  */
 export function ScreenHeader(props: TProps) {
   const {
-    variant = 'default',
+    variant = 'screen',
     title,
     backgroundColor,
     textColor,
@@ -69,10 +69,6 @@ export function ScreenHeader(props: TProps) {
   const insets = useSafeAreaInsets();
 
   const paddingTop = topInset ?? insets.top;
-
-  if (variant === 'none') {
-    return null;
-  }
 
   const config = headerVariants[variant];
 

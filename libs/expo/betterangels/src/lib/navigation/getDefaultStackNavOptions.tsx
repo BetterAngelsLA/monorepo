@@ -15,7 +15,7 @@ export function getDefaultStackNavOptions(props?: TProps) {
     headerTitleAlign: 'center',
     title: title || '',
     headerStyle: {
-      backgroundColor: headerVariants.default.backgroundColor,
+      backgroundColor: headerVariants.screen.backgroundColor,
     },
     headerLeft: () => <HeaderLeftButton />,
   } as const;

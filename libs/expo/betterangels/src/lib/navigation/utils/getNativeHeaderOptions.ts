@@ -2,7 +2,7 @@ import { headerVariants } from '../config';
 
 /** Projects a header variant onto the options react-navigation expects. */
 export function getNativeHeaderOptions(
-  variant: keyof typeof headerVariants = 'default',
+  variant: keyof typeof headerVariants = 'screen',
 ) {
   const { backgroundColor, textColor } = headerVariants[variant];
 
