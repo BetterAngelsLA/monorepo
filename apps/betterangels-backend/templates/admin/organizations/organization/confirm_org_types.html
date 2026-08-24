@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block content_title %}
+  <h1>{{ title }}</h1>
+{% endblock %}
+
+{% block content %}
+  <p>Removing an org type revokes its roles from everyone holding them. This save would take:</p>
+  <ul>
+    {% for role, holders in losses %}
+      <li><strong>{{ role }}</strong> — from {{ holders }} member{{ holders|pluralize }}</li>
+    {% endfor %}
+  </ul>
+  <p>Re-adding the org type afterwards creates the roles again, but does not give them back to anyone.</p>
+  <form method="post">
+    {% csrf_token %}
+    {% for name, value in posted %}
+      {% if name != "csrfmiddlewaretoken" %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+      {% endif %}
+    {% endfor %}
+    <input type="hidden" name="{{ confirm_field }}" value="1">
+    <div class="submit-row">
+      <input type="submit" value="Yes, revoke these roles" class="default">
+      <a href="{{ cancel_url }}" class="closelink">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

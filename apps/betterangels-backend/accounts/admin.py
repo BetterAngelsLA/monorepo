@@ -5,6 +5,7 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
+from django.contrib.admin.utils import unquote
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -263,10 +264,100 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
+    ORG_TYPE_REMOVAL_CONFIRMED = "_confirm_org_type_removal"
+
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """Reconcile permission groups once the profile's org types are saved."""
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
+
+    def change_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        form_url: str = "",
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
+        """Confirm before a save takes a role away from people who hold it.
+
+        Unchecking an org type deletes its permission groups on reconcile, and
+        ``delete_orphaned_group`` takes the ``auth.Group`` with them — so every
+        member silently loses that role.  It is the one edit on this page whose
+        blast radius is invisible from the form.
+
+        Interposed here rather than in the form because the form cannot re-render
+        the whole change view, and because a ``clean()`` error would be the wrong
+        shape: this is a confirmation, not a rejection.
+        """
+        if request.method == "POST" and self.ORG_TYPE_REMOVAL_CONFIRMED not in request.POST:
+            organization = self.get_object(request, unquote(object_id))
+            if organization is not None and (
+                losses := self._roles_lost_to_org_type_removal(organization, request.POST)
+            ):
+                return self._confirm_org_type_removal_response(request, organization, losses)
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def _confirm_org_type_removal_response(
+        self, request: HttpRequest, organization: Organization, losses: list[tuple[str, int]]
+    ) -> HttpResponse:
+        """Re-offer the submitted save, spelling out what it revokes."""
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "losses": losses,
+            "posted": [(key, value) for key in request.POST for value in request.POST.getlist(key)],
+            "confirm_field": self.ORG_TYPE_REMOVAL_CONFIRMED,
+            "title": f"Remove org types from {organization.name}?",
+            "cancel_url": reverse("admin:organizations_organization_change", args=[organization.pk]),
+        }
+        return TemplateResponse(request, "admin/organizations/organization/confirm_org_types.html", context)
+
+    @staticmethod
+    def _roles_lost_to_org_type_removal(organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles that reconciling *posted* would revoke, with how many hold each.
+
+        Empty when nothing is lost — a type nobody holds, or none removed at all.
+        A prompt that always fires stops being read.
+        """
+        profile_prefix = next(
+            (key.rsplit("-", 1)[0] for key in posted if key.endswith("-org_types")),
+            None,
+        )
+        if profile_prefix is None:
+            return []
+
+        submitted = set(posted.getlist(f"{profile_prefix}-org_types"))
+        current = (
+            {org_type.value for org_type in organization.profile.org_types}
+            if hasattr(organization, "profile")
+            else set()
+        )
+        removed = current - submitted
+        if not removed:
+            return []
+
+        kept_templates = {
+            template.name
+            for org_type in submitted
+            if (config := REGISTRY.org_type(org_type)) is not None
+            for template in config.templates
+        }
+        losing = {
+            template.name
+            for org_type in removed
+            if (config := REGISTRY.org_type(org_type)) is not None
+            for template in config.templates
+        } - kept_templates
+
+        losses = []
+        for permission_group in PermissionGroup.objects.filter(
+            organization=organization, template__name__in=sorted(losing)
+        ).select_related("group", "template"):
+            holders = permission_group.group.user_set.count()
+            if holders:
+                losses.append((permission_group.name, holders))
+        return sorted(losses)
 
     def get_urls(self) -> list[URLPattern]:
         custom_urls = [
