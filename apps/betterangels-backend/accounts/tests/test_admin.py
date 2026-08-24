@@ -713,6 +713,90 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         )
 
 
+class OrganizationTypeRemovalConfirmationTestCase(TestCase):
+    """Unchecking an org type revokes its roles; the page has to say so first."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_orgtype_tests", email="admin_orgtype_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _payload(self, org_types: list[str], **extra: str) -> dict:
+        rows = list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+        payload: dict = {
+            "name": self.organization.name,
+            "is_active": "on",
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(self.organization.profile.pk),
+            "profile-0-organization": str(self.organization.pk),
+            "profile-0-org_types": org_types,
+            "permission_groups-TOTAL_FORMS": str(len(rows)),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+        }
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-id"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(self.organization.pk)
+            payload[f"permission_groups-{index}-name"] = row.name
+            payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
+        return payload | extra
+
+    def _holds_shelter_operator(self) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=SHELTER_OPERATOR.name,
+        ).exists()
+
+    def test_dropping_a_held_type_asks_first_and_changes_nothing(self) -> None:
+        member_add(
+            email="losesit@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds_shelter_operator())
+
+    def test_confirming_goes_through(self) -> None:
+        member = member_add(
+            email="confirmed@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+
+        self.client.post(self.url, self._payload(["outreach"], _confirm_org_type_removal="1"))
+
+        self.assertFalse(self._holds_shelter_operator())
+        self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, group__user=member).exists())
+
+    def test_dropping_a_type_nobody_holds_does_not_ask(self) -> None:
+        """A prompt that always fires stops being read."""
+        self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertFalse(self._holds_shelter_operator())
+
+
 class OrganizationOwnershipTransferTestCase(TestCase):
     """The owner cannot be removed, so there has to be a way to stop being one."""
 
