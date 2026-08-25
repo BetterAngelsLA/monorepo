@@ -438,14 +438,14 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelter_spa_filter(self) -> None:
-        spa_one, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
+        spa_1 = SPA.objects.get(short_name="1")
 
-        shelters_in_spa = shelter_recipe.make(spa=spa_one, status=StatusChoices.APPROVED, _quantity=2)
+        shelters_in_spa = shelter_recipe.make(spa=spa_1, status=StatusChoices.APPROVED, _quantity=2)
         shelter_recipe.make(spa=None, status=StatusChoices.APPROVED, _quantity=2)
 
         query = self.get_shelters_query("id")
 
-        filters: dict[str, Any] = {"spa": [str(spa_one.pk)]}
+        filters: dict[str, Any] = {"spa": [str(spa_1.pk)]}
 
         expected_query_count = 2
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -1884,13 +1884,13 @@ class PublicShelterFilterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(result_ids, {str(match.id)})
 
     def test_spas_served_filter(self) -> None:
-        spa_a, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
-        spa_b, _ = SPA.objects.get_or_create(short_name="2", defaults={"long_name": "2 - San Fernando Valley"})
-        match = shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_a])
-        shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_b])
+        spa_1 = SPA.objects.get(short_name="1")
+        spa_2 = SPA.objects.get(short_name="2")
+        match = shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_1])
+        shelter_recipe.make(status=StatusChoices.APPROVED, spas_served=[spa_2])
 
         query = self.get_shelters_query("id")
-        response = self.execute_graphql(query, variables={"filters": {"spasServed": [str(spa_a.id)]}})
+        response = self.execute_graphql(query, variables={"filters": {"spasServed": [str(spa_1.id)]}})
         result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
         self.assertEqual(result_ids, {str(match.id)})
 
