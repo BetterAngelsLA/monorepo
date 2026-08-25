@@ -1,7 +1,4 @@
-import {
-  getDefaultStackNavOptions,
-  useUser,
-} from '@monorepo/expo/betterangels';
+import { getStackScreenOptions, useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
@@ -136,29 +133,29 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="clients/create"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Create Client Profile',
         })}
       />
       <Stack.Screen
         name="clients/[id]/edit"
-        options={getDefaultStackNavOptions()}
+        options={getStackScreenOptions()}
       />
       <Stack.Screen
         name="clients/[id]/relations/add"
-        options={getDefaultStackNavOptions()}
+        options={getStackScreenOptions()}
       />
       <Stack.Screen
         name="clients/[id]/relations/[relationId]/edit"
-        options={getDefaultStackNavOptions()}
+        options={getStackScreenOptions()}
       />
       <Stack.Screen
         name="clients/[id]/relations/index"
-        options={getDefaultStackNavOptions()}
+        options={getStackScreenOptions()}
       />
       <Stack.Screen
         name="notes-hmis/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Notes',
         })}
       />
@@ -184,19 +181,19 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="notes-hmis/create/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Add Note',
         })}
       />
       <Stack.Screen
         name="notes-hmis/[id]/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Note',
         })}
       />
       <Stack.Screen
         name="notes-hmis/[id]/edit"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Edit Note',
         })}
       />
@@ -240,44 +237,44 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="settings/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Settings',
         })}
       />
       <Stack.Screen
         name="settings/about/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'About App',
         })}
       />
       <Stack.Screen
         name="settings/hmis-rest"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'HMIS REST (dev)',
         })}
       />
       <Stack.Screen
         name="settings/team/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Select Default Team',
         })}
       />
       <Stack.Screen
         name="settings/location/index"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Select Default Location',
         })}
       />
       <Stack.Screen
         name="tasks"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Tasks',
         })}
       />
 
       <Stack.Screen
         name="task/[id]"
-        options={getDefaultStackNavOptions({
+        options={getStackScreenOptions({
           title: 'Task',
         })}
       />

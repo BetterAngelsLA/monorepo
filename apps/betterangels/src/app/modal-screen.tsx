@@ -26,7 +26,7 @@ export default function BaseModalScreen() {
         >
           {header?.mode === 'custom' && (
             <ScreenHeader
-              variant={header.variant ?? 'modal'}
+              variant={header.variant ?? 'secondary'}
               title={title}
               // A page-sheet 'modal' starts below the notch already (iOS-only),
               // so the window's top inset would add a wrong gap there. Every
@@ -38,7 +38,9 @@ export default function BaseModalScreen() {
               }
               buttonLeft={header.buttonLeft}
               buttonRight={
-                header.closeButton === false ? null : (
+                header.buttonRight !== undefined ? (
+                  header.buttonRight
+                ) : (
                   <ScreenHeaderCloseButton label={header.closeLabel} />
                 )
               }
