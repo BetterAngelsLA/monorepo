@@ -737,6 +737,18 @@ class TestOrganizationTransferOwnership:
 
         assert not OrganizationUser.objects.filter(organization=org, user=owner).exists()
 
+    def test_an_organization_with_no_owner_row_gains_one(self) -> None:
+        """The shelter importer never called add_user, so most production orgs own nothing."""
+        owner, member, org = self._org_with_member("Ownerless Org")
+        OrganizationOwner.objects.filter(organization=org).delete()
+        # Refetched, or change_owner finds the deleted row still cached on the instance.
+        org = Organization.objects.get(pk=org.pk)
+
+        returned = organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert returned == member
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == member
+
     def test_a_non_member_cannot_own_the_organization(self) -> None:
         owner, member, org = self._org_with_member("Stranger Owner Org")
         stranger = baker.make(User)

@@ -5,13 +5,14 @@
 {% endblock %}
 
 {% block content %}
-  <p>Removing an org type revokes its roles from everyone holding them. This save would take:</p>
+  <p>This save takes these roles away from the people who hold them:</p>
   <ul>
     {% for role, holders in losses %}
       <li><strong>{{ role }}</strong> — from {{ holders }} member{{ holders|pluralize }}</li>
     {% endfor %}
   </ul>
-  <p>Re-adding the org type afterwards creates the roles again, but does not give them back to anyone.</p>
+  <p>Putting a role back — re-adding the org type, or re-adding the row — creates it again, but does not
+     give it back to anyone.</p>
   <form method="post">
     {% csrf_token %}
     {% for name, value in posted %}

@@ -16,8 +16,9 @@ from accounts.models import (
     User,
 )
 from accounts.services import invitation_role, member_add, reconcile_org_groups
+from common.permissions.config import TemplateConfig
 from django.contrib import admin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 from django.test import SimpleTestCase, TestCase
@@ -713,8 +714,8 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         )
 
 
-class OrganizationTypeRemovalConfirmationTestCase(TestCase):
-    """Unchecking an org type revokes its roles; the page has to say so first."""
+class OrganizationRoleLossConfirmationTestCase(TestCase):
+    """A save that takes someone's role away has to say so first, by either route."""
 
     def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(
@@ -724,8 +725,11 @@ class OrganizationTypeRemovalConfirmationTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
         self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
 
+    def _rows(self) -> list[PermissionGroup]:
+        return list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+
     def _payload(self, org_types: list[str], **extra: str) -> dict:
-        rows = list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+        rows = self._rows()
         payload: dict = {
             "name": self.organization.name,
             "is_active": "on",
@@ -752,6 +756,30 @@ class OrganizationTypeRemovalConfirmationTestCase(TestCase):
             payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
         return payload | extra
 
+    def _tick_delete(self, template: TemplateConfig) -> dict[str, str]:
+        """The POST key the inline's Delete checkbox sends for *template*'s row."""
+        index = next(
+            index for index, row in enumerate(self._rows()) if row.template and row.template.name == template.name
+        )
+        return {f"permission_groups-{index}-DELETE": "on"}
+
+    def _member_holding(self, template: TemplateConfig, email: str) -> User:
+        return member_add(
+            email=email,
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(template,),
+        )
+
+    def _holds(self, member: User, template: TemplateConfig) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=template.name,
+            group__user=member,
+        ).exists()
+
     def _holds_shelter_operator(self) -> bool:
         return PermissionGroup.objects.filter(
             organization=self.organization,
@@ -759,14 +787,7 @@ class OrganizationTypeRemovalConfirmationTestCase(TestCase):
         ).exists()
 
     def test_dropping_a_held_type_asks_first_and_changes_nothing(self) -> None:
-        member_add(
-            email="losesit@example.com",
-            first_name="",
-            last_name="",
-            middle_name=None,
-            organization=self.organization,
-            permission_templates=(SHELTER_OPERATOR,),
-        )
+        self._member_holding(SHELTER_OPERATOR, "losesit@example.com")
 
         response = self.client.post(self.url, self._payload(["outreach"]))
 
@@ -776,16 +797,9 @@ class OrganizationTypeRemovalConfirmationTestCase(TestCase):
         self.assertTrue(self._holds_shelter_operator())
 
     def test_confirming_goes_through(self) -> None:
-        member = member_add(
-            email="confirmed@example.com",
-            first_name="",
-            last_name="",
-            middle_name=None,
-            organization=self.organization,
-            permission_templates=(SHELTER_OPERATOR,),
-        )
+        member = self._member_holding(SHELTER_OPERATOR, "confirmed@example.com")
 
-        self.client.post(self.url, self._payload(["outreach"], _confirm_org_type_removal="1"))
+        self.client.post(self.url, self._payload(["outreach"], _confirm_role_loss="1"))
 
         self.assertFalse(self._holds_shelter_operator())
         self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, group__user=member).exists())
@@ -795,6 +809,54 @@ class OrganizationTypeRemovalConfirmationTestCase(TestCase):
         self.client.post(self.url, self._payload(["outreach"]))
 
         self.assertFalse(self._holds_shelter_operator())
+
+    def test_a_role_the_remaining_type_keeps_is_not_named(self) -> None:
+        """Organization Admin belongs to both org types, so dropping one does not revoke it."""
+        self._member_holding(ORG_ADMIN, "stays_admin@example.com")
+        self._member_holding(SHELTER_OPERATOR, "loses_operator@example.com")
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        # Against the context, not the HTML: the replayed POST carries every role
+        # name in a hidden field, so the page contains them either way.
+        losses = dict(response.context["losses"])
+        self.assertIn(SHELTER_OPERATOR.name, losses)
+        self.assertNotIn(ORG_ADMIN.name, losses)
+
+    def test_deleting_a_role_row_asks_first_and_changes_nothing(self) -> None:
+        """The quieter route: reconcile rebuilds the row, so the saved page looks untouched."""
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete@example.com")
+
+        response = self.client.post(
+            self.url, self._payload(["outreach", "shelter"], **self._tick_delete(SHELTER_OPERATOR))
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds(member, SHELTER_OPERATOR))
+
+    def test_confirming_a_row_deletion_goes_through(self) -> None:
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete_ok@example.com")
+
+        self.client.post(
+            self.url,
+            self._payload(["outreach", "shelter"], _confirm_role_loss="1", **self._tick_delete(SHELTER_OPERATOR)),
+        )
+
+        self.assertFalse(self._holds(member, SHELTER_OPERATOR))
+
+    def test_a_view_only_staff_user_is_refused_rather_than_asked(self) -> None:
+        """The prompt must not answer a question Django is about to refuse."""
+        self._member_holding(SHELTER_OPERATOR, "viewonly_subject@example.com")
+        viewer = User.objects.create_user(username="orgtype_viewer", password="password", is_staff=True)
+        viewer.user_permissions.add(Permission.objects.get(codename="view_organization"))
+        self.client.force_login(viewer)
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, SHELTER_OPERATOR.name, status_code=403)
 
 
 class OrganizationOwnershipTransferTestCase(TestCase):
@@ -830,6 +892,17 @@ class OrganizationOwnershipTransferTestCase(TestCase):
         offered = set(response.context["form"].fields["new_owner"].queryset)
         self.assertIn(self.member, offered)
         self.assertNotIn(self.owner_membership.user, offered)
+
+    def test_an_organization_with_no_owner_offers_every_member(self) -> None:
+        """The shelter importer left 97 of 99 production organizations with no owner row."""
+        OrganizationOwner.objects.filter(organization=self.organization).delete()
+
+        response = self.client.get(self.url)
+
+        self.assertIn("Currently owned by nobody", response.context["help_text"])
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertIn(self.owner_membership.user, offered)
 
     def test_transferring_moves_ownership_and_frees_the_old_owner(self) -> None:
         old_owner = self.owner_membership.user

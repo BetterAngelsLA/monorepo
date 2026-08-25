@@ -264,7 +264,7 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
-    ORG_TYPE_REMOVAL_CONFIRMED = "_confirm_org_type_removal"
+    ROLE_LOSS_CONFIRMED = "_confirm_role_loss"
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """Reconcile permission groups once the profile's org types are saved."""
@@ -278,26 +278,30 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         form_url: str = "",
         extra_context: dict[str, Any] | None = None,
     ) -> HttpResponse:
-        """Confirm before a save takes a role away from people who hold it.
+        """Confirm before a save takes a role away from the people holding it.
 
-        Unchecking an org type deletes its permission groups on reconcile, and
-        ``delete_orphaned_group`` takes the ``auth.Group`` with them — so every
-        member silently loses that role.  It is the one edit on this page whose
-        blast radius is invisible from the form.
+        Two edits on this page do that, and neither shows it: unchecking an org
+        type, and ticking Delete on a permission group row.  Both end with
+        ``delete_orphaned_group`` tearing out the ``auth.Group``, and every member
+        holding that role loses it.
 
         Interposed here rather than in the form because the form cannot re-render
         the whole change view, and because a ``clean()`` error would be the wrong
-        shape: this is a confirmation, not a rejection.
+        shape: this is a confirmation, not a rejection.  Deferring to
+        ``has_change_permission`` keeps the prompt from answering a question
+        Django is about to refuse.
         """
-        if request.method == "POST" and self.ORG_TYPE_REMOVAL_CONFIRMED not in request.POST:
+        if request.method == "POST" and self.ROLE_LOSS_CONFIRMED not in request.POST:
             organization = self.get_object(request, unquote(object_id))
-            if organization is not None and (
-                losses := self._roles_lost_to_org_type_removal(organization, request.POST)
+            if (
+                organization is not None
+                and self.has_change_permission(request, organization)
+                and (losses := self._roles_lost_to_save(organization, request.POST))
             ):
-                return self._confirm_org_type_removal_response(request, organization, losses)
+                return self._confirm_role_loss_response(request, organization, losses)
         return super().change_view(request, object_id, form_url, extra_context)
 
-    def _confirm_org_type_removal_response(
+    def _confirm_role_loss_response(
         self, request: HttpRequest, organization: Organization, losses: list[tuple[str, int]]
     ) -> HttpResponse:
         """Re-offer the submitted save, spelling out what it revokes."""
@@ -307,19 +311,27 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             "organization": organization,
             "losses": losses,
             "posted": [(key, value) for key in request.POST for value in request.POST.getlist(key)],
-            "confirm_field": self.ORG_TYPE_REMOVAL_CONFIRMED,
-            "title": f"Remove org types from {organization.name}?",
+            "confirm_field": self.ROLE_LOSS_CONFIRMED,
+            "title": f"Revoke roles in {organization.name}?",
             "cancel_url": reverse("admin:organizations_organization_change", args=[organization.pk]),
         }
-        return TemplateResponse(request, "admin/organizations/organization/confirm_org_types.html", context)
+        return TemplateResponse(request, "admin/organizations/organization/confirm_role_loss.html", context)
 
-    @staticmethod
-    def _roles_lost_to_org_type_removal(organization: Organization, posted: Any) -> list[tuple[str, int]]:
-        """Roles that reconciling *posted* would revoke, with how many hold each.
+    @classmethod
+    def _roles_lost_to_save(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Every role *posted* would take from someone, with how many hold each.
 
-        Empty when nothing is lost — a type nobody holds, or none removed at all.
-        A prompt that always fires stops being read.
+        Empty when nothing is lost, which is most saves.  A prompt that always
+        fires stops being read.
         """
+        return sorted(
+            set(cls._roles_lost_to_org_type_removal(organization, posted))
+            | set(cls._roles_lost_to_row_deletion(organization, posted))
+        )
+
+    @classmethod
+    def _roles_lost_to_org_type_removal(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles reconciliation will delete because the type granting them is dropped."""
         profile_prefix = next(
             (key.rsplit("-", 1)[0] for key in posted if key.endswith("-org_types")),
             None,
@@ -350,14 +362,37 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             for template in config.templates
         } - kept_templates
 
-        losses = []
-        for permission_group in PermissionGroup.objects.filter(
-            organization=organization, template__name__in=sorted(losing)
-        ).select_related("group", "template"):
-            holders = permission_group.group.user_set.count()
-            if holders:
-                losses.append((permission_group.name, holders))
-        return sorted(losses)
+        return cls._held_by(
+            PermissionGroup.objects.filter(organization=organization, template__name__in=sorted(losing))
+        )
+
+    @classmethod
+    def _roles_lost_to_row_deletion(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles whose row is ticked for deletion on the Permission groups inline.
+
+        The quieter of the two routes: reconciliation recreates a derived row on
+        the same save, with a fresh and empty ``auth.Group``, so the page comes
+        back looking untouched while everyone who held the role has lost it.
+        """
+        deleted_row_ids = [
+            posted.get(f"{key.rsplit('-', 1)[0]}-id")
+            for key in posted
+            if key.startswith("permission_groups-") and key.endswith("-DELETE") and posted.get(key)
+        ]
+        return cls._held_by(
+            PermissionGroup.objects.filter(
+                organization=organization, pk__in=[row_id for row_id in deleted_row_ids if row_id]
+            )
+        )
+
+    @staticmethod
+    def _held_by(permission_groups: QuerySet[PermissionGroup]) -> list[tuple[str, int]]:
+        """Name each group and how many hold it, dropping the ones nobody does."""
+        return [
+            (permission_group.name, holders)
+            for permission_group in permission_groups.select_related("group", "template")
+            if (holders := permission_group.group.user_set.count())
+        ]
 
     def get_urls(self) -> list[URLPattern]:
         custom_urls = [

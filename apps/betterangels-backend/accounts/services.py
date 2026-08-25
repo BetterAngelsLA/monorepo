@@ -407,7 +407,9 @@ def organization_transfer_ownership(
     Ownership is a single row, so the previous owner simply stops being one; they
     keep their membership and their roles.  Delegates the move to
     ``Organization.change_owner`` so django-organizations' ``owner_changed``
-    signal still fires.
+    signal still fires.  An organization that never had an owner has no move to
+    make and no old owner to report, so it gets the row outright and no signal —
+    the shelter importer's ``get_or_create`` left most of them in that state.
 
     Raises :class:`~django.core.exceptions.ValidationError` if the new owner is
     not a member of *organization*.
