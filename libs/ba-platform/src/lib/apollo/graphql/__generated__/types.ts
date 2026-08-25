@@ -2617,7 +2617,7 @@ export type Query = {
   shelterCities: CityTypeOffsetPaginated;
   shelterMaxStay?: Maybe<Scalars['Int']['output']>;
   shelterOccupancyMetrics: ShelterOccupancyMetricsType;
-  shelterOperatorOrganizations: OrganizationTypeOffsetPaginated;
+  shelterOrganizations: OrganizationTypeOffsetPaginated;
   shelterServiceCategories: ServiceCategoryTypeOffsetPaginated;
   shelterSpas: SpaTypeOffsetPaginated;
   shelters: ShelterTypeOffsetPaginated;
@@ -2855,7 +2855,7 @@ export type QueryShelterOccupancyMetricsArgs = {
 };
 
 
-export type QueryShelterOperatorOrganizationsArgs = {
+export type QueryShelterOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;

@@ -278,7 +278,7 @@ class PublicShelterFilter:
 @strawberry_django.filter_type(models.Shelter)
 class OperatorShelterFilter(PublicShelterFilter):
     @strawberry_django.filter_field
-    def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
+    def search(self, info: Info, value: str, prefix: str) -> Q:
         """
         Free-text search across name, organization name, description, and subjective review.
 
