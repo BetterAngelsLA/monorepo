@@ -290,7 +290,7 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
     list_display = ("name",)
     search_fields = ("name",)
-    fields = ("name", "is_active", "slug")
+    fields = ("name", "slug")
     readonly_fields = ("slug",)
     change_form_template = "admin/organizations/organization/change_form.html"
     # django-organizations' models define get_absolute_url against its own generic

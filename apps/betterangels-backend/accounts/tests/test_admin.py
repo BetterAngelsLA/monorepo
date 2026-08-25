@@ -57,7 +57,6 @@ class OrganizationAdminTestCase(TestCase):
     def _add_payload(self, name: str, org_types: list[str]) -> dict:
         return {
             "name": name,
-            "is_active": "on",
             # Management form for the required profile inline.
             "profile-TOTAL_FORMS": "1",
             "profile-INITIAL_FORMS": "0",
@@ -81,7 +80,6 @@ class OrganizationAdminTestCase(TestCase):
         rows = list(PermissionGroup.objects.filter(organization=organization).order_by("pk"))
         payload = {
             "name": organization.name,
-            "is_active": "on",
             "profile-TOTAL_FORMS": "1",
             "profile-INITIAL_FORMS": "1",
             "profile-MIN_NUM_FORMS": "1",
@@ -126,6 +124,14 @@ class OrganizationAdminTestCase(TestCase):
             set(PermissionGroup.objects.filter(organization=organization).values_list("template__name", flat=True)),
             {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
         )
+
+    def test_the_form_does_not_offer_is_active(self) -> None:
+        """django-organizations' own field; nothing in this codebase filters on it."""
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+
+        response = self.client.get(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
+        self.assertNotIn("is_active", response.context["adminform"].form.fields)
 
     def test_creating_an_organization_without_an_org_type_is_rejected(self) -> None:
         response = self.client.post(
