@@ -240,7 +240,11 @@ def create_organization_with_presets(
     :class:`~accounts.role_manager.OrgRoleManager`.  The caller decides which
     roles the owner gets — no implicit derivation from org type order.
 
-    Returns the new :class:`~organizations.models.Organization`.
+    Returns the new :class:`~organizations.models.Organization` — always a new
+    row, never an existing one matched on *name*.  Organization names are not
+    unique, and resolving one by name let any caller of the public
+    ``createOrganization`` mutation land on an organization someone else runs.
+    Joining an existing organization goes through an invitation.
     """
     org_types: list[str] = []
     for preset_name in preset_names:
@@ -250,21 +254,18 @@ def create_organization_with_presets(
         if org_config.name not in org_types:
             org_types.append(org_config.name)
 
-    org, _ = Organization.objects.get_or_create(name=name)
+    org = Organization.objects.create(name=name)
 
-    # Profile with org types — update_or_create to fill in on existing orgs too.
-    OrganizationProfile.objects.update_or_create(
+    OrganizationProfile.objects.create(
         organization=org,
-        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
+        org_types=[OrgTypeChoices(org_type) for org_type in org_types],
     )
 
     # Create PermissionGroup per template for this org.
     reconcile_org_groups(org)
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
-    # Guarded so the function is safe to call repeatedly (idempotent).
-    if not org.users.filter(pk=owner.pk).exists():
-        org.add_user(owner)
+    org.add_user(owner)
 
     if owner_roles:
         OrgRoleManager(org).add_roles(owner, *owner_roles)
