@@ -6,17 +6,6 @@ roles and accept no members, and adding a member to it returned a 500.
 
 from typing import cast
 
-from accounts.admin import CustomOrganizationUserAdmin
-from accounts.groups import ORG_ADMIN
-from accounts.models import (
-    OrganizationProfile,
-    OrgTypeChoices,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    User,
-)
-from accounts.seed import seed_permission_templates
-from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
@@ -28,6 +17,18 @@ from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
+
+from accounts.admin import CustomOrganizationUserAdmin
+from accounts.groups import ORG_ADMIN
+from accounts.models import (
+    OrganizationProfile,
+    OrgTypeChoices,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    User,
+)
+from accounts.seed import seed_permission_templates
+from accounts.services import invitation_role, member_add, reconcile_org_groups
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 

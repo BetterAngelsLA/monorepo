@@ -101,6 +101,40 @@ class PermissionGroupAdmin(admin.ModelAdmin):
             model_count = {**model_count, "revoked roles": len(losses)}
         return deletable, model_count, perms_needed, protected
 
+    def get_deleted_objects(
+        self, objs: Any, request: HttpRequest
+    ) -> tuple[list[Any], dict[str, int], set[str], list[str]]:
+        """Name the ``auth.Group`` going with each row, and who loses the role.
+
+        Django cannot work this out on its own: the group is torn down by
+        :func:`accounts.signals.delete_orphaned_group` from ``post_delete`` rather
+        than by cascade, and the foreign key points the other way, so nothing
+        appears downstream of the row being deleted — least of all the people
+        about to lose their access.
+
+        Hooked here because it is what both the delete view and the
+        ``delete_selected`` action call, so one override covers a single delete
+        and a bulk one alike.
+        """
+        deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        losses = []
+        for permission_group in objs:
+            holders = permission_group.group.user_set.count()
+            losses.append(
+                format_html(
+                    "Group: {} — revoked from {} member{}",
+                    permission_group.group.name,
+                    holders,
+                    "" if holders == 1 else "s",
+                )
+            )
+
+        if losses:
+            deletable = [*deletable, *losses]
+            model_count = {**model_count, "groups": len(losses)}
+        return deletable, model_count, perms_needed, protected
+
 
 @admin.register(PermissionGroupTemplate)
 class PermissionGroupTemplateAdmin(admin.ModelAdmin):
