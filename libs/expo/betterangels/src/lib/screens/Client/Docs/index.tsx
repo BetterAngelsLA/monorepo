@@ -54,11 +54,10 @@ export default function Docs({
           onPress={() =>
             showModalScreen({
               presentation: 'fullScreenModal',
-              // title: 'Upload Files',
+              title: 'Upload Files',
               header: {
                 mode: 'custom',
                 variant: 'modal',
-                // variant: 'minimal',
                 closeLabel: 'Done',
               },
               renderContent: ({ close }) => (
