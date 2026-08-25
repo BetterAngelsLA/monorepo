@@ -14,8 +14,10 @@
     "shelter": "nx serve shelter-web --port 8083",
     "fires": "nx serve wildfires --port 8200",
     "admin": "nx serve betterangels-admin --port 8084",
-    "pretty": "prettier --check .",
-    "pretty:fix": "prettier --write ."
+    "pretty": "nx format:check --verbose",
+    "pretty:fix": "nx format:write",
+    "pretty:all": "nx format:check --all --verbose",
+    "pretty:all:fix": "nx format:write --all"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",

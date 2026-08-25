@@ -64,7 +64,7 @@ every `.env` — so every worktree, container shell and coding-agent session sha
 one `test_postgres`. `addopts = "--reuse-db"` hides that most of the time, but
 `pytest --create-db` drops and recreates it underneath anyone else mid-run.
 
-The symptom is failures that escalate and move between runs of *unchanged* code —
+The symptom is failures that escalate and move between runs of _unchanged_ code —
 5, then 14, then every test in the suite erroring, in apps you never touched.
 That is not a defect in your branch. Set `POSTGRES_TEST_NAME` before concluding
 anything about a failure you cannot reproduce:
