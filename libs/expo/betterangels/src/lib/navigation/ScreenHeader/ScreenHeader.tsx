@@ -111,8 +111,8 @@ export function ScreenHeader(props: TProps) {
     >
       <View style={[styles.slot, styles.slotLeft]}>{left}</View>
 
-      {!!title && (
-        <View style={styles.title}>
+      <View style={styles.title}>
+        {!!title && (
           <TextBold
             size={IS_IOS ? 'md' : 'lg'}
             color={tintColor}
@@ -123,8 +123,8 @@ export function ScreenHeader(props: TProps) {
           >
             {title}
           </TextBold>
-        </View>
-      )}
+        )}
+      </View>
 
       <View style={[styles.slot, styles.slotRight]}>{right}</View>
     </View>
