@@ -15,11 +15,12 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
+from accounts.seed import seed_permission_templates
 from accounts.services import invitation_role, member_add, reconcile_org_groups
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import NoReverseMatch, reverse
@@ -933,3 +934,94 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
         response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
 
         self.assertContains(response, "revoked from 1 member<")
+
+
+class PermissionGroupTemplateAdminTestCase(TestCase):
+    """A template is one row shared by every organization holding the role.
+
+    Two ways the admin implied otherwise: the organization page linked into the
+    template admin from a row that reads as belonging to that organization, and
+    the template admin let a role the code owns be edited or deleted, which
+    ``sync_group_permissions`` undoes on the next reconcile.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="template_admin_tests", email="template_admin_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.code_owned = PermissionGroupTemplate.objects.get(name=ORG_ADMIN.name)
+        self.hand_defined = PermissionGroupTemplate.objects.create(name="Weekend Volunteers")
+
+    def test_the_organization_page_does_not_link_into_the_template_admin(self) -> None:
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        for action in ("add", "change", "delete"):
+            self.assertNotContains(response, f"{action}_id_permission_groups-0-template")
+            self.assertNotContains(response, f"{action}_id_permission_groups-__prefix__-template")
+
+    def test_the_organization_page_still_lets_the_template_be_viewed(self) -> None:
+        """Read-only, not hidden -- what a role grants is worth being able to see."""
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        self.assertContains(response, "view_id_permission_groups-0-template")
+
+    def test_a_role_the_code_owns_is_read_only(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.code_owned.pk]),
+        )
+
+        self.assertNotContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="permissions"')
+
+    def test_a_role_defined_in_the_admin_stays_editable(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.hand_defined.pk]),
+        )
+
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'name="permissions"')
+
+    def test_a_role_the_code_owns_cannot_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.code_owned.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(PermissionGroupTemplate.objects.filter(pk=self.code_owned.pk).exists())
+
+    def test_a_role_defined_in_the_admin_can_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.hand_defined.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(PermissionGroupTemplate.objects.filter(pk=self.hand_defined.pk).exists())
+
+    def test_deleting_a_code_owned_role_breaks_the_next_reconcile(self) -> None:
+        """Why the guard is a refusal rather than a warning.
+
+        The delete itself succeeds quietly -- ``SET_NULL`` leaves each row with
+        its label and members and no template, so reconciliation stops seeing it
+        as derived.  ``post_migrate`` re-seeds the template, and the next
+        reconcile collides with the orphan on ``auth_group.name``.  Reached here
+        by deleting directly, which is what the admin guard now prevents.
+        """
+        row = PermissionGroup.objects.get(organization=self.organization, template=self.code_owned)
+
+        self.code_owned.delete()
+
+        row.refresh_from_db()
+        self.assertIsNone(row.template_id)
+        self.assertEqual(row.label, ORG_ADMIN.name)
+
+        seed_permission_templates()
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            reconcile_org_groups(self.organization)
