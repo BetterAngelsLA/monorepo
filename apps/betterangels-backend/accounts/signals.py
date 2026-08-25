@@ -97,6 +97,12 @@ def _ensure_test_org() -> None:
 
     admin = User.objects.get(username="admin")
 
+    # The idempotency this seeding relies on lives here, not in the service:
+    # create_organization_with_presets always creates, so that naming an existing
+    # organization cannot join it.
+    if Organization.objects.filter(name="test_org").exists():
+        return
+
     create_organization_with_presets(
         name="test_org",
         preset_names=["shelter", "outreach"],
