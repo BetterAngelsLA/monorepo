@@ -21,9 +21,8 @@ from strawberry_django.pagination import OffsetPaginated
 
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors import shelter_get
+from shelters.selectors import shelter_get, shelter_organization_list
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
-from shelters.selectors import shelter_operator_organization_list
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
@@ -109,19 +108,10 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
 
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
-    )
-    def shelter_operator_organizations(self, info: Info) -> QuerySet[Organization]:
-        """Return every shelter-operator org, regardless of caller membership.
-
-        Access is gated by ``view_shelter`` in the active org only; the result
-        is not limited to orgs the caller belongs to (see
-        ``shelter_operator_organization_list``).
-        """
-        return shelter_operator_organization_list()
+    @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType])
+    def shelter_organizations(self, info: Info) -> QuerySet[Organization]:
+        """Return every shelter org. Intentionally available to anonymous users."""
+        return shelter_organization_list()
 
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:
