@@ -25,6 +25,7 @@ export function ThreeDotMenu({
   return (
     <div className="relative">
       <button
+        aria-label={`Actions for ${team.name}`}
         onClick={(e) => {
           e.stopPropagation();
           setOpenMenuRowId((prev) => (prev === team.id ? null : team.id));

@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.template.defaultfilters import pluralize
 from organizations.models import Organization
 
 from .models import Team
@@ -68,5 +69,23 @@ def team_delete(
     *,
     team: Team,
 ) -> None:
-    """Hard-delete a Team. FK references are SET_NULL by the database."""
+    """Delete a Team that nothing references.
+
+    ``Note.team`` and ``Task.team`` are ``SET_NULL``, so deleting a team that is
+    in use silently detaches it from every record that used it, and nothing
+    records that it ever existed.  ``is_active`` retires a team reversibly, so a
+    referenced team is refused here and the counts are the message.
+    """
+    references = [
+        f"{count} {noun}{pluralize(count)}"
+        for count, noun in ((team.note_set.count(), "note"), (team.task_set.count(), "task"))
+        if count
+    ]
+
+    if references:
+        raise ValidationError(
+            f'Cannot delete "{team.name}": it is used by {" and ".join(references)}. '
+            "Deactivate it instead — an inactive team is hidden in the app but keeps its history."
+        )
+
     team.delete()

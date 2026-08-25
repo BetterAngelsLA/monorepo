@@ -6,7 +6,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { Dropdown, Input, mergeCss } from '@monorepo/react/shared';
+import { Dropdown, Input, mergeCss, toError } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import {
@@ -60,10 +60,13 @@ export function TeamFormDrawer(props: TProps) {
       closeDrawer();
       onSuccess();
     } catch (err) {
-      console.error(err);
+      const error = toError(err);
+
+      console.error(`error saving team: ${error.message}`);
+
       showAlert({
         type: 'error',
-        content: 'Sorry, something went wrong. Please try again.',
+        content: error.message,
       });
     } finally {
       setDisabled(false);
