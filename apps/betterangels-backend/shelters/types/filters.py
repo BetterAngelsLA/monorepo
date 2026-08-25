@@ -19,7 +19,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value, When
+from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -48,6 +48,7 @@ from shelters.enums import (
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+from shelters.selectors.computed_status import shelter_count_subquery
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -388,28 +389,16 @@ class ShelterOrder:
     ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
         """Order by the count of beds related to the shelter.
 
-        Uses an isolated correlated subquery rather than a JOIN-based
-        ``Count('beds', distinct=True)``.  The subquery is unaffected by any
-        M2M JOINs that active filters (cities_served, services, spasServed)
-        may have added to the outer queryset, so no DISTINCT deduplication is
-        needed and the count is always correct in a single pass.
-        Uses a distinct annotation name (``_order_bed_total``) to avoid
-        conflicting with the ``_bed_total`` annotation added by the bedCounts
-        resolver when both are requested in the same query.
+        Uses ``shelter_count_subquery`` (same as ``bedCounts.total``) under
+        ``Coalesce`` to 0. Annotation name ``_order_bed_total`` avoids conflicting
+        with ``_bed_total`` when both are requested in the same query.
         """
-        bed_count_subq = (
-            models.Bed.objects.filter(shelter=OuterRef("pk"))
-            .order_by()
-            .values("shelter")
-            .annotate(c=Count("pk"))
-            .values("c")
-        )
         # Coalesce NULL (no related beds) to 0 so DESC/ASC match bedCounts.total
         # and PostgreSQL does not sort empty shelters first under DESC.
         queryset = queryset.annotate(
             **{
                 f"{prefix}_order_bed_total": Coalesce(
-                    Subquery(bed_count_subq, output_field=IntegerField()),
+                    shelter_count_subquery(models.Bed),
                     Value(0),
                 )
             }
