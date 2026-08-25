@@ -644,6 +644,25 @@ class ShelterOperatorOrganizationsTestCase(GraphQLBaseTestCase):
         self.assertIn(str(shelter_org_a.id), result_ids)
         self.assertIn(str(shelter_org_b.id), result_ids)
 
+    def test_returns_shelter_operator_orgs_user_is_not_member_of(self) -> None:
+        """Cross-org enumeration is intentional: orgs appear even when the caller is not a member."""
+        from shelters.groups import SHELTER_OPERATOR
+
+        other_shelter_org = organization_recipe.make(
+            name="Other Shelter Org",
+            preset_names=["shelter"],
+            owner_roles=(SHELTER_OPERATOR,),
+        )
+        # org_1_case_manager_1 belongs to org_1 only — not to other_shelter_org
+        self.assertFalse(other_shelter_org.users.filter(pk=self.org_1_case_manager_1.pk).exists())
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        response = self.execute_graphql(self.get_shelter_operator_orgs_query())
+
+        self.assertIsNone(response.get("errors"))
+        result_ids = {r["id"] for r in response["data"]["shelterOperatorOrganizations"]["results"]}
+        self.assertIn(str(other_shelter_org.id), result_ids)
+
     def test_results_ordered_by_name(self) -> None:
         """Results are sorted alphabetically by name when ordering is requested."""
         from shelters.groups import SHELTER_OPERATOR

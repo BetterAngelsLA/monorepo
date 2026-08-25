@@ -115,7 +115,12 @@ class Query:
         extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
     def shelter_operator_organizations(self, info: Info) -> QuerySet[Organization]:
-        """Return all organizations that have a Shelter Operator permission group."""
+        """Return every shelter-operator org, regardless of caller membership.
+
+        Access is gated by ``view_shelter`` in the active org only; the result
+        is not limited to orgs the caller belongs to (see
+        ``shelter_operator_organization_list``).
+        """
         return shelter_operator_organization_list()
 
     @strawberry.field()

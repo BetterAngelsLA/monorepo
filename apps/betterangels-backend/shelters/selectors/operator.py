@@ -46,6 +46,12 @@ def shelter_operator_organization_list(
 ) -> "QuerySet[Organization]":
     """Filter to organizations that have a Shelter Operator permission group.
 
+    Intentionally does **not** scope to the caller's org memberships — any
+    authenticated user with ``view_shelter`` in their active org may enumerate
+    every shelter-operator org.  That cross-org visibility is deliberate: the
+    shelter-operator org picker dropdown must list all eligible orgs, not only
+    ones the caller belongs to.
+
     Falls back to ``Organization.objects.all()`` when *queryset* is omitted.
     """
     from shelters.groups import SHELTER_OPERATOR

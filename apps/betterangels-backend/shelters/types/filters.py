@@ -19,7 +19,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Case, Count, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value, When
+from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Subquery, Value, When
 from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
@@ -119,10 +119,7 @@ class PublicShelterFilter:
         return Q(**{f"{prefix}shelter_types__name__exact": ShelterChoices.ACCESS_CENTER})
 
     @strawberry_django.filter_field
-    def max_stay(self, info: Info, value: Optional[MaxStayInput], prefix: str) -> Q:
-        if not value:
-            return Q()
-
+    def max_stay(self, info: Info, value: MaxStayInput, prefix: str) -> Q:
         conditions = Q(**{f"{prefix}max_stay__gte": value.days})
         if value.include_null:
             conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
@@ -133,9 +130,6 @@ class PublicShelterFilter:
     def properties(
         self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None:
-            return queryset, Q()
-
         # Fields that have corresponding include_null flags
         property_fields = [
             "pets",
@@ -185,10 +179,8 @@ class PublicShelterFilter:
         )
 
     @strawberry_django.filter_field
-    def open_now(
-        self, queryset: QuerySet, value: Optional[OpenNowInput], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None or not value.schedule_type:
+    def open_now(self, queryset: QuerySet, value: OpenNowInput, prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value.schedule_type:
             return queryset, Q()
 
         return (
@@ -204,12 +196,9 @@ class PublicShelterFilter:
     def map_bounds(
         self,
         queryset: QuerySet,
-        value: Optional[MapBoundsInput],
+        value: MapBoundsInput,
         prefix: str,
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if not value:
-            return queryset, Q()
-
         bbox: tuple = (
             value.west_lng,
             value.north_lat,
@@ -222,11 +211,8 @@ class PublicShelterFilter:
 
     @strawberry_django.filter_field
     def geolocation(
-        self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
+        self, queryset: QuerySet, value: GeolocationInput, prefix: str
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None:
-            return queryset, Q()
-
         reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
 
         queryset = queryset.annotate(distance=Distance("geolocation", reference_point)).order_by("distance")
@@ -240,9 +226,6 @@ class PublicShelterFilter:
 
     @strawberry_django.filter_field
     def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-
         has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
             **{f"{prefix}availability__restricted_beds__gt": 0}
         )
@@ -257,8 +240,6 @@ class PublicShelterFilter:
 
     @strawberry_django.filter_field
     def on_site_security(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
         return Q(**{f"{prefix}on_site_security": value})
 
     @strawberry_django.filter_field
@@ -268,20 +249,21 @@ class PublicShelterFilter:
         return Q(**{f"{prefix}city__in": value})
 
     @strawberry_django.filter_field
-    def cities_served(
-        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
+    def cities_served(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}cities_served__in": value}).distinct(), Q()
+            return Q()
+        through = models.Shelter.cities_served.through
+
+        return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), city_id__in=value)))
 
     @strawberry_django.filter_field
-    def spas_served(
-        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
+    def spas_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}spas_served__in": value}).distinct(), Q()
+            return Q()
+
+        through = models.Shelter.spas_served.through
+
+        return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), spa_id__in=value)))
 
     @strawberry_django.filter_field
     def services(
@@ -303,9 +285,6 @@ class OperatorShelterFilter(PublicShelterFilter):
         with AND so a single term matching one field cannot bypass the other terms'
         requirements.
         """
-        if value is None:
-            return Q()
-
         value = value.strip()
         if not value:
             return Q()
@@ -494,8 +473,6 @@ class RoomFilter(CommonBedRoomFilterMixin):
 
     @strawberry_django.filter_field
     def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:
-        if value is None:
-            return queryset, Q()
         return queryset.annotate(num_beds=Count("beds")).filter(num_beds=value), Q()
 
     @strawberry_django.filter_field
