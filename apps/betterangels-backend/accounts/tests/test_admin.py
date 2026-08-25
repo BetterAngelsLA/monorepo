@@ -877,3 +877,53 @@ class OrganizationsGenericViewsNotRoutedTestCase(SimpleTestCase):
         ``ExtendedOrganizationInvitation.get_absolute_url`` reverses it.
         """
         self.assertEqual(reverse("invitations_register", kwargs={"user_id": 1, "token": "abc"}), "/invitations/1-abc/")
+
+
+class PermissionGroupDeleteWarningTestCase(TestCase):
+    """Deleting a permission group takes its auth.Group, and every member's role with it."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_pg_delete", email="admin_pg_delete@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        for email in ("operator_one@example.com", "operator_two@example.com"):
+            member_add(
+                email=email,
+                first_name="",
+                last_name="",
+                middle_name=None,
+                organization=self.organization,
+                permission_templates=(SHELTER_OPERATOR,),
+            )
+        self.permission_group = PermissionGroup.objects.get(
+            organization=self.organization, template__name=SHELTER_OPERATOR.name
+        )
+
+    def test_the_delete_page_names_the_group_and_who_loses_it(self) -> None:
+        url = reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk])
+
+        response = self.client.get(url)
+
+        self.assertContains(response, self.permission_group.group.name)
+        self.assertContains(response, "revoked from 2 members")
+
+    def test_the_bulk_delete_page_names_them_too(self) -> None:
+        """``delete_selected`` is the likelier route, and goes through the same hook."""
+        response = self.client.post(
+            reverse("admin:accounts_permissiongroup_changelist"),
+            {"action": "delete_selected", "_selected_action": [str(self.permission_group.pk)]},
+        )
+
+        self.assertContains(response, self.permission_group.group.name)
+        self.assertContains(response, "revoked from 2 members")
+
+    def test_one_member_is_not_pluralised(self) -> None:
+        Group.objects.get(pk=self.permission_group.group_id).user_set.remove(
+            User.objects.get(email="operator_two@example.com")
+        )
+
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
+
+        self.assertContains(response, "revoked from 1 member<")
