@@ -127,8 +127,8 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGATE)[0]],
             shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
             shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
-            spa=SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})[0],
-            spas_served=[SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})[0]],
+            spa=SPA.objects.get(short_name="1"),
+            spas_served=[SPA.objects.get(short_name="1")],
             special_situation_restrictions=[
                 SpecialSituationRestriction.objects.get_or_create(
                     name=SpecialSituationRestrictionChoices.NONE,
