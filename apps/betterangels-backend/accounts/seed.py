@@ -116,14 +116,12 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
             if {p.pk for p in template.permissions.all()} != wanted:
                 template.permissions.set(wanted)
 
-        permission_groups = PermissionGroup.objects.filter(template__isnull=False).prefetch_related(
-            "group__permissions"
-        )
+        permission_groups = PermissionGroup.objects.filter(template__isnull=False).prefetch_related("permissions")
         if organization is not None:
             permission_groups = permission_groups.filter(organization=organization)
 
         for permission_group in permission_groups:
             wanted = wanted_by_template.get(cast(int, permission_group.template_id), set())
-            if {p.pk for p in permission_group.group.permissions.all()} != wanted:
-                permission_group.group.permissions.set(wanted)
-                logger.info("Synced permissions for group %s (%d perms)", permission_group.group.name, len(wanted))
+            if {p.pk for p in permission_group.permissions.all()} != wanted:
+                permission_group.permissions.set(wanted)
+                logger.info("Synced permissions for group %s (%d perms)", permission_group.name, len(wanted))

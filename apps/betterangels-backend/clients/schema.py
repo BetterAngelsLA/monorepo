@@ -617,7 +617,7 @@ class Mutation:
                 Attachment.perms.DELETE,
                 Attachment.perms.CHANGE,
             ]
-            assign_object_permissions(permission_group.group, client_document, permissions)
+            assign_object_permissions(permission_group, client_document, permissions)
 
             return cast(ClientDocumentType, client_document)
 

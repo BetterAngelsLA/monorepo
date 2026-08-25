@@ -47,7 +47,7 @@ def get_user_permitted_org(
     return (
         Organization.objects.filter(
             pk=org_id,
-            permission_groups__group__user=user,
+            permission_groups__user=user,
         )
         .filter(perm_filter(app_label, codename))
         .first()

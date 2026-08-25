@@ -587,6 +587,4 @@ class TestMemberRolesReplace:
 
 
 def _role_names(org: Organization, member: User) -> set[str]:
-    return set(
-        PermissionGroup.objects.filter(organization=org, group__user=member).values_list("template__name", flat=True)
-    )
+    return set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
