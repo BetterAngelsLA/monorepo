@@ -107,14 +107,20 @@ export function getStackModalOptions(props?: TStackModalOptionsProps) {
 
   const styleName =
     header?.variant ?? DEFAULT_PALETTE_BY_PRESENTATION[presentation];
-  const { textColor } = headerStyles[styleName];
+  const { textColor, pressedBackgroundColor } = headerStyles[styleName];
 
   if (presentation === 'card') {
     return {
       ...getNativeHeaderOptions(styleName),
       presentation,
       title: title || '',
-      headerLeft: () => <HeaderLeftButton title="Close" color={textColor} />,
+      headerLeft: () => (
+        <HeaderLeftButton
+          title="Close"
+          color={textColor}
+          pressedBackgroundColor={pressedBackgroundColor}
+        />
+      ),
     };
   }
 
