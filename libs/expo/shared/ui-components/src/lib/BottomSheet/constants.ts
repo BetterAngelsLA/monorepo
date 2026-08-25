@@ -4,6 +4,7 @@ import { BottomSheetOptions, BottomSheetVariant } from './types';
 
 // Default style definitions
 export const BOTTOM_SHEET_RADIUS = Radiuses.md;
+
 export const BOTTOM_SHEET_PADDING: Pick<
   ViewStyle,
   'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight'
@@ -20,36 +21,22 @@ export const BOTTOM_SHEET_PADDING: Pick<
  * These represent design-system baseline behavior.
  */
 export const DEFAULT_BOTTOM_SHEET_OPTIONS: Partial<BottomSheetOptions> = {
-  /**
-   * Allow sheet height to adapt to content.
-   */
+  //  Allow sheet height to adapt to content.
   enableDynamicSizing: true,
 
-  /**
-   * Allow swipe-down to dismiss by default.
-   */
+  // Allow swipe-down to dismiss by default.
   enablePanDownToClose: true,
 
-  /**
-   * Content is non-scrollable unless explicitly requested.
-   */
+  // Content is non-scrollable unless explicitly requested.
   scrollable: false,
 
-  /**
-   * Close button is opt-in.
-   */
+  // Close button is opt-in.
   showCloseButton: false,
 
-  /**
-   * Backdrop is enabled with semi-transparent overlay.
-   */
+  // Backdrop is enabled with semi-transparent overlay.
   disableBackdrop: false,
-  backdropOpacity: 0.5,
 
-  /**
-   * Default stacking behavior replaces existing sheets.
-   */
-  stackBehavior: 'replace',
+  backdropOpacity: 0.5,
 };
 
 /**
@@ -84,7 +71,10 @@ export const BOTTOM_SHEET_VARIANT_OPTIONS: Record<
       borderTopRightRadius: 0,
     },
     contentStyle: {
-      padding: 0,
+      paddingTop: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingBottom: 0,
     },
   },
 };

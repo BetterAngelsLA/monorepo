@@ -1,0 +1,125 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-screen'
+
+# #######################
+# Go to Docs Tab ########
+# #######################
+
+# Tabs are in a horizontal ScrollView — Docs may be off-screen on narrower
+# devices. scrollUntilVisible ensures it's in view before tapping.
+- scrollUntilVisible:
+    element:
+      id: 'client-tab-docs'
+    direction: RIGHT
+- tapOn:
+    id: 'client-tab-docs'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-view-docs'
+
+# ################################
+# Go to Docs Uploads Screen ######
+# ################################
+- tapOn:
+    id: 'open-client-docs-upload-screen-btn'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-docs-upload-screen'
+
+# trigger media picker menu
+- tapOn: 'Consent Forms'
+
+- assertVisible:
+    id: 'media-picker-menu'
+
+# tap across menu options
+
+# open/close photo picker
+- tapOn:
+    id: 'media-picker-image-btn'
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible:
+          id: 'Photos'
+      - tapOn:
+          id: 'Cancel'
+      - waitForAnimationToEnd
+
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible: 'Photos' # "Photos" tab label
+      - assertVisible: 'Media grid' # photo grid container
+      # Dismiss banner is first-time-only — close by swiping the sheet down
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 90%
+          duration: 400
+      - waitForAnimationToEnd
+      # confirm we're back on the app's media-picker menu
+      - assertVisible:
+          id: 'media-picker-menu'
+
+# open/close camera
+- tapOn:
+    id: 'media-picker-camera-btn'
+
+- assertVisible:
+    id: 'camera-view'
+
+- tapOn:
+    id: 'camera-cancel-btn'
+- waitForAnimationToEnd
+
+# open/close file picker - test on iOS only
+# no good way to Cancel it on Android
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: 'media-picker-file-btn'
+      - assertVisible:
+          # id: 'Browse View (Picker)'
+          id: 'FullDocumentManagerViewControllerNavigationBar'
+      - tapOn: 'Cancel' # text match — resource-id is empty
+      - waitForAnimationToEnd
+
+# close and go back to client view
+- tapOn:
+    id: 'media-picker-cancel-btn'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'screen-header-close-btn'
+
+- assertVisible:
+    id: 'client-view-docs'

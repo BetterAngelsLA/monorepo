@@ -50,12 +50,15 @@ export default function Docs({
       >
         <TextMedium size="lg">Doc Library</TextMedium>
         <IconButton
+          testID="open-client-docs-upload-screen-btn"
           onPress={() =>
             showModalScreen({
               presentation: 'fullScreenModal',
-              title: 'Upload Files x',
+              // title: 'Upload Files',
               header: {
+                mode: 'custom',
                 variant: 'modal',
+                // variant: 'minimal',
                 closeLabel: 'Done',
               },
               renderContent: ({ close }) => (
