@@ -15,6 +15,7 @@ from shelters.enums import (
     StatusChoices,
 )
 from shelters.enums import ShelterChoices as ShelterTypeChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.tests.baker_recipes import shelter_recipe
@@ -611,7 +612,6 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_returns_only_shelter_operator_orgs(self) -> None:
         """Returns orgs with a SHELTER_OPERATOR permission group; outreach-only orgs are excluded."""
-        from shelters.groups import SHELTER_OPERATOR
 
         shelter_org_a = organization_recipe.make(
             name="Alpha Shelter", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,)
@@ -635,8 +635,6 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_returns_shelter_orgs_caller_is_not_member_of(self) -> None:
         """Cross-org enumeration is intentional for anonymous and authenticated callers."""
-        from shelters.groups import SHELTER_OPERATOR
-
         other_shelter_org = organization_recipe.make(
             name="Other Shelter Org",
             preset_names=["shelter"],
@@ -651,8 +649,6 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_results_ordered_by_name(self) -> None:
         """Results are sorted alphabetically by name when ordering is requested."""
-        from shelters.groups import SHELTER_OPERATOR
-
         organization_recipe.make(name="Zebra", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         organization_recipe.make(name="Alpha", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         organization_recipe.make(name="Middle", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
@@ -668,8 +664,6 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_unauthenticated_is_allowed(self) -> None:
         """Anonymous callers can list shelter organizations."""
-        from shelters.groups import SHELTER_OPERATOR
-
         shelter_org = organization_recipe.make(
             name="Public Visible Org",
             preset_names=["shelter"],
@@ -684,8 +678,6 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
 
     def test_user_without_shelter_view_permission_is_allowed(self) -> None:
         """VIEW permission is not required; the endpoint is public."""
-        from shelters.groups import SHELTER_OPERATOR
-
         shelter_org = organization_recipe.make(
             name="No View Perm Org",
             preset_names=["shelter"],

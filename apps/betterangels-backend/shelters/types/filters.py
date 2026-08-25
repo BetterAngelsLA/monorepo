@@ -253,12 +253,13 @@ class PublicShelterFilter:
     def cities_served(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
             return Q()
+
         through = models.Shelter.cities_served.through
 
         return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), city_id__in=value)))
 
     @strawberry_django.filter_field
-    def spas_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Q:
+    def spas_served(self, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
             return Q()
 
@@ -267,12 +268,23 @@ class PublicShelterFilter:
         return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), spa_id__in=value)))
 
     @strawberry_django.filter_field
-    def services(
-        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
+    def services(self, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
-        return queryset.filter(**{f"{prefix}services__in": value}).distinct(), Q()
+            return Q()
+
+        through = models.Shelter.services.through
+
+        return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), service_id__in=value)))
+
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        """Scope to orgs the authenticated user belongs to (intersected with *value* if set)."""
+        current_user = cast(User, get_current_user(info))
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
 
 @strawberry_django.filter_type(models.Shelter)
@@ -303,16 +315,6 @@ class OperatorShelterFilter(PublicShelterFilter):
             term_queries.append(term_query)
 
         return reduce(and_, term_queries)
-
-    @strawberry_django.filter_field
-    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        """Scope to orgs the authenticated user belongs to (intersected with *value* if set)."""
-        current_user = cast(User, get_current_user(info))
-        allowed_organizations = current_user.organizations_organization.all()
-        if value:
-            allowed_organizations = allowed_organizations.filter(pk__in=value)
-
-        return Q(**{f"{prefix}organization__in": allowed_organizations})
 
     @strawberry_django.filter_field
     def status(self, info: Info, value: Optional[List[StatusChoices]], prefix: str) -> Q:
@@ -393,8 +395,6 @@ class ShelterOrder:
         ``Coalesce`` to 0. Annotation name ``_order_bed_total`` avoids conflicting
         with ``_bed_total`` when both are requested in the same query.
         """
-        # Coalesce NULL (no related beds) to 0 so DESC/ASC match bedCounts.total
-        # and PostgreSQL does not sort empty shelters first under DESC.
         queryset = queryset.annotate(
             **{
                 f"{prefix}_order_bed_total": Coalesce(
