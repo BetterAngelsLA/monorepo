@@ -657,9 +657,7 @@ class ShelterOrganizationsTestCase(GraphQLBaseTestCase):
         organization_recipe.make(name="Alpha", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         organization_recipe.make(name="Middle", preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
 
-        response = self.execute_graphql(
-            self.get_shelter_orgs_query(), variables={"ordering": [{"name": "DESC"}]}
-        )
+        response = self.execute_graphql(self.get_shelter_orgs_query(), variables={"ordering": [{"name": "DESC"}]})
 
         self.assertIsNone(response.get("errors"))
         names = [r["name"] for r in response["data"]["shelterOrganizations"]["results"]]
