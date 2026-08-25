@@ -1,5 +1,8 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
-import { SCALAR_IMPORT_PLUGIN, SHARED_SCALAR_CONFIG } from '../../tools/codegen/scalars';
+import {
+  SCALAR_IMPORT_PLUGIN,
+  SHARED_SCALAR_CONFIG,
+} from '../../tools/codegen/scalars';
 
 const config: CodegenConfig = {
   overwrite: true,

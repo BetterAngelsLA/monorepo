@@ -60,7 +60,7 @@ function renderPage(mocks: Parameters<typeof MockedProvider>[0]['mocks']) {
           />
         </Routes>
       </MemoryRouter>
-    </MockedProvider>
+    </MockedProvider>,
   );
 }
 
@@ -79,7 +79,7 @@ describe('ShelterReportPage', () => {
     expect(exportButton().hasAttribute('disabled')).toBe(true);
 
     await waitFor(() =>
-      expect(screen.getByText('Test Organization')).toBeTruthy()
+      expect(screen.getByText('Test Organization')).toBeTruthy(),
     );
 
     expect(exportButton().hasAttribute('disabled')).toBe(false);
@@ -89,7 +89,7 @@ describe('ShelterReportPage', () => {
     renderPage([{ request, result: { data: { operatorShelter: OVERVIEW } } }]);
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Bed Summary' })).toBeTruthy()
+      expect(screen.getByRole('heading', { name: 'Bed Summary' })).toBeTruthy(),
     );
 
     expect(screen.getByRole('heading', { name: 'Room Summary' })).toBeTruthy();
@@ -100,7 +100,9 @@ describe('ShelterReportPage', () => {
     renderPage([{ request, error: new Error('network down') }]);
 
     await waitFor(() =>
-      expect(screen.getByText('Failed to load the shelter report.')).toBeTruthy()
+      expect(
+        screen.getByText('Failed to load the shelter report.'),
+      ).toBeTruthy(),
     );
 
     expect(exportButton().hasAttribute('disabled')).toBe(true);
@@ -112,8 +114,8 @@ describe('ShelterReportPage', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText('No shelter data available for this report.')
-      ).toBeTruthy()
+        screen.getByText('No shelter data available for this report.'),
+      ).toBeTruthy(),
     );
 
     expect(exportButton().hasAttribute('disabled')).toBe(true);
