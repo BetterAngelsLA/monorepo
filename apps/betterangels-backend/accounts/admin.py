@@ -104,13 +104,11 @@ class PermissionGroupAdmin(admin.ModelAdmin):
     def get_deleted_objects(
         self, objs: Any, request: HttpRequest
     ) -> tuple[list[Any], dict[str, int], set[str], list[str]]:
-        """Name the ``auth.Group`` going with each row, and who loses the role.
+        """Say how many people lose the role, which Django never can.
 
-        Django cannot work this out on its own: the group is torn down by
-        :func:`accounts.signals.delete_orphaned_group` from ``post_delete`` rather
-        than by cascade, and the foreign key points the other way, so nothing
-        appears downstream of the row being deleted — least of all the people
-        about to lose their access.
+        The collector lists the row and everything cascading from it, but its
+        members are an M2M and never appear — so a delete that strips a role from
+        a dozen people reads exactly like one that strips it from nobody.
 
         Hooked here because it is what both the delete view and the
         ``delete_selected`` action call, so one override covers a single delete
@@ -120,11 +118,11 @@ class PermissionGroupAdmin(admin.ModelAdmin):
 
         losses = []
         for permission_group in objs:
-            holders = permission_group.group.user_set.count()
+            holders = permission_group.user_set.count()
             losses.append(
                 format_html(
-                    "Group: {} — revoked from {} member{}",
-                    permission_group.group.name,
+                    "{} — revoked from {} member{}",
+                    permission_group.label,
                     holders,
                     "" if holders == 1 else "s",
                 )
@@ -132,7 +130,7 @@ class PermissionGroupAdmin(admin.ModelAdmin):
 
         if losses:
             deletable = [*deletable, *losses]
-            model_count = {**model_count, "groups": len(losses)}
+            model_count = {**model_count, "revoked roles": len(losses)}
         return deletable, model_count, perms_needed, protected
 
 
