@@ -53,7 +53,11 @@ export default function Docs({
           onPress={() =>
             showModalScreen({
               presentation: 'fullScreenModal',
-              title: 'Upload Files',
+              title: 'Upload Files x',
+              header: {
+                variant: 'modal',
+                closeLabel: 'Done',
+              },
               renderContent: ({ close }) => (
                 <UploadModal client={client} closeModal={close} />
               ),

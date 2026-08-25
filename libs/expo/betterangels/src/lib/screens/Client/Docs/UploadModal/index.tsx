@@ -3,7 +3,6 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   MediaPicker,
   TextBold,
-  TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
@@ -102,39 +101,21 @@ export default function UploadModal(props: IUploadModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-  const topOffset = insets.top;
 
   return (
     <View
       style={{
-        paddingTop: topOffset + Spacings.xs,
+        // paddingTop: topOffset + Spacings.xs,
+        paddingTop: Spacings.md,
         backgroundColor: Colors.WHITE,
         flex: 1,
       }}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: Spacings.sm,
-          paddingBottom: Spacings.sm,
-        }}
-      >
-        <TextBold size="lg">Upload Files</TextBold>
-        <TextButton
-          title="Done"
-          onPress={closeModal}
-          accessibilityHint="Closes the upload form"
-        />
-      </View>
-
       <TextRegular
         size="xs"
         color={Colors.NEUTRAL}
         style={{
           paddingHorizontal: Spacings.sm,
-          marginBottom: Spacings.sm,
         }}
       >
         You can upload several documents at once — progress appears in a bar at
@@ -143,6 +124,7 @@ export default function UploadModal(props: IUploadModalProps) {
 
       <ScrollView
         style={{
+          marginTop: Spacings.md,
           paddingHorizontal: Spacings.sm,
           paddingBottom: 35 + bottomOffset,
         }}
