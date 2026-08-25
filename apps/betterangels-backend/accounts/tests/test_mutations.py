@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
@@ -191,7 +192,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(21):
+            with self.assertNumQueriesWithoutCache(20):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -556,3 +557,67 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                 user=self.org_admin,
             ).exists()
         )
+
+
+@ignore_warnings(category=UserWarning)
+class CreateOrganizationMutationTests(GraphQLBaseTestCase):
+    """The mutation is gated on IsAuthenticated alone, so it is the attack surface.
+
+    Fixing the service alone would leave a future resolver free to reintroduce
+    resolving an organization by name; these pin the property where a caller
+    actually stands.
+    """
+
+    MUTATION = """
+        mutation CreateOrganization($data: CreateOrganizationInput!) {
+            createOrganization(data: $data) {
+                organization { id name }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.incumbent = baker.make(User, email="incumbent@example.com")
+        self.organization = organization_recipe.make(
+            name="Acme Housing", owner=self.incumbent, owner_roles=(CASEWORKER,)
+        )
+        self.outsider = baker.make(User, email="outsider@example.com")
+
+    def _create(self, name: str) -> dict[str, Any]:
+        self.graphql_client.force_login(self.outsider)
+        response = self.execute_graphql(self.MUTATION, {"data": {"organizationName": name, "orgType": "shelter"}})
+        self.assertIsNone(response.get("errors"))
+        organization: dict[str, Any] = response["data"]["createOrganization"]["organization"]
+        return organization
+
+    def test_naming_an_existing_organization_creates_a_separate_one(self) -> None:
+        created = self._create("Acme Housing")
+
+        self.assertNotEqual(created["id"], str(self.organization.pk))
+        self.assertEqual(created["name"], "Acme Housing")
+
+    def test_naming_an_existing_organization_grants_no_membership_on_it(self) -> None:
+        self._create("Acme Housing")
+
+        self.assertFalse(OrganizationUser.objects.filter(user=self.outsider, organization=self.organization).exists())
+
+    def test_naming_an_existing_organization_grants_no_role_on_it(self) -> None:
+        self._create("Acme Housing")
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.organization, group__user=self.outsider).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertSetEqual(held, set())
+
+    def test_naming_an_existing_organization_does_not_revoke_its_members_roles(self) -> None:
+        self._create("Acme Housing")
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.organization, group__user=self.incumbent).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertIn(CASEWORKER.name, held)
