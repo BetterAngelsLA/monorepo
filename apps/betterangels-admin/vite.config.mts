@@ -3,7 +3,10 @@ import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import { monorepoTsconfigAliases } from '../../libs/vite-utils/src/index';
+import {
+  monorepoTsconfigAliases,
+  svgTestResolver,
+} from '../../libs/vite-utils/src/index';
 import {
   baseHrefPlugin,
   getBranchBasePath,
@@ -48,7 +51,13 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), baseHrefPlugin(basePath)],
+    plugins: [
+      react(),
+      baseHrefPlugin(basePath),
+      // Vite handles ?raw SVG imports natively.
+      // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
+      ...(process.env.VITEST ? [svgTestResolver()] : []),
+    ],
 
     css: {
       postcss: {
@@ -62,6 +71,12 @@ export default defineConfig(({ mode }) => {
     },
 
     resolve: { alias: monorepoTsconfigAliases(WORKSPACE_ROOT) },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    },
 
     build: {
       outDir: '../../dist/apps/betterangels-admin',
