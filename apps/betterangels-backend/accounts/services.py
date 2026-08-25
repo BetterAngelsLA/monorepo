@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
+from .emails import base_url_for
 from .groups import ORG_ADMIN
 from .seed import sync_group_permissions
 from .models import (
@@ -179,7 +179,6 @@ def member_invite(
     email: str,
     permission_templates: tuple[TemplateConfig, ...],
     invited_by: UserModel,
-    site: Site,
 ) -> UserModel:
     """Add someone to *organization* with the given roles and email them an invitation.
 
@@ -209,7 +208,7 @@ def member_invite(
             user=user,
             sender=invited_by,
             organization=organization,
-            domain=site,
+            base_url=base_url_for(permission_template),
             role_template=permission_template,
         )
 
