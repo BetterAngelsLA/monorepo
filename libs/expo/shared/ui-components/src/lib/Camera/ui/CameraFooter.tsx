@@ -25,57 +25,58 @@ export function CameraFooter({
         styles.bottomBar,
         {
           paddingBottom: insets.bottom + Spacings.xs,
-          paddingHorizontal: Spacings.md,
         },
       ]}
     >
-      <TextMedium textAlign="center" mb="md" size="sm" color={Colors.WARNING}>
-        PHOTO
-      </TextMedium>
+      <View style={styles.slotCenter}>
+        <TextMedium textAlign="center" mb="md" size="sm" color={Colors.WARNING}>
+          PHOTO
+        </TextMedium>
+      </View>
 
       <View style={styles.controlsRow}>
-        <TextButton
-          testId="camera-cancel-btn"
-          style={{
-            borderRadius: Radiuses.xs,
-            paddingVertical: 6,
-            paddingHorizontal: 10,
-          }}
-          color={Colors.WHITE}
-          // The default pressed grey flashes white against the camera.
-          pressedBackgroundColor="rgba(255, 255, 255, 0.2)"
-          onPress={onCancel}
-          accessibilityHint="closes camera"
-          title="Cancel"
-        />
+        <View style={styles.slotLeft}>
+          <TextButton
+            testId="camera-cancel-btn"
+            style={{
+              borderRadius: Radiuses.xs,
+              paddingVertical: 6,
+              paddingHorizontal: 10,
+            }}
+            color={Colors.WHITE}
+            // The default pressed grey flashes white against the camera.
+            pressedBackgroundColor="rgba(255, 255, 255, 0.2)"
+            onPress={onCancel}
+            accessibilityHint="closes camera"
+            title="Cancel"
+          />
+        </View>
 
-        <Pressable
-          onPress={onCapture}
-          testID="camera-capture-btn"
-          style={{
-            flex: 2,
-            alignItems: 'center',
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="capture"
-          accessibilityHint="taka a photo"
-        >
-          {({ pressed }) => (
-            <View style={styles.shutterOuter}>
-              <View
-                style={[
-                  styles.shutterInner,
-                  {
-                    height: pressed ? 38 : 45,
-                    width: pressed ? 38 : 45,
-                  },
-                ]}
-              />
-            </View>
-          )}
-        </Pressable>
+        <View style={styles.slotCenter}>
+          <Pressable
+            onPress={onCapture}
+            testID="camera-capture-btn"
+            accessibilityRole="button"
+            accessibilityLabel="capture"
+            accessibilityHint="take a photo"
+          >
+            {({ pressed }) => (
+              <View style={styles.shutterOuter}>
+                <View
+                  style={[
+                    styles.shutterInner,
+                    {
+                      height: pressed ? 38 : 45,
+                      width: pressed ? 38 : 45,
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+        </View>
 
-        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+        <View style={styles.slotRight}>
           <View style={styles.swapWrap}>
             <IconButton
               onPress={onToggleCameraType}
@@ -105,7 +106,19 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: Spacings.md,
+  },
+  slotLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  slotRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  slotCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   shutterOuter: {
     backgroundColor: Colors.BLACK,
