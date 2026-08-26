@@ -138,6 +138,12 @@ class PermissionGroupTemplate(models.Model):
 
     name = models.CharField(max_length=255)
     permissions = models.ManyToManyField(Permission, blank=True)
+    bypasses_org_scoping = models.BooleanField(
+        default=False,
+        help_text=(
+            "Holders of this role bypass organization scoping. See common.permissions.utils.user_holds_org_bypass_perms."
+        ),
+    )
 
     objects = models.Manager()
 

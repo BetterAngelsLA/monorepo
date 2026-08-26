@@ -97,11 +97,13 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
     group gets its permissions without waiting for the next ``migrate``.
     """
     configured: dict[str, set[int]] = {}
+    bypasses_org_scoping_by_name: dict[str, bool] = {}
     for name in REGISTRY.template_names():
         template_config = REGISTRY.template(name)
         if template_config is None:
             continue
         configured[name] = set(_resolve_permissions(template_config.permissions))
+        bypasses_org_scoping_by_name[name] = template_config.bypasses_org_scoping
 
     with transaction.atomic():
         templates = PermissionGroupTemplate.objects.prefetch_related("permissions")
@@ -115,6 +117,10 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
             wanted_by_template[template.pk] = wanted
             if {p.pk for p in template.permissions.all()} != wanted:
                 template.permissions.set(wanted)
+            wanted_bypass = bypasses_org_scoping_by_name[template.name]
+            if template.bypasses_org_scoping != wanted_bypass:
+                template.bypasses_org_scoping = wanted_bypass
+                template.save(update_fields=["bypasses_org_scoping"])
 
         permission_groups = PermissionGroup.objects.filter(template__isnull=False).prefetch_related("permissions")
         if organization is not None:

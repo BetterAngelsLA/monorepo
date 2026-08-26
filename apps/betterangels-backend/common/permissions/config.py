@@ -14,6 +14,19 @@ class TemplateConfig:
     """Whether a user can be invited directly into this role.
 
     Set ``False`` for promotion-only roles (e.g. Org Admin, Org Superuser)."""
+    bypasses_org_scoping: bool = False
+    """Whether holders of this role bypass organization scoping in permission checks.
+
+    A ``PermissionGroup`` is always tied to one organization, but a role marked
+    ``True`` here (e.g. Global Shelter Operator) grants access across every
+    organization for the permissions it holds — regardless of which one
+    organization its ``PermissionGroup`` happens to live under. See
+    :func:`common.permissions.utils.user_holds_org_bypass_perms`.
+
+    Only set this for roles that are genuinely meant to be org-independent.
+    Every permission on such a role's list is implicitly cross-org for any
+    check that goes through :func:`~common.permissions.utils.permissioned_queryset`
+    or :class:`~accounts.extensions.HasOrgPerm`."""
     invite_html: str | None = None
     """Path to the HTML invitation email template.
 
