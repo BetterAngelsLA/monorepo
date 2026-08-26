@@ -1,1 +1,1 @@
-export { shouldMockCamera } from './isIosSimulator';
+export { shouldMockCamera } from './shouldMockCamera';

@@ -1,7 +1,8 @@
 import { Platform } from 'react-native';
 
 /**
- * True when running in the iOS Simulator.
+ * True when requested via 1 of 2 ENV vars.
+ * Targets iOS Simulator, either in local or EAS e2e env.
  *
  * The iOS Simulator has no camera: mounting the real `ExpoCamera` creates an
  * `AVCaptureSession` that can never start (AVFoundation err -12782) and blocks
@@ -13,9 +14,9 @@ import { Platform } from 'react-native';
  * feed, so the real camera keeps working there.
  */
 
-// const isIosSimulator = Platform.OS === 'ios' && !Device.isDevice;
-// const isCameraMockEnabled = __DEV__ || process.env.EXPO_PUBLIC_E2E_MODE === '1';
-// export const shouldMockCamera = isIosSimulator && isCameraMockEnabled;
+const isEasE2eMode = process.env.EXPO_PUBLIC_E2E_MODE === '1'; // set in eas-e2e.ts
+const mockCameraRequestedLocally =
+  process.env.EXPO_PUBLIC_MOCK_EXPO_CAMERA_LOCALLY === 'true';
 
 export const shouldMockCamera =
-  Platform.OS === 'ios' && process.env.EXPO_PUBLIC_E2E_MODE === '1';
+  Platform.OS === 'ios' && (isEasE2eMode || mockCameraRequestedLocally);

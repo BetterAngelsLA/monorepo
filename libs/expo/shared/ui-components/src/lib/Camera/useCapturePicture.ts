@@ -3,7 +3,7 @@ import { resizeImage } from '@monorepo/expo/shared/utils';
 import { CameraView as ExpoCamera, ImageType } from 'expo-camera';
 import { File, Paths } from 'expo-file-system';
 import { RefObject, useCallback } from 'react';
-import { shouldMockCamera } from './utils/isIosSimulator';
+import { shouldMockCamera } from './utils';
 
 export type CapturePictureResult =
   | { type: 'success'; file: ReactNativeFile }
