@@ -8,7 +8,6 @@ from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.contrib import auth
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.backends import invitation_backend
 from strawberry.types import Info
@@ -28,6 +27,7 @@ from .services import (
     member_add,
     member_roles_replace,
     organization_remove_member,
+    user_delete,
 )
 from .types import (
     AuthResponse,
@@ -211,12 +211,7 @@ class Mutation:
         if user.pk is None:
             raise RuntimeError("Cannot delete user.")
 
-        user_id = user.pk
-
-        with transaction.atomic():
-            user.delete()
-
-        return DeletedObjectType(id=user_id)
+        return DeletedObjectType(id=user_delete(user=cast(User, user)))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

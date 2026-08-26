@@ -4,7 +4,7 @@ Creating an organization in the admin used to produce one that could hold no
 roles and accept no members, and adding a member to it returned a 500.
 """
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from accounts.admin import CustomOrganizationUserAdmin
 from accounts.groups import ORG_ADMIN
@@ -15,7 +15,12 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
-from accounts.services import invitation_role, member_add, reconcile_org_groups
+from accounts.services import (
+    invitation_role,
+    member_add,
+    organization_transfer_ownership,
+    reconcile_org_groups,
+)
 from common.permissions.config import TemplateConfig
 from django.contrib import admin
 from django.contrib.auth.models import Group, Permission
@@ -30,6 +35,11 @@ from organizations.models import Organization, OrganizationOwner, OrganizationUs
 from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe, permission_group_recipe
+
+if TYPE_CHECKING:
+    # What ``self.client`` returns: an ``HttpResponse`` that also carries the
+    # template ``context`` these tests assert against.
+    from django.test.client import _MonkeyPatchedWSGIResponse
 
 
 class OrganizationProfileAccessTestCase(TestCase):
@@ -329,8 +339,20 @@ class OrganizationMembershipDeletionTestCase(TestCase):
 
     ``organization_remove_member`` clears the member's org-scoped roles and
     refuses to remove the owner.  The admin deletes the row directly, so both
-    rules have to hold there too.
+    rules have to hold there too — and a refusal has to say which rule refused.
     """
+
+    def assertRefused(self, response: "_MonkeyPatchedWSGIResponse") -> None:
+        """The page explains the refusal instead of reporting a missing permission.
+
+        Django reports a withheld ``has_delete_permission`` as "your account
+        doesn't have permission to delete the following types of objects:
+        organization user", which tells a superuser they lack a permission and
+        names the row rather than the organization that blocks it.
+        """
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["perms_lacking"])
+        self.assertTrue(response.context["protected"])
 
     def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(
@@ -384,7 +406,13 @@ class OrganizationMembershipDeletionTestCase(TestCase):
             {"post": "yes"},
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertRefused(response)
+        self.assertContains(response, "would be left with no owner")
+        self.assertContains(response, self.organization.name)
+        self.assertContains(
+            response,
+            reverse("admin:organizations_organization_transfer_ownership", args=[self.organization.pk]),
+        )
         self.assertTrue(OrganizationUser.objects.filter(pk=owner_membership.pk).exists())
         self.assertTrue(OrganizationOwner.objects.filter(organization=self.organization).exists())
 
@@ -405,15 +433,16 @@ class OrganizationMembershipDeletionTestCase(TestCase):
             {"post": "yes"},
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertRefused(response)
+        self.assertContains(response, "You cannot remove yourself from")
         self.assertTrue(OrganizationUser.objects.filter(pk=own_membership.pk).exists())
 
     def test_a_bulk_delete_including_the_owner_deletes_nothing(self) -> None:
         """``delete_selected`` refuses the whole batch if any row is protected.
 
-        ``get_deleted_objects`` consults ``has_delete_permission`` per selected
-        row, so the guard covers the bulk action without a ``delete_queryset``
-        override — and it is all-or-nothing rather than a silent partial delete.
+        ``get_deleted_objects`` covers the bulk action as well as the single one,
+        so the guard needs no ``delete_queryset`` override — and it is
+        all-or-nothing rather than a silent partial delete.
         """
         owner_membership = OrganizationOwner.objects.get(organization=self.organization).organization_user
 
@@ -426,11 +455,113 @@ class OrganizationMembershipDeletionTestCase(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertRefused(response)
+        self.assertContains(response, "would be left with no owner")
         self.assertTrue(OrganizationUser.objects.filter(pk=owner_membership.pk).exists())
         self.assertTrue(OrganizationOwner.objects.filter(organization=self.organization).exists())
         self.assertTrue(OrganizationUser.objects.filter(pk=self.membership.pk).exists())
         self.assertEqual(self._org_role_count(), 1)
+
+
+class UserDeletionTestCase(TestCase):
+    """Deleting a ``User`` account from the admin.
+
+    ``User`` cascades to ``OrganizationUser``, which cascades to
+    ``OrganizationOwner``, so deleting an owner would leave the organization
+    with nobody able to administer it.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_user_delete", email="admin_user_delete@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.owner = OrganizationOwner.objects.get(organization=self.organization).organization_user.user
+        self.member = member_add(
+            email="plain_member@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+
+    def _delete(self, user: User) -> "_MonkeyPatchedWSGIResponse":
+        return self.client.post(reverse("admin:accounts_user_delete", args=[user.pk]), {"post": "yes"})
+
+    def test_an_owners_account_cannot_be_deleted(self) -> None:
+        response = self._delete(self.owner)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "would be left with no owner")
+        self.assertContains(response, self.organization.name)
+        self.assertTrue(User.objects.filter(pk=self.owner.pk).exists())
+        self.assertTrue(OrganizationOwner.objects.filter(organization=self.organization).exists())
+
+    def test_the_refusal_offers_the_transfer_that_lifts_it(self) -> None:
+        response = self._delete(self.owner)
+
+        self.assertContains(
+            response,
+            reverse("admin:organizations_organization_transfer_ownership", args=[self.organization.pk]),
+        )
+
+    def test_the_owner_guard_is_not_reported_as_a_missing_permission(self) -> None:
+        """The bug this replaced: a superuser told they lacked a permission.
+
+        Django turns a withheld ``has_delete_permission`` on the cascaded
+        membership into "your account doesn't have permission to delete the
+        following types of objects: organization user".
+        """
+        response = self._delete(self.owner)
+
+        self.assertFalse(response.context["perms_lacking"])
+        self.assertNotContains(response, "doesn't have permission to delete")
+
+    def test_transferring_ownership_frees_the_account_for_deletion(self) -> None:
+        organization_transfer_ownership(organization=self.organization, new_owner_user_id=self.member.pk)
+
+        response = self._delete(self.owner)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(pk=self.owner.pk).exists())
+
+    def test_a_member_who_owns_nothing_is_deleted_with_their_membership(self) -> None:
+        membership_id = OrganizationUser.objects.get(organization=self.organization, user=self.member).pk
+
+        response = self._delete(self.member)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(pk=self.member.pk).exists())
+        self.assertFalse(OrganizationUser.objects.filter(pk=membership_id).exists())
+
+    def test_you_cannot_delete_the_account_you_are_signed_in_with(self) -> None:
+        """Refused for its own sake, not as a side effect of the membership guard.
+
+        The superuser here holds no membership, which is the case that used to
+        slip through.
+        """
+        response = self._delete(self.superuser)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You cannot delete the account you are signed in with")
+        self.assertTrue(User.objects.filter(pk=self.superuser.pk).exists())
+
+    def test_a_bulk_delete_including_an_owner_deletes_nothing(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_user_changelist"),
+            {
+                "action": "delete_selected",
+                "_selected_action": [str(self.owner.pk), str(self.member.pk)],
+                "post": "yes",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "would be left with no owner")
+        self.assertTrue(User.objects.filter(pk=self.owner.pk).exists())
+        self.assertTrue(User.objects.filter(pk=self.member.pk).exists())
 
 
 class OrganizationUserAddViewTestCase(TestCase):

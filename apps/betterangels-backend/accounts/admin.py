@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any, Type, cast
 
 from common.org_types import REGISTRY
@@ -26,7 +26,12 @@ from .forms import (
     UserChangeForm,
     UserCreationForm,
 )
-from .selectors import member_role_names, role_names_by_organization
+from .selectors import (
+    member_role_names,
+    organizations_owned_by,
+    owned_organizations,
+    role_names_by_organization,
+)
 from .models import (
     ExtendedOrganizationInvitation,
     OrganizationProfile,
@@ -50,6 +55,16 @@ def _change_roles_link(obj: OrganizationUser) -> str:
         args=[obj.organization_id, obj.user_id],
     )
     return format_html('<a href="{}" class="changelink">Change roles</a>', url)
+
+
+def _ownerless_blocker(organization: Organization) -> str:
+    """Why a delete is refused, beside the link that lifts the refusal."""
+    url = reverse("admin:organizations_organization_transfer_ownership", args=[organization.pk])
+    return format_html(
+        '“{}” would be left with no owner. <a href="{}">Transfer ownership</a> first.',
+        organization.name,
+        url,
+    )
 
 
 def _invited_message(email: str, organization: Organization, role_templates: tuple[TemplateConfig, ...]) -> str:
@@ -101,8 +116,8 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
 
     Read-only: adding goes through **Add member** so roles are always chosen, and
     removing stays on the Organization user page, where the owner guard lives.  An
-    inline could not gate deletion per row anyway — ``has_delete_permission``
-    receives the parent organization, not the member.
+    inline could not gate deletion per row anyway — it deletes through a formset,
+    which ``get_deleted_objects`` never sees.
     """
 
     model = OrganizationUser
@@ -612,26 +627,45 @@ class CustomOrganizationUserAdmin(MemberInviteAdminMixin, ModelAdmin[Organizatio
         )
         return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
 
-    def has_delete_permission(self, request: HttpRequest, obj: OrganizationUser | None = None) -> bool:
-        """Withhold deletion for the rows ``organization_remove_member`` refuses.
+    def get_deleted_objects(
+        self, objs: QuerySet[OrganizationUser] | Sequence[OrganizationUser], request: HttpRequest
+    ) -> tuple[list[Any], dict[str, int], set[str], list[Any]]:
+        """Refuse the rows ``organization_remove_member`` refuses, and say why.
 
         That service rejects removing the organization's owner and removing
         yourself.  Deletion is routed through it, so a row it would refuse has to
-        be unavailable here or the admin turns its ``ValidationError`` into a 500.
+        be stopped here or the admin turns its ``ValidationError`` into a 500.
 
         This is also what protects the owner at all on the bulk path:
         ``AbstractOrganizationUser.delete`` raises ``OwnershipRequired``, but only
-        from ``Model.delete()``, so the changelist's ``queryset.delete()`` was
-        previously unguarded.  ``get_deleted_objects`` consults this per selected
-        row and ``delete_selected`` refuses the whole batch if any row is
-        protected.
+        from ``Model.delete()``, so the changelist's ``queryset.delete()`` would
+        otherwise be unguarded.
+
+        Reported through ``protected`` rather than by withholding
+        ``has_delete_permission``, which is where the rule used to live: Django
+        turns a withheld permission into ``perms_needed``, which renders as "your
+        account doesn't have permission to delete the following types of objects:
+        organization user" — a superuser told they lack a permission, naming the
+        thing they are trying to delete rather than the organization that blocks
+        it.  ``protected`` refuses the POST just as firmly, on both the single and
+        the bulk path, and leaves the sentence ours to write.
         """
-        if obj is not None:
-            if obj.user_id == request.user.pk:
-                return False
-            if OrganizationOwner.objects.filter(organization_user=obj).exists():
-                return False
-        return super().has_delete_permission(request, obj)
+        to_delete, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+        return to_delete, model_count, perms_needed, [*protected, *self._removal_blockers(objs, request)]
+
+    @staticmethod
+    def _removal_blockers(
+        memberships: QuerySet[OrganizationUser] | Sequence[OrganizationUser], request: HttpRequest
+    ) -> list[str]:
+        """What stops each of these memberships being removed."""
+        owned = owned_organizations(membership_ids=[membership.pk for membership in memberships])
+        blockers = []
+        for membership in memberships:
+            if organization := owned.get(membership.pk):
+                blockers.append(_ownerless_blocker(organization))
+            elif membership.user_id == request.user.pk:
+                blockers.append(format_html("You cannot remove yourself from “{}”.", membership.organization.name))
+        return blockers
 
     def delete_model(self, request: HttpRequest, obj: OrganizationUser) -> None:
         """Remove the membership through the service, so roles are revoked with it.
@@ -709,6 +743,33 @@ class UserAdmin(BaseUserAdmin):
     list_display = ["id", "full_name", "email"]
     list_filter = ["organizations_organization", "is_active", "is_staff", "is_superuser"]
     readonly_fields = ("organizations_and_roles",)
+
+    def get_deleted_objects(
+        self, objs: QuerySet[User] | Sequence[User], request: HttpRequest
+    ) -> tuple[list[Any], dict[str, int], set[str], list[Any]]:
+        """Refuse to delete an account that still owns an organization, and say why.
+
+        ``User`` cascades to ``OrganizationUser``, which cascades to
+        ``OrganizationOwner``, so deleting an owner silently leaves the
+        organization with nobody able to administer it.  The membership admin's
+        own guard does not cover this: ``get_deleted_objects`` consults each
+        collected object's ``ModelAdmin``, not its ``get_deleted_objects``, so the
+        rule has to be asked again from here.
+
+        Deleting the account you are signed in with is refused for its own sake.
+        It used to be refused only as a side effect of the membership guard —
+        which meant a superuser holding no membership could delete themselves,
+        and one holding a membership was told they lacked a permission.
+        """
+        to_delete, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        user_ids = [user.pk for user in objs]
+        owned = organizations_owned_by(user_ids=user_ids)
+        blockers = [_ownerless_blocker(organization) for user_id in user_ids for organization in owned.get(user_id, [])]
+        if request.user.pk in user_ids:
+            blockers.append("You cannot delete the account you are signed in with.")
+
+        return to_delete, model_count, perms_needed, [*protected, *blockers]
 
     @admin.display(description="Organizations and roles")
     def organizations_and_roles(self, obj: User) -> str:

@@ -15,6 +15,7 @@ from accounts.services import (
     organization_remove_member,
     organization_transfer_ownership,
     reactivate_user,
+    user_delete,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -757,3 +758,67 @@ class TestOrganizationTransferOwnership:
             organization_transfer_ownership(organization=org, new_owner_user_id=stranger.pk)
 
         assert OrganizationOwner.objects.get(organization=org).organization_user.user == owner
+
+
+# ── user_delete ───────────────────────────────────────────────────────
+
+
+@pytest.mark.django_db
+class TestUserDelete:
+    """Tests for user_delete."""
+
+    def _org_with_member(self, name: str) -> tuple[User, User, "Organization"]:
+        owner = baker.make(User)
+        org = create_organization_with_presets(name, ["outreach"], owner=owner)
+        member = member_add(
+            email=f"{name.replace(' ', '').lower()}@example.com",
+            first_name="A",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+        return owner, member, org
+
+    def test_deletes_an_account_that_owns_nothing(self) -> None:
+        user = baker.make(User)
+        user_id = user.pk
+
+        assert user_delete(user=user) == user_id
+        assert not User.objects.filter(pk=user_id).exists()
+
+    def test_a_members_account_goes_with_their_membership(self) -> None:
+        owner, member, org = self._org_with_member("Member Delete Org")
+
+        member_id = member.pk
+
+        user_delete(user=member)
+
+        assert not User.objects.filter(pk=member_id).exists()
+        assert not OrganizationUser.objects.filter(organization=org, user_id=member_id).exists()
+
+    def test_an_owner_cannot_delete_their_account(self) -> None:
+        """The cascade would take the OrganizationOwner row and leave the org unadministrable."""
+        owner, member, org = self._org_with_member("Owner Delete Org")
+
+        with pytest.raises(ValidationError, match="Transfer ownership to another member"):
+            user_delete(user=owner)
+
+        assert User.objects.filter(pk=owner.pk).exists()
+        assert OrganizationOwner.objects.filter(organization=org).exists()
+
+    def test_the_refusal_names_the_organization(self) -> None:
+        owner, member, org = self._org_with_member("Named Org")
+
+        with pytest.raises(ValidationError, match=org.name):
+            user_delete(user=owner)
+
+    def test_transferring_ownership_frees_the_account(self) -> None:
+        owner, member, org = self._org_with_member("Freed Org")
+        owner_id = owner.pk
+        organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        user_delete(user=owner)
+
+        assert not User.objects.filter(pk=owner_id).exists()
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == member
