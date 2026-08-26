@@ -19,19 +19,13 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
-    PermissionGroupInlineForm,
     OrganizationProfileForm,
+    PermissionGroupInlineForm,
     UserChangeForm,
     UserCreationForm,
 )
+from .models import ExtendedOrganizationInvitation, OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from .selectors import member_role_names, role_names_by_organization
-from .models import (
-    ExtendedOrganizationInvitation,
-    OrganizationProfile,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    User,
-)
 from .services import (
     invitation_role,
     member_invite,
@@ -535,6 +529,15 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (("Personal info"), {"fields": ("first_name", "last_name", "middle_name")}),
+        (
+            ("Consent"),
+            {
+                "fields": (
+                    "has_accepted_tos",
+                    "has_accepted_privacy_policy",
+                ),
+            },
+        ),
         (
             ("Permissions"),
             {
