@@ -69,6 +69,11 @@ class CreateShelterInput:
     name: auto
     description: Optional[str] = None  # CKEditor5Field not supported by auto
 
+    # Only honored for callers holding an org-bypass role (e.g. Global Shelter
+    # Operator) — lets them create a shelter for an organization other than
+    # their own. Required for those callers; rejected for everyone else.
+    organization_id: Optional[ID] = None
+
     # M2M enum fields — explicit types because we accept enum values directly
     # (get_or_create by name), not PKs as strawberry-django's ManyToManyInput expects.
     accessibility: Optional[List[AccessibilityChoices]] = None

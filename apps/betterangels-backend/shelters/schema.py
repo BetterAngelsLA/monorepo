@@ -10,21 +10,29 @@ from common.graphql.types import (
     BulkDeleteInput,
     BulkDeleteResult,
 )
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from common.permissions.utils import IsAuthenticated, get_current_organization, user_holds_org_bypass_perms
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Max
+from strawberry import ID
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
 from shelters.selectors import (
     shelter_get,
     shelter_metrics_window,
+)
+from shelters.selectors import (
     shelter_occupancy_metrics as shelter_occupancy_metrics_selector,
 )
 from shelters.services import shelter_photo
-from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
+from shelters.services.shelter_photo import ShelterPhotoResolveItem, UploadRequest
 from shelters.types import (
     BedType,
     CityType,
@@ -49,10 +57,6 @@ from shelters.types import (
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
-from strawberry import ID
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
 
 
 @strawberry.type
@@ -143,7 +147,22 @@ class Mutation:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_create(user=user, organization_id=org_id, data=clean))
+        input_org_id = clean.pop("organization_id", None)
+
+        if user_holds_org_bypass_perms(user, [Shelter.perms.ADD]):
+            if not input_org_id:
+                raise ValidationError(
+                    "organization_id is required when creating a shelter as a Global Shelter Operator."
+                )
+            if not Organization.objects.filter(pk=input_org_id).exists():
+                raise ValidationError("organization_id does not refer to an existing organization.")
+            target_org_id = input_org_id
+        else:
+            if input_org_id and input_org_id != org_id:
+                raise PermissionDenied("You do not have permission to create a shelter for another organization.")
+            target_org_id = org_id
+
+        return cast(ShelterType, shelter_create(user=user, organization_id=target_org_id, data=clean))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
