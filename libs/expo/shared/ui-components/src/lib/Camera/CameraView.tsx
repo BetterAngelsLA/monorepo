@@ -10,7 +10,7 @@ import { useRef, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { CameraFooter, CameraHeader } from './ui';
 import { useCapturePicture } from './useCapturePicture';
-import { isIosSimulator } from './utils';
+import { shouldMockCamera } from './utils';
 
 interface CameraProps {
   onCapture: (file: ReactNativeFile) => void;
@@ -82,7 +82,7 @@ export function CameraView(props: CameraProps) {
 
   return (
     <View style={[styles.root, style]} testID="camera-view">
-      {!isIosSimulator && (
+      {!shouldMockCamera && (
         // standard prd expo-camera experience (non iOS simulator)
         <ExpoCamera
           ref={cameraRef}
@@ -92,7 +92,7 @@ export function CameraView(props: CameraProps) {
         />
       )}
 
-      {isIosSimulator && (
+      {shouldMockCamera && (
         // The iOS Simulator has no camera: mounting the real view would
         // create an AVCaptureSession that can never start and block for ~9s.
         // Show a black placeholder instead so open/close stays instant.
