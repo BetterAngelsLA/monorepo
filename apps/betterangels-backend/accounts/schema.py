@@ -6,9 +6,7 @@ import strawberry_django
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.conf import settings
 from django.contrib import auth
-from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -19,7 +17,7 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from accounts.emails import send_welcome_emails_for_org
+from accounts.emails import base_url_for, send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
 
@@ -244,12 +242,11 @@ class Mutation:
             organization=organization, invited_by_user=current_user, invitee_user=user
         )
 
-        site = Site.objects.get(pk=settings.SITE_ID)
         invitation_backend().send_invitation(
             user=user,
             sender=current_user,
             organization=organization,
-            domain=site,
+            base_url=base_url_for(template),
             role_template=template,
         )
 

@@ -91,7 +91,7 @@ class PermissionGroupTestCase(TestCase):
 
         self.assertFalse(Group.objects.filter(id=group_id).exists())
 
-    def test_deleting_a_permission_group_takes_its_object_permissions(self) -> None:
+    def test_deleting_a_permission_group_also_deletes_its_object_permissions(self) -> None:
         """Why the teardown matters at all.
 
         Object-level grants are assigned to the group and cascade from it.  A group

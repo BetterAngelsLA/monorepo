@@ -8,8 +8,6 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
-from django.contrib.sites.models import Site
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import Field as FormField
 from django.db.models import Field, Model, QuerySet
@@ -307,7 +305,6 @@ class MemberInviteAdminMixin:
                 email=email,
                 permission_templates=role_templates,
                 invited_by=cast(User, request.user),
-                site=Site.objects.get(pk=settings.SITE_ID),
             )
         except ValidationError as error:
             self.message_user(request, "; ".join(error.messages), messages.ERROR)
