@@ -406,6 +406,23 @@ class PublicShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["shelter"]["id"], str(self.shelter.pk))
 
+    def test_an_anonymous_caller_can_read_the_organization_name(self) -> None:
+        """Organization names are public for any org owning an approved shelter.
+
+        Load-bearing rather than incidental: it is what makes the exact-name
+        lookups on Organization reachable by an outsider, so anything that starts
+        keying behaviour on a name being secret is wrong. Kept as a test so the
+        assumption is checked rather than remembered.
+        """
+        organization = organization_recipe.make(name="Publicly Named Org")
+        self.shelter.organization = organization
+        self.shelter.save()
+
+        response = self.execute_graphql("{ shelters { results { organization { name } } } }")
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelters"]["results"], [{"organization": {"name": "Publicly Named Org"}}])
+
 
 class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def test_shelter_max_stay_query(self) -> None:

@@ -125,7 +125,7 @@ class OrganizationAdminTestCase(TestCase):
             {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
         )
 
-    def test_the_form_does_not_offer_is_active(self) -> None:
+    def test_form_hides_is_active(self) -> None:
         """django-organizations' own field; nothing in this codebase filters on it."""
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
 
@@ -237,7 +237,7 @@ class OrganizationAdminTestCase(TestCase):
         """``group`` is created and torn down by code, so staff must not pick one.
 
         Binding a row to a group used for something else means deleting the row
-        takes that group's members with it.
+        deletes that group's members with it.
         """
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
 
@@ -886,7 +886,7 @@ class OrganizationsGenericViewsNotRoutedTestCase(SimpleTestCase):
 
 
 class PermissionGroupDeleteWarningTestCase(TestCase):
-    """Deleting a permission group takes its auth.Group, and every member's role with it."""
+    """Deleting a permission group deletes its auth.Group, and every member's role with it."""
 
     def setUp(self) -> None:
         self.superuser = User.objects.create_superuser(
@@ -915,8 +915,7 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
         self.assertContains(response, self.permission_group.name)
         self.assertContains(response, "revoked from 2 members")
 
-    def test_the_bulk_delete_page_names_them_too(self) -> None:
-        """``delete_selected`` is the likelier route, and goes through the same hook."""
+    def test_the_bulk_delete_page_names_the_group_and_who_loses_it(self) -> None:
         response = self.client.post(
             reverse("admin:accounts_permissiongroup_changelist"),
             {"action": "delete_selected", "_selected_action": [str(self.permission_group.pk)]},

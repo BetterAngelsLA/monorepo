@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 # ── Local dev data setup ──────────────────────────────────────────────
 # Connected via AppConfig.ready() with sender=self — fires once, not per-app.
 
+TEST_ORG_NAME = "test_org"
+
 
 def setup_local_dev_data(sender: object, **kwargs: object) -> None:
     """Create test users and org — local dev only.
@@ -74,12 +76,16 @@ def _ensure_test_org() -> None:
     """
     from accounts.services import create_organization_with_presets
 
-    admin = User.objects.get(username="admin")
+    # The idempotency this seeding relies on lives here, not in the service:
+    # create_organization_with_presets always creates, so that naming an existing
+    # organization cannot join it.
+    if Organization.objects.filter(name=TEST_ORG_NAME).exists():
+        return
 
     create_organization_with_presets(
-        name="test_org",
+        name=TEST_ORG_NAME,
         preset_names=["shelter", "outreach"],
-        owner=admin,
+        owner=User.objects.get(username="admin"),
         owner_roles=(),  # roles assigned by sync_all_org_permission_groups
     )
 
@@ -117,7 +123,7 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
     try:
         from accounts.groups import ORG_ADMIN
 
-        test_org = Organization.objects.get(name="test_org")
+        test_org = Organization.objects.get(name=TEST_ORG_NAME)
         admin = User.objects.get(username="admin")
         agent = User.objects.get(username="agent")
 
