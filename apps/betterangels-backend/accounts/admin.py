@@ -19,19 +19,13 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
-    PermissionGroupInlineForm,
     OrganizationProfileForm,
+    PermissionGroupInlineForm,
     UserChangeForm,
     UserCreationForm,
 )
+from .models import ExtendedOrganizationInvitation, OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from .selectors import member_role_names, role_names_by_organization
-from .models import (
-    ExtendedOrganizationInvitation,
-    OrganizationProfile,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    User,
-)
 from .services import (
     invitation_role,
     member_invite,
@@ -74,6 +68,40 @@ class PermissionGroupAdmin(admin.ModelAdmin):
     # Excludes ``group``: picking an existing one means deleting this row takes that
     # group's members with it.
     fields = ("organization", "template", "name")
+
+    def get_deleted_objects(
+        self, objs: Any, request: HttpRequest
+    ) -> tuple[list[Any], dict[str, int], set[str], list[str]]:
+        """Name the ``auth.Group`` going with each row, and who loses the role.
+
+        Django cannot work this out on its own: the group is torn down by
+        :func:`accounts.signals.delete_orphaned_group` from ``post_delete`` rather
+        than by cascade, and the foreign key points the other way, so nothing
+        appears downstream of the row being deleted — least of all the people
+        about to lose their access.
+
+        Hooked here because it is what both the delete view and the
+        ``delete_selected`` action call, so one override covers a single delete
+        and a bulk one alike.
+        """
+        deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        losses = []
+        for permission_group in objs:
+            holders = permission_group.group.user_set.count()
+            losses.append(
+                format_html(
+                    "Group: {} — revoked from {} member{}",
+                    permission_group.group.name,
+                    holders,
+                    "" if holders == 1 else "s",
+                )
+            )
+
+        if losses:
+            deletable = [*deletable, *losses]
+            model_count = {**model_count, "groups": len(losses)}
+        return deletable, model_count, perms_needed, protected
 
 
 @admin.register(PermissionGroupTemplate)
@@ -253,7 +281,7 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
     list_display = ("name",)
     search_fields = ("name",)
-    fields = ("name", "is_active", "slug")
+    fields = ("name", "slug")
     readonly_fields = ("slug",)
     change_form_template = "admin/organizations/organization/change_form.html"
     # django-organizations' models define get_absolute_url against its own generic
@@ -501,6 +529,15 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (("Personal info"), {"fields": ("first_name", "last_name", "middle_name")}),
+        (
+            ("Consent"),
+            {
+                "fields": (
+                    "has_accepted_tos",
+                    "has_accepted_privacy_policy",
+                ),
+            },
+        ),
         (
             ("Permissions"),
             {

@@ -70,7 +70,7 @@ export function SheltersDisplay(props: TProps) {
       if (openNowFor && openNowFor.length > 0) {
         vars = vars || {};
         vars.filters = vars.filters || {};
-        vars.filters.openNowFor = openNowFor;
+        vars.filters.openNow = { scheduleType: openNowFor };
       }
 
       if (isAccessCenter) {
