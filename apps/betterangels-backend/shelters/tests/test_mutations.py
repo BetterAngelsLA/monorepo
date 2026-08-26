@@ -1,9 +1,10 @@
 from typing import Any
 
 from django.test import TestCase, ignore_warnings
+from unittest_parametrize import ParametrizedTestCase
+
 from shelters.models import SPA, City, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
-from unittest_parametrize import ParametrizedTestCase
 
 
 @ignore_warnings(category=UserWarning)
@@ -784,8 +785,8 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             name="SPAs Served Shelter",
             organization=self.org,
         )
-        spa_a, _ = SPA.objects.get_or_create(short_name="1", defaults={"long_name": "1 - Antelope Valley"})
-        spa_b, _ = SPA.objects.get_or_create(short_name="2", defaults={"long_name": "2 - San Fernando Valley"})
+        spa_1 = SPA.objects.get(short_name="1")
+        spa_2 = SPA.objects.get(short_name="2")
 
         mutation = """
             mutation ($data: UpdateShelterInput!) {
@@ -802,7 +803,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         variables: dict[str, Any] = {
             "data": {
                 "id": str(shelter.pk),
-                "spasServedIds": [str(spa_a.pk), str(spa_b.pk)],
+                "spasServedIds": [str(spa_1.pk), str(spa_2.pk)],
             }
         }
 
@@ -811,7 +812,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertIsNone(response.get("errors"))
         result = response["data"]["updateShelter"]
         spa_ids = {s["id"] for s in result["spasServed"]}
-        self.assertEqual(spa_ids, {str(spa_a.pk), str(spa_b.pk)})
+        self.assertEqual(spa_ids, {str(spa_1.pk), str(spa_2.pk)})
 
         # Verify patch semantics — omitting spasServedIds leaves the field unchanged.
         variables2: dict[str, Any] = {
@@ -823,7 +824,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         response2 = self.execute_graphql(mutation, variables2)
         self.assertIsNone(response2.get("errors"))
         spa_ids2 = {s["id"] for s in response2["data"]["updateShelter"]["spasServed"]}
-        self.assertEqual(spa_ids2, {str(spa_a.pk), str(spa_b.pk)})
+        self.assertEqual(spa_ids2, {str(spa_1.pk), str(spa_2.pk)})
 
         # Verify full replacement — sending an empty list clears the relation.
         variables3: dict[str, Any] = {

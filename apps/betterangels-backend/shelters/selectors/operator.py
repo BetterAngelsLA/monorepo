@@ -7,16 +7,19 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
+from accounts.models import PermissionGroup
 from common.permissions.utils import permissioned_queryset
 from common.utils import get_by_pk_or_not_found
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
+
 from shelters.enums import StatusChoices
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.contrib.auth.base_user import AbstractBaseUser
     from django.contrib.auth.models import AnonymousUser
+
     from shelters.models import Bed, Reservation, Room, Shelter
 
 
@@ -36,6 +39,22 @@ def shelter_list(
     if user and user.is_authenticated and hasattr(user, "has_perm") and user.has_perm(Shelter.perms.VIEW_PRIVATE):
         return queryset
     return queryset.filter(is_private=False)
+
+
+def shelter_organization_list(queryset: "QuerySet[Organization] | None" = None) -> "QuerySet[Organization]":
+    """Filter to organizations that have a Shelter Operator permission group."""
+    from shelters.groups import SHELTER_OPERATOR
+
+    if queryset is None:
+        queryset = Organization.objects.all()
+
+    has_shelter_operator_group = Exists(
+        PermissionGroup.objects.filter(
+            organization=OuterRef("pk"),
+            template__name=SHELTER_OPERATOR.name,
+        )
+    )
+    return queryset.filter(has_shelter_operator_group)
 
 
 def user_shelter_list(

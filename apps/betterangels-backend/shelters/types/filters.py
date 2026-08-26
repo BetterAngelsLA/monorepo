@@ -1,6 +1,8 @@
 """Filter and ordering types for shelter queries."""
 
 import datetime
+from functools import reduce
+from operator import and_, or_
 from typing import List, Optional, Tuple, cast
 from zoneinfo import ZoneInfo
 
@@ -17,7 +19,8 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
+from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -38,10 +41,14 @@ from shelters.enums import (
     RoomStyleChoices,
     ScheduleTypeChoices,
     ShelterChoices,
+    ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
+    StorageChoices,
 )
 from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
+from shelters.selectors.computed_status import shelter_count_subquery
 
 SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
 
@@ -83,6 +90,8 @@ class ShelterPropertyInput:
     room_styles_include_null: Optional[bool] = False
     parking: Optional[List[ParkingChoices]] = None
     parking_include_null: Optional[bool] = False
+    funders: Optional[List[FunderChoices]] = None
+    funders_include_null: Optional[bool] = False
 
 
 @strawberry.input
@@ -97,7 +106,12 @@ class OpenNowInput:
 
 
 @strawberry_django.filter_type(models.Shelter)
-class ShelterFilter:
+class PublicShelterFilter:
+    name = make_icontains_filter("name")
+    accessibility = make_m2m_in_filter("accessibility", "name", AccessibilityChoices)
+    storage = make_m2m_in_filter("storage", "name", StorageChoices)
+    shelter_programs = make_m2m_in_filter("shelter_programs", "name", ShelterProgramChoices)
+
     @strawberry_django.filter_field
     def is_access_center(self, info: Info, value: Optional[bool], prefix: str) -> Q:
         if not value:
@@ -106,42 +120,17 @@ class ShelterFilter:
         return Q(**{f"{prefix}shelter_types__name__exact": ShelterChoices.ACCESS_CENTER})
 
     @strawberry_django.filter_field
-    def max_stay(self, info: Info, value: Optional[MaxStayInput], prefix: str) -> Q:
-        if not value:
-            return Q()
-
+    def max_stay(self, info: Info, value: MaxStayInput, prefix: str) -> Q:
         conditions = Q(**{f"{prefix}max_stay__gte": value.days})
         if value.include_null:
             conditions |= Q(**{f"{prefix}max_stay__isnull": value.include_null})
 
         return conditions
 
-    name = make_icontains_filter("name")
-
-    @strawberry_django.filter_field
-    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        user = get_current_user(info)
-
-        if user is None or not user.is_authenticated:
-            if not value:
-                return Q()
-
-            return Q(**{f"{prefix}organization__in": value})
-
-        current_user = cast(User, user)
-        allowed_organizations = current_user.organizations_organization.all()
-        if value:
-            allowed_organizations = allowed_organizations.filter(pk__in=value)
-
-        return Q(**{f"{prefix}organization__in": allowed_organizations})
-
     @strawberry_django.filter_field
     def properties(
         self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None:
-            return queryset, Q()
-
         # Fields that have corresponding include_null flags
         property_fields = [
             "pets",
@@ -152,6 +141,7 @@ class ShelterFilter:
             "shelter_types",
             "room_styles",
             "parking",
+            "funders",
         ]
 
         value_dict = asdict(value)
@@ -190,10 +180,8 @@ class ShelterFilter:
         )
 
     @strawberry_django.filter_field
-    def open_now(
-        self, queryset: QuerySet, value: Optional[OpenNowInput], prefix: str
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None or not value.schedule_type:
+    def open_now(self, queryset: QuerySet, value: OpenNowInput, prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value.schedule_type:
             return queryset, Q()
 
         return (
@@ -209,12 +197,9 @@ class ShelterFilter:
     def map_bounds(
         self,
         queryset: QuerySet,
-        value: Optional[MapBoundsInput],
+        value: MapBoundsInput,
         prefix: str,
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if not value:
-            return queryset, Q()
-
         bbox: tuple = (
             value.west_lng,
             value.north_lat,
@@ -227,11 +212,8 @@ class ShelterFilter:
 
     @strawberry_django.filter_field
     def geolocation(
-        self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
+        self, queryset: QuerySet, value: GeolocationInput, prefix: str
     ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if value is None:
-            return queryset, Q()
-
         reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
 
         queryset = queryset.annotate(distance=Distance("geolocation", reference_point)).order_by("distance")
@@ -245,9 +227,6 @@ class ShelterFilter:
 
     @strawberry_django.filter_field
     def has_available_beds(self, info: Info, value: Optional[bool], prefix: str) -> Q:
-        if value is None:
-            return Q()
-
         has_beds = Q(**{f"{prefix}availability__non_restricted_beds__gt": 0}) | Q(
             **{f"{prefix}availability__restricted_beds__gt": 0}
         )
@@ -260,11 +239,171 @@ class ShelterFilter:
 
         return queryset.filter(spa_id__in=value).select_related("spa"), Q()
 
+    @strawberry_django.filter_field
+    def on_site_security(self, info: Info, value: Optional[bool], prefix: str) -> Q:
+        return Q(**{f"{prefix}on_site_security": value})
+
+    @strawberry_django.filter_field
+    def city(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}city__in": value})
+
+    @strawberry_django.filter_field
+    def cities_served(self, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        through = models.Shelter.cities_served.through
+
+        return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), city_id__in=value)))
+
+    @strawberry_django.filter_field
+    def spas_served(self, queryset: QuerySet, value: Optional[List[ID]], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        through = models.Shelter.spas_served.through
+
+        return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), spa_id__in=value)))
+
+    @strawberry_django.filter_field
+    def services(
+        self, queryset: QuerySet, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Shelter], Q]:
+        if not value:
+            return queryset, Q()
+        return queryset.filter(**{f"{prefix}services__in": value}).distinct(), Q()
+
+
+@strawberry_django.filter_type(models.Shelter)
+class OperatorShelterFilter(PublicShelterFilter):
+    @strawberry_django.filter_field
+    def search(self, info: Info, value: str, prefix: str) -> Q:
+        """
+        Free-text search across name, organization name, description, and subjective review.
+
+        Each search term must match at least one searched field; terms are combined
+        with AND so a single term matching one field cannot bypass the other terms'
+        requirements.
+        """
+        value = value.strip()
+        if not value:
+            return Q()
+
+        search_terms = value.split()
+        searchable_fields = ["name", "organization__name", "description", "subjective_review"]
+
+        # Each search term must match at least one searched field.
+        term_queries: list[Q] = []
+        for term in search_terms:
+            term_query = reduce(
+                or_,
+                [Q(**{f"{prefix}{field}__icontains": term}) for field in searchable_fields],
+            )
+            term_queries.append(term_query)
+
+        return reduce(and_, term_queries)
+
+    @strawberry_django.filter_field
+    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
+        """Scope to orgs the authenticated user belongs to (intersected with *value* if set)."""
+        current_user = cast(User, get_current_user(info))
+        allowed_organizations = current_user.organizations_organization.all()
+        if value:
+            allowed_organizations = allowed_organizations.filter(pk__in=value)
+
+        return Q(**{f"{prefix}organization__in": allowed_organizations})
+
+    @strawberry_django.filter_field
+    def status(self, info: Info, value: Optional[List[StatusChoices]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}status__in": value})
+
+    @strawberry_django.filter_field
+    def city_council_district(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}city_council_district__in": value})
+
+    @strawberry_django.filter_field
+    def supervisorial_district(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}supervisorial_district__in": value})
+
+    @strawberry_django.filter_field
+    def overall_rating(self, info: Info, value: Optional[List[int]], prefix: str) -> Q:
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}overall_rating__in": value})
+
 
 @strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
     created_at: auto
+
+    @strawberry_django.order_field
+    def status(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        """Order by shelter lifecycle: draft → pending → approved → inactive."""
+        queryset = queryset.annotate(
+            **{
+                f"{prefix}_status_rank": Case(
+                    When(**{f"{prefix}status": StatusChoices.DRAFT}, then=Value(0)),
+                    When(**{f"{prefix}status": StatusChoices.PENDING}, then=Value(1)),
+                    When(**{f"{prefix}status": StatusChoices.APPROVED}, then=Value(2)),
+                    When(**{f"{prefix}status": StatusChoices.INACTIVE}, then=Value(3)),
+                    default=Value(4),
+                    output_field=IntegerField(),
+                )
+            }
+        )
+        return queryset, [value.resolve(f"{prefix}_status_rank")]
+
+    @strawberry_django.order_field
+    def organization(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        """Order by organization name; direction comes from ``value.resolve``."""
+        queryset = queryset.annotate(**{f"{prefix}_organization_name": F(f"{prefix}organization__name")})
+        return queryset, [value.resolve(f"{prefix}_organization_name")]
+
+    @strawberry_django.order_field
+    def bed_count(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet, list[strawberry_django.Ordering]]:
+        """Order by the count of beds related to the shelter.
+
+        Uses ``shelter_count_subquery`` (same as ``bedCounts.total``) under
+        ``Coalesce`` to 0. Annotation name ``_order_bed_total`` avoids conflicting
+        with ``_bed_total`` when both are requested in the same query.
+        """
+        # Coalesce NULL (no related beds) to 0 so DESC/ASC match bedCounts.total
+        # and PostgreSQL does not sort empty shelters first under DESC.
+        queryset = queryset.annotate(
+            **{
+                f"{prefix}_order_bed_total": Coalesce(
+                    shelter_count_subquery(models.Bed),
+                    Value(0),
+                )
+            }
+        )
+        return queryset, [value.resolve(f"{prefix}_order_bed_total")]
 
 
 @strawberry_django.order_type(models.Bed, one_of=False)
@@ -323,8 +462,6 @@ class RoomFilter(CommonBedRoomFilterMixin):
 
     @strawberry_django.filter_field
     def number_of_beds(self, queryset: QuerySet, value: Optional[int], prefix: str) -> Tuple[QuerySet, Q]:
-        if value is None:
-            return queryset, Q()
         return queryset.annotate(num_beds=Count("beds")).filter(num_beds=value), Q()
 
     @strawberry_django.filter_field
