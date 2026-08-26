@@ -105,8 +105,9 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
         }
+        pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
-            payload[f"permission_groups-{index}-id"] = str(row.pk)
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
             payload[f"permission_groups-{index}-organization"] = str(organization.pk)
             payload[f"permission_groups-{index}-name"] = row.name
             payload[f"permission_groups-{index}-template"] = str(

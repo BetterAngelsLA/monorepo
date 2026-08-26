@@ -374,8 +374,12 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         the same save, with a fresh and empty ``auth.Group``, so the page comes
         back looking untouched while everyone who held the role has lost it.
         """
+        # The inline names its pk field after the model's pk, which #2378 makes
+        # ``group_ptr``.  Hardcoding ``-id`` would stop matching and report no
+        # losses rather than failing.
+        pk_field = PermissionGroup._meta.pk.name
         deleted_row_ids = [
-            posted.get(f"{key.rsplit('-', 1)[0]}-id")
+            posted.get(f"{key.rsplit('-', 1)[0]}-{pk_field}")
             for key in posted
             if key.startswith("permission_groups-") and key.endswith("-DELETE") and posted.get(key)
         ]
