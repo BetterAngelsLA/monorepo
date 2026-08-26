@@ -16,12 +16,20 @@ export const BOTTOM_SHEET_PADDING: Pick<
 };
 
 /**
- * Global defaults applied to every sheet before variant + user overrides.
+ * Authoritative option defaults applied to every sheet before variant + user
+ * overrides.
  *
- * These represent design-system baseline behavior.
+ * Single source of truth for default *behavior* and options consumed upstream
+ * of rendering. Baseline surface styling is intentionally NOT here — it lives
+ * in `BottomSheetBase`'s `styles` so the component's look stays co-located
+ * with the component. `BOTTOM_SHEET_VARIANT_OPTIONS` only deviates from the
+ * baseline, and user options override everything last.
+ *
+ * Keep defaults here; do not hard-code them in the provider or the resolution
+ * utilities.
  */
 export const DEFAULT_BOTTOM_SHEET_OPTIONS: Partial<BottomSheetOptions> = {
-  //  Allow sheet height to adapt to content.
+  // Allow sheet height to adapt to content.
   enableDynamicSizing: true,
 
   // Allow swipe-down to dismiss by default.
@@ -37,6 +45,13 @@ export const DEFAULT_BOTTOM_SHEET_OPTIONS: Partial<BottomSheetOptions> = {
   disableBackdrop: false,
 
   backdropOpacity: 0.5,
+
+  // Opening a new sheet dismisses all existing ones.
+  stackBehavior: 'replace',
+
+  // Non-accessible by default: iOS e2e (maestro) and screen-readers collapse
+  // accessible parents, swallowing the sheet's children. DEV-2513.
+  accessible: false,
 };
 
 /**

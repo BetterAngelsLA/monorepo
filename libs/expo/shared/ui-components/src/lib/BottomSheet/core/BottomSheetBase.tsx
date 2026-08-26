@@ -16,6 +16,7 @@
  * - manage state
  * - resolve options
  * - control stacking or lifecycle
+ * - own any option defaults (authoritative source: `DEFAULT_BOTTOM_SHEET_OPTIONS`)
  *
  * Upstream:
  * - API + usage: `useBottomSheet`
@@ -73,11 +74,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
       snapPoints,
       overDragResistanceFactor,
       containerComponent,
-      // default accessible to false
-      // iOS e2e test runner (maestro) collapses accessible elements making them
-      // hard to test. iOS screen-readers do similar things, meaning that our
-      // `accessibility` annotations already fail here. Related ticket: DEV-2513.
-      accessible = false,
+      accessible,
 
       // Wrapper-level
       disableBackdrop,

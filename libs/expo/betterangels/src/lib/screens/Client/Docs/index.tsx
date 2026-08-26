@@ -57,7 +57,6 @@ export default function Docs({
               title: 'Upload Files',
               header: {
                 mode: 'custom',
-                variant: 'modal',
                 closeLabel: 'Done',
               },
               renderContent: ({ close }) => (

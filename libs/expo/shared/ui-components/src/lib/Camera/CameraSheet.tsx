@@ -139,20 +139,14 @@ const CAMERA_SHEET_OPTIONS: BottomSheetOptions = {
   disableBackdrop: true,
   showHandle: false,
 
-  // 'replace' is the honest semantic here: the menu and camera are mutually
-  // exclusive, so the stack should never hold both. The provider defers
-  // removal of the outgoing sheet until its dismiss completes, so the menu
-  // still slides away under the arriving camera — and the camera is appended
-  // last, which is what puts it above the outgoing sheet.
+  // The menu and camera are mutually exclusive, so the stack should never hold
+  // both. The provider defers removal of the outgoing sheet until its dismiss
+  // completes, so the menu still slides away under the arriving camera — and
+  // the camera is appended last, which is what puts it above the outgoing sheet.
   stackBehavior: 'replace',
 
   sheetStyle: {
-    // backgroundColor: Colors.BLACK,
-    backgroundColor: Colors.IOS_GRAY,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderWidth: 4,
-    borderColor: 'blue',
+    backgroundColor: Colors.BLACK,
   },
   // `height` rather than `flex: 1`: gorhom styles its content view
   // `position: absolute` (after any style passed to it), and an absolutely

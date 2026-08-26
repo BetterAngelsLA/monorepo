@@ -106,7 +106,6 @@ export default function UploadModal(props: IUploadModalProps) {
     <View
       testID="client-docs-upload-screen"
       style={{
-        // paddingTop: topOffset + Spacings.xs,
         paddingTop: Spacings.md,
         backgroundColor: Colors.WHITE,
         flex: 1,
