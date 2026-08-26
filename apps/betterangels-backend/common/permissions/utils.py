@@ -272,6 +272,38 @@ def _org_perm_exists_across_fields(
     )
 
 
+def user_has_org_bypass_role(user: AbstractBaseUser) -> bool:
+    """Whether *user* belongs to a ``PermissionGroup`` whose template bypasses org scoping.
+
+    See :attr:`~common.permissions.config.TemplateConfig.bypasses_org_scoping`
+    (e.g. Global Shelter Operator). Such a role's ``PermissionGroup`` is still
+    tied to one organization, but its holder isn't meant to be confined to it.
+    """
+    from accounts.models import PermissionGroup
+
+    return PermissionGroup.objects.filter(user=user, template__bypasses_org_scoping=True).exists()
+
+
+def user_holds_org_bypass_perms(user: AbstractBaseUser, perms: Sequence[str], any_perm: bool = True) -> bool:
+    """Whether *user* holds *perms* through an org-bypassing role, independent of organization.
+
+    Checks the permission directly against the user's org-bypassing
+    ``PermissionGroup`` memberships — no organization filter — so a Global
+    Shelter Operator's access isn't limited to whichever one organization
+    their grant happens to live under. Permission-scoped, not role-wide: only
+    returns ``True`` for permissions the bypassing role's template actually
+    carries.
+    """
+    if not perms:
+        return False
+
+    from accounts.models import PermissionGroup
+
+    groups = PermissionGroup.objects.filter(user=user, template__bypasses_org_scoping=True)
+    checks = (groups.filter(_perm_q(*p.split(".", 1), prefix="permissions")).exists() for p in perms)
+    return any(checks) if any_perm else all(checks)
+
+
 def permissioned_queryset(
     queryset: "QuerySet[_T]",
     *,
