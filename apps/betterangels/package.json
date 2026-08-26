@@ -96,8 +96,7 @@
     "react-native-paper": "*",
     "react-native-paper-dates": "*",
     "eslint-plugin-storybook": "*",
-    "libphonenumber-js": "*",
-    "expo-device": "*"
+    "libphonenumber-js": "*"
   },
   "devDependencies": {}
 }
