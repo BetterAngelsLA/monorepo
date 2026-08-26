@@ -7,6 +7,7 @@ from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
+    create_organization_service,
     create_organization_with_presets,
     get_or_create_user_by_email,
     member_add,
@@ -590,3 +591,95 @@ def _role_names(org: Organization, member: User) -> set[str]:
     return set(
         PermissionGroup.objects.filter(organization=org, group__user=member).values_list("template__name", flat=True)
     )
+
+
+# ── create_organization_service: no implicit join ─────────────────────
+
+
+def _existing_org_with_caseworker() -> tuple[Organization, User]:
+    """An organization someone else already runs, with a member holding a role."""
+    incumbent = baker.make(User, email="incumbent@example.com")
+    org = create_organization_with_presets("Acme Housing", ["outreach"], owner=incumbent, owner_roles=(CASEWORKER,))
+    return org, incumbent
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_does_not_join_it() -> None:
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    _, created = create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    assert created.pk != org.pk, "must not resolve onto the existing organization"
+    assert not OrganizationUser.objects.filter(user=outsider, organization=org).exists()
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_leaves_its_org_types_alone() -> None:
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    profile = OrganizationProfile.objects.get(organization=org)
+    assert [str(org_type) for org_type in profile.org_types] == ["outreach"]
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_leaves_its_members_roles_alone() -> None:
+    org, incumbent = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    caseworker = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name)
+    assert caseworker in incumbent.groups.all()
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_grants_no_role_on_it() -> None:
+    """The escalation itself: naming someone else's org must not make you its admin."""
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    held = set(
+        PermissionGroup.objects.filter(organization=org, group__user=outsider).values_list("template__name", flat=True)
+    )
+    assert held == set(), f"outsider holds {held} on an organization they never joined"
+
+
+# ── duplicate organization names are supported ────────────────────────
+
+
+@pytest.mark.django_db
+def test_two_organizations_may_share_a_name() -> None:
+    """Pins a deliberate invariant, so nobody "fixes" this with a unique constraint.
+
+    Names are editable and two real organizations may genuinely share one, so
+    uniqueness must not be reintroduced — it is the assumption that made
+    resolving an organization by name look reasonable in the first place.
+    """
+    first = create_organization_with_presets("Shared Name", ["outreach"], owner=baker.make(User))
+    second = create_organization_with_presets("Shared Name", ["outreach"], owner=baker.make(User))
+
+    assert first.pk != second.pk
+    assert first.slug != second.slug, "slug is unique and must absorb the collision"
+
+
+@pytest.mark.django_db
+def test_same_named_organizations_keep_separate_members_and_roles() -> None:
+    first_owner = baker.make(User, email="first@example.com")
+    second_owner = baker.make(User, email="second@example.com")
+    first = create_organization_with_presets("Shared Name", ["outreach"], owner=first_owner, owner_roles=(CASEWORKER,))
+    second = create_organization_with_presets(
+        "Shared Name", ["outreach"], owner=second_owner, owner_roles=(CASEWORKER,)
+    )
+
+    assert not OrganizationUser.objects.filter(user=first_owner, organization=second).exists()
+    assert not PermissionGroup.objects.filter(organization=second, group__user=first_owner).exists()
+
+    first_group = PermissionGroup.objects.get(organization=first, template__name=CASEWORKER.name)
+    second_group = PermissionGroup.objects.get(organization=second, template__name=CASEWORKER.name)
+    assert first_group.group.name != second_group.group.name, "the pk segment must disambiguate"

@@ -1,8 +1,7 @@
-export { headerVariants } from './config';
 export * from './constants';
-export { getDefaultStackNavOptions } from './getDefaultStackNavOptions';
 export { HeaderLeftButton } from './HeaderLeftButton';
-export * from './modalOptions';
+export { headerStyles } from './headerStyles';
+export type { THeaderStyleName } from './headerStyles';
+export { getStackModalOptions, getStackScreenOptions } from './options';
 export * from './ScreenHeader';
 export * from './types';
-export * from './utils';

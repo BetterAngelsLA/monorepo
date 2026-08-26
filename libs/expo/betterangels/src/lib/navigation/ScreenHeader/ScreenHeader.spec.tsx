@@ -21,9 +21,6 @@ vi.mock('react-native-safe-area-context', () => ({
 // pieces the header actually uses.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
-  TextRegular: ({ children }: { children: ReactNode }) => (
-    <Text>{children}</Text>
-  ),
 }));
 
 // Icons are SVG assets that cannot load here; the close glyph is not asserted.
@@ -42,17 +39,10 @@ describe('ScreenHeader', () => {
     expect(screen.getByText('Upload Files')).toBeTruthy();
   });
 
-  it('defaults to a Back button that navigates back', () => {
+  it('renders no buttons by default', () => {
     render(<ScreenHeader title="Upload Files" />);
 
-    fireEvent.press(screen.getByTestId('screen-header-back-btn'));
-
-    expect(mocks.back).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders no left button when buttonLeft is null', () => {
-    render(<ScreenHeader title="Upload Files" buttonLeft={null} />);
-
+    expect(screen.queryByTestId('screen-header-close-btn')).toBeNull();
     expect(screen.queryByTestId('screen-header-back-btn')).toBeNull();
   });
 
@@ -67,7 +57,6 @@ describe('ScreenHeader', () => {
 
     expect(screen.getByText('Cancel')).toBeTruthy();
     expect(screen.getByText('Done')).toBeTruthy();
-    expect(screen.queryByTestId('screen-header-back-btn')).toBeNull();
   });
 
   it('pads for the status bar, and honours a topInset override', () => {
@@ -89,22 +78,39 @@ describe('ScreenHeader', () => {
   });
 
   describe('variants', () => {
-    it('renders a Back button and no close button by default', () => {
-      render(<ScreenHeader title="Clients" />);
+    it('uses the primary palette by default', () => {
+      render(<ScreenHeader title="Clients" testID="header" />);
 
-      expect(screen.getByTestId('screen-header-back-btn')).toBeTruthy();
-      expect(screen.queryByTestId('screen-header-close-btn')).toBeNull();
+      expect(screen.getByTestId('header').props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ backgroundColor: '#1E3342' }),
+        ]),
+      );
     });
 
-    it('renders a close button and no Back button for modal', () => {
-      render(<ScreenHeader variant="modal" title="Upload Files" />);
+    it('uses the secondary palette for the secondary variant', () => {
+      render(
+        <ScreenHeader
+          variant="secondary"
+          title="Upload Files"
+          testID="header"
+        />,
+      );
 
-      expect(screen.getByTestId('screen-header-close-btn')).toBeTruthy();
-      expect(screen.queryByTestId('screen-header-back-btn')).toBeNull();
+      expect(screen.getByTestId('header').props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ backgroundColor: '#375C76' }),
+        ]),
+      );
     });
 
-    it("closes via the router by default on modal's close button", () => {
-      render(<ScreenHeader variant="modal" title="Upload Files" />);
+    it('closes via the router when a close button is supplied', () => {
+      render(
+        <ScreenHeader
+          title="Upload Files"
+          buttonRight={<ScreenHeaderCloseButton />}
+        />,
+      );
 
       fireEvent.press(screen.getByTestId('screen-header-close-btn'));
 
@@ -114,25 +120,12 @@ describe('ScreenHeader', () => {
     it('renders a text label on the close button when one is given', () => {
       render(
         <ScreenHeader
-          variant="modal"
           title="Upload Files"
           buttonRight={<ScreenHeaderCloseButton label="Done" />}
         />,
       );
 
       expect(screen.getByText('Done')).toBeTruthy();
-    });
-
-    it('renders only the inset background for minimal', () => {
-      render(
-        <ScreenHeader variant="minimal" title="Upload Files" testID="header" />,
-      );
-
-      const bar = screen.getByTestId('header');
-
-      expect(bar.props.style).toEqual(expect.objectContaining({ height: 47 }));
-      expect(screen.queryByText('Upload Files')).toBeNull();
-      expect(screen.queryByTestId('screen-header-back-btn')).toBeNull();
     });
   });
 });
