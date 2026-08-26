@@ -2121,8 +2121,6 @@ export type NoteType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
-  /** @deprecated Use team instead */
-  currentTeam?: Maybe<TeamType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -3618,8 +3616,6 @@ export type TaskType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
-  /** @deprecated Use team instead */
-  currentTeam?: Maybe<TeamType>;
   description?: Maybe<Scalars['String']['output']>;
   hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
@@ -3655,8 +3651,6 @@ export type TeamType = {
   id: Scalars['ID']['output'];
   isActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
-  /** @deprecated Always null. Team.name is the only identifier. */
-  slug?: Maybe<Scalars['String']['output']>;
 };
 
 export type TeamTypeOffsetPaginated = {

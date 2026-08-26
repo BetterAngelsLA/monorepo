@@ -246,32 +246,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
         self.assertCountEqual(expected_ids, actual_ids)
 
-    def test_note_query_legacy_team_selection_still_resolves(self) -> None:
-        """The exact selection shipped in native app builds must keep validating.
-
-        Every ``currentTeam`` block in those builds is ``{ id slug name }``, so
-        ``currentTeam`` and ``slug`` have to survive together — removing either one
-        fails the whole document. Both go in #2342, once no build selects them.
-        """
-        self._update_note_fixture({"id": self.note["id"], "teamId": str(self.org_1_team_1.pk)})
-
-        query = """
-            query ($id: ID!) {
-                note(pk: $id) {
-                    team { id name }
-                    currentTeam { id slug name }
-                }
-            }
-        """
-        response = self.execute_graphql(query, {"id": self.note["id"]})
-
-        note = response["data"]["note"]
-        self.assertEqual(note["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
-        self.assertEqual(
-            note["currentTeam"],
-            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
-        )
-
     @parametrize(
         ("team_labels, expected_results_count, expected_note_labels"),
         [

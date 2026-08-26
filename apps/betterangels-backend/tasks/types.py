@@ -114,8 +114,6 @@ class TaskType:
     summary: Optional[str]
     team: Optional[TeamType]
 
-    # Deprecated alias for ``team`` — see ``NoteType.current_team``.
-    current_team: Optional[TeamType] = strawberry_django.field(field_name="team", deprecation_reason="Use team instead")
     updated_at: auto
 
 

@@ -214,33 +214,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
-    def test_task_query_legacy_team_selection_still_resolves(self) -> None:
-        """The exact selection shipped in native app builds must keep validating.
-
-        See the note counterpart: ``currentTeam`` and ``slug`` are removed together
-        in #2342, because every shipped block selects both.
-        """
-        task_id = self.create_task_fixture({"summary": "task summary", "teamId": str(self.org_1_team_1.pk)})["data"][
-            "createTask"
-        ]["id"]
-
-        query = """
-            query ($id: ID!) {
-                task(pk: $id) {
-                    team { id name }
-                    currentTeam { id slug name }
-                }
-            }
-        """
-        response = self.execute_graphql(query, {"id": task_id})
-
-        task = response["data"]["task"]
-        self.assertEqual(task["team"], {"id": str(self.org_1_team_1.pk), "name": self.org_1_team_1.name})
-        self.assertEqual(
-            task["currentTeam"],
-            {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
-        )
-
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(
             {
