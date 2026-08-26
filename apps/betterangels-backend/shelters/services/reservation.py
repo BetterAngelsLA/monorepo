@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from shelters.enums import ReservationStatusChoices
-from shelters.models import Reservation, ReservationClient
+from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.selectors import bed_get, reservation_get, room_get
 from shelters.selectors.operator import reservation_queryset
@@ -13,8 +13,6 @@ from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 if TYPE_CHECKING:
     from accounts.models import User
-
-    from shelters.models.shelter import Bed, Room
 
 
 def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | None) -> None:
@@ -107,9 +105,9 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed_get(user=user, organization_id=organization_id, bed_id=bed_id)
+        bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
     elif room_id:
-        room_get(user=user, organization_id=organization_id, room_id=room_id)
+        room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
@@ -140,7 +138,12 @@ def reservation_update(
     """
     data = dict(data)
     try:
-        reservation = reservation_get(user=user, organization_id=organization_id, reservation_id=reservation_id)
+        reservation = reservation_get(
+            user=user,
+            organization_id=organization_id,
+            reservation_id=reservation_id,
+            permission=Reservation.perms.CHANGE,
+        )
     except Reservation.DoesNotExist:
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
@@ -182,7 +185,7 @@ def reservation_delete(*, user: "User", organization_id: str, reservation_ids: l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching reservations exist.
     """
-    qs = reservation_queryset(user=user, organization_id=organization_id)
+    qs = reservation_queryset(user=user, organization_id=organization_id, perms=[Reservation.perms.DELETE])
     qs = qs.filter(pk__in=reservation_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:

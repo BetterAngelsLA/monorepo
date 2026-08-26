@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.enums import ShelterPhotoTypeChoices
-from shelters.models import ShelterPhoto
+from shelters.models import Shelter, ShelterPhoto
 from shelters.selectors import shelter_get, shelter_queryset
 from shelters.types.inputs import UpdateShelterPhotoInput
 
@@ -66,7 +66,7 @@ def create_presigned_uploads(
     uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1)."""
-    shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
+    shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id, permission=Shelter.perms.CHANGE)
     return file_upload.create_presigned_uploads(
         user=user,
         uploads=uploads,
@@ -96,7 +96,9 @@ def resolve_uploads(
         config=SHELTER_PHOTO_CONFIG,
     )
 
-    shelter = shelter_get(user=user, shelter_id=shelter_id, organization_id=organization_id)
+    shelter = shelter_get(
+        user=user, shelter_id=shelter_id, organization_id=organization_id, permission=Shelter.perms.CHANGE
+    )
     created: list[ShelterPhoto] = []
 
     with transaction.atomic():
@@ -119,7 +121,7 @@ def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int])
     Only photos belonging to shelters in the active organization are
     eligible for deletion.
     """
-    org_shelters = shelter_queryset(user=user, organization_id=organization_id)
+    org_shelters = shelter_queryset(user=user, organization_id=organization_id, perms=[Shelter.perms.CHANGE])
     photos = ShelterPhoto.objects.filter(
         shelter__in=org_shelters,
         pk__in=ids,
@@ -147,7 +149,9 @@ def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShel
     photo_id = data.id
 
     photo = get_by_pk_or_not_found(
-        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, organization_id=organization_id)),
+        ShelterPhoto.objects.filter(
+            shelter__in=shelter_queryset(user=user, organization_id=organization_id, perms=[Shelter.perms.CHANGE])
+        ),
         pk=photo_id,
     )
 

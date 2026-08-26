@@ -104,7 +104,7 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.
     """
-    qs = bed_queryset(user=user, organization_id=organization_id)
+    qs = bed_queryset(user=user, organization_id=organization_id, perms=[Bed.perms.DELETE])
     qs = qs.filter(pk__in=bed_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -127,6 +127,7 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
         Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
         user=user,
         organization_id=organization_id,
+        perms=[Bed.perms.VIEW],
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

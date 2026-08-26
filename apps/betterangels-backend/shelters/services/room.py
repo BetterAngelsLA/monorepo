@@ -129,7 +129,7 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    qs = room_queryset(user=user, organization_id=organization_id)
+    qs = room_queryset(user=user, organization_id=organization_id, perms=[Room.perms.DELETE])
     qs = qs.filter(pk__in=room_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -153,6 +153,7 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
         Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
         user=user,
         organization_id=organization_id,
+        perms=[Room.perms.VIEW],
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
     return cast(
