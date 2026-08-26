@@ -44,7 +44,6 @@ export function CameraFooter({
               paddingHorizontal: 10,
             }}
             color={Colors.WHITE}
-            // The default pressed grey flashes white against the camera.
             pressedBackgroundColor="rgba(255, 255, 255, 0.2)"
             onPress={onCancel}
             accessibilityHint="closes camera"

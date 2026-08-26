@@ -107,11 +107,6 @@ appId: ${MAESTRO_APP_ID}
     id: 'client-docs-accordion-forms'
 - waitForAnimationToEnd
 
-# - extendedWaitUntil:
-#     visible:
-#       id: 'file-card.*'
-#     timeout: 15000
-
 # This is a soft check, as there could be a pre-existing uploads
 # and we can't easily validate exact filename of latest upload.
 - extendedWaitUntil:
