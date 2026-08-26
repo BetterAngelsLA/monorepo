@@ -320,6 +320,17 @@ def permissioned_queryset(
     user holds the specified permission(s).  The org-membership check is
     implicit — ``permission_groups__user`` proves both.
 
+    When *perms* is provided and the user holds it through an org-bypassing
+    role (see :func:`user_holds_org_bypass_perms`), *organization_id* is
+    ignored entirely and *queryset* is returned unfiltered by organization —
+    that role's access isn't confined to one org. This only applies on the
+    *perms* path, deliberately: it's permission-scoped, so it can't fire for
+    a permission the role doesn't actually hold. The ``perms is None`` (pure
+    membership) branch below has no permission to gate a bypass on, so it
+    stays a plain org-membership check — adding a bypass there would be
+    role-scoped rather than permission-scoped, and this function is a shared
+    utility used well beyond the shelter domain.
+
     Parameters
     ----------
     queryset : QuerySet
@@ -352,6 +363,9 @@ def permissioned_queryset(
     QuerySet
         The filtered queryset.
     """
+    if perms is not None and user_holds_org_bypass_perms(user, perms, any_perm):
+        return queryset
+
     fields = organization_fields or [organization_field]
 
     queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
