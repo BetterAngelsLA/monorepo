@@ -27,6 +27,7 @@ from .models import (
 )
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
+from .selectors import organizations_owned_by, owned_organizations
 
 if TYPE_CHECKING:
     from .models import User
@@ -376,10 +377,7 @@ def organization_remove_member(
     except OrganizationUser.DoesNotExist:
         raise ValidationError("User is not a member of this organization.")
 
-    if OrganizationOwner.objects.filter(
-        organization=organization,
-        organization_user=org_user,
-    ).exists():
+    if owned_organizations(membership_ids=[org_user.pk]):
         raise ValidationError("You cannot remove the organization owner. Transfer ownership to another member first.")
 
     if user_id == removed_by.pk:
@@ -387,6 +385,31 @@ def organization_remove_member(
 
     OrgRoleManager(organization).clear_roles(org_user.user)
     org_user.delete()
+
+    return user_id
+
+
+@transaction.atomic
+def user_delete(*, user: UserModel) -> int:
+    """Delete *user*'s account, unless they still own an organization.
+
+    ``OrganizationOwner.organization_user`` cascades from ``OrganizationUser``,
+    which cascades from ``User``, so deleting the account takes the ownership row
+    with it and leaves the organization with no owner.  django-organizations'
+    own guard in ``AbstractOrganizationUser.delete`` does not fire here: the
+    deletion collector removes cascaded rows with queryset SQL and never calls
+    ``Model.delete()``.
+
+    Returns the deleted user's id.  Raises
+    :class:`~django.core.exceptions.ValidationError` while they own anything.
+    """
+    user_id = user.pk
+    owned = organizations_owned_by(user_ids=[user_id]).get(user_id, [])
+    if owned:
+        names = ", ".join(organization.name for organization in owned)
+        raise ValidationError(f"You own {names}. Transfer ownership to another member before deleting your account.")
+
+    user.delete()
 
     return user_id
 

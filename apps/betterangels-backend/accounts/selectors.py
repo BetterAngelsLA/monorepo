@@ -4,13 +4,14 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
 import logging
+from collections.abc import Iterable
 from typing import Optional, Union
 
 from common.permissions.config import TemplateConfig
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
-from organizations.models import Organization
+from organizations.models import Organization, OrganizationOwner
 
 from .models import PermissionGroup, User
 
@@ -125,6 +126,44 @@ def resolve_permission_group(
         raise PermissionError(f"User does not hold a '{template_name}' permission group in any organization")
 
     return permission_group
+
+
+# ── Ownership ─────────────────────────────────────────────────────────
+
+
+def owned_organizations(*, membership_ids: Iterable[int]) -> dict[int, Organization]:
+    """The organization each of these memberships owns, keyed by membership id.
+
+    ``OrganizationOwner.organization_user`` cascades, so deleting one of these
+    rows — on its own, or by cascade from its ``User`` — leaves the organization
+    with no owner and no way to gain one.  Every caller that deletes a membership
+    asks this first.
+
+    Keyed by membership rather than by user because a user may belong to several
+    organizations and own only one of them.
+    """
+    return {
+        owner.organization_user_id: owner.organization
+        for owner in OrganizationOwner.objects.filter(organization_user_id__in=membership_ids).select_related(
+            "organization"
+        )
+    }
+
+
+def organizations_owned_by(*, user_ids: Iterable[int]) -> dict[int, list[Organization]]:
+    """Every organization each of these users owns, keyed by user id.
+
+    The ``User``-shaped question behind :func:`owned_organizations`: deleting the
+    account cascades through every membership it holds.
+    """
+    by_user: dict[int, list[Organization]] = {}
+    for owner in (
+        OrganizationOwner.objects.filter(organization_user__user_id__in=user_ids)
+        .select_related("organization", "organization_user")
+        .order_by("organization__name")
+    ):
+        by_user.setdefault(owner.organization_user.user_id, []).append(owner.organization)
+    return by_user
 
 
 # ── Role reporting ────────────────────────────────────────────────────

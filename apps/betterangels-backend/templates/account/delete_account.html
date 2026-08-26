@@ -37,6 +37,11 @@
         <main>
             <h1>Delete Account</h1>
             <p>WARNING: This will permanently delete your Better Angels account. You cannot undo this action.</p>
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+                </ul>
+            {% endif %}
             <form method="post" action="{% url 'delete_account' %}">
                 {% csrf_token %}
                 <button type="submit">Delete my account</button>

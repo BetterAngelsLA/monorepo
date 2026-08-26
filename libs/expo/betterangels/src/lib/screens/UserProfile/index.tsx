@@ -1,4 +1,8 @@
 import { useMutation } from '@apollo/client/react';
+import {
+  OperationInfoError,
+  unwrapPayload,
+} from '@monorepo/expo/shared/services';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
@@ -57,14 +61,30 @@ export default function UserProfile() {
 
   async function deleteCurrentUserFunction() {
     try {
-      await deleteCurrentUser();
+      const result = await deleteCurrentUser();
+
+      // The server refuses while this account still owns an organization.
+      // Without unwrapping, that refusal resolves like a success and signs the
+      // user out of an account that still exists.
+      unwrapPayload(
+        result.data?.deleteCurrentUser,
+        'delete account',
+        'DeletedObjectType'
+      );
+
       router.navigate('/auth');
       signOut();
     } catch (err) {
+      if (err instanceof OperationInfoError) {
+        showSnackbar({ message: err.message, type: 'error' });
+
+        return;
+      }
+
       console.error(err);
 
       showSnackbar({
-        message: `Sorry, there was an error logging you out.`,
+        message: `Sorry, there was an error deleting your account.`,
         type: 'error',
       });
     }

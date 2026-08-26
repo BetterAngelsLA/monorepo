@@ -5,6 +5,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
+from accounts.services import organization_transfer_ownership
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.types import PermissionTemplateEnum
 from common.tests.utils import GraphQLBaseTestCase
@@ -89,6 +90,39 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
         response = self.execute_graphql(mutation)["data"]["deleteCurrentUser"]
         self.assertEqual(response["id"], self.user.pk)
         self.assertEqual(User.objects.count(), initial_user_count - 1)
+
+    def test_an_owner_cannot_delete_their_account(self) -> None:
+        """Deleting the account cascades to the OrganizationOwner row.
+
+        That would leave the organization with nobody able to administer it, so
+        the mutation reports it instead of succeeding.
+        """
+        organization_transfer_ownership(organization=self.user_organization, new_owner_user_id=self.user.pk)
+        initial_user_count = User.objects.count()
+        self.graphql_client.force_login(self.user)
+
+        mutation: str = """
+            mutation DeleteCurrentUser {
+                deleteCurrentUser {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(mutation)["data"]["deleteCurrentUser"]
+
+        self.assertIn("Transfer ownership to another member", response["messages"][0]["message"])
+        self.assertIn(self.user_organization.name, response["messages"][0]["message"])
+        self.assertEqual(User.objects.count(), initial_user_count)
 
 
 @ignore_warnings(category=UserWarning)
