@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 /**
@@ -13,4 +12,10 @@ import { Platform } from 'react-native';
  * The Android emulator is deliberately excluded — it provides a virtual camera
  * feed, so the real camera keeps working there.
  */
-export const isIosSimulator = Platform.OS === 'ios' && !Constants.isDevice;
+
+// const isIosSimulator = Platform.OS === 'ios' && !Device.isDevice;
+// const isCameraMockEnabled = __DEV__ || process.env.EXPO_PUBLIC_E2E_MODE === '1';
+// export const shouldMockCamera = isIosSimulator && isCameraMockEnabled;
+
+export const shouldMockCamera =
+  Platform.OS === 'ios' && process.env.EXPO_PUBLIC_E2E_MODE === '1';

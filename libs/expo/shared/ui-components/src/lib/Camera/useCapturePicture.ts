@@ -3,7 +3,7 @@ import { resizeImage } from '@monorepo/expo/shared/utils';
 import { CameraView as ExpoCamera, ImageType } from 'expo-camera';
 import { File, Paths } from 'expo-file-system';
 import { RefObject, useCallback } from 'react';
-import { isIosSimulator } from './utils';
+import { shouldMockCamera } from './utils/isIosSimulator';
 
 export type CapturePictureResult =
   | { type: 'success'; file: ReactNativeFile }
@@ -47,7 +47,7 @@ export function useCapturePicture(params: UseCapturePictureParams) {
       // wedges an AVCaptureSession that can never start (~9s per mount, piling
       // up across open/close cycles). Since we render a placeholder instead of
       // mounting the camera there, produce the placeholder photo ourselves.
-      if (isIosSimulator) {
+      if (shouldMockCamera) {
         try {
           return {
             type: 'success',
