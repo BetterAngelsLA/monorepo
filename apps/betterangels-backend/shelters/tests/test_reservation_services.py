@@ -1,5 +1,6 @@
 import datetime
-
+from shelters.groups import SHELTER_OPERATOR
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
 from django.contrib.auth import get_user_model
@@ -16,10 +17,11 @@ from shelters.tests.baker_recipes import shelter_recipe
 class ReservationServiceTestCase(TestCase):
     def setUp(self) -> None:
         User = get_user_model()
-        self.org = organization_recipe.make()
+        self.org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.other_org = organization_recipe.make()
         self.user = User.objects.create_user(username="reservation-service-user", password="pw")
         self.org.users.add(self.user)
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
         self.shelter = shelter_recipe.make(organization=self.org)
         self.room_1 = baker.make(Room, shelter=self.shelter, name="Room-101")
         self.room_2 = baker.make(Room, shelter=self.shelter, name="Room-202")
