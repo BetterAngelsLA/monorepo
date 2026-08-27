@@ -4,15 +4,15 @@ import { useState } from 'react';
 import { useToast } from '../base-ui/toast';
 import type { DateRange } from '../date-range-filter';
 
-/** Mirrors ``MetricsExportOptions`` in ``reports/export_options.py``. */
+/** Mirrors ``MetricsExportOptions`` in ``shelters/services/metrics_export.py``. */
 export const EXPORT_METRICS = [
-  { value: 'daily_occupancy_metrics', label: 'Daily occupancy' },
-  { value: 'daily_bed_status_metrics', label: 'Bed status' },
-  { value: 'reservation_metrics', label: 'Reservation status changes' },
-  { value: 'avg_days_to_occupancy', label: 'Average days to occupancy' },
+  'daily_occupancy_metrics',
+  'daily_bed_status_metrics',
+  'reservation_metrics',
+  'avg_days_to_occupancy',
 ] as const;
 
-export type ExportMetric = (typeof EXPORT_METRICS)[number]['value'];
+export type ExportMetric = (typeof EXPORT_METRICS)[number];
 
 /** Formats served by ``ShelterMetricsExportApi``. CSV arrives as a zip. */
 export const EXPORT_FORMATS = ['csv', 'xlsx', 'json'] as const;
@@ -51,9 +51,7 @@ export function useShelterMetricsExport() {
     setIsExporting(true);
 
     try {
-      const response = await fetch(
-        `/reports/shelters/${shelterId}/export/?${params}`,
-      );
+      const response = await fetch(`/shelters/${shelterId}/export/?${params}`);
 
       if (!response.ok) {
         throw new Error(`The server returned ${response.status}.`);

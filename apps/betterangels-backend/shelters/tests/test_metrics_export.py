@@ -16,8 +16,7 @@ from shelters.types.reporting import (
 )
 from strawberry import ID
 
-from reports.export_options import MetricsExportOptions
-from reports.metrics_export import shelter_metrics_export
+from shelters.services.metrics_export import MetricsExportOptions, shelter_metrics_export
 
 ALL_OPTIONS = [
     MetricsExportOptions.DAILY_OCCUPANCY_METRICS,

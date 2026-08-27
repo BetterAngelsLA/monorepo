@@ -16,7 +16,14 @@ const FORMAT_LABELS: Record<ExportFormat, string> = {
   json: 'JSON',
 };
 
-const ALL_METRICS = EXPORT_METRICS.map((metric) => metric.value);
+const METRIC_LABELS: Record<ExportMetric, string> = {
+  daily_occupancy_metrics: 'Daily occupancy',
+  daily_bed_status_metrics: 'Bed status',
+  reservation_metrics: 'Reservation status changes',
+  avg_days_to_occupancy: 'Average days to occupancy',
+};
+
+const ALL_METRICS = [...EXPORT_METRICS];
 
 type ExportDataModalProps = {
   isOpen: boolean;
@@ -113,16 +120,16 @@ export function ExportDataModal({
             <div className="mt-3 flex flex-col gap-3">
               {EXPORT_METRICS.map((metric) => (
                 <label
-                  key={metric.value}
+                  key={metric}
                   className="flex w-fit cursor-pointer items-center gap-3 text-[1rem] leading-none text-[#111827]"
                 >
                   <input
                     type="checkbox"
-                    checked={metrics.includes(metric.value)}
-                    onChange={() => toggleMetric(metric.value)}
+                    checked={metrics.includes(metric)}
+                    onChange={() => toggleMetric(metric)}
                     className="h-4 w-4 accent-[#008CEE]"
                   />
-                  <span>{metric.label}</span>
+                  <span>{METRIC_LABELS[metric]}</span>
                 </label>
               ))}
             </div>

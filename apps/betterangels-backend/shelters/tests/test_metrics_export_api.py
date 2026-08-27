@@ -25,7 +25,7 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.shelter = shelter_recipe.make(organization=self.org_1)
-        self.url = reverse("reports:export_shelter_metrics", kwargs={"shelter_id": str(self.shelter.pk)})
+        self.url = reverse("shelters:export_shelter_metrics", kwargs={"shelter_id": str(self.shelter.pk)})
         self._add_shelter_view_permission(self.org_1)
         self.api_client = APIClient()
         self.api_client.force_authenticate(self.org_1_case_manager_1)
@@ -135,7 +135,7 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
 
     def test_a_shelter_the_user_cannot_view_is_not_found(self) -> None:
         other_shelter = shelter_recipe.make(organization=self.org_2)
-        url = reverse("reports:export_shelter_metrics", kwargs={"shelter_id": str(other_shelter.pk)})
+        url = reverse("shelters:export_shelter_metrics", kwargs={"shelter_id": str(other_shelter.pk)})
 
         response = self.api_client.get(url, {"export_format": "csv"}, headers={"x-organization-id": str(self.org_1.pk)})
 

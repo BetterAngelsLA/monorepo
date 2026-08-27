@@ -72,7 +72,7 @@ describe('ReportFilterBar export', () => {
 
     const url = new URL(fetchMock.mock.calls[0][0], 'https://example.test');
 
-    expect(url.pathname).toBe('/reports/shelters/7/export/');
+    expect(url.pathname).toBe('/shelters/7/export/');
     expect(url.searchParams.get('export_format')).toBe('csv');
     expect(url.searchParams.get('start_date')).toBe('2026-06-01');
     expect(url.searchParams.get('end_date')).toBe('2026-06-30');
