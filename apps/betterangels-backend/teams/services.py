@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import RestrictedError
 from django.template.defaultfilters import pluralize
 from organizations.models import Organization
 
@@ -64,28 +65,28 @@ def team_update(
     return team
 
 
-@transaction.atomic
 def team_delete(
     *,
     team: Team,
 ) -> None:
     """Delete a Team that nothing references.
 
-    ``Note.team`` and ``Task.team`` are ``SET_NULL``, so deleting a team that is
-    in use silently detaches it from every record that used it, and nothing
-    records that it ever existed.  ``is_active`` retires a team reversibly, so a
-    referenced team is refused here and the counts are the message.
+    The refusal is the ``RESTRICT`` on ``Note.team`` and ``Task.team``, not a check
+    here -- so it also covers the Django admin, ``queryset.delete()`` and a shell
+    session, none of which reach this function.  ``is_active`` retires a team
+    reversibly, which is what the message points at.  The counts are gathered only
+    once the delete has already been refused.
     """
-    references = [
-        f"{count} {noun}{pluralize(count)}"
-        for count, noun in ((team.note_set.count(), "note"), (team.task_set.count(), "task"))
-        if count
-    ]
+    try:
+        team.delete()
+    except RestrictedError:
+        references = [
+            f"{count} {noun}{pluralize(count)}"
+            for count, noun in ((team.note_set.count(), "note"), (team.task_set.count(), "task"))
+            if count
+        ]
 
-    if references:
         raise ValidationError(
             f'Cannot delete "{team.name}": it is used by {" and ".join(references)}. '
             "Deactivate it instead — an inactive team is hidden in the app but keeps its history."
         )
-
-    team.delete()

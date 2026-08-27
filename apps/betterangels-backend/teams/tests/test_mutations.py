@@ -87,7 +87,7 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
-        expected_query_count = 11
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 
