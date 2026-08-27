@@ -9,7 +9,8 @@ const meta: Meta<typeof Calendar> = {
 };
 export default meta;
 
-const storyWrapperClass = 'w-fit rounded-2xl border border-gray-200 bg-white p-4';
+const storyWrapperClass =
+  'w-fit rounded-2xl border border-gray-200 bg-white p-4';
 
 const ANCHOR = new Date(2026, 5, 1);
 

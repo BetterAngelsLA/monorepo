@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Calendar } from './Calendar';
@@ -58,7 +55,7 @@ describe('Calendar range selection', () => {
     render(<Calendar onSelect={onSelect} month={JUNE_2026} />);
     clickDay('12');
     expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ from: new Date(2026, 5, 12) })
+      expect.objectContaining({ from: new Date(2026, 5, 12) }),
     );
   });
 });

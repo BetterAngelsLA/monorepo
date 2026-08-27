@@ -133,12 +133,14 @@ export function Calendar({
   const handleSelect = useCallback(
     (next: RdpDateRange | undefined, triggerDate: Date) => {
       if (selected?.from && selected?.to && triggerDate) {
-        onSelect?.(nearestEndpointRange(selected.from, selected.to, triggerDate));
+        onSelect?.(
+          nearestEndpointRange(selected.from, selected.to, triggerDate),
+        );
         return;
       }
       onSelect?.(next);
     },
-    [onSelect, selected]
+    [onSelect, selected],
   );
 
   return (

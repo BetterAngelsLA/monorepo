@@ -8,18 +8,24 @@
  */
 
 /** Default body / label text */
-export const TEXT_PRIMARY = 'text-[#383B40]';
+export const TEXT_PRIMARY = 'text-neutral-20';
 
 /** Muted text – weekday headers, secondary labels, nav icons */
-export const TEXT_SECONDARY = 'text-[#747A82]';
+export const TEXT_SECONDARY = 'text-neutral-50';
 
 /** Disabled / outside-month text */
-export const TEXT_DISABLED = 'text-[#A8AEB8]';
+export const TEXT_DISABLED = 'text-neutral-70';
 
 /** Subtle hover background for interactive elements */
-export const HOVER_BG = 'hover:bg-[#F4F6FD]';
+export const HOVER_BG = 'hover:bg-neutral-99';
 
-/** Light blue highlight behind a selected range */
+/**
+ * Light blue highlight behind a selected range.
+ *
+ * Written as a literal because the matching token, `--color-tags-blue`, lives
+ * in shelter-web's `global.css`; Storybook only loads `libs/tailwind`, so a
+ * `bg-tags-blue` here would leave the range band unstyled in the stories.
+ */
 export const RANGE_BG = 'bg-[#DCF1FF]';
 
 /** Primary accent blue fill on a selected day button */
