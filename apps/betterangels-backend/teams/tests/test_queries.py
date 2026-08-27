@@ -111,7 +111,18 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertEqual(returned_ids, org_2_ids)
 
     def test_requires_the_active_org_header(self) -> None:
-        """The server must not guess — first-match is how other orgs leaked."""
+        """Belonging to one organization is not a licence to assume it.
+
+        The caller belongs to exactly one organization, which is the case both
+        discarded fallbacks would have served — first-match resolution, and
+        sole-organization adoption. So a denial here can only mean the server
+        requires the header.
+
+        The previous version of this test used a caller holding no Caseworker
+        group, so it was the *fallback erroring* that denied the request, not the
+        server refusing to guess. It passed with first-match fully intact.
+        """
+        self.assertEqual(self.org_1_admin.organizations_organization.count(), 1)
         del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
 
         self._assert_denied(self.execute_graphql(self.get_teams_query()))
