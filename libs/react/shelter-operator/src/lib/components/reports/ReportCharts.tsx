@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { formatScalarDate, type DateString } from '@monorepo/shared/scalars';
 import { useMemo } from 'react';
 import type {
   DailyBedStatusMetrics,
@@ -6,19 +6,19 @@ import type {
 } from '../../hooks/useShelterOccupancyMetrics';
 import { BarChart, type ViewMode } from '../BarChart/BarChart';
 
-/** Format YYYY-MM-DD date strings into short labels (e.g. "Jun 1") for clean x-axis rendering. */
-function formatDateLabel(dateStr: string): string {
-  try {
-    return format(parseISO(String(dateStr)), 'MMM d');
-  } catch {
-    return String(dateStr);
-  }
+/**
+ * Short x-axis label, e.g. "Jun 1". A date we cannot parse keeps its raw value:
+ * the label is the chart's grouping key, so falling back to '' would merge
+ * every unreadable day into a single bar.
+ */
+function dateLabel(date: DateString): string {
+  return formatScalarDate(date, 'MMM d') || date;
 }
 
 /** Pivot one row-per-day into one row-per-(day × status) for the stacked bar chart. */
 function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateLabel(String(d.date));
+    const date = dateLabel(d.date);
     return [
       { date, status: 'Occupied', count: d.occupied },
       { date, status: 'Available', count: d.available },
@@ -32,7 +32,7 @@ function toBedStatusCountData(metrics: DailyBedStatusMetrics[]) {
 /** Same pivot but each count is expressed as a percentage of the daily total. */
 function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
   return metrics.flatMap((d) => {
-    const date = formatDateLabel(String(d.date));
+    const date = dateLabel(d.date);
     const total =
       d.occupied + d.available + d.reserved + d.outOfService + d.inTurnaround;
     const pct = (n: number) => {
@@ -51,14 +51,14 @@ function toBedStatusPercentData(metrics: DailyBedStatusMetrics[]) {
 
 function toDailyOccupancyCountData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateLabel(String(d.date)),
+    date: dateLabel(d.date),
     count: d.occupiedCount,
   }));
 }
 
 function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
   return metrics.map((d) => ({
-    date: formatDateLabel(String(d.date)),
+    date: dateLabel(d.date),
     count: Math.round(d.occupancyPct * 10) / 10,
   }));
 }

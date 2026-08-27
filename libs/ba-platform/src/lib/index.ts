@@ -7,3 +7,4 @@ export * from './constants';
 export * from './errors';
 export * from './interceptors';
 export * from './react';
+export * from './utils';

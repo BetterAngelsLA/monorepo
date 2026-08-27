@@ -1,6 +1,12 @@
+"""Shared fixtures for the teams test suites."""
+
 from typing import Any, Dict, Optional
 
+from accounts.groups import ORG_ADMIN
+from accounts.models import User
+from accounts.role_manager import OrgRoleManager
 from common.tests.utils import GraphQLBaseTestCase
+from model_bakery import baker
 
 
 class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
@@ -62,3 +68,27 @@ class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
         """
 
         return self.execute_graphql(mutation, {"id": team_id})
+
+
+class TeamGraphQLBaseTestCase(TeamGraphQLUtilsMixin):
+    """An org admin in ``org_1``, acting as ``org_1``.
+
+    Teams come from the shared fixture, which provisions them for both
+    organizations so a test asserting "only my org's" is asserting scoping
+    rather than a difference in the data.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.org_1_admin = self._make_org_admin(org=self.org_1)
+        self.org_2_admin = self._make_org_admin(org=self.org_2)
+
+        self.graphql_client.force_login(self.org_1_admin)
+        self._set_active_org(self.org_1)
+
+    def _make_org_admin(self, *, org: Any) -> User:
+        user = baker.make(User)
+        org.add_user(user)
+        OrgRoleManager(org).add_roles(user, ORG_ADMIN)
+        return user

@@ -16,7 +16,7 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router, useNavigation } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -194,7 +194,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           )}
         </View>
         <TextRegular textAlign="right" size="sm">
-          Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
+          Uploaded on {formatScalarDate(createdAt, 'MM/dd/yyyy')}
         </TextRegular>
       </MainScrollContainer>
       {isEditing && (

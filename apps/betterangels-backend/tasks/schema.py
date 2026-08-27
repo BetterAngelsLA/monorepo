@@ -8,8 +8,8 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.utils import maybe_int_value
 from common.permissions.utils import IsAuthenticated
-from common.team_shim import resolve_team_id_from_input
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from hmis.models import HmisClientProfile, HmisNote
@@ -53,9 +53,7 @@ class Mutation:
 
         task_data = asdict(data)
 
-        # Resolve team: prefer teamId (new), fall back to team enum (deprecated).
-        task_data["team_id"] = resolve_team_id_from_input(data, organization_id=permission_group.organization_id)
-        task_data.pop("team", None)
+        task_data["team_id"] = maybe_int_value(data.team_id)
 
         # Resolve FK references
         note = None
@@ -93,14 +91,13 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
-        # Resolve team before asdict.
         task: Task = qs.get(pk=data.id)
-        team_id = resolve_team_id_from_input(data, organization_id=task.organization_id or 0)
 
         clean = asdict(data)
-        clean.pop("team", None)
-        clean.pop("team_id", None)
-        clean["team_id"] = team_id
+        # Guarded on the input field so an unmentioned team stays unmentioned:
+        # assigning unconditionally would turn "not sent" into "set to null".
+        if data.team_id:
+            clean["team_id"] = maybe_int_value(data.team_id)
 
         task = task_update(task=task, data=clean)
 

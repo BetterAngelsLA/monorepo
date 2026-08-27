@@ -14,9 +14,8 @@ query Tasks(
       summary
       description
       status
-      currentTeam {
+      team {
         id
-        slug
         name
       }
       organization {

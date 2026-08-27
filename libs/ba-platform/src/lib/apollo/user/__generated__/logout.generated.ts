@@ -1,5 +1,6 @@
 import type * as Types from '../../graphql/__generated__/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type LogoutMutationVariables = Types.Exact<{ [key: string]: never; }>;
 

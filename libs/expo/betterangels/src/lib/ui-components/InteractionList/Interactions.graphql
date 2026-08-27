@@ -12,9 +12,8 @@ query Interactions(
     results {
       id
       purpose
-      currentTeam {
+      team {
         id
-        slug
         name
       }
       organization {
