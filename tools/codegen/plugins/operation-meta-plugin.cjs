@@ -19,9 +19,11 @@ const {
   visit,
   isUnionType,
   isInterfaceType,
+  isObjectType,
   GraphQLNonNull,
   GraphQLList,
 } = require('graphql');
+const { pascalCase, lowerCaseFirst } = require('change-case-all');
 
 // Strips GraphQL wrappers (NonNull, List) to reach the underlying named type.
 /**
@@ -36,16 +38,9 @@ function unwrapType(type) {
   return current && current.name ? current : null;
 }
 
-/**
- * @param {string} str
- * @returns {string}
- */
-function camelCase(str) {
-  return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
 // Derives the generated TS type name from the operation name and type.
-// E.g. `UpdateShelterProfile` mutation → `UpdateShelterProfileMutation`
+// E.g. `UpdateShelterProfile` mutation → `UpdateShelterProfileMutation`,
+// `logout` mutation → `LogoutMutation`.
 /**
  * @param {string} operationName
  * @param {'query' | 'mutation'} operationType
@@ -53,7 +48,8 @@ function camelCase(str) {
  */
 function generatedTypeName(operationName, operationType) {
   const suffix = operationType === 'query' ? 'Query' : 'Mutation';
-  return `${operationName}${suffix}`;
+
+  return `${pascalCase(operationName)}${suffix}`;
 }
 
 /**
@@ -159,7 +155,9 @@ module.exports = {
                       `[operation-meta] Field ${operationName}:${fieldName} resolves to OperationInfo — ` +
                         `this likely indicates a schema issue or missing inline fragments.`,
                     );
-                  } else {
+                  } else if (isObjectType(type)) {
+                    // Scalars (Boolean, String, …) and enums carry no
+                    // `__typename`, so only object types get a successTypename.
                     successTypename = type.name;
                   }
                 }
@@ -207,23 +205,23 @@ module.exports = {
 
     for (const op of operations) {
       const typeName = generatedTypeName(op.name, op.type);
-      const camelName = camelCase(op.name);
+      const operationName = lowerCaseFirst(op.name);
 
       sections.push(
         '',
-        `export const ${camelName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`,
+        `export const ${operationName}OperationKey: keyof Omit<${typeName}, '__typename'> = '${op.fieldName}';`,
       );
 
       if (op.successTypename) {
         sections.push(
-          `export const ${camelName}SuccessTypename: Extract<`,
+          `export const ${operationName}SuccessTypename: Extract<`,
           `  NonNullable<${typeName}['${op.fieldName}']>,`,
           `  { __typename: '${op.successTypename}' }`,
           `>['__typename'] = '${op.successTypename}';`,
           '',
-          `export const ${camelName}Meta = {`,
-          `  operationKey: ${camelName}OperationKey,`,
-          `  successTypename: ${camelName}SuccessTypename,`,
+          `export const ${operationName}Meta = {`,
+          `  operationKey: ${operationName}OperationKey,`,
+          `  successTypename: ${operationName}SuccessTypename,`,
           `} as const;`,
         );
       }

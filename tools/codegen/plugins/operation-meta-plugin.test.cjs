@@ -9,6 +9,7 @@ const {
   GraphQLObjectType,
   GraphQLID,
   GraphQLString,
+  GraphQLBoolean,
 } = require('graphql');
 const { plugin } = require('./operation-meta-plugin.cjs');
 
@@ -173,6 +174,60 @@ describe('operation-meta-plugin', () => {
       assert.ok(content.includes("'foo'"));
       assert.ok(!content.includes('SuccessTypename'));
       assert.ok(!content.includes('Meta'));
+    });
+
+    it('scalar return type — writes operationKey, no successTypename', () => {
+      const schema = new GraphQLSchema({
+        mutation: new GraphQLObjectType({
+          name: 'Mutation',
+          fields: {
+            logout: { type: GraphQLBoolean },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        mutation Logout {
+          logout
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const logoutOperationKey'));
+      assert.ok(content.includes("'logout'"));
+      assert.ok(!content.includes('SuccessTypename'));
+      assert.ok(!content.includes('Meta'));
+    });
+
+    it('lowercase operation name — PascalCases the generated type name', () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            currentUser: {
+              type: new GraphQLObjectType({
+                name: 'CurrentUserType',
+                fields: { id: { type: GraphQLID } },
+              }),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query currentOrgUser {
+          currentUser { id }
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const currentOrgUserOperationKey'));
+      assert.ok(content.includes("'currentUser'"));
+      assert.ok(content.includes('CurrentOrgUserQuery'));
+      assert.ok(!content.includes('currentOrgUserQuery'));
+      assert.ok(content.includes('currentOrgUserSuccessTypename'));
     });
   });
 });
