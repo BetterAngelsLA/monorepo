@@ -1,4 +1,4 @@
-import { isoToDateSafe } from '@monorepo/expo/shared/utils';
+import { isoToDateSafe } from '@monorepo/shared/scalars';
 import { format, isValid, parse } from 'date-fns';
 
 type TProps = {

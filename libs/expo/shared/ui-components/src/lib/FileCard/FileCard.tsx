@@ -1,5 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { Image } from 'expo-image';
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -38,7 +38,7 @@ export function FileCard(props: IFileCardProps) {
       </View>
 
       <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
-        {format(new Date(createdAt), 'MM/dd/yyyy')}
+        {formatScalarDate(createdAt, 'MM/dd/yyyy')}
       </TextRegular>
     </>
   );

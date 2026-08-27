@@ -12,7 +12,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "files": [],
-  "include": [],
+  "include": ["codegen.ts"],
   "references": [
     {
       "path": "./tsconfig.lib.json"

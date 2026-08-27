@@ -9,6 +9,7 @@ import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
 import { tableEmptyState } from '../tableEmptyState';
 import { reservationStatusInfo } from './ReservationForm';
+import { isoToDateSafe } from '@monorepo/shared/scalars';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,
@@ -55,8 +56,8 @@ function getEffectiveCheckIn(reservation: Reservation): {
     reservation.status === ReservationStatusChoices.CheckedIn ||
     reservation.status === ReservationStatusChoices.Completed;
   return isActual
-    ? { date: reservation.checkedInAt, isScheduled: false }
-    : { date: reservation.startDate, isScheduled: true };
+    ? { date: reservation.checkedInAt ?? null, isScheduled: false }
+    : { date: reservation.startDate ?? null, isScheduled: true };
 }
 
 export function ReservationTable({
@@ -171,8 +172,9 @@ export function ReservationTable({
           getEffectiveCheckIn(reservation).date ?? '',
         render: (reservation) => {
           const { date, isScheduled } = getEffectiveCheckIn(reservation);
-          if (!date) return <span className="text-gray-400">—</span>;
-          const label = new Date(date).toLocaleDateString();
+          const parsed = isoToDateSafe(date);
+          if (!parsed) return <span className="text-gray-400">—</span>;
+          const label = parsed.toLocaleDateString();
           return <span>{isScheduled ? `${label} (sched.)` : label}</span>;
         },
       },

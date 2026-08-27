@@ -1,56 +1,182 @@
-from accounts.models import PermissionGroup
+from accounts.models import PermissionGroup, PermissionGroupTemplate
+from accounts.seed import sync_group_permissions
+from accounts.services import reconcile_org_groups
 from django.contrib.auth.models import Group, Permission
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase
-from model_bakery import baker
+from notes.groups import CASEWORKER
 from organizations.models import Organization
 
-from .baker_recipes import (
-    permission_group_recipe,
-    permission_group_template_recipe,
-)
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class PermissionGroupTestCase(TestCase):
-    def test_group_creation_inherits_template_permissions(self) -> None:
-        permissions = baker.make(Permission, _quantity=2)
-        permission_template = permission_group_template_recipe.make(permissions=permissions)
+    def test_group_name_reads_as_organization_pk_and_role(self) -> None:
+        """Readable label, made unique by the pk.
 
-        permission_group = permission_group_recipe.make(template=permission_template)
-        assert permission_group.organization is not None and permission_group.template is not None
-        expected_group_name = f"{permission_group.organization.name}_{permission_group.template.name}"
-
-        created_group = Group.objects.get(name=expected_group_name)
-        self.assertTrue(created_group.permissions.filter(id=permissions[0].id).exists())
-        self.assertTrue(created_group.permissions.filter(id=permissions[1].id).exists())
-
-    def test_group_creation_without_template_has_no_permissions(self) -> None:
+        ``auth.Group.name`` is unique and capped at 150 characters while
+        ``Organization.name`` is neither, so the pk is what prevents a collision —
+        but the name is what makes the group picker legible, so it carries both.
+        """
         permission_group = permission_group_recipe.make(template=None)
-        created_group = Group.objects.get(name=f"{permission_group.organization.name}_{permission_group.name}")
-        self.assertEqual(created_group.permissions.count(), 0)
+
+        self.assertEqual(
+            permission_group.group.name,
+            f"{permission_group.organization.name} [{permission_group.organization_id}] · {permission_group.name}",
+        )
+
+    def test_a_long_organization_name_is_truncated_to_fit(self) -> None:
+        """``Organization.name`` allows 200 characters, ``auth.Group.name`` 150."""
+        organization = Organization.objects.create(name="L" * 200)
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
+
+        permission_group = PermissionGroup.objects.create(organization=organization, template=template)
+
+        self.assertLessEqual(len(permission_group.group.name), 150)
+        self.assertTrue(permission_group.group.name.endswith(f"[{organization.pk}] · {CASEWORKER.name}"))
+
+    def test_two_organizations_may_share_a_name(self) -> None:
+        first = Organization.objects.create(name="Acme")
+        second = Organization.objects.create(name="Acme")
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
+
+        first_group = PermissionGroup.objects.create(organization=first, template=template)
+        second_group = PermissionGroup.objects.create(organization=second, template=template)
+
+        self.assertNotEqual(first_group.group.name, second_group.group.name)
+
+    def test_renaming_an_organization_refreshes_its_group_names_on_reconcile(self) -> None:
+        """The label carries a copy of the name, so reconcile has to re-apply it.
+
+        A rename outside a reconcile leaves it stale, which is tolerable only
+        because nothing reads the group name as data.
+        """
+        permission_group = permission_group_recipe.make(template=None)
+        organization = permission_group.organization
+
+        organization.name = "Renamed Organization"
+        organization.save()
+        reconcile_org_groups(organization)
+
+        permission_group.group.refresh_from_db()
+        self.assertEqual(
+            permission_group.group.name,
+            f"Renamed Organization [{organization.pk}] · {permission_group.name}",
+        )
+
+    def test_group_receives_the_permissions_configured_for_its_template(self) -> None:
+        organization = organization_recipe.make(owner_roles=())
+        permission_group = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
+
+        sync_group_permissions()
+
+        granted = set(permission_group.group.permissions.values_list("content_type__app_label", "codename"))
+        expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
+        self.assertSetEqual(granted, expected)
+
+    def test_group_without_a_template_has_no_permissions(self) -> None:
+        permission_group = permission_group_recipe.make(template=None)
+
+        sync_group_permissions()
+
+        self.assertEqual(permission_group.group.permissions.count(), 0)
 
     def test_deleting_permission_group_also_deletes_associated_group(self) -> None:
         permission_group = permission_group_recipe.make()
-        group_id = permission_group.group.id
+        group_id = permission_group.group_id
+
         permission_group.delete()
+
         self.assertFalse(Group.objects.filter(id=group_id).exists())
 
     def test_deleting_organization_deletes_permission_groups_and_associated_groups(
         self,
     ) -> None:
-        organization = Organization.objects.create(name="Plain Org")
-        _ = permission_group_recipe.make(_quantity=3, organization=organization)
-
-        organization_pk = organization.pk
-        permission_groups_before_delete = PermissionGroup.objects.filter(organization=organization_pk).count()
-        groups_before_delete = Group.objects.filter(permissiongroup__organization=organization_pk).count()
-
-        self.assertEqual(permission_groups_before_delete, 3)
-        self.assertEqual(groups_before_delete, 3)
+        organization = organization_recipe.make(owner_roles=())
+        permission_group_ids = list(
+            PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True)
+        )
+        # Captured up front: once the rows are gone, a join through them matches
+        # nothing whether or not the groups were actually deleted.
+        group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("group_id", flat=True))
+        self.assertEqual(len(group_ids), 3)
 
         organization.delete()
 
-        permission_groups_after_delete = PermissionGroup.objects.filter(organization=organization_pk).exists()
-        groups_after_delete = Group.objects.filter(permissiongroup__organization=organization_pk).exists()
+        self.assertFalse(PermissionGroup.objects.filter(pk__in=permission_group_ids).exists())
+        self.assertFalse(Group.objects.filter(pk__in=group_ids).exists())
 
-        self.assertFalse(permission_groups_after_delete)
-        self.assertFalse(groups_after_delete)
+    def test_a_group_with_neither_template_nor_name_is_rejected(self) -> None:
+        """The admin inline leaves both optional, but one is needed to name the group.
+
+        Without this the group is named ``org:<pk>:`` and the next such row
+        collides on the unique ``auth.Group.name``.
+        """
+        organization = organization_recipe.make(owner_roles=())
+
+        with self.assertRaises(ValidationError):
+            PermissionGroup(organization=organization).full_clean()
+
+    def test_a_writer_that_skips_validation_is_rejected_by_the_database(self) -> None:
+        """``objects.create`` never reaches ``clean()``, so the rule lives in a constraint."""
+        organization = organization_recipe.make(owner_roles=())
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            PermissionGroup.objects.create(organization=organization)
+
+    def test_deleting_through_a_queryset_still_deletes_the_group(self) -> None:
+        """The production bug was a queryset delete, which skips ``Model.delete()``.
+
+        Group teardown hangs off ``post_delete`` for exactly this reason — it is
+        the only mechanism a queryset delete and a cascade both reach.
+        """
+        permission_group = permission_group_recipe.make()
+        group_id = permission_group.group_id
+
+        PermissionGroup.objects.filter(pk=permission_group.pk).delete()
+
+        self.assertFalse(Group.objects.filter(id=group_id).exists())
+
+
+class TemplatePermissionSourceTestCase(TestCase):
+    """Where a role's permissions come from depends on whether the code defines it."""
+
+    def test_a_hand_defined_template_propagates_its_own_permissions(self) -> None:
+        """The point of a template: define a role once, apply it across organizations.
+
+        The code knows nothing about this role, so the template row is the
+        definition and ``sync_group_permissions`` reads it rather than writing it.
+        """
+        template = PermissionGroupTemplate.objects.create(name="Report Viewer")
+        permission = Permission.objects.first()
+        assert permission is not None
+        template.permissions.add(permission)
+
+        first = organization_recipe.make(owner_roles=())
+        second = organization_recipe.make(owner_roles=())
+        groups = [
+            PermissionGroup.objects.create(organization=organization, template=template)
+            for organization in (first, second)
+        ]
+
+        sync_group_permissions()
+
+        for permission_group in groups:
+            permission_group.group.refresh_from_db()
+            self.assertEqual(list(permission_group.group.permissions.all()), [permission])
+
+    def test_a_managed_templates_permissions_are_overwritten_from_config(self) -> None:
+        """For a role the code defines, ``TemplateConfig`` wins over the stored copy."""
+        template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        stray = Permission.objects.exclude(
+            codename__in=[entry.split(".", 1)[1] for entry in CASEWORKER.permissions]
+        ).first()
+        assert stray is not None
+        template.permissions.add(stray)
+
+        sync_group_permissions()
+
+        expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
+        self.assertSetEqual(set(template.permissions.values_list("content_type__app_label", "codename")), expected)
+        self.assertNotIn(stray, template.permissions.all())

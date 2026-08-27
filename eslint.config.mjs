@@ -174,7 +174,15 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: ['.*libs/tailwind.*', 'libs/vite-utils/.*'],
+          allow: [
+            '.*libs/tailwind.*',
+            'libs/vite-utils/.*',
+            // Each codegen.ts imports the shared scalar map from tools/ by
+            // relative path. graphql-codegen loads these configs through jiti,
+            // which does not resolve tsconfig path aliases, so a scoped import
+            // fails at runtime with "Cannot find module".
+            'tools/codegen/.*',
+          ],
           depConstraints,
         },
       ],

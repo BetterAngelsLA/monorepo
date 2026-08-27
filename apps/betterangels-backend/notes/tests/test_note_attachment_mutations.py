@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock, patch
 
+from accounts.tests.baker_recipes import permission_group_recipe
 from common.models import Attachment
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
-from model_bakery import baker
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
 from unittest_parametrize import parametrize
@@ -232,11 +232,10 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
-        from accounts.models import PermissionGroup
         from django.contrib.contenttypes.models import ContentType
 
         # Create a real permission group so assign_object_permissions works.
-        pg = baker.make(PermissionGroup, organization=self.org_1)
+        pg = permission_group_recipe.make(organization=self.org_1)
         mock_perm_group.return_value = pg
 
         note = Note.objects.get(id=self.note["id"])
@@ -283,10 +282,9 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         mock_assign: MagicMock,
         mock_generic: MagicMock,
     ) -> None:
-        from accounts.models import PermissionGroup
         from django.contrib.contenttypes.models import ContentType
 
-        pg = baker.make(PermissionGroup, organization=self.org_1)
+        pg = permission_group_recipe.make(organization=self.org_1)
         mock_perm_group.return_value = pg
 
         note = Note.objects.get(id=self.note["id"])
@@ -486,10 +484,9 @@ class ResolveNoteFileUploadsMutationTest(NoteGraphQLBaseTestCase):
         user_label: str,
         should_succeed: bool,
     ) -> None:
-        from accounts.models import PermissionGroup
         from django.contrib.contenttypes.models import ContentType
 
-        pg = baker.make(PermissionGroup, organization=self.org_1)
+        pg = permission_group_recipe.make(organization=self.org_1)
         mock_perm_group.return_value = pg
 
         note = Note.objects.get(id=self.note["id"])

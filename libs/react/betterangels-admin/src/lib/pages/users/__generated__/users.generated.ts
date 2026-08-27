@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type OrganizationMembersQueryVariables = Types.Exact<{
   organizationId: Types.Scalars['String']['input'];
@@ -10,7 +11,7 @@ export type OrganizationMembersQueryVariables = Types.Exact<{
 }>;
 
 
-export type OrganizationMembersQuery = { __typename?: 'Query', organizationMembers: { __typename?: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, isOrgOwner: boolean, lastLogin?: any | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: any, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
+export type OrganizationMembersQuery = { __typename?: 'Query', organizationMembers: { __typename?: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, isOrgOwner: boolean, lastLogin?: DateTimeString | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: DateTimeString, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
 
 export type RemoveOrganizationMemberMutationVariables = Types.Exact<{
   data: Types.RemoveOrganizationMemberInput;
