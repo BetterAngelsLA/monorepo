@@ -1,4 +1,3 @@
-import { describe, it } from 'node:test';
 import { bucketData } from './bucketData';
 
 describe('bucketData', () => {
@@ -36,13 +35,14 @@ describe('bucketData', () => {
   });
 
   it('rounds averaged y-values to one decimal place', () => {
+    // Mean is 10.666…, so an unrounded average would fail this.
     const data = [
       { x: 'A', y: 10 },
       { x: 'B', y: 11 },
-      { x: 'C', y: 12 },
+      { x: 'C', y: 11 },
     ];
     const result = bucketData(data, 'x', 'y', undefined, 1);
-    expect(result[0].y).toBe(11);
+    expect(result[0].y).toBe(10.7);
   });
 
   it('averages per colorField series within each bucket', () => {

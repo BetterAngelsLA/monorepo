@@ -1,4 +1,5 @@
 import { format, parseISO } from 'date-fns';
+import { useMemo } from 'react';
 import type {
   DailyBedStatusMetrics,
   DailyOccupancyMetrics,
@@ -83,8 +84,14 @@ const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
  * Renders empty (no data) until `data` is provided.
  */
 export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
-  const countData = data ? toBedStatusCountData(data) : [];
-  const percentData = data ? toBedStatusPercentData(data) : [];
+  const countData = useMemo(
+    () => (data ? toBedStatusCountData(data) : []),
+    [data],
+  );
+  const percentData = useMemo(
+    () => (data ? toBedStatusPercentData(data) : []),
+    [data],
+  );
 
   return (
     <section className={chartCardClassName} data-testid="bed-status-chart">
@@ -131,8 +138,14 @@ export function DailyOccupancyChart({
 }: {
   data?: DailyOccupancyMetrics[];
 }) {
-  const countData = data ? toDailyOccupancyCountData(data) : [];
-  const percentData = data ? toDailyOccupancyPercentData(data) : [];
+  const countData = useMemo(
+    () => (data ? toDailyOccupancyCountData(data) : []),
+    [data],
+  );
+  const percentData = useMemo(
+    () => (data ? toDailyOccupancyPercentData(data) : []),
+    [data],
+  );
 
   return (
     <section className={chartCardClassName} data-testid="daily-occupancy-chart">
