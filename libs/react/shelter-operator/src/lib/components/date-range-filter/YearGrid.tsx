@@ -1,12 +1,24 @@
 import { mergeCss } from '@monorepo/react/shared';
+import {
+  ACCENT_BG,
+  ACCENT_HOVER_BG,
+  ACCENT_RING,
+  HOVER_BG,
+  TEXT_PRIMARY,
+} from './colors';
 
-const FIRST_YEAR = 2021;
-const LAST_YEAR = 2036;
+// The window is anchored on the current year rather than fixed, so the grid
+// does not run out of future years as time passes. Sixteen years fills the
+// four-column layout exactly.
+const YEARS_BEFORE = 5;
+const YEARS_AFTER = 10;
 
-const YEARS = Array.from(
-  { length: LAST_YEAR - FIRST_YEAR + 1 },
-  (_, i) => FIRST_YEAR + i
-);
+function yearsAround(anchor: number): number[] {
+  return Array.from(
+    { length: YEARS_BEFORE + YEARS_AFTER + 1 },
+    (_, i) => anchor - YEARS_BEFORE + i,
+  );
+}
 
 export interface YearGridProps {
   selectedYear?: number;
@@ -27,7 +39,7 @@ export function YearGrid({
       aria-label="Select year"
       className={mergeCss(['grid grid-cols-4 gap-2 font-sans', className])}
     >
-      {YEARS.map((year) => {
+      {yearsAround(currentYear).map((year) => {
         const isSelected = year === selectedYear;
         const isCurrent = year === currentYear;
         return (
@@ -40,9 +52,9 @@ export function YearGrid({
             className={mergeCss([
               'h-10 rounded-full text-sm transition-colors',
               isSelected
-                ? 'bg-[#008CEE] text-white hover:bg-[#0071C0]'
-                : 'text-[#383B40] hover:bg-[#F4F6FD]',
-              isCurrent && !isSelected && 'ring-1 ring-inset ring-[#008CEE]',
+                ? `${ACCENT_BG} text-white ${ACCENT_HOVER_BG}`
+                : `${TEXT_PRIMARY} ${HOVER_BG}`,
+              isCurrent && !isSelected && `ring-1 ring-inset ${ACCENT_RING}`,
             ])}
           >
             {year}
