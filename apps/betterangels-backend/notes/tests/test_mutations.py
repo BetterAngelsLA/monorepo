@@ -431,28 +431,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIn(service_request, getattr(note, expected_type).all())
 
     def test_delete_note_mutation(self) -> None:
-        mutation = """
-            mutation DeleteNote($id: ID!) {
-                deleteNote(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.note["id"]}
-
-        expected_query_count = 21
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
-        self.assertIsNotNone(response["data"]["deleteNote"])
+            response = self._delete_note_fixture(self.note["id"])
+
+        self.assertEqual(
+            response["data"]["deleteNote"],
+            {"__typename": "NoteType", "id": self.note["id"]},
+        )
 
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
