@@ -1,6 +1,6 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- runFlow: ../steps/start_test.yml
+- runFlow: ../lib/framework/start_test.yml
 
 - assertVisible:
     id: clients-screen
@@ -21,11 +21,12 @@ appId: ${MAESTRO_APP_ID}
 # generate unique test data
 - evalScript: ${output.runId = Date.now()}
 - evalScript: ${output.caId = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String(output.runId).slice(-7)}
+- evalScript: ${output.clientFirstName = "e2e-test-firstName-" + String(output.runId)}
 
 # fill out form
 - tapOn:
     id: 'firstName'
-- inputText: ${'e2e-fn-' + output.runId}
+- inputText: ${output.clientFirstName}
 - hideKeyboard
 
 # Submit
@@ -33,7 +34,7 @@ appId: ${MAESTRO_APP_ID}
     id: 'action-btn-primary'
 - waitForAnimationToEnd
 
-- assertVisible: ${'e2e-fn-' + output.runId} # header
+- assertVisible: ${output.clientFirstName} # header
 - assertVisible: 'Full Name' # label
 - assertVisible: 'Profile' # tab
 

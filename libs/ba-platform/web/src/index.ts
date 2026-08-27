@@ -9,3 +9,4 @@
  * expo code and vice versa.
  */
 export { createWebFetchClient } from './lib/fetchClient';
+export { webActiveOrgStorage } from './lib/activeOrgStorage';

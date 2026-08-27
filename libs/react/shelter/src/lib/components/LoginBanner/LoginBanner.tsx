@@ -7,7 +7,7 @@ const STORAGE_KEY = 'shelter-login-banner-dismissed';
 
 export function LoginBanner() {
   const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem(STORAGE_KEY) === 'true'
+    () => localStorage.getItem(STORAGE_KEY) === 'true',
   );
 
   if (dismissed) {

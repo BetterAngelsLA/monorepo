@@ -6,6 +6,7 @@ from typing import Any, Sequence, Tuple, Type, TypeVar
 
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, Group
+from django.core.exceptions import PermissionDenied
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
@@ -223,21 +224,17 @@ def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_grou
 
 
 def get_current_organization(info: Info) -> str:
-    """Return the organization ID from the current request context.
+    """Return the organization ID from the ``X-Organization-ID`` header.
 
-    Reads ``request.organization_id``, which is set by
-    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header.
-
-    Companion to ``get_current_user(info)`` — use it anywhere a schema
-    method needs the active organization for selector/service calls.
-
-    Raises:
-        ``AttributeError`` if the request does not have ``organization_id``
-        set.  This only happens when a field/mutation uses ``@HasOrgPerm``
-        without the middleware being installed — which is a configuration
-        error.
+    Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
+    if ``OrganizationMiddleware`` is not installed.
     """
-    return str(info.context.request.organization_id)
+    org_id = info.context.request.organization_id
+
+    if org_id is None:
+        raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
+
+    return str(org_id)
 
 
 _T = TypeVar("_T", bound=Model)
@@ -249,15 +246,25 @@ def _org_perm_exists_across_fields(
     codename: str,
     fields: list[str],
 ) -> Q:
-    """Return a ``Q`` checking the user holds a permission on any of the org fields."""
+    """Return a ``Q`` checking the user holds a permission on any of the org fields.
+
+    Both conditions — that *user* is in the group, and that the group carries
+    the permission — MUST stay inside a single ``.filter()`` call.
+    ``Organization.permission_groups`` is multi-valued, so chaining them as two
+    ``.filter()`` calls builds two independent joins and lets them be satisfied
+    by *different* permission groups: "user is in some group of this org, and
+    some group of this org has the permission". Every organization is
+    provisioned with every template, so that reads as "any member holds every
+    permission any template in their org has".
+    """
     return reduce(
         or_,
         (
             Q(
                 Exists(
-                    Organization.objects.filter(pk=OuterRef(f))
-                    .filter(permission_groups__group__user=user)
-                    .filter(_perm_q(app_label, codename))
+                    Organization.objects.filter(pk=OuterRef(f)).filter(
+                        Q(permission_groups__group__user=user) & _perm_q(app_label, codename)
+                    )
                 )
             )
             for f in fields

@@ -11,6 +11,12 @@ export type TMapBounds = {
   southLat: number;
 };
 
+/** Fully controlled map camera (center + zoom). */
+export type TMapCamera = {
+  center: TLatLng;
+  zoom: number;
+};
+
 export interface TAddress extends TLatLng {
   address: string;
 }
@@ -19,7 +25,9 @@ export type TMarker = {
   position: TLatLng;
   id?: string;
   label?: string;
-  onClick?: ((e: google.maps.marker.AdvancedMarkerClickEvent) => void) | undefined;
+  onClick?:
+    | ((e: google.maps.marker.AdvancedMarkerClickEvent) => void)
+    | undefined;
   type?: 'primary' | 'secondary' | 'purple';
   isPrivate?: boolean;
 };

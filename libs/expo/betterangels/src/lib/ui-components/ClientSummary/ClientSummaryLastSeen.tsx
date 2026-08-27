@@ -30,7 +30,7 @@ export function formatActivityTime(date: Date) {
 }
 
 export default function ClientSummaryLastSeen(
-  props: IClientSummaryLastSeenProps
+  props: IClientSummaryLastSeenProps,
 ) {
   const { client } = props;
 

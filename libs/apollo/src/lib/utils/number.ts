@@ -34,7 +34,7 @@ export function toNonNegativeInteger(value: unknown): number | undefined {
 
 export function toNonNegativeIntegerOrFallback(
   value: unknown,
-  fallback: number
+  fallback: number,
 ): number {
   return toNonNegativeInteger(value) || fallback;
 }

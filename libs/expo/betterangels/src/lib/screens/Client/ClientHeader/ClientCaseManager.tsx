@@ -18,7 +18,8 @@ export function ClientCaseManager(props: TProps) {
   const caseManagers =
     client?.contacts?.filter(
       (contact) =>
-        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+        contact.relationshipToClient ===
+        RelationshipTypeEnum.CurrentCaseManager,
     ) || [];
 
   const primaryCCM = caseManagers[0];

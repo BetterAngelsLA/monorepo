@@ -13,7 +13,6 @@ import {
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import type { StorageAdapter } from '@monorepo/react/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,10 +33,7 @@ export interface UserState<TUser> {
  * @typeParam TQuery  The GraphQL operation result type
  *   (e.g. ``CurrentOrgUserQuery``).
  */
-export interface UserProviderConfig<
-  TUser,
-  TQuery,
-> {
+export interface UserProviderConfig<TUser, TQuery> {
   /** GraphQL document that fetches the current user. */
   document: TypedDocumentNode<TQuery, Record<string, never>>;
 
@@ -56,15 +52,6 @@ export interface UserProviderConfig<
       | readonly { message: string; extensions?: Record<string, unknown> }[]
       | undefined,
   ) => boolean;
-
-  /**
-   * Default storage adapter for the embedded :component:`ActiveOrgProvider`.
-   *
-   * If provided, consumers do not need to pass ``storage`` as a prop -
-   * the provider uses this default. Individual apps can still override
-   * via the ``storage`` prop when needed.
-   */
-  defaultStorage?: StorageAdapter;
 
   /**
    * Optional custom mapping from user organizations to the
@@ -113,15 +100,12 @@ export function createUserProvider<
     document,
     parseUser,
     isUnauthenticated,
-    defaultStorage,
     mapOrganizations: customMapOrganizations,
   } = config;
 
   // ---- Helpers -------------------------------------------------------
 
-  const defaultMapOrganizations = (
-    orgs: readonly OrgLike[],
-  ) =>
+  const defaultMapOrganizations = (orgs: readonly OrgLike[]) =>
     orgs.map((org) => ({
       id: org.id,
       name: org.name,
@@ -146,20 +130,7 @@ export function createUserProvider<
     return ctx;
   }
 
-  function UserProvider({
-    children,
-    storage,
-  }: {
-    children: ReactNode;
-    /** Storage adapter — defaults to :attr:`defaultStorage` from config. */
-    storage?: StorageAdapter;
-  }) {
-    const resolvedStorage = storage ?? defaultStorage;
-    if (!resolvedStorage) {
-      throw new Error(
-        'UserProvider requires a storage adapter. Pass it as a prop or set defaultStorage in createUserProvider config.',
-      );
-    }
+  function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<TUser | undefined>();
 
     const { data, loading, error, refetch } = useQuery(document, {
@@ -194,7 +165,10 @@ export function createUserProvider<
         // with graphQLErrors — narrow via runtime check.
         const gqlErrors =
           error && 'graphQLErrors' in error
-            ? (error.graphQLErrors as readonly { message: string; extensions?: Record<string, unknown> }[])
+            ? (error.graphQLErrors as readonly {
+                message: string;
+                extensions?: Record<string, unknown>;
+              }[])
             : undefined;
         updateUser({ data, errors: gqlErrors?.length ? gqlErrors : undefined });
       }
@@ -222,8 +196,9 @@ export function createUserProvider<
     return (
       <UserContext.Provider value={contextValue}>
         <ActiveOrgProvider
-          storage={resolvedStorage}
-          organizations={user?.organizations ? mapOrganizations(user.organizations) : []}
+          organizations={
+            user?.organizations ? mapOrganizations(user.organizations) : []
+          }
         >
           {children}
         </ActiveOrgProvider>

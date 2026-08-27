@@ -26,7 +26,7 @@ export function HouseholdMemeberDeleteBtn(props: TProps) {
   const { showSnackbar } = useSnackbar();
 
   const [deleteHouseholdMember, { loading, error }] = useMutation(
-    DeleteClientHouseholdMemberDocument
+    DeleteClientHouseholdMemberDocument,
   );
 
   const onDelete = async () => {

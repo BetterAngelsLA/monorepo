@@ -21,7 +21,7 @@ export default function Home() {
   }
 
   const firstAllowed = permissionRoutes.find((r) =>
-    hasPermission(r.permission)
+    hasPermission(r.permission),
   );
 
   if (firstAllowed) return <Navigate to={firstAllowed.path} replace />;

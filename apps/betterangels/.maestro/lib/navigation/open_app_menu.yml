@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Precondition: on a screen with the nav menu button
+- assertVisible:
+    id: 'nav-menu-btn'
+
+- tapOn:
+    id: 'nav-menu-btn'
+
+- assertVisible:
+    id: 'nav-menu'

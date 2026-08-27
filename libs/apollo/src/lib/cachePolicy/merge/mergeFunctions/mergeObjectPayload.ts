@@ -102,7 +102,7 @@ type TMergeObjectPayloadArgs<TVars> = {
 };
 
 export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
-  args: TMergeObjectPayloadArgs<TVars>
+  args: TMergeObjectPayloadArgs<TVars>,
 ): FieldMergeFunction<
   unknown,
   unknown,
@@ -121,7 +121,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
   return function mergeObject(
     existingValue,
     incomingValue,
-    fieldOptions
+    fieldOptions,
   ): Record<string, unknown> {
     const { readField, args } = fieldOptions;
 
@@ -138,7 +138,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     const positionById = buildPositionByIdMap(
       mergedItems,
       readItemId,
-      readField
+      readField,
     );
 
     for (let i = 0; i < newItems.length; i = i + 1) {
@@ -173,7 +173,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
       console.error(
         '[mergeObjectPayload] failed to write items at path',
         itemsPath,
-        writeItemsResult
+        writeItemsResult,
       );
     }
 
@@ -186,7 +186,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     if (totalCount === undefined) {
       console.warn(
         '[mergeObjectPayload] expected totalCount to be defined for totalCountPath: ',
-        totalCountPath
+        totalCountPath,
       );
     }
 
@@ -197,7 +197,7 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
         console.error(
           '[mergeObjectPayload] failed to write totalCount at path',
           totalCountPath,
-          writeTotalResult
+          writeTotalResult,
         );
       }
     }

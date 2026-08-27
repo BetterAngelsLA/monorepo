@@ -51,26 +51,21 @@ export function FilterPills(props: IProps) {
   const pills: TPill[] = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (key === 'openNow') {
-      continue;
-    }
-    if (key === 'openNowScheduleTypes') {
+    if (key === 'openNowFor') {
       const scheduleTypes = value as ScheduleTypeChoices[] | undefined;
       scheduleTypes?.forEach((scheduleType) => {
         const label = OPEN_NOW_SCHEDULE_TYPE_LABELS[scheduleType];
         if (label) {
           pills.push({
-            id: `openNowScheduleTypes-${scheduleType}`,
+            id: `openNowFor-${scheduleType}`,
             label,
             clear: (prev) => {
-              const nextTypes = (prev.openNowScheduleTypes ?? []).filter(
-                (t) => t !== scheduleType
+              const nextTypes = (prev.openNowFor ?? []).filter(
+                (t) => t !== scheduleType,
               );
               return {
                 ...prev,
-                openNowScheduleTypes:
-                  nextTypes.length > 0 ? nextTypes : undefined,
-                openNow: nextTypes.length > 0 ? true : undefined,
+                openNowFor: nextTypes.length > 0 ? nextTypes : undefined,
               };
             },
           });
@@ -103,7 +98,7 @@ export function FilterPills(props: IProps) {
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(
         key as keyof TShelterPropertyFilters,
-        val as never
+        val as never,
       );
 
       if (label) {

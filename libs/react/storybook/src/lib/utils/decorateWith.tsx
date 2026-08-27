@@ -3,7 +3,7 @@ import { ComponentType, type PropsWithChildren } from 'react';
 
 export function decorateWith<P>(
   Wrapper: ComponentType<PropsWithChildren<P>>,
-  wrapperProps?: P
+  wrapperProps?: P,
 ): Decorator {
   return (Story, context) => (
     <Wrapper {...(wrapperProps as P)}>

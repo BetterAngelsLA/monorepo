@@ -1,0 +1,112 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+
+- assertVisible: 'Profile'
+- assertVisible: 'Back'
+- assertVisible: ${output.fixtureClientName}
+
+# ###############################
+# Go to Interactions Tab ########
+# ###############################
+
+# generate unique test data
+- evalScript: ${output.interactionId = Date.now()}
+- evalScript: ${output.interactionPurpose = "interaction-" + String(output.interactionId)}
+- evalScript: ${output.noteCardTestId = "note-card-" + String(output.interactionPurpose)}
+
+# #########################
+# Add Interaction ########
+# #########################
+
+- tapOn:
+    id: 'client-tab-interactions'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'create-interaction-btn'
+
+- assertVisible: 'Add Interaction'
+
+- tapOn:
+    id: 'note-purpose-field'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'note-purpose-input'
+- extendedWaitUntil:
+    visible:
+      id: 'note-purpose-input'
+    timeout: 2000
+
+- inputText: ${output.interactionPurpose}
+
+# close keyboard
+# `hideKeyboard` may not always hit `Done` btn exactly
+# and in this case would trigger another tap event
+- tapOn: 'Done'
+- waitForAnimationToEnd
+
+# Assert default location set in launch_app.yml
+# should match INITIAL_LOCATION in NoteForm/Location
+- assertVisible: '727 W 7th St'
+
+# Submit
+- tapOn:
+    id: 'action-btn-primary'
+- waitForAnimationToEnd
+
+# ###################################
+# Assert Created Interaction ########
+# ###################################
+
+# visit Interactions Tab to confirm
+- tapOn:
+    id: 'client-tab-interactions'
+- waitForAnimationToEnd
+
+# Latest created interaction should be at the top
+- extendedWaitUntil:
+    visible:
+      id: ${output.noteCardTestId}
+    timeout: 2000
+
+# ###########################
+# Delete Interaction ########
+# ###########################
+
+- tapOn:
+    id: ${output.noteCardTestId}
+
+- tapOn: 'Edit'
+
+- scrollUntilVisible:
+    element:
+      id: delete-note-btn
+    direction: DOWN
+
+- tapOn:
+    id: delete-note-btn
+
+- tapOn:
+    id: delete-modal-confirm-btn
+
+# navigates back to clients-screen
+- assertVisible:
+    id: client-view-interactions

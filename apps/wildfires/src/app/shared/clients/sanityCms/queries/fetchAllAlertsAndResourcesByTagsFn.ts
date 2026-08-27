@@ -6,7 +6,7 @@ import { normalizeQueryString } from './utils/normalizeQueryString';
 const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
 export const fetchAllAlertsAndResourcesByTagsFn = async (
-  tags: string[]
+  tags: string[],
 ): Promise<TResource[]> => {
   try {
     const queryParams = generateQueryParams(tags);

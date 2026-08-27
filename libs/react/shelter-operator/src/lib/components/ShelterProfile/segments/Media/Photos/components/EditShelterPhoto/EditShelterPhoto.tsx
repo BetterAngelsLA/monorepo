@@ -30,7 +30,7 @@ export function EditShelterPhoto(props: TProps) {
 
   async function onSubmit(
     data: ShelterPhotoFormData,
-    setError: UseFormSetError<ShelterPhotoFormData>
+    setError: UseFormSetError<ShelterPhotoFormData>,
   ) {
     try {
       const response = await updateShelterPhoto({

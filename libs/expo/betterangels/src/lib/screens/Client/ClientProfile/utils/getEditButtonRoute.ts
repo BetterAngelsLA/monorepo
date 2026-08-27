@@ -41,7 +41,7 @@ export function getEditButtonRoute(props: TProps) {
 
 function hasSectionModelData(
   section: ClientProfileSectionEnum,
-  clientProfile: TClientProfile
+  clientProfile: TClientProfile,
 ): boolean {
   const { hmisProfiles, householdMembers, contacts } = clientProfile;
 

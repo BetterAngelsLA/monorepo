@@ -16,6 +16,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             createdBy {
                 id
             }
+            team {
+                id
+                name
+            }
             interactedAt
             isSubmitted
             privateDetails
@@ -25,7 +29,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 summary
             }
-            team
             location {
                 id
                 address {

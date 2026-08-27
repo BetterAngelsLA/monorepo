@@ -20,11 +20,11 @@ export function SidebarItemLabel(props: TProps) {
   const showMarker = theme.variant === 'decorated';
 
   const linkColor = isActive
-    ? theme.fontColorActive ?? theme.activeColor
+    ? (theme.fontColorActive ?? theme.activeColor)
     : theme.fontColor;
 
   const markerBg = isActive
-    ? theme.markerColor ?? theme.activeColor
+    ? (theme.markerColor ?? theme.activeColor)
     : 'transparent';
 
   const transitionCss = ['transition-[width]', 'duration-300', 'ease-in-out'];

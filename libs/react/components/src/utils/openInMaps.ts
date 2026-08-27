@@ -4,7 +4,7 @@ const isIOS = /iPad|iPhone|iPod/i.test(ua);
 export function openInMaps(
   latitude?: number,
   longitude?: number,
-  place?: string
+  place?: string,
 ) {
   if (!((latitude && longitude) || place)) {
     return;

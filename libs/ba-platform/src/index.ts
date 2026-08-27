@@ -8,6 +8,6 @@
  *
  * Framework-specific code has its own entry points:
  * - ``@monorepo/ba-platform/web``  — web-only (CSRF, cookies, etc.)
- * - ``@monorepo/ba-platform/expo``  — RN-only (AsyncStorage, native fetch, etc.)
+ * - ``@monorepo/ba-platform/expo``  — RN-only (MMKV, native fetch, etc.)
  */
 export * from './lib';

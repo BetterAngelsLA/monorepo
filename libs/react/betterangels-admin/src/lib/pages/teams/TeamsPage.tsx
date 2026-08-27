@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client/react';
-import { useActiveOrg } from '@monorepo/ba-platform';
+import { formatTeamDisplayName, useActiveOrg } from '@monorepo/ba-platform';
 import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { Ordering, TeamType } from '@monorepo/ba-platform/types';
 import {
@@ -18,7 +18,7 @@ import {
   AdminTeamsDocument,
   DeleteTeamDocument,
 } from './__generated__/teams.generated';
-import { AddTeamDrawer } from './AddTeamDrawer';
+import { TeamFormDrawer } from './TeamFormDrawer';
 import { ThreeDotMenu } from './ThreeDotMenu';
 
 type IProps = {
@@ -32,7 +32,7 @@ const COLUMNS: {
   field: SortField;
   render: (t: TeamType) => string | JSX.Element;
 }[] = [
-  { label: 'Name', field: 'name', render: (t) => t.name },
+  { label: 'Name', field: 'name', render: (t) => formatTeamDisplayName(t) },
   {
     label: 'Created',
     field: 'createdAt',
@@ -52,6 +52,7 @@ export function TeamsPage(props: IProps) {
   const { showDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [sort, setSort] = useState<{
     field: SortField;
     direction: Ordering;
@@ -89,6 +90,20 @@ export function TeamsPage(props: IProps) {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+  };
+
+  const handleEdit = (team: TeamType) => {
+    showDrawer({
+      content: (
+        <TeamFormDrawer
+          team={team}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      ),
+      contentClassName: 'p-0',
+    });
   };
 
   const handleDelete = async (team: TeamType) => {
@@ -148,6 +163,9 @@ export function TeamsPage(props: IProps) {
 
   // Filter/search client-side
   let displayTeams = teams;
+  if (!showInactive) {
+    displayTeams = displayTeams.filter((t) => t.isActive !== false);
+  }
   if (search) {
     const lower = search.toLowerCase();
     displayTeams = displayTeams.filter((t) =>
@@ -178,15 +196,24 @@ export function TeamsPage(props: IProps) {
       </div>
 
       <div className="flex items-center justify-between gap-5 mb-6">
-        <div>
+        <div className="flex items-center gap-4">
           <SearchInput debounceMs={300} onChange={handleSearchChange} />
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={(e) => setShowInactive(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+            />
+            Show inactive teams
+          </label>
         </div>
         {hasPermission(TeamPermissions.Add) && (
           <button
             onClick={() =>
               showDrawer({
                 content: (
-                  <AddTeamDrawer
+                  <TeamFormDrawer
                     onSuccess={() => {
                       refetch();
                     }}
@@ -212,7 +239,9 @@ export function TeamsPage(props: IProps) {
         <div className="text-center py-10 text-neutral-60">
           {search
             ? 'No teams match your search.'
-            : 'No teams in this organization.'}
+            : !showInactive
+              ? 'No active teams in this organization.'
+              : 'No teams in this organization.'}
         </div>
       )}
 
@@ -232,7 +261,7 @@ export function TeamsPage(props: IProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 text-sm truncate">
-                        {team.name}
+                        {formatTeamDisplayName(team)}
                       </div>
                       <div className="text-xs text-gray-500">
                         Created {formatCreatedDate(team.createdAt)}
@@ -243,6 +272,7 @@ export function TeamsPage(props: IProps) {
                       openMenuRowId={openMenuRowId}
                       setOpenMenuRowId={setOpenMenuRowId}
                       menuRef={menuRef}
+                      onEdit={handleEdit}
                       onDelete={handleDelete}
                       deleting={deleting}
                     />
@@ -260,6 +290,7 @@ export function TeamsPage(props: IProps) {
                     openMenuRowId={openMenuRowId}
                     setOpenMenuRowId={setOpenMenuRowId}
                     menuRef={menuRef}
+                    onEdit={handleEdit}
                     onDelete={handleDelete}
                     deleting={deleting}
                   />

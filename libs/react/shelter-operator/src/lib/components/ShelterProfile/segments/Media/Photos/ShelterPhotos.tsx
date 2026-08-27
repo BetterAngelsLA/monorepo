@@ -17,7 +17,7 @@ function getLastPathSegment(path: string): string {
 
 function buildColumns(
   shelterId: string,
-  heroImageId?: string
+  heroImageId?: string,
 ): TableColumn<ShelterProfilePhotoType>[] {
   return [
     {

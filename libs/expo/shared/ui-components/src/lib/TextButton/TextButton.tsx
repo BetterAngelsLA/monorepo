@@ -24,7 +24,7 @@ interface ITextButtonProps {
   fontSize?: 'sm' | 'md';
   accessibilityLabel?: string;
   accessibilityHint: string;
-  testID?: string;
+  testId?: string;
   regular?: boolean;
 }
 
@@ -43,7 +43,7 @@ export function TextButton(props: ITextButtonProps) {
     my,
     mx,
     accessibilityLabel,
-    testID,
+    testId,
     accessibilityHint,
     regular = false,
   } = props;
@@ -69,7 +69,7 @@ export function TextButton(props: ITextButtonProps) {
         },
       ]}
       onPress={onPress}
-      testID={testID}
+      testID={testId}
     >
       <Text
         style={[

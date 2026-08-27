@@ -50,7 +50,6 @@ Once started, you can access the Django development server at
 - default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
   - or the port you've configured.
 - Login using creds
-
   - email: `admin@example.com`
   - psw: `password`
 
@@ -95,6 +94,22 @@ To run an individual test, add the full path of the test in dot notation. Exampl
 ```bash
 yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
 ```
+
+#### Working in more than one checkout
+
+The test database name comes from `POSTGRES_NAME`, so every worktree and every
+container shell shares one `test_postgres`. Running with `--create-db` in one
+drops it under the others, which surfaces as large numbers of failures in apps
+you did not touch.
+
+When that is a risk, name a database for the run:
+
+```bash
+POSTGRES_TEST_NAME=test_myworktree uv run pytest -q --create-db
+```
+
+Per command, not in `.env` — the shared database stays the default so that
+running the suite by hand behaves the same way everywhere.
 
 #### Debugging Tests
 

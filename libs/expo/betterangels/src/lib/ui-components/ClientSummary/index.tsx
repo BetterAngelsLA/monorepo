@@ -31,7 +31,7 @@ export function ClientSummary(props: IClientSummaryProps) {
         params: { arrivedFrom },
       });
     },
-    [arrivedFrom]
+    [arrivedFrom],
   );
 
   const handleNavigateToNewNote = useCallback(() => {

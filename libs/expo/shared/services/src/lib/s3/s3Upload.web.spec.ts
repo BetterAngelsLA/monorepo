@@ -20,11 +20,13 @@ class MockXMLHttpRequest {
   static instance: MockXMLHttpRequest | null = null;
 
   upload = {
-    onprogress: null as ((event: {
-      lengthComputable: boolean;
-      loaded: number;
-      total: number;
-    }) => void) | null,
+    onprogress: null as
+      | ((event: {
+          lengthComputable: boolean;
+          loaded: number;
+          total: number;
+        }) => void)
+      | null,
   };
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;

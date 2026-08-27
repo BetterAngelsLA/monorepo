@@ -23,9 +23,8 @@ export const UPDATE_NOTE = gql`
       ... on NoteType {
         id
         purpose
-        currentTeam {
+        team {
           id
-          slug
           name
         }
         publicDetails

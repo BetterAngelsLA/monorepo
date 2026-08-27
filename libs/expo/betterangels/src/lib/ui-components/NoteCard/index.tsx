@@ -1,4 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { toTestId } from '@monorepo/expo/shared/utils';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
@@ -10,19 +11,21 @@ import NoteCardServices from './NoteCardServices';
 
 interface INoteCardProps {
   note: NotesQuery['notes']['results'][0];
+  testId?: string;
   variant: 'interactions' | 'clientProfile';
   hasBorder?: boolean;
   onPress?: () => void;
 }
 
 export default function NoteCard(props: INoteCardProps) {
-  const { note, variant, hasBorder, onPress } = props;
+  const { note, testId, variant, hasBorder, onPress } = props;
   const pathname = usePathname();
   const router = useRouter();
 
   return (
     <Pressable
       accessibilityRole="button"
+      testID={testId ?? toTestId(['note-card', note.purpose])}
       onPress={() => {
         if (onPress) {
           onPress();
@@ -48,7 +51,7 @@ export default function NoteCard(props: INoteCardProps) {
       <NoteCardByline
         createdBy={note.createdBy}
         organization={note.organization}
-        currentTeam={note.currentTeam}
+        team={note.team}
       />
 
       {(!!note.providedServices.length || !!note.requestedServices.length) && (

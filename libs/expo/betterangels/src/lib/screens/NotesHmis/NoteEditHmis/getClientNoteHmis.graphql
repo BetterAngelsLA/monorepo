@@ -43,9 +43,8 @@ query HmisNote($id: ID!) {
         summary
         description
         status
-        currentTeam {
+        team {
           id
-          slug
           name
         }
       }

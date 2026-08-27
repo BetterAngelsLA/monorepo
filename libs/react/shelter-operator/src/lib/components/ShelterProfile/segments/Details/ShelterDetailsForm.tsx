@@ -24,7 +24,7 @@ type TProps = {
   values?: Partial<DetailsFormData>;
   onSubmit: (
     data: DetailsFormData,
-    setError: UseFormSetError<DetailsFormData>
+    setError: UseFormSetError<DetailsFormData>,
   ) => void;
   isViewMode?: boolean;
   onEditClick?: () => void;
@@ -46,7 +46,7 @@ export function ShelterDetailsForm(props: TProps) {
 
   const initialValues = useMemo(
     () => ({ ...defaultFormValues, ...values }),
-    [values]
+    [values],
   );
 
   const {
@@ -101,7 +101,7 @@ export function ShelterDetailsForm(props: TProps) {
                   label="Special Situation Restrictions"
                   isMulti={true}
                   value={SPECIAL_SITUATION_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={SPECIAL_SITUATION_OPTIONS}
                   onChange={(options) => {
@@ -138,7 +138,7 @@ export function ShelterDetailsForm(props: TProps) {
                   label="Accessibility"
                   isMulti={true}
                   value={ACCESSIBILITY_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={ACCESSIBILITY_OPTIONS}
                   onChange={(options) => {
@@ -157,7 +157,7 @@ export function ShelterDetailsForm(props: TProps) {
                   label="Storage"
                   isMulti={true}
                   value={STORAGE_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={STORAGE_OPTIONS}
                   onChange={(options) => {
@@ -176,7 +176,7 @@ export function ShelterDetailsForm(props: TProps) {
                   label="Pets"
                   isMulti={true}
                   value={PETS_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={PETS_OPTIONS}
                   onChange={(options) => {
@@ -197,7 +197,7 @@ export function ShelterDetailsForm(props: TProps) {
                   label="Parking"
                   isMulti={true}
                   value={PARKING_OPTIONS.filter((o) =>
-                    field.value.includes(o.value)
+                    field.value.includes(o.value),
                   )}
                   options={PARKING_OPTIONS}
                   onChange={(options) => {

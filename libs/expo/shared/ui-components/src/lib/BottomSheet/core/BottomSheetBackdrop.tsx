@@ -44,7 +44,7 @@ type BottomSheetBackdropWrapperProps = BottomSheetBackdropProps & {
 };
 
 export function BottomSheetBackdrop(
-  props: BottomSheetBackdropWrapperProps
+  props: BottomSheetBackdropWrapperProps,
 ): ReactElement | null {
   const {
     disableBackdrop,

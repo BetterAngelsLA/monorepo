@@ -23,7 +23,7 @@ type PartitionResult = {
  */
 export function filterRecoverableOperationMessages(
   messages: OperationMessage[],
-  allowedFields: string[]
+  allowedFields: string[],
 ): PartitionResult {
   const recoverable: FieldError[] = [];
   const unrecoverable: OperationMessage[] = [];

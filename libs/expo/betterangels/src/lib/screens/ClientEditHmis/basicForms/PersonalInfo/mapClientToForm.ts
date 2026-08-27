@@ -1,4 +1,4 @@
-import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
+import { parseDateString } from '@monorepo/shared/scalars';
 import { HmisClientProfileType } from '../../../../apollo';
 import {
   personalInfoFormEmptyState as emptyState,
@@ -6,7 +6,7 @@ import {
 } from './formSchema';
 
 export function mapClientToPersonalInfoSchema(
-  client: HmisClientProfileType
+  client: HmisClientProfileType,
 ): TPersonalInfoFormSchema {
   const {
     birthDate,
@@ -19,7 +19,7 @@ export function mapClientToPersonalInfoSchema(
   } = client;
 
   const mappedBirthDate =
-    toLocalCalendarDate(birthDate ?? undefined) ?? emptyState.birthDate;
+    parseDateString(birthDate ?? undefined) ?? emptyState.birthDate;
 
   return {
     birthDate: mappedBirthDate,

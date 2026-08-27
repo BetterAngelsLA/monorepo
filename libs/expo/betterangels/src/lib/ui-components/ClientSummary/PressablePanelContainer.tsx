@@ -49,8 +49,8 @@ export function PressablePanelContainer({
               variant === 'primary'
                 ? Colors.PRIMARY_EXTRA_LIGHT
                 : variant === 'warning'
-                ? Colors.WARNING_LIGHT
-                : Colors.ERROR_EXTRA_LIGHT,
+                  ? Colors.WARNING_LIGHT
+                  : Colors.ERROR_EXTRA_LIGHT,
             height: 30,
             width: 30,
             borderRadius: 100,
@@ -72,7 +72,7 @@ export function PressablePanelContainer({
           </TextBold>
           {extension && (
             <TextBold color={Colors.NEUTRAL_EXTRA_DARK} size="sm">
-              {extension}
+              {`ext. ${extension}`}
             </TextBold>
           )}
         </View>

@@ -2,10 +2,13 @@ from datetime import datetime, timezone
 
 import time_machine
 from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
 from notes.enums import ServiceRequestStatusEnum
-from notes.models import OrganizationService, ServiceRequest
+from notes.models import Note, OrganizationService, ServiceRequest
+from teams.models import Team
 
 
 class ServiceRequestModelTestCase(TestCase):
@@ -44,3 +47,32 @@ class ServiceRequestModelTestCase(TestCase):
             service_request_to_do.completed_on,
             datetime(2024, 3, 11, 10, 11, 12, tzinfo=timezone.utc),
         )
+
+
+class NoteTeamOrgValidationTestCase(TestCase):
+    """A note's team must belong to the note's organization."""
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.other_org = organization_recipe.make()
+        self.own_team = baker.make(Team, organization=self.org)
+        self.other_team = baker.make(Team, organization=self.other_org)
+
+    def test_clean_allows_a_team_from_the_same_org(self) -> None:
+        note = baker.make(Note, organization=self.org, team=self.own_team)
+
+        note.clean()
+
+    def test_clean_allows_no_team(self) -> None:
+        note = baker.make(Note, organization=self.org, team=None)
+
+        note.clean()
+
+    def test_clean_rejects_a_team_from_another_org(self) -> None:
+        # Unsaved: #2312 adds a composite FK that makes the row unstorable.
+        note = Note(organization=self.org, team=self.other_team)
+
+        with self.assertRaises(ValidationError) as ctx:
+            note.clean()
+
+        self.assertIn("team", ctx.exception.message_dict)

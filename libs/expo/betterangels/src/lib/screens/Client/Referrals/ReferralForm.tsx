@@ -27,7 +27,7 @@ type TProps = {
 
 export function ReferralForm({ onCancel, onSubmit }: TProps) {
   const [selectedShelterId, setSelectedShelterId] = useState<string | null>(
-    null
+    null,
   );
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -35,7 +35,7 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
   const { data, loading, error } = useQuery<SheltersQuery>(SheltersDocument);
 
   const shelters = (data?.shelters.results ?? []).filter(
-    (s) => s.status === 'APPROVED'
+    (s) => s.status === 'APPROVED',
   );
   const selectedShelter = shelters.find((s) => s.id === selectedShelterId);
 
@@ -123,7 +123,7 @@ export function ReferralForm({ onCancel, onSubmit }: TProps) {
                     <Pressable
                       onPress={() =>
                         Linking.openURL(
-                          `https://shelterconnect.org/shelters/${shelter.id}`
+                          `https://shelterconnect.org/shelters/${shelter.id}`,
                         )
                       }
                       accessibilityRole="link"

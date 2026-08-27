@@ -10,13 +10,13 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             clientProfile { id firstName lastName }
             createdAt
             createdBy { id firstName lastName }
+            team { id name }
             description
             note { pk }
             hmisNote { pk }
             organization { id name }
             status
             summary
-            team
             updatedAt
         """
 

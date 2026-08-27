@@ -20,7 +20,7 @@ export function QuestionsBlock(props: IProps) {
 
   function findQuestionResult(
     question: TQuestion,
-    answers: TAnswer[]
+    answers: TAnswer[],
   ): string | string[] {
     const answer = answers.find((a) => a.questionId === question.id);
 

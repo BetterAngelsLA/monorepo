@@ -161,6 +161,6 @@ export function Modal({
 
       {children}
     </dialog>,
-    document.body
+    document.body,
   );
 }

@@ -6,10 +6,12 @@ from common.permissions.config import TemplateConfig
 from django.test import TestCase, override_settings
 from model_bakery import baker
 from notes.groups import CASEWORKER
+from shelters.groups import SHELTER_OPERATOR
 from organizations.models import Organization, OrganizationInvitation
 from post_office.models import Email
 
 from ..backends import CustomInvitations
+from ..emails import base_url_for
 from ..models import User
 
 
@@ -76,7 +78,7 @@ class SendInvitationTestCase(TestCase):
             user,
             sender,
             organization=self.organization,
-            domain="localhost:8000",
+            base_url="http://localhost:4200",
         )
         self.assertIsInstance(result, int)
         self.assertEqual(Email.objects.filter(to=self.email).count(), 1)
@@ -102,7 +104,7 @@ class SendInvitationTestCase(TestCase):
                 user,
                 sender,
                 organization=self.organization,
-                domain="localhost:8000",
+                base_url="http://localhost:4200",
                 role_template=CASEWORKER,
             )
             mock_resolve.assert_called_once()
@@ -113,27 +115,67 @@ class SendInvitationTestCase(TestCase):
         """send_invitation raises ValueError if user has no email."""
         user = baker.make(User, email="")
         with self.assertRaisesRegex(ValueError, r"Cannot send invitation"):
-            self.invitation_backend.send_invitation(user, organization=self.organization, domain="localhost:8000")
+            self.invitation_backend.send_invitation(
+                user, organization=self.organization, base_url="http://localhost:4200"
+            )
+
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
+    def test_a_shelter_operator_invitation_links_to_the_operator_app(self) -> None:
+        """The link has to match where the welcome email sends them.
+
+        It used to come from the ``django_site`` row, which holds the API host —
+        ``api.dev.betterangels.la`` on dev — so the invitation and the welcome
+        email named two different places, and neither environment's row was ever
+        the operator app.
+        """
+        user = baker.make(User, email=self.email)
+
+        self.invitation_backend.send_invitation(
+            user,
+            baker.make(User, email="admin@test.com"),
+            organization=self.organization,
+            base_url=base_url_for(SHELTER_OPERATOR),
+            role_template=SHELTER_OPERATOR,
+        )
+
+        body = Email.objects.get(to=self.email).html_message
+        self.assertIn("https://shelter.example.org", body)
+        self.assertNotIn("betterangels.la", body)
 
     # ── invite_by_email ────────────────────────────────────────────────
 
     @patch("accounts.backends.CustomInvitations.send_invitation")
     def test_invite_by_email_creates_user(self, mock_send: Mock) -> None:
         """invite_by_email creates a new user and sends invitation."""
-        abstract_user = self.invitation_backend.invite_by_email(self.email, domain="localhost:8000")
+        abstract_user = self.invitation_backend.invite_by_email(self.email, base_url="http://localhost:4200")
         assert isinstance(abstract_user, User)
         self.assertEqual(abstract_user.email, self.email)
         self.assertFalse(abstract_user.has_usable_password())
-        mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
+        mock_send.assert_called_once_with(abstract_user, None, base_url="http://localhost:4200")
 
     @patch("accounts.backends.CustomInvitations.send_invitation")
     def test_invite_by_email_existing_user(self, mock_send: Mock) -> None:
         """invite_by_email reuses existing user by email."""
         existing = baker.make(User, email=self.email, username="existing")
-        abstract_user = self.invitation_backend.invite_by_email(self.email, domain="localhost:8000")
+        abstract_user = self.invitation_backend.invite_by_email(self.email, base_url="http://localhost:4200")
         assert isinstance(abstract_user, User)
         self.assertEqual(abstract_user.pk, existing.pk)  # reused
-        mock_send.assert_called_once_with(abstract_user, None, domain="localhost:8000")
+        mock_send.assert_called_once_with(abstract_user, None, base_url="http://localhost:4200")
+
+    @patch("accounts.backends.CustomInvitations.send_invitation")
+    def test_invite_by_email_reactivates_inactive_user(self, mock_send: Mock) -> None:
+        """A deactivated user re-invited with a mixed-case email is reactivated
+        instead of duplicated."""
+        existing = baker.make(User, email=self.email, username="existing", is_active=False)
+
+        abstract_user = self.invitation_backend.invite_by_email(self.email.upper(), base_url="http://localhost:4200")
+
+        assert isinstance(abstract_user, User)
+        self.assertEqual(abstract_user.pk, existing.pk)  # reused, not duplicated
+        self.assertEqual(User.objects.filter(email=self.email).count(), 1)
+        abstract_user.refresh_from_db()
+        self.assertTrue(abstract_user.is_active)
+        mock_send.assert_called_once_with(abstract_user, None, base_url="http://localhost:4200")
 
     def test_send_invitation_case(self) -> None:
         """Original smoke test — invite_by_email creates an Email record."""

@@ -29,7 +29,7 @@ type TProps = {
 };
 
 function buildDefaultValues(
-  initialSchedules?: ScheduleType[]
+  initialSchedules?: ScheduleType[],
 ): ScheduleFormData {
   const weeklySchedules = initialSchedules?.filter((s) => !s.isException) ?? [];
   const exceptionSchedules =
