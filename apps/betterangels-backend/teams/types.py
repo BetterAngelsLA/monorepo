@@ -5,6 +5,7 @@ from typing import Optional
 import strawberry_django
 from strawberry import ID, Maybe, auto
 
+from .annotations import annotate_is_in_use
 from .models import Team
 
 
@@ -19,6 +20,11 @@ class TeamType:
     name: auto
     is_active: Optional[bool]
     created_at: auto
+
+    @strawberry_django.field(annotate={"_is_in_use": lambda info: annotate_is_in_use()})
+    def is_in_use(self, root: Team) -> bool:
+        """Whether a delete would be refused."""
+        return bool(getattr(root, "_is_in_use", False))
 
     @strawberry_django.field(deprecation_reason="Always null. Team.name is the only identifier.")
     def slug(self) -> Optional[str]:

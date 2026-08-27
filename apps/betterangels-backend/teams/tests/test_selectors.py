@@ -5,9 +5,15 @@ so their org scoping was asserted several layers away from where it is
 implemented.
 """
 
+from typing import Any, cast
+
 from accounts.selectors import organization_get_for_member
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
+from django.db.models import Model
+from django.db.models.deletion import PROTECT, RESTRICT
+from model_bakery import baker
+from teams.models import Team
 from teams.selectors import team_get, team_list
 
 
@@ -22,6 +28,27 @@ class TeamListTestCase(GraphQLBaseTestCase):
         org = organization_recipe.make()
 
         self.assertEqual(list(team_list(organization=org)), [])
+
+    def test_every_relation_that_refuses_a_delete_marks_the_team_in_use(self) -> None:
+        """Derived from ``Team._meta``, so a model added later is covered without editing the selector."""
+        for rel in Team._meta.related_objects:
+            if getattr(rel, "on_delete", None) not in (PROTECT, RESTRICT):
+                continue
+
+            related = cast(type[Model], rel.related_model)
+
+            with self.subTest(relation=related._meta.label):
+                team = baker.make(Team, organization=self.org_1)
+                holder: dict[str, Any] = {rel.field.name: team}
+
+                if any(f.name == "organization" for f in related._meta.get_fields()):
+                    holder["organization"] = self.org_1
+
+                baker.make(related, **holder)
+
+                annotated = team_get(pk=team.pk, organization=self.org_1)
+
+                self.assertTrue(getattr(annotated, "_is_in_use", False))
 
 
 class TeamGetTestCase(GraphQLBaseTestCase):

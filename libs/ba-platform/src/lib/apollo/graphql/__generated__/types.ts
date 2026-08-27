@@ -3654,6 +3654,7 @@ export type TeamType = {
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   isActive?: Maybe<Scalars['Boolean']['output']>;
+  isInUse: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   /** @deprecated Always null. Team.name is the only identifier. */
   slug?: Maybe<Scalars['String']['output']>;

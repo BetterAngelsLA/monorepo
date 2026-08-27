@@ -41,6 +41,15 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(team["name"], "new name")
         self.assertFalse(team["isActive"])
 
+    def test_update_team_mutation_reports_a_team_in_use(self) -> None:
+        """The updateTeam payload reports a team a note holds as in use."""
+        team = baker.make(Team, name="held", organization=self.org)
+        baker.make(Note, organization=self.org, team=team)
+
+        response = self.update_team_fixture({"id": team.pk, "name": "renamed"})
+
+        self.assertTrue(response["data"]["updateTeam"]["isInUse"])
+
     @parametrize(
         "field, value",
         [("name", "new name"), ("isActive", False)],
