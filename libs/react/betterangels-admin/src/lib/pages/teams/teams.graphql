@@ -4,6 +4,7 @@ query AdminTeams($filters: TeamFilter, $pagination: OffsetPaginationInput) {
       id
       name
       isActive
+      isInUse
       createdAt
     }
     totalCount

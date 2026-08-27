@@ -17,6 +17,7 @@ import { useOutsideClick } from '../../hooks';
 import {
   AdminTeamsDocument,
   DeleteTeamDocument,
+  UpdateTeamDocument,
 } from './__generated__/teams.generated';
 import { TeamFormDrawer } from './TeamFormDrawer';
 import { ThreeDotMenu } from './ThreeDotMenu';
@@ -79,6 +80,9 @@ export function TeamsPage(props: IProps) {
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
+  const [updateTeam, { loading: deactivating }] =
+    useMutation(UpdateTeamDocument);
+  const busy = deleting || deactivating;
 
   const activeData = data ?? previousData;
   const teams = activeData?.teams?.results ?? [];
@@ -134,6 +138,36 @@ export function TeamsPage(props: IProps) {
       refetch();
     } catch (err) {
       console.error(`[deleteTeam error]: ${toError(err).message}`);
+
+      showAlert({
+        type: 'error',
+        content: 'Sorry, something went wrong. Please try again.',
+      });
+    } finally {
+      setOpenMenuRowId(null);
+    }
+  };
+
+  const handleDeactivate = async (team: TeamType) => {
+    try {
+      const response = await updateTeam({
+        variables: { data: { id: team.id, isActive: false } },
+      });
+      const rejection = extractOperationInfoMessage(response, 'updateTeam');
+
+      if (rejection) {
+        showAlert({ type: 'error', content: rejection });
+
+        return;
+      }
+
+      showAlert({
+        type: 'success',
+        content: `${team.name} deactivated. Its notes and tasks keep it.`,
+      });
+      refetch();
+    } catch (err) {
+      console.error(`[updateTeam error]: ${toError(err).message}`);
 
       showAlert({
         type: 'error',
@@ -288,7 +322,8 @@ export function TeamsPage(props: IProps) {
                       menuRef={menuRef}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
-                      deleting={deleting}
+                      onDeactivate={handleDeactivate}
+                      busy={busy}
                     />
                   </div>
                 </div>
@@ -306,7 +341,8 @@ export function TeamsPage(props: IProps) {
                     menuRef={menuRef}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-                    deleting={deleting}
+                    onDeactivate={handleDeactivate}
+                    busy={busy}
                   />
                 )}
                 data={displayTeams}

@@ -12,7 +12,11 @@ from typing import Any, Dict
 from accounts.groups import ORG_ADMIN
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
+from notes.models import Note
+from tasks.models import Task
 from teams.models import Team
 
 from .utils import TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
@@ -39,6 +43,47 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self.assertEqual(team["id"], str(self.team.pk))
         self.assertEqual(team["name"], self.team.name)
         self.assertTrue(team["isActive"])
+
+    def test_reports_a_team_no_record_holds_as_free(self) -> None:
+        team = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"][0]
+
+        self.assertFalse(team["isInUse"])
+
+    def test_reports_a_team_a_note_holds_as_in_use(self) -> None:
+        baker.make(Note, organization=self.org, team=self.team)
+
+        team = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"][0]
+
+        self.assertTrue(team["isInUse"])
+
+    def test_reports_a_team_a_task_holds_as_in_use(self) -> None:
+        baker.make(Task, organization=self.org, team=self.team)
+
+        team = self.execute_graphql(self.get_teams_query())["data"]["teams"]["results"][0]
+
+        self.assertTrue(team["isInUse"])
+
+    def test_is_in_use_is_not_computed_when_it_is_not_selected(self) -> None:
+        with CaptureQueriesContext(connection) as captured:
+            self.execute_graphql(self.get_teams_query(fields="id name"))
+
+        self.assertNotIn("notes_note", self._team_sql(captured))
+
+    def test_is_in_use_is_computed_when_it_is_selected(self) -> None:
+        with CaptureQueriesContext(connection) as captured:
+            self.execute_graphql(self.get_teams_query(fields="id isInUse"))
+
+        self.assertIn("notes_note", self._team_sql(captured))
+
+    def test_is_in_use_costs_no_query_per_team(self) -> None:
+        baker.make(Team, organization=self.org, _quantity=4)
+
+        with self.assertNumQueriesWithoutCache(4):
+            self.execute_graphql(self.get_teams_query())
+
+    @staticmethod
+    def _team_sql(captured: CaptureQueriesContext) -> str:
+        return " ".join(q["sql"] for q in captured.captured_queries if "teams_team" in q["sql"])
 
     def test_teams_query_is_scoped_to_org(self) -> None:
         """Teams from other organizations are not returned."""

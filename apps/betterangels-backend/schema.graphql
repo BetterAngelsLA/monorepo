@@ -2888,6 +2888,7 @@ type TeamType {
   name: String!
   isActive: Boolean
   createdAt: DateTime!
+  isInUse: Boolean!
   slug: String @deprecated(reason: "Always null. Team.name is the only identifier.")
 }
 

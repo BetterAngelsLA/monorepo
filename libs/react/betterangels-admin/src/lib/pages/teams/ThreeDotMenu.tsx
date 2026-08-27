@@ -8,7 +8,8 @@ interface ThreeDotMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>;
   onEdit: (team: TeamType) => void;
   onDelete: (team: TeamType) => Promise<void>;
-  deleting: boolean;
+  onDeactivate: (team: TeamType) => Promise<void>;
+  busy: boolean;
 }
 
 export function ThreeDotMenu({
@@ -18,9 +19,13 @@ export function ThreeDotMenu({
   menuRef,
   onEdit,
   onDelete,
-  deleting,
+  onDeactivate,
+  busy,
 }: ThreeDotMenuProps) {
   const isOpen = openMenuRowId === team.id;
+
+  const canDelete = !team.isInUse;
+  const canDeactivate = team.isInUse && team.isActive !== false;
 
   return (
     <div className="relative">
@@ -48,13 +53,24 @@ export function ThreeDotMenu({
           >
             Edit
           </button>
-          <button
-            className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
-            onClick={() => void onDelete(team)}
-            disabled={deleting}
-          >
-            Delete
-          </button>
+          {canDeactivate && (
+            <button
+              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left whitespace-nowrap"
+              onClick={() => void onDeactivate(team)}
+              disabled={busy}
+            >
+              Deactivate
+            </button>
+          )}
+          {canDelete && (
+            <button
+              className="py-2 px-4 hover:bg-neutral-98 rounded-lg w-full text-left text-alert-60"
+              onClick={() => void onDelete(team)}
+              disabled={busy}
+            >
+              Delete
+            </button>
+          )}
         </div>
       )}
     </div>

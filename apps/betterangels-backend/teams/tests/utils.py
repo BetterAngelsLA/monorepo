@@ -15,6 +15,7 @@ class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
             id
             name
             isActive
+            isInUse
         """
 
     def get_teams_query(self, fields: Optional[str] = None) -> str:
