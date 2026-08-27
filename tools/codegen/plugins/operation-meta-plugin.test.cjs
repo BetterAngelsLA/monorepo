@@ -165,6 +165,39 @@ describe('operation-meta-plugin', () => {
       assert.ok(content.includes("'HmisClientProgramType'"));
       assert.ok(content.includes('extends readonly (infer _T)[]'));
     });
+
+    it('aliased root field — uses the response key (alias), not the schema field', () => {
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            currentUser: {
+              type: new GraphQLObjectType({
+                name: 'CurrentUserType',
+                fields: { id: { type: GraphQLID } },
+              }),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query currentOrgUser {
+          profile: currentUser { id }
+        }
+      `),
+        schema,
+      );
+
+      assert.ok(content.includes('export const currentOrgUserOperationKey'));
+      // operationKey is the response key (the alias), not the schema field.
+      assert.ok(content.includes("= 'profile';"));
+      // Schema lookup still resolves the success typename from the schema field.
+      assert.ok(content.includes("'CurrentUserType'"));
+      // SuccessTypename indexes the generated type by the response key.
+      assert.ok(content.includes("CurrentOrgUserQuery['profile']"));
+      assert.ok(!content.includes("CurrentOrgUserQuery['currentUser']"));
+    });
   });
 
   // ── Edge cases ─────────────────────────────────────────────

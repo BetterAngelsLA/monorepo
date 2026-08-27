@@ -99,7 +99,11 @@ module.exports = {
             );
             return;
           }
-          const fieldName = field.name.value;
+          const schemaFieldName = field.name.value;
+          // The response key is the alias when the root field is aliased
+          // (e.g. `profile: currentUser` → key is `profile`). Schema lookup
+          // still uses the schema field name (`currentUser`).
+          const responseKey = field.alias?.value ?? schemaFieldName;
 
           // Strategy 1: extract success typename from inline fragments.
           // The first `... on <Type>` where Type is not 'OperationInfo' wins.
@@ -124,7 +128,7 @@ module.exports = {
             );
             if (hasFragments) {
               console.warn(
-                `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
+                `[operation-meta] No success typename for ${operationName}:${schemaFieldName} — ` +
                   `all inline fragments are OperationInfo.`,
               );
             }
@@ -138,13 +142,13 @@ module.exports = {
                 ? schema.getQueryType()
                 : schema.getMutationType();
             if (rootType) {
-              const fieldDef = rootType.getFields()[fieldName];
+              const fieldDef = rootType.getFields()[schemaFieldName];
               if (fieldDef) {
                 const type = unwrapType(fieldDef.type);
                 if (type) {
                   if (isUnionType(type) || isInterfaceType(type)) {
                     console.warn(
-                      `[operation-meta] Skipping successTypename for ${operationName}:${fieldName} — ` +
+                      `[operation-meta] Skipping successTypename for ${operationName}:${schemaFieldName} — ` +
                         `return type "${type.name}" is a ${
                           isUnionType(type) ? 'union' : 'interface'
                         }, ` +
@@ -152,7 +156,7 @@ module.exports = {
                     );
                   } else if (type.name === 'OperationInfo') {
                     console.warn(
-                      `[operation-meta] Field ${operationName}:${fieldName} resolves to OperationInfo — ` +
+                      `[operation-meta] Field ${operationName}:${schemaFieldName} resolves to OperationInfo — ` +
                         `this likely indicates a schema issue or missing inline fragments.`,
                     );
                   } else if (isObjectType(type)) {
@@ -168,14 +172,14 @@ module.exports = {
           // Warn if no success typename could be resolved through any strategy.
           if (!successTypename && !schema) {
             console.warn(
-              `[operation-meta] No success typename for ${operationName}:${fieldName} — ` +
+              `[operation-meta] No success typename for ${operationName}:${schemaFieldName} — ` +
                 `schema unavailable and no inline fragments found.`,
             );
           }
 
           operations.push({
             name: operationName,
-            fieldName,
+            fieldName: responseKey,
             successTypename,
             type: node.operation,
           });
