@@ -1,11 +1,24 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from strawberry import ID, Maybe
+from strawberry.types import Info
 
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
+
+
+def permissioned_qs(info: Info, model: type[T]) -> QuerySet[T]:
+    """Return the queryset ``PermissionedQuerySet`` prepared for this resolver."""
+    qs = info.context.qs
+
+    if qs.model is not model:
+        raise ImproperlyConfigured(
+            f"PermissionedQuerySet is configured for {qs.model.__name__}, but the resolver expects {model.__name__}."
+        )
+
+    return cast(QuerySet[T], qs)
 
 
 def get_object_or_permission_error(

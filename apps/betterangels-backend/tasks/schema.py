@@ -86,7 +86,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE])],
+        extensions=[PermissionedQuerySet(model=Task, perms=[Task.perms.CHANGE], organization_field="organization_id")],
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs

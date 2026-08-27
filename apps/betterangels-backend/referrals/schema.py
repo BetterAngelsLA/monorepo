@@ -80,7 +80,9 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Referral, perms=[Referral.perms.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Referral, perms=[Referral.perms.CHANGE], organization_field="organization_id")
+        ],
     )
     def update_referral(self, info: Info, data: UpdateReferralInput) -> ReferralType:
         qs: QuerySet[Referral] = info.context.qs

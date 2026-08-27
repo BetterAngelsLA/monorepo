@@ -167,7 +167,9 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
@@ -194,7 +196,9 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
@@ -207,7 +211,9 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+        extensions=[
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id")
+        ],
     )
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
@@ -232,7 +238,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasPerm(ServiceRequestPermissions.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
@@ -259,7 +265,13 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.DELETE])],
+        extensions=[
+            PermissionedQuerySet(
+                model=ServiceRequest,
+                perms=[ServiceRequestPermissions.DELETE],
+                organization_field=["provided_notes__organization_id", "requested_notes__organization_id"],
+            )
+        ],
     )
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
@@ -376,7 +388,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def generate_note_file_uploads(
@@ -405,7 +417,7 @@ class Mutation:
         permission_classes=[IsAuthenticated],
         extensions=[
             HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE], organization_field="organization_id"),
         ],
     )
     def resolve_note_file_uploads(
