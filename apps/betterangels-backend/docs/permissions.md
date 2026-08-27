@@ -193,3 +193,91 @@ The frontend `hasPermission()` helper checks across all domains with O(1) lookup
 - `shelters/permissions.py` is a 3-line bridge that delegates to `Shelter.perms.as_text_choices()` for GraphQL schema generation — `model.perms` is the single source of truth.
 - The old `AdminShelterManager`/`AdminShelterQuerySet` and `Shelter.admin_objects` manager were removed — they've been replaced by `permissioned_queryset()` + selectors + `HasOrgPerm`, which provide the same org-scoping in a single, shared function.
 - The `adminShelters`/`adminShelter` GraphQL queries have been renamed to `operatorShelters`/`operatorShelter` and `AdminShelterType` → `OperatorShelterType` to reflect their role as operator-facing endpoints.
+
+## Org-owned vs platform-shared
+
+- **Org-owned**: teams, members, reports, shelter operations, and
+  note/task **writes** (header-driven via `HasOrgPerm`).
+- **Platform-shared by design**: client profiles, note/task **reads**
+  (orgs coordinate on shared clients and see cross-org interactions).
+
+### Where a mutation declares which one it is
+
+Every `PermissionedQuerySet` takes a **required** `organization_field`:
+
+```python
+extensions=[
+    PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE],
+                         organization_field="organization_id"),   # org-owned
+]
+```
+
+`None` opts out and means the records are deliberately shared. Because the
+argument is required, adding a mutation forces an answer, and reviewing one
+means reading the decorator rather than hunting for a filter in the body.
+
+This replaced a hand-written `.filter(organization_id=...)` in each resolver.
+Four of eleven call sites did not have it — `generateNoteFileUploads`,
+`resolveNoteFileUploads`, `deleteServiceRequest` and `updateReferral` — so
+those records could be written while the caller's active organization was a
+different one than the record's owner. Guardian grants object permissions to
+the permission group that *created* the record, and that grant says nothing
+about the header, so nothing else was confining them.
+
+### Why the org filter is load-bearing, and what it is not
+
+It is **not** compensating for guardian's global fallback in the usual case:
+in practice `CASEWORKER` does not hold `notes.change_note` globally, so
+`filter_for_user` already refuses a stranger's note.
+
+What it does confine is the **multi-org caller**. Object permissions follow
+the record's creating group, so a user who legitimately reaches a record
+through org A can act on it while their active organization header says org
+B. Without the filter, the action is accepted and attributed to the wrong
+organization.
+
+The global fallback is still a real hazard wherever a template *does* grant a
+model-level permission — it makes `filter_for_user` match every row in the
+table. Retiring it means auditing which templates grant model-level
+permissions, deciding per model whether it is shared or org-owned, and dropping
+the fallback so `filter_for_user` cannot match rows the caller holds no object
+grant on. The required `organization_field` is what makes that mechanical, since
+every call site's intended layer is now written down. Until it lands, that
+filter is the only thing standing between a model-level grant and every row in
+its table.
+
+### Outstanding: mutations that still resolve the org by first match
+
+`resolve_permission_group(user, template=...)` called without an organization id
+picks whichever `PermissionGroup` the database returns first, so for a multi-org
+caller it can pick the wrong organization. Still doing that:
+
+| Call site | Consequence |
+| --- | --- |
+| `notes/schema.py` — four sites, including `create_note` and `import_note` | a note, or the object permissions granted for it, can be attributed to the wrong organization |
+| `tasks/schema.py` `create_task` | same, for tasks |
+| `referrals/schema.py` `create_referral` | a referral can be attributed to the wrong organization |
+| `clients/schema.py` `create_client_document`, and `clients/services/client_document.py` | document *ownership* on upload is first-match, so "shared read, org-owned write" is not guaranteed for client documents |
+| `hmis/schema.py` `create_hmis_note_service_request` | same |
+
+The org filter this document describes confines which records a write may
+*reach*; it does not decide which organization the write is *attributed* to.
+That is what these nine call sites still get wrong, and it is a separate change:
+make `organization_id` required on `resolve_permission_group` so the guessing
+branch cannot be reached, and pass `get_current_organization(info)` at each site.
+
+### Accepted risk: cross-org delete of a client profile
+
+`delete_client_profile` filters on `ClientProfile.perms.DELETE`, which
+`CASEWORKER` holds globally, and `Note.client_profile` is `on_delete=CASCADE`.
+So a caseworker in any organization can delete a shared client profile, and
+doing so **also deletes every other organization's notes** for that client —
+note rows are org-owned, so this destroys data outside the deleting
+organization's own layer. (`Task.client_profile` is `SET_NULL`, so tasks survive
+with no client, which is its own inconsistency.)
+
+Left as-is deliberately: clients are shared and there is no ownership concept,
+and changing delete rights now would change app behaviour. Recorded here so it
+is a known risk rather than a surprise. The cheapest mitigations that preserve
+today's rights are soft-deleting the profile, or `PROTECT`ing the cascade when
+another organization holds notes.

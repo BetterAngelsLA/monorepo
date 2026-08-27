@@ -6,13 +6,14 @@ from typing import Any, Sequence, Tuple, Type, TypeVar
 
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, Group
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import DjangoNoPermission
 
 from common.errors import UnauthenticatedGQLError
 
@@ -233,6 +234,26 @@ def get_current_organization(info: Info) -> str:
 
     if org_id is None:
         raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
+
+    return str(org_id)
+
+
+def require_organization_id(info: Info) -> str:
+    """Return the active organization ID, for use *inside a permission extension*.
+
+    Raises ``DjangoNoPermission``, which strawberry-django only catches around
+    ``resolve_for_user``.  Resolver *bodies* want ``get_current_organization``.
+    """
+    org_id = info.context.request.organization_id
+    if org_id is None:
+        raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
+
+    # A client-supplied header need not be a usable primary key; unvalidated it
+    # raises ValueError from inside the query rather than reading as a denial.
+    try:
+        Organization._meta.pk.to_python(org_id)
+    except ValidationError:
+        raise DjangoNoPermission("Organization ID (X-Organization-ID header) is not a valid organization ID.")
 
     return str(org_id)
 
