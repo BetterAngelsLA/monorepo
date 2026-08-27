@@ -1762,6 +1762,8 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             {},
             {"scheduleType": None},
             {"scheduleType": []},
+            {"scheduleType": None, "includeUnknown": True},
+            {"scheduleType": [], "includeUnknown": True},
         ],
     )
     def test_shelter_open_now_empty_or_null_is_noop(self, open_now: dict[str, Any] | None) -> None:
@@ -1814,6 +1816,209 @@ class ShelterFilterQueryTestCase(GraphQLBaseTestCase):
             result_ids,
             "A shelter with no currently-open schedule must still be returned when the openNow filter is a no-op.",
         )
+
+    def test_shelter_open_now_include_unknown_single_type(self) -> None:
+        """includeUnknown=true returns shelters open now PLUS shelters with no
+        schedule for the requested type (unknown); excludes shelters that have a
+        schedule for the type but are currently closed."""
+        open_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+        unknown_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)  # no schedules at all
+        closed_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)  # OPERATING schedule not covering now
+
+        # Monday 1:00 PM PST
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        Schedule.objects.create(
+            shelter=open_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+        Schedule.objects.create(
+            shelter=closed_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(10, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response_strict = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": {"scheduleType": ["OPERATING"]}}},
+            )
+            response_unknown = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": {"scheduleType": ["OPERATING"], "includeUnknown": True}}},
+            )
+
+        strict_ids = {r["id"] for r in response_strict["data"]["shelters"]["results"]}
+        unknown_ids = {r["id"] for r in response_unknown["data"]["shelters"]["results"]}
+
+        self.assertIn(str(open_shelter.pk), strict_ids)
+        self.assertNotIn(str(unknown_shelter.pk), strict_ids)
+        self.assertNotIn(str(closed_shelter.pk), strict_ids)
+
+        self.assertIn(str(open_shelter.pk), unknown_ids)
+        self.assertIn(
+            str(unknown_shelter.pk),
+            unknown_ids,
+            "Shelter with no OPERATING schedule is unknown and must be included.",
+        )
+        self.assertNotIn(
+            str(closed_shelter.pk),
+            unknown_ids,
+            "Shelter with a non-covering OPERATING schedule is known closed, not unknown.",
+        )
+
+    def test_shelter_open_now_include_unknown_exception_only_is_unknown(self) -> None:
+        """A shelter with only exception Schedule rows (no non-exception base
+        schedule) has no defined schedule for the type and counts as unknown."""
+        exception_only_shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Monday 1:00 PM PST
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        Schedule.objects.create(
+            shelter=exception_only_shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=None,
+            end_time=None,
+            is_exception=True,
+            start_date=None,
+            end_date=None,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={"filters": {"openNow": {"scheduleType": ["OPERATING"], "includeUnknown": True}}},
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(
+            str(exception_only_shelter.pk),
+            result_ids,
+            "Exception-only shelter has no defined schedule → unknown → included with includeUnknown.",
+        )
+
+    def test_shelter_open_now_include_unknown_multiple_types(self) -> None:
+        """includeUnknown=true with multiple types: shelter included if open now
+        for ANY requested type OR unknown for ANY requested type (per-type union)."""
+        # Monday 1:00 PM PST
+        fixed_pst = datetime.datetime(
+            2026,
+            1,
+            5,
+            13,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-8)),
+        )
+
+        # Open for OPERATING, but no INTAKE schedule (unknown for INTAKE).
+        operating_open_intake_unknown = shelter_recipe.make(status=StatusChoices.APPROVED)
+        Schedule.objects.create(
+            shelter=operating_open_intake_unknown,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(18, 0),
+            is_exception=False,
+        )
+
+        # No schedules at all → unknown for both requested types.
+        fully_unknown = shelter_recipe.make(status=StatusChoices.APPROVED)
+
+        # Known closed for OPERATING (8-10 AM, not covering now) but open for INTAKE.
+        closed_for_operating = shelter_recipe.make(status=StatusChoices.APPROVED)
+        Schedule.objects.create(
+            shelter=closed_for_operating,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(10, 0),
+            is_exception=False,
+        )
+        Schedule.objects.create(
+            shelter=closed_for_operating,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(12, 0),
+            end_time=datetime.time(14, 0),
+            is_exception=False,
+        )
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results { id }
+                }
+            }
+        """
+
+        with patch(
+            "shelters.types.filters.get_current_shelter_schedule_datetime",
+            return_value=fixed_pst,
+        ):
+            response = self.execute_graphql(
+                query,
+                variables={
+                    "filters": {
+                        "openNow": {
+                            "scheduleType": ["OPERATING", "INTAKE"],
+                            "includeUnknown": True,
+                        }
+                    }
+                },
+            )
+
+        result_ids = {r["id"] for r in response["data"]["shelters"]["results"]}
+        self.assertIn(str(operating_open_intake_unknown.pk), result_ids)  # open for OPERATING
+        self.assertIn(str(fully_unknown.pk), result_ids)  # unknown for both
+        self.assertIn(str(closed_for_operating.pk), result_ids)  # open for INTAKE
 
     def test_shelter_open_now_full_day_open_schedule(self) -> None:
         """A full-day schedule (start_time IS NULL, non-exception) is open all day."""
