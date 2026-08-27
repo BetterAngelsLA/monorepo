@@ -8,6 +8,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
+from shelters.groups import GLOBAL_SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
@@ -198,3 +199,33 @@ class TemplatePermissionSourceTestCase(TestCase):
         expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
         self.assertSetEqual(set(template.permissions.values_list("content_type__app_label", "codename")), expected)
         self.assertNotIn(stray, template.permissions.all())
+
+    def test_bypasses_org_scoping_is_synced_from_config(self) -> None:
+        """Global Shelter Operator opts in; an ordinary managed template does not."""
+        global_template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
+        caseworker_template = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
+        # Simulate drift, e.g. from a stale row predating this field.
+        PermissionGroupTemplate.objects.filter(pk=global_template.pk).update(bypasses_org_scoping=False)
+
+        sync_group_permissions()
+
+        global_template.refresh_from_db()
+        caseworker_template.refresh_from_db()
+        self.assertTrue(global_template.bypasses_org_scoping)
+        self.assertFalse(caseworker_template.bypasses_org_scoping)
+
+    def test_bypasses_org_scoping_sync_is_idempotent(self) -> None:
+        sync_group_permissions()
+        sync_group_permissions()
+
+        template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
+        self.assertTrue(template.bypasses_org_scoping)
+
+    def test_a_hand_defined_templates_bypasses_org_scoping_is_left_alone(self) -> None:
+        """The code knows nothing about a hand-defined role, so this flag is too."""
+        template = PermissionGroupTemplate.objects.create(name="Report Viewer", bypasses_org_scoping=True)
+
+        sync_group_permissions()
+
+        template.refresh_from_db()
+        self.assertTrue(template.bypasses_org_scoping)
