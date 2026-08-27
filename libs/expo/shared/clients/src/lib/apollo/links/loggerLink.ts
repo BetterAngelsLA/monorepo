@@ -7,7 +7,7 @@ export const loggerLink = new ApolloLink(
       operation.operationName || '(anonymous)',
       operation.variables && Object.keys(operation.variables).length > 0
         ? operation.variables
-        : ''
+        : '',
     );
 
     // If there’s no next link, just return an empty observable
@@ -23,7 +23,7 @@ export const loggerLink = new ApolloLink(
           console.log(
             '[GraphQL resp]',
             operation.operationName || '(anonymous)',
-            result
+            result,
           );
           observer.next(result);
         },
@@ -31,7 +31,7 @@ export const loggerLink = new ApolloLink(
           console.error(
             '[GraphQL error]',
             operation.operationName || '(anonymous)',
-            error
+            error,
           );
           observer.error(error);
         },
@@ -45,5 +45,5 @@ export const loggerLink = new ApolloLink(
         }
       };
     });
-  }
+  },
 );

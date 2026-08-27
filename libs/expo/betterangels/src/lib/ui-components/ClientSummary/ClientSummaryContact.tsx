@@ -9,7 +9,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import { toPhoneParts } from '@monorepo/shared/scalars';
 import { Linking, View } from 'react-native';
 import { RelationshipTypeEnum } from '../../apollo';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
@@ -19,30 +19,28 @@ interface IClientSummaryContactProps {
 }
 
 export default function ClientSummaryContact(
-  props: IClientSummaryContactProps
+  props: IClientSummaryContactProps,
 ) {
   const { client } = props;
 
   const caseManagers =
     client?.contacts?.filter(
       (contact) =>
-        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+        contact.relationshipToClient ===
+        RelationshipTypeEnum.CurrentCaseManager,
     ) || [];
 
   const primaryCCM = caseManagers[0];
 
-  const formattedNumber =
-    primaryCCM?.phoneNumber && formatPhoneNumber(primaryCCM?.phoneNumber);
-
-  const [phoneNumber, extension] = formattedNumber || [];
+  const {
+    formatted,
+    extension,
+    dial: phoneNumberUrl,
+  } = toPhoneParts(primaryCCM?.phoneNumber);
   const mailingAddress = primaryCCM?.mailingAddress;
   const email = primaryCCM?.email;
 
-  const phoneNumberUrl = extension
-    ? `${phoneNumber},${extension}`
-    : phoneNumber;
-
-  const showPhone = !!phoneNumber;
+  const showPhone = !!formatted;
   const showEmail = !showPhone && !!email;
   const showAddress = !showPhone && !showEmail && !!mailingAddress;
 
@@ -98,11 +96,11 @@ export default function ClientSummaryContact(
             {showPhone && (
               <>
                 <TextBold textDecorationLine="underline" size="sm">
-                  {phoneNumber}
+                  {formatted}
                 </TextBold>
                 {extension && (
                   <TextBold size="sm">
-                    {' ext.'}
+                    {' ext. '}
                     {extension}
                   </TextBold>
                 )}

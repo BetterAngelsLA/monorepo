@@ -22,12 +22,6 @@ export { default as ControlledInput } from './ControlledInput';
 export { default as Copy } from './Copy';
 export { default as CTAButton } from './CTAButton';
 export { DataTable, TDataTable, TDataTableItem } from './DataTable';
-export {
-  DateLocal,
-  formatDateLocal,
-  formatDateStatic,
-  parseToDate,
-} from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as DirectionsPopup } from './DirectionsPopup';
@@ -38,6 +32,8 @@ export { default as EmailBtn } from './EmailBtn';
 export { default as ExpandableContainer } from './ExpandableContainer';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
+export { UploadItemRow } from './UploadItemRow/UploadItemRow';
+export type { TUploadItemRowStatus } from './UploadItemRow/UploadItemRow';
 export * from './Filters';
 export { default as Form } from './Form';
 export { default as FormCard } from './FormCard';

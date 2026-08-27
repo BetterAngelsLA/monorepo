@@ -1,6 +1,5 @@
 import { ActiveOrgProvider } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
-import { localStorageAdapter } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
@@ -21,6 +20,7 @@ import {
 } from './pages';
 import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
+import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
   ShelterBasicInfoPage,
   ShelterDetailsPage,
@@ -44,7 +44,6 @@ export function OperatorApp() {
 
   return (
     <ActiveOrgProvider
-      storage={localStorageAdapter}
       organizations={(user?.organizations ?? []).map((org) => ({
         id: org.id,
         name: org.name,
@@ -101,6 +100,10 @@ export function OperatorApp() {
                 element={<ShelterMediaPage />}
               />
             </Route>
+            <Route
+              path={routePath(paths.shelterReport)}
+              element={<ShelterReportPage />}
+            />
             <Route path={routePath(mgmtRouteConfig.root)}>
               <Route
                 index

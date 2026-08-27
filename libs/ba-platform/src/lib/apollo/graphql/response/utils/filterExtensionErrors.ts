@@ -11,7 +11,7 @@ type FilterExtensionErrorsParams = {
  * value matches one of the provided filters.
  */
 export function filterExtensionErrors(
-  params: FilterExtensionErrorsParams
+  params: FilterExtensionErrorsParams,
 ): ExtensionError[] {
   const { errors, key, filters } = params;
 

@@ -9,7 +9,7 @@ import { TMapBounds } from '../types.maps';
  */
 export function sameMapBounds(
   a: TMapBounds | undefined,
-  b: TMapBounds | undefined
+  b: TMapBounds | undefined,
 ): boolean {
   return (
     !!a &&

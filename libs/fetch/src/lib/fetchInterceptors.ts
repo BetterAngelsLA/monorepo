@@ -5,12 +5,11 @@
 export type FetchInterceptor = (
   input: RequestInfo | URL,
   init: RequestInit,
-  next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
+  next: (input: RequestInfo | URL, init: RequestInit) => Promise<Response>,
 ) => Promise<Response>;
 
 export type TokenReader = (name: string) => Promise<string | null>;
 export type TokenRefresher = (url: string) => Promise<void>;
-export type StorageReader = { getItem: (key: string) => string | null | Promise<string | null> };
 
 /**
  * Callback invoked after a CSRF token refresh so that the platform can
@@ -45,7 +44,7 @@ export const composeFetchInterceptors = (
       (input: RequestInfo | URL, init: RequestInit) => Promise<Response>
     >(
       (next, interceptor) => (input, init) => interceptor(input, init, next),
-      (input: RequestInfo | URL, init: RequestInit) => fetch(input, init)
+      (input: RequestInfo | URL, init: RequestInit) => fetch(input, init),
     );
 
     return chain(input, init);
@@ -93,13 +92,14 @@ const resolveRequestUrl = (input: RequestInfo | URL): string => {
  * Platform-agnostic — pass platform-specific ``TokenReader`` /
  * ``TokenRefresher`` implementations.
  */
-export const createCsrfInterceptor = (
-  readToken: TokenReader,
-  refreshToken: TokenRefresher,
-  cookieName = 'csrftoken',
-  headerName = 'x-csrftoken',
-  loginPath = '/admin/login/',
-): FetchInterceptor =>
+export const createCsrfInterceptor =
+  (
+    readToken: TokenReader,
+    refreshToken: TokenRefresher,
+    cookieName = 'csrftoken',
+    headerName = 'x-csrftoken',
+    loginPath = '/admin/login/',
+  ): FetchInterceptor =>
   async (_input, init, next) => {
     let token = await readToken(cookieName);
     if (!token) {
@@ -123,14 +123,15 @@ export const createCsrfInterceptor = (
 // ---------------------------------------------------------------------------
 
 /**
- * Inject the ``X-Organization-ID`` header from a storage backend.
+ * Inject the ``X-Organization-ID`` header, read per request.
+ *
+ * *readOrgId* must not do I/O — see ``getActiveOrgId`` in
+ * ``@monorepo/ba-platform``.
  */
-export const createOrgInterceptor = (
-  storage: StorageReader,
-  storageKey = 'betterangels_active_org_id',
-): FetchInterceptor =>
+export const createOrgInterceptor =
+  (readOrgId: () => string | null): FetchInterceptor =>
   async (_input, init, next) => {
-    const orgId = await storage.getItem(storageKey);
+    const orgId = readOrgId();
     if (!orgId) return next(_input, init);
     const headers = new Headers(init.headers);
     headers.set('X-Organization-ID', orgId);
@@ -161,16 +162,21 @@ export const includeCredentialsInterceptor: FetchInterceptor = async (
  * @param persistCookies  Optional — on React Native pass a function that
  *                        calls ``CookieManager.setFromResponse``.
  */
-export const createCsrfTokenRefresher = (
-  persistCookies?: CookiePersister,
-): TokenRefresher =>
+export const createCsrfTokenRefresher =
+  (persistCookies?: CookiePersister): TokenRefresher =>
   async (url: string) => {
-    const response = await fetch(`${url}?t=${Date.now()}`, { credentials: 'include' });
+    const response = await fetch(`${url}?t=${Date.now()}`, {
+      credentials: 'include',
+    });
 
     if (persistCookies) {
       const setCookie = response.headers.get('set-cookie');
       if (setCookie) {
-        try { await persistCookies(setCookie); } catch { /* non-critical */ }
+        try {
+          await persistCookies(setCookie);
+        } catch {
+          /* non-critical */
+        }
       }
     }
   };

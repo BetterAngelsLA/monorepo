@@ -45,7 +45,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
-    [renderItem]
+    [renderItem],
   );
 
   const onEndReached = useCallback(() => {
@@ -98,13 +98,13 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
 
   const mergedContentContainerStyle = useMemo(
     () => StyleSheet.flatten([styles.contentContainer, contentContainerStyle]),
-    [contentContainerStyle]
+    [contentContainerStyle],
   );
 
   // Stable extraData to re-render FlashList as needed
   const stableExtraData = useMemo(
     () => [data.length, itemGap, extraData],
-    [data.length, itemGap, extraData]
+    [data.length, itemGap, extraData],
   );
 
   return (

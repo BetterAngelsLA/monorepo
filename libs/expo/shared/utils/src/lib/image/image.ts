@@ -7,7 +7,7 @@ import { Image } from 'react-native';
  * @returns A promise that resolves to an object containing the width and height of the image.
  */
 async function getImageDimensions(
-  uri: string
+  uri: string,
 ): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     Image.getSize(uri, (width, height) => resolve({ width, height }), reject);

@@ -132,7 +132,7 @@ export function useShelterPhotoUploads(props?: TProps) {
             },
             file,
           });
-        })
+        }),
       );
     } catch (error) {
       throw new Error(userFacingError(error));
@@ -193,7 +193,7 @@ export function useShelterPhotoUploads(props?: TProps) {
                       }
                     }
                   `,
-                })
+                }),
               );
               return [...existing, ...newRefs];
             },

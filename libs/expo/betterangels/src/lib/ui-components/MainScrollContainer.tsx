@@ -62,7 +62,7 @@ const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
         </ViewContainer>
       </KeyboardAvoidingView>
     );
-  }
+  },
 );
 
 export default MainScrollContainer;

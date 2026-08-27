@@ -4,9 +4,9 @@ export function buildPositionByIdMap<TItem>(
   items: Array<TItem | undefined>,
   readItemId: (
     item: TItem,
-    readField: FieldFunctionOptions['readField']
+    readField: FieldFunctionOptions['readField'],
   ) => string | number | null | undefined,
-  readField: FieldFunctionOptions['readField']
+  readField: FieldFunctionOptions['readField'],
 ): Map<string | number, number> {
   const positionById = new Map<string | number, number>();
 

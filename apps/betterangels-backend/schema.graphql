@@ -642,7 +642,6 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 
 input CreateNoteInput {
   purpose: String = null
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String = ""
   privateDetails: String = ""
@@ -675,7 +674,6 @@ input CreateNoteTaskInput {
   summary: String!
   description: String = null
   status: Int = null
-  team: SelahTeamEnum = null
   teamId: ID
 }
 
@@ -799,7 +797,6 @@ input CreateTaskInput {
   note: ID
   hmisNote: ID
   summary: String!
-  team: SelahTeamEnum
   teamId: ID
   status: TaskStatusEnum
 }
@@ -1386,7 +1383,6 @@ union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
 input ImportNoteDataInput {
   purpose: String
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String
@@ -1676,7 +1672,6 @@ input NoteFilter {
   DISTINCT: Boolean
   authors: [ID!]
   organizations: [ID!]
-  teams: [SelahTeamEnum!]
   teamIds: [ID!]
   search: String
 }
@@ -1711,8 +1706,8 @@ type NoteType {
   purpose: String
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
-  currentTeam: TeamType
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1735,6 +1730,11 @@ type OffsetPaginationInfo {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int
+}
+
+input OpenNowInput {
+  scheduleType: [ScheduleTypeChoices!] = null
+  includeUnknown: Boolean = false
 }
 
 type OperationInfo {
@@ -2089,7 +2089,7 @@ type Query {
   reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  teams(pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
+  teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelter(pk: ID!): ShelterType!
@@ -2464,24 +2464,6 @@ enum ScheduleTypeChoices {
   STAFF_AVAILABILITY
 }
 
-enum SelahTeamEnum {
-  BOWTIE_RIVERSIDE_OUTREACH
-  ECHO_PARK_ON_SITE
-  ECHO_PARK_OUTREACH
-  HOLLYWOOD_ON_SITE
-  HOLLYWOOD_OUTREACH
-  LA_RIVER_OUTREACH
-  LOS_FELIZ_OUTREACH
-  NORTHEAST_HOLLYWOOD_OUTREACH
-  SELAH_STAFF
-  SILVER_LAKE_OUTREACH
-  SLCC_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_ON_SITE
-  SUNDAY_SOCIAL_ATWATER_OUTREACH
-  WDI_ON_SITE
-  WDI_OUTREACH
-}
-
 type ServiceCategoryType {
   id: ID!
   name: String!
@@ -2566,7 +2548,8 @@ input ShelterFilter {
   name: String
   organizations: [ID!]
   properties: ShelterPropertyInput
-  openNowFor: [ScheduleTypeChoices!]
+  openNowFor: [ScheduleTypeChoices!] @deprecated(reason: "Use openNow instead")
+  openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
   hasAvailableBeds: Boolean
@@ -2847,7 +2830,6 @@ input TaskFilter {
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
-  teams: [SelahTeamEnum!]
   teamIds: [ID!]
   search: String
   clientProfileLookup: IDFilterLookup
@@ -2879,9 +2861,9 @@ type TaskType {
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
-  currentTeam: TeamType
+  team: TeamType
+  currentTeam: TeamType @deprecated(reason: "Use team instead")
   updatedAt: DateTime!
-  team: SelahTeamEnum @deprecated(reason: "Use currentTeam instead")
 }
 
 type TaskTypeOffsetPaginated {
@@ -2894,11 +2876,20 @@ type TaskTypeOffsetPaginated {
   results: [TaskType!]!
 }
 
+input TeamFilter {
+  isActive: Boolean
+  AND: TeamFilter
+  OR: TeamFilter
+  NOT: TeamFilter
+  DISTINCT: Boolean
+}
+
 type TeamType {
   id: ID!
-  slug: String!
   name: String!
+  isActive: Boolean
   createdAt: DateTime!
+  slug: String @deprecated(reason: "Always null. Team.name is the only identifier.")
 }
 
 type TeamTypeOffsetPaginated {
@@ -3063,7 +3054,6 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
-  team: SelahTeamEnum = null
   teamId: ID
   publicDetails: String
   privateDetails: String
@@ -3189,7 +3179,6 @@ input UpdateTaskInput {
   id: ID!
   description: String
   summary: String
-  team: SelahTeamEnum
   teamId: ID
   status: TaskStatusEnum
 }
@@ -3199,6 +3188,7 @@ union UpdateTaskPayload = TaskType | OperationInfo
 input UpdateTeamInput {
   id: ID!
   name: String
+  isActive: Boolean
 }
 
 union UpdateTeamPayload = TeamType | OperationInfo

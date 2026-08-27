@@ -9,7 +9,7 @@ import { toPathArray } from './toPathArray';
  */
 export function readAtPath<T = unknown>(
   value: unknown,
-  path?: string | ReadonlyArray<string>
+  path?: string | ReadonlyArray<string>,
 ): T | undefined {
   if (!value) {
     return undefined;

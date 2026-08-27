@@ -11,7 +11,7 @@ interface IProvidedServicesHmisProps {
 }
 
 export default function ProvidedServicesHmis(
-  props: IProvidedServicesHmisProps
+  props: IProvidedServicesHmisProps,
 ) {
   const { services } = props;
 

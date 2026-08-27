@@ -17,12 +17,12 @@ interface IServiceOtherCheckboxProps {
 const isTmp = (id?: string) => !!id && id.startsWith('tmp-other-');
 
 export default function ServiceOtherCheckbox(
-  props: IServiceOtherCheckboxProps
+  props: IServiceOtherCheckboxProps,
 ) {
   const { service, idx, serviceRequests, setServiceRequests } = props;
 
   const serviceEntry = serviceRequests.find(
-    (s) => s.serviceRequestId === service.serviceRequestId
+    (s) => s.serviceRequestId === service.serviceRequestId,
   );
 
   const persisted =
@@ -41,8 +41,8 @@ export default function ServiceOtherCheckbox(
           serviceRequests.map((s) =>
             s.serviceRequestId === service.serviceRequestId
               ? { ...s, markedForDeletion: true }
-              : s
-          )
+              : s,
+          ),
         );
       } else {
         setServiceRequests(serviceRequests.filter((_, i) => i !== idx));
@@ -53,8 +53,8 @@ export default function ServiceOtherCheckbox(
           serviceRequests.map((s) =>
             s.serviceRequestId === service.serviceRequestId
               ? { ...s, markedForDeletion: false }
-              : s
-          )
+              : s,
+          ),
         );
       }
     }

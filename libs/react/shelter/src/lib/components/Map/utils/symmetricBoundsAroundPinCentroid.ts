@@ -10,7 +10,7 @@ import { TLatLng } from '../types.maps';
  * while keeping every pin inside the bounds, with a minimum padding radius.
  */
 export function symmetricBoundsAroundPinCentroid(
-  pinLocations: TLatLng[]
+  pinLocations: TLatLng[],
 ): google.maps.LatLngBounds {
   const n = pinLocations.length;
   const centroidLat = pinLocations.reduce((sum, p) => sum + p.latitude, 0) / n;
@@ -23,7 +23,7 @@ export function symmetricBoundsAroundPinCentroid(
     maxHalfLatDeg = Math.max(maxHalfLatDeg, Math.abs(p.latitude - centroidLat));
     maxHalfLngDeg = Math.max(
       maxHalfLngDeg,
-      Math.abs(p.longitude - centroidLng)
+      Math.abs(p.longitude - centroidLng),
     );
   }
 

@@ -7,5 +7,6 @@ export const initialDateRangeFilter: DateRangeFilterState = {
   range: resolvePreset(DEFAULT_PRESET),
 };
 
-export const dateRangeFilterAtom =
-  atomWithReset<DateRangeFilterState>(initialDateRangeFilter);
+export const dateRangeFilterAtom = atomWithReset<DateRangeFilterState>(
+  initialDateRangeFilter,
+);

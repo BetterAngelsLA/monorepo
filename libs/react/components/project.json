@@ -3,10 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/react/components/src",
   "projectType": "library",
-  "tags": [
-    "type:ui",
-    "scope:shared"
-  ],
+  "tags": ["type:ui", "scope:shared"],
   "targets": {
     "test": {
       "options": {

@@ -1,5 +1,7 @@
 from typing import Any, TypeVar
 
+from strawberry import ID, Maybe
+
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Model, QuerySet
 
@@ -23,3 +25,15 @@ def get_object_or_permission_error(
         return qs.get(pk=pk)
     except ObjectDoesNotExist:
         raise PermissionDenied(error_message)
+
+
+def maybe_int_value(maybe: Maybe[ID | None]) -> int | None:
+    """Narrow a ``Maybe[ID | None]`` to the FK's int, collapsing absent and null.
+
+    Callers assigning the result into a dict of fields to update need a presence
+    check on the input field first, or an absent field becomes an explicit null.
+    """
+    if maybe is None or maybe.value is None:
+        return None
+
+    return int(maybe.value)

@@ -11,7 +11,7 @@ import { extractPagination } from './extractPagination';
  */
 export function resolveOffsetPagination(
   variables: unknown,
-  config: OffsetPaginationVariables = DEFAULT_OFFSET_PAGINATION_VARS
+  config: OffsetPaginationVariables = DEFAULT_OFFSET_PAGINATION_VARS,
 ): MergePaginationArgs {
   const pagination = extractPagination(variables, config);
 

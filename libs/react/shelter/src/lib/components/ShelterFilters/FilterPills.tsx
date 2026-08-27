@@ -61,12 +61,11 @@ export function FilterPills(props: IProps) {
             label,
             clear: (prev) => {
               const nextTypes = (prev.openNowFor ?? []).filter(
-                (t) => t !== scheduleType
+                (t) => t !== scheduleType,
               );
               return {
                 ...prev,
-                openNowFor:
-                  nextTypes.length > 0 ? nextTypes : undefined,
+                openNowFor: nextTypes.length > 0 ? nextTypes : undefined,
               };
             },
           });
@@ -99,7 +98,7 @@ export function FilterPills(props: IProps) {
     (value as string[] | undefined)?.forEach((val) => {
       const label = getFilterLabel(
         key as keyof TShelterPropertyFilters,
-        val as never
+        val as never,
       );
 
       if (label) {

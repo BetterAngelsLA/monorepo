@@ -5,7 +5,8 @@ function setCookie(name: string, value: string) {
 }
 function clearCookies() {
   document.cookie.split(';').forEach((c) => {
-    const n = c.indexOf('=') > -1 ? c.substring(0, c.indexOf('=')).trim() : c.trim();
+    const n =
+      c.indexOf('=') > -1 ? c.substring(0, c.indexOf('=')).trim() : c.trim();
     document.cookie = `${n}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   });
 }

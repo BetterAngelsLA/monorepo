@@ -125,7 +125,7 @@ describe('HmisClient', () => {
     await expect(clientHmis.get('/current-user')).rejects.toThrow(
       new ErrorHmis('Validation errors: foo: invalid, bar: missing', 422, {
         messages: { foo: 'invalid', bar: 'missing' },
-      })
+      }),
     );
   });
 
@@ -190,7 +190,7 @@ describe('HmisClient', () => {
 
       const [url, options] = mockFetch.mock.calls[0];
       expect(url).toBe(
-        'https://hmis.example.com/clients/68998C256/client-files'
+        'https://hmis.example.com/clients/68998C256/client-files',
       );
       expect(options.method).toBe('POST');
       const headers = options.headers as Headers;

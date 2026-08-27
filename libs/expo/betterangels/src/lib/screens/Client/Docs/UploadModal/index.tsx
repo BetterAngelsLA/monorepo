@@ -10,10 +10,9 @@ import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { useUploadSession } from '../../../../providers';
+import { useDocsUpload } from '../useDocsUpload';
 import FileUploadTab from './FileUploadTab';
 import { DocUploads, IUploadModalProps } from './types';
-import { useClientDocumentUpload } from './useClientDocumentUpload';
 
 type TUploadSelection = {
   docType: keyof DocUploads;
@@ -37,7 +36,7 @@ export default function UploadModal(props: IUploadModalProps) {
   const { client, closeModal } = props;
 
   const [selectedUpload, setSelectedUpload] = useState<TUploadSelection | null>(
-    null
+    null,
   );
   const [docs, setDocs] = useState<DocUploads>({
     BirthCertificate: [],
@@ -51,24 +50,15 @@ export default function UploadModal(props: IUploadModalProps) {
     SocialSecurityCard: [],
   });
 
-  const { uploadDocuments } = useClientDocumentUpload();
-  const {
-    begin,
-    setUploadManifest,
-    updateUpload,
-    failUpload,
-    completeUpload,
-    endUpload,
-  } = useUploadSession();
-
   const clientProfileId = client?.clientProfile.id;
+  const { startSession } = useDocsUpload(clientProfileId);
 
   // Pre-populate existing doc-ready documents so already-uploaded doc types
   // are shown as complete and cannot be overwritten.
   useEffect(() => {
     const findDoc = (namespace: ClientDocumentNamespaceEnum) => {
       const file = client?.clientProfile.docReadyDocuments?.find(
-        (item) => item.namespace === namespace
+        (item) => item.namespace === namespace,
       )?.file as ReactNativeFile | undefined;
       return file ? [file] : [];
     };
@@ -76,13 +66,13 @@ export default function UploadModal(props: IUploadModalProps) {
     setDocs((prev) => ({
       ...prev,
       DriversLicenseFront: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseFront
+        ClientDocumentNamespaceEnum.DriversLicenseFront,
       ),
       DriversLicenseBack: findDoc(
-        ClientDocumentNamespaceEnum.DriversLicenseBack
+        ClientDocumentNamespaceEnum.DriversLicenseBack,
       ),
       SocialSecurityCard: findDoc(
-        ClientDocumentNamespaceEnum.SocialSecurityCard
+        ClientDocumentNamespaceEnum.SocialSecurityCard,
       ),
       BirthCertificate: findDoc(ClientDocumentNamespaceEnum.BirthCertificate),
       PhotoId: findDoc(ClientDocumentNamespaceEnum.PhotoId),
@@ -91,58 +81,6 @@ export default function UploadModal(props: IUploadModalProps) {
 
   const openMediaPicker = (upload: TUploadSelection) => {
     setSelectedUpload(upload);
-  };
-
-  const runUpload = async (
-    session: ReturnType<typeof begin>,
-    files: ReactNativeFile[],
-    namespace: ClientDocumentNamespaceEnum,
-  ) => {
-    if (!clientProfileId) {
-      return;
-    }
-
-    try {
-      await uploadDocuments({
-        clientProfileId,
-        // Each file carries its own abort signal so the drawer can cancel a
-        // single item without affecting the rest of the batch.
-        documents: files.map((file, index) => ({
-          ...file,
-          signal: session.signals[index],
-        })),
-        namespace,
-        onManifest: (manifest) => setUploadManifest(session.id, manifest),
-        onProgress: (progress) => updateUpload(session.id, progress),
-      });
-
-      completeUpload(session.id);
-    } catch (err) {
-      console.error(`[UploadModal upload error:] ${err}`);
-
-      // Cancelled sessions were already removed by the cancel action. Other
-      // failures stay in the queue so the user can retry or dismiss.
-      if (session.isAborted()) {
-        endUpload(session.id);
-      } else {
-        failUpload(session.id);
-      }
-    }
-  };
-
-  const startSession = (
-    files: ReactNativeFile[],
-    namespace: ClientDocumentNamespaceEnum,
-    title: string,
-  ) => {
-    const session = begin(files.map((file) => file.name), {
-      label: title,
-      // Retrying a failed item re-runs only that file in a fresh session;
-      // the successful files were already persisted and stay untouched.
-      onRetryItem: (index) => startSession([files[index]], namespace, title),
-    });
-
-    void runUpload(session, files, namespace);
   };
 
   const uploadSelectedFiles = async (newFiles: ReactNativeFile[]) => {
@@ -155,10 +93,11 @@ export default function UploadModal(props: IUploadModalProps) {
 
     setSelectedUpload(null);
 
-    // Keep the form open so the user can upload several documents in one
-    // session — the progress panel shows each upload and they dismiss the
-    // form with Done when finished.
+    // The form is a picker: start the upload and close. Progress shows in
+    // the top bar (tap it for per-file detail), and completion is surfaced
+    // with a snackbar.
     startSession(selectedFiles, namespace, DOC_TYPE_TITLES[docType]);
+    closeModal();
   };
 
   const insets = useSafeAreaInsets();
@@ -198,8 +137,8 @@ export default function UploadModal(props: IUploadModalProps) {
           marginBottom: Spacings.sm,
         }}
       >
-        You can upload several documents at once — progress appears in a panel
-        at the bottom. Tap Done when finished.
+        You can upload several documents at once — progress appears in a bar at
+        the top of the screen.
       </TextRegular>
 
       <ScrollView

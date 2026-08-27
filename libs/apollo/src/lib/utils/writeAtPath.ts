@@ -19,7 +19,7 @@ import { toPathArray } from './toPathArray';
 export function writeAtPath(
   target: Record<string, unknown> | undefined,
   path: string | ReadonlyArray<string> | undefined,
-  value: unknown
+  value: unknown,
 ): boolean {
   if (!target || !path) {
     return false;

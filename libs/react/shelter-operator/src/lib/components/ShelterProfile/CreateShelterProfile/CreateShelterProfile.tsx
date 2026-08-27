@@ -94,7 +94,9 @@ export function CreateShelterProfile(props: TProps) {
         title: 'Shelter created!',
       });
 
-      navigate(shelterProfileRoute(result.id, profileRouteConfig.children.basic));
+      navigate(
+        shelterProfileRoute(result.id, profileRouteConfig.children.basic),
+      );
     } catch (err) {
       let userMessage = 'An unexpected error occurred.';
 

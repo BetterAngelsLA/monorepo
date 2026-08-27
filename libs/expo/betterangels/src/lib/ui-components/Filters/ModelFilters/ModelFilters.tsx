@@ -8,10 +8,7 @@ import { FilterOrganizations } from '../FilterOrganizations';
 import { FilterStatic } from '../FilterStatic';
 import { FilterTeams } from '../FilterTeams/FilterTeams';
 import { FilterUsers } from '../FilterUsers';
-import {
-  modelFilterConfigDefault,
-  taskStatusOptions,
-} from './constants';
+import { modelFilterConfigDefault, taskStatusOptions } from './constants';
 import {
   TModelFilterConfig,
   TModelFilterFullConfig,
@@ -65,7 +62,7 @@ export function ModelFilters(props: TProps) {
 
   function onFilterChange(
     filterType: TModelFilterType,
-    selectedOpts: TFilterOption[]
+    selectedOpts: TFilterOption[],
   ) {
     onChange({
       ...selected,

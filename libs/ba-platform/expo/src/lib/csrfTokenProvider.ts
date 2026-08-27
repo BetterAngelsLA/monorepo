@@ -7,7 +7,8 @@ import type { TokenReader } from '@monorepo/fetch';
  * On React Native there is no global ``document.cookie``; cookies are
  * scoped per-URL.  The returned reader queries cookies for ``baseUrl``.
  */
-export const createNativeTokenReader = (baseUrl: string): TokenReader =>
+export const createNativeTokenReader =
+  (baseUrl: string): TokenReader =>
   async (name: string) => {
     try {
       const cookies = await CookieManager.get(baseUrl);

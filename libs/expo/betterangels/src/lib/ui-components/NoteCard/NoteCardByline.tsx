@@ -10,11 +10,11 @@ import { NoteType } from '../../apollo';
 interface INoteCardBylineProps {
   createdBy?: NoteType['createdBy'];
   organization: NoteType['organization'];
-  currentTeam?: { name?: string | null } | null;
+  team?: { name?: string | null } | null;
 }
 
 export default function NoteCardByline(props: INoteCardBylineProps) {
-  const { createdBy, organization, currentTeam } = props;
+  const { createdBy, organization, team } = props;
 
   const authorName = createdBy
     ? `${createdBy.firstName} ${createdBy.lastName}`
@@ -47,10 +47,10 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
 
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
-          {currentTeam?.name && (
+          {team?.name && (
             <TextRegular size="xs">
               {' - '}
-              {currentTeam.name}
+              {team.name}
             </TextRegular>
           )}
         </TextRegular>

@@ -9,8 +9,15 @@ import {
   shelterSearchPendingLocationAtom,
   shelterSearchTriggerAtom,
 } from '../../atoms';
-import { DEFAULT_MAP_ZOOM, LA_COUNTY_CENTER } from '../../components/Map/constants.maps';
-import { TLatLng, TMapBounds, TMapCamera } from '../../components/Map/types.maps';
+import {
+  DEFAULT_MAP_ZOOM,
+  LA_COUNTY_CENTER,
+} from '../../components/Map/constants.maps';
+import {
+  TLatLng,
+  TMapBounds,
+  TMapCamera,
+} from '../../components/Map/types.maps';
 import {
   mapBoundsFromCenter,
   sameMapBounds,
@@ -54,7 +61,7 @@ export function useShelterMapSearch() {
   // shelter-detail round trip: the query re-runs with identical variables and
   // Apollo's cache-first policy serves it without a network request.
   const [mapBoundsFilter, setMapBoundsFilter] = useAtom(
-    shelterMapBoundsFilterAtom
+    shelterMapBoundsFilterAtom,
   );
   // Mirrors the persisted bounds so the location effect can compare without
   // subscribing (same pattern as cameraRef); seeded from the atom so it
@@ -66,7 +73,7 @@ export function useShelterMapSearch() {
       lastSearchedBoundsRef.current = bounds;
       setMapBoundsFilter(bounds);
     },
-    [setMapBoundsFilter]
+    [setMapBoundsFilter],
   );
   const [hasInitialized, setHasInitialized] = useState(false);
   const [nameSearchPinFitRequestId, setNameSearchPinFitRequestId] = useState(0);
@@ -86,7 +93,7 @@ export function useShelterMapSearch() {
       setMapBounds(bounds);
       setSearchTrigger((n) => n + 1);
     },
-    [setMapBounds, setSearchTrigger]
+    [setMapBounds, setSearchTrigger],
   );
 
   /**
@@ -104,7 +111,7 @@ export function useShelterMapSearch() {
         }
       }
     },
-    [fireSearchForBounds]
+    [fireSearchForBounds],
   );
 
   const onPlaceViewportFitted = useCallback(
@@ -114,7 +121,7 @@ export function useShelterMapSearch() {
       setPlaceViewportToFit(null);
       fireSearchForBounds(actualBounds);
     },
-    [fireSearchForBounds]
+    [fireSearchForBounds],
   );
 
   const onShelterPinsReadyForMapFit = useCallback(
@@ -126,7 +133,7 @@ export function useShelterMapSearch() {
       const bounds = symmetricBoundsAroundPinCentroid(pinLocations);
       map.fitBounds(bounds);
     },
-    [map]
+    [map],
   );
 
   function onCenterSelect(center: TLatLng) {
@@ -155,7 +162,7 @@ export function useShelterMapSearch() {
       // comes from the camera state above.
       setLocation({ latitude: lat, longitude: lng });
     },
-    [setLocation]
+    [setLocation],
   );
 
   useEffect(() => {
@@ -203,7 +210,7 @@ export function useShelterMapSearch() {
       setSavedMapViewport(null);
       applyMapCenter(
         savedViewport.center.latitude,
-        savedViewport.center.longitude
+        savedViewport.center.longitude,
       );
       return;
     }
@@ -220,7 +227,7 @@ export function useShelterMapSearch() {
         () => {
           applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);
         },
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 5000 },
       );
     } else {
       applyMapCenter(LA_COUNTY_CENTER.latitude, LA_COUNTY_CENTER.longitude);

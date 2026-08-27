@@ -83,6 +83,11 @@ def _parse_phone_number(v: str) -> DjangoPhoneNumber:
 
 
 def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
+    # national_number is None when phonenumbers could not parse the stored
+    # value, and str() would then put the literal "None" on the wire.
+    if not v.national_number:
+        return ""
+
     if v.extension:
         return f"{v.national_number}x{v.extension}"
 

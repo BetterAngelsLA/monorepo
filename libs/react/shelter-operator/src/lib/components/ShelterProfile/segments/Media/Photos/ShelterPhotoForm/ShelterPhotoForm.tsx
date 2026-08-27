@@ -8,14 +8,14 @@ import { Form } from '../../../../../form/Form';
 import { formSchema, type ShelterPhotoFormData } from './formSchema';
 
 const PHOTO_TYPE_OPTIONS = toDropdownOptions(
-  enumDisplayShelterPhotoTypeChoices
+  enumDisplayShelterPhotoTypeChoices,
 );
 
 type TProps = {
   defaultValues: ShelterPhotoFormData;
   onSubmit: (
     data: ShelterPhotoFormData,
-    setError: UseFormSetError<ShelterPhotoFormData>
+    setError: UseFormSetError<ShelterPhotoFormData>,
   ) => void;
   onCancel?: () => void;
   disabled?: boolean;

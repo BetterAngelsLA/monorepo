@@ -36,16 +36,20 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
       {children}
     </Pressable>
   ),
-  TextMedium: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextMedium: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
-  TextRegular: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextRegular: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
 }));
 
 vi.mock('./Documents', () => ({
   __esModule: true,
-  default: ({ title }: { title: string }) => (
+  default: (props: { title: string }) => (
     <View>
-      <Text>{title}</Text>
+      <Text>{props.title}</Text>
     </View>
   ),
 }));
@@ -90,7 +94,9 @@ describe('Client Docs', () => {
   });
 
   it('shows document sections when documents exist', () => {
-    const { getByText, queryByText } = render(<Docs client={populatedClient} />);
+    const { getByText, queryByText } = render(
+      <Docs client={populatedClient} />,
+    );
 
     expect(getByText('Doc Ready')).toBeTruthy();
     expect(getByText('Forms')).toBeTruthy();

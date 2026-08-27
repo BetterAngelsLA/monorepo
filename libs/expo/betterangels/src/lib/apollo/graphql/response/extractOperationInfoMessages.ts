@@ -1,11 +1,14 @@
 import { ApolloLink } from '@apollo/client';
-import { OperationMessage, OperationMessageKind } from '@monorepo/ba-platform/types';
+import {
+  OperationMessage,
+  OperationMessageKind,
+} from '@monorepo/ba-platform/types';
 import { extractOperationInfo } from './extractOperationInfo';
 
 export function extractOperationInfoMessages(
   response: ApolloLink.Result,
   queryKey: string,
-  types?: OperationMessageKind[]
+  types?: OperationMessageKind[],
 ): OperationMessage[] | null {
   const operationInfo = extractOperationInfo(response, queryKey);
 

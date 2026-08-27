@@ -23,14 +23,14 @@ export function useToast() {
   const closeToast = useCallback(
     (id: string) => {
       setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, visible: false } : t))
+        prev.map((t) => (t.id === id ? { ...t, visible: false } : t)),
       );
 
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, CLOSE_ANIMATION_MS);
     },
-    [setToasts]
+    [setToasts],
   );
 
   const showToast = useCallback(
@@ -38,7 +38,7 @@ export function useToast() {
       const id = `toast-${++toastCounter}`;
       const duration = params.persistent
         ? 0
-        : params.duration ?? AUTO_DISMISS_MS[params.status];
+        : (params.duration ?? AUTO_DISMISS_MS[params.status]);
 
       setToasts((prev) => [
         ...prev,
@@ -58,7 +58,7 @@ export function useToast() {
 
       return id;
     },
-    [setToasts, closeToast]
+    [setToasts, closeToast],
   );
 
   return { showToast, closeToast };

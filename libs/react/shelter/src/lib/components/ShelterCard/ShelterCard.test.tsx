@@ -32,15 +32,16 @@ vi.mock('@vis.gl/react-google-maps', () => ({
 // mapViewportFromMap helper so the viewport conversion is exercised.
 vi.mock('../Map', async () => {
   const util = await vi.importActual<typeof import('../Map/utils/mapViewport')>(
-    '../Map/utils/mapViewport'
+    '../Map/utils/mapViewport',
   );
   return { mapViewportFromMap: util.mapViewportFromMap };
 });
 
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>(
-    'react-router-dom'
-  );
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
   return { ...actual, useNavigate: () => navigateMock };
 });
 

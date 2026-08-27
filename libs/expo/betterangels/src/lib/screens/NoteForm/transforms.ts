@@ -19,7 +19,7 @@ type DirtyFields = Partial<Record<keyof TNoteFormInputs, boolean | object>>;
 export function buildNotePayload(
   form: TNoteFormInputs,
   isSubmitted?: boolean,
-  dirtyFields?: DirtyFields
+  dirtyFields?: DirtyFields,
 ) {
   const include = (field: keyof TNoteFormInputs) =>
     !dirtyFields || !!dirtyFields[field];
@@ -35,12 +35,12 @@ export function buildNotePayload(
   if (include('location')) payload.location = form.location || undefined;
   if (include('providedServices')) {
     payload.providedServices = form.providedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('requestedServices')) {
     payload.requestedServices = form.requestedServices.map(
-      ({ label: _label, ...rest }) => rest
+      ({ label: _label, ...rest }) => rest,
     );
   }
   if (include('tasks')) {
@@ -61,7 +61,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
   return {
     purpose: note.purpose,
     interactedAt: note.interactedAt,
-    teamId: note.currentTeam?.id as string | undefined,
+    teamId: note.team?.id as string | undefined,
     publicNote: note.publicDetails || '',
     location: note.location?.point
       ? {
@@ -93,7 +93,7 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     requestedServices: (note.requestedServices ?? []).map(
       (service: {
@@ -108,14 +108,14 @@ export function formDataFromNote(note: ViewNoteQuery['note']): TNoteFormInputs {
         serviceOther: service.service?.category
           ? undefined
           : service.service?.label,
-      })
+      }),
     ),
     tasks: (note.tasks ?? []).map((task) => ({
       id: task.id,
       summary: task.summary ?? null,
       description: task.description ?? null,
       status: task.status ?? null,
-      teamId: task.currentTeam?.id ?? null,
+      teamId: task.team?.id ?? null,
     })),
   };
 }

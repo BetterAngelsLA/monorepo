@@ -14,7 +14,7 @@ const FIELD_ERROR_CODES = [...API_FORM_ERROR_KEYS, '422'];
  */
 export function extractExtensionFieldErrors(
   response: TResultWithError | TResultMinimal | null,
-  fieldNames: readonly string[]
+  fieldNames: readonly string[],
 ): TFormValidationError[] {
   if (!response) {
     return [];

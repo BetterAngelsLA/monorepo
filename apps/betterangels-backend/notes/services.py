@@ -89,6 +89,7 @@ def note_update(
             note.location = location
 
         # Single save for core fields + location to produce one pghistory event.
+        note.full_clean()
         note.save()
 
         # --- Provided services (replace-all) ---
@@ -256,7 +257,7 @@ def note_create(
     if location_data:
         location = Location.get_or_create_location(location_data)
 
-    note = Note.objects.create(
+    note = Note(
         purpose=purpose,
         team_id=team_id,
         public_details=public_details or "",
@@ -268,6 +269,8 @@ def note_create(
         created_by=user,
         organization=permission_group.organization,
     )
+    note.full_clean()
+    note.save()
 
     assign_object_permissions(
         permission_group.group,

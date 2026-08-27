@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client/react';
-import { format } from 'date-fns';
+import { toDateString } from '@monorepo/shared/scalars';
 import {
   ShelterOccupancyMetricsDocument,
   type ShelterOccupancyMetricsQuery,
@@ -9,8 +9,7 @@ import {
 export type ShelterOccupancyMetrics =
   ShelterOccupancyMetricsQuery['shelterOccupancyMetrics'];
 
-export type ReservationMetrics =
-  ShelterOccupancyMetrics['reservationMetrics'];
+export type ReservationMetrics = ShelterOccupancyMetrics['reservationMetrics'];
 
 export type DailyBedStatusMetrics =
   ShelterOccupancyMetrics['dailyBedStatus'][number];
@@ -24,18 +23,13 @@ type UseShelterOccupancyMetricsArgs = {
   endDate?: Date | null;
 };
 
-function toDateVariable(value: Date | null | undefined): string | undefined {
-  if (!value) return undefined;
-  return format(value, 'yyyy-MM-dd');
-}
-
 export function useShelterOccupancyMetrics({
   shelterId,
   startDate,
   endDate,
 }: UseShelterOccupancyMetricsArgs) {
-  const startDateVar = toDateVariable(startDate);
-  const endDateVar = toDateVariable(endDate);
+  const startDateVar = startDate ? toDateString(startDate) : undefined;
+  const endDateVar = endDate ? toDateString(endDate) : undefined;
   const skip = !shelterId || !startDateVar || !endDateVar;
 
   const { data, loading, error, refetch } = useQuery<

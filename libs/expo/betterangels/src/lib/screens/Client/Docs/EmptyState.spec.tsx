@@ -10,7 +10,9 @@ vi.mock('@monorepo/expo/shared/icons', () => ({
 
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
   TextBold: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
-  TextRegular: ({ children }: { children: ReactNode }) => <Text>{children}</Text>,
+  TextRegular: ({ children }: { children: ReactNode }) => (
+    <Text>{children}</Text>
+  ),
 }));
 
 describe('Docs EmptyState', () => {
@@ -19,7 +21,9 @@ describe('Docs EmptyState', () => {
 
     expect(getByText('No files yet')).toBeTruthy();
     expect(
-      getByText('After you upload a file, it will appear here along with its folder.')
+      getByText(
+        'After you upload a file, it will appear here along with its folder.',
+      ),
     ).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ import App from './app/app';
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById('root') as HTMLElement,
 );
 
 root.render(
@@ -16,5 +16,5 @@ root.render(
     <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

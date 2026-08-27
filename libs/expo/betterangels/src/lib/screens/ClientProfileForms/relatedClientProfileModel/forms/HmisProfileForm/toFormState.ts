@@ -19,7 +19,7 @@ export function toFormState(props: TProps): THmisProfileFormState {
   }
 
   const hmisProfile = clientProfile?.hmisProfiles?.find(
-    (profile) => profile.id === relationId
+    (profile) => profile.id === relationId,
   );
 
   const { agency, hmisId } = hmisProfile || {};

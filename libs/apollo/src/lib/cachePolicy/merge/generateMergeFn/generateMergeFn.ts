@@ -78,7 +78,7 @@ import { generatePaginationResolver } from './utils';
 
 export function generateMergeFn<TItem = unknown, TVars = unknown>(
   mergeOptions?: TCacheMergeOpts,
-  paginationVariables?: TPaginationVariables
+  paginationVariables?: TPaginationVariables,
 ): FieldMergeFunction<
   unknown,
   unknown,
@@ -93,7 +93,7 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
 
   if (resolvedMergeOpts.mode === MergeModeEnum.Array) {
     return mergeArrayPayload<TItem, TVars>(
-      resolvePaginationFn
+      resolvePaginationFn,
     ) as FieldMergeFunction<
       unknown,
       unknown,
