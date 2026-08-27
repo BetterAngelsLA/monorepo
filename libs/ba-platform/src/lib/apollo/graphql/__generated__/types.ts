@@ -2176,6 +2176,7 @@ export type OffsetPaginationInput = {
 };
 
 export type OpenNowInput = {
+  includeUnknown?: InputMaybe<Scalars['Boolean']['input']>;
   scheduleType?: InputMaybe<Array<ScheduleTypeChoices>>;
 };
 
