@@ -7,9 +7,9 @@ export type GenerateClientProfilePhotoUploadMutationVariables = Types.Exact<{
 }>;
 
 
-export type GenerateClientProfilePhotoUploadMutation = { __typename?: 'Mutation', generateClientProfilePhotoUpload:
-    | { __typename?: 'AuthorizedPresignedS3UploadType', refId: string, url: string, fields: any, presignedKey: string, uploadToken: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type GenerateClientProfilePhotoUploadMutation = { __typename: 'Mutation', generateClientProfilePhotoUpload:
+    | { __typename: 'AuthorizedPresignedS3UploadType', refId: string, url: string, fields: any, presignedKey: string, uploadToken: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type ResolveClientProfilePhotoUploadMutationVariables = Types.Exact<{
@@ -17,9 +17,9 @@ export type ResolveClientProfilePhotoUploadMutationVariables = Types.Exact<{
 }>;
 
 
-export type ResolveClientProfilePhotoUploadMutation = { __typename?: 'Mutation', resolveClientProfilePhotoUpload:
-    | { __typename?: 'ClientProfileType', id: string, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type ResolveClientProfilePhotoUploadMutation = { __typename: 'Mutation', resolveClientProfilePhotoUpload:
+    | { __typename: 'ClientProfileType', id: string, profilePhoto?: { __typename: 'DjangoImageType', name: string, url: string } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

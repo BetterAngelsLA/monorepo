@@ -5290,6 +5290,7 @@ __metadata:
     babel-plugin-react-native-web: "npm:^0.19.8"
     babel-preset-expo: "npm:~57.0.0"
     babel-preset-vite: "npm:^1.1.3"
+    change-case-all: "npm:^2.1.0"
     clsx: "npm:^2.1.1"
     core-js: "npm:3.36.1"
     date-fns: "npm:^3.6.0"

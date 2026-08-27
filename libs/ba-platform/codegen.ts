@@ -15,6 +15,7 @@ const config: CodegenConfig = {
     'src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: [SCALAR_IMPORT_PLUGIN, 'typescript'],
       config: {
+        nonOptionalTypename: true,
         ...SHARED_SCALAR_CONFIG,
       },
     },
@@ -24,8 +25,10 @@ const config: CodegenConfig = {
         SCALAR_IMPORT_PLUGIN,
         'typescript-operations',
         'typed-document-node',
+        '../../tools/codegen/plugins/operation-meta-plugin.cjs',
       ],
       config: {
+        nonOptionalTypename: true,
         ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },

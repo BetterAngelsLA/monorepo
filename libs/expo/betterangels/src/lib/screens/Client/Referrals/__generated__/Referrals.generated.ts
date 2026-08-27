@@ -7,16 +7,16 @@ export type ClientReferralsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientReferralsQuery = { __typename?: 'Query', referrals: { __typename?: 'ReferralTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ReferralType', id: string, status?: Types.ReferralStatusEnum | null, notes?: string | null, createdAt: DateTimeString, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null, shelter?: { __typename?: 'ShelterType', id: string, name: string } | null }> } };
+export type ClientReferralsQuery = { __typename: 'Query', referrals: { __typename: 'ReferralTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'ReferralType', id: string, status?: Types.ReferralStatusEnum | null, notes?: string | null, createdAt: DateTimeString, createdBy?: { __typename: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null, shelter?: { __typename: 'ShelterType', id: string, name: string } | null }> } };
 
 export type CreateReferralMutationVariables = Types.Exact<{
   data: Types.CreateReferralInput;
 }>;
 
 
-export type CreateReferralMutation = { __typename?: 'Mutation', createReferral:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ReferralType', id: string, status?: Types.ReferralStatusEnum | null, createdAt: DateTimeString, shelter?: { __typename?: 'ShelterType', id: string, name: string } | null, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
+export type CreateReferralMutation = { __typename: 'Mutation', createReferral:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ReferralType', id: string, status?: Types.ReferralStatusEnum | null, createdAt: DateTimeString, shelter?: { __typename: 'ShelterType', id: string, name: string } | null, createdBy?: { __typename: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
    };
 
 
