@@ -4,7 +4,9 @@ import type { NoteSummaryQuery } from './NoteSummary.generated';
 
 export const noteSummaryOperationKey: keyof Omit<NoteSummaryQuery, '__typename'> = 'note';
 export const noteSummarySuccessTypename: Extract<
-  NonNullable<NoteSummaryQuery['note']>,
+  NonNullable<NoteSummaryQuery['note']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<NoteSummaryQuery['note']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 

@@ -7,7 +7,9 @@ import type { DeleteTeamMutation } from './teams.generated';
 
 export const adminTeamsOperationKey: keyof Omit<AdminTeamsQuery, '__typename'> = 'teams';
 export const adminTeamsSuccessTypename: Extract<
-  NonNullable<AdminTeamsQuery['teams']>,
+  NonNullable<AdminTeamsQuery['teams']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<AdminTeamsQuery['teams']>,
   { __typename: 'TeamTypeOffsetPaginated' }
 >['__typename'] = 'TeamTypeOffsetPaginated';
 
@@ -18,7 +20,9 @@ export const adminTeamsMeta = {
 
 export const createTeamOperationKey: keyof Omit<CreateTeamMutation, '__typename'> = 'createTeam';
 export const createTeamSuccessTypename: Extract<
-  NonNullable<CreateTeamMutation['createTeam']>,
+  NonNullable<CreateTeamMutation['createTeam']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateTeamMutation['createTeam']>,
   { __typename: 'TeamType' }
 >['__typename'] = 'TeamType';
 
@@ -29,7 +33,9 @@ export const createTeamMeta = {
 
 export const updateTeamOperationKey: keyof Omit<UpdateTeamMutation, '__typename'> = 'updateTeam';
 export const updateTeamSuccessTypename: Extract<
-  NonNullable<UpdateTeamMutation['updateTeam']>,
+  NonNullable<UpdateTeamMutation['updateTeam']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateTeamMutation['updateTeam']>,
   { __typename: 'TeamType' }
 >['__typename'] = 'TeamType';
 

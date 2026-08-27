@@ -5,7 +5,9 @@ import type { RemoveOrganizationMemberMutation } from './users.generated';
 
 export const organizationMembersOperationKey: keyof Omit<OrganizationMembersQuery, '__typename'> = 'organizationMembers';
 export const organizationMembersSuccessTypename: Extract<
-  NonNullable<OrganizationMembersQuery['organizationMembers']>,
+  NonNullable<OrganizationMembersQuery['organizationMembers']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<OrganizationMembersQuery['organizationMembers']>,
   { __typename: 'OrganizationMemberTypeOffsetPaginated' }
 >['__typename'] = 'OrganizationMemberTypeOffsetPaginated';
 
@@ -16,7 +18,9 @@ export const organizationMembersMeta = {
 
 export const removeOrganizationMemberOperationKey: keyof Omit<RemoveOrganizationMemberMutation, '__typename'> = 'removeOrganizationMember';
 export const removeOrganizationMemberSuccessTypename: Extract<
-  NonNullable<RemoveOrganizationMemberMutation['removeOrganizationMember']>,
+  NonNullable<RemoveOrganizationMemberMutation['removeOrganizationMember']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<RemoveOrganizationMemberMutation['removeOrganizationMember']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 

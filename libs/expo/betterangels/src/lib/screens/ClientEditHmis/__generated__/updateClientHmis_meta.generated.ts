@@ -4,7 +4,9 @@ import type { UpdateClientProfileHmisMutation } from './updateClientHmis.generat
 
 export const updateClientProfileHmisOperationKey: keyof Omit<UpdateClientProfileHmisMutation, '__typename'> = 'updateHmisClientProfile';
 export const updateClientProfileHmisSuccessTypename: Extract<
-  NonNullable<UpdateClientProfileHmisMutation['updateHmisClientProfile']>,
+  NonNullable<UpdateClientProfileHmisMutation['updateHmisClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientProfileHmisMutation['updateHmisClientProfile']>,
   { __typename: 'HmisClientProfileType' }
 >['__typename'] = 'HmisClientProfileType';
 

@@ -5,7 +5,9 @@ import type { ResolveClientProfilePhotoUploadMutation } from './clientProfilePho
 
 export const generateClientProfilePhotoUploadOperationKey: keyof Omit<GenerateClientProfilePhotoUploadMutation, '__typename'> = 'generateClientProfilePhotoUpload';
 export const generateClientProfilePhotoUploadSuccessTypename: Extract<
-  NonNullable<GenerateClientProfilePhotoUploadMutation['generateClientProfilePhotoUpload']>,
+  NonNullable<GenerateClientProfilePhotoUploadMutation['generateClientProfilePhotoUpload']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GenerateClientProfilePhotoUploadMutation['generateClientProfilePhotoUpload']>,
   { __typename: 'AuthorizedPresignedS3UploadType' }
 >['__typename'] = 'AuthorizedPresignedS3UploadType';
 
@@ -16,7 +18,9 @@ export const generateClientProfilePhotoUploadMeta = {
 
 export const resolveClientProfilePhotoUploadOperationKey: keyof Omit<ResolveClientProfilePhotoUploadMutation, '__typename'> = 'resolveClientProfilePhotoUpload';
 export const resolveClientProfilePhotoUploadSuccessTypename: Extract<
-  NonNullable<ResolveClientProfilePhotoUploadMutation['resolveClientProfilePhotoUpload']>,
+  NonNullable<ResolveClientProfilePhotoUploadMutation['resolveClientProfilePhotoUpload']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ResolveClientProfilePhotoUploadMutation['resolveClientProfilePhotoUpload']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 

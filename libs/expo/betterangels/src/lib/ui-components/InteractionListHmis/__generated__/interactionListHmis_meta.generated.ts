@@ -4,7 +4,9 @@ import type { InteractionListHmisQuery } from './interactionListHmis.generated';
 
 export const interactionListHmisOperationKey: keyof Omit<InteractionListHmisQuery, '__typename'> = 'hmisNotes';
 export const interactionListHmisSuccessTypename: Extract<
-  NonNullable<InteractionListHmisQuery['hmisNotes']>,
+  NonNullable<InteractionListHmisQuery['hmisNotes']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<InteractionListHmisQuery['hmisNotes']>,
   { __typename: 'HmisNoteTypeOffsetPaginated' }
 >['__typename'] = 'HmisNoteTypeOffsetPaginated';
 

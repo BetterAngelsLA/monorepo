@@ -5,7 +5,9 @@ import type { CreateClientHouseholdMemberMutation } from './householdMember.gene
 
 export const updateClientHouseholdMemberOperationKey: keyof Omit<UpdateClientHouseholdMemberMutation, '__typename'> = 'updateClientHouseholdMember';
 export const updateClientHouseholdMemberSuccessTypename: Extract<
-  NonNullable<UpdateClientHouseholdMemberMutation['updateClientHouseholdMember']>,
+  NonNullable<UpdateClientHouseholdMemberMutation['updateClientHouseholdMember']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientHouseholdMemberMutation['updateClientHouseholdMember']>,
   { __typename: 'ClientHouseholdMemberType' }
 >['__typename'] = 'ClientHouseholdMemberType';
 
@@ -16,7 +18,9 @@ export const updateClientHouseholdMemberMeta = {
 
 export const createClientHouseholdMemberOperationKey: keyof Omit<CreateClientHouseholdMemberMutation, '__typename'> = 'createClientHouseholdMember';
 export const createClientHouseholdMemberSuccessTypename: Extract<
-  NonNullable<CreateClientHouseholdMemberMutation['createClientHouseholdMember']>,
+  NonNullable<CreateClientHouseholdMemberMutation['createClientHouseholdMember']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateClientHouseholdMemberMutation['createClientHouseholdMember']>,
   { __typename: 'ClientHouseholdMemberType' }
 >['__typename'] = 'ClientHouseholdMemberType';
 

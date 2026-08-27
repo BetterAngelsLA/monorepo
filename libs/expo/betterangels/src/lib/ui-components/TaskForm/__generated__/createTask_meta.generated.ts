@@ -4,7 +4,9 @@ import type { CreateTaskMutation } from './createTask.generated';
 
 export const createTaskOperationKey: keyof Omit<CreateTaskMutation, '__typename'> = 'createTask';
 export const createTaskSuccessTypename: Extract<
-  NonNullable<CreateTaskMutation['createTask']>,
+  NonNullable<CreateTaskMutation['createTask']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateTaskMutation['createTask']>,
   { __typename: 'TaskType' }
 >['__typename'] = 'TaskType';
 

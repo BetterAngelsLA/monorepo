@@ -4,7 +4,9 @@ import type { ViewShelterQuery } from './shelter.generated';
 
 export const viewShelterOperationKey: keyof Omit<ViewShelterQuery, '__typename'> = 'shelter';
 export const viewShelterSuccessTypename: Extract<
-  NonNullable<ViewShelterQuery['shelter']>,
+  NonNullable<ViewShelterQuery['shelter']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ViewShelterQuery['shelter']>,
   { __typename: 'ShelterType' }
 >['__typename'] = 'ShelterType';
 

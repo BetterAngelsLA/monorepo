@@ -4,7 +4,9 @@ import type { UpdateTaskStatusMutation } from './updateTaskStatus.generated';
 
 export const updateTaskStatusOperationKey: keyof Omit<UpdateTaskStatusMutation, '__typename'> = 'updateTask';
 export const updateTaskStatusSuccessTypename: Extract<
-  NonNullable<UpdateTaskStatusMutation['updateTask']>,
+  NonNullable<UpdateTaskStatusMutation['updateTask']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateTaskStatusMutation['updateTask']>,
   { __typename: 'TaskType' }
 >['__typename'] = 'TaskType';
 

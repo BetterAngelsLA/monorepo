@@ -4,7 +4,9 @@ import type { GetBaFeatureControlsQuery } from './featureControls.generated';
 
 export const getBaFeatureControlsOperationKey: keyof Omit<GetBaFeatureControlsQuery, '__typename'> = 'featureControls';
 export const getBaFeatureControlsSuccessTypename: Extract<
-  NonNullable<GetBaFeatureControlsQuery['featureControls']>,
+  NonNullable<GetBaFeatureControlsQuery['featureControls']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GetBaFeatureControlsQuery['featureControls']>,
   { __typename: 'FeatureControlData' }
 >['__typename'] = 'FeatureControlData';
 

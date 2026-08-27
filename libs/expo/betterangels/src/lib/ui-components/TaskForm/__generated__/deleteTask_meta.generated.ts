@@ -4,7 +4,9 @@ import type { DeleteTaskMutation } from './deleteTask.generated';
 
 export const deleteTaskOperationKey: keyof Omit<DeleteTaskMutation, '__typename'> = 'deleteTask';
 export const deleteTaskSuccessTypename: Extract<
-  NonNullable<DeleteTaskMutation['deleteTask']>,
+  NonNullable<DeleteTaskMutation['deleteTask']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteTaskMutation['deleteTask']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 

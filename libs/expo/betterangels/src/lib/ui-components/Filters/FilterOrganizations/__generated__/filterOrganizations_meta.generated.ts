@@ -4,7 +4,9 @@ import type { FilterOrganizationsQuery } from './filterOrganizations.generated';
 
 export const filterOrganizationsOperationKey: keyof Omit<FilterOrganizationsQuery, '__typename'> = 'caseworkerOrganizations';
 export const filterOrganizationsSuccessTypename: Extract<
-  NonNullable<FilterOrganizationsQuery['caseworkerOrganizations']>,
+  NonNullable<FilterOrganizationsQuery['caseworkerOrganizations']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<FilterOrganizationsQuery['caseworkerOrganizations']>,
   { __typename: 'OrganizationTypeOffsetPaginated' }
 >['__typename'] = 'OrganizationTypeOffsetPaginated';
 

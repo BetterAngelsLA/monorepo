@@ -4,7 +4,9 @@ import type { DeleteClientHouseholdMemberMutation } from './deleteHouseholdMembe
 
 export const deleteClientHouseholdMemberOperationKey: keyof Omit<DeleteClientHouseholdMemberMutation, '__typename'> = 'deleteClientHouseholdMember';
 export const deleteClientHouseholdMemberSuccessTypename: Extract<
-  NonNullable<DeleteClientHouseholdMemberMutation['deleteClientHouseholdMember']>,
+  NonNullable<DeleteClientHouseholdMemberMutation['deleteClientHouseholdMember']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteClientHouseholdMemberMutation['deleteClientHouseholdMember']>,
   { __typename: 'ClientHouseholdMemberType' }
 >['__typename'] = 'ClientHouseholdMemberType';
 

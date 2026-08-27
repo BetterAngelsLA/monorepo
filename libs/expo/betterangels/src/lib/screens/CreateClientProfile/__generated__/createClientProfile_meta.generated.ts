@@ -4,7 +4,9 @@ import type { CreateClientProfileMutation } from './createClientProfile.generate
 
 export const createClientProfileOperationKey: keyof Omit<CreateClientProfileMutation, '__typename'> = 'createClientProfile';
 export const createClientProfileSuccessTypename: Extract<
-  NonNullable<CreateClientProfileMutation['createClientProfile']>,
+  NonNullable<CreateClientProfileMutation['createClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateClientProfileMutation['createClientProfile']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 

@@ -4,7 +4,9 @@ import type { ServiceCategoriesQuery } from './services.generated';
 
 export const serviceCategoriesOperationKey: keyof Omit<ServiceCategoriesQuery, '__typename'> = 'serviceCategories';
 export const serviceCategoriesSuccessTypename: Extract<
-  NonNullable<ServiceCategoriesQuery['serviceCategories']>,
+  NonNullable<ServiceCategoriesQuery['serviceCategories']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ServiceCategoriesQuery['serviceCategories']>,
   { __typename: 'OrganizationServiceCategoryTypeOffsetPaginated' }
 >['__typename'] = 'OrganizationServiceCategoryTypeOffsetPaginated';
 

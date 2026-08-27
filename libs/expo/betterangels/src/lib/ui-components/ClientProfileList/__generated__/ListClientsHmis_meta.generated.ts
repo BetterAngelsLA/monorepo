@@ -4,7 +4,9 @@ import type { ClientProfilesHmisQuery } from './ListClientsHmis.generated';
 
 export const clientProfilesHmisOperationKey: keyof Omit<ClientProfilesHmisQuery, '__typename'> = 'hmisClientProfiles';
 export const clientProfilesHmisSuccessTypename: Extract<
-  NonNullable<ClientProfilesHmisQuery['hmisClientProfiles']>,
+  NonNullable<ClientProfilesHmisQuery['hmisClientProfiles']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientProfilesHmisQuery['hmisClientProfiles']>,
   { __typename: 'HmisClientProfileTypeOffsetPaginated' }
 >['__typename'] = 'HmisClientProfileTypeOffsetPaginated';
 

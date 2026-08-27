@@ -4,7 +4,9 @@ import type { AddOrganizationMemberMutation } from './addOrganizationMember.gene
 
 export const addOrganizationMemberOperationKey: keyof Omit<AddOrganizationMemberMutation, '__typename'> = 'addOrganizationMember';
 export const addOrganizationMemberSuccessTypename: Extract<
-  NonNullable<AddOrganizationMemberMutation['addOrganizationMember']>,
+  NonNullable<AddOrganizationMemberMutation['addOrganizationMember']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<AddOrganizationMemberMutation['addOrganizationMember']>,
   { __typename: 'OrganizationMemberType' }
 >['__typename'] = 'OrganizationMemberType';
 

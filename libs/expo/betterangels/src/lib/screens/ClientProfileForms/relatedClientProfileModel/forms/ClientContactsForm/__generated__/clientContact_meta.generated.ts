@@ -5,7 +5,9 @@ import type { CreateClientContactMutation } from './clientContact.generated';
 
 export const updateClientContactOperationKey: keyof Omit<UpdateClientContactMutation, '__typename'> = 'updateClientContact';
 export const updateClientContactSuccessTypename: Extract<
-  NonNullable<UpdateClientContactMutation['updateClientContact']>,
+  NonNullable<UpdateClientContactMutation['updateClientContact']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientContactMutation['updateClientContact']>,
   { __typename: 'ClientContactType' }
 >['__typename'] = 'ClientContactType';
 
@@ -16,7 +18,9 @@ export const updateClientContactMeta = {
 
 export const createClientContactOperationKey: keyof Omit<CreateClientContactMutation, '__typename'> = 'createClientContact';
 export const createClientContactSuccessTypename: Extract<
-  NonNullable<CreateClientContactMutation['createClientContact']>,
+  NonNullable<CreateClientContactMutation['createClientContact']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateClientContactMutation['createClientContact']>,
   { __typename: 'ClientContactType' }
 >['__typename'] = 'ClientContactType';
 

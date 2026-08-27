@@ -4,7 +4,9 @@ import type { TeamsQuery } from './teams.generated';
 
 export const teamsOperationKey: keyof Omit<TeamsQuery, '__typename'> = 'teams';
 export const teamsSuccessTypename: Extract<
-  NonNullable<TeamsQuery['teams']>,
+  NonNullable<TeamsQuery['teams']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<TeamsQuery['teams']>,
   { __typename: 'TeamTypeOffsetPaginated' }
 >['__typename'] = 'TeamTypeOffsetPaginated';
 

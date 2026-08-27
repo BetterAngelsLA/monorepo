@@ -4,7 +4,9 @@ import type { FilterUsersQuery } from './filterUsers.generated';
 
 export const filterUsersOperationKey: keyof Omit<FilterUsersQuery, '__typename'> = 'interactionAuthors';
 export const filterUsersSuccessTypename: Extract<
-  NonNullable<FilterUsersQuery['interactionAuthors']>,
+  NonNullable<FilterUsersQuery['interactionAuthors']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<FilterUsersQuery['interactionAuthors']>,
   { __typename: 'InteractionAuthorTypeOffsetPaginated' }
 >['__typename'] = 'InteractionAuthorTypeOffsetPaginated';
 

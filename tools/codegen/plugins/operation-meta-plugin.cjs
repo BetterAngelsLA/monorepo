@@ -213,9 +213,13 @@ module.exports = {
       );
 
       if (op.successTypename) {
+        // List-returning fields (e.g. `hmisClientPrograms: [X!]!`) have an array
+        // payload, so unwrap to the element type before matching `__typename`.
         sections.push(
           `export const ${operationName}SuccessTypename: Extract<`,
-          `  NonNullable<${typeName}['${op.fieldName}']>,`,
+          `  NonNullable<${typeName}['${op.fieldName}']> extends readonly (infer _T)[]`,
+          `    ? _T`,
+          `    : NonNullable<${typeName}['${op.fieldName}']>,`,
           `  { __typename: '${op.successTypename}' }`,
           `>['__typename'] = '${op.successTypename}';`,
           '',

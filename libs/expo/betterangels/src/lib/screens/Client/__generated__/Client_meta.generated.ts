@@ -7,7 +7,9 @@ import type { UpdateClientProfilePhotoMutation } from './Client.generated';
 
 export const clientProfileOperationKey: keyof Omit<ClientProfileQuery, '__typename'> = 'clientProfile';
 export const clientProfileSuccessTypename: Extract<
-  NonNullable<ClientProfileQuery['clientProfile']>,
+  NonNullable<ClientProfileQuery['clientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientProfileQuery['clientProfile']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 
@@ -18,7 +20,9 @@ export const clientProfileMeta = {
 
 export const updateClientDocumentOperationKey: keyof Omit<UpdateClientDocumentMutation, '__typename'> = 'updateClientDocument';
 export const updateClientDocumentSuccessTypename: Extract<
-  NonNullable<UpdateClientDocumentMutation['updateClientDocument']>,
+  NonNullable<UpdateClientDocumentMutation['updateClientDocument']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientDocumentMutation['updateClientDocument']>,
   { __typename: 'ClientDocumentType' }
 >['__typename'] = 'ClientDocumentType';
 
@@ -29,7 +33,9 @@ export const updateClientDocumentMeta = {
 
 export const deleteClientDocumentOperationKey: keyof Omit<DeleteClientDocumentMutation, '__typename'> = 'deleteClientDocument';
 export const deleteClientDocumentSuccessTypename: Extract<
-  NonNullable<DeleteClientDocumentMutation['deleteClientDocument']>,
+  NonNullable<DeleteClientDocumentMutation['deleteClientDocument']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteClientDocumentMutation['deleteClientDocument']>,
   { __typename: 'ClientDocumentType' }
 >['__typename'] = 'ClientDocumentType';
 
@@ -40,7 +46,9 @@ export const deleteClientDocumentMeta = {
 
 export const updateClientProfilePhotoOperationKey: keyof Omit<UpdateClientProfilePhotoMutation, '__typename'> = 'updateClientProfilePhoto';
 export const updateClientProfilePhotoSuccessTypename: Extract<
-  NonNullable<UpdateClientProfilePhotoMutation['updateClientProfilePhoto']>,
+  NonNullable<UpdateClientProfilePhotoMutation['updateClientProfilePhoto']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientProfilePhotoMutation['updateClientProfilePhoto']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 

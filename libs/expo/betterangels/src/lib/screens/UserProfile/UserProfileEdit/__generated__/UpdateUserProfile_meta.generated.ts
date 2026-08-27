@@ -4,7 +4,9 @@ import type { UpdateUserProfileMutation } from './UpdateUserProfile.generated';
 
 export const updateUserProfileOperationKey: keyof Omit<UpdateUserProfileMutation, '__typename'> = 'updateUserProfile';
 export const updateUserProfileSuccessTypename: Extract<
-  NonNullable<UpdateUserProfileMutation['updateUserProfile']>,
+  NonNullable<UpdateUserProfileMutation['updateUserProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateUserProfileMutation['updateUserProfile']>,
   { __typename: 'CurrentUserType' }
 >['__typename'] = 'CurrentUserType';
 

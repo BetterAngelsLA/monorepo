@@ -4,7 +4,9 @@ import type { TasksQuery } from './Tasks.generated';
 
 export const tasksOperationKey: keyof Omit<TasksQuery, '__typename'> = 'tasks';
 export const tasksSuccessTypename: Extract<
-  NonNullable<TasksQuery['tasks']>,
+  NonNullable<TasksQuery['tasks']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<TasksQuery['tasks']>,
   { __typename: 'TaskTypeOffsetPaginated' }
 >['__typename'] = 'TaskTypeOffsetPaginated';
 

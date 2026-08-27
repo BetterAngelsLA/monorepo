@@ -4,7 +4,9 @@ import type { UpdateNoteLocationHmisMutation } from './updateNoteLocationHmis.ge
 
 export const updateNoteLocationHmisOperationKey: keyof Omit<UpdateNoteLocationHmisMutation, '__typename'> = 'updateHmisNoteLocation';
 export const updateNoteLocationHmisSuccessTypename: Extract<
-  NonNullable<UpdateNoteLocationHmisMutation['updateHmisNoteLocation']>,
+  NonNullable<UpdateNoteLocationHmisMutation['updateHmisNoteLocation']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateNoteLocationHmisMutation['updateHmisNoteLocation']>,
   { __typename: 'HmisNoteType' }
 >['__typename'] = 'HmisNoteType';
 

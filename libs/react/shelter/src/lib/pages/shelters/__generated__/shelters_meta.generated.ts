@@ -6,7 +6,9 @@ import type { CreateShelterMutation } from './shelters.generated';
 
 export const viewSheltersOperationKey: keyof Omit<ViewSheltersQuery, '__typename'> = 'shelters';
 export const viewSheltersSuccessTypename: Extract<
-  NonNullable<ViewSheltersQuery['shelters']>,
+  NonNullable<ViewSheltersQuery['shelters']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ViewSheltersQuery['shelters']>,
   { __typename: 'ShelterTypeOffsetPaginated' }
 >['__typename'] = 'ShelterTypeOffsetPaginated';
 
@@ -17,7 +19,9 @@ export const viewSheltersMeta = {
 
 export const shelterServiceCategoriesOperationKey: keyof Omit<ShelterServiceCategoriesQuery, '__typename'> = 'shelterServiceCategories';
 export const shelterServiceCategoriesSuccessTypename: Extract<
-  NonNullable<ShelterServiceCategoriesQuery['shelterServiceCategories']>,
+  NonNullable<ShelterServiceCategoriesQuery['shelterServiceCategories']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ShelterServiceCategoriesQuery['shelterServiceCategories']>,
   { __typename: 'ServiceCategoryTypeOffsetPaginated' }
 >['__typename'] = 'ServiceCategoryTypeOffsetPaginated';
 
@@ -28,7 +32,9 @@ export const shelterServiceCategoriesMeta = {
 
 export const createShelterOperationKey: keyof Omit<CreateShelterMutation, '__typename'> = 'createShelter';
 export const createShelterSuccessTypename: Extract<
-  NonNullable<CreateShelterMutation['createShelter']>,
+  NonNullable<CreateShelterMutation['createShelter']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateShelterMutation['createShelter']>,
   { __typename: 'ShelterType' }
 >['__typename'] = 'ShelterType';
 

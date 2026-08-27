@@ -4,7 +4,9 @@ import type { ClientProfileHmisQuery } from './getClientHmis.generated';
 
 export const clientProfileHmisOperationKey: keyof Omit<ClientProfileHmisQuery, '__typename'> = 'hmisClientProfile';
 export const clientProfileHmisSuccessTypename: Extract<
-  NonNullable<ClientProfileHmisQuery['hmisClientProfile']>,
+  NonNullable<ClientProfileHmisQuery['hmisClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientProfileHmisQuery['hmisClientProfile']>,
   { __typename: 'HmisClientProfileType' }
 >['__typename'] = 'HmisClientProfileType';
 

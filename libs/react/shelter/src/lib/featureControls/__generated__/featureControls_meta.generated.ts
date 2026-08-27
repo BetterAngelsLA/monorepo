@@ -4,7 +4,9 @@ import type { GetShelterFeatureControlsQuery } from './featureControls.generated
 
 export const getShelterFeatureControlsOperationKey: keyof Omit<GetShelterFeatureControlsQuery, '__typename'> = 'featureControls';
 export const getShelterFeatureControlsSuccessTypename: Extract<
-  NonNullable<GetShelterFeatureControlsQuery['featureControls']>,
+  NonNullable<GetShelterFeatureControlsQuery['featureControls']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GetShelterFeatureControlsQuery['featureControls']>,
   { __typename: 'FeatureControlData' }
 >['__typename'] = 'FeatureControlData';
 

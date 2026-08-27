@@ -4,7 +4,9 @@ import type { ReportSummaryQuery } from './reports.generated';
 
 export const reportSummaryOperationKey: keyof Omit<ReportSummaryQuery, '__typename'> = 'reportSummary';
 export const reportSummarySuccessTypename: Extract<
-  NonNullable<ReportSummaryQuery['reportSummary']>,
+  NonNullable<ReportSummaryQuery['reportSummary']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ReportSummaryQuery['reportSummary']>,
   { __typename: 'ReportSummaryType' }
 >['__typename'] = 'ReportSummaryType';
 

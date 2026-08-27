@@ -4,7 +4,9 @@ import type { DeleteHmisProfileMutation } from './deleteHmisProfile.generated';
 
 export const deleteHmisProfileOperationKey: keyof Omit<DeleteHmisProfileMutation, '__typename'> = 'deleteHmisProfile';
 export const deleteHmisProfileSuccessTypename: Extract<
-  NonNullable<DeleteHmisProfileMutation['deleteHmisProfile']>,
+  NonNullable<DeleteHmisProfileMutation['deleteHmisProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteHmisProfileMutation['deleteHmisProfile']>,
   { __typename: 'HmisProfileType' }
 >['__typename'] = 'HmisProfileType';
 

@@ -4,7 +4,9 @@ import type { ShelterOccupancyMetricsQuery } from './useShelterOccupancyMetrics.
 
 export const shelterOccupancyMetricsOperationKey: keyof Omit<ShelterOccupancyMetricsQuery, '__typename'> = 'shelterOccupancyMetrics';
 export const shelterOccupancyMetricsSuccessTypename: Extract<
-  NonNullable<ShelterOccupancyMetricsQuery['shelterOccupancyMetrics']>,
+  NonNullable<ShelterOccupancyMetricsQuery['shelterOccupancyMetrics']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ShelterOccupancyMetricsQuery['shelterOccupancyMetrics']>,
   { __typename: 'ShelterOccupancyMetricsType' }
 >['__typename'] = 'ShelterOccupancyMetricsType';
 

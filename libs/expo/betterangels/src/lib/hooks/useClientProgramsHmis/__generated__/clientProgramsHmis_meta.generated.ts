@@ -4,7 +4,9 @@ import type { ClientProgramsHmisQuery } from './clientProgramsHmis.generated';
 
 export const clientProgramsHmisOperationKey: keyof Omit<ClientProgramsHmisQuery, '__typename'> = 'hmisClientPrograms';
 export const clientProgramsHmisSuccessTypename: Extract<
-  NonNullable<ClientProgramsHmisQuery['hmisClientPrograms']>,
+  NonNullable<ClientProgramsHmisQuery['hmisClientPrograms']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientProgramsHmisQuery['hmisClientPrograms']>,
   { __typename: 'HmisClientProgramType' }
 >['__typename'] = 'HmisClientProgramType';
 

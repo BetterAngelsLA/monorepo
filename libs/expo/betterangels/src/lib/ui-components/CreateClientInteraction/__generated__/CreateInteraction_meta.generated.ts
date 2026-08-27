@@ -4,7 +4,9 @@ import type { CreateNoteMutation } from './CreateInteraction.generated';
 
 export const createNoteOperationKey: keyof Omit<CreateNoteMutation, '__typename'> = 'createNote';
 export const createNoteSuccessTypename: Extract<
-  NonNullable<CreateNoteMutation['createNote']>,
+  NonNullable<CreateNoteMutation['createNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateNoteMutation['createNote']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 

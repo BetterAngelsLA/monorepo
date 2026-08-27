@@ -4,7 +4,9 @@ import type { SheltersQuery } from './Shelters.generated';
 
 export const sheltersOperationKey: keyof Omit<SheltersQuery, '__typename'> = 'shelters';
 export const sheltersSuccessTypename: Extract<
-  NonNullable<SheltersQuery['shelters']>,
+  NonNullable<SheltersQuery['shelters']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<SheltersQuery['shelters']>,
   { __typename: 'ShelterTypeOffsetPaginated' }
 >['__typename'] = 'ShelterTypeOffsetPaginated';
 

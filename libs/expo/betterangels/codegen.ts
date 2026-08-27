@@ -21,6 +21,7 @@ const config: CodegenConfig = {
         '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
       ],
       config: {
+        nonOptionalTypename: true,
         ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },

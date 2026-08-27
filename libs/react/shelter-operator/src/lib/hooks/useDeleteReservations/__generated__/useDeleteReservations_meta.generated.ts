@@ -4,7 +4,9 @@ import type { DeleteReservationsMutation } from './useDeleteReservations.generat
 
 export const deleteReservationsOperationKey: keyof Omit<DeleteReservationsMutation, '__typename'> = 'deleteReservations';
 export const deleteReservationsSuccessTypename: Extract<
-  NonNullable<DeleteReservationsMutation['deleteReservations']>,
+  NonNullable<DeleteReservationsMutation['deleteReservations']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteReservationsMutation['deleteReservations']>,
   { __typename: 'BulkDeleteResult' }
 >['__typename'] = 'BulkDeleteResult';
 

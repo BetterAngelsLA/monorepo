@@ -4,7 +4,9 @@ import type { InteractionsQuery } from './Interactions.generated';
 
 export const interactionsOperationKey: keyof Omit<InteractionsQuery, '__typename'> = 'notes';
 export const interactionsSuccessTypename: Extract<
-  NonNullable<InteractionsQuery['notes']>,
+  NonNullable<InteractionsQuery['notes']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<InteractionsQuery['notes']>,
   { __typename: 'NoteTypeOffsetPaginated' }
 >['__typename'] = 'NoteTypeOffsetPaginated';
 

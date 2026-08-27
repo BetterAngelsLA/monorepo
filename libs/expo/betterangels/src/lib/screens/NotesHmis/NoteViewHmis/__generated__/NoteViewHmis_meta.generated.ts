@@ -4,7 +4,9 @@ import type { ViewNoteHmisQuery } from './NoteViewHmis.generated';
 
 export const viewNoteHmisOperationKey: keyof Omit<ViewNoteHmisQuery, '__typename'> = 'hmisNote';
 export const viewNoteHmisSuccessTypename: Extract<
-  NonNullable<ViewNoteHmisQuery['hmisNote']>,
+  NonNullable<ViewNoteHmisQuery['hmisNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ViewNoteHmisQuery['hmisNote']>,
   { __typename: 'HmisNoteType' }
 >['__typename'] = 'HmisNoteType';
 

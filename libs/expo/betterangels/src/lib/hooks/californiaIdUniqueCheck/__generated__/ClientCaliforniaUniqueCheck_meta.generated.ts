@@ -4,7 +4,9 @@ import type { ClientCaliforniaUniqueCheckQuery } from './ClientCaliforniaUniqueC
 
 export const clientCaliforniaUniqueCheckOperationKey: keyof Omit<ClientCaliforniaUniqueCheckQuery, '__typename'> = 'clientProfiles';
 export const clientCaliforniaUniqueCheckSuccessTypename: Extract<
-  NonNullable<ClientCaliforniaUniqueCheckQuery['clientProfiles']>,
+  NonNullable<ClientCaliforniaUniqueCheckQuery['clientProfiles']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientCaliforniaUniqueCheckQuery['clientProfiles']>,
   { __typename: 'ClientProfileTypeOffsetPaginated' }
 >['__typename'] = 'ClientProfileTypeOffsetPaginated';
 

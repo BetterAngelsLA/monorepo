@@ -5,7 +5,9 @@ import type { ResolveClientDocumentUploadsMutation } from './clientDocumentUploa
 
 export const generateClientDocumentUploadsOperationKey: keyof Omit<GenerateClientDocumentUploadsMutation, '__typename'> = 'generateClientDocumentUploads';
 export const generateClientDocumentUploadsSuccessTypename: Extract<
-  NonNullable<GenerateClientDocumentUploadsMutation['generateClientDocumentUploads']>,
+  NonNullable<GenerateClientDocumentUploadsMutation['generateClientDocumentUploads']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GenerateClientDocumentUploadsMutation['generateClientDocumentUploads']>,
   { __typename: 'AuthorizedPresignedS3UploadsType' }
 >['__typename'] = 'AuthorizedPresignedS3UploadsType';
 
@@ -16,7 +18,9 @@ export const generateClientDocumentUploadsMeta = {
 
 export const resolveClientDocumentUploadsOperationKey: keyof Omit<ResolveClientDocumentUploadsMutation, '__typename'> = 'resolveClientDocumentUploads';
 export const resolveClientDocumentUploadsSuccessTypename: Extract<
-  NonNullable<ResolveClientDocumentUploadsMutation['resolveClientDocumentUploads']>,
+  NonNullable<ResolveClientDocumentUploadsMutation['resolveClientDocumentUploads']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ResolveClientDocumentUploadsMutation['resolveClientDocumentUploads']>,
   { __typename: 'ClientDocumentUploadsType' }
 >['__typename'] = 'ClientDocumentUploadsType';
 

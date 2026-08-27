@@ -5,7 +5,9 @@ import type { CreateReferralMutation } from './Referrals.generated';
 
 export const clientReferralsOperationKey: keyof Omit<ClientReferralsQuery, '__typename'> = 'referrals';
 export const clientReferralsSuccessTypename: Extract<
-  NonNullable<ClientReferralsQuery['referrals']>,
+  NonNullable<ClientReferralsQuery['referrals']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientReferralsQuery['referrals']>,
   { __typename: 'ReferralTypeOffsetPaginated' }
 >['__typename'] = 'ReferralTypeOffsetPaginated';
 
@@ -16,7 +18,9 @@ export const clientReferralsMeta = {
 
 export const createReferralOperationKey: keyof Omit<CreateReferralMutation, '__typename'> = 'createReferral';
 export const createReferralSuccessTypename: Extract<
-  NonNullable<CreateReferralMutation['createReferral']>,
+  NonNullable<CreateReferralMutation['createReferral']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateReferralMutation['createReferral']>,
   { __typename: 'ReferralType' }
 >['__typename'] = 'ReferralType';
 

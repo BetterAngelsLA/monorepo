@@ -4,7 +4,9 @@ import type { TaskQuery } from './Task.generated';
 
 export const taskOperationKey: keyof Omit<TaskQuery, '__typename'> = 'task';
 export const taskSuccessTypename: Extract<
-  NonNullable<TaskQuery['task']>,
+  NonNullable<TaskQuery['task']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<TaskQuery['task']>,
   { __typename: 'TaskType' }
 >['__typename'] = 'TaskType';
 

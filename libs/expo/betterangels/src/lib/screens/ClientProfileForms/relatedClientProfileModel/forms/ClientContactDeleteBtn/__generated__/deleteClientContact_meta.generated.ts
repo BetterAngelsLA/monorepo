@@ -4,7 +4,9 @@ import type { DeleteClientContactMutation } from './deleteClientContact.generate
 
 export const deleteClientContactOperationKey: keyof Omit<DeleteClientContactMutation, '__typename'> = 'deleteClientContact';
 export const deleteClientContactSuccessTypename: Extract<
-  NonNullable<DeleteClientContactMutation['deleteClientContact']>,
+  NonNullable<DeleteClientContactMutation['deleteClientContact']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteClientContactMutation['deleteClientContact']>,
   { __typename: 'ClientContactType' }
 >['__typename'] = 'ClientContactType';
 

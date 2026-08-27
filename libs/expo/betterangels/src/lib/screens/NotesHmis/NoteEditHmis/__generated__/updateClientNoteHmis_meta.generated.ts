@@ -5,7 +5,9 @@ import type { DeleteNoteHmisMutation } from './updateClientNoteHmis.generated';
 
 export const updateNoteHmisOperationKey: keyof Omit<UpdateNoteHmisMutation, '__typename'> = 'updateHmisNote';
 export const updateNoteHmisSuccessTypename: Extract<
-  NonNullable<UpdateNoteHmisMutation['updateHmisNote']>,
+  NonNullable<UpdateNoteHmisMutation['updateHmisNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateNoteHmisMutation['updateHmisNote']>,
   { __typename: 'HmisNoteType' }
 >['__typename'] = 'HmisNoteType';
 
@@ -16,7 +18,9 @@ export const updateNoteHmisMeta = {
 
 export const deleteNoteHmisOperationKey: keyof Omit<DeleteNoteHmisMutation, '__typename'> = 'deleteHmisNote';
 export const deleteNoteHmisSuccessTypename: Extract<
-  NonNullable<DeleteNoteHmisMutation['deleteHmisNote']>,
+  NonNullable<DeleteNoteHmisMutation['deleteHmisNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteNoteHmisMutation['deleteHmisNote']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 

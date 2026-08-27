@@ -4,7 +4,9 @@ import type { LoginHmisMutation } from './LoginHmis.generated';
 
 export const loginHmisOperationKey: keyof Omit<LoginHmisMutation, '__typename'> = 'hmisLogin';
 export const loginHmisSuccessTypename: Extract<
-  NonNullable<LoginHmisMutation['hmisLogin']>,
+  NonNullable<LoginHmisMutation['hmisLogin']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<LoginHmisMutation['hmisLogin']>,
   { __typename: 'HmisLoginSuccess' }
 >['__typename'] = 'HmisLoginSuccess';
 

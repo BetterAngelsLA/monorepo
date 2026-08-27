@@ -9,7 +9,9 @@ import type { UpdateNoteLocationMutation } from './mutations.generated';
 
 export const deleteCurrentUserOperationKey: keyof Omit<DeleteCurrentUserMutation, '__typename'> = 'deleteCurrentUser';
 export const deleteCurrentUserSuccessTypename: Extract<
-  NonNullable<DeleteCurrentUserMutation['deleteCurrentUser']>,
+  NonNullable<DeleteCurrentUserMutation['deleteCurrentUser']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteCurrentUserMutation['deleteCurrentUser']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 
@@ -20,7 +22,9 @@ export const deleteCurrentUserMeta = {
 
 export const updateNoteOperationKey: keyof Omit<UpdateNoteMutation, '__typename'> = 'updateNote';
 export const updateNoteSuccessTypename: Extract<
-  NonNullable<UpdateNoteMutation['updateNote']>,
+  NonNullable<UpdateNoteMutation['updateNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateNoteMutation['updateNote']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 
@@ -31,7 +35,9 @@ export const updateNoteMeta = {
 
 export const deleteNoteOperationKey: keyof Omit<DeleteNoteMutation, '__typename'> = 'deleteNote';
 export const deleteNoteSuccessTypename: Extract<
-  NonNullable<DeleteNoteMutation['deleteNote']>,
+  NonNullable<DeleteNoteMutation['deleteNote']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteNoteMutation['deleteNote']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 
@@ -42,7 +48,9 @@ export const deleteNoteMeta = {
 
 export const createNoteServiceRequestOperationKey: keyof Omit<CreateNoteServiceRequestMutation, '__typename'> = 'createNoteServiceRequest';
 export const createNoteServiceRequestSuccessTypename: Extract<
-  NonNullable<CreateNoteServiceRequestMutation['createNoteServiceRequest']>,
+  NonNullable<CreateNoteServiceRequestMutation['createNoteServiceRequest']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateNoteServiceRequestMutation['createNoteServiceRequest']>,
   { __typename: 'ServiceRequestType' }
 >['__typename'] = 'ServiceRequestType';
 
@@ -53,7 +61,9 @@ export const createNoteServiceRequestMeta = {
 
 export const deleteServiceRequestOperationKey: keyof Omit<DeleteServiceRequestMutation, '__typename'> = 'deleteServiceRequest';
 export const deleteServiceRequestSuccessTypename: Extract<
-  NonNullable<DeleteServiceRequestMutation['deleteServiceRequest']>,
+  NonNullable<DeleteServiceRequestMutation['deleteServiceRequest']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteServiceRequestMutation['deleteServiceRequest']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 
@@ -64,7 +74,9 @@ export const deleteServiceRequestMeta = {
 
 export const updateNoteLocationOperationKey: keyof Omit<UpdateNoteLocationMutation, '__typename'> = 'updateNoteLocation';
 export const updateNoteLocationSuccessTypename: Extract<
-  NonNullable<UpdateNoteLocationMutation['updateNoteLocation']>,
+  NonNullable<UpdateNoteLocationMutation['updateNoteLocation']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateNoteLocationMutation['updateNoteLocation']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 

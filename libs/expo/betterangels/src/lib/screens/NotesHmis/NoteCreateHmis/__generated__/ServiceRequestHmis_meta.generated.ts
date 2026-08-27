@@ -5,7 +5,9 @@ import type { RemoveServiceRequestHmisMutation } from './ServiceRequestHmis.gene
 
 export const createServiceRequestHmisOperationKey: keyof Omit<CreateServiceRequestHmisMutation, '__typename'> = 'createHmisNoteServiceRequest';
 export const createServiceRequestHmisSuccessTypename: Extract<
-  NonNullable<CreateServiceRequestHmisMutation['createHmisNoteServiceRequest']>,
+  NonNullable<CreateServiceRequestHmisMutation['createHmisNoteServiceRequest']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateServiceRequestHmisMutation['createHmisNoteServiceRequest']>,
   { __typename: 'ServiceRequestType' }
 >['__typename'] = 'ServiceRequestType';
 
@@ -16,7 +18,9 @@ export const createServiceRequestHmisMeta = {
 
 export const removeServiceRequestHmisOperationKey: keyof Omit<RemoveServiceRequestHmisMutation, '__typename'> = 'removeHmisNoteServiceRequest';
 export const removeServiceRequestHmisSuccessTypename: Extract<
-  NonNullable<RemoveServiceRequestHmisMutation['removeHmisNoteServiceRequest']>,
+  NonNullable<RemoveServiceRequestHmisMutation['removeHmisNoteServiceRequest']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<RemoveServiceRequestHmisMutation['removeHmisNoteServiceRequest']>,
   { __typename: 'HmisNoteType' }
 >['__typename'] = 'HmisNoteType';
 

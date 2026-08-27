@@ -4,7 +4,9 @@ import type { ClientDocumentQuery } from './Document.generated';
 
 export const clientDocumentOperationKey: keyof Omit<ClientDocumentQuery, '__typename'> = 'clientDocument';
 export const clientDocumentSuccessTypename: Extract<
-  NonNullable<ClientDocumentQuery['clientDocument']>,
+  NonNullable<ClientDocumentQuery['clientDocument']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ClientDocumentQuery['clientDocument']>,
   { __typename: 'ClientDocumentType' }
 >['__typename'] = 'ClientDocumentType';
 

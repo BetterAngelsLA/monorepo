@@ -5,7 +5,9 @@ import type { ViewNoteQuery } from './queries.generated';
 
 export const notesOperationKey: keyof Omit<NotesQuery, '__typename'> = 'notes';
 export const notesSuccessTypename: Extract<
-  NonNullable<NotesQuery['notes']>,
+  NonNullable<NotesQuery['notes']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<NotesQuery['notes']>,
   { __typename: 'NoteTypeOffsetPaginated' }
 >['__typename'] = 'NoteTypeOffsetPaginated';
 
@@ -16,7 +18,9 @@ export const notesMeta = {
 
 export const viewNoteOperationKey: keyof Omit<ViewNoteQuery, '__typename'> = 'note';
 export const viewNoteSuccessTypename: Extract<
-  NonNullable<ViewNoteQuery['note']>,
+  NonNullable<ViewNoteQuery['note']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ViewNoteQuery['note']>,
   { __typename: 'NoteType' }
 >['__typename'] = 'NoteType';
 

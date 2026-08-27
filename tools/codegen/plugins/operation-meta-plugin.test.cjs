@@ -10,6 +10,7 @@ const {
   GraphQLID,
   GraphQLString,
   GraphQLBoolean,
+  GraphQLList,
 } = require('graphql');
 const { plugin } = require('./operation-meta-plugin.cjs');
 
@@ -127,6 +128,42 @@ describe('operation-meta-plugin', () => {
       assert.ok(content.includes("'ShelterType'"));
       assert.ok(content.includes('export const getShelterMeta'));
       assert.ok(content.includes('GetShelterQuery'));
+    });
+
+    it('list return type — extracts successTypename from the element', () => {
+      const listSchema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            hmisClientPrograms: {
+              type: new GraphQLList(
+                new GraphQLObjectType({
+                  name: 'HmisClientProgramType',
+                  fields: { id: { type: GraphQLID } },
+                }),
+              ),
+            },
+          },
+        }),
+      });
+      const content = invokePlugin(
+        parse(`
+        query clientProgramsHmis {
+          hmisClientPrograms { id }
+        }
+      `),
+        listSchema,
+      );
+
+      assert.ok(
+        content.includes('export const clientProgramsHmisOperationKey'),
+      );
+      assert.ok(content.includes("'hmisClientPrograms'"));
+      assert.ok(
+        content.includes('export const clientProgramsHmisSuccessTypename'),
+      );
+      assert.ok(content.includes("'HmisClientProgramType'"));
+      assert.ok(content.includes('extends readonly (infer _T)[]'));
     });
   });
 

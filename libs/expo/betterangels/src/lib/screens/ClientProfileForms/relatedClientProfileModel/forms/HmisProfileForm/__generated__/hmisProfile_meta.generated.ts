@@ -5,7 +5,9 @@ import type { CreateHmisProfileMutation } from './hmisProfile.generated';
 
 export const updateHmisProfileOperationKey: keyof Omit<UpdateHmisProfileMutation, '__typename'> = 'updateHmisProfile';
 export const updateHmisProfileSuccessTypename: Extract<
-  NonNullable<UpdateHmisProfileMutation['updateHmisProfile']>,
+  NonNullable<UpdateHmisProfileMutation['updateHmisProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateHmisProfileMutation['updateHmisProfile']>,
   { __typename: 'HmisProfileType' }
 >['__typename'] = 'HmisProfileType';
 
@@ -16,7 +18,9 @@ export const updateHmisProfileMeta = {
 
 export const createHmisProfileOperationKey: keyof Omit<CreateHmisProfileMutation, '__typename'> = 'createHmisProfile';
 export const createHmisProfileSuccessTypename: Extract<
-  NonNullable<CreateHmisProfileMutation['createHmisProfile']>,
+  NonNullable<CreateHmisProfileMutation['createHmisProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateHmisProfileMutation['createHmisProfile']>,
   { __typename: 'HmisProfileType' }
 >['__typename'] = 'HmisProfileType';
 

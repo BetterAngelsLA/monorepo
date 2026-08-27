@@ -4,7 +4,9 @@ import type { FilterClientProfilesQuery } from './filterClientProfiles.generated
 
 export const filterClientProfilesOperationKey: keyof Omit<FilterClientProfilesQuery, '__typename'> = 'clientProfiles';
 export const filterClientProfilesSuccessTypename: Extract<
-  NonNullable<FilterClientProfilesQuery['clientProfiles']>,
+  NonNullable<FilterClientProfilesQuery['clientProfiles']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<FilterClientProfilesQuery['clientProfiles']>,
   { __typename: 'ClientProfileTypeOffsetPaginated' }
 >['__typename'] = 'ClientProfileTypeOffsetPaginated';
 

@@ -4,7 +4,9 @@ import type { ServiceCategoriesHmisQuery } from './ServicesHmis.generated';
 
 export const serviceCategoriesHmisOperationKey: keyof Omit<ServiceCategoriesHmisQuery, '__typename'> = 'serviceCategories';
 export const serviceCategoriesHmisSuccessTypename: Extract<
-  NonNullable<ServiceCategoriesHmisQuery['serviceCategories']>,
+  NonNullable<ServiceCategoriesHmisQuery['serviceCategories']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ServiceCategoriesHmisQuery['serviceCategories']>,
   { __typename: 'OrganizationServiceCategoryTypeOffsetPaginated' }
 >['__typename'] = 'OrganizationServiceCategoryTypeOffsetPaginated';
 

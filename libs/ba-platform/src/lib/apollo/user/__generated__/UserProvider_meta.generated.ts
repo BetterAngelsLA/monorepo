@@ -4,7 +4,9 @@ import type { CurrentOrgUserQuery } from './UserProvider.generated';
 
 export const currentOrgUserOperationKey: keyof Omit<CurrentOrgUserQuery, '__typename'> = 'currentUser';
 export const currentOrgUserSuccessTypename: Extract<
-  NonNullable<CurrentOrgUserQuery['currentUser']>,
+  NonNullable<CurrentOrgUserQuery['currentUser']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CurrentOrgUserQuery['currentUser']>,
   { __typename: 'CurrentUserType' }
 >['__typename'] = 'CurrentUserType';
 

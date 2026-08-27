@@ -4,7 +4,9 @@ import type { CreateClientProfileHmisMutation } from './createClientHmis.generat
 
 export const createClientProfileHmisOperationKey: keyof Omit<CreateClientProfileHmisMutation, '__typename'> = 'createHmisClientProfile';
 export const createClientProfileHmisSuccessTypename: Extract<
-  NonNullable<CreateClientProfileHmisMutation['createHmisClientProfile']>,
+  NonNullable<CreateClientProfileHmisMutation['createHmisClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateClientProfileHmisMutation['createHmisClientProfile']>,
   { __typename: 'HmisClientProfileType' }
 >['__typename'] = 'HmisClientProfileType';
 

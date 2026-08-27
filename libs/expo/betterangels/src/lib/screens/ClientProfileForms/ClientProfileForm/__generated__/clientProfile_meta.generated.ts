@@ -6,7 +6,9 @@ import type { GetClientProfileQuery } from './clientProfile.generated';
 
 export const updateClientProfileOperationKey: keyof Omit<UpdateClientProfileMutation, '__typename'> = 'updateClientProfile';
 export const updateClientProfileSuccessTypename: Extract<
-  NonNullable<UpdateClientProfileMutation['updateClientProfile']>,
+  NonNullable<UpdateClientProfileMutation['updateClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateClientProfileMutation['updateClientProfile']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 
@@ -17,7 +19,9 @@ export const updateClientProfileMeta = {
 
 export const deleteClientProfileOperationKey: keyof Omit<DeleteClientProfileMutation, '__typename'> = 'deleteClientProfile';
 export const deleteClientProfileSuccessTypename: Extract<
-  NonNullable<DeleteClientProfileMutation['deleteClientProfile']>,
+  NonNullable<DeleteClientProfileMutation['deleteClientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteClientProfileMutation['deleteClientProfile']>,
   { __typename: 'DeletedObjectType' }
 >['__typename'] = 'DeletedObjectType';
 
@@ -28,7 +32,9 @@ export const deleteClientProfileMeta = {
 
 export const getClientProfileOperationKey: keyof Omit<GetClientProfileQuery, '__typename'> = 'clientProfile';
 export const getClientProfileSuccessTypename: Extract<
-  NonNullable<GetClientProfileQuery['clientProfile']>,
+  NonNullable<GetClientProfileQuery['clientProfile']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GetClientProfileQuery['clientProfile']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 

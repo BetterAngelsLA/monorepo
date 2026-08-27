@@ -7,9 +7,9 @@ export type CreateNoteHmisMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteHmisMutation = { __typename?: 'Mutation', createHmisNote:
-    | { __typename?: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, providedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, requestedServices?: Array<{ __typename?: 'ServiceRequestType', service?: { __typename?: 'OrganizationServiceType', id: string, label: string } | null }> | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateNoteHmisMutation = { __typename: 'Mutation', createHmisNote:
+    | { __typename: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, providedServices?: Array<{ __typename: 'ServiceRequestType', service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null }> | null, requestedServices?: Array<{ __typename: 'ServiceRequestType', service?: { __typename: 'OrganizationServiceType', id: string, label: string } | null }> | null, hmisClientProfile: { __typename: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 
