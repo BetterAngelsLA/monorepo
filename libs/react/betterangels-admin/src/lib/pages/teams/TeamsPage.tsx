@@ -119,21 +119,25 @@ export function TeamsPage(props: IProps) {
       const response = await deleteTeam({
         variables: { data: { id: team.id } },
       });
-      const error = extractOperationInfoMessage(response, 'deleteTeam');
-      if (error) throw new Error(error);
+      const refusal = extractOperationInfoMessage(response, 'deleteTeam');
+
+      if (refusal) {
+        showAlert({ type: 'error', content: refusal });
+
+        return;
+      }
+
       showAlert({
         type: 'success',
         content: `${team.name} successfully deleted.`,
       });
       refetch();
     } catch (err) {
-      const error = toError(err);
-
-      console.error(`error deleting team: ${error.message}`);
+      console.error(`[deleteTeam error]: ${toError(err).message}`);
 
       showAlert({
         type: 'error',
-        content: error.message,
+        content: 'Sorry, something went wrong. Please try again.',
       });
     } finally {
       setOpenMenuRowId(null);

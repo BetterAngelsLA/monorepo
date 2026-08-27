@@ -69,14 +69,7 @@ def team_delete(
     *,
     team: Team,
 ) -> None:
-    """Delete a Team that nothing references.
-
-    The refusal is the ``RESTRICT`` on ``Note.team`` and ``Task.team``, not a check
-    here -- so it also covers the Django admin, ``queryset.delete()`` and a shell
-    session, none of which reach this function.  ``is_active`` retires a team
-    reversibly, which is what the message points at.  The counts are gathered only
-    once the delete has already been refused.
-    """
+    """Delete a Team. Deletion of Teams associated with a Note or Task is restricted by the model."""
     try:
         team.delete()
     except RestrictedError:

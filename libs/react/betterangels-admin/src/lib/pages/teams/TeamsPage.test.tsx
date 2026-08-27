@@ -106,7 +106,9 @@ describe('TeamsPage', () => {
   it('asks for every team, since it searches and sorts client-side', async () => {
     const { variablesByOperation } = renderPage();
 
-    await waitFor(() => expect(variablesByOperation['AdminTeams']).toBeTruthy());
+    await waitFor(() =>
+      expect(variablesByOperation['AdminTeams']).toBeTruthy(),
+    );
 
     const pagination = variablesByOperation['AdminTeams']['pagination'] as {
       limit?: number;

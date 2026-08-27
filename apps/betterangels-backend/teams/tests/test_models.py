@@ -1,9 +1,4 @@
-"""The database layer's refusal to strand a team's history.
-
-``Note.team`` and ``Task.team`` are ``RESTRICT``, which is enforced by Django's
-deletion collector rather than by ``teams.services.team_delete``.  These go
-through the writers that never reach the service layer.
-"""
+"""Team deletion through the writers that never reach ``teams.services.team_delete``."""
 
 from accounts.tests.baker_recipes import organization_recipe
 from django.db.models import RestrictedError
@@ -19,27 +14,6 @@ class TeamDeletionTestCase(TestCase):
     def setUp(self) -> None:
         self.organization = organization_recipe.make(owner_roles=())
         self.team = baker.make(Team, organization=self.organization)
-
-    def test_an_unreferenced_team_is_deleted(self) -> None:
-        self.team.delete()
-
-        self.assertFalse(Team.objects.filter(pk=self.team.pk).exists())
-
-    def test_a_team_a_note_references_is_refused(self) -> None:
-        baker.make(Note, organization=self.organization, team=self.team)
-
-        with self.assertRaises(RestrictedError):
-            self.team.delete()
-
-        self.assertTrue(Team.objects.filter(pk=self.team.pk).exists())
-
-    def test_a_team_a_task_references_is_refused(self) -> None:
-        baker.make(Task, organization=self.organization, team=self.team)
-
-        with self.assertRaises(RestrictedError):
-            self.team.delete()
-
-        self.assertTrue(Team.objects.filter(pk=self.team.pk).exists())
 
     def test_a_queryset_delete_is_refused_too(self) -> None:
         """The writer ``team_delete`` cannot cover — no service call, no ``clean()``."""

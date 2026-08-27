@@ -3,12 +3,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    """Point ``Task.team`` at ``RESTRICT`` so a team in use cannot be deleted.
-
-    See ``notes.0004_alter_note_team`` -- ``on_delete`` has no database
-    representation, so re-creating the identical foreign key would lock
-    ``tasks_task`` to prove nothing.
-    """
+    """A plain ``AlterField`` would drop and re-add an identical FK constraint; skip the SQL."""
 
     dependencies = [
         ("tasks", "0004_alter_task_created_by_alter_task_organization_and_more"),
