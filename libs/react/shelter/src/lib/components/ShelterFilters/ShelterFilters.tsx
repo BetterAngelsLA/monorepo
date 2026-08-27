@@ -40,9 +40,9 @@ export function ShelterFilters(props: IProps) {
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
-  const initialopenNowTypes = filters.openNow ?? [];
+  const initialOpenNowTypes = filters.openNow ?? [];
   const [openNowTypes, setOpenNowTypes] =
-    useState<ScheduleTypeChoices[]>(initialopenNowTypes);
+    useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
 
   useEffect(() => {
     setOpenNowTypes(filters.openNow ?? []);
