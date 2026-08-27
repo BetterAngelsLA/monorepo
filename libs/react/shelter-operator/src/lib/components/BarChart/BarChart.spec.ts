@@ -19,8 +19,26 @@ describe('bucketData', () => {
   it('labels a multi-item bucket as "first - last"', () => {
     const data = makeRows(['Jan', 'Feb', 'Mar', 'Apr', 'May']);
     const result = bucketData(data, 'x', 'y', undefined, 2);
-    expect(result[0].x).toBe('Jan - Mar');
-    expect(result[1].x).toBe('Apr - May');
+    expect(result[0].x).toBe('Jan - Feb');
+    expect(result[1].x).toBe('Mar - May');
+  });
+
+  it('splits into buckets whose sizes differ by at most one', () => {
+    const labels = Array.from({ length: 10 }, (_, i) => String(i));
+    const result = bucketData(makeRows(labels), 'x', 'y', undefined, 4);
+    // 10 across 4 buckets is 2/3/2/3, never 3/3/3/1.
+    expect(result.map((r) => r.x)).toEqual([
+      '0 - 1',
+      '2 - 4',
+      '5 - 6',
+      '7 - 9',
+    ]);
+  });
+
+  it('uses the full bar budget when data only just exceeds maxBars', () => {
+    const labels = Array.from({ length: 41 }, (_, i) => String(i));
+    const result = bucketData(makeRows(labels), 'x', 'y', undefined, 40);
+    expect(result).toHaveLength(40);
   });
 
   it('averages y-values within each bucket', () => {

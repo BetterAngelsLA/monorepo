@@ -7,7 +7,6 @@ import { bucketData } from './bucketData';
 
 const FONT_FAMILY = "'Poppins', ui-sans-serif, system-ui, sans-serif";
 const RESIZE_DEBOUNCE_MS = 150;
-const DEFAULT_MAX_BARS = 40;
 function darkenHex(hex: string, amount = 0.18): string {
   const h = hex.replace('#', '');
   const full =
@@ -41,7 +40,7 @@ export function BarChart({
   chartTitle,
   showViewToggle,
   onViewChange,
-  maxBars = DEFAULT_MAX_BARS,
+  maxBars,
   chartHeight,
   ...config
 }: BarChartProps) {
@@ -102,8 +101,6 @@ export function BarChart({
         titleLetterSpacing: -0.32,
         titleLineHeight: 24,
         titleFill: '#747A82',
-        labelFormatter: (value: number) =>
-          Number.isInteger(value) ? String(value) : '',
         tick: false,
         grid: true,
         gridStroke: '#D3D9E3',
@@ -148,17 +145,19 @@ export function BarChart({
     '#3B82F6';
 
   // Bucket the display data (already count or percentage based on viewMode)
-  // down to at most `maxBars` bars by averaging consecutive values.
+  // down to at most `maxBars` bars by averaging consecutive values. Callers
+  // that omit `maxBars` get their data drawn as passed.
   const xField = cfg['xField'] as string | undefined;
   const yField = cfg['yField'] as string | undefined;
-  const normalizedMaxBars = Math.max(1, Math.floor(maxBars));
+  const normalizedMaxBars =
+    maxBars === undefined ? undefined : Math.max(1, Math.floor(maxBars));
   const displayData =
     ((displayConfig as Record<string, unknown>)['data'] as
       | Record<string, unknown>[]
       | undefined) ?? [];
   const finalData = useMemo(
     () =>
-      xField && yField
+      normalizedMaxBars !== undefined && xField && yField
         ? bucketData(displayData, xField, yField, colorField, normalizedMaxBars)
         : displayData,
     [displayData, xField, yField, colorField, normalizedMaxBars],

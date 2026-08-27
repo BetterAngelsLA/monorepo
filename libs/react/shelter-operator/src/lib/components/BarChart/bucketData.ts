@@ -1,4 +1,4 @@
-import { chunk, groupBy, meanBy, unique } from 'remeda';
+import { groupBy, meanBy, unique } from 'remeda';
 
 /**
  * Groups chart data into at most `maxBars` buckets and averages the y-values
@@ -36,9 +36,18 @@ export function bucketData(
     }
   }
 
-  const bucketSize = Math.ceil(xValues.length / maxBars);
+  // Split into exactly `maxBars` buckets whose sizes differ by at most one.
+  // A fixed size of ceil(n / maxBars) would collapse 41 values into 21 bars,
+  // so one value past the limit would halve the chart.
+  const bucketCount = Math.min(xValues.length, maxBars);
+  const buckets = Array.from({ length: bucketCount }, (_, i) =>
+    xValues.slice(
+      Math.floor((i * xValues.length) / bucketCount),
+      Math.floor(((i + 1) * xValues.length) / bucketCount),
+    ),
+  );
 
-  return chunk(xValues, bucketSize).flatMap((bucketXValues) => {
+  return buckets.flatMap((bucketXValues) => {
     const label =
       bucketXValues.length === 1
         ? String(bucketXValues[0])

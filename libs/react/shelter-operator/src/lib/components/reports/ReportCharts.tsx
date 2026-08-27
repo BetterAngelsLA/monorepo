@@ -67,6 +67,9 @@ const cardClassName =
   'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
 const chartCardClassName = `flex flex-col ${cardClassName}`;
 const CHART_PLOT_HEIGHT = 460;
+// Past this many days the bars are too thin to read, so BarChart averages
+// consecutive days into ranges.
+const CHART_MAX_BARS = 40;
 
 const STATUSES = [
   'Occupied',
@@ -108,6 +111,7 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
             : {}
         }
         chartHeight={CHART_PLOT_HEIGHT}
+        maxBars={CHART_MAX_BARS}
         data={countData}
         xField="date"
         yField="count"
@@ -162,6 +166,7 @@ export function DailyOccupancyChart({
             : {}
         }
         chartHeight={CHART_PLOT_HEIGHT}
+        maxBars={CHART_MAX_BARS}
         data={countData}
         xField="date"
         yField="count"
