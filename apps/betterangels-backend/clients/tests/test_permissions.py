@@ -1,6 +1,7 @@
 from typing import Optional
 from unittest.mock import patch
 
+from accounts.selectors import resolve_permission_group
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, HmisAgencyEnum, LanguageEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile, SocialMediaProfile
 from clients.tests.utils import (
@@ -11,7 +12,13 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
+from common.permissions.utils import assign_object_permissions
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.uploadedfile import SimpleUploadedFile
+from model_bakery import baker
+from notes.groups import CASEWORKER
+from notes.models import Note
 from unittest_parametrize import parametrize
 
 
@@ -299,6 +306,33 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertGraphQLUnauthenticated(response)
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+    def test_delete_client_document_refuses_a_note_attachment(self) -> None:
+        """Note attachments share the Attachment table and grant the same group DELETE."""
+        note = baker.make(Note, organization=self.org_1)
+        note_attachment = Attachment.objects.create(
+            file=SimpleUploadedFile(name="note.txt", content=b"note attachment"),
+            content_type=ContentType.objects.get_for_model(Note),
+            object_id=note.pk,
+            uploaded_by=self.org_1_case_manager_1,
+        )
+        assign_object_permissions(
+            resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER).group,
+            note_attachment,
+            [Attachment.perms.DELETE],
+        )
+
+        self._handle_user_login("org_1_case_manager_1")
+        response = self._delete_client_document_fixture(str(note_attachment.pk))
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteClientDocument",
+            "You do not have permission to delete this document.",
+            kind="PERMISSION",
+            exact=True,
+        )
+        self.assertTrue(Attachment.objects.filter(id=note_attachment.pk).exists())
 
     @parametrize(
         "user_label, should_succeed",

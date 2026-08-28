@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Any, List, Optional, cast
+from typing import Any, ClassVar, List, Optional, cast
 
 import pghistory
 from betterangels_backend import settings
@@ -252,8 +252,15 @@ class ClientProfile(AbstractClientProfile):
         ordering = ["first_name"]
 
 
+class ClientDocumentManager(models.Manager["ClientDocument"]):
+    def get_queryset(self) -> QuerySet["ClientDocument"]:
+        return super().get_queryset().filter(content_type__app_label="clients", content_type__model="clientprofile")
+
+
 class ClientDocument(Attachment):
-    """This is here to allow for a separate admin interface for Client Documents"""
+    """An Attachment hanging off a ClientProfile. Note attachments share the table and are excluded."""
+
+    objects: ClassVar[ClientDocumentManager] = ClientDocumentManager()
 
     class Meta:
         proxy = True
