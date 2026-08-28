@@ -7,16 +7,16 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: DateString | null, email?: string | null, eyeColor?: Types.EyeColorEnum | null, firstName?: string | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, lastName?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, middleName?: string | null, nickname?: string | null, phoneNumber?: PhoneNumberString | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, unhousedStartDate?: DateString | null, veteranStatus?: Types.VeteranStatusEnum | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: PhoneNumberString | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, updatedAt: DateTimeString }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId?: string | null, id: string }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: DateString | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: PhoneNumberString | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
+export type ClientProfileQuery = { __typename: 'Query', clientProfile: { __typename: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: DateString | null, email?: string | null, eyeColor?: Types.EyeColorEnum | null, firstName?: string | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, lastName?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, middleName?: string | null, nickname?: string | null, phoneNumber?: PhoneNumberString | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, unhousedStartDate?: DateString | null, veteranStatus?: Types.VeteranStatusEnum | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, contacts?: Array<{ __typename: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: PhoneNumberString | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, updatedAt: DateTimeString }> | null, hmisProfiles?: Array<{ __typename: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId?: string | null, id: string }> | null, householdMembers?: Array<{ __typename: 'ClientHouseholdMemberType', dateOfBirth?: DateString | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename: 'PhoneNumberType', id: string, number?: PhoneNumberString | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename: 'DjangoImageType', name: string, url: string } | null, socialMediaProfiles?: Array<{ __typename: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, docReadyDocuments?: Array<{ __typename: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename: 'ClientDocumentType', id: string, createdAt: DateTimeString, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename: 'DjangoFileType', url: string, name: string } }> | null } };
 
 export type UpdateClientDocumentMutationVariables = Types.Exact<{
   data: Types.UpdateClientDocumentInput;
 }>;
 
 
-export type UpdateClientDocumentMutation = { __typename?: 'Mutation', updateClientDocument:
-    | { __typename?: 'ClientDocumentType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateClientDocumentMutation = { __typename: 'Mutation', updateClientDocument:
+    | { __typename: 'ClientDocumentType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type DeleteClientDocumentMutationVariables = Types.Exact<{
@@ -24,9 +24,9 @@ export type DeleteClientDocumentMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteClientDocumentMutation = { __typename?: 'Mutation', deleteClientDocument:
-    | { __typename?: 'ClientDocumentType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteClientDocumentMutation = { __typename: 'Mutation', deleteClientDocument:
+    | { __typename: 'ClientDocumentType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type UpdateClientProfilePhotoMutationVariables = Types.Exact<{
@@ -34,9 +34,9 @@ export type UpdateClientProfilePhotoMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateClientProfilePhotoMutation = { __typename?: 'Mutation', updateClientProfilePhoto:
-    | { __typename?: 'ClientProfileType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateClientProfilePhotoMutation = { __typename: 'Mutation', updateClientProfilePhoto:
+    | { __typename: 'ClientProfileType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

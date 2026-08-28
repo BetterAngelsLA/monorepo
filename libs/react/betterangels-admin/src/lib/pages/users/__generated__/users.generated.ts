@@ -11,16 +11,16 @@ export type OrganizationMembersQueryVariables = Types.Exact<{
 }>;
 
 
-export type OrganizationMembersQuery = { __typename?: 'Query', organizationMembers: { __typename?: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, isOrgOwner: boolean, lastLogin?: DateTimeString | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: DateTimeString, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
+export type OrganizationMembersQuery = { __typename: 'Query', organizationMembers: { __typename: 'OrganizationMemberTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'OrganizationMemberType', email?: string | null, firstName?: string | null, id: string, isOrgOwner: boolean, lastLogin?: DateTimeString | null, lastName?: string | null, memberRole: Types.OrgRoleEnum, middleName?: string | null, dateJoined: DateTimeString, permissionTemplates: Array<Types.PermissionTemplateEnum> }> } };
 
 export type RemoveOrganizationMemberMutationVariables = Types.Exact<{
   data: Types.RemoveOrganizationMemberInput;
 }>;
 
 
-export type RemoveOrganizationMemberMutation = { __typename?: 'Mutation', removeOrganizationMember:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type RemoveOrganizationMemberMutation = { __typename: 'Mutation', removeOrganizationMember:
+    | { __typename: 'DeletedObjectType', id: number }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

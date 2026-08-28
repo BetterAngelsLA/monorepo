@@ -4,7 +4,9 @@ import type { CreateReservationMutation } from './useCreateReservation.generated
 
 export const createReservationOperationKey: keyof Omit<CreateReservationMutation, '__typename'> = 'createReservation';
 export const createReservationSuccessTypename: Extract<
-  NonNullable<CreateReservationMutation['createReservation']>,
+  NonNullable<CreateReservationMutation['createReservation']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateReservationMutation['createReservation']>,
   { __typename: 'ReservationType' }
 >['__typename'] = 'ReservationType';
 
