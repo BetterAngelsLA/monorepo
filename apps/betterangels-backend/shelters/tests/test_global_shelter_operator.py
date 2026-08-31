@@ -13,10 +13,11 @@ from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
 from django.test import TestCase
 from model_bakery import baker
+from strawberry import ID
 
 from shelters.enums import ShelterPhotoTypeChoices, StatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR
-from shelters.models import Bed, Room, Shelter, ShelterPhoto
+from shelters.models import Bed, Reservation, Room, Shelter, ShelterPhoto
 from shelters.services.shelter_photo import delete_shelter_photos, update_shelter_photo
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
@@ -78,6 +79,28 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
         ids = {r["id"] for r in response["data"]["operatorShelters"]["results"]}
         self.assertNotIn(str(self.other_shelter.pk), ids)
 
+    def test_sees_reservation_in_other_org(self) -> None:
+        reservation = baker.make(Reservation, bed=self.other_bed)
+        response = self.execute_graphql("query { reservations { results { id } } }")
+        self.assertIsNone(response.get("errors"))
+        ids = {r["id"] for r in response["data"]["reservations"]["results"]}
+        self.assertIn(str(reservation.pk), ids)
+
+    def test_occupancy_metrics_in_other_org(self) -> None:
+        """shelter_occupancy_metrics resolves a cross-org shelter via shelter_get(permission=VIEW)."""
+        response = self.execute_graphql(
+            """
+            query ($shelterId: ID!) {
+                shelterOccupancyMetrics(shelterId: $shelterId) {
+                    shelterId
+                }
+            }
+            """,
+            {"shelterId": str(self.other_shelter.pk)},
+        )
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["shelterOccupancyMetrics"]["shelterId"], str(self.other_shelter.pk))
+
     # ── Mutate-by-id in another org ──────────────────────────────────────
 
     def test_can_update_bed_in_other_org(self) -> None:
@@ -128,7 +151,7 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
         updated = update_shelter_photo(
             user=self.global_operator,
             organization_id=str(self.org.id),
-            data=UpdateShelterPhotoInput(id=str(photo.pk), photo_type=ShelterPhotoTypeChoices.INTERIOR),
+            data=UpdateShelterPhotoInput(id=ID(str(photo.pk)), photo_type=ShelterPhotoTypeChoices.INTERIOR),
         )
 
         self.assertEqual(updated.pk, photo.pk)

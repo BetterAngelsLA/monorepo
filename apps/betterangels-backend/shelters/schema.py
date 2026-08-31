@@ -13,6 +13,7 @@ from common.graphql.types import (
 from common.permissions.utils import IsAuthenticated, get_current_organization, user_holds_org_bypass_perms
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Max
+from organizations.models import Organization
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user

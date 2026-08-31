@@ -262,3 +262,40 @@ class PermissionedQuerysetBypassTestCase(TestCase):
                 organization_field="organization_id",
             ).exists()
         )
+
+    # ── Empty perms: org-scoped only, bypass never fires ───────────────
+
+    def test_empty_perms_does_not_drop_the_org_filter(self) -> None:
+        """perms=[] must stay org-scoped — even a bypass user sees only the requested org.
+
+        Without the guard, ``(org_filter & Q()) | Q()`` collapses to an
+        unfiltered ``Q()``: an empty OR-reduce is the identity, so the bypass
+        branch would match *everything* with no permission to gate on. Pins
+        that empty perms behave like the pre-bypass org-only path.
+        """
+        from shelters.tests.baker_recipes import shelter_recipe
+
+        shelter_in_host = shelter_recipe.make(organization=self.org_1)
+        shelter_in_other = shelter_recipe.make(organization=self.org_2)
+
+        host_pks = permissioned_queryset(
+            Shelter.objects.all(),
+            user=self.bypass_user,
+            organization_id=str(self.org_1.id),
+            perms=[],
+            organization_field="organization_id",
+        ).values_list("pk", flat=True)
+        self.assertIn(shelter_in_host.pk, host_pks)
+        self.assertNotIn(shelter_in_other.pk, host_pks)
+
+        # The bypass group is irrelevant: with no permission to gate on, even a
+        # bypass user is confined to the org they asked for.
+        other_pks = permissioned_queryset(
+            Shelter.objects.all(),
+            user=self.bypass_user,
+            organization_id=str(self.org_2.id),
+            perms=[],
+            organization_field="organization_id",
+        ).values_list("pk", flat=True)
+        self.assertIn(shelter_in_other.pk, other_pks)
+        self.assertNotIn(shelter_in_host.pk, other_pks)

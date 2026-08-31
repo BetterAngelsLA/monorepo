@@ -9,8 +9,8 @@ from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.forms import Field as FormField
 from django.db.models import Field, Model, QuerySet
+from django.forms import Field as FormField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -68,38 +68,6 @@ class PermissionGroupAdmin(admin.ModelAdmin):
     list_display = ("label", "organization", "template")
     list_filter = ("organization", "template")
     fields = ("organization", "template", "label")
-
-    def get_deleted_objects(
-        self, objs: Any, request: HttpRequest
-    ) -> tuple[list[Any], dict[str, int], set[str], list[str]]:
-        """Say how many people lose the role, which Django never can.
-
-        The collector lists the row and everything cascading from it, but its
-        members are an M2M and never appear — so a delete that strips a role from
-        a dozen people reads exactly like one that strips it from nobody.
-
-        Hooked here because it is what both the delete view and the
-        ``delete_selected`` action call, so one override covers a single delete
-        and a bulk one alike.
-        """
-        deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
-
-        losses = []
-        for permission_group in objs:
-            holders = permission_group.user_set.count()
-            losses.append(
-                format_html(
-                    "{} — revoked from {} member{}",
-                    permission_group.label,
-                    holders,
-                    "" if holders == 1 else "s",
-                )
-            )
-
-        if losses:
-            deletable = [*deletable, *losses]
-            model_count = {**model_count, "revoked roles": len(losses)}
-        return deletable, model_count, perms_needed, protected
 
     def get_deleted_objects(
         self, objs: Any, request: HttpRequest

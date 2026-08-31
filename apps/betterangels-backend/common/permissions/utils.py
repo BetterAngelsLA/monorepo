@@ -382,6 +382,9 @@ def permissioned_queryset(
             reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields)),
         )
 
+    if not perms:
+        return queryset.filter(org_filter)
+
     op = or_ if any_perm else and_
     perm_q = reduce(
         op,

@@ -414,7 +414,11 @@ def test_member_add_persists_new_name() -> None:
 
 @pytest.mark.django_db
 def test_member_add_refuses_org_bypass_role() -> None:
-    """member_add must never grant an org-bypassing role."""
+    """member_add must never grant an org-bypassing role.
+
+    ``member_add`` is atomic, so the refused grant rolls the whole add back —
+    the new user, the membership and any group are discarded together.
+    """
     org = create_organization_with_presets("Guarded Member Org", ["shelter"], owner=baker.make(User))
 
     with pytest.raises(ValueError, match="Global Shelter Operator"):
@@ -427,11 +431,9 @@ def test_member_add_refuses_org_bypass_role() -> None:
             permission_templates=(GLOBAL_SHELTER_OPERATOR,),
         )
 
-    # No bypass group is granted (the guard fires before any assignment).
-    user = User.objects.get(email="guard@example.com")
-    assert not PermissionGroup.objects.filter(
-        organization=org, user=user, template__bypasses_org_scoping=True
-    ).exists()
+    # Atomic rollback: no user, no membership, and no bypass group.
+    assert not User.objects.filter(email="guard@example.com").exists()
+    assert not PermissionGroup.objects.filter(organization=org, template__bypasses_org_scoping=True).exists()
 
 
 # ── permission_group_for_user ─────────────────────────────────────────

@@ -84,6 +84,9 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.VIEW,
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
+        # TODO: Client reads are gated by object-level HasRetvalPerm (guardian) checks,
+        # not permissioned_queryset/HasOrgPerm, so this permission remains org-confined,
+        # despite the bypass.
         ClientProfile.perms.VIEW,
         # ── common ──
         Address.perms.ADD,
