@@ -34,10 +34,7 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
 
 
 class MatchableValuesTestCase(TestCase):
-    """An id is whatever the column says it is -- never assumed to be an integer.
-
-    ``ID`` accepts any string, and only the field knows which ones can match.
-    """
+    """An id is whatever the column says it is -- never assumed to be an integer."""
 
     def test_keeps_values_an_integer_column_can_hold(self) -> None:
         field = Note._meta.get_field("team")
@@ -50,11 +47,6 @@ class MatchableValuesTestCase(TestCase):
         self.assertEqual(matchable_values(field=field, values=["1", "abc"]), ["1"])
 
     def test_keeps_a_well_formed_uuid_for_a_uuid_column(self) -> None:
-        """The reason nothing here converts to int.
-
-        ``NoteImportRecord.import_job`` points at a UUID primary key. Asking the
-        field rather than calling ``int()`` is what makes this work unchanged.
-        """
         field = NoteImportRecord._meta.get_field("import_job")
         job_id = str(uuid.uuid4())
 

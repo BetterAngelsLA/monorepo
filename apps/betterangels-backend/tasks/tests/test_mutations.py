@@ -192,11 +192,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
 
 class TaskUnmatchableIdTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
-    """An id the column cannot hold names no row, so it is a miss, not a crash.
-
-    The note-side equivalents live in ``notes/tests/test_mutations.py``; these
-    cover the task mutations, which reach the same helpers by a different route.
-    """
+    """An id the column cannot hold names no row, so it is a miss, not a crash."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -213,7 +209,6 @@ class TaskUnmatchableIdTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(Task.objects.filter(summary="Org 1 task").count(), 0)
 
     def test_update_task_denies_an_unmatchable_id(self) -> None:
-        """The same answer an id that simply does not exist gets."""
         unmatchable = self.update_task_fixture({"id": "abc", "summary": "Amended"})
         missing = self.update_task_fixture({"id": "99999999", "summary": "Amended"})
 

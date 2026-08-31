@@ -19,9 +19,6 @@ def get_object_or_permission_error(
     since the queryset is already filtered by row-level permissions,
     a DoesNotExist exception usually implies a permission denial (even if
     technically it could be a 404). Cross-org protection relies on this explicit error.
-
-    ``pk`` comes from a GraphQL ``ID`` and may be any string. One the primary key
-    cannot hold names no row, so it is refused the same way a missing row is.
     """
     obj = get_or_none(qs, pk)
 

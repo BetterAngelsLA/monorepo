@@ -21,12 +21,7 @@ from strawberry.types.scalar import ScalarDefinition
 
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
-    """Filter rows whose ``field_name`` is in the given values.
-
-    ``field_name`` is resolved against the queryset's own model, so this is for
-    a field on the filtered model rather than one reached through a nested
-    filter object, which would arrive with a non-empty *prefix*.
-    """
+    """Filter rows whose ``field_name`` is in the given values."""
 
     @strawberry_django.filter_field
     def _filter(queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str) -> Q:

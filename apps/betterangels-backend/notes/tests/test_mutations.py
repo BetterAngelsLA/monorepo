@@ -1019,13 +1019,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
 
 class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
-    """An id the column cannot hold names no row, so it is a miss, not a crash.
-
-    ``teamId`` and ``id`` are GraphQL ``ID``s, which accept any string. Nothing
-    in the write path converts one, so Django's field decides what the value
-    means -- which is what keeps this correct if a primary key ever becomes a
-    UUID.
-    """
+    """An id the column cannot hold names no row, so it is a miss, not a crash."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -1066,7 +1060,6 @@ class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(Note.objects.filter(purpose="Org 1 note").count(), 0)
 
     def test_update_note_denies_an_unmatchable_id(self) -> None:
-        """The same answer an id that simply does not exist gets."""
         unmatchable = self._update_note_fixture({"id": "abc", "purpose": "Amended"})
         missing = self._update_note_fixture({"id": "99999999", "purpose": "Amended"})
 

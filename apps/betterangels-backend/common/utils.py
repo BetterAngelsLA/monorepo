@@ -10,19 +10,7 @@ _M = TypeVar("_M", bound=Model)
 
 
 def can_match(*, field: Field, value: Any) -> bool:
-    """Whether *value* is one the column behind *field* could hold.
-
-    A GraphQL ``ID`` accepts any string, so a value can reach a lookup that the
-    column cannot store -- and Django raises from inside the query rather than
-    returning nothing. A value it cannot store names no row, which is what every
-    caller wants to know.
-
-    ``get_prep_value`` rather than ``to_python`` or ``clean``: it is the call
-    ``Lookup.get_prep_lookup`` makes, so this rejects exactly what the lookup
-    would have raised on. The cost is that it has no single exception contract --
-    an integer column raises ``ValueError``/``TypeError`` and a UUID column
-    raises ``ValidationError`` -- where ``to_python`` would raise only the last.
-    """
+    """Whether *value* is one the column behind *field* could hold."""
     try:
         field.get_prep_value(value)
     except ValueError, TypeError, ValidationError:
@@ -32,23 +20,12 @@ def can_match(*, field: Field, value: Any) -> bool:
 
 
 def matchable_values(*, field: Field, values: Iterable[Any]) -> list[Any]:
-    """Drop the values *field* cannot hold, keeping the rest in order.
-
-    An empty result is not the same as no filter: Django renders ``__in []`` as
-    matching nothing, which is what a list of entirely unmatchable values should
-    do.
-    """
+    """Drop the values *field* cannot hold, keeping the rest in order."""
     return [value for value in values if can_match(field=field, value=value)]
 
 
 def get_or_none(queryset: QuerySet[_M], pk: Any) -> _M | None:
-    """Return the row *pk* names, or ``None`` -- including when *pk* cannot match.
-
-    *pk* may come from a GraphQL ``ID``, which accepts any string. One the
-    primary key cannot hold names no row, so it is a miss rather than something
-    that raises from inside the query. Callers that want an exception raise their
-    own, which is why this returns ``None`` instead of choosing one for them.
-    """
+    """Return the row *pk* names, or ``None`` -- including when *pk* cannot match."""
     if not can_match(field=queryset.model._meta.pk, value=pk):
         return None
 

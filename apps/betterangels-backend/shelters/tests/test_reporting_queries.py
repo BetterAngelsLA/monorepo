@@ -97,7 +97,6 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_unmatchable_shelter_id_is_not_found(self) -> None:
-        """An id the column cannot hold gets the answer a missing row gets."""
         self._add_shelter_view_permission(self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 

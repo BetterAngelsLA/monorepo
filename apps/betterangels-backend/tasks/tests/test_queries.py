@@ -242,11 +242,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         )
 
     def test_tasks_query_teams_filter_ignores_an_unmatchable_id(self) -> None:
-        """An id the column cannot hold matches nothing, so it changes nothing.
-
-        The list still filters on the ids that can match, rather than the whole
-        query failing on the one that cannot.
-        """
         task_id = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
@@ -265,11 +260,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_teams_filter_of_only_unmatchable_ids_matches_nothing(self) -> None:
-        """The filter must fail closed.
-
-        Dropping every value would leave no filter at all, which would return
-        every task the caller can see -- the opposite of what was asked for.
-        """
         self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),

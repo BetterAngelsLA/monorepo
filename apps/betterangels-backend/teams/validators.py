@@ -41,10 +41,6 @@ def validate_team_in_org(*, team_id: int | str | None, organization_id: int | No
         raise ValidationError("A team cannot be set on a record that has no organization.")
 
     if not can_match(field=Team._meta.pk, value=team_id):
-        # ``team_id`` comes from a GraphQL ``ID``, so it may be any string. One
-        # the column cannot hold is not a team this rule can have an opinion
-        # about, and the only caller is ``clean()``, which ``full_clean()`` runs
-        # after ``clean_fields()`` has already reported the field error.
         return
 
     if not Team.objects.filter(pk=team_id, organization_id=organization_id).exists():

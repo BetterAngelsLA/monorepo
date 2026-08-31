@@ -36,7 +36,6 @@ class TeamGetTestCase(GraphQLBaseTestCase):
         self.assertIsNone(team_get(pk=999999, organization=self.org_1))
 
     def test_returns_none_for_a_pk_the_column_cannot_hold(self) -> None:
-        """A GraphQL ``ID`` accepts any string, so this reaches the selector."""
         self.assertIsNone(team_get(pk="abc", organization=self.org_1))
 
 
