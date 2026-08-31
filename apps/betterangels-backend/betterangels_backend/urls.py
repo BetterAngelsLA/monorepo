@@ -39,8 +39,6 @@ urlpatterns = [
         ensure_csrf_cookie(
             GraphQLView.as_view(
                 schema=schema,
-                # https://github.com/strawberry-graphql/strawberry/issues/3655#issuecomment-2386409153
-                multipart_uploads_enabled=True,
             )
         ),
     ),
