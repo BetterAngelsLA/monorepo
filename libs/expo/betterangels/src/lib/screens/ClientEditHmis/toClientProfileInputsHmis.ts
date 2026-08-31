@@ -43,36 +43,32 @@ export function toUpdateClientProfileInputHmis(
     return null;
   }
 
-  // remove disallowed fields
-  const { profilePhoto, ...safeInputs } = inputs;
-
   // normalize values: hmis API does not support PATCH, so we some values
   // must always be resent, or they can be cleared accidentally.
   const normalizedInputs: TRequiredHmisFields &
     Partial<UpdateHmisClientProfileInput> = {
-    ...safeInputs,
+    ...inputs,
 
-    gender: firstNonEmptyArray(safeInputs.gender, client.gender) ?? [
+    gender: firstNonEmptyArray(inputs.gender, client.gender) ?? [
       FALLBACK_GENDER,
     ],
 
     raceEthnicity: firstNonEmptyArray(
-      safeInputs.raceEthnicity,
+      inputs.raceEthnicity,
       client.raceEthnicity,
     ) ?? [FALLBACK_RACE_ETHNICITY],
 
-    nameSuffix:
-      safeInputs.nameSuffix ?? client.nameSuffix ?? FALLBACK_NAME_SUFFIX,
+    nameSuffix: inputs.nameSuffix ?? client.nameSuffix ?? FALLBACK_NAME_SUFFIX,
 
-    veteran: safeInputs.veteran ?? client.veteran ?? FALLBACK_VETERAN_STATUS,
+    veteran: inputs.veteran ?? client.veteran ?? FALLBACK_VETERAN_STATUS,
 
-    nameMiddle: safeInputs.nameMiddle ?? client.nameMiddle ?? '',
+    nameMiddle: inputs.nameMiddle ?? client.nameMiddle ?? '',
 
     genderIdentityText:
-      safeInputs.genderIdentityText ?? client.genderIdentityText ?? '',
+      inputs.genderIdentityText ?? client.genderIdentityText ?? '',
 
     additionalRaceEthnicityDetail:
-      safeInputs.additionalRaceEthnicityDetail ??
+      inputs.additionalRaceEthnicityDetail ??
       client.additionalRaceEthnicityDetail ??
       '',
   };
