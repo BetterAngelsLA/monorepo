@@ -1,9 +1,14 @@
 """Tests for exporting interaction data via NoteResource."""
 
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 import pytest
+from django.utils import timezone
 from model_bakery import baker
 from notes.admin import NoteResource
 from notes.models import Note
+from reports.exporters import ReportNoteResource
 
 
 class TestNoteResourceExport:
@@ -69,3 +74,35 @@ class TestNoteResourceExport:
 
         # NoteResource should be a subclass of ModelResource
         assert issubclass(NoteResource, ModelResource)
+
+
+@pytest.mark.django_db
+class TestExportTimeZones:
+    """The admin export follows the person browsing; a report export does not."""
+
+    # 2025-02-01 05:30 UTC is 2025-01-31 21:30 in Los Angeles but 2025-02-01 00:30
+    # in New York, so the two zones disagree about which day this note belongs to.
+    INSTANT = datetime(2025, 2, 1, 5, 30, tzinfo=UTC)
+
+    def test_admin_export_follows_the_active_timezone(self) -> None:
+        """TimezoneMiddleware activates the browsing user's zone, and the admin export uses it."""
+        note = baker.make(Note, interacted_at=self.INSTANT)
+
+        with timezone.override(ZoneInfo("America/New_York")):
+            csv_content = NoteResource().export(queryset=Note.objects.filter(pk=note.pk)).csv
+
+        assert "02/01/2025" in csv_content
+
+    def test_report_export_is_labelled_on_the_operating_zone(self) -> None:
+        """A report is a record, so its rows carry the calendar its range was cut on.
+
+        Following whoever triggered it would let the same month export as two
+        different files, and neither would match the emailed copy.
+        """
+        note = baker.make(Note, interacted_at=self.INSTANT)
+
+        with timezone.override(ZoneInfo("America/New_York")):
+            csv_content = ReportNoteResource().export(queryset=Note.objects.filter(pk=note.pk)).csv
+
+        assert "01/31/2025" in csv_content
+        assert "02/01/2025" not in csv_content

@@ -5,9 +5,11 @@ from typing import Any
 
 from celery import Task, shared_task
 from common.celery import single_instance
+from common.constants import OPERATING_TIME_ZONE
 from django.utils import timezone
 
 from .models import ScheduledReport
+
 from .services import generate_report_data, get_previous_month_range, send_report_email
 
 logger = logging.getLogger(__name__)
@@ -48,8 +50,10 @@ def send_scheduled_report(self: Task, report_id: int, recipient_override: str | 
     except ScheduledReport.DoesNotExist:
         return {"status": "error", "message": f"ScheduledReport {report_id} not found"}
 
-    # Calculate the date range for the previous month
-    start_date, end_date = get_previous_month_range()
+    # The period comes from the run being serviced, not from the clock — a job that
+    # runs late or on a retry must still report the month its due date fell after.
+    due_at = report.next_run_at or timezone.now()
+    start_date, end_date = get_previous_month_range(as_of=due_at.astimezone(OPERATING_TIME_ZONE).date())
     month_str = start_date.strftime("%m")
     year_str = start_date.strftime("%Y")
 

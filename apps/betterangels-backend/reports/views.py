@@ -6,18 +6,29 @@ APIs should be thin — validation via serializers, logic via selectors/services
 Reference: https://github.com/HackSoftware/Django-Styleguide#apis--serializers
 """
 
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from typing import Any
 
 from django.http import HttpResponse
-from django.utils import timezone
-from notes.admin import NoteResource
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
+from .exporters import ReportNoteResource
 from .permissions import HasReportAccess
-from .selectors import note_list_for_org
+from .selectors import local_today, local_window, note_list_for_org, report_month_range
+
+
+def _resolve_range(data: dict[str, Any]) -> tuple[date, date]:
+    """The requested range, or the previous month on the operating zone's calendar."""
+    if data.get("start_date") and data.get("end_date"):
+        return data["start_date"], data["end_date"]
+
+    previous_month = local_today().replace(day=1) - timedelta(days=1)
+    return report_month_range(
+        year=data.get("year", previous_month.year),
+        month=data.get("month", previous_month.month),
+    )
 
 
 class ExportInteractionDataApi(APIView):
@@ -40,36 +51,22 @@ class ExportInteractionDataApi(APIView):
             start = attrs.get("start_date")
             end = attrs.get("end_date")
 
-            if start and end:
-                if start > end:
-                    raise serializers.ValidationError("start_date must be before or equal to end_date.")
-                attrs["_resolved_start"] = start
-                attrs["_resolved_end"] = end
-                return attrs
+            if start and end and start > end:
+                raise serializers.ValidationError("start_date must be before or equal to end_date.")
 
-            # Fallback to month/year (legacy)
-            now = timezone.now()
-            month = attrs.get("month", (now.month - 1) or 12)
-            year = attrs.get("year", now.year if now.month > 1 else now.year - 1)
-
-            attrs["_resolved_start"] = datetime(year, month, 1).date()
-            if month == 12:
-                attrs["_resolved_end"] = (datetime(year + 1, 1, 1) - timedelta(days=1)).date()
-            else:
-                attrs["_resolved_end"] = (datetime(year, month + 1, 1) - timedelta(days=1)).date()
             return attrs
 
     def get(self, request: Request) -> HttpResponse:
         serializer = self.InputSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        start_date = serializer.validated_data["_resolved_start"]
-        end_date = serializer.validated_data["_resolved_end"]
-
         org = request.permitted_org  # type: ignore[attr-defined]  # set by HasReportAccess
-        notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date).order_by("interacted_at")
+        start_date, end_date = _resolve_range(serializer.validated_data)
 
-        resource = NoteResource()
+        start, end = local_window(start_date, end_date)
+        notes = note_list_for_org(org=org, start=start, end=end).order_by("interacted_at")
+
+        resource = ReportNoteResource()
         dataset = resource.export(queryset=notes)
 
         start_str = start_date.strftime("%Y%m%d")
