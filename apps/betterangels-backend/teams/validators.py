@@ -39,5 +39,12 @@ def validate_team_in_org(*, team_id: int | str | None, organization_id: int | No
     if organization_id is None:
         raise ValidationError("A team cannot be set on a record that has no organization.")
 
-    if not Team.objects.filter(pk=team_id, organization_id=organization_id).exists():
+    try:
+        belongs = Team.objects.filter(pk=team_id, organization_id=organization_id).exists()
+    except ValueError, TypeError:
+        # ``team_id`` comes from a GraphQL ``ID``, so it may be any string. One
+        # the column cannot hold names no team, let alone one of this org's.
+        belongs = False
+
+    if not belongs:
         raise ValidationError("The selected team does not belong to this organization.")
