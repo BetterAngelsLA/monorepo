@@ -98,6 +98,7 @@ export default function Client({
   if (loading) {
     return (
       <View
+        testID="client-screen-loading"
         style={{
           flex: 1,
           alignItems: 'center',
@@ -157,7 +158,13 @@ export default function Client({
           ),
         }}
       />
-      <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+      <MainContainer
+        testId="client-screen"
+        pt={0}
+        pb={0}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        px={0}
+      >
         {showHeader && <ClientHeader client={data?.clientProfile} />}
         <UploadProgressBar />
         <ClientTabs selectedTab={tab} setTab={setTab} />
