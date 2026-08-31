@@ -41,19 +41,30 @@ def matchable_values(*, field: Field, values: Iterable[Any]) -> list[Any]:
     return [value for value in values if can_match(field=field, value=value)]
 
 
+def get_or_none(queryset: QuerySet[_M], pk: Any) -> _M | None:
+    """Return the row *pk* names, or ``None`` -- including when *pk* cannot match.
+
+    *pk* may come from a GraphQL ``ID``, which accepts any string. One the
+    primary key cannot hold names no row, so it is a miss rather than something
+    that raises from inside the query. Callers that want an exception raise their
+    own, which is why this returns ``None`` instead of choosing one for them.
+    """
+    if not can_match(field=queryset.model._meta.pk, value=pk):
+        return None
+
+    return queryset.filter(pk=pk).first()
+
+
 def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
     """Get an object by primary key, raising ObjectDoesNotExist on failure.
 
     Uses ``queryset.model.__name__`` to build a descriptive error message.
-
-    *pk* may come from a GraphQL ``ID``, which accepts any string. One the
-    primary key cannot hold names no row, so it is reported as not found rather
-    than allowed to raise from inside the query.
     """
-    obj = queryset.filter(pk=pk).first() if can_match(field=queryset.model._meta.pk, value=pk) else None
+    obj = get_or_none(queryset, pk)
 
     if obj is None:
         raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
+
     return obj
 
 

@@ -1,7 +1,7 @@
 from typing import Any, TypeVar
 
-from common.utils import can_match
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from common.utils import get_or_none
+from django.core.exceptions import PermissionDenied
 from django.db.models import Model, QuerySet
 
 T = TypeVar("T", bound=Model)
@@ -21,13 +21,11 @@ def get_object_or_permission_error(
     technically it could be a 404). Cross-org protection relies on this explicit error.
 
     ``pk`` comes from a GraphQL ``ID`` and may be any string. One the primary key
-    cannot hold names no row, so it is refused the same way a missing row is,
-    rather than being allowed to raise from inside the query.
+    cannot hold names no row, so it is refused the same way a missing row is.
     """
-    if not can_match(field=qs.model._meta.pk, value=pk):
+    obj = get_or_none(qs, pk)
+
+    if obj is None:
         raise PermissionDenied(error_message)
 
-    try:
-        return qs.get(pk=pk)
-    except ObjectDoesNotExist as exc:
-        raise PermissionDenied(error_message) from exc
+    return obj
