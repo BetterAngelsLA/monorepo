@@ -1,11 +1,12 @@
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import User
+from accounts.models import PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import Organization
+from shelters.groups import GLOBAL_SHELTER_OPERATOR
 from unittest_parametrize import ParametrizedTestCase
 
 from .baker_recipes import organization_recipe
@@ -52,6 +53,21 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
         omb.replace_roles(self.user, CASEWORKER, ORG_SUPERUSER)
         self.assertNotIn(org_admin_group, self.user.groups.all())
         self.assertIn(org_superuser_group, self.user.groups.all())
+
+    def test_add_roles_refuses_org_bypass_role(self) -> None:
+        """Org-bypassing roles are admin-only — the role manager must never grant them."""
+        omb = OrgRoleManager(self.org_1)
+
+        with self.assertRaisesMessage(ValueError, "Global Shelter Operator"):
+            omb.add_roles(self.user, GLOBAL_SHELTER_OPERATOR)
+
+        self.assertFalse(
+            PermissionGroup.objects.filter(
+                organization=self.org_1,
+                user=self.user,
+                template__bypasses_org_scoping=True,
+            ).exists()
+        )
 
     def test_remove_roles(self) -> None:
         """remove_roles should remove only the specified templates, leaving others."""

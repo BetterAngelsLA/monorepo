@@ -3,6 +3,13 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 """
 
 import pytest
+from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
+from model_bakery import baker
+from notes.groups import CASEWORKER
+from organizations.models import Organization, OrganizationUser
+from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
+
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
@@ -15,12 +22,6 @@ from accounts.services import (
     organization_remove_member,
     reactivate_user,
 )
-from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
-from model_bakery import baker
-from notes.groups import CASEWORKER
-from organizations.models import Organization, OrganizationUser
-from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────
 
@@ -585,6 +586,25 @@ class TestMemberRolesReplace:
 
         with pytest.raises(ValidationError, match="not a member"):
             member_roles_replace(organization=org, user_id=stranger.pk, permission_templates=(CASEWORKER,))
+
+    def test_refuses_an_org_bypass_role(self) -> None:
+        """Bypass roles are admin-only: this API must never grant one."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Guarded Org", ["shelter"], owner=owner)
+
+        member = member_add(
+            email="guarded@example.com",
+            first_name="Guarded",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+
+        with pytest.raises(ValueError, match="Cannot add roles for"):
+            member_roles_replace(organization=org, user_id=member.pk, permission_templates=(GLOBAL_SHELTER_OPERATOR,))
+
+        assert _role_names(org, member) == {SHELTER_OPERATOR.name}
 
 
 def _role_names(org: Organization, member: User) -> set[str]:

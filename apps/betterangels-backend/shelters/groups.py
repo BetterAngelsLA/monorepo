@@ -200,7 +200,4 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
     ],
     is_invitable=False,
     bypasses_org_scoping=True,
-    welcome_html="shelters/email/shelter_operator_welcome.html",
-    welcome_txt="shelters/email/shelter_operator_welcome.txt",
-    base_url_setting="SHELTER_WEB_BASE_URL",
 )

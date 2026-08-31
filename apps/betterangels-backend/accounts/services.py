@@ -400,6 +400,7 @@ def member_roles_replace(
 
     An invitable role not listed is revoked, which makes this a single edit of
     "what this person can do here" rather than an additive grant.
+    Org-bypassing roles cannot be named here.
 
     Every other org-scoped group is left alone: ``Organization Admin`` and
     ``Organization Superuser``, the ``REGISTRY.unscoped`` templates, and rows

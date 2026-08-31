@@ -21,6 +21,9 @@ class OrgRoleManager:
     Provides mechanical operations — adding, removing, and replacing
     permission groups.  Business rules (e.g. "cannot remove the org
     owner") belong in the calling layer, not here.
+
+    One invariant is enforced here rather than in a caller: org-bypassing
+    roles (``bypasses_org_scoping=True``) are admin-only — see :meth:`add_roles`.
     """
 
     def __init__(self, organization: Organization) -> None:
@@ -35,9 +38,15 @@ class OrgRoleManager:
         ``templates`` are :class:`~common.permissions.config.TemplateConfig`
         objects such as :data:`~notes.groups.CASEWORKER`.
 
+        Org-bypassing roles (``bypasses_org_scoping=True``) are **admin-only**.
+
         Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
         ``PermissionGroup`` exists for a given template on this organization.
         """
+        bypass_roles = [template.name for template in templates if template.bypasses_org_scoping]
+        if bypass_roles:
+            raise ValueError(f"Cannot add roles for: {', '.join(bypass_roles)}.")
+
         for template_config in templates:
             permission_group = PermissionGroup.objects.get(
                 organization=self.organization,
