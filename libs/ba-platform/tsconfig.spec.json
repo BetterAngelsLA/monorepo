@@ -8,8 +8,6 @@
     "types": ["node", "vitest/globals"]
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.tsx",

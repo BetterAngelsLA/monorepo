@@ -26,8 +26,8 @@ import { deleteClientDocumentMeta } from '../screens/Client/__generated__/Client
 import { MainModal } from './MainModal';
 
 type ModalState =
-  | 'menuVisible'
-  | 'menuClosing'
+  | 'mainVisible'
+  | 'mainClosing'
   | 'deleteRequested'
   | 'deleteVisible';
 
@@ -35,7 +35,6 @@ interface IDocumentModalProps {
   closeModal: () => void;
   document: ClientDocumentType;
   clientId: string;
-  /** Notifies the parent when the delete mutation starts / finishes. */
   onDeleteStateChange?: (documentId: string, isDeleting: boolean) => void;
 }
 
@@ -48,7 +47,7 @@ export default function DocumentModal({
   const fileTypeText = getFileTypeText(document.mimeType);
 
   const { showSnackbar } = useSnackbar();
-  const [modalState, setModalState] = useState<ModalState>('menuVisible');
+  const [modalState, setModalState] = useState<ModalState>('mainVisible');
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -192,18 +191,18 @@ export default function DocumentModal({
           body={`All data associated with this ${fileTypeText} will be deleted.`}
           title={`Delete ${fileTypeText}?`}
           onDelete={deleteFile}
-          onCancel={() => setModalState('menuVisible')}
+          onCancel={() => setModalState('mainVisible')}
           deleteableItemName={fileTypeText}
         />
       )}
 
       {modalState !== 'deleteVisible' && (
         <MainModal
-          isModalVisible={modalState === 'menuVisible'}
+          isModalVisible={modalState === 'mainVisible'}
           closeButton
           vertical
           actions={ACTIONS}
-          closeModal={() => setModalState('menuClosing')}
+          closeModal={() => setModalState('mainClosing')}
           opacity={0.5}
           onCloseComplete={() => {
             // MainModal must fully close (animation + unmount) before DeleteModal
