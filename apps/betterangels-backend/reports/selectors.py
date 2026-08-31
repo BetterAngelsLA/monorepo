@@ -8,7 +8,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 
 from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
@@ -49,7 +49,7 @@ def note_list_for_org(
 
 def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by date."""
-    return list(
+    rows = (
         notes.annotate(trunc_date=TruncDate("interacted_at"))
         .values("trunc_date")
         .annotate(count=Count("id"))
@@ -60,6 +60,8 @@ def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
         )
     )
 
+    return cast(list[dict[str, Any]], list(rows))
+
 
 def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by team, with display labels."""
@@ -69,7 +71,7 @@ def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
 
 def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by purpose."""
-    return list(
+    rows = (
         notes.exclude(purpose__isnull=True)
         .exclude(purpose="")
         .values("purpose")
@@ -80,6 +82,8 @@ def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dic
             count=F("count"),
         )
     )
+
+    return cast(list[dict[str, Any]], list(rows))
 
 
 def note_top_services(
@@ -99,12 +103,14 @@ def note_top_services(
         limit: Max number of results.
     """
     label_field = f"{relation}__service__label"
-    return list(
+    rows = (
         notes.filter(**{f"{relation}__service__isnull": False})
         .values(name=F(label_field))
         .annotate(count=Count("id"))
         .order_by("-count")[:limit]
     )
+
+    return cast(list[dict[str, Any]], list(rows))
 
 
 def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
@@ -114,7 +120,7 @@ def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
 
 def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Count distinct client profiles grouped by interaction date."""
-    return list(
+    rows = (
         notes.filter(client_profile__isnull=False)
         .annotate(trunc_date=TruncDate("interacted_at"))
         .values("trunc_date")
@@ -125,6 +131,8 @@ def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]
             count=F("count"),
         )
     )
+
+    return cast(list[dict[str, Any]], list(rows))
 
 
 def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

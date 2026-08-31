@@ -1,15 +1,4 @@
-# django-stubs 5.2.x still targets Django 5.2, where StringAgg lived only in
-# django.contrib.postgres.aggregates. Drop the ignore when the stubs catch up.
-from django.db.models import (  # type: ignore[attr-defined]
-    Case,
-    CharField,
-    Exists,
-    OuterRef,
-    StringAgg,
-    Subquery,
-    Value,
-    When,
-)
+from django.db.models import Case, CharField, Exists, OuterRef, StringAgg, Subquery, Value, When
 from organizations.models import OrganizationOwner
 
 from accounts.enums import OrgRoleEnum

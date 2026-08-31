@@ -641,10 +641,14 @@ def avg_days_to_occupancy(
     last_free: dict[int, datetime.datetime] = {}  # per-bed: when last freed
     last_free_res: dict[int, int] = {}  # per-bed: which reservation freed it
 
-    for reservation_id, bed_id, before, after, created_at in rows:
+    for raw_reservation_id, raw_bed_id, before, after, created_at in rows:
+        if raw_bed_id is None or raw_reservation_id is None:
+            continue
+
         try:
-            bed_id = int(bed_id)
-        except TypeError, ValueError:
+            bed_id = int(raw_bed_id)
+            reservation_id = int(raw_reservation_id)
+        except ValueError:
             continue
 
         # "Free" event: exited checked_in → bed available for the next guest.
