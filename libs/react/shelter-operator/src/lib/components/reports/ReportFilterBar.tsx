@@ -80,11 +80,19 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   const printRef = useRef<HTMLDivElement>(null);
   const { exportPdf, isExporting: isPdfExporting } = useExportPdf(printRef);
 
-  const { data: shelterData } = useQuery(GetShelterSummaryDocument, {
+  const {
+    data: shelterData,
+    loading: isShelterDataLoading,
+    error: shelterDataError,
+  } = useQuery(GetShelterSummaryDocument, {
     variables: { id: shelterId ?? '' },
     skip: !shelterId || !isExportOpen,
   });
-  const { metrics } = useShelterOccupancyMetrics({
+  const {
+    metrics,
+    loading: isMetricsLoading,
+    error: metricsError,
+  } = useShelterOccupancyMetrics({
     // Piggyback on the hook's own `!shelterId` skip condition — it has no
     // separate skip param, and there's nothing to render off-screen while
     // the modal is closed.
@@ -92,6 +100,18 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
     startDate: range.from,
     endDate: range.to,
   });
+
+  // Both queries above feed the off-screen ShelterReportPrint that PDF
+  // export captures. Until they've resolved successfully, that render would
+  // show fallback names, em-dash stats, and empty charts instead of the
+  // selected range's real data — so Export stays disabled rather than
+  // letting handlePdfExport silently capture an incomplete report.
+  const isPdfDataUnavailable =
+    isExportOpen &&
+    (isShelterDataLoading ||
+      isMetricsLoading ||
+      Boolean(shelterDataError) ||
+      Boolean(metricsError));
 
   async function handlePdfExport(selectedMetrics: ExportMetric[]) {
     if (!shelterId) return;
@@ -173,6 +193,7 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
         <ExportDataModal
           isOpen={isExportOpen}
           isExporting={isBackendExporting || isPdfExporting}
+          disableExport={isPdfDataUnavailable}
           rangeLabel={rangeLabel(range)}
           onClose={() => setIsExportOpen(false)}
           onExport={handleExport}

@@ -1,18 +1,75 @@
 import { MockedProvider } from '@apollo/client/testing/react';
+import type { MockLink } from '@apollo/client/testing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { GetShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
+import { ShelterOccupancyMetricsDocument } from '../../hooks/useShelterOccupancyMetrics/__generated__/useShelterOccupancyMetrics.generated';
 import { ReportFilterBar } from './ReportFilterBar';
 
 const fetchMock = vi.fn();
 const showToast = vi.fn();
 const exportPdfMock = vi.fn();
 
+const SHELTER_ID = '7';
+
 // ReportFilterBar always queries the shelter summary + occupancy metrics for
-// the off-screen PDF render target (see handlePdfExport), even when the CSV/
-// XLSX/JSON path is what's under test — a bare MockedProvider with no
-// matching mocks is enough since nothing here asserts on that query's data.
-function renderFilterBar(shelterId?: string) {
+// the off-screen PDF render target (see handlePdfExport) once the modal is
+// open, and disables Export until both resolve — see the "disables Export"
+// tests below. The CSV/XLSX/JSON tests need these to resolve too, since they
+// share the same Export button.
+function pdfDataMocks(): MockLink.MockedResponse[] {
+  return [
+    {
+      request: {
+        query: GetShelterSummaryDocument,
+        variables: { id: SHELTER_ID },
+      },
+      result: {
+        data: {
+          operatorShelter: {
+            id: SHELTER_ID,
+            name: 'Downtown Emergency Shelter',
+            location: { place: '1234 S Main St' },
+          },
+        },
+      },
+    },
+    {
+      request: {
+        query: ShelterOccupancyMetricsDocument,
+        variables: {
+          shelterId: SHELTER_ID,
+          startDate: '2026-06-01',
+          endDate: '2026-06-30',
+        },
+      },
+      result: {
+        data: {
+          shelterOccupancyMetrics: {
+            shelterId: SHELTER_ID,
+            startDate: '2026-06-01',
+            endDate: '2026-06-30',
+            avgDaysToOccupancy: 10,
+            dailyOccupancy: [],
+            dailyBedStatus: [],
+            reservationMetrics: {
+              checkInOverdue: 0,
+              cancelled: 0,
+              checkedIn: 0,
+              checkInOverdueToCheckedIn: 0,
+            },
+          },
+        },
+      },
+    },
+  ];
+}
+
+function renderFilterBar(
+  shelterId?: string,
+  mocks: MockLink.MockedResponse[] = pdfDataMocks(),
+) {
   return render(
-    <MockedProvider mocks={[]}>
+    <MockedProvider mocks={mocks} addTypename={false}>
       <ReportFilterBar shelterId={shelterId} />
     </MockedProvider>,
   );
@@ -62,9 +119,23 @@ function exportResponse(filename = '20260601_20260630_shelter_report.zip') {
   };
 }
 
-function openModalAndExport() {
+async function openModalAndExport() {
   fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+  await waitForExportEnabled();
   fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+}
+
+// Export is disabled until the off-screen PDF render's queries resolve (see
+// isPdfDataUnavailable in ReportFilterBar) — every test that submits the
+// modal has to wait this out first, even the CSV/XLSX/JSON ones, since they
+// share the same button.
+function waitForExportEnabled() {
+  return waitFor(() => {
+    const button = screen.getByRole('button', {
+      name: /^export$/i,
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+  });
 }
 
 beforeEach(() => {
@@ -94,7 +165,7 @@ describe('ReportFilterBar export', () => {
     fetchMock.mockResolvedValue(exportResponse());
 
     renderFilterBar('7');
-    openModalAndExport();
+    await openModalAndExport();
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
@@ -118,6 +189,7 @@ describe('ReportFilterBar export', () => {
     renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
     fireEvent.click(screen.getByRole('checkbox', { name: /bed status/i }));
+    await waitForExportEnabled();
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -133,7 +205,7 @@ describe('ReportFilterBar export', () => {
     fetchMock.mockResolvedValue(exportResponse());
 
     renderFilterBar('7');
-    openModalAndExport();
+    await openModalAndExport();
 
     await waitFor(() =>
       expect(showToast).toHaveBeenCalledWith(
@@ -149,7 +221,7 @@ describe('ReportFilterBar export', () => {
     fetchMock.mockResolvedValue({ ok: false, status: 403 });
 
     renderFilterBar('7');
-    openModalAndExport();
+    await openModalAndExport();
 
     await waitFor(() =>
       expect(showToast).toHaveBeenCalledWith(
@@ -179,6 +251,7 @@ describe('ReportFilterBar export', () => {
     renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
     fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    await waitForExportEnabled();
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
 
     await waitFor(() => expect(exportPdfMock).toHaveBeenCalledTimes(1));
@@ -199,6 +272,7 @@ describe('ReportFilterBar export', () => {
     renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
     fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    await waitForExportEnabled();
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
 
     await waitFor(() =>
@@ -210,5 +284,85 @@ describe('ReportFilterBar export', () => {
       ),
     );
     expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+  });
+
+  it('disables Export while the off-screen PDF render data is still loading', () => {
+    // A pending mock (no `result`) simulates the query never resolving
+    // within the test, so isPdfDataUnavailable stays true throughout.
+    renderFilterBar('7', [
+      {
+        request: {
+          query: GetShelterSummaryDocument,
+          variables: { id: SHELTER_ID },
+        },
+        delay: Infinity,
+      },
+      {
+        request: {
+          query: ShelterOccupancyMetricsDocument,
+          variables: {
+            shelterId: SHELTER_ID,
+            startDate: '2026-06-01',
+            endDate: '2026-06-30',
+          },
+        },
+        delay: Infinity,
+      },
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+
+    const button = screen.getByRole('button', {
+      name: /^export$/i,
+    }) as HTMLButtonElement;
+
+    expect(button.disabled).toBe(true);
+  });
+
+  it('disables Export when the off-screen PDF render data fails to load', async () => {
+    renderFilterBar('7', [
+      {
+        request: {
+          query: GetShelterSummaryDocument,
+          variables: { id: SHELTER_ID },
+        },
+        error: new Error('network error'),
+      },
+      {
+        request: {
+          query: ShelterOccupancyMetricsDocument,
+          variables: {
+            shelterId: SHELTER_ID,
+            startDate: '2026-06-01',
+            endDate: '2026-06-30',
+          },
+        },
+        result: {
+          data: {
+            shelterOccupancyMetrics: {
+              shelterId: SHELTER_ID,
+              startDate: '2026-06-01',
+              endDate: '2026-06-30',
+              avgDaysToOccupancy: 10,
+              dailyOccupancy: [],
+              dailyBedStatus: [],
+              reservationMetrics: {
+                checkInOverdue: 0,
+                cancelled: 0,
+                checkedIn: 0,
+                checkInOverdueToCheckedIn: 0,
+              },
+            },
+          },
+        },
+      },
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+
+    await waitFor(() => {
+      const button = screen.getByRole('button', {
+        name: /^export$/i,
+      }) as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+    });
   });
 });

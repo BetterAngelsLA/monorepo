@@ -37,6 +37,13 @@ const ALL_METRICS = [...EXPORT_METRICS];
 type ExportDataModalProps = {
   isOpen: boolean;
   isExporting: boolean;
+  /**
+   * True while data the export depends on (e.g. the off-screen PDF render's
+   * queries) is still loading or failed to load — keeps Export disabled so
+   * it can't capture a report with fallback names, missing stats, or empty
+   * charts.
+   */
+  disableExport?: boolean;
   /** Human-readable range, so the modal states what it will export. */
   rangeLabel: string;
   onClose: () => void;
@@ -46,6 +53,7 @@ type ExportDataModalProps = {
 export function ExportDataModal({
   isOpen,
   isExporting,
+  disableExport = false,
   rangeLabel,
   onClose,
   onExport,
@@ -156,7 +164,7 @@ export function ExportDataModal({
           variant="primary"
           color="blue"
           rightIcon={false}
-          disabled={isExporting || metrics.length === 0}
+          disabled={isExporting || metrics.length === 0 || disableExport}
           onClick={() => onExport(format, metrics)}
         >
           {isExporting ? 'Exporting…' : 'Export'}
