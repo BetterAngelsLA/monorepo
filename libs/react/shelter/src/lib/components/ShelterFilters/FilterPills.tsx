@@ -51,28 +51,46 @@ export function FilterPills(props: IProps) {
   const pills: TPill[] = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (key === 'openNowFor') {
+    if (key === 'openNow') {
       const scheduleTypes = value as ScheduleTypeChoices[] | undefined;
+
       scheduleTypes?.forEach((scheduleType) => {
         const label = OPEN_NOW_SCHEDULE_TYPE_LABELS[scheduleType];
+
         if (label) {
           pills.push({
-            id: `openNowFor-${scheduleType}`,
+            id: `openNow-${scheduleType}`,
             label,
             clear: (prev) => {
-              const nextTypes = (prev.openNowFor ?? []).filter(
+              const nextTypes = (prev.openNow ?? []).filter(
                 (t) => t !== scheduleType,
               );
               return {
                 ...prev,
-                openNowFor: nextTypes.length > 0 ? nextTypes : undefined,
+                openNow: nextTypes.length > 0 ? nextTypes : undefined,
+                openNowIncludeUnknown:
+                  nextTypes.length > 0 ? prev.openNowIncludeUnknown : undefined,
               };
             },
           });
         }
       });
+
       continue;
     }
+
+    if (key === 'openNowIncludeUnknown') {
+      if (value) {
+        pills.push({
+          id: 'openNowIncludeUnknown',
+          label: 'Open Now: Include unknown',
+          clear: (prev) => ({ ...prev, openNowIncludeUnknown: undefined }),
+        });
+      }
+
+      continue;
+    }
+
     if (key === 'isAccessCenter') {
       if (value) {
         pills.push({
@@ -81,10 +99,13 @@ export function FilterPills(props: IProps) {
           clear: (prev) => ({ ...prev, isAccessCenter: undefined }),
         });
       }
+
       continue;
     }
+
     if (key === 'maxStay') {
       const maxStay = value as TShelterPropertyFilters['maxStay'];
+
       if (maxStay) {
         pills.push({
           id: 'maxStay',
@@ -92,6 +113,7 @@ export function FilterPills(props: IProps) {
           clear: (prev) => ({ ...prev, maxStay: undefined }),
         });
       }
+
       continue;
     }
 
