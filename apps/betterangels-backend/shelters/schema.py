@@ -148,18 +148,17 @@ class Mutation:
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
         input_org_id = clean.pop("organization_id", None)
+        target_org_id: str
 
         if user_holds_org_bypass_perms(user, [Shelter.perms.ADD]):
             if not input_org_id:
-                raise ValidationError(
-                    "organization_id is required when creating a shelter as a Global Shelter Operator."
-                )
+                raise ValidationError("organization_id is required.")
             if not Organization.objects.filter(pk=input_org_id).exists():
-                raise ValidationError("organization_id does not refer to an existing organization.")
-            target_org_id = input_org_id
+                raise ValidationError(f"Organization with id {input_org_id} not found.")
+            target_org_id = cast(str, input_org_id)
         else:
             if input_org_id and input_org_id != org_id:
-                raise PermissionDenied("You do not have permission to create a shelter for another organization.")
+                raise PermissionDenied("You do not have permission to create a shelter for that organization.")
             target_org_id = org_id
 
         return cast(ShelterType, shelter_create(user=user, organization_id=target_org_id, data=clean))

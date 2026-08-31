@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from functools import reduce
-from operator import or_
-from typing import Any, Sequence, Tuple, Type, TypeVar
+from operator import and_, or_
+from typing import Any, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
 from django.contrib.auth.models import AbstractBaseUser, Group
@@ -15,7 +15,6 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
-
 
 # ── Permission enum registry (frontend codegen) ───────────────────────────────
 
@@ -242,11 +241,10 @@ _T = TypeVar("_T", bound=Model)
 
 def _org_perm_exists_across_fields(
     user: AbstractBaseUser,
-    app_label: str,
-    codename: str,
+    perm_str: str,
     fields: list[str],
 ) -> Q:
-    """Return a ``Q`` checking the user holds a permission on any of the org fields.
+    """Return a ``Q`` checking the user holds *perm_str* on any of the org fields.
 
     Both conditions — that *user* is in the group, and that the group carries
     the permission — MUST stay inside a single ``.filter()`` call.
@@ -257,6 +255,7 @@ def _org_perm_exists_across_fields(
     provisioned with every template, so that reads as "any member holds every
     permission any template in their org has".
     """
+    app_label, codename = perm_str.split(".", 1)
     return reduce(
         or_,
         (
@@ -272,36 +271,45 @@ def _org_perm_exists_across_fields(
     )
 
 
-def user_has_org_bypass_role(user: AbstractBaseUser) -> bool:
-    """Whether *user* belongs to a ``PermissionGroup`` whose template bypasses org scoping.
+def _bypass_groups_for(user: AbstractBaseUser) -> "QuerySet[Any]":
+    """``PermissionGroup`` queryset for *user*'s org-bypassing roles.
 
     See :attr:`~common.permissions.config.TemplateConfig.bypasses_org_scoping`
     (e.g. Global Shelter Operator). Such a role's ``PermissionGroup`` is still
     tied to one organization, but its holder isn't meant to be confined to it.
     """
-    from accounts.models import PermissionGroup
+    from accounts.models import PermissionGroup, User
 
-    return PermissionGroup.objects.filter(user=user, template__bypasses_org_scoping=True).exists()
+    return PermissionGroup.objects.filter(user=cast(User, user), template__bypasses_org_scoping=True)
 
 
 def user_holds_org_bypass_perms(user: AbstractBaseUser, perms: Sequence[str], any_perm: bool = True) -> bool:
     """Whether *user* holds *perms* through an org-bypassing role, independent of organization.
 
-    Checks the permission directly against the user's org-bypassing
-    ``PermissionGroup`` memberships — no organization filter — so a Global
-    Shelter Operator's access isn't limited to whichever one organization
-    their grant happens to live under. Permission-scoped, not role-wide: only
-    returns ``True`` for permissions the bypassing role's template actually
-    carries.
+    For use outside a queryset filter (e.g. deciding which branch of a
+    resolver to take) — see :func:`_bypass_perm_exists` for the ``Q``-based
+    equivalent used inside :func:`permissioned_queryset`.
+
+    Permission-scoped, not role-wide: only returns ``True`` for permissions
+    the bypassing role's template actually carries.
     """
     if not perms:
         return False
 
-    from accounts.models import PermissionGroup
-
-    groups = PermissionGroup.objects.filter(user=user, template__bypasses_org_scoping=True)
+    groups = _bypass_groups_for(user)
     checks = (groups.filter(_perm_q(*p.split(".", 1), prefix="permissions")).exists() for p in perms)
     return any(checks) if any_perm else all(checks)
+
+
+def _bypass_perm_exists(user: AbstractBaseUser, perm_str: str) -> Q:
+    """Return a ``Q`` checking *user* holds *perm_str* through an org-bypassing role.
+
+    No ``OuterRef`` — org-bypassing access isn't relative to the row being
+    filtered, so this is a single uncorrelated ``EXISTS`` the database only
+    has to evaluate once, not per row.
+    """
+    app_label, codename = perm_str.split(".", 1)
+    return Q(Exists(_bypass_groups_for(user).filter(_perm_q(app_label, codename, prefix="permissions"))))
 
 
 def permissioned_queryset(
@@ -320,16 +328,18 @@ def permissioned_queryset(
     user holds the specified permission(s).  The org-membership check is
     implicit — ``permission_groups__user`` proves both.
 
-    When *perms* is provided and the user holds it through an org-bypassing
-    role (see :func:`user_holds_org_bypass_perms`), *organization_id* is
-    ignored entirely and *queryset* is returned unfiltered by organization —
-    that role's access isn't confined to one org. This only applies on the
-    *perms* path, deliberately: it's permission-scoped, so it can't fire for
-    a permission the role doesn't actually hold. The ``perms is None`` (pure
-    membership) branch below has no permission to gate a bypass on, so it
-    stays a plain org-membership check — adding a bypass there would be
-    role-scoped rather than permission-scoped, and this function is a shared
-    utility used well beyond the shelter domain.
+    When *perms* is provided, a user holding it through an org-bypassing role
+    (see :attr:`~common.permissions.config.TemplateConfig.bypasses_org_scoping`)
+    matches regardless of *organization_id* — that role's access isn't
+    confined to one org. This is folded into the same query as an OR'd,
+    uncorrelated ``EXISTS`` (see :func:`_bypass_perm_exists`) rather than a
+    separate up-front check, so it costs nothing extra for the common,
+    non-bypassing case: the same one query runs either way. This only applies
+    on the *perms* path, deliberately: it's permission-scoped, so it can't
+    fire for a permission the role doesn't actually hold. The ``perms is
+    None`` (pure membership) branch below has no permission to gate a bypass
+    on, so it stays a plain org-membership check — adding a bypass there
+    would be role-scoped rather than permission-scoped.
 
     Parameters
     ----------
@@ -363,29 +373,24 @@ def permissioned_queryset(
     QuerySet
         The filtered queryset.
     """
-    if perms is not None and user_holds_org_bypass_perms(user, perms, any_perm):
-        return queryset
-
     fields = organization_fields or [organization_field]
-
-    queryset = queryset.filter(reduce(or_, (Q(**{f: organization_id}) for f in fields)))
+    org_filter = reduce(or_, (Q(**{f: organization_id}) for f in fields))
 
     if perms is None:
-        queryset = queryset.filter(
-            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields))
+        return queryset.filter(
+            org_filter,
+            reduce(or_, (Q(Exists(Organization.objects.filter(pk=OuterRef(f), users=user))) for f in fields)),
         )
-    elif any_perm:
-        q = Q()
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            q |= _org_perm_exists_across_fields(user, app_label, codename, fields)
-        queryset = queryset.filter(q)
-    else:
-        for perm_str in perms:
-            app_label, codename = perm_str.split(".", 1)
-            queryset = queryset.filter(_org_perm_exists_across_fields(user, app_label, codename, fields))
 
-    return queryset
+    op = or_ if any_perm else and_
+    perm_q = reduce(
+        op,
+        (_org_perm_exists_across_fields(user, p, fields) for p in perms),
+        Q(),
+    )
+    bypass_q = reduce(op, (_bypass_perm_exists(user, p) for p in perms), Q())
+
+    return queryset.filter((org_filter & perm_q) | bypass_q)
 
 
 def assign_object_permissions(
