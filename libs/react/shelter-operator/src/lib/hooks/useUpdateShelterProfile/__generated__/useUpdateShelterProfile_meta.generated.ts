@@ -4,7 +4,9 @@ import type { UpdateShelterProfileMutation } from './useUpdateShelterProfile.gen
 
 export const updateShelterProfileOperationKey: keyof Omit<UpdateShelterProfileMutation, '__typename'> = 'updateShelter';
 export const updateShelterProfileSuccessTypename: Extract<
-  NonNullable<UpdateShelterProfileMutation['updateShelter']>,
+  NonNullable<UpdateShelterProfileMutation['updateShelter']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateShelterProfileMutation['updateShelter']>,
   { __typename: 'ShelterType' }
 >['__typename'] = 'ShelterType';
 

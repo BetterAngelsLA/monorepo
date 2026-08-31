@@ -143,7 +143,7 @@ def member_add(
     existing_template_names: set[str] = set(
         PermissionGroup.objects.filter(
             organization=organization,
-            group__user=user,
+            user=user,
             template__name__in=[t.name for t in permission_templates],
         ).values_list("template__name", flat=True)
     )
@@ -341,13 +341,11 @@ def _refresh_group_names(org: Organization) -> None:
     copy — this is what keeps it current.  Runs for hand-managed groups too: the
     label is wrong for them in exactly the same way.
     """
-    for permission_group in PermissionGroup.objects.filter(organization=org).select_related(
-        "group", "template", "organization"
-    ):
+    for permission_group in PermissionGroup.objects.filter(organization=org).select_related("template", "organization"):
         wanted = permission_group.group_name()
-        if permission_group.group.name != wanted:
-            permission_group.group.name = wanted
-            permission_group.group.save(update_fields=["name"])
+        if permission_group.name != wanted:
+            permission_group.name = wanted
+            permission_group.save(update_fields=["name"])
 
 
 # ── Member removal ───────────────────────────────────────────────────

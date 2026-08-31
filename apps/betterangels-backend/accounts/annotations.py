@@ -1,5 +1,4 @@
-from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Case, CharField, Exists, OuterRef, Subquery, Value, When
+from django.db.models import Case, CharField, Exists, OuterRef, StringAgg, Subquery, Value, When
 from organizations.models import OrganizationOwner
 
 from accounts.enums import OrgRoleEnum
@@ -14,14 +13,14 @@ def annotate_member_role(org_id: str) -> Case:
         PermissionGroup.objects.filter(
             organization_id=org_id,
             template__name=ORG_SUPERUSER.name,
-            group__user=OuterRef("pk"),
+            user=OuterRef("pk"),
         )
     )
     is_admin = Exists(
         PermissionGroup.objects.filter(
             organization_id=org_id,
             template__name=ORG_ADMIN.name,
-            group__user=OuterRef("pk"),
+            user=OuterRef("pk"),
         )
     )
 
@@ -56,10 +55,10 @@ def annotate_permission_templates(org_id: str) -> Subquery:
     return Subquery(
         PermissionGroup.objects.filter(
             organization_id=org_id,
-            group__user=OuterRef("pk"),
+            user=OuterRef("pk"),
             template__name__in=REGISTRY.invitable_template_names(),
         )
-        .values("group__user")
-        .annotate(names=StringAgg("template__name", ", ", distinct=True, ordering="template__name"))
+        .values("user")
+        .annotate(names=StringAgg("template__name", Value(", "), distinct=True, order_by="template__name"))
         .values("names")
     )

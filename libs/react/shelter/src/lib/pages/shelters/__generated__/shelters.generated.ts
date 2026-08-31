@@ -9,21 +9,21 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 }>;
 
 
-export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, distanceInMiles?: number | null, isPrivate: boolean, heroImage?: { __typename?: 'ShelterHeroImageType', id: string, url: string } | null, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null, shelterTypes: Array<{ __typename?: 'ShelterTypeType', name?: Types.ShelterChoices | null }> }> } };
+export type ViewSheltersQuery = { __typename: 'Query', shelters: { __typename: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'ShelterType', id: string, name: string, distanceInMiles?: number | null, isPrivate: boolean, heroImage?: { __typename: 'ShelterHeroImageType', id: string, url: string } | null, location?: { __typename: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null, shelterTypes: Array<{ __typename: 'ShelterTypeType', name?: Types.ShelterChoices | null }> }> } };
 
 export type ShelterServiceCategoriesQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ShelterServiceCategoriesQuery = { __typename?: 'Query', shelterServiceCategories: { __typename?: 'ServiceCategoryTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ServiceCategoryType', id: string, name: string, displayName: string, priority: number, services: Array<{ __typename?: 'ServiceType', id: string, name: string, displayName: string, isOther: boolean, priority: number }> }> } };
+export type ShelterServiceCategoriesQuery = { __typename: 'Query', shelterServiceCategories: { __typename: 'ServiceCategoryTypeOffsetPaginated', totalCount: number, results: Array<{ __typename: 'ServiceCategoryType', id: string, name: string, displayName: string, priority: number, services: Array<{ __typename: 'ServiceType', id: string, name: string, displayName: string, isOther: boolean, priority: number }> }> } };
 
 export type CreateShelterMutationVariables = Types.Exact<{
   data: Types.CreateShelterInput;
 }>;
 
 
-export type CreateShelterMutation = { __typename?: 'Mutation', createShelter:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ShelterType', id: string, name: string, status: Types.StatusChoices }
+export type CreateShelterMutation = { __typename: 'Mutation', createShelter:
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'ShelterType', id: string, name: string, status: Types.StatusChoices }
    };
 
 

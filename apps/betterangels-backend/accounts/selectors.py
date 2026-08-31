@@ -80,15 +80,15 @@ def get_permission_group_for_org(
     """
     template_name = template.name
     permission_group = (
-        PermissionGroup.objects.select_related("organization", "group")
+        PermissionGroup.objects.select_related("organization")
         .filter(organization=organization, template__name=template_name)
         .first()
     )
 
-    if not (permission_group and permission_group.group):
+    if not permission_group:
         raise PermissionError(f"Organization does not have a '{template_name}' permission group")
 
-    if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.group_id).exists():  # type: ignore[union-attr]
+    if not hasattr(user, "groups") or not user.groups.filter(id=permission_group.pk).exists():  # type: ignore[union-attr]
         raise PermissionError("User is not a member of this organization's permission group")
 
     return permission_group
@@ -116,12 +116,12 @@ def resolve_permission_group(
 
     # No organization_id — find the first org where the user holds this template.
     permission_group = (
-        PermissionGroup.objects.select_related("organization", "group")
-        .filter(template__name=template_name, group__user=user.pk)  # type: ignore[union-attr]
+        PermissionGroup.objects.select_related("organization")
+        .filter(template__name=template_name, user=user.pk)  # type: ignore[union-attr]
         .first()
     )
 
-    if not (permission_group and permission_group.group):
+    if not permission_group:
         raise PermissionError(f"User does not hold a '{template_name}' permission group in any organization")
 
     return permission_group
@@ -133,9 +133,7 @@ def resolve_permission_group(
 def member_role_names(*, user_id: int, organization_id: int) -> list[str]:
     """Names of the roles *user_id* holds in *organization_id*, sorted."""
     return sorted(
-        PermissionGroup.objects.filter(organization_id=organization_id, group__user=user_id).values_list(
-            "name", flat=True
-        )
+        PermissionGroup.objects.filter(organization_id=organization_id, user=user_id).values_list("label", flat=True)
     )
 
 
@@ -143,9 +141,9 @@ def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
     """Roles *user_id* holds, grouped by organization name and sorted within each."""
     by_organization: dict[str, list[str]] = {}
     for organization_name, role_name in (
-        PermissionGroup.objects.filter(group__user=user_id)
+        PermissionGroup.objects.filter(user=user_id)
         .select_related("organization")
-        .values_list("organization__name", "name")
+        .values_list("organization__name", "label")
     ):
         by_organization.setdefault(organization_name, []).append(role_name)
     return {name: sorted(roles) for name, roles in sorted(by_organization.items())}

@@ -1,34 +1,13 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
 from organizations.models import Organization
 
-from .models import PermissionGroup, User
+from .models import User
 
 logger = logging.getLogger(__name__)
-
-
-# ── auth.Group teardown ───────────────────────────────────────────────
-
-
-def delete_orphaned_group(sender: object, instance: PermissionGroup, **kwargs: object) -> None:
-    """Delete the ``auth.Group`` a removed ``PermissionGroup`` was scoping.
-
-    A ``PermissionGroup`` exists only to scope one ``auth.Group`` to an
-    organization and role, so the group must not outlive it — an orphaned group
-    still grants its permissions to every member while no longer being reachable
-    for revocation.
-
-    This is a ``post_delete`` receiver rather than a ``delete()`` override
-    because the override was silently skipped by the two paths that matter most:
-    queryset deletes (used by reconciliation) and cascades (deleting an
-    organization).  Registering the receiver also opts the model out of Django's
-    fast-delete path, which is what guarantees it runs during a cascade.
-    """
-    Group.objects.filter(pk=instance.group_id).delete()
 
 
 # ── Local dev data setup ──────────────────────────────────────────────

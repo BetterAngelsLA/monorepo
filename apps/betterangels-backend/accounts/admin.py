@@ -6,10 +6,12 @@ from common.permissions.config import TemplateConfig
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
+from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Model, QuerySet
+from django.forms import Field as FormField
+from django.db.models import Field, Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -21,19 +23,13 @@ from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
     OrganizationOwnerTransferForm,
-    PermissionGroupInlineForm,
     OrganizationProfileForm,
+    PermissionGroupInlineForm,
     UserChangeForm,
     UserCreationForm,
 )
+from .models import ExtendedOrganizationInvitation, OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from .selectors import member_role_names, role_names_by_organization
-from .models import (
-    ExtendedOrganizationInvitation,
-    OrganizationProfile,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    User,
-)
 from .services import (
     invitation_role,
     member_invite,
@@ -72,11 +68,41 @@ admin.site.unregister(OrganizationInvitation)
 
 @admin.register(PermissionGroup)
 class PermissionGroupAdmin(admin.ModelAdmin):
-    list_display = ("name", "organization", "group", "template")
+    list_display = ("label", "organization", "template")
     list_filter = ("organization", "template")
-    # Excludes ``group``: picking an existing one means deleting this row takes that
-    # group's members with it.
-    fields = ("organization", "template", "name")
+    fields = ("organization", "template", "label")
+
+    def get_deleted_objects(
+        self, objs: Any, request: HttpRequest
+    ) -> tuple[list[Any], dict[str, int], set[str], list[str]]:
+        """Say how many people lose the role, which Django never can.
+
+        The collector lists the row and everything cascading from it, but its
+        members are an M2M and never appear — so a delete that strips a role from
+        a dozen people reads exactly like one that strips it from nobody.
+
+        Hooked here because it is what both the delete view and the
+        ``delete_selected`` action call, so one override covers a single delete
+        and a bulk one alike.
+        """
+        deletable, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        losses = []
+        for permission_group in objs:
+            holders = permission_group.user_set.count()
+            losses.append(
+                format_html(
+                    "{} — revoked from {} member{}",
+                    permission_group.label,
+                    holders,
+                    "" if holders == 1 else "s",
+                )
+            )
+
+        if losses:
+            deletable = [*deletable, *losses]
+            model_count = {**model_count, "revoked roles": len(losses)}
+        return deletable, model_count, perms_needed, protected
 
 
 @admin.register(PermissionGroupTemplate)
@@ -88,12 +114,67 @@ class PermissionGroupTemplateAdmin(admin.ModelAdmin):
         "name",
     ]
 
+    def _is_code_owned(self, obj: PermissionGroupTemplate | None) -> bool:
+        return obj is not None and obj.name in REGISTRY.template_names()
+
+    def get_readonly_fields(self, request: HttpRequest, obj: Any = None) -> tuple[str, ...]:
+        """A role the code names is read here, not written.
+
+        ``sync_group_permissions`` re-applies its ``TemplateConfig`` on every
+        ``migrate`` and every org reconcile, so editing one of these is undone
+        without saying so.  A role created in the admin is the opposite -- its
+        ``permissions`` are the definition -- and stays editable.
+        """
+        if self._is_code_owned(obj):
+            return ("name", "permissions")
+
+        return tuple(super().get_readonly_fields(request, obj))
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        """Deleting a code-owned role succeeds quietly and breaks reconciliation.
+
+        ``template`` is ``SET_NULL``, so every organization's row survives the
+        delete holding its label, its members and no template -- indistinguishable
+        from a hand-managed row, so reconciliation stops treating it as derived.
+        ``post_migrate`` then re-seeds the template, and the next reconcile's
+        ``get_or_create`` for that role collides with the orphan's group name:
+        ``duplicate key value violates unique constraint "auth_group_name_key"``.
+        The same failure ``PermissionGroupInlineForm`` refuses a repointed
+        template for, reached by a different route.
+        """
+        if self._is_code_owned(obj):
+            return False
+
+        return super().has_delete_permission(request, obj)
+
 
 class PermissionGroupInline(admin.TabularInline):
     model = PermissionGroup
     form = PermissionGroupInlineForm
     extra = 1
-    fields = ("template", "name")
+    fields = ("template", "label")
+
+    def formfield_for_dbfield(self, db_field: Field, request: HttpRequest, **kwargs: Any) -> FormField | None:
+        """Keep the organization page out of the global template admin.
+
+        Django wraps a related field in ``RelatedFieldWidgetWrapper``, whose add,
+        change and delete links open ``PermissionGroupTemplate`` -- one row shared
+        by every organization holding the role.  On this page they read as editing
+        *this* organization's row.  The view link stays: what a role grants is
+        worth being able to look at.
+        """
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if (
+            formfield is not None
+            and db_field.name == "template"
+            and isinstance(formfield.widget, RelatedFieldWidgetWrapper)
+        ):
+            formfield.widget.can_add_related = False
+            formfield.widget.can_change_related = False
+            formfield.widget.can_delete_related = False
+
+        return formfield
 
 
 class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organization]):
@@ -163,7 +244,7 @@ class OrganizationMemberInline(admin.TabularInline[OrganizationUser, Organizatio
             except ObjectDoesNotExist:
                 continue
             if permission_group.organization_id == obj.organization_id:
-                names.append(permission_group.name)
+                names.append(permission_group.label)
         return ", ".join(sorted(names)) or "—"
 
     @admin.display(description="Owner", boolean=True)
@@ -256,7 +337,7 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
     list_display = ("name",)
     search_fields = ("name",)
-    fields = ("name", "is_active", "slug")
+    fields = ("name", "slug")
     readonly_fields = ("slug",)
     change_form_template = "admin/organizations/organization/change_form.html"
     # django-organizations' models define get_absolute_url against its own generic
@@ -374,9 +455,9 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         the same save, with a fresh and empty ``auth.Group``, so the page comes
         back looking untouched while everyone who held the role has lost it.
         """
-        # The inline names its pk field after the model's pk, which #2378 makes
-        # ``group_ptr``.  Hardcoding ``-id`` would stop matching and report no
-        # losses rather than failing.
+        # The inline names its pk field after the model's pk, which for a subclass
+        # of ``auth.Group`` is ``group_ptr``.  Hardcoding ``-id`` would stop
+        # matching and report no losses rather than failing.
         pk_field = PermissionGroup._meta.pk.name
         deleted_row_ids = [
             posted.get(f"{key.rsplit('-', 1)[0]}-{pk_field}")
@@ -393,9 +474,9 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     def _held_by(permission_groups: QuerySet[PermissionGroup]) -> list[tuple[str, int]]:
         """Name each group and how many hold it, dropping the ones nobody does."""
         return [
-            (permission_group.name, holders)
-            for permission_group in permission_groups.select_related("group", "template")
-            if (holders := permission_group.group.user_set.count())
+            (permission_group.label, holders)
+            for permission_group in permission_groups.select_related("template")
+            if (holders := permission_group.user_set.count())
         ]
 
     def get_urls(self) -> list[URLPattern]:
@@ -689,6 +770,15 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (("Personal info"), {"fields": ("first_name", "last_name", "middle_name")}),
+        (
+            ("Consent"),
+            {
+                "fields": (
+                    "has_accepted_tos",
+                    "has_accepted_privacy_policy",
+                ),
+            },
+        ),
         (
             ("Permissions"),
             {

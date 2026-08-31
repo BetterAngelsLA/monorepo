@@ -4,7 +4,9 @@ import type { GetShelterPropertiesQuery } from './useShelterProperties.generated
 
 export const getShelterPropertiesOperationKey: keyof Omit<GetShelterPropertiesQuery, '__typename'> = 'operatorShelter';
 export const getShelterPropertiesSuccessTypename: Extract<
-  NonNullable<GetShelterPropertiesQuery['operatorShelter']>,
+  NonNullable<GetShelterPropertiesQuery['operatorShelter']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GetShelterPropertiesQuery['operatorShelter']>,
   { __typename: 'OperatorShelterType' }
 >['__typename'] = 'OperatorShelterType';
 

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, cast
 
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
+from django.utils import timezone as django_timezone
 
 import pghistory
 from strawberry import ID
@@ -640,10 +641,14 @@ def avg_days_to_occupancy(
     last_free: dict[int, datetime.datetime] = {}  # per-bed: when last freed
     last_free_res: dict[int, int] = {}  # per-bed: which reservation freed it
 
-    for reservation_id, bed_id, before, after, created_at in rows:
+    for raw_reservation_id, raw_bed_id, before, after, created_at in rows:
+        if raw_bed_id is None or raw_reservation_id is None:
+            continue
+
         try:
-            bed_id = int(bed_id)
-        except TypeError, ValueError:
+            bed_id = int(raw_bed_id)
+            reservation_id = int(raw_reservation_id)
+        except ValueError:
             continue
 
         # "Free" event: exited checked_in → bed available for the next guest.
@@ -660,6 +665,26 @@ def avg_days_to_occupancy(
     if not gaps:
         return None
     return round(sum(gaps) / len(gaps), 2)
+
+
+def shelter_metrics_window(
+    start_date: datetime.date | None, end_date: datetime.date | None
+) -> tuple[datetime.datetime, datetime.datetime]:
+    """Resolve a reporting date range into the tz-aware window the selectors take.
+
+    *end_date* is inclusive for callers; the returned *end* is exclusive. Missing
+    bounds default to the last 30 days in the shelter schedule timezone.
+    """
+    from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
+
+    tz = SHELTER_SCHEDULE_TIME_ZONE
+    end_date = end_date or django_timezone.now().astimezone(tz).date()
+    start_date = start_date or (end_date - datetime.timedelta(days=29))
+
+    start = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=tz)
+    end = datetime.datetime.combine(end_date, datetime.time.min, tzinfo=tz) + datetime.timedelta(days=1)
+
+    return start, end
 
 
 def shelter_occupancy_metrics(

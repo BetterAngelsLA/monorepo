@@ -8,6 +8,7 @@ from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationUser
+from shelters.groups import SHELTER_OPERATOR
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from accounts.enums import OrgRoleEnum
@@ -302,6 +303,37 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         self.assertEqual(response["data"]["organizationMember"], expected_member)
         self.assertIsNotNone(response["data"]["organizationMember"]["dateJoined"])
+
+    def test_organization_member_query_returns_every_permission_template(self) -> None:
+        """A member holding more than one template gets all of them, alphabetically."""
+        self.graphql_client.force_login(self.org_admin)
+
+        org = organization_recipe.make(
+            name="multi-preset org",
+            owner=self.org_admin,
+            preset_names=["outreach", "shelter"],
+        )
+        member = baker.make(User, first_name="multi")
+        org.add_user(member)
+        OrgRoleManager(org).add_roles(member, SHELTER_OPERATOR, CASEWORKER)
+
+        query = """
+            query ($organizationId: String!, $userId: String!) {
+                organizationMember(organizationId: $organizationId, userId: $userId) {
+                    permissionTemplates
+                }
+            }
+        """
+
+        response = self.execute_graphql(
+            query,
+            variables={"organizationId": str(org.pk), "userId": str(member.pk)},
+        )
+
+        self.assertEqual(
+            response["data"]["organizationMember"]["permissionTemplates"],
+            ["CASEWORKER", "SHELTER_OPERATOR"],
+        )
 
     def test_organization_members_query(self) -> None:
         self.graphql_client.force_login(self.org_admin)

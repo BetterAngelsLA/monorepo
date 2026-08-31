@@ -19,19 +19,21 @@ from clients.models import (
 from clients.services import client_document, client_profile_photo
 from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
+from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     AuthorizedPresignedS3UploadType,
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
+from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment, PhoneNumber
 from common.permissions.utils import IsAuthenticated, assign_object_permissions
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import ForeignKey, Prefetch
+from django.db.models import ForeignKey, Prefetch, QuerySet
 from graphql import GraphQLError
 from notes.groups import CASEWORKER
 from phonenumber_field.validators import validate_international_phonenumber
@@ -617,17 +619,23 @@ class Mutation:
                 Attachment.perms.DELETE,
                 Attachment.perms.CHANGE,
             ]
-            assign_object_permissions(permission_group.group, client_document, permissions)
+            assign_object_permissions(permission_group, client_document, permissions)
 
             return cast(ClientDocumentType, client_document)
 
-    delete_client_document: ClientDocumentType = mutations.delete(
-        DeleteDjangoObjectInput,
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=Attachment.perms.DELETE),
+            PermissionedQuerySet(model=Attachment, perms=[Attachment.perms.DELETE]),
         ],
     )
+    def delete_client_document(self, info: Info, data: DeleteDjangoObjectInput) -> ClientDocumentType:
+        qs: QuerySet[Attachment] = info.context.qs
+        client_document = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to delete this document."
+        )
+
+        return cast(ClientDocumentType, resolvers.delete(info, client_document))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

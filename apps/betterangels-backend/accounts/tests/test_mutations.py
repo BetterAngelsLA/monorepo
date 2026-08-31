@@ -192,7 +192,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(20):
+            with self.assertNumQueriesWithoutCache(19):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -322,9 +322,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         self.execute_graphql(mutation, {"data": variables})
 
         held = set(
-            PermissionGroup.objects.filter(organization=self.org, group__user=member).values_list(
-                "template__name", flat=True
-            )
+            PermissionGroup.objects.filter(organization=self.org, user=member).values_list("template__name", flat=True)
         )
         self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
 
@@ -606,7 +604,7 @@ class CreateOrganizationMutationTests(GraphQLBaseTestCase):
         self._create("Acme Housing")
 
         held = set(
-            PermissionGroup.objects.filter(organization=self.organization, group__user=self.outsider).values_list(
+            PermissionGroup.objects.filter(organization=self.organization, user=self.outsider).values_list(
                 "template__name", flat=True
             )
         )
@@ -616,7 +614,7 @@ class CreateOrganizationMutationTests(GraphQLBaseTestCase):
         self._create("Acme Housing")
 
         held = set(
-            PermissionGroup.objects.filter(organization=self.organization, group__user=self.incumbent).values_list(
+            PermissionGroup.objects.filter(organization=self.organization, user=self.incumbent).values_list(
                 "template__name", flat=True
             )
         )

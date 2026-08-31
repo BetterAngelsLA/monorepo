@@ -4,7 +4,9 @@ import type { CloneBedMutation } from './useCloneBed.generated';
 
 export const cloneBedOperationKey: keyof Omit<CloneBedMutation, '__typename'> = 'cloneBed';
 export const cloneBedSuccessTypename: Extract<
-  NonNullable<CloneBedMutation['cloneBed']>,
+  NonNullable<CloneBedMutation['cloneBed']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CloneBedMutation['cloneBed']>,
   { __typename: 'BedType' }
 >['__typename'] = 'BedType';
 

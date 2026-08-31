@@ -15,12 +15,13 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
+from accounts.seed import seed_permission_templates
 from accounts.services import invitation_role, member_add, reconcile_org_groups
 from common.permissions.config import TemplateConfig
 from django.contrib import admin
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import NoReverseMatch, reverse
@@ -58,7 +59,6 @@ class OrganizationAdminTestCase(TestCase):
     def _add_payload(self, name: str, org_types: list[str]) -> dict:
         return {
             "name": name,
-            "is_active": "on",
             # Management form for the required profile inline.
             "profile-TOTAL_FORMS": "1",
             "profile-INITIAL_FORMS": "0",
@@ -82,7 +82,6 @@ class OrganizationAdminTestCase(TestCase):
         rows = list(PermissionGroup.objects.filter(organization=organization).order_by("pk"))
         payload = {
             "name": organization.name,
-            "is_active": "on",
             "profile-TOTAL_FORMS": "1",
             "profile-INITIAL_FORMS": "1",
             "profile-MIN_NUM_FORMS": "1",
@@ -109,7 +108,7 @@ class OrganizationAdminTestCase(TestCase):
         for index, row in enumerate(rows):
             payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
             payload[f"permission_groups-{index}-organization"] = str(organization.pk)
-            payload[f"permission_groups-{index}-name"] = row.name
+            payload[f"permission_groups-{index}-label"] = row.label
             payload[f"permission_groups-{index}-template"] = str(
                 template_id if row.pk == permission_group.pk else (row.template_id or "")
             )
@@ -129,6 +128,14 @@ class OrganizationAdminTestCase(TestCase):
             {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
         )
 
+    def test_form_hides_is_active(self) -> None:
+        """django-organizations' own field; nothing in this codebase filters on it."""
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+
+        response = self.client.get(reverse("admin:organizations_organization_change", args=[organization.pk]))
+
+        self.assertNotIn("is_active", response.context["adminform"].form.fields)
+
     def test_creating_an_organization_without_an_org_type_is_rejected(self) -> None:
         response = self.client.post(
             reverse("admin:organizations_organization_add"),
@@ -141,7 +148,7 @@ class OrganizationAdminTestCase(TestCase):
     def test_removing_an_org_type_deletes_its_groups_without_orphaning(self) -> None:
         organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
         shelter_group = PermissionGroup.objects.get(organization=organization, template__name=SHELTER_OPERATOR.name)
-        group_id = shelter_group.group_id
+        group_id = shelter_group.pk
 
         OrganizationProfile.objects.filter(organization=organization).update(org_types=[OrgTypeChoices.OUTREACH])
 
@@ -161,12 +168,12 @@ class OrganizationAdminTestCase(TestCase):
         template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
         hand_granted = PermissionGroup.objects.create(organization=organization, template=template)
         member = baker.make(User)
-        member.groups.add(hand_granted.group)
+        member.groups.add(hand_granted)
 
         reconcile_org_groups(organization)
 
         self.assertTrue(PermissionGroup.objects.filter(pk=hand_granted.pk).exists())
-        self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+        self.assertTrue(member.groups.filter(pk=hand_granted.pk).exists())
 
     def test_an_unconfigured_organization_still_has_its_permissions_synced(self) -> None:
         """No profile means no *derived* groups — not that config stops applying.
@@ -178,12 +185,12 @@ class OrganizationAdminTestCase(TestCase):
         organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
         template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
         hand_granted = PermissionGroup.objects.create(organization=organization, template=template)
-        hand_granted.group.permissions.clear()
+        hand_granted.permissions.clear()
         OrganizationProfile.objects.filter(organization=organization).delete()
 
         reconcile_org_groups(organization)
 
-        granted = set(hand_granted.group.permissions.values_list("content_type__app_label", "codename"))
+        granted = set(hand_granted.permissions.values_list("content_type__app_label", "codename"))
         self.assertSetEqual(granted, {tuple(entry.split(".", 1)) for entry in GLOBAL_SHELTER_OPERATOR.permissions})
 
     def test_repointing_an_existing_rows_template_cannot_drop_its_members(self) -> None:
@@ -199,9 +206,9 @@ class OrganizationAdminTestCase(TestCase):
         """
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
         caseworker = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
-        group_id = caseworker.group_id
+        group_id = caseworker.pk
         member = baker.make(User)
-        member.groups.add(caseworker.group)
+        member.groups.add(caseworker)
         shelter_operator = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR.name)
 
         payload = self._change_payload(organization, caseworker, template_id=shelter_operator.pk)
@@ -233,7 +240,7 @@ class OrganizationAdminTestCase(TestCase):
         """``group`` is created and torn down by code, so staff must not pick one.
 
         Binding a row to a group used for something else means deleting the row
-        takes that group's members with it.
+        deletes that group's members with it.
         """
         organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
 
@@ -267,7 +274,7 @@ class OrganizationAddMemberViewTestCase(TestCase):
         self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
@@ -475,7 +482,7 @@ class OrganizationUserAddViewTestCase(TestCase):
         self.assertTrue(OrganizationUser.objects.filter(organization=self.organization, user=member).exists())
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
@@ -548,7 +555,7 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
 
     def _roles_of(self, member: User) -> set[str]:
         return set(
-            PermissionGroup.objects.filter(organization=self.organization, group__user=member).values_list(
+            PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                 "template__name", flat=True
             )
         )
@@ -657,12 +664,12 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
             permission_templates=(CASEWORKER,),
         )
         hand_granted = permission_group_recipe.make(organization=self.organization, template=None)
-        member.groups.add(hand_granted.group)
+        member.groups.add(hand_granted)
 
         url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
         self.client.post(url, {"permission_templates": [SHELTER_OPERATOR.name]})
 
-        self.assertTrue(member.groups.filter(pk=hand_granted.group_id).exists())
+        self.assertTrue(member.groups.filter(pk=hand_granted.pk).exists())
         self.assertNotIn(CASEWORKER.name, self._roles_of(member))
         self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
 
@@ -707,7 +714,7 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.assertIn("permission_templates", response.context["form"].errors)
         self.assertSetEqual(
             set(
-                PermissionGroup.objects.filter(organization=outreach_only, group__user=member).values_list(
+                PermissionGroup.objects.filter(organization=outreach_only, user=member).values_list(
                     "template__name", flat=True
                 )
             ),
@@ -750,10 +757,11 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
         }
+        pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
-            payload[f"permission_groups-{index}-id"] = str(row.pk)
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
             payload[f"permission_groups-{index}-organization"] = str(self.organization.pk)
-            payload[f"permission_groups-{index}-name"] = row.name
+            payload[f"permission_groups-{index}-label"] = row.label
             payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
         return payload | extra
 
@@ -778,7 +786,7 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
         return PermissionGroup.objects.filter(
             organization=self.organization,
             template__name=template.name,
-            group__user=member,
+            user=member,
         ).exists()
 
     def _holds_shelter_operator(self) -> bool:
@@ -803,7 +811,7 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
         self.client.post(self.url, self._payload(["outreach"], _confirm_role_loss="1"))
 
         self.assertFalse(self._holds_shelter_operator())
-        self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, group__user=member).exists())
+        self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, user=member).exists())
 
     def test_dropping_a_type_nobody_holds_does_not_ask(self) -> None:
         """A prompt that always fires stops being read."""
@@ -1088,3 +1096,143 @@ class OrganizationsGenericViewsNotRoutedTestCase(SimpleTestCase):
         ``ExtendedOrganizationInvitation.get_absolute_url`` reverses it.
         """
         self.assertEqual(reverse("invitations_register", kwargs={"user_id": 1, "token": "abc"}), "/invitations/1-abc/")
+
+
+class PermissionGroupDeleteWarningTestCase(TestCase):
+    """Deleting a permission group deletes its auth.Group, and every member's role with it."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_pg_delete", email="admin_pg_delete@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        for email in ("operator_one@example.com", "operator_two@example.com"):
+            member_add(
+                email=email,
+                first_name="",
+                last_name="",
+                middle_name=None,
+                organization=self.organization,
+                permission_templates=(SHELTER_OPERATOR,),
+            )
+        self.permission_group = PermissionGroup.objects.get(
+            organization=self.organization, template__name=SHELTER_OPERATOR.name
+        )
+
+    def test_the_delete_page_names_the_group_and_who_loses_it(self) -> None:
+        url = reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk])
+
+        response = self.client.get(url)
+
+        self.assertContains(response, self.permission_group.name)
+        self.assertContains(response, "revoked from 2 members")
+
+    def test_the_bulk_delete_page_names_the_group_and_who_loses_it(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongroup_changelist"),
+            {"action": "delete_selected", "_selected_action": [str(self.permission_group.pk)]},
+        )
+
+        self.assertContains(response, self.permission_group.name)
+        self.assertContains(response, "revoked from 2 members")
+
+    def test_one_member_is_not_pluralised(self) -> None:
+        Group.objects.get(pk=self.permission_group.pk).user_set.remove(
+            User.objects.get(email="operator_two@example.com")
+        )
+
+        response = self.client.get(reverse("admin:accounts_permissiongroup_delete", args=[self.permission_group.pk]))
+
+        self.assertContains(response, "revoked from 1 member<")
+
+
+class PermissionGroupTemplateAdminTestCase(TestCase):
+    """A template is one row shared by every organization holding the role.
+
+    Two ways the admin implied otherwise: the organization page linked into the
+    template admin from a row that reads as belonging to that organization, and
+    the template admin let a role the code owns be edited or deleted, which
+    ``sync_group_permissions`` undoes on the next reconcile.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="template_admin_tests", email="template_admin_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.code_owned = PermissionGroupTemplate.objects.get(name=ORG_ADMIN.name)
+        self.hand_defined = PermissionGroupTemplate.objects.create(name="Weekend Volunteers")
+
+    def test_the_organization_page_does_not_link_into_the_template_admin(self) -> None:
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        for action in ("add", "change", "delete"):
+            self.assertNotContains(response, f"{action}_id_permission_groups-0-template")
+            self.assertNotContains(response, f"{action}_id_permission_groups-__prefix__-template")
+
+    def test_the_organization_page_still_lets_the_template_be_viewed(self) -> None:
+        """Read-only, not hidden -- what a role grants is worth being able to see."""
+        response = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk]),
+        )
+
+        self.assertContains(response, "view_id_permission_groups-0-template")
+
+    def test_a_role_the_code_owns_is_read_only(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.code_owned.pk]),
+        )
+
+        self.assertNotContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="permissions"')
+
+    def test_a_role_defined_in_the_admin_stays_editable(self) -> None:
+        response = self.client.get(
+            reverse("admin:accounts_permissiongrouptemplate_change", args=[self.hand_defined.pk]),
+        )
+
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'name="permissions"')
+
+    def test_a_role_the_code_owns_cannot_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.code_owned.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(PermissionGroupTemplate.objects.filter(pk=self.code_owned.pk).exists())
+
+    def test_a_role_defined_in_the_admin_can_be_deleted(self) -> None:
+        response = self.client.post(
+            reverse("admin:accounts_permissiongrouptemplate_delete", args=[self.hand_defined.pk]),
+            {"post": "yes"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(PermissionGroupTemplate.objects.filter(pk=self.hand_defined.pk).exists())
+
+    def test_deleting_a_code_owned_role_breaks_the_next_reconcile(self) -> None:
+        """Why the guard is a refusal rather than a warning.
+
+        The delete itself succeeds quietly -- ``SET_NULL`` leaves each row with
+        its label and members and no template, so reconciliation stops seeing it
+        as derived.  ``post_migrate`` re-seeds the template, and the next
+        reconcile collides with the orphan on ``auth_group.name``.  Reached here
+        by deleting directly, which is what the admin guard now prevents.
+        """
+        row = PermissionGroup.objects.get(organization=self.organization, template=self.code_owned)
+
+        self.code_owned.delete()
+
+        row.refresh_from_db()
+        self.assertIsNone(row.template_id)
+        self.assertEqual(row.label, ORG_ADMIN.name)
+
+        seed_permission_templates()
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            reconcile_org_groups(self.organization)

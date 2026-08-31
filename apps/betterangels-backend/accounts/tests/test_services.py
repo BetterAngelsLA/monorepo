@@ -589,9 +589,7 @@ class TestMemberRolesReplace:
 
 
 def _role_names(org: Organization, member: User) -> set[str]:
-    return set(
-        PermissionGroup.objects.filter(organization=org, group__user=member).values_list("template__name", flat=True)
-    )
+    return set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
 
 
 # ── create_organization_service: no implicit join ─────────────────────
@@ -645,9 +643,7 @@ def test_creating_an_org_by_an_existing_name_grants_no_role_on_it() -> None:
 
     create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
 
-    held = set(
-        PermissionGroup.objects.filter(organization=org, group__user=outsider).values_list("template__name", flat=True)
-    )
+    held = set(PermissionGroup.objects.filter(organization=org, user=outsider).values_list("template__name", flat=True))
     assert held == set(), f"outsider holds {held} on an organization they never joined"
 
 
@@ -679,11 +675,11 @@ def test_same_named_organizations_keep_separate_members_and_roles() -> None:
     )
 
     assert not OrganizationUser.objects.filter(user=first_owner, organization=second).exists()
-    assert not PermissionGroup.objects.filter(organization=second, group__user=first_owner).exists()
+    assert not PermissionGroup.objects.filter(organization=second, user=first_owner).exists()
 
     first_group = PermissionGroup.objects.get(organization=first, template__name=CASEWORKER.name)
     second_group = PermissionGroup.objects.get(organization=second, template__name=CASEWORKER.name)
-    assert first_group.group.name != second_group.group.name, "the pk segment must disambiguate"
+    assert first_group.name != second_group.name, "the pk segment must disambiguate"
 
 
 @pytest.mark.django_db
@@ -714,14 +710,14 @@ class TestOrganizationTransferOwnership:
     def test_the_previous_owner_keeps_membership_and_roles(self) -> None:
         owner, member, org = self._org_with_member("Keeps Org")
         before = set(
-            PermissionGroup.objects.filter(organization=org, group__user=owner).values_list("template__name", flat=True)
+            PermissionGroup.objects.filter(organization=org, user=owner).values_list("template__name", flat=True)
         )
 
         organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
 
         assert OrganizationUser.objects.filter(organization=org, user=owner).exists()
         after = set(
-            PermissionGroup.objects.filter(organization=org, group__user=owner).values_list("template__name", flat=True)
+            PermissionGroup.objects.filter(organization=org, user=owner).values_list("template__name", flat=True)
         )
         assert after == before
 

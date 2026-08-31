@@ -12,16 +12,9 @@ export function SpecialSituationRestrictions({
   return (
     <Card title="Special Situation Restrictions">
       {shelter.specialSituationRestrictions
-        .filter(
-          (
-            restriction,
-          ): restriction is { name: SpecialSituationRestrictionChoices } =>
-            !!restriction.name,
-        )
-        .map(
-          (restriction) =>
-            enumDisplaySpecialSituationRestrictionChoices[restriction.name],
-        )
+        .map((restriction) => restriction.name)
+        .filter((name): name is SpecialSituationRestrictionChoices => !!name)
+        .map((name) => enumDisplaySpecialSituationRestrictionChoices[name])
         .join(', ')}
     </Card>
   );

@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import pghistory
 from accounts.managers import UserManager
@@ -145,20 +145,25 @@ class PermissionGroupTemplate(models.Model):
         return self.name
 
 
-class PermissionGroup(models.Model):
-    name = models.CharField(
-        max_length=255,
-        blank=True,
-    )
+class PermissionGroup(Group):
+    """An ``auth.Group`` scoped to one organization and one role.
+
+    It *is* the group rather than pointing at one, so the group cannot outlive
+    it.  That matters because object-level permissions are assigned to the group
+    (:func:`common.permissions.utils.assign_object_permissions`) and
+    ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
+    granting them with no row left to revoke through.  Inheritance makes the
+    teardown a cascade Django's own collector performs, on a direct delete, a
+    queryset delete and an organization cascade alike.
+
+    ``name`` is the group's, and is the unique key built by :meth:`group_name`.
+    The human role label is :attr:`label`.
+    """
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
         related_name="permission_groups",
-    )
-    group = models.OneToOneField(
-        Group,
-        on_delete=models.CASCADE,
-        blank=True,
     )
     template = models.ForeignKey(
         PermissionGroupTemplate,
@@ -166,25 +171,36 @@ class PermissionGroup(models.Model):
         null=True,
         blank=True,
     )
+    label = models.CharField(
+        max_length=255,
+        blank=True,
+    )
 
-    objects = models.Manager()
+    # django-stubs types ``Group.objects`` as ``GroupManager``, which is
+    # ``Manager[Group]`` — inheriting it resolves every query on this model
+    # against the parent's fields.  Overriding it is the only way to keep
+    # ``PermissionGroup.objects.filter(organization=…)`` type-checked.
+    objects: ClassVar[models.Manager["PermissionGroup"]] = models.Manager()  # type: ignore[assignment]
 
     class Meta:
-        unique_together = (("organization", "group"), ("organization", "template"))
+        unique_together = (("organization", "template"),)
         constraints = [
             models.CheckConstraint(
-                condition=Q(template__isnull=False) | ~Q(name=""),
-                name="permission_group_has_template_or_name",
-                violation_error_message="A permission group needs either a template or a name.",
+                condition=Q(template__isnull=False) | ~Q(label=""),
+                name="permission_group_has_template_or_label",
+                violation_error_message="A permission group needs either a template or a label.",
             )
         ]
 
+    def __str__(self) -> str:
+        return self.label
+
     def clean(self) -> None:
-        """Require a template or a name to identify the role.
+        """Require a template or a label to identify the role.
 
         Both are optional individually, so the admin inline could otherwise save
-        a row with neither — leaving its group's role segment empty and colliding
-        with the next such row on the unique ``auth.Group.name``.
+        a row with neither — leaving its role segment empty and colliding with
+        the next such row on the unique ``name``.
 
         Duplicates the *call* of the constraint above, not the rule: ``clean()``
         is what words the error on the inline, because ``_post_clean`` runs with
@@ -192,20 +208,21 @@ class PermissionGroup(models.Model):
         ``objects.create()`` and ``get_or_create``, which never reach this.  Delete
         this method if the admin ever stops needing the field-level message.
         """
-        if not self.template_id and not self.name:
-            raise ValidationError("A permission group needs either a template or a name.")
+        if not self.template_id and not self.label:
+            raise ValidationError("A permission group needs either a template or a label.")
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Create the backing ``auth.Group`` on first save.
+        """Name the row on creation, ignoring any name the caller supplied.
 
-        Group lifecycle otherwise belongs to
-        :func:`accounts.services.reconcile_org_groups`, which is the only caller
-        that can keep the group, its permissions and this row consistent.
+        The name is derived, never chosen — :meth:`group_name` is what keeps it
+        unique.  Refreshing it afterwards belongs to
+        :func:`accounts.services.reconcile_org_groups`, the only caller that can
+        keep the name, the permissions and this row consistent.
         """
-        if not self.pk and not self.group_id:
-            self.group = Group.objects.create(name=self.group_name())
-        if self.template and not self.name:
-            self.name = self.template.name
+        if self.template and not self.label:
+            self.label = self.template.name
+        if not self.pk:
+            self.name = self.group_name()
         super().save(*args, **kwargs)
 
     def group_name(self) -> str:
@@ -218,7 +235,7 @@ class PermissionGroup(models.Model):
         alphabetically by organization rather than by pk-as-string.
 
         Truncated to fit: ``Organization.name`` allows 200 characters and a
-        hand-entered role name 255, against ``auth.Group.name``'s 150.
+        hand-entered label 255, against ``auth.Group.name``'s 150.
 
         Nothing reads this as data — every lookup goes through ``PermissionGroup``
         — so :func:`accounts.services.reconcile_org_groups` refreshing it is
@@ -226,7 +243,7 @@ class PermissionGroup(models.Model):
         reconcile, which is only acceptable while nothing keys off it.
         """
         max_length = cast(int, Group._meta.get_field("name").max_length)
-        role = self.template.name if self.template else self.name
+        role = self.template.name if self.template else self.label
         suffix = f" [{self.organization_id}] · {role}"
         budget = max(max_length - len(suffix), 0)
         return f"{self.organization.name[:budget]}{suffix}"[:max_length]

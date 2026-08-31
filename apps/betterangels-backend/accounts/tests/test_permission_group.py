@@ -1,6 +1,7 @@
-from accounts.models import PermissionGroup, PermissionGroupTemplate
+from accounts.models import BigGroupObjectPermission, PermissionGroup, PermissionGroupTemplate
 from accounts.seed import sync_group_permissions
 from accounts.services import reconcile_org_groups
+from common.permissions.utils import assign_object_permissions
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -22,8 +23,8 @@ class PermissionGroupTestCase(TestCase):
         permission_group = permission_group_recipe.make(template=None)
 
         self.assertEqual(
-            permission_group.group.name,
-            f"{permission_group.organization.name} [{permission_group.organization_id}] · {permission_group.name}",
+            permission_group.name,
+            f"{permission_group.organization.name} [{permission_group.organization_id}] · {permission_group.label}",
         )
 
     def test_a_long_organization_name_is_truncated_to_fit(self) -> None:
@@ -33,8 +34,8 @@ class PermissionGroupTestCase(TestCase):
 
         permission_group = PermissionGroup.objects.create(organization=organization, template=template)
 
-        self.assertLessEqual(len(permission_group.group.name), 150)
-        self.assertTrue(permission_group.group.name.endswith(f"[{organization.pk}] · {CASEWORKER.name}"))
+        self.assertLessEqual(len(permission_group.name), 150)
+        self.assertTrue(permission_group.name.endswith(f"[{organization.pk}] · {CASEWORKER.name}"))
 
     def test_two_organizations_may_share_a_name(self) -> None:
         first = Organization.objects.create(name="Acme")
@@ -44,7 +45,7 @@ class PermissionGroupTestCase(TestCase):
         first_group = PermissionGroup.objects.create(organization=first, template=template)
         second_group = PermissionGroup.objects.create(organization=second, template=template)
 
-        self.assertNotEqual(first_group.group.name, second_group.group.name)
+        self.assertNotEqual(first_group.name, second_group.name)
 
     def test_renaming_an_organization_refreshes_its_group_names_on_reconcile(self) -> None:
         """The label carries a copy of the name, so reconcile has to re-apply it.
@@ -59,10 +60,10 @@ class PermissionGroupTestCase(TestCase):
         organization.save()
         reconcile_org_groups(organization)
 
-        permission_group.group.refresh_from_db()
+        permission_group.refresh_from_db()
         self.assertEqual(
-            permission_group.group.name,
-            f"Renamed Organization [{organization.pk}] · {permission_group.name}",
+            permission_group.name,
+            f"Renamed Organization [{organization.pk}] · {permission_group.label}",
         )
 
     def test_group_receives_the_permissions_configured_for_its_template(self) -> None:
@@ -71,7 +72,7 @@ class PermissionGroupTestCase(TestCase):
 
         sync_group_permissions()
 
-        granted = set(permission_group.group.permissions.values_list("content_type__app_label", "codename"))
+        granted = set(permission_group.permissions.values_list("content_type__app_label", "codename"))
         expected = {tuple(entry.split(".", 1)) for entry in CASEWORKER.permissions}
         self.assertSetEqual(granted, expected)
 
@@ -80,15 +81,32 @@ class PermissionGroupTestCase(TestCase):
 
         sync_group_permissions()
 
-        self.assertEqual(permission_group.group.permissions.count(), 0)
+        self.assertEqual(permission_group.permissions.count(), 0)
 
     def test_deleting_permission_group_also_deletes_associated_group(self) -> None:
         permission_group = permission_group_recipe.make()
-        group_id = permission_group.group_id
+        group_id = permission_group.pk
 
         permission_group.delete()
 
         self.assertFalse(Group.objects.filter(id=group_id).exists())
+
+    def test_deleting_a_permission_group_also_deletes_its_object_permissions(self) -> None:
+        """Why the teardown matters at all.
+
+        Object-level grants are assigned to the group and cascade from it.  A group
+        that outlived its row would keep granting them, with nothing left to revoke
+        through — this is the property inheritance is here to guarantee.
+        """
+        permission_group = permission_group_recipe.make()
+        subject = PermissionGroupTemplate.objects.create(name="Object Of A Grant")
+        assign_object_permissions(permission_group, subject, ["accounts.view_permissiongrouptemplate"])
+        self.assertTrue(BigGroupObjectPermission.objects.filter(group=permission_group).exists())
+        group_id = permission_group.pk
+
+        permission_group.delete()
+
+        self.assertFalse(BigGroupObjectPermission.objects.filter(group_id=group_id).exists())
 
     def test_deleting_organization_deletes_permission_groups_and_associated_groups(
         self,
@@ -99,7 +117,7 @@ class PermissionGroupTestCase(TestCase):
         )
         # Captured up front: once the rows are gone, a join through them matches
         # nothing whether or not the groups were actually deleted.
-        group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("group_id", flat=True))
+        group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
         self.assertEqual(len(group_ids), 3)
 
         organization.delete()
@@ -132,7 +150,7 @@ class PermissionGroupTestCase(TestCase):
         the only mechanism a queryset delete and a cascade both reach.
         """
         permission_group = permission_group_recipe.make()
-        group_id = permission_group.group_id
+        group_id = permission_group.pk
 
         PermissionGroup.objects.filter(pk=permission_group.pk).delete()
 
@@ -163,8 +181,8 @@ class TemplatePermissionSourceTestCase(TestCase):
         sync_group_permissions()
 
         for permission_group in groups:
-            permission_group.group.refresh_from_db()
-            self.assertEqual(list(permission_group.group.permissions.all()), [permission])
+            permission_group.refresh_from_db()
+            self.assertEqual(list(permission_group.permissions.all()), [permission])
 
     def test_a_managed_templates_permissions_are_overwritten_from_config(self) -> None:
         """For a role the code defines, ``TemplateConfig`` wins over the stored copy."""
