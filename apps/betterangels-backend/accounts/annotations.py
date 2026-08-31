@@ -1,5 +1,15 @@
-from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Case, CharField, Exists, OuterRef, Subquery, Value, When
+# django-stubs 5.2.x still targets Django 5.2, where StringAgg lived only in
+# django.contrib.postgres.aggregates. Drop the ignore when the stubs catch up.
+from django.db.models import (  # type: ignore[attr-defined]
+    Case,
+    CharField,
+    Exists,
+    OuterRef,
+    StringAgg,
+    Subquery,
+    Value,
+    When,
+)
 from organizations.models import OrganizationOwner
 
 from accounts.enums import OrgRoleEnum
@@ -60,6 +70,6 @@ def annotate_permission_templates(org_id: str) -> Subquery:
             template__name__in=REGISTRY.invitable_template_names(),
         )
         .values("user")
-        .annotate(names=StringAgg("template__name", ", ", distinct=True, ordering="template__name"))
+        .annotate(names=StringAgg("template__name", Value(", "), distinct=True, order_by="template__name"))
         .values("names")
     )
