@@ -11,11 +11,13 @@ interface IFileCardProps {
   filename?: string | null;
   url: string;
   createdAt: string;
+  testId?: string;
   disabled?: boolean;
 }
 
 export function FileCard(props: IFileCardProps) {
-  const { onPress, url, filename, createdAt, thumbnail, disabled } = props;
+  const { onPress, url, filename, createdAt, thumbnail, testId, disabled } =
+    props;
 
   const content = (
     <>
@@ -47,6 +49,7 @@ export function FileCard(props: IFileCardProps) {
   return (
     <Pressable
       onPress={onPress}
+      testID={testId}
       disabled={disabled}
       style={({ pressed }) => [
         styles.row,
