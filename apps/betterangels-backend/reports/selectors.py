@@ -8,7 +8,7 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
 from datetime import date, timedelta
-from typing import Any, cast
+from typing import Any
 
 from django.db.models import Count, F, QuerySet
 from django.db.models.functions import TruncDate
@@ -54,13 +54,8 @@ def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
         .values("trunc_date")
         .annotate(count=Count("id"))
         .order_by("trunc_date")
-        .values(
-            date=F("trunc_date"),
-            count=F("count"),
-        )
     )
-
-    return cast(list[dict[str, Any]], list(rows))
+    return [{"date": row["trunc_date"], "count": row["count"]} for row in rows]
 
 
 def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
@@ -77,13 +72,8 @@ def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dic
         .values("purpose")
         .annotate(count=Count("id"))
         .order_by("-count")[:limit]
-        .values(
-            name=F("purpose"),
-            count=F("count"),
-        )
     )
-
-    return cast(list[dict[str, Any]], list(rows))
+    return [{"name": row["purpose"], "count": row["count"]} for row in rows]
 
 
 def note_top_services(
@@ -109,8 +99,7 @@ def note_top_services(
         .annotate(count=Count("id"))
         .order_by("-count")[:limit]
     )
-
-    return cast(list[dict[str, Any]], list(rows))
+    return [{"name": row["name"], "count": row["count"]} for row in rows]
 
 
 def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
@@ -126,13 +115,8 @@ def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]
         .values("trunc_date")
         .annotate(count=Count("client_profile", distinct=True))
         .order_by("trunc_date")
-        .values(
-            date=F("trunc_date"),
-            count=F("count"),
-        )
     )
-
-    return cast(list[dict[str, Any]], list(rows))
+    return [{"date": row["trunc_date"], "count": row["count"]} for row in rows]
 
 
 def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

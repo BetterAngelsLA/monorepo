@@ -1210,7 +1210,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         # Limit events to just the objects in *this* queryset (admin page w/ filters)
         # This uses pghistory's optimized aggregator instead of scanning all events.
         scoped_events = (
-            MiddlewareEvents.objects.tracks(qs)  # type: ignore[no-untyped-call]
+            MiddlewareEvents.objects.tracks(qs)
             .exclude(user__isnull=True)
             .order_by("pgh_obj_id", "-pgh_created_at")
             .distinct("pgh_obj_id")
@@ -1633,7 +1633,7 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[ShelterAvailability]:
         qs: QuerySet[ShelterAvailability] = super().get_queryset(request)
         scoped_events = (
-            MiddlewareEvents.objects.tracks(qs)  # type: ignore[no-untyped-call]
+            MiddlewareEvents.objects.tracks(qs)
             .exclude(user__isnull=True)
             .order_by("pgh_obj_id", "-pgh_created_at")
             .distinct("pgh_obj_id")
