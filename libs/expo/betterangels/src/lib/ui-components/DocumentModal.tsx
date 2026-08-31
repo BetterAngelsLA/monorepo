@@ -46,10 +46,6 @@ export default function DocumentModal({
 
   const { showSnackbar } = useSnackbar();
   const [modalState, setModalState] = useState<ModalState>('menuVisible');
-  // Hidden (but still mounted) while the delete mutation is in flight: the
-  // parent only unmounts us via closeModal(), which we call once the mutation
-  // settles — so the mutation always runs with the component alive.
-  const [modalHidden, setModalHidden] = useState(false);
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -60,9 +56,6 @@ export default function DocumentModal({
   const { operationKey, successTypename } = deleteClientDocumentMeta;
 
   const deleteFile = async () => {
-    // Hide immediately but stay mounted; unmount only after the mutation settles.
-    setModalHidden(true);
-
     try {
       const result = await deleteDocument({
         variables: { id: document.id },
@@ -184,10 +177,6 @@ export default function DocumentModal({
       onPress: () => setModalState('deleteRequested'),
     },
   ];
-
-  if (modalHidden) {
-    return null;
-  }
 
   return (
     <>
