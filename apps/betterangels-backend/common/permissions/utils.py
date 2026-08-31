@@ -205,10 +205,10 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
     """Return a Q object matching a specific Django permission.
 
-    The default *prefix* ``permission_groups__group__permissions``
+    The default *prefix* ``permission_groups__permissions``
     resolves from ``Organization`` through ``PermissionGroup`` →
     ``Group`` → ``Permission`` → ``ContentType``.
     """
@@ -218,7 +218,7 @@ def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__
     )
 
 
-def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
     """Public alias for ``_perm_q`` — Q for a single permission."""
     return _perm_q(app_label, codename, prefix=prefix)
 
@@ -263,7 +263,7 @@ def _org_perm_exists_across_fields(
             Q(
                 Exists(
                     Organization.objects.filter(pk=OuterRef(f)).filter(
-                        Q(permission_groups__group__user=user) & _perm_q(app_label, codename)
+                        Q(permission_groups__user=user) & _perm_q(app_label, codename)
                     )
                 )
             )
@@ -286,7 +286,7 @@ def permissioned_queryset(
 
     When *perms* is provided, further restricts to records where the
     user holds the specified permission(s).  The org-membership check is
-    implicit — ``permission_groups__group__user`` proves both.
+    implicit — ``permission_groups__user`` proves both.
 
     Parameters
     ----------

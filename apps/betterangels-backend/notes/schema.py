@@ -110,7 +110,7 @@ class Query:
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 template__name=CASEWORKER.name,
-                group__user=user,
+                user=user,
             )
         )
         queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)

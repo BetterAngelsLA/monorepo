@@ -70,6 +70,6 @@ group_recipe = Recipe(
 
 permission_group_recipe = Recipe(
     PermissionGroup,
-    name=lambda: gen_string(50),
+    label=lambda: gen_string(50),
     organization=foreign_key(organization_recipe),
 )
