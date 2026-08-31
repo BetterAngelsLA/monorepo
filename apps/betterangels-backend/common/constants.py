@@ -1,3 +1,9 @@
+from zoneinfo import ZoneInfo
+
+# The zone this deployment's calendar days are cut on — report boundaries and
+# shelter schedules. Not a display zone: datetimes are stored and served in UTC.
+OPERATING_TIME_ZONE = ZoneInfo("America/Los_Angeles")
+
 CALIFORNIA_ID_REGEX = r"^[a-zA-Z]\d{7}$"
 EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 PHONE_NUMBER_REGEX = r"^[2-9]\d{2}[2-9]\d{6}(x\d+)?$"

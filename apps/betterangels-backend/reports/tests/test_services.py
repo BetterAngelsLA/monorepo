@@ -1,6 +1,6 @@
 """Tests for report services."""
 
-from datetime import datetime
+from datetime import UTC, date, datetime
 
 import pytest
 import time_machine
@@ -9,6 +9,7 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
 from reports.models import ScheduledReport
+from reports.selectors import local_today
 from reports.services import generate_report_data, get_previous_month_range
 
 
@@ -49,9 +50,10 @@ class TestReportService:
                 "02",
                 "2025",
             ),
-            # Case 5: Year boundary (runs in Jan, reports Dec prev year)
+            # Case 5: Year boundary (runs in Jan, reports Dec prev year).
+            # 08:00 UTC is midnight in Los Angeles, so this is genuinely January there.
             (
-                "2025-01-01 00:00:00",
+                "2025-01-01 08:00:00",
                 1,
                 [datetime(2024, 12, 15, 12, 0, 0)],
                 "12",
@@ -86,7 +88,7 @@ class TestReportService:
                 )
 
             # Manually calculate range as the task would
-            start_date, end_date = get_previous_month_range()
+            start_date, end_date = get_previous_month_range(as_of=local_today())
 
             filename, content, meta = generate_report_data(report, start_date, end_date)
 
@@ -104,8 +106,8 @@ class TestReportService:
 
         report = baker.make(ScheduledReport, organization=org1)
 
-        start = timezone.make_aware(datetime(2024, 12, 1, 0, 0, 0))
-        end = timezone.make_aware(datetime(2025, 1, 1, 0, 0, 0))
+        start = date(2024, 12, 1)
+        end = date(2024, 12, 31)
 
         # Create notes for org1 (should be included)
         baker.make(
@@ -138,69 +140,59 @@ class TestGetPreviousMonthRange:
     """Tests for get_previous_month_range function (helper in services.py)."""
 
     @pytest.mark.parametrize(
-        "current_date, expected_start, expected_end",
+        "as_of, expected_start, expected_end",
         [
             # January -> December previous year
-            (
-                "2025-01-15 10:30:00",
-                datetime(2024, 12, 1, 0, 0),
-                datetime(2025, 1, 1, 0, 0),
-            ),
+            (date(2025, 1, 15), date(2024, 12, 1), date(2024, 12, 31)),
             # March -> February
-            (
-                "2025-03-15 10:30:00",
-                datetime(2025, 2, 1, 0, 0),
-                datetime(2025, 3, 1, 0, 0),
-            ),
-            # End of month -> Previous month
-            (
-                "2025-05-31 23:59:59",
-                datetime(2025, 4, 1, 0, 0),
-                datetime(2025, 5, 1, 0, 0),
-            ),
-            # Leap Year February -> January
-            (
-                "2024-02-29 12:00:00",
-                datetime(2024, 1, 1, 0, 0),
-                datetime(2024, 2, 1, 0, 0),
-            ),
+            (date(2025, 3, 15), date(2025, 2, 1), date(2025, 2, 28)),
+            # End of month -> previous month
+            (date(2025, 5, 31), date(2025, 4, 1), date(2025, 4, 30)),
+            # Leap year February -> January
+            (date(2024, 2, 29), date(2024, 1, 1), date(2024, 1, 31)),
         ],
     )
-    def test_month_ranges(self, current_date: datetime, expected_start: datetime, expected_end: datetime) -> None:
+    def test_month_ranges(self, as_of: date, expected_start: date, expected_end: date) -> None:
         """Parameterized test for month range calculation."""
-        with time_machine.travel(current_date, tick=False):
-            start, end = get_previous_month_range()
+        assert get_previous_month_range(as_of=as_of) == (expected_start, expected_end)
 
-            # Helper to ignore tz info for comparison if needed,
-            # or ensure expected has correct tz if function returns naive/aware
-            # Based on code, timezone.now() is used so we expect aware datetimes usually.
-            # But get_previous_month_range constructs from parts.
-            # Let's compare just the naive parts or ensure equality checks handle it.
-            # Start/End from function should have clean times (00:00:00)
+    def test_both_bounds_are_inclusive(self) -> None:
+        """The range covers the whole previous month, first day through last."""
+        assert get_previous_month_range(as_of=date(2025, 2, 15)) == (date(2025, 1, 1), date(2025, 1, 31))
 
-            assert start.year == expected_start.year
-            assert start.month == expected_start.month
-            assert start.day == expected_start.day
-            assert start.hour == 0
 
-            assert end.year == expected_end.year
-            assert end.month == expected_end.month
-            assert end.day == expected_end.day
-            assert end.hour == 0
+@pytest.mark.django_db
+class TestReportTimeZoneBoundaries:
+    """Report ranges are cut on the operating time zone's calendar days, not UTC's."""
 
-    def test_date_range_is_inclusive_exclusive(self) -> None:
-        """Test that start is inclusive and end is exclusive."""
-        with time_machine.travel("2025-02-15 00:00:00", tick=False):
-            start, end = get_previous_month_range()
+    def test_late_evening_note_counts_in_the_month_it_was_logged(self) -> None:
+        """A note at 5pm on 31 January in Los Angeles belongs to January, not February."""
+        org = baker.make(Organization)
+        report = baker.make(ScheduledReport, organization=org)
+        # 2025-02-01 01:00 UTC is 2025-01-31 17:00 in Los Angeles.
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 1, 0, tzinfo=UTC))
 
-            # Start should be at midnight
-            assert start.hour == 0
-            assert start.minute == 0
-            assert start.second == 0
-            assert start.microsecond == 0
+        _, _, meta = generate_report_data(report, date(2025, 1, 1), date(2025, 1, 31))
 
-            # End should also be at midnight (exclusive boundary)
-            assert end.hour == 0
-            assert end.minute == 0
-            assert end.second == 0
-            assert end.microsecond == 0
+        assert meta["notes_count"] == 1
+
+    def test_that_note_is_excluded_from_the_following_month(self) -> None:
+        """The same note must not also be counted in February."""
+        org = baker.make(Organization)
+        report = baker.make(ScheduledReport, organization=org)
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 1, 0, tzinfo=UTC))
+
+        _, _, meta = generate_report_data(report, date(2025, 2, 1), date(2025, 2, 28))
+
+        assert meta["notes_count"] == 0
+
+    def test_csv_row_is_labelled_with_the_date_it_was_filtered_on(self) -> None:
+        """The exported date must match the boundary the note was filtered on."""
+        org = baker.make(Organization)
+        report = baker.make(ScheduledReport, organization=org)
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 1, 0, tzinfo=UTC))
+
+        _, content, _ = generate_report_data(report, date(2025, 1, 1), date(2025, 1, 31))
+
+        assert "01/31/2025" in content
+        assert "02/01/2025" not in content

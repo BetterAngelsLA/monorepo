@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from itertools import groupby
 from typing import TYPE_CHECKING, cast
 
+from common.constants import OPERATING_TIME_ZONE
 from django.db.models import Count, Q, TextField
 from django.db.models.functions import Cast
 from django.utils import timezone as django_timezone
@@ -673,11 +674,9 @@ def shelter_metrics_window(
     """Resolve a reporting date range into the tz-aware window the selectors take.
 
     *end_date* is inclusive for callers; the returned *end* is exclusive. Missing
-    bounds default to the last 30 days in the shelter schedule timezone.
+    bounds default to the last 30 days in the operating time zone.
     """
-    from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
-
-    tz = SHELTER_SCHEDULE_TIME_ZONE
+    tz = OPERATING_TIME_ZONE
     end_date = end_date or django_timezone.now().astimezone(tz).date()
     start_date = start_date or (end_date - datetime.timedelta(days=29))
 

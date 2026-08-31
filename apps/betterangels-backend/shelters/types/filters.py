@@ -4,10 +4,10 @@ import datetime
 from functools import reduce
 from operator import and_, or_
 from typing import List, Optional, Tuple
-from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
+from common.constants import OPERATING_TIME_ZONE
 from common.graphql.types import (
     LatitudeScalar,
     LongitudeScalar,
@@ -48,11 +48,9 @@ from shelters.managers import BedQuerySet, RoomQuerySet
 from shelters.open_at import shelters_open_at
 from shelters.selectors.computed_status import shelter_count_subquery
 
-SHELTER_SCHEDULE_TIME_ZONE = ZoneInfo("America/Los_Angeles")
-
 
 def get_current_shelter_schedule_datetime() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).astimezone(SHELTER_SCHEDULE_TIME_ZONE)
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(OPERATING_TIME_ZONE)
 
 
 @strawberry.input
