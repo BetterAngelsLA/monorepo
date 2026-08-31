@@ -1,8 +1,22 @@
+import { MockedProvider } from '@apollo/client/testing/react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReportFilterBar } from './ReportFilterBar';
 
 const fetchMock = vi.fn();
 const showToast = vi.fn();
+const exportPdfMock = vi.fn();
+
+// ReportFilterBar always queries the shelter summary + occupancy metrics for
+// the off-screen PDF render target (see handlePdfExport), even when the CSV/
+// XLSX/JSON path is what's under test — a bare MockedProvider with no
+// matching mocks is enough since nothing here asserts on that query's data.
+function renderFilterBar(shelterId?: string) {
+  return render(
+    <MockedProvider mocks={[]}>
+      <ReportFilterBar shelterId={shelterId} />
+    </MockedProvider>,
+  );
+}
 
 vi.mock('@monorepo/react/shelter', () => ({
   useApiConfig: () => ({ fetch: fetchMock }),
@@ -12,6 +26,12 @@ vi.mock('../base-ui/toast', () => ({
   useToast: () => ({ showToast }),
 }));
 
+// PDF is captured client-side rather than through the fetch/export endpoint
+// the other formats hit — see useExportPdf.test.ts for its own coverage.
+vi.mock('../../pages/report/useExportPdf', () => ({
+  useExportPdf: () => ({ exportPdf: exportPdfMock, isExporting: false }),
+}));
+
 // The atom defaults to LAST_30_DAYS off the real clock; pin it so the
 // start/end params are predictable.
 vi.mock('jotai', () => ({
@@ -19,6 +39,14 @@ vi.mock('jotai', () => ({
     preset: 'LAST_30_DAYS',
     range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
   }),
+}));
+
+// @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
+// provide; the off-screen PDF render's chart content is covered in
+// ShelterReportPrint.test.tsx, not here.
+vi.mock('./ReportCharts', () => ({
+  BedStatusChart: () => <div data-testid="bed-status-chart" />,
+  DailyOccupancyChart: () => <div data-testid="daily-occupancy-chart" />,
 }));
 
 function exportResponse(filename = '20260601_20260630_shelter_report.zip') {
@@ -65,7 +93,7 @@ describe('ReportFilterBar export', () => {
   it('requests the shelter export for the filtered range and every metric', async () => {
     fetchMock.mockResolvedValue(exportResponse());
 
-    render(<ReportFilterBar shelterId="7" />);
+    renderFilterBar('7');
     openModalAndExport();
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -87,7 +115,7 @@ describe('ReportFilterBar export', () => {
   it('sends only the metrics left checked', async () => {
     fetchMock.mockResolvedValue(exportResponse());
 
-    render(<ReportFilterBar shelterId="7" />);
+    renderFilterBar('7');
     fireEvent.click(screen.getByRole('button', { name: /export data/i }));
     fireEvent.click(screen.getByRole('checkbox', { name: /bed status/i }));
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
@@ -104,7 +132,7 @@ describe('ReportFilterBar export', () => {
   it('names the download from the Content-Disposition the server sent', async () => {
     fetchMock.mockResolvedValue(exportResponse());
 
-    render(<ReportFilterBar shelterId="7" />);
+    renderFilterBar('7');
     openModalAndExport();
 
     await waitFor(() =>
@@ -120,7 +148,7 @@ describe('ReportFilterBar export', () => {
   it('reports a failed export instead of downloading', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 403 });
 
-    render(<ReportFilterBar shelterId="7" />);
+    renderFilterBar('7');
     openModalAndExport();
 
     await waitFor(() =>
@@ -135,10 +163,52 @@ describe('ReportFilterBar export', () => {
   });
 
   it('cannot export before the shelter is known', () => {
-    render(<ReportFilterBar />);
+    renderFilterBar();
 
     const button = screen.getByRole('button', { name: /export data/i });
 
     expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('captures and downloads a PDF instead of hitting the export endpoint when PDF is selected', async () => {
+    exportPdfMock.mockResolvedValue({
+      blob: new Blob(['pdf']),
+      filename: 'shelter-7-report.pdf',
+    });
+
+    renderFilterBar('7');
+    fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+
+    await waitFor(() => expect(exportPdfMock).toHaveBeenCalledTimes(1));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'success',
+        description: 'shelter-7-report.pdf',
+      }),
+    );
+  });
+
+  it('reports a failed PDF generation instead of downloading', async () => {
+    exportPdfMock.mockRejectedValue(new Error('canvas exploded'));
+
+    renderFilterBar('7');
+    fireEvent.click(screen.getByRole('button', { name: /export data/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^pdf$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'error',
+          description: 'canvas exploded',
+        }),
+      ),
+    );
+    expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
   });
 });

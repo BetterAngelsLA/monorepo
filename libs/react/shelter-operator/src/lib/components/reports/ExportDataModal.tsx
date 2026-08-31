@@ -10,7 +10,16 @@ import {
   type ExportMetric,
 } from './useShelterMetricsExport';
 
-const FORMAT_LABELS: Record<ExportFormat, string> = {
+/**
+ * PDF is rendered client-side (see useExportPdf.ts) rather than through the
+ * `ShelterMetricsExportApi` the other three formats hit, but it shares the
+ * same file-type picker and metric checkboxes.
+ */
+export type ModalExportFormat = ExportFormat | 'pdf';
+const MODAL_FORMATS: ModalExportFormat[] = ['pdf', ...EXPORT_FORMATS];
+
+const FORMAT_LABELS: Record<ModalExportFormat, string> = {
+  pdf: 'PDF',
   csv: 'CSV',
   xlsx: 'XLSX',
   json: 'JSON',
@@ -31,7 +40,7 @@ type ExportDataModalProps = {
   /** Human-readable range, so the modal states what it will export. */
   rangeLabel: string;
   onClose: () => void;
-  onExport: (format: ExportFormat, metrics: ExportMetric[]) => void;
+  onExport: (format: ModalExportFormat, metrics: ExportMetric[]) => void;
 };
 
 export function ExportDataModal({
@@ -41,7 +50,9 @@ export function ExportDataModal({
   onClose,
   onExport,
 }: ExportDataModalProps) {
-  const [format, setFormat] = useState<ExportFormat>('csv');
+  // Keeps CSV as the default selection — matches the existing export tests'
+  // expectations, PDF is just added as another option in the picker.
+  const [format, setFormat] = useState<ModalExportFormat>('csv');
   const [metrics, setMetrics] = useState<ExportMetric[]>([...ALL_METRICS]);
 
   function toggleMetric(metric: ExportMetric) {
@@ -80,7 +91,7 @@ export function ExportDataModal({
               role="radiogroup"
               aria-label="Export file type"
             >
-              {EXPORT_FORMATS.map((option) => (
+              {MODAL_FORMATS.map((option) => (
                 <button
                   key={option}
                   type="button"

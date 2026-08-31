@@ -50,10 +50,7 @@ describe('ShelterReportPrint', () => {
   it('renders a single page with the Operational Summary header and stats when only stats are included', () => {
     render(
       <ShelterReportPrint
-        {...baseProps([
-          'avg_days_to_occupancy',
-          'reservation_metrics',
-        ])}
+        {...baseProps(['avg_days_to_occupancy', 'reservation_metrics'])}
       />,
     );
 
@@ -120,9 +117,7 @@ describe('ShelterReportPrint', () => {
   });
 
   it('shows the "Previously Overdue" pill when reservation_metrics is included', () => {
-    render(
-      <ShelterReportPrint {...baseProps(['reservation_metrics'])} />,
-    );
+    render(<ShelterReportPrint {...baseProps(['reservation_metrics'])} />);
 
     expect(screen.getByText('Previously Overdue')).toBeTruthy();
     expect(screen.getByText('1 / 8')).toBeTruthy();

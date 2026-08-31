@@ -150,15 +150,14 @@ export function ShelterReportPrint({
   dailyOccupancy,
   ref,
 }: IShelterReportPrintProps) {
-  const showReservationStatusChanges =
-    includedMetrics.includes('reservation_metrics');
+  const showReservationStatusChanges = includedMetrics.includes(
+    'reservation_metrics',
+  );
   const showAvgDaysToOccupancy = includedMetrics.includes(
     'avg_days_to_occupancy',
   );
   const showStats = showReservationStatusChanges || showAvgDaysToOccupancy;
-  const showBedStatus = includedMetrics.includes(
-    'daily_bed_status_metrics',
-  );
+  const showBedStatus = includedMetrics.includes('daily_bed_status_metrics');
   const showDailyOccupancy = includedMetrics.includes(
     'daily_occupancy_metrics',
   );
