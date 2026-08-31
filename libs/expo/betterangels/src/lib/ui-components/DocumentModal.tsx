@@ -1,5 +1,9 @@
 import { useMutation } from '@apollo/client/react';
-import { BaError, throwOnMutationFail } from '@monorepo/ba-platform';
+import {
+  BaError,
+  BaPermissionError,
+  getOperationInfoMessage,
+} from '@monorepo/ba-platform';
 import {
   DeleteIcon,
   DownloadIcon,
@@ -11,13 +15,14 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import { ClientDocumentType } from '../apollo';
+import { ClientDocumentType, OperationMessageKind } from '../apollo';
 import { convertCapitalize } from '../helpers';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
   DeleteClientDocumentDocument,
 } from '../screens/Client/__generated__/Client.generated';
+import { deleteClientDocumentMeta } from '../screens/Client/__generated__/Client_meta.generated';
 import { MainModal } from './MainModal';
 
 type ModalState =
@@ -52,6 +57,8 @@ export default function DocumentModal({
     ],
   });
 
+  const { operationKey, successTypename } = deleteClientDocumentMeta;
+
   const deleteFile = async () => {
     // Hide immediately but stay mounted; unmount only after the mutation settles.
     setModalHidden(true);
@@ -61,17 +68,31 @@ export default function DocumentModal({
         variables: { id: document.id },
       });
 
-      throwOnMutationFail({
-        response: result,
-        operationKey: 'deleteClientDocument',
-        successTypename: 'ClientDocumentType',
-      });
+      const deleteResult = result.data?.deleteClientDocument;
 
-      showSnackbar({
-        message: `${convertCapitalize(fileTypeText)} deleted.`,
-        type: 'success',
-        durationMs: 2000,
-      });
+      // Success — file deleted.
+      if (deleteResult?.__typename === successTypename) {
+        showSnackbar({
+          message: `${convertCapitalize(fileTypeText)} deleted.`,
+          type: 'success',
+          durationMs: 2000,
+        });
+
+        return;
+      }
+
+      // Failure
+      const permissionMsg = getOperationInfoMessage(
+        result,
+        operationKey,
+        OperationMessageKind.Permission,
+      );
+
+      if (permissionMsg) {
+        throw new BaPermissionError(permissionMsg.message || undefined);
+      }
+
+      throw new Error('unspecified error');
     } catch (err) {
       console.error('Delete file error:', err);
 
