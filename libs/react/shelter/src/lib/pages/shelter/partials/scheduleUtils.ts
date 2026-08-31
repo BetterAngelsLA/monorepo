@@ -1,3 +1,8 @@
+import {
+  parseTimeString,
+  toDateString,
+  toTimeString,
+} from '@monorepo/shared/scalars';
 import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import {
   DayOfWeekChoices,
@@ -30,23 +35,25 @@ const JS_DAY_TO_ENUM: Record<number, DayOfWeekChoices> = {
   6: DayOfWeekChoices.Saturday,
 };
 
-/** Parse "HH:mm:ss" to minutes since midnight */
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
+/** Wrap into a single day — overnight windows carry a +1440 offset. */
+function wrapIntoDay(minutes: number): number {
+  return ((minutes % 1440) + 1440) % 1440;
 }
 
-/** Format minutes since midnight to "HH:mm:ss" */
-function minutesToTime(minutes: number): string {
-  const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
-  const h = Math.floor(normalizedMinutes / 60);
-  const m = normalizedMinutes % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
-}
+/**
+ * `undefined` for a time we cannot read — a window we cannot place is not a
+ * window that opens at midnight.
+ */
+function normalizeWindow(
+  startTime?: string | null,
+  endTime?: string | null,
+): TimeWindow | undefined {
+  const open = parseTimeString(startTime);
+  let close = parseTimeString(endTime);
 
-function normalizeWindow(startTime: string, endTime: string): TimeWindow {
-  const open = timeToMinutes(startTime);
-  let close = timeToMinutes(endTime);
+  if (open === undefined || close === undefined) {
+    return undefined;
+  }
 
   // Overnight shifts stay attached to the start day.
   if (close <= open) {
@@ -54,14 +61,6 @@ function normalizeWindow(startTime: string, endTime: string): TimeWindow {
   }
 
   return { open, close };
-}
-
-/** Format a Date as "YYYY-MM-DD" */
-function formatDateISO(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 /** Check if a date string falls within an optional [start, end] range */
@@ -155,7 +154,7 @@ function getEffectiveTimeWindows(
   date: Date,
   scheduleType: ScheduleTypeChoices,
 ): TimeWindow[] {
-  const dateStr = formatDateISO(date);
+  const dateStr = toDateString(date);
   const dayEnum = JS_DAY_TO_ENUM[date.getDay()];
 
   const typed = schedules.filter((s) => s.scheduleType === scheduleType);
@@ -169,8 +168,8 @@ function getEffectiveTimeWindows(
       dateInRange(dateStr, s.startDate, s.endDate),
   );
 
-  const baseWindows = baseEntries.map((s) =>
-    normalizeWindow(s.startTime ?? '00:00:00', s.endTime ?? '00:00:00'),
+  const baseWindows = baseEntries.flatMap(
+    (s) => normalizeWindow(s.startTime, s.endTime) ?? [],
   );
 
   const activeExceptions = typed.filter(
@@ -184,8 +183,8 @@ function getEffectiveTimeWindows(
     return [];
   }
 
-  const excWindows = activeExceptions.map((e) =>
-    normalizeWindow(e.startTime ?? '00:00:00', e.endTime ?? '00:00:00'),
+  const excWindows = activeExceptions.flatMap(
+    (e) => normalizeWindow(e.startTime, e.endTime) ?? [],
   );
 
   const effective = subtractWindows(baseWindows, excWindows);
@@ -209,8 +208,10 @@ function getConcreteWindows(
   );
 }
 
+export const CLOCK_PATTERN = 'h:mm a';
+
 function formatClock(date: Date): string {
-  return format(date, 'h:mm a');
+  return format(date, CLOCK_PATTERN);
 }
 
 /**
@@ -223,8 +224,8 @@ export function getEffectiveWindows(
   scheduleType: ScheduleTypeChoices,
 ): EffectiveWindow[] {
   return getEffectiveTimeWindows(schedules, date, scheduleType).map((w) => ({
-    startTime: minutesToTime(w.open),
-    endTime: minutesToTime(w.close),
+    startTime: toTimeString(wrapIntoDay(w.open)),
+    endTime: toTimeString(wrapIntoDay(w.close)),
   }));
 }
 

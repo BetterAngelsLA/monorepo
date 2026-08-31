@@ -111,7 +111,8 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.assertEqual(returned_ids, org_2_ids)
 
     def test_requires_the_active_org_header(self) -> None:
-        """The server must not guess — first-match is how other orgs leaked."""
+        """A caller who belongs to exactly one organization is still denied without the header."""
+        self.assertEqual(self.org_1_admin.organizations_organization.count(), 1)
         del self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"]
 
         self._assert_denied(self.execute_graphql(self.get_teams_query()))

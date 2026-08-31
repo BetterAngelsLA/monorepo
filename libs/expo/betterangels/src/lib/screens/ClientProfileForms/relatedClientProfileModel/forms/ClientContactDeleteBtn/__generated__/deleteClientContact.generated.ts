@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type DeleteClientContactMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type DeleteClientContactMutation = { __typename?: 'Mutation', deleteClientContact:
-    | { __typename?: 'ClientContactType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type DeleteClientContactMutation = { __typename: 'Mutation', deleteClientContact:
+    | { __typename: 'ClientContactType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type LoginHmisMutationVariables = Types.Exact<{
   email: Types.Scalars['String']['input'];
@@ -7,9 +8,9 @@ export type LoginHmisMutationVariables = Types.Exact<{
 }>;
 
 
-export type LoginHmisMutation = { __typename?: 'Mutation', hmisLogin:
-    | { __typename?: 'HmisLoginError', field?: string | null, message: string }
-    | { __typename?: 'HmisLoginSuccess', user: { __typename?: 'CurrentUserType', id: string } }
+export type LoginHmisMutation = { __typename: 'Mutation', hmisLogin:
+    | { __typename: 'HmisLoginError', field?: string | null, message: string }
+    | { __typename: 'HmisLoginSuccess', user: { __typename: 'CurrentUserType', id: string } }
    };
 
 

@@ -1,7 +1,10 @@
+from typing import Any
 from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
-from accounts.models import User
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
+from accounts.models import PermissionGroup, User
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.types import PermissionTemplateEnum
 from common.tests.utils import GraphQLBaseTestCase
@@ -189,7 +192,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(21):
+            with self.assertNumQueriesWithoutCache(20):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -209,6 +212,121 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             permissiongroup__template__name=CASEWORKER.name,
         )
         self.assertIn(group, new_user.groups.all())
+
+    def test_add_organization_member_rejects_a_role_the_organization_cannot_hold(self) -> None:
+        """``PermissionTemplateEnum`` offers every invitable role, not just this org's.
+
+        The org is outreach-only, so Shelter Operator has no permission group here.
+        Resolving the name against the whole registry accepted it and then failed in
+        ``add_roles`` with ``PermissionGroup.DoesNotExist``.
+        """
+        mutation = """
+            mutation ($data: OrgInvitationInput!) {
+                addOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "email": "wrongrole@example.com",
+            "firstName": "Wrong",
+            "middleName": "",
+            "lastName": "Role",
+            "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.SHELTER_OPERATOR.name,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        messages = response["data"]["addOrganizationMember"]["messages"]
+        self.assertIn("Shelter Operator", messages[0]["message"])
+        self.assertFalse(User.objects.filter(email="wrongrole@example.com").exists())
+
+    def test_change_organization_member_role_rejects_a_role_the_organization_cannot_hold(self) -> None:
+        """The other caller of ``get_template_or_raise``, and the org is outreach-only."""
+        member = baker.make(User, email="rolechange@example.com")
+        self.org.add_user(member)
+        # Only Organization Superuser carries CHANGE_ORG_MEMBER_ROLE.
+        OrgRoleManager(self.org).add_roles(self.org_admin, ORG_SUPERUSER)
+
+        mutation = """
+            mutation ($data: ChangeOrganizationMemberRoleInput!) {
+                changeOrganizationMemberRole(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "userId": member.pk,
+            "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.SHELTER_OPERATOR.name,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        messages = response["data"]["changeOrganizationMemberRole"]["messages"]
+        self.assertIn("Shelter Operator", messages[0]["message"])
+
+    def test_change_organization_member_role_keeps_a_role_it_cannot_name(self) -> None:
+        """``ORG_ADMIN`` is ``is_invitable=False``, so ``PermissionTemplateEnum`` omits it.
+
+        Replacing every org-scoped group therefore demoted an org admin on any
+        call — including one only meant to grant them Caseworker as well.
+        """
+        member = baker.make(User, email="keepsadmin@example.com")
+        self.org.add_user(member)
+        OrgRoleManager(self.org).add_roles(member, ORG_ADMIN)
+        # Only Organization Superuser carries CHANGE_ORG_MEMBER_ROLE.
+        OrgRoleManager(self.org).add_roles(self.org_admin, ORG_SUPERUSER)
+
+        mutation = """
+            mutation ($data: ChangeOrganizationMemberRoleInput!) {
+                changeOrganizationMemberRole(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "userId": member.pk,
+            "organizationId": self.org.pk,
+            "permissionTemplate": PermissionTemplateEnum.CASEWORKER.name,
+        }
+
+        self.execute_graphql(mutation, {"data": variables})
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.org, group__user=member).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(
@@ -439,3 +557,67 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
                 user=self.org_admin,
             ).exists()
         )
+
+
+@ignore_warnings(category=UserWarning)
+class CreateOrganizationMutationTests(GraphQLBaseTestCase):
+    """The mutation is gated on IsAuthenticated alone, so it is the attack surface.
+
+    Fixing the service alone would leave a future resolver free to reintroduce
+    resolving an organization by name; these pin the property where a caller
+    actually stands.
+    """
+
+    MUTATION = """
+        mutation CreateOrganization($data: CreateOrganizationInput!) {
+            createOrganization(data: $data) {
+                organization { id name }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.incumbent = baker.make(User, email="incumbent@example.com")
+        self.organization = organization_recipe.make(
+            name="Acme Housing", owner=self.incumbent, owner_roles=(CASEWORKER,)
+        )
+        self.outsider = baker.make(User, email="outsider@example.com")
+
+    def _create(self, name: str) -> dict[str, Any]:
+        self.graphql_client.force_login(self.outsider)
+        response = self.execute_graphql(self.MUTATION, {"data": {"organizationName": name, "orgType": "shelter"}})
+        self.assertIsNone(response.get("errors"))
+        organization: dict[str, Any] = response["data"]["createOrganization"]["organization"]
+        return organization
+
+    def test_naming_an_existing_organization_creates_a_separate_one(self) -> None:
+        created = self._create("Acme Housing")
+
+        self.assertNotEqual(created["id"], str(self.organization.pk))
+        self.assertEqual(created["name"], "Acme Housing")
+
+    def test_naming_an_existing_organization_grants_no_membership_on_it(self) -> None:
+        self._create("Acme Housing")
+
+        self.assertFalse(OrganizationUser.objects.filter(user=self.outsider, organization=self.organization).exists())
+
+    def test_naming_an_existing_organization_grants_no_role_on_it(self) -> None:
+        self._create("Acme Housing")
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.organization, group__user=self.outsider).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertSetEqual(held, set())
+
+    def test_naming_an_existing_organization_does_not_revoke_its_members_roles(self) -> None:
+        self._create("Acme Housing")
+
+        held = set(
+            PermissionGroup.objects.filter(organization=self.organization, group__user=self.incumbent).values_list(
+                "template__name", flat=True
+            )
+        )
+        self.assertIn(CASEWORKER.name, held)

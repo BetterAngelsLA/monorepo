@@ -1,15 +1,16 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateCurrentUserMutationVariables = Types.Exact<{
   data: Types.UpdateUserInput;
 }>;
 
 
-export type UpdateCurrentUserMutation = { __typename?: 'Mutation', updateCurrentUser:
-    | { __typename?: 'CurrentUserType', id: string, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'UserType', id: string, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null }
+export type UpdateCurrentUserMutation = { __typename: 'Mutation', updateCurrentUser:
+    | { __typename: 'CurrentUserType', id: string, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename: 'UserType', id: string, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null }
    };
 
 

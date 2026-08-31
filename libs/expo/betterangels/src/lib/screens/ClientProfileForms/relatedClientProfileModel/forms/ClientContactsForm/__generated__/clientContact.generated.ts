@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateClientContactMutationVariables = Types.Exact<{
   data: Types.ClientContactInput;
 }>;
 
 
-export type UpdateClientContactMutation = { __typename?: 'Mutation', updateClientContact:
-    | { __typename?: 'ClientContactType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateClientContactMutation = { __typename: 'Mutation', updateClientContact:
+    | { __typename: 'ClientContactType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CreateClientContactMutationVariables = Types.Exact<{
@@ -16,9 +17,9 @@ export type CreateClientContactMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateClientContactMutation = { __typename?: 'Mutation', createClientContact:
-    | { __typename?: 'ClientContactType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateClientContactMutation = { __typename: 'Mutation', createClientContact:
+    | { __typename: 'ClientContactType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

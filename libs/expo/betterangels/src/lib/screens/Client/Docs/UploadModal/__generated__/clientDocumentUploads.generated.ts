@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type GenerateClientDocumentUploadsMutationVariables = Types.Exact<{
   data: Types.GenerateClientDocumentUploadsInput;
 }>;
 
 
-export type GenerateClientDocumentUploadsMutation = { __typename?: 'Mutation', generateClientDocumentUploads:
-    | { __typename?: 'AuthorizedPresignedS3UploadsType', uploads: Array<{ __typename?: 'AuthorizedPresignedS3UploadType', refId: string, url: string, fields: any, presignedKey: string, uploadToken: string }> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type GenerateClientDocumentUploadsMutation = { __typename: 'Mutation', generateClientDocumentUploads:
+    | { __typename: 'AuthorizedPresignedS3UploadsType', uploads: Array<{ __typename: 'AuthorizedPresignedS3UploadType', refId: string, url: string, fields: any, presignedKey: string, uploadToken: string }> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type ResolveClientDocumentUploadsMutationVariables = Types.Exact<{
@@ -16,9 +17,9 @@ export type ResolveClientDocumentUploadsMutationVariables = Types.Exact<{
 }>;
 
 
-export type ResolveClientDocumentUploadsMutation = { __typename?: 'Mutation', resolveClientDocumentUploads:
-    | { __typename?: 'ClientDocumentUploadsType', documents: Array<{ __typename?: 'ClientDocumentType', id: string, originalFilename?: string | null, mimeType: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type ResolveClientDocumentUploadsMutation = { __typename: 'Mutation', resolveClientDocumentUploads:
+    | { __typename: 'ClientDocumentUploadsType', documents: Array<{ __typename: 'ClientDocumentType', id: string, originalFilename?: string | null, mimeType: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename: 'DjangoFileType', url: string, name: string } }> }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

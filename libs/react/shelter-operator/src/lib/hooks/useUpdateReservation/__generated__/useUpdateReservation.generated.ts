@@ -1,5 +1,6 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateReservationMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -9,7 +10,7 @@ export type UpdateReservationMutationVariables = Types.Exact<{
 
 export type UpdateReservationMutation = { __typename: 'Mutation', updateReservation:
     | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename: 'ReservationType', id: string, status: Types.ReservationStatusChoices, startDate?: any | null, checkedInAt?: any | null, checkedOutAt?: any | null, notes?: string | null, bed?: { __typename: 'BedType', id: string, name?: string | null } | null, room?: { __typename: 'RoomType', id: string, name: string } | null, clients: Array<{ __typename: 'ReservationClientAssignmentType', id: string, isPrimary: boolean, clientProfile: { __typename: 'ClientProfileType', id: string, firstName?: string | null, middleName?: string | null, lastName?: string | null, nickname?: string | null } }> }
+    | { __typename: 'ReservationType', id: string, status: Types.ReservationStatusChoices, startDate?: DateString | null, checkedInAt?: DateTimeString | null, checkedOutAt?: DateTimeString | null, notes?: string | null, bed?: { __typename: 'BedType', id: string, name?: string | null } | null, room?: { __typename: 'RoomType', id: string, name: string } | null, clients: Array<{ __typename: 'ReservationClientAssignmentType', id: string, isPrimary: boolean, clientProfile: { __typename: 'ClientProfileType', id: string, firstName?: string | null, middleName?: string | null, lastName?: string | null, nickname?: string | null } }> }
    };
 
 
