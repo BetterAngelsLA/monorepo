@@ -23,14 +23,15 @@ Or with django-codename strings::
 from collections.abc import Callable
 from typing import Any
 
-from accounts.models import Organization
-from common.permissions.utils import permissioned_queryset, user_holds_org_bypass_perms
+from common.permissions.utils import permissioned_queryset
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
     HasPerm,
 )
 from strawberry_django.utils.typing import UserType
+
+from accounts.models import Organization
 
 
 class HasOrgPerm(HasPerm):
@@ -75,30 +76,20 @@ class HasOrgPerm(HasPerm):
         if not user or not user.is_authenticated:
             raise DjangoNoPermission("Authentication required.")
 
-        if not self.perms:
-            raise DjangoNoPermission("No permissions specified for this operation.")
-
-        perm_strs = [f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms]
-
-        # Redundant with permissioned_queryset's own bypass below (an org-bypassing
-        # user would make that call's Organization.objects.all() return non-empty
-        # regardless of organization_id) -- kept as an explicit short-circuit so the
-        # bypass is visible here without requiring a reader to trace into
-        # permissioned_queryset, and so we skip a pointless always-true query.
-        if user_holds_org_bypass_perms(user, perm_strs, self.any_perm):
-            return resolver()
-
         org_id_raw = info.context.request.organization_id
 
         if org_id_raw is None:
             raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
         org_id = str(org_id_raw)
 
+        if not self.perms:
+            raise DjangoNoPermission("No permissions specified for this operation.")
+
         has_perm = permissioned_queryset(
             Organization.objects.all(),
             user=user,
             organization_id=org_id,
-            perms=perm_strs,
+            perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
             any_perm=self.any_perm,
             organization_field="pk",
         ).exists()

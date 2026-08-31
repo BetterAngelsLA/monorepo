@@ -138,9 +138,7 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
     def test_can_delete_shelter_photos_in_other_org(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.other_shelter)
 
-        deleted_ids = delete_shelter_photos(
-            user=self.global_operator, organization_id=str(self.org.id), ids=[photo.pk]
-        )
+        deleted_ids = delete_shelter_photos(user=self.global_operator, organization_id=str(self.org.id), ids=[photo.pk])
 
         self.assertEqual(deleted_ids, [photo.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
@@ -210,7 +208,11 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
             }
         """
         variables: dict[str, Any] = {
-            "data": {"name": "Shelter For Other Org", "organizationId": str(self.other_org.id)}
+            "data": {
+                "name": "Shelter For Other Org",
+                "description": "desc",
+                "organizationId": str(self.other_org.id),
+            }
         }
         response = self.execute_graphql(mutation, variables)
         self.assertIsNone(response.get("errors"))
@@ -226,7 +228,9 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
                 }
             }
         """
-        variables: dict[str, Any] = {"data": {"name": "Shelter For Own Org", "organizationId": str(self.org.id)}}
+        variables: dict[str, Any] = {
+            "data": {"name": "Shelter For Own Org", "description": "desc", "organizationId": str(self.org.id)}
+        }
         response = self.execute_graphql(mutation, variables)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["createShelter"]["organization"]["id"], str(self.org.id))
@@ -240,7 +244,15 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
                 }
             }
         """
-        response = self.execute_graphql(mutation, {"data": {"name": "No Org Shelter"}})
+        response = self.execute_graphql(
+            mutation,
+            {
+                "data": {
+                    "name": "No Org Shelter",
+                    "description": "desc",
+                }
+            },
+        )
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createShelter"]["messages"]
         self.assertEqual(len(messages), 1)
@@ -256,7 +268,13 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
                 }
             }
         """
-        variables: dict[str, Any] = {"data": {"name": "Bogus Org Shelter", "organizationId": "999999"}}
+        variables: dict[str, Any] = {
+            "data": {
+                "name": "Bogus Org Shelter",
+                "description": "desc",
+                "organizationId": "999999",
+            }
+        }
         response = self.execute_graphql(mutation, variables)
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createShelter"]["messages"]
@@ -270,17 +288,24 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
                     ... on ShelterType { id }
+                    ... on OperationInfo { messages { kind message } }
                 }
             }
         """
         variables: dict[str, Any] = {
-            "data": {"name": "Sneaky Org Shelter", "organizationId": str(self.other_org.id)}
+            "data": {
+                "name": "Sneaky Org Shelter",
+                "description": "desc",
+                "organizationId": str(self.other_org.id),
+            }
         }
         response = self.execute_graphql(mutation, variables)
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "You do not have permission to create a shelter for another organization.",
-            response["errors"][0]["message"],
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "createShelter",
+            "You do not have permission to create a shelter for that organization.",
+            kind="PERMISSION",
         )
         self.assertFalse(Shelter.objects.filter(name="Sneaky Org Shelter").exists())
 
