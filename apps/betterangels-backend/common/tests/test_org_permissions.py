@@ -10,15 +10,16 @@ template, effectively "any member holds every permission in their org".
 import uuid
 
 from accounts.groups import ORG_ADMIN
-from accounts.models import PermissionGroup, User
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.utils import permissioned_queryset
+from common.permissions.utils import permissioned_queryset, user_holds_org_bypass_perms
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization
+from shelters.models import Shelter
 from teams.models import Team
 
 CREATE_TEAM = """
@@ -108,3 +109,121 @@ class PermissionedQuerysetSameGroupTestCase(TestCase):
         self.holder_group.user_set.add(self.user)
 
         self.assertTrue(self._matches())
+
+
+class PermissionedQuerysetBypassTestCase(TestCase):
+    """Direct coverage of the org-bypass branch in ``permissioned_queryset``.
+
+    Pins the permission-scoped semantics at the layer where they live: a user
+    holding a permission through an org-bypassing role matches rows in *any*
+    organization, but only for permissions the bypass template actually
+    carries. Also covers the ``any_perm=False`` (all-perms) path for both the
+    org-scoped and bypass branches, plus the resolver-branch helper.
+    """
+
+    def setUp(self) -> None:
+        self.org_1 = organization_recipe.make(name="bypass_org_1")
+        self.org_2 = organization_recipe.make(name="bypass_org_2")
+
+        self.bypass_user = baker.make(User, username=f"bypass_{uuid.uuid4()}")
+        self.bypass_template = PermissionGroupTemplate.objects.create(
+            name="Bypass Test Role", bypasses_org_scoping=True
+        )
+        self.bypass_group = PermissionGroup.objects.create(organization=self.org_1, template=self.bypass_template)
+        self.bypass_user.groups.add(self.bypass_group)
+
+        self.org_user = baker.make(User, username=f"org_member_{uuid.uuid4()}")
+        self.org_group = PermissionGroup.objects.create(organization=self.org_1, label="org-only-role")
+        self.org_user.groups.add(self.org_group)
+
+    @staticmethod
+    def _perm(perm_str: str) -> Permission:
+        app_label, codename = perm_str.split(".")
+        return Permission.objects.get(codename=codename, content_type__app_label=app_label)
+
+    def _matches(self, user: User, perms: list[str], organization_id: str, *, any_perm: bool = True) -> bool:
+        return permissioned_queryset(
+            Organization.objects.all(),
+            user=user,
+            organization_id=organization_id,
+            perms=perms,
+            any_perm=any_perm,
+            organization_field="pk",
+        ).exists()
+
+    # ── Bypass: cross-org, permission-scoped ────────────────────────────
+
+    def test_bypass_user_matches_any_org_when_holding_perm(self) -> None:
+        self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        self.assertTrue(self._matches(self.bypass_user, [Shelter.perms.VIEW], str(self.org_1.id)))
+        # Same grant, different org: the bypass descopes the org filter.
+        self.assertTrue(self._matches(self.bypass_user, [Shelter.perms.VIEW], str(self.org_2.id)))
+
+    def test_bypass_user_without_perm_matches_nothing(self) -> None:
+        """Permission-scoped: the bypass never grants what the template lacks."""
+        self.assertFalse(self._matches(self.bypass_user, [Shelter.perms.VIEW], str(self.org_2.id)))
+        # Even in the org hosting the bypass group.
+        self.assertFalse(self._matches(self.bypass_user, [Shelter.perms.VIEW], str(self.org_1.id)))
+
+    def test_bypass_user_any_perm_true_requires_one(self) -> None:
+        self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        self.assertTrue(
+            self._matches(self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_2.id))
+        )
+
+    def test_bypass_user_any_perm_false_requires_all(self) -> None:
+        self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        # Holds VIEW via the bypass but not CHANGE: the all-perms bypass must not fire.
+        self.assertFalse(
+            self._matches(
+                self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_2.id), any_perm=False
+            )
+        )
+
+        self.bypass_group.permissions.add(self._perm(Shelter.perms.CHANGE))
+        self.assertTrue(
+            self._matches(
+                self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_2.id), any_perm=False
+            )
+        )
+
+    # ── Non-bypass: strictly org-scoped ─────────────────────────────────
+
+    def test_org_scoped_user_does_not_leak_across_orgs(self) -> None:
+        self.org_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        self.assertTrue(self._matches(self.org_user, [Shelter.perms.VIEW], str(self.org_1.id)))
+        self.assertFalse(self._matches(self.org_user, [Shelter.perms.VIEW], str(self.org_2.id)))
+
+    def test_org_scoped_any_perm_false_requires_all(self) -> None:
+        """Pins the and_-reduce org-scoped path (no bypass involved)."""
+        self.org_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        self.assertFalse(
+            self._matches(
+                self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False
+            )
+        )
+
+        self.org_group.permissions.add(self._perm(Shelter.perms.CHANGE))
+        self.assertTrue(
+            self._matches(
+                self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False
+            )
+        )
+
+    # ── Resolver-branch helper ──────────────────────────────────────────
+
+    def test_user_holds_org_bypass_perms_is_permission_scoped(self) -> None:
+        self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
+
+        self.assertTrue(user_holds_org_bypass_perms(self.bypass_user, [Shelter.perms.VIEW]))
+        self.assertFalse(user_holds_org_bypass_perms(self.bypass_user, [Shelter.perms.CHANGE]))
+        self.assertFalse(
+            user_holds_org_bypass_perms(self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], any_perm=False)
+        )
+        # The empty-perms guard: all([]) is vacuously True, so it must return False.
+        self.assertFalse(user_holds_org_bypass_perms(self.bypass_user, []))

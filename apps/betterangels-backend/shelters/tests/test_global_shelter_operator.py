@@ -279,7 +279,7 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createShelter"]["messages"]
         self.assertEqual(len(messages), 1)
-        self.assertIn("does not refer to an existing organization", messages[0]["message"])
+        self.assertIn("Organization with id 999999 not found", messages[0]["message"])
 
     def test_ordinary_operator_cannot_create_shelter_for_another_org(self) -> None:
         """Regression guard: organization_id isn't silently ignored for a non-bypass caller."""
