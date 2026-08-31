@@ -4,7 +4,9 @@ import type { SearchClientsQuery } from './useSearchClient.generated';
 
 export const searchClientsOperationKey: keyof Omit<SearchClientsQuery, '__typename'> = 'clientProfiles';
 export const searchClientsSuccessTypename: Extract<
-  NonNullable<SearchClientsQuery['clientProfiles']>,
+  NonNullable<SearchClientsQuery['clientProfiles']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<SearchClientsQuery['clientProfiles']>,
   { __typename: 'ClientProfileTypeOffsetPaginated' }
 >['__typename'] = 'ClientProfileTypeOffsetPaginated';
 

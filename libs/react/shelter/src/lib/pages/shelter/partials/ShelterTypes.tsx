@@ -12,11 +12,9 @@ export function ShelterTypes({
   return (
     <Card title="Shelter Types">
       {shelter.shelterTypes
-        .filter(
-          (shelterType): shelterType is { name: ShelterChoices } =>
-            !!shelterType.name,
-        )
-        .map((shelterType) => enumDisplayShelterChoices[shelterType.name])
+        .map((shelterType) => shelterType.name)
+        .filter((name): name is ShelterChoices => !!name)
+        .map((name) => enumDisplayShelterChoices[name])
         .join(', ')}
     </Card>
   );

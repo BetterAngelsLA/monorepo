@@ -1,4 +1,5 @@
 import { formatScalarDate, type DateString } from '@monorepo/shared/scalars';
+import { useMemo } from 'react';
 import type {
   DailyBedStatusMetrics,
   DailyOccupancyMetrics,
@@ -64,8 +65,11 @@ function toDailyOccupancyPercentData(metrics: DailyOccupancyMetrics[]) {
 
 const cardClassName =
   'rounded-[20px] bg-white p-6 shadow-[0_2px_8px_rgba(16,24,40,0.06)]';
-// BarChart uses autoFit, so the card needs an explicit height for the plot to fill.
-const chartCardClassName = `flex flex-col ${cardClassName} h-[560px]`;
+const chartCardClassName = `flex flex-col ${cardClassName}`;
+const CHART_PLOT_HEIGHT = 460;
+// Past this many days the bars are too thin to read, so BarChart averages
+// consecutive days into ranges.
+const CHART_MAX_BARS = 40;
 
 const STATUSES = [
   'Occupied',
@@ -83,8 +87,14 @@ const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
  * Renders empty (no data) until `data` is provided.
  */
 export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
-  const countData = data ? toBedStatusCountData(data) : [];
-  const percentData = data ? toBedStatusPercentData(data) : [];
+  const countData = useMemo(
+    () => (data ? toBedStatusCountData(data) : []),
+    [data],
+  );
+  const percentData = useMemo(
+    () => (data ? toBedStatusPercentData(data) : []),
+    [data],
+  );
 
   return (
     <section className={chartCardClassName} data-testid="bed-status-chart">
@@ -100,6 +110,8 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
               }
             : {}
         }
+        chartHeight={CHART_PLOT_HEIGHT}
+        maxBars={CHART_MAX_BARS}
         data={countData}
         xField="date"
         yField="count"
@@ -116,7 +128,6 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
         }}
         style={{ stroke: '#ffffff', lineWidth: 1, inset: 0.1 }}
         tooltip={{ title: 'date' }}
-        className="h-full"
       />
     </section>
   );
@@ -131,8 +142,14 @@ export function DailyOccupancyChart({
 }: {
   data?: DailyOccupancyMetrics[];
 }) {
-  const countData = data ? toDailyOccupancyCountData(data) : [];
-  const percentData = data ? toDailyOccupancyPercentData(data) : [];
+  const countData = useMemo(
+    () => (data ? toDailyOccupancyCountData(data) : []),
+    [data],
+  );
+  const percentData = useMemo(
+    () => (data ? toDailyOccupancyPercentData(data) : []),
+    [data],
+  );
 
   return (
     <section className={chartCardClassName} data-testid="daily-occupancy-chart">
@@ -148,6 +165,8 @@ export function DailyOccupancyChart({
               }
             : {}
         }
+        chartHeight={CHART_PLOT_HEIGHT}
+        maxBars={CHART_MAX_BARS}
         data={countData}
         xField="date"
         yField="count"
@@ -158,7 +177,6 @@ export function DailyOccupancyChart({
         scale={{ x: { padding: 0.4 }, y: { nice: true } }}
         style={{ fill: '#008CEE' }}
         tooltip={{ title: 'date' }}
-        className="h-full"
       />
     </section>
   );
