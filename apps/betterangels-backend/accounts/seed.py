@@ -87,7 +87,11 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
     * **Managed** — the template is named in :data:`common.org_types.REGISTRY`, so its
       ``TemplateConfig`` is authoritative and the template's own ``permissions`` are
       refreshed to match.  This is what picks up a permission change in code on the
-      next ``migrate``.
+      next ``migrate``.  ``bypasses_org_scoping`` is config-authoritative here too:
+      flipping it in the admin on a managed template is reverted on the next sync —
+      including for unscoped templates like Global Shelter Operator, whose bypass
+      flag is owned by code.  Granting org-bypass in the admin means creating a
+      ``PermissionGroup`` bound to an existing bypass template, not editing the flag.
     * **Hand-defined** — the template was created in the admin and the code knows
       nothing about it, so its ``permissions`` *are* the definition and are read, not
       written.  This is what lets one admin-defined role reach every organization

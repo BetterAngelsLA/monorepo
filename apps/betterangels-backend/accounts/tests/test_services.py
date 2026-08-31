@@ -123,6 +123,25 @@ def test_create_org_atomic() -> None:
     assert not OrgModel.objects.filter(name="Atomic Org").exists()
 
 
+@pytest.mark.django_db(transaction=True)
+def test_create_org_with_owner_roles_refuses_org_bypass_role() -> None:
+    """Org-bypassing roles are admin-only: they can't be named as owner roles.
+
+    ``create_organization_with_presets`` is atomic, so the refused grant rolls
+    the whole organization creation back.
+    """
+    from organizations.models import Organization as OrgModel
+
+    owner = baker.make(User, email="bypass-owner@example.com")
+
+    with pytest.raises(ValueError, match="Global Shelter Operator"):
+        create_organization_with_presets(
+            "Bypass Owner Org", ["shelter"], owner=owner, owner_roles=(GLOBAL_SHELTER_OPERATOR,)
+        )
+
+    assert not OrgModel.objects.filter(name="Bypass Owner Org").exists()
+
+
 # ── get_or_create_user_by_email ───────────────────────────────────────
 
 
@@ -391,6 +410,28 @@ def test_member_add_persists_new_name() -> None:
     # Name should stay as the original (existing user is reused, new data not applied).
     assert user.first_name == "Original"
     assert user.last_name == "Name"
+
+
+@pytest.mark.django_db
+def test_member_add_refuses_org_bypass_role() -> None:
+    """member_add must never grant an org-bypassing role."""
+    org = create_organization_with_presets("Guarded Member Org", ["shelter"], owner=baker.make(User))
+
+    with pytest.raises(ValueError, match="Global Shelter Operator"):
+        member_add(
+            email="guard@example.com",
+            first_name="Guard",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(GLOBAL_SHELTER_OPERATOR,),
+        )
+
+    # No bypass group is granted (the guard fires before any assignment).
+    user = User.objects.get(email="guard@example.com")
+    assert not PermissionGroup.objects.filter(
+        organization=org, user=user, template__bypasses_org_scoping=True
+    ).exists()
 
 
 # ── permission_group_for_user ─────────────────────────────────────────

@@ -27,7 +27,7 @@ from accounts.models import (
     PermissionGroupTemplate,
     User,
 )
-from accounts.seed import seed_permission_templates
+from accounts.seed import seed_permission_templates, sync_group_permissions
 from accounts.services import invitation_role, member_add, reconcile_org_groups
 
 from .baker_recipes import organization_recipe, permission_group_recipe
@@ -252,6 +252,71 @@ class OrganizationAdminTestCase(TestCase):
         )
         self.assertNotIn("group", inline_formset.formset.empty_form.fields)
 
+    def test_adding_a_bypass_group_via_the_inline_grants_cross_org_access(self) -> None:
+        """The org change form's inline is the deliberate admin path for org-bypass.
+
+        A superuser can add a ``PermissionGroup`` bound to the Global Shelter
+        Operator template through the organization page; a user granted that
+        group then reads across organizations. This is the only route for
+        granting org-bypass — everything else refuses it.
+        """
+        from common.permissions.utils import permissioned_queryset
+        from shelters.models import Shelter
+        from shelters.tests.baker_recipes import shelter_recipe
+
+        organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        member = baker.make(User)
+        organization.add_user(member)
+
+        gsh_template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)
+        rows = list(PermissionGroup.objects.filter(organization=organization).order_by("pk"))
+        payload = {
+            "name": organization.name,
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(organization.profile.pk),
+            "profile-0-organization": str(organization.pk),
+            "profile-0-org_types": [t.value for t in organization.profile.org_types],
+            "permission_groups-TOTAL_FORMS": str(len(rows) + 1),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+        }
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-group_ptr"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(organization.pk)
+            payload[f"permission_groups-{index}-label"] = row.label
+            payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
+        payload[f"permission_groups-{len(rows)}-group_ptr"] = ""
+        payload[f"permission_groups-{len(rows)}-organization"] = str(organization.pk)
+        payload[f"permission_groups-{len(rows)}-label"] = GLOBAL_SHELTER_OPERATOR.name
+        payload[f"permission_groups-{len(rows)}-template"] = str(gsh_template.pk)
+
+        response = self.client.post(reverse("admin:organizations_organization_change", args=[organization.pk]), payload)
+        self.assertEqual(response.status_code, 302)
+
+        gsh_group = PermissionGroup.objects.get(organization=organization, template=gsh_template)
+        sync_group_permissions(organization=organization)
+        member.groups.add(gsh_group)
+
+        # Cross-org: the group lives in ``organization`` but matches another org's shelter.
+        other_org = organization_recipe.make(name="Other Bypass Org", preset_names=["shelter"], owner_roles=())
+        other_shelter = shelter_recipe.make(organization=other_org)
+        qs = permissioned_queryset(
+            Shelter.objects.all(),
+            user=member,
+            organization_id=str(other_org.pk),
+            perms=[Shelter.perms.VIEW],
+            organization_field="organization_id",
+        )
+        self.assertIn(other_shelter.pk, list(qs.values_list("pk", flat=True)))
+
 
 class OrganizationAddMemberViewTestCase(TestCase):
     def setUp(self) -> None:
@@ -317,6 +382,12 @@ class OrganizationAddMemberViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(email="escalate@example.com").exists())
+
+    def test_the_invite_form_does_not_offer_the_org_bypass_role(self) -> None:
+        """Verify an is_invitable=False templates are hidden in invite form."""
+        response = self.client.get(self.url)
+
+        self.assertNotContains(response, GLOBAL_SHELTER_OPERATOR.name)
 
     def test_an_unconfigured_organization_refuses_members(self) -> None:
         """Its role list is empty, so the page must say why instead of offering nothing."""

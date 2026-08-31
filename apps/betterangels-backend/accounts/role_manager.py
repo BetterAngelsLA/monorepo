@@ -39,6 +39,10 @@ class OrgRoleManager:
         objects such as :data:`~notes.groups.CASEWORKER`.
 
         Org-bypassing roles (``bypasses_org_scoping=True``) are **admin-only**.
+        The guard checks the resolved ``PermissionGroup``'s template row, not
+        just the caller-supplied ``TemplateConfig``: the config's flag defaults
+        to ``False`` and can be fabricated, but the database row is
+        authoritative.
 
         Raises :class:`~django.core.exceptions.ObjectDoesNotExist` if no
         ``PermissionGroup`` exists for a given template on this organization.
@@ -52,6 +56,9 @@ class OrgRoleManager:
                 organization=self.organization,
                 template__name=template_config.name,
             )
+            template = permission_group.template
+            if template is not None and template.bypasses_org_scoping:
+                raise ValueError(f"Cannot add roles for: {template.name}.")
             user.groups.add(permission_group)
 
     @transaction.atomic

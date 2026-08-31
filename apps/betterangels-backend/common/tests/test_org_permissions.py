@@ -227,3 +227,38 @@ class PermissionedQuerysetBypassTestCase(TestCase):
         )
         # The empty-perms guard: all([]) is vacuously True, so it must return False.
         self.assertFalse(user_holds_org_bypass_perms(self.bypass_user, []))
+
+    # ── Membership-only path: bypass never applies ─────────────────────
+
+    def test_bypass_does_not_extend_the_membership_only_path(self) -> None:
+        """perms=None is a plain org-membership check, bypass or not.
+
+        The bypass branch needs a permission to gate on; the membership branch
+        has none, so even a bypass user stays confined to orgs they belong to.
+        """
+        from shelters.tests.baker_recipes import shelter_recipe
+
+        self.org_1.users.add(self.bypass_user)
+        shelter_in_host = shelter_recipe.make(organization=self.org_1)
+        shelter_in_other = shelter_recipe.make(organization=self.org_2)
+
+        host_pks = permissioned_queryset(
+            Shelter.objects.all(),
+            user=self.bypass_user,
+            organization_id=str(self.org_1.id),
+            perms=None,
+            organization_field="organization_id",
+        ).values_list("pk", flat=True)
+        self.assertIn(shelter_in_host.pk, host_pks)
+        self.assertNotIn(shelter_in_other.pk, host_pks)
+
+        # Not a member of org_2: membership-only access matches nothing there.
+        self.assertFalse(
+            permissioned_queryset(
+                Shelter.objects.all(),
+                user=self.bypass_user,
+                organization_id=str(self.org_2.id),
+                perms=None,
+                organization_field="organization_id",
+            ).exists()
+        )

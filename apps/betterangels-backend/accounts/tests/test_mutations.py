@@ -13,6 +13,7 @@ from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from notes.groups import CASEWORKER
 from organizations.models import OrganizationInvitation, OrganizationUser
+from shelters.groups import GLOBAL_SHELTER_OPERATOR
 from unittest_parametrize import ParametrizedTestCase
 
 from .baker_recipes import organization_recipe
@@ -325,6 +326,24 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             PermissionGroup.objects.filter(organization=self.org, user=member).values_list("template__name", flat=True)
         )
         self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
+
+    def test_permission_template_enum_omits_the_org_bypass_role(self) -> None:
+        """GLOBAL_SHELTER_OPERATOR is is_invitable=False, so the enum can't name it.
+
+        ``addOrganizationMember`` and ``changeOrganizationMemberRole`` take a
+        ``PermissionTemplateEnum``, so an org-bypass role is unreachable by name
+        at the GraphQL layer.
+        """
+        enum_values = {member.value for member in PermissionTemplateEnum.__members__.values()}
+        self.assertNotIn(GLOBAL_SHELTER_OPERATOR.name, enum_values)
+
+    def test_get_template_or_raise_refuses_the_org_bypass_role(self) -> None:
+        """get_template_or_raise is the resolver-layer guard: it only resolves invitable roles."""
+        from common.org_types import REGISTRY
+        from django.core.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            REGISTRY.get_template_or_raise(GLOBAL_SHELTER_OPERATOR.name, self.org)
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(
