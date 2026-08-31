@@ -41,7 +41,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
 
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        self.org_1.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
 
     def test_operator_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
@@ -124,7 +124,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         # Grant view_shelter to the CASEWORKER group in org_2
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_2.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        self.org_2.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
 
         self._set_active_org(self.org_2)
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -334,7 +334,7 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
         pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
-        pg.group.permissions.add(perm)
+        pg.permissions.add(perm)
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
 

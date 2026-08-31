@@ -27,8 +27,8 @@ def grant_view_reports(user: User, org: Organization) -> None:
     template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
     template.permissions.add(perm)
     pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
-    pg.group.permissions.add(perm)
-    user.groups.add(pg.group)
+    pg.permissions.add(perm)
+    user.groups.add(pg)
 
 
 @pytest.fixture

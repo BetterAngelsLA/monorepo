@@ -174,7 +174,7 @@ def service_request_create(
         )
 
         assign_object_permissions(
-            permission_group.group,
+            permission_group,
             sr,
             [
                 ServiceRequestPermissions.VIEW,
@@ -273,7 +273,7 @@ def note_create(
     note.save()
 
     assign_object_permissions(
-        permission_group.group,
+        permission_group,
         note,
         [
             NotePermissions.CHANGE,
@@ -361,7 +361,7 @@ def resolve_note_file_uploads(
 
         for att in attached:
             assign_object_permissions(
-                permission_group.group,
+                permission_group,
                 att,
                 [
                     Attachment.perms.DELETE,

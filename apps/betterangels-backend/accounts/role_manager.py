@@ -6,7 +6,6 @@ Placed in its own module to avoid circular imports between
 
 from typing import TYPE_CHECKING
 
-from django.contrib.auth.models import Group
 from django.db import transaction
 from organizations.models import Organization
 
@@ -44,7 +43,7 @@ class OrgRoleManager:
                 organization=self.organization,
                 template__name=template_config.name,
             )
-            user.groups.add(permission_group.group)
+            user.groups.add(permission_group)
 
     @transaction.atomic
     def remove_roles(self, user: User, *templates: TemplateConfig) -> None:
@@ -58,12 +57,12 @@ class OrgRoleManager:
                 organization=self.organization,
                 template__name=template_config.name,
             )
-            user.groups.remove(permission_group.group)
+            user.groups.remove(permission_group)
 
     @transaction.atomic
     def clear_roles(self, user: User) -> None:
         """Remove **all** org-scoped permission groups from *user*."""
-        groups = Group.objects.filter(permissiongroup__organization=self.organization)
+        groups = PermissionGroup.objects.filter(organization=self.organization)
         user.groups.remove(*groups)
 
     @transaction.atomic

@@ -113,11 +113,11 @@ class CurrentUserOrganizationType(OrganizationType):
         qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
             _granted_perms=ArrayAgg(
                 Concat(
-                    F("permission_groups__group__permissions__content_type__app_label"),
+                    F("permission_groups__permissions__content_type__app_label"),
                     Value("."),
-                    F("permission_groups__group__permissions__codename"),
+                    F("permission_groups__permissions__codename"),
                 ),
-                filter=Q(permission_groups__group__user=user),
+                filter=Q(permission_groups__user=user),
                 distinct=True,
             )
         )
@@ -164,7 +164,7 @@ class UserType(UserBaseType):
         if not user or not user.is_authenticated:
             return None
         return PermissionGroup.objects.filter(
-            group__user=user.pk,
+            user=user.pk,
             template__name=CASEWORKER.name,
         ).exists()
 
@@ -197,7 +197,7 @@ class CurrentUserType(UserBaseType):
         if not user or not user.is_authenticated:
             return None
         return PermissionGroup.objects.filter(
-            group__user=user.pk,
+            user=user.pk,
             template__name=CASEWORKER.name,
         ).exists()
 
