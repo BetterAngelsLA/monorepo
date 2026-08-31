@@ -5,12 +5,11 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.extensions import HasOrgPerm
-from accounts.selectors import organization_get_for_member, resolve_permission_group
+from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
-from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -30,15 +29,10 @@ class Query:
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
         """List the active organization's teams, if the user is a member of it."""
-        org_id = info.context.request.organization_id
-
-        if org_id is None:
-            # App builds older than #2330 send no header; #2345 denies them
-            # once those builds have rolled over.
-            permission_group = resolve_permission_group(info.context.request.user, template=CASEWORKER)
-            return team_list(organization=permission_group.organization)
-
-        org = organization_get_for_member(user=get_current_user(info), organization_id=org_id)
+        org = organization_get_for_member(
+            user=get_current_user(info),
+            organization_id=get_current_organization(info),
+        )
 
         if org is None:
             raise PermissionDenied("You do not have access to this organization.")
