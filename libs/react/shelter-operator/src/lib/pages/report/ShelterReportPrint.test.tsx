@@ -22,10 +22,10 @@ const METRICS: ReservationMetrics = {
 };
 
 const ALL_METRICS: ExportMetric[] = [
-  'average-days-to-occupancy',
-  'reservation-status-changes',
-  'bed-status',
-  'daily-occupancy',
+  'avg_days_to_occupancy',
+  'reservation_metrics',
+  'daily_bed_status_metrics',
+  'daily_occupancy_metrics',
 ];
 
 function baseProps(includedMetrics: ExportMetric[]) {
@@ -51,8 +51,8 @@ describe('ShelterReportPrint', () => {
     render(
       <ShelterReportPrint
         {...baseProps([
-          'average-days-to-occupancy',
-          'reservation-status-changes',
+          'avg_days_to_occupancy',
+          'reservation_metrics',
         ])}
       />,
     );
@@ -92,7 +92,7 @@ describe('ShelterReportPrint', () => {
   });
 
   it('collapses to a single page when only Bed Status is included', () => {
-    render(<ShelterReportPrint {...baseProps(['bed-status'])} />);
+    render(<ShelterReportPrint {...baseProps(['daily_bed_status_metrics'])} />);
 
     expect(screen.getByTestId('bed-status-chart')).toBeTruthy();
     expect(screen.queryByTestId('daily-occupancy-chart')).toBeNull();
@@ -102,7 +102,7 @@ describe('ShelterReportPrint', () => {
   it('moves Daily Occupancy up to page 1 when Bed Status is not included, instead of giving it its own page', () => {
     render(
       <ShelterReportPrint
-        {...baseProps(['reservation-status-changes', 'daily-occupancy'])}
+        {...baseProps(['reservation_metrics', 'daily_occupancy_metrics'])}
       />,
     );
 
@@ -119,9 +119,9 @@ describe('ShelterReportPrint', () => {
     ).toHaveLength(0);
   });
 
-  it('shows the "Previously Overdue" pill when reservation-status-changes is included', () => {
+  it('shows the "Previously Overdue" pill when reservation_metrics is included', () => {
     render(
-      <ShelterReportPrint {...baseProps(['reservation-status-changes'])} />,
+      <ShelterReportPrint {...baseProps(['reservation_metrics'])} />,
     );
 
     expect(screen.getByText('Previously Overdue')).toBeTruthy();
@@ -131,7 +131,7 @@ describe('ShelterReportPrint', () => {
   it('shows a dash instead of a 0/0 ratio when nobody has checked in', () => {
     render(
       <ShelterReportPrint
-        {...baseProps(['reservation-status-changes'])}
+        {...baseProps(['reservation_metrics'])}
         metrics={{ ...METRICS, checkedIn: 0, checkInOverdueToCheckedIn: 0 }}
       />,
     );

@@ -50,10 +50,10 @@ export const AllMetrics: Story = {
   args: {
     ...baseArgs,
     includedMetrics: [
-      'average-days-to-occupancy',
-      'reservation-status-changes',
-      'bed-status',
-      'daily-occupancy',
+      'avg_days_to_occupancy',
+      'reservation_metrics',
+      'daily_bed_status_metrics',
+      'daily_occupancy_metrics',
     ],
   },
 };
@@ -62,9 +62,9 @@ export const WithoutAvgDaysToOccupancy: Story = {
   args: {
     ...baseArgs,
     includedMetrics: [
-      'reservation-status-changes',
-      'bed-status',
-      'daily-occupancy',
+      'reservation_metrics',
+      'daily_bed_status_metrics',
+      'daily_occupancy_metrics',
     ],
   },
 };
@@ -75,9 +75,9 @@ export const OnlyAvgDaysToOccupancy: Story = {
     // The stat row collapses to a single flat item, but bed-status/daily-
     // occupancy are independent checkboxes — the charts still show.
     includedMetrics: [
-      'average-days-to-occupancy',
-      'bed-status',
-      'daily-occupancy',
+      'avg_days_to_occupancy',
+      'daily_bed_status_metrics',
+      'daily_occupancy_metrics',
     ],
   },
 };

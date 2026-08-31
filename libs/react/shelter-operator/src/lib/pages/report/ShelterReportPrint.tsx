@@ -5,6 +5,7 @@ import {
   BedStatusChart,
   DailyOccupancyChart,
 } from '../../components/reports/ReportCharts';
+import type { ExportMetric } from '../../components/reports/useShelterMetricsExport';
 import { Text } from '../../components/base-ui/text/text';
 import type {
   DailyBedStatusMetrics,
@@ -12,12 +13,6 @@ import type {
   ReservationMetrics,
 } from '../../hooks/useShelterOccupancyMetrics';
 import { ReportOperationalStats } from './ReportOperationalStats';
-
-export type ExportMetric =
-  | 'average-days-to-occupancy'
-  | 'reservation-status-changes'
-  | 'bed-status'
-  | 'daily-occupancy';
 
 // US Letter, portrait, at 96dpi (8.5in x 11in). Fixed so each page's raster
 // capture is identical regardless of the browser window that generated it.
@@ -155,15 +150,18 @@ export function ShelterReportPrint({
   dailyOccupancy,
   ref,
 }: IShelterReportPrintProps) {
-  const showReservationStatusChanges = includedMetrics.includes(
-    'reservation-status-changes',
-  );
+  const showReservationStatusChanges =
+    includedMetrics.includes('reservation_metrics');
   const showAvgDaysToOccupancy = includedMetrics.includes(
-    'average-days-to-occupancy',
+    'avg_days_to_occupancy',
   );
   const showStats = showReservationStatusChanges || showAvgDaysToOccupancy;
-  const showBedStatus = includedMetrics.includes('bed-status');
-  const showDailyOccupancy = includedMetrics.includes('daily-occupancy');
+  const showBedStatus = includedMetrics.includes(
+    'daily_bed_status_metrics',
+  );
+  const showDailyOccupancy = includedMetrics.includes(
+    'daily_occupancy_metrics',
+  );
 
   // Daily Occupancy only gets its own page when Bed Status is also shown —
   // otherwise it moves up onto page 1 with the stats instead of leaving page
