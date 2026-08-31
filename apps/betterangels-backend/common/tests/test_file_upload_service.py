@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
+from common.enums import AttachmentType
 from common.models import Attachment
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -11,6 +12,7 @@ from common.services.file_upload import (
     _validate_upload_item,
     create_presigned_uploads,
     create_attachment_records,
+    create_multipart_attachment,
     validate_upload_batch,
 )
 from common.services.exceptions import (
@@ -20,7 +22,8 @@ from common.services.exceptions import (
 )
 from common.services.s3 import PresignedS3UploadResult, PresignedS3UploadBatchResult, PresignedS3UploadInput
 from django.conf import settings
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from model_bakery import baker
 
 # ---------------------------------------------------------------------------
@@ -274,6 +277,23 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(attachment.namespace, None)
         self.assertEqual(attachment.object_id, self.content_object.id)
         self.assertEqual(attachment.uploaded_by, self.user)
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_infers_attachment_type_and_canonicalises_filename(
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock
+    ) -> None:
+        item = self._make_item(filename="holiday%20photo", mime_type="image/jpeg")
+
+        attachment = create_attachment_records(
+            user=self.user,
+            content_object=self.content_object,
+            uploads=[item],
+            config=TEST_CONFIG,
+        )[0]
+
+        self.assertEqual(attachment.attachment_type, AttachmentType.IMAGE)
+        self.assertEqual(attachment.original_filename, "holiday photo.jpg")
 
     @patch("common.services.file_upload.s3_key_exists", return_value=True)
     @patch("common.services.file_upload.validate_upload_token", return_value=True)
@@ -722,3 +742,51 @@ class ValidateUploadBatchTest(TestCase):
         )
 
         self.assertEqual(result[0].namespace, "CUSTOM_NS")
+
+
+# ---------------------------------------------------------------------------
+# create_multipart_attachment
+# ---------------------------------------------------------------------------
+
+
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
+class CreateMultipartAttachmentTest(TestCase):
+    def setUp(self) -> None:
+        self.user: Any = baker.make("accounts.User")
+        self.content_object: Any = baker.make("clients.ClientProfile")
+
+    def _create(self, file: Any, namespace: str | None = None) -> Attachment:
+        return create_multipart_attachment(
+            user=self.user,
+            content_object=self.content_object,
+            file=file,
+            namespace=namespace,
+        )
+
+    def test_uses_the_content_type_supplied_by_the_client(self) -> None:
+        file = SimpleUploadedFile(name="scan.pdf", content=b"pdf bytes", content_type="application/pdf")
+
+        attachment = self._create(file)
+
+        self.assertEqual(attachment.mime_type, "application/pdf")
+        self.assertEqual(attachment.attachment_type, AttachmentType.DOCUMENT)
+        self.assertEqual(attachment.object_id, self.content_object.id)
+        self.assertEqual(attachment.uploaded_by, self.user)
+
+    def test_infers_image_attachment_type(self) -> None:
+        file = SimpleUploadedFile(name="photo.jpg", content=b"jpeg bytes", content_type="image/jpeg")
+
+        self.assertEqual(self._create(file).attachment_type, AttachmentType.IMAGE)
+
+    def test_canonicalises_the_original_filename(self) -> None:
+        file = SimpleUploadedFile(name="test%20file%20name", content=b"Test file content")
+
+        attachment = self._create(file)
+
+        self.assertEqual(attachment.mime_type, "text/plain")
+        self.assertEqual(attachment.original_filename, "test file name.txt")
+
+    def test_stores_the_namespace(self) -> None:
+        file = SimpleUploadedFile(name="scan.pdf", content=b"pdf bytes", content_type="application/pdf")
+
+        self.assertEqual(self._create(file, namespace="CLIENT_DOCUMENT").namespace, "CLIENT_DOCUMENT")

@@ -17,6 +17,7 @@ from clients.models import (
 )
 
 from clients.services import client_document, client_profile_photo
+from common.services.file_upload import create_multipart_attachment
 from common.services.types import UploadRequest, UploadConfirmation
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.extensions import PermissionedQuerySet
@@ -606,13 +607,11 @@ class Mutation:
 
             permission_group = resolve_permission_group(user, template=CASEWORKER)
 
-            content_type = ContentType.objects.get_for_model(ClientProfile)
-            client_document = Attachment.objects.create(
+            client_document = create_multipart_attachment(
+                user=user,
+                content_object=client_profile,
                 file=data.file,
                 namespace=data.namespace,
-                content_type=content_type,
-                object_id=client_profile.id,
-                uploaded_by=user,
             )
 
             permissions = [

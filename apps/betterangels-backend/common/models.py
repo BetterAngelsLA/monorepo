@@ -1,10 +1,8 @@
 import json
 from typing import Any, Dict, Optional
-from urllib.parse import unquote
 
-import magic
 from common.enums import AttachmentType
-from common.files.utils import canonicalise_filename, get_unique_file_path, infer_attachment_type
+from common.files.utils import get_unique_file_path
 from common.permissions.utils import PermissionSet
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -81,54 +79,6 @@ class Attachment(BaseModel):
                 name="attachment_gfk_idx",
             ),
         ]
-
-    def save(
-        self,
-        *args: Any,
-        direct_upload: bool = False,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Saves the Attachment instance.
-
-        .. deprecated::
-            This custom ``save()`` override is deprecated. MIME-type detection,
-            attachment type inference, and filename canonicalisation will move
-            to the service layer (see ``create_attachment_records`` in
-            ``common/services/file_upload.py``).  The presigned S3 upload
-            pipeline already enforces content types at the S3 level and passes
-            ``mime_type`` explicitly via ``direct_upload=True``.  This override
-            will be removed in a future release — ``Attachment`` will revert to
-            plain Django ``save()``.
-        """
-        import warnings
-
-        warnings.warn(
-            "Attachment.save() override is deprecated. "
-            "All file metadata should be set in the service layer "
-            "(see common/services/file_upload.py).",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        if not self.pk:
-            if direct_upload:
-                if not self.mime_type:
-                    raise ValueError("mime_type required for direct upload")
-
-                self.attachment_type = infer_attachment_type(self.mime_type)
-            else:
-                # Determine the MIME type of the file
-                self.file.seek(0)
-                mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
-                self.mime_type = mime_type
-                self.attachment_type = infer_attachment_type(self.mime_type)
-                self.file.seek(0)
-
-        filename = self.original_filename or unquote(self.file.name or "")
-        self.original_filename = canonicalise_filename(self.mime_type, filename)
-
-        super().save(*args, **kwargs)
 
 
 class Address(BaseModel):
