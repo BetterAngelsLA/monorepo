@@ -3298,8 +3298,6 @@ export type ShelterFilter = {
   maxStay?: InputMaybe<MaxStayInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   openNow?: InputMaybe<OpenNowInput>;
-  /** @deprecated Use openNow instead */
-  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   spa?: InputMaybe<Array<Scalars['ID']['input']>>;
