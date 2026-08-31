@@ -6,7 +6,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
-import { Dropdown, Input, mergeCss } from '@monorepo/react/shared';
+import { Dropdown, Input, mergeCss, toError } from '@monorepo/react/shared';
 import { KeyboardEvent, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import {
@@ -35,32 +35,38 @@ export function TeamFormDrawer(props: TProps) {
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setDisabled(true);
+    let rejection: string | null;
+
     try {
       if (isEditing) {
         const response = await updateTeam({
           variables: { data: { id: team.id, name: name.trim(), isActive } },
         });
-        const error = extractOperationInfoMessage(response, 'updateTeam');
-        if (error) throw new Error(error);
-        showAlert({
-          type: 'success',
-          content: `Team "${name.trim()}" updated.`,
-        });
+        rejection = extractOperationInfoMessage(response, 'updateTeam');
       } else {
         const response = await createTeam({
           variables: { data: { name: name.trim() } },
         });
-        const error = extractOperationInfoMessage(response, 'createTeam');
-        if (error) throw new Error(error);
-        showAlert({
-          type: 'success',
-          content: `Team "${name.trim()}" created.`,
-        });
+        rejection = extractOperationInfoMessage(response, 'createTeam');
       }
+
+      if (rejection) {
+        showAlert({ type: 'error', content: rejection });
+
+        return;
+      }
+
+      showAlert({
+        type: 'success',
+        content: `Team "${name.trim()}" ${isEditing ? 'updated' : 'created'}.`,
+      });
       closeDrawer();
       onSuccess();
     } catch (err) {
-      console.error(err);
+      console.error(
+        `[${isEditing ? 'updateTeam' : 'createTeam'} error]: ${toError(err).message}`,
+      );
+
       showAlert({
         type: 'error',
         content: 'Sorry, something went wrong. Please try again.',

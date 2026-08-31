@@ -156,7 +156,7 @@ class Note(BaseModel):
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
-    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.RESTRICT, db_index=True)
 
     objects = models.Manager()
 

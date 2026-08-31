@@ -74,7 +74,7 @@ class PermissionGroupInlineForm(forms.ModelForm):
 
     class Meta:
         model = PermissionGroup
-        fields = ("template", "name")
+        fields = ("template", "label")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -168,7 +168,7 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
         held = sorted(
-            PermissionGroup.objects.filter(organization=organization, group__user=member).values_list("name", flat=True)
+            PermissionGroup.objects.filter(organization=organization, user=member).values_list("label", flat=True)
         )
         offered = set(self.role_names)
         self.locked_role_names = [name for name in held if name not in offered]

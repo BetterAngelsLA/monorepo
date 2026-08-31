@@ -1,5 +1,5 @@
 import {
-  getDefaultStackModalOptions,
+  getStackModalOptions,
   useModalScreen,
 } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
@@ -22,7 +22,7 @@ export default function AppRoutesStack() {
       />
       <Stack.Screen
         name="modal-screen"
-        options={getDefaultStackModalOptions({
+        options={getStackModalOptions({
           ...modalScreenProps,
           onClose: () => router.back(),
         })}

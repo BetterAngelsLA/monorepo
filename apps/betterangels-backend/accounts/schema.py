@@ -132,7 +132,7 @@ class Query:
                     PermissionGroup.objects.filter(
                         organization_id=organization_id,
                         template__name__in=template_names,
-                        group__user=OuterRef("pk"),
+                        user=OuterRef("pk"),
                     )
                 )
                 queryset = queryset.filter(has_org_type_template)
@@ -144,7 +144,7 @@ class Query:
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
                     template__name=permission_template.value,
-                    group__user=OuterRef("pk"),
+                    user=OuterRef("pk"),
                 )
             )
             queryset = queryset.filter(has_template)

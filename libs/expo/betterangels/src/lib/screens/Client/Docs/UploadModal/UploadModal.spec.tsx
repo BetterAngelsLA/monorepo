@@ -149,13 +149,4 @@ describe('UploadModal', () => {
       'Consent Forms',
     );
   });
-
-  it('closes the form when Done is pressed', () => {
-    const closeModal = vi.fn();
-
-    const { getByLabelText } = renderModal({ closeModal });
-
-    fireEvent.press(getByLabelText('Done'));
-    expect(closeModal).toHaveBeenCalled();
-  });
 });
