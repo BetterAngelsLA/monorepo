@@ -20,6 +20,9 @@ export default function Documents(props: IDocumentsProps) {
   const [selectedDocument, setSelectedDocument] = useState<
     Maybe<ClientDocumentType> | undefined
   >(undefined);
+  const [deletingIds, setDeletingIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
 
   const isOtherDocuments = expanded === title;
 
@@ -50,6 +53,7 @@ export default function Documents(props: IDocumentsProps) {
           {data?.map((document) => (
             <FileCard
               key={document.id}
+              disabled={deletingIds.has(document.id)}
               filename={document.originalFilename}
               url={document.file.url}
               onPress={() => setSelectedDocument(document)}
@@ -75,6 +79,17 @@ export default function Documents(props: IDocumentsProps) {
           clientId={clientId}
           closeModal={() => setSelectedDocument(undefined)}
           document={selectedDocument}
+          onDeleteStateChange={(documentId, isDeleting) =>
+            setDeletingIds((prev) => {
+              const next = new Set(prev);
+              if (isDeleting) {
+                next.add(documentId);
+              } else {
+                next.delete(documentId);
+              }
+              return next;
+            })
+          }
         />
       )}
     </Accordion>

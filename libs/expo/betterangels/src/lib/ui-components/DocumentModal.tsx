@@ -35,12 +35,15 @@ interface IDocumentModalProps {
   closeModal: () => void;
   document: ClientDocumentType;
   clientId: string;
+  /** Notifies the parent when the delete mutation starts / finishes. */
+  onDeleteStateChange?: (documentId: string, isDeleting: boolean) => void;
 }
 
 export default function DocumentModal({
   closeModal,
   document,
   clientId,
+  onDeleteStateChange,
 }: IDocumentModalProps) {
   const fileTypeText = getFileTypeText(document.mimeType);
 
@@ -56,6 +59,8 @@ export default function DocumentModal({
   const { operationKey, successTypename } = deleteClientDocumentMeta;
 
   const deleteFile = async () => {
+    onDeleteStateChange?.(document.id, true);
+
     try {
       const result = await deleteDocument({
         variables: { id: document.id },
@@ -101,6 +106,7 @@ export default function DocumentModal({
         persist: true,
       });
     } finally {
+      onDeleteStateChange?.(document.id, false);
       closeModal();
     }
   };
