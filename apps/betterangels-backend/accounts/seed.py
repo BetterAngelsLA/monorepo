@@ -1,28 +1,30 @@
-"""Seed data for PermissionGroupTemplates.
+"""Seed and sync of permission data, driven from :data:`common.org_types.REGISTRY`.
 
 Replaces RunPython data migrations. Called by:
 
 * ``post_migrate`` signal (production & local dev)
-* ``conftest.py`` session fixture (CI / ``--no-migrations``)
 * ``manage.py seed_data`` management command (manual)
 
 Uses ``get_or_create`` throughout — idempotent, safe to re-run.
+
+A role's permission set lives in its
+:class:`~common.permissions.config.TemplateConfig` when the code defines the role,
+and on the ``PermissionGroupTemplate`` row itself when someone defined it in the
+admin.  Either way it is written onto the ``auth.Group`` that actually grants it.
 """
 
 from logging import getLogger
+from typing import cast
 
+from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from organizations.models import Organization
 
-from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import PermissionGroupTemplate
-from common.permissions.config import TemplateConfig
-from notes.groups import CASEWORKER
-from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
+from accounts.models import PermissionGroup, PermissionGroupTemplate
 
 logger = getLogger(__name__)
-
-ALL_TEMPLATES = (CASEWORKER, ORG_ADMIN, ORG_SUPERUSER, GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR)
 
 
 def _resolve_permissions(permission_strings: list[str]) -> list[int]:
@@ -65,30 +67,61 @@ def _resolve_permissions(permission_strings: list[str]) -> list[int]:
     return [id_lookup[(a, c)] for a, c in parsed]
 
 
-def _seed_template(template_config: TemplateConfig) -> None:
-    """Create or update a PermissionGroupTemplate with its configured permissions."""
-    name = template_config.name
-
-    template, created = PermissionGroupTemplate.objects.get_or_create(name=name)
-    if created:
-        logger.info("Created PermissionGroupTemplate: %s", name)
-
-    wanted_ids = _resolve_permissions(template_config.permissions)
-    existing_ids = set(template.permissions.values_list("id", flat=True))
-    if set(wanted_ids) != existing_ids:
-        template.permissions.set(wanted_ids)
-        logger.info("Updated PermissionGroupTemplate permissions: %s (%d perms)", name, len(wanted_ids))
-
-
 def seed_permission_templates() -> None:
-    """Ensure all PermissionGroupTemplates exist with correct permissions.
+    """Ensure a ``PermissionGroupTemplate`` row exists for every registered role.
 
     Idempotent — safe to call on every ``migrate`` / test session start.
-    Always iterates through every template so that permissions are
-    re-synced when a data migration creates a template without
-    permissions (e.g. the consolidation migration that moves users
-    into ``Global Shelter Operator``).  ``_seed_template`` is itself
-    idempotent and only issues writes when the permission set differs.
+    Permissions are not stored here; see :func:`sync_group_permissions`.
     """
-    for template_config in ALL_TEMPLATES:
-        _seed_template(template_config)
+    for name in REGISTRY.template_names():
+        _, created = PermissionGroupTemplate.objects.get_or_create(name=name)
+        if created:
+            logger.info("Created PermissionGroupTemplate: %s", name)
+
+
+def sync_group_permissions(*, organization: Organization | None = None) -> None:
+    """Apply each role's permissions to the ``auth.Group`` that grants them.
+
+    A role's permissions come from its template, resolved by tier:
+
+    * **Managed** — the template is named in :data:`common.org_types.REGISTRY`, so its
+      ``TemplateConfig`` is authoritative and the template's own ``permissions`` are
+      refreshed to match.  This is what picks up a permission change in code on the
+      next ``migrate``.
+    * **Hand-defined** — the template was created in the admin and the code knows
+      nothing about it, so its ``permissions`` *are* the definition and are read, not
+      written.  This is what lets one admin-defined role reach every organization
+      holding it.
+
+    Pass *organization* to scope the sync to one org, which is how a newly created
+    group gets its permissions without waiting for the next ``migrate``.
+    """
+    configured: dict[str, set[int]] = {}
+    for name in REGISTRY.template_names():
+        template_config = REGISTRY.template(name)
+        if template_config is None:
+            continue
+        configured[name] = set(_resolve_permissions(template_config.permissions))
+
+    with transaction.atomic():
+        templates = PermissionGroupTemplate.objects.prefetch_related("permissions")
+        wanted_by_template: dict[int, set[int]] = {}
+        for template in templates:
+            wanted = configured.get(template.name)
+            if wanted is None:
+                # Hand-defined: the template row is the definition.
+                wanted_by_template[template.pk] = {p.pk for p in template.permissions.all()}
+                continue
+            wanted_by_template[template.pk] = wanted
+            if {p.pk for p in template.permissions.all()} != wanted:
+                template.permissions.set(wanted)
+
+        permission_groups = PermissionGroup.objects.filter(template__isnull=False).prefetch_related("permissions")
+        if organization is not None:
+            permission_groups = permission_groups.filter(organization=organization)
+
+        for permission_group in permission_groups:
+            wanted = wanted_by_template.get(cast(int, permission_group.template_id), set())
+            if {p.pk for p in permission_group.permissions.all()} != wanted:
+                permission_group.permissions.set(wanted)
+                logger.info("Synced permissions for group %s (%d perms)", permission_group.name, len(wanted))

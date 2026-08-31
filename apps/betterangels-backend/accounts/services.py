@@ -13,10 +13,12 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from organizations.backends import invitation_backend
 from organizations.models import Organization, OrganizationOwner, OrganizationUser
 
+from .emails import base_url_for
 from .groups import ORG_ADMIN
+from .seed import sync_group_permissions
 from .models import (
     OrganizationProfile,
     OrgTypeChoices,
@@ -141,7 +143,7 @@ def member_add(
     existing_template_names: set[str] = set(
         PermissionGroup.objects.filter(
             organization=organization,
-            group__user=user,
+            user=user,
             template__name__in=[t.name for t in permission_templates],
         ).values_list("template__name", flat=True)
     )
@@ -150,6 +152,67 @@ def member_add(
 
     if new_templates:
         OrgRoleManager(organization).add_roles(user, *new_templates)
+
+    return user
+
+
+def invitation_role(permission_templates: tuple[TemplateConfig, ...]) -> TemplateConfig:
+    """Pick which role's invitation email to send.
+
+    One email goes out however many roles are granted, so prefer a role whose
+    invite template is *not* the generic organization invitation — that body says
+    nothing role-specific, while e.g. the Shelter Operator one carries the link to
+    the shelter app.  Note Caseworker names the generic template explicitly, so
+    "has an ``invite_html``" does not distinguish them; it has to be compared
+    against the backend's default.  Ties fall to the given order.
+    """
+    generic_body = invitation_backend().invitation_body_html
+    role_specific = [
+        template for template in permission_templates if template.invite_html and template.invite_html != generic_body
+    ]
+    return (role_specific or list(permission_templates))[0]
+
+
+def member_invite(
+    *,
+    organization: Organization,
+    email: str,
+    permission_templates: tuple[TemplateConfig, ...],
+    invited_by: UserModel,
+) -> UserModel:
+    """Add someone to *organization* with the given roles and email them an invitation.
+
+    The invitation is sent on commit, so a rolled-back membership never produces
+    an email promising access the person does not have.  Which role's email is
+    used is decided by :func:`invitation_role`.
+
+    Returns the invited :class:`~accounts.models.User`.
+    """
+    permission_template = invitation_role(permission_templates)
+    user = member_add(
+        email=email,
+        first_name="",
+        last_name="",
+        middle_name=None,
+        organization=organization,
+        permission_templates=permission_templates,
+    )
+
+    def send_invitation() -> None:
+        invitation_backend().create_organization_invite(
+            organization=organization,
+            invited_by_user=invited_by,
+            invitee_user=user,
+        )
+        invitation_backend().send_invitation(
+            user=user,
+            sender=invited_by,
+            organization=organization,
+            base_url=base_url_for(permission_template),
+            role_template=permission_template,
+        )
+
+    transaction.on_commit(send_invitation)
 
     return user
 
@@ -176,35 +239,32 @@ def create_organization_with_presets(
     :class:`~accounts.role_manager.OrgRoleManager`.  The caller decides which
     roles the owner gets — no implicit derivation from org type order.
 
-    Returns the new :class:`~organizations.models.Organization`.
+    Returns the new :class:`~organizations.models.Organization` — always a new
+    row, never an existing one matched on *name*.  Organization names are not
+    unique, and resolving one by name let any caller of the public
+    ``createOrganization`` mutation land on an organization someone else runs.
+    Joining an existing organization goes through an invitation.
     """
-    for preset_name in preset_names:
-        if REGISTRY.org_type(preset_name) is None:
-            raise ValidationError(f"Unknown org-type preset: {preset_name}")
-
-    org, _ = Organization.objects.get_or_create(name=name)
-
-    # Collect unique templates from all requested presets (deduplicate by name).
     org_types: list[str] = []
-
     for preset_name in preset_names:
         org_config = REGISTRY.org_type(preset_name)
-        assert org_config is not None
-        org_types.append(org_config.name)
+        if org_config is None:
+            raise ValidationError(f"Unknown org-type preset: {preset_name}")
+        if org_config.name not in org_types:
+            org_types.append(org_config.name)
 
-    # Profile with org types — update_or_create to fill in on existing orgs too.
-    OrganizationProfile.objects.update_or_create(
+    org = Organization.objects.create(name=name)
+
+    OrganizationProfile.objects.create(
         organization=org,
-        defaults={"org_types": [OrgTypeChoices(org_type) for org_type in org_types]},
+        org_types=[OrgTypeChoices(org_type) for org_type in org_types],
     )
 
     # Create PermissionGroup per template for this org.
     reconcile_org_groups(org)
 
     # Link the owner (django-organizations auto-creates OrganizationOwner).
-    # Guarded so the function is safe to call repeatedly (idempotent).
-    if not org.users.filter(pk=owner.pk).exists():
-        org.add_user(owner)
+    org.add_user(owner)
 
     if owner_roles:
         OrgRoleManager(org).add_roles(owner, *owner_roles)
@@ -215,44 +275,77 @@ def create_organization_with_presets(
 # ── Group reconciliation ──────────────────────────────────────────────
 
 
+@transaction.atomic
 def reconcile_org_groups(org: Organization) -> None:
     """Create missing and delete stale ``PermissionGroup`` records for *org*.
 
-    Expected templates are derived from the org's ``profile.org_types``
-    via :data:`common.org_types.REGISTRY`.  Groups whose template is no
-    longer in the org's presets are deleted.
+    Expected templates are derived from the org's ``profile.org_types`` via
+    :data:`common.org_types.REGISTRY`.
+
+    Only *derived* groups are reconciled — those whose template belongs to an
+    org type.  Hand-managed groups are left untouched: templates outside any org
+    type (``REGISTRY.unscoped``, e.g. Global Shelter Operator) and rows with no
+    template at all, both of which are granted through the Django admin and
+    would otherwise be destroyed on the next reconcile.
+
+    An organization with no profile has no derived groups to reconcile, so none
+    are created or deleted — unconfigured is not the same as having no roles.  Its
+    permissions are still applied, so this function always leaves *org*
+    consistent with config and is the only pass any caller needs to make.
+
+    Group names are refreshed from the organization's current name, and each
+    removed row's ``auth.Group`` is torn down by
+    :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
+    their permissions applied by :func:`accounts.seed.sync_group_permissions` —
+    without this a newly created group would grant nothing until the next
+    ``migrate``.
 
     Safe to call repeatedly — all operations are idempotent.
     """
-    from .models import PermissionGroup
+    org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
 
-    # Expected template names from current org-type presets.
-    expected: set[str] = set()
-    org_type_values = org.profile.org_types if hasattr(org, "profile") else []
-    for org_type_value in org_type_values:
-        org_config = REGISTRY.org_type(org_type_value.value)
-        if org_config is None:
-            continue
-        for template_config in org_config.templates:
-            expected.add(template_config.name)
+    if org_types is not None:
+        expected: set[str] = set()
+        for org_type_value in org_types:
+            org_config = REGISTRY.org_type(org_type_value.value)
+            if org_config is None:
+                continue
+            for template_config in org_config.templates:
+                expected.add(template_config.name)
 
-    if not expected:
-        return
+        for template_name in expected:
+            permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
+                name=template_name,
+            )
+            PermissionGroup.objects.get_or_create(
+                organization=org,
+                template=permission_group_template,
+            )
 
-    # Create missing.
-    for template_name in expected:
-        permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=template_name,
-        )
-        PermissionGroup.objects.get_or_create(
+        unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+        derived = {name for name in REGISTRY.template_names() if name not in unscoped}
+
+        PermissionGroup.objects.filter(
             organization=org,
-            template=permission_group_template,
-        )
+            template__name__in=derived - expected,
+        ).delete()
 
-    # Delete stale (including groups whose template was set to NULL).
-    PermissionGroup.objects.filter(organization=org).filter(
-        Q(template__isnull=True) | ~Q(template__name__in=expected),
-    ).delete()
+    _refresh_group_names(org)
+    sync_group_permissions(organization=org)
+
+
+def _refresh_group_names(org: Organization) -> None:
+    """Re-label *org*'s groups, so a renamed organization is not left stale.
+
+    ``PermissionGroup.group_name`` carries the organization's name, which is a
+    copy — this is what keeps it current.  Runs for hand-managed groups too: the
+    label is wrong for them in exactly the same way.
+    """
+    for permission_group in PermissionGroup.objects.filter(organization=org).select_related("template", "organization"):
+        wanted = permission_group.group_name()
+        if permission_group.name != wanted:
+            permission_group.name = wanted
+            permission_group.save(update_fields=["name"])
 
 
 # ── Member removal ───────────────────────────────────────────────────
@@ -296,19 +389,54 @@ def organization_remove_member(
     return user_id
 
 
-# ── Organization-level permission group management ────────────────────
+@transaction.atomic
+def member_roles_replace(
+    *,
+    organization: Organization,
+    user_id: int,
+    permission_templates: tuple[TemplateConfig, ...],
+) -> UserModel:
+    """Set which of *organization*'s invitable roles a member holds.
 
+    An invitable role not listed is revoked, which makes this a single edit of
+    "what this person can do here" rather than an additive grant.
 
-def create_default_org_permission_groups(organization: Organization) -> None:
-    """Create ``PermissionGroup`` rows for every template in *organization*.
+    Every other org-scoped group is left alone: ``Organization Admin`` and
+    ``Organization Superuser``, the ``REGISTRY.unscoped`` templates, and rows
+    created by hand in the admin with a name and no template.  None of those are
+    offered by the surfaces that call this, so clearing every group and re-adding
+    the listed ones would revoke them invisibly — and a template-less row could
+    not be re-added at all, since
+    :meth:`accounts.role_manager.OrgRoleManager.add_roles` resolves a
+    ``PermissionGroup`` by template name.  They are granted and revoked from the
+    user page's group picker.
 
-    Uses :meth:`Registry.templates_for` so the result is org-type-aware —
-    an outreach org gets Caseworker, Org Admin, Org Superuser; a shelter org
-    gets Shelter Operator, Org Admin, Org Superuser.
+    Raises :class:`~django.core.exceptions.ValidationError` if the user is not a
+    member of *organization*.
     """
-    for template_config in REGISTRY.templates_for(organization):
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_config.name)
-        PermissionGroup.objects.get_or_create(organization=organization, template=template)
+    try:
+        org_user = OrganizationUser.objects.select_related("user").get(
+            organization=organization,
+            user_id=user_id,
+        )
+    except OrganizationUser.DoesNotExist:
+        raise ValidationError("User is not a member of this organization.")
+
+    member: UserModel = org_user.user
+    granted = {template.name for template in permission_templates}
+    # reconcile_org_groups creates a PermissionGroup for every template the org's
+    # org types name, so remove_roles' lookup of each of these resolves.
+    revoked = tuple(
+        template
+        for name in REGISTRY.invitable_template_names_for(organization)
+        if name not in granted and (template := REGISTRY.template(name)) is not None
+    )
+
+    role_manager = OrgRoleManager(organization)
+    role_manager.add_roles(member, *permission_templates)
+    role_manager.remove_roles(member, *revoked)
+
+    return member
 
 
 # ── Self-signup ───────────────────────────────────────────────────────

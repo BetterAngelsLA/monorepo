@@ -63,6 +63,13 @@ class TeamGraphQLUtilsMixin(GraphQLBaseTestCase):
                     ... on DeletedObjectType {
                         id
                     }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                 }
             }
         """

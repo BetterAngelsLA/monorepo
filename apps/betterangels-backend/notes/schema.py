@@ -38,8 +38,8 @@ from notes.utils import NoteReverter
 from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
-from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
@@ -110,7 +110,7 @@ class Query:
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 template__name=CASEWORKER.name,
-                group__user=user,
+                user=user,
             )
         )
         queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
@@ -220,13 +220,19 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    delete_note: NoteType = mutations.delete(
-        DeleteDjangoObjectInput,
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=NotePermissions.DELETE),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE]),
         ],
     )
+    def delete_note(self, info: Info, data: DeleteDjangoObjectInput) -> NoteType:
+        qs: QuerySet[Note] = info.context.qs
+        note = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to delete this interaction."
+        )
+
+        return cast(NoteType, resolvers.delete(info, note))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],

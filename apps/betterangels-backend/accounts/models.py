@@ -1,20 +1,15 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, ClassVar, cast
 
 import pghistory
 from accounts.managers import UserManager
-from annoying.fields import AutoOneToOneField
 from common.models import BaseModel
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    Group,
-    Permission,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -126,6 +121,21 @@ class BigUserObjectPermission(UserObjectPermissionAbstract):
 
 
 class PermissionGroupTemplate(models.Model):
+    """A role that :class:`PermissionGroup` scopes to an organization.
+
+    Where its permissions come from depends on whether the code knows the role:
+
+    * named in :data:`common.org_types.REGISTRY` — its
+      :class:`~common.permissions.config.TemplateConfig` is authoritative, and
+      ``permissions`` here is kept as a mirror of it.
+    * created by hand in the admin — ``permissions`` here *is* the definition, and
+      is left alone.
+
+    Either way :func:`accounts.seed.sync_group_permissions` is what applies it to
+    the ``auth.Group`` that actually grants the access, so a role defined once
+    reaches every organization holding it.
+    """
+
     name = models.CharField(max_length=255)
     permissions = models.ManyToManyField(Permission, blank=True)
 
@@ -135,20 +145,25 @@ class PermissionGroupTemplate(models.Model):
         return self.name
 
 
-class PermissionGroup(models.Model):
-    name = models.CharField(
-        max_length=255,
-        blank=True,
-    )
+class PermissionGroup(Group):
+    """An ``auth.Group`` scoped to one organization and one role.
+
+    It *is* the group rather than pointing at one, so the group cannot outlive
+    it.  That matters because object-level permissions are assigned to the group
+    (:func:`common.permissions.utils.assign_object_permissions`) and
+    ``BigGroupObjectPermission`` cascades from it — an orphaned group would keep
+    granting them with no row left to revoke through.  Inheritance makes the
+    teardown a cascade Django's own collector performs, on a direct delete, a
+    queryset delete and an organization cascade alike.
+
+    ``name`` is the group's, and is the unique key built by :meth:`group_name`.
+    The human role label is :attr:`label`.
+    """
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
         related_name="permission_groups",
-    )
-    group = models.OneToOneField(
-        Group,
-        on_delete=models.CASCADE,
-        blank=True,
     )
     template = models.ForeignKey(
         PermissionGroupTemplate,
@@ -156,35 +171,82 @@ class PermissionGroup(models.Model):
         null=True,
         blank=True,
     )
+    label = models.CharField(
+        max_length=255,
+        blank=True,
+    )
 
-    objects = models.Manager()
+    # django-stubs types ``Group.objects`` as ``GroupManager``, which is
+    # ``Manager[Group]`` — inheriting it resolves every query on this model
+    # against the parent's fields.  Overriding it is the only way to keep
+    # ``PermissionGroup.objects.filter(organization=…)`` type-checked.
+    objects: ClassVar[models.Manager["PermissionGroup"]] = models.Manager()  # type: ignore[assignment]
 
     class Meta:
-        unique_together = (("organization", "group"), ("organization", "template"))
+        unique_together = (("organization", "template"),)
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(template__isnull=False) | ~Q(label=""),
+                name="permission_group_has_template_or_label",
+                violation_error_message="A permission group needs either a template or a label.",
+            )
+        ]
 
-    def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
-        self.group.delete()
-        return super().delete(*args, **kwargs)
+    def __str__(self) -> str:
+        return self.label
+
+    def clean(self) -> None:
+        """Require a template or a label to identify the role.
+
+        Both are optional individually, so the admin inline could otherwise save
+        a row with neither — leaving its role segment empty and colliding with
+        the next such row on the unique ``name``.
+
+        Duplicates the *call* of the constraint above, not the rule: ``clean()``
+        is what words the error on the inline, because ``_post_clean`` runs with
+        ``validate_constraints=False``.  The constraint is the one that holds for
+        ``objects.create()`` and ``get_or_create``, which never reach this.  Delete
+        this method if the admin ever stops needing the field-level message.
+        """
+        if not self.template_id and not self.label:
+            raise ValidationError("A permission group needs either a template or a label.")
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        if self.pk and self.template:
-            raise ValidationError("Updating a PermissionGroup with a template is not allowed.")
-        # TODO: Update the admin so that when a template is defined you can't enter in a
-        # name. Also make it clear that the name of the group will be prefixed by the
-        # org name.
-        if hasattr(self, "template"):
-            permissions_to_apply: Iterable[Permission] = []
-            if self.template:
-                group_name = f"{self.organization.name}_{self.template.name}"
-                permissions_to_apply = self.template.permissions.all()
-                self.name = self.template.name
-            else:
-                group_name = f"{self.organization.name}_{self.name}"
+        """Name the row on creation, ignoring any name the caller supplied.
 
-            self.group = Group.objects.create(name=group_name)
-            self.group.permissions.set(permissions_to_apply)
-
+        The name is derived, never chosen — :meth:`group_name` is what keeps it
+        unique.  Refreshing it afterwards belongs to
+        :func:`accounts.services.reconcile_org_groups`, the only caller that can
+        keep the name, the permissions and this row consistent.
+        """
+        if self.template and not self.label:
+            self.label = self.template.name
+        if not self.pk:
+            self.name = self.group_name()
         super().save(*args, **kwargs)
+
+    def group_name(self) -> str:
+        """Return the ``auth.Group`` name for this row, e.g. ``Acme Housing [3] · Caseworker``.
+
+        The pk is what makes the name unique — ``auth.Group.name`` is unique and
+        ``Organization.name`` is not — and the organization's name rides alongside
+        it because this string is the label in the group picker and the
+        ``auth.Group`` changelist.  Organization first so those lists sort
+        alphabetically by organization rather than by pk-as-string.
+
+        Truncated to fit: ``Organization.name`` allows 200 characters and a
+        hand-entered label 255, against ``auth.Group.name``'s 150.
+
+        Nothing reads this as data — every lookup goes through ``PermissionGroup``
+        — so :func:`accounts.services.reconcile_org_groups` refreshing it is
+        enough.  A rename outside that path leaves the label stale until the next
+        reconcile, which is only acceptable while nothing keys off it.
+        """
+        max_length = cast(int, Group._meta.get_field("name").max_length)
+        role = self.template.name if self.template else self.label
+        suffix = f" [{self.organization_id}] · {role}"
+        budget = max(max_length - len(suffix), 0)
+        return f"{self.organization.name[:budget]}{suffix}"[:max_length]
 
 
 class OrgTypeChoices(models.TextChoices):
@@ -193,21 +255,26 @@ class OrgTypeChoices(models.TextChoices):
 
 
 class OrganizationProfile(BaseModel):
-    organization = AutoOneToOneField(
+    organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
         related_name="profile",
     )
     org_types = ArrayField(
         base_field=TextChoicesField(choices_enum=OrgTypeChoices),
-        blank=True,
-        default=list,
     )
 
     objects = models.Manager()
 
     class Meta:
         indexes = [GinIndex(fields=["org_types"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(org_types__len__gt=0),
+                name="org_profile_has_org_type",
+                violation_error_message="An organization must have at least one org type.",
+            )
+        ]
 
     def __str__(self) -> str:
         types = ", ".join(t.label for t in self.org_types)

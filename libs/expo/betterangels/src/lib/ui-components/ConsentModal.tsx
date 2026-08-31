@@ -59,7 +59,29 @@ export default function ConsentModal({
   height = 'auto',
 }: IConsentModalProps) {
   const { setUser } = useUser();
-  const [updateCurrentUser] = useMutation(UpdateCurrentUserDocument);
+  const [updateCurrentUser] = useMutation(UpdateCurrentUserDocument, {
+    update: (cache) => {
+      // `updateCurrentUser` returns `UserType`, which Apollo normalizes under a
+      // DIFFERENT cache key than the `currentUser` query's `CurrentUserType`.
+      // Without writing the accepted flags into the `CurrentUserType` cache
+      // object, the next query re-render (e.g. after `UserProfileEdit` saves the
+      // name) would overwrite the context with the stale flags and flip
+      // `accepted` back to false.
+      const currentUserRef = cache.identify({
+        __typename: 'CurrentUserType',
+        id: user.id,
+      });
+      if (currentUserRef) {
+        cache.modify({
+          id: currentUserRef,
+          fields: {
+            hasAcceptedTos: () => checkedItems.isTosChecked,
+            hasAcceptedPrivacyPolicy: () => checkedItems.isPrivacyPolicyChecked,
+          },
+        });
+      }
+    },
+  });
   const [checkedItems, setCheckedItems] = useState<CheckedItems>({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,
@@ -83,7 +105,6 @@ export default function ConsentModal({
       return;
     }
 
-    closeModal();
     setUser((prev) =>
       prev
         ? {
@@ -93,6 +114,16 @@ export default function ConsentModal({
           }
         : prev,
     );
+
+    // Accepting the agreements flips `accepted` to true, so this modal
+    // transitions in place to the "Complete Your Registration" name form when
+    // the user has no name yet. Only close it once registration is fully done
+    // (the user already has a name); otherwise the tabs layout re-opens the
+    // modal right after we close it — because it still needs the user's name —
+    // and the modal visibly renders again after submitting.
+    if (user.firstName && user.lastName) {
+      closeModal();
+    }
   };
 
   const { signOut } = useSignOut();

@@ -208,8 +208,10 @@ function getConcreteWindows(
   );
 }
 
+export const CLOCK_PATTERN = 'h:mm a';
+
 function formatClock(date: Date): string {
-  return format(date, 'h:mm a');
+  return format(date, CLOCK_PATTERN);
 }
 
 /**

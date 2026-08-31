@@ -17,7 +17,7 @@ from common.graphql.types import (
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet
 from strawberry import ID, Info, asdict, auto
 from strawberry_django.auth.utils import get_current_user
 
@@ -94,6 +94,7 @@ class MaxStayInput:
 @strawberry.input
 class OpenNowInput:
     schedule_type: Optional[List[ScheduleTypeChoices]] = None
+    include_unknown: Optional[bool] = False
 
 
 @strawberry_django.filter_type(models.Shelter)
@@ -196,14 +197,30 @@ class ShelterFilter:
         if value is None or not value.schedule_type:
             return queryset, Q()
 
-        return (
-            shelters_open_at(
-                queryset,
-                dt=get_current_shelter_schedule_datetime(),
-                schedule_types=value.schedule_type,
-            ),
-            Q(),
+        open_qs = shelters_open_at(
+            queryset,
+            dt=get_current_shelter_schedule_datetime(),
+            schedule_types=value.schedule_type,
         )
+
+        if not value.include_unknown:
+            return open_qs, Q()
+
+        # "Unknown" for a schedule type = the shelter has no non-exception
+        # schedule row of that type.  Unioned per-type with the open results.
+        unknown_qs = queryset.none()
+        for schedule_type in value.schedule_type:
+            unknown_qs |= queryset.filter(
+                ~Exists(
+                    models.Schedule.objects.filter(
+                        shelter=OuterRef("pk"),
+                        schedule_type=schedule_type,
+                        is_exception=False,
+                    )
+                )
+            )
+
+        return (open_qs | unknown_qs).distinct(), Q()
 
     @strawberry_django.filter_field
     def map_bounds(

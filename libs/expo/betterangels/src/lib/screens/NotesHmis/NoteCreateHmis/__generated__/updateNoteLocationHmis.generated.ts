@@ -7,9 +7,9 @@ export type UpdateNoteLocationHmisMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteLocationHmisMutation = { __typename?: 'Mutation', updateHmisNoteLocation:
-    | { __typename?: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, hmisClientProfile: { __typename?: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateNoteLocationHmisMutation = { __typename: 'Mutation', updateHmisNoteLocation:
+    | { __typename: 'HmisNoteType', id: string, addedDate?: DateTimeString | null, lastUpdated?: DateTimeString | null, title?: string | null, note: string, date?: DateString | null, refClientProgram?: string | null, location?: { __typename: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, hmisClientProfile: { __typename: 'HmisClientProfileType', id: string, firstName?: string | null, lastName?: string | null }, createdBy?: { __typename: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 
