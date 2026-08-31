@@ -8,22 +8,14 @@ database effects are verified by running the migration itself.
 
 import importlib
 
-from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate
-from django.apps import apps
-from django.contrib.auth.models import Group
+from accounts.models import OrganizationProfile, PermissionGroup
 from django.test import TestCase
-from notes.groups import CASEWORKER
 from organizations.models import Organization
 
 from .baker_recipes import organization_recipe
 
 backfill = importlib.import_module("accounts.migrations.0004_require_org_type_on_profile")
 renaming = importlib.import_module("accounts.migrations.0005_deterministic_permission_group_names")
-
-
-def _grant_template(organization: Organization, template_name: str) -> PermissionGroup:
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
-    return PermissionGroup.objects.create(organization=organization, template=template)
 
 
 class DecideOrgTypesTestCase(TestCase):
@@ -48,28 +40,6 @@ class DecideOrgTypesTestCase(TestCase):
     def test_no_members_and_no_signal_keeps_no_profile(self) -> None:
         """Do not invent a type for an organization nobody uses."""
         self.assertIsNone(backfill.decide_org_types([], set(), False))
-
-
-class RestoreGroupNamesTestCase(TestCase):
-    def test_reverse_survives_two_organizations_sharing_a_name(self) -> None:
-        """Both reconstruct to the same legacy name, which Group.name forbids.
-
-        The reverse must keep one deterministic name rather than raising
-        IntegrityError.
-        """
-        first = Organization.objects.create(name="Acme")
-        second = Organization.objects.create(name="Acme")
-        first_group = _grant_template(first, CASEWORKER.name)
-        second_group = _grant_template(second, CASEWORKER.name)
-
-        renaming.restore_group_names(apps, None)
-
-        first_group.group.refresh_from_db()
-        second_group.group.refresh_from_db()
-        names = {first_group.group.name, second_group.group.name}
-        self.assertIn("Acme_Caseworker", names)
-        self.assertEqual(len(names), 2, "the two groups must not both take the legacy name")
-        self.assertEqual(Group.objects.filter(name="Acme_Caseworker").count(), 1)
 
 
 class UnconfiguredOrganizationTestCase(TestCase):

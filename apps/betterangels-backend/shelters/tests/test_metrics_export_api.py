@@ -35,7 +35,7 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
 
         app_label, codename = Shelter.perms.VIEW.split(".")
         perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        org.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        org.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
 
     def _get(self, **params: str) -> Response:
         return self.api_client.get(self.url, params, headers={"x-organization-id": str(self.org_1.pk)})

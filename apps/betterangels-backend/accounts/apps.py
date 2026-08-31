@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_migrate
+from django.db.models.signals import post_migrate
 
 
 def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
@@ -16,19 +16,12 @@ class AccountsConfig(AppConfig):
         from post_office.settings import get_celery_enabled
         from post_office.signals import email_queued
 
-        from .models import PermissionGroup
-        from .signals import delete_orphaned_group, setup_local_dev_data, sync_all_org_permission_groups
+        from .signals import setup_local_dev_data, sync_all_org_permission_groups
         from .tasks import queued_mail_handler
 
         if get_celery_enabled():
             email_queued.receivers.clear()
             email_queued.connect(queued_mail_handler)
-
-        post_delete.connect(
-            delete_orphaned_group,
-            sender=PermissionGroup,
-            dispatch_uid="delete_orphaned_group",
-        )
 
         post_migrate.connect(_seed_on_migrate, sender=self)
 
