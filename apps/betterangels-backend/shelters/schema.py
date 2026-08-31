@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date
 from typing import Optional, cast
 
 import strawberry
@@ -12,12 +12,14 @@ from common.graphql.types import (
 )
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from django.db.models import Max
-from django.utils import timezone
 from shelters.enums import StatusChoices
 from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors import shelter_get, shelter_occupancy_metrics as shelter_occupancy_metrics_selector
+from shelters.selectors import (
+    shelter_get,
+    shelter_metrics_window,
+    shelter_occupancy_metrics as shelter_occupancy_metrics_selector,
+)
 from shelters.services import shelter_photo
-from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
 from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
@@ -127,12 +129,7 @@ class Query:
             permission=Shelter.perms.VIEW,
         )
 
-        tz = SHELTER_SCHEDULE_TIME_ZONE
-        end_date = end_date or timezone.now().astimezone(tz).date()
-        start_date = start_date or (end_date - timedelta(days=29))
-
-        start = datetime.combine(start_date, time.min, tzinfo=tz)
-        end = datetime.combine(end_date, time.min, tzinfo=tz) + timedelta(days=1)
+        start, end = shelter_metrics_window(start_date, end_date)
 
         return shelter_occupancy_metrics_selector(shelter=shelter, start=start, end=end)
 

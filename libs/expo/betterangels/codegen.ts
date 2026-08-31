@@ -18,8 +18,10 @@ const config: CodegenConfig = {
         SCALAR_IMPORT_PLUGIN,
         'typescript-operations',
         'typed-document-node',
+        '../../../tools/codegen/plugins/operation-meta-plugin.cjs',
       ],
       config: {
+        nonOptionalTypename: true,
         ...SHARED_SCALAR_CONFIG,
         useTypeImports: true,
       },
