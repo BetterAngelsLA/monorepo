@@ -31,6 +31,15 @@ class Team(BaseModel):
                 Lower("name"),
                 "organization",
                 name="unique_team_name_per_org",
+                violation_error_message="A team with this name already exists in this organization.",
+            ),
+            # Redundant on its own -- ``id`` is already unique. It exists because a
+            # composite foreign key must reference a unique constraint on exactly
+            # the columns it names, and ``Note.team`` / ``Task.team`` reference
+            # ``(team_id, organization_id)``.
+            models.UniqueConstraint(
+                fields=["id", "organization"],
+                name="unique_team_id_per_org",
             ),
         ]
 

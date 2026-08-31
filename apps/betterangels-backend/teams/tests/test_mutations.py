@@ -32,7 +32,10 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="old name", organization=self.org)
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
-        expected_query_count = 11
+        # One of the twelve is full_clean() validating unique_team_id_per_org --
+        # a lookup on the primary key that cannot match. Creates do not pay it:
+        # Django skips a composite constraint while any of its fields is NULL.
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)
 

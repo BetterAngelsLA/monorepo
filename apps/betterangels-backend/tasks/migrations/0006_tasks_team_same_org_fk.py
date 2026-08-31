@@ -36,7 +36,7 @@ def null_cross_org_teams(apps, schema_editor):  # type: ignore[no-untyped-def]
 class Migration(migrations.Migration):
     dependencies = [
         ("tasks", "0005_alter_task_team"),
-        ("teams", "0004_team_unique_team_id_per_org"),
+        ("teams", "0004_team_unique_team_id_per_org_and_more"),
     ]
 
     operations = [
