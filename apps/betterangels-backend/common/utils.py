@@ -9,17 +9,6 @@ from strawberry.utils.str_converters import to_camel_case, to_snake_case
 _M = TypeVar("_M", bound=Model)
 
 
-def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
-    """Get an object by primary key, raising ObjectDoesNotExist on failure.
-
-    Uses ``queryset.model.__name__`` to build a descriptive error message.
-    """
-    obj = queryset.filter(pk=pk).first()
-    if obj is None:
-        raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
-    return obj
-
-
 def can_match(*, field: Field, value: Any) -> bool:
     """Whether *value* is one the column behind *field* could hold.
 
@@ -50,6 +39,22 @@ def matchable_values(*, field: Field, values: Iterable[Any]) -> list[Any]:
     do.
     """
     return [value for value in values if can_match(field=field, value=value)]
+
+
+def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
+    """Get an object by primary key, raising ObjectDoesNotExist on failure.
+
+    Uses ``queryset.model.__name__`` to build a descriptive error message.
+
+    *pk* may come from a GraphQL ``ID``, which accepts any string. One the
+    primary key cannot hold names no row, so it is reported as not found rather
+    than allowed to raise from inside the query.
+    """
+    obj = queryset.filter(pk=pk).first() if can_match(field=queryset.model._meta.pk, value=pk) else None
+
+    if obj is None:
+        raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
+    return obj
 
 
 def get_fargate_task_ips() -> Set[str]:

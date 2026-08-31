@@ -96,6 +96,22 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             response["errors"][0]["message"],
         )
 
+    def test_unmatchable_shelter_id_is_not_found(self) -> None:
+        """An id the column cannot hold gets the answer a missing row gets."""
+        self._add_shelter_view_permission(self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": "abc"},
+        )
+
+        self.assertIsNone(response["data"])
+        self.assertIn(
+            "Shelter matching ID abc could not be found.",
+            response["errors"][0]["message"],
+        )
+
     def test_defaults_to_last_30_days(self) -> None:
         self._add_shelter_view_permission(self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
