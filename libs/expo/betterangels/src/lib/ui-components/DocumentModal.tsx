@@ -59,6 +59,7 @@ export default function DocumentModal({
 
   const deleteFile = async () => {
     onDeleteStateChange?.(document.id, true);
+    closeModal();
 
     try {
       const result = await deleteDocument({
@@ -106,7 +107,6 @@ export default function DocumentModal({
       });
     } finally {
       onDeleteStateChange?.(document.id, false);
-      closeModal();
     }
   };
 
