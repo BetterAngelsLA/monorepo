@@ -426,50 +426,6 @@ class PhoneNumberTestCase(TestCase):
         self.assertTrue(phone_number_2.is_primary)
 
 
-@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
-class AttachmentTestCase(TestCase):
-    def test_save(self) -> None:
-        file_content = b"Test file content"
-        file_name = "test%20file%20name"
-        file = SimpleUploadedFile(name=file_name, content=file_content)
-        content_type = ContentType.objects.get_for_model(Address)
-        attachment = Attachment.objects.create(content_type=content_type, object_id=1, file=file)
-
-        self.assertEqual(attachment.original_filename, "test file name.txt")
-
-    def test_save_direct_upload(self) -> None:
-        file_name = "test%20file%20name.jpg"
-        file = SimpleUploadedFile(name=file_name, content=b"irrelevant")
-
-        content_type = ContentType.objects.get_for_model(Address)
-
-        attachment = Attachment(
-            content_type=content_type,
-            object_id=1,
-            file=file,
-            mime_type="image/jpeg",
-        )
-
-        attachment.save(direct_upload=True)
-
-        self.assertEqual(attachment.mime_type, "image/jpeg")
-        self.assertEqual(attachment.original_filename, "test file name.jpg")
-        self.assertEqual(attachment.attachment_type, AttachmentType.IMAGE)
-
-    def test_save_direct_upload_requires_mime_type(self) -> None:
-        file = SimpleUploadedFile(name="file.jpg", content=b"irrelevant")
-        content_type = ContentType.objects.get_for_model(Address)
-
-        attachment = Attachment(
-            content_type=content_type,
-            object_id=1,
-            file=file,
-        )
-
-        with self.assertRaises(ValueError):
-            attachment.save(direct_upload=True)
-
-
 class LocationAdminMixinTestCase(TestCase):
     """``LocationAdmin`` renders its readonly ``notes`` and ``tasks`` columns."""
 

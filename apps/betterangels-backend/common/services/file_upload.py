@@ -12,8 +12,11 @@ authorization (permission checks, permission assignment) themselves.
 """
 
 from typing import Any, Iterable
+from urllib.parse import unquote
 
+import magic
 from accounts.models import User
+from common.files.utils import canonicalise_filename, infer_attachment_type
 from common.models import Attachment
 from common.services.exceptions import (
     InvalidContentTypeError,
@@ -188,14 +191,47 @@ def create_attachment_records(
             attachment = Attachment(
                 file=item.file_path,
                 mime_type=item.mime_type,
-                original_filename=item.filename,
+                attachment_type=infer_attachment_type(item.mime_type),
+                original_filename=canonicalise_filename(item.mime_type, item.filename),
                 namespace=item.namespace,
                 content_type=content_type,
                 object_id=content_object.id,
                 uploaded_by=user,
             )
 
-            attachment.save(direct_upload=True)
+            attachment.save()
             attached.append(attachment)
 
     return attached
+
+
+def create_multipart_attachment(
+    *,
+    user: User,
+    content_object: Any,
+    file: Any,
+    namespace: str | None = None,
+) -> Attachment:
+    """Persist an Attachment for a file delivered in a multipart request body.
+
+    The presigned pipeline knows each file's content type up front because S3
+    enforces it at upload time. A multipart upload carries no such guarantee, so
+    the type is sniffed from the file contents instead.
+
+    **Does NOT assign object-level permissions** — that is the caller's
+    responsibility.
+    """
+    file.seek(0)
+    mime_type = file.content_type or magic.from_buffer(file.read(), mime=True)
+    file.seek(0)
+
+    return Attachment.objects.create(
+        file=file,
+        mime_type=mime_type,
+        attachment_type=infer_attachment_type(mime_type),
+        original_filename=canonicalise_filename(mime_type, unquote(file.name)),
+        namespace=namespace,
+        content_type=ContentType.objects.get_for_model(content_object.__class__),
+        object_id=content_object.id,
+        uploaded_by=user,
+    )
