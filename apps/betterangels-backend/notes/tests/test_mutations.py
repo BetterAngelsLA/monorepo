@@ -1042,6 +1042,7 @@ class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
         )
 
         messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["field"], "team")
         self.assertIn("abc", messages[0]["message"])
@@ -1058,6 +1059,7 @@ class NoteUnmatchableIdTestCase(NoteGraphQLBaseTestCase):
         )
 
         messages = response["data"]["createNote"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["field"], "team")
         self.assertIn("abc", messages[0]["message"])

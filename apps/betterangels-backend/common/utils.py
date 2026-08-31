@@ -1,9 +1,9 @@
 import os
-from typing import Any, Set, TypeVar
+from typing import Any, Iterable, Set, TypeVar
 
 import requests
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Model, QuerySet
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Field, Model, QuerySet
 from strawberry.utils.str_converters import to_camel_case, to_snake_case
 
 _M = TypeVar("_M", bound=Model)
@@ -18,6 +18,38 @@ def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
     if obj is None:
         raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
     return obj
+
+
+def can_match(*, field: Field, value: Any) -> bool:
+    """Whether *value* is one the column behind *field* could hold.
+
+    A GraphQL ``ID`` accepts any string, so a value can reach a lookup that the
+    column cannot store -- and Django raises from inside the query rather than
+    returning nothing. A value it cannot store names no row, which is what every
+    caller wants to know.
+
+    ``get_prep_value`` rather than ``to_python`` or ``clean``: it is the call
+    ``Lookup.get_prep_lookup`` makes, so this rejects exactly what the lookup
+    would have raised on. The cost is that it has no single exception contract --
+    an integer column raises ``ValueError``/``TypeError`` and a UUID column
+    raises ``ValidationError`` -- where ``to_python`` would raise only the last.
+    """
+    try:
+        field.get_prep_value(value)
+    except ValueError, TypeError, ValidationError:
+        return False
+
+    return True
+
+
+def matchable_values(*, field: Field, values: Iterable[Any]) -> list[Any]:
+    """Drop the values *field* cannot hold, keeping the rest in order.
+
+    An empty result is not the same as no filter: Django renders ``__in []`` as
+    matching nothing, which is what a list of entirely unmatchable values should
+    do.
+    """
+    return [value for value in values if can_match(field=field, value=value)]
 
 
 def get_fargate_task_ips() -> Set[str]:

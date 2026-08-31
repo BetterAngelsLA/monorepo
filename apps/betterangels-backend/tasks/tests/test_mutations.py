@@ -206,6 +206,7 @@ class TaskUnmatchableIdTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         response = self.create_task_fixture({"summary": "Org 1 task", "teamId": "abc"})
 
         messages = response["data"]["createTask"]["messages"]
+        self.assertEqual(len(messages), 1, messages)
         self.assertEqual(messages[0]["kind"], "VALIDATION")
         self.assertEqual(messages[0]["field"], "team")
         self.assertIn("abc", messages[0]["message"])

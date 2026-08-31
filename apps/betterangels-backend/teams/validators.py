@@ -12,6 +12,7 @@ imports *this* module for its field validators, so a top-level model import
 would be circular. Import inside the function body instead.
 """
 
+from common.utils import can_match
 from django.core.exceptions import ValidationError
 
 
@@ -39,12 +40,12 @@ def validate_team_in_org(*, team_id: int | str | None, organization_id: int | No
     if organization_id is None:
         raise ValidationError("A team cannot be set on a record that has no organization.")
 
-    try:
-        belongs = Team.objects.filter(pk=team_id, organization_id=organization_id).exists()
-    except ValueError, TypeError:
+    if not can_match(field=Team._meta.pk, value=team_id):
         # ``team_id`` comes from a GraphQL ``ID``, so it may be any string. One
-        # the column cannot hold names no team, let alone one of this org's.
-        belongs = False
+        # the column cannot hold is not a team this rule can have an opinion
+        # about, and the only caller is ``clean()``, which ``full_clean()`` runs
+        # after ``clean_fields()`` has already reported the field error.
+        return
 
-    if not belongs:
+    if not Team.objects.filter(pk=team_id, organization_id=organization_id).exists():
         raise ValidationError("The selected team does not belong to this organization.")
