@@ -104,15 +104,18 @@ class Grant(models.Model):
             # an org cannot delegate to itself
             models.CheckConstraint(condition=Q(principal_org__isnull=True) | ~Q(principal_org=F("scope_org")),
                                    name="grant_org_principal_is_not_scope"),
-            # NULLS NOT DISTINCT: two org-scoped (NULL object) or two object-scoped
-            # (NULL scope_org) rows for one principal/role/scope are duplicates,
-            # while an org-scoped and an object-scoped row still differ (one side
-            # is NULL, the other is not).
+            # Partial + NULLS NOT DISTINCT: the user index only holds user-principal
+            # rows and the org index only org-principal rows (a user grant's NULL
+            # principal_org must not collide with another user's grant), while the
+            # NULLS NOT DISTINCT scope columns still dedupe org- and object-scoped
+            # rows within each principal kind.
             models.UniqueConstraint(fields=["principal_user", "role", "scope_org",
                                             "scope_object_type", "scope_object_id"],
+                                    condition=Q(principal_user__isnull=False),
                                     nulls_distinct=False, name="unique_user_grant"),
             models.UniqueConstraint(fields=["principal_org", "role", "scope_org",
                                             "scope_object_type", "scope_object_id"],
+                                    condition=Q(principal_org__isnull=False),
                                     nulls_distinct=False, name="unique_org_grant"),
         ]
 ```
@@ -313,7 +316,9 @@ creates rows. Global roles (`is_global=True`) are never granted through a `Grant
 - **E003** – object grant targets a non-whitelisted model (including any org-bearing
   model; findings F5, F16).
 - **E004** – an `org_via` hop is multi-valued (duplicate-row bug class).
-- **E005** – a permission is granted to a model that doesn't declare `OrgScoped`.
+- **E005** – a *scoped* role grants a permission on a model that doesn't declare
+  `OrgScoped` (global roles are exempt — their permissions are never org-confined;
+  the check fires the moment a scoped role needs one of those models).
 
 ### 2.8 Requirements coverage
 
@@ -345,7 +350,7 @@ creates rows. Global roles (`is_global=True`) are never granted through a `Grant
 | Phase | Ships |
 |---|---|
 | **0** | This ADR; resolve §7 open decisions |
-| **1** | `Role` + `Grant` models, constraints, checks, provisioning (sync creates the roles once; per-org `PermissionGroup` materialization stops for shelter roles), backfill (GSO → global Role; Shelter Operator memberships → `Grant` rows). **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** |
+| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
 | **3** | Frontend (both apps): grants-based org list (+ all orgs for global holders), header optional, `currentUser.permissions` global list as the shared contract (finding F24). |
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
