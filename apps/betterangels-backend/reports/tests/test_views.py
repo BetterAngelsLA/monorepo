@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.models import Note
+from notes.models import Note, OrganizationService, ServiceRequest
 from organizations.models import Organization
 from reports.models import ScheduledReport
 from rest_framework.test import APIClient
@@ -401,6 +401,40 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["topRequestedServices"], list)
         self.assertIsInstance(data["uniqueClients"], int)
         self.assertIsInstance(data["uniqueClientsByDate"], list)
+
+    def test_summary_top_services_return_service_label_and_note_count(self) -> None:
+        """topProvidedServices and topRequestedServices name each service by its label."""
+        org, user = self._setup_org_user_with_access()
+        meal = baker.make(OrganizationService, label="Meal", organization=org)
+        shower = baker.make(OrganizationService, label="Shower", organization=org)
+        first, second = baker.make(
+            Note,
+            organization=org,
+            interacted_at=timezone.make_aware(datetime(2025, 1, 10, 12, 0, 0)),
+            _quantity=2,
+        )
+        first.provided_services.add(baker.make(ServiceRequest, service=meal))
+        second.provided_services.add(baker.make(ServiceRequest, service=meal))
+        first.provided_services.add(baker.make(ServiceRequest, service=shower))
+        first.requested_services.add(baker.make(ServiceRequest, service=shower))
+
+        self._set_active_org(org)
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-31",
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["reportSummary"]
+        self.assertEqual(
+            data["topProvidedServices"],
+            [{"name": "Meal", "count": 2}, {"name": "Shower", "count": 1}],
+        )
+        self.assertEqual(data["topRequestedServices"], [{"name": "Shower", "count": 1}])
 
     def test_summary_empty_range(self) -> None:
         org, user = self._setup_org_user_with_access()

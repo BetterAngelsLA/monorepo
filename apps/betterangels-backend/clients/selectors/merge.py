@@ -7,7 +7,7 @@ Services (merge.py) handle business logic and writes.
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from clients.models import ClientProfile
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -106,7 +106,7 @@ def get_scalar_fields(model: type[models.Model]) -> list[models.Field]:
             continue
         if not f.concrete:
             continue
-        fields.append(cast(models.Field, f))
+        fields.append(f)
     return fields
 
 
@@ -117,7 +117,7 @@ def get_fk_relations() -> list[dict[str, Any]]:
         if not isinstance(rel, ManyToOneRel):
             continue
         fk_field = rel.field
-        related_model = cast(type[models.Model], rel.related_model)
+        related_model = rel.related_model
         relations.append(
             {
                 "model": related_model,

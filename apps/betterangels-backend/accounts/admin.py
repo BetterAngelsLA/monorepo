@@ -5,6 +5,7 @@ from common.org_types import REGISTRY
 from common.permissions.config import TemplateConfig
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
+from django.contrib.admin.utils import unquote
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
@@ -21,6 +22,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .forms import (
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
+    OrganizationOwnerTransferForm,
     OrganizationProfileForm,
     PermissionGroupInlineForm,
     UserChangeForm,
@@ -33,6 +35,7 @@ from .services import (
     member_invite,
     member_roles_replace,
     organization_remove_member,
+    organization_transfer_ownership,
     reconcile_org_groups,
 )
 
@@ -342,10 +345,139 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     # raises NoReverseMatch. Offering "View on site" would error.
     view_on_site = False
 
+    ROLE_LOSS_CONFIRMED = "_confirm_role_loss"
+
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """Reconcile permission groups once the profile's org types are saved."""
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
+
+    def change_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        form_url: str = "",
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
+        """Confirm before a save takes a role away from the people holding it.
+
+        Two edits on this page do that, and neither shows it: unchecking an org
+        type, and ticking Delete on a permission group row.  Both end with
+        ``delete_orphaned_group`` tearing out the ``auth.Group``, and every member
+        holding that role loses it.
+
+        Interposed here rather than in the form because the form cannot re-render
+        the whole change view, and because a ``clean()`` error would be the wrong
+        shape: this is a confirmation, not a rejection.  Deferring to
+        ``has_change_permission`` keeps the prompt from answering a question
+        Django is about to refuse.
+        """
+        if request.method == "POST" and self.ROLE_LOSS_CONFIRMED not in request.POST:
+            organization = self.get_object(request, unquote(object_id))
+            if (
+                organization is not None
+                and self.has_change_permission(request, organization)
+                and (losses := self._roles_lost_to_save(organization, request.POST))
+            ):
+                return self._confirm_role_loss_response(request, organization, losses)
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def _confirm_role_loss_response(
+        self, request: HttpRequest, organization: Organization, losses: list[tuple[str, int]]
+    ) -> HttpResponse:
+        """Re-offer the submitted save, spelling out what it revokes."""
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "losses": losses,
+            "posted": [(key, value) for key in request.POST for value in request.POST.getlist(key)],
+            "confirm_field": self.ROLE_LOSS_CONFIRMED,
+            "title": f"Revoke roles in {organization.name}?",
+            "cancel_url": reverse("admin:organizations_organization_change", args=[organization.pk]),
+        }
+        return TemplateResponse(request, "admin/organizations/organization/confirm_role_loss.html", context)
+
+    @classmethod
+    def _roles_lost_to_save(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Every role *posted* would take from someone, with how many hold each.
+
+        Empty when nothing is lost, which is most saves.  A prompt that always
+        fires stops being read.
+        """
+        return sorted(
+            set(cls._roles_lost_to_org_type_removal(organization, posted))
+            | set(cls._roles_lost_to_row_deletion(organization, posted))
+        )
+
+    @classmethod
+    def _roles_lost_to_org_type_removal(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles reconciliation will delete because the type granting them is dropped."""
+        profile_prefix = next(
+            (key.rsplit("-", 1)[0] for key in posted if key.endswith("-org_types")),
+            None,
+        )
+        if profile_prefix is None:
+            return []
+
+        submitted = set(posted.getlist(f"{profile_prefix}-org_types"))
+        current = (
+            {org_type.value for org_type in organization.profile.org_types}
+            if hasattr(organization, "profile")
+            else set()
+        )
+        removed = current - submitted
+        if not removed:
+            return []
+
+        kept_templates = {
+            template.name
+            for org_type in submitted
+            if (config := REGISTRY.org_type(org_type)) is not None
+            for template in config.templates
+        }
+        losing = {
+            template.name
+            for org_type in removed
+            if (config := REGISTRY.org_type(org_type)) is not None
+            for template in config.templates
+        } - kept_templates
+
+        return cls._held_by(
+            PermissionGroup.objects.filter(organization=organization, template__name__in=sorted(losing))
+        )
+
+    @classmethod
+    def _roles_lost_to_row_deletion(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles whose row is ticked for deletion on the Permission groups inline.
+
+        The quieter of the two routes: reconciliation recreates a derived row on
+        the same save, with a fresh and empty ``auth.Group``, so the page comes
+        back looking untouched while everyone who held the role has lost it.
+        """
+        # The inline names its pk field after the model's pk, which for a subclass
+        # of ``auth.Group`` is ``group_ptr``.  Hardcoding ``-id`` would stop
+        # matching and report no losses rather than failing.
+        pk_field = PermissionGroup._meta.pk.name
+        deleted_row_ids = [
+            posted.get(f"{key.rsplit('-', 1)[0]}-{pk_field}")
+            for key in posted
+            if key.startswith("permission_groups-") and key.endswith("-DELETE") and posted.get(key)
+        ]
+        return cls._held_by(
+            PermissionGroup.objects.filter(
+                organization=organization, pk__in=[row_id for row_id in deleted_row_ids if row_id]
+            )
+        )
+
+    @staticmethod
+    def _held_by(permission_groups: QuerySet[PermissionGroup]) -> list[tuple[str, int]]:
+        """Name each group and how many hold it, dropping the ones nobody does."""
+        return [
+            (permission_group.label, holders)
+            for permission_group in permission_groups.select_related("template")
+            if (holders := permission_group.user_set.count())
+        ]
 
     def get_urls(self) -> list[URLPattern]:
         custom_urls = [
@@ -358,6 +490,11 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
                 "<path:object_id>/change-roles/<int:user_id>/",
                 self.admin_site.admin_view(self.change_member_roles_view),
                 name="organizations_organization_change_member_roles",
+            ),
+            path(
+                "<path:object_id>/transfer-ownership/",
+                self.admin_site.admin_view(self.transfer_ownership_view),
+                name="organizations_organization_transfer_ownership",
             ),
         ]
         return custom_urls + super().get_urls()
@@ -441,6 +578,57 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             "title": f"Roles for {member.email or member} in {organization.name}",
             "help_text": "Unchecking a role revokes it. Clearing them all leaves the person a member with no access.",
             "submit_label": "Save roles",
+            "cancel_url": organization_url,
+        }
+        return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
+
+    def transfer_ownership_view(self, request: HttpRequest, object_id: str) -> HttpResponse:
+        """Hand ownership of this organization to another member.
+
+        Without this the first person invited to a new organization is stuck:
+        ``Organization.add_user`` makes them the owner and
+        ``organization_remove_member`` refuses to remove an owner.  Editing the
+        ``OrganizationOwner`` row by hand was the only way out.
+        """
+        organization = get_object_or_404(Organization, pk=object_id)
+        organization_url = reverse("admin:organizations_organization_change", args=[organization.pk])
+        owner = (
+            OrganizationOwner.objects.filter(organization=organization)
+            .select_related("organization_user__user")
+            .first()
+        )
+        current_owner = owner.organization_user.user if owner else None
+
+        if request.method == "POST":
+            form = OrganizationOwnerTransferForm(request.POST, organization=organization, current_owner=current_owner)
+            if form.is_valid():
+                try:
+                    member = organization_transfer_ownership(
+                        organization=organization,
+                        new_owner_user_id=form.cleaned_data["new_owner"].pk,
+                    )
+                except ValidationError as error:
+                    self.message_user(request, "; ".join(error.messages), messages.ERROR)
+                    return redirect(request.get_full_path())
+
+                self.message_user(
+                    request,
+                    f"{member.email or member} now owns {organization.name}.",
+                    messages.SUCCESS,
+                )
+                return redirect(organization_url)
+        else:
+            form = OrganizationOwnerTransferForm(organization=organization, current_owner=current_owner)
+
+        current = current_owner.email or str(current_owner) if current_owner else "nobody"
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "organization": organization,
+            "form": form,
+            "title": f"Transfer ownership of {organization.name}",
+            "help_text": f"Currently owned by {current}. Only a member can own an organization.",
+            "submit_label": "Transfer ownership",
             "cancel_url": organization_url,
         }
         return TemplateResponse(request, "admin/organizations/organization/member_form.html", context)
