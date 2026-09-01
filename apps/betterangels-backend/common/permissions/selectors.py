@@ -61,7 +61,15 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
 
 
 def scopes(user: "User", perm: str) -> Any:
-    """``ALL``, or the org ids where *user* holds *perm* through a scoped Grant.
+    """``ALL``, or the org ids where *user* holds *perm* (direct or delegated).
+
+    * Direct — a user-principal ``Grant``.
+    * Delegated — an org-principal ``Grant`` inherited by the principal org's
+      people: "acts at B" = member of B AND holds a direct Grant at B whose role
+      carries *this* permission (role-keyed — a weak-role holder at B is not
+      amplified to B's stronger delegated roles at C).  A consultant granted a
+      role at B without membership does NOT inherit — no amplification (ADR 0001
+      §2.4, findings F1/F19).  One hop only.
 
     Memoized per request on the user instance.  The cached value is a lazy
     queryset used as a subquery — caching it does not evaluate it.
@@ -69,12 +77,32 @@ def scopes(user: "User", perm: str) -> Any:
     if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
         return ALL
 
-    from accounts.models import Grant
+    from accounts.models import Grant, Organization
 
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
         roles = _roles_carrying_perm(perm)
-        cache[perm] = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
+        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
+
+        # Delegation: orgs where the user acts (member + holds a direct Grant
+        # at that org) inherit that org's org→org delegations.  "Acts at B" is
+        # role-keyed: the grant at B must carry *this* permission's role, or a
+        # member holding only a weak role at B would inherit everything B
+        # delegated at C — more authority at C than at B (audit C-1).
+        acting_at = (
+            Organization.objects.filter(
+                users=user,
+                grants__principal_user=user,
+                grants__role__in=Subquery(roles),
+            )
+            .values("pk")
+            .distinct()
+        )
+        inherited = Grant.objects.filter(principal_org__in=Subquery(acting_at), role__in=Subquery(roles)).values(
+            "scope_org"
+        )
+
+        cache[perm] = mine.union(inherited)
     return cache[perm]
 
 
