@@ -4,7 +4,6 @@ import re
 from typing import Any
 
 from accounts.models import Organization
-from common.constants import OPERATING_TIME_ZONE
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
@@ -83,7 +82,7 @@ class ScheduledReport(models.Model):
     hour = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour of the day to send the report (0-23), in the operating time zone",
+        help_text="Hour of the day to send the report (0-23), in the site's time zone",
     )
     subject_template = models.CharField(
         max_length=255,
@@ -138,13 +137,14 @@ class ScheduledReport(models.Model):
     def set_next_run(self) -> None:
         """Calculate and set the next run time based on the schedule.
 
-        ``day_of_month`` and ``hour`` are read on :data:`OPERATING_TIME_ZONE`'s
-        calendar.  Placing them on UTC's instead fires a monthly report at 5pm on
-        the last day of the month locally, so it both misses that evening's notes
-        and — once the report range is cut locally too — reports the month before
-        the one that just ended.
+        ``day_of_month`` and ``hour`` are read on ``settings.TIME_ZONE``'s
+        calendar, deliberately ignoring any zone the request activated.  This runs
+        both from an admin save and from Celery after a send; following the
+        browsing admin's zone would let a report set to 8am drift to 8am elsewhere
+        on its first reschedule.  A schedule fires once, globally — it has no
+        viewer.
         """
-        now = timezone.now().astimezone(OPERATING_TIME_ZONE)
+        now = timezone.now().astimezone(timezone.get_default_timezone())
 
         # Calculate candidate for current month.
         # relativedelta(day=N) replaces the day, clamping to the last valid day of month

@@ -7,7 +7,7 @@ from reports.models import ScheduledReport
 
 
 def reschedule_active_reports(apps, schema_editor):
-    """Recompute ``next_run_at`` onto the operating zone's calendar.
+    """Recompute ``next_run_at`` onto the site zone's calendar.
 
     Stored values were placed on UTC's, so an active monthly report is due at 5pm
     local on the last day of the month.  ``set_next_run`` only corrects itself
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='scheduledreport',
             name='hour',
-            field=models.IntegerField(default=0, help_text='Hour of the day to send the report (0-23), in the operating time zone', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(23)]),
+            field=models.IntegerField(default=0, help_text="Hour of the day to send the report (0-23), in the site's time zone", validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(23)]),
         ),
         migrations.RunPython(reschedule_active_reports, migrations.RunPython.noop),
     ]

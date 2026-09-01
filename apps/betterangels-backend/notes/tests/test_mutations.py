@@ -16,7 +16,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_create_note_mutation(self) -> None:
         expected_query_count = 33
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -46,7 +46,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(created_note, expected_note)
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_update_note_mutation(self) -> None:
         json_address_input, _ = self._get_address_inputs()
         location_input = {
@@ -97,7 +97,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(updated_note, expected_note)
 
-    @time_machine.travel("03-12-2024 10:11:12", tick=False)
+    @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_partial_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
