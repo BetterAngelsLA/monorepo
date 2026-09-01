@@ -77,7 +77,9 @@ class ExteriorShelterPhoto(ShelterPhoto):
         super().save(*args, **kwargs)
 
 
-class Video(BaseModel):
+class Video(OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
 
@@ -92,7 +94,9 @@ MEDIA_TYPE_VALIDATORS: dict[str, RegexValidator] = {
 }
 
 
-class MediaLink(BaseModel):
+class MediaLink(OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
     url = models.URLField(max_length=255)
     title = models.CharField(max_length=255, blank=True)
     media_type = TextChoicesField(

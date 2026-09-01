@@ -342,17 +342,20 @@ class Grant(models.Model):
                 name="grant_org_principal_is_not_scope",
                 violation_error_message="An organization cannot delegate a role to itself.",
             ),
-            # NULLS NOT DISTINCT: two org-scoped rows (NULL object columns) or two
-            # object-scoped rows (NULL scope_org) for the same principal/role/scope
-            # are duplicates, while an org-scoped and an object-scoped row still
-            # differ because one side is NULL and the other is not.
+            # Partial + NULLS NOT DISTINCT: the user index only holds user-principal
+            # rows and the org index only org-principal rows (a user grant's NULL
+            # principal_org must not collide with another user's grant), while the
+            # NULLS NOT DISTINCT scope columns still dedupe org- and object-scoped
+            # rows within each principal kind.
             models.UniqueConstraint(
                 fields=["principal_user", "role", "scope_org", "scope_object_type", "scope_object_id"],
+                condition=Q(principal_user__isnull=False),
                 nulls_distinct=False,
                 name="unique_user_grant",
             ),
             models.UniqueConstraint(
                 fields=["principal_org", "role", "scope_org", "scope_object_type", "scope_object_id"],
+                condition=Q(principal_org__isnull=False),
                 nulls_distinct=False,
                 name="unique_org_grant",
             ),
