@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
+from common.enums import AttachmentType
 from common.models import Attachment
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -274,6 +275,23 @@ class ResolveAttachmentsTest(TestCase):
         self.assertEqual(attachment.namespace, None)
         self.assertEqual(attachment.object_id, self.content_object.id)
         self.assertEqual(attachment.uploaded_by, self.user)
+
+    @patch("common.services.file_upload.s3_key_exists", return_value=True)
+    @patch("common.services.file_upload.validate_upload_token", return_value=True)
+    def test_infers_attachment_type_and_canonicalises_filename(
+        self, mock_validate: MagicMock, mock_s3_exists: MagicMock
+    ) -> None:
+        item = self._make_item(filename="holiday%20photo", mime_type="image/jpeg")
+
+        attachment = create_attachment_records(
+            user=self.user,
+            content_object=self.content_object,
+            uploads=[item],
+            config=TEST_CONFIG,
+        )[0]
+
+        self.assertEqual(attachment.attachment_type, AttachmentType.IMAGE)
+        self.assertEqual(attachment.original_filename, "holiday photo.jpg")
 
     @patch("common.services.file_upload.s3_key_exists", return_value=True)
     @patch("common.services.file_upload.validate_upload_token", return_value=True)

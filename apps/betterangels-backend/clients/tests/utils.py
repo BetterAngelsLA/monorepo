@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from typing import Any, Dict, cast
+from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
@@ -329,67 +330,58 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         self.client_profile_1_document_1 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Client 1 license front",
             "client_profile_1_document_1.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_2 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
-            b"Client 1 license back",
             "client_profile_1_document_2.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_3 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.HMIS_FORM.name,
-            b"Client 1 hmis form",
             "client_profile_1_document_3.txt",
-        )["data"]["createClientDocument"]
+        )
         self.client_profile_1_document_4 = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-            b"Client 1 other doc",
             "client_profile_1_document_4.txt",
-        )["data"]["createClientDocument"]
+        )
 
     def _create_client_document_fixture(
         self,
         client_profile_id: str,
         namespace: str,
-        file_content: bytes,
         file_name: str = "test_file.txt",
+        content_type: str = "text/plain",
     ) -> Dict[str, Any]:
-        file = SimpleUploadedFile(name=file_name, content=file_content)
-        response = self.execute_graphql(
-            """
-            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
-                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
+        """Create one client document through the presigned pipeline.
+
+        Token validation and the S3 key check are stubbed: callers use this to get
+        a document row to act on, not to exercise the upload itself.
+        """
+        with (
+            patch("common.services.file_upload.validate_upload_token", return_value=True),
+            patch("common.services.file_upload.s3_key_exists", return_value=True),
+            patch(
+                "common.services.file_upload.strip_storage_location",
+                side_effect=lambda key: key.removeprefix("media/"),
+            ),
+        ):
+            response = self._resolve_client_document_uploads_fixture(
+                client_profile_id,
+                [
+                    {
+                        "presignedKey": f"media/attachments/{file_name}",
+                        "uploadToken": "valid-token",
+                        "filename": file_name,
+                        "contentType": content_type,
+                        "namespace": namespace,
                     }
-                    ... on ClientDocumentType {
-                        id
-                        attachmentType
-                        mimeType
-                        file {
-                            name
-                        }
-                        originalFilename
-                        namespace
-                    }
-                }
-            }
-            """,
-            variables={
-                "clientProfileId": client_profile_id,
-                "namespace": namespace,
-            },
-            files={"file": file},
-        )
-        return response
+                ],
+            )
+
+        return cast(Dict[str, Any], response["data"]["resolveClientDocumentUploads"]["documents"][0])
 
     def _delete_client_document_fixture(self, document_id: str) -> Dict[str, Any]:
         response = self.execute_graphql(
@@ -532,6 +524,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                             file {
                                 name
                             }
+                            attachmentType
                             originalFilename
                             namespace
                             mimeType
