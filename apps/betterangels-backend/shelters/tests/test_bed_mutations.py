@@ -75,7 +75,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 35
+        expected_query_count = 40
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -163,7 +163,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 35
+        expected_query_count = 37
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -231,7 +231,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"statusNotes": "New notes"},
         }
 
-        expected_query_count = 16
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -307,7 +307,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             "data": {"maintenanceFlag": True},
         }
 
-        expected_query_count = 16
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -408,7 +408,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 32
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

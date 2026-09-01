@@ -1,11 +1,13 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
+from shelters.groups import SHELTER_OPERATOR
 from shelters.models import ShelterPhoto
 from shelters.services.shelter_photo import (
     SHELTER_PHOTO_CONFIG,
@@ -47,9 +49,11 @@ class ValidateContentTypeTest(TestCase):
 class CreatePresignedUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     @patch("common.services.file_upload.create_presigned_uploads")
     def test_delegates_to_generic_with_shelter_photo_config(self, mock_generic: MagicMock) -> None:
@@ -124,9 +128,11 @@ class CreatePresignedUploadsTest(TestCase):
 class ResolveUploadsTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_creates_shelter_photo_record(self, mock_validate: MagicMock) -> None:
@@ -264,9 +270,11 @@ class ResolveUploadsTest(TestCase):
 class DeleteShelterPhotosTest(TestCase):
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
         self.org.users.add(self.user)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     def test_deletes_single_photo(self) -> None:
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
@@ -341,10 +349,12 @@ class DeleteShelterPhotosTest(TestCase):
 
 class UpdateShelterPhotoTest(TestCase):
     def setUp(self) -> None:
-        self.org: Any = organization_recipe.make()
+        self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.user: Any = baker.make("accounts.User")
         self.user.organizations_organization.add(self.org)
         self.shelter: Any = shelter_recipe.make(organization=self.org)
+        # Photo services authorize through a Grant (ADR 0001 §2.4).
+        OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     def _input(self, photo_id: int, photo_type: ShelterPhotoTypeChoices) -> UpdateShelterPhotoInput:
         return UpdateShelterPhotoInput(id=ID(str(photo_id)), photo_type=photo_type)

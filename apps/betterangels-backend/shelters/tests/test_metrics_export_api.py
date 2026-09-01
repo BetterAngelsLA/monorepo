@@ -7,7 +7,6 @@ from io import BytesIO
 
 import time_machine
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from django.urls import reverse
 from openpyxl import load_workbook
 from organizations.models import Organization
@@ -31,11 +30,8 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
         self.api_client.force_authenticate(self.org_1_case_manager_1)
 
     def _add_shelter_view_permission(self, org: Organization) -> None:
-        from notes.groups import CASEWORKER
-
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        org.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
+        # Grant view_shelter via a Role+Grant (ADR 0001).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, org)
 
     def _get(self, **params: str) -> Response:
         return self.api_client.get(self.url, params, headers={"x-organization-id": str(self.org_1.pk)})

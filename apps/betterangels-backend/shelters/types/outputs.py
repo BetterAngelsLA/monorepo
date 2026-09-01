@@ -11,7 +11,7 @@ from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from common.permissions.utils import get_current_organization
+from common.permissions.utils import active_org
 from django.db.models import Prefetch, QuerySet
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -283,7 +283,9 @@ class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
+        # Header optional (ADR 0001 §2.6): absent ⇒ unconfined to the user's
+        # grant scopes; global holders are never confined by a stale header.
+        org_id = active_org(info)
         return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
 
 
@@ -300,7 +302,7 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
     bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
-        org_id = get_current_organization(info)
+        org_id = active_org(info)
         bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     return Prefetch("beds", queryset=bed_qs)
@@ -318,7 +320,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
+        org_id = active_org(info)
         return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
 
     id: ID
@@ -351,7 +353,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
+        org_id = active_org(info)
         return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
 
     id: ID
@@ -395,7 +397,7 @@ class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
+        org_id = active_org(info)
         return reservation_queryset(queryset, user=user, organization_id=org_id, perms=[models.Reservation.perms.VIEW])
 
     id: ID
