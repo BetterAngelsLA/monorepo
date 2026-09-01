@@ -40,8 +40,8 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
 
         self.other_org = organization_recipe.make(name="Other Shelter Org", preset_names=["shelter"], owner_roles=())
         self.other_shelter = shelter_recipe.make(organization=self.other_org)
-        self.other_room = baker.make(Room, shelter=self.other_shelter)
-        self.other_bed = baker.make(Bed, shelter=self.other_shelter, room=self.other_room)
+        self.other_room = baker.make(Room, shelter=self.other_shelter, name="other room")
+        self.other_bed = baker.make(Bed, shelter=self.other_shelter, room=self.other_room, name="other bed")
 
         self.global_operator = baker.make(User)
         global_template = PermissionGroupTemplate.objects.get(name=GLOBAL_SHELTER_OPERATOR.name)

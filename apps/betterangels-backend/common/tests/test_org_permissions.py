@@ -13,14 +13,15 @@ from accounts.groups import ORG_ADMIN
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.utils import permissioned_queryset, user_holds_org_bypass_perms
-from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization
 from shelters.models import Shelter
 from teams.models import Team
+
+from common.permissions.utils import permissioned_queryset, user_holds_org_bypass_perms
+from common.tests.utils import GraphQLBaseTestCase
 
 CREATE_TEAM = """
     mutation ($data: CreateTeamInput!) {
@@ -169,9 +170,7 @@ class PermissionedQuerysetBypassTestCase(TestCase):
     def test_bypass_user_any_perm_true_requires_one(self) -> None:
         self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
 
-        self.assertTrue(
-            self._matches(self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_2.id))
-        )
+        self.assertTrue(self._matches(self.bypass_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_2.id)))
 
     def test_bypass_user_any_perm_false_requires_all(self) -> None:
         self.bypass_group.permissions.add(self._perm(Shelter.perms.VIEW))
@@ -203,16 +202,12 @@ class PermissionedQuerysetBypassTestCase(TestCase):
         self.org_group.permissions.add(self._perm(Shelter.perms.VIEW))
 
         self.assertFalse(
-            self._matches(
-                self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False
-            )
+            self._matches(self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False)
         )
 
         self.org_group.permissions.add(self._perm(Shelter.perms.CHANGE))
         self.assertTrue(
-            self._matches(
-                self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False
-            )
+            self._matches(self.org_user, [Shelter.perms.VIEW, Shelter.perms.CHANGE], str(self.org_1.id), any_perm=False)
         )
 
     # ── Resolver-branch helper ──────────────────────────────────────────

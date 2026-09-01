@@ -5,6 +5,7 @@ from typing import Any
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery.recipe import Recipe, foreign_key, related, seq
 from places import Places
+
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -19,14 +20,12 @@ from shelters.enums import (
     ReferralRequirementChoices,
     RoomStyleChoices,
     ScheduleTypeChoices,
-)
-from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.enums import (
     ShelterProgramChoices,
     SpecialSituationRestrictionChoices,
     StatusChoices,
     StorageChoices,
 )
+from shelters.enums import ShelterChoices as ShelterTypeChoices
 from shelters.models import (
     SPA,
     Accessibility,
@@ -171,7 +170,7 @@ shelter_recipe = Recipe(
     subjective_review=seq("subjective review "),  # type: ignore
     supervisorial_district=lambda: random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
     total_beds=lambda: round(random.randint(20, 200), -1),
-    website=seq("shelter", suffix=".com"),  # type: ignore
+    website=seq("https://shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices, min_quantity=1),
     city=get_or_create_city,
     cities_served=related_m2m_unique(City, CITY_NAMES, min_quantity=1),
