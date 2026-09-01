@@ -73,6 +73,14 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-INITIAL_FORMS": "0",
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
         }
 
     def _change_payload(
@@ -103,6 +111,14 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-INITIAL_FORMS": "0",
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
         }
         pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
@@ -756,6 +772,14 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
             "organization_users-INITIAL_FORMS": "0",
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
         }
         pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
