@@ -602,6 +602,23 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     return grant
 
 
+def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organization) -> Grant:
+    """Org *principal_org* delegates *role* to *scope_org* (ADR 0001 §2.2, §2.4).
+
+    The delegation is inherited by the principal org's people — those who are
+    members of *principal_org* AND hold a direct Grant there ("acting at" the
+    org).  The org cannot delegate a role to itself (model constraint
+    ``grant_org_principal_is_not_scope``) and a global Role can never be
+    delegated (check ``permissions.E002``).
+    """
+    from accounts.models import Grant
+
+    grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
+    grant.full_clean()
+    grant.save()
+    return grant
+
+
 def grant_delete(*, grant: Grant) -> None:
     """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
     grant.delete()
