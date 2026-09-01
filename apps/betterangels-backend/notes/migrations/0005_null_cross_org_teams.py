@@ -1,10 +1,10 @@
 """Detach any team belonging to an organization other than the record's own.
 
-Runs before the composite foreign key is added, because ``ADD CONSTRAINT``
-fails on rows that already violate it.  Expected to affect nothing: the rule has
-been enforced in application code since #2339.  It logs what it touches anyway --
-this cannot be undone, and a silent count of zero is indistinguishable from a
-silent count of many.
+Such a row cannot be saved again: ``Note.clean()`` rejects the pair, so
+every later edit fails validation on a field the editor did not touch.  Expected
+to affect nothing -- the rule has been enforced in application code since #2339
+-- but it logs what it touches, because this cannot be undone and a silent count
+of zero is indistinguishable from a silent count of many.
 """
 
 import logging

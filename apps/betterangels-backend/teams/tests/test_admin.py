@@ -1,8 +1,7 @@
 """The Django admin change form is the only place a user is offered a team's organization.
 
 ``UpdateTeamInput`` carries only ``name`` and ``is_active``, so GraphQL cannot
-reach the field.  Other writers -- a service, a management command, a shell
-session -- are stopped by the composite foreign key rather than by this form.
+reach the field.
 """
 
 from accounts.models import User

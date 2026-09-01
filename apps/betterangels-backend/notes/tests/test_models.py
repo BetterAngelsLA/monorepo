@@ -4,7 +4,6 @@ import time_machine
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, connection, transaction
 from django.test import TestCase
 from model_bakery import baker
 from notes.enums import ServiceRequestStatusEnum
@@ -70,7 +69,6 @@ class NoteTeamOrgValidationTestCase(TestCase):
         note.clean()
 
     def test_clean_rejects_a_team_from_another_org(self) -> None:
-        # Unsaved: #2312 adds a composite FK that makes the row unstorable.
         note = Note(organization=self.org, team=self.other_team)
 
         with self.assertRaises(ValidationError) as ctx:
@@ -79,8 +77,13 @@ class NoteTeamOrgValidationTestCase(TestCase):
         self.assertIn("team", ctx.exception.message_dict)
 
 
-class NoteTeamOrgConstraintTestCase(TestCase):
-    """The rule holds for writers that never reach ``clean()``."""
+class NoteRevertActionTestCase(TestCase):
+    """Reverting a note validates the state it restores.
+
+    ``revert_action`` replays one event's diff at a time, so a restored team can
+    end up paired with an organization from a different point in the note's
+    history.
+    """
 
     def setUp(self) -> None:
         self.org = organization_recipe.make()
@@ -88,25 +91,21 @@ class NoteTeamOrgConstraintTestCase(TestCase):
         self.own_team = baker.make(Team, organization=self.org)
         self.other_team = baker.make(Team, organization=self.other_org)
 
-    def _check_deferred_constraints(self) -> None:
-        # The composite FK is deferred, so Postgres checks it at commit -- which
-        # a test transaction never reaches.
-        with connection.cursor() as cursor:
-            cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
-
-    def test_queryset_update_cannot_store_a_cross_org_team(self) -> None:
-        note = baker.make(Note, organization=self.org, team=self.own_team)
-
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            Note.objects.filter(pk=note.pk).update(team=self.other_team)
-            self._check_deferred_constraints()
-
-    def test_queryset_update_still_allows_a_team_from_the_same_org(self) -> None:
+    def test_revert_restores_a_team_from_the_same_org(self) -> None:
         note = baker.make(Note, organization=self.org, team=None)
 
-        with transaction.atomic():
-            Note.objects.filter(pk=note.pk).update(team=self.own_team)
-            self._check_deferred_constraints()
+        note.revert_action(action="update", diff={"team_id": [self.own_team.pk, None]})
 
         note.refresh_from_db()
         self.assertEqual(note.team, self.own_team)
+
+    def test_revert_refuses_to_restore_a_team_from_another_org(self) -> None:
+        note = baker.make(Note, organization=self.org, team=None)
+
+        with self.assertRaises(ValidationError) as ctx:
+            note.revert_action(action="update", diff={"team_id": [self.other_team.pk, None]})
+
+        self.assertIn("team", ctx.exception.message_dict)
+
+        note.refresh_from_db()
+        self.assertIsNone(note.team)

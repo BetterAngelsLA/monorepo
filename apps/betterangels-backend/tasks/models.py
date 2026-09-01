@@ -1,6 +1,5 @@
 import pghistory
 from accounts.models import User
-from common.constraints import CompositeForeignKey
 from common.models import BaseModel
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
@@ -95,13 +94,6 @@ class Task(BaseModel):
                 ),
                 name="task_only_one_client_link",
                 violation_error_message="A task belongs to one client, not both a client profile and an HMIS client profile.",
-            ),
-            CompositeForeignKey(
-                name="tasks_task_team_same_org_fk",
-                fields=["team", "organization"],
-                to_model="teams.Team",
-                to_fields=["id", "organization"],
-                deferrable=models.Deferrable.DEFERRED,
             ),
         ]
 

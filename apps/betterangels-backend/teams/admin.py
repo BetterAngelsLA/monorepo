@@ -9,9 +9,11 @@ from .models import Team
 class TeamAdminForm(forms.ModelForm):
     """Fix a team's organization once the row exists.
 
-    Notes and tasks reference ``(team_id, organization_id)`` as a composite
-    foreign key, so repointing a team strands every record holding it -- an
-    IntegrityError at commit rather than anything this page could explain.
+    Notes and tasks validate that their team belongs to their own organization,
+    so repointing a team leaves every record already holding it in a state its
+    own ``clean()`` rejects -- unsavable, with nothing on this page to say why.
+    This form is the only writer that can reach the field: ``UpdateTeamInput``
+    carries just ``name`` and ``is_active``.
 
     ``disabled`` rather than ``ModelAdmin.readonly_fields``: a read-only field is
     dropped from the form, which puts it in the ModelForm's validation
