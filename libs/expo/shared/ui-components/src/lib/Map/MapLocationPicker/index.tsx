@@ -36,7 +36,8 @@ export function MapLocationPicker({
   const insets = useSafeAreaInsets();
 
   const [location, setLocation] = useState<TLocationData | null>(null);
-  const [showUserDot, setShowUserDot] = useState(!!userLocation);
+  const [showUserLocationDot, setShowUserLocationDot] =
+    useState(!!userLocation);
   const [minimized, setMinimized] = useState(false);
   const [showIosDirections, setShowIosDirections] = useState(false);
 
@@ -51,7 +52,7 @@ export function MapLocationPicker({
     const { latitude, longitude } = location.coords;
 
     setLocation(await geocode(latitude, longitude));
-    setShowUserDot(true);
+    setShowUserLocationDot(true);
     setMinimized(false);
   }
 
@@ -94,8 +95,8 @@ export function MapLocationPicker({
   }, [initialLocation]);
 
   useEffect(() => {
-    setShowUserDot(!!userLocation);
-  }, [userLocation, setShowUserDot]);
+    setShowUserLocationDot(!!userLocation);
+  }, [userLocation, setShowUserLocationDot]);
 
   // Geocode: POI click or map tap → full location data
   const geocode = useCallback(
@@ -251,7 +252,6 @@ export function MapLocationPicker({
             regionDelta={DELTA}
             variant="relative"
             onLocated={onCurrentLocationChange}
-            style={{ marginHorizontal: 8 }}
           />
         </View>
 
@@ -278,7 +278,7 @@ export function MapLocationPicker({
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        showsUserLocation={showUserDot}
+        showsUserLocation={showUserLocationDot}
         showsMyLocationButton={false}
         initialRegion={{ ...center, ...DELTA }}
         onPress={(e) => handleMapPress(e, false)}
