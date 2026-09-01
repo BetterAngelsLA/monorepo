@@ -3,7 +3,7 @@
 import type { ClientProfileQuery } from './Client.generated';
 import type { UpdateClientDocumentMutation } from './Client.generated';
 import type { DeleteClientDocumentMutation } from './Client.generated';
-import type { UpdateClientProfilePhotoMutation } from './Client.generated';
+import type { DeleteClientProfilePhotoMutation } from './Client.generated';
 
 export const clientProfileOperationKey: keyof Omit<ClientProfileQuery, '__typename'> = 'clientProfile';
 export const clientProfileSuccessTypename: Extract<
@@ -44,15 +44,15 @@ export const deleteClientDocumentMeta = {
   successTypename: deleteClientDocumentSuccessTypename,
 } as const;
 
-export const updateClientProfilePhotoOperationKey: keyof Omit<UpdateClientProfilePhotoMutation, '__typename'> = 'updateClientProfilePhoto';
-export const updateClientProfilePhotoSuccessTypename: Extract<
-  NonNullable<UpdateClientProfilePhotoMutation['updateClientProfilePhoto']> extends readonly (infer _T)[]
+export const deleteClientProfilePhotoOperationKey: keyof Omit<DeleteClientProfilePhotoMutation, '__typename'> = 'deleteClientProfilePhoto';
+export const deleteClientProfilePhotoSuccessTypename: Extract<
+  NonNullable<DeleteClientProfilePhotoMutation['deleteClientProfilePhoto']> extends readonly (infer _T)[]
     ? _T
-    : NonNullable<UpdateClientProfilePhotoMutation['updateClientProfilePhoto']>,
+    : NonNullable<DeleteClientProfilePhotoMutation['deleteClientProfilePhoto']>,
   { __typename: 'ClientProfileType' }
 >['__typename'] = 'ClientProfileType';
 
-export const updateClientProfilePhotoMeta = {
-  operationKey: updateClientProfilePhotoOperationKey,
-  successTypename: updateClientProfilePhotoSuccessTypename,
+export const deleteClientProfilePhotoMeta = {
+  operationKey: deleteClientProfilePhotoOperationKey,
+  successTypename: deleteClientProfilePhotoSuccessTypename,
 } as const;
