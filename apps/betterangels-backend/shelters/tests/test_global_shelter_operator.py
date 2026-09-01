@@ -11,9 +11,12 @@ from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from accounts.seed import sync_group_permissions
 from accounts.tests.baker_recipes import organization_recipe
 from clients.models import ClientProfile
+from common.permissions.utils import user_holds_org_bypass_perms
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
 from strawberry import ID
+from teams.models import Team
 
 from shelters.enums import ShelterPhotoTypeChoices, StatusChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR
@@ -143,6 +146,96 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
         response = self.execute_graphql(mutation, {"id": str(self.other_bed.pk)})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["cloneBed"]["shelter"]["id"], str(self.other_shelter.pk))
+
+    def test_can_update_shelter_in_other_org(self) -> None:
+        mutation = """
+            mutation ($data: UpdateShelterInput!) {
+                updateShelter(data: $data) {
+                    ... on ShelterType { id name }
+                    ... on OperationInfo { messages { message } }
+                }
+            }
+        """
+        response = self.execute_graphql(
+            mutation,
+            {"data": {"id": str(self.other_shelter.pk), "name": "Renamed Shelter"}},
+        )
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateShelter"]["name"], "Renamed Shelter")
+        self.other_shelter.refresh_from_db()
+        self.assertEqual(self.other_shelter.name, "Renamed Shelter")
+
+    def test_can_update_room_in_other_org(self) -> None:
+        mutation = """
+            mutation ($id: ID!, $data: UpdateRoomInput!) {
+                updateRoom(id: $id, data: $data) {
+                    ... on RoomType { id name }
+                    ... on OperationInfo { messages { message } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"id": str(self.other_room.pk), "data": {"name": "Renamed Room"}})
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateRoom"]["name"], "Renamed Room")
+        self.other_room.refresh_from_db()
+        self.assertEqual(self.other_room.name, "Renamed Room")
+
+    def test_can_delete_rooms_in_other_org(self) -> None:
+        mutation = """
+            mutation ($data: BulkDeleteInput!) {
+                deleteRooms(data: $data) {
+                    ... on BulkDeleteResult { ids }
+                    ... on OperationInfo { messages { message } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"data": {"ids": [str(self.other_room.pk)]}})
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteRooms"]["ids"], [str(self.other_room.pk)])
+        self.assertFalse(Room.objects.filter(pk=self.other_room.pk).exists())
+
+    def test_can_clone_room_in_other_org(self) -> None:
+        mutation = """
+            mutation ($id: ID!) {
+                cloneRoom(id: $id) {
+                    ... on RoomType { id shelter { id } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"id": str(self.other_room.pk)})
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["cloneRoom"]["shelter"]["id"], str(self.other_shelter.pk))
+
+    def test_can_update_reservation_in_other_org(self) -> None:
+        reservation = baker.make(Reservation, bed=self.other_bed)
+        mutation = """
+            mutation ($id: ID!, $data: UpdateReservationInput!) {
+                updateReservation(id: $id, data: $data) {
+                    ... on ReservationType { id notes }
+                    ... on OperationInfo { messages { message } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"id": str(reservation.pk), "data": {"notes": "Updated Notes"}})
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateReservation"]["notes"], "Updated Notes")
+        reservation.refresh_from_db()
+        self.assertEqual(reservation.notes, "Updated Notes")
+
+    def test_can_delete_reservations_in_other_org(self) -> None:
+        reservation = baker.make(Reservation, bed=self.other_bed)
+        mutation = """
+            mutation ($data: BulkDeleteInput!) {
+                deleteReservations(data: $data) {
+                    ... on BulkDeleteResult { ids }
+                    ... on OperationInfo { messages { message } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"data": {"ids": [str(reservation.pk)]}})
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteReservations"]["ids"], [str(reservation.pk)])
+        self.assertFalse(Reservation.objects.filter(pk=reservation.pk).exists())
 
     def test_can_update_shelter_photo_in_other_org(self) -> None:
         """Exercises the Phase 5 fix (explicit permission=) together with the bypass."""
@@ -344,6 +437,91 @@ class GlobalShelterOperatorTestCase(ShelterTestCase, TestCase):
             "You do not have permission to perform this action in this organization.",
             response["errors"][0]["message"],
         )
+
+    def test_cannot_add_organization_member(self) -> None:
+        """GSO holds no org-member perms: addOrganizationMember must never run."""
+        mutation = """
+            mutation ($data: OrgInvitationInput!) {
+                addOrganizationMember(data: $data) {
+                    ... on OrganizationMemberType { id }
+                    ... on OperationInfo { messages { kind message } }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "email": "gso-invite@example.com",
+                "firstName": "GSO",
+                "lastName": "Invite",
+                "organizationId": str(self.org.id),
+                "permissionTemplate": "SHELTER_OPERATOR",
+            }
+        }
+        response = self.execute_graphql(mutation, variables)
+        payload = (response.get("data") or {}).get("addOrganizationMember") or {}
+        self.assertIsNone(payload.get("id"))
+        self.assertFalse(User.objects.filter(email="gso-invite@example.com").exists())
+
+    def test_cannot_change_organization_member_role(self) -> None:
+        """GSO holds no org-member perms: changeOrganizationMemberRole must never run."""
+        mutation = """
+            mutation ($data: ChangeOrganizationMemberRoleInput!) {
+                changeOrganizationMemberRole(data: $data) {
+                    ... on OrganizationMemberType { id }
+                    ... on OperationInfo { messages { kind message } }
+                }
+            }
+        """
+        variables: dict[str, Any] = {
+            "data": {
+                "userId": str(self.operator.pk),
+                "organizationId": str(self.org.id),
+                "permissionTemplate": "SHELTER_OPERATOR",
+            }
+        }
+        response = self.execute_graphql(mutation, variables)
+        payload = (response.get("data") or {}).get("changeOrganizationMemberRole") or {}
+        self.assertIsNone(payload.get("id"))
+
+    def test_cannot_manage_teams_in_other_org(self) -> None:
+        """GSO holds no teams.* perms: createTeam must never run."""
+        mutation = """
+            mutation ($data: CreateTeamInput!) {
+                createTeam(data: $data) {
+                    ... on TeamType { id }
+                    ... on OperationInfo { messages { kind message } }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation, {"data": {"name": "GSO Team"}})
+        payload = (response.get("data") or {}).get("createTeam") or {}
+        self.assertIsNone(payload.get("id"))
+        self.assertFalse(Team.objects.filter(name="GSO Team").exists())
+
+    def test_bypass_never_grants_permissions_not_on_the_template(self) -> None:
+        """Exhaustive: the bypass cannot grant any permission the template lacks.
+
+        ``user_holds_org_bypass_perms`` is the resolver-branch gate. Probing it
+        with every permission the GSO config does *not* carry must return False
+        each time — proving "can't do anything not in the template" directly
+        rather than sampling a few surfaces. The config list (not the synced DB
+        row) is the exclusion set, so an accidentally-synced extra permission
+        would be caught here too.
+        """
+        template_perms = set(GLOBAL_SHELTER_OPERATOR.permissions)
+
+        off_template = [
+            f"{p.content_type.app_label}.{p.codename}"
+            for p in Permission.objects.all()
+            if f"{p.content_type.app_label}.{p.codename}" not in template_perms
+        ]
+        self.assertTrue(off_template, "the GSO template is not expected to carry every permission")
+
+        for perm_str in off_template:
+            self.assertFalse(
+                user_holds_org_bypass_perms(self.global_operator, [perm_str]),
+                f"bypass granted an off-template permission: {perm_str}",
+            )
 
     # ── Regression guard: pre-existing public-directory behavior is unaffected ─
 

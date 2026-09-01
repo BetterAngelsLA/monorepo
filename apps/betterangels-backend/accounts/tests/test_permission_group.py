@@ -1,6 +1,3 @@
-from accounts.models import BigGroupObjectPermission, PermissionGroup, PermissionGroupTemplate
-from accounts.seed import sync_group_permissions
-from accounts.services import reconcile_org_groups
 from common.permissions.utils import assign_object_permissions
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ValidationError
@@ -9,6 +6,10 @@ from django.test import TestCase
 from notes.groups import CASEWORKER
 from organizations.models import Organization
 from shelters.groups import GLOBAL_SHELTER_OPERATOR
+
+from accounts.models import BigGroupObjectPermission, PermissionGroup, PermissionGroupTemplate
+from accounts.seed import sync_group_permissions
+from accounts.services import reconcile_org_groups
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
