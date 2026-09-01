@@ -59,7 +59,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+    def delete_task_fixture(self, task_id: str) -> Dict[str, Any]:
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTask(data: { id: $id }) {

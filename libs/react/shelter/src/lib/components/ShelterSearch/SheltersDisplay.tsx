@@ -64,13 +64,21 @@ export function SheltersDisplay(props: TProps) {
     }
 
     if (propertyFilters) {
-      const { openNowFor, isAccessCenter, maxStay, ...propertyOnlyFilters } =
-        propertyFilters;
+      const {
+        openNow,
+        openNowIncludeUnknown,
+        isAccessCenter,
+        maxStay,
+        ...propertyOnlyFilters
+      } = propertyFilters;
 
-      if (openNowFor && openNowFor.length > 0) {
+      if (openNow && openNow.length > 0) {
         vars = vars || {};
         vars.filters = vars.filters || {};
-        vars.filters.openNow = { scheduleType: openNowFor };
+        vars.filters.openNow = {
+          scheduleType: openNow,
+          includeUnknown: openNowIncludeUnknown ?? false,
+        };
       }
 
       if (isAccessCenter) {
@@ -203,7 +211,7 @@ export function SheltersDisplay(props: TProps) {
           <ResultsSource
             nameFilter={nameSearch}
             mapBoundsFilter={mapBoundsFilter}
-            openNowForFilter={propertyFilters?.openNowFor}
+            openNowFilter={propertyFilters?.openNow}
             propertyFilters={pruneFilters(propertyFilters)}
           />
         </div>
@@ -295,7 +303,7 @@ const INCLUDE_NULL_KEY_MAP: Record<string, keyof ShelterPropertyInput> = {
 function propertyFiltersToGraphQLInput(
   filters: Omit<
     TShelterPropertyFilters,
-    'openNowFor' | 'isAccessCenter' | 'maxStay'
+    'openNow' | 'isAccessCenter' | 'maxStay'
   >,
 ): ShelterPropertyInput | null {
   const result: ShelterPropertyInput = {};

@@ -3,11 +3,18 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from common.enums import AttachmentType
 from common.models import Address, Attachment, Location, PhoneNumber
+from accounts.tests.baker_recipes import organization_recipe
+from common.admin import LocationAdmin
 from common.tests.utils import build_address_inputs
+from django.contrib.admin.sites import AdminSite
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
+from django.urls import reverse
+from notes.admin import NoteAdmin
+from notes.models import Note
+from tasks.models import Task
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -461,3 +468,60 @@ class AttachmentTestCase(TestCase):
 
         with self.assertRaises(ValueError):
             attachment.save(direct_upload=True)
+
+
+class LocationAdminMixinTestCase(TestCase):
+    """``LocationAdmin`` renders its readonly ``notes`` and ``tasks`` columns."""
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.location = baker.make(Location, point=Point(-118.2437, 34.0522))
+        self.note = baker.make(Note, location=self.location, organization=self.org)
+
+    def test_tasks_column_lists_tasks_attached_via_their_note(self) -> None:
+        task = baker.make(Task, note=self.note)
+
+        rendered = LocationAdmin(Location, AdminSite()).tasks(self.location)
+
+        self.assertIn(f"Task {task.id}", rendered)
+        self.assertIn(reverse("admin:tasks_task_change", args=(task.id,)), rendered)
+
+    def test_tasks_column_excludes_tasks_at_other_locations(self) -> None:
+        other_location = baker.make(Location, point=Point(-119.0, 35.0))
+        other_note = baker.make(Note, location=other_location, organization=self.org)
+        elsewhere = baker.make(Task, note=other_note)
+
+        rendered = LocationAdmin(Location, AdminSite()).tasks(self.location)
+
+        self.assertNotIn(f"Task {elsewhere.id}", rendered)
+
+    def test_notes_column_lists_notes_at_the_location(self) -> None:
+        rendered = LocationAdmin(Location, AdminSite()).notes(self.location)
+
+        self.assertIn(f"Note {self.note.id}", rendered)
+
+
+@override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
+class AttachmentAdminMixinTestCase(TestCase):
+    """``AttachmentAdminMixin`` renders a link per attachment on the object."""
+
+    def setUp(self) -> None:
+        self.note = baker.make(Note, organization=organization_recipe.make())
+        self.admin = NoteAdmin(Note, AdminSite())
+
+    def test_attachments_column_links_each_attachment(self) -> None:
+        attachment = Attachment.objects.create(
+            file=SimpleUploadedFile(name="scan.pdf", content=b"x", content_type="application/pdf"),
+            mime_type="application/pdf",
+            attachment_type=AttachmentType.DOCUMENT,
+            content_type=ContentType.objects.get_for_model(Note),
+            object_id=self.note.pk,
+        )
+
+        rendered = self.admin.attachments(self.note)
+
+        self.assertIn(f"Attachment {attachment.id}", rendered)
+        self.assertIn(reverse("admin:common_attachment_change", args=(attachment.id,)), rendered)
+
+    def test_attachments_column_is_empty_without_attachments(self) -> None:
+        self.assertEqual(self.admin.attachments(self.note), "")

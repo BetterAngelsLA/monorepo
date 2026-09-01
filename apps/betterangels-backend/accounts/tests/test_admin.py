@@ -6,8 +6,9 @@ roles and accept no members, and adding a member to it returned a 500.
 
 from typing import cast
 
+from common.permissions.config import TemplateConfig
 from django.contrib import admin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, connection, transaction
 from django.test import SimpleTestCase, TestCase
@@ -104,8 +105,9 @@ class OrganizationAdminTestCase(TestCase):
             "organization_users-MIN_NUM_FORMS": "0",
             "organization_users-MAX_NUM_FORMS": "1000",
         }
+        pk_field = PermissionGroup._meta.pk.name
         for index, row in enumerate(rows):
-            payload[f"permission_groups-{index}-group_ptr"] = str(row.pk)
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
             payload[f"permission_groups-{index}-organization"] = str(organization.pk)
             payload[f"permission_groups-{index}-label"] = row.label
             payload[f"permission_groups-{index}-template"] = str(
@@ -790,6 +792,216 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
             ),
             {CASEWORKER.name},
         )
+
+
+class OrganizationRoleLossConfirmationTestCase(TestCase):
+    """A save that takes someone's role away has to say so first, by either route."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_orgtype_tests", email="admin_orgtype_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _rows(self) -> list[PermissionGroup]:
+        return list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+
+    def _payload(self, org_types: list[str], **extra: str) -> dict:
+        rows = self._rows()
+        payload: dict = {
+            "name": self.organization.name,
+            "is_active": "on",
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(self.organization.profile.pk),
+            "profile-0-organization": str(self.organization.pk),
+            "profile-0-org_types": org_types,
+            "permission_groups-TOTAL_FORMS": str(len(rows)),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+        }
+        pk_field = PermissionGroup._meta.pk.name
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(self.organization.pk)
+            payload[f"permission_groups-{index}-label"] = row.label
+            payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
+        return payload | extra
+
+    def _tick_delete(self, template: TemplateConfig) -> dict[str, str]:
+        """The POST key the inline's Delete checkbox sends for *template*'s row."""
+        index = next(
+            index for index, row in enumerate(self._rows()) if row.template and row.template.name == template.name
+        )
+        return {f"permission_groups-{index}-DELETE": "on"}
+
+    def _member_holding(self, template: TemplateConfig, email: str) -> User:
+        return member_add(
+            email=email,
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(template,),
+        )
+
+    def _holds(self, member: User, template: TemplateConfig) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=template.name,
+            user=member,
+        ).exists()
+
+    def _holds_shelter_operator(self) -> bool:
+        return PermissionGroup.objects.filter(
+            organization=self.organization,
+            template__name=SHELTER_OPERATOR.name,
+        ).exists()
+
+    def test_dropping_a_held_type_asks_first_and_changes_nothing(self) -> None:
+        self._member_holding(SHELTER_OPERATOR, "losesit@example.com")
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds_shelter_operator())
+
+    def test_confirming_goes_through(self) -> None:
+        member = self._member_holding(SHELTER_OPERATOR, "confirmed@example.com")
+
+        self.client.post(self.url, self._payload(["outreach"], _confirm_role_loss="1"))
+
+        self.assertFalse(self._holds_shelter_operator())
+        self.assertFalse(PermissionGroup.objects.filter(organization=self.organization, user=member).exists())
+
+    def test_dropping_a_type_nobody_holds_does_not_ask(self) -> None:
+        """A prompt that always fires stops being read."""
+        self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertFalse(self._holds_shelter_operator())
+
+    def test_a_role_the_remaining_type_keeps_is_not_named(self) -> None:
+        """Organization Admin belongs to both org types, so dropping one does not revoke it."""
+        self._member_holding(ORG_ADMIN, "stays_admin@example.com")
+        self._member_holding(SHELTER_OPERATOR, "loses_operator@example.com")
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        # Against the context, not the HTML: the replayed POST carries every role
+        # name in a hidden field, so the page contains them either way.
+        losses = dict(response.context["losses"])
+        self.assertIn(SHELTER_OPERATOR.name, losses)
+        self.assertNotIn(ORG_ADMIN.name, losses)
+
+    def test_deleting_a_role_row_asks_first_and_changes_nothing(self) -> None:
+        """The quieter route: reconcile rebuilds the row, so the saved page looks untouched."""
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete@example.com")
+
+        response = self.client.post(
+            self.url, self._payload(["outreach", "shelter"], **self._tick_delete(SHELTER_OPERATOR))
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, SHELTER_OPERATOR.name)
+        self.assertContains(response, "1 member")
+        self.assertTrue(self._holds(member, SHELTER_OPERATOR))
+
+    def test_confirming_a_row_deletion_goes_through(self) -> None:
+        member = self._member_holding(SHELTER_OPERATOR, "row_delete_ok@example.com")
+
+        self.client.post(
+            self.url,
+            self._payload(["outreach", "shelter"], _confirm_role_loss="1", **self._tick_delete(SHELTER_OPERATOR)),
+        )
+
+        self.assertFalse(self._holds(member, SHELTER_OPERATOR))
+
+    def test_a_view_only_staff_user_is_refused_rather_than_asked(self) -> None:
+        """The prompt must not answer a question Django is about to refuse."""
+        self._member_holding(SHELTER_OPERATOR, "viewonly_subject@example.com")
+        viewer = User.objects.create_user(username="orgtype_viewer", password="password", is_staff=True)
+        viewer.user_permissions.add(Permission.objects.get(codename="view_organization"))
+        self.client.force_login(viewer)
+
+        response = self.client.post(self.url, self._payload(["outreach"]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, SHELTER_OPERATOR.name, status_code=403)
+
+
+class OrganizationOwnershipTransferTestCase(TestCase):
+    """The owner cannot be removed, so there has to be a way to stop being one."""
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_owner_tests", email="admin_owner_tests@example.com", password="password"
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"])
+        self.owner_membership = OrganizationOwner.objects.get(organization=self.organization).organization_user
+        self.member = member_add(
+            email="successor@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.url = reverse("admin:organizations_organization_transfer_ownership", args=[self.organization.pk])
+
+    def test_the_organization_page_offers_the_transfer(self) -> None:
+        page = self.client.get(
+            reverse("admin:organizations_organization_change", args=[self.organization.pk])
+        ).content.decode()
+
+        self.assertIn(self.url, page)
+
+    def test_the_form_offers_members_but_not_the_current_owner(self) -> None:
+        response = self.client.get(self.url)
+
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertNotIn(self.owner_membership.user, offered)
+
+    def test_an_organization_with_no_owner_offers_every_member(self) -> None:
+        """The shelter importer left 97 of 99 production organizations with no owner row."""
+        OrganizationOwner.objects.filter(organization=self.organization).delete()
+
+        response = self.client.get(self.url)
+
+        self.assertIn("Currently owned by nobody", response.context["help_text"])
+        offered = set(response.context["form"].fields["new_owner"].queryset)
+        self.assertIn(self.member, offered)
+        self.assertIn(self.owner_membership.user, offered)
+
+    def test_transferring_moves_ownership_and_frees_the_old_owner(self) -> None:
+        old_owner = self.owner_membership.user
+
+        response = self.client.post(self.url, {"new_owner": str(self.member.pk)})
+
+        self.assertRedirects(response, reverse("admin:organizations_organization_change", args=[self.organization.pk]))
+        self.assertEqual(
+            OrganizationOwner.objects.get(organization=self.organization).organization_user.user, self.member
+        )
+        # The old owner's row is now deletable, which it was not before.
+        old_membership = OrganizationUser.objects.get(organization=self.organization, user=old_owner)
+        deleted = self.client.post(
+            reverse("admin:organizations_organizationuser_delete", args=[old_membership.pk]),
+            {"post": "yes"},
+        )
+        self.assertEqual(deleted.status_code, 302)
+        self.assertFalse(OrganizationUser.objects.filter(pk=old_membership.pk).exists())
 
 
 class OrganizationMemberInlineQueryCountTestCase(TestCase):

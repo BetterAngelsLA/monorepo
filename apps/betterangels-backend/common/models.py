@@ -125,7 +125,7 @@ class Attachment(BaseModel):
                 self.attachment_type = infer_attachment_type(self.mime_type)
                 self.file.seek(0)
 
-        filename = self.original_filename or unquote(self.file.name)
+        filename = self.original_filename or unquote(self.file.name or "")
         self.original_filename = canonicalise_filename(self.mime_type, filename)
 
         super().save(*args, **kwargs)
