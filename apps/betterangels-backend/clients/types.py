@@ -150,7 +150,7 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
-        earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
+        earliest_interaction_threshold = timezone.now() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
         # Filter profiles based on the maximum interacted_at date being within the threshold
         comparison = "gte" if value else "lt"
 

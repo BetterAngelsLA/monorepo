@@ -7,7 +7,7 @@ They should not contain write logic — that belongs in services.
 Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from django.db.models import Count, F, QuerySet
@@ -18,37 +18,34 @@ from organizations.models import Organization
 
 
 def report_default_date_range() -> tuple[date, date]:
-    """Return the default date range (current month)."""
-    now = timezone.now()
-    start = date(now.year, now.month, 1)
-    if now.month == 12:
-        end = date(now.year + 1, 1, 1) - timedelta(days=1)
-    else:
-        end = date(now.year, now.month + 1, 1) - timedelta(days=1)
+    """Return the default date range — the current month."""
+    start = timezone.localdate().replace(day=1)
+    end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     return start, end
 
 
-def note_list_for_org(
-    *,
-    org: Organization,
-    start_date: date,
-    end_date: date,
-) -> QuerySet[Note]:
-    """
-    Return Notes for an organization within an inclusive date range.
+def report_month_range(*, year: int, month: int) -> tuple[date, date]:
+    """Inclusive first and last calendar day of the given month."""
+    start = date(year, month, 1)
+    return start, (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
-    The end_date is inclusive — internally we add one day for the ORM ``lt`` filter.
-    """
-    filter_end = end_date + timedelta(days=1)
+
+def note_list_for_org(*, org: Organization, start_date: date, end_date: date) -> QuerySet[Note]:
+    """Return Notes for an organization between two inclusive calendar dates."""
+    # Half-open on instants rather than ``interacted_at__date``, which would wrap
+    # the column in a cast and lose the index.
+    start = timezone.make_aware(datetime.combine(start_date, time.min))
+    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min))
+
     return Note.objects.filter(
-        interacted_at__gte=start_date,
-        interacted_at__lt=filter_end,
+        interacted_at__gte=start,
+        interacted_at__lt=end,
         organization=org,
     )
 
 
 def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
-    """Aggregate note counts grouped by date."""
+    """Aggregate note counts grouped by calendar date."""
     rows = (
         notes.annotate(trunc_date=TruncDate("interacted_at"))
         .values("trunc_date")
@@ -129,7 +126,7 @@ def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def report_summary(*, org: Organization, start_date: date, end_date: date) -> dict[str, Any]:
     """
-    Build the full report summary for an organization and date range.
+    Build the full report summary for an organization and inclusive date range.
 
     Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
     """
