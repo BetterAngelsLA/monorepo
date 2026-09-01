@@ -28,7 +28,15 @@ from .forms import (
     UserChangeForm,
     UserCreationForm,
 )
-from .models import ExtendedOrganizationInvitation, OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+from .models import (
+    ExtendedOrganizationInvitation,
+    Grant,
+    OrganizationProfile,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    Role,
+    User,
+)
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -332,9 +340,88 @@ class MemberInviteAdminMixin:
         }
 
 
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    """Code-owned roles (ADR 0001 §2.2) — read-only in the admin."""
+
+    list_display = ("id", "name", "is_global")
+    list_filter = ("is_global",)
+    search_fields = ("name",)
+
+
+@admin.register(Grant)
+class GrantAdmin(admin.ModelAdmin):
+    """Audit + administer grants (ADR 0001 §2.2) — user grants and org→org delegations.
+
+    ``principal_user`` vs ``principal_org`` (exactly one) and ``scope_org`` vs
+    object scope (exactly one) are enforced by the model constraints; a global
+    Role can never be granted (check ``permissions.E002``).
+    """
+
+    list_display = (
+        "id",
+        "principal",
+        "role",
+        "scope",
+    )
+    list_filter = ("role", "scope_org", "principal_org", "scope_object_type")
+    search_fields = (
+        "principal_user__email",
+        "principal_user__first_name",
+        "principal_user__last_name",
+        "principal_org__name",
+        "scope_org__name",
+        "role__name",
+    )
+    autocomplete_fields = ("principal_user", "principal_org", "role", "scope_org")
+    readonly_fields = ("id",)
+    fields = (
+        "principal_user",
+        "principal_org",
+        "role",
+        "scope_org",
+        "scope_object_type",
+        "scope_object_id",
+    )
+
+    @admin.display(description="Principal")
+    def principal(self, obj: Grant) -> str:
+        return str(obj.principal_user or obj.principal_org)
+
+    @admin.display(description="Scope")
+    def scope(self, obj: Grant) -> str:
+        if obj.scope_org is not None:
+            return str(obj.scope_org)
+        return f"{obj.scope_object_type}:{obj.scope_object_id}"
+
+
+class GrantInline(admin.TabularInline):
+    """Grants scoped TO this org — who can act here, and how."""
+
+    model = Grant
+    fk_name = "scope_org"
+    extra = 0
+    autocomplete_fields = ("principal_user", "principal_org", "role")
+
+
+class DelegatedGrantInline(admin.TabularInline):
+    """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2)."""
+
+    model = Grant
+    fk_name = "principal_org"
+    extra = 0
+    autocomplete_fields = ("role", "scope_org")
+
+
 @admin.register(Organization)
 class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
-    inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
+    inlines = [
+        OrganizationProfileInline,
+        OrganizationMemberInline,
+        PermissionGroupInline,
+        GrantInline,
+        DelegatedGrantInline,
+    ]
     list_display = ("name",)
     search_fields = ("name",)
     fields = ("name", "slug")
