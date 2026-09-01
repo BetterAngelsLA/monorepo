@@ -416,12 +416,22 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(db_shelter.description, "This should be in the database")
 
     def test_create_shelter_wrong_org_rejected(self) -> None:
-        """Creating a shelter with a header org the user doesn't belong to is rejected by HasOrgPerm."""
+        """Creating a shelter for an org the user holds no grant in is rejected.
+
+        The grant model (ADR 0001) converts the authority check into an
+        ``OperationInfo`` (kind=PERMISSION) instead of a GraphQL error.
+        """
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
                     ... on ShelterType {
                         id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
                     }
                 }
             }
@@ -434,13 +444,16 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             }
         }
 
-        # Pass org_2 header so HasOrgPerm fails (user isn't a member)
+        # Pass org_2 header so can(user, ADD, org=org_2) fails (no grant there)
         response = self.execute_graphql(mutation, variables, HTTP_X_ORGANIZATION_ID=str(self.org_2.pk))
 
-        self.assertEqual(len(response["errors"]), 1)
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "PERMISSION")
         self.assertIn(
             "You do not have permission to perform this action in this organization.",
-            response["errors"][0]["message"],
+            messages[0]["message"],
         )
 
     def test_update_shelter_scalar_fields(self) -> None:
