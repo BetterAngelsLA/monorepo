@@ -712,7 +712,6 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
 
         self.file_name = "test%20file%20name"
-        self.file_content = b"Test file content"
         self.client_profile = baker.make(ClientProfile)
         self.content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -722,9 +721,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_doc = self._create_client_document_fixture(
             str(self.client_profile.pk),
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            self.file_content,
             self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($id: ID!) {
@@ -753,9 +751,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]["id"]
+            )["id"]
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -814,9 +811,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self._create_client_document_fixture(
                 client_profile_id=str(self.client_profile.pk),
                 namespace=namespace.name,
-                file_content=self.file_content,
                 file_name=self.file_name,
-            )["data"]["createClientDocument"]
+            )
             for namespace in ClientDocumentNamespaceEnum
         ]
 
@@ -845,9 +841,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self._create_client_document_fixture(
             client_profile_id=str(self.client_profile.pk),
             namespace=ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE.name,
-            file_content=self.file_content,
             file_name=self.file_name,
-        )["data"]["createClientDocument"]
+        )
 
         query = """
             query ($clientId: String!){
