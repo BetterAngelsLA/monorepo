@@ -1,7 +1,7 @@
 """Tests for Role provisioning and grant backfill (ADR 0001 §2.2, §4 phase 1)."""
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
-from accounts.seed import backfill_global_role_members, backfill_shelter_grants, sync_roles
+from accounts.services import backfill_global_role_members, backfill_shelter_grants, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.checks import check_role_permissions_models_declare_org_scoping
 from django.contrib.auth.models import Permission
