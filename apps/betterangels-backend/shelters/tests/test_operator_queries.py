@@ -2,7 +2,6 @@ import datetime
 from typing import Any, cast
 
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -34,14 +33,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.shelter = shelter_recipe.make(organization=self.org_1)
 
     def _add_shelter_view_permission(self) -> None:
-        # Grant view_shelter to the CASEWORKER permission group so the
-        # user inherits it through their org role.  HasOrgPerm checks
-        # the group's permissions at query time.
-        from notes.groups import CASEWORKER
-
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_1.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
+        # Grant view_shelter through a Role+Grant (ADR 0001) so the case
+        # manager can see shelters.  The legacy PermissionGroup mutation is
+        # gone — permission checks read the Role the Grant references.
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
 
     def test_operator_shelters_filter_by_organization(self) -> None:
         """Only shelters for the specified organization are returned."""
@@ -121,10 +116,8 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.org_2.add_user(self.org_1_case_manager_1)
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
 
-        # Grant view_shelter to the CASEWORKER group in org_2
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        self.org_2.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
+        # Grant view_shelter in org_2 via a Role+Grant (ADR 0001).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
 
         self._set_active_org(self.org_2)
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -151,7 +144,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     def test_operator_shelters_without_permission(self) -> None:
-        """Users without shelter view permission are rejected."""
+        """Users without shelter view permission get an empty result (fail-closed)."""
         self.graphql_client.force_login(self.non_case_manager_user)
 
         response = self.execute_graphql(
@@ -159,12 +152,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             variables={"offset": 0, "limit": 10},
         )
 
-        self.assertIsNone(response["data"])
-        self.assertEqual(len(response["errors"]), 1)
-        self.assertIn(
-            "You do not have permission to perform this action in this organization.",
-            response["errors"][0]["message"],
-        )
+        self.assertIsNone(response.get("errors"))
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 0)
+        self.assertEqual(payload["results"], [])
 
     def test_operator_shelters_filter_by_name(self) -> None:
         """Name filter returns only shelters whose name matches (case-insensitive)."""
@@ -262,7 +253,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
         results = response["data"]["operatorShelters"]["results"]
@@ -293,7 +284,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"orgIds": [str(self.org_1.id)]})
         results = response["data"]["operatorShelters"]["results"]
@@ -329,12 +320,8 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
         super().setUp()
 
         # HasOrgPerm checks org-scoped permissions, not global Django perms.
-        from notes.groups import CASEWORKER
-
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        pg = self.org_1.permission_groups.get(template__name=CASEWORKER.name)
-        pg.permissions.add(perm)
+        # Grant view_shelter via a Role+Grant (ADR 0001).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
 

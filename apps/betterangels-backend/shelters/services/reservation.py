@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from common.permissions.selectors import can
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from shelters.enums import ReservationStatusChoices
-from shelters.models import Reservation, ReservationClient
+from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.selectors import bed_get, reservation_get, room_get
 from shelters.selectors.operator import reservation_queryset
@@ -95,6 +96,8 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
         does not belong to its organization.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot
+        create reservations (ADR 0001 §2.6).
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -107,11 +110,14 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed_get(user=user, organization_id=organization_id, bed_id=bed_id)
+        bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
     elif room_id:
-        room_get(user=user, organization_id=organization_id, room_id=room_id)
+        room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
+
+    if not can(user, Reservation.perms.ADD, org=organization_id):
+        raise PermissionDenied("You do not have permission to perform this action in this organization.")
 
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
@@ -140,7 +146,12 @@ def reservation_update(
     """
     data = dict(data)
     try:
-        reservation = reservation_get(user=user, organization_id=organization_id, reservation_id=reservation_id)
+        reservation = reservation_get(
+            user=user,
+            organization_id=organization_id,
+            reservation_id=reservation_id,
+            permission=Reservation.perms.CHANGE,
+        )
     except Reservation.DoesNotExist:
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
@@ -182,7 +193,7 @@ def reservation_delete(*, user: "User", organization_id: str, reservation_ids: l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching reservations exist.
     """
-    qs = reservation_queryset(user=user, organization_id=organization_id)
+    qs = reservation_queryset(user=user, organization_id=organization_id, perms=[Reservation.perms.DELETE])
     qs = qs.filter(pk__in=reservation_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:

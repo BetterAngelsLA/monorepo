@@ -7,7 +7,7 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
-from common.permissions.utils import permissioned_queryset
+from common.permissions.selectors import visible
 from common.utils import get_by_pk_or_not_found
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
@@ -69,7 +69,7 @@ def shelter_queryset(
     queryset: "QuerySet[Shelter] | None" = None,
     *,
     user: "User",
-    organization_id: str,
+    organization_id: str | None,
     perms: list[str] | None = None,
 ) -> "QuerySet[Shelter]":
     """Scope *queryset* to *organization_id* where *user* belongs to the org.
@@ -80,14 +80,15 @@ def shelter_queryset(
         from shelters.models import Shelter
 
         queryset = Shelter.objects.all()
-    return permissioned_queryset(queryset, user=user, organization_id=organization_id, perms=perms)
+    perm = perms[0] if perms else Shelter.perms.VIEW
+    return visible(queryset, user, perm, in_org=organization_id)
 
 
 def room_queryset(
     queryset: "QuerySet[Room] | None" = None,
     *,
     user: "User",
-    organization_id: str,
+    organization_id: str | None,
     perms: list[str] | None = None,
 ) -> "QuerySet[Room]":
     """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
@@ -98,20 +99,15 @@ def room_queryset(
         from shelters.models import Room
 
         queryset = Room.objects.all()
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_field="shelter__organization_id",
-    )
+    perm = perms[0] if perms else Room.perms.VIEW
+    return visible(queryset, user, perm, in_org=organization_id)
 
 
 def bed_queryset(
     queryset: "QuerySet[Bed] | None" = None,
     *,
     user: "User",
-    organization_id: str,
+    organization_id: str | None,
     perms: list[str] | None = None,
 ) -> "QuerySet[Bed]":
     """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
@@ -122,21 +118,15 @@ def bed_queryset(
         from shelters.models import Bed
 
         queryset = Bed.objects.all()
-
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_field="shelter__organization_id",
-    )
+    perm = perms[0] if perms else Bed.perms.VIEW
+    return visible(queryset, user, perm, in_org=organization_id)
 
 
 def reservation_queryset(
     queryset: "QuerySet[Reservation] | None" = None,
     *,
     user: "User",
-    organization_id: str,
+    organization_id: str | None,
     perms: list[str] | None = None,
 ) -> "QuerySet[Reservation]":
     """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
@@ -151,17 +141,8 @@ def reservation_queryset(
         from shelters.models import Reservation
 
         queryset = Reservation.objects.all()
-
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_fields=[
-            "bed__shelter__organization_id",
-            "room__shelter__organization_id",
-        ],
-    )
+    perm = perms[0] if perms else Reservation.perms.VIEW
+    return visible(queryset, user, perm, in_org=organization_id)
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
