@@ -237,6 +237,15 @@ def get_current_organization(info: Info) -> str:
     return str(org_id)
 
 
+def active_org(info: Info) -> str | None:
+    """Return the organization ID from the header, or ``None`` when absent.
+
+    The authority never requires the header (ADR 0001 §2.6) — the header only
+    confines the view when the caller has finite scopes.
+    """
+    return getattr(info.context.request, "organization_id", None)
+
+
 _T = TypeVar("_T", bound=Model)
 
 
