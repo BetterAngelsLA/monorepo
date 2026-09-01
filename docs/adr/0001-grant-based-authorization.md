@@ -652,10 +652,10 @@ authorization, which is the service→selector pattern the guide prescribes.
   introspection, not a query or business logic. A selector would split the
   declaration from its model.
 - Provisioning (`sync_roles`, `backfill_shelter_grants`, `backfill_global_role_members`)
-  lives in `accounts/seed.py` and runs on `post_migrate`, matching the existing
-  `sync_group_permissions` / `seed_permission_templates` convention. It is data
-  provisioning, not domain business logic, and the `manage.py sync_roles` interface
-  stays thin.
+  lives in `accounts/services.py` (the write side), with `accounts/seed.py` keeping
+  the legacy template sync and the `manage.py sync_roles` interface staying thin.
+  It runs on `post_migrate` per the existing provisioning convention, and is data
+  provisioning, not domain business logic.
 
 **Tests** mirror source modules (`accounts/tests/test_roles.py`,
 `common/tests/test_org_scoping.py`, …), matching the repo's flat

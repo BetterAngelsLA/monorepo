@@ -16,7 +16,7 @@ class Command(BaseCommand):
     help = "Provision Roles and backfill Grants from legacy PermissionGroups (ADR 0001)"
 
     def handle(self, **options: object) -> None:
-        from accounts.seed import backfill_global_role_members, backfill_shelter_grants, sync_roles
+        from accounts.services import backfill_global_role_members, backfill_shelter_grants, sync_roles
 
         sync_roles()
         self.stdout.write("✓ Roles provisioned")
