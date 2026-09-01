@@ -5,7 +5,7 @@ from functools import cache
 from typing import Any
 
 import pghistory
-from common.models import BaseModel
+from common.models import BaseModel, OrgScoped
 from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
@@ -66,7 +66,7 @@ ACTIVE_RESERVATION_STATUSES = (
     pghistory.UpdateEvent("shelter.update"),
     pghistory.DeleteEvent("shelter.remove"),
 )
-class Shelter(BaseModel):
+class Shelter(OrgScoped, BaseModel):
     class perms(PermissionSet):
         CHANGE_IS_REVIEWED = perm("change_shelter_is_reviewed", "Can change shelter is reviewed")
         VIEW_PRIVATE = perm("view_private_shelter", "Can view private shelters")
@@ -222,7 +222,9 @@ class Shelter(BaseModel):
     pghistory.DeleteEvent("bed.remove"),
     pghistory.UpdateEvent("bed.update"),
 )
-class Bed(CloneMixin, BaseModel):
+class Bed(CloneMixin, OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
     objects = BedManager()
 
     _clone_linked_m2m_fields = [
@@ -283,7 +285,9 @@ class Bed(CloneMixin, BaseModel):
         )
 
 
-class Room(CloneMixin, BaseModel):
+class Room(CloneMixin, OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
     objects = RoomManager()
 
     _clone_linked_m2m_fields = [

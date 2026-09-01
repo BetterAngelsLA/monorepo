@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 from urllib.parse import unquote
 
 import magic
@@ -27,6 +27,77 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class OrgScoped(models.Model):
+    """Declares how a model reaches the organizations that scope it (ADR 0001).
+
+    ``org_via`` names *relations*, not lookup paths, and is resolved by
+    :meth:`org_paths`:
+
+    * ``()``            — the model's own ``organization`` FK
+    * ``("shelter",)``  — hop these relations (each single-valued); a row is in
+                      scope for every organization it reaches
+    * ``None``          — platform-shared; deliberately unscoped
+
+    Object-grant ancestors are derived from the same graph, so this one
+    declaration drives both the org filter and the object-grant cascade.
+    """
+
+    org_via: ClassVar[tuple[str, ...] | None] = ()
+    _org_paths: ClassVar[tuple[str, ...] | None] = None
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def org_paths(cls) -> tuple[str, ...]:
+        """Lookup paths from this model to an organization id.
+
+        e.g. ``("shelter__organization_id",)`` for a bed, or
+        ``("bed__shelter__organization_id", "room__shelter__organization_id")``
+        for a reservation.
+
+        Cached per model — ``cls.__dict__``, not ``getattr``, so a subclass never
+        inherits its parent's paths.  A multi-valued or non-``OrgScoped`` hop
+        raises ``TypeError``; ``permissions.E004`` surfaces the same condition as
+        a deploy-time error.
+        """
+        # ``cls.__dict__`` (not ``getattr``) so a subclass never inherits its
+        # parent's cached paths when it overrides ``org_via``.
+        cached = cls.__dict__.get("_org_paths")
+        if cached is None:
+            cached = tuple(cls._resolve_org_paths())
+            cls._org_paths = cached
+        return cast(tuple[str, ...], cached)
+
+    @classmethod
+    def _resolve_org_paths(cls) -> Iterator[str]:
+        if cls.org_via is None:
+            return
+        hops = cls.org_via
+        if not hops:
+            field = cls._meta.get_field("organization")
+            if not (field.many_to_one or field.one_to_one):
+                raise TypeError(f"{cls.__name__}.org_via=() requires a single-valued 'organization' FK.")
+            yield f"{field.name}_id"
+            return
+        for hop in hops:
+            field = cls._meta.get_field(hop)
+            if not (field.many_to_one or field.one_to_one):
+                raise TypeError(
+                    f"{cls.__name__}.org_via names {hop!r}, which is multi-valued; "
+                    "the scope filter would duplicate rows (permissions.E004)."
+                )
+            target = field.related_model
+            if target is None:
+                raise TypeError(f"{cls.__name__}.org_via hop {hop!r} has no related model.")
+            if not issubclass(target, OrgScoped):
+                raise TypeError(
+                    f"{cls.__name__}.org_via hop {hop!r} targets {target.__name__}, which does not declare OrgScoped."
+                )
+            for sub in target.org_paths():
+                yield f"{hop}__{sub}"
 
 
 class Attachment(BaseModel):
