@@ -621,6 +621,46 @@ forbidden); the whitelist gates which models can carry them (`ClientProfile` tod
 `Note` joins at its cutover); and what happens to them when `bob` leaves the org is
 resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 
+### 2.9 Code structure — services, selectors, thin interfaces (repo styleguide)
+
+Per `docs/styleguides/python.md` (HackSoft's service/selector pattern, GraphQL as
+the API layer), the grant system is organized as:
+
+**Read side — selectors** (`common/permissions/selectors.py`). The predicate is
+pull-only, so it lives as selectors:
+
+- `scopes(user, perm)` — the org ids where *user* holds *perm* (`ALL` sentinel).
+- `visible(qs, user, perm, *, in_org=None)` — the permission-aware queryset.
+- `can(user, perm, *, org)` / `can_obj(user, perm, obj)` / `can_anywhere(user, perm)`
+  — read-only authorization checks used by services and the API layer.
+
+**Write side — services** (`accounts/services.py`). Granting is push-only:
+
+- `grant_create(...)` / `grant_delete(...)` — scoped `Grant` rows.
+- `role_assign(...)` / `role_remove(...)` — the global tier (`user.groups`).
+
+**Thin interfaces.** GraphQL resolvers (`schema.py`), the Strawberry field
+extension, the Django admin, and management commands parse and validate and then
+delegate — none of them contain authorization logic. Shelter services already
+follow `<entity>_<action>` (e.g. `shelter_create`) and call `visible()` for
+authorization, which is the service→selector pattern the guide prescribes.
+
+**Deliberate judgment calls** (documented so reviewers know they are intentional):
+
+- `OrgScoped.org_paths()` lives on the model as *declarative metadata* — the
+  `org_via` declaration must travel with the model it describes, and resolution is
+  introspection, not a query or business logic. A selector would split the
+  declaration from its model.
+- Provisioning (`sync_roles`, `backfill_shelter_grants`, `backfill_global_role_members`)
+  lives in `accounts/seed.py` and runs on `post_migrate`, matching the existing
+  `sync_group_permissions` / `seed_permission_templates` convention. It is data
+  provisioning, not domain business logic, and the `manage.py sync_roles` interface
+  stays thin.
+
+**Tests** mirror source modules (`accounts/tests/test_roles.py`,
+`common/tests/test_org_scoping.py`, …), matching the repo's flat
+`tests/test_*.py` convention, with services/selectors as the primary test surface.
+
 ## 3. Accepted limitations (decided, not deferred)
 
 - **Delegation inheritance is role-keyed, but there is no role *translation*.** A member
