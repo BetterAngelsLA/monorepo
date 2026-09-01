@@ -101,3 +101,19 @@ class GrantSystemChecksTestCase(TestCase):
             _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005"),
             [],
         )
+
+    def test_e005_is_quiet_for_global_roles_on_unscoped_models(self) -> None:
+        """Global roles are never org-filtered, so their models need no declaration yet."""
+        role = Role.objects.create(name="Global Ops", is_global=True)
+        content_type = ContentType.objects.get_for_model(Note)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename="view_note",
+            defaults={"name": "Can view note"},
+        )
+        role.permissions.add(permission)
+
+        self.assertEqual(
+            _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005"),
+            [],
+        )

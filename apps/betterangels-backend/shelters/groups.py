@@ -2,7 +2,7 @@ from accounts.models import OrganizationProfile
 from accounts.permissions import OrganizationAdminPermissions
 from clients.models import ClientProfile
 from common.models import Address
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 
 from shelters.models.availability import ShelterAvailability
 from shelters.models.lookups import (
@@ -213,3 +213,12 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
     welcome_txt="shelters/email/shelter_operator_welcome.txt",
     base_url_setting="SHELTER_WEB_BASE_URL",
 )
+
+
+# ── Roles (ADR 0001 §2.2) ────────────────────────────────────────────────────
+# Code-owned Role definitions for the grant system.  Derived from the legacy
+# templates so the permission lists have one source until the templates retire.
+SHELTER_OPERATOR_ROLE = RoleDef.from_template(SHELTER_OPERATOR)
+GLOBAL_SHELTER_OPERATOR_ROLE = RoleDef.from_template(GLOBAL_SHELTER_OPERATOR, is_global=True)
+
+ROLES: tuple[RoleDef, ...] = (SHELTER_OPERATOR_ROLE, GLOBAL_SHELTER_OPERATOR_ROLE)

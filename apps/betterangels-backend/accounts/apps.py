@@ -3,9 +3,17 @@ from django.db.models.signals import post_migrate
 
 
 def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
-    from accounts.seed import seed_permission_templates
+    from accounts.seed import (
+        backfill_global_role_members,
+        backfill_shelter_grants,
+        seed_permission_templates,
+        sync_roles,
+    )
 
     seed_permission_templates()
+    sync_roles()
+    backfill_shelter_grants()
+    backfill_global_role_members()
 
 
 class AccountsConfig(AppConfig):

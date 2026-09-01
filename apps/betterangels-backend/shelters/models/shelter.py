@@ -357,7 +357,9 @@ class Room(CloneMixin, OrgScoped, BaseModel):
     pghistory.UpdateEvent("shelter.contact_info.update"),
     pghistory.DeleteEvent("shelter.contact_info.remove"),
 )
-class ContactInfo(models.Model):
+class ContactInfo(OrgScoped):
+    org_via = ("shelter",)
+
     class perms(PermissionSet):
         pass
 
