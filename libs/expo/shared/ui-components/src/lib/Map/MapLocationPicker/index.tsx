@@ -96,7 +96,7 @@ export function MapLocationPicker({
 
   useEffect(() => {
     setShowUserLocationDot(!!userLocation);
-  }, [userLocation, setShowUserLocationDot]);
+  }, [userLocation]);
 
   // Geocode: POI click or map tap → full location data
   const geocode = useCallback(
@@ -252,6 +252,8 @@ export function MapLocationPicker({
             regionDelta={DELTA}
             variant="relative"
             onLocated={onCurrentLocationChange}
+            accessibilityLabel="My location"
+            accessibilityHint="center map on your location"
           />
         </View>
 

@@ -7,18 +7,26 @@ interface ILocateMeButtonProps {
   onPress: () => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export function LocateMeButton(props: ILocateMeButtonProps) {
-  const { onPress, disabled, style } = props;
+  const {
+    onPress,
+    disabled,
+    style,
+    accessibilityLabel = 'userlocation button',
+    accessibilityHint = 'gets user location',
+  } = props;
   return (
     <IconButton
       style={[styles.button, style]}
       onPress={onPress}
       disabled={disabled}
-      accessibilityLabel="userlocation button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       variant="secondary"
-      accessibilityHint="gets user location"
     >
       <LocationArrowIcon color={Colors.PRIMARY} />
     </IconButton>

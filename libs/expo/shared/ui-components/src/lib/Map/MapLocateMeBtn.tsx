@@ -13,6 +13,8 @@ type TProps = {
   regionDelta?: TMapDeltaLatLng;
   duration?: number;
   onLocated?: (location: LocationObject) => void;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   variant?: TVariant;
   style?: ViewStyle;
 };
@@ -23,6 +25,8 @@ export function MapLocateMeBtn(props: TProps) {
     regionDelta,
     duration,
     onLocated,
+    accessibilityLabel,
+    accessibilityHint,
     variant = 'absolute',
     style,
   } = props;
@@ -68,6 +72,8 @@ export function MapLocateMeBtn(props: TProps) {
       ]}
       disabled={disabled}
       onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
     />
   );
 }
