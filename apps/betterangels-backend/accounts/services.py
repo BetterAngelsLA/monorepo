@@ -20,10 +20,12 @@ from organizations.models import Organization, OrganizationOwner, OrganizationUs
 from .emails import base_url_for
 from .groups import ORG_ADMIN
 from .models import (
+    Grant,
     OrganizationProfile,
     OrgTypeChoices,
     PermissionGroup,
     PermissionGroupTemplate,
+    Role,
 )
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
@@ -609,3 +611,41 @@ def backfill_global_role_members() -> None:
     for group in groups.prefetch_related("user_set"):
         for user in group.user_set.all():
             user.groups.add(role)
+
+
+# ── Grant write services (ADR 0001 §2.10) ────────────────────────────────
+
+
+def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Grant:
+    """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
+
+    Validates via ``full_clean`` (which checks the model constraints since
+    Django 4.1) before saving, per the repo styleguide.
+    """
+    from accounts.models import Grant
+
+    grant = Grant(principal_user=user, role=role, scope_org=scope_org)
+    grant.full_clean()
+    grant.save()
+    return grant
+
+
+def grant_delete(*, grant: Grant) -> None:
+    """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
+    grant.delete()
+
+
+def role_assign(*, user: UserModel, role: Role) -> None:
+    """Add *user* to a *global* Role's group — the global tier (ADR 0001 §2.1).
+
+    Scoped roles are never placed in ``user.groups`` (checks ``permissions.E001``);
+    they are granted through a ``Grant`` instead.
+    """
+    if not role.is_global:
+        raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
+    user.groups.add(role)
+
+
+def role_remove(*, user: UserModel, role: Role) -> None:
+    """Remove *user* from a global Role's group."""
+    user.groups.remove(role)
