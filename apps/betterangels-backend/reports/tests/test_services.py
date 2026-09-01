@@ -9,7 +9,6 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note
 from reports.models import ScheduledReport
-from reports.selectors import local_today
 from reports.services import generate_report_data, get_previous_month_range
 
 
@@ -50,8 +49,7 @@ class TestReportService:
                 "02",
                 "2025",
             ),
-            # Case 5: Year boundary (runs in Jan, reports Dec prev year).
-            # 08:00 UTC is midnight in Los Angeles, so this is genuinely January there.
+            # Case 5: Year boundary (runs in Jan, reports Dec prev year)
             (
                 "2025-01-01 08:00:00",
                 1,
@@ -88,7 +86,7 @@ class TestReportService:
                 )
 
             # Manually calculate range as the task would
-            start_date, end_date = get_previous_month_range(as_of=local_today())
+            start_date, end_date = get_previous_month_range(as_of=timezone.localdate())
 
             filename, content, meta = generate_report_data(report, start_date, end_date)
 
@@ -163,7 +161,7 @@ class TestGetPreviousMonthRange:
 
 @pytest.mark.django_db
 class TestReportTimeZoneBoundaries:
-    """Report ranges are cut on the operating time zone's calendar days, not UTC's."""
+    """Report ranges are cut on the active calendar's days, not UTC's."""
 
     def test_late_evening_note_counts_in_the_month_it_was_logged(self) -> None:
         """A note at 5pm on 31 January in Los Angeles belongs to January, not February."""

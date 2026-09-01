@@ -2,11 +2,11 @@ from datetime import date, timedelta
 from typing import Any
 
 from django.core.files.base import ContentFile
+from notes.admin import NoteResource
 from post_office import mail
 
-from .exporters import ReportNoteResource
 from .models import ScheduledReport
-from .selectors import local_window, note_list_for_org
+from .selectors import note_list_for_org
 
 
 def get_previous_month_range(*, as_of: date) -> tuple[date, date]:
@@ -26,10 +26,11 @@ def generate_report_data(report: ScheduledReport, start_date: date, end_date: da
     year_str = start_date.strftime("%Y")
 
     if report.report_type == ScheduledReport.ReportType.INTERACTION_DATA:
-        start, end = local_window(start_date, end_date)
-        notes = note_list_for_org(org=report.organization, start=start, end=end).order_by("interacted_at")
+        notes = note_list_for_org(org=report.organization, start_date=start_date, end_date=end_date).order_by(
+            "interacted_at"
+        )
 
-        resource = ReportNoteResource()
+        resource = NoteResource()
         dataset = resource.export(queryset=notes)
         filename = f"interaction_data_{month_str}_{year_str}.csv"
         return filename, dataset.csv, {"notes_count": notes.count()}

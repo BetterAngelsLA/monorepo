@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from common.constants import OPERATING_TIME_ZONE
 from common.graphql.types import (
     LatitudeScalar,
     LongitudeScalar,
@@ -20,6 +19,7 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Coalesce
+from django.utils import timezone as django_timezone
 from strawberry import ID, Info, asdict, auto
 
 from shelters import models
@@ -50,7 +50,12 @@ from shelters.selectors.computed_status import shelter_count_subquery
 
 
 def get_current_shelter_schedule_datetime() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).astimezone(OPERATING_TIME_ZONE)
+    """Now, on the calendar the shelters' posted hours are written in.
+
+    Deliberately the site's zone rather than the viewer's: a shelter is open on
+    its own clock whoever is looking it up.
+    """
+    return django_timezone.localtime(timezone=django_timezone.get_default_timezone())
 
 
 @strawberry.input
