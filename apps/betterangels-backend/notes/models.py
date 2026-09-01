@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
+from common.constraints import CompositeForeignKey
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -190,6 +191,15 @@ class Note(BaseModel):
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
         ordering = ["-interacted_at"]
+        constraints = [
+            CompositeForeignKey(
+                name="notes_note_team_same_org_fk",
+                fields=["team", "organization"],
+                to_model="teams.Team",
+                to_fields=["id", "organization"],
+                deferrable=models.Deferrable.DEFERRED,
+            ),
+        ]
 
 
 @pghistory.track(
