@@ -736,6 +736,7 @@ union CreateRoomPayload = RoomType | OperationInfo
 input CreateShelterInput {
   name: String!
   description: String = null
+  organizationId: ID = null
   accessibility: [AccessibilityChoices!] = null
   demographics: [DemographicChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
@@ -1592,23 +1593,23 @@ type Mutation {
   createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
   updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
   deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
-  createShelter(data: CreateShelterInput!): CreateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_shelter"}], any: true)
-  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  createRoom(data: CreateRoomInput!): CreateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_room"}], any: true)
-  cloneRoom(id: ID!): CloneRoomPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_room"}], any: true)
-  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_room"}], any: true)
-  createBed(data: CreateBedInput!): CreateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_bed"}], any: true)
-  cloneBed(id: ID!): CloneBedPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_bed"}], any: true)
-  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_bed"}], any: true)
-  createReservation(data: CreateReservationInput!): CreateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "add_reservation"}], any: true)
-  updateReservation(id: ID!, data: UpdateReservationInput!): UpdateReservationPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_reservation"}], any: true)
-  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "delete_reservation"}], any: true)
-  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
-  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload! @hasOrgPerm(permissions: [{app: "shelters", permission: "change_shelter"}], any: true)
+  createShelter(data: CreateShelterInput!): CreateShelterPayload!
+  updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
+  createRoom(data: CreateRoomInput!): CreateRoomPayload!
+  updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload!
+  cloneRoom(id: ID!): CloneRoomPayload!
+  deleteRooms(data: BulkDeleteInput!): DeleteRoomsPayload!
+  createBed(data: CreateBedInput!): CreateBedPayload!
+  updateBed(id: ID!, data: UpdateBedInput!): UpdateBedPayload!
+  cloneBed(id: ID!): CloneBedPayload!
+  deleteBeds(data: BulkDeleteInput!): DeleteBedsPayload!
+  createReservation(data: CreateReservationInput!): CreateReservationPayload!
+  updateReservation(id: ID!, data: UpdateReservationInput!): UpdateReservationPayload!
+  deleteReservations(data: BulkDeleteInput!): DeleteReservationsPayload!
+  generateShelterPhotoUploads(data: GenerateShelterPhotoUploadsInput!): GenerateShelterPhotoUploadsPayload!
+  resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
+  updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
+  deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
   createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
   updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
@@ -2090,16 +2091,16 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
-  operatorShelter(pk: ID!): OperatorShelterType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
-  operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
+  operatorShelter(pk: ID!): OperatorShelterType!
+  operatorShelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, ordering: [ShelterOrder!]! = []): ShelterTypeOffsetPaginated!
-  bed(pk: ID!): BedType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_bed"}], any: true)
-  reservation(pk: ID!): ReservationType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
-  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_reservation"}], any: true)
-  room(pk: ID!): RoomType! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
-  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_room"}], any: true)
+  bed(pk: ID!): BedType!
+  beds(pagination: OffsetPaginationInput, filters: BedFilter, ordering: [BedOrder!]! = []): BedTypeOffsetPaginated!
+  reservation(pk: ID!): ReservationType!
+  reservations(pagination: OffsetPaginationInput, filters: ReservationFilter, ordering: [ReservationOrder!]! = []): ReservationTypeOffsetPaginated!
+  room(pk: ID!): RoomType!
+  rooms(pagination: OffsetPaginationInput, filters: RoomFilter, ordering: [RoomOrder!]! = []): RoomTypeOffsetPaginated!
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
