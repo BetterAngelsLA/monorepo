@@ -15,6 +15,17 @@ mean "do not set / leave unchanged"), so plain ``None`` defaults are exactly
 equivalent and no presence sentinel is required. (Shelter updates are the
 exception and keep their dict-based path.)
 
+.. TODO(perm): Revisit update-payload presence semantics. These ``= None``
+   defaults conflate *absent* (UNSET) with *explicit null*, which the wire
+   ``Maybe[T | None]`` types model as distinct states. Two follow-ups were
+   designed but deliberately parked (not worth it on the cutover PR):
+   (1) a framework-agnostic ``MISSING`` sentinel so absent != None, and
+   (2) deciding whether explicit null should *clear* a nullable column/M2M
+   on updates. Current contract (matches the mutation tests + clients):
+   null and absent are both no-ops; M2M clears only via ``[]``; nullable
+   scalars cannot be cleared through an update. If null-clearing is ever
+   wanted, it is an API-wide behavior change and needs the sentinel.
+
 Each payload mirrors one GraphQL input type field-for-field; the mirror
 canary tests (``test_service_data.py``) keep the two from drifting.
 """
