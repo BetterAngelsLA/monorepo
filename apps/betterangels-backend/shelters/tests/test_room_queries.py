@@ -97,7 +97,9 @@ class RoomQueryTestCase(RoomQueriesTestCase):
                 }
             }
         """
-        expected_query_count = 12
+        # scopes() now memoizes the whole decision (global-tier checks included),
+        # so the repeated view_room check costs 0 — 2 queries fewer than before.
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"id": str(self.room.pk)})
 
