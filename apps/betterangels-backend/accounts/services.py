@@ -147,12 +147,21 @@ def member_add(
         return user
 
     # Existing member: only assign templates they do not already hold.
+    # Both authorities count — legacy groups and, for role-backed templates,
+    # the authoritative Grant (teardown, ADR 0001 §4 phase 5).
+    template_names = [t.name for t in permission_templates]
     existing_template_names: set[str] = set(
         PermissionGroup.objects.filter(
             organization=organization,
             user=user,
-            template__name__in=[t.name for t in permission_templates],
+            template__name__in=template_names,
         ).values_list("template__name", flat=True)
+    ) | set(
+        Grant.objects.filter(
+            principal_user=user,
+            scope_org=organization,
+            role__name__in=template_names,
+        ).values_list("role__name", flat=True)
     )
 
     new_templates = tuple(t for t in permission_templates if t.name not in existing_template_names)
@@ -313,11 +322,18 @@ def reconcile_org_groups(org: Organization) -> None:
 
     if org_types is not None:
         expected: set[str] = set()
+        expected_role_backed: set[str] = set()
         for org_type_value in org_types:
             org_config = REGISTRY.org_type(org_type_value.value)
             if org_config is None:
                 continue
             for template_config in org_config.templates:
+                # Post-teardown (ADR 0001 §4 phase 5): role-backed templates
+                # (migrated domains) have no legacy PermissionGroup — the Grant
+                # is authoritative.  Skip them here and delete any stale rows.
+                if Role.objects.filter(name=template_config.name, is_global=False).exists():
+                    expected_role_backed.add(template_config.name)
+                    continue
                 expected.add(template_config.name)
 
         for template_name in expected:
@@ -330,11 +346,27 @@ def reconcile_org_groups(org: Organization) -> None:
             )
 
         unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+        # ``expected`` excludes role-backed templates, so ``derived - expected``
+        # deletes any stale legacy row a pre-teardown org still carries — the
+        # Grant is authoritative now, and the row is dead weight.
         derived = {name for name in REGISTRY.template_names() if name not in unscoped}
 
         PermissionGroup.objects.filter(
             organization=org,
             template__name__in=derived - expected,
+        ).delete()
+
+        # Role-backed templates the org no longer offers are revoked the same
+        # way their legacy groups were: the role is not derivable from any org
+        # type the org still holds, so every scoped Grant for it is deleted.
+        role_backed = {
+            name
+            for name in REGISTRY.template_names()
+            if name not in unscoped and Role.objects.filter(name=name, is_global=False).exists()
+        }
+        Grant.objects.filter(
+            scope_org=org,
+            role__name__in=role_backed - expected_role_backed,
         ).delete()
 
     _refresh_group_names(org)

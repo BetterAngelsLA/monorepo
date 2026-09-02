@@ -42,7 +42,7 @@ def test_create_outreach_org() -> None:
 
 @pytest.mark.django_db
 def test_create_shelter_org() -> None:
-    """Shelter org gets Shelter Operator + Org Admin + Org Superuser groups."""
+    """Shelter org gets Org Admin + Org Superuser groups; Shelter Operator is role-backed (Grant, no legacy group)."""
     org = create_organization_with_presets("Shelter Org", ["shelter"], owner=baker.make(User))
 
     profile = OrganizationProfile.objects.get(organization=org)
@@ -51,7 +51,9 @@ def test_create_shelter_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+    # Post-teardown (ADR 0001 §4 phase 5): SHELTER_OPERATOR is role-backed and
+    # has no legacy PermissionGroup.
+    assert names == {ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
 @pytest.mark.django_db
@@ -65,7 +67,7 @@ def test_create_dual_type_org() -> None:
     names = set(
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
-    assert names == {CASEWORKER.name, SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+    assert names == {CASEWORKER.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
 
 
 @pytest.mark.django_db
@@ -342,12 +344,13 @@ def test_member_add_cross_portal_reinvite() -> None:
         permission_templates=(SHELTER_OPERATOR,),
     )
     assert user2.pk == user.pk  # same user, no duplicate
-    so_group = Group.objects.get(
-        permissiongroup__organization=org,
-        permissiongroup__template__name=SHELTER_OPERATOR.name,
-    )
-    assert so_group in user2.groups.all()
-    assert cw_group in user2.groups.all()  # still has original role
+    # Post-teardown (ADR 0001 §4 phase 5): Shelter Operator is role-backed —
+    # the authority is a Grant, not a legacy group membership.
+    from accounts.models import Grant, Role
+
+    so_role = Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)
+    assert Grant.objects.filter(principal_user=user2, role=so_role, scope_org=org).exists()
+    assert cw_group in user2.groups.all()  # still has original (legacy) role
 
 
 @pytest.mark.django_db
@@ -411,21 +414,29 @@ def test_permission_group_caseworker() -> None:
 
 @pytest.mark.django_db
 def test_permission_group_shelter_operator() -> None:
-    """Returns the Shelter Operator PermissionGroup for a user in their shelter org."""
-    org = create_organization_with_presets("Shelter PM", ["shelter"], owner=baker.make(User))
+    """Shelter Operator is role-backed: no PermissionGroup exists — the Grant is the authority."""
+    from accounts.models import Grant, Role
+
+    org = create_organization_with_presets(
+        "Shelter PM", ["shelter"], owner=baker.make(User), owner_roles=(SHELTER_OPERATOR,)
+    )
     user = baker.make(User, username="spmuser", email="spm@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
-    pg = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
-    assert pg.template is not None
-    assert pg.template.name == SHELTER_OPERATOR.name
-    assert pg.organization == org
+    role = Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)
+    assert not PermissionGroup.objects.filter(organization=org, template__name=SHELTER_OPERATOR.name).exists()
+    # The owner received a Grant for the Shelter Operator role at creation.
+    assert Grant.objects.filter(role=role, scope_org=org).exists()
 
 
 @pytest.mark.django_db
 def test_permission_group_dual_type() -> None:
-    """User in a dual-type org can look up both member templates."""
-    org = create_organization_with_presets("Dual PM", ["outreach", "shelter"], owner=baker.make(User))
+    """User in a dual-type org can look up legacy templates; shelter authority is a Grant."""
+    from accounts.models import Grant, Role
+
+    org = create_organization_with_presets(
+        "Dual PM", ["outreach", "shelter"], owner=baker.make(User), owner_roles=(SHELTER_OPERATOR,)
+    )
     user = baker.make(User, username="dualuser", email="dual@example.com")
     baker.make(OrganizationUser, user=user, organization=org)
 
@@ -433,9 +444,9 @@ def test_permission_group_dual_type() -> None:
     assert pg.template is not None
     assert pg.template.name == CASEWORKER.name
 
-    pg2 = permission_group_for_user(user, str(org.pk), SHELTER_OPERATOR.name)
-    assert pg2.template is not None
-    assert pg2.template.name == SHELTER_OPERATOR.name
+    # Shelter Operator has no legacy PermissionGroup; the role is a Grant.
+    role = Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)
+    assert Grant.objects.filter(role=role, scope_org=org).exists()
 
 
 @pytest.mark.django_db
@@ -589,7 +600,12 @@ class TestMemberRolesReplace:
 
 
 def _role_names(org: Organization, member: User) -> set[str]:
-    return set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
+    """Names of the roles *member* holds at *org* — legacy groups + Grants."""
+    from accounts.models import Grant
+
+    legacy = set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
+    grants = set(Grant.objects.filter(principal_user=member, scope_org=org).values_list("role__name", flat=True))
+    return legacy | grants
 
 
 # ── create_organization_service: no implicit join ─────────────────────

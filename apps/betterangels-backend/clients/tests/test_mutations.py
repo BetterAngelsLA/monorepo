@@ -467,7 +467,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 19
+        # The orphan object-grant cleanup (ADR 0001 §2.5) runs on delete.
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

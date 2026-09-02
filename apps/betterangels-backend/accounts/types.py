@@ -311,7 +311,16 @@ class OrganizationMemberType(UserBaseType):
         raw = getattr(self, "_permission_templates", None)
         if not raw:
             return []
-        return [PermissionTemplateEnum(v) for v in raw.split(", ")]
+        # The annotation concatenates legacy-group and Grant name lists, which
+        # can leave an empty leading segment or duplicates; de-dupe preserving
+        # order.
+        seen: set[str] = set()
+        names: list[str] = []
+        for v in raw.split(", "):
+            if v and v not in seen:
+                seen.add(v)
+                names.append(v)
+        return [PermissionTemplateEnum(v) for v in names]
 
 
 @strawberry_django.input(User, partial=True)
