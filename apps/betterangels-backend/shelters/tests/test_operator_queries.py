@@ -394,3 +394,64 @@ class OperatorShelterPropertyFilterTestCase(GraphQLBaseTestCase, ParametrizedTes
             }
         )
         self.assertEqual(len(results), 2)
+
+
+class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
+    """operatorShelter(s) are gated on Shelter.perms.VIEW.
+
+    Org membership alone is not enough — the caller needs a grant carrying
+    ``shelters.view_shelter`` (ADR 0001). Without it the list fails closed
+    (empty) and the single-object query reports not-found.
+    """
+
+    LIST_QUERY = """
+        query OperatorShelters($orgIds: [ID!]) {
+            operatorShelters(filters: { organizations: $orgIds }) {
+                totalCount
+                results { id name }
+            }
+        }
+    """
+
+    SINGLE_QUERY = """
+        query OperatorShelter($pk: ID!) {
+            operatorShelter(pk: $pk) { id name }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter = shelter_recipe.make(organization=self.org_1, name="Permission Gated Shelter")
+        # org_1 member with the CASEWORKER role only — no shelter VIEW grant.
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_list_without_view_permission_is_empty(self) -> None:
+        response = self.execute_graphql(self.LIST_QUERY, {"orgIds": [str(self.org_1.pk)]})
+
+        self.assertIsNone(response.get("errors"))
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 0)
+        self.assertEqual(payload["results"], [])
+
+    def test_list_with_view_permission_returns_shelters(self) -> None:
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+
+        response = self.execute_graphql(self.LIST_QUERY, {"orgIds": [str(self.org_1.pk)]})
+
+        self.assertIsNone(response.get("errors"))
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(self.shelter.pk))
+
+    def test_single_without_view_permission_is_not_found(self) -> None:
+        response = self.execute_graphql(self.SINGLE_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNotNone(response.get("errors"))
+
+    def test_single_with_view_permission_returns_shelter(self) -> None:
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+
+        response = self.execute_graphql(self.SINGLE_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["operatorShelter"]["id"], str(self.shelter.pk))

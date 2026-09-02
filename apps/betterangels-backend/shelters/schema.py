@@ -8,6 +8,7 @@ from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     BulkDeleteInput,
     BulkDeleteResult,
+    DeletedObjectType,
 )
 from common.permissions.utils import IsAuthenticated, active_org, get_current_organization
 from django.db.models import Max
@@ -23,7 +24,7 @@ from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveIt
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
-from shelters.services.shelter import shelter_create, shelter_update
+from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
 from shelters.types import (
     BedType,
     CityType,
@@ -143,6 +144,14 @@ class Mutation:
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
         return cast(ShelterType, shelter_update(user=user, organization_id=org_id, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_shelter(self, info: Info, id: ID) -> DeletedObjectType:
+        """Delete a shelter — authorization lives in :func:`shelter_delete` (ADR 0001 §2.6)."""
+        user = cast(User, get_current_user(info))
+        org_id = get_current_organization(info)
+        deleted = shelter_delete(user=user, organization_id=org_id, shelter_id=str(id))
+        return DeletedObjectType(id=deleted.pk)
 
     # ── Room ───────────────────────────────────────────────────────────────
 

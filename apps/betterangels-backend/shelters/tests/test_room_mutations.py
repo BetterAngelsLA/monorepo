@@ -1,3 +1,4 @@
+from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
@@ -400,3 +401,181 @@ class DeleteRoomsMutationTestCase(RoomMutationTestCase):
         deleted_ids = response["data"]["deleteRooms"]["ids"]
         self.assertEqual(deleted_ids, [str(room1.pk), str(room2.pk)])
         self.assertFalse(Room.objects.filter(pk__in=[room1.pk, room2.pk]).exists())
+
+
+class RoomMutationPermissionTestCase(RoomMutationTestCase):
+    """Room mutations are gated on the specific Room permission, not membership.
+
+    A read-only viewer (Shelter + Room VIEW grants, no ADD/CHANGE/DELETE) can
+    read rooms but cannot mutate them: creates/clones fail with a PERMISSION
+    OperationInfo, updates/deletes fail closed as not-found (ADR 0001 §2.6).
+    The operator (SHELTER_OPERATOR) holds ADD/CHANGE/DELETE and succeeds.
+    """
+
+    CREATE_MUTATION = """
+        mutation CreateRoom($data: CreateRoomInput!) {
+            createRoom(data: $data) {
+                ... on RoomType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    UPDATE_MUTATION = """
+        mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
+            updateRoom(id: $id, data: $data) {
+                ... on RoomType {
+                    id
+                    name
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    CLONE_MUTATION = """
+        mutation CloneRoom($id: ID!) {
+            cloneRoom(id: $id) {
+                ... on RoomType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    DELETE_MUTATION = """
+        mutation DeleteRooms($data: BulkDeleteInput!) {
+            deleteRooms(data: $data) {
+                ... on BulkDeleteResult {
+                    ids
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.room = baker.make(Room, shelter=self.shelter, name="Permission Target Room")
+        self.viewer = baker.make(User)
+        self.org.users.add(self.viewer)
+        for perm in (Shelter.perms.VIEW, Room.perms.VIEW):
+            self._grant_permission(self.viewer, perm, self.org, role_name="Room Read Only")
+
+    # ── createRoom (ADD) ───────────────────────────────────────────────────
+
+    def test_create_room_succeeds_for_user_with_add_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"shelterId": str(self.shelter.pk), "name": "Operator Room"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        created_id = response["data"]["createRoom"]["id"]
+        self.assertTrue(Room.objects.filter(pk=created_id, name="Operator Room").exists())
+
+    def test_create_room_denied_for_user_without_add_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"shelterId": str(self.shelter.pk), "name": "Viewer Room"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "createRoom", "do not have permission", kind="PERMISSION")
+        self.assertFalse(Room.objects.filter(name="Viewer Room").exists())
+
+    # ── updateRoom (CHANGE) ────────────────────────────────────────────────
+
+    def test_update_room_succeeds_for_user_with_change_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"id": str(self.room.pk), "data": {"name": "Renamed Room"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateRoom"]["name"], "Renamed Room")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.name, "Renamed Room")
+
+    def test_update_room_denied_for_user_without_change_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"id": str(self.room.pk), "data": {"name": "Nope"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "updateRoom", "Room matching ID", kind="ERROR")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.name, "Permission Target Room")
+
+    # ── cloneRoom (ADD) ────────────────────────────────────────────────────
+
+    def test_clone_room_succeeds_for_user_with_add_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(self.CLONE_MUTATION, {"id": str(self.room.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        clone_id = response["data"]["cloneRoom"]["id"]
+        self.assertNotEqual(clone_id, str(self.room.pk))
+        self.assertTrue(Room.objects.filter(pk=clone_id).exists())
+
+    def test_clone_room_denied_for_user_without_add_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.CLONE_MUTATION, {"id": str(self.room.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "cloneRoom", "do not have permission", kind="PERMISSION")
+        self.assertEqual(Room.objects.filter(shelter=self.shelter).count(), 1)
+
+    # ── deleteRooms (DELETE) ───────────────────────────────────────────────
+
+    def test_delete_rooms_succeeds_for_user_with_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(self.room.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteRooms"]["ids"], [str(self.room.pk)])
+        self.assertFalse(Room.objects.filter(pk=self.room.pk).exists())
+
+    def test_delete_rooms_denied_for_user_without_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(self.room.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "deleteRooms", "No matching rooms found", kind="ERROR")
+        self.assertTrue(Room.objects.filter(pk=self.room.pk).exists())

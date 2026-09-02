@@ -219,3 +219,31 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
         shelter.spas_served.set(spas_served_ids)
 
     return shelter
+
+
+@transaction.atomic
+def shelter_delete(*, user: "User", organization_id: str, shelter_id: str | int) -> Shelter:
+    """Delete a shelter scoped to *organization_id* for *user*.
+
+    Resolves the shelter via :func:`~shelters.selectors.shelter_get` with
+    ``delete_shelter`` permission, so the row must sit in *organization_id*
+    AND *user* must hold ``Shelter.perms.DELETE`` there — an unauthorized
+    shelter is indistinguishable from a missing one (ADR 0001 §2.6).
+
+    Deleting cascades through the model FKs to the shelter's rooms, beds,
+    photos, schedules and contacts (DB default).
+
+    Raises:
+        ``django.core.exceptions.ObjectDoesNotExist`` when no matching shelter
+        exists or the user lacks DELETE permission.
+    """
+    shelter = shelter_get(
+        user=user,
+        shelter_id=shelter_id,
+        organization_id=organization_id,
+        permission=Shelter.perms.DELETE,
+    )
+    deleted_pk = shelter.pk
+    shelter.delete()
+    shelter.pk = deleted_pk  # Model.delete() nulls the instance pk; keep it for the caller.
+    return shelter
