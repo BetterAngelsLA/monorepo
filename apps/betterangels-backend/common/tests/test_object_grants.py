@@ -70,6 +70,43 @@ class ObjectGrantTestCase(TestCase):
         self.assertTrue(can_obj(sharer, ClientProfile.perms.DELETE, profile))
         self.assertTrue(can_obj(sharer, ClientProfile.perms.VIEW, profile))
 
+    def test_can_obj_fails_closed_for_an_org_holder_on_platform_shared_rows(self) -> None:
+        """Finding C1: holding a client perm via an ORG grant must not make every
+        client mutable.  Per-record writes on a platform-shared model need an
+        object grant (or the global tier); reads stay platform-shared via
+        ``visible``."""
+        from clients.models import ClientProfile
+
+        org_holder = baker.make(User)
+        org = organization_recipe.make(name="Org Holder Org")
+        grant_create(user=org_holder, role=self.sharer_role, scope_org=org)
+        profile = self._profile()
+        other = self._profile()
+
+        # Reads are unchanged — platform-shared (the holder sees every profile).
+        self.assertEqual(visible(ClientProfile.objects.all(), org_holder, ClientProfile.perms.VIEW).count(), 2)
+        # But per-record writes are fail-closed without an object grant.
+        self.assertFalse(can_obj(org_holder, ClientProfile.perms.CHANGE, profile))
+        self.assertFalse(can_obj(org_holder, ClientProfile.perms.CHANGE, other))
+        self.assertFalse(can_obj(org_holder, ClientProfile.perms.DELETE, profile))
+
+        # An object grant restores per-record authority for the holder.
+        grant_obj(user=org_holder, role=self.sharer_role, obj=profile)
+        self.assertTrue(can_obj(org_holder, ClientProfile.perms.CHANGE, profile))
+        self.assertFalse(can_obj(org_holder, ClientProfile.perms.CHANGE, other))
+
+    def test_global_tier_can_obj_any_platform_shared_row(self) -> None:
+        from clients.models import ClientProfile
+
+        gso = baker.make(User)
+        from accounts.services import role_assign
+
+        role_assign(user=gso, role=self.gso_role)
+        profile = self._profile()
+
+        # GSO carries clients.view_clientprofile; the global tier acts on any row.
+        self.assertTrue(can_obj(gso, ClientProfile.perms.VIEW, profile))
+
     def test_object_grant_does_not_change_platform_shared_reads_for_holders(self) -> None:
         from clients.models import ClientProfile
 
@@ -92,8 +129,6 @@ class ObjectGrantTestCase(TestCase):
         # Bed/Room/Shelter are not whitelisted — an object grant on them would
         # violate E003, so ``_object_grant_q`` fails closed for them.
         from django.db.models import Q
-
-        from common.permissions.selectors import _object_grant_q
 
         user = baker.make(User)
         self.assertEqual(_object_grant_q(Bed, user, Bed.perms.VIEW), Q(pk__lt=0))
