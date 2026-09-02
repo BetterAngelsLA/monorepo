@@ -7,6 +7,26 @@ from organizations.models import Organization
 
 from .models import User
 
+
+def cleanup_orphan_object_grants(sender: object, instance: object, **kwargs: object) -> None:
+    """Finding F3 — a deleted row's object grants are orphans; drop them.
+
+    Connected in ``AppConfig.ready`` to every object-grant whitelisted model
+    (ADR 0001 §2.5).  Non-whitelisted senders are ignored.
+    """
+    from common.permissions.object_grants import object_grant_whitelist
+
+    if not any(issubclass(sender, cls) for cls in object_grant_whitelist()):  # type: ignore[arg-type]
+        return
+
+    from django.contrib.contenttypes.models import ContentType
+
+    from .models import Grant
+
+    ct = ContentType.objects.get_for_model(sender)  # type: ignore[arg-type]
+    Grant.objects.filter(scope_object_type=ct, scope_object_id=instance.pk).delete()  # type: ignore[attr-defined]
+
+
 logger = logging.getLogger(__name__)
 
 
