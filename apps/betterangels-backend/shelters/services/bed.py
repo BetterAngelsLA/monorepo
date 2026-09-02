@@ -123,10 +123,14 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
 def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
     """Clone an existing bed, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.
+    Scopes to *organization_id* where *user* is a member.  Cloning creates a
+    new bed, so it follows the create convention (ADR 0001 §2.6): the source
+    is resolved with view authority and create authority is checked with
+    ``can(user, Bed.perms.ADD, org)``.
 
     Raises:
         ``ObjectDoesNotExist`` when the bed is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add beds.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     qs = bed_queryset(
@@ -136,4 +140,8 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
         perms=[Bed.perms.VIEW],
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
+
+    if not can(user, Bed.perms.ADD, org=organization_id):
+        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))
