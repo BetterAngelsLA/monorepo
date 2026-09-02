@@ -445,8 +445,8 @@ still needs at its cutover:
 |---|---|---|---|---|---|
 | **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
 | **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
-| **Teams** | `Team.organization` | `()` | legacy `@hasOrgPerm` (perms on `ORG_ADMIN`) | `OrgScoped` + `can()`/`visible()` (domain path is clean — no guardian rows) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
-| **Reports** | report row `.organization` | `()` | legacy `@hasOrgPerm` (`view_reports`, on `ORG_ADMIN`) | org-scoped role perms (domain path is clean) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
+| **Teams** | `Team.organization` | `()` | **grant-only** (`can()`/`can_obj` via the role-backed `ORG_ADMIN` role, §5.3) | **Cut over (§5.3)** — no guardian rows; `@hasOrgPerm` reads Grants | None |
+| **Reports** | report row `.organization` | `()` | **grant-only** (`can()` via the role-backed `ORG_ADMIN` role, §5.3) | **Cut over (§5.3)** — DRF + GraphQL reads authorize through `permitted_org` | None |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
 | **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
@@ -566,6 +566,13 @@ ADR-vs-code `OBJECT_ARM_ENABLED` drift) are fixed during the cutover wave, becau
 cutover touches those exact code paths.
 
 ### 5.3 Org-admin role-backed milestone — teams, reports, and member management land together
+> **Status: complete.** Steps 1–3 (teams / reports / member-management dual reads) landed first as
+> `@hasOrgPerm` / `@hasPermOrGrant` slices and were later consolidated into a single seam
+> (`permitted_org` / `has_authority_anywhere`, deleting `HasOrgPermOrGrant`). Step 4 (provisioning)
+> then role-backed `ORG_ADMIN`/`ORG_SUPERUSER`, backfilled Grants, and collapsed the seam to
+> grant-only — legacy-PermissionGroup-only holders now fail closed. The historical plan below is
+> retained as the decision record.
+
 
 Teams and reports look like the cleanest cutovers (§4.1): org-scoped rows, no guardian
 rows at creation, pure `@hasOrgPerm`. They are not standalone, because **their
