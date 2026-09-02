@@ -11,7 +11,6 @@ from shelters.selectors.operator import (
     shelter_get,
     shelter_list,
     shelter_queryset,
-    user_shelter_list,
 )
 from shelters.selectors.reports import (
     avg_days_to_occupancy,

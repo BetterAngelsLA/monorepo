@@ -26,6 +26,13 @@ class GrantServiceTestCase(TestCase):
         self.assertIsNone(grant.principal_org)
         self.assertIsNone(grant.scope_object_type)
 
+    def test_grant_create_refuses_a_global_role(self) -> None:
+        """A global Role can never be granted through a Grant (permissions.E002)."""
+        with self.assertRaises(ValidationError):
+            grant_create(user=self.user, role=self.gso_role, scope_org=self.org)
+
+        self.assertFalse(Grant.objects.filter(principal_user=self.user).exists())
+
     def test_grant_create_validates_before_saving(self) -> None:
         with self.assertRaises(ValidationError):
             grant_create(user=self.user, role=self.shelter_role, scope_org=None)  # type: ignore[arg-type]
@@ -50,16 +57,14 @@ class GrantServiceTestCase(TestCase):
 
         self.assertFalse(Grant.objects.filter(principal_org=self.org).exists())
 
-    def test_grant_delegate_rejects_a_global_role(self) -> None:
-        """A global Role must never be delegated — check permissions.E002 flags it."""
-        from common.permissions import checks
-
+    def test_grant_delegate_refuses_a_global_role(self) -> None:
+        """A global Role must never be delegated — refused at write time (permissions.E002)."""
         other_org = organization_recipe.make(name="Global Role Delegatee")
-        grant_delegate(principal_org=self.org, role=self.gso_role, scope_org=other_org)
 
-        # The row violates E002 (Grant referencing a global Role).
-        errors = [e for e in checks.check_grant_never_references_global_role(None) if e.id == "permissions.E002"]
-        self.assertTrue(errors)
+        with self.assertRaises(ValidationError):
+            grant_delegate(principal_org=self.org, role=self.gso_role, scope_org=other_org)
+
+        self.assertFalse(Grant.objects.filter(principal_org=self.org).exists())
 
     def test_grant_delete_revokes_a_delegation(self) -> None:
         other_org = organization_recipe.make(name="Delegatee Org")
