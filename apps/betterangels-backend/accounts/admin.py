@@ -530,9 +530,35 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             for template in config.templates
         } - kept_templates
 
-        return cls._held_by(
-            PermissionGroup.objects.filter(organization=organization, template__name__in=sorted(losing))
+        return [
+            (template_name, holders)
+            for template_name in sorted(losing)
+            if (holders := cls._template_holders(organization, template_name))
+        ]
+
+    @classmethod
+    def _template_holders(cls, organization: Organization, template_name: str) -> int:
+        """How many people hold *template_name* at *organization*.
+
+        Role-backed templates (migrated domains, e.g. Shelter Operator) are held
+        through ``Grant`` rows; every other template through the legacy
+        ``PermissionGroup`` membership.  Both are counted so a pre-teardown org
+        still holding the legacy group (plus its backfilled Grant) warns once
+        per person, not twice.
+        """
+        role = Role.objects.filter(name=template_name, is_global=False).first()
+        holders: set[int] = set()
+        if role is not None:
+            holders.update(
+                Grant.objects.filter(scope_org=organization, role=role).values_list("principal_user_id", flat=True)
+            )
+        holders.update(
+            PermissionGroup.objects.filter(
+                organization=organization,
+                template__name=template_name,
+            ).values_list("user", flat=True)
         )
+        return len(holders)
 
     @classmethod
     def _roles_lost_to_row_deletion(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
