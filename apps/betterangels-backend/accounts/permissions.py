@@ -56,3 +56,34 @@ def get_user_permitted_org(
         .filter(Q(permission_groups__user=user) & perm_filter(app_label, codename))
         .first()
     )
+
+
+def get_user_permitted_org_dual(
+    user: UserLike,
+    org_id: str,
+    permission: str | TextChoices,
+) -> Optional[Organization]:
+    """The org *user* may act on — grant ``can()`` OR legacy membership (§5.3).
+
+    Transitional dual-read used by the member-management queries, whose
+    authority template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy.  The
+    legacy arm (``get_user_permitted_org``) preserves today's behavior; the
+    grant arm (``can()``) is the end-state authority and stays dormant until the
+    §5.3 provisioning PR role-backs the template and backfills Grants.  Deleted
+    in that PR.
+    """
+    org = get_user_permitted_org(user, org_id=org_id, permission=permission)
+    if org is not None:
+        return org
+
+    from accounts.models import User
+    from common.permissions.selectors import can
+
+    if not isinstance(user, User):
+        return None
+
+    perm_value = permission.value if isinstance(permission, TextChoices) else permission
+    if can(user, perm_value, org=int(org_id)):
+        # ``can()`` never implies existence (ADR 0001 §2.6, finding F7).
+        return Organization.objects.filter(pk=org_id).first()
+    return None
