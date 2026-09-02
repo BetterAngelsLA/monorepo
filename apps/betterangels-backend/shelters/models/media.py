@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from admin_async_upload.models import AsyncFileField
-from common.models import BaseModel
+from common.models import BaseModel, OrgScoped
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import RegexValidator
@@ -30,7 +30,9 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
-class ShelterPhoto(BaseModel):
+class ShelterPhoto(OrgScoped, BaseModel):
+    org_via = ("shelter",)
+
     file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="photos")
     type = TextChoicesField(choices_enum=ShelterPhotoTypeChoices)
