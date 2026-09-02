@@ -15,14 +15,13 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
 
 from accounts.emails import base_url_for, send_welcome_emails_for_org
-from accounts.extensions import HasOrgPerm
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.extensions import HasOrgPermOrGrant, HasPermOrGrant
+from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org_dual
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
-from .models import Organization, PermissionGroup, User
+from .models import Grant, Organization, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
@@ -67,11 +66,11 @@ class Query:
     # they're applied automatically and not duplicated in every resolver.
     @strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
+        extensions=[HasPermOrGrant(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
+        organization = get_user_permitted_org_dual(
             current_user,
             org_id=organization_id,
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
@@ -97,7 +96,7 @@ class Query:
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
+        extensions=[HasPermOrGrant(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(
         self,
@@ -109,7 +108,7 @@ class Query:
         permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
+        organization = get_user_permitted_org_dual(
             current_user,
             org_id=organization_id,
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
@@ -124,6 +123,11 @@ class Query:
         # This allows interfaces (e.g. betterangels-admin vs shelter-operator)
         # to scope the member list to their relevant org type, even when
         # the organization has multiple types.
+        #
+        # Reads BOTH authorities: legacy PermissionGroup memberships and
+        # user-principal Grants for role-backed templates (teardown, ADR 0001
+        # §4 phase 5) — a grant-held Shelter Operator must survive the filter
+        # (audit C-8).
         if org_type is not None:
             org_config = REGISTRY.org_type(org_type.value)
             if org_config:
@@ -134,17 +138,30 @@ class Query:
                         template__name__in=template_names,
                         user=OuterRef("pk"),
                     )
+                ) | Exists(
+                    Grant.objects.filter(
+                        scope_org_id=organization_id,
+                        role__name__in=template_names,
+                        principal_user=OuterRef("pk"),
+                    )
                 )
                 queryset = queryset.filter(has_org_type_template)
 
         # When a permission_template is provided, filter to members who have
-        # that specific template (e.g. only Caseworkers).
+        # that specific template (e.g. only Caseworkers) — from either authority.
         if permission_template is not None:
+            template_name = permission_template.value
             has_template = Exists(
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
-                    template__name=permission_template.value,
+                    template__name=template_name,
                     user=OuterRef("pk"),
+                )
+            ) | Exists(
+                Grant.objects.filter(
+                    scope_org_id=organization_id,
+                    role__name=template_name,
+                    principal_user=OuterRef("pk"),
                 )
             )
             queryset = queryset.filter(has_template)
@@ -220,7 +237,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
+        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
@@ -254,7 +271,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
     )
     def remove_organization_member(
         self,
@@ -298,7 +315,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
     )
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput

@@ -29,6 +29,7 @@ from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
     HasPerm,
+    PermDefinition,
 )
 from strawberry_django.utils.typing import UserType
 
@@ -173,3 +174,46 @@ class HasOrgPermOrGrant(HasPerm):
             raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
 
         return resolver()
+
+
+def _legacy_or_grant_perm_checker(info: Info, user: UserType) -> Callable[[PermDefinition], bool]:
+    """Global ``has_perm`` OR grant-anywhere (ADR 0001 §5.3, transitional).
+
+    Mirrors strawberry_django's default checker but also accepts the grant arm:
+    Grants do not feed ``has_perm``, and the member-management permissions ride
+    the still-legacy ``ORG_ADMIN`` / ``ORG_SUPERUSER`` templates, so a
+    grant-only holder must be authorized through ``can_anywhere()``.
+    """
+    user_model = cast(User, user)
+
+    def perm_checker(perm: PermDefinition) -> bool:
+        if not perm.permission:
+            return user_model.has_module_perms(str(perm.app))
+        if user_model.has_perm(perm.perm):
+            return True
+        from common.permissions.selectors import can_anywhere
+
+        return can_anywhere(user_model, perm.perm)
+
+    return perm_checker
+
+
+class HasPermOrGrant(HasPerm):
+    """Transitional (ADR 0001 §5.3): global ``has_perm`` OR grant-anywhere.
+
+    Used on the member-management read queries, whose authority template
+    (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy.  ``has_perm()`` is the
+    legacy arm (today's ``HasPerm``); ``can_anywhere()`` is the grant arm and
+    stays dormant until the §5.3 provisioning PR role-backs the template and
+    backfills Grants.  Same message, ``fail_silently``, and caching semantics as
+    ``HasPerm`` (the schema directive name changes to ``@hasPermOrGrant``).
+    Delete this extension in the provisioning PR.
+    """
+
+    SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
+        "Requires the user to hold the permission(s) globally (group or grant)."
+    )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("perm_checker", _legacy_or_grant_perm_checker)
+        super().__init__(*args, **kwargs)
