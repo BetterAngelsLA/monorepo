@@ -44,7 +44,7 @@ def bed_create(*, user: "User", organization_id: str, data: BedCreateData) -> Be
 
     require_can(user, Bed.perms.ADD, org=organization_id)
 
-    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"shelter_id"}))
+    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"shelter_id"}), model=Bed)
 
     _validate_subset_attributes(shelter, m2m_data)
 
@@ -80,7 +80,7 @@ def bed_update(*, user: "User", organization_id: str, data: BedUpdateData) -> Be
         permission=Bed.perms.CHANGE,
     )
 
-    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"bed_id"}))
+    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"bed_id"}), model=Bed)
 
     _validate_subset_attributes(bed.shelter, m2m_data)
 

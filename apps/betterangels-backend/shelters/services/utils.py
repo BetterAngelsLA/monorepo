@@ -72,6 +72,7 @@ def _split_payload(
     m2m_field_names: set[str],
     *,
     skip: frozenset[str] = frozenset(),
+    model: type[models.Model] | None = None,
 ) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Partition a typed write payload (see :mod:`shelters.services.data`) into
     (scalar_fields, m2m_fields) without mutating it.
@@ -79,6 +80,11 @@ def _split_payload(
     ``None`` values (absent or explicitly null) are excluded so model defaults
     apply and update paths leave unset fields unchanged. *skip* names control
     keys handled by the caller (e.g. ``shelter_id``, resolved as an attribute).
+
+    When *model* is given, every scalar key must map to a real model field
+    (or FK attribute) — a payload key that is not a settable model attribute
+    raises ``ValueError`` instead of silently becoming a phantom instance
+    attribute on the update path.
     """
     scalar_data: Dict[str, Any] = {}
     m2m_data: Dict[str, Any] = {}
@@ -92,6 +98,11 @@ def _split_payload(
             m2m_data[field.name] = value
         else:
             scalar_data[field.name] = value
+    if model is not None:
+        attnames = {f.attname for f in model._meta.get_fields() if hasattr(f, "attname")}
+        unknown = set(scalar_data) - attnames
+        if unknown:
+            raise ValueError(f"{model.__name__} has no settable field(s): {sorted(unknown)}")
     return scalar_data, m2m_data
 
 

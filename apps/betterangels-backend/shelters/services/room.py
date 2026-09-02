@@ -45,7 +45,7 @@ def room_create(*, user: "User", organization_id: str, data: RoomCreateData) -> 
 
     require_can(user, Room.perms.ADD, org=organization_id)
 
-    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"shelter_id"}))
+    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"shelter_id"}), model=Room)
 
     _validate_subset_attributes(shelter, m2m_data)
 
@@ -78,7 +78,7 @@ def room_update(*, user: "User", organization_id: str, data: RoomUpdateData) -> 
         permission=Room.perms.CHANGE,
     )
 
-    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"room_id"}))
+    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"room_id"}), model=Room)
 
     _validate_subset_attributes(room.shelter, m2m_data)
 

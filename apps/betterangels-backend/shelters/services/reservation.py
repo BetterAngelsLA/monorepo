@@ -116,7 +116,7 @@ def reservation_create(*, user: "User", organization_id: str, data: ReservationC
 
     require_can(user, Reservation.perms.ADD, org=organization_id)
 
-    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients"}))
+    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients"}), model=Reservation)
 
     reservation = Reservation(created_by=user, **scalar_data)
     reservation.full_clean()
@@ -157,7 +157,7 @@ def reservation_update(*, user: "User", organization_id: str, data: ReservationU
 
     previous_status = reservation.status
 
-    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients", "reservation_id"}))
+    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients", "reservation_id"}), model=Reservation)
     for key, value in scalar_data.items():
         setattr(reservation, key, value)
 
