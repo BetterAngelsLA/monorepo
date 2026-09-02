@@ -634,10 +634,33 @@ def grant_delete(*, grant: Grant) -> None:
 
 
 def role_assign(*, user: UserModel, role: Role) -> None:
-    """Add *user* to a *global* Role's group — the global tier (ADR 0001 §2.1).
+    """Grant *user* a *global* Role by adding it to ``user.groups``.
 
-    Scoped roles are never placed in ``user.groups`` (checks ``permissions.E001``);
-    they are granted through a ``Grant`` instead.
+    .. warning::
+       **GLOBAL AUTHORITY — read before calling.** This is the global tier
+       (ADR 0001 §2.1): once *role* is in ``user.groups``, *user* can exercise
+       every permission *role* carries **across every organization**, with no
+       org scope and no per-org audit row.  It is the highest-authority write
+       in this module — prefer an org-scoped ``Grant`` (via :func:`grant_create`)
+       unless the user genuinely needs org-wide access.
+
+       Today the only *intended* writers of the global tier are the Django
+       admin's group picker and provisioning (:func:`backfill_global_role_members`).
+       This service has **no production caller yet** — add one deliberately
+       (e.g. an admin/member-management flow), never "because it is handy".
+
+    Constraints:
+
+    * *role* **must** be a global Role (``is_global=True``).  Scoped roles are
+      exercised exclusively through ``Grant`` rows — never group membership
+      (checks ``permissions.E001``) — so a scoped *role* raises
+      ``ValidationError`` instead of silently becoming global.
+    * Granting is additive and idempotent (Django M2M); revoke with
+      :func:`role_remove`.  Membership is visible in the Django admin and in
+      ``user.groups``.
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is scoped.
     """
     if not role.is_global:
         raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
@@ -645,5 +668,10 @@ def role_assign(*, user: UserModel, role: Role) -> None:
 
 
 def role_remove(*, user: UserModel, role: Role) -> None:
-    """Remove *user* from a global Role's group."""
+    """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
+
+    Removes *role* from ``user.groups``, withdrawing its global-tier authority.
+    Scoped roles are never in ``user.groups`` (they are granted via ``Grant``),
+    so removing one here is a no-op rather than an error.
+    """
     user.groups.remove(role)
