@@ -4,6 +4,11 @@ Requires the user to have the specified permission(s) in the organization set vi
 directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 """
+Requires the user to hold the permission(s) in the organization (legacy group or grant) set via X-Organization-ID header.
+"""
+directive @hasOrgPermOrGrant(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+
+"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -1591,9 +1596,9 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
-  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
-  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
+  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "add_team"}], any: true)
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "change_team"}], any: true)
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload!
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
   createRoom(data: CreateRoomInput!): CreateRoomPayload!
