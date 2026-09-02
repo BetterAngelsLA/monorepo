@@ -39,7 +39,8 @@ merged branch) and resolve.
 
 ## After the stack lands
 
-1. Decide RFC 0002 / ADR §7.6 (client ownership) with product.
+1. Decide RFC 0002 / ADR §7.6 (per-model read/write tiers for clients; parity-first
+   cutover, owner-tier parked) with product — gates clients/HMIS.
 2. Mechanical cutovers in ADR §4.1 order: tasks → referrals → teams → reports (shelter
    playbook).
 3. Clients/notes cutovers (§5/§5.1), then phase-5 teardown (`PermissionGroup` removal +
