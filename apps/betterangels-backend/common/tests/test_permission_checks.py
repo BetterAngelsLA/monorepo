@@ -1,6 +1,7 @@
-"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E005)."""
+"""Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E006)."""
 
 from accounts.models import Grant, Role, User
+from accounts.services import sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.models import OrgScoped
 from common.permissions.checks import (
@@ -8,6 +9,7 @@ from common.permissions.checks import (
     check_grant_never_references_global_role,
     check_object_grant_targets_whitelisted_model,
     check_org_via_hops_are_single_valued,
+    check_role_backed_permissions_not_legacy_gated,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
 )
@@ -117,3 +119,29 @@ class GrantSystemChecksTestCase(TestCase):
             _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005"),
             [],
         )
+
+    def test_e006_fires_for_a_role_backed_role_with_a_legacy_gated_permission(self) -> None:
+        """The role-backed Shelter Operator carries clients.view_clientprofile,
+        still read through HasRetvalPerm — the live audit C-0 break."""
+        sync_roles()
+
+        e006 = _errors_with(check_role_backed_permissions_not_legacy_gated(None), "permissions.E006")
+        self.assertTrue(
+            any("Shelter Operator" in error.msg and "clients.view_clientprofile" in error.msg for error in e006)
+        )
+
+    def test_e006_is_quiet_for_a_role_with_only_grant_read_permissions(self) -> None:
+        """A role-backed role carrying only grant-read permissions (shelter data)
+        does not trip E006 — its consumers read visible()/can()."""
+        sync_roles()
+        role = Role.objects.get(name="Shelter Operator")
+        role.permissions.clear()
+        content_type = ContentType.objects.get_for_model(Shelter)
+        permission, _ = Permission.objects.get_or_create(
+            content_type=content_type,
+            codename="view_shelter",
+            defaults={"name": "Can view shelter"},
+        )
+        role.permissions.add(permission)
+
+        self.assertEqual(_errors_with(check_role_backed_permissions_not_legacy_gated(None), "permissions.E006"), [])

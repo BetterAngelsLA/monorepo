@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E005``.
+IDs: ``permissions.E001``–``permissions.E006``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -178,6 +178,83 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
                             id="permissions.E005",
                         )
                     )
+        return errors
+    except DatabaseError:
+        return []
+
+
+def _legacy_gated_permissions() -> set[str]:
+    """``app.codename`` permissions still read through a legacy-only GraphQL gate.
+
+    Walks the built schema's fields for permission extensions that read
+    ``has_perm`` / guardian only — strawberry's ``HasPerm``, ``HasRetvalPerm`` and
+    ``permissionedQuerySet`` — excluding the transitional dual extensions
+    (``HasOrgPerm`` → ``permitted_org``, ``HasPermOrGrant`` →
+    ``has_authority_anywhere``), which read the grant predicate too.
+    """
+    from accounts.extensions import HasOrgPerm, HasPermOrGrant
+    from betterangels_backend.schema import schema
+    from strawberry_django.permissions import HasPerm
+
+    legacy_only: set[str] = set()
+    for type_def in schema._schema.type_map.values():
+        for field in getattr(type_def, "fields", {}).values():
+            definition = (field.extensions or {}).get("strawberry-definition")
+            for extension in getattr(definition, "extensions", None) or []:
+                if not isinstance(extension, HasPerm):
+                    continue
+                if isinstance(extension, (HasOrgPerm, HasPermOrGrant)):
+                    continue  # dual — reads the grant predicate too
+                for perm in getattr(extension, "perms", ()) or ():
+                    perm_str = getattr(perm, "perm", None) or str(perm)
+                    if perm_str:
+                        legacy_only.add(perm_str)
+    return legacy_only
+
+
+@register(Tags.models)
+def check_role_backed_permissions_not_legacy_gated(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E006 — a role-backed Role must not carry a permission read through a legacy gate.
+
+    The transition built dual arms in only one direction: grant-aware surfaces
+    reading still-legacy templates.  The mirror — a role-backed Role (whose legacy
+    ``PermissionGroup`` teardown has retired, so its holders are Grant-only) still
+    carrying a permission gated by ``has_perm`` / ``HasRetvalPerm`` /
+    ``permissioned_queryset`` — fails closed for every holder on deploy: Grants
+    never feed ``has_perm`` (audit C-0 — ``clients.view_clientprofile`` on Shelter
+    Operator).  Rule: never retire a legacy ``PermissionGroup`` until every
+    consumer of every permission on that template reads the predicate.
+    """
+    from django.apps import apps
+    from django.db.utils import DatabaseError
+
+    try:
+        Role = apps.get_model("accounts", "Role")
+
+        role_perms: list[tuple[Any, str]] = []
+        for role in Role.objects.filter(is_global=False).prefetch_related("permissions__content_type"):
+            for permission in role.permissions.all():
+                role_perms.append((role, f"{permission.content_type.app_label}.{permission.codename}"))
+
+        if not role_perms:
+            return []
+
+        legacy_gated = _legacy_gated_permissions()
+        errors: list[Error] = []
+        for role, perm in role_perms:
+            if perm not in legacy_gated:
+                continue
+            errors.append(
+                Error(
+                    f"Role {role.name!r} (role-backed) grants {perm!r}, which is still read "
+                    "through a legacy-only gate (has_perm / HasRetvalPerm / permissioned_queryset).",
+                    hint="A Grant never feeds has_perm, so retiring this Role's legacy PermissionGroup "
+                    "revokes the permission for every holder. Convert the consumer to the grant "
+                    "predicate (or keep the legacy group) before the Role is role-backed.",
+                    obj=role,
+                    id="permissions.E006",
+                )
+            )
         return errors
     except DatabaseError:
         return []
