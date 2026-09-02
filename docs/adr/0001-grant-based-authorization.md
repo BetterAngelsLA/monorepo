@@ -184,9 +184,10 @@ class Bed(OrgScoped, BaseModel):          org_via = ("shelter",)
 class Room(OrgScoped, BaseModel):         org_via = ("shelter",)
 class Reservation(OrgScoped, BaseModel):  org_via = ("bed", "room")
 class ShelterPhoto(OrgScoped, BaseModel): org_via = ("shelter",)
-# outreach (future cutovers):
-class Note(OrgScoped, BaseModel):         org_via = ("organization",)
-class Referral(OrgScoped, BaseModel):     org_via = ("organization", "shelter")
+# outreach (future cutovers) — these declare org_via = () because each owns its
+# own ``organization`` FK; ``org_via`` hops *from* a model that lacks one:
+class Note(OrgScoped, BaseModel):         org_via = ()          # owns organization
+class Referral(OrgScoped, BaseModel):     org_via = ()          # owns organization (see §4.1 for the shelter-OR gap)
 class ClientProfile(OrgScoped, BaseModel): org_via = None   # platform-shared by decision
 ```
 
@@ -437,14 +438,23 @@ still needs at its cutover:
 
 | Domain | Model path | `org_via` at cutover | Current authority | Migration shape | Gate |
 |---|---|---|---|---|---|
-| **Tasks** | `Task.organization` | `("organization",)` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
-| **Referrals** | `Referral.organization` (+ shelter) | `("organization",)` / + `("shelter",)` | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
-| **Teams** | `Team.organization` | `("organization",)` | legacy `@hasOrgPerm` (perms on `ORG_ADMIN`) | `OrgScoped` + `can()`/`visible()` (domain path is clean — no guardian rows) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
-| **Reports** | report row `.organization` | `("organization",)` | legacy `@hasOrgPerm` (`view_reports`, on `ORG_ADMIN`) | org-scoped role perms (domain path is clean) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
-| **Notes** | `Note.organization` | `("organization",)` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
+| **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Teams** | `Team.organization` | `()` | legacy `@hasOrgPerm` (perms on `ORG_ADMIN`) | `OrgScoped` + `can()`/`visible()` (domain path is clean — no guardian rows) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
+| **Reports** | report row `.organization` | `()` | legacy `@hasOrgPerm` (`view_reports`, on `ORG_ADMIN`) | org-scoped role perms (domain path is clean) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
+| **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
 | **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy guardian per-record | `can_obj` fail-closed (#2421) + ownership (`created_by_org` or object grants) | §5.1 / RFC 0002 (product decision) |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
 | **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | global Roles (GSO) | stays on the global tier — never org-scoped | None — by design |
+
+> **`org_via` cells are `()` for every org-owning domain.** A model with its own
+> `organization` FK declares `org_via = ()`; the `("organization",)` form hops
+> *through* a relation to a model that owns one and would raise `TypeError` at import
+> (`hop 'organization' targets Organization, which does not declare OrgScoped`) — the
+> earlier matrix and §2.3 examples were wrong. **Referral is additionally
+> inexpressible:** `_resolve_org_paths` treats `()` and a hop tuple as mutually
+> exclusive, so "own org **or** via shelter" has no declaration. `OrgScoped` needs an
+> `own_org_or=("shelter",)` form (or similar) before Referral can cut over.
 
 "Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
 written at creation, so no §5-style redesign of CHANGE/DELETE semantics is needed.
@@ -582,7 +592,9 @@ them all atomically:
    the legacy rows.
 3. **Authority conversion in the same change set** (each domain's path is otherwise
    clean and follows the shelter playbook):
-   - **Teams** — `Team` declares `OrgScoped` with `org_via = ("organization",)`;
+   - **Teams** — `Team` declares `OrgScoped` with `org_via = ()` (it owns its
+     `organization` FK; the earlier `("organization",)` form was wrong — that hops
+     *to* `Organization`, which is not `OrgScoped` and raises at import);
      `teams/selectors.py` and `teams/schema.py` move from `team_list(organization)`
      + `HasOrgPerm` to `visible()`/`can()`, with the org from the header and
      per-row `can_obj`-style checks on update/delete; drop the legacy directives.
