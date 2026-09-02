@@ -1,3 +1,4 @@
+from dataclasses import fields as dataclass_fields
 from typing import Any, Dict, List, overload
 
 from django.core.exceptions import ValidationError
@@ -64,6 +65,34 @@ def _parse_location(data: Any) -> Any:
         latitude=str(latitude) if latitude is not None else None,
         longitude=str(longitude) if longitude is not None else None,
     )
+
+
+def _split_payload(
+    data: Any,
+    m2m_field_names: set[str],
+    *,
+    skip: frozenset[str] = frozenset(),
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Partition a typed write payload (see :mod:`shelters.services.data`) into
+    (scalar_fields, m2m_fields) without mutating it.
+
+    ``None`` values (absent or explicitly null) are excluded so model defaults
+    apply and update paths leave unset fields unchanged. *skip* names control
+    keys handled by the caller (e.g. ``shelter_id``, resolved as an attribute).
+    """
+    scalar_data: Dict[str, Any] = {}
+    m2m_data: Dict[str, Any] = {}
+    for field in dataclass_fields(data):
+        if field.name in skip:
+            continue
+        value = getattr(data, field.name)
+        if value is None:
+            continue
+        if field.name in m2m_field_names:
+            m2m_data[field.name] = value
+        else:
+            scalar_data[field.name] = value
+    return scalar_data, m2m_data
 
 
 def _prepare_shelter_data(

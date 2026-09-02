@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, cast
 
 from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
@@ -6,43 +6,47 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import bed_get, bed_queryset, shelter_get
-from shelters.services.utils import _BED_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
+from shelters.services.data import BedCreateData, BedUpdateData
+from shelters.services.utils import (
+    _BED_M2M_FIELDS,
+    _clone_label,
+    _set_m2m_from_enums,
+    _split_payload,
+    _validate_subset_attributes,
+)
 
 if TYPE_CHECKING:
     from accounts.models import User
 
 
 @transaction.atomic
-def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Bed:
+def bed_create(*, user: "User", organization_id: str, data: BedCreateData) -> Bed:
     """Create a new Bed associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
     ``view_shelter`` permission, then checks create authority with
-    ``can(user, Bed.perms.ADD, org)`` (ADR 0001 §2.6).
+    ``require_can(user, Bed.perms.ADD, org)`` (ADR 0001 §2.6).
+
+    *data* is a typed write payload (:class:`BedCreateData`); ``None`` fields
+    are left to model defaults.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.PermissionDenied`` when the user cannot add beds.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    data = dict(data)
-    shelter_id = data.pop("shelter_id")
-
     shelter = shelter_get(
         user=user,
-        shelter_id=shelter_id,
+        shelter_id=data.shelter_id,
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
 
     require_can(user, Bed.perms.ADD, org=organization_id)
 
-    m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
+    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"shelter_id"}))
 
     _validate_subset_attributes(shelter, m2m_data)
-
-    # Drop None values so model defaults apply
-    scalar_data = {k: v for k, v in data.items() if v is not None}
 
     bed = Bed(shelter=shelter, **scalar_data)
     bed.full_clean()
@@ -55,38 +59,33 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
 
 
 @transaction.atomic
-def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: Dict[str, Any]) -> Bed:
+def bed_update(*, user: "User", organization_id: str, data: BedUpdateData) -> Bed:
     """Update an existing bed, including M2M relationships when provided.
 
-    Resolves *bed* via :func:`~shelters.selectors.bed_get` with
-    ``change_bed`` permission.
+    Resolves *bed* (``data.bed_id``) via :func:`~shelters.selectors.bed_get`
+    with ``change_bed`` permission.
 
-    Only keys present in *data* are applied; ``None`` scalar values are
-    skipped.
+    *data* is a typed write payload (:class:`BedUpdateData`) that carries the
+    target ``bed_id``; ``None`` fields (absent or explicit null) are left
+    unchanged.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the bed is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    data = dict(data)
-    data.pop("id", None)
-
     bed = bed_get(
         user=user,
-        bed_id=bed_id,
+        bed_id=data.bed_id,
         organization_id=organization_id,
         permission=Bed.perms.CHANGE,
     )
 
-    m2m_data: Dict[str, Any] = {
-        k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and k in data and data[k] is not None
-    }
+    scalar_data, m2m_data = _split_payload(data, _BED_M2M_FIELDS, skip=frozenset({"bed_id"}))
 
     _validate_subset_attributes(bed.shelter, m2m_data)
 
-    for key, value in data.items():
-        if value is not None:
-            setattr(bed, key, value)
+    for key, value in scalar_data.items():
+        setattr(bed, key, value)
 
     bed.full_clean()
     bed.save()
@@ -109,7 +108,7 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.
     """
-    qs = bed_queryset(user=user, organization_id=organization_id, perms=[Bed.perms.DELETE])
+    qs = bed_queryset(user=user, organization_id=organization_id, permission=Bed.perms.DELETE)
     qs = qs.filter(pk__in=bed_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -136,7 +135,7 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
         Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
         user=user,
         organization_id=organization_id,
-        perms=[Bed.perms.VIEW],
+        permission=Bed.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
 
