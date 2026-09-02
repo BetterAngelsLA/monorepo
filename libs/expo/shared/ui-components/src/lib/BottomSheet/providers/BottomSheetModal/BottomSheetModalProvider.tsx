@@ -245,6 +245,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
           {sharedBackdrop.render()}
 
+          {/* eslint-disable react-hooks/refs */}
           {sheets.map(({ id, render, options }) => (
             <BottomSheetBase
               key={id}

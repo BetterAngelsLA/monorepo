@@ -10,8 +10,10 @@ import {
   ViewIcon,
   WFEdit,
 } from '@monorepo/expo/shared/icons';
-import { DeleteModal } from '@monorepo/expo/shared/ui-components';
+import type { TMenuSheetAction } from '@monorepo/expo/shared/ui-components';
+import { DeleteModal, MenuSheet } from '@monorepo/expo/shared/ui-components';
 import { Directory, File, Paths } from 'expo-file-system';
+import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -23,13 +25,6 @@ import {
   DeleteClientDocumentDocument,
 } from '../screens/Client/__generated__/Client.generated';
 import { deleteClientDocumentMeta } from '../screens/Client/__generated__/Client_meta.generated';
-import { MainModal } from './MainModal';
-
-type ModalState =
-  | 'mainVisible'
-  | 'mainClosing'
-  | 'deleteRequested'
-  | 'deleteVisible';
 
 interface IDocumentModalProps {
   closeModal: () => void;
@@ -44,10 +39,12 @@ export default function DocumentModal({
   clientId,
   onDeleteStateChange,
 }: IDocumentModalProps) {
+  const router = useRouter();
   const fileTypeText = getFileTypeText(document.mimeType);
 
   const { showSnackbar } = useSnackbar();
-  const [modalState, setModalState] = useState<ModalState>('mainVisible');
+  // 'menu' → actions sheet; 'confirm' → DeleteModal open (sheet hidden).
+  const [stage, setStage] = useState<'menu' | 'confirm'>('menu');
 
   const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
@@ -160,18 +157,25 @@ export default function DocumentModal({
     }
   };
 
-  const ACTIONS = [
+  /** View / Edit: navigate to the file screen and close the whole flow. */
+  const openFile = (route: string) => {
+    router.navigate(route);
+    closeModal();
+  };
+
+  const actions: TMenuSheetAction[] = [
     {
       title: `View ${fileTypeText}`,
       testId: 'view-file-btn',
       Icon: ViewIcon,
-      route: `/file/${document.id}`,
+      onPress: () => openFile(`/file/${document.id}`),
     },
     {
       title: `Edit ${fileTypeText} name`,
       testId: 'edit-file-btn',
       Icon: WFEdit,
-      route: `/file/${document.id}?editing=true&clientId=${clientId}`,
+      onPress: () =>
+        openFile(`/file/${document.id}?editing=true&clientId=${clientId}`),
     },
     {
       title: `Download ${fileTypeText}`,
@@ -183,44 +187,30 @@ export default function DocumentModal({
       title: `Delete ${fileTypeText}`,
       testId: 'delete-file-btn',
       Icon: DeleteIcon,
-      onPress: () => setModalState('deleteRequested'),
+      onPress: () => setStage('confirm'),
     },
   ];
 
   return (
     <>
-      {modalState === 'deleteVisible' && (
+      {/* Actions sheet. Rendered via MenuSheet (Gorhom) which is NOT an RN
+          Modal, so DeleteModal can open without the RN-modal handoff that
+          caused the old flicker. Hiding the sheet on Delete and reopening it
+          on Cancel is just the `stage` toggle below. */}
+      <MenuSheet
+        isOpen={stage === 'menu'}
+        onClose={closeModal}
+        actions={actions}
+      />
+
+      {stage === 'confirm' && (
         <DeleteModal
-          isVisible={true}
+          isVisible
           body={`All data associated with this ${fileTypeText} will be deleted.`}
           title={`Delete ${fileTypeText}?`}
           onDelete={deleteFile}
-          onCancel={() => setModalState('mainVisible')}
+          onCancel={() => setStage('menu')}
           deleteableItemName={fileTypeText}
-        />
-      )}
-
-      {modalState !== 'deleteVisible' && (
-        <MainModal
-          isModalVisible={modalState === 'mainVisible'}
-          closeButton
-          vertical
-          actions={ACTIONS}
-          closeModal={() => setModalState('mainClosing')}
-          opacity={0.5}
-          onCloseComplete={() => {
-            // MainModal must fully close (animation + unmount) before DeleteModal
-            // mounts: RN can only present one Modal at a time, and mounting
-            // DeleteModal while MainModal is still up causes the confirm modal to
-            // be dropped and the actions sheet to reappear. Can possibly use BottomSheetModal.
-            if (modalState === 'deleteRequested') {
-              setTimeout(() => {
-                setModalState('deleteVisible');
-              }, 0);
-            } else {
-              closeModal();
-            }
-          }}
         />
       )}
     </>
