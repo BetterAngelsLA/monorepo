@@ -5,6 +5,11 @@
 **Scope:** Backend authorization model. First cutover: shelters. Target: outreach app (notes, tasks, clients, referrals, teams, reports).
 **Related:** [SDB-218], [PR #2407]
 
+> **Reading guide.** §2 is the mechanics (model + predicate). If you want to *see
+> how it works before reading the formal rules*, jump to **§2.9 — worked examples**
+> (roles, grants, delegations, object grants resolved for concrete people and orgs).
+> RFC 0002 / RFC 0003 are the per-domain cutover decisions this ADR gates.
+
 ---
 
 ## 1. Context
@@ -390,6 +395,163 @@ creates rows. Global roles (`is_global=True`) are never granted through a `Grant
 | Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes §5, clients §5.1 |
 | Shelter-first isolation | phased cutover, §4 | ✅ |
 | Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ⚠️ shape under-designed, §7.4 |
+
+### 2.9 Worked examples — how roles, grants, and delegation compose
+
+This section resolves the model for concrete people and orgs. It is the **target
+end-state** (what the cutover PRs build); where `main` still behaves differently,
+the example says so. Four parts, one map:
+
+| Part | What it is | Where it lives | Example in §2.2 |
+|---|---|---|---|
+| `RoleDef` | code declaration: a named role + its permissions (`app.codename`) | `shelters/groups.py`, `accounts/groups.py` | `SHELTER_OPERATOR_ROLE` |
+| `Role` | the `RoleDef` materialized as a DB row by `sync_roles` | `accounts.Role` | row "Shelter Operator", `is_global=False` |
+| `Grant` | the **only** scoped authority row: *who holds which role where* | `accounts.Grant` | `(alice, Shelter Operator, Harbor)` |
+| global tier | a global `Role` held directly in `user.groups` (never a `Grant`) | `user.groups` | `GLOBAL_SHELTER_OPERATOR_ROLE` |
+
+Three rules make every trace below predictable:
+
+1. **Authority is a union** — per permission, the global tier (if held) plus every
+   `Grant` scope the user reaches. No denies, no subtraction.
+2. **`scopes(user, perm)` is the whole answer** — `ALL` (global tier) or the org ids
+   from direct grants + one-hop delegations. Reads filter rows by it; creates check
+   the org in it; single-row writes check the row against it (`can_obj`).
+3. **Writes never fall back to the read rule** — a row you can *read* (shared) is not
+   a row you can *write*; per-record writes go through `can_obj` (or the object arm).
+
+#### Example 1 — Shelter Operator inside one org (scoped role + grant)
+
+The RoleDef (abridged; full list in §2.2):
+
+```python
+SHELTER_OPERATOR_ROLE = RoleDef(
+    name="Shelter Operator",
+    is_global=False,
+    permissions=("shelters.add_shelter", "shelters.change_shelter",
+                 "shelters.delete_shelter", "shelters.view_shelter",
+                 "shelters.add_bed", "shelters.change_bed", ...),
+)
+```
+
+Provisioning + assignment produce exactly two relevant rows:
+
+| Row | principal | role | scope |
+|---|---|---|---|
+| `Role` | — | "Shelter Operator" (`is_global=False`) | — |
+| `Grant` | `alice` | Shelter Operator | org `Harbor` |
+
+Resolution for `alice` (perm = `shelters.change_bed`):
+
+- `scopes(alice, change_bed)` = `{Harbor}` (her only grant). Not `ALL` — no global role.
+- **List** shelters/beds: `visible(...)` returns rows whose org (via `org_via`) ∈
+  `{Harbor}` — she sees Harbor's rows only; no other org is visible at all.
+- **Create** a shelter: `can(alice, add_shelter, org=Harbor)` → `Harbor ∈ scopes` →
+  allowed; the new row's `organization = Harbor`. Creating "in" another org fails.
+- **Edit** a Harbor bed: `can_obj(alice, change_bed, bed)` → the bed's org resolves
+  to Harbor via `org_via` → allowed.
+- **Edit** a Sunrise (other org) shelter: `Sunrise ∉ {Harbor}` → invisible for reads,
+  `can_obj` denied.
+
+Add a second grant and the picture extends: `Grant(alice, Shelter Operator, Sunrise)`
+→ `scopes = {Harbor, Sunrise}` → she operates both orgs and nothing else.
+
+#### Example 2 — Global Shelter Operator, and a *read-only* global viewer
+
+```python
+GLOBAL_SHELTER_OPERATOR_ROLE = RoleDef(
+    name="Global Shelter Operator", is_global=True,
+    permissions=("...shelter CRUD + global reference data..."),
+)
+GLOBAL_SHELTER_VIEWER_ROLE = RoleDef(  # reads everything, edits nothing
+    name="Global Shelter Viewer", is_global=True,
+    permissions=("shelters.view_shelter", "shelters.view_bed", ...),
+)
+```
+
+- **GSO (`carol`)** — `sync_roles` puts the global Role in `carol.user.groups`; there
+  is **no `Grant` row**. `scopes(carol, shelter_perm)` = `ALL` → every shelter in
+  every org, plus global reference data; `visible` unconfined; `can`/`can_obj` true.
+- **Global Viewer (`dave`)** — `scopes(dave, view_shelter)` = `ALL` (he can list every
+  shelter), but `scopes(dave, change_shelter)` is empty (no global role holds it, no
+  grants) → `can`/`can_obj` for writes are false. Dave browses all shelters, edits none.
+- **Combination** — `alice` from Example 1 *plus* the Global Viewer role: she reads all
+  shelters (viewer) and edits only Harbor/Sunrise (operator grants). Global roles
+  compose per permission; the FE gates on `currentUser.permissions`, which carries
+  exactly what she holds (viewer perms globally, operator perms per org).
+
+#### Example 3 — Caseworkers in two orgs: read everyone's notes, write your own org's
+
+```python
+CASEWORKER_ROLE = RoleDef(
+    name="Caseworker", is_global=False,
+    permissions=("notes.add_note", "notes.view_note",
+                 "notes.change_note", "notes.delete_note", ...),  # Option A: CHANGE/DELETE on the role
+)
+```
+
+Rows: `Grant(alice, Caseworker, orgA)` and `Grant(bob, Caseworker, orgB)`. Every
+`Note` carries `organization` = the org that created it (org A's notes have
+`organization = orgA`). **Read tier is SHARED; write tier is the row's org**
+(RFC 0002 vocabulary — for notes the two coincide because org is set at creation).
+
+| Operation | alice (org A) | bob (org B) |
+|---|---|---|
+| Read any note (A's or B's) | ✅ SHARED read: holds `view_note` anywhere → all rows | ✅ same |
+| Create in own org | ✅ `can(add_note, orgA)` → note `organization = orgA` | ✅ `can(add_note, orgB)` |
+| Edit own org's note | ✅ `can_obj(change_note, n)` → `n.organization = orgA ∈ {orgA}` | ✅ `n.organization = orgB ∈ {orgB}` |
+| Edit the other org's note | ❌ `n.organization = orgB ∉ {orgA}` | ❌ `n.organization = orgA ∉ {orgB}` |
+
+So org B's caseworkers can read org A's notes but **never edit them** — no special
+cross-org rule; it falls out of `can_obj` filtering on the note's own org. If org B
+legitimately needs to edit *one* org-A note, BA creates an explicit object grant
+(Example 5). Today on `main` the same behavior is expressed with guardian rows at
+creation instead of `Role` + `Grant` + `can_obj`; this example is the RFC 0003 cutover
+(and needs RFC 0002's read/write-tier decoupling to make SHARED-read-on-an-org-owning
+model a first-class cell).
+
+#### Example 4 — Org→org delegation (one hop, role-keyed)
+
+Central BA (`orgA`) is lent the "Shelter Viewer" role *at* the Sunrise Network
+(`orgC`) so its staff can view Sunrise's shelters. Two rows do all the work:
+
+| Row | principal | role | scope |
+|---|---|---|---|
+| `Grant` | org `CentralBA` (as principal) | Shelter Viewer | org `Sunrise` |
+| `Grant` | `alice` | Shelter Viewer | org `CentralBA` |
+
+Resolution for `alice` (`perm = view_shelter`):
+
+- direct: grants where *she* holds the role → `{CentralBA}`;
+- "acts at": orgs where she is a **member** *and* holds a grant whose role carries
+  `view_shelter` → `{CentralBA}` (membership alone is not enough — no amplification);
+- inherited: org-principal grants whose principal org ∈ `{CentralBA}` → `{Sunrise}`.
+- `scopes = {CentralBA, Sunrise}` → alice lists Sunrise's shelters.
+
+Role-keyed limits (deliberate): `evelyn`, a CentralBA member holding only "Shelter
+Operator" (a *different* role) at CentralBA, does **not** inherit the delegated viewer
+role at Sunrise; a consultant granted Viewer at CentralBA without membership does not
+inherit either. There is no role *translation* (Sunrise cannot remap "Shelter Viewer"
+into "Shelter Operator" for CentralBA's people), and Sunrise's own delegations onward
+are not inherited (one hop).
+
+#### Example 5 — Object grant (per-record sharing on a platform-shared model)
+
+`ClientProfile` is platform-shared (`org_via = None`). Any caseworker reads all
+clients (SHARED read); **writes fail closed per record** unless the global tier or an
+object grant covers the row. BA shares client `c1` with `bob`:
+
+| Row | principal | role | scope |
+|---|---|---|---|
+| `Grant` | `bob` | Caseworker (scoped role carrying `clients.change_clientprofile`) | **object** `c1` |
+
+- `can_obj(bob, change_clientprofile, c1)` → object arm → **allowed**.
+- `can_obj(bob, change_clientprofile, c2)` → no object grant on `c2` → **denied**
+  (he can still *read* every client).
+
+Object grants are user-principal only (§2.5 — org-principal object grants are
+forbidden); the whitelist gates which models can carry them (`ClientProfile` today,
+`Note` joins at its cutover); and what happens to them when `bob` leaves the org is
+the sharing-edge revocation decision (RFC 0002 open sub-decisions).
 
 ## 3. Accepted limitations (decided, not deferred)
 
