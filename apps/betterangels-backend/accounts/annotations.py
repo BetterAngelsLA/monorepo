@@ -1,11 +1,12 @@
 from django.db.models import Case, CharField, Exists, OuterRef, StringAgg, Subquery, Value, When
+from django.db.models.functions import Coalesce, Concat
 from organizations.models import OrganizationOwner
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from common.org_types import REGISTRY
 
-from .models import PermissionGroup
+from .models import Grant, PermissionGroup
 
 
 def annotate_member_role(org_id: str) -> Case:
@@ -42,23 +43,42 @@ def annotate_is_org_owner(org_id: str) -> Exists:
     )
 
 
-def annotate_permission_templates(org_id: str) -> Subquery:
+def annotate_permission_templates(org_id: str) -> Coalesce:
     """Return comma-separated member-level permission template names for *org_id*.
 
     Filters to member-level templates only (the same set exposed by
     ``PermissionTemplateEnum``), excluding org-level templates like
     Org Admin / Org Superuser which are surfaced via ``member_role``.
 
-    Uses ``Subquery`` + ``StringAgg`` because ``User`` has no direct FK
-    to ``PermissionGroup`` — the path is ``User ↔ Group ↔ PermissionGroup``.
+    Reads from BOTH authorities: legacy ``PermissionGroup`` memberships and
+    ``Grant`` rows for role-backed templates (teardown, ADR 0001 §4 phase 5).
+    The two sets are disjoint (role-backed templates no longer create legacy
+    groups), so a plain concatenation is safe; the resolver de-dupes empties.
     """
-    return Subquery(
+    names = REGISTRY.invitable_template_names()
+    legacy = Subquery(
         PermissionGroup.objects.filter(
             organization_id=org_id,
             user=OuterRef("pk"),
-            template__name__in=REGISTRY.invitable_template_names(),
+            template__name__in=names,
         )
         .values("user")
         .annotate(names=StringAgg("template__name", Value(", "), distinct=True, order_by="template__name"))
         .values("names")
+    )
+    grants = Subquery(
+        Grant.objects.filter(
+            scope_org_id=org_id,
+            principal_user=OuterRef("pk"),
+            role__name__in=names,
+        )
+        .values("principal_user")
+        .annotate(names=StringAgg("role__name", Value(", "), distinct=True, order_by="role__name"))
+        .values("names")
+    )
+    return Coalesce(
+        Concat(legacy, Value(", "), grants, output_field=CharField()),
+        legacy,
+        grants,
+        output_field=CharField(),
     )

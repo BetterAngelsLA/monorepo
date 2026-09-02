@@ -1,8 +1,9 @@
-"""OrgRoleManager dual-write: role memberships mirror into ``Grant`` rows.
+"""OrgRoleManager grant-only writes for role-backed templates.
 
-ADR 0001 §4 phase 2 — during the transition, ``OrgRoleManager`` writes BOTH the
-legacy ``PermissionGroup`` membership AND (for role-backed templates) a
-``Grant`` that is authoritative for the shelter domain.
+ADR 0001 §4 phase 5 (teardown) — role-backed templates (e.g. Shelter
+Operator) write ONLY a ``Grant``; the legacy ``PermissionGroup`` membership is
+no longer created. Non-role-backed templates (e.g. Caseworker) still use the
+legacy ``PermissionGroup`` path.
 """
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
@@ -15,7 +16,7 @@ from shelters.groups import SHELTER_OPERATOR
 from .baker_recipes import organization_recipe
 
 
-class OrgRoleManagerDualWriteTestCase(TestCase):
+class OrgRoleManagerGrantTestCase(TestCase):
     def setUp(self) -> None:
         self.user = baker.make(User)
         # A shelter-preset org has a "Shelter Operator" PermissionGroup, and the
@@ -33,13 +34,13 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
     def _shelter_operator_role(self) -> Role:
         return Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)
 
-    def test_add_roles_mirrors_a_role_backed_membership_as_a_grant(self) -> None:
+    def test_add_roles_writes_only_a_grant_for_a_role_backed_template(self) -> None:
         self.manager.add_roles(self.user, SHELTER_OPERATOR)
 
         grant = Grant.objects.get(principal_user=self.user, scope_org=self.org)
         self.assertEqual(grant.role, self._shelter_operator_role())
-        # The legacy membership is still written too (dual-write).
-        self.assertTrue(
+        # Teardown: no legacy PermissionGroup membership is written.
+        self.assertFalse(
             self.user.groups.filter(
                 permissiongroup__organization=self.org,
                 permissiongroup__template__name=SHELTER_OPERATOR.name,
