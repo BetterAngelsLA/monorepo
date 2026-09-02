@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 
 from common.permissions.selectors import visible
 from common.utils import get_by_pk_or_not_found
-from django.db.models import Exists, OuterRef, QuerySet
-from organizations.models import Organization
+from django.db.models import QuerySet
 from shelters.enums import StatusChoices
 
 if TYPE_CHECKING:
@@ -38,42 +37,16 @@ def shelter_list(
     return queryset.filter(is_private=False)
 
 
-def user_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to organizations that *user* is a member of.
-
-    Does NOT require a specific organization — used by global permission
-    checks (e.g., photo mutations using ``HasPerm``).
-    """
-    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user)))
-
-
-def operator_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-    organization_id: str,
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
-    user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-    return queryset.filter(Exists(user_orgs), organization_id=organization_id)
-
-
 # ── Queryset wrappers (hide organization_field) ───────────────────────────────
 
 
-def _single_permission(perms: list[str] | None, default: str) -> str:
+def _single_permission(perms: list[str]) -> str:
     """The one permission a shelter queryset authorizes with.
 
     ``visible`` takes a single permission; the legacy ``permissioned_queryset``
     accepted a list (AND).  Every shelter caller passes exactly one
     (VIEW/CHANGE/DELETE) — refuse more rather than silently check only the first.
     """
-    if perms is None:
-        return default
     if len(perms) != 1:
         raise ValueError("shelter querysets authorize exactly one permission; got {len(perms)}.")
     return perms[0]
@@ -84,9 +57,9 @@ def shelter_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str] | None = None,
+    perms: list[str],
 ) -> "QuerySet[Shelter]":
-    """The shelters *user* may exercise *perms* (VIEW by default) on.
+    """The shelters *user* may exercise *perms* on.
 
     Wraps :func:`common.permissions.selectors.visible` — the org filter comes
     from the user's Grants, and *organization_id* only confines finite scopes
@@ -97,8 +70,7 @@ def shelter_queryset(
 
     if queryset is None:
         queryset = Shelter.objects.all()
-    perm = _single_permission(perms, Shelter.perms.VIEW)
-    return visible(queryset, user, perm, in_org=organization_id)
+    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
 
 
 def room_queryset(
@@ -106,9 +78,9 @@ def room_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str] | None = None,
+    perms: list[str],
 ) -> "QuerySet[Room]":
-    """The rooms *user* may exercise *perms* (VIEW by default) on.
+    """The rooms *user* may exercise *perms* on.
 
     Wraps :func:`common.permissions.selectors.visible` (rooms reach their org
     through ``shelter``); *organization_id* only confines finite scopes
@@ -119,8 +91,7 @@ def room_queryset(
 
     if queryset is None:
         queryset = Room.objects.all()
-    perm = _single_permission(perms, Room.perms.VIEW)
-    return visible(queryset, user, perm, in_org=organization_id)
+    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
 
 
 def bed_queryset(
@@ -128,9 +99,9 @@ def bed_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str] | None = None,
+    perms: list[str],
 ) -> "QuerySet[Bed]":
-    """The beds *user* may exercise *perms* (VIEW by default) on.
+    """The beds *user* may exercise *perms* on.
 
     Wraps :func:`common.permissions.selectors.visible` (beds reach their org
     through ``shelter``); *organization_id* only confines finite scopes
@@ -141,8 +112,7 @@ def bed_queryset(
 
     if queryset is None:
         queryset = Bed.objects.all()
-    perm = _single_permission(perms, Bed.perms.VIEW)
-    return visible(queryset, user, perm, in_org=organization_id)
+    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
 
 
 def reservation_queryset(
@@ -150,9 +120,9 @@ def reservation_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str] | None = None,
+    perms: list[str],
 ) -> "QuerySet[Reservation]":
-    """The reservations *user* may exercise *perms* (VIEW by default) on.
+    """The reservations *user* may exercise *perms* on.
 
     Wraps :func:`common.permissions.selectors.visible` — a reservation reaches
     its org through either ``bed`` or ``room`` (both org paths are derived from
@@ -164,8 +134,7 @@ def reservation_queryset(
 
     if queryset is None:
         queryset = Reservation.objects.all()
-    perm = _single_permission(perms, Reservation.perms.VIEW)
-    return visible(queryset, user, perm, in_org=organization_id)
+    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
@@ -176,12 +145,13 @@ def shelter_get(
     user: "User",
     shelter_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Shelter":
     """Return the shelter scoped to *organization_id* for *user*.
 
-    When *permission* is provided, org membership AND the permission are
-    checked in a single query.
+    The row must sit in *organization_id* AND *user* must hold *permission*
+    there (single query) — an unauthorized row is indistinguishable from a
+    missing one (ADR 0001 §2.6).
     """
     from shelters.models import Shelter
 
@@ -190,7 +160,7 @@ def shelter_get(
             Shelter.objects.all(),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            perms=[permission],
         ),
         pk=shelter_id,
     )
@@ -201,9 +171,9 @@ def room_get(
     user: "User",
     room_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Room":
-    """Return the room scoped to *organization_id* for *user*."""
+    """Return the room scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
     from shelters.models import Room
 
     return get_by_pk_or_not_found(
@@ -211,7 +181,7 @@ def room_get(
             Room.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            perms=[permission],
         ),
         pk=room_id,
     )
@@ -222,9 +192,9 @@ def bed_get(
     user: "User",
     bed_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Bed":
-    """Return the bed scoped to *organization_id* for *user*."""
+    """Return the bed scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
     from shelters.models import Bed
 
     return get_by_pk_or_not_found(
@@ -232,7 +202,7 @@ def bed_get(
             Bed.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            perms=[permission],
         ),
         pk=bed_id,
     )
@@ -243,7 +213,7 @@ def reservation_get(
     user: "User",
     organization_id: str,
     reservation_id: int | str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Reservation":
     """Return the reservation scoped to *organization_id* for *user*.
 
@@ -258,7 +228,7 @@ def reservation_get(
             Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            perms=[permission],
         ),
         pk=reservation_id,
     )
