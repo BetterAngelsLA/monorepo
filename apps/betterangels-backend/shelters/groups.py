@@ -82,6 +82,24 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.CHANGE,
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
+        # ── Django admin: organization management ──
+        # GLOBAL_SHELTER_OPERATOR replaced the legacy global "Shelter Data
+        # Entry" / "Shelter Administration" auth groups (migration
+        # 0003_consolidate_shelter_operator), whose staff add and edit
+        # Organization rows in the Django admin.  The org-scoped GSO
+        # PermissionGroup *is* an auth.Group, so ``ModelBackend`` reads these
+        # permissions globally for any BA staff member holding it — exactly as
+        # it already does for the ``shelters.*`` perms below.  Without them
+        # those staff get a 403 on /admin/organizations/organization/.
+        # Deliberately scoped to add/change/view: deleting an org, or
+        # hand-editing its role (PermissionGroup) rows, stays superuser work.
+        "organizations.add_organization",
+        "organizations.change_organization",
+        "organizations.view_organization",
+        "organizations.view_organizationuser",
+        "accounts.add_organizationprofile",
+        "accounts.change_organizationprofile",
+        "accounts.view_organizationprofile",
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
         ClientProfile.perms.VIEW,
