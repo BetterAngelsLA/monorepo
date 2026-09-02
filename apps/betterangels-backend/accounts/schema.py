@@ -17,7 +17,7 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 
 from accounts.emails import base_url_for, send_welcome_emails_for_org
-from accounts.extensions import HasOrgPermOrGrant, HasPermOrGrant
+from accounts.extensions import HasOrgPerm, HasPermOrGrant
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org_dual
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
@@ -237,7 +237,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.ADD_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
@@ -271,7 +271,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
     )
     def remove_organization_member(
         self,
@@ -315,7 +315,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
     )
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput

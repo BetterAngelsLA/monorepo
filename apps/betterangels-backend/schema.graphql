@@ -1,7 +1,7 @@
 """
-Requires the user to hold the permission(s) in the organization (legacy group or grant) set via X-Organization-ID header.
+Requires the user to hold the specified permission(s) in the organization set via X-Organization-ID header.
 """
-directive @hasOrgPermOrGrant(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 """
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
@@ -1540,10 +1540,10 @@ type Mutation {
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   updateUserProfile(data: UpdateUserProfileInput!): UpdateUserProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasOrgPermOrGrant(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
-  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasOrgPermOrGrant(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
+  removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "remove_org_member"}], any: true)
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
-  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasOrgPermOrGrant(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
+  changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload! @hasOrgPerm(permissions: [{app: "organizations", permission: "change_org_member_role"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1594,9 +1594,9 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
-  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "add_team"}], any: true)
-  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "change_team"}], any: true)
-  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPermOrGrant(permissions: [{app: "teams", permission: "delete_team"}], any: true)
+  createTeam(data: CreateTeamInput!): CreateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "add_team"}], any: true)
+  updateTeam(data: UpdateTeamInput!): UpdateTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "change_team"}], any: true)
+  deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload!
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
   createRoom(data: CreateRoomInput!): CreateRoomPayload!
@@ -2091,7 +2091,7 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPermOrGrant(permissions: [{app: "reports", permission: "view_reports"}], any: true)
+  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!

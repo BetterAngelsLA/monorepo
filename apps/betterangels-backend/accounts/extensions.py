@@ -23,8 +23,7 @@ Or with django-codename strings::
 from collections.abc import Callable
 from typing import Any, cast
 
-from accounts.models import Organization, User
-from common.permissions.utils import permissioned_queryset
+from accounts.models import User
 from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
@@ -35,26 +34,24 @@ from strawberry_django.utils.typing import UserType
 
 
 class HasOrgPerm(HasPerm):
-    """Validates permissions on the request's active organization.
+    """Transitional org-scoped permission (ADR 0001 §5.3): legacy OR grant.
 
     Reads ``info.context.request.organization_id`` (set by
-    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header)
-    and checks that the authenticated user holds the requested
-    permission(s) within that organization via a single query.
+    ``OrganizationMiddleware`` from the ``X-Organization-ID`` header) and checks
+    the user holds the permission(s) in that organization through the single
+    transition seam, :func:`common.permissions.selectors.has_authority` — the
+    legacy org-scoped check while the authority template is still legacy, then
+    the grant predicate (``can()``) once the template is role-backed and
+    backfilled.
 
-    Delegates to ``permissioned_queryset`` so the permission-checking
-    SQL is shared with ``get_queryset`` hooks and selectors.
-
-    Defaults ``fail_silently=False`` so that permission denials raise
-    rather than silently returning empty results.
-
-    Honors the parent ``any_perm`` flag:
+    ``fail_silently=False``: permission denials raise rather than silently
+    returning empty results.  Honors the parent ``any_perm`` flag:
     - ``any_perm=True`` (default): user must hold at least one of the given perms.
     - ``any_perm=False``: user must hold **all** of the given perms.
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header."
+        "Requires the user to hold the specified permission(s) in the organization set via X-Organization-ID header."
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -85,115 +82,39 @@ class HasOrgPerm(HasPerm):
         if not self.perms:
             raise DjangoNoPermission("No permissions specified for this operation.")
 
-        has_perm = permissioned_queryset(
-            Organization.objects.all(),
-            user=user,
-            organization_id=org_id,
-            perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
-            any_perm=self.any_perm,
-            organization_field="pk",
-        ).exists()
-
-        if not has_perm:
-            raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
-
-        return resolver()
-
-
-class HasOrgPermOrGrant(HasPerm):
-    """Transitional (ADR 0001 §5.3): legacy org-scoped perm OR the grant predicate.
-
-    Used while an authority template — ``ORG_ADMIN`` / ``ORG_SUPERUSER`` — is still
-    legacy.  The legacy arm (``permissioned_queryset``, exactly what ``HasOrgPerm``
-    checks) preserves today's behavior; the grant arm (``can()``) is the end-state
-    authority and stays dormant until the §5.3 provisioning PR role-backs the
-    template and backfills Grants.
-
-    The legacy arm runs first: it is today's authority and costs the same single
-    query ``HasOrgPerm`` already made, so the common path's query count is
-    unchanged.  Delete this extension in the provisioning PR — the predicate stays
-    pure-grant; only consumers carry the transitional arm.
-    """
-
-    SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to hold the permission(s) in the organization (legacy group or grant) "
-        "set via X-Organization-ID header."
-    )
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault("fail_silently", False)
-        kwargs.setdefault(
-            "message",
-            "You do not have permission to perform this action in this organization.",
-        )
-        super().__init__(*args, **kwargs)
-
-    def resolve_for_user(
-        self,
-        resolver: Callable,
-        user: UserType | None,
-        *,
-        info: Info,
-        source: Any,
-    ) -> Any:
-        if not user or not user.is_authenticated:
-            raise DjangoNoPermission("Authentication required.")
-
-        org_id_raw = info.context.request.organization_id
-
-        if org_id_raw is None:
-            raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
-        org_id = str(org_id_raw)
-
-        if not self.perms:
-            raise DjangoNoPermission("No permissions specified for this operation.")
+        from common.permissions.selectors import permitted_org
 
         perm_strings = [f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms]
+        user_model = cast(User, user)
 
-        legacy_ok = permissioned_queryset(
-            Organization.objects.all(),
-            user=user,
-            organization_id=org_id,
-            perms=perm_strings,
-            any_perm=self.any_perm,
-            organization_field="pk",
-        ).exists()
+        if self.any_perm:
+            ok = any(permitted_org(user_model, perm, org_id=org_id) is not None for perm in perm_strings)
+        else:
+            ok = all(permitted_org(user_model, perm, org_id=org_id) is not None for perm in perm_strings)
 
-        grant_ok = False
-        if not legacy_ok:
-            from common.permissions.selectors import can
-
-            org_int = int(org_id)
-            user_model = cast(User, user)
-            if self.any_perm:
-                grant_ok = any(can(user_model, perm, org=org_int) for perm in perm_strings)
-            else:
-                grant_ok = all(can(user_model, perm, org=org_int) for perm in perm_strings)
-
-        if not (legacy_ok or grant_ok):
+        if not ok:
             raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
 
         return resolver()
 
 
 def _legacy_or_grant_perm_checker(info: Info, user: UserType) -> Callable[[PermDefinition], bool]:
-    """Global ``has_perm`` OR grant-anywhere (ADR 0001 §5.3, transitional).
+    """Global ``has_perm`` OR grant-anywhere — the member-query anywhere tier.
 
-    Mirrors strawberry_django's default checker but also accepts the grant arm:
-    Grants do not feed ``has_perm``, and the member-management permissions ride
-    the still-legacy ``ORG_ADMIN`` / ``ORG_SUPERUSER`` templates, so a
-    grant-only holder must be authorized through ``can_anywhere()``.
+    Mirrors strawberry_django's default checker but accepts the grant arm via
+    :func:`common.permissions.selectors.has_authority_anywhere`: Grants do not
+    feed ``has_perm``, and ``view_org_members`` rides the still-legacy
+    ``ORG_ADMIN`` / ``ORG_SUPERUSER`` templates, so a grant-only holder must be
+    authorized through ``can_anywhere()``.  Deleted at phase 5.
     """
     user_model = cast(User, user)
 
     def perm_checker(perm: PermDefinition) -> bool:
         if not perm.permission:
             return user_model.has_module_perms(str(perm.app))
-        if user_model.has_perm(perm.perm):
-            return True
-        from common.permissions.selectors import can_anywhere
+        from common.permissions.selectors import has_authority_anywhere
 
-        return can_anywhere(user_model, perm.perm)
+        return has_authority_anywhere(user_model, perm.perm)
 
     return perm_checker
 
