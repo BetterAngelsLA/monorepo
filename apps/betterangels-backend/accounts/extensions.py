@@ -29,6 +29,7 @@ from strawberry.types import Info
 from strawberry_django.permissions import (
     DjangoNoPermission,
     HasPerm,
+    PermDefinition,
 )
 from strawberry_django.utils.typing import UserType
 
@@ -124,3 +125,31 @@ class HasOrgPerm(HasPerm):
             raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
 
         return resolver()
+
+
+def legacy_or_grant_perm_checker(info: Info, user: UserType) -> Callable[[PermDefinition], bool]:
+    """Global ``has_perm`` OR grant-anywhere (ADR 0001 §5.3, transitional).
+
+    Mirrors strawberry_django's default checker but also accepts the grant arm:
+    Grants do not feed ``has_perm``, and the member-management permissions ride
+    the still-legacy ``ORG_ADMIN`` / ``ORG_SUPERUSER`` templates, so a
+    grant-only holder must be authorized through ``can_anywhere()``.
+
+    Pass this to the stock ``HasPerm`` (``perm_checker=...``) rather than a
+    subclass: a subclass would mint its own ``@hasPermOrGrant`` schema
+    directive, churning ``schema.graphql`` and the frontend types for a
+    transitional seam.  ``HasPerm`` keeps the ``@hasPerm`` directive either
+    way, so the schema stays stable through the slice.
+    """
+    user_model = cast(User, user)
+
+    def perm_checker(perm: PermDefinition) -> bool:
+        if not perm.permission:
+            return user_model.has_module_perms(str(perm.app))
+        if user_model.has_perm(perm.perm):
+            return True
+        from common.permissions.selectors import can_anywhere
+
+        return can_anywhere(user_model, perm.perm)
+
+    return perm_checker

@@ -15,11 +15,11 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm
 
 from accounts.emails import base_url_for, send_welcome_emails_for_org
-from accounts.extensions import HasOrgPerm
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
+from accounts.extensions import HasOrgPerm, legacy_or_grant_perm_checker
+from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org_dual
+from strawberry_django.permissions import HasPerm
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
 from .models import Organization, PermissionGroup, User
@@ -67,11 +67,11 @@ class Query:
     # they're applied automatically and not duplicated in every resolver.
     @strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
+        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS, perm_checker=legacy_or_grant_perm_checker)],
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
+        organization = get_user_permitted_org_dual(
             current_user,
             org_id=organization_id,
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
@@ -97,7 +97,7 @@ class Query:
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
+        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS, perm_checker=legacy_or_grant_perm_checker)],
     )
     def organization_members(
         self,
@@ -109,7 +109,7 @@ class Query:
         permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org(
+        organization = get_user_permitted_org_dual(
             current_user,
             org_id=organization_id,
             permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
@@ -220,7 +220,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER, also_grant=True)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
@@ -254,7 +254,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER, also_grant=True)],
     )
     def remove_organization_member(
         self,
@@ -298,7 +298,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE, also_grant=True)],
     )
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
