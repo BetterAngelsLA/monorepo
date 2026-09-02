@@ -62,6 +62,24 @@ global — the modern GSO; `accounts/groups.py`: `ORG_ADMIN_ROLE` /
 SHARED vs org-owned vs per-record, per model) is designed in RFC 0002
 (`docs/adr/0002-client-writes-ownership.md`).
 
+## Terminology (one line each)
+
+| Term | Meaning | Full design |
+|---|---|---|
+| **RoleDef** | the code declaration of a role: a name + its permission list + whether it is global | ADR §2.2 |
+| **Role** | the `RoleDef` materialized as a DB row by `sync_roles` | ADR §2.2 |
+| **Grant** | the **only** scoped authority row: *who holds which role where* (principal = user or org; scope = org or object) | ADR §2.2 |
+| **global tier** | a global `Role` held directly in `user.groups` (never a `Grant`); reach = every row of every permitted model (`ALL`) | ADR §2.1/§2.4 |
+| **org tier** | a `Grant` at an organization; reach = rows whose org is in `scopes()` | ADR §2.4 |
+| **object arm** | a `Grant` on a single record; per-record sharing, user-principal only, whitelist-gated | ADR §2.5 |
+| **delegation** | an org-principal `Grant`: org A holds role R *at* org B, so A's members who hold R at A act at B (one hop, role-keyed, no amplification) | ADR §2.2/§3, §2.9 Ex. 4 |
+| **`scopes()`** | the function that answers "where does this user hold this permission": `ALL` or a set of org ids | ADR §2.4 |
+| **`org_via`** | the per-model declaration of how a row reaches an org (`()` = own FK; hop tuples; `None` = platform-shared) | ADR §2.3 |
+| **read/write tier** | the per-model choice of read scope (`SHARED`/`ORG`) and write scope (`SHARED`/`ORG`/`CREATOR`/`UPLOADER`/`OBJECT`) | RFC 0002 |
+
+End-to-end traces of these pieces working together — shelter operator, global + read-only
+roles, cross-org caseworkers, delegation, object grant — are in **ADR §2.9 worked examples**.
+
 ## The path — PR #2409 onward
 
 Every PR is based on the previous branch (a linear stack; `#2409` bases `main`).
@@ -105,8 +123,10 @@ deleted, not merged as separate PRs.
 
 ## Reading order
 
-1. This overview.
+1. This overview — the terminology table above; **ADR §2.9** has the concrete traces.
 2. `docs/adr/0001-grant-based-authorization.md` — design, rules, migration plan.
+   New reader: start at **§2.9 worked examples** (roles/grants/delegation resolved
+   for real people and orgs), then read §2 for the formal mechanics.
 3. `docs/grant-migration-merge-guide.md` — per-PR review focus (written as the stack
    matures; later PRs carry the current version).
 4. RFC 0002 / RFC 0003 (`docs/adr/0002-…`, `0003-…`) — the gated cutovers.

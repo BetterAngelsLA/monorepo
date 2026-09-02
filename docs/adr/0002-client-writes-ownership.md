@@ -25,7 +25,8 @@ advanced cells are expressible later without re-architecture.** Each content typ
 "main today" cell (verified against `origin/main`) is the parity target the cutover must
 preserve; its "product target" cell is a future narrow that is *expressible but not
 activated* until product asks. No behavior change ships in the cutover; every future
-narrow is a later, deliberate tier-table change.
+narrow is a later, deliberate tier-table change. The underlying mechanics — roles,
+grants, `scopes()`, delegation — are traced for real people and orgs in ADR 0001 §2.9.
 
 Verified matrix (`main today` read from the code paths cited; product target from
 product/BA, 2026-09-02):

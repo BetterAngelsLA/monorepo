@@ -39,7 +39,9 @@ over at all.
 ## Target model
 
 End-state authority (the same shape ADR 0001 designs for the shelter and
-org-admin cutovers, which ship earlier in this stack):
+org-admin cutovers, which ship earlier in this stack). A concrete trace of this exact
+scenario — caseworkers in orgs A and B read everyone's notes but write only their own
+org's — is **ADR 0001 §2.9 Example 3**:
 
 1. **Org-owned rows** — CHANGE/DELETE ride the org role, org-scoped. The row's
    own `organization` FK is the anchor (`org_via = ()`, `OrgScoped`): a
