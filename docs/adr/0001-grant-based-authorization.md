@@ -448,7 +448,7 @@ still needs at its cutover:
 | **Teams** | `Team.organization` | `()` | legacy `@hasOrgPerm` (perms on `ORG_ADMIN`) | `OrgScoped` + `can()`/`visible()` (domain path is clean — no guardian rows) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
 | **Reports** | report row `.organization` | `()` | legacy `@hasOrgPerm` (`view_reports`, on `ORG_ADMIN`) | org-scoped role perms (domain path is clean) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
-| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy guardian per-record | `can_obj` fail-closed (#2421) + ownership (`created_by_org` or object grants) | §5.1 / RFC 0002 (product decision) |
+| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
 | **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | global Roles (GSO) | stays on the global tier — never org-scoped | None — by design |
 
