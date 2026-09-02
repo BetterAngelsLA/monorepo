@@ -437,20 +437,36 @@ still needs at its cutover:
 
 | Domain | Model path | `org_via` at cutover | Current authority | Migration shape | Gate |
 |---|---|---|---|---|---|
-| **Tasks** | `Task.organization` | `("organization",)` | legacy template + guardian rows at creation | org-scoped role perms; guardian rows → teardown | Mechanical |
-| **Referrals** | `Referral.organization` (+ shelter) | `("organization",)` / + `("shelter",)` | legacy + guardian rows at creation | org-scoped role perms | Mechanical |
-| **Teams** | `Team.organization` | `("organization",)` | legacy `@hasOrgPerm` | org-scoped role perms | Mechanical |
-| **Reports** | report row `.organization` | `("organization",)` | legacy `@hasOrgPerm` (`view_reports`) | org-scoped role perms | Mechanical |
+| **Tasks** | `Task.organization` | `("organization",)` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Referrals** | `Referral.organization` (+ shelter) | `("organization",)` / + `("shelter",)` | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Teams** | `Team.organization` | `("organization",)` | legacy `@hasOrgPerm` (perms on `ORG_ADMIN`) | `OrgScoped` + `can()`/`visible()` (domain path is clean — no guardian rows) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
+| **Reports** | report row `.organization` | `("organization",)` | legacy `@hasOrgPerm` (`view_reports`, on `ORG_ADMIN`) | org-scoped role perms (domain path is clean) | **Blocked on §5.3** — authority rides the legacy `ORG_ADMIN` template |
 | **Notes** | `Note.organization` | `("organization",)` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
 | **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy guardian per-record | `can_obj` fail-closed (#2421) + ownership (`created_by_org` or object grants) | §5.1 / RFC 0002 (product decision) |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
 | **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | global Roles (GSO) | stays on the global tier — never org-scoped | None — by design |
 
-Mechanical cutovers (tasks/referrals/teams/reports) follow the shelter playbook:
-declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in services/schema,
-drop legacy directives, regenerate schema + FE types. The two non-mechanical domains
-(notes §5, clients §5.1) are the phase-4 design work; nothing in the predicate blocks
-them once those designs land.
+"Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
+written at creation, so no §5-style redesign of CHANGE/DELETE semantics is needed.
+Two distinct gates still block a cutover:
+
+- **Tasks / Referrals** write guardian rows at creation (`assign_object_permissions`),
+  the same over-permission pattern as notes §5: promoting CHANGE/DELETE onto the org
+  role lets every role-holder at the org mutate every row in the org's scope, including
+  cross-org rows the org should only view. They need the §5-equivalence design first.
+- **Teams / Reports** have clean domain paths but their permissions live on the legacy
+  `ORG_ADMIN` / `ORG_SUPERUSER` templates (§5.3). The grant predicate reads *Grants
+  only*, and a scoped `Role` row does not exist for those templates, so no holder has a
+  Grant for `add_team`/`view_reports` today. Cutting the read path over without first
+  role-backing `ORG_ADMIN` would strip authority from every org admin at every org
+  (shelter *and* outreach). They land atomically inside the §5.3 milestone, not as
+  standalone cutovers.
+
+The shelter playbook (declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in
+services/schema, drop legacy directives, regenerate schema + FE types) applies once a
+domain's authority template is role-backed. The non-mechanical / blocked domains
+(notes §5, clients §5.1, tasks/referrals §5, teams/reports §5.3) are the phase-4
+design work; nothing in the predicate blocks them once those designs land.
 
 ## 5. Notes / guardian migration (phase-4 design, finding F23)
 
@@ -531,6 +547,93 @@ anchors org-scoped writes; object grants anchor shared edits). The hygiene items
 the adversarial review (global-role write guards on `grant_create`/`grant_delegate`,
 ADR-vs-code `OBJECT_ARM_ENABLED` drift) are fixed during the cutover wave, because the
 cutover touches those exact code paths.
+
+### 5.3 Org-admin role-backed milestone — teams, reports, and member management land together
+
+Teams and reports look like the cleanest cutovers (§4.1): org-scoped rows, no guardian
+rows at creation, pure `@hasOrgPerm`. They are not standalone, because **their
+permissions ride the `ORG_ADMIN` / `ORG_SUPERUSER` templates** (`accounts/groups.py`),
+which are legacy and cross-domain:
+
+- `ORG_ADMIN` carries the team perms (`Team.perms.ADD/CHANGE/DELETE/VIEW`), the report
+  perm (`ReportPermissions.VIEW_REPORTS`), the member-management perms
+  (`ADD_ORG_MEMBER`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS`) and
+  `ACCESS_ORG_PORTAL`; `ORG_SUPERUSER` adds `CHANGE_ORG_MEMBER_ROLE`. Both templates
+  are offered by **every** org type (`outreach` and `shelter`).
+- No scoped `Role` row exists for either template, so **no holder has a Grant** for any
+  of those perms; authority today is the legacy `PermissionGroup` membership read by
+  `HasOrgPerm` → `permissioned_queryset`.
+- The grant predicate reads Grants only (`scopes()`/`visible()`/`can()`, §2.4).
+  Flipping teams (or reports, or member management) to `can()`/`visible()` before
+  `ORG_ADMIN` is role-backed therefore returns *nothing* for every current org admin —
+  the cutover would delete authority rather than move it.
+
+Role-backing is all-or-nothing per template: the moment a scoped `Role` row named
+"Organization Admin" exists, `reconcile_org_groups` stops creating its legacy
+`PermissionGroup` and deletes stale rows (PR #2416), so **every** consumer of every
+`ORG_ADMIN` perm loses its legacy read in the same deploy. The milestone must convert
+them all atomically:
+
+1. **RoleDefs** — `ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)` and
+   `ORG_SUPERUSER_ROLE` (scoped, not global), registered with the shelter roles.
+2. **Backfill** — for every org (shelter and outreach), convert existing
+   `ORG_ADMIN`/`ORG_SUPERUSER` `PermissionGroup` memberships into Grants
+   (idempotent, mirroring `backfill_shelter_grants`), run before `reconcile` deletes
+   the legacy rows.
+3. **Authority conversion in the same change set** (each domain's path is otherwise
+   clean and follows the shelter playbook):
+   - **Teams** — `Team` declares `OrgScoped` with `org_via = ("organization",)`;
+     `teams/selectors.py` and `teams/schema.py` move from `team_list(organization)`
+     + `HasOrgPerm` to `visible()`/`can()`, with the org from the header and
+     per-row `can_obj`-style checks on update/delete; drop the legacy directives.
+   - **Reports** — read gate (`view_reports`) moves from `HasOrgPerm` /
+     `get_user_permitted_org` to `can()`/`visible()`.
+   - **Member management** — the `accounts` mutations gated on
+     `ADD_ORG_MEMBER`/`REMOVE_ORG_MEMBER`/`CHANGE_ORG_MEMBER_ROLE`/`VIEW_ORG_MEMBERS`
+     move to `can()`; member add/remove/role-change flows already write Grants for
+     role-backed templates via `OrgRoleManager`, so this is the read-side flip.
+   - **FE** — no new surfacing work: tier 2 (`organizationsOrganization[].permissions`,
+     §5.2) already unions Grant role perms per org, so the admin app's org-scoped
+     gates keep working once holders have Grants.
+4. **Tests** — mirror the shelter cutover suite (`test_grant_cutover.py`): global-tier
+   cross-org reads, grant-only org admin without legacy group still manages teams /
+   members / reports, and the legacy-group-only holder (a `PermissionGroup` row left
+   by a pre-backfill org) fails closed.
+
+Why this is a milestone and not a "teams PR": the change set is *one template* —
+`ORG_ADMIN`/`ORG_SUPERUSER` — cut over across its four consumers. Doing teams alone
+either leaves the legacy group in place (predicate still returns nothing → broken) or
+role-backs the template (members + reports break in the same deploy). It is scheduled
+after the tasks/referrals §5-equivalence design only because that design is orthogonal
+and already on the critical path for notes/clients; it can land in either order.
+
+**Reviewability — the milestone ships as a stacked series, not one PR.** A single
+large PR is risky to review, but the milestone cannot be split naively: the moment a
+scoped `Role` row named "Organization Admin" exists, `reconcile_org_groups` retires
+the legacy groups and every unconverted consumer breaks (above). So each consumer is
+converted *ahead* of the Role rows behind a **transitional dual-read**: the mutation
+passes if the user holds the permission via the grant predicate (`can()`, §2.4) **or**
+via the legacy org-scoped check (`permissioned_queryset` — exactly what `HasOrgPerm`
+checks today). Each PR is green alone: the legacy arm is current behavior, and the
+grant arm is dormant until Role rows + backfill land. The stack:
+
+1. **Teams** — a `HasOrgPermOrGrant` extension on the three team mutations (+ tests:
+   a legacy `ORG_ADMIN` holder still passes; a scoped-Grant holder passes with no
+   legacy group; neither is denied; a Grant at org A does not authorize acting at
+   org B). The teams *query* stays membership-gated — workers pick teams for
+   notes/tasks, so org members may read their org's teams (unchanged).
+2. **Reports** — `view_reports` reads dual.
+3. **Member management** — the four `accounts` member permissions read dual.
+4. **Provisioning** — `ORG_ADMIN`/`ORG_SUPERUSER` RoleDefs + Role rows + backfill
+   converting every existing org's admin `PermissionGroup` memberships into Grants;
+   remove the legacy arms from (1)–(3) and retire the templates (reconcile deletes
+   the legacy groups once the Role rows exist); tests go grant-only.
+
+The dual-read helper is temporary by construction — deleted in step 4 — and the
+predicate itself stays pure-grant throughout; only the *consumers* carry the
+transitional arm. Schema directives change name as extensions are swapped
+(`@hasOrgPerm` → `@hasOrgPermOrGrant` → none), so `schema.graphql` + FE types are
+regenerated at each step.
 
 ## 6. References
 
