@@ -1,3 +1,4 @@
+from accounts.models import OrganizationProfile
 from clients.models import ClientProfile
 from common.models import Address
 from common.permissions.config import TemplateConfig
@@ -83,13 +84,15 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
         # ── Django admin: organization management ──
+        # Default perms on the django-organizations models, which declare no
+        # ``perms`` PermissionSet, so they are named as ``app.codename`` strings.
         "organizations.add_organization",
         "organizations.change_organization",
         "organizations.view_organization",
         "organizations.view_organizationuser",
-        "accounts.add_organizationprofile",
-        "accounts.change_organizationprofile",
-        "accounts.view_organizationprofile",
+        OrganizationProfile.perms.ADD,
+        OrganizationProfile.perms.CHANGE,
+        OrganizationProfile.perms.VIEW,
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
         ClientProfile.perms.VIEW,
