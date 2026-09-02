@@ -41,9 +41,12 @@ merged branch) and resolve.
 
 1. Decide RFC 0002 / ADR §7.6 (per-model read/write tiers for clients; parity-first
    cutover, owner-tier parked) with product — gates clients/HMIS.
-2. Mechanical cutovers in ADR §4.1 order: tasks → referrals → teams → reports (shelter
-   playbook).
-3. Clients/notes cutovers (§5/§5.1), then phase-5 teardown (`PermissionGroup` removal +
-   `has_perm` collapse).
+2. **§5.3 org-admin role-backed milestone** — `ORG_ADMIN`/`ORG_SUPERUSER` become
+   scoped Roles with backfill; teams, reports, and member management convert to the
+   grant selectors atomically (their perms ride that one legacy template — see
+   ADR §4.1/§5.3; not standalone cutovers).
+3. Tasks/referrals cutover after the §5-equivalence design (guardian-at-creation —
+   not mechanical), then clients/notes (§5/§5.1), then phase-5 teardown
+   (`PermissionGroup` removal + `has_perm` collapse).
 
 Full details: `docs/adr/0001-grant-based-authorization.md`, RFC `docs/adr/0002-client-writes-ownership.md`.
