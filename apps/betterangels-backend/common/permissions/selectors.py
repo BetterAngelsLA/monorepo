@@ -26,6 +26,74 @@ if TYPE_CHECKING:
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
 
+OBJECT_ARM_ENABLED = True
+"""Object-grant arm (ADR 0001 §2.5) — on with its first consumer (clients).
+
+Only whitelisted models are object-grantable (``permissions.E003``), so the arm
+is a no-op for every other model; it is safe to leave on.
+"""
+
+
+def _object_grant_ancestors(model: Any) -> list[tuple[str, type["Model"]]]:
+    """(FK lookup path to parent id, parent model) for every object-grantable ancestor.
+
+    Derived from ``org_via`` (ADR 0001 §2.3): an object grant on an ancestor —
+    e.g. a Shelter — covers its descendants (beds, rooms, ...) through their FK
+    paths.  A non-``OrgScoped`` hop is skipped defensively.
+    """
+    results: list[tuple[str, type["Model"]]] = []
+    for hop in model.org_via or ():
+        field = model._meta.get_field(hop)
+        target = field.related_model
+        if target is None:
+            continue
+        results.append((f"{field.name}_id", target))
+        for sub_path, sub_ct in _object_grant_ancestors(target):
+            results.append((f"{field.name}__{sub_path}", sub_ct))
+    return results
+
+
+def _object_grant_q(model: Any, user: "User", perm: str) -> Q:
+    """Q matching rows of *model* the user holds *perm* on via an object grant.
+
+    Direct — an object grant on the row itself — plus the cascade: an object
+    grant on an ancestor (an ``org_via`` hop target) covers descendants through
+    their FK paths (ADR 0001 §2.5, finding F17).  Grants are always scoped to
+    *user* (the principal).  Only whitelisted models are object-grantable, so
+    grants on non-whitelisted ancestors cannot exist and non-whitelisted models
+    fail closed.
+    """
+    from django.contrib.contenttypes.models import ContentType
+
+    from accounts.models import Grant
+    from common.permissions.object_grants import object_grant_whitelist
+
+    if not any(issubclass(model, cls) for cls in object_grant_whitelist()):
+        return Q(pk__lt=0)
+
+    roles = _roles_carrying_perm(perm)
+    direct_ct = ContentType.objects.get_for_model(model)
+    q = Q(
+        pk__in=Grant.objects.filter(
+            principal_user=user,
+            scope_object_type=direct_ct,
+            role__in=Subquery(roles),
+        ).values("scope_object_id")
+    )
+
+    for path, target in _object_grant_ancestors(model):
+        ct = ContentType.objects.get_for_model(target)
+        q |= Q(
+            **{
+                f"{path}__in": Grant.objects.filter(
+                    principal_user=user,
+                    scope_object_type=ct,
+                    role__in=Subquery(roles),
+                ).values("scope_object_id")
+            }
+        )
+    return q
+
 
 def _perm_parts(perm: str) -> tuple[str, str]:
     app_label, codename = perm.split(".", 1)
@@ -106,7 +174,11 @@ def scopes(user: "User", perm: str) -> Any:
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
         roles = _roles_carrying_perm(perm)
-        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
+        # Org-scope arm only: object grants (scope_org IS NULL) never feed the
+        # org filter — they are per-record and handled by the object arm.
+        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles), scope_org__isnull=False).values(
+            "scope_org"
+        )
 
         # Delegation: orgs where the user acts (member + holds a direct Grant
         # at that org) inherit that org's org→org delegations.  "Acts at B" is
@@ -122,9 +194,13 @@ def scopes(user: "User", perm: str) -> Any:
             .values("pk")
             .distinct()
         )
-        inherited = Grant.objects.filter(principal_org__in=Subquery(acting_at), role__in=Subquery(roles)).values(
-            "scope_org"
-        )
+        # Org-scope arm only on inherited delegations too: object grants
+        # (scope_org IS NULL) never feed the org filter.
+        inherited = Grant.objects.filter(
+            principal_org__in=Subquery(acting_at),
+            role__in=Subquery(roles),
+            scope_org__isnull=False,
+        ).values("scope_org")
 
         cache[perm] = mine.union(inherited)
     return cache[perm]
@@ -139,6 +215,12 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
     * org-scoped model — rows whose org is in *user*'s scopes.
     * model not declared ``OrgScoped`` — fails closed (no rows).
 
+    The object arm (ADR 0001 §2.5) is OR'd with the org filter in a single
+    ``filter``, so per-record object grants can add rows on top of a
+    deliberately-empty org scope.  ``pk__lt=0`` is the "impossible" condition —
+    it compiles to a normal always-false predicate instead of Django's
+    ``EmptyResultSet`` short-circuit, which would swallow the object arm.
+
     *in_org* confines the view to one organization, and only for finite scopes —
     a global holder is never org-confined by a stale header (ADR 0001 §2.4).
     """
@@ -152,16 +234,27 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
 
     if s is ALL:
         qs = qs
-    elif not paths:
-        # platform-shared: perm held anywhere (finite s) ⇒ all rows
-        qs = qs if s.exists() else qs.none()
-    elif s:
-        qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
     else:
-        qs = qs.none()
+        if not paths:
+            # platform-shared: perm held anywhere (finite s) ⇒ all rows (identity
+            # org filter), else nothing (``pk__lt=0`` — an always-false predicate
+            # that compiles normally, unlike Django's EmptyResultSet short-circuit).
+            org_q: Q | None = None if s.exists() else Q(pk__lt=0)
+        elif s:
+            org_q = reduce(or_, (Q(**{f"{p}__in": s}) for p in paths))
+        else:
+            org_q = Q(pk__lt=0)
 
-    if in_org is not None and s is not ALL and paths:
-        qs = qs.filter(reduce(or_, (Q(**{p: in_org}) for p in paths)))
+        if in_org is not None and paths and org_q is not None:
+            org_q &= reduce(or_, (Q(**{p: in_org}) for p in paths))
+
+        if org_q is None:
+            # Every row is already visible — the object arm cannot add more.
+            qs = qs
+        elif OBJECT_ARM_ENABLED:
+            qs = qs.filter(org_q | _object_grant_q(qs.model, user, perm))
+        else:
+            qs = qs.filter(org_q)
     return qs
 
 
@@ -176,8 +269,35 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
-    """The single-row check *is* the row filter, applied to one row."""
-    return visible(obj.__class__._base_manager.filter(pk=obj.pk), user, perm).exists()
+    """The single-row check *is* the row filter, applied to one row.
+
+    Org-scoped model — the row falls in the user's scopes (the ``visible`` org
+    filter on a one-row queryset).
+
+    Platform-shared model (``org_via = None``) — per-record authority comes
+    from the object arm (or the global tier), **not** from "holds the perm
+    anywhere".  The read rule (perm held anywhere ⇒ all rows) must not leak
+    into per-record writes: an org-grant holder of a client perm would
+    otherwise be able to CHANGE/DELETE *every* client (finding C1).  Write
+    services on platform-shared models must use ``can_obj`` (or the object
+    arm), never the read-side ``visible``, to load records for mutation.
+    """
+    from common.models import OrgScoped
+
+    model = obj.__class__
+    if not issubclass(model, OrgScoped):
+        return False
+
+    s = scopes(user, perm)
+    if s is ALL:
+        return True
+
+    if not model.org_paths():
+        # Platform-shared: an object grant on this row is the only scoped path
+        # (a non-whitelisted model fails closed — ``_object_grant_q`` is False).
+        return model._base_manager.filter(pk=obj.pk).filter(_object_grant_q(model, user, perm)).exists()
+
+    return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
 
 
 def can_anywhere(user: "User", perm: str) -> bool:
