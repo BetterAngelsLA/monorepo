@@ -148,11 +148,14 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
 def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
     """Clone an existing room, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.
-    Beds are not copied.
+    Scopes to *organization_id* where *user* is a member.  Beds are not copied.
+    Cloning creates a new room, so it follows the create convention (ADR 0001
+    §2.6): the source is resolved with view authority and create authority is
+    checked with ``can(user, Room.perms.ADD, org)``.
 
     Raises:
         ``ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     qs = room_queryset(
@@ -162,6 +165,10 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
         perms=[Room.perms.VIEW],
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
+
+    if not can(user, Room.perms.ADD, org=organization_id):
+        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),
