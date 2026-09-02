@@ -9,6 +9,7 @@ from typing import cast
 from accounts.admin import CustomOrganizationUserAdmin
 from accounts.groups import ORG_ADMIN
 from accounts.models import (
+    Grant,
     OrganizationProfile,
     OrgTypeChoices,
     PermissionGroup,
@@ -163,7 +164,9 @@ class OrganizationAdminTestCase(TestCase):
 
     def test_removing_an_org_type_deletes_its_groups_without_orphaning(self) -> None:
         organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
-        shelter_group = PermissionGroup.objects.get(organization=organization, template__name=SHELTER_OPERATOR.name)
+        # Simulate a pre-teardown org that still has the legacy Shelter Operator row.
+        template = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR.name)
+        shelter_group = PermissionGroup.objects.create(organization=organization, template=template)
         group_id = shelter_group.pk
 
         OrganizationProfile.objects.filter(organization=organization).update(org_types=[OrgTypeChoices.OUTREACH])
@@ -570,11 +573,17 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         self.organization = organization_recipe.make(preset_names=["outreach", "shelter"], owner_roles=())
 
     def _roles_of(self, member: User) -> set[str]:
-        return set(
+        legacy = set(
             PermissionGroup.objects.filter(organization=self.organization, user=member).values_list(
                 "template__name", flat=True
             )
         )
+        grants = set(
+            Grant.objects.filter(principal_user=member, scope_org=self.organization).values_list(
+                "role__name", flat=True
+            )
+        )
+        return legacy | grants
 
     def test_inviting_with_two_roles_grants_both(self) -> None:
         with self.captureOnCommitCallbacks(execute=True):
@@ -626,6 +635,45 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.context["form"].fields["permission_templates"].initial, [CASEWORKER.name])
+
+    def test_the_role_form_is_prefilled_with_a_grant_held_role(self) -> None:
+        """Teardown (ADR 0001 §4 phase 5): Shelter Operator has no legacy group —
+        the form must read the authoritative Grant or it looks unheld."""
+        member = member_add(
+            email="prefilled_grant@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].fields["permission_templates"].initial, [SHELTER_OPERATOR.name])
+
+    def test_a_no_op_save_of_the_role_form_keeps_a_grant_held_role(self) -> None:
+        """Regression: a form blind to Grants made saving look like unchecking the
+        role, silently revoking a Shelter Operator grant the page never showed."""
+        member = member_add(
+            email="noop_grant@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+        self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        prefilled = self.client.get(url).context["form"].fields["permission_templates"].initial
+        self.assertEqual(prefilled, [SHELTER_OPERATOR.name])
+
+        self.client.post(url, {"permission_templates": prefilled})
+
+        # The no-op save must not revoke the grant.
+        self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
 
     def test_clearing_every_role_is_allowed_and_leaves_membership(self) -> None:
         """A member with no roles is a real state — it is what Add member starts from."""
@@ -807,17 +855,35 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
         )
 
     def _holds(self, member: User, template: TemplateConfig) -> bool:
-        return PermissionGroup.objects.filter(
+        if PermissionGroup.objects.filter(
             organization=self.organization,
             template__name=template.name,
             user=member,
+        ).exists():
+            return True
+        return Grant.objects.filter(
+            principal_user=member,
+            scope_org=self.organization,
+            role__name=template.name,
         ).exists()
 
     def _holds_shelter_operator(self) -> bool:
-        return PermissionGroup.objects.filter(
+        if PermissionGroup.objects.filter(
             organization=self.organization,
             template__name=SHELTER_OPERATOR.name,
+        ).exists():
+            return True
+        return Grant.objects.filter(
+            scope_org=self.organization,
+            role__name=SHELTER_OPERATOR.name,
         ).exists()
+
+    def _stale_shelter_operator_group(self, member: User) -> PermissionGroup:
+        """A pre-teardown org row, to exercise the row-deletion route."""
+        template = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR.name)
+        group = PermissionGroup.objects.create(organization=self.organization, template=template)
+        member.groups.add(group)
+        return group
 
     def test_dropping_a_held_type_asks_first_and_changes_nothing(self) -> None:
         self._member_holding(SHELTER_OPERATOR, "losesit@example.com")
@@ -859,6 +925,7 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
     def test_deleting_a_role_row_asks_first_and_changes_nothing(self) -> None:
         """The quieter route: reconcile rebuilds the row, so the saved page looks untouched."""
         member = self._member_holding(SHELTER_OPERATOR, "row_delete@example.com")
+        self._stale_shelter_operator_group(member)
 
         response = self.client.post(
             self.url, self._payload(["outreach", "shelter"], **self._tick_delete(SHELTER_OPERATOR))
@@ -870,7 +937,12 @@ class OrganizationRoleLossConfirmationTestCase(TestCase):
         self.assertTrue(self._holds(member, SHELTER_OPERATOR))
 
     def test_confirming_a_row_deletion_goes_through(self) -> None:
-        member = self._member_holding(SHELTER_OPERATOR, "row_delete_ok@example.com")
+        # A member who holds the role ONLY through the stale legacy row — no
+        # Grant (a pre-teardown hold) — loses it when the row is confirmed gone.
+        member = baker.make(User)
+        self.organization.add_user(member)
+        self._stale_shelter_operator_group(member)
+        self.assertTrue(self._holds(member, SHELTER_OPERATOR))
 
         self.client.post(
             self.url,
@@ -1130,7 +1202,9 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
             username="admin_pg_delete", email="admin_pg_delete@example.com", password="password"
         )
         self.client.force_login(self.superuser)
-        self.organization = organization_recipe.make(preset_names=["shelter"], owner_roles=())
+        # CASEWORKER still has a legacy PermissionGroup (non-role-backed), which
+        # is the surviving route for this warning.
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
         for email in ("operator_one@example.com", "operator_two@example.com"):
             member_add(
                 email=email,
@@ -1138,10 +1212,10 @@ class PermissionGroupDeleteWarningTestCase(TestCase):
                 last_name="",
                 middle_name=None,
                 organization=self.organization,
-                permission_templates=(SHELTER_OPERATOR,),
+                permission_templates=(CASEWORKER,),
             )
         self.permission_group = PermissionGroup.objects.get(
-            organization=self.organization, template__name=SHELTER_OPERATOR.name
+            organization=self.organization, template__name=CASEWORKER.name
         )
 
     def test_the_delete_page_names_the_group_and_who_loses_it(self) -> None:

@@ -459,6 +459,49 @@ product-triggered write-tier change, not schema debt now. Full design: RFC 0002
 Cross-org edit/delete of profiles beyond shared-write is an open product follow-up
 (`docs/teams_org_scoping.md`); the model must make it expressible, not decide it.
 
+### 5.2 Capability surfacing to the frontend — tiers 1–2 shipped, tier 3 with the cutover
+
+The FE gates features on **capabilities, not raw grants** (finding F24). Three tiers:
+
+1. **Global** — `currentUser.permissions`: the global tier (global Role perms +
+   `user_permissions`; superuser → every permission). Shipped with phase 3 (PR #2414).
+2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the union of
+   legacy group perms and Grant role perms (including delegated org→org grants) at each
+   reachable org. Shipped with phase 3 (PR #2414).
+3. **Per-record** — object-grant capabilities: **not yet surfaced**, by decision. A
+   platform-shared model with per-record edit authority (the object arm) is ungatable
+   from tiers 1–2: an org-scoped gate hides the shared record's edit button, and a
+   permission gate shows it on records the user cannot edit — the FE-shows-action /
+   backend-refuses bug class. Tier 3 therefore ships **with the clients cutover**, not
+   as a follow-up after it.
+
+**Chosen tier-3 shape — per-record capability fields on whitelisted models**, resolved
+through the predicate itself so the button and the mutation cannot disagree:
+
+```graphql
+type ClientProfileType {
+  # ...
+  canChange: Boolean!   # can_obj(user, ClientProfile.perms.CHANGE, self)
+  canDelete: Boolean!   # can_obj(user, ClientProfile.perms.DELETE, self)
+}
+```
+
+List queries batch these with an `Exists` annotation over the row's object grants rather
+than a per-row `can_obj` call (avoids N+1). A generic `can(permission: String!)` field
+is deliberately rejected — it cannot be batched and invites callers to enumerate
+permissions the FE has no button for. `currentUser.objectGrants` (a raw-grant list) is
+also rejected as the primary contract — the FE gates on capabilities, not grants; it
+may be added later only if a "shared with me" surface needs it.
+
+**Sequencing (decided):** per-domain backend cutover first, tier-3 surfacing second,
+within the same wave — mirroring phase 2 → phase 3 for shelters (backend first,
+reachability second). The §5.1 ownership decision (§7.6) gates the clients cutover and
+must be made first; the `can*` fields are the same either way (a `created_by_org` FK
+anchors org-scoped writes; object grants anchor shared edits). The hygiene items from
+the adversarial review (global-role write guards on `grant_create`/`grant_delegate`,
+ADR-vs-code `OBJECT_ARM_ENABLED` drift) are fixed during the cutover wave, because the
+cutover touches those exact code paths.
+
 ## 6. References
 
 - [SDB-218] — global shelter operator org-bypass ticket
@@ -482,10 +525,12 @@ Cross-org edit/delete of profiles beyond shared-write is an open product follow-
    (VIEW only?), audit. Under-designed by intent; must be specified before phase 4.
 5. **`in_org` for scoped multi-org users** — confirmed: header picks the active view;
    authority is unaffected. No further decision needed.
-6. **Client-writes design (§5.1)** — resolved parity-first (RFC 0002): shared read
-   AND shared write today via `can_anywhere`; owner-tier (`created_by_org`, org-scoped
-   CHANGE/DELETE) parked for later product adoption. Decision request:
-   `docs/adr/0002-client-writes-ownership.md` (added later in the stack).
+6. **Client-writes design (§5.1)** — per-model read/write tiers for platform-shared
+   models with no org (RFC 0002: parity-first — shared read AND shared write today via
+   `can_anywhere`; owner-tier `created_by_org` parked for later product adoption).
+   Required before phase 4. The tier-3 FE surfacing shape (§5.2 — `canChange`/
+   `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision
+   request: `docs/adr/0002-client-writes-ownership.md` (added later in the stack).
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407

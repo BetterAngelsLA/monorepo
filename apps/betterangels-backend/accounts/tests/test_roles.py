@@ -75,7 +75,9 @@ class BackfillTestCase(TestCase):
         self.gso_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
 
     def test_backfill_shelter_grants_creates_one_grant_per_member(self) -> None:
-        group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
+        # Simulate a pre-teardown org that still had the legacy group.
+        template = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        group = PermissionGroup.objects.create(organization=self.org, template=template)
         member = baker.make(User)
         group.user_set.add(member)
 
@@ -85,7 +87,8 @@ class BackfillTestCase(TestCase):
         self.assertIsNotNone(grant.pk)
 
     def test_backfill_shelter_grants_is_idempotent(self) -> None:
-        group = PermissionGroup.objects.get(organization=self.org, template__name=SHELTER_OPERATOR_ROLE.name)
+        template = PermissionGroupTemplate.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        group = PermissionGroup.objects.create(organization=self.org, template=template)
         member = baker.make(User)
         group.user_set.add(member)
 
