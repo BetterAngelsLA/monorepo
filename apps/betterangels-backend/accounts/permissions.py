@@ -5,7 +5,7 @@ from typing import Optional, Union
 from common.permissions.utils import perm_filter, register_permission
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import models
-from django.db.models import TextChoices
+from django.db.models import Q, TextChoices
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
@@ -44,12 +44,16 @@ def get_user_permitted_org(
     """
     perm_value = permission.value if isinstance(permission, TextChoices) else permission
     app_label, codename = perm_value.split(".", 1)
+    # Both conditions MUST stay in a single ``.filter()`` call: ``permission_groups``
+    # is multi-valued, so chaining them as two ``.filter()`` calls builds two
+    # independent joins that different groups can satisfy — "user is in some group
+    # of this org, and some group of this org has the permission".  Every org is
+    # provisioned with every template, so that reads as "any member holds every
+    # permission any template in their org has" (see
+    # ``common.permissions.utils._org_perm_exists_across_fields``).
     return (
-        Organization.objects.filter(
-            pk=org_id,
-            permission_groups__user=user,
-        )
-        .filter(perm_filter(app_label, codename))
+        Organization.objects.filter(pk=org_id)
+        .filter(Q(permission_groups__user=user) & perm_filter(app_label, codename))
         .first()
     )
 

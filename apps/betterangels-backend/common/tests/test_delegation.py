@@ -81,6 +81,29 @@ class DelegationTestCase(TestCase):
         # ...but DELETE is not on the delegated role, so it is not inherited.
         self.assertFalse(can(bob, Shelter.perms.DELETE, org=self.org_c))
 
+    def test_a_weak_grant_at_b_does_not_amplify_to_b_delegations_at_c(self) -> None:
+        """Role-keyed inheritance: a member of B holding only a VIEW role at B
+        does not inherit B's Shelter-Operator delegation at C beyond VIEW.
+
+        Regression for the audit's delegation-amplification finding: "acts at B"
+        used to key on *any* grant at B, so a member holding the weakest role at
+        B inherited everything B had delegated at C — more authority at C than at
+        B.  Inheritance now requires a grant at B whose role carries the
+        permission being checked.
+        """
+        grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
+        eve = baker.make(User)
+        self.org_b.add_user(eve)
+        grant_create(user=eve, role=self.view_role, scope_org=self.org_b)
+
+        # VIEW at C is inherited — eve's B role carries VIEW (role-keyed)...
+        self.assertIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.VIEW))
+        self.assertTrue(can(eve, Shelter.perms.VIEW, org=self.org_c))
+        # ...but CHANGE/DELETE are not: eve holds no role at B that carries them,
+        # so B's Shelter-Operator delegation does not amplify her.
+        self.assertFalse(can(eve, Shelter.perms.CHANGE, org=self.org_c))
+        self.assertFalse(can(eve, Shelter.perms.DELETE, org=self.org_c))
+
     def test_delegation_is_one_hop_only(self) -> None:
         """B→C and C→D: a user acting at B inherits C but not D (no transitivity)."""
         grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)

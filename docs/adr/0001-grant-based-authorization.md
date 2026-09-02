@@ -222,10 +222,12 @@ def scopes(user, perm):
     mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
 
     # delegation: org-principal grants inherited by the principal org's people.
-    # "acts at B" = member of B AND holds any grant at B (with .distinct() — the join
-    # multiplies rows). A consultant granted a role at B without membership does NOT
-    # inherit B's delegations — no amplification (findings F1, F19 — reduced).
-    at = Organization.objects.filter(users=user, grants__principal_user=user).values("pk").distinct()
+    # "acts at B" = member of B AND holds a direct grant at B whose role carries
+    # this permission (role-keyed: no amplification to stronger delegated roles);
+    # a consultant granted a role at B without membership does NOT inherit B's
+    # delegations (findings F1, F19 — reduced).
+    at = Organization.objects.filter(users=user, grants__principal_user=user,
+                                     grants__role__in=Subquery(roles)).values("pk").distinct()
     inherited = Grant.objects.filter(principal_org__in=Subquery(at), role__in=Subquery(roles)).values("scope_org")
 
     return mine.union(inherited)
@@ -409,10 +411,13 @@ authorization, which is the service→selector pattern the guide prescribes.
 
 ## 3. Accepted limitations (decided, not deferred)
 
-- **Delegation is all-or-nothing per "member-with-any-grant" at the principal org, and
-  has no role mapping** ("B's Shelter Operators become A's *Viewers*" is inexpressible)
-  (finding F19). One row per role, no role translation, no individual carve-out without
-  a deny rule (banned). Revisit at the outreach cutover.
+- **Delegation inheritance is role-keyed, but there is no role *translation*.**
+  A member of the principal org inherits B's delegation at C only for a permission
+  whose role they also hold at B — a weak-role holder at B is not amplified to B's
+  stronger delegated roles at C (audit C-1, fixed). What remains inexpressible is
+  mapping the delegated role onto a *different* role at C ("B's Shelter Operators
+  become A's *Viewers*") (finding F19). One row per role, no role translation, no
+  individual carve-out without a deny rule (banned). Revisit at the outreach cutover.
 - **One delegation hop.** Transitive delegation needs a recursive CTE; deferred until a
   real need exists.
 - **Global roles are granted in the Django admin only.** Grant-admin parity for global
