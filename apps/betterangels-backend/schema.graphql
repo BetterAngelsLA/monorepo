@@ -2093,7 +2093,7 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPerm(permissions: [{app: "reports", permission: "view_reports"}], any: true)
+  reportSummary(startDate: Date = null, endDate: Date = null): ReportSummaryType! @hasOrgPermOrGrant(permissions: [{app: "reports", permission: "view_reports"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
