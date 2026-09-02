@@ -32,8 +32,16 @@ export interface ActiveOrgState {
  * Owns *validation*: the store holds whatever it is told, and this is the only
  * thing that knows which organizations the user belongs to. Consumers can rely
  * on ``activeOrg`` alone — there is no readiness flag to wait on.
+ *
+ * ``globalPermissions`` is the user's GLOBAL permission list (ADR 0001,
+ * finding F24): ``hasPermission`` returns true when either the active org
+ * carries the permission or the global list does — a global holder (e.g.
+ * GSO) gates UI everywhere, not just in one org.
  */
-export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
+export function useActiveOrgState(
+  organizations: Org[],
+  globalPermissions?: readonly PermissionEnum[],
+): ActiveOrgState {
   // Reconcile during render, before the snapshot read below. NOT an effect:
   // React runs effects child-before-parent, so a child would query before this
   // provider had chosen an organization and the request would go out with no
@@ -74,13 +82,24 @@ export function useActiveOrgState(organizations: Org[]): ActiveOrgState {
     [activeOrg?.permissions],
   );
 
+  const globalPermSet = useMemo(
+    () => new Set(globalPermissions ?? []),
+    [globalPermissions],
+  );
+
   const hasPermission = useCallback(
-    (permission: PermissionEnum): boolean => permSet.has(permission),
-    [permSet],
+    (permission: PermissionEnum): boolean =>
+      permSet.has(permission) || globalPermSet.has(permission),
+    [permSet, globalPermSet],
   );
 
   return useMemo(
-    () => ({ activeOrg, organizations, setActiveOrgId, hasPermission }),
+    () => ({
+      activeOrg,
+      organizations,
+      setActiveOrgId,
+      hasPermission,
+    }),
     [activeOrg, organizations, setActiveOrgId, hasPermission],
   );
 }

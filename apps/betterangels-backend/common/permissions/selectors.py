@@ -60,6 +60,30 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
     ).values("pk")
 
 
+def global_permissions(user: "User") -> list[str]:
+    """The global-tier permission list (ADR 0001 §2.4, finding F24).
+
+    The shared contract the frontend gates global-tier features on: a
+    superuser holds every permission; otherwise the union of direct
+    ``user_permissions`` and permissions carried by global Roles in
+    ``user.groups``.  Scoped (Grant) permissions are NOT included here —
+    they are per-organization and reported per org.
+    """
+    from django.contrib.auth.models import Permission
+
+    if user.is_superuser:
+        perms = Permission.objects.all().values_list("content_type__app_label", "codename")
+        return sorted(f"{app}.{codename}" for app, codename in perms)
+
+    direct = user.user_permissions.values_list("content_type__app_label", "codename")
+    role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
+        "content_type__app_label", "codename"
+    )
+    return sorted(
+        {f"{app}.{codename}" for app, codename in direct} | {f"{app}.{codename}" for app, codename in role_held}
+    )
+
+
 def scopes(user: "User", perm: str) -> Any:
     """``ALL``, or the org ids where *user* holds *perm* (direct or delegated).
 
