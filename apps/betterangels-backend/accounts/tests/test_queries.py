@@ -54,9 +54,9 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     @parametrize(
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
-            (0, False, 3),
-            (1, False, 3),
-            (2, False, 3),
+            (0, False, 4),
+            (1, False, 4),
+            (2, False, 4),
         ],
     )
     def test_logged_in_user_query(
@@ -218,7 +218,8 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             }
         """
 
-        expected_query_count = 2
+        # The grants-based org list (ADR 0001 phase 3) adds one query.
+        expected_query_count = 3
 
         if templates:
             omb.add_roles(user, *templates)

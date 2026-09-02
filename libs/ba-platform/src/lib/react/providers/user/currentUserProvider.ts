@@ -15,6 +15,8 @@ export type CurrentUser = {
   firstName?: string;
   lastName?: string;
   email?: string | null;
+  /** The user's GLOBAL permission list (ADR 0001, finding F24). */
+  permissions?: readonly PermissionEnum[];
   organizations:
     | readonly {
         id: string;
@@ -39,6 +41,7 @@ const { UserProvider, useUser } = createUserProvider({
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
       email: user.email ?? undefined,
+      permissions: user.permissions as PermissionEnum[] | undefined,
       organizations: (user.organizations ?? []) as CurrentUser['organizations'],
     };
   },
