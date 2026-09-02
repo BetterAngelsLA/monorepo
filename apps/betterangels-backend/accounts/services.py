@@ -603,11 +603,15 @@ def backfill_shelter_grants() -> None:
 
 
 def backfill_global_role_members() -> None:
-    """Move Global Shelter Operator members onto the global Role group.
+    """Move Global Shelter Operator members onto the global Role group, then
+    delete the legacy GSO ``PermissionGroup`` rows (teardown, ADR 0001 §4 phase 5).
 
-    The GSO ``PermissionGroup`` was pinned to one arbitrary org; its members now
+    The GSO ``PermissionGroup`` was pinned to one arbitrary org; its members
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
-    Idempotent (``user.groups.add``).
+    Once moved, the group row is dead weight — nothing reads it for authority
+    (the global tier is the Role group, and the Role carries the same
+    permissions, ``RoleDef.from_template(GLOBAL_SHELTER_OPERATOR)``), so it is
+    deleted the way ``reconcile_org_groups`` deletes stale groups.  Idempotent.
     """
     from accounts.models import PermissionGroup, Role
     from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
@@ -617,6 +621,7 @@ def backfill_global_role_members() -> None:
     for group in groups.prefetch_related("user_set"):
         for user in group.user_set.all():
             user.groups.add(role)
+    groups.delete()
 
 
 # ── Grant write services (ADR 0001 §2.9) ─────────────────────────────────
