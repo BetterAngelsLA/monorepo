@@ -72,29 +72,38 @@ def check_grant_never_references_global_role(app_configs: Any, **kwargs: Any) ->
 
 @register(Tags.models)
 def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E003 — object grants may only target whitelisted, non-org-bearing models.
+    """E003 — object grants may only target whitelisted models.
 
-    The whitelist is empty until the object-grant arm is wired (ADR 0001 §2.5):
-    object grants are schema-live but must not be written before then, and
-    org-bearing models are never object-grantable (that would duplicate org scope).
+    The whitelist (ADR 0001 §2.5) deliberately excludes ``Organization`` and
+    org-bearing models by default — object-granting a row that already has an
+    org would create a second path to the same authority — with an explicit
+    exception for sharing consumers like ``Note`` when the notes cutover
+    lands.  See ``common.permissions.object_grants``.
     """
+    from common.permissions.object_grants import object_grant_whitelist
     from django.apps import apps
     from django.db.utils import DatabaseError
 
     try:
         Grant = apps.get_model("accounts", "Grant")
 
+        whitelist = object_grant_whitelist()
         errors: list[Error] = []
         for grant in Grant.objects.filter(scope_object_type__isnull=False).select_related("scope_object_type"):
-            errors.append(
-                Error(
-                    f"Grant {grant} is an object grant on {grant.scope_object_type}, "
-                    "which is not on the object-grant whitelist.",
-                    hint="Object grants are not wired yet (ADR 0001 §2.5); no model is object-grantable.",
-                    obj=grant,
-                    id="permissions.E003",
+            if grant.scope_object_type is None:
+                continue
+            target_model = grant.scope_object_type.model_class()
+            if target_model is None or not any(issubclass(target_model, cls) for cls in whitelist):
+                errors.append(
+                    Error(
+                        f"Grant {grant} is an object grant on {grant.scope_object_type}, "
+                        "which is not on the object-grant whitelist.",
+                        hint="Only models in common.permissions.object_grants.object_grant_whitelist() "
+                        "may be object-granted (ADR 0001 §2.5).",
+                        obj=grant,
+                        id="permissions.E003",
+                    )
                 )
-            )
         return errors
     except DatabaseError:
         return []

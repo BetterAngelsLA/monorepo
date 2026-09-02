@@ -32,6 +32,8 @@ from .role_manager import OrgRoleManager
 from .seed import _resolve_permissions, sync_group_permissions
 
 if TYPE_CHECKING:
+    from django.db.models import Model
+
     from .models import User
 
 logger = logging.getLogger(__name__)
@@ -614,6 +616,38 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
     from accounts.models import Grant
 
     grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
+    grant.full_clean()
+    grant.save()
+    return grant
+
+
+def grant_obj(*, user: UserModel, role: Role, obj: "Model") -> Grant:
+    """Grant *user* the scoped *role* on the single row *obj* (ADR 0001 §2.5).
+
+    Per-record authority — the object arm.  *obj*'s model must be on the
+    object-grant whitelist (``permissions.E003``); the model constraint
+    ``grant_has_exactly_one_scope`` enforces that an object grant has no org.
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when the target model is not
+        whitelisted, the role is global, or the row would violate a constraint.
+    """
+    from django.contrib.contenttypes.models import ContentType
+
+    from accounts.models import Grant
+    from common.permissions.object_grants import object_grant_whitelist
+
+    if not any(issubclass(type(obj), cls) for cls in object_grant_whitelist()):
+        raise ValidationError(f"{type(obj).__name__} is not object-grantable (ADR 0001 §2.5).")
+    if role.is_global:
+        raise ValidationError(f"Role {role.name!r} is global; object grants are scoped (permissions.E002).")
+
+    grant = Grant(
+        principal_user=user,
+        role=role,
+        scope_object_type=ContentType.objects.get_for_model(obj),
+        scope_object_id=obj.pk,
+    )
     grant.full_clean()
     grant.save()
     return grant
