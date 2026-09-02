@@ -123,3 +123,45 @@ class GrantSelectorsTestCase(TestCase):
 
         self.assertTrue(can_anywhere(alice, ClientProfile.perms.VIEW))
         self.assertFalse(can_anywhere(stranger, ClientProfile.perms.VIEW))
+
+
+class ScopesMemoizationTestCase(TestCase):
+    """scopes() caches the whole decision — global tier included.
+
+    A shelter page checks the same permission on several fields; the
+    superuser/global-Role/user_permissions EXISTS checks must not re-run
+    per call (they used to, costing 2 queries per visible()).
+    """
+
+    def setUp(self) -> None:
+        sync_roles()
+        self.org = organization_recipe.make(name="Memo Org")
+        self.user = baker.make(User)
+        grant_create(user=self.user, role=Role.objects.get(name=SHELTER_OPERATOR_ROLE.name), scope_org=self.org)
+
+    def test_repeated_scopes_calls_execute_no_extra_queries(self) -> None:
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        with CaptureQueriesContext(connection) as ctx:
+            scopes(self.user, Shelter.perms.VIEW)
+        first = len(ctx.captured_queries)
+        self.assertGreater(first, 0)
+
+        with CaptureQueriesContext(connection) as ctx:
+            scopes(self.user, Shelter.perms.VIEW)
+            scopes(self.user, Shelter.perms.VIEW)
+        self.assertEqual(len(ctx.captured_queries), 0, "memoized scopes() must not re-query")
+
+    def test_the_all_sentinel_is_cached_too(self) -> None:
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        gso = baker.make(User)
+        role_assign(user=gso, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+        self.assertIs(scopes(gso, Shelter.perms.VIEW), ALL)
+
+        with CaptureQueriesContext(connection) as ctx:
+            self.assertIs(scopes(gso, Shelter.perms.VIEW), ALL)
+            self.assertIs(scopes(gso, Shelter.perms.VIEW), ALL)
+        self.assertEqual(len(ctx.captured_queries), 0, "the cached ALL sentinel must not re-query")
