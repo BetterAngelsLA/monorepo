@@ -7,11 +7,17 @@ membership condition and the permission condition could be satisfied by
 permission any template in their org has".  Every org is provisioned with every
 template, so that let a Caseworker pass a ``view_reports`` gate and download the
 org's whole note history via ``/reports/export/``.
+
+The utility is legacy-only and is now exercised against still-legacy groups
+(ADR 0001 §5.3): the fixture member holds ``CASEWORKER`` (a legacy group), and
+the permission-holding group is created by hand — the org no longer provisions
+an ``Organization Admin``/``Organization Superuser`` group (role-backed).
 """
 
 from accounts.models import PermissionGroup, User
 from accounts.permissions import get_user_permitted_org
 from accounts.role_manager import OrgRoleManager
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
 from notes.groups import CASEWORKER
@@ -24,20 +30,23 @@ class GetUserPermittedOrgSingleJoinTestCase(TestCase):
     """Membership in one group must not satisfy a permission held by another."""
 
     def setUp(self) -> None:
-        # create_organization_with_presets provisions every template group the
-        # org type offers — including ORG_ADMIN, which carries view_reports — so
-        # the org has *both* a CASEWORKER group (for the user) and an ORG_ADMIN
-        # group (holding view_reports) before the test asserts anything.
         self.org = organization_recipe.make(name="Provisioned Org")
         self.caseworker = baker.make(User)
         self.org.add_user(self.caseworker)
         OrgRoleManager(self.org).add_roles(self.caseworker, CASEWORKER)
 
-        self.org_admin_group = PermissionGroup.objects.get(
+        # §5.3 provisioning retired the ORG_ADMIN/ORG_SUPERUSER PermissionGroups
+        # (role-backed → Grants), so the "other group" that holds view_reports is
+        # a hand-made legacy PermissionGroup.  ``reports.view_reports`` is a real
+        # permission row on ScheduledReport (its declaring model).
+        self.report_holder_group = PermissionGroup.objects.create(
             organization=self.org,
-            template__name="Organization Admin",
+            label="Report Holders",
         )
-        self.assertFalse(self.caseworker.groups.filter(pk=self.org_admin_group.pk).exists())
+        self.report_holder_group.permissions.add(
+            Permission.objects.get(content_type__model="scheduledreport", codename="view_reports")
+        )
+        self.assertFalse(self.caseworker.groups.filter(pk=self.report_holder_group.pk).exists())
 
     def test_membership_in_another_group_does_not_confer_the_permission(self) -> None:
         org = get_user_permitted_org(
@@ -49,7 +58,7 @@ class GetUserPermittedOrgSingleJoinTestCase(TestCase):
         self.assertIsNone(org)
 
     def test_holding_the_permission_still_returns_the_org(self) -> None:
-        self.caseworker.groups.add(self.org_admin_group)
+        self.caseworker.groups.add(self.report_holder_group)
 
         org = get_user_permitted_org(
             self.caseworker,

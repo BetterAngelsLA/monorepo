@@ -79,9 +79,13 @@ class PermissionedQuerysetSameGroupTestCase(TestCase):
         self.user = baker.make(User, username=f"member_{uuid.uuid4()}")
         self.org.add_user(self.user)
 
-        groups = list(PermissionGroup.objects.filter(organization=self.org)[:2])
-        assert len(groups) >= 2, "the org recipe should provision at least two permission groups"
-        self.member_group, self.holder_group = groups[0], groups[1]
+        # §5.3 provisioning: the outreach org provisions only the CASEWORKER
+        # group (ORG_ADMIN/ORG_SUPERUSER are role-backed), so the second legacy
+        # group the permission lives in is created by hand.
+        groups = list(PermissionGroup.objects.filter(organization=self.org)[:1])
+        assert len(groups) == 1, "the org recipe should provision the CASEWORKER group"
+        self.member_group = groups[0]
+        self.holder_group = PermissionGroup.objects.create(organization=self.org, label="Permission Holder")
 
         permission = Permission.objects.exclude(pk__in=self.member_group.permissions.values("pk")).first()
         assert permission is not None

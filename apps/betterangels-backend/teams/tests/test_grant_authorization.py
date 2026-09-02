@@ -1,22 +1,21 @@
-"""Teams write authority — grant arm OR legacy (ADR 0001 §5.3, teams slice).
+"""Teams write authority — grant-only (ADR 0001 §5.3, provisioning).
 
-The three team mutations are authorized by the grant predicate (``can()``) or,
-during the transition while ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are still legacy
-templates, by the legacy org-scoped check (``HasOrgPerm``'s
-``permissioned_queryset``).  These tests pin **both** arms so the transition
-cannot silently drop either authority:
+§5.3 provisioning role-backed ``ORG_ADMIN``/``ORG_SUPERUSER`` and removed the
+transitional legacy arm: ``OrgRoleManager(org).add_roles(user, ORG_ADMIN)`` now
+writes a scoped ``Grant`` (role = "Organization Admin"), and ``reconcile``
+retired the template's legacy ``PermissionGroup`` rows.  These tests pin the
+grant-only contract:
 
-- a legacy ``ORG_ADMIN`` holder with no Grant still passes (current behavior);
-- a scoped-Grant holder with no legacy group passes via the grant arm;
+- an org admin (ORG_ADMIN Grant) manages teams with no legacy group;
+- a holder of a stale legacy ``ORG_ADMIN`` ``PermissionGroup`` with no Grant
+  fails closed;
 - a member with neither is denied;
 - a Grant at org A does not authorize acting at org B;
 - update/delete thread CHANGE/DELETE (a holder of ADD alone cannot update/delete).
-
-The dual-read is transitional: the legacy arm is removed when the §5.3
-provisioning PR role-backs the template and backfills Grants.
 """
 
-from accounts.models import User
+from accounts.groups import ORG_ADMIN
+from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from model_bakery import baker
 from teams.models import Team
 
@@ -26,18 +25,38 @@ PERMISSION_DENIED = "You do not have permission to perform this action in this o
 
 
 class TeamLegacyAuthorityTestCase(TeamGraphQLBaseTestCase):
-    """The legacy ORG_ADMIN holder keeps working — no Grant needed (transitional arm)."""
+    """§5.3 provisioning: an org admin is a Grant holder; legacy-only fails closed."""
 
-    def test_legacy_org_admin_can_create_a_team(self) -> None:
-        # org_1_admin holds ORG_ADMIN as a legacy PermissionGroup, no Grant.
-        self.assertFalse(self.org_1_admin.grants.filter(scope_org=self.org_1).exists())
+    def test_org_admin_can_create_a_team(self) -> None:
+        # org_1_admin holds ORG_ADMIN as a scoped Grant (role-backed template).
+        self.assertTrue(self.org_1_admin.grants.filter(scope_org=self.org_1).exists())
 
         response = self.create_team_fixture({"name": "grant-era team"})
 
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["createTeam"]["name"], "grant-era team")
 
-    def test_legacy_org_admin_can_update_and_delete_a_team(self) -> None:
+    def test_legacy_group_only_org_admin_is_denied(self) -> None:
+        """A stale ORG_ADMIN PermissionGroup holder with no Grant fails closed."""
+        legacy_user = baker.make(User)
+        self.org_1.add_user(legacy_user)
+        # Simulate a pre-backfill org: a legacy ORG_ADMIN group row that the
+        # grant-only seam must not read.
+        template = PermissionGroupTemplate.objects.get(name=ORG_ADMIN.name)
+        PermissionGroup.objects.create(organization=self.org_1, template=template)
+        legacy_group = PermissionGroup.objects.get(organization=self.org_1, template=template)
+        legacy_user.groups.add(legacy_group)
+        self.assertFalse(legacy_user.grants.filter(scope_org=self.org_1).exists())
+
+        self.graphql_client.force_login(legacy_user)
+        self._set_active_org(self.org_1)
+
+        response = self.create_team_fixture({"name": "legacy-only team"})
+
+        self.assertEqual(response["errors"][0]["message"], PERMISSION_DENIED)
+        self.assertFalse(Team.objects.filter(name="legacy-only team").exists())
+
+    def test_org_admin_can_update_and_delete_a_team(self) -> None:
         team = baker.make(Team, name="old name", organization=self.org_1)
 
         response = self.update_team_fixture({"id": team.pk, "name": "new name"})

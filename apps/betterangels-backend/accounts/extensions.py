@@ -34,15 +34,14 @@ from strawberry_django.utils.typing import UserType
 
 
 class HasOrgPerm(HasPerm):
-    """Transitional org-scoped permission (ADR 0001 §5.3): legacy OR grant.
+    """Org-scoped permission (ADR 0001 §5.3, post-provisioning): grant-based.
 
     Reads ``info.context.request.organization_id`` (set by
     ``OrganizationMiddleware`` from the ``X-Organization-ID`` header) and checks
     the user holds the permission(s) in that organization through the single
-    transition seam, :func:`common.permissions.selectors.has_authority` — the
-    legacy org-scoped check while the authority template is still legacy, then
-    the grant predicate (``can()``) once the template is role-backed and
-    backfilled.
+    grant-based seam, :func:`common.permissions.selectors.permitted_org` — the
+    grant predicate ``can()`` since the §5.3 provisioning role-backed
+    ``ORG_ADMIN``/``ORG_SUPERUSER`` and retired their legacy groups.
 
     ``fail_silently=False``: permission denials raise rather than silently
     returning empty results.  Honors the parent ``any_perm`` flag:
