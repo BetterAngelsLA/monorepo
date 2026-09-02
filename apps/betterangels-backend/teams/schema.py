@@ -4,7 +4,7 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPermOrGrant
+from accounts.extensions import HasOrgPerm
 from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, get_current_organization
@@ -44,7 +44,7 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(Team.perms.ADD)],
+        extensions=[HasOrgPerm(Team.perms.ADD)],
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
@@ -52,7 +52,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(Team.perms.CHANGE)],
+        extensions=[HasOrgPerm(Team.perms.CHANGE)],
     )
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
@@ -71,7 +71,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPermOrGrant(Team.perms.DELETE)],
+        extensions=[HasOrgPerm(Team.perms.DELETE)],
     )
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         org = Organization.objects.get(pk=get_current_organization(info))
