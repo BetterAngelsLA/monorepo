@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPerm
+from accounts.extensions import HasOrgPermOrGrant
 from common.permissions.utils import IsAuthenticated, get_current_organization
 from organizations.models import Organization
 from strawberry.types import Info
@@ -42,7 +42,7 @@ class ReportSummaryType:
 class Query:
     @strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(ReportPermissions.VIEW_REPORTS)],
+        extensions=[HasOrgPermOrGrant(ReportPermissions.VIEW_REPORTS)],
     )
     def report_summary(
         self,
