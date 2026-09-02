@@ -71,6 +71,15 @@ writes) cheap and filterable, and reserves the object arm for what it is for —
 cross-org sharing. The §5.2 tier-3 fields (`canChange`/`canDelete`) are identical either
 way; only the backing query differs (org filter + object arm vs. object arm alone).
 
+## Precondition — finding C1 (shipped before this decision)
+
+Per-record **writes** on a platform-shared model must fail closed: `can_obj` checks the
+object arm (or the global tier) and never "holds the perm anywhere" — which is the
+platform-shared **read** rule and would otherwise let any org-grant holder CHANGE/DELETE
+every client (ADR 0001 §2.4, finding C1; implemented in the predicate). This is a
+precondition to any option here: it guarantees that until `created_by_org` (or a sharing
+grant) exists, no scoped role can silently mutate clients it was never granted.
+
 ## Open sub-decisions (for the cutover PR, not this RFC)
 
 - Nullability/fallback for orphaned rows (NULL → global-only, vs. backfill to a
