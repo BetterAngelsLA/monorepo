@@ -14,6 +14,25 @@ are the target end-state. §7 lists decisions (most resolved; #2 open).
 > `finding F*` / `audit C-*` IDs reference the internal design audit; each is explained
 > where it appears.
 
+**What this is (90-second read).** BetterAngels is replacing two legacy mechanisms —
+org-scoped `PermissionGroup` role rows (whose permissions Django treats as
+unconditionally global) and per-record guardian rows written at record creation — with
+a **grant-based model**:
+
+- **Roles** are named capability sets (`RoleDef` → `Role` rows). A *global* role lives
+  in `user.groups`; a *scoped* role is exercised only through a `Grant`.
+- A **`Grant`** is the only scoped authority row — *who holds which role where* (an
+  org, or a single object). No per-record rows at creation, no denies, one delegation
+  hop.
+- **Three tiers compose per check:** global (reach everything), org (rows whose org is
+  in `scopes()`), object (per-record sharing). Each model declares its org reach
+  (`OrgScoped.org_via`) and its read/write tier (RFC 0002).
+- **One predicate answers everything:** `scopes` / `visible` / `can` / `can_obj` /
+  `can_anywhere`.
+- Migration is a bottom-up PR stack from **#2409** (shelters first); **RFC 0002/0003**
+  design the clients and caseworker cutovers. **§2.9** has worked examples; the
+  overview doc is the friendlier entry point.
+
 ---
 
 ## 1. Context
@@ -434,7 +453,7 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 | Cross-org grants | delegation + multi-scope rows | ✅ |
 | Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes §5, clients §5.1 |
 | Shelter-first isolation | phased cutover, §4 | ✅ |
-| Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ⚠️ shape under-designed, §7.4 |
+| Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ✅ v1 decided (2026-09-02) — BA-created person object grants; org-level edge future (§7.4) |
 
 ### 2.9 Worked examples — how roles, grants, and delegation compose
 
@@ -618,7 +637,7 @@ resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 
 | Phase | Ships |
 |---|---|
-| **0** | This ADR; resolve §7 open decisions |
+| **0** | This ADR; §7 decision log (items resolved; §7.2 open) |
 | **1** | `Role` + `Grant` models, constraints, checks, provisioning (sync creates the roles once; per-org `PermissionGroup` materialization stops for shelter roles), backfill (GSO → global Role; Shelter Operator memberships → `Grant` rows). **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
 | **3** | Frontend (both apps): grants-based org list (+ all orgs for global holders), header optional, `currentUser.permissions` global list as the shared contract (finding F24). |
@@ -688,7 +707,8 @@ Moving CHANGE/DELETE onto the `Caseworker` role changes the semantic to "every
 caseworker at the org edits every note in the org's scope," which **over-permits on
 notes shared into an org's scope** (e.g. via referrals) that the org should only view.
 
-This migration is therefore **not mechanical.** Design to be completed before phase 4:
+This migration is therefore **not mechanical.** The full design is **RFC 0003**
+(`docs/adr/0003-caseworker-guardian-equivalence.md`); in brief:
 
 - Org-owned notes: CHANGE/DELETE on the role, org-scoped (the common case).
 - Shared/foreign notes: per-record control via the **object arm** (a sharing grant on

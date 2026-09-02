@@ -118,11 +118,12 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
 
 ## Sub-decisions for the cutover PRs (not this RFC)
 
-1. **Object-grant whitelist** — `common/permissions/object_grants.py` currently
-   whitelists only `ClientProfile`, with a note that `Note` joins at the notes
-   cutover as the explicit sharing consumer. Decide per model whether shared
-   edits are product-real (whitelist + a sharing edge) or impossible-by-design
-   (org-owned only → no whitelist entry; the object arm stays off for it).
+1. **Object-grant whitelist** — **[open — decided per model at its own cutover]**
+   `common/permissions/object_grants.py` currently whitelists only `ClientProfile`,
+   with a note that `Note` joins at the notes cutover as the explicit sharing
+   consumer. Decide per model whether shared edits are product-real (whitelist + a
+   sharing edge) or impossible-by-design (org-owned only → no whitelist entry; the
+   object arm stays off for it).
 2. **Sharing edges** — when org B may edit a row owned by org A, who creates the
    object grant and how is it audited. **Decided (2026-09-02):** BA/staff create
    person object grants in the Django admin (`grant_obj`, audited via pghistory);
@@ -130,7 +131,8 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    provenance + revoke-on-exit; non-member collaborators until explicit unshare). An
    org-level *data edge* remains future (ADR §7.4) — never an org-principal `Grant`
    (ADR §2.5).
-3. **Referral `own_org_or`** — `OrgScoped` needs an `own_org_or=("shelter",)`
+3. **Referral `own_org_or`** — **[open — prerequisite design, before Referral can cut
+   over]** `OrgScoped` needs an `own_org_or=("shelter",)`
    declaration form before Referral cuts over (ADR §4.1). This RFC does not
    design the multi-path form; it is called out as a prerequisite. Note that
    `Referral.organization` **and** `Referral.shelter` are both nullable
@@ -138,10 +140,12 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    shelter is an orphan — the same class as RFC 0002's `created_by_org` backfill
    orphans. The cutover must decide default-org or global-only handling for
    those rows before the org-scoped write arm can anchor on them.
-4. **Notes' sibling rows** — notes create related rows at write time (service
+4. **Notes' sibling rows** — **[action — at the notes cutover]** notes create related
+   rows at write time (service
    requests in `notes/services.py`) that also take guardian perms. Each related
    model must declare its own org reach and cut over with its parent.
-5. **Guardian teardown ordering** — per domain: cutover PR role-backs the role,
+5. **Guardian teardown ordering** — **[action — per domain, after its parity tests]**
+   per domain: cutover PR role-backs the role,
    adds the parity tests (legacy-equivalent success cases + shared-row fail-closed
    cases), then a follow-up removes `assign_object_permissions` calls and the
    guardian tables once nothing reads them. Keep `guardian` installed until every
