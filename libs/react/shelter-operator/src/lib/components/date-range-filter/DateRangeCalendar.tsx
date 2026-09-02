@@ -243,7 +243,7 @@ export function DateRangeCalendar({
       <div
         ref={anchorRef}
         className={mergeCss([
-          'flex h-[45px] w-full items-center gap-2 rounded-[20px] border bg-white px-5 transition-colors',
+          'flex h-12 w-full items-center gap-2 rounded-full border bg-white px-5 transition-colors',
           hasError
             ? 'border-red-500'
             : open
