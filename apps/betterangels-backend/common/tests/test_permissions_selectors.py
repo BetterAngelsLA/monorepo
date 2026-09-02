@@ -4,6 +4,8 @@ from accounts.models import Role, User
 from accounts.services import grant_create, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.selectors import ALL, can, can_anywhere, can_obj, scopes, visible
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
 from notes.models import Note
@@ -38,6 +40,29 @@ class GrantSelectorsTestCase(TestCase):
         qs = visible(Shelter.objects.all(), gso, Shelter.perms.VIEW)
 
         self.assertEqual(set(qs.values_list("pk", flat=True)), {self.shelter_a.pk, self.shelter_b.pk})
+
+    def test_narrower_global_role_composes_per_perm(self) -> None:
+        """A global Role carrying only VIEW sees everything for VIEW, nothing for CHANGE.
+
+        Global roles compose per-permission (ADR 0001 §2.2) — authority is the
+        union of the held perms, so a read-only global role is never amplified to
+        the write perms it does not carry.
+        """
+        viewer = baker.make(User)
+        role = Role.objects.create(name="Global Shelter Viewer", is_global=True)
+        view_perm, _ = Permission.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(Shelter),
+            codename=Shelter.perms.VIEW.split(".")[1],
+            defaults={"name": "Can view shelter"},
+        )
+        role.permissions.add(view_perm)
+        viewer.groups.add(role)
+
+        self.assertEqual(
+            set(visible(Shelter.objects.all(), viewer, Shelter.perms.VIEW).values_list("pk", flat=True)),
+            {self.shelter_a.pk, self.shelter_b.pk},
+        )
+        self.assertFalse(visible(Shelter.objects.all(), viewer, Shelter.perms.CHANGE).exists())
 
     def test_superuser_sees_everything(self) -> None:
         admin = baker.make(User, is_superuser=True)

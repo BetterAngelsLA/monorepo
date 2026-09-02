@@ -63,6 +63,11 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
 def scopes(user: "User", perm: str) -> Any:
     """``ALL``, or the org ids where *user* holds *perm* through a scoped Grant.
 
+    Direct user grants only at this stage — org→org delegation is deliberately
+    absent here and lands with the delegation PR (ADR 0001 §2.4).  Object grants
+    (``scope_org`` NULL) are excluded so they can never register as an org scope
+    or as "holds the perm somewhere" for a platform-shared model.
+
     Memoized per request on the user instance.  The cached value is a lazy
     queryset used as a subquery — caching it does not evaluate it.
     """
@@ -74,7 +79,9 @@ def scopes(user: "User", perm: str) -> Any:
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
         roles = _roles_carrying_perm(perm)
-        cache[perm] = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
+        cache[perm] = Grant.objects.filter(
+            principal_user=user, role__in=Subquery(roles), scope_org__isnull=False
+        ).values("scope_org")
     return cache[perm]
 
 
@@ -124,7 +131,15 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
-    """The single-row check *is* the row filter, applied to one row."""
+    """The single-row check *is* the row filter, applied to one row.
+
+    WARNING (finding C1): on a platform-shared model (``org_via = None``)
+    ``visible`` applies the read rule — "holds the perm anywhere ⇒ all rows" —
+    so ``can_obj`` currently returns True for *every* row to any perm-holder.
+    Do not route platform-shared single-row *writes* through this until the C1
+    fix (object arm + fail-closed ``can_obj``) lands; until then it is the
+    org-scoped row filter only.
+    """
     return visible(obj.__class__._base_manager.filter(pk=obj.pk), user, perm).exists()
 
 

@@ -622,8 +622,6 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     Validates via ``full_clean`` (which checks the model constraints since
     Django 4.1) before saving, per the repo styleguide.
     """
-    from accounts.models import Grant
-
     grant = Grant(principal_user=user, role=role, scope_org=scope_org)
     grant.full_clean()
     grant.save()
