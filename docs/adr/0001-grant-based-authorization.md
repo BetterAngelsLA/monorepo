@@ -399,6 +399,9 @@ the platform-wide model perm (RFC 0002 — client read-surface decision).
 reading `OrganizationProfile.org_types` (preserving today's `REGISTRY` rule) — it never
 creates rows. Global roles (`is_global=True`) are never granted through a `Grant`.
 
+The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
+**§2.9 — worked examples** (roles, grants, delegation, object grants).
+
 ### 2.7 Invariants enforced by `manage.py check`
 
 - **E001** – `user.groups` contains a `Role` with `is_global=False` (a scoped role went
