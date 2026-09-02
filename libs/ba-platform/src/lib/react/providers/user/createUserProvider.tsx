@@ -93,6 +93,8 @@ export function createUserProvider<
     organizations?:
       | readonly { id: string; name: string; permissions?: readonly string[] }[]
       | null;
+    /** The user's GLOBAL permission list (ADR 0001, finding F24). */
+    permissions?: readonly string[];
   },
   TQuery extends { currentUser?: unknown },
 >(config: UserProviderConfig<TUser, TQuery>) {
@@ -198,6 +200,9 @@ export function createUserProvider<
         <ActiveOrgProvider
           organizations={
             user?.organizations ? mapOrganizations(user.organizations) : []
+          }
+          globalPermissions={
+            user?.permissions as PermissionEnum[] | undefined
           }
         >
           {children}
