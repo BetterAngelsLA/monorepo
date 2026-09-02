@@ -1,9 +1,15 @@
 """Tests for Role provisioning and grant backfill (ADR 0001 §2.2, §4 phase 1)."""
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
-from accounts.services import backfill_global_role_members, backfill_shelter_grants, sync_roles
+from accounts.services import (
+    _raise_on_phantom_role_permissions,
+    backfill_global_role_members,
+    backfill_shelter_grants,
+    sync_roles,
+)
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.checks import check_role_permissions_models_declare_org_scoping
+from common.permissions.config import RoleDef
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
@@ -65,6 +71,36 @@ class SyncRolesTestCase(TestCase):
 
         errors = [e for e in check_role_permissions_models_declare_org_scoping(None) if e.id == "permissions.E005"]
         self.assertEqual(errors, [])
+
+    def test_every_provisioned_permission_binds_a_real_model(self) -> None:
+        """No RoleDef codename may bind to a phantom ContentType.
+
+        ``_resolve_permissions`` derives the ContentType model from the codename's
+        last ``_`` token, so a custom codename whose final token is not its model
+        (e.g. ``change_shelter_is_reviewed`` -> ``"reviewed"``) would be silently
+        skipped by E005 and unrunnable at runtime.  ``sync_roles`` refuses them.
+        """
+        sync_roles()
+
+        for role in Role.objects.all():
+            for permission in role.permissions.select_related("content_type"):
+                self.assertIsNotNone(
+                    permission.content_type.model_class(),
+                    f"{role.name} holds {permission.codename} on a phantom ContentType",
+                )
+
+    def test_sync_roles_refuses_a_phantom_permission(self) -> None:
+        """A RoleDef permission that binds no model raises, not silently provisioned."""
+        phantom_ct, _ = ContentType.objects.get_or_create(app_label="shelters", model="reviewed")
+        phantom_perm, _ = Permission.objects.get_or_create(
+            content_type=phantom_ct,
+            codename="change_shelter_is_reviewed",
+            defaults={"name": "Can change shelter is reviewed"},
+        )
+        role_def = RoleDef(name="Phantom Role", permissions=["shelters.change_shelter_is_reviewed"])
+
+        with self.assertRaisesRegex(RuntimeError, "no model class"):
+            _raise_on_phantom_role_permissions(role_def, {phantom_perm.pk})
 
 
 class BackfillTestCase(TestCase):

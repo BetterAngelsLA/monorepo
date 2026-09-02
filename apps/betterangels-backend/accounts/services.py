@@ -11,7 +11,7 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
@@ -521,6 +521,33 @@ def create_organization_service(
 # ── Role + Grant provisioning (ADR 0001 §2.2, §4 phase 1) ───────────────
 
 
+def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[int]) -> None:
+    """Fail loudly when a RoleDef permission binds to a phantom ContentType.
+
+    :func:`accounts.seed._resolve_permissions` derives each permission's
+    ContentType model from the codename's last ``_`` token, so a custom codename
+    whose final token is not the model it belongs to (e.g.
+    ``change_shelter_is_reviewed`` → ``"reviewed"``) binds to a ContentType with
+    no model class.  ``permissions.E005`` silently skips those (``model_class()``
+    → ``None``) and no runtime path can exercise them, so provisioning must
+    refuse to create them.  Runs inside :func:`sync_roles`' transaction, so the
+    phantom rows are rolled back with the error.
+    """
+    from django.contrib.auth.models import Permission
+
+    phantoms = [
+        f"{permission.content_type.app_label}.{permission.codename}"
+        for permission in Permission.objects.filter(pk__in=permission_ids).select_related("content_type")
+        if permission.content_type.model_class() is None
+    ]
+    if phantoms:
+        raise RuntimeError(
+            f"RoleDef {role_def.name!r} permissions {', '.join(phantoms)} resolve to a "
+            "ContentType with no model class.  Custom permission codenames must end in the "
+            "model name they belong to (e.g. 'view_private_shelter')."
+        )
+
+
 def sync_roles() -> None:
     """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
 
@@ -535,6 +562,7 @@ def sync_roles() -> None:
         for role_def in ROLES:
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
+            _raise_on_phantom_role_permissions(role_def, wanted)
             perms_changed = {p.pk for p in role.permissions.all()} != wanted
             global_changed = role.is_global != role_def.is_global
             if perms_changed:

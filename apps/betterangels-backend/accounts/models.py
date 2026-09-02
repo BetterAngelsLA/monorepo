@@ -258,7 +258,7 @@ class Role(Group):
     granted through :class:`Grant` rows and are always scoped to a
     ``Grant.scope_org``.
 
-    Roles are code-owned (see the ``RoleDef`` config and ``accounts.seed.sync_roles``),
+    Roles are code-owned (see the ``RoleDef`` config and ``accounts.services.sync_roles``),
     and the flag is never flipped by hand: ``permissions.E001`` / ``permissions.E002``
     make a scoped role in ``user.groups`` and a global role in a ``Grant`` into
     deploy-time errors.

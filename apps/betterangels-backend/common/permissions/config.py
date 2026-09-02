@@ -48,8 +48,8 @@ class RoleDef:
     tier, read through Django's ``has_perm``.  ``is_global=False`` roles are
     granted through ``Grant`` rows and are always scoped to an organization.
 
-    Provisioned by :func:`accounts.seed.sync_roles`; the flag is never flipped
-    by hand (checks ``permissions.E001`` / ``permissions.E002``).
+    Provisioned by :func:`accounts.services.sync_roles`; the flag is never
+    flipped by hand (checks ``permissions.E001`` / ``permissions.E002``).
     """
 
     name: str
@@ -67,7 +67,9 @@ class RoleDef:
         """Build a ``RoleDef`` from the legacy ``TemplateConfig`` it replaces."""
         return cls(
             name=template.name,
-            permissions=template.permissions,
+            # Copy so a future in-place mutation of one list never aliases the
+            # other definition (the dataclass is frozen, the list is not).
+            permissions=list(template.permissions),
             is_global=is_global,
             is_invitable=template.is_invitable,
             invite_html=template.invite_html,
