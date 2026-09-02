@@ -163,6 +163,13 @@ and nothing writes grants at creation for routine ownership.
    decoupling is shared infrastructure, not client-specific. RFC 0003 must treat
    org-only task reads as a **product-signaled behavior change**, not a parity target.
 
+**The client family rides `ClientProfile`'s tier.** `ClientContact`,
+`ClientHouseholdMember`, `HmisProfile`, and `SocialMediaProfile` are platform-shared
+full-CRUD on `CASEWORKER` today (`notes/groups.py`) — the same shape as `ClientProfile`.
+They cut over together and **inherit `ClientProfile`'s tier cells** (SHARED read / SHARED
+write now; the owner-tier applies to the family later), so no sibling is forgotten or
+left on the legacy path with a divergent tier.
+
 ## Future Option A — `created_by_org` (owner-tier for clients, parked)
 
 When product adopts org ownership/transfer, `ClientProfile` gains
@@ -192,6 +199,13 @@ When product adopts org ownership/transfer, `ClientProfile` gains
   documents, notes, or tasks — the OBJECT tier stays available but unactivated.
 - Whether read privacy narrows below `SHARED` (per-program / consent) — the write model
   rides whatever granularity the read model settles on.
+- **Which roles may hold a platform-shared model's perm at all.** SHARED read means
+  *every holder in every org reads every row* (e.g. `SHELTER_OPERATOR` carries
+  `ClientProfile.VIEW`). Parity keeps that today; narrowing the read *surface per role*
+  is a product decision, not a cutover detail.
+- **Client-relative read scoping** — "org B sees only rows relevant to the clients it
+  co-serves" — the condition axis below `SHARED`, not expressible with the read tiers
+  as defined (ADR 0001 §3).
 
 ## Open sub-decisions (for the cutover PR, not this RFC)
 

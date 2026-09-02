@@ -59,6 +59,12 @@ sharing across orgs is a future requirement we must not block.
    data.** Never grant rows written at record-creation time.
 5. **No denies, no transitivity.** The predicate is a pure union; one delegation hop,
    enforced structurally.
+6. **A `Role` row enters `user.groups` only through `role_assign`, and only for
+   `is_global=True`.** Scoped roles are exercised exclusively through `Grant` rows —
+   never group membership (E001). `Role` is a `Group` subclass, so the one structural
+   hazard of the legacy model (`auth.Group.permissions` is unconditionally global) is
+   held off by convention + checks rather than shape; this rule names the only legal
+   write path.
 
 ### 2.2 Data model
 
@@ -329,6 +335,14 @@ subquery, not a re-derivation.
   a stated convention for every child-create service, not per-site.
 - The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
   it is turned on with its first consumer, not before.
+- **Object grants are user-principal only (decision).** The schema permits
+  `principal_org` + `scope_object` (the two axes are independent), but no predicate
+  path reads an org-principal object grant — the delegation arm is org-scope-only
+  (`scope_org__isnull=False`) and the object arm is user-principal (`_object_grant_q`).
+  Such rows would be inert and misleading, so they are **forbidden**: a new E00x check
+  plus an admin form restriction (`scope_object` requires `principal_user`). Org-wide
+  per-record sharing, if ever product-real, is a separate design — not an accidental
+  schema side-effect.
 
 ### 2.6 Mutation surface convention
 
@@ -339,7 +353,16 @@ subquery, not a re-derivation.
 | Create (org-scoped) | explicit `organization_id` input; `can(user, perm, org=target)` **and** `Organization.objects.filter(pk=target).exists()` → `ValidationError` (finding F7 — `can()` never implies existence) |
 | Create (platform-shared model) | `can_anywhere(user, perm)` — no org to check (finding F14) |
 | Child create under object grant | resolve parent; `can_obj(parent, child_ADD)` (finding F17) |
+| Update / Delete (org-scoped) | load the row via `visible(qs, perm).get(pk=…)` or `can_obj(user, perm, row)` — the org filter *is* the write check; never broaden to the read rule |
+| Update / Delete (platform-shared) | the **write tier** decides (RFC 0002 § Precondition): `OBJECT` / undeclared → `can_obj` (fails closed, finding C1); `SHARED` (e.g. `ClientProfile`) → any holder of the perm anywhere may mutate (`can_anywhere`-equivalent) |
 | Header | `active_org(info)` returns `None` when absent; nothing *requires* it |
+
+**Write authority is the union of the user's full grant set, not the active org.**
+The `X-Organization-ID` header confines *list* views (`visible(…, in_org=…)`) only;
+single-row writes (`can`/`can_obj`) resolve against every org in `scopes()`. A user
+holding a role at orgs A and B may edit org A's rows while the UI says they are acting
+as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
+stated product fact so nobody later "fixes" it by confining writes to the header.
 
 **Role assignment rule:** which roles an org may grant is a service-layer validation
 reading `OrganizationProfile.org_types` (preserving today's `REGISTRY` rule) — it never
@@ -379,6 +402,11 @@ creates rows. Global roles (`is_global=True`) are never granted through a `Grant
 - **Global roles are granted in the Django admin only.** Grant-admin parity for global
   grants is a log of `Role` membership changes, not a second representation.
 - **No deny rules, ever.** Narrower permissions compose; denials break the union.
+- **No row-attribute conditions.** Granularity stops at scope tier + per-record object
+  grant. "Only rows assigned to me", "only rows I created within the org" (`CREATOR`
+  is org-level, not user-level), and client-relative reads ("org B sees only notes on
+  clients it co-serves") are inexpressible today — they are a future *condition* axis,
+  not schema debt now (RFC 0002 parks the read side; RFC 0003 the task side).
 
 ## 4. Migration plan
 
