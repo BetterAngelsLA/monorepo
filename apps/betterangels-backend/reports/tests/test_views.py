@@ -5,12 +5,15 @@ from datetime import datetime
 import pytest
 import time_machine
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
+from accounts.role_manager import OrgRoleManager
+from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
+from notes.groups import CASEWORKER
 from notes.models import Note, OrganizationService, ServiceRequest
 from organizations.models import Organization
 from reports.models import ScheduledReport
@@ -322,6 +325,26 @@ class TestExportInteractionDataView:
 
         api_client.force_authenticate(user=user)
         response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
+        assert response.status_code == 403
+
+    def test_membership_in_one_group_does_not_gain_another_groups_report_access(self, api_client: APIClient) -> None:
+        """Single-join regression: a CASEWORKER must not pass view_reports via the org's ORG_ADMIN group.
+
+        The org is provisioned with every template group (CASEWORKER for the
+        user, ORG_ADMIN holding view_reports), so the buggy two-``.filter()``
+        form let the membership and permission conditions match different
+        groups.  ``/reports/export/`` then leaked the org's whole note history.
+        """
+        org = organization_recipe.make(name="Provisioned Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        OrgRoleManager(org).add_roles(user, CASEWORKER)
+        assert user.has_perm("reports.view_reports") is False
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get(f"/reports/export/?org_id={org.id}")
         assert response.status_code == 403
 
 
