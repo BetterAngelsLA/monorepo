@@ -21,7 +21,7 @@ from accounts.extensions import HasOrgPermOrGrant, HasPermOrGrant
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org_dual
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
-from .models import Organization, PermissionGroup, User
+from .models import Grant, Organization, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
@@ -123,6 +123,11 @@ class Query:
         # This allows interfaces (e.g. betterangels-admin vs shelter-operator)
         # to scope the member list to their relevant org type, even when
         # the organization has multiple types.
+        #
+        # Reads BOTH authorities: legacy PermissionGroup memberships and
+        # user-principal Grants for role-backed templates (teardown, ADR 0001
+        # §4 phase 5) — a grant-held Shelter Operator must survive the filter
+        # (audit C-8).
         if org_type is not None:
             org_config = REGISTRY.org_type(org_type.value)
             if org_config:
@@ -133,17 +138,30 @@ class Query:
                         template__name__in=template_names,
                         user=OuterRef("pk"),
                     )
+                ) | Exists(
+                    Grant.objects.filter(
+                        scope_org_id=organization_id,
+                        role__name__in=template_names,
+                        principal_user=OuterRef("pk"),
+                    )
                 )
                 queryset = queryset.filter(has_org_type_template)
 
         # When a permission_template is provided, filter to members who have
-        # that specific template (e.g. only Caseworkers).
+        # that specific template (e.g. only Caseworkers) — from either authority.
         if permission_template is not None:
+            template_name = permission_template.value
             has_template = Exists(
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
-                    template__name=permission_template.value,
+                    template__name=template_name,
                     user=OuterRef("pk"),
+                )
+            ) | Exists(
+                Grant.objects.filter(
+                    scope_org_id=organization_id,
+                    role__name=template_name,
+                    principal_user=OuterRef("pk"),
                 )
             )
             queryset = queryset.filter(has_template)
