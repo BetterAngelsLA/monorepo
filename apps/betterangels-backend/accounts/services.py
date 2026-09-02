@@ -626,9 +626,19 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
 
     Validates via ``full_clean`` (which checks the model constraints since
-    Django 4.1) before saving, per the repo styleguide.
+    Django 4.1) before saving, per the repo styleguide.  A global Role can
+    never be granted through a Grant — it belongs in ``user.groups`` via
+    :func:`role_assign` (mirrors ``permissions.E002`` at write time).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global.
     """
     from accounts.models import Grant
+
+    if role.is_global:
+        raise ValidationError(
+            f"Role {role.name!r} is global; grant it via role_assign, not a Grant (permissions.E002)."
+        )
 
     grant = Grant(principal_user=user, role=role, scope_org=scope_org)
     grant.full_clean()
@@ -643,9 +653,15 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
     members of *principal_org* AND hold a direct Grant there ("acting at" the
     org).  The org cannot delegate a role to itself (model constraint
     ``grant_org_principal_is_not_scope``) and a global Role can never be
-    delegated (check ``permissions.E002``).
+    delegated (mirrors ``permissions.E002`` at write time).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global.
     """
     from accounts.models import Grant
+
+    if role.is_global:
+        raise ValidationError(f"Role {role.name!r} is global; scoped roles only (permissions.E002).")
 
     grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
     grant.full_clean()
