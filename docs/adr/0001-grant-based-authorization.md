@@ -843,31 +843,34 @@ regenerated at each step.
 - `docs/teams_org_scoping.md` — product decision that cross-org *reads* (clients,
   notes/tasks) are deliberate and platform-shared
 
-## 7. Open decisions (phase-0 gate)
+## 7. Decisions & open items (phase-0 gate)
 
-1. **Admin-created custom roles** (finding F21) — **decided (2026-09-02): code-owned
-   `RoleDef`s only for v1**; admins may not create bespoke roles. Revisit only when a
+Status tags: **[decided 2026-09-02]** / **[confirmed]** / **[open]**. Item numbers
+are stable (referenced elsewhere and shared with the rest of the stack).
+
+1. **Admin-created custom roles** (finding F21) — **[decided 2026-09-02: code-owned
+   `RoleDef`s only for v1]**; admins may not create bespoke roles. Revisit only when a
    concrete org asks (then `is_global` ownership, sync, and E002 need explicit rules).
-2. **`Shelter.organization` nullability** — currently `SET_NULL`; orphans are reachable
-   only at the global tier. Decide required-with-backfill vs. accept.
-3. **Who administers org→org delegation** — **decided (2026-09-02): BA staff in the
-   Django admin only for v1** (the `GrantInline`/`DelegatedGrantInline`). Org-admin
+2. **`Shelter.organization` nullability** — **[open]** currently `SET_NULL`; orphans
+   are reachable only at the global tier. Decide required-with-backfill vs. accept.
+3. **Who administers org→org delegation** — **[decided 2026-09-02: BA staff in the
+   Django admin only for v1]** (the `GrantInline`/`DelegatedGrantInline`). Org-admin
    self-service in the portal is deferred (needs guardrails, audit, and
    receiving-org confirmation).
-4. **Client-sharing data edge shape** — **decided (2026-09-02, v1):** cross-org sharing
+4. **Client-sharing data edge shape** — **[decided 2026-09-02, v1:]** cross-org sharing
    is BA/staff creating person object grants in the Django admin (`grant_obj`), with
    revocation on org departure resolved in RFC 0002. An org-level *data edge* (a
    sharing relationship naming the orgs allowed to act) remains a future,
    product-triggered design — authority still resolves per-person; the edge never
    becomes an org-principal `Grant` (§2.5).
-5. **`in_org` for scoped multi-org users** — confirmed: header picks the active view;
-   authority is unaffected. No further decision needed.
-6. **Client-writes design (§5.1)** — per-model read/write tiers for platform-shared
-   models with no org (RFC 0002: parity-first — shared read AND shared write today via
-   `can_anywhere`; owner-tier `created_by_org` parked for later product adoption).
-   Required before phase 4. The tier-3 FE surfacing shape (§5.2 — `canChange`/
-   `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision
-   request: `docs/adr/0002-client-writes-ownership.md`.
+5. **`in_org` for scoped multi-org users** — **[confirmed]** header picks the active
+   view; authority is unaffected. No further decision needed.
+6. **Client-writes design (§5.1)** — **[decided 2026-09-02: RFC 0002]** per-model
+   read/write tiers for platform-shared models with no org (parity-first — shared read
+   AND shared write today via `can_anywhere`; owner-tier `created_by_org` parked for
+   later product adoption). The tier-3 FE surfacing shape (§5.2 — `canChange`/
+   `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision:
+   `docs/adr/0002-client-writes-ownership.md`.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
