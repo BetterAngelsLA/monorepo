@@ -57,6 +57,13 @@ sharing across orgs is a future requirement we must not block.
 
 ## 2. Decision
 
+> **How to read §2.** §2.2–2.3 (models, `OrgScoped`) are **built in this PR (#2409)**.
+> §2.4 (the predicate) is **design** — the code ships with the selectors (#2411) and
+> evolves through #2416. §2.5–2.6 (object arm, mutation conventions) are **designed
+> now, wired at each domain's cutover**. §2.9 is the **target end-state** the stack
+> converges on; §5–§7 are forward design and decisions. Where a passage differs from
+> what `main` does today, it says so explicitly.
+
 ### 2.1 The rules
 
 1. **Roles are organization-independent. Grants carry the organization.**
