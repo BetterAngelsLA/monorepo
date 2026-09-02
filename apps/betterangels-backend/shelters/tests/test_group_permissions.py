@@ -11,7 +11,7 @@ from accounts.services import role_assign, sync_roles
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from model_bakery import baker
-from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 
 
 class GlobalShelterOperatorTierTestCase(TestCase):
@@ -46,6 +46,22 @@ class GlobalShelterOperatorTierTestCase(TestCase):
         role_assign(user=user, role=self.role)
 
         self.assertIn("shelters.view_private_shelter", user.get_all_permissions())
+
+    def test_view_private_is_global_tier_only(self) -> None:
+        """Private shelters in the public directory are a global-tier gate.
+
+        The scoped Shelter Operator role must NOT carry view_private_shelter
+        (its only consumer reads has_perm, which Grants don't feed) — the
+        scoped role would declare an authority it can never exercise.
+        """
+        so_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        so_codenames = so_role.permissions.filter(content_type__app_label="shelters").values_list("codename", flat=True)
+        self.assertNotIn("view_private_shelter", so_codenames)
+        # The global role still carries it.
+        gso_codenames = self.role.permissions.filter(content_type__app_label="shelters").values_list(
+            "codename", flat=True
+        )
+        self.assertIn("view_private_shelter", gso_codenames)
 
     def test_member_gains_shelters_admin_access(self) -> None:
         user = baker.make(User, is_staff=True)
