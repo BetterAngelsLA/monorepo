@@ -4,7 +4,7 @@ Creating an organization in the admin used to produce one that could hold no
 roles and accept no members, and adding a member to it returned a 500.
 """
 
-from typing import cast
+from typing import Any, cast
 
 from accounts.admin import CustomOrganizationUserAdmin
 from accounts.groups import ORG_ADMIN
@@ -14,6 +14,7 @@ from accounts.models import (
     OrgTypeChoices,
     PermissionGroup,
     PermissionGroupTemplate,
+    Role,
     User,
 )
 from accounts.seed import seed_permission_templates
@@ -1334,3 +1335,39 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
         seed_permission_templates()
         with self.assertRaises(IntegrityError), transaction.atomic():
             reconcile_org_groups(self.organization)
+
+
+class GrantAdminRoleFilterTestCase(TestCase):
+    """Grant forms offer only scoped Roles — a global Role is held in user.groups (permissions.E002)."""
+
+    def setUp(self) -> None:
+        from accounts.admin import DelegatedGrantInline, GrantAdmin, GrantInline
+        from accounts.services import sync_roles
+
+        sync_roles()
+        self.grant_admin = GrantAdmin(Grant, admin.site)
+        self.grant_inline = GrantInline(Grant, admin.site)
+        self.delegated_inline = DelegatedGrantInline(Grant, admin.site)
+        self.scoped = Role.objects.get(name=SHELTER_OPERATOR.name, is_global=False)
+        self.global_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR.name, is_global=True)
+
+    def _role_queryset(self, admin_instance: Any) -> Any:
+        field = admin_instance.formfield_for_foreignkey(
+            Grant._meta.get_field("role"),
+            None,  # type: ignore[arg-type]
+        )
+        return field.queryset
+
+    def _assert_scoped_only(self, admin_instance: Any) -> None:
+        queryset = self._role_queryset(admin_instance)
+        self.assertIn(self.scoped, queryset)
+        self.assertNotIn(self.global_role, queryset)
+
+    def test_grant_admin_offers_only_scoped_roles(self) -> None:
+        self._assert_scoped_only(self.grant_admin)
+
+    def test_grant_inline_offers_only_scoped_roles(self) -> None:
+        self._assert_scoped_only(self.grant_inline)
+
+    def test_delegated_grant_inline_offers_only_scoped_roles(self) -> None:
+        self._assert_scoped_only(self.delegated_inline)

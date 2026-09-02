@@ -340,6 +340,17 @@ class MemberInviteAdminMixin:
         }
 
 
+def _scoped_role_queryset() -> Any:
+    """Grant forms must not offer global Roles.
+
+    A global Role is held in ``user.groups`` (the global tier), never in a
+    Grant — ``permissions.E002`` makes a grant referencing one a deploy-time
+    error, so the admin refuses the choice up front instead of writing a row
+    that only a check will flag.
+    """
+    return Role.objects.filter(is_global=False)
+
+
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
     """Code-owned roles (ADR 0001 §2.2) — read-only in the admin."""
@@ -357,6 +368,11 @@ class GrantAdmin(admin.ModelAdmin):
     object scope (exactly one) are enforced by the model constraints; a global
     Role can never be granted (check ``permissions.E002``).
     """
+
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     list_display = (
         "id",
@@ -403,6 +419,11 @@ class GrantInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = ("principal_user", "principal_org", "role")
 
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 class DelegatedGrantInline(admin.TabularInline):
     """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2)."""
@@ -411,6 +432,11 @@ class DelegatedGrantInline(admin.TabularInline):
     fk_name = "principal_org"
     extra = 0
     autocomplete_fields = ("role", "scope_org")
+
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(Organization)
