@@ -7,7 +7,7 @@ from organizations.models import Organization
 
 from common.permissions.config import TemplateConfig
 
-from .models import OrganizationProfile, OrgTypeChoices, PermissionGroup, User
+from .models import Grant, OrganizationProfile, OrgTypeChoices, PermissionGroup, User
 
 # isort: off
 # We ignore this type check because there's an issue with django-stubs not recognizing
@@ -190,9 +190,18 @@ class OrganizationMemberRoleForm(OrganizationRoleSelectionForm):
 
     def __init__(self, *args: Any, organization: Organization, member: User, **kwargs: Any) -> None:
         super().__init__(*args, organization=organization, **kwargs)
-        held = sorted(
+        # Both authorities count: legacy PermissionGroup memberships AND, for
+        # role-backed templates (migrated domains, e.g. Shelter Operator), the
+        # authoritative Grant — post-teardown the legacy group no longer exists,
+        # and a form blind to Grants would silently revoke them on save
+        # (ADR 0001 §4 phase 5).
+        legacy = set(
             PermissionGroup.objects.filter(organization=organization, user=member).values_list("label", flat=True)
         )
+        granted = set(
+            Grant.objects.filter(principal_user=member, scope_org=organization).values_list("role__name", flat=True)
+        )
+        held = sorted(legacy | granted)
         offered = set(self.role_names)
         self.locked_role_names = [name for name in held if name not in offered]
         # Clearing every role is a real state — it is what a member starts as
