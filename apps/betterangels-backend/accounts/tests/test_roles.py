@@ -4,7 +4,7 @@ from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Rol
 from accounts.services import backfill_global_role_members, backfill_shelter_grants, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.checks import check_role_permissions_models_declare_org_scoping
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
@@ -118,6 +118,10 @@ class BackfillTestCase(TestCase):
         backfill_global_role_members()
 
         self.assertTrue(member.groups.filter(role__is_global=True).exists())
+        # Teardown (ADR 0001 §4 phase 5): the legacy group row is dead weight
+        # once its members are on the Role group — nothing reads it for authority.
+        self.assertFalse(PermissionGroup.objects.filter(pk=gso_group.pk).exists())
+        self.assertFalse(Group.objects.filter(pk=gso_group.pk).exists())
 
 
 class ViewPrivateGlobalTierTestCase(TestCase):

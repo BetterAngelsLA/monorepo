@@ -38,7 +38,10 @@ cannot express org→org delegation; and it is unreachable from the frontend
 (`CurrentUserOrganizationType` is membership-derived, so a non-member global holder
 gets an empty org list and every UI screen keys off `activeOrg`). Its one useful
 artifact is the 541-line `test_global_shelter_operator.py`, which we keep as the
-behavioral contract.
+behavioral contract — its assertions now live, grant-model-first, in
+`shelters/tests/test_grant_cutover.py`, `common/tests/test_permissions_selectors.py`,
+`common/tests/test_delegation.py`, `common/tests/test_object_grants.py`, and
+`shelters/tests/test_group_permissions.py` (the GSO global-Role tier).
 
 **Requirements (from the SDB-218 / outreach thread).** One model must handle: user
 grants, global group grants, org grants (org→org "view/edit managed others"), object
