@@ -273,8 +273,35 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
-    """The single-row check *is* the row filter, applied to one row."""
-    return visible(obj.__class__._base_manager.filter(pk=obj.pk), user, perm).exists()
+    """The single-row check *is* the row filter, applied to one row.
+
+    Org-scoped model — the row falls in the user's scopes (the ``visible`` org
+    filter on a one-row queryset).
+
+    Platform-shared model (``org_via = None``) — per-record authority comes
+    from the object arm (or the global tier), **not** from "holds the perm
+    anywhere".  The read rule (perm held anywhere ⇒ all rows) must not leak
+    into per-record writes: an org-grant holder of a client perm would
+    otherwise be able to CHANGE/DELETE *every* client (finding C1).  Write
+    services on platform-shared models must use ``can_obj`` (or the object
+    arm), never the read-side ``visible``, to load records for mutation.
+    """
+    from common.models import OrgScoped
+
+    model = obj.__class__
+    if not issubclass(model, OrgScoped):
+        return False
+
+    s = scopes(user, perm)
+    if s is ALL:
+        return True
+
+    if not model.org_paths():
+        # Platform-shared: an object grant on this row is the only scoped path
+        # (a non-whitelisted model fails closed — ``_object_grant_q`` is False).
+        return model._base_manager.filter(pk=obj.pk).filter(_object_grant_q(model, user, perm)).exists()
+
+    return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
 
 
 def can_anywhere(user: "User", perm: str) -> bool:
