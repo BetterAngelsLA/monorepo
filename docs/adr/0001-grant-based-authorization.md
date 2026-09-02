@@ -1,7 +1,9 @@
 # ADR 0001 — Grant-based authorization
 
-**Status:** Draft (open decisions in §7 pending)
-**Date:** 2026-09-01
+**Status:** Design record for the grant migration (stack #2409 → #2435, merging
+bottom-up). §2.4–§2.6 record the design as built across the stack; §2.9 and §5–§7
+are the target end-state. §7 lists decisions (most resolved; #2 open).
+**Date:** 2026-09-01 (revised 2026-09-02)
 **Scope:** Backend authorization model. First cutover: shelters. Target: outreach app (notes, tasks, clients, referrals, teams, reports).
 **Related:** [SDB-218], [PR #2407]
 
@@ -9,6 +11,8 @@
 > how it works before reading the formal rules*, jump to **§2.9 — worked examples**
 > (roles, grants, delegations, object grants resolved for concrete people and orgs).
 > RFC 0002 / RFC 0003 are the per-domain cutover decisions this ADR gates.
+> `finding F*` / `audit C-*` IDs reference the internal design audit; each is explained
+> where it appears.
 
 ---
 
@@ -237,10 +241,12 @@ def scopes(user, perm):
     mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles)).values("scope_org")
 
     # delegation: org-principal grants inherited by the principal org's people.
-    # "acts at B" = member of B AND holds any grant at B (with .distinct() — the join
-    # multiplies rows). A consultant granted a role at B without membership does NOT
-    # inherit B's delegations — no amplification (findings F1, F19 — reduced).
-    at = Organization.objects.filter(users=user, grants__principal_user=user).values("pk").distinct()
+    # "acts at B" = member of B AND holds a direct grant at B whose role carries
+    # this permission (role-keyed: no amplification to stronger delegated roles);
+    # a consultant granted a role at B without membership does NOT inherit B's
+    # delegations (findings F1, F19 — reduced).
+    at = Organization.objects.filter(users=user, grants__principal_user=user,
+                                     grants__role__in=Subquery(roles)).values("pk").distinct()
     inherited = Grant.objects.filter(principal_org__in=Subquery(at), role__in=Subquery(roles)).values("scope_org")
 
     return mine.union(inherited)
@@ -564,14 +570,18 @@ object grant covers the row. BA shares client `c1` with `bob`:
 Object grants are user-principal only (§2.5 — org-principal object grants are
 forbidden); the whitelist gates which models can carry them (`ClientProfile` today,
 `Note` joins at its cutover); and what happens to them when `bob` leaves the org is
-the sharing-edge revocation decision (RFC 0002 open sub-decisions).
+resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 
 ## 3. Accepted limitations (decided, not deferred)
 
-- **Delegation is all-or-nothing per "member-with-any-grant" at the principal org, and
-  has no role mapping** ("B's Shelter Operators become A's *Viewers*" is inexpressible)
-  (finding F19). One row per role, no role translation, no individual carve-out without
-  a deny rule (banned). Revisit at the outreach cutover.
+- **Delegation inheritance is role-keyed, but there is no role *translation*.** A member
+  of the principal org inherits its delegation at the target org only for a permission
+  whose role they also hold at the principal org — a member holding only a weaker role
+  is not amplified to the delegated role (no amplification; audit C-1). What remains
+  inexpressible is mapping the delegated role onto a *different* role at the target
+  ("B's Shelter Operators become A's *Viewers*") (finding F19). One row per role, no
+  role translation, no individual carve-out without a deny rule (banned). Revisit at
+  the outreach cutover.
 - **One delegation hop.** Transitive delegation needs a recursive CTE; deferred until a
   real need exists.
 - **Global roles are granted in the Django admin only.** Grant-admin parity for global
