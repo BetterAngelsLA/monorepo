@@ -621,7 +621,7 @@ forbidden); the whitelist gates which models can carry them (`ClientProfile` tod
 `Note` joins at its cutover); and what happens to them when `bob` leaves the org is
 resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 
-### 2.9 Code structure — services, selectors, thin interfaces (repo styleguide)
+### 2.10 Code structure — services, selectors, thin interfaces (repo styleguide)
 
 Per `docs/styleguides/python.md` (HackSoft's service/selector pattern, GraphQL as
 the API layer), the grant system is organized as:
