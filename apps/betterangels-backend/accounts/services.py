@@ -20,10 +20,12 @@ from organizations.models import Organization, OrganizationOwner, OrganizationUs
 from .emails import base_url_for
 from .groups import ORG_ADMIN
 from .models import (
+    Grant,
     OrganizationProfile,
     OrgTypeChoices,
     PermissionGroup,
     PermissionGroupTemplate,
+    Role,
 )
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
@@ -609,3 +611,67 @@ def backfill_global_role_members() -> None:
     for group in groups.prefetch_related("user_set"):
         for user in group.user_set.all():
             user.groups.add(role)
+
+
+# ── Grant write services (ADR 0001 §2.10) ────────────────────────────────
+
+
+def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Grant:
+    """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
+
+    Validates via ``full_clean`` (which checks the model constraints since
+    Django 4.1) before saving, per the repo styleguide.
+    """
+    grant = Grant(principal_user=user, role=role, scope_org=scope_org)
+    grant.full_clean()
+    grant.save()
+    return grant
+
+
+def grant_delete(*, grant: Grant) -> None:
+    """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
+    grant.delete()
+
+
+def role_assign(*, user: UserModel, role: Role) -> None:
+    """Grant *user* a *global* Role by adding it to ``user.groups``.
+
+    .. warning::
+       **GLOBAL AUTHORITY — read before calling.** This is the global tier
+       (ADR 0001 §2.1): once *role* is in ``user.groups``, *user* can exercise
+       every permission *role* carries **across every organization**, with no
+       org scope and no per-org audit row.  It is the highest-authority write
+       in this module — prefer an org-scoped ``Grant`` (via :func:`grant_create`)
+       unless the user genuinely needs org-wide access.
+
+       Today the only *intended* writers of the global tier are the Django
+       admin's group picker and provisioning (:func:`backfill_global_role_members`).
+       This service has **no production caller yet** — add one deliberately
+       (e.g. an admin/member-management flow), never "because it is handy".
+
+    Constraints:
+
+    * *role* **must** be a global Role (``is_global=True``).  Scoped roles are
+      exercised exclusively through ``Grant`` rows — never group membership
+      (checks ``permissions.E001``) — so a scoped *role* raises
+      ``ValidationError`` instead of silently becoming global.
+    * Granting is additive and idempotent (Django M2M); revoke with
+      :func:`role_remove`.  Membership is visible in the Django admin and in
+      ``user.groups``.
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is scoped.
+    """
+    if not role.is_global:
+        raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
+    user.groups.add(role)
+
+
+def role_remove(*, user: UserModel, role: Role) -> None:
+    """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
+
+    Removes *role* from ``user.groups``, withdrawing its global-tier authority.
+    Scoped roles are never in ``user.groups`` (they are granted via ``Grant``),
+    so removing one here is a no-op rather than an error.
+    """
+    user.groups.remove(role)
