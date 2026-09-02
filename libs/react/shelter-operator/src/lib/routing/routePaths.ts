@@ -19,7 +19,6 @@ export const paths = {
   users: '/operator/users',
   shelter: '/operator/shelter/:shelterId',
   shelterCreate: '/operator/shelter/create',
-  shelterReport: '/operator/shelter/:shelterId/report',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -123,13 +122,6 @@ export function shelterEditResourceRoute(
     `${shelterMgmtResourceRoute(shelterId, resource)}/${mgmtRouteConfig.actions.edit}`,
     { id: resourceId },
   );
-}
-
-// ── Report ────────────────────────────────────────────────────────────────────
-
-/** /operator/shelter/5/report */
-export function shelterReportRoute(shelterId: string): string {
-  return generatePath(paths.shelterReport, { shelterId });
 }
 
 // ── Profile ───────────────────────────────────────────────────────────────────
