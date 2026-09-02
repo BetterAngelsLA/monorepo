@@ -86,3 +86,9 @@ grant) exists, no scoped role can silently mutate clients it was never granted.
   default org).
 - Whether `created_by_org` is immutable (set at create) or transferable later.
 - Who may set it: always the creating service, or also the admin.
+- **Sharing revocation on member removal (audit note):** `organization_remove_member`
+  revokes org-scoped Grants but not `principal_user` object grants — a removed member
+  would keep per-record access to shared clients. The sharing model must define
+  revocation semantics (e.g., object grants tied to membership and cleaned on removal,
+  or an explicit unshare action) before the clients cutover wires sharing; it is a
+  design decision of this RFC, not a predicate gap.
