@@ -16,11 +16,17 @@ provisioning PR, when the templates are role-backed and backfilled.
 
 from unittest.mock import patch
 
-from accounts.models import User
-from accounts.types import PermissionTemplateEnum
+from accounts.groups import ORG_ADMIN
+from accounts.models import PermissionGroup, User
+from accounts.role_manager import OrgRoleManager
+from accounts.services import sync_roles
+from accounts.types import OrgTypeEnum, PermissionTemplateEnum
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from organizations.models import OrganizationUser
+from shelters.groups import SHELTER_OPERATOR
+
+from .baker_recipes import organization_recipe
 
 MEMBER_PERMS = (
     "organizations.view_org_members",
@@ -195,3 +201,80 @@ class MemberManagementGrantAuthorityTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(mutation, {"data": variables})
         self.assertIsNone(response["data"])
         self.assertEqual(response["errors"][0]["message"], ACTION_DENIED)
+
+
+class MemberListGrantFilterTestCase(GraphQLBaseTestCase):
+    """C-8: the member-list orgType/permissionTemplate filters union Grants.
+
+    After teardown a role-backed Shelter Operator holds a Grant and no legacy
+    ``PermissionGroup``; the operator-portal Users page (``orgType=SHELTER``)
+    must still list them.  The filters used to read ``PermissionGroup`` only, so
+    grant-held operators vanished from the page while the display annotation
+    beside them read both authorities.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.shelter_org = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        # A legacy ORG_ADMIN viewer at the shelter org runs the query.
+        self.viewer = baker.make(User, first_name="shelter admin")
+        self.shelter_org.add_user(self.viewer)
+        OrgRoleManager(self.shelter_org).add_roles(self.viewer, ORG_ADMIN)
+        # A role-backed Shelter Operator: Grant only, no legacy PermissionGroup.
+        self.operator = baker.make(User, first_name="shelter operator")
+        self.shelter_org.add_user(self.operator)
+        OrgRoleManager(self.shelter_org).add_roles(self.operator, SHELTER_OPERATOR)
+        self.assertFalse(PermissionGroup.objects.filter(organization=self.shelter_org, user=self.operator).exists())
+
+        self.graphql_client.force_login(self.viewer)
+        self._set_active_org(self.shelter_org)
+
+    def _list_org_members(
+        self,
+        *,
+        org_type: str | None = None,
+        permission_template: str | None = None,
+    ) -> dict:
+        query = """
+            query ($organizationId: String!, $orgType: OrgTypeEnum, $permissionTemplate: PermissionTemplateEnum) {
+                organizationMembers(organizationId: $organizationId, orgType: $orgType, permissionTemplate: $permissionTemplate) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"organizationId": str(self.shelter_org.pk)}
+        if org_type is not None:
+            variables["orgType"] = org_type
+        if permission_template is not None:
+            variables["permissionTemplate"] = permission_template
+        return self.execute_graphql(query, variables)
+
+    def _member_ids(self, response: dict) -> set[str]:
+        self.assertIsNone(response.get("errors"))
+        return {m["id"] for m in response["data"]["organizationMembers"]["results"]}
+
+    def test_grant_held_operator_survives_the_org_type_filter(self) -> None:
+        response = self._list_org_members(org_type=OrgTypeEnum.SHELTER.name)
+
+        member_ids = self._member_ids(response)
+        self.assertIn(str(self.operator.pk), member_ids)
+
+    def test_grant_held_operator_survives_the_permission_template_filter(self) -> None:
+        response = self._list_org_members(permission_template=PermissionTemplateEnum.SHELTER_OPERATOR.name)
+
+        member_ids = self._member_ids(response)
+        self.assertIn(str(self.operator.pk), member_ids)
+
+    def test_member_without_the_role_still_fails_the_filter(self) -> None:
+        plain_member = baker.make(User, first_name="plain member")
+        self.shelter_org.add_user(plain_member)
+
+        response = self._list_org_members(permission_template=PermissionTemplateEnum.SHELTER_OPERATOR.name)
+
+        member_ids = self._member_ids(response)
+        self.assertNotIn(str(plain_member.pk), member_ids)
+        self.assertIn(str(self.operator.pk), member_ids)

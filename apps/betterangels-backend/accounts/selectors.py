@@ -131,19 +131,42 @@ def resolve_permission_group(
 
 
 def member_role_names(*, user_id: int, organization_id: int) -> list[str]:
-    """Names of the roles *user_id* holds in *organization_id*, sorted."""
-    return sorted(
-        PermissionGroup.objects.filter(organization_id=organization_id, user=user_id).values_list("label", flat=True)
+    """Names of the roles *user_id* holds in *organization_id*, sorted.
+
+    Unions the legacy ``PermissionGroup`` memberships and user-principal
+    ``Grant`` rows (role-backed templates, ADR 0001 §4 phase 5) — a grant-held
+    Shelter Operator must still appear after teardown (audit C-8).
+    """
+    from .models import Grant
+
+    legacy = PermissionGroup.objects.filter(organization_id=organization_id, user=user_id).values_list(
+        "label", flat=True
     )
+    grant_roles = Grant.objects.filter(scope_org_id=organization_id, principal_user_id=user_id).values_list(
+        "role__name", flat=True
+    )
+    return sorted(set(legacy) | set(grant_roles))
 
 
 def role_names_by_organization(*, user_id: int) -> dict[str, list[str]]:
-    """Roles *user_id* holds, grouped by organization name and sorted within each."""
+    """Roles *user_id* holds, grouped by organization name and sorted within each.
+
+    Unions legacy ``PermissionGroup`` memberships and user-principal ``Grant``
+    rows (audit C-8) so a grant-only holder still appears after teardown.
+    """
+    from .models import Grant
+
     by_organization: dict[str, list[str]] = {}
-    for organization_name, role_name in (
+    rows: list[tuple[str, str]] = list(
         PermissionGroup.objects.filter(user=user_id)
         .select_related("organization")
         .values_list("organization__name", "label")
-    ):
+    )
+    rows += list(
+        Grant.objects.filter(principal_user_id=user_id, scope_org__isnull=False)
+        .select_related("scope_org")
+        .values_list("scope_org__name", "role__name")
+    )
+    for organization_name, role_name in rows:
         by_organization.setdefault(organization_name, []).append(role_name)
     return {name: sorted(roles) for name, roles in sorted(by_organization.items())}
