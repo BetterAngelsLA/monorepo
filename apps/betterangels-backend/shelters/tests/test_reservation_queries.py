@@ -213,7 +213,8 @@ class ReservationsQueryTestCase(ReservationQueriesTestCase):
 
         Grant.objects.filter(principal_user=self.operator).delete()
 
-        expected_query_count = 10
+        # The object arm (ADR 0001 §2.5) adds a constant ContentType lookup.
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.reservations_query,
