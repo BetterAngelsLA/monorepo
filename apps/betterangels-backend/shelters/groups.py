@@ -52,7 +52,11 @@ SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.CHANGE,
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
-        Shelter.perms.VIEW_PRIVATE,
+        # view_private_shelter deliberately NOT on the scoped role: private
+        # shelters in the public directory are a global-tier gate (the only
+        # consumer reads has_perm, which Grants don't feed); a shelter operator
+        # sees their org's private shelters through the org-scoped visible()
+        # path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
     ],
     invite_html="account/email/shelter_operator_invite.html",
