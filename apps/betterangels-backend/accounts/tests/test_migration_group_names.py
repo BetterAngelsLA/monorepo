@@ -55,7 +55,9 @@ class UnconfiguredOrganizationTestCase(TestCase):
         organization = organization_recipe.make(owner_roles=())
         OrganizationProfile.objects.filter(organization=organization).delete()
         before = set(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
-        self.assertEqual(len(before), 3)
+        # §5.3 provisioning: only the still-legacy CASEWORKER group exists
+        # (ORG_ADMIN/ORG_SUPERUSER are role-backed).
+        self.assertEqual(len(before), 1)
 
         reconcile_org_groups(organization)
 

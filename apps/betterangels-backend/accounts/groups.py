@@ -1,5 +1,5 @@
 from accounts.permissions import UserOrganizationPermissions
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 from reports.permissions import ReportPermissions
 from teams.models import Team
 
@@ -27,3 +27,16 @@ ORG_SUPERUSER = TemplateConfig(
     ],
     is_invitable=False,
 )
+
+# ── Role definitions (ADR 0001 §5.3, provisioning) ─────────────────────
+# Role-backing ORG_ADMIN / ORG_SUPERUSER is the §5.3 org-admin milestone: once
+# ``sync_roles`` creates these scoped Role rows, ``reconcile_org_groups`` stops
+# provisioning their legacy ``PermissionGroup`` rows and deletes stale ones, and
+# ``OrgRoleManager`` writes Grants instead of group memberships.  Both templates
+# are offered by every org type (outreach and shelter) and are scoped (never
+# global).
+
+ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)
+ORG_SUPERUSER_ROLE = RoleDef.from_template(ORG_SUPERUSER)
+
+ORG_ADMIN_ROLES: tuple[RoleDef, ...] = (ORG_ADMIN_ROLE, ORG_SUPERUSER_ROLE)

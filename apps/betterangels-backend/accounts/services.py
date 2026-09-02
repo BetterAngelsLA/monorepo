@@ -561,12 +561,19 @@ def sync_roles() -> None:
     One row per :class:`~common.permissions.config.RoleDef` — global roles are
     provisioned once, never per organization.  Idempotent: get_or_create each
     ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
+
+    Aggregates the shelter roles (:data:`shelters.groups.ROLES`) with the
+    org-admin roles (:data:`accounts.groups.ORG_ADMIN_ROLES`, ADR 0001 §5.3).
     """
     from accounts.models import Role
-    from shelters.groups import ROLES
+    from shelters.groups import ROLES as SHELTER_ROLES
+
+    from .groups import ORG_ADMIN_ROLES
+
+    roles = (*SHELTER_ROLES, *ORG_ADMIN_ROLES)
 
     with transaction.atomic():
-        for role_def in ROLES:
+        for role_def in roles:
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
             perms_changed = {p.pk for p in role.permissions.all()} != wanted
@@ -598,6 +605,33 @@ def backfill_shelter_grants() -> None:
             grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
             if created:
                 logger.info("Backfilled Grant %s", grant)
+
+
+def backfill_org_admin_grants() -> None:
+    """Backfill ``Grant`` rows from legacy Organization Admin memberships.
+
+    The §5.3 provisioning flip (ADR 0001 §5.3): one ``Grant`` per member of an
+    org's ``Organization Admin`` / ``Organization Superuser`` ``PermissionGroup``,
+    for every org (shelter and outreach).  Idempotent (``get_or_create``), and
+    must run *before* ``reconcile_org_groups`` deletes those legacy rows — once
+    ``sync_roles`` has created the scoped Role rows, reconcile retires the
+    groups, so the conversion order on ``post_migrate`` is: ``sync_roles`` →
+    this backfill → reconcile.
+    """
+    from accounts.models import Grant, PermissionGroup, Role
+
+    from .groups import ORG_ADMIN_ROLES
+
+    for role_def in ORG_ADMIN_ROLES:
+        role = Role.objects.get(name=role_def.name)
+        groups = PermissionGroup.objects.filter(template__name=role_def.name)
+        for group in groups.prefetch_related("user_set"):
+            for user in group.user_set.all():
+                grant, created = Grant.objects.get_or_create(
+                    principal_user=user, role=role, scope_org=group.organization
+                )
+                if created:
+                    logger.info("Backfilled Grant %s", grant)
 
 
 def backfill_global_role_members() -> None:

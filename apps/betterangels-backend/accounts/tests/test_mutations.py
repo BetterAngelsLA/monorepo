@@ -3,7 +3,7 @@ from unittest.mock import ANY, patch
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.tests.utils import CurrentUserGraphQLBaseTestCase
 from accounts.types import PermissionTemplateEnum
@@ -193,8 +193,10 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
             # Teardown (ADR 0001 §4 phase 5): CASEWORKER is non-role-backed, so
-            # only the legacy group write happens (no Grant row).
-            with self.assertNumQueriesWithoutCache(20):
+            # only the legacy group write happens (no Grant row).  §5.3
+            # provisioning: the mutation's authority now resolves grant-only
+            # through ``permitted_org`` (3 extra queries).
+            with self.assertNumQueriesWithoutCache(23):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
@@ -323,10 +325,16 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         self.execute_graphql(mutation, {"data": variables})
 
-        held = set(
+        # §5.3 provisioning: ORG_ADMIN is role-backed, so the member holds it as
+        # a Grant; CASEWORKER remains a legacy group membership.
+        held_groups = set(
             PermissionGroup.objects.filter(organization=self.org, user=member).values_list("template__name", flat=True)
         )
-        self.assertSetEqual(held, {CASEWORKER.name, ORG_ADMIN.name})
+        held_grants = set(
+            Grant.objects.filter(principal_user=member, scope_org=self.org).values_list("role__name", flat=True)
+        )
+        self.assertSetEqual(held_groups, {CASEWORKER.name})
+        self.assertSetEqual(held_grants, {ORG_ADMIN.name})
 
     def test_add_organization_member_already_member(self) -> None:
         org_member = baker.make(

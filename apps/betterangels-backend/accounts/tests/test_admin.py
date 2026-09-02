@@ -7,7 +7,7 @@ roles and accept no members, and adding a member to it returned a 500.
 from typing import Any, cast
 
 from accounts.admin import CustomOrganizationUserAdmin
-from accounts.groups import ORG_ADMIN
+from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
 from accounts.models import (
     Grant,
     OrganizationProfile,
@@ -141,9 +141,18 @@ class OrganizationAdminTestCase(TestCase):
 
         organization = Organization.objects.get(name="Outreach Org")
         self.assertEqual([t.value for t in organization.profile.org_types], ["outreach"])
+        # §5.3 provisioning: only the still-legacy CASEWORKER template gets a
+        # PermissionGroup; the role-backed ORG_ADMIN/ORG_SUPERUSER rows are not
+        # created (their authority is a Grant).
         self.assertSetEqual(
             set(PermissionGroup.objects.filter(organization=organization).values_list("template__name", flat=True)),
-            {t.name for t in (CASEWORKER,)} | {"Organization Admin", "Organization Superuser"},
+            {CASEWORKER.name},
+        )
+        self.assertFalse(
+            PermissionGroup.objects.filter(
+                organization=organization,
+                template__name__in=[ORG_ADMIN.name, ORG_SUPERUSER.name],
+            ).exists()
         )
 
     def test_form_hides_is_active(self) -> None:
@@ -1261,7 +1270,11 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
         )
         self.client.force_login(self.superuser)
         self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
-        self.code_owned = PermissionGroupTemplate.objects.get(name=ORG_ADMIN.name)
+        # CASEWORKER is the still-legacy code-owned template (ADR 0001 §5.3): it
+        # still provisions org PermissionGroups, so deleting its template row
+        # exercises the SET_NULL-orphan path.  ORG_ADMIN/ORG_SUPERUSER are
+        # code-owned as scoped Roles now and have no org PermissionGroup rows.
+        self.code_owned = PermissionGroupTemplate.objects.get(name=CASEWORKER.name)
         self.hand_defined = PermissionGroupTemplate.objects.create(name="Weekend Volunteers")
 
     def test_the_organization_page_does_not_link_into_the_template_admin(self) -> None:
@@ -1330,7 +1343,7 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
 
         row.refresh_from_db()
         self.assertIsNone(row.template_id)
-        self.assertEqual(row.label, ORG_ADMIN.name)
+        self.assertEqual(row.label, CASEWORKER.name)
 
         seed_permission_templates()
         with self.assertRaises(IntegrityError), transaction.atomic():

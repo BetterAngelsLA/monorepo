@@ -312,36 +312,16 @@ def can_anywhere(user: "User", perm: str) -> bool:
 
 
 def permitted_org(user: "User", perm: str, *, org_id: Any) -> Organization | None:
-    """Transitional org-scoped dual-read (ADR 0001 §5.3): legacy OR ``can()``.
+    """The org-scoped authority check (ADR 0001 §5.3, post-provisioning).
 
-    **The single seam of the §5.3 transition.**  Every consumer whose authority
-    template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy reads through
-    this one function: the legacy arm (``permissioned_queryset`` — the robust
-    single-join EXISTS) returns the org in one query while the template is
-    legacy, and the grant arm (``can()``) takes over once the provisioning PR
-    role-backs the template and backfills Grants.  Because every consumer shares
-    the seam, role-backing a template no longer has to coincide with cutting each
-    consumer over — a domain can land independently and nothing breaks
-    mid-transition.  ``None`` means not authorized (or no such org — ``can()``
-    never implies existence, ADR 0001 §2.6 finding F7).
-
-    The legacy arm runs first: it is today's authority and keeps the common path
-    at a single query.  The legacy arm is deleted from this one function at phase
-    5, when it collapses to the grant check.
+    **The single seam of the org-admin transition** — grant-only since the §5.3
+    provisioning PR role-backed ``ORG_ADMIN``/``ORG_SUPERUSER`` and backfilled
+    Grants, which retired the legacy ``PermissionGroup`` arms (reconcile deletes
+    the rows).  Returns the org when the user can act on *perm* there, else
+    ``None``.  ``None`` also means no such org — ``can()`` never implies
+    existence, ADR 0001 §2.6 finding F7.
     """
-    from common.permissions.utils import permissioned_queryset
     from organizations.models import Organization
-
-    org = permissioned_queryset(
-        Organization.objects.all(),
-        user=user,
-        organization_id=str(org_id),
-        perms=[perm],
-        any_perm=True,
-        organization_field="pk",
-    ).first()
-    if org is not None:
-        return org
 
     if can(user, perm, org=org_id):
         return Organization.objects.filter(pk=org_id).first()
@@ -349,13 +329,12 @@ def permitted_org(user: "User", perm: str, *, org_id: Any) -> Organization | Non
 
 
 def has_authority_anywhere(user: "User", perm: str) -> bool:
-    """Transitional global-tier dual-read: legacy ``has_perm`` OR grant-anywhere.
+    """Global-tier authority check: grant-anywhere (ADR 0001 §5.3, post-provisioning).
 
-    The global companion to :func:`has_authority` for the member-management
-    queries' anywhere tier (``view_org_members`` rides a still-legacy template).
-    Grants do not feed ``has_perm``, so a grant-only holder is covered by
-    ``can_anywhere()``.  Deleted at phase 5.
+    The global companion to :func:`permitted_org` for the member-management
+    queries' anywhere tier.  Grant-only since provisioning: legacy ``has_perm``
+    no longer feeds these perms (the role-backed templates' ``PermissionGroup``
+    rows are gone), so a holder is authorized iff they hold the perm via a Grant
+    at some org (``can_anywhere``) or the global tier.
     """
-    if user.has_perm(perm):
-        return True
     return can_anywhere(user, perm)

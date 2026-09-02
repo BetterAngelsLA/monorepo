@@ -289,7 +289,10 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             "userId": str(self.org_admin.pk),
         }
 
-        with self.assertNumQueriesWithoutCache(5):
+        # §5.3 provisioning: ``permitted_org`` is grant-only, so the authority
+        # resolves through ``scopes()`` + the Grant check instead of the legacy
+        # single-join EXISTS (2 extra queries, memoized per request).
+        with self.assertNumQueriesWithoutCache(7):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
@@ -354,7 +357,9 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(6):
+        # §5.3 provisioning: grant-only ``permitted_org`` (see
+        # test_organization_member_query) — 2 extra queries over the legacy arm.
+        with self.assertNumQueriesWithoutCache(8):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(
