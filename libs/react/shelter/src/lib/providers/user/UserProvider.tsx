@@ -18,6 +18,7 @@ const { UserProvider, useUser } = createUserProvider({
       email: user.email,
       organization: user.organizations?.[0] ?? undefined,
       organizations: user.organizations ?? null,
+      permissions: user.permissions,
     };
   },
   isUnauthenticated: (errors) =>
