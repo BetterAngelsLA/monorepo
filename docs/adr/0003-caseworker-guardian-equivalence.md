@@ -124,9 +124,12 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    edits are product-real (whitelist + a sharing edge) or impossible-by-design
    (org-owned only → no whitelist entry; the object arm stays off for it).
 2. **Sharing edges** — when org B may edit a row owned by org A, who creates the
-   object grant and how is it audited (mirrors the unresolved client-sharing
-   data-edge shape, RFC 0002 § Open sub-decisions). Default proposal: BA/staff in
-   the Django admin (as today), with a `GrantAdmin` object-grant inline.
+   object grant and how is it audited. **Decided (2026-09-02):** BA/staff create
+   person object grants in the Django admin (`grant_obj`, audited via pghistory);
+   revocation on the grantee's org departure is resolved in RFC 0002 (granting-org
+   provenance + revoke-on-exit; non-member collaborators until explicit unshare). An
+   org-level *data edge* remains future (ADR §7.4) — never an org-principal `Grant`
+   (ADR §2.5).
 3. **Referral `own_org_or`** — `OrgScoped` needs an `own_org_or=("shelter",)`
    declaration form before Referral cuts over (ADR §4.1). This RFC does not
    design the multi-path form; it is called out as a prerequisite. Note that

@@ -340,14 +340,19 @@ subquery, not a re-derivation.
   a stated convention for every child-create service, not per-site.
 - The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
   it is turned on with its first consumer, not before.
-- **Object grants are user-principal only (decision).** The schema permits
-  `principal_org` + `scope_object` (the two axes are independent), but no predicate
-  path reads an org-principal object grant — the delegation arm is org-scope-only
-  (`scope_org__isnull=False`) and the object arm is user-principal (`_object_grant_q`).
-  Such rows would be inert and misleading, so they are **forbidden**: a new E00x check
-  plus an admin form restriction (`scope_object` requires `principal_user`). Org-wide
-  per-record sharing, if ever product-real, is a separate design — not an accidental
-  schema side-effect.
+- **Object grants are user-principal only (decision).** Sharing is person-granular:
+  `Grant(principal_user, role, scope_object)` — authority attaches to a person you can
+  audit and revoke. Org-principal object grants (`principal_org` + `scope_object`) are
+  schema-legal but read by no predicate path, and wiring them would make authority
+  org-granular — "every current *and future* member of org B with this role edits this
+  record" — which is group-held per-record authority, the exact guardian shape this
+  ADR deletes (rule 4). They are therefore **forbidden**: a new E00x check plus an
+  admin form restriction (`scope_object` requires `principal_user`). If org-level
+  per-record sharing is ever product-real, it belongs on the *data edge* (ADR §7.4 — a
+  sharing relationship naming the orgs allowed to act), with authority still resolving
+  per-person through each member's own role — never an org-principal `Grant`.
+  Person-grant lifecycle on org departure: see RFC 0002 (granting-org provenance +
+  revoke-on-exit).
 
 ### 2.6 Mutation surface convention
 
@@ -368,6 +373,14 @@ single-row writes (`can`/`can_obj`) resolve against every org in `scopes()`. A u
 holding a role at orgs A and B may edit org A's rows while the UI says they are acting
 as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
 stated product fact so nobody later "fixes" it by confining writes to the header.
+
+**Contextual reads (nested platform-shared records).** A client (platform-shared)
+shown *because its parent is visible* — e.g. a client on a reservation you can see — is
+authorized by the **parent's scope**, not by holding the platform-wide client perm. A
+shelter operator sees guests at their shelter through the reservation, not through a
+global client browser. Read paths that surface a platform-shared record nested under a
+visible org-scoped parent gate on the parent's visibility and never require (or imply)
+the platform-wide model perm (RFC 0002 — client read-surface decision).
 
 **Role assignment rule:** which roles an org may grant is a service-layer validation
 reading `OrganizationProfile.org_types` (preserving today's `REGISTRY` rule) — it never
@@ -808,16 +821,21 @@ regenerated at each step.
 
 ## 7. Open decisions (phase-0 gate)
 
-1. **Admin-created custom roles** (finding F21): v1 default is **code-owned `RoleDef`s
-   only**; admins may not create bespoke roles. Revisit if the admin-defined-template
-   capability is product-required. If allowed later, `is_global` ownership, sync, and
-   E002 need explicit rules.
+1. **Admin-created custom roles** (finding F21) — **decided (2026-09-02): code-owned
+   `RoleDef`s only for v1**; admins may not create bespoke roles. Revisit only when a
+   concrete org asks (then `is_global` ownership, sync, and E002 need explicit rules).
 2. **`Shelter.organization` nullability** — currently `SET_NULL`; orphans are reachable
    only at the global tier. Decide required-with-backfill vs. accept.
-3. **Who administers org→org delegation** — org admin self-service in the portal vs.
-   BA staff in Django admin. Decides whether phase 2 ships a UI or only an inline.
-4. **Client-sharing data edge shape** — model, who adds/removes, implied perms
-   (VIEW only?), audit. Under-designed by intent; must be specified before phase 4.
+3. **Who administers org→org delegation** — **decided (2026-09-02): BA staff in the
+   Django admin only for v1** (the `GrantInline`/`DelegatedGrantInline`). Org-admin
+   self-service in the portal is deferred (needs guardrails, audit, and
+   receiving-org confirmation).
+4. **Client-sharing data edge shape** — **decided (2026-09-02, v1):** cross-org sharing
+   is BA/staff creating person object grants in the Django admin (`grant_obj`), with
+   revocation on org departure resolved in RFC 0002. An org-level *data edge* (a
+   sharing relationship naming the orgs allowed to act) remains a future,
+   product-triggered design — authority still resolves per-person; the edge never
+   becomes an org-principal `Grant` (§2.5).
 5. **`in_org` for scoped multi-org users** — confirmed: header picks the active view;
    authority is unaffected. No further decision needed.
 6. **Client-writes design (§5.1)** — per-model read/write tiers for platform-shared

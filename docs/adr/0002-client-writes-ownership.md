@@ -171,6 +171,27 @@ They cut over together and **inherit `ClientProfile`'s tier cells** (SHARED read
 write now; the owner-tier applies to the family later), so no sibling is forgotten or
 left on the legacy path with a divergent tier.
 
+**Client read surface (decision — 2026-09-02): dedupe search, not blanket VIEW.**
+The `ClientProfile` tier cell stays SHARED (any holder reads all rows); this decision
+sets **which roles hold the client perms**. Shelter operators need to find existing
+profiles (so they do not create duplicates), but they do not need — and should not
+get — the full platform-wide casework record:
+
+- **Full `ClientProfile.VIEW`/`CHANGE`/`DELETE` leave the `SHELTER_OPERATOR` role**
+  (caseworker/global-tier territory). A client shown *inside a shelter-scoped record*
+  (a guest on a visible reservation) is a **contextual read** — authorized by the
+  parent's shelter scope (ADR §2.6), never by a platform-wide client perm.
+- **A purpose-built dedupe search** (`clientSearch`) returns a narrow projection —
+  name, DOB, and enough to pick the right record, not the casework fields — gated by a
+  dedicated permission (e.g. `clients.search_clientprofile`) on Shelter Operator and
+  Caseworker. Row scope is platform-wide **on purpose** (dedupe must find clients other
+  orgs created); the *field surface* is capped by the endpoint, so no field-level ACL
+  or condition axis is required.
+- **No client writes** for shelter operators, ever.
+- Cutover notes: removing full VIEW is a *narrow* vs `main` (operators surface clients
+  only through reservations today), so it ships with the reservation re-gating; the
+  search projection's fields and PII-search audit logging are cutover sub-decisions.
+
 ## Future Option A — `created_by_org` (owner-tier for clients, parked)
 
 When product adopts org ownership/transfer, `ClientProfile` gains
@@ -200,10 +221,6 @@ When product adopts org ownership/transfer, `ClientProfile` gains
   documents, notes, or tasks — the OBJECT tier stays available but unactivated.
 - Whether read privacy narrows below `SHARED` (per-program / consent) — the write model
   rides whatever granularity the read model settles on.
-- **Which roles may hold a platform-shared model's perm at all.** SHARED read means
-  *every holder in every org reads every row* (e.g. `SHELTER_OPERATOR` carries
-  `ClientProfile.VIEW`). Parity keeps that today; narrowing the read *surface per role*
-  is a product decision, not a cutover detail.
 - **Client-relative read scoping** — "org B sees only rows relevant to the clients it
   co-serves" — the condition axis below `SHARED`, not expressible with the read tiers
   as defined (ADR 0001 §3).
@@ -223,9 +240,11 @@ When product adopts org ownership/transfer, `ClientProfile` gains
 - How `ClientDocument` CHANGE/DELETE expresses the creating-org tier in the cutover
   (replacing the per-record guardian rows from `resolve_upload` / `PermissionedQuerySet`
   with the tier check) without changing behavior.
-- **Sharing revocation on member removal (audit note):** `organization_remove_member`
-  revokes org-scoped Grants but not `principal_user` object grants — a removed member
-  would keep per-record access to shared clients. The sharing model must define
-  revocation semantics (e.g. object grants tied to membership and cleaned on removal, or
-  an explicit unshare action) before the clients cutover wires sharing; it is a design
-  decision of this RFC, not a predicate gap.
+- **Sharing revocation on member removal — resolved (2026-09-02).** Object grants gain
+  a **granting-org provenance** (the org the share was made on behalf of). On
+  `organization_remove_member`, `OrgRoleManager` revokes the member's org-scoped Grants
+  **and** their object grants whose granting org is the org they left (hybrid: org-
+  member grantees lose org-derived shares; non-member collaborators keep access until
+  an explicit admin unshare). Add an admin "shares held by former members" review list
+  as a safety net. Schema: one nullable granting-org FK on `Grant` (plus the E00x
+  org-principal-forbid check, ADR §2.5); no sharing has shipped, so no backfill.
