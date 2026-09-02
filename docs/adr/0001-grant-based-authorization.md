@@ -152,6 +152,16 @@ templates keep their own sync during transition). `is_global` is **code-owned** 
 admin may not flip it (see E002). Invite/welcome email metadata lives on the `RoleDef`,
 not on a per-org row.
 
+**Global roles compose and may be narrower than full CRUD.** Authority at the global
+tier is the per-permission union of every global `Role` a user holds in `user.groups`
+(E001 keeps scoped roles out of groups; nothing forces a global role to be
+all-or-nothing). A read-only global role — e.g. a "Global Shelter Viewer" carrying only
+the `VIEW` perms of the shelter models — reads everything and edits nothing: `scopes`
+returns `ALL` only for the perms the role actually carries, so `can`/`can_obj` for the
+write perms fail closed, and `currentUser.permissions` surfaces only the held perms to
+the frontend. One user may hold both a read-only global role and an org-scoped operator
+role; each check resolves through the union.
+
 ### 2.3 Model declarations — one graph, not two
 
 ```python
@@ -178,9 +188,10 @@ class Bed(OrgScoped, BaseModel):          org_via = ("shelter",)
 class Room(OrgScoped, BaseModel):         org_via = ("shelter",)
 class Reservation(OrgScoped, BaseModel):  org_via = ("bed", "room")
 class ShelterPhoto(OrgScoped, BaseModel): org_via = ("shelter",)
-# outreach (future cutovers):
-class Note(OrgScoped, BaseModel):         org_via = ("organization",)
-class Referral(OrgScoped, BaseModel):     org_via = ("organization", "shelter")
+# outreach (future cutovers) — these declare org_via = () because each owns its
+# own ``organization`` FK; ``org_via`` hops *from* a model that lacks one:
+class Note(OrgScoped, BaseModel):         org_via = ()          # owns organization
+class Referral(OrgScoped, BaseModel):     org_via = ()          # owns organization (see §4.1 for the shelter-OR gap)
 class ClientProfile(OrgScoped, BaseModel): org_via = None   # platform-shared by decision
 ```
 
@@ -261,10 +272,39 @@ def can(user, perm, *, org):
 
 
 def can_obj(user, perm, obj):
-    """The single-row check *is* the row filter, applied to one row."""
+    """The single-row check *is* the row filter, applied to one row.
+
+    Org-scoped model — the row falls in the user's scopes.  Platform-shared
+    model (``org_via = None``) — per-record authority comes from the object
+    arm or the global tier, never from "holds the perm anywhere" (finding
+    C1): the read rule must not leak into per-record writes.
+    """
+    s = scopes(user, perm)
+    if s is ALL:
+        return True
+    if not obj.__class__.org_paths():
+        # platform-shared: only an object grant on this row grants per-record
+        # authority (fails closed for non-whitelisted models)
+        return obj.__class__._base_manager.filter(pk=obj.pk).filter(
+            _object_grant_q(obj.__class__, user, perm)
+        ).exists()
     return visible(obj.__class__._base_manager.filter(pk=obj.pk), user, perm).exists()
+```
 
+**Platform-shared per-record writes (finding C1).** `visible()`'s platform-shared
+branch — "perm held anywhere ⇒ all rows" — is the **read** rule (reads are
+deliberately platform-shared). It must never be the per-record **write** authority:
+`can_obj` on a platform-shared model checks the object arm (or the global tier) and
+fails closed otherwise. Write services on platform-shared models load records via
+`can_obj` (or the object arm) for mutation, and only use `visible()` for reads and
+load-by-id-for-display.
 
+RFC 0002 reframes C1 as the **default** for a platform-shared model with **no declared
+write tier** — declaring a SHARED write tier for a specific model is an explicit,
+reviewed exception (`docs/adr/0002-client-writes-ownership.md`). The read rule never
+feeds an undeclared write.
+
+```python
 def can_anywhere(user, perm):
     """Authority for platform-shared creates — no org to check (finding F14)."""
     s = scopes(user, perm)
@@ -351,6 +391,54 @@ creates rows. Global roles (`is_global=True`) are never granted through a `Grant
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
 | **5** | Teardown: delete legacy `PermissionGroup` for migrated domains, collapse the global-tier helper to `user.has_perm`, remove the dual-write branch. |
 
+### 4.1 Remaining domains — readiness matrix (the full-migration target)
+
+Every org-scoped domain ends on the grant model; platform-shared data uses the object
+arm + an ownership anchor; reference data stays on the global tier. What each domain
+still needs at its cutover:
+
+| Domain | Model path | `org_via` at cutover | Current authority | Migration shape | Gate |
+|---|---|---|---|---|---|
+| **Tasks** | `Task.organization` | `()` | legacy template + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Referrals** | `Referral.organization` (+ shelter) | `()` — but "own org **or** via shelter" is inexpressible today (§4.1 note) | legacy + guardian rows at creation | §5-equivalence: org-scoped writes on the role; shared/foreign rows via the object arm | **Not mechanical** — guardian-at-creation (§5) |
+| **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
+| **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
+| **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
+| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
+| **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
+| **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | legacy GSO `PermissionGroup` template (global tier) | stays on the global tier — never org-scoped | None — by design |
+
+> **`org_via` cells are `()` for every org-owning domain.** A model with its own
+> `organization` FK declares `org_via = ()`; the `("organization",)` form hops
+> *through* a relation to a model that owns one and would raise `TypeError` at import
+> (`hop 'organization' targets Organization, which does not declare OrgScoped`) — the
+> earlier matrix and §2.3 examples were wrong. **Referral is additionally
+> inexpressible:** `_resolve_org_paths` treats `()` and a hop tuple as mutually
+> exclusive, so "own org **or** via shelter" has no declaration. `OrgScoped` needs an
+> `own_org_or=("shelter",)` form (or similar) before Referral can cut over.
+
+"Mechanical" here means the *domain path* is clean: org-scoped with no guardian rows
+written at creation, so no §5-style redesign of CHANGE/DELETE semantics is needed.
+Two distinct gates still block a cutover:
+
+- **Tasks / Referrals** write guardian rows at creation (`assign_object_permissions`),
+  the same over-permission pattern as notes §5: promoting CHANGE/DELETE onto the org
+  role lets every role-holder at the org mutate every row in the org's scope, including
+  cross-org rows the org should only view. They need the §5-equivalence design first.
+- **Teams / Reports** have clean domain paths but their permissions live on the legacy
+  `ORG_ADMIN` / `ORG_SUPERUSER` templates (§5.3). The grant predicate reads *Grants
+  only*, and a scoped `Role` row does not exist for those templates, so no holder has a
+  Grant for `add_team`/`view_reports` today. Cutting the read path over without first
+  role-backing `ORG_ADMIN` would strip authority from every org admin at every org
+  (shelter *and* outreach). They land atomically inside the §5.3 milestone, not as
+  standalone cutovers.
+
+The shelter playbook (declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in
+services/schema, drop legacy directives, regenerate schema + FE types) applies once a
+domain's authority template is role-backed. The non-mechanical / blocked domains
+(notes §5, clients §5.1, tasks/referrals §5, teams/reports §5.3) are the phase-4
+design work; nothing in the predicate blocks them once those designs land.
+
 ## 5. Notes / guardian migration (phase-4 design, finding F23)
 
 Today, caseworkers hold ADD/VIEW on the template and CHANGE/DELETE comes from
@@ -390,6 +478,135 @@ product-triggered write-tier change, not schema debt now. Full design: RFC 0002
 Cross-org edit/delete of profiles beyond shared-write is an open product follow-up
 (`docs/teams_org_scoping.md`); the model must make it expressible, not decide it.
 
+### 5.2 Capability surfacing to the frontend — tiers 1–2 ship with phase 3, tier 3 with the cutover
+
+The FE gates features on **capabilities, not raw grants** (finding F24). Three tiers:
+
+1. **Global** — `currentUser.permissions`: the global tier (global Role perms +
+   `user_permissions`; superuser → every permission). Ships with phase 3 (PR #2414).
+2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the union of
+   legacy group perms and Grant role perms (including delegated org→org grants) at each
+   reachable org. Ships with phase 3 (PR #2414).
+3. **Per-record** — object-grant capabilities: **not yet surfaced**, by decision. A
+   platform-shared model with per-record edit authority (the object arm) is ungatable
+   from tiers 1–2: an org-scoped gate hides the shared record's edit button, and a
+   permission gate shows it on records the user cannot edit — the FE-shows-action /
+   backend-refuses bug class. Tier 3 therefore ships **with the clients cutover**, not
+   as a follow-up after it.
+
+**Chosen tier-3 shape — per-record capability fields on whitelisted models**, resolved
+through the predicate itself so the button and the mutation cannot disagree:
+
+```graphql
+type ClientProfileType {
+  # ...
+  canChange: Boolean!   # can_obj(user, ClientProfile.perms.CHANGE, self)
+  canDelete: Boolean!   # can_obj(user, ClientProfile.perms.DELETE, self)
+}
+```
+
+List queries batch these with an `Exists` annotation over the row's object grants rather
+than a per-row `can_obj` call (avoids N+1). A generic `can(permission: String!)` field
+is deliberately rejected — it cannot be batched and invites callers to enumerate
+permissions the FE has no button for. `currentUser.objectGrants` (a raw-grant list) is
+also rejected as the primary contract — the FE gates on capabilities, not grants; it
+may be added later only if a "shared with me" surface needs it.
+
+**Sequencing (decided):** per-domain backend cutover first, tier-3 surfacing second,
+within the same wave — mirroring phase 2 → phase 3 for shelters (backend first,
+reachability second). The client-write tier (§7.6, resolved parity-first in RFC 0002)
+gates the clients cutover; the `can*` fields are the same either way (a `created_by_org`
+FK anchors org-scoped writes; object grants anchor shared edits).
+
+### 5.3 Org-admin role-backed milestone — teams, reports, and member management land together
+
+Teams and reports look like the cleanest cutovers (§4.1): org-scoped rows, no guardian
+rows at creation, pure `@hasOrgPerm`. They are not standalone, because **their
+permissions ride the `ORG_ADMIN` / `ORG_SUPERUSER` templates** (`accounts/groups.py`),
+which are legacy and cross-domain:
+
+- `ORG_ADMIN` carries the team perms (`Team.perms.ADD/CHANGE/DELETE/VIEW`), the report
+  perm (`ReportPermissions.VIEW_REPORTS`), the member-management perms
+  (`ADD_ORG_MEMBER`, `REMOVE_ORG_MEMBER`, `VIEW_ORG_MEMBERS`) and
+  `ACCESS_ORG_PORTAL`; `ORG_SUPERUSER` adds `CHANGE_ORG_MEMBER_ROLE`. Both templates
+  are offered by **every** org type (`outreach` and `shelter`).
+- No scoped `Role` row exists for either template, so **no holder has a Grant** for any
+  of those perms; authority today is the legacy `PermissionGroup` membership read by
+  `HasOrgPerm` → `permissioned_queryset`.
+- The grant predicate reads Grants only (`scopes()`/`visible()`/`can()`, §2.4).
+  Flipping teams (or reports, or member management) to `can()`/`visible()` before
+  `ORG_ADMIN` is role-backed therefore returns *nothing* for every current org admin —
+  the cutover would delete authority rather than move it.
+
+Role-backing is all-or-nothing per template: the moment a scoped `Role` row named
+"Organization Admin" exists, `reconcile_org_groups` stops creating its legacy
+`PermissionGroup` and deletes stale rows (PR #2416), so **every** consumer of every
+`ORG_ADMIN` perm loses its legacy read in the same deploy. The milestone must convert
+them all atomically:
+
+1. **RoleDefs** — `ORG_ADMIN_ROLE = RoleDef.from_template(ORG_ADMIN)` and
+   `ORG_SUPERUSER_ROLE` (scoped, not global), registered with the shelter roles.
+2. **Backfill** — for every org (shelter and outreach), convert existing
+   `ORG_ADMIN`/`ORG_SUPERUSER` `PermissionGroup` memberships into Grants
+   (idempotent, mirroring `backfill_shelter_grants`), run before `reconcile` deletes
+   the legacy rows.
+3. **Authority conversion in the same change set** (each domain's path is otherwise
+   clean and follows the shelter playbook):
+   - **Teams** — `Team` declares `OrgScoped` with `org_via = ()` (it owns its
+     `organization` FK; the earlier `("organization",)` form was wrong — that hops
+     *to* `Organization`, which is not `OrgScoped` and raises at import);
+     `teams/selectors.py` and `teams/schema.py` move from `team_list(organization)`
+     + `HasOrgPerm` to `visible()`/`can()`, with the org from the header and
+     per-row `can_obj`-style checks on update/delete; drop the legacy directives.
+   - **Reports** — read gate (`view_reports`) moves from `HasOrgPerm` /
+     `get_user_permitted_org` to `can()`/`visible()`.
+   - **Member management** — the `accounts` mutations gated on
+     `ADD_ORG_MEMBER`/`REMOVE_ORG_MEMBER`/`CHANGE_ORG_MEMBER_ROLE`/`VIEW_ORG_MEMBERS`
+     move to `can()`; member add/remove/role-change flows already write Grants for
+     role-backed templates via `OrgRoleManager`, so this is the read-side flip.
+   - **FE** — no new surfacing work: tier 2 (`organizationsOrganization[].permissions`,
+     §5.2) already unions Grant role perms per org, so the admin app's org-scoped
+     gates keep working once holders have Grants.
+4. **Tests** — mirror the shelter cutover suite (`test_grant_cutover.py`): global-tier
+   cross-org reads, grant-only org admin without legacy group still manages teams /
+   members / reports, and the legacy-group-only holder (a `PermissionGroup` row left
+   by a pre-backfill org) fails closed.
+
+Why this is a milestone and not a "teams PR": the change set is *one template* —
+`ORG_ADMIN`/`ORG_SUPERUSER` — cut over across its four consumers. Doing teams alone
+either leaves the legacy group in place (predicate still returns nothing → broken) or
+role-backs the template (members + reports break in the same deploy). It is scheduled
+after the tasks/referrals §5-equivalence design only because that design is orthogonal
+and already on the critical path for notes/clients; it can land in either order.
+
+**Reviewability — the milestone ships as a stacked series, not one PR.** A single
+large PR is risky to review, but the milestone cannot be split naively: the moment a
+scoped `Role` row named "Organization Admin" exists, `reconcile_org_groups` retires
+the legacy groups and every unconverted consumer breaks (above). So each consumer is
+converted *ahead* of the Role rows behind a **transitional dual-read**: the mutation
+passes if the user holds the permission via the grant predicate (`can()`, §2.4) **or**
+via the legacy org-scoped check (`permissioned_queryset` — exactly what `HasOrgPerm`
+checks today). Each PR is green alone: the legacy arm is current behavior, and the
+grant arm is dormant until Role rows + backfill land. The stack:
+
+1. **Teams** — a `HasOrgPermOrGrant` extension on the three team mutations (+ tests:
+   a legacy `ORG_ADMIN` holder still passes; a scoped-Grant holder passes with no
+   legacy group; neither is denied; a Grant at org A does not authorize acting at
+   org B). The teams *query* stays membership-gated — workers pick teams for
+   notes/tasks, so org members may read their org's teams (unchanged).
+2. **Reports** — `view_reports` reads dual.
+3. **Member management** — the four `accounts` member permissions read dual.
+4. **Provisioning** — `ORG_ADMIN`/`ORG_SUPERUSER` RoleDefs + Role rows + backfill
+   converting every existing org's admin `PermissionGroup` memberships into Grants;
+   remove the legacy arms from (1)–(3) and retire the templates (reconcile deletes
+   the legacy groups once the Role rows exist); tests go grant-only.
+
+The dual-read helper is temporary by construction — deleted in step 4 — and the
+predicate itself stays pure-grant throughout; only the *consumers* carry the
+transitional arm. Schema directives change name as extensions are swapped
+(`@hasOrgPerm` → `@hasOrgPermOrGrant` → none), so `schema.graphql` + FE types are
+regenerated at each step.
+
 ## 6. References
 
 - [SDB-218] — global shelter operator org-bypass ticket
@@ -413,10 +630,12 @@ Cross-org edit/delete of profiles beyond shared-write is an open product follow-
    (VIEW only?), audit. Under-designed by intent; must be specified before phase 4.
 5. **`in_org` for scoped multi-org users** — confirmed: header picks the active view;
    authority is unaffected. No further decision needed.
-6. **Client-writes design (§5.1)** — resolved parity-first (RFC 0002): shared read
-   AND shared write today via `can_anywhere`; owner-tier (`created_by_org`, org-scoped
-   CHANGE/DELETE) parked for later product adoption. Decision request:
-   `docs/adr/0002-client-writes-ownership.md` (added later in the stack).
+6. **Client-writes design (§5.1)** — per-model read/write tiers for platform-shared
+   models with no org (RFC 0002: parity-first — shared read AND shared write today via
+   `can_anywhere`; owner-tier `created_by_org` parked for later product adoption).
+   Required before phase 4. The tier-3 FE surfacing shape (§5.2 — `canChange`/
+   `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision
+   request: `docs/adr/0002-client-writes-ownership.md`.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407

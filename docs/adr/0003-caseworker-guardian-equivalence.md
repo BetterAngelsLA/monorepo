@@ -67,6 +67,14 @@ shared row gains an edit grant**. Those are the sub-decisions below.
 > reads SHARED **today** (model-level VIEW on `main`), writes CREATOR. Org-only
 > `Task` reads are a **product-signaled behavior change, not a parity target** —
 > they must not silently ship inside the caseworker cutover.
+>
+> **Vocabulary mapping.** RFC 0002's `CREATOR` write cell for these org-owning rows is
+> implemented here as the org-scoped `can_obj` arm: `Note.organization` /
+> `Task.organization` is set to the creating org, so "the creating org edits its rows"
+> and "the acting org edits rows whose org is in its scopes" are the same check. And
+> `SHARED` read means **all** rows of the model to any VIEW holder (there is no narrower
+> read tier today): org B reads org A's notes through that same rule; its *edit* of
+> them is what fails closed.
 
 ## Options for the caseworker role
 
@@ -119,7 +127,12 @@ org-scoped … Shared/foreign notes: per-record control via the object arm").
    the Django admin (as today), with a `GrantAdmin` object-grant inline.
 3. **Referral `own_org_or`** — `OrgScoped` needs an `own_org_or=("shelter",)`
    declaration form before Referral cuts over (ADR §4.1). This RFC does not
-   design the multi-path form; it is called out as a prerequisite.
+   design the multi-path form; it is called out as a prerequisite. Note that
+   `Referral.organization` **and** `Referral.shelter` are both nullable
+   (`SET_NULL`), so even with `own_org_or` a referral with org NULL and no
+   shelter is an orphan — the same class as RFC 0002's `created_by_org` backfill
+   orphans. The cutover must decide default-org or global-only handling for
+   those rows before the org-scoped write arm can anchor on them.
 4. **Notes' sibling rows** — notes create related rows at write time (service
    requests in `notes/services.py`) that also take guardian perms. Each related
    model must declare its own org reach and cut over with its parent.

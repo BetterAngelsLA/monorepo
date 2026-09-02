@@ -59,16 +59,25 @@ without re-architecture.
 Two independent declarations per model.
 
 **Read scope:**
-- `SHARED` — any holder of the VIEW permission anywhere reads all rows (the existing
-  platform-shared read rule).
+- `SHARED` — any holder of the VIEW permission anywhere reads **all rows of the model**
+  (the existing platform-shared read rule). There is no intermediate "rows related to
+  what I can see" read tier today — `SHARED` cross-org reads mean literally everything,
+  which is the `main`-today parity target for clients/notes/tasks.
 - `ORG` — rows are scoped to the acting org.
 
-**Write scope (CHANGE; DELETE may declare a narrower tier):**
+**Write scope (CHANGE; DELETE may declare a narrower tier) — tiers are defined by the
+anchor the check filters on, not by where the actor's grant came from:**
 - `SHARED` — any holder of the permission anywhere may change any row.
-- `ORG` — the row's own organization (row carries an org FK).
-- `CREATOR` — the org that created the row (org FK set at create).
-- `UPLOADER` — the org that recorded/uploaded the row (per-record anchor, e.g. via
-  `Attachment.uploaded_by`).
+- `ORG` — the row's own organization: rows carry an org FK and the check is the
+  org-scoped `can_obj` arm (`row.organization` in the acting scopes).
+- `CREATOR` — the org that created the row (org FK set at create). **On an org-owning
+  row whose org is set at creation, `ORG` and `CREATOR` are the same check** — RFC 0003
+  implements the Note/Task "creating org" cells as that org-scoped `can_obj` arm. The
+  vocabulary only separates when creation org and row org can differ (transfer) or the
+  anchor is not on the row itself.
+- `UPLOADER` — the org that recorded/uploaded the row. The anchor must be an **org
+  captured at upload time** (the acting org); `Attachment.uploaded_by` is a *user* FK,
+  and a user may hold memberships in several orgs, so it is not an org anchor by itself.
 - `OBJECT` — per-record object grants only (explicit sharing, never routine ownership).
 
 Target matrix (tier vocabulary): `ClientProfile` = SHARED read / SHARED CHANGE now,
@@ -76,6 +85,12 @@ CREATOR (owner) later; `ClientDocument` = SHARED read / CREATOR write (matches `
 today, expressed as a tier instead of guardian rows); `Note` = SHARED read / CREATOR
 write; `Task` = SHARED read now / ORG read later (product change), CREATOR write now /
 ORG write later.
+
+For the org-owning domains (`Note`, `Task`, `ClientDocument`) the `CREATOR` and `ORG`
+write cells coincide — the row's org is set to the creating org, so both are the
+org-scoped `can_obj` arm RFC 0003 implements. `Task`'s listed `CREATOR` → `ORG` write
+movement is therefore not a write change at all: **the only `Task` behavior change is
+the read narrowing (SHARED → ORG)**, which needs explicit product sign-off.
 
 ## Why the current machinery cannot express this
 
@@ -137,9 +152,11 @@ and nothing writes grants at creation for routine ownership.
    uploading org's caseworker group, and delete gates on `PermissionedQuerySet(…,
    [DELETE])` — so doc writes are **already** uploading-org-scoped. The cutover
    expresses that as a `CREATOR`/`UPLOADER` tier instead of guardian rows — same
-   behavior, no expansion. The uploader anchor exists (`Attachment.uploaded_by`);
-   explicit cross-org doc sharing, if ever product-real, rides the OBJECT tier. There is
-   no broad doc-write to narrow later.
+   behavior, no expansion. The org anchor must be **captured at upload** (the acting org
+   that `resolve_upload` assigns the guardian row to today) — `Attachment.uploaded_by`
+   is only a *user* FK and is not an org anchor by itself; explicit cross-org doc
+   sharing, if ever product-real, rides the OBJECT tier. There is no broad doc-write to
+   narrow later.
 
 3. **`Note` / `Task` — owned by RFC 0003**, but their cells (`Note` SHARED-read /
    CREATOR-write; `Task` SHARED-read now / ORG-read later) are why the § Precondition
@@ -180,6 +197,11 @@ When product adopts org ownership/transfer, `ClientProfile` gains
 
 - Exact declaration form for the decoupled scopes (e.g. `write_tier` alongside `org_via`,
   or a model capability) and the E00x checks that keep it honest at deploy time.
+  Concretely: an E00x that **requires a declared write tier to be explicit and
+  auditable** — e.g. it fires when a *scoped* Role carries a permission whose model
+  declares a SHARED write tier without a tier-table entry, so parity SHARED writes
+  riding scoped roles (like `ClientProfile.CHANGE/DELETE` on a scoped
+  `CASEWORKER_ROLE`) are deliberate, not accidental.
 - Which write services on `ClientProfile` switch from the legacy read-side load
   (`filter_for_user`) to the SHARED-write check, and the parity tests that prove no
   behavior change.
