@@ -115,3 +115,26 @@ class BackfillTestCase(TestCase):
         backfill_global_role_members()
 
         self.assertTrue(member.groups.filter(role__is_global=True).exists())
+
+
+class ViewPrivateGlobalTierTestCase(TestCase):
+    """view_private_shelter is global-tier only (folded from audit #2422).
+
+    Private shelters in the public directory are a global-tier gate: the only
+    consumer reads has_perm, which Grant rows don't feed, so the scoped Shelter
+    Operator role must not declare an authority it could never exercise.  The
+    GSO role keeps it.
+    """
+
+    def test_view_private_is_absent_from_scoped_role_and_present_on_global(self) -> None:
+        sync_roles()
+
+        shelter_op = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.assertFalse(
+            shelter_op.permissions.filter(content_type__app_label="shelters", codename="view_private_shelter").exists()
+        )
+
+        gso = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+        self.assertTrue(
+            gso.permissions.filter(content_type__app_label="shelters", codename="view_private_shelter").exists()
+        )
