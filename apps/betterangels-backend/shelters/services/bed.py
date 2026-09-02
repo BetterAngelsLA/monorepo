@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Any, Dict, cast
 
-from common.permissions.selectors import can
+from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Bed, Shelter
 from shelters.selectors import bed_get, bed_queryset, shelter_get
@@ -35,8 +35,7 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
         permission=Shelter.perms.VIEW,
     )
 
-    if not can(user, Bed.perms.ADD, org=organization_id):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+    require_can(user, Bed.perms.ADD, org=organization_id)
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
@@ -141,7 +140,6 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
 
-    if not can(user, Bed.perms.ADD, org=organization_id):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+    require_can(user, Bed.perms.ADD, org=organization_id)
 
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

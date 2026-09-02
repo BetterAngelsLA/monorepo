@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from django.core.exceptions import ValidationError
+from common.permissions.utils import require_can
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
+from organizations.models import Organization
 from shelters.models import Service, ServiceCategory, Shelter
 from shelters.selectors import shelter_get
 from shelters.services.utils import (
@@ -126,15 +128,24 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
     Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
     ``UNSET`` keys already removed).
 
     Raises:
-        ``django.core.exceptions.ValidationError`` on invalid data.
+        ``django.core.exceptions.PermissionDenied`` when no target organization is given
+        or the user may not add shelters there.
+        ``django.core.exceptions.ValidationError`` when the target organization does not
+        exist or on invalid data.
     """
+    if not organization_id:
+        raise PermissionDenied("X-Organization-ID or an organization_id is required.")
+    if not Organization.objects.filter(pk=organization_id).exists():
+        raise ValidationError(f"Organization with id {organization_id} not found.")
+    require_can(user, Shelter.perms.ADD, org=organization_id)
+
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 

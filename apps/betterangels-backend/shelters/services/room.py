@@ -1,9 +1,9 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
-from common.permissions.selectors import can
+from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import room_get, room_queryset, shelter_get
@@ -36,8 +36,7 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
         permission=Shelter.perms.VIEW,
     )
 
-    if not can(user, Room.perms.ADD, org=organization_id):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+    require_can(user, Room.perms.ADD, org=organization_id)
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
@@ -166,8 +165,7 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
 
-    if not can(user, Room.perms.ADD, org=organization_id):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+    require_can(user, Room.perms.ADD, org=organization_id)
 
     return cast(
         Room,

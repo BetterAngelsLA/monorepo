@@ -10,8 +10,6 @@ from common.graphql.types import (
     BulkDeleteResult,
 )
 from common.permissions.utils import IsAuthenticated, active_org, get_current_organization
-from django.core.exceptions import PermissionDenied, ValidationError
-from organizations.models import Organization
 from django.db.models import Max
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
@@ -133,17 +131,10 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
-        from common.permissions.selectors import can
-
+        """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        target_org_id = cast(str, clean.pop("organization_id", None) or active_org(info))
-        if not target_org_id:
-            raise PermissionDenied("X-Organization-ID or an organization_id is required.")
-        if not Organization.objects.filter(pk=target_org_id).exists():
-            raise ValidationError(f"Organization with id {target_org_id} not found.")
-        if not can(user, Shelter.perms.ADD, org=target_org_id):
-            raise PermissionDenied("You do not have permission to perform this action in this organization.")
+        target_org_id = cast("str | None", clean.pop("organization_id", None) or active_org(info))
         return cast(ShelterType, shelter_create(user=user, organization_id=target_org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])

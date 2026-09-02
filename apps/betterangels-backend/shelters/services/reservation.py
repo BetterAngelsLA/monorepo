@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from common.permissions.selectors import can
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from common.permissions.utils import require_can
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -116,8 +116,7 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
-    if not can(user, Reservation.perms.ADD, org=organization_id):
-        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+    require_can(user, Reservation.perms.ADD, org=organization_id)
 
     scalar_data = {k: v for k, v in data.items() if v is not None}
 
