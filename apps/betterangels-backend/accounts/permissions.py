@@ -63,27 +63,19 @@ def get_user_permitted_org_dual(
     org_id: str,
     permission: str | TextChoices,
 ) -> Optional[Organization]:
-    """The org *user* may act on — grant ``can()`` OR legacy membership (§5.3).
+    """The org *user* may act on — the transition seam (§5.3).
 
     Transitional dual-read used by the member-management queries, whose
-    authority template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy.  The
-    legacy arm (``get_user_permitted_org``) preserves today's behavior; the
-    grant arm (``can()``) is the end-state authority and stays dormant until the
-    §5.3 provisioning PR role-backs the template and backfills Grants.  Deleted
-    in that PR.
+    authority template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy.
+    Delegates to :func:`common.permissions.selectors.permitted_org` (legacy
+    org-scoped check OR grant ``can()``) — one seam for every consumer.
+    Deleted at phase 5.
     """
-    org = get_user_permitted_org(user, org_id=org_id, permission=permission)
-    if org is not None:
-        return org
-
     from accounts.models import User
-    from common.permissions.selectors import can
+    from common.permissions.selectors import permitted_org
 
     if not isinstance(user, User):
         return None
 
     perm_value = permission.value if isinstance(permission, TextChoices) else permission
-    if can(user, perm_value, org=int(org_id)):
-        # ``can()`` never implies existence (ADR 0001 §2.6, finding F7).
-        return Organization.objects.filter(pk=org_id).first()
-    return None
+    return permitted_org(user, perm_value, org_id=org_id)

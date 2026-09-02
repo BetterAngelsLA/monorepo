@@ -42,7 +42,7 @@ class ReportSummaryType:
 class Query:
     @strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(ReportPermissions.VIEW_REPORTS, also_grant=True)],
+        extensions=[HasOrgPerm(ReportPermissions.VIEW_REPORTS)],
     )
     def report_summary(
         self,

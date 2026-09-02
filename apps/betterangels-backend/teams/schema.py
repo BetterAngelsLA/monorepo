@@ -44,7 +44,7 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.ADD, also_grant=True)],
+        extensions=[HasOrgPerm(Team.perms.ADD)],
     )
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
@@ -52,7 +52,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.CHANGE, also_grant=True)],
+        extensions=[HasOrgPerm(Team.perms.CHANGE)],
     )
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
@@ -71,7 +71,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.DELETE, also_grant=True)],
+        extensions=[HasOrgPerm(Team.perms.DELETE)],
     )
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         org = Organization.objects.get(pk=get_current_organization(info))

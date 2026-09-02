@@ -1,5 +1,5 @@
 """
-Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header.
+Requires the user to hold the specified permission(s) in the organization set via X-Organization-ID header.
 """
 directive @hasOrgPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 

@@ -238,7 +238,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER, also_grant=True)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)],
     )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
@@ -272,7 +272,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER, also_grant=True)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.REMOVE_ORG_MEMBER)],
     )
     def remove_organization_member(
         self,
@@ -316,7 +316,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE, also_grant=True)],
+        extensions=[HasOrgPerm(UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE)],
     )
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
