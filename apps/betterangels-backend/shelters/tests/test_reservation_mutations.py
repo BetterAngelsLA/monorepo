@@ -486,9 +486,7 @@ class ReservationMutationPermissionTestCase(ReservationMutationTestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        self.assertGraphQLOperationInfo(
-            response, "createReservation", "do not have permission", kind="PERMISSION"
-        )
+        self.assertGraphQLOperationInfo(response, "createReservation", "do not have permission", kind="PERMISSION")
         self.assertFalse(Reservation.objects.filter(created_by=self.viewer).exists())
 
     # ── updateReservation (CHANGE) ─────────────────────────────────────────
@@ -536,7 +534,5 @@ class ReservationMutationPermissionTestCase(ReservationMutationTestCase):
         response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(self.reservation.pk)]}})
 
         self.assertIsNone(response.get("errors"))
-        self.assertGraphQLOperationInfo(
-            response, "deleteReservations", "No matching reservations found", kind="ERROR"
-        )
+        self.assertGraphQLOperationInfo(response, "deleteReservations", "No matching reservations found", kind="ERROR")
         self.assertTrue(Reservation.objects.filter(pk=self.reservation.pk).exists())

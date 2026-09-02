@@ -682,9 +682,7 @@ class ShelterPhotoMutationPermissionTestCase(ShelterTestCase, TestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        self.assertGraphQLOperationInfo(
-            response, "generateShelterPhotoUploads", "Shelter matching ID", kind="ERROR"
-        )
+        self.assertGraphQLOperationInfo(response, "generateShelterPhotoUploads", "Shelter matching ID", kind="ERROR")
 
     @patch("shelters.services.shelter_photo.validate_upload_batch")
     def test_resolve_uploads_denied_for_user_without_change_permission(self, mock_validate: MagicMock) -> None:
@@ -727,9 +725,7 @@ class ShelterPhotoMutationPermissionTestCase(ShelterTestCase, TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
         self.graphql_client.force_login(self.viewer)
 
-        response = self.execute_graphql(
-            self.UPDATE_MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}}
-        )
+        response = self.execute_graphql(self.UPDATE_MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
 
         self.assertIsNone(response.get("errors"))
         self.assertGraphQLOperationInfo(response, "updateShelterPhoto", str(photo.pk), kind="ERROR")
