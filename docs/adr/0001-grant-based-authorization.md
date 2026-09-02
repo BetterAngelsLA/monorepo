@@ -413,8 +413,10 @@ Cross-org edit/delete of profiles beyond shared-write is an open product follow-
    (VIEW only?), audit. Under-designed by intent; must be specified before phase 4.
 5. **`in_org` for scoped multi-org users** — confirmed: header picks the active view;
    authority is unaffected. No further decision needed.
-6. **Client-writes design (§5.1)** — ownership model for platform-shared models with no
-   org (`created_by_org` vs. per-record object grants). Required before phase 4.
+6. **Client-writes design (§5.1)** — resolved parity-first (RFC 0002): shared read
+   AND shared write today via `can_anywhere`; owner-tier (`created_by_org`, org-scoped
+   CHANGE/DELETE) parked for later product adoption. Decision request:
+   `docs/adr/0002-client-writes-ownership.md` (added later in the stack).
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
