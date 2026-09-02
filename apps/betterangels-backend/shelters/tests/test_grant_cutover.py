@@ -35,7 +35,7 @@ class GlobalTierCrossOrgReadTestCase(TestCase):
     def test_gso_sees_shelters_in_every_org_without_a_header(self) -> None:
         role_assign(user=self.gso, role=self.gso_role)
 
-        qs = shelter_queryset(Shelter.objects.all(), user=self.gso, organization_id=None, perms=[Shelter.perms.VIEW])
+        qs = shelter_queryset(Shelter.objects.all(), user=self.gso, organization_id=None, permission=Shelter.perms.VIEW)
 
         self.assertEqual(qs.count(), 2)
         self.assertSetEqual(
@@ -48,7 +48,7 @@ class GlobalTierCrossOrgReadTestCase(TestCase):
         self.org_a.add_user(user)
         OrgRoleManager(self.org_a).add_roles(user, SHELTER_OPERATOR)
 
-        qs = shelter_queryset(Shelter.objects.all(), user=user, organization_id=None, perms=[Shelter.perms.VIEW])
+        qs = shelter_queryset(Shelter.objects.all(), user=user, organization_id=None, permission=Shelter.perms.VIEW)
 
         self.assertEqual(list(qs.values_list("pk", flat=True)), [self.shelter_a.pk])
 
@@ -60,7 +60,7 @@ class GlobalTierCrossOrgReadTestCase(TestCase):
             Shelter.objects.all(),
             user=self.gso,
             organization_id=str(self.org_a.pk),
-            perms=[Shelter.perms.VIEW],
+            permission=Shelter.perms.VIEW,
         )
 
         self.assertEqual(qs.count(), 2)
@@ -140,7 +140,7 @@ class PermissionThreadedMutationsTestCase(TestCase):
     def test_room_delete_requires_delete_permission(self) -> None:
         # The user can VIEW the room...
         qs = room_queryset(
-            Room.objects.all(), user=self.user, organization_id=str(self.org.pk), perms=[Room.perms.VIEW]
+            Room.objects.all(), user=self.user, organization_id=str(self.org.pk), permission=Room.perms.VIEW
         )
         self.assertEqual(list(qs.values_list("pk", flat=True)), [self.room.pk])
 

@@ -40,26 +40,14 @@ def shelter_list(
 # ── Queryset wrappers (hide organization_field) ───────────────────────────────
 
 
-def _single_permission(perms: list[str]) -> str:
-    """The one permission a shelter queryset authorizes with.
-
-    ``visible`` takes a single permission; the legacy ``permissioned_queryset``
-    accepted a list (AND).  Every shelter caller passes exactly one
-    (VIEW/CHANGE/DELETE) — refuse more rather than silently check only the first.
-    """
-    if len(perms) != 1:
-        raise ValueError("shelter querysets authorize exactly one permission; got {len(perms)}.")
-    return perms[0]
-
-
 def shelter_queryset(
     queryset: "QuerySet[Shelter] | None" = None,
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str],
+    permission: str,
 ) -> "QuerySet[Shelter]":
-    """The shelters *user* may exercise *perms* on.
+    """The shelters *user* may exercise *permission* on.
 
     Wraps :func:`common.permissions.selectors.visible` — the org filter comes
     from the user's Grants, and *organization_id* only confines finite scopes
@@ -70,7 +58,7 @@ def shelter_queryset(
 
     if queryset is None:
         queryset = Shelter.objects.all()
-    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def room_queryset(
@@ -78,9 +66,9 @@ def room_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str],
+    permission: str,
 ) -> "QuerySet[Room]":
-    """The rooms *user* may exercise *perms* on.
+    """The rooms *user* may exercise *permission* on.
 
     Wraps :func:`common.permissions.selectors.visible` (rooms reach their org
     through ``shelter``); *organization_id* only confines finite scopes
@@ -91,7 +79,7 @@ def room_queryset(
 
     if queryset is None:
         queryset = Room.objects.all()
-    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def bed_queryset(
@@ -99,9 +87,9 @@ def bed_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str],
+    permission: str,
 ) -> "QuerySet[Bed]":
-    """The beds *user* may exercise *perms* on.
+    """The beds *user* may exercise *permission* on.
 
     Wraps :func:`common.permissions.selectors.visible` (beds reach their org
     through ``shelter``); *organization_id* only confines finite scopes
@@ -112,7 +100,7 @@ def bed_queryset(
 
     if queryset is None:
         queryset = Bed.objects.all()
-    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def reservation_queryset(
@@ -120,9 +108,9 @@ def reservation_queryset(
     *,
     user: "User",
     organization_id: str | None,
-    perms: list[str],
+    permission: str,
 ) -> "QuerySet[Reservation]":
-    """The reservations *user* may exercise *perms* on.
+    """The reservations *user* may exercise *permission* on.
 
     Wraps :func:`common.permissions.selectors.visible` — a reservation reaches
     its org through either ``bed`` or ``room`` (both org paths are derived from
@@ -134,7 +122,7 @@ def reservation_queryset(
 
     if queryset is None:
         queryset = Reservation.objects.all()
-    return visible(queryset, user, _single_permission(perms), in_org=organization_id)
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
@@ -160,7 +148,7 @@ def shelter_get(
             Shelter.objects.all(),
             user=user,
             organization_id=organization_id,
-            perms=[permission],
+            permission=permission,
         ),
         pk=shelter_id,
     )
@@ -181,7 +169,7 @@ def room_get(
             Room.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission],
+            permission=permission,
         ),
         pk=room_id,
     )
@@ -202,7 +190,7 @@ def bed_get(
             Bed.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission],
+            permission=permission,
         ),
         pk=bed_id,
     )
@@ -228,7 +216,7 @@ def reservation_get(
             Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
             user=user,
             organization_id=organization_id,
-            perms=[permission],
+            permission=permission,
         ),
         pk=reservation_id,
     )

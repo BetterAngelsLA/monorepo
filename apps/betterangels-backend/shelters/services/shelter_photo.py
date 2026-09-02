@@ -129,7 +129,7 @@ def delete_shelter_photos(*, user: "User", organization_id: str, ids: list[int])
     Only photos belonging to shelters in the active organization are
     eligible for deletion.
     """
-    org_shelters = shelter_queryset(user=user, organization_id=organization_id, perms=[Shelter.perms.CHANGE])
+    org_shelters = shelter_queryset(user=user, organization_id=organization_id, permission=Shelter.perms.CHANGE)
     photos = ShelterPhoto.objects.filter(
         shelter__in=org_shelters,
         pk__in=ids,
@@ -158,7 +158,7 @@ def update_shelter_photo(*, user: "User", organization_id: str, data: UpdateShel
 
     photo = get_by_pk_or_not_found(
         ShelterPhoto.objects.filter(
-            shelter__in=shelter_queryset(user=user, organization_id=organization_id, perms=[Shelter.perms.CHANGE])
+            shelter__in=shelter_queryset(user=user, organization_id=organization_id, permission=Shelter.perms.CHANGE)
         ),
         pk=photo_id,
     )
