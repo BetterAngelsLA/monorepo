@@ -290,8 +290,14 @@ subquery, not a re-derivation.
 - **Creates under an object grant** resolve the parent object and check
   `can_obj(parent, child_ADD)` (finding F17) — ADD-on-child ≈ CHANGE-on-parent. This is
   a stated convention for every child-create service, not per-site.
-- The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
-  it is turned on with its first consumer, not before.
+- The arm ships **on** (`OBJECT_ARM_ENABLED = True`, PR #2415) but is a *no-op for
+  every non-whitelisted model* (`_object_grant_q` fails closed with `pk__lt=0`), and
+  `ClientProfile` — the only whitelisted model — is not yet read through `visible()`
+  by any consumer. It is therefore schema-live and predicate-lazy: it gains its first
+  real effect when the clients cutover reads `ClientProfile` through `visible()`, and
+  per-record capability fields ship then (§5.2). This revises the earlier finding-F9
+  "keep it `False` until the cutover" rule: turning it on early is harmless because the
+  whitelist gates every effect, and it keeps the object-grant tests live.
 
 ### 2.6 Mutation surface convention
 
@@ -502,7 +508,8 @@ cutover touches those exact code paths.
 6. **Client-writes design (§5.1)** — ownership model for platform-shared models with no
    org (`created_by_org` vs. per-record object grants). Required before phase 4. The
    tier-3 FE surfacing shape (§5.2 — `canChange`/`canDelete` via `can_obj`) is chosen
-   regardless of which ownership model wins.
+   regardless of which ownership model wins. Decision request: `docs/adr/0002-client-writes-ownership.md`
+   (recommends `created_by_org`, per ADR rule 4).
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
