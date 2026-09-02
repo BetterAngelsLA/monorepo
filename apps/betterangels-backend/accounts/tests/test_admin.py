@@ -636,6 +636,45 @@ class OrganizationMemberMultipleRolesTestCase(TestCase):
 
         self.assertEqual(response.context["form"].fields["permission_templates"].initial, [CASEWORKER.name])
 
+    def test_the_role_form_is_prefilled_with_a_grant_held_role(self) -> None:
+        """Teardown (ADR 0001 §4 phase 5): Shelter Operator has no legacy group —
+        the form must read the authoritative Grant or it looks unheld."""
+        member = member_add(
+            email="prefilled_grant@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].fields["permission_templates"].initial, [SHELTER_OPERATOR.name])
+
+    def test_a_no_op_save_of_the_role_form_keeps_a_grant_held_role(self) -> None:
+        """Regression: a form blind to Grants made saving look like unchecking the
+        role, silently revoking a Shelter Operator grant the page never showed."""
+        member = member_add(
+            email="noop_grant@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(SHELTER_OPERATOR,),
+        )
+        self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
+
+        url = reverse("admin:organizations_organization_change_member_roles", args=[self.organization.pk, member.pk])
+        prefilled = self.client.get(url).context["form"].fields["permission_templates"].initial
+        self.assertEqual(prefilled, [SHELTER_OPERATOR.name])
+
+        self.client.post(url, {"permission_templates": prefilled})
+
+        # The no-op save must not revoke the grant.
+        self.assertIn(SHELTER_OPERATOR.name, self._roles_of(member))
+
     def test_clearing_every_role_is_allowed_and_leaves_membership(self) -> None:
         """A member with no roles is a real state — it is what Add member starts from."""
         member = member_add(
