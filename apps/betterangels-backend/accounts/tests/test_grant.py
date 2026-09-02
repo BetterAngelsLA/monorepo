@@ -18,20 +18,20 @@ from .baker_recipes import organization_recipe
 
 class RoleTestCase(TestCase):
     def test_role_is_a_group_subclass(self) -> None:
-        role = Role.objects.create(name="Shelter Operator")
+        role = Role.objects.create(name="Test Shelter Role")
 
         self.assertIsInstance(role, Group)
         self.assertFalse(role.is_global)
-        self.assertEqual(str(role), "Shelter Operator")
+        self.assertEqual(str(role), "Test Shelter Role")
 
     def test_a_global_role_carries_a_flag(self) -> None:
-        Role.objects.create(name="Global Shelter Operator", is_global=True)
+        Role.objects.create(name="Test Global Role", is_global=True)
 
-        self.assertTrue(Role.objects.get(name="Global Shelter Operator").is_global)
+        self.assertTrue(Role.objects.get(name="Test Global Role").is_global)
 
     def test_a_global_role_in_user_groups_reads_via_django(self) -> None:
         """The global tier is ``user.groups`` on a global Role (ADR 0001 §2.1)."""
-        role = Role.objects.create(name="GSO", is_global=True)
+        role = Role.objects.create(name="Test GSO", is_global=True)
         user = baker.make(User)
         user.groups.add(role)
 
@@ -44,7 +44,7 @@ class GrantTestCase(TestCase):
         self.org_a = organization_recipe.make(name="Grant Org A")
         self.org_b = organization_recipe.make(name="Grant Org B")
         self.user = baker.make(User)
-        self.role = Role.objects.create(name="Shelter Operator")
+        self.role = Role.objects.create(name="Test Shelter Role")
 
     def test_user_grant_requires_exactly_one_principal(self) -> None:
         with self.assertRaises(IntegrityError), transaction.atomic():
@@ -98,6 +98,18 @@ class GrantTestCase(TestCase):
         Grant.objects.create(principal_org=self.org_b, role=self.role, scope_org=self.org_a)
 
         self.assertEqual(Grant.objects.filter(role=self.role, scope_org=self.org_a).count(), 2)
+
+    def test_two_users_may_hold_the_same_role_at_the_same_scope(self) -> None:
+        """User grants never collide through the org-principal uniqueness index."""
+        other_user = baker.make(User)
+
+        Grant.objects.create(principal_user=self.user, role=self.role, scope_org=self.org_a)
+        Grant.objects.create(principal_user=other_user, role=self.role, scope_org=self.org_a)
+
+        self.assertEqual(
+            Grant.objects.filter(role=self.role, scope_org=self.org_a).count(),
+            2,
+        )
 
     def test_an_object_scope_is_allowed_at_the_database_level(self) -> None:
         """Object grants are schema-live in PR 1; E003 forbids writing them, not the DB."""

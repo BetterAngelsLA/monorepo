@@ -31,6 +31,23 @@ class OrgPathsTestCase(TestCase):
     def test_org_paths_are_cached_per_class(self) -> None:
         self.assertIs(Shelter.org_paths(), Shelter.org_paths())
 
+    def test_shelter_child_models_reach_the_shelter_organization(self) -> None:
+        from shelters.models.availability import ShelterAvailability
+        from shelters.models.media import MediaLink, Video
+        from shelters.models.schedule import Schedule
+        from shelters.models.shelter import ContactInfo
+
+        self.assertEqual(Video.org_paths(), ("shelter__organization_id",))
+        self.assertEqual(MediaLink.org_paths(), ("shelter__organization_id",))
+        self.assertEqual(Schedule.org_paths(), ("shelter__organization_id",))
+        self.assertEqual(ShelterAvailability.org_paths(), ("shelter__organization_id",))
+        self.assertEqual(ContactInfo.org_paths(), ("shelter__organization_id",))
+
+    def test_platform_shared_models_declare_no_org_paths(self) -> None:
+        from clients.models import ClientProfile
+
+        self.assertEqual(ClientProfile.org_paths(), ())
+
     def test_a_multi_valued_hop_raises(self) -> None:
         class MultiValued(OrgScoped):
             org_via = ("teams",)

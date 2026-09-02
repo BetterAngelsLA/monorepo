@@ -138,11 +138,12 @@ def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> lis
 
 @register(Tags.models)
 def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E005 — every model a Role grants a permission on must declare OrgScoped.
+    """E005 — every model a *scoped* Role grants a permission on must declare OrgScoped.
 
-    A Role permission on a model that has not declared how it reaches an
-    organization (or declared itself platform-shared via ``org_via = None``)
-    would be unscoped when exercised through the grant system.
+    A scoped Role's permission is exercised through the org filter, so the model
+    must declare how it reaches an organization — or declare itself platform-shared
+    via ``org_via = None``.  Global Roles are exempt: their permissions are never
+    org-confined, so no declaration is required until a scoped Role holds them.
     """
     from common.models import OrgScoped
     from django.apps import apps
@@ -152,7 +153,7 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
         Role = apps.get_model("accounts", "Role")
 
         errors: list[Error] = []
-        for role in Role.objects.prefetch_related("permissions__content_type"):
+        for role in Role.objects.filter(is_global=False).prefetch_related("permissions__content_type"):
             for permission in role.permissions.all():
                 model = permission.content_type.model_class()
                 if model is None or model._meta.abstract:

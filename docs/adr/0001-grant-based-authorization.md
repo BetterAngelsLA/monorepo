@@ -145,15 +145,18 @@ class Grant(models.Model):
             # an org cannot delegate to itself
             models.CheckConstraint(condition=Q(principal_org__isnull=True) | ~Q(principal_org=F("scope_org")),
                                    name="grant_org_principal_is_not_scope"),
-            # NULLS NOT DISTINCT: two org-scoped (NULL object) or two object-scoped
-            # (NULL scope_org) rows for one principal/role/scope are duplicates,
-            # while an org-scoped and an object-scoped row still differ (one side
-            # is NULL, the other is not).
+            # Partial + NULLS NOT DISTINCT: the user index only holds user-principal
+            # rows and the org index only org-principal rows (a user grant's NULL
+            # principal_org must not collide with another user's grant), while the
+            # NULLS NOT DISTINCT scope columns still dedupe org- and object-scoped
+            # rows within each principal kind.
             models.UniqueConstraint(fields=["principal_user", "role", "scope_org",
                                             "scope_object_type", "scope_object_id"],
+                                    condition=Q(principal_user__isnull=False),
                                     nulls_distinct=False, name="unique_user_grant"),
             models.UniqueConstraint(fields=["principal_org", "role", "scope_org",
                                             "scope_object_type", "scope_object_id"],
+                                    condition=Q(principal_org__isnull=False),
                                     nulls_distinct=False, name="unique_org_grant"),
         ]
 ```
@@ -444,7 +447,9 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 - **E003** – object grant targets a non-whitelisted model (including any org-bearing
   model; findings F5, F16).
 - **E004** – an `org_via` hop is multi-valued (duplicate-row bug class).
-- **E005** – a permission is granted to a model that doesn't declare `OrgScoped`.
+- **E005** – a *scoped* role grants a permission on a model that doesn't declare
+  `OrgScoped` (global roles are exempt — their permissions are never org-confined;
+  the check fires the moment a scoped role needs one of those models).
 
 ### 2.8 Requirements coverage
 
@@ -616,6 +621,46 @@ forbidden); the whitelist gates which models can carry them (`ClientProfile` tod
 `Note` joins at its cutover); and what happens to them when `bob` leaves the org is
 resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 
+### 2.10 Code structure — services, selectors, thin interfaces (repo styleguide)
+
+Per `docs/styleguides/python.md` (HackSoft's service/selector pattern, GraphQL as
+the API layer), the grant system is organized as:
+
+**Read side — selectors** (`common/permissions/selectors.py`). The predicate is
+pull-only, so it lives as selectors:
+
+- `scopes(user, perm)` — the org ids where *user* holds *perm* (`ALL` sentinel).
+- `visible(qs, user, perm, *, in_org=None)` — the permission-aware queryset.
+- `can(user, perm, *, org)` / `can_obj(user, perm, obj)` / `can_anywhere(user, perm)`
+  — read-only authorization checks used by services and the API layer.
+
+**Write side — services** (`accounts/services.py`). Granting is push-only:
+
+- `grant_create(...)` / `grant_delete(...)` — scoped `Grant` rows.
+- `role_assign(...)` / `role_remove(...)` — the global tier (`user.groups`).
+
+**Thin interfaces.** GraphQL resolvers (`schema.py`), the Strawberry field
+extension, the Django admin, and management commands parse and validate and then
+delegate — none of them contain authorization logic. Shelter services already
+follow `<entity>_<action>` (e.g. `shelter_create`) and call `visible()` for
+authorization, which is the service→selector pattern the guide prescribes.
+
+**Deliberate judgment calls** (documented so reviewers know they are intentional):
+
+- `OrgScoped.org_paths()` lives on the model as *declarative metadata* — the
+  `org_via` declaration must travel with the model it describes, and resolution is
+  introspection, not a query or business logic. A selector would split the
+  declaration from its model.
+- Provisioning (`sync_roles`, `backfill_shelter_grants`, `backfill_global_role_members`)
+  lives in `accounts/services.py` (the write side), with `accounts/seed.py` keeping
+  the legacy template sync and the `manage.py sync_roles` interface staying thin.
+  It runs on `post_migrate` per the existing provisioning convention, and is data
+  provisioning, not domain business logic.
+
+**Tests** mirror source modules (`accounts/tests/test_roles.py`,
+`common/tests/test_org_scoping.py`, …), matching the repo's flat
+`tests/test_*.py` convention, with services/selectors as the primary test surface.
+
 ## 3. Accepted limitations (decided, not deferred)
 
 - **Delegation inheritance is role-keyed, but there is no role *translation*.** A member
@@ -642,7 +687,7 @@ resolved in RFC 0002 (granting-org provenance + revoke-on-exit).
 | Phase | Ships |
 |---|---|
 | **0** | This ADR; §7 decision log (items resolved; §7.2 open) |
-| **1** | `Role` + `Grant` models, constraints, checks, provisioning (sync creates the roles once; per-org `PermissionGroup` materialization stops for shelter roles), backfill (GSO → global Role; Shelter Operator memberships → `Grant` rows). **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** |
+| **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
 | **3** | Frontend (both apps): grants-based org list (+ all orgs for global holders), header optional, `currentUser.permissions` global list as the shared contract (finding F24). |
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
