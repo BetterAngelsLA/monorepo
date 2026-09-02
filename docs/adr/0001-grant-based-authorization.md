@@ -659,7 +659,14 @@ domain's authority template is role-backed. The non-mechanical / blocked domains
 (notes §5, clients §5.1, tasks/referrals §5, teams/reports §5.3) are the phase-4
 design work; nothing in the predicate blocks them once those designs land.
 
-## 5. Notes / guardian migration (phase-4 design, finding F23)
+## 5. Phase-4 cutover designs — notes/guardian and the migration's forward designs
+
+This section holds the forward designs that gate and complete the migration (target
+end-state; see the §2 legend). It **opens with the notes/guardian migration** — the
+non-mechanical case (finding F23) — then: **§5.1** client writes (parity-first),
+**§5.2** tier-3 FE capability surfacing, **§5.3** the org-admin role-backed milestone
+(teams/reports/member-management — a migration item, not notes; it shares this
+section for stack-numbering continuity).
 
 Today, caseworkers hold ADD/VIEW on the template and CHANGE/DELETE comes from
 per-note guardian rows written at creation — *"the creating org may edit this note."*
