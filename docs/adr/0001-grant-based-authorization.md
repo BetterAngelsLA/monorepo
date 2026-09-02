@@ -369,23 +369,25 @@ This migration is therefore **not mechanical.** Design to be completed before ph
   equivalence is proven by tests (the 541-line GSO suite is the contract, extended
   with shared-note cases).
 
-### 5.1 Client writes — open before phase 4
+### 5.1 Client writes — parity-first: shared read AND shared write (RFC 0002)
 
-`ClientProfile` has **no organization FK** (no `clients/` migration ever added one), yet
-the product rule is "reads are platform-shared, writes stay org-owned." Today org-owned
-CHANGE/DELETE is enforced by guardian per-record rows tied to the creating org's group;
-under v2 with `org_via = None`, org-scoped writes are inexpressible — `scopes()` returns
-org ids and the client has no org.
+`ClientProfile` has **no organization FK** (no `clients/` migration ever added one). The
+product rule (2026-09-02) is **not** "writes stay org-owned" — **reads and writes are
+both platform-shared today**: client CHANGE/DELETE ride model-level permissions on the
+legacy `CASEWORKER` group (`notes/groups.py`), so any caseworker in any org edits or
+deletes any client. There are **no per-record guardian rows for `ClientProfile`**
+(guardian per-record exists for notes/tasks/referrals/documents, not clients).
 
-Options to design before phase 4 (same class of problem as §5, worse because there is no
-org to anchor to):
+Under v2 with `org_via = None`, org-scoped writes are inexpressible — `scopes()` returns
+org ids and the client has no org — and the object arm only covers per-record sharing.
+The clients cutover is **parity-first** (RFC 0002): keep `ClientProfile` SHARED read and
+SHARED write, where the write check is "holds the permission anywhere"
+(`can_anywhere`) rather than org-scoped — no column, no backfill, no object grants at
+creation. The owner-tier (`created_by_org`, org-scoped CHANGE/DELETE) is a future,
+product-triggered write-tier change, not schema debt now. Full design: RFC 0002
+(`docs/adr/0002-client-writes-ownership.md`).
 
-1. Add `ClientProfile.created_by_org` FK (backfill from guardian rows at cutover);
-   CHANGE/DELETE on the `Caseworker` role, org-scoped via that org. Shared edits use the
-   object arm.
-2. Per-record object grants for CHANGE (no new column; ownership lives in the grant).
-
-Cross-org edit/delete of profiles is an open product follow-up
+Cross-org edit/delete of profiles beyond shared-write is an open product follow-up
 (`docs/teams_org_scoping.md`); the model must make it expressible, not decide it.
 
 ## 6. References
