@@ -429,6 +429,29 @@ authorization, which is the service→selector pattern the guide prescribes.
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
 | **5** | Teardown: delete legacy `PermissionGroup` for migrated domains, collapse the global-tier helper to `user.has_perm`, remove the dual-write branch. |
 
+### 4.1 Remaining domains — readiness matrix (the full-migration target)
+
+Every org-scoped domain ends on the grant model; platform-shared data uses the object
+arm + an ownership anchor; reference data stays on the global tier. What each domain
+still needs at its cutover:
+
+| Domain | Model path | `org_via` at cutover | Current authority | Migration shape | Gate |
+|---|---|---|---|---|---|
+| **Tasks** | `Task.organization` | `("organization",)` | legacy template + guardian rows at creation | org-scoped role perms; guardian rows → teardown | Mechanical |
+| **Referrals** | `Referral.organization` (+ shelter) | `("organization",)` / + `("shelter",)` | legacy + guardian rows at creation | org-scoped role perms | Mechanical |
+| **Teams** | `Team.organization` | `("organization",)` | legacy `@hasOrgPerm` | org-scoped role perms | Mechanical |
+| **Reports** | report row `.organization` | `("organization",)` | legacy `@hasOrgPerm` (`view_reports`) | org-scoped role perms | Mechanical |
+| **Notes** | `Note.organization` | `("organization",)` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
+| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy guardian per-record | `can_obj` fail-closed (#2421) + ownership (`created_by_org` or object grants) | §5.1 / RFC 0002 (product decision) |
+| **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
+| **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | global Roles (GSO) | stays on the global tier — never org-scoped | None — by design |
+
+Mechanical cutovers (tasks/referrals/teams/reports) follow the shelter playbook:
+declare `OrgScoped`, add `RoleDef`s, wire `visible()`/`can()` in services/schema,
+drop legacy directives, regenerate schema + FE types. The two non-mechanical domains
+(notes §5, clients §5.1) are the phase-4 design work; nothing in the predicate blocks
+them once those designs land.
+
 ## 5. Notes / guardian migration (phase-4 design, finding F23)
 
 Today, caseworkers hold ADD/VIEW on the template and CHANGE/DELETE comes from
