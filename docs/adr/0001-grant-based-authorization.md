@@ -248,10 +248,14 @@ class ClientProfile(OrgScoped, BaseModel): org_via = None   # platform-shared by
 ```
 
 **Reference-data note:** most of GSO's permissions are for *global reference data*
-(City, SPA, RoomStyle, media, …) — data that is not org-scoped at all. Those permissions
-belong on the global role because the **data is global**, not as a side effect of GSO.
-A future role needing only org-scoped shelter data carries only the shelter-data perms
-and is granted via `Grant`.
+(City, SPA, RoomStyle, media, …) — data that is not org-scoped at all. Reading that
+data is not what the global role is for: reference lookups are open to any
+authenticated user. What sits on the global role is the **write/admin surface**
+(add/change/delete) for it — and those perms must live on the global tier because the
+**data is global**: no org-scoped role can carry them (the models don't declare
+`OrgScoped`, so E005 would fire), and an org-context write to global data would be
+meaningless. A future role needing only org-scoped shelter data carries only the
+shelter-data perms and is granted via `Grant`.
 
 ### 2.4 The predicate
 
