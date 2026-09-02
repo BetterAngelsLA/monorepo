@@ -22,7 +22,12 @@ from teams.models import Team
 
 
 def grant_view_reports(user: User, org: Organization) -> None:
-    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    """Give *user* ``view_reports`` on *org* through a legacy PermissionGroup only.
+
+    §5.3 provisioning made the reports gate grant-only, so this legacy-only
+    holder must FAIL CLOSED — the helper now exists to pin that denial
+    (``test_legacy_group_only_holder_is_denied``).
+    """
     ct = ContentType.objects.get_for_model(ScheduledReport)
     perm, _ = Permission.objects.get_or_create(
         codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
@@ -35,12 +40,11 @@ def grant_view_reports(user: User, org: Organization) -> None:
 
 
 def grant_view_reports_via_role(user: User, org: Organization) -> None:
-    """Grant view_reports via a scoped test Role + Grant (grant arm, ADR §5.3).
+    """Grant view_reports via a scoped test Role + Grant (ADR §5.3 grant-only).
 
-    The §5.3 reports slice authorizes reads through the grant predicate OR the
-    legacy PermissionGroup.  A legacy-only holder exercises the legacy arm; a
-    holder with a scoped Role carrying ``view_reports`` (no PermissionGroup)
-    exercises the grant arm.
+    The §5.3 reports read gate authorizes through the grant predicate
+    (``permitted_org`` → ``can()``), so a holder needs a scoped Role carrying
+    ``view_reports`` and a Grant at the org — no PermissionGroup.
     """
     ct = ContentType.objects.get_for_model(ScheduledReport)
     perm, _ = Permission.objects.get_or_create(
@@ -63,7 +67,21 @@ def org() -> Organization:
 
 @pytest.fixture
 def user_with_access(org: Organization) -> User:
-    """Create a user with VIEW_REPORTS permission on the org."""
+    """Create a user with VIEW_REPORTS on the org via a scoped Grant (grant-only)."""
+    user = baker.make(User)
+    user.set_password("testpass")
+    user.save()
+    org.add_user(user)
+    grant_view_reports_via_role(user, org)
+    return user
+
+
+@pytest.fixture
+def user_with_legacy_group_only(org: Organization) -> User:
+    """A user holding view_reports ONLY through a legacy PermissionGroup.
+
+    §5.3 provisioning made the gate grant-only — this holder must fail closed.
+    """
     user = baker.make(User)
     user.set_password("testpass")
     user.save()
@@ -110,6 +128,14 @@ class TestExportInteractionDataView:
         """User in org but without VIEW_REPORTS permission gets 403."""
         api_client.force_authenticate(user=user_without_access)
         response = api_client.get("/reports/export/")
+        assert response.status_code == 403
+
+    def test_legacy_group_only_holder_is_denied(
+        self, api_client: APIClient, user_with_legacy_group_only: User, org: Organization
+    ) -> None:
+        """§5.3 provisioning: a legacy-only PermissionGroup holder fails closed."""
+        api_client.force_authenticate(user=user_with_legacy_group_only)
+        response = api_client.get(f"/reports/export/?org_id={org.id}")
         assert response.status_code == 403
 
     def test_successful_csv_download_with_month_year(
@@ -278,7 +304,7 @@ class TestExportInteractionDataView:
         user.save()
         org.add_user(user)
         other_org.add_user(user)
-        grant_view_reports(user, org)
+        grant_view_reports_via_role(user, org)
         # No permission on other_org
 
         api_client.force_authenticate(user=user)
@@ -389,13 +415,13 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
     """Tests for the reportSummary GraphQL query."""
 
     def _setup_org_user_with_access(self) -> tuple[Organization, User]:
-        """Create org + user with VIEW_REPORTS permission."""
+        """Create org + user with VIEW_REPORTS permission (scoped Grant)."""
         org = baker.make(Organization, name="Test Org")
         user = baker.make(User)
         user.set_password("testpass")
         user.save()
         org.add_user(user)
-        grant_view_reports(user, org)
+        grant_view_reports_via_role(user, org)
         return org, user
 
     def test_unauthenticated_returns_error(self) -> None:

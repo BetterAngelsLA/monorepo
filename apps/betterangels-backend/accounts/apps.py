@@ -4,10 +4,19 @@ from django.db.models.signals import post_migrate
 
 def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
     from accounts.seed import seed_permission_templates
-    from accounts.services import backfill_global_role_members, backfill_shelter_grants, sync_roles
+    from accounts.services import (
+        backfill_global_role_members,
+        backfill_org_admin_grants,
+        backfill_shelter_grants,
+        sync_roles,
+    )
 
     seed_permission_templates()
     sync_roles()
+    # Org-admin conversion (§5.3) must run before reconcile retires the legacy
+    # rows: sync_roles creates the Role rows, this converts existing members,
+    # then sync_all_org_permission_groups (connected after) reconciles and deletes.
+    backfill_org_admin_grants()
     backfill_shelter_grants()
     backfill_global_role_members()
 

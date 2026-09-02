@@ -56,26 +56,3 @@ def get_user_permitted_org(
         .filter(Q(permission_groups__user=user) & perm_filter(app_label, codename))
         .first()
     )
-
-
-def get_user_permitted_org_dual(
-    user: UserLike,
-    org_id: str,
-    permission: str | TextChoices,
-) -> Optional[Organization]:
-    """The org *user* may act on — the transition seam (§5.3).
-
-    Transitional dual-read used by the member-management queries, whose
-    authority template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still legacy.
-    Delegates to :func:`common.permissions.selectors.permitted_org` (legacy
-    org-scoped check OR grant ``can()``) — one seam for every consumer.
-    Deleted at phase 5.
-    """
-    from accounts.models import User
-    from common.permissions.selectors import permitted_org
-
-    if not isinstance(user, User):
-        return None
-
-    perm_value = permission.value if isinstance(permission, TextChoices) else permission
-    return permitted_org(user, perm_value, org_id=org_id)

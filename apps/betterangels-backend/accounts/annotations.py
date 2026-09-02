@@ -10,18 +10,26 @@ from .models import Grant, PermissionGroup
 
 
 def annotate_member_role(org_id: str) -> Case:
+    """Annotate the org role (superuser/admin/member) from ``Grant`` rows.
+
+    Org-level authority is grant-only since the §5.3 provisioning role-backed
+    ``ORG_ADMIN``/``ORG_SUPERUSER`` and reconcile retired their legacy
+    ``PermissionGroup`` rows, so the role is read from scoped ``Grant`` rows
+    (ADR 0001 §5.3).  A superuser holds the ``ORG_SUPERUSER`` role; an admin
+    holds ``ORG_ADMIN`` (superuser implies admin too).
+    """
     is_superuser = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_SUPERUSER.name,
-            user=OuterRef("pk"),
+        Grant.objects.filter(
+            scope_org_id=org_id,
+            role__name=ORG_SUPERUSER.name,
+            principal_user=OuterRef("pk"),
         )
     )
     is_admin = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template__name=ORG_ADMIN.name,
-            user=OuterRef("pk"),
+        Grant.objects.filter(
+            scope_org_id=org_id,
+            principal_user=OuterRef("pk"),
+            role__name__in=[ORG_ADMIN.name, ORG_SUPERUSER.name],
         )
     )
 

@@ -118,7 +118,9 @@ class PermissionGroupTestCase(TestCase):
         # Captured up front: once the rows are gone, a join through them matches
         # nothing whether or not the groups were actually deleted.
         group_ids = list(PermissionGroup.objects.filter(organization=organization).values_list("pk", flat=True))
-        self.assertEqual(len(group_ids), 3)
+        # §5.3 provisioning: only the still-legacy CASEWORKER template keeps a
+        # PermissionGroup (ORG_ADMIN/ORG_SUPERUSER are role-backed).
+        self.assertEqual(len(group_ids), 1)
 
         organization.delete()
 

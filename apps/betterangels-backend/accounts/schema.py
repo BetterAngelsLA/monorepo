@@ -18,7 +18,7 @@ from strawberry_django.pagination import OffsetPaginated
 
 from accounts.emails import base_url_for, send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm, HasPermOrGrant
-from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org_dual
+from accounts.permissions import UserOrganizationPermissions
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
 from .models import Grant, Organization, PermissionGroup, User
@@ -70,10 +70,12 @@ class Query:
     )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org_dual(
+        from common.permissions.selectors import permitted_org
+
+        organization = permitted_org(
             current_user,
+            UserOrganizationPermissions.VIEW_ORG_MEMBERS.value,
             org_id=organization_id,
-            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
@@ -108,10 +110,12 @@ class Query:
         permission_template: Optional[PermissionTemplateEnum] = None,
     ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
-        organization = get_user_permitted_org_dual(
+        from common.permissions.selectors import permitted_org
+
+        organization = permitted_org(
             current_user,
+            UserOrganizationPermissions.VIEW_ORG_MEMBERS.value,
             org_id=organization_id,
-            permission=UserOrganizationPermissions.VIEW_ORG_MEMBERS,
         )
         if organization is None:
             raise PermissionError("You do not have permission to view this organization's members.")
