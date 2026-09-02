@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 import time_machine
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -29,6 +29,23 @@ def grant_view_reports(user: User, org: Organization) -> None:
     pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
     pg.permissions.add(perm)
     user.groups.add(pg)
+
+
+def grant_view_reports_via_role(user: User, org: Organization) -> None:
+    """Grant view_reports via a scoped test Role + Grant (grant arm, ADR §5.3).
+
+    The §5.3 reports slice authorizes reads through the grant predicate OR the
+    legacy PermissionGroup.  A legacy-only holder exercises the legacy arm; a
+    holder with a scoped Role carrying ``view_reports`` (no PermissionGroup)
+    exercises the grant arm.
+    """
+    ct = ContentType.objects.get_for_model(ScheduledReport)
+    perm, _ = Permission.objects.get_or_create(
+        codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
+    )
+    role, _ = Role.objects.get_or_create(name="_test_report_viewer_role", is_global=False)
+    role.permissions.add(perm)
+    Grant.objects.get_or_create(principal_user=user, role=role, scope_org=org)
 
 
 @pytest.fixture
@@ -280,6 +297,33 @@ class TestExportInteractionDataView:
         response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
         assert response.status_code == 403
 
+    def test_grant_holder_without_legacy_group_can_export(self, api_client: APIClient, org: Organization) -> None:
+        """Scoped-Grant holder (no PermissionGroup) can export via the grant arm."""
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports_via_role(user, org)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get(f"/reports/export/?org_id={org.id}&month=1&year=2025")
+        assert response.status_code == 200
+
+    def test_grant_at_org_a_does_not_authorize_org_b(self, api_client: APIClient, org: Organization) -> None:
+        """A view_reports Grant at org A does not authorize exporting org B."""
+        other_org = baker.make(Organization, name="Other Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        other_org.add_user(user)
+        grant_view_reports_via_role(user, org)
+        # No Grant or PermissionGroup on other_org
+
+        api_client.force_authenticate(user=user)
+        response = api_client.get(f"/reports/export/?start_date=2025-01-01&end_date=2025-01-31&org_id={other_org.id}")
+        assert response.status_code == 403
+
 
 REPORT_SUMMARY_QUERY = """
     query ReportSummary($startDate: Date, $endDate: Date) {
@@ -505,6 +549,58 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         org_without_access.add_user(user)
         grant_view_reports(user, org_with_access)
         # No view_reports on org_without_access
+
+        self._set_active_org(org_without_access)
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-31",
+            },
+        )
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+
+    def test_grant_holder_without_legacy_group_can_view_summary(self) -> None:
+        """Scoped-Grant holder (no PermissionGroup) can read reportSummary via the grant arm."""
+        org = baker.make(Organization, name="Test Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org.add_user(user)
+        grant_view_reports_via_role(user, org)
+        baker.make(
+            Note,
+            organization=org,
+            interacted_at=timezone.make_aware(datetime(2025, 1, 15, 12, 0, 0)),
+            _quantity=2,
+        )
+
+        self._set_active_org(org)
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(
+            REPORT_SUMMARY_QUERY,
+            {
+                "startDate": "2025-01-01",
+                "endDate": "2025-01-31",
+            },
+        )
+        self.assertIsNone(response.get("errors"))
+        data = response["data"]["reportSummary"]
+        self.assertEqual(data["totalNotes"], 2)
+
+    def test_grant_at_org_a_does_not_authorize_org_b(self) -> None:
+        """A view_reports Grant at org A does not authorize a summary at org B."""
+        org_with_access = baker.make(Organization, name="Authorized Org")
+        org_without_access = baker.make(Organization, name="Unauthorized Org")
+        user = baker.make(User)
+        user.set_password("testpass")
+        user.save()
+        org_with_access.add_user(user)
+        org_without_access.add_user(user)
+        grant_view_reports_via_role(user, org_with_access)
+        # No Grant or PermissionGroup on org_without_access
 
         self._set_active_org(org_without_access)
         self.graphql_client.force_login(user)
