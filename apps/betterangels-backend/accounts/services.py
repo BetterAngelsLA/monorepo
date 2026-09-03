@@ -6,11 +6,12 @@ Reference: https://github.com/HackSoftware/Django-Styleguide#services
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
 from common.org_types import REGISTRY
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from organizations.backends import invitation_backend
@@ -18,18 +19,22 @@ from organizations.models import Organization, OrganizationOwner, OrganizationUs
 
 from .emails import base_url_for
 from .groups import ORG_ADMIN
-from .seed import sync_group_permissions
 from .models import (
+    Grant,
     OrganizationProfile,
     OrgTypeChoices,
     PermissionGroup,
     PermissionGroupTemplate,
+    Role,
 )
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
+from .seed import _resolve_permissions, sync_group_permissions
 
 if TYPE_CHECKING:
     from .models import User
+
+logger = logging.getLogger(__name__)
 
 
 # ── User provisioning ────────────────────────────────────────────────
@@ -513,3 +518,160 @@ def create_organization_service(
     )
 
     return user, organization
+
+
+# ── Role + Grant provisioning (ADR 0001 §2.2, §4 phase 1) ───────────────
+
+
+def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[int]) -> None:
+    """Fail loudly when a RoleDef permission binds to a phantom ContentType.
+
+    :func:`accounts.seed._resolve_permissions` derives each permission's
+    ContentType model from the codename's last ``_`` token, so a custom codename
+    whose final token is not the model it belongs to (e.g.
+    ``change_shelter_is_reviewed`` → ``"reviewed"``) binds to a ContentType with
+    no model class.  ``permissions.E005`` silently skips those (``model_class()``
+    → ``None``) and no runtime path can exercise them, so provisioning must
+    refuse to create them.  Runs inside :func:`sync_roles`' transaction, so the
+    phantom rows are rolled back with the error.
+    """
+    from django.contrib.auth.models import Permission
+
+    phantoms = [
+        f"{permission.content_type.app_label}.{permission.codename}"
+        for permission in Permission.objects.filter(pk__in=permission_ids).select_related("content_type")
+        if permission.content_type.model_class() is None
+    ]
+    if phantoms:
+        raise RuntimeError(
+            f"RoleDef {role_def.name!r} permissions {', '.join(phantoms)} resolve to a "
+            "ContentType with no model class.  Custom permission codenames must end in the "
+            "model name they belong to (e.g. 'view_private_shelter')."
+        )
+
+
+def sync_roles() -> None:
+    """Create or refresh the code-owned ``Role`` rows (ADR 0001 §2.2).
+
+    One row per :class:`~common.permissions.config.RoleDef` — global roles are
+    provisioned once, never per organization.  Idempotent: get_or_create each
+    ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
+    """
+    from accounts.models import Role
+    from shelters.groups import ROLES
+
+    with transaction.atomic():
+        for role_def in ROLES:
+            role, created = Role.objects.get_or_create(name=role_def.name)
+            wanted = set(_resolve_permissions(role_def.permissions))
+            _raise_on_phantom_role_permissions(role_def, wanted)
+            perms_changed = {p.pk for p in role.permissions.all()} != wanted
+            global_changed = role.is_global != role_def.is_global
+            if perms_changed:
+                role.permissions.set(wanted)
+            if global_changed:
+                role.is_global = role_def.is_global
+                role.save(update_fields=["is_global"])
+            if created or perms_changed or global_changed:
+                logger.info("Synced Role %s (%d perms, global=%s)", role.name, len(wanted), role.is_global)
+
+
+def backfill_shelter_grants() -> None:
+    """Backfill ``Grant`` rows from legacy Shelter Operator memberships.
+
+    One ``Grant(user, role=Shelter Operator, scope=org)`` per member of an org's
+    Shelter Operator ``PermissionGroup``.  Idempotent (``get_or_create``).  Only
+    the scoped shelter role is converted here — every other role keeps its
+    ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
+    """
+    from accounts.models import Grant, PermissionGroup, Role
+    from shelters.groups import SHELTER_OPERATOR_ROLE
+
+    role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+    groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
+    for group in groups.prefetch_related("user_set"):
+        for user in group.user_set.all():
+            grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
+            if created:
+                logger.info("Backfilled Grant %s", grant)
+
+
+def backfill_global_role_members() -> None:
+    """Move Global Shelter Operator members onto the global Role group.
+
+    The GSO ``PermissionGroup`` was pinned to one arbitrary org; its members now
+    belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
+    Idempotent (``user.groups.add``).
+    """
+    from accounts.models import PermissionGroup, Role
+    from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+
+    role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+    groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
+    for group in groups.prefetch_related("user_set"):
+        for user in group.user_set.all():
+            user.groups.add(role)
+
+
+# ── Grant write services (ADR 0001 §2.10) ────────────────────────────────
+
+
+def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Grant:
+    """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
+
+    Validates via ``full_clean`` (which checks the model constraints since
+    Django 4.1) before saving, per the repo styleguide.
+    """
+    grant = Grant(principal_user=user, role=role, scope_org=scope_org)
+    grant.full_clean()
+    grant.save()
+    return grant
+
+
+def grant_delete(*, grant: Grant) -> None:
+    """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
+    grant.delete()
+
+
+def role_assign(*, user: UserModel, role: Role) -> None:
+    """Grant *user* a *global* Role by adding it to ``user.groups``.
+
+    .. warning::
+       **GLOBAL AUTHORITY — read before calling.** This is the global tier
+       (ADR 0001 §2.1): once *role* is in ``user.groups``, *user* can exercise
+       every permission *role* carries **across every organization**, with no
+       org scope and no per-org audit row.  It is the highest-authority write
+       in this module — prefer an org-scoped ``Grant`` (via :func:`grant_create`)
+       unless the user genuinely needs org-wide access.
+
+       Today the only *intended* writers of the global tier are the Django
+       admin's group picker and provisioning (:func:`backfill_global_role_members`).
+       This service has **no production caller yet** — add one deliberately
+       (e.g. an admin/member-management flow), never "because it is handy".
+
+    Constraints:
+
+    * *role* **must** be a global Role (``is_global=True``).  Scoped roles are
+      exercised exclusively through ``Grant`` rows — never group membership
+      (checks ``permissions.E001``) — so a scoped *role* raises
+      ``ValidationError`` instead of silently becoming global.
+    * Granting is additive and idempotent (Django M2M); revoke with
+      :func:`role_remove`.  Membership is visible in the Django admin and in
+      ``user.groups``.
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is scoped.
+    """
+    if not role.is_global:
+        raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
+    user.groups.add(role)
+
+
+def role_remove(*, user: UserModel, role: Role) -> None:
+    """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
+
+    Removes *role* from ``user.groups``, withdrawing its global-tier authority.
+    Scoped roles are never in ``user.groups`` (they are granted via ``Grant``),
+    so removing one here is a no-op rather than an error.
+    """
+    user.groups.remove(role)

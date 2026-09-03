@@ -5,11 +5,12 @@ from accounts.managers import UserManager
 from common.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, Group, Permission, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -247,6 +248,123 @@ class PermissionGroup(Group):
         suffix = f" [{self.organization_id}] · {role}"
         budget = max(max_length - len(suffix), 0)
         return f"{self.organization.name[:budget]}{suffix}"[:max_length]
+
+
+class Role(Group):
+    """A named role.
+
+    ``is_global=True`` roles are held directly in ``user.groups`` — the global
+    tier, read through Django's ``has_perm``.  ``is_global=False`` roles are
+    granted through :class:`Grant` rows and are always scoped to a
+    ``Grant.scope_org``.
+
+    Roles are code-owned (see the ``RoleDef`` config and ``accounts.services.sync_roles``),
+    and the flag is never flipped by hand: ``permissions.E001`` / ``permissions.E002``
+    make a scoped role in ``user.groups`` and a global role in a ``Grant`` into
+    deploy-time errors.
+    """
+
+    is_global = models.BooleanField(default=False)
+
+    # django-stubs types ``Group.objects`` as ``GroupManager`` — inheriting it
+    # resolves every query on this model against the parent's fields.  Overriding
+    # it keeps ``Role.objects`` type-checked (same reason as ``PermissionGroup``).
+    objects: ClassVar[models.Manager["Role"]] = models.Manager()  # type: ignore[assignment]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+@pghistory.track(
+    pghistory.InsertEvent("grant.add"),
+    pghistory.UpdateEvent("grant.update"),
+    pghistory.DeleteEvent("grant.remove"),
+)
+class Grant(models.Model):
+    """Who holds which role, where — the only scoped authorization input.
+
+    Exactly one principal — a user, or an organization delegating its authority
+    to another organization's people — and exactly one scope: an organization,
+    or an object once the object-grant arm is wired (``permissions.E003``).
+
+    Design: ``docs/adr/0001-grant-based-authorization.md``.
+    """
+
+    # ── principal: exactly one ──
+    principal_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="grants",
+    )
+    principal_org = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="delegated_grants",
+    )
+
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="grants")
+
+    # ── scope: exactly one ──
+    scope_org = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="grants",
+    )
+    scope_object_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    scope_object_id = models.PositiveBigIntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(principal_user__isnull=False) ^ Q(principal_org__isnull=False),
+                name="grant_has_exactly_one_principal",
+                violation_error_message="A grant needs exactly one principal: a user or an organization.",
+            ),
+            models.CheckConstraint(
+                condition=(Q(scope_org__isnull=False) & Q(scope_object_type__isnull=True))
+                | (Q(scope_org__isnull=True) & Q(scope_object_type__isnull=False) & Q(scope_object_id__isnull=False)),
+                name="grant_has_exactly_one_scope",
+                violation_error_message="A grant needs exactly one scope: an organization or an object.",
+            ),
+            models.CheckConstraint(
+                condition=Q(principal_org__isnull=True) | ~Q(principal_org=F("scope_org")),
+                name="grant_org_principal_is_not_scope",
+                violation_error_message="An organization cannot delegate a role to itself.",
+            ),
+            # Partial + NULLS NOT DISTINCT: the user index only holds user-principal
+            # rows and the org index only org-principal rows (a user grant's NULL
+            # principal_org must not collide with another user's grant), while the
+            # NULLS NOT DISTINCT scope columns still dedupe org- and object-scoped
+            # rows within each principal kind.
+            models.UniqueConstraint(
+                fields=["principal_user", "role", "scope_org", "scope_object_type", "scope_object_id"],
+                condition=Q(principal_user__isnull=False),
+                nulls_distinct=False,
+                name="unique_user_grant",
+            ),
+            models.UniqueConstraint(
+                fields=["principal_org", "role", "scope_org", "scope_object_type", "scope_object_id"],
+                condition=Q(principal_org__isnull=False),
+                nulls_distinct=False,
+                name="unique_org_grant",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        principal = self.principal_user or self.principal_org
+        scope = self.scope_org or self.scope_object_type
+        return f"{principal} · {self.role} → {scope}"
 
 
 class OrgTypeChoices(models.TextChoices):

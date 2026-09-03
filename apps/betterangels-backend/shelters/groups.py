@@ -1,6 +1,8 @@
+from accounts.models import OrganizationProfile
+from accounts.permissions import OrganizationAdminPermissions
 from clients.models import ClientProfile
 from common.models import Address
-from common.permissions.config import TemplateConfig
+from common.permissions.config import RoleDef, TemplateConfig
 
 from shelters.models.availability import ShelterAvailability
 from shelters.models.lookups import (
@@ -52,7 +54,11 @@ SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.CHANGE,
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
-        Shelter.perms.VIEW_PRIVATE,
+        # view_private_shelter deliberately NOT on the scoped role: private
+        # shelters in the public directory are a global-tier gate (the only
+        # consumer reads has_perm, which Grants don't feed); a shelter operator
+        # sees their org's private shelters through the org-scoped visible()
+        # path instead (ADR 0001 §2.4).
         ClientProfile.perms.VIEW,
     ],
     invite_html="account/email/shelter_operator_invite.html",
@@ -82,6 +88,14 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
         Reservation.perms.CHANGE,
         Reservation.perms.DELETE,
         Reservation.perms.VIEW,
+        # ── Django admin: organization management ──
+        OrganizationAdminPermissions.ADD_ORGANIZATION,
+        OrganizationAdminPermissions.CHANGE_ORGANIZATION,
+        OrganizationAdminPermissions.VIEW_ORGANIZATION,
+        OrganizationAdminPermissions.VIEW_ORGANIZATION_USER,
+        OrganizationProfile.perms.ADD,
+        OrganizationProfile.perms.CHANGE,
+        OrganizationProfile.perms.VIEW,
         # ── Custom perms ──
         Shelter.perms.VIEW_PRIVATE,
         ClientProfile.perms.VIEW,
@@ -203,3 +217,12 @@ GLOBAL_SHELTER_OPERATOR = TemplateConfig(
     welcome_txt="shelters/email/shelter_operator_welcome.txt",
     base_url_setting="SHELTER_WEB_BASE_URL",
 )
+
+
+# ── Roles (ADR 0001 §2.2) ────────────────────────────────────────────────────
+# Code-owned Role definitions for the grant system.  Derived from the legacy
+# templates so the permission lists have one source until the templates retire.
+SHELTER_OPERATOR_ROLE = RoleDef.from_template(SHELTER_OPERATOR)
+GLOBAL_SHELTER_OPERATOR_ROLE = RoleDef.from_template(GLOBAL_SHELTER_OPERATOR, is_global=True)
+
+ROLES: tuple[RoleDef, ...] = (SHELTER_OPERATOR_ROLE, GLOBAL_SHELTER_OPERATOR_ROLE)
