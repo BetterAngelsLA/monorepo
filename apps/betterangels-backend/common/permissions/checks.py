@@ -1,6 +1,6 @@
 """System checks for the grant-based authorization model (ADR 0001).
 
-IDs: ``permissions.E001``–``permissions.E005``.
+IDs: ``permissions.E001``–``permissions.E006``.
 
 The data-reading checks return ``[]`` on any ``DatabaseError`` — unreachable
 database, or tables not migrated yet — so ``manage.py check``, ``makemigrations``
@@ -74,18 +74,25 @@ def check_grant_never_references_global_role(app_configs: Any, **kwargs: Any) ->
 def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any) -> list[Error]:
     """E003 — object grants may only target whitelisted, non-org-bearing models.
 
-    The whitelist is empty until the object-grant arm is wired (ADR 0001 §2.5):
-    object grants are schema-live but must not be written before then, and
-    org-bearing models are never object-grantable (that would duplicate org scope).
+    The whitelist (``common.permissions.config.OBJECT_GRANT_WHITELIST``) is empty
+    until the object-grant arm is wired (ADR 0001 §2.5): object grants are
+    schema-live but must not be written before then, and org-bearing models are
+    never object-grantable (that would duplicate org scope).  ``Grant.clean``
+    shares the same whitelist, so the write-time and deploy-time gates open
+    together.
     """
     from django.apps import apps
     from django.db.utils import DatabaseError
+
+    from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 
     try:
         Grant = apps.get_model("accounts", "Grant")
 
         errors: list[Error] = []
         for grant in Grant.objects.filter(scope_object_type__isnull=False).select_related("scope_object_type"):
+            if content_type_key(grant.scope_object_type) in OBJECT_GRANT_WHITELIST:
+                continue
             errors.append(
                 Error(
                     f"Grant {grant} is an object grant on {grant.scope_object_type}, "
@@ -125,8 +132,9 @@ def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> lis
     A reverse-FK or M2M hop in an org path would duplicate rows in the scope
     filter (the bug class recorded at notes/types.py).  Runs without a database.
     """
-    from common.models import OrgScoped
     from django.apps import apps
+
+    from common.models import OrgScoped
 
     errors: list[Error] = []
     for model in apps.get_models():
@@ -145,9 +153,10 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     via ``org_via = None``.  Global Roles are exempt: their permissions are never
     org-confined, so no declaration is required until a scoped Role holds them.
     """
-    from common.models import OrgScoped
     from django.apps import apps
     from django.db.utils import DatabaseError
+
+    from common.models import OrgScoped
 
     try:
         Role = apps.get_model("accounts", "Role")
@@ -169,6 +178,41 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
                             id="permissions.E005",
                         )
                     )
+        return errors
+    except DatabaseError:
+        return []
+
+
+@register(Tags.models)
+def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E006 — an object grant's principal must be a user, never an organization.
+
+    Org-principal object grants are forbidden (ADR 0001 §2.5): per-record
+    authority attaches to a person you can audit and revoke, and an org-principal
+    row would make it org-granular — "every current *and future* member of this
+    org with this role edits this record" — the guardian shape this model
+    deletes.  ``Grant.clean`` refuses it at write time; this is the deploy-time
+    backstop for writers that skip ``clean()``.
+    """
+    from django.apps import apps
+    from django.db.utils import DatabaseError
+
+    try:
+        Grant = apps.get_model("accounts", "Grant")
+
+        errors: list[Error] = []
+        for grant in Grant.objects.filter(principal_org__isnull=False, scope_object_type__isnull=False).select_related(
+            "principal_org", "scope_object_type"
+        ):
+            errors.append(
+                Error(
+                    f"Grant {grant} grants an object to organization {grant.principal_org!r}.",
+                    hint="Object grants are user-principal only (ADR 0001 §2.5): share records "
+                    "person-to-person, never to an organization.",
+                    obj=grant,
+                    id="permissions.E006",
+                )
+            )
         return errors
     except DatabaseError:
         return []

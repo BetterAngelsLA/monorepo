@@ -17,7 +17,7 @@ from functools import reduce
 from operator import or_
 from typing import TYPE_CHECKING, Any
 
-from django.db.models import Q, Subquery
+from django.db.models import Exists, OuterRef, Q, Subquery
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -61,12 +61,22 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
 
 
 def scopes(user: "User", perm: str) -> Any:
-    """``ALL``, or the org ids where *user* holds *perm* through a scoped Grant.
+    """``ALL``, or the org ids where *user* holds *perm* (direct or delegated).
 
-    Direct user grants only at this stage — org→org delegation is deliberately
-    absent here and lands with the delegation PR (ADR 0001 §2.4).  Object grants
-    (``scope_org`` NULL) are excluded so they can never register as an org scope
-    or as "holds the perm somewhere" for a platform-shared model.
+    * Direct — a user-principal ``Grant``.
+    * Delegated — an org-principal ``Grant`` inherited by the principal org's
+      people: "acts at B" = member of B AND holds a direct Grant at B whose role
+      carries *this* permission (permission-matched: the delegated role's bundle
+      is the ceiling, and a weak-role holder at B is not amplified to B's
+      stronger delegated roles at C).  A consultant granted a role at B without
+      membership does NOT inherit — no amplification (ADR 0001 §2.4, findings
+      F1/F19).  One hop only.  Revocation is row-driven: removing the membership,
+      the direct grant, or the delegation row drops the scope on the next request
+      (RFC 0002 revoke-on-exit); account deactivation (``User.is_active``) is an
+      authentication-layer gate, not consulted here.
+
+    Object grants (``scope_org`` NULL) are excluded so they can never register
+    as an org scope or as "holds the perm somewhere" for a platform-shared model.
 
     Memoized per request on the user instance.  The cached value is a lazy
     queryset used as a subquery — caching it does not evaluate it.
@@ -74,14 +84,37 @@ def scopes(user: "User", perm: str) -> Any:
     if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
         return ALL
 
-    from accounts.models import Grant
+    from accounts.models import Grant, Organization
 
     cache = user.__dict__.setdefault("_scope_cache", {})
     if perm not in cache:
         roles = _roles_carrying_perm(perm)
-        cache[perm] = Grant.objects.filter(
-            principal_user=user, role__in=Subquery(roles), scope_org__isnull=False
+        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles), scope_org__isnull=False).values(
+            "scope_org"
+        )
+
+        # Delegation: delegations whose principal org is one where the user acts
+        # (member AND holds a direct Grant there carrying *this* permission's
+        # role — permission-matched: the delegated role's bundle is the ceiling,
+        # and a weak-role holder at B is not amplified to B's stronger delegated
+        # roles at C).  Correlated EXISTS per delegation row, so there is no
+        # org-list subquery to materialize and no DISTINCT to dedupe one.
+        acts_at = Organization.objects.filter(
+            users=user,
+            grants__principal_user=user,
+            grants__role__in=Subquery(roles),
+            pk=OuterRef("principal_org_id"),
+        )
+        # Delegations only (org-principal), org-scope arm only — object grants
+        # and user-principal grants never feed the org filter.
+        inherited = Grant.objects.filter(
+            Exists(acts_at),
+            principal_org__isnull=False,
+            role__in=Subquery(roles),
+            scope_org__isnull=False,
         ).values("scope_org")
+
+        cache[perm] = mine.union(inherited)
     return cache[perm]
 
 

@@ -557,8 +557,9 @@ def sync_roles() -> None:
     provisioned once, never per organization.  Idempotent: get_or_create each
     ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
     """
-    from accounts.models import Role
     from shelters.groups import ROLES
+
+    from accounts.models import Role
 
     with transaction.atomic():
         for role_def in ROLES:
@@ -584,8 +585,9 @@ def backfill_shelter_grants() -> None:
     the scoped shelter role is converted here — every other role keeps its
     ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
     """
-    from accounts.models import Grant, PermissionGroup, Role
     from shelters.groups import SHELTER_OPERATOR_ROLE
+
+    from accounts.models import Grant, PermissionGroup, Role
 
     role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
@@ -603,8 +605,9 @@ def backfill_global_role_members() -> None:
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
     Idempotent (``user.groups.add``).
     """
-    from accounts.models import PermissionGroup, Role
     from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+
+    from accounts.models import PermissionGroup, Role
 
     role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
@@ -619,11 +622,64 @@ def backfill_global_role_members() -> None:
 def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Grant:
     """Grant *user* the scoped *role* at *scope_org* (ADR 0001 §2.2).
 
-    Validates via ``full_clean`` (which checks the model constraints since
-    Django 4.1) before saving, per the repo styleguide.
+    ``full_clean`` validates before saving (per the repo styleguide) — the
+    model constraints and :meth:`Grant.clean`, which holds the rule that a
+    global Role can never sit in a Grant (mirrors ``permissions.E002``).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *user* already holds
+        *role* at *scope_org* (checked here — Django's unique checks skip the
+        NULL scope-object columns, so ``full_clean`` cannot see the duplicate).
+        The DB constraint ``unique_user_grant`` remains the backstop for a
+        concurrent double-write.
     """
+    from accounts.models import Grant
+
     grant = Grant(principal_user=user, role=role, scope_org=scope_org)
     grant.full_clean()
+    if Grant.objects.filter(
+        principal_user=user,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(f"{user} already holds {role.name!r} at {scope_org}.")
+    grant.save()
+    return grant
+
+
+def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organization) -> Grant:
+    """Org *principal_org* delegates *role* to *scope_org* (ADR 0001 §2.2, §2.4).
+
+    The delegation is inherited by the principal org's people — those who are
+    members of *principal_org* AND hold a direct Grant there ("acting at" the
+    org).  The org cannot delegate a role to itself (model constraint
+    ``grant_org_principal_is_not_scope``) and a global Role can never be
+    delegated (:meth:`Grant.clean` via ``full_clean``, mirroring
+    ``permissions.E002``).
+
+    Raises:
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *principal_org* already
+        delegates *role* to *scope_org* (checked here — Django's unique checks
+        skip the NULL scope-object columns, so ``full_clean`` cannot see the
+        duplicate).  The DB constraint ``unique_org_grant`` remains the backstop
+        for a concurrent double-write.
+    """
+    from accounts.models import Grant
+
+    grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
+    grant.full_clean()
+    if Grant.objects.filter(
+        principal_org=principal_org,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(f"{principal_org} already delegates {role.name!r} to {scope_org}.")
     grant.save()
     return grant
 
