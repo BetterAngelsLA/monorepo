@@ -66,10 +66,11 @@ def scopes(user: "User", perm: str) -> Any:
     * Direct — a user-principal ``Grant``.
     * Delegated — an org-principal ``Grant`` inherited by the principal org's
       people: "acts at B" = member of B AND holds a direct Grant at B whose role
-      carries *this* permission (role-keyed — a weak-role holder at B is not
-      amplified to B's stronger delegated roles at C).  A consultant granted a
-      role at B without membership does NOT inherit — no amplification (ADR 0001
-      §2.4, findings F1/F19).  One hop only.
+      carries *this* permission (permission-matched: the delegated role's bundle
+      is the ceiling, and a weak-role holder at B is not amplified to B's
+      stronger delegated roles at C).  A consultant granted a role at B without
+      membership does NOT inherit — no amplification (ADR 0001 §2.4, findings
+      F1/F19).  One hop only.
 
     Object grants (``scope_org`` NULL) are excluded so they can never register
     as an org scope or as "holds the perm somewhere" for a platform-shared model.
@@ -91,10 +92,10 @@ def scopes(user: "User", perm: str) -> Any:
 
         # Delegation: delegations whose principal org is one where the user acts
         # (member AND holds a direct Grant there carrying *this* permission's
-        # role — role-keyed: a weak-role holder at B is not amplified to B's
-        # stronger delegated roles at C).  Correlated EXISTS per delegation row,
-        # so there is no org-list subquery to materialize and no DISTINCT to
-        # dedupe one.
+        # role — permission-matched: the delegated role's bundle is the ceiling,
+        # and a weak-role holder at B is not amplified to B's stronger delegated
+        # roles at C).  Correlated EXISTS per delegation row, so there is no
+        # org-list subquery to materialize and no DISTINCT to dedupe one.
         acts_at = Organization.objects.filter(
             users=user,
             grants__principal_user=user,

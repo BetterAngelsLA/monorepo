@@ -383,6 +383,29 @@ def _scoped_role_queryset() -> Any:
     return Role.objects.filter(is_global=False)
 
 
+class SuperuserOnlyWritesMixin:
+    """Grant surfaces are write-only for superusers.
+
+    Grants are the whole authorization graph (ADR 0001 §2.2): add/change/delete
+    are superuser-only wherever the surface lives.  Django admin inlines gate on
+    the inline *model's* auth permissions (``add_grant`` etc.) rather than on a
+    sibling ``ModelAdmin``'s overrides — so the Grant inlines on the
+    Organization page would let staff holding those perms write grants even
+    though ``GrantAdmin`` refuses them.  All three surfaces share this guard.
+    ``has_view_permission`` stays default: staff may still view where Django
+    grants them ``view_grant``.
+    """
+
+    def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
     """Code-owned roles (ADR 0001 §2.2) — read-only in the admin.
@@ -407,29 +430,21 @@ class RoleAdmin(admin.ModelAdmin):
 
 
 @admin.register(Grant)
-class GrantAdmin(admin.ModelAdmin):
+class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
     """Audit + administer grants (ADR 0001 §2.2) — user grants and org→org delegations.
 
     ``principal_user`` vs ``principal_org`` (exactly one) and ``scope_org`` vs
     object scope (exactly one) are enforced by the model constraints and a
     global Role can never be granted (:meth:`Grant.clean`, ``permissions.E002``).
     Grants are the whole authorization graph, so add/change/delete are
-    superuser-only; staff may still view where Django grants them ``view_grant``.
+    superuser-only (:class:`SuperuserOnlyWritesMixin`); staff may still view
+    where Django grants them ``view_grant``.
     """
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
         if db_field.name == "role":
             kwargs["queryset"] = _scoped_role_queryset()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def has_add_permission(self, request: HttpRequest) -> bool:
-        return request.user.is_superuser
-
-    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
-        return request.user.is_superuser
-
-    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
-        return request.user.is_superuser
 
     list_select_related = (
         "principal_user",
@@ -475,7 +490,7 @@ class GrantAdmin(admin.ModelAdmin):
         return f"{obj.scope_object_type}:{obj.scope_object_id}"
 
 
-class GrantInline(admin.TabularInline):
+class GrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     """Grants scoped TO this org — who can act here, and how."""
 
     model = Grant
@@ -489,7 +504,7 @@ class GrantInline(admin.TabularInline):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class DelegatedGrantInline(admin.TabularInline):
+class DelegatedGrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
     """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2)."""
 
     model = Grant
@@ -526,6 +541,13 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """Reconcile permission groups once the profile's org types are saved."""
+        if not request.user.is_superuser:
+            # Belt and braces behind the inlines' read-only gate: Django does not
+            # re-check add permission for new inline rows at save time, so a crafted
+            # POST can carry grant rows even when the inlines render read-only.
+            # Grants are the whole authorization graph — never save them for anyone
+            # but superusers.
+            formsets = [fs for fs in formsets if fs.model is not Grant]
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
 

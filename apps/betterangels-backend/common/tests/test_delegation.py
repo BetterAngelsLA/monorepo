@@ -1,9 +1,11 @@
 """Org→org delegation — the inherited arm of ``scopes`` (ADR 0001 §2.4).
 
 Org B delegates role R to org C via ``Grant(principal_org=B, role=R, scope_org=C)``.
-B's *acting* people — members of B who also hold a direct Grant at B — inherit R
-at C.  Membership alone or a grant alone is NOT enough (no amplification); the
-delegation is one hop only (no transitivity).
+B's *acting* people — members of B who also hold a direct Grant at B — inherit at C
+per permission: the delegated role's bundle is the ceiling, and the member's own role
+at B must carry the permission too (permission-matched; role identity is irrelevant).
+Membership alone or a grant alone is NOT enough (no amplification); the delegation is
+one hop only (no transitivity).
 """
 
 from accounts.models import Role, User
@@ -80,6 +82,26 @@ class DelegationTestCase(TestCase):
         self.assertIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
         # ...but DELETE is not on the delegated role, so it is not inherited.
         self.assertFalse(can(bob, Shelter.perms.DELETE, org=self.org_c))
+
+    def test_delegation_is_keyed_on_permissions_not_role_identity(self) -> None:
+        """Role identity is irrelevant; the permission intersection governs.
+
+        B lends the VIEW-only Viewer role to C.  A member of B holding the
+        Shelter Operator role at B — a *different* role — still inherits VIEW at
+        C: her Operator role carries view_shelter and the delegated Viewer role
+        carries it too.  What does not cross: CHANGE/DELETE at C, because the
+        lent Viewer bundle does not carry them (the delegated role is the
+        ceiling).
+        """
+        grant_delegate(principal_org=self.org_b, role=self.view_role, scope_org=self.org_c)
+        operator = baker.make(User)
+        self.org_b.add_user(operator)
+        grant_create(user=operator, role=self.shelter_role, scope_org=self.org_b)
+
+        self.assertIn(self.shelter_c.pk, self._visible_pks(operator, Shelter.perms.VIEW))
+        self.assertTrue(can(operator, Shelter.perms.VIEW, org=self.org_c))
+        self.assertFalse(can(operator, Shelter.perms.CHANGE, org=self.org_c))
+        self.assertFalse(can(operator, Shelter.perms.DELETE, org=self.org_c))
 
     def test_a_weak_grant_at_b_does_not_amplify_to_b_delegations_at_c(self) -> None:
         """Role-keyed inheritance: a member of B holding only a VIEW role at B
