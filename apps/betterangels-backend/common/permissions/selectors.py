@@ -171,7 +171,10 @@ def scopes(user: "User", perm: str) -> Any:
       is the ceiling, and a weak-role holder at B is not amplified to B's
       stronger delegated roles at C).  A consultant granted a role at B without
       membership does NOT inherit — no amplification (ADR 0001 §2.4, findings
-      F1/F19).  One hop only.
+      F1/F19).  One hop only.  Revocation is row-driven: removing the membership,
+      the direct grant, or the delegation row drops the scope on the next request
+      (RFC 0002 revoke-on-exit); account deactivation (``User.is_active``) is an
+      authentication-layer gate, not consulted here.
 
     Object grants (``scope_org`` NULL) are excluded so they can never register
     as an org scope or as "holds the perm somewhere" for a platform-shared model.
