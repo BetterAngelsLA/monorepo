@@ -81,9 +81,10 @@ def check_object_grant_targets_whitelisted_model(app_configs: Any, **kwargs: Any
     shares the same whitelist, so the write-time and deploy-time gates open
     together.
     """
-    from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
     from django.apps import apps
     from django.db.utils import DatabaseError
+
+    from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
 
     try:
         Grant = apps.get_model("accounts", "Grant")
@@ -131,8 +132,9 @@ def check_org_via_hops_are_single_valued(app_configs: Any, **kwargs: Any) -> lis
     A reverse-FK or M2M hop in an org path would duplicate rows in the scope
     filter (the bug class recorded at notes/types.py).  Runs without a database.
     """
-    from common.models import OrgScoped
     from django.apps import apps
+
+    from common.models import OrgScoped
 
     errors: list[Error] = []
     for model in apps.get_models():
@@ -151,9 +153,10 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     via ``org_via = None``.  Global Roles are exempt: their permissions are never
     org-confined, so no declaration is required until a scoped Role holds them.
     """
-    from common.models import OrgScoped
     from django.apps import apps
     from django.db.utils import DatabaseError
+
+    from common.models import OrgScoped
 
     try:
         Role = apps.get_model("accounts", "Role")

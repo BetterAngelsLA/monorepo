@@ -557,8 +557,9 @@ def sync_roles() -> None:
     provisioned once, never per organization.  Idempotent: get_or_create each
     ``Role``, then reconcile ``permissions`` and ``is_global`` from the RoleDef.
     """
-    from accounts.models import Role
     from shelters.groups import ROLES
+
+    from accounts.models import Role
 
     with transaction.atomic():
         for role_def in ROLES:
@@ -584,8 +585,9 @@ def backfill_shelter_grants() -> None:
     the scoped shelter role is converted here — every other role keeps its
     ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
     """
-    from accounts.models import Grant, PermissionGroup, Role
     from shelters.groups import SHELTER_OPERATOR_ROLE
+
+    from accounts.models import Grant, PermissionGroup, Role
 
     role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
@@ -603,8 +605,9 @@ def backfill_global_role_members() -> None:
     belong on the global Role's group, which is the global tier (ADR 0001 §2.1).
     Idempotent (``user.groups.add``).
     """
-    from accounts.models import PermissionGroup, Role
     from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
+
+    from accounts.models import PermissionGroup, Role
 
     role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
     groups = PermissionGroup.objects.filter(template__name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
