@@ -1260,3 +1260,37 @@ class PermissionGroupTemplateAdminTestCase(TestCase):
         seed_permission_templates()
         with self.assertRaises(IntegrityError), transaction.atomic():
             reconcile_org_groups(self.organization)
+
+
+class GrantAdminRoleRestrictionTestCase(TestCase):
+    """The Grant admin surfaces must not offer global Roles (permissions.E002).
+
+    GrantAdmin / GrantInline / DelegatedGrantInline route the ``role`` picker
+    through ``_scoped_role_queryset`` — a global Role is held in user.groups
+    (global tier), never in a Grant, so the forms refuse it up front.
+    """
+
+    def test_role_picker_offers_only_scoped_roles(self) -> None:
+        from accounts.admin import DelegatedGrantInline, GrantAdmin, GrantInline
+        from accounts.models import Grant, Role
+        from accounts.services import sync_roles
+        from django.contrib.admin.options import BaseModelAdmin
+        from django.test import RequestFactory
+        from shelters.groups import SHELTER_OPERATOR_ROLE
+
+        sync_roles()
+        shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        self.assertTrue(Role.objects.filter(is_global=True).exists())  # guard against a vacuous pass
+        role_field = Grant._meta.get_field("role")
+        request = RequestFactory().get("/")
+
+        surfaces: list[BaseModelAdmin] = [GrantAdmin(Grant, admin.site)]
+        surfaces += [inline(Organization, admin.site) for inline in (GrantInline, DelegatedGrantInline)]
+
+        for surface in surfaces:
+            with self.subTest(admin=type(surface).__name__):
+                field = surface.formfield_for_foreignkey(role_field, request)
+                queryset = getattr(field, "queryset", None)
+                assert queryset is not None
+                self.assertIn(shelter_role, queryset)
+                self.assertFalse(queryset.filter(is_global=True).exists())

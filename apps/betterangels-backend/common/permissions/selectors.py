@@ -71,8 +71,8 @@ def scopes(user: "User", perm: str) -> Any:
       role at B without membership does NOT inherit — no amplification (ADR 0001
       §2.4, findings F1/F19).  One hop only.
 
-        Object grants (``scope_org`` NULL) are excluded so they can never register
-        as an org scope or as "holds the perm somewhere" for a platform-shared model.
+    Object grants (``scope_org`` NULL) are excluded so they can never register
+    as an org scope or as "holds the perm somewhere" for a platform-shared model.
 
     Memoized per request on the user instance.  The cached value is a lazy
     queryset used as a subquery — caching it does not evaluate it.
@@ -101,10 +101,11 @@ def scopes(user: "User", perm: str) -> Any:
             grants__role__in=Subquery(roles),
             pk=OuterRef("principal_org_id"),
         )
-        # Org-scope arm only on inherited delegations too: object grants
-        # (scope_org IS NULL) never feed the org filter.
+        # Delegations only (org-principal), org-scope arm only — object grants
+        # and user-principal grants never feed the org filter.
         inherited = Grant.objects.filter(
             Exists(acts_at),
+            principal_org__isnull=False,
             role__in=Subquery(roles),
             scope_org__isnull=False,
         ).values("scope_org")

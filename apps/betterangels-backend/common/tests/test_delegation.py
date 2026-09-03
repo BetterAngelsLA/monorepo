@@ -7,7 +7,7 @@ delegation is one hop only (no transitivity).
 """
 
 from accounts.models import Role, User
-from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
+from accounts.services import grant_create, grant_delegate, grant_delete, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.permissions.selectors import ALL, can, scopes, visible
 from django.contrib.auth.models import Permission
@@ -155,3 +155,17 @@ class DelegationTestCase(TestCase):
         dave = baker.make(User)
         grant_create(user=dave, role=self.shelter_role, scope_org=self.org_b)
         self.assertFalse(can(dave, Shelter.perms.ADD, org=self.org_c))
+
+    def test_deleting_the_delegation_revokes_inheritance(self) -> None:
+        """Deleting the B→C delegation row drops C from the acting people's scopes."""
+        grant = grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
+        bob = self._acting_member(self.org_b)
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        grant_delete(grant=grant)
+
+        # Next request: the predicate is re-derived from the DB.
+        bob = User.objects.get(pk=bob.pk)
+        scoped = self._scoped_orgs(bob, Shelter.perms.VIEW)
+        self.assertNotIn(self.org_c.pk, scoped)
+        self.assertIn(self.org_b.pk, scoped)  # the direct grant at B remains
