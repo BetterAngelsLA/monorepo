@@ -1,0 +1,71 @@
+# client_docs_image.yml
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- assertVisible: 'Clients'
+
+- addMedia:
+    - ../fixtures/e2e-image.jpg
+
+# Ensure fixture client exists and open its profile
+- runFlow:
+    file: ../lib/screens/clients/visit_fixture_client_profile_summary.yml
+
+# #############################
+# Go to Profile Screen ########
+# #############################
+
+# Go to actual profile screen
+- tapOn: 'See Details'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-screen'
+
+# #######################
+# Go to Docs Tab ########
+# #######################
+
+# Tabs are in a horizontal ScrollView — Docs may be off-screen on narrower
+# devices. scrollUntilVisible ensures it's in view before tapping.
+- scrollUntilVisible:
+    element:
+      id: 'client-tab-docs'
+    direction: RIGHT
+- tapOn:
+    id: 'client-tab-docs'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-view-docs'
+
+# ################################
+# Go to Docs Uploads Screen ######
+# ################################
+- tapOn:
+    id: 'open-client-docs-upload-screen-btn'
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: 'client-docs-upload-screen'
+
+# We are uploading types that can accept multiple uploads
+# so as to avoid being blocked during tests.
+# Driver's License accepts 1 upload, so may not be clickable
+# if there is a pre-existing upload.
+# Should we create fixture profiles unique to each test run,
+# as per ticket DEV-2498, then we can update.
+- tapOn: 'Consent Forms'
+
+- assertVisible:
+    id: 'media-picker-menu'
+
+# ###################
+# Select Photo ######
+# ###################
+- tapOn:
+    id: 'media-picker-image-btn'
