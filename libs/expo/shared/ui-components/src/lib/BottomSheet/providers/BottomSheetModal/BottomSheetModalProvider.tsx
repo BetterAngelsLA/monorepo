@@ -121,7 +121,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   );
 
   const [closingSheetIds, setClosingSheetIds] = useState<Set<string>>(
-    new Set(),
+    () => new Set(),
   );
 
   /**
@@ -130,6 +130,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
    */
   const [sheets, setSheets] = useState<TBottomSheetInstance[]>([]);
 
+  const presentedIdsRef = useRef<Set<string>>(new Set());
   /**
    * Map of sheet id → gorhom instance.
    * Used for imperative dismissal.
@@ -147,7 +148,13 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
       return;
     }
 
-    setClosingSheetIds((prev) => new Set(prev).add(id));
+    setClosingSheetIds((prev) => {
+      if (prev.has(id)) {
+        return prev;
+      }
+
+      return new Set(prev).add(id);
+    });
 
     instance.dismiss();
   }, []);
@@ -245,6 +252,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
           {sharedBackdrop.render()}
 
+          {/* eslint-disable react-hooks/refs */}
           {sheets.map(({ id, render, options }) => (
             <BottomSheetBase
               key={id}
@@ -254,7 +262,12 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
                 }
 
                 sheetRefs.current.set(id, instance);
-                instance.present();
+
+                if (!presentedIdsRef.current.has(id)) {
+                  presentedIdsRef.current.add(id);
+
+                  instance.present();
+                }
               }}
               options={options}
               keyboardBlurBehavior="restore"
@@ -263,12 +276,19 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
                 dismissSheetById(id);
               }}
               onDismiss={() => {
-                options.onClose?.();
+                options.onClose?.(id);
 
                 sheetRefs.current.delete(id);
+                presentedIdsRef.current.delete(id);
 
                 setClosingSheetIds((prev) => {
+                  // already closing → no new Set → no re-render
+                  if (!prev.has(id)) {
+                    return prev;
+                  }
+
                   const next = new Set(prev);
+
                   next.delete(id);
 
                   return next;
@@ -277,7 +297,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
                 setSheets((prev) => prev.filter((s) => s.id !== id));
               }}
             >
-              {render({ closeSheet: () => dismissSheetById(id) })}
+              {render({ id, closeSheet: () => dismissSheetById(id) })}
             </BottomSheetBase>
           ))}
         </BottomSheetContext.Provider>
