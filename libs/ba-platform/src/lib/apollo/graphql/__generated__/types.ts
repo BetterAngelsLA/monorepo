@@ -833,6 +833,7 @@ export type CurrentUserType = {
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  permissions: Array<Scalars['String']['output']>;
   username?: Maybe<Scalars['String']['output']>;
 };
 

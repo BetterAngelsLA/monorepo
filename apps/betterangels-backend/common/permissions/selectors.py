@@ -15,13 +15,14 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from django.db.models import Exists, OuterRef, Q, Subquery
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.db.models import Model, QuerySet
+    from organizations.models import Organization
 
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
@@ -58,6 +59,106 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
         permissions__content_type__app_label=app_label,
         permissions__codename=codename,
     ).values("pk")
+
+
+def global_permissions(user: "User") -> list[str]:
+    """The global-tier permission list (ADR 0001 §2.4, finding F24).
+
+    The shared contract the frontend gates global-tier features on: a
+    superuser holds every permission; otherwise the union of direct
+    ``user_permissions`` and permissions carried by global Roles in
+    ``user.groups``.  Scoped (Grant) permissions are NOT included here —
+    they are per-organization and reported per org.
+    """
+    from django.contrib.auth.models import Permission
+
+    if user.is_superuser:
+        perms = Permission.objects.all().values_list("content_type__app_label", "codename")
+        return sorted(f"{app}.{codename}" for app, codename in perms)
+
+    direct = user.user_permissions.values_list("content_type__app_label", "codename")
+    role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
+        "content_type__app_label", "codename"
+    )
+    return sorted(
+        {f"{app}.{codename}" for app, codename in direct} | {f"{app}.{codename}" for app, codename in role_held}
+    )
+
+
+def global_holder(user: "User") -> bool:
+    """Whether *user* holds at least one permission that applies in every org.
+
+    Superuser, a global Role in ``user.groups``, or a direct
+    ``user_permissions`` row.  A ``user_permission`` grants per-permission
+    "acts anywhere" authority — ``scopes()`` returns ``ALL`` for the held perm
+    and ``can()`` is True at any org — so holding one unbounds the ORG LIST
+    (``reachable_orgs``), giving the user every org to act in.
+
+    This predicate gates org-list reachability ONLY.  It must never skip the
+    per-org permission report, which still carries the user's org-scoped grants
+    and legacy roles (see :func:`accounts.selectors.organization_permissions`):
+    skipping it would hide org-scoped authority the user exercises through
+    ``can()``.  Memoized per request on the user instance, mirroring
+    ``scopes()``.
+    """
+    cached: Optional[bool] = user.__dict__.get("_global_holder")
+    if cached is not None:
+        return cached
+    if user.is_superuser:
+        result = True
+    elif user.groups.filter(role__is_global=True).exists():
+        result = True
+    else:
+        result = user.user_permissions.exists()
+    user.__dict__["_global_holder"] = result
+    return result
+
+
+def reachable_orgs(user: "User") -> "QuerySet[Organization]":
+    """The organizations *user* can act in (ADR 0001 §2.4, finding F24).
+
+    Membership, orgs with a direct user grant, orgs reachable through an
+    inherited delegation, and every organization for a global holder.  The
+    delegated arm mirrors ``scopes()``: a delegation B→C is reachable only when
+    the user acts at B (member of B AND a direct Grant at B) with a role that
+    shares at least one permission with the delegation's role — so the org list
+    never shows C when no permission in ``scopes()`` would ever yield it.  Lazy
+    subquery form — consumers use it directly as a filter (the org list) or
+    materialize it (the per-org permission report).
+    """
+    from accounts.models import Grant, Organization, Role
+
+    # ``Organization`` is the (untyped) django-organizations model; the module
+    # boundary casts to the declared type, matching accounts/types.py.
+    if global_holder(user):
+        return cast("QuerySet[Organization]", Organization.objects.all())
+
+    # Delegation: delegations whose principal org is one where the user acts —
+    # a member of B with a direct Grant at B whose role shares at least one
+    # permission with the delegation's role (the org-level mirror of ``scopes()``'
+    # per-permission arm, unioned over all permissions).  ``roles_at_b`` is
+    # correlated one level up to each delegation row's principal org — the same
+    # single-level OuterRef pattern ``scopes()`` uses — so a delegation B→C
+    # whose role the user can never exercise at B stays out of the org list.
+    roles_at_b = Role.objects.filter(
+        grants__principal_user=user,
+        grants__scope_org=OuterRef("principal_org_id"),
+        grants__scope_org__users=user,
+    )
+    delegated = Grant.objects.filter(
+        role__permissions__in=Subquery(roles_at_b.values("permissions__pk")),
+        principal_org__isnull=False,
+        scope_org__isnull=False,
+    ).values("scope_org")
+
+    return cast(
+        "QuerySet[Organization]",
+        Organization.objects.filter(
+            Q(pk__in=Organization.objects.filter(users=user).values("pk"))
+            | Q(pk__in=Grant.objects.filter(principal_user=user, scope_org__isnull=False).values("scope_org"))
+            | Q(pk__in=delegated)
+        ),
+    )
 
 
 def scopes(user: "User", perm: str) -> Any:

@@ -12,7 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
-import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
+import { isPermission } from '@monorepo/ba-platform/permissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,14 +57,32 @@ export interface UserProviderConfig<TUser, TQuery> {
    * Optional custom mapping from user organizations to the
    * :type:`Org` shape expected by :component:`ActiveOrgProvider`.
    *
-   * Defaults to spreading ``permissions`` into a new array.
+   * Defaults to copying each org's ``permissions`` (filtered through
+   * ``isPermission`` — unknown backend permission strings are dropped before
+   * they can become gateable).
    */
-  mapOrganizations?: (
-    orgs: readonly OrgLike[],
-  ) => { id: string; name: string; permissions: readonly PermissionEnum[] }[];
+  mapOrganizations?: (orgs: readonly OrgLike[]) => MappedOrg[];
 }
 
-type OrgLike = { id: string; name: string; permissions?: readonly string[] };
+/** Minimal org shape the provider accepts (raw backend ``permissions``). */
+export type OrgLike = { id: string; name: string; permissions?: readonly string[] };
+
+/** The org shape passed to :component:`ActiveOrgProvider`. */
+export type MappedOrg = { id: string; name: string; permissions: readonly string[] };
+
+/**
+ * Default user-organization → ``Org`` mapping, used when the config supplies no
+ * custom ``mapOrganizations``: copies each org and keeps only the permission
+ * strings the frontend models (``isPermission``), so an unknown backend
+ * permission can never become gateable.  ``useActiveOrgState`` filters again
+ * (defense in depth for providers that bypass this mapper).
+ */
+export const defaultMapOrganizations = (orgs: readonly OrgLike[]): MappedOrg[] =>
+  orgs.map((org) => ({
+    id: org.id,
+    name: org.name,
+    permissions: (org.permissions ?? []).filter(isPermission),
+  }));
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -93,6 +111,8 @@ export function createUserProvider<
     organizations?:
       | readonly { id: string; name: string; permissions?: readonly string[] }[]
       | null;
+    /** The user's GLOBAL permission list (ADR 0001, finding F24). */
+    permissions?: readonly string[];
   },
   TQuery extends { currentUser?: unknown },
 >(config: UserProviderConfig<TUser, TQuery>) {
@@ -104,13 +124,6 @@ export function createUserProvider<
   } = config;
 
   // ---- Helpers -------------------------------------------------------
-
-  const defaultMapOrganizations = (orgs: readonly OrgLike[]) =>
-    orgs.map((org) => ({
-      id: org.id,
-      name: org.name,
-      permissions: [...(org.permissions ?? [])] as PermissionEnum[],
-    }));
 
   const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
 
@@ -199,6 +212,7 @@ export function createUserProvider<
           organizations={
             user?.organizations ? mapOrganizations(user.organizations) : []
           }
+          globalPermissions={user?.permissions}
         >
           {children}
         </ActiveOrgProvider>

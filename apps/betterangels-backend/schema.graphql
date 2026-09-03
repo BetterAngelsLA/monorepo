@@ -826,6 +826,7 @@ type CurrentUserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   username: String
+  permissions: [String!]!
   isHmisUser: Boolean
   isOutreachAuthorized: Boolean @deprecated(reason: "Use userPermissions check instead.")
 }

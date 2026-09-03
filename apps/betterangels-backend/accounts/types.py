@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString, NonEmptyString
 from common.org_types import REGISTRY
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import F, Q, QuerySet, Value
-from django.db.models.functions import Concat
+from django.db.models import Q, QuerySet
 from notes.groups import CASEWORKER
 from organizations.models import Organization
 from strawberry import ID, Info, auto
@@ -104,28 +102,51 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: QuerySet[Organization],
         info: Info,
     ) -> QuerySet[Organization]:
+        """The grants-based org list for *info*'s user (ADR 0001 §2.6, finding F24).
+
+        Builds from the FULL ``Organization`` table, not the caller's
+        queryset: the ``currentUser.organizationsOrganization`` field hands
+        this the user's membership relation, which is empty for a non-member
+        grant holder.  Returns every org the user can act in — membership,
+        direct grants, inherited delegations — and every org for global
+        holders.  The per-org ``permissions`` field is resolved from
+        ``organization_permissions``, so this stays a lazy, annotation-free
+        filter.
+        """
+        from common.permissions.selectors import reachable_orgs
+
         user = get_current_user(info)
         if not user or not user.is_authenticated:
             return queryset.none()
-
-        # Annotate each org with a single array of granted permission strings
-        # (e.g. ["organizations.view_org_members", "reports.view_reports"]).
-        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
-            _granted_perms=ArrayAgg(
-                Concat(
-                    F("permission_groups__permissions__content_type__app_label"),
-                    Value("."),
-                    F("permission_groups__permissions__codename"),
-                ),
-                filter=Q(permission_groups__user=user),
-                distinct=True,
-            )
-        )
-        return qs
+        return cast(QuerySet[Organization], Organization.objects.filter(pk__in=reachable_orgs(cast(User, user))))
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        return getattr(self, "_granted_perms", []) or []
+        """The permissions *user* can exercise at this org (``scopes``-equivalent).
+
+        Computed once per request by :func:`accounts.selectors.organization_permissions`
+        and memoized on the user instance.  The report carries ORG-SCOPED
+        authority only — grants, permission-matched delegations and legacy per-org roles.
+        Per-permission "acts anywhere" authority (superuser, global Role,
+        ``user_permissions``) is reported once in ``currentUser.permissions`` and
+        the frontend unions both via ``hasPermission`` (ADR 0001 finding F24).
+        Computed for every user — never skipped for acts-anywhere holders — so an
+        org-scoped grant or legacy role stays visible even when the user also
+        holds an unrelated global permission (skipping it would make the report
+        disagree with ``can()`` for the user's own org-scoped grants).
+        """
+        from accounts.selectors import organization_permissions
+
+        user = cast(User, get_current_user(info))
+        if not user or not user.is_authenticated:
+            return []
+        report = user.__dict__.get("_org_permissions")
+        if report is None:
+            report = organization_permissions(user)
+            user.__dict__["_org_permissions"] = report
+        # ``id`` is the declared strawberry field for the org pk (typed, unlike
+        # ``pk`` on this wrapper type); the report is keyed by int org id.
+        return report.get(int(str(self.id)), [])
 
 
 @strawberry_django.type(User)
@@ -176,6 +197,22 @@ class CurrentUserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     username: Optional[str]
+
+    @strawberry_django.field
+    def permissions(self, info: Info) -> List[str]:
+        """Global-tier permission list (ADR 0001 §2.4, finding F24).
+
+        The shared contract for gating global-tier features: superuser holds
+        every permission; otherwise the union of direct ``user_permissions``
+        and permissions carried by global Roles in ``user.groups``.  Scoped
+        (grant) permissions are reported per organization instead.
+        """
+        from common.permissions.selectors import global_permissions
+
+        user = cast(User, get_current_user(info))
+        if not user or not user.is_authenticated:
+            return []
+        return global_permissions(user)
 
     @strawberry_django.field
     def is_hmis_user(self, info: Info) -> Optional[bool]:
