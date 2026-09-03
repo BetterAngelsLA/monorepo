@@ -1,3 +1,4 @@
+import type { PermissionEnum } from './__generated__';
 import * as PermissionGroups from './__generated__';
 
 export * from './__generated__';
