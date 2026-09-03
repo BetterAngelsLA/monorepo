@@ -398,8 +398,9 @@ subquery, not a re-derivation.
   schema-legal but read by no predicate path, and wiring them would make authority
   org-granular — "every current *and future* member of org B with this role edits this
   record" — which is group-held per-record authority, the exact guardian shape this
-  ADR deletes (rule 4). They are therefore **forbidden**: a new E00x check plus an
-  admin form restriction (`scope_object` requires `principal_user`). If org-level
+  ADR deletes (rule 4). They are therefore **forbidden**: `permissions.E006`
+  (deploy-time) plus `Grant.clean` and the admin surfaces (write-time) refuse
+  them up front (`scope_object` requires `principal_user`). If org-level
   per-record sharing is ever product-real, it belongs on the *data edge* (ADR §7.4 — a
   sharing relationship naming the orgs allowed to act), with authority still resolving
   per-person through each member's own role — never an org-principal `Grant`.
@@ -459,6 +460,8 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 - **E005** – a *scoped* role grants a permission on a model that doesn't declare
   `OrgScoped` (global roles are exempt — their permissions are never org-confined;
   the check fires the moment a scoped role needs one of those models).
+- **E006** – a `Grant` grants an *object* to an organization (`principal_org` +
+  `scope_object`); object grants are user-principal only (§2.5).
 
 ### 2.8 Requirements coverage
 

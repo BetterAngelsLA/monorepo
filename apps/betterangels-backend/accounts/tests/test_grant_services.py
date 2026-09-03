@@ -33,6 +33,15 @@ class GrantServiceTestCase(TestCase):
 
         self.assertFalse(Grant.objects.filter(principal_user=self.user).exists())
 
+    def test_grant_create_refuses_a_duplicate(self) -> None:
+        """The service contract is ValidationError, not IntegrityError, for duplicates."""
+        grant_create(user=self.user, role=self.shelter_role, scope_org=self.org)
+
+        with self.assertRaises(ValidationError):
+            grant_create(user=self.user, role=self.shelter_role, scope_org=self.org)
+
+        self.assertEqual(Grant.objects.filter(principal_user=self.user).count(), 1)
+
     def test_grant_create_validates_before_saving(self) -> None:
         with self.assertRaises(ValidationError):
             grant_create(user=self.user, role=self.shelter_role, scope_org=None)  # type: ignore[arg-type]
@@ -65,6 +74,16 @@ class GrantServiceTestCase(TestCase):
             grant_delegate(principal_org=self.org, role=self.gso_role, scope_org=other_org)
 
         self.assertFalse(Grant.objects.filter(principal_org=self.org).exists())
+
+    def test_grant_delegate_refuses_a_duplicate(self) -> None:
+        """The service contract is ValidationError, not IntegrityError, for duplicates."""
+        other_org = organization_recipe.make(name="Duplicate Delegatee")
+        grant_delegate(principal_org=self.org, role=self.shelter_role, scope_org=other_org)
+
+        with self.assertRaises(ValidationError):
+            grant_delegate(principal_org=self.org, role=self.shelter_role, scope_org=other_org)
+
+        self.assertEqual(Grant.objects.filter(principal_org=self.org).count(), 1)
 
     def test_grant_delete_revokes_a_delegation(self) -> None:
         other_org = organization_recipe.make(name="Delegatee Org")

@@ -624,13 +624,25 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     global Role can never sit in a Grant (mirrors ``permissions.E002``).
 
     Raises:
-        ``django.core.exceptions.ValidationError`` when *role* is global
-        (via ``Grant.clean`` through ``full_clean``).
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *user* already holds
+        *role* at *scope_org* (checked here — Django's unique checks skip the
+        NULL scope-object columns, so ``full_clean`` cannot see the duplicate).
+        The DB constraint ``unique_user_grant`` remains the backstop for a
+        concurrent double-write.
     """
     from accounts.models import Grant
 
     grant = Grant(principal_user=user, role=role, scope_org=scope_org)
     grant.full_clean()
+    if Grant.objects.filter(
+        principal_user=user,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(f"{user} already holds {role.name!r} at {scope_org}.")
     grant.save()
     return grant
 
@@ -646,13 +658,27 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
     ``permissions.E002``).
 
     Raises:
-        ``django.core.exceptions.ValidationError`` when *role* is global
-        (via ``Grant.clean`` through ``full_clean``).
+        ``django.core.exceptions.ValidationError`` when *role* is global (via
+        ``Grant.clean`` through ``full_clean``) or when *principal_org* already
+        delegates *role* to *scope_org* (checked here — Django's unique checks
+        skip the NULL scope-object columns, so ``full_clean`` cannot see the
+        duplicate).  The DB constraint ``unique_org_grant`` remains the backstop
+        for a concurrent double-write.
     """
     from accounts.models import Grant
 
     grant = Grant(principal_org=principal_org, role=role, scope_org=scope_org)
     grant.full_clean()
+    if Grant.objects.filter(
+        principal_org=principal_org,
+        role=role,
+        scope_org=scope_org,
+        scope_object_type__isnull=True,
+        scope_object_id__isnull=True,
+    ).exists():
+        raise ValidationError(
+            f"{principal_org} already delegates {role.name!r} to {scope_org}."
+        )
     grant.save()
     return grant
 
