@@ -899,6 +899,8 @@ union DeleteRoomsPayload = BulkDeleteResult | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
+union DeleteShelterPayload = DeletedObjectType | OperationInfo
+
 union DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo
 
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
@@ -1595,6 +1597,7 @@ type Mutation {
   deleteTeam(data: DeleteDjangoObjectInput!): DeleteTeamPayload! @hasOrgPerm(permissions: [{app: "teams", permission: "delete_team"}], any: true)
   createShelter(data: CreateShelterInput!): CreateShelterPayload!
   updateShelter(data: UpdateShelterInput!): UpdateShelterPayload!
+  deleteShelter(id: ID!): DeleteShelterPayload!
   createRoom(data: CreateRoomInput!): CreateRoomPayload!
   updateRoom(id: ID!, data: UpdateRoomInput!): UpdateRoomPayload!
   cloneRoom(id: ID!): CloneRoomPayload!

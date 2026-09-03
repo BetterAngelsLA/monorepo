@@ -2,12 +2,13 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import waffle
+from accounts.models import User
 from common.imgproxy import IMGPROXY_SWITCH
 from common.services.types import AuthorizedPresignedUpload, AuthorizedPresignedUploadBatch
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import ShelterPhotoTypeChoices
-from shelters.models import ShelterPhoto
+from shelters.models import Shelter, ShelterPhoto
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
@@ -590,6 +591,143 @@ class UpdateShelterPhotoMutationTest(ShelterTestCase, TestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
 
+        self.assertGraphQLOperationInfo(response, "updateShelterPhoto", str(photo.pk), kind="ERROR")
+        photo.refresh_from_db()
+        self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
+
+
+class ShelterPhotoMutationPermissionTestCase(ShelterTestCase, TestCase):
+    """Shelter photo mutations are gated on Shelter.perms.CHANGE.
+
+    Every photo write — generating uploads, resolving uploads, deleting photos
+    and updating a photo — authorizes through ``shelter_get``/
+    ``shelter_queryset`` with ``change_shelter`` (ADR 0001 §2.6). A read-only
+    viewer (VIEW grant, no CHANGE) therefore fails closed on each path; the
+    operator (SHELTER_OPERATOR) happy paths are covered by the per-mutation
+    test classes above.
+    """
+
+    GENERATE_MUTATION = """
+        mutation GenerateShelterPhotoUploads($data: GenerateShelterPhotoUploadsInput!) {
+            generateShelterPhotoUploads(data: $data) {
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    RESOLVE_MUTATION = """
+        mutation ResolveShelterPhotoUploads($data: ResolveShelterPhotoUploadsInput!) {
+            resolveShelterPhotoUploads(data: $data) {
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    DELETE_MUTATION = """
+        mutation DeleteShelterPhotos($data: BulkDeleteInput!) {
+            deleteShelterPhotos(data: $data) {
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    UPDATE_MUTATION = """
+        mutation UpdateShelterPhoto($data: UpdateShelterPhotoInput!) {
+            updateShelterPhoto(data: $data) {
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter: Any = shelter_recipe.make(organization=self.org)
+        self.graphql_client.force_login(self.operator)
+        self.viewer = baker.make(User)
+        self.org.users.add(self.viewer)
+        # VIEW only — no CHANGE grant, so every photo write fails closed.
+        self._grant_permission(self.viewer, Shelter.perms.VIEW, self.org, role_name="Photo View Only")
+
+    def test_generate_uploads_denied_for_user_without_change_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.GENERATE_MUTATION,
+            {
+                "data": {
+                    "shelterId": str(self.shelter.pk),
+                    "uploads": [{"refId": "ref-1", "filename": "photo.jpg", "contentType": "image/jpeg"}],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "generateShelterPhotoUploads", "Shelter matching ID", kind="ERROR")
+
+    @patch("shelters.services.shelter_photo.validate_upload_batch")
+    def test_resolve_uploads_denied_for_user_without_change_permission(self, mock_validate: MagicMock) -> None:
+        mock_validate.return_value = []
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.RESOLVE_MUTATION,
+            {
+                "data": {
+                    "shelterId": str(self.shelter.pk),
+                    "photos": [
+                        {
+                            "presignedKey": "media/shelters/abc.jpg",
+                            "uploadToken": "valid-token",
+                            "filename": "photo.jpg",
+                            "contentType": "image/jpeg",
+                            "photoType": "INTERIOR",
+                        }
+                    ],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "resolveShelterPhotoUploads", "Shelter matching ID", kind="ERROR")
+        self.assertEqual(ShelterPhoto.objects.count(), 0)
+
+    def test_delete_photos_denied_for_user_without_change_permission(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter)
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(photo.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "deleteShelterPhotos", str(photo.pk), kind="ERROR")
+        self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
+
+    def test_update_photo_denied_for_user_without_change_permission(self) -> None:
+        photo = baker.make(ShelterPhoto, shelter=self.shelter, type=ShelterPhotoTypeChoices.INTERIOR)
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.UPDATE_MUTATION, {"data": {"id": str(photo.pk), "photoType": "EXTERIOR"}})
+
+        self.assertIsNone(response.get("errors"))
         self.assertGraphQLOperationInfo(response, "updateShelterPhoto", str(photo.pk), kind="ERROR")
         photo.refresh_from_db()
         self.assertEqual(photo.type, ShelterPhotoTypeChoices.INTERIOR)
