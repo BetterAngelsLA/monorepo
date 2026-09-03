@@ -61,12 +61,28 @@ export interface UserProviderConfig<TUser, TQuery> {
    * ``isPermission`` — unknown backend permission strings are dropped before
    * they can become gateable).
    */
-  mapOrganizations?: (
-    orgs: readonly OrgLike[],
-  ) => { id: string; name: string; permissions: readonly string[] }[];
+  mapOrganizations?: (orgs: readonly OrgLike[]) => MappedOrg[];
 }
 
-type OrgLike = { id: string; name: string; permissions?: readonly string[] };
+/** Minimal org shape the provider accepts (raw backend ``permissions``). */
+export type OrgLike = { id: string; name: string; permissions?: readonly string[] };
+
+/** The org shape passed to :component:`ActiveOrgProvider`. */
+export type MappedOrg = { id: string; name: string; permissions: readonly string[] };
+
+/**
+ * Default user-organization → ``Org`` mapping, used when the config supplies no
+ * custom ``mapOrganizations``: copies each org and keeps only the permission
+ * strings the frontend models (``isPermission``), so an unknown backend
+ * permission can never become gateable.  ``useActiveOrgState`` filters again
+ * (defense in depth for providers that bypass this mapper).
+ */
+export const defaultMapOrganizations = (orgs: readonly OrgLike[]): MappedOrg[] =>
+  orgs.map((org) => ({
+    id: org.id,
+    name: org.name,
+    permissions: (org.permissions ?? []).filter(isPermission),
+  }));
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -108,16 +124,6 @@ export function createUserProvider<
   } = config;
 
   // ---- Helpers -------------------------------------------------------
-
-  const defaultMapOrganizations = (orgs: readonly OrgLike[]) =>
-    orgs.map((org) => ({
-      id: org.id,
-      name: org.name,
-      // Raw backend ``app.codename`` strings → only the ones the frontend
-      // models (PermissionEnum). Filtered again in useActiveOrgState (defense
-      // in depth for providers that bypass this mapper).
-      permissions: (org.permissions ?? []).filter(isPermission),
-    }));
 
   const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
 

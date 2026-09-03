@@ -10,12 +10,13 @@ import {
 } from '../../../activeOrg';
 
 /**
- * Minimal org shape consumed by the active-org state.
+ * Minimal org shape accepted by the active-org state.
  *
- * ``permissions`` are the RAW backend strings (``app.codename``) — they are
- * filtered to the modeled ``PermissionEnum`` set where they become gateable
- * (see ``hasPermission`` below), so an unknown backend permission can never
- * satisfy a check.
+ * ``permissions`` are the RAW backend strings (``app.codename``).  The state
+ * filters them to the modeled ``PermissionEnum`` set before exposing
+ * ``activeOrg``/``organizations`` (see ``useActiveOrgState``), so an unknown
+ * backend permission can never satisfy a check or leak to consumers that read
+ * ``permissions`` directly.
  */
 export interface Org {
   id: string;
@@ -49,7 +50,9 @@ export interface ActiveOrgState {
  * Permission boundary: both the per-org and global lists are raw backend
  * ``app.codename`` strings, filtered through ``isPermission`` (the runtime
  * mirror of ``PermissionEnum``) before they become gateable — an unknown
- * backend permission can never satisfy ``hasPermission``.
+ * backend permission can never satisfy ``hasPermission``.  The orgs exposed on
+ * the state (``activeOrg``/``organizations``) are sanitized the same way, so
+ * their ``permissions`` hold only modeled permissions.
  */
 export function useActiveOrgState(
   organizations: Org[],
@@ -78,16 +81,28 @@ export function useActiveOrgState(
     getActiveOrgId,
   );
 
+  // Exposed orgs carry only the permissions the frontend models: raw backend
+  // ``app.codename`` strings are filtered once here, so ``activeOrg`` and
+  // ``organizations`` never leak a permission ``hasPermission`` cannot check.
+  const cleanOrgs = useMemo(
+    () =>
+      organizations.map((org) => ({
+        ...org,
+        permissions: (org.permissions ?? []).filter(isPermission),
+      })),
+    [organizations],
+  );
+
   const activeOrg = useMemo(
-    () => organizations.find((o) => o.id === activeOrgId),
-    [organizations, activeOrgId],
+    () => cleanOrgs.find((o) => o.id === activeOrgId),
+    [cleanOrgs, activeOrgId],
   );
 
   const setActiveOrgId = useCallback(
     (orgId: string) => {
-      if (organizations.some((o) => o.id === orgId)) commitActiveOrgId(orgId);
+      if (cleanOrgs.some((o) => o.id === orgId)) commitActiveOrgId(orgId);
     },
-    [organizations],
+    [cleanOrgs],
   );
 
   const permSet = useMemo(
@@ -109,10 +124,10 @@ export function useActiveOrgState(
   return useMemo(
     () => ({
       activeOrg,
-      organizations,
+      organizations: cleanOrgs,
       setActiveOrgId,
       hasPermission,
     }),
-    [activeOrg, organizations, setActiveOrgId, hasPermission],
+    [activeOrg, cleanOrgs, setActiveOrgId, hasPermission],
   );
 }

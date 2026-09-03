@@ -376,6 +376,14 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
     Grant-derived authority for these domains is out of scope here: no scoped
     role carries these permissions until the dual-read cutover (ADR 0001 §5.3,
     PRs #2427-2429), so today the report can only carry them via the legacy arm.
+
+    Cutover contract: this class encodes the CURRENT legacy-only state.  When a
+    domain flips to dual-read (PRs #2427-2429) and later to grant-only with its
+    legacy rows inert, the report's arms and this test must flip in lockstep —
+    the equivalence predicate becomes ``can() OR legacy`` and then ``can()``,
+    and the domain's app_label moves into ``LEGACY_INERT_APPS``.  These tests
+    are the tripwire: they fail the moment the report and the enforcement
+    predicate disagree.
     """
 
     # The ORG_ADMIN template is the canonical legacy role for member
