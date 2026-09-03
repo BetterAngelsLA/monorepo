@@ -125,19 +125,24 @@ class CurrentUserOrganizationType(OrganizationType):
         """The permissions *user* can exercise at this org (``scopes``-equivalent).
 
         Computed once per request by :func:`accounts.selectors.organization_permissions`
-        and memoized on the user instance; global holders report an empty
-        list here and carry their authority in the global ``currentUser.permissions``
-        list (the frontend unions both via ``hasPermission``).
+        and memoized on the user instance.  The report carries ORG-SCOPED
+        authority only — grants, role-keyed delegations and legacy per-org roles.
+        Per-permission "acts anywhere" authority (superuser, global Role,
+        ``user_permissions``) is reported once in ``currentUser.permissions`` and
+        the frontend unions both via ``hasPermission`` (ADR 0001 finding F24).
+        Computed for every user — never skipped for acts-anywhere holders — so an
+        org-scoped grant or legacy role stays visible even when the user also
+        holds an unrelated global permission (skipping it would make the report
+        disagree with ``can()`` for the user's own org-scoped grants).
         """
         from accounts.selectors import organization_permissions
-        from common.permissions.selectors import global_holder
 
         user = cast(User, get_current_user(info))
         if not user or not user.is_authenticated:
             return []
         report = user.__dict__.get("_org_permissions")
         if report is None:
-            report = {} if global_holder(user) else organization_permissions(user)
+            report = organization_permissions(user)
             user.__dict__["_org_permissions"] = report
         # ``id`` is the declared strawberry field for the org pk (typed, unlike
         # ``pk`` on this wrapper type); the report is keyed by int org id.

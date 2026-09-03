@@ -86,13 +86,20 @@ def global_permissions(user: "User") -> list[str]:
 
 
 def global_holder(user: "User") -> bool:
-    """Whether *user* sits on the global tier (ADR 0001 §2.1, §2.4).
+    """Whether *user* holds at least one permission that applies in every org.
 
     Superuser, a global Role in ``user.groups``, or a direct
-    ``user_permissions`` row — the single definition of "acts everywhere",
-    shared by :func:`global_permissions`, the org-list reachability and the
-    per-org permission report so the three can never disagree.  Memoized per
-    request on the user instance, mirroring ``scopes()``.
+    ``user_permissions`` row.  A ``user_permission`` grants per-permission
+    "acts anywhere" authority — ``scopes()`` returns ``ALL`` for the held perm
+    and ``can()`` is True at any org — so holding one unbounds the ORG LIST
+    (``reachable_orgs``), giving the user every org to act in.
+
+    This predicate gates org-list reachability ONLY.  It must never skip the
+    per-org permission report, which still carries the user's org-scoped grants
+    and legacy roles (see :func:`accounts.selectors.organization_permissions`):
+    skipping it would hide org-scoped authority the user exercises through
+    ``can()``.  Memoized per request on the user instance, mirroring
+    ``scopes()``.
     """
     cached: Optional[bool] = user.__dict__.get("_global_holder")
     if cached is not None:

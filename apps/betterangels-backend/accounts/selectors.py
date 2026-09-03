@@ -170,6 +170,11 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     (``common.permissions.domain.LEGACY_INERT_APPS``); grant-only domains
     (shelters) never report inert legacy rows.
 
+    ORG-SCOPED ONLY by design: per-permission "acts anywhere" authority
+    (superuser, global Role, ``user_permissions``) is NOT included here — it is
+    reported once in ``currentUser.permissions`` and the frontend unions both
+    channels, so ``hasPermission`` still mirrors ``can()`` at every org.
+
     Batched: five queries regardless of the org count, run once per request.
     """
     from collections import defaultdict
