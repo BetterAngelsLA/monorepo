@@ -4,7 +4,7 @@ Creating an organization in the admin used to produce one that could hold no
 roles and accept no members, and adding a member to it returned a 500.
 """
 
-from typing import cast
+from typing import Any, cast
 
 from accounts.admin import CustomOrganizationUserAdmin
 from accounts.groups import ORG_ADMIN
@@ -1294,3 +1294,53 @@ class GrantAdminRoleRestrictionTestCase(TestCase):
                 assert queryset is not None
                 self.assertIn(shelter_role, queryset)
                 self.assertFalse(queryset.filter(is_global=True).exists())
+
+
+class GrantAdminPermissionGuardsTestCase(TestCase):
+    """Grant/Role admins gate their writes hard — grants are the authz graph."""
+
+    def setUp(self) -> None:
+        from accounts.admin import GrantAdmin, RoleAdmin
+        from accounts.models import Grant, Role
+        from accounts.services import sync_roles
+
+        sync_roles()
+        self.grant_admin = GrantAdmin(Grant, admin.site)
+        self.role_admin = RoleAdmin(Role, admin.site)
+        self.superuser = User.objects.create_superuser(
+            username="grant_super", email="grant_super@example.com", password="password"
+        )
+        self.staff = User.objects.create_user(
+            username="grant_staff", email="grant_staff@example.com", password="password", is_staff=True
+        )
+        from django.contrib.auth.models import Permission
+
+        grant_perms = Permission.objects.filter(
+            content_type__app_label="accounts", codename__in=["add_grant", "change_grant", "delete_grant", "view_grant"]
+        )
+        self.staff.user_permissions.add(*grant_perms)
+
+    def _request(self, user: User) -> Any:
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/")
+        request.user = user
+        return request
+
+    def test_grant_writes_require_superuser(self) -> None:
+        staff = self._request(self.staff)
+        superuser = self._request(self.superuser)
+
+        self.assertFalse(self.grant_admin.has_add_permission(staff))
+        self.assertFalse(self.grant_admin.has_change_permission(staff))
+        self.assertFalse(self.grant_admin.has_delete_permission(staff))
+        self.assertTrue(self.grant_admin.has_add_permission(superuser))
+        self.assertTrue(self.grant_admin.has_change_permission(superuser))
+        self.assertTrue(self.grant_admin.has_delete_permission(superuser))
+
+    def test_role_admin_is_read_only_for_everyone(self) -> None:
+        request = self._request(self.superuser)
+
+        self.assertFalse(self.role_admin.has_add_permission(request))
+        self.assertFalse(self.role_admin.has_change_permission(request))
+        self.assertFalse(self.role_admin.has_delete_permission(request))

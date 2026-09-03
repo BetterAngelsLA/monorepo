@@ -385,11 +385,25 @@ def _scoped_role_queryset() -> Any:
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    """Code-owned roles (ADR 0001 §2.2) — read-only in the admin."""
+    """Code-owned roles (ADR 0001 §2.2) — read-only in the admin.
+
+    Roles are defined by code (``RoleDef``/``sync_roles``) and re-synced on
+    every migrate; editing one here would be silently undone, so the admin
+    only reads.
+    """
 
     list_display = ("id", "name", "is_global")
     list_filter = ("is_global",)
     search_fields = ("name",)
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
 
 
 @admin.register(Grant)
@@ -397,8 +411,10 @@ class GrantAdmin(admin.ModelAdmin):
     """Audit + administer grants (ADR 0001 §2.2) — user grants and org→org delegations.
 
     ``principal_user`` vs ``principal_org`` (exactly one) and ``scope_org`` vs
-    object scope (exactly one) are enforced by the model constraints; a global
-    Role can never be granted (check ``permissions.E002``).
+    object scope (exactly one) are enforced by the model constraints and a
+    global Role can never be granted (:meth:`Grant.clean`, ``permissions.E002``).
+    Grants are the whole authorization graph, so add/change/delete are
+    superuser-only; staff may still view where Django grants them ``view_grant``.
     """
 
     def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
@@ -406,6 +422,22 @@ class GrantAdmin(admin.ModelAdmin):
             kwargs["queryset"] = _scoped_role_queryset()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return request.user.is_superuser
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    list_select_related = (
+        "principal_user",
+        "principal_org",
+        "role",
+        "scope_org",
+        "scope_object_type",
+    )
     list_display = (
         "id",
         "principal",

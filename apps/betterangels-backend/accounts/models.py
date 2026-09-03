@@ -361,6 +361,29 @@ class Grant(models.Model):
             ),
         ]
 
+    def clean(self) -> None:
+        """A Grant must never reference a global Role (mirrors ``permissions.E002``).
+
+        Global Roles are held in ``user.groups`` (the global tier), never in a
+        Grant — a row referencing one is inert at best and confusing at worst.
+        Enforced here so every ``full_clean`` writer shares the rule: the grant
+        services (which call ``full_clean`` before ``save``) and the admin
+        ModelForm.  ``permissions.E002`` remains the deploy-time backstop for
+        writers that skip ``clean()`` (e.g. ``loaddata``, the shell) — this
+        cannot be a database constraint because ``Role.is_global`` lives on
+        another table.
+        """
+        super().clean()
+        if self.role is not None and self.role.is_global:
+            raise ValidationError(
+                {
+                    "role": (
+                        "Global roles are held in user.groups, never in a Grant "
+                        f"({self.role.name!r} — permissions.E002)."
+                    )
+                }
+            )
+
     def __str__(self) -> str:
         principal = self.principal_user or self.principal_org
         scope = self.scope_org or self.scope_object_type
