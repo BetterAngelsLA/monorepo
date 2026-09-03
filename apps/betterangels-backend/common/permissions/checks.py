@@ -198,9 +198,9 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
         Grant = apps.get_model("accounts", "Grant")
 
         errors: list[Error] = []
-        for grant in Grant.objects.filter(
-            principal_org__isnull=False, scope_object_type__isnull=False
-        ).select_related("principal_org", "scope_object_type"):
+        for grant in Grant.objects.filter(principal_org__isnull=False, scope_object_type__isnull=False).select_related(
+            "principal_org", "scope_object_type"
+        ):
             errors.append(
                 Error(
                     f"Grant {grant} grants an object to organization {grant.principal_org!r}.",

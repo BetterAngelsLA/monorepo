@@ -676,9 +676,7 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
         scope_object_type__isnull=True,
         scope_object_id__isnull=True,
     ).exists():
-        raise ValidationError(
-            f"{principal_org} already delegates {role.name!r} to {scope_org}."
-        )
+        raise ValidationError(f"{principal_org} already delegates {role.name!r} to {scope_org}.")
     grant.save()
     return grant
 
