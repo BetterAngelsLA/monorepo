@@ -156,3 +156,48 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         orgs = self._orgs()
         self.assertIn("Org B", orgs)
         self.assertNotIn("Org C", orgs)
+
+    def test_weak_holder_at_b_does_not_report_strong_delegated_perms_at_c(self) -> None:
+        """Role-keyed report: a VIEW-only member of B does not see B's delegated
+        Shelter-Operator permissions at C (the audit C-1 no-amplification rule)."""
+        view_role, _ = Role.objects.get_or_create(name="Reachability Viewer", is_global=False)
+        app_label, codename = "shelters.view_shelter".split(".")
+        view_role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+
+        b = organization_recipe.make(name="Weak B")
+        c = organization_recipe.make(name="Weak C")
+        grant_delegate(principal_org=b, role=self.shelter_role, scope_org=c)
+
+        user = baker.make(User)
+        b.add_user(user)
+        grant_create(user=user, role=view_role, scope_org=b)
+        self.graphql_client.force_login(user)
+
+        orgs = self._orgs()
+        self.assertIn("Weak C", orgs)
+        # VIEW is inherited (the user's role at B carries it)…
+        self.assertIn("shelters.view_shelter", orgs["Weak C"])
+        # …but the strong delegated perms are not (role-keyed ∩).
+        self.assertNotIn("shelters.change_shelter", orgs["Weak C"])
+        self.assertNotIn("shelters.delete_shelter", orgs["Weak C"])
+
+    def test_reported_shelter_perms_are_enforceable(self) -> None:
+        """Property (domain-aware): the report never claims a grant-only perm
+        (``LEGACY_INERT_APPS``) that ``can()`` would deny at that org."""
+        from common.permissions.selectors import can
+        from organizations.models import Organization
+
+        b = organization_recipe.make(name="Prop B")
+        c = organization_recipe.make(name="Prop C")
+        grant_delegate(principal_org=b, role=self.shelter_role, scope_org=c)
+
+        user = baker.make(User)
+        b.add_user(user)
+        grant_create(user=user, role=self.shelter_role, scope_org=b)
+        self.graphql_client.force_login(user)
+
+        for name, perms in self._orgs().items():
+            org = Organization.objects.get(name=name)
+            for perm in perms:
+                if perm.startswith("shelters."):
+                    self.assertTrue(can(user, perm, org=org), f"{perm} reported at {name} but not enforceable")

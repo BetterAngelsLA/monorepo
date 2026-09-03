@@ -15,13 +15,14 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from django.db.models import Exists, OuterRef, Q, Subquery
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.db.models import Model, QuerySet
+    from organizations.models import Organization
 
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
@@ -81,6 +82,56 @@ def global_permissions(user: "User") -> list[str]:
     )
     return sorted(
         {f"{app}.{codename}" for app, codename in direct} | {f"{app}.{codename}" for app, codename in role_held}
+    )
+
+
+def global_holder(user: "User") -> bool:
+    """Whether *user* sits on the global tier (ADR 0001 §2.1, §2.4).
+
+    Superuser, a global Role in ``user.groups``, or a direct
+    ``user_permissions`` row — the single definition of "acts everywhere",
+    shared by :func:`global_permissions`, the org-list reachability and the
+    per-org permission report so the three can never disagree.  Memoized per
+    request on the user instance, mirroring ``scopes()``.
+    """
+    cached: Optional[bool] = user.__dict__.get("_global_holder")
+    if cached is not None:
+        return cached
+    if user.is_superuser:
+        result = True
+    elif user.groups.filter(role__is_global=True).exists():
+        result = True
+    else:
+        result = user.user_permissions.exists()
+    user.__dict__["_global_holder"] = result
+    return result
+
+
+def reachable_orgs(user: "User") -> "QuerySet[Organization]":
+    """The organizations *user* can act in (ADR 0001 §2.4, finding F24).
+
+    Membership, orgs with a direct user grant, orgs reachable through an
+    inherited delegation, and every organization for a global holder.  Lazy
+    subquery form — consumers use it directly as a filter (the org list) or
+    materialize it (the per-org permission report).
+    """
+    from accounts.models import Grant, Organization
+
+    # ``Organization`` is the (untyped) django-organizations model; the module
+    # boundary casts to the declared type, matching accounts/types.py.
+    if global_holder(user):
+        return cast("QuerySet[Organization]", Organization.objects.all())
+    return cast(
+        "QuerySet[Organization]",
+        Organization.objects.filter(
+            Q(pk__in=Organization.objects.filter(users=user).values("pk"))
+            | Q(pk__in=Grant.objects.filter(principal_user=user).values("scope_org"))
+            | Q(
+                pk__in=Grant.objects.filter(
+                    principal_org__in=Organization.objects.filter(users=user, grants__principal_user=user).values("pk")
+                ).values("scope_org")
+            )
+        ),
     )
 
 

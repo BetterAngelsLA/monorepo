@@ -54,9 +54,9 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     @parametrize(
         ("organization_count, is_outreach_authorized, expected_query_count"),
         [
-            (0, False, 4),
-            (1, False, 4),
-            (2, False, 4),
+            (0, False, 5),
+            (1, False, 5),
+            (2, False, 5),
         ],
     )
     def test_logged_in_user_query(
@@ -218,8 +218,11 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             }
         """
 
-        # The grants-based org list (ADR 0001 phase 3) adds one query.
-        expected_query_count = 3
+        # Scopes-equivalent per-org report (ADR 0001 phase 3): user fetch +
+        # global-holder probes + lazy org-list filter + the batched five-query
+        # organization_permissions() report.  Bounded — flat in the org count:
+        # the report runs once per request (memoized on the user instance).
+        expected_query_count = 9
 
         if templates:
             omb.add_roles(user, *templates)
