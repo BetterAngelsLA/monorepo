@@ -14,6 +14,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from model_bakery import baker
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
+from shelters.models import Shelter
 
 
 class CurrentUserGlobalPermissionsTestCase(GraphQLBaseTestCase):
@@ -181,6 +182,59 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertNotIn("shelters.change_shelter", orgs["Weak C"])
         self.assertNotIn("shelters.delete_shelter", orgs["Weak C"])
 
+    def test_a_user_permission_holder_sees_every_org(self) -> None:
+        """A ``user_permission`` is 'acts anywhere': every org is reachable."""
+        organization_recipe.make(name="Unjoined Perm Org")
+        user = baker.make(User)
+        app_label, codename = "shelters.view_shelter".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        orgs = self._orgs()
+        self.assertIn("Unjoined Perm Org", orgs)
+        # No org-scoped grants or legacy roles there — the acts-anywhere perm is
+        # carried by the global list, not duplicated per org.
+        self.assertEqual(orgs["Unjoined Perm Org"], [])
+
+    def test_an_org_scoped_grant_survives_an_unrelated_user_permission(self) -> None:
+        """The report is never skipped for acts-anywhere holders.
+
+        A grant-derived permission must stay visible per org even when the user
+        also holds an unrelated ``user_permission`` — emptying the per-org report
+        would hide an action ``can()`` allows.
+        """
+        org = organization_recipe.make(name="Granted Plus Perm Org")
+        user = baker.make(User)
+        org.add_user(user)
+        grant_create(user=user, role=self.shelter_role, scope_org=org)
+        app_label, codename = "accounts.view_user".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        orgs = self._orgs()
+        self.assertIn("Granted Plus Perm Org", orgs)
+        self.assertIn("shelters.change_shelter", orgs["Granted Plus Perm Org"])
+
+    def test_a_legacy_org_role_survives_an_unrelated_user_permission(self) -> None:
+        """Legacy per-org roles are still reported for acts-anywhere holders."""
+        from accounts.models import PermissionGroup
+
+        org = organization_recipe.make(name="Legacy Plus Perm Org")
+        user = baker.make(User)
+        org.add_user(user)
+        group = PermissionGroup.objects.create(organization=org, label="Hand-granted role")
+        app_label, codename = "accounts.view_user".split(".")
+        group.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        group.user_set.add(user)
+        # An unrelated acts-anywhere permission must not empty the per-org report.
+        app_label, codename = "shelters.view_shelter".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        orgs = self._orgs()
+        self.assertIn("Legacy Plus Perm Org", orgs)
+        self.assertEqual(orgs["Legacy Plus Perm Org"], ["accounts.view_user"])
+
     def test_reported_shelter_perms_are_enforceable(self) -> None:
         """Property (domain-aware): the report never claims a grant-only perm
         (``LEGACY_INERT_APPS``) that ``can()`` would deny at that org."""
@@ -201,3 +255,108 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
             for perm in perms:
                 if perm.startswith("shelters."):
                     self.assertTrue(can(user, perm, org=org), f"{perm} reported at {name} but not enforceable")
+
+
+class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
+    """The FE union (per-org ∪ global) equals ``can()`` at each org.
+
+    ``user_permissions`` are per-permission "acts anywhere", so the frontend's
+    ``hasPermission(P)`` at org O — ``P ∈ orgPermissions[O]`` or
+    ``P ∈ globalPermissions`` — must equal ``can(user, P, org=O)``.  Otherwise
+    the UI hides actions the backend allows or shows actions it refuses.
+    Fixtures span grant-only, user_permission-only, grant + unrelated
+    ``user_permission`` (the collision case), and a weak-role delegated holder.
+    """
+
+    SHELTER_PERMS = (
+        Shelter.perms.VIEW,
+        Shelter.perms.ADD,
+        Shelter.perms.CHANGE,
+        Shelter.perms.DELETE,
+    )
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+
+    def _assert_report_matches_can(self, user: User) -> None:
+        """For every reachable org and every shelter perm: report ≡ can()."""
+        from common.permissions.selectors import can
+        from organizations.models import Organization
+
+        response = self.execute_graphql(
+            """
+            query {
+                currentUser {
+                    permissions
+                    organizations: organizationsOrganization {
+                        name
+                        permissions
+                    }
+                }
+            }
+            """
+        )
+        self.assertIsNone(response.get("errors"))
+        global_perms = set(response["data"]["currentUser"]["permissions"])
+        orgs = {o["name"]: set(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
+
+        for org_name, org_perms in orgs.items():
+            org = Organization.objects.get(name=org_name)
+            for perm in self.SHELTER_PERMS:
+                reported = perm in org_perms or perm in global_perms
+                self.assertEqual(
+                    reported,
+                    can(user, perm, org=org),
+                    f"{perm} at {org_name}: report says {reported}, can() says otherwise",
+                )
+
+    def test_scoped_grant_only(self) -> None:
+        """A scoped grant alone: report matches can() at the grant org."""
+        org = organization_recipe.make(name="Equiv Grant Org")
+        user = baker.make(User)
+        org.add_user(user)
+        grant_create(user=user, role=self.shelter_role, scope_org=org)
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_user_permission_only(self) -> None:
+        """An unscoped user_permission alone: carried globally, can() applies everywhere."""
+        organization_recipe.make(name="Equiv Unjoined Org")
+        user = baker.make(User)
+        app_label, codename = "shelters.view_shelter".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_grant_plus_unrelated_user_permission(self) -> None:
+        """The collision case: the unrelated permission must not leak (or hide)."""
+        org = organization_recipe.make(name="Equiv Mixed Org")
+        organization_recipe.make(name="Equiv Mixed Unjoined Org")
+        user = baker.make(User)
+        org.add_user(user)
+        grant_create(user=user, role=self.shelter_role, scope_org=org)
+        app_label, codename = "accounts.view_user".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_weak_role_delegated_holder(self) -> None:
+        """Delegation with a weak role at B: only shared perms are inherited at C."""
+        view_role, _ = Role.objects.get_or_create(name="Equiv Delegation Viewer", is_global=False)
+        app_label, codename = "shelters.view_shelter".split(".")
+        view_role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        b = organization_recipe.make(name="Equiv Delegator B")
+        c = organization_recipe.make(name="Equiv Delegatee C")
+        grant_delegate(principal_org=b, role=self.shelter_role, scope_org=c)
+
+        user = baker.make(User)
+        b.add_user(user)
+        grant_create(user=user, role=view_role, scope_org=b)
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)

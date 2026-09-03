@@ -1344,3 +1344,145 @@ class GrantAdminPermissionGuardsTestCase(TestCase):
         self.assertFalse(self.role_admin.has_add_permission(request))
         self.assertFalse(self.role_admin.has_change_permission(request))
         self.assertFalse(self.role_admin.has_delete_permission(request))
+
+
+class GrantInlinePermissionGatingTestCase(TestCase):
+    """Grant inlines on the Organization admin are superuser-only.
+
+    Django admin never checks an inline child model's permissions — the grant
+    inlines ride on ``change_organization`` — so ``CustomOrganizationAdmin``
+    filters ``GrantInline``/``DelegatedGrantInline`` out for non-superusers.
+    Without it, any staff who can edit an org could create, re-scope or delete
+    ``Grant`` rows (the whole authorization graph), bypassing the superuser
+    gate ``GrantAdmin`` enforces on the same rows.
+    """
+
+    def setUp(self) -> None:
+        from accounts.services import sync_roles
+
+        sync_roles()
+        self.superuser = User.objects.create_superuser(
+            username="inline_super", email="inline_super@example.com", password="password"
+        )
+        self.staff = User.objects.create_user(
+            username="inline_staff", email="inline_staff@example.com", password="password", is_staff=True
+        )
+        org_perms = Permission.objects.filter(
+            content_type__app_label="organizations",
+            codename__in=["view_organization", "change_organization"],
+        )
+        self.staff.user_permissions.add(*org_perms)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.target_org = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        self.url = reverse("admin:organizations_organization_change", args=[self.organization.pk])
+
+    def _inline_prefixes(self) -> set[str]:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        return {inline.formset.prefix for inline in response.context["inline_admin_formsets"]}
+
+    def _change_payload(self, **extra: str) -> dict:
+        rows = list(PermissionGroup.objects.filter(organization=self.organization).order_by("pk"))
+        payload: dict = {
+            "name": self.organization.name,
+            "profile-TOTAL_FORMS": "1",
+            "profile-INITIAL_FORMS": "1",
+            "profile-MIN_NUM_FORMS": "1",
+            "profile-MAX_NUM_FORMS": "1",
+            "profile-0-id": str(self.organization.profile.pk),
+            "profile-0-organization": str(self.organization.pk),
+            "profile-0-org_types": [t.value for t in self.organization.profile.org_types],
+            "permission_groups-TOTAL_FORMS": str(len(rows)),
+            "permission_groups-INITIAL_FORMS": str(len(rows)),
+            "permission_groups-MIN_NUM_FORMS": "0",
+            "permission_groups-MAX_NUM_FORMS": "1000",
+            "organization_users-TOTAL_FORMS": "0",
+            "organization_users-INITIAL_FORMS": "0",
+            "organization_users-MIN_NUM_FORMS": "0",
+            "organization_users-MAX_NUM_FORMS": "1000",
+            "grants-TOTAL_FORMS": "0",
+            "grants-INITIAL_FORMS": "0",
+            "grants-MIN_NUM_FORMS": "0",
+            "grants-MAX_NUM_FORMS": "1000",
+            "delegated_grants-TOTAL_FORMS": "0",
+            "delegated_grants-INITIAL_FORMS": "0",
+            "delegated_grants-MIN_NUM_FORMS": "0",
+            "delegated_grants-MAX_NUM_FORMS": "1000",
+        }
+        pk_field = PermissionGroup._meta.pk.name
+        for index, row in enumerate(rows):
+            payload[f"permission_groups-{index}-{pk_field}"] = str(row.pk)
+            payload[f"permission_groups-{index}-organization"] = str(self.organization.pk)
+            payload[f"permission_groups-{index}-label"] = row.label
+            payload[f"permission_groups-{index}-template"] = str(row.template_id or "")
+        return payload | extra
+
+    def test_grant_inlines_render_for_superusers_only(self) -> None:
+        """Grant inlines appear on the org page for superusers only, not staff."""
+        self.client.force_login(self.superuser)
+        superuser_prefixes = self._inline_prefixes()
+        self.assertIn("grants", superuser_prefixes)
+        self.assertIn("delegated_grants", superuser_prefixes)
+
+        self.client.force_login(self.staff)
+        staff_prefixes = self._inline_prefixes()
+        self.assertNotIn("grants", staff_prefixes)
+        self.assertNotIn("delegated_grants", staff_prefixes)
+
+    def test_a_staff_post_forging_grant_rows_creates_nothing(self) -> None:
+        """Posted ``grants-*`` keys are inert when the inlines are filtered out."""
+        from accounts.models import Grant, Role
+        from shelters.groups import SHELTER_OPERATOR_ROLE
+
+        role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        grantee = baker.make(User)
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            self.url,
+            self._change_payload(
+                **{
+                    "grants-TOTAL_FORMS": "1",
+                    "grants-INITIAL_FORMS": "0",
+                    "grants-0-principal_user": str(grantee.pk),
+                    "grants-0-role": str(role.pk),
+                    "grants-0-scope_object_type": "",
+                    "grants-0-scope_object_id": "",
+                    "delegated_grants-TOTAL_FORMS": "1",
+                    "delegated_grants-INITIAL_FORMS": "0",
+                    "delegated_grants-0-role": str(role.pk),
+                    "delegated_grants-0-scope_org": str(self.target_org.pk),
+                    "delegated_grants-0-scope_object_type": "",
+                    "delegated_grants-0-scope_object_id": "",
+                }
+            ),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Grant.objects.exists())
+
+    def test_a_superuser_can_add_a_grant_from_the_org_page(self) -> None:
+        """The gate must not over-block: superusers still add grants inline."""
+        from accounts.models import Grant, Role
+        from shelters.groups import SHELTER_OPERATOR_ROLE
+
+        role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
+        grantee = baker.make(User)
+        self.client.force_login(self.superuser)
+
+        response = self.client.post(
+            self.url,
+            self._change_payload(
+                **{
+                    "grants-TOTAL_FORMS": "1",
+                    "grants-INITIAL_FORMS": "0",
+                    "grants-0-principal_user": str(grantee.pk),
+                    "grants-0-role": str(role.pk),
+                    "grants-0-scope_object_type": "",
+                    "grants-0-scope_object_id": "",
+                }
+            ),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Grant.objects.filter(principal_user=grantee, role=role, scope_org=self.organization).exists())
