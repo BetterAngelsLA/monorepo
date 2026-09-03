@@ -476,8 +476,16 @@ class GrantAdmin(admin.ModelAdmin):
 
 
 class GrantInline(admin.TabularInline):
-    """Grants scoped TO this org — who can act here, and how."""
+    """Grants scoped TO this org — who can act here, and how.
 
+    Superuser-only, mirroring ``GrantAdmin``: this inline rides on the
+    Organization change permission (Django never checks the inline child
+    model's permissions), so ``CustomOrganizationAdmin`` filters it out for
+    everyone else — otherwise any staff who can edit an org could write or
+    revoke the whole authorization graph.
+    """
+
+    requires_superuser = True
     model = Grant
     fk_name = "scope_org"
     extra = 0
@@ -490,8 +498,12 @@ class GrantInline(admin.TabularInline):
 
 
 class DelegatedGrantInline(admin.TabularInline):
-    """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2)."""
+    """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2).
 
+    Superuser-only, mirroring ``GrantInline`` and ``GrantAdmin``.
+    """
+
+    requires_superuser = True
     model = Grant
     fk_name = "principal_org"
     extra = 0
@@ -528,6 +540,23 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         """Reconcile permission groups once the profile's org types are saved."""
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
+
+    def get_inline_instances(self, request: HttpRequest, obj: Any = None) -> list[Any]:
+        """Grant inlines are superuser-only (mirrors ``GrantAdmin``).
+
+        The Organization change permission is the only thing Django checks for
+        an inline save — never the inline model's own permissions — so a staff
+        user with ``change_organization`` could otherwise create, re-scope or
+        delete ``Grant`` rows (the whole authorization graph) from this page.
+        Filtering here hides the surfaces on both the add and change views, and
+        any ``grants-*`` keys a non-superuser posts are silently ignored.
+        """
+        instances = super().get_inline_instances(request, obj)
+        if not request.user.is_superuser:
+            instances = [
+                inline for inline in instances if not getattr(inline, "requires_superuser", False)
+            ]
+        return instances
 
     def change_view(
         self,
