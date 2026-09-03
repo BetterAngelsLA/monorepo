@@ -43,6 +43,7 @@ QUERY_AUTHZ_ROUTES: dict[str, str] = {
 MUTATION_AUTHZ_ROUTES: dict[str, str] = {
     "create_shelter": "shelter_create -> org gate + require_can(ADD)",
     "update_shelter": "shelter_update -> shelter_get(CHANGE)",
+    "delete_shelter": "shelter_delete -> shelter_get(DELETE)",
     "create_room": "room_create -> shelter_get(VIEW) + require_can(ADD)",
     "update_room": "room_update -> room_get(CHANGE)",
     "clone_room": "room_clone -> room_queryset(VIEW) + require_can(ADD)",
