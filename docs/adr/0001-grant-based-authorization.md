@@ -424,6 +424,13 @@ holding a role at orgs A and B may edit org A's rows while the UI says they are 
 as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
 stated product fact so nobody later "fixes" it by confining writes to the header.
 
+The org-scoped **entity services** (the shelter cutover is the first) are deliberately
+stricter and act on the *active org*: they take the header org (or an explicit target)
+and scope the create/update/delete row load to it, so an operator acts on the org the
+UI says they are acting in and an unauthorized row reads as a 404. This is a
+fail-closed layer above the predicates — `can`/`can_obj` stay union checks for callers
+that use them directly — not a relaxation of the union rule.
+
 **Contextual reads (nested platform-shared records).** A client (platform-shared)
 shown *because its parent is visible* — e.g. a client on a reservation you can see — is
 authorized by the **parent's scope**, not by holding the platform-wide client perm. A

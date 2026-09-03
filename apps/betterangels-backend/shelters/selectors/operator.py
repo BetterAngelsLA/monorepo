@@ -7,10 +7,9 @@ circular import with the model layer.
 
 from typing import TYPE_CHECKING
 
-from common.permissions.utils import permissioned_queryset
+from common.permissions.selectors import visible
 from common.utils import get_by_pk_or_not_found
-from django.db.models import Exists, OuterRef, QuerySet
-from organizations.models import Organization
+from django.db.models import QuerySet
 from shelters.enums import StatusChoices
 
 if TYPE_CHECKING:
@@ -38,30 +37,6 @@ def shelter_list(
     return queryset.filter(is_private=False)
 
 
-def user_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to organizations that *user* is a member of.
-
-    Does NOT require a specific organization — used by global permission
-    checks (e.g., photo mutations using ``HasPerm``).
-    """
-    return queryset.filter(Exists(Organization.objects.filter(pk=OuterRef("organization_id"), users=user)))
-
-
-def operator_shelter_list(
-    queryset: "QuerySet[Shelter]",
-    *,
-    user: "User",
-    organization_id: str,
-) -> "QuerySet[Shelter]":
-    """Filter to shelters belonging to *organization_id* that *user* is a member of."""
-    user_orgs = Organization.objects.filter(pk=OuterRef("organization_id"), users=user)
-    return queryset.filter(Exists(user_orgs), organization_id=organization_id)
-
-
 # ── Queryset wrappers (hide organization_field) ───────────────────────────────
 
 
@@ -69,99 +44,85 @@ def shelter_queryset(
     queryset: "QuerySet[Shelter] | None" = None,
     *,
     user: "User",
-    organization_id: str,
-    perms: list[str] | None = None,
+    organization_id: str | None,
+    permission: str,
 ) -> "QuerySet[Shelter]":
-    """Scope *queryset* to *organization_id* where *user* belongs to the org.
+    """The shelters *user* may exercise *permission* on.
 
-    Falls back to ``Shelter.objects.all()`` when *queryset* is omitted.
+    Wraps :func:`common.permissions.selectors.visible` — the org filter comes
+    from the user's Grants, and *organization_id* only confines finite scopes
+    (header-optional reads, ADR 0001 §2.4/§2.6).  Falls back to
+    ``Shelter.objects.all()`` when *queryset* is omitted.
     """
-    if queryset is None:
-        from shelters.models import Shelter
+    from shelters.models import Shelter
 
+    if queryset is None:
         queryset = Shelter.objects.all()
-    return permissioned_queryset(queryset, user=user, organization_id=organization_id, perms=perms)
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def room_queryset(
     queryset: "QuerySet[Room] | None" = None,
     *,
     user: "User",
-    organization_id: str,
-    perms: list[str] | None = None,
+    organization_id: str | None,
+    permission: str,
 ) -> "QuerySet[Room]":
-    """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
+    """The rooms *user* may exercise *permission* on.
 
-    Falls back to ``Room.objects.all()`` when *queryset* is omitted.
+    Wraps :func:`common.permissions.selectors.visible` (rooms reach their org
+    through ``shelter``); *organization_id* only confines finite scopes
+    (ADR 0001 §2.4/§2.6).  Falls back to ``Room.objects.all()`` when *queryset*
+    is omitted.
     """
-    if queryset is None:
-        from shelters.models import Room
+    from shelters.models import Room
 
+    if queryset is None:
         queryset = Room.objects.all()
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_field="shelter__organization_id",
-    )
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def bed_queryset(
     queryset: "QuerySet[Bed] | None" = None,
     *,
     user: "User",
-    organization_id: str,
-    perms: list[str] | None = None,
+    organization_id: str | None,
+    permission: str,
 ) -> "QuerySet[Bed]":
-    """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
+    """The beds *user* may exercise *permission* on.
 
-    Falls back to ``Bed.objects.all()`` when *queryset* is omitted.
+    Wraps :func:`common.permissions.selectors.visible` (beds reach their org
+    through ``shelter``); *organization_id* only confines finite scopes
+    (ADR 0001 §2.4/§2.6).  Falls back to ``Bed.objects.all()`` when *queryset*
+    is omitted.
     """
+    from shelters.models import Bed
+
     if queryset is None:
-        from shelters.models import Bed
-
         queryset = Bed.objects.all()
-
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_field="shelter__organization_id",
-    )
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 def reservation_queryset(
     queryset: "QuerySet[Reservation] | None" = None,
     *,
     user: "User",
-    organization_id: str,
-    perms: list[str] | None = None,
+    organization_id: str | None,
+    permission: str,
 ) -> "QuerySet[Reservation]":
-    """Scope *queryset* to *organization_id* where *user* belongs to the shelter's org.
+    """The reservations *user* may exercise *permission* on.
 
-    Reservation links to a shelter via two optional paths
-    (``bed__shelter`` and ``room__shelter``), so we pass
-    ``organization_fields`` to ``permissioned_queryset`` to check both.
-
-    Falls back to ``Reservation.objects.all()`` when *queryset* is omitted.
+    Wraps :func:`common.permissions.selectors.visible` — a reservation reaches
+    its org through either ``bed`` or ``room`` (both org paths are derived from
+    ``org_via``, so the filter cannot drift); *organization_id* only confines
+    finite scopes (ADR 0001 §2.4/§2.6).  Falls back to
+    ``Reservation.objects.all()`` when *queryset* is omitted.
     """
+    from shelters.models import Reservation
+
     if queryset is None:
-        from shelters.models import Reservation
-
         queryset = Reservation.objects.all()
-
-    return permissioned_queryset(
-        queryset,
-        user=user,
-        organization_id=organization_id,
-        perms=perms,
-        organization_fields=[
-            "bed__shelter__organization_id",
-            "room__shelter__organization_id",
-        ],
-    )
+    return visible(queryset, user, permission, in_org=organization_id)
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
@@ -172,12 +133,13 @@ def shelter_get(
     user: "User",
     shelter_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Shelter":
     """Return the shelter scoped to *organization_id* for *user*.
 
-    When *permission* is provided, org membership AND the permission are
-    checked in a single query.
+    The row must sit in *organization_id* AND *user* must hold *permission*
+    there (single query) — an unauthorized row is indistinguishable from a
+    missing one (ADR 0001 §2.6).
     """
     from shelters.models import Shelter
 
@@ -186,7 +148,7 @@ def shelter_get(
             Shelter.objects.all(),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            permission=permission,
         ),
         pk=shelter_id,
     )
@@ -197,9 +159,9 @@ def room_get(
     user: "User",
     room_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Room":
-    """Return the room scoped to *organization_id* for *user*."""
+    """Return the room scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
     from shelters.models import Room
 
     return get_by_pk_or_not_found(
@@ -207,7 +169,7 @@ def room_get(
             Room.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            permission=permission,
         ),
         pk=room_id,
     )
@@ -218,9 +180,9 @@ def bed_get(
     user: "User",
     bed_id: int | str,
     organization_id: str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Bed":
-    """Return the bed scoped to *organization_id* for *user*."""
+    """Return the bed scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
     from shelters.models import Bed
 
     return get_by_pk_or_not_found(
@@ -228,7 +190,7 @@ def bed_get(
             Bed.objects.select_related("shelter"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            permission=permission,
         ),
         pk=bed_id,
     )
@@ -239,7 +201,7 @@ def reservation_get(
     user: "User",
     organization_id: str,
     reservation_id: int | str,
-    permission: str | None = None,
+    permission: str,
 ) -> "Reservation":
     """Return the reservation scoped to *organization_id* for *user*.
 
@@ -254,7 +216,7 @@ def reservation_get(
             Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
             user=user,
             organization_id=organization_id,
-            perms=[permission] if permission else None,
+            permission=permission,
         ),
         pk=reservation_id,
     )

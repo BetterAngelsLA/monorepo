@@ -69,6 +69,10 @@ class CreateShelterInput:
     name: auto
     description: Optional[str] = None  # CKEditor5Field not supported by auto
 
+    # Target organization for global-tier holders (ADR 0001 §2.6). Ordinary
+    # users create in their header org; a global holder names a target.
+    organization_id: Optional[strawberry.ID] = None
+
     # M2M enum fields — explicit types because we accept enum values directly
     # (get_or_create by name), not PKs as strawberry-django's ManyToManyInput expects.
     accessibility: Optional[List[AccessibilityChoices]] = None

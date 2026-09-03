@@ -192,7 +192,9 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
         }
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
-            with self.assertNumQueriesWithoutCache(19):
+            # Dual-write (ADR 0001 §4): add_roles mirrors memberships into
+            # Grants, adding the role-lookup + grant-check queries.
+            with self.assertNumQueriesWithoutCache(21):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
