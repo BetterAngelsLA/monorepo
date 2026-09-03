@@ -9,7 +9,7 @@ appId: ${MAESTRO_APP_ID}
 - assertVisible: 'Clients'
 
 - addMedia:
-    - ../fixtures/e2e-image.jpg
+    - ./fixtures/e2e-image.jpg
 
 # Ensure fixture client exists and open its profile
 - runFlow:
