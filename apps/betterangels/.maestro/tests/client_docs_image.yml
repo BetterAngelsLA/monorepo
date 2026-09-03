@@ -69,3 +69,6 @@ appId: ${MAESTRO_APP_ID}
 # ###################
 - tapOn:
     id: 'media-picker-image-btn'
+- waitForAnimationToEnd
+
+- assertVisible: 'hello'
