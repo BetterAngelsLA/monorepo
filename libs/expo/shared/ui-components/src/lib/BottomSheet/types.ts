@@ -100,9 +100,10 @@ export type BottomSheetProviderOptions = {
   stackBehavior?: StackBehavior;
 
   /**
-   * Optional callback invoked after the sheet is fully dismissed.
+   * Invoked when the sheet is dismissed. Receives the dismissed sheet's id so
+   * callers can distinguish a current dismissal from a superseded one.
    */
-  onClose?: () => void;
+  onClose?: (id: string) => void;
 };
 
 /**
@@ -235,6 +236,11 @@ export type BottomSheetRenderApi = {
    * Imperatively closes the current sheet.
    */
   closeSheet: () => void;
+
+  /**
+   * The provider-assigned id of this sheet.
+   */
+  id: string;
 };
 
 /**
