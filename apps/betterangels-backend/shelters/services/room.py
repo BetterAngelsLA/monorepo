@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
@@ -7,47 +7,43 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from shelters.models import Room, Shelter
 from shelters.selectors import room_get, room_queryset, shelter_get
-from shelters.services.data import RoomCreateData, RoomUpdateData
-from shelters.services.utils import (
-    _ROOM_M2M_FIELDS,
-    _clone_label,
-    _set_m2m_from_enums,
-    _split_payload,
-    _validate_subset_attributes,
-)
+from shelters.services.utils import _ROOM_M2M_FIELDS, _clone_label, _set_m2m_from_enums, _validate_subset_attributes
 
 if TYPE_CHECKING:
     from accounts.models import User
 
 
 @transaction.atomic
-def room_create(*, user: "User", organization_id: str, data: RoomCreateData) -> Room:
+def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
     ``view_shelter`` permission, then checks create authority with
-    ``require_can(user, Room.perms.ADD, org)`` (ADR 0001 §2.6).
-
-    *data* is a typed write payload (:class:`RoomCreateData`); ``None`` fields
-    are left to model defaults.
+    ``can(user, Room.perms.ADD, org)`` (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
         ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    data = dict(data)
+    shelter_id = data.pop("shelter_id")
+
     shelter = shelter_get(
         user=user,
-        shelter_id=data.shelter_id,
+        shelter_id=shelter_id,
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
 
     require_can(user, Room.perms.ADD, org=organization_id)
 
-    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"shelter_id"}), model=Room)
+    m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
     _validate_subset_attributes(shelter, m2m_data)
+
+    # Drop None values so model defaults apply
+    scalar_data = {k: v for k, v in data.items() if v is not None}
 
     room = Room(shelter=shelter, **scalar_data)
     room.full_clean()
@@ -57,33 +53,38 @@ def room_create(*, user: "User", organization_id: str, data: RoomCreateData) -> 
 
 
 @transaction.atomic
-def room_update(*, user: "User", organization_id: str, data: RoomUpdateData) -> Room:
+def room_update(*, user: "User", organization_id: str, room_id: int | str, data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
-    Resolves *room* (``data.room_id``) via :func:`~shelters.selectors.room_get`
-    with ``change_room`` permission.
+    Resolves *room* via :func:`~shelters.selectors.room_get` with
+    ``change_room`` permission.
 
-    *data* is a typed write payload (:class:`RoomUpdateData`) that carries the
-    target ``room_id``; ``None`` fields (absent or explicit null) are left
-    unchanged.
+    Only keys present in *data* are applied; ``None`` scalar values are
+    skipped.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the room is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    data = dict(data)
+    data.pop("id", None)
+
     room = room_get(
         user=user,
-        room_id=data.room_id,
+        room_id=room_id,
         organization_id=organization_id,
         permission=Room.perms.CHANGE,
     )
 
-    scalar_data, m2m_data = _split_payload(data, _ROOM_M2M_FIELDS, skip=frozenset({"room_id"}), model=Room)
+    m2m_data: Dict[str, Any] = {
+        k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and k in data and data[k] is not None
+    }
 
     _validate_subset_attributes(room.shelter, m2m_data)
 
-    for key, value in scalar_data.items():
-        setattr(room, key, value)
+    for key, value in data.items():
+        if value is not None:
+            setattr(room, key, value)
 
     room.full_clean()
     room.save()

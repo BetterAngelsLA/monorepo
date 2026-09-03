@@ -1,4 +1,3 @@
-from dataclasses import fields as dataclass_fields
 from typing import Any, Dict, List, overload
 
 from django.core.exceptions import ValidationError
@@ -65,45 +64,6 @@ def _parse_location(data: Any) -> Any:
         latitude=str(latitude) if latitude is not None else None,
         longitude=str(longitude) if longitude is not None else None,
     )
-
-
-def _split_payload(
-    data: Any,
-    m2m_field_names: set[str],
-    *,
-    skip: frozenset[str] = frozenset(),
-    model: type[models.Model] | None = None,
-) -> tuple[Dict[str, Any], Dict[str, Any]]:
-    """Partition a typed write payload (see :mod:`shelters.services.data`) into
-    (scalar_fields, m2m_fields) without mutating it.
-
-    ``None`` values (absent or explicitly null) are excluded so model defaults
-    apply and update paths leave unset fields unchanged. *skip* names control
-    keys handled by the caller (e.g. ``shelter_id``, resolved as an attribute).
-
-    When *model* is given, every scalar key must map to a real model field
-    (or FK attribute) — a payload key that is not a settable model attribute
-    raises ``ValueError`` instead of silently becoming a phantom instance
-    attribute on the update path.
-    """
-    scalar_data: Dict[str, Any] = {}
-    m2m_data: Dict[str, Any] = {}
-    for field in dataclass_fields(data):
-        if field.name in skip:
-            continue
-        value = getattr(data, field.name)
-        if value is None:
-            continue
-        if field.name in m2m_field_names:
-            m2m_data[field.name] = value
-        else:
-            scalar_data[field.name] = value
-    if model is not None:
-        attnames = {f.attname for f in model._meta.get_fields() if hasattr(f, "attname")}
-        unknown = set(scalar_data) - attnames
-        if unknown:
-            raise ValueError(f"{model.__name__} has no settable field(s): {sorted(unknown)}")
-    return scalar_data, m2m_data
 
 
 def _prepare_shelter_data(

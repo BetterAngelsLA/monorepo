@@ -20,7 +20,6 @@ from shelters.enums import (
 from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
-from shelters.services.data import BedCreateData, BedUpdateData
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -41,11 +40,11 @@ class BedCreateTestCase(BedServiceTestCase):
         bed = bed_create(
             user=self.user,
             organization_id=self.org_id,
-            data=BedCreateData(
-                shelter_id=self.shelter.pk,
-                name="Bed 1",
-                type=BedTypeChoices.TWIN,
-            ),
+            data={
+                "shelter_id": self.shelter.pk,
+                "name": "Bed 1",
+                "type": BedTypeChoices.TWIN,
+            },
         )
 
         self.assertEqual(bed.shelter_id, self.shelter.pk)
@@ -61,7 +60,10 @@ class BedCreateTestCase(BedServiceTestCase):
         bed = bed_create(
             user=self.user,
             organization_id=self.org_id,
-            data=BedCreateData(shelter_id=self.shelter.pk, room_id=room.pk),
+            data={
+                "shelter_id": self.shelter.pk,
+                "room_id": room.pk,
+            },
         )
 
         self.assertEqual(bed.room_id, room.pk)
@@ -75,11 +77,11 @@ class BedCreateTestCase(BedServiceTestCase):
         bed = bed_create(
             user=self.user,
             organization_id=self.org_id,
-            data=BedCreateData(
-                shelter_id=self.shelter.pk,
-                demographics=[DemographicChoices.SINGLE_MEN],
-                funders=[FunderChoices.CITY_OF_LOS_ANGELES],
-            ),
+            data={
+                "shelter_id": self.shelter.pk,
+                "demographics": [DemographicChoices.SINGLE_MEN],
+                "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
+            },
         )
 
         demographic_result = bed.demographics.first()
@@ -101,7 +103,10 @@ class BedCreateTestCase(BedServiceTestCase):
             bed_create(
                 user=self.user,
                 organization_id=self.org_id,
-                data=BedCreateData(shelter_id=shelter.pk, demographics=[DemographicChoices.FAMILIES]),
+                data={
+                    "shelter_id": shelter.pk,
+                    "demographics": [DemographicChoices.FAMILIES],
+                },
             )
         self.assertIn("demographics", ctx.exception.message_dict)
 
@@ -120,12 +125,12 @@ class BedUpdateTestCase(BedServiceTestCase):
         updated = bed_update(
             user=self.user,
             organization_id=self.org_id,
-            data=BedUpdateData(
-                bed_id=self.bed.pk,
-                maintenance_flag=True,
-                name="Bed 1 Updated",
-                type=BedTypeChoices.BUNK,
-            ),
+            bed_id=self.bed.pk,
+            data={
+                "maintenance_flag": True,
+                "name": "Bed 1 Updated",
+                "type": BedTypeChoices.BUNK,
+            },
         )
 
         self.assertEqual(updated.pk, self.bed.pk)
@@ -136,11 +141,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(
-            user=self.user,
-            organization_id=self.org_id,
-            data=BedUpdateData(bed_id=self.bed.pk, name="Renamed"),
-        )
+        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")
@@ -156,11 +157,11 @@ class BedUpdateTestCase(BedServiceTestCase):
         bed_update(
             user=self.user,
             organization_id=self.org_id,
-            data=BedUpdateData(
-                bed_id=self.bed.pk,
-                demographics=[DemographicChoices.SINGLE_MEN],
-                funders=[FunderChoices.CITY_OF_LOS_ANGELES],
-            ),
+            bed_id=self.bed.pk,
+            data={
+                "demographics": [DemographicChoices.SINGLE_MEN],
+                "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
+            },
         )
 
         self.bed.refresh_from_db()
@@ -175,7 +176,8 @@ class BedUpdateTestCase(BedServiceTestCase):
         bed_update(
             user=self.user,
             organization_id=self.org_id,
-            data=BedUpdateData(bed_id=self.bed.pk, demographics=[]),
+            bed_id=self.bed.pk,
+            data={"demographics": []},
         )
 
         self.bed.refresh_from_db()

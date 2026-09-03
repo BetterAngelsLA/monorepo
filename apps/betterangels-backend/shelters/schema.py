@@ -1,6 +1,5 @@
-from dataclasses import fields as dataclass_fields
 from datetime import date
-from typing import Any, Mapping, Optional, TypeVar, cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -22,15 +21,6 @@ from shelters.selectors import (
 from shelters.services import shelter_photo
 from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
-from shelters.services.data import (
-    BedCreateData,
-    BedUpdateData,
-    ReservationClientData,
-    ReservationCreateData,
-    ReservationUpdateData,
-    RoomCreateData,
-    RoomUpdateData,
-)
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_update
@@ -58,53 +48,10 @@ from shelters.types import (
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
-from strawberry import ID, Some, UNSET
+from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
-
-
-P = TypeVar("P")
-
-
-def _build_payload(
-    cls: type[P],
-    source: object,
-    *,
-    nested: Mapping[str, type[Any]] | None = None,
-    extra: Mapping[str, Any] | None = None,
-) -> P:
-    """Build a framework-agnostic write payload (:mod:`shelters.services.data`) from a GraphQL input.
-
-    ``UNSET`` fields (not provided) are dropped so payload defaults apply.
-    Fields named in *nested* are lists of GraphQL inputs converted item-wise
-    into the corresponding plain payload type. *extra* supplies payload-only
-    keys the input does not carry (e.g. the ``bed_id``/``room_id`` update
-    targets, which arrive as the mutation's separate ``id`` argument). The
-    mirror canary tests in ``shelters/tests/test_service_data.py`` keep
-    payloads in sync with the inputs, so a field drift here fails loudly
-    rather than silently.
-    """
-    values: dict[str, Any] = {}
-    for f in dataclass_fields(cast(Any, cls)):
-        if not hasattr(source, f.name):
-            # Payload-only key (e.g. an update target id) — supplied via *extra*.
-            continue
-        value = getattr(source, f.name)
-        # Strawberry stores provided ``Maybe`` fields wrapped in ``Some(...)``;
-        # unwrap so payloads carry the plain value (mirrors ``asdict``).
-        if isinstance(value, Some):
-            value = value.value
-        if value is UNSET:
-            continue
-        if nested and f.name in nested and value is not None:
-            item_cls = nested[f.name]
-            values[f.name] = [_build_payload(item_cls, item) for item in value]
-        else:
-            values[f.name] = value
-    if extra:
-        values.update(extra)
-    return cls(**values)
 
 
 @strawberry.type
@@ -203,17 +150,17 @@ class Mutation:
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(RoomCreateData, data)
-        return cast(RoomType, room_create(user=user, organization_id=org_id, data=payload))
+        clean = strawberry.asdict(data)
+        return cast(RoomType, room_create(user=user, organization_id=org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(RoomUpdateData, data, extra={"room_id": id})
+        clean = strawberry.asdict(data)
         return cast(
             RoomType,
-            room_update(user=user, organization_id=org_id, data=payload),
+            room_update(user=user, organization_id=org_id, room_id=id, data=clean),
         )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
@@ -236,17 +183,17 @@ class Mutation:
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(BedCreateData, data)
-        return cast(BedType, bed_create(user=user, organization_id=org_id, data=payload))
+        clean = strawberry.asdict(data)
+        return cast(BedType, bed_create(user=user, organization_id=org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(BedUpdateData, data, extra={"bed_id": id})
+        clean = strawberry.asdict(data)
         return cast(
             BedType,
-            bed_update(user=user, organization_id=org_id, data=payload),
+            bed_update(user=user, organization_id=org_id, bed_id=id, data=clean),
         )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
@@ -267,24 +214,17 @@ class Mutation:
     def create_reservation(self, info: Info, data: CreateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(
-            ReservationCreateData,
-            data,
-            nested={"clients": ReservationClientData},
-        )
-        return cast(ReservationType, reservation_create(user=user, organization_id=org_id, data=payload))
+        clean = strawberry.asdict(data)
+        return cast(ReservationType, reservation_create(user=user, organization_id=org_id, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_reservation(self, info: Info, id: ID, data: UpdateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
-        payload = _build_payload(
-            ReservationUpdateData,
-            data,
-            nested={"clients": ReservationClientData},
-            extra={"reservation_id": id},
+        clean = strawberry.asdict(data)
+        return cast(
+            ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean)
         )
-        return cast(ReservationType, reservation_update(user=user, organization_id=org_id, data=payload))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:

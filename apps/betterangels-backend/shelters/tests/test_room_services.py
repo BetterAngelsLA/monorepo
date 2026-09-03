@@ -21,7 +21,6 @@ from shelters.enums import (
 from shelters.groups import SHELTER_OPERATOR
 from shelters.models import Accessibility, Bed, Demographic, Funder, Pet, Room, Shelter
 from shelters.services.room import room_clone, room_create, room_delete, room_update
-from shelters.services.data import RoomCreateData, RoomUpdateData
 from shelters.tests.baker_recipes import shelter_recipe
 
 
@@ -51,15 +50,15 @@ class RoomCreateTestCase(RoomServiceTestCase):
         room = room_create(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomCreateData(
-                shelter_id=self.shelter.pk,
-                amenities="WiFi, AC",
-                last_cleaned_inspected=last_cleaned,
-                medical_respite=True,
-                name="Room-101",
-                notes="Corner room",
-                type=RoomStyleChoices.SINGLE_ROOM,
-            ),
+            data={
+                "shelter_id": self.shelter.pk,
+                "amenities": "WiFi, AC",
+                "last_cleaned_inspected": last_cleaned,
+                "medical_respite": True,
+                "name": "Room-101",
+                "notes": "Corner room",
+                "type": RoomStyleChoices.SINGLE_ROOM,
+            },
         )
 
         self.assertEqual(room.shelter_id, self.shelter.pk)
@@ -85,14 +84,14 @@ class RoomCreateTestCase(RoomServiceTestCase):
         room = room_create(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomCreateData(
-                shelter_id=self.shelter.pk,
-                name="Room-102",
-                demographics=[DemographicChoices.SINGLE_MEN],
-                funders=[FunderChoices.CITY_OF_LOS_ANGELES],
-                accessibility=[AccessibilityChoices.WHEELCHAIR_ACCESSIBLE],
-                pets=[PetChoices.CATS],
-            ),
+            data={
+                "shelter_id": self.shelter.pk,
+                "name": "Room-102",
+                "demographics": [DemographicChoices.SINGLE_MEN],
+                "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
+                "accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE],
+                "pets": [PetChoices.CATS],
+            },
         )
 
         self.assertEqual(room.demographics.count(), 1)
@@ -107,7 +106,7 @@ class RoomCreateTestCase(RoomServiceTestCase):
             room_create(
                 user=self.user,
                 organization_id=self.org_id,
-                data=RoomCreateData(shelter_id=self.shelter.pk, name="Room-101"),
+                data={"shelter_id": self.shelter.pk, "name": "Room-101"},
             )
 
     def test_invalid_m2m_subset_raises_validation_error(self) -> None:
@@ -119,11 +118,11 @@ class RoomCreateTestCase(RoomServiceTestCase):
             room_create(
                 user=self.user,
                 organization_id=self.org_id,
-                data=RoomCreateData(
-                    shelter_id=shelter.pk,
-                    name="Room-103",
-                    demographics=[DemographicChoices.FAMILIES],
-                ),
+                data={
+                    "shelter_id": shelter.pk,
+                    "name": "Room-103",
+                    "demographics": [DemographicChoices.FAMILIES],
+                },
             )
         self.assertIn("demographics", ctx.exception.message_dict)
 
@@ -143,16 +142,18 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         updated = room_update(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomUpdateData(
-                room_id=self.room.pk,
-                name="Room-101 Updated",
-                type=RoomStyleChoices.MOTEL_ROOM,
-                notes="Updated notes",
-            ),
+            room_id=self.room.pk,
+            data={
+                "name": "Room-101 Updated",
+                "status": RoomStatusChoices.RESERVED,
+                "type": RoomStyleChoices.MOTEL_ROOM,
+                "notes": "Updated notes",
+            },
         )
 
         self.assertEqual(updated.pk, self.room.pk)
         self.assertEqual(updated.name, "Room-101 Updated")
+        self.assertEqual(updated.status, RoomStatusChoices.RESERVED)
         self.assertEqual(updated.type, RoomStyleChoices.MOTEL_ROOM)
         self.assertEqual(updated.notes, "Updated notes")
         self.room.refresh_from_db()
@@ -162,11 +163,8 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         room_update(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomUpdateData(
-                room_id=self.room.pk,
-                name="Renamed",
-                medical_respite=None,
-            ),
+            room_id=self.room.pk,
+            data={"name": "Renamed", "medical_respite": None},
         )
 
         self.room.refresh_from_db()
@@ -180,7 +178,8 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         room_update(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomUpdateData(room_id=self.room.pk, demographics=[DemographicChoices.SINGLE_MEN]),
+            room_id=self.room.pk,
+            data={"demographics": [DemographicChoices.SINGLE_MEN]},
         )
 
         self.room.refresh_from_db()
@@ -194,7 +193,8 @@ class RoomUpdateTestCase(RoomServiceTestCase):
         room_update(
             user=self.user,
             organization_id=self.org_id,
-            data=RoomUpdateData(room_id=self.room.pk, demographics=[]),
+            room_id=self.room.pk,
+            data={"demographics": []},
         )
 
         self.room.refresh_from_db()

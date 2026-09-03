@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
 
 from common.permissions.utils import require_can
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -10,33 +10,33 @@ from shelters.models import Bed, Reservation, ReservationClient, Room
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.selectors import bed_get, reservation_get, room_get
 from shelters.selectors.operator import reservation_queryset
-from shelters.services.data import ReservationClientData, ReservationCreateData, ReservationUpdateData
-from shelters.services.utils import _split_payload
 from shelters.status import get_last_completed_checkout, is_in_turnaround
 
 if TYPE_CHECKING:
     from accounts.models import User
 
+    from shelters.models.shelter import Bed, Room
 
-def _set_clients(reservation: Reservation, clients_data: list[ReservationClientData] | None) -> None:
-    if not clients_data:
+
+def _set_clients(reservation: Reservation, clients_data: list[Dict[str, Any]] | None) -> None:
+    if clients_data is None:
         return
 
     reservation.reservation_clients.all().delete()
     for entry in clients_data:
         ReservationClient.objects.create(
             reservation=reservation,
-            client_profile_id=entry.client_profile_id,
-            is_primary=entry.is_primary,
+            client_profile_id=entry["client_profile_id"],
+            is_primary=entry.get("is_primary", False),
         )
 
 
-def _validate_clients(clients_data: list[ReservationClientData]) -> None:
+def _validate_clients(clients_data: list[dict[str, Any]]) -> None:
     """Validate that exactly one client is primary when multiple clients are assigned."""
     if len(clients_data) == 1:
         return
 
-    primary_count = sum(1 for c in clients_data if c.is_primary)
+    primary_count = sum(1 for c in clients_data if c.get("is_primary", False))
     if primary_count != 1:
         raise ValidationError("Exactly one client must be marked as primary when multiple clients are assigned.")
 
@@ -87,14 +87,11 @@ def _validate_reservable(
 
 
 @transaction.atomic
-def reservation_create(*, user: "User", organization_id: str, data: ReservationCreateData) -> Reservation:
+def reservation_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Reservation:
     """Create a new Reservation associated with a Room and/or Bed.
 
     Validates that *user* belongs to the shelter's organization. The shelter
     is derived from ``bed_id`` or ``room_id``.
-
-    *data* is a typed write payload (:class:`ReservationCreateData`); ``None``
-    fields are left to model defaults.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -103,20 +100,25 @@ def reservation_create(*, user: "User", organization_id: str, data: ReservationC
         create reservations (ADR 0001 §2.6).
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
-    clients_data = data.clients
+    data = dict(data)
+
+    bed_id = data.get("bed_id")
+    room_id = data.get("room_id")
+
+    clients_data = data.pop("clients", None)
     if not clients_data:
         raise ValidationError("At least one client must be associated with a reservation.")
 
-    if data.bed_id:
-        bed_get(user=user, organization_id=organization_id, bed_id=data.bed_id, permission=Bed.perms.VIEW)
-    elif data.room_id:
-        room_get(user=user, organization_id=organization_id, room_id=data.room_id, permission=Room.perms.VIEW)
+    if bed_id:
+        bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
+    elif room_id:
+        room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
     require_can(user, Reservation.perms.ADD, org=organization_id)
 
-    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients"}), model=Reservation)
+    scalar_data = {k: v for k, v in data.items() if v is not None}
 
     reservation = Reservation(created_by=user, **scalar_data)
     reservation.full_clean()
@@ -129,40 +131,41 @@ def reservation_create(*, user: "User", organization_id: str, data: ReservationC
 
 
 @transaction.atomic
-def reservation_update(*, user: "User", organization_id: str, data: ReservationUpdateData) -> Reservation:
+def reservation_update(
+    *, user: "User", organization_id: str, reservation_id: int | str, data: Dict[str, Any]
+) -> Reservation:
     """Update an existing reservation.
 
-    Validates org access via the reservation's shelter. *data* is a typed
-    write payload (:class:`ReservationUpdateData`) that carries the target
-    ``reservation_id``; ``None`` fields (absent or explicit null) are left
-    unchanged.
+    Validates org access via the reservation's shelter. Only keys present in
+    *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
+    data = dict(data)
     try:
         reservation = reservation_get(
             user=user,
             organization_id=organization_id,
-            reservation_id=data.reservation_id,
+            reservation_id=reservation_id,
             permission=Reservation.perms.CHANGE,
         )
     except Reservation.DoesNotExist:
-        raise ObjectDoesNotExist(f"Reservation matching ID {data.reservation_id} could not be found.")
+        raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
 
-    clients_data = data.clients
+    clients_data = data.pop("clients", None)
     if clients_data:
         _validate_clients(clients_data)
 
     previous_status = reservation.status
 
-    scalar_data, _ = _split_payload(data, set(), skip=frozenset({"clients", "reservation_id"}), model=Reservation)
-    for key, value in scalar_data.items():
-        setattr(reservation, key, value)
+    for key, value in data.items():
+        if value is not None:
+            setattr(reservation, key, value)
 
     # Auto-set timestamps on status transitions
-    new_status = data.status
+    new_status = data.get("status")
     if new_status is not None and new_status != previous_status:
         if new_status == ReservationStatusChoices.COMPLETED:
             reservation.checked_out_at = timezone.now()
