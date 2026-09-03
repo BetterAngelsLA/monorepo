@@ -164,9 +164,9 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
                  ∪ ⋃_{B→O delegation} perms(role_d) ∩ perms(user's grants at B)
 
     The delegated arm intersects the delegated role's permissions with what
-    the user actually holds at the acting org B — the role-keying rule (audit
-    C-1) — mirroring ``scopes``.  Legacy permissions are reported only for
-    domains whose authority is still legacy
+    the user actually holds at the acting org B — the permission-matched rule
+    (audit C-1) — mirroring ``scopes``.  Legacy permissions are reported only
+    for domains whose authority is still legacy
     (``common.permissions.domain.LEGACY_INERT_APPS``); grant-only domains
     (shelters) never report inert legacy rows.
 
@@ -199,7 +199,7 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
 
     member_org_ids = set(Organization.objects.filter(users=user).values_list("pk", flat=True))
 
-    # Delegated perms, role-keyed: a delegation B→O contributes a permission
+    # Delegated perms, permission-matched: a delegation B→O contributes a permission
     # only when *user* is a member of B AND holds that permission at B (the
     # audit C-1 rule).  One joined query over delegations into requested orgs.
     inherited_by_org: dict[int, set[str]] = defaultdict(set)

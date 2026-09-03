@@ -126,7 +126,7 @@ class CurrentUserOrganizationType(OrganizationType):
 
         Computed once per request by :func:`accounts.selectors.organization_permissions`
         and memoized on the user instance.  The report carries ORG-SCOPED
-        authority only — grants, role-keyed delegations and legacy per-org roles.
+        authority only — grants, permission-matched delegations and legacy per-org roles.
         Per-permission "acts anywhere" authority (superuser, global Role,
         ``user_permissions``) is reported once in ``currentUser.permissions`` and
         the frontend unions both via ``hasPermission`` (ADR 0001 finding F24).

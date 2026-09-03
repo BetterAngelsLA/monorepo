@@ -159,7 +159,7 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertNotIn("Org C", orgs)
 
     def test_weak_holder_at_b_does_not_report_strong_delegated_perms_at_c(self) -> None:
-        """Role-keyed report: a VIEW-only member of B does not see B's delegated
+        """Permission-matched report: a VIEW-only member of B does not see B's delegated
         Shelter-Operator permissions at C (the audit C-1 no-amplification rule)."""
         view_role, _ = Role.objects.get_or_create(name="Reachability Viewer", is_global=False)
         app_label, codename = "shelters.view_shelter".split(".")
@@ -178,7 +178,7 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertIn("Weak C", orgs)
         # VIEW is inherited (the user's role at B carries it)…
         self.assertIn("shelters.view_shelter", orgs["Weak C"])
-        # …but the strong delegated perms are not (role-keyed ∩).
+        # …but the strong delegated perms are not (permission-matched ∩).
         self.assertNotIn("shelters.change_shelter", orgs["Weak C"])
         self.assertNotIn("shelters.delete_shelter", orgs["Weak C"])
 
