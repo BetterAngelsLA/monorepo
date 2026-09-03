@@ -38,4 +38,20 @@ describe('FileCard', () => {
     fireEvent.press(getByText('a.pdf'));
     expect(onPress).toHaveBeenCalled();
   });
+
+  it('exposes a disabled state when disabled', () => {
+    const { getByLabelText } = render(
+      <FileCard
+        filename="a.pdf"
+        url="u"
+        createdAt="2026-08-01T12:00:00.000Z"
+        onPress={() => undefined}
+        disabled
+      />,
+    );
+
+    expect(
+      getByLabelText('open document modal').props.accessibilityState,
+    ).toEqual({ disabled: true });
+  });
 });
