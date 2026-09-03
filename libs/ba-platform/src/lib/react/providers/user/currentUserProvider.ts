@@ -1,3 +1,4 @@
+import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import { createUserProvider } from './createUserProvider';
 import {
@@ -41,8 +42,14 @@ const { UserProvider, useUser } = createUserProvider({
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
       email: user.email ?? undefined,
-      permissions: user.permissions as PermissionEnum[] | undefined,
-      organizations: (user.organizations ?? []) as CurrentUser['organizations'],
+      // Backend permission strings are ``app.codename``; keep only the ones the
+      // frontend actually models (PermissionEnum), so a backend perm-name this
+      // app does not know can never be stored as a gateable permission.
+      permissions: user.permissions?.filter(isPermission),
+      organizations: (user.organizations ?? []).map((org) => ({
+        ...org,
+        permissions: org.permissions.filter(isPermission),
+      })) as CurrentUser['organizations'],
     };
   },
   isUnauthenticated: (errors) =>

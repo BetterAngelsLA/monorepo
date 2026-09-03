@@ -118,26 +118,45 @@ def reachable_orgs(user: "User") -> "QuerySet[Organization]":
     """The organizations *user* can act in (ADR 0001 §2.4, finding F24).
 
     Membership, orgs with a direct user grant, orgs reachable through an
-    inherited delegation, and every organization for a global holder.  Lazy
+    inherited delegation, and every organization for a global holder.  The
+    delegated arm mirrors ``scopes()``: a delegation B→C is reachable only when
+    the user acts at B (member of B AND a direct Grant at B) with a role that
+    shares at least one permission with the delegation's role — so the org list
+    never shows C when no permission in ``scopes()`` would ever yield it.  Lazy
     subquery form — consumers use it directly as a filter (the org list) or
     materialize it (the per-org permission report).
     """
-    from accounts.models import Grant, Organization
+    from accounts.models import Grant, Organization, Role
 
     # ``Organization`` is the (untyped) django-organizations model; the module
     # boundary casts to the declared type, matching accounts/types.py.
     if global_holder(user):
         return cast("QuerySet[Organization]", Organization.objects.all())
+
+    # Delegation: delegations whose principal org is one where the user acts —
+    # a member of B with a direct Grant at B whose role shares at least one
+    # permission with the delegation's role (the org-level mirror of ``scopes()``'
+    # per-permission arm, unioned over all permissions).  ``roles_at_b`` is
+    # correlated one level up to each delegation row's principal org — the same
+    # single-level OuterRef pattern ``scopes()`` uses — so a delegation B→C
+    # whose role the user can never exercise at B stays out of the org list.
+    roles_at_b = Role.objects.filter(
+        grants__principal_user=user,
+        grants__scope_org=OuterRef("principal_org_id"),
+        grants__scope_org__users=user,
+    )
+    delegated = Grant.objects.filter(
+        role__permissions__in=Subquery(roles_at_b.values("permissions__pk")),
+        principal_org__isnull=False,
+        scope_org__isnull=False,
+    ).values("scope_org")
+
     return cast(
         "QuerySet[Organization]",
         Organization.objects.filter(
             Q(pk__in=Organization.objects.filter(users=user).values("pk"))
-            | Q(pk__in=Grant.objects.filter(principal_user=user).values("scope_org"))
-            | Q(
-                pk__in=Grant.objects.filter(
-                    principal_org__in=Organization.objects.filter(users=user, grants__principal_user=user).values("pk")
-                ).values("scope_org")
-            )
+            | Q(pk__in=Grant.objects.filter(principal_user=user, scope_org__isnull=False).values("scope_org"))
+            | Q(pk__in=delegated)
         ),
     )
 
@@ -148,10 +167,11 @@ def scopes(user: "User", perm: str) -> Any:
     * Direct — a user-principal ``Grant``.
     * Delegated — an org-principal ``Grant`` inherited by the principal org's
       people: "acts at B" = member of B AND holds a direct Grant at B whose role
-      carries *this* permission (role-keyed — a weak-role holder at B is not
-      amplified to B's stronger delegated roles at C).  A consultant granted a
-      role at B without membership does NOT inherit — no amplification (ADR 0001
-      §2.4, findings F1/F19).  One hop only.
+      carries *this* permission (permission-keyed, not role-keyed: the at-B role
+      need not be the delegated role, only carry the permission, so a weak-role
+      holder at B is not amplified to B's stronger delegated roles at C).  A
+      consultant granted a role at B without membership does NOT inherit — no
+      amplification (ADR 0001 §2.4, findings F1/F19).  One hop only.
 
     Object grants (``scope_org`` NULL) are excluded so they can never register
     as an org scope or as "holds the perm somewhere" for a platform-shared model.
