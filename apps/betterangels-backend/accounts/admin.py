@@ -394,6 +394,13 @@ class SuperuserOnlyWritesMixin:
     though ``GrantAdmin`` refuses them.  All three surfaces share this guard.
     ``has_view_permission`` stays default: staff may still view where Django
     grants them ``view_grant``.
+
+    On the Organization page the grant inlines are additionally hidden entirely
+    for non-superusers (:meth:`CustomOrganizationAdmin.get_inline_instances`):
+    a read-only inline still builds a formset that Django validates and later
+    reads in ``construct_change_message``, so filtering the formsets at save
+    time alone would crash staff org edits.  No formset, no forged row, no
+    crash.
     """
 
     def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
@@ -541,15 +548,26 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """Reconcile permission groups once the profile's org types are saved."""
-        if not request.user.is_superuser:
-            # Belt and braces behind the inlines' read-only gate: Django does not
-            # re-check add permission for new inline rows at save time, so a crafted
-            # POST can carry grant rows even when the inlines render read-only.
-            # Grants are the whole authorization graph — never save them for anyone
-            # but superusers.
-            formsets = [fs for fs in formsets if fs.model is not Grant]
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
+
+    def get_inline_instances(self, request: HttpRequest, obj: Any = None) -> list[Any]:
+        """Grant inlines are superuser-only (mirrors ``GrantAdmin``).
+
+        The org change page must never build a Grant formset for a non-superuser.
+        Django renders the inlines read-only (``SuperuserOnlyWritesMixin``) and
+        still validates any ``grants-*`` keys a crafted POST carries, but a
+        formset that ``save_related`` skips would be read afterwards by Django's
+        ``construct_change_message`` and crash the save.  Filtering the inlines
+        out here means no Grant formset exists at all for non-superusers: forged
+        ``grants-*`` keys are ignored and legitimate staff org edits save
+        cleanly.  Grants are the whole authorization graph — only superusers
+        write them.
+        """
+        instances = super().get_inline_instances(request, obj)
+        if not request.user.is_superuser:
+            instances = [inline for inline in instances if inline.model is not Grant]
+        return instances
 
     def change_view(
         self,
