@@ -175,6 +175,11 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     reported once in ``currentUser.permissions`` and the frontend unions both
     channels, so ``hasPermission`` still mirrors ``can()`` at every org.
 
+    Orgs with no permissions are omitted from the result — consumers treat a
+    missing org id as ``[]`` — so a global holder with no org-scoped authority
+    collapses the report to ``{}`` instead of one empty entry per org in the
+    platform.
+
     Batched: five queries regardless of the org count, run once per request.
     """
     from collections import defaultdict
@@ -188,21 +193,21 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
         org_ids = set(reachable_orgs(user).values_list("pk", flat=True))
 
     # Direct grants at each org — one joined query (scope_org, app, codename).
-    held_by_org: dict[int, set[str]] = defaultdict(set)
+    held_in_org: dict[int, set[str]] = defaultdict(set)
     for org_id, app, codename in Grant.objects.filter(principal_user=user).values_list(
         "scope_org",
         "role__permissions__content_type__app_label",
         "role__permissions__codename",
     ):
         if org_id is not None:
-            held_by_org[org_id].add(f"{app}.{codename}")
+            held_in_org[org_id].add(f"{app}.{codename}")
 
     member_org_ids = set(Organization.objects.filter(users=user).values_list("pk", flat=True))
 
     # Delegated perms, permission-matched: a delegation B→O contributes a permission
     # only when *user* is a member of B AND holds that permission at B (the
     # audit C-1 rule).  One joined query over delegations into requested orgs.
-    inherited_by_org: dict[int, set[str]] = defaultdict(set)
+    inherited_in_org: dict[int, set[str]] = defaultdict(set)
     for principal_org_id, org_id, app, codename in Grant.objects.filter(
         scope_org_id__in=org_ids, principal_org__isnull=False
     ).values_list(
@@ -212,22 +217,24 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
         "role__permissions__codename",
     ):
         perm = f"{app}.{codename}"
-        if principal_org_id in member_org_ids and perm in held_by_org.get(principal_org_id, set()):
-            inherited_by_org[org_id].add(perm)
+        if principal_org_id in member_org_ids and perm in held_in_org.get(principal_org_id, set()):
+            inherited_in_org[org_id].add(perm)
 
     # Legacy PermissionGroup perms, non-inert apps only — one joined query.
-    legacy_by_org: dict[int, set[str]] = defaultdict(set)
+    legacy_in_org: dict[int, set[str]] = defaultdict(set)
     for org_id, app, codename in PermissionGroup.objects.filter(user=user, organization_id__in=org_ids).values_list(
         "organization_id",
         "permissions__content_type__app_label",
         "permissions__codename",
     ):
         if app not in LEGACY_INERT_APPS:
-            legacy_by_org[org_id].add(f"{app}.{codename}")
+            legacy_in_org[org_id].add(f"{app}.{codename}")
 
-    return {
-        org_id: sorted(
-            held_by_org.get(org_id, set()) | inherited_by_org.get(org_id, set()) | legacy_by_org.get(org_id, set())
-        )
-        for org_id in org_ids
-    }
+    # Only orgs with at least one permission are materialized (see the docstring
+    # note above): the GraphQL resolver defaults an absent org to ``[]``.
+    report: dict[int, list[str]] = {}
+    for org_id in org_ids:
+        perms = held_in_org.get(org_id, set()) | inherited_in_org.get(org_id, set()) | legacy_in_org.get(org_id, set())
+        if perms:
+            report[org_id] = sorted(perms)
+    return report

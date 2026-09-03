@@ -1,6 +1,9 @@
 import path from 'node:path';
 import { mergeConfig } from 'vitest/config';
-import { baseVitestConfig, monorepoTsconfigAliases } from '../../libs/vite-utils/src/index';
+import {
+  baseVitestConfig,
+  monorepoTsconfigAliases,
+} from '../../libs/vite-utils/src/index';
 
 const WORKSPACE_ROOT = path.resolve(__dirname, '../..');
 

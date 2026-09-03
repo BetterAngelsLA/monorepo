@@ -12,7 +12,7 @@ import {
   useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
-import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
+import { isPermission } from '@monorepo/ba-platform/permissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,11 +57,13 @@ export interface UserProviderConfig<TUser, TQuery> {
    * Optional custom mapping from user organizations to the
    * :type:`Org` shape expected by :component:`ActiveOrgProvider`.
    *
-   * Defaults to spreading ``permissions`` into a new array.
+   * Defaults to copying each org's ``permissions`` (filtered through
+   * ``isPermission`` — unknown backend permission strings are dropped before
+   * they can become gateable).
    */
   mapOrganizations?: (
     orgs: readonly OrgLike[],
-  ) => { id: string; name: string; permissions: readonly PermissionEnum[] }[];
+  ) => { id: string; name: string; permissions: readonly string[] }[];
 }
 
 type OrgLike = { id: string; name: string; permissions?: readonly string[] };
@@ -111,7 +113,10 @@ export function createUserProvider<
     orgs.map((org) => ({
       id: org.id,
       name: org.name,
-      permissions: [...(org.permissions ?? [])] as PermissionEnum[],
+      // Raw backend ``app.codename`` strings → only the ones the frontend
+      // models (PermissionEnum). Filtered again in useActiveOrgState (defense
+      // in depth for providers that bypass this mapper).
+      permissions: (org.permissions ?? []).filter(isPermission),
     }));
 
   const mapOrganizations = customMapOrganizations ?? defaultMapOrganizations;
@@ -201,9 +206,7 @@ export function createUserProvider<
           organizations={
             user?.organizations ? mapOrganizations(user.organizations) : []
           }
-          globalPermissions={
-            user?.permissions as PermissionEnum[] | undefined
-          }
+          globalPermissions={user?.permissions}
         >
           {children}
         </ActiveOrgProvider>

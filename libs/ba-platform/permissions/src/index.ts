@@ -7,9 +7,11 @@ export * from './__generated__';
 // are erased at runtime), so every runtime export is an object of permission
 // strings.  This is the runtime mirror of the ``PermissionEnum`` union.
 const KNOWN_PERMISSIONS: ReadonlySet<string> = new Set(
-  (Object.values(PermissionGroups) as unknown as ReadonlyArray<Readonly<Record<string, string>>>).flatMap(
-    (group) => Object.values(group),
-  ),
+  (
+    Object.values(PermissionGroups) as unknown as ReadonlyArray<
+      Readonly<Record<string, string>>
+    >
+  ).flatMap((group) => Object.values(group)),
 );
 
 /**

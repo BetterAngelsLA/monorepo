@@ -1,3 +1,4 @@
+import { isPermission } from '@monorepo/ba-platform/permissions';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
@@ -8,11 +9,18 @@ import {
   subscribeActiveOrgId,
 } from '../../../activeOrg';
 
-/** Minimal org shape consumed by the active-org state. */
+/**
+ * Minimal org shape consumed by the active-org state.
+ *
+ * ``permissions`` are the RAW backend strings (``app.codename``) — they are
+ * filtered to the modeled ``PermissionEnum`` set where they become gateable
+ * (see ``hasPermission`` below), so an unknown backend permission can never
+ * satisfy a check.
+ */
 export interface Org {
   id: string;
   name: string;
-  permissions: readonly PermissionEnum[];
+  permissions: readonly string[];
 }
 
 export interface ActiveOrgState {
@@ -37,10 +45,15 @@ export interface ActiveOrgState {
  * finding F24): ``hasPermission`` returns true when either the active org
  * carries the permission or the global list does — a global holder (e.g.
  * GSO) gates UI everywhere, not just in one org.
+ *
+ * Permission boundary: both the per-org and global lists are raw backend
+ * ``app.codename`` strings, filtered through ``isPermission`` (the runtime
+ * mirror of ``PermissionEnum``) before they become gateable — an unknown
+ * backend permission can never satisfy ``hasPermission``.
  */
 export function useActiveOrgState(
   organizations: Org[],
-  globalPermissions?: readonly PermissionEnum[],
+  globalPermissions?: readonly string[],
 ): ActiveOrgState {
   // Reconcile during render, before the snapshot read below. NOT an effect:
   // React runs effects child-before-parent, so a child would query before this
@@ -78,12 +91,12 @@ export function useActiveOrgState(
   );
 
   const permSet = useMemo(
-    () => new Set(activeOrg?.permissions ?? []),
+    () => new Set((activeOrg?.permissions ?? []).filter(isPermission)),
     [activeOrg?.permissions],
   );
 
   const globalPermSet = useMemo(
-    () => new Set(globalPermissions ?? []),
+    () => new Set((globalPermissions ?? []).filter(isPermission)),
     [globalPermissions],
   );
 

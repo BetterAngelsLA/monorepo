@@ -7,7 +7,9 @@ grants, inherited delegations, and all orgs for global holders — with per-org
 permissions now including grant-derived role permissions.
 """
 
+from accounts.groups import ORG_ADMIN
 from accounts.models import Role, User
+from accounts.role_manager import OrgRoleManager
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.tests.utils import GraphQLBaseTestCase
@@ -360,3 +362,97 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(user)
 
         self._assert_report_matches_can(user)
+
+
+class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
+    """The per-org report's legacy arm equals legacy (``PermissionGroup``) enforcement.
+
+    Domains still enforced through ``HasOrgPerm`` — member management, reports,
+    teams — are gated per org by the legacy ``PermissionGroup`` predicate
+    (``permissioned_queryset``), not by grants (``can()``).  The report must
+    agree with that predicate so the admin UI neither hides an action the
+    backend allows nor shows one it refuses.
+
+    Grant-derived authority for these domains is out of scope here: no scoped
+    role carries these permissions until the dual-read cutover (ADR 0001 §5.3,
+    PRs #2427-2429), so today the report can only carry them via the legacy arm.
+    """
+
+    # The ORG_ADMIN template is the canonical legacy role for member
+    # management / reports / teams (accounts/groups.py).
+    LEGACY_PERMS = tuple(str(p) for p in ORG_ADMIN.permissions)
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Presets create the ORG_ADMIN PermissionGroup on the org.
+        self.org = organization_recipe.make(name="Legacy Admin Org")
+
+    def _report(self) -> tuple[set[str], dict[str, set[str]]]:
+        response = self.execute_graphql(
+            """
+            query {
+                currentUser {
+                    permissions
+                    organizations: organizationsOrganization {
+                        name
+                        permissions
+                    }
+                }
+            }
+            """
+        )
+        self.assertIsNone(response.get("errors"))
+        global_perms = set(response["data"]["currentUser"]["permissions"])
+        orgs = {o["name"]: set(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
+        return global_perms, orgs
+
+    def _legacy_holds(self, user: User, perm: str) -> bool:
+        """The exact predicate ``HasOrgPerm`` enforces for the active org."""
+        from common.permissions.utils import permissioned_queryset
+        from organizations.models import Organization
+
+        return permissioned_queryset(
+            Organization.objects.all(),
+            user=user,
+            organization_id=str(self.org.pk),
+            perms=[perm],
+            any_perm=True,
+            organization_field="pk",
+        ).exists()
+
+    def test_org_admin_member_report_matches_legacy_enforcement(self) -> None:
+        """An ORG_ADMIN member: the report carries exactly the enforceable perms."""
+        user = baker.make(User)
+        self.org.add_user(user)
+        OrgRoleManager(self.org).add_roles(user, ORG_ADMIN)
+        self.graphql_client.force_login(user)
+
+        global_perms, orgs = self._report()
+        org_perms = orgs[self.org.name]
+
+        # Sanity: the legacy role is actually reported per org…
+        self.assertIn("organizations.add_org_member", org_perms)
+        self.assertIn("reports.view_reports", org_perms)
+        self.assertIn("teams.add_team", org_perms)
+        # …and nothing more than the group grants (no amplification).
+        self.assertEqual(org_perms, set(self.LEGACY_PERMS))
+
+        # Every reported perm is enforceable through the legacy predicate.
+        for perm in self.LEGACY_PERMS:
+            reported = perm in org_perms or perm in global_perms
+            self.assertTrue(reported, f"{perm} not reported for an ORG_ADMIN member")
+            self.assertTrue(self._legacy_holds(user, perm), f"{perm} reported but legacy enforcement denies")
+
+    def test_plain_member_report_matches_legacy_enforcement(self) -> None:
+        """A member with no role: nothing reported, nothing enforceable."""
+        user = baker.make(User)
+        self.org.add_user(user)
+        self.graphql_client.force_login(user)
+
+        global_perms, orgs = self._report()
+        org_perms = orgs[self.org.name]
+
+        self.assertEqual(org_perms, set())
+        self.assertEqual(global_perms, set())
+        for perm in self.LEGACY_PERMS:
+            self.assertFalse(self._legacy_holds(user, perm), f"{perm} held without any PermissionGroup")
