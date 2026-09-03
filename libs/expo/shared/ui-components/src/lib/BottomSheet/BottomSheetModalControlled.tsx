@@ -29,11 +29,12 @@ type TProps = {
   isOpen: boolean;
   children: ReactNode;
   onClose?: () => void;
+  onRequestClose?: () => void;
   options?: BottomSheetOptions;
 };
 
 export function BottomSheetModalControlled(props: TProps) {
-  const { isOpen, onClose, children, options } = props;
+  const { isOpen, onClose, onRequestClose, children, options } = props;
   const { showBottomSheet } = useBottomSheet();
 
   const closeSheetRef = useRef<(() => void) | null>(null);
@@ -45,11 +46,17 @@ export function BottomSheetModalControlled(props: TProps) {
     children,
     options,
     onClose,
+    onRequestClose,
   });
 
   useEffect(() => {
-    stableInputsRef.current = { children, options, onClose };
-  }, [children, options, onClose]);
+    stableInputsRef.current = {
+      children,
+      options,
+      onClose,
+      onRequestClose,
+    };
+  }, [children, options, onClose, onRequestClose]);
 
   useEffect(() => {
     isOpenRef.current = isOpen;
@@ -86,6 +93,14 @@ export function BottomSheetModalControlled(props: TProps) {
       },
       options: {
         ...(stableInputsRef.current.options ?? {}),
+        onRequestClose: () => {
+          // Only notify the parent when the USER initiated the close
+          // (button, backdrop, swipe). Programmatic closes set
+          // closingFromStateRef before dismissing, so they're skipped here.
+          if (!closingFromStateRef.current) {
+            stableInputsRef.current.onRequestClose?.();
+          }
+        },
         onClose: () => {
           closeSheetRef.current = null;
 

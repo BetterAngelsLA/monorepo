@@ -51,6 +51,8 @@ interface IMenuSheetProps {
   children?: ReactNode;
   /** Fired when the USER dismisses the sheet (X / backdrop / swipe down). */
   onClose?: () => void;
+  /** Fired immediately when the USER initiates the close, before the exit animation. */
+  onRequestClose?: () => void;
   /**
    * BottomSheet configuration. MenuSheet defaults are applied automatically —
    * pass only the overrides you need.
@@ -63,12 +65,14 @@ export function MenuSheet({
   actions,
   children,
   onClose,
+  onRequestClose,
   options,
 }: IMenuSheetProps) {
   return (
     <BottomSheetModalControlled
       isOpen={isOpen}
       onClose={onClose}
+      onRequestClose={onRequestClose}
       options={{ ...MENU_SHEET_DEFAULT_OPTIONS, ...options }}
     >
       {actions?.map((action, idx) => (

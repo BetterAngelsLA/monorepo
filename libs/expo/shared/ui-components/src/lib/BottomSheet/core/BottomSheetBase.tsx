@@ -30,7 +30,7 @@ import {
   BottomSheetModal as GbsBottomSheetModal,
   BottomSheetModalProps as GbsBottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef, ReactNode, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { BOTTOM_SHEET_PADDING, BOTTOM_SHEET_RADIUS } from '../constants';
 import { BottomSheetOptions } from '../types';
@@ -95,6 +95,21 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
     } = options;
 
     /**
+     * Fires the consumer's `onRequestClose` exactly once when the sheet starts
+     * animating toward index -1 (close button, backdrop, or swipe down).
+     * The consumer wrapper (`BottomSheetModalControlled`) decides whether the
+     * close was user-initiated, so programmatic closes are skipped there.
+     */
+    const requestCloseFiredRef = useRef(false);
+
+    const handleAnimate = (_fromIndex: number, toIndex: number) => {
+      if (toIndex === -1 && !requestCloseFiredRef.current) {
+        requestCloseFiredRef.current = true;
+        options.onRequestClose?.();
+      }
+    };
+
+    /**
      * Choose scroll container based on wrapper-level option.
      */
     const ContentContainer = scrollable
@@ -121,6 +136,7 @@ const BottomSheetBase = forwardRef<GbsBottomSheetModal, TBottomSheetModal>(
         ref={ref}
         accessible={accessible}
         {...gorhomProps}
+        onAnimate={handleAnimate}
         snapPoints={snapPoints}
         overDragResistanceFactor={overDragResistanceFactor}
         enablePanDownToClose={enablePanDownToClose}

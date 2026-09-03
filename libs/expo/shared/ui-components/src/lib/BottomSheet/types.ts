@@ -103,6 +103,16 @@ export type BottomSheetProviderOptions = {
    * Optional callback invoked after the sheet is fully dismissed.
    */
   onClose?: () => void;
+
+  /**
+   * Optional callback invoked immediately when the USER initiates a close
+   * (close button, backdrop press, or swipe down).
+   *
+   * NOT invoked for programmatic closes (e.g. the controlling `isOpen`
+   * flipping to false), so consumers can safely clear state here without
+   * racing the exit animation.
+   */
+  onRequestClose?: () => void;
 };
 
 /**

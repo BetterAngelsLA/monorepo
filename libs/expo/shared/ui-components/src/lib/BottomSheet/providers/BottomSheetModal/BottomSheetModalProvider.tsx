@@ -69,6 +69,8 @@ import {
 import {
   Fragment,
   ReactNode,
+  RefObject,
+  memo,
   useCallback,
   useMemo,
   useRef,
@@ -107,6 +109,70 @@ type BottomSheetProviderProps = BottomSheetProviderConfig & {
   children: ReactNode;
 };
 
+type TBottomSheetHostProps = {
+  sheet: TBottomSheetInstance;
+  sheetRefs: RefObject<Map<string, BottomSheetModal>>;
+  onRequestClose: (id: string) => void;
+  onDismissed: (id: string) => void;
+};
+
+/**
+ * Stable per-sheet host.
+ *
+ * Exists so the Gorhom ref callback is created once per sheet instead of on
+ * every provider re-render. The previous inline ref re-created the callback
+ * each render, so `instance.present()` re-fired on every state change
+ * (including `dismiss`), which cancelled in-flight dismissals and could stack
+ * two sheets mid-animation. `present()` is now guarded to run once per mount.
+ */
+const BottomSheetHost = memo(function BottomSheetHost({
+  sheet,
+  sheetRefs,
+  onRequestClose,
+  onDismissed,
+}: TBottomSheetHostProps) {
+  const { id, render, options } = sheet;
+  const presentedRef = useRef(false);
+
+  // Plain function (not `useCallback`): the host is memoized, so this stays
+  // referentially stable across provider re-renders, which is what stops the
+  // ref from re-firing `present()` on dismiss. `presentedRef` is intentionally
+  // never reset, so `present()` stays once even if the host re-renders.
+  const handleRef = (instance: BottomSheetModal | null) => {
+    if (!instance) {
+      sheetRefs.current.delete(id);
+
+      return;
+    }
+
+    sheetRefs.current.set(id, instance);
+
+    if (!presentedRef.current) {
+      presentedRef.current = true;
+      instance.present();
+    }
+  };
+
+  return (
+    <BottomSheetBase
+      ref={handleRef}
+      options={options}
+      keyboardBlurBehavior="restore"
+      keyboardBehavior="interactive"
+      onRequestClose={() => onRequestClose(id)}
+      onDismiss={() => {
+        options.onClose?.();
+
+        sheetRefs.current.delete(id);
+
+        onDismissed(id);
+      }}
+    >
+      {render({ closeSheet: () => onRequestClose(id) })}
+    </BottomSheetBase>
+  );
+});
+
 export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   const {
     children,
@@ -121,7 +187,7 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
   );
 
   const [closingSheetIds, setClosingSheetIds] = useState<Set<string>>(
-    new Set(),
+    () => new Set(),
   );
 
   /**
@@ -150,6 +216,21 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
     setClosingSheetIds((prev) => new Set(prev).add(id));
 
     instance.dismiss();
+  }, []);
+
+  /**
+   * Removes a dismissed sheet from provider state. Kept stable so the
+   * memoized per-sheet host can reference it without re-rendering.
+   */
+  const finalizeSheetDismiss = useCallback((id: string) => {
+    setClosingSheetIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+
+      return next;
+    });
+
+    setSheets((prev) => prev.filter((sheet) => sheet.id !== id));
   }, []);
 
   const { addSheet } = useBottomSheetStack({
@@ -245,41 +326,14 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
           {sharedBackdrop.render()}
 
-          {/* eslint-disable react-hooks/refs */}
-          {sheets.map(({ id, render, options }) => (
-            <BottomSheetBase
-              key={id}
-              ref={(instance) => {
-                if (!instance) {
-                  return;
-                }
-
-                sheetRefs.current.set(id, instance);
-                instance.present();
-              }}
-              options={options}
-              keyboardBlurBehavior="restore"
-              keyboardBehavior="interactive"
-              onRequestClose={() => {
-                dismissSheetById(id);
-              }}
-              onDismiss={() => {
-                options.onClose?.();
-
-                sheetRefs.current.delete(id);
-
-                setClosingSheetIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(id);
-
-                  return next;
-                });
-
-                setSheets((prev) => prev.filter((s) => s.id !== id));
-              }}
-            >
-              {render({ closeSheet: () => dismissSheetById(id) })}
-            </BottomSheetBase>
+          {sheets.map((sheet) => (
+            <BottomSheetHost
+              key={sheet.id}
+              sheet={sheet}
+              sheetRefs={sheetRefs}
+              onRequestClose={dismissSheetById}
+              onDismissed={finalizeSheetDismiss}
+            />
           ))}
         </BottomSheetContext.Provider>
       </LayoutWrapper>

@@ -199,7 +199,7 @@ export default function DocumentModal({
           on Cancel is just the `stage` toggle below. */}
       <MenuSheet
         isOpen={stage === 'menu'}
-        onClose={closeModal}
+        onRequestClose={closeModal}
         actions={actions}
       />
 
