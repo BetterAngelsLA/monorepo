@@ -1,6 +1,8 @@
 from typing import Any
 
+from accounts.models import User
 from django.test import TestCase, ignore_warnings
+from model_bakery import baker
 from shelters.models import SPA, City, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 from unittest_parametrize import ParametrizedTestCase
@@ -416,12 +418,22 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(db_shelter.description, "This should be in the database")
 
     def test_create_shelter_wrong_org_rejected(self) -> None:
-        """Creating a shelter with a header org the user doesn't belong to is rejected by HasOrgPerm."""
+        """Creating a shelter for an org the user holds no grant in is rejected.
+
+        The grant model (ADR 0001) converts the authority check into an
+        ``OperationInfo`` (kind=PERMISSION) instead of a GraphQL error.
+        """
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
                     ... on ShelterType {
                         id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            message
+                        }
                     }
                 }
             }
@@ -434,13 +446,16 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             }
         }
 
-        # Pass org_2 header so HasOrgPerm fails (user isn't a member)
+        # Pass org_2 header so can(user, ADD, org=org_2) fails (no grant there)
         response = self.execute_graphql(mutation, variables, HTTP_X_ORGANIZATION_ID=str(self.org_2.pk))
 
-        self.assertEqual(len(response["errors"]), 1)
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "PERMISSION")
         self.assertIn(
             "You do not have permission to perform this action in this organization.",
-            response["errors"][0]["message"],
+            messages[0]["message"],
         )
 
     def test_update_shelter_scalar_fields(self) -> None:
@@ -835,3 +850,150 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         response3 = self.execute_graphql(mutation, variables3)
         self.assertIsNone(response3.get("errors"))
         self.assertEqual(response3["data"]["updateShelter"]["spasServed"], [])
+
+
+class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
+    """Shelter mutations are gated on the specific permission, not just membership.
+
+    A member holding only ``shelters.view_shelter`` can create/update/delete nothing:
+    create fails with a PERMISSION OperationInfo, update and delete fail closed as
+    not-found (ADR 0001 §2.6). The operator (SHELTER_OPERATOR) holds ADD/CHANGE/DELETE
+    and succeeds.
+    """
+
+    CREATE_MUTATION = """
+        mutation CreateShelter($data: CreateShelterInput!) {
+            createShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                    name
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    UPDATE_MUTATION = """
+        mutation UpdateShelter($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                    name
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    DELETE_MUTATION = """
+        mutation DeleteShelter($id: ID!) {
+            deleteShelter(id: $id) {
+                ... on DeletedObjectType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter = Shelter.objects.create(name="Permission Target", organization=self.org)
+        self.viewer = baker.make(User)
+        self.org.users.add(self.viewer)
+        # VIEW only — no ADD/CHANGE/DELETE grants.
+        self._grant_permission(self.viewer, Shelter.perms.VIEW, self.org, role_name="Shelter View Only")
+
+    # ── createShelter ────────────────────────────────────────────────────────
+
+    def test_create_shelter_succeeds_for_user_with_add_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"name": "Operator Created", "description": "has ADD"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        created_id = response["data"]["createShelter"]["id"]
+        self.assertTrue(Shelter.objects.filter(pk=created_id, name="Operator Created").exists())
+
+    def test_create_shelter_denied_for_user_without_add_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"name": "Viewer Created", "description": "no ADD"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "createShelter",
+            "do not have permission to perform this action",
+            kind="PERMISSION",
+        )
+        self.assertFalse(Shelter.objects.filter(name="Viewer Created").exists())
+
+    # ── updateShelter ────────────────────────────────────────────────────────
+
+    def test_update_shelter_succeeds_for_user_with_change_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "name": "Renamed"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateShelter"]["name"], "Renamed")
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.name, "Renamed")
+
+    def test_update_shelter_denied_for_user_without_change_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "name": "Nope"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "updateShelter", "Shelter matching ID", kind="ERROR")
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.name, "Permission Target")
+
+    # ── deleteShelter ────────────────────────────────────────────────────────
+
+    def test_delete_shelter_succeeds_for_user_with_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"id": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteShelter"]["id"], self.shelter.pk)
+        self.assertFalse(Shelter.objects.filter(pk=self.shelter.pk).exists())
+
+    def test_delete_shelter_denied_for_user_without_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"id": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "deleteShelter", "Shelter matching ID", kind="ERROR")
+        self.assertTrue(Shelter.objects.filter(pk=self.shelter.pk).exists())

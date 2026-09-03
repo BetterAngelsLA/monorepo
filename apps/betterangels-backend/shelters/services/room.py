@@ -1,6 +1,7 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -17,10 +18,12 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     """Create a new Room associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``view_shelter`` permission.
+    ``view_shelter`` permission, then checks create authority with
+    ``can(user, Room.perms.ADD, org)`` (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -32,6 +35,8 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
+
+    require_can(user, Room.perms.ADD, org=organization_id)
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
@@ -129,7 +134,7 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    qs = room_queryset(user=user, organization_id=organization_id)
+    qs = room_queryset(user=user, organization_id=organization_id, permission=Room.perms.DELETE)
     qs = qs.filter(pk__in=room_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -142,19 +147,26 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
 def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
     """Clone an existing room, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.
-    Beds are not copied.
+    Scopes to *organization_id* where *user* is a member.  Beds are not copied.
+    Cloning creates a new room, so it follows the create convention (ADR 0001
+    §2.6): the source is resolved with view authority and create authority is
+    checked with ``can(user, Room.perms.ADD, org)``.
 
     Raises:
         ``ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     qs = room_queryset(
         Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
         user=user,
         organization_id=organization_id,
+        permission=Room.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
+
+    require_can(user, Room.perms.ADD, org=organization_id)
+
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),
