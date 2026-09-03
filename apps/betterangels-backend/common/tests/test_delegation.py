@@ -104,21 +104,21 @@ class DelegationTestCase(TestCase):
         self.assertFalse(can(operator, Shelter.perms.DELETE, org=self.org_c))
 
     def test_a_weak_grant_at_b_does_not_amplify_to_b_delegations_at_c(self) -> None:
-        """Role-keyed inheritance: a member of B holding only a VIEW role at B
-        does not inherit B's Shelter-Operator delegation at C beyond VIEW.
+        """Permission-matched inheritance: a member of B holding only a VIEW role
+        at B inherits B's Shelter-Operator delegation at C only as far as VIEW.
 
         Regression for the audit's delegation-amplification finding: "acts at B"
         used to key on *any* grant at B, so a member holding the weakest role at
         B inherited everything B had delegated at C — more authority at C than at
         B.  Inheritance now requires a grant at B whose role carries the
-        permission being checked.
+        permission being checked (role identity is irrelevant — ADR §3).
         """
         grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
         eve = baker.make(User)
         self.org_b.add_user(eve)
         grant_create(user=eve, role=self.view_role, scope_org=self.org_b)
 
-        # VIEW at C is inherited — eve's B role carries VIEW (role-keyed)...
+        # VIEW at C is inherited — eve's B role carries VIEW (permission-matched)...
         self.assertIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.VIEW))
         self.assertTrue(can(eve, Shelter.perms.VIEW, org=self.org_c))
         # ...but CHANGE/DELETE are not: eve holds no role at B that carries them,
@@ -191,3 +191,41 @@ class DelegationTestCase(TestCase):
         scoped = self._scoped_orgs(bob, Shelter.perms.VIEW)
         self.assertNotIn(self.org_c.pk, scoped)
         self.assertIn(self.org_b.pk, scoped)  # the direct grant at B remains
+
+    def test_revoking_the_direct_grant_at_b_revokes_the_inheritance(self) -> None:
+        """Delegation rides the at-B grant, not membership: losing the direct grant
+        at B (while staying a member) drops B's delegations from scopes too."""
+        from accounts.models import Grant
+
+        grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
+        bob = self._acting_member(self.org_b)
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        direct_at_b = Grant.objects.get(principal_user=bob, role=self.shelter_role, scope_org=self.org_b)
+        grant_delete(grant=direct_at_b)
+
+        # Next request: the predicate is re-derived from the DB.
+        bob = User.objects.get(pk=bob.pk)
+        scoped = self._scoped_orgs(bob, Shelter.perms.VIEW)
+        self.assertNotIn(self.org_c.pk, scoped)  # delegation gone with the at-B grant
+        self.assertNotIn(self.org_b.pk, scoped)  # the direct grant at B is gone too
+        self.assertNotIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
+
+    def test_a_delegation_sharing_no_permission_with_the_at_b_role_is_not_inherited(self) -> None:
+        """Disjoint roles: B delegates a role whose permissions the user's at-B role
+        does not share — the delegated org stays out of scopes entirely."""
+        change_role, _ = Role.objects.get_or_create(name="Test Delegation Changer", is_global=False)
+        app_label, codename = Shelter.perms.CHANGE.split(".")
+        change_role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        grant_delegate(principal_org=self.org_b, role=change_role, scope_org=self.org_c)
+
+        eve = baker.make(User)
+        self.org_b.add_user(eve)
+        grant_create(user=eve, role=self.view_role, scope_org=self.org_b)  # VIEW only at B
+
+        # VIEW: the delegated role (change_role) does not carry it.
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(eve, Shelter.perms.VIEW))
+        # CHANGE: eve holds no role at B that carries it.
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(eve, Shelter.perms.CHANGE))
+        self.assertNotIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.CHANGE))
+        self.assertNotIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.VIEW))

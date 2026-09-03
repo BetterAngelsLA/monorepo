@@ -164,8 +164,9 @@ class Grant(models.Model):
 **How to read a `Grant` row.** A grant always reads as *"<principal> holds <role>
 **at** <scope>"* — the scope is where the authority is exercised and whose data it
 reaches. The `principal_org` form is the one people misread: it is **not** "B grants R
-to C"; it is the delegation **B receives to act at C** (its members who already hold R
-at B may act at C — role-keyed, §3).
+to C"; it is the delegation **B receives to act at C** (its acting people — members
+of B holding a direct grant at B — may exercise the delegated role's permissions at C,
+permission-matched against what they already hold at B — §2.4, §3).
 
 | Row | Data owner | People who gain authority | Read it as |
 |---|---|---|---|
