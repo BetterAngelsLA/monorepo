@@ -60,10 +60,11 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         <div className="flex flex-row flex-wrap w-full mb-2">
           <div className="flex flex-row flex-wrap w-full mb-2">
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">
+              <label htmlFor="firstName" className="mb-1 font-bold">
                 First Name<span className="text-[#FF0000]">*</span>
               </label>
               <input
+                id="firstName"
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
@@ -75,10 +76,11 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">
+              <label htmlFor="lastName" className="mb-1 font-bold">
                 Last Name<span className="text-[#FF0000]">*</span>
               </label>
               <input
+                id="lastName"
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
@@ -89,12 +91,14 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               />
             </div>
           </div>
+
           <div className="flex flex-row flex-wrap w-full mb-2">
             <div className="flex flex-1 flex-col mb-2 ">
-              <label className="mb-1 font-bold">
+              <label htmlFor="email" className="mb-1 font-bold">
                 Email<span className="text-[#FF0000]">*</span>
               </label>
               <input
+                id="email"
                 style={styles.input}
                 onChange={handleChange}
                 type="email"
@@ -107,10 +111,11 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">
+              <label htmlFor="zipCode" className="mb-1 font-bold">
                 Zip Code of Fire Impacted Property
               </label>
               <input
+                id="zipCode"
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
@@ -121,6 +126,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             </div>
           </div>
         </div>
+
         {/* HIDING AS PART OF DEV-1373 but may add back later */}
         {/* <div className="flex flex-1 flex-col mb-2">
               <label className="mb-1 font-bold">Cell Number</label>
@@ -133,6 +139,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               placeholder="Phone Number"
               />
             </div> */}
+
         <div>
           <span className="text-[#FF0000]">*</span>
           <span>indicates a required field</span>
@@ -154,6 +161,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             )}
           </div>
         </div>
+
         <div className="flex flex-col items-center justify-center pr-4 mt-6">
           <SurveyButton
             ariaLabel="submit subscribe to mailing list form"

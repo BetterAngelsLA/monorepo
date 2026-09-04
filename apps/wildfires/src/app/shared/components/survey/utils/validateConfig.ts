@@ -67,7 +67,7 @@ function validateNextFormIds(forms: TSurveyForm[]): string[] {
   return invalidFormIds;
 }
 
-function getAllRules(forms: TSurveyForm[]): TConditionRule[] {
+function _getAllRules(forms: TSurveyForm[]): TConditionRule[] {
   const rules: TConditionRule[] = [];
 
   forms.forEach((form) => {
