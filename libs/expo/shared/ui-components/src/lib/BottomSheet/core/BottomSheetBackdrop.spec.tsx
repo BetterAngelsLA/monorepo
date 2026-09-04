@@ -25,12 +25,22 @@ vi.mock('@gorhom/bottom-sheet', () => {
       pressBehavior?: unknown;
     }) => {
       mocks.onGorhomProps(props);
-      return <Pressable testID="gorhom-backdrop" onPress={props.onPress} />;
+      return (
+        <Pressable
+          testID="gorhom-backdrop"
+          accessibilityRole="button"
+          onPress={props.onPress}
+        />
+      );
     },
   };
 });
 
 describe('BottomSheetBackdrop', () => {
+  // Gorhom passes animatedIndex/animatedPosition into backdrop components; the
+  // component only forwards them, so a plain object suffices here.
+  const fakeSharedValue = { value: 0 } as never;
+
   beforeEach(() => {
     mocks.onGorhomProps.mockClear();
   });
@@ -38,7 +48,11 @@ describe('BottomSheetBackdrop', () => {
   it('forwards taps to onRequestClose as the single dismissal path', () => {
     const onRequestClose = vi.fn();
     const { getByTestId } = render(
-      <BottomSheetBackdrop onRequestClose={onRequestClose} />,
+      <BottomSheetBackdrop
+        animatedIndex={fakeSharedValue}
+        animatedPosition={fakeSharedValue}
+        onRequestClose={onRequestClose}
+      />,
     );
 
     const gorhomProps = mocks.onGorhomProps.mock.calls[0][0];
@@ -57,7 +71,13 @@ describe('BottomSheetBackdrop', () => {
   });
 
   it('renders nothing when disableBackdrop is set', () => {
-    const { queryByTestId } = render(<BottomSheetBackdrop disableBackdrop />);
+    const { queryByTestId } = render(
+      <BottomSheetBackdrop
+        animatedIndex={fakeSharedValue}
+        animatedPosition={fakeSharedValue}
+        disableBackdrop
+      />,
+    );
     expect(queryByTestId('gorhom-backdrop')).toBeNull();
   });
 });
