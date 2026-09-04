@@ -132,6 +132,12 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
   const presentedIdsRef = useRef<Set<string>>(new Set());
   /**
+   * Sheets whose options.onClose has already fired — either at dismissal
+   * request time (backdrop tap / header X) or at dismissal end (gorhom-
+   * initiated, e.g. pan-down). Guarantees onClose fires at most once.
+   */
+  const closeNotifiedIdsRef = useRef<Set<string>>(new Set());
+  /**
    * Map of sheet id → gorhom instance.
    * Used for imperative dismissal.
    */
@@ -158,6 +164,27 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
 
     instance.dismiss();
   }, []);
+
+  /**
+   * Invoke a sheet's options.onClose exactly once per sheet.
+   *
+   * Called at dismissal REQUEST time for user-initiated closes (backdrop tap /
+   * header X) so a controlled sheet flips `isOpen` closed immediately — the
+   * same behavior a Cancel button gets — and can be reopened during the dismiss
+   * animation. Falls back to dismissal END (onDismiss) for gorhom-initiated
+   * closes (e.g. pan-down). The id-guarded wrapper in BottomSheetModalControlled
+   * makes a late second call a safe no-op.
+   */
+  const notifyClose = useCallback(
+    (sheetId: string, sheetOptions: BottomSheetOptions) => {
+      if (closeNotifiedIdsRef.current.has(sheetId)) {
+        return;
+      }
+      closeNotifiedIdsRef.current.add(sheetId);
+      sheetOptions.onClose?.(sheetId);
+    },
+    [],
+  );
 
   const { addSheet } = useBottomSheetStack({
     sheetRefs,
@@ -273,13 +300,15 @@ export function BottomSheetModalProvider(props: BottomSheetProviderProps) {
               keyboardBlurBehavior="restore"
               keyboardBehavior="interactive"
               onRequestClose={() => {
+                notifyClose(id, options);
                 dismissSheetById(id);
               }}
               onDismiss={() => {
-                options.onClose?.(id);
+                notifyClose(id, options);
 
                 sheetRefs.current.delete(id);
                 presentedIdsRef.current.delete(id);
+                closeNotifiedIdsRef.current.delete(id);
 
                 setClosingSheetIds((prev) => {
                   // already closing → no new Set → no re-render

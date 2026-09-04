@@ -167,17 +167,30 @@ describe('BottomSheetModalProvider', () => {
     expect(state.mountedBases).toHaveLength(1);
   });
 
-  it('onRequestClose dismisses the sheet (backdrop / header X path)', () => {
+  it('onRequestClose notifies onClose at request time and dismisses (backdrop / header X)', () => {
     const { show } = renderProvider();
+    const onClose = vi.fn();
 
-    showSheet(show);
+    showSheet(show, { onClose });
     const base = state.mountedBases[0];
 
     act(() => {
       base.onRequestClose?.();
     });
 
+    // Request-time notification lets a controlled sheet close its state
+    // immediately (like a Cancel button) instead of waiting for onDismiss.
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose.mock.calls[0][0]).toMatch(/^sheet-/);
     expect(base.inst.dismiss).toHaveBeenCalledTimes(1);
+
+    // When Gorhom later reports the dismissal finishing, onClose is NOT fired
+    // again (once-per-sheet guard) and the sheet is removed.
+    act(() => {
+      base.onDismiss?.();
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(state.mountedBases).toHaveLength(0);
   });
 
   it('closeSheet (render API) dismisses the sheet', () => {
