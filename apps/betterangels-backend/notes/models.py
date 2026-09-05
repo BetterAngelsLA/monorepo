@@ -183,6 +183,11 @@ class Note(BaseModel):
                 for field, changes in diff.items():
                     setattr(self, field, changes[0])
 
+                # clean(), not full_clean(): every value here was persisted once
+                # already, so re-checking each FK still exists would make a revert
+                # fail on unrelated rows deleted since. Only the cross-field pair
+                # can be assembled wrongly, one event's diff at a time.
+                self.clean()
                 self.save()
             case _:
                 raise Exception(f"Action {action} is not revertable")
