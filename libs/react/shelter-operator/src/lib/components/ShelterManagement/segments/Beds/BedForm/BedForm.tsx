@@ -78,8 +78,7 @@ export function BedForm({
       if (bedId) {
         const response = await updateBedMutation({
           variables: {
-            id: bedId,
-            data: buildUpdateBedInput(data),
+            data: { ...buildUpdateBedInput(data), id: bedId },
           },
         });
 

@@ -127,8 +127,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
       try {
         const response = await updateRoom({
           variables: {
-            id: roomId,
-            data: { lastCleaned: new Date().toISOString() },
+            data: { id: roomId, lastCleaned: new Date().toISOString() },
           },
         });
 

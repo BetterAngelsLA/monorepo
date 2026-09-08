@@ -131,8 +131,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
       try {
         const response = await updateBed({
           variables: {
-            id: bedId,
-            data: { lastCleaned: new Date().toISOString() },
+            data: { id: bedId, lastCleaned: new Date().toISOString() },
           },
         });
 

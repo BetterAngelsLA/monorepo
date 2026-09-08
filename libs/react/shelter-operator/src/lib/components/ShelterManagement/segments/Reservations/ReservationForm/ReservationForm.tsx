@@ -213,8 +213,7 @@ export function ReservationForm({
       if (reservationId) {
         const response = await updateReservation({
           variables: {
-            id: reservationId,
-            data: buildUpdateReservationInput(data),
+            data: { ...buildUpdateReservationInput(data), id: reservationId },
           },
         });
 

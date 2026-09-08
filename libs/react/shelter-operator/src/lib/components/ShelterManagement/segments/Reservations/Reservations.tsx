@@ -92,7 +92,7 @@ export function Reservations({ shelterId }: { shelterId: string }) {
       setLoadingAction(action);
       try {
         const response = await updateReservation({
-          variables: { id: reservationId, data: { status } },
+          variables: { data: { id: reservationId, status } },
         });
         if (
           !isMutationSuccess(

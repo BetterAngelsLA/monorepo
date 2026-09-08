@@ -67,8 +67,7 @@ export function RoomForm({
       if (roomId) {
         const response = await updateRoomMutation({
           variables: {
-            id: roomId,
-            data: buildUpdateRoomInput(data),
+            data: { ...buildUpdateRoomInput(data), id: roomId },
           },
         });
 
