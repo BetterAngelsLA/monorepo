@@ -189,7 +189,6 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
 
@@ -241,7 +240,6 @@ def shelter_delete(*, user: "User", shelter_id: str | int) -> Shelter:
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.DELETE,
     )
     deleted_pk = shelter.pk

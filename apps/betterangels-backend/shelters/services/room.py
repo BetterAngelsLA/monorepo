@@ -33,7 +33,6 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.VIEW,
     )
 
@@ -74,7 +73,6 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     room = room_get(
         user=user,
         room_id=room_id,
-        organization_id=None,
         permission=Room.perms.CHANGE,
     )
 
@@ -137,7 +135,7 @@ def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    qs = room_queryset(user=user, organization_id=None, permission=Room.perms.DELETE)
+    qs = room_queryset(user=user, permission=Room.perms.DELETE)
     qs = qs.filter(pk__in=room_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -164,7 +162,6 @@ def room_clone(*, user: "User", room_id: str) -> Room:
     qs = room_queryset(
         Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
         user=user,
-        organization_id=None,
         permission=Room.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)

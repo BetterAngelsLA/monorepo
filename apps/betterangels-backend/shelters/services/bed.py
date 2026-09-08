@@ -32,7 +32,6 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.VIEW,
     )
 
@@ -76,7 +75,6 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     bed = bed_get(
         user=user,
         bed_id=bed_id,
-        organization_id=None,
         permission=Bed.perms.CHANGE,
     )
 
@@ -112,7 +110,7 @@ def bed_delete(*, user: "User", bed_ids: list[int]) -> list[int]:
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.
     """
-    qs = bed_queryset(user=user, organization_id=None, permission=Bed.perms.DELETE)
+    qs = bed_queryset(user=user, permission=Bed.perms.DELETE)
     qs = qs.filter(pk__in=bed_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -139,7 +137,6 @@ def bed_clone(*, user: "User", bed_id: str) -> Bed:
     qs = bed_queryset(
         Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
         user=user,
-        organization_id=None,
         permission=Bed.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)

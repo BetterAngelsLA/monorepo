@@ -44,85 +44,83 @@ def shelter_queryset(
     queryset: "QuerySet[Shelter] | None" = None,
     *,
     user: "User",
-    organization_id: str | None,
     permission: str,
 ) -> "QuerySet[Shelter]":
     """The shelters *user* may exercise *permission* on.
 
-    Wraps :func:`common.permissions.selectors.visible` — the org filter comes
-    from the user's Grants, and *organization_id* only confines finite scopes
-    (header-optional reads, ADR 0001 §2.4/§2.6).  Falls back to
-    ``Shelter.objects.all()`` when *queryset* is omitted.
+    Reach-scoped wrapper around :func:`common.permissions.selectors.visible` —
+    the org filter comes entirely from the user's Grants.  The org *view* on a
+    list read is the query's own ``filters`` variable (header-free, ADR 0001
+    §5.2/§7.7).  Falls back to ``Shelter.objects.all()`` when *queryset* is
+    omitted.
     """
     from shelters.models import Shelter
 
     if queryset is None:
         queryset = Shelter.objects.all()
-    return visible(queryset, user, permission, in_org=organization_id)
+    return visible(queryset, user, permission)
 
 
 def room_queryset(
     queryset: "QuerySet[Room] | None" = None,
     *,
     user: "User",
-    organization_id: str | None,
     permission: str,
 ) -> "QuerySet[Room]":
     """The rooms *user* may exercise *permission* on.
 
-    Wraps :func:`common.permissions.selectors.visible` (rooms reach their org
-    through ``shelter``); *organization_id* only confines finite scopes
-    (ADR 0001 §2.4/§2.6).  Falls back to ``Room.objects.all()`` when *queryset*
-    is omitted.
+    Reach-scoped wrapper around :func:`common.permissions.selectors.visible`
+    (rooms reach their org through ``shelter``).  The org *view* on a list read
+    is the query's own ``filters`` variable (header-free, ADR 0001 §5.2/§7.7).
+    Falls back to ``Room.objects.all()`` when *queryset* is omitted.
     """
     from shelters.models import Room
 
     if queryset is None:
         queryset = Room.objects.all()
-    return visible(queryset, user, permission, in_org=organization_id)
+    return visible(queryset, user, permission)
 
 
 def bed_queryset(
     queryset: "QuerySet[Bed] | None" = None,
     *,
     user: "User",
-    organization_id: str | None,
     permission: str,
 ) -> "QuerySet[Bed]":
     """The beds *user* may exercise *permission* on.
 
-    Wraps :func:`common.permissions.selectors.visible` (beds reach their org
-    through ``shelter``); *organization_id* only confines finite scopes
-    (ADR 0001 §2.4/§2.6).  Falls back to ``Bed.objects.all()`` when *queryset*
-    is omitted.
+    Reach-scoped wrapper around :func:`common.permissions.selectors.visible`
+    (beds reach their org through ``shelter``).  The org *view* on a list read
+    is the query's own ``filters`` variable (header-free, ADR 0001 §5.2/§7.7).
+    Falls back to ``Bed.objects.all()`` when *queryset* is omitted.
     """
     from shelters.models import Bed
 
     if queryset is None:
         queryset = Bed.objects.all()
-    return visible(queryset, user, permission, in_org=organization_id)
+    return visible(queryset, user, permission)
 
 
 def reservation_queryset(
     queryset: "QuerySet[Reservation] | None" = None,
     *,
     user: "User",
-    organization_id: str | None,
     permission: str,
 ) -> "QuerySet[Reservation]":
     """The reservations *user* may exercise *permission* on.
 
-    Wraps :func:`common.permissions.selectors.visible` — a reservation reaches
-    its org through either ``bed`` or ``room`` (both org paths are derived from
-    ``org_via``, so the filter cannot drift); *organization_id* only confines
-    finite scopes (ADR 0001 §2.4/§2.6).  Falls back to
-    ``Reservation.objects.all()`` when *queryset* is omitted.
+    Reach-scoped wrapper around :func:`common.permissions.selectors.visible` —
+    a reservation reaches its org through either ``bed`` or ``room`` (both org
+    paths derive from ``org_via``, so the filter cannot drift).  The org *view*
+    on a list read is the query's own ``filters`` variable (header-free, ADR
+    0001 §5.2/§7.7).  Falls back to ``Reservation.objects.all()`` when
+    *queryset* is omitted.
     """
     from shelters.models import Reservation
 
     if queryset is None:
         queryset = Reservation.objects.all()
-    return visible(queryset, user, permission, in_org=organization_id)
+    return visible(queryset, user, permission)
 
 
 # ── Entity lookups ────────────────────────────────────────────────────────────
@@ -132,26 +130,19 @@ def shelter_get(
     *,
     user: "User",
     shelter_id: int | str,
-    organization_id: str | None,
     permission: str,
 ) -> "Shelter":
     """Return the shelter on which *user* may exercise *permission*.
 
-    When *organization_id* is given the row must sit in that org AND *user*
-    must hold *permission* there.  ``None`` reach-scopes by *user*'s grants
-    alone — header-free operator reads where the org is carried by the query
-    itself (delta 3, ADR 0001 §5.2/§7.7).  An unauthorized row is
-    indistinguishable from a missing one (single query, ADR 0001 §2.6).
+    Reach-scoped by *user*'s grants (header-free, ADR 0001 §5.2/§7.7).  Rows
+    carry globally-unique ids, so no org is needed to disambiguate the lookup;
+    an unauthorized row is indistinguishable from a missing one (single query,
+    ADR 0001 §2.6).
     """
     from shelters.models import Shelter
 
     return get_by_pk_or_not_found(
-        shelter_queryset(
-            Shelter.objects.all(),
-            user=user,
-            organization_id=organization_id,
-            permission=permission,
-        ),
+        shelter_queryset(Shelter.objects.all(), user=user, permission=permission),
         pk=shelter_id,
     )
 
@@ -160,14 +151,12 @@ def room_get(
     *,
     user: "User",
     room_id: int | str,
-    organization_id: str | None,
     permission: str,
 ) -> "Room":
     """Return the room *user* may exercise *permission* on (see :func:`shelter_get`).
 
-    ``None`` organization reach-scopes by the user's grants alone — header-free
-    reads/writes where the org comes from the operation or the row (delta 3,
-    ADR 0001 §5.2/§7.7).
+    Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
+    org is needed (header-free, ADR 0001 §5.2/§7.7).
     """
     from shelters.models import Room
 
@@ -175,7 +164,6 @@ def room_get(
         room_queryset(
             Room.objects.select_related("shelter"),
             user=user,
-            organization_id=organization_id,
             permission=permission,
         ),
         pk=room_id,
@@ -186,14 +174,12 @@ def bed_get(
     *,
     user: "User",
     bed_id: int | str,
-    organization_id: str | None,
     permission: str,
 ) -> "Bed":
     """Return the bed *user* may exercise *permission* on (see :func:`shelter_get`).
 
-    ``None`` organization reach-scopes by the user's grants alone — header-free
-    reads/writes where the org comes from the operation or the row (delta 3,
-    ADR 0001 §5.2/§7.7).
+    Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
+    org is needed (header-free, ADR 0001 §5.2/§7.7).
     """
     from shelters.models import Bed
 
@@ -201,7 +187,6 @@ def bed_get(
         bed_queryset(
             Bed.objects.select_related("shelter"),
             user=user,
-            organization_id=organization_id,
             permission=permission,
         ),
         pk=bed_id,
@@ -211,19 +196,17 @@ def bed_get(
 def reservation_get(
     *,
     user: "User",
-    organization_id: str | None,
     reservation_id: int | str,
     permission: str,
 ) -> "Reservation":
     """Return the reservation *user* may exercise *permission* on.
 
-    ``None`` organization reach-scopes by the user's grants alone — header-free
-    reads/writes where the org comes from the operation or the row (delta 3,
-    ADR 0001 §5.2/§7.7).
+    Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
+    org is needed (header-free, ADR 0001 §5.2/§7.7).
 
     Raises:
-        ``ObjectDoesNotExist`` when no matching reservation exists in the
-        organization or the user lacks the required permission.
+        ``ObjectDoesNotExist`` when no matching reservation exists or the user
+        lacks the required permission.
     """
     from shelters.models import Reservation
 
@@ -231,7 +214,6 @@ def reservation_get(
         reservation_queryset(
             Reservation.objects.select_related("room__shelter", "bed__shelter", "created_by"),
             user=user,
-            organization_id=organization_id,
             permission=permission,
         ),
         pk=reservation_id,

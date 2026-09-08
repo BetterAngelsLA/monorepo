@@ -73,7 +73,6 @@ def create_presigned_uploads(
     shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
     return file_upload.create_presigned_uploads(
@@ -109,7 +108,6 @@ def resolve_uploads(
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
     created: list[ShelterPhoto] = []
@@ -134,7 +132,7 @@ def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
     The queryset is reach-scoped by the user's grants (header-free, ADR 0001
     §5.2) — only photos of shelters the user may CHANGE are eligible.
     """
-    org_shelters = shelter_queryset(user=user, organization_id=None, permission=Shelter.perms.CHANGE)
+    org_shelters = shelter_queryset(user=user, permission=Shelter.perms.CHANGE)
     photos = ShelterPhoto.objects.filter(
         shelter__in=org_shelters,
         pk__in=ids,
@@ -164,7 +162,7 @@ def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> Shel
 
     photo = get_by_pk_or_not_found(
         ShelterPhoto.objects.filter(
-            shelter__in=shelter_queryset(user=user, organization_id=None, permission=Shelter.perms.CHANGE)
+            shelter__in=shelter_queryset(user=user, permission=Shelter.perms.CHANGE)
         ),
         pk=photo_id,
     )

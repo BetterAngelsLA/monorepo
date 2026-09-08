@@ -289,9 +289,7 @@ class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return shelter_queryset(
-            queryset, user=user, organization_id=None, permission=models.Shelter.perms.VIEW
-        )
+        return shelter_queryset(queryset, user=user, permission=models.Shelter.perms.VIEW)
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -307,7 +305,7 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
     bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
-        bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=None, permission=models.Bed.perms.VIEW)
+        bed_qs = bed_queryset(bed_qs, user=cast(User, user), permission=models.Bed.perms.VIEW)
 
     return Prefetch("beds", queryset=bed_qs)
 
@@ -324,7 +322,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        return bed_queryset(queryset, user=user, organization_id=None, permission=models.Bed.perms.VIEW)
+        return bed_queryset(queryset, user=user, permission=models.Bed.perms.VIEW)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -356,7 +354,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        return room_queryset(queryset, user=user, organization_id=None, permission=models.Room.perms.VIEW)
+        return room_queryset(queryset, user=user, permission=models.Room.perms.VIEW)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -399,9 +397,7 @@ class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
         user = cast(User, get_current_user(info))
-        return reservation_queryset(
-            queryset, user=user, organization_id=None, permission=models.Reservation.perms.VIEW
-        )
+        return reservation_queryset(queryset, user=user, permission=models.Reservation.perms.VIEW)
 
     id: ID
     bed: Optional["BedType"]

@@ -66,7 +66,6 @@ class ShelterMetricsExportApi(APIView):
             shelter = shelter_get(
                 user=cast(User, request.user),
                 shelter_id=shelter_id,
-                organization_id=None,
                 permission=Shelter.perms.VIEW,
             )
         except ObjectDoesNotExist as error:

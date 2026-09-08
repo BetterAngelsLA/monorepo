@@ -111,10 +111,10 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed = bed_get(user=user, organization_id=None, bed_id=bed_id, permission=Bed.perms.VIEW)
+        bed = bed_get(user=user, bed_id=bed_id, permission=Bed.perms.VIEW)
         organization_id = bed.shelter.organization_id
     elif room_id:
-        room = room_get(user=user, organization_id=None, room_id=room_id, permission=Room.perms.VIEW)
+        room = room_get(user=user, room_id=room_id, permission=Room.perms.VIEW)
         organization_id = room.shelter.organization_id
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
@@ -151,7 +151,6 @@ def reservation_update(
     try:
         reservation = reservation_get(
             user=user,
-            organization_id=None,
             reservation_id=reservation_id,
             permission=Reservation.perms.CHANGE,
         )
@@ -197,7 +196,7 @@ def reservation_delete(*, user: "User", reservation_ids: list[int]) -> list[int]
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching reservations exist.
     """
-    qs = reservation_queryset(user=user, organization_id=None, permission=Reservation.perms.DELETE)
+    qs = reservation_queryset(user=user, permission=Reservation.perms.DELETE)
     qs = qs.filter(pk__in=reservation_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:

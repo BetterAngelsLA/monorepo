@@ -117,7 +117,6 @@ class Query:
         shelter = shelter_get(
             user=user,
             shelter_id=shelter_id,
-            organization_id=None,
             permission=Shelter.perms.VIEW,
         )
 
