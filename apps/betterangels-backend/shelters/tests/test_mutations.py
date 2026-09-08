@@ -468,6 +468,42 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             messages[0]["message"],
         )
 
+    def test_create_shelter_missing_org_returns_field_validation(self) -> None:
+        """create_shelter without an organization_id is an input error (VALIDATION),
+        not an authorization failure.
+        """
+        mutation = """
+            mutation ($data: CreateShelterInput!) {
+                createShelter(data: $data) {
+                    ... on ShelterType {
+                        id
+                    }
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+        """
+
+        variables: dict[str, Any] = {
+            "data": {
+                "name": "No Org Shelter",
+                "description": "Should be an input validation error",
+            }
+        }
+
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["createShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "organizationId")
+
     def test_update_shelter_scalar_fields(self) -> None:
         """Updating scalar fields persists the new values."""
         shelter = Shelter.objects.create(

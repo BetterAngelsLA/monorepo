@@ -38,8 +38,11 @@ class ShelterCreateServiceTestCase(ShelterServiceTestCase):
     def test_create_succeeds_with_add_permission(self) -> None:
         shelter = shelter_create(
             user=self.user,
-            organization_id=self.org_id,
-            data={"name": "New Shelter", "description": "Created with ADD"},
+            data={
+                "name": "New Shelter",
+                "description": "Created with ADD",
+                "organization_id": self.org_id,
+            },
         )
 
         self.assertTrue(Shelter.objects.filter(pk=shelter.pk, organization_id=self.org.pk).exists())
@@ -51,8 +54,11 @@ class ShelterCreateServiceTestCase(ShelterServiceTestCase):
         with self.assertRaises(PermissionDenied):
             shelter_create(
                 user=viewer,
-                organization_id=self.org_id,
-                data={"name": "Viewer Shelter", "description": "Must be rejected"},
+                data={
+                    "name": "Viewer Shelter",
+                    "description": "Must be rejected",
+                    "organization_id": self.org_id,
+                },
             )
 
         self.assertFalse(Shelter.objects.filter(name="Viewer Shelter").exists())

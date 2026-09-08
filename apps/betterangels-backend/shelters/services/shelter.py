@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from common.permissions.utils import require_can
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
@@ -128,20 +128,24 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
-    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
-    ``UNSET`` keys already removed).
+    The target organization rides in the payload (``data["organization_id"]``) —
+    like every other create, the anchor is part of the input and the row is
+    created under it (ADR 0001 §2.6).  Accepts a plain dict (e.g. from
+    ``strawberry.asdict(data)`` with ``UNSET`` keys already removed).
 
     Raises:
-        ``django.core.exceptions.PermissionDenied`` when no target organization is given
-        or the user may not add shelters there.
-        ``django.core.exceptions.ValidationError`` when the target organization does not
-        exist or on invalid data.
+        ``django.core.exceptions.ValidationError`` when no target organization is
+        given, it does not exist, or the data is invalid.
+        ``django.core.exceptions.PermissionDenied`` when the user may not add
+        shelters in the target organization.
     """
+    data = dict(data)
+    organization_id = data.pop("organization_id", None)
     if not organization_id:
-        raise PermissionDenied("create_shelter requires an organization_id.")
+        raise ValidationError({"organization_id": "An organization is required to create a shelter."})
     if not Organization.objects.filter(pk=organization_id).exists():
         raise ValidationError(f"Organization with id {organization_id} not found.")
     require_can(user, Shelter.perms.ADD, org=organization_id)

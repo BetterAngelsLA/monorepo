@@ -133,8 +133,7 @@ class Mutation:
         """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        target_org_id = cast("str | None", clean.pop("organization_id", None))
-        return cast(ShelterType, shelter_create(user=user, organization_id=target_org_id, data=clean))
+        return cast(ShelterType, shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:

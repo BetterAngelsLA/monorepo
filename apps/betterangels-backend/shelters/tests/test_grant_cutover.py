@@ -106,6 +106,83 @@ class CreateShelterWithTargetOrgTestCase(ShelterTestCase, TestCase):
         self.assertEqual(messages[0]["kind"], "PERMISSION")
 
 
+class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
+    """Writes are identity-wide — reach at the row's org authorizes, not the
+    ambient org header (ADR 0001 §7.7).
+    """
+
+    UPDATE_MUTATION = """
+        mutation UpdateShelter($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                    name
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    DELETE_MUTATION = """
+        mutation DeleteShelter($id: ID!) {
+            deleteShelter(id: $id) {
+                ... on DeletedObjectType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        # self.operator holds SHELTER_OPERATOR at self.org and the header defaults
+        # to self.org. Grant the same role at org_b so the operator can reach
+        # org_b's rows too.
+        self.org_b = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
+        self.org_b.users.add(self.operator)
+        OrgRoleManager(self.org_b).add_roles(self.operator, SHELTER_OPERATOR)
+        self.shelter_b = shelter_recipe.make(organization=self.org_b)
+        self.graphql_client.force_login(self.operator)
+
+    def test_update_shelter_in_another_org_does_not_need_its_header(self) -> None:
+        """Reach at org_b lets the operator update org_b's shelter while the
+        ambient header still names org_a (self.org).
+        """
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter_b.pk), "description": "cross-org update"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateShelter"]["id"], str(self.shelter_b.pk))
+        self.shelter_b.refresh_from_db()
+        self.assertEqual(self.shelter_b.description, "cross-org update")
+
+    def test_delete_shelter_in_another_org_does_not_need_its_header(self) -> None:
+        """Reach at org_b lets the operator delete org_b's shelter while the
+        ambient header still names org_a.
+        """
+        response = self.execute_graphql(
+            self.DELETE_MUTATION,
+            {"id": str(self.shelter_b.pk)},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteShelter"]["id"], str(self.shelter_b.pk))
+        self.assertFalse(Shelter.objects.filter(pk=self.shelter_b.pk).exists())
+
+
 class PermissionThreadedMutationsTestCase(TestCase):
     """Mutations thread the exact permission (e.g. DELETE for deletes)."""
 

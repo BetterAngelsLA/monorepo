@@ -427,12 +427,15 @@ holding a role at orgs A and B may edit org A's rows while the UI says they are 
 as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
 stated product fact so nobody later "fixes" it by confining writes to the header.
 
-The org-scoped **entity services** (the shelter cutover is the first) are deliberately
-stricter and act on the *active org*: they take the header org (or an explicit target)
-and scope the create/update/delete row load to it, so an operator acts on the org the
-UI says they are acting in and an unauthorized row reads as a 404. This is a
-fail-closed layer above the predicates — `can`/`can_obj` stay union checks for callers
-that use them directly — not a relaxation of the union rule.
+The org-scoped **entity services** that still run on the header act on the *active
+org*: they take the header org and scope the create/update/delete row load to it, so an
+operator acts on the org the UI says they are acting in and an unauthorized row reads
+as a 404 — a fail-closed layer above the predicates. The **shelter domain** is cut over
+to the end state (deltas 3–4, PR #2440): its entity services are reach-scoped union
+checks that derive the org from the operation itself — the payload on the root create,
+the parent/row on child creates, updates, deletes and clones — so no header and no
+active-org scoping remains there (§7 item 7). `can`/`can_obj` are union checks for
+callers that use them directly.
 
 **Contextual reads (nested platform-shared records).** A client (platform-shared)
 shown *because its parent is visible* — e.g. a client on a reservation you can see — is
