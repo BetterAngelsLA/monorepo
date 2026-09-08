@@ -87,13 +87,12 @@ def _validate_reservable(
 
 
 @transaction.atomic
-def reservation_create(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Reservation:
+def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Create a new Reservation associated with a Room and/or Bed.
 
-    Validates that *user* has view authority on the room/bed's shelter. The
-    org is derived from ``bed_id`` or ``room_id`` (reach-scoped, header-free,
-    ADR 0001 §5.2); an explicit *organization_id* optionally confines the
-    lookups to one org.
+    Validates that *user* has view authority on the room/bed's shelter
+    (reach-scoped, header-free — ADR 0001 §5.2); the org is derived from
+    ``bed_id`` or ``room_id`` and create authority is checked there.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -112,11 +111,11 @@ def reservation_create(*, user: "User", organization_id: str | None = None, data
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed = bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
-        organization_id = organization_id or str(bed.shelter.organization_id)
+        bed = bed_get(user=user, organization_id=None, bed_id=bed_id, permission=Bed.perms.VIEW)
+        organization_id = bed.shelter.organization_id
     elif room_id:
-        room = room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
-        organization_id = organization_id or str(room.shelter.organization_id)
+        room = room_get(user=user, organization_id=None, room_id=room_id, permission=Room.perms.VIEW)
+        organization_id = room.shelter.organization_id
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
@@ -136,13 +135,13 @@ def reservation_create(*, user: "User", organization_id: str | None = None, data
 
 @transaction.atomic
 def reservation_update(
-    *, user: "User", organization_id: str | None = None, reservation_id: int | str, data: Dict[str, Any]
+    *, user: "User", reservation_id: int | str, data: Dict[str, Any]
 ) -> Reservation:
     """Update an existing reservation.
 
-    *organization_id* is optional — when omitted the load is reach-scoped by
-    the user's grants (header-free, ADR 0001 §5.2).  Only keys present in
-    *data* are applied; ``None`` scalar values are skipped.
+    Resolves *reservation* reach-scoped by the user's grants (header-free,
+    ADR 0001 §5.2).  Only keys present in *data* are applied; ``None`` scalar
+    values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.
@@ -152,7 +151,7 @@ def reservation_update(
     try:
         reservation = reservation_get(
             user=user,
-            organization_id=organization_id,
+            organization_id=None,
             reservation_id=reservation_id,
             permission=Reservation.perms.CHANGE,
         )
@@ -186,11 +185,10 @@ def reservation_update(
 
 
 @transaction.atomic
-def reservation_delete(*, user: "User", organization_id: str | None = None, reservation_ids: list[int]) -> list[int]:
+def reservation_delete(*, user: "User", reservation_ids: list[int]) -> list[int]:
     """Delete reservations and return the deleted IDs.
 
-    *organization_id* optionally confines the delete to one org; when omitted
-    the queryset is reach-scoped by the user's grants (header-free, ADR 0001
+    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
     §5.2).
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
@@ -199,7 +197,7 @@ def reservation_delete(*, user: "User", organization_id: str | None = None, rese
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching reservations exist.
     """
-    qs = reservation_queryset(user=user, organization_id=organization_id, permission=Reservation.perms.DELETE)
+    qs = reservation_queryset(user=user, organization_id=None, permission=Reservation.perms.DELETE)
     qs = qs.filter(pk__in=reservation_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:

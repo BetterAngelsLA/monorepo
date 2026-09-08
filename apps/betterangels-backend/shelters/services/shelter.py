@@ -163,13 +163,13 @@ def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str,
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``change_shelter`` permission, so the caller does not need to
-    pre-lookup the entity.  *organization_id* is optional — when omitted the
-    load is reach-scoped by the user's grants (header-free, ADR 0001 §5.2).
+    ``change_shelter`` permission — reach-scoped by the user's grants
+    (header-free, ADR 0001 §5.2) — so the caller does not need to pre-lookup
+    the entity.
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules and services use full-replacement semantics when provided.
@@ -189,7 +189,7 @@ def shelter_update(*, user: "User", organization_id: str | None = None, data: Di
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
+        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
 
@@ -223,12 +223,11 @@ def shelter_update(*, user: "User", organization_id: str | None = None, data: Di
 
 
 @transaction.atomic
-def shelter_delete(*, user: "User", organization_id: str | None = None, shelter_id: str | int) -> Shelter:
+def shelter_delete(*, user: "User", shelter_id: str | int) -> Shelter:
     """Delete a shelter.
 
     Resolves the shelter via :func:`~shelters.selectors.shelter_get` with
-    ``delete_shelter`` permission.  *organization_id* optionally confines the
-    load to one org; when omitted it is reach-scoped by the user's grants
+    ``delete_shelter`` permission — reach-scoped by the user's grants
     (header-free, ADR 0001 §5.2) — an unauthorized shelter is
     indistinguishable from a missing one (ADR 0001 §2.6).
 
@@ -242,7 +241,7 @@ def shelter_delete(*, user: "User", organization_id: str | None = None, shelter_
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
+        organization_id=None,
         permission=Shelter.perms.DELETE,
     )
     deleted_pk = shelter.pk

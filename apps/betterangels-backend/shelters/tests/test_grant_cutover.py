@@ -146,4 +146,4 @@ class PermissionThreadedMutationsTestCase(TestCase):
 
         # ...but the delete path threads DELETE and fails closed.
         with self.assertRaises(ObjectDoesNotExist):
-            room_delete(user=self.user, organization_id=str(self.org.pk), room_ids=[self.room.pk])
+            room_delete(user=self.user, room_ids=[self.room.pk])

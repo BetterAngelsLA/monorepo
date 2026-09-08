@@ -68,7 +68,6 @@ class ShelterUpdateServiceTestCase(ShelterServiceTestCase):
     def test_update_succeeds_with_change_permission(self) -> None:
         updated = shelter_update(
             user=self.user,
-            organization_id=self.org_id,
             data={"id": self.shelter.pk, "name": "Renamed"},
         )
 
@@ -82,7 +81,6 @@ class ShelterUpdateServiceTestCase(ShelterServiceTestCase):
         with self.assertRaises(ObjectDoesNotExist):
             shelter_update(
                 user=viewer,
-                organization_id=self.org_id,
                 data={"id": self.shelter.pk, "name": "Viewer Rename"},
             )
 
@@ -98,7 +96,7 @@ class ShelterDeleteServiceTestCase(ShelterServiceTestCase):
         self.shelter = Shelter.objects.create(name="Doomed Shelter", organization=self.org)
 
     def test_delete_succeeds_with_delete_permission(self) -> None:
-        deleted = shelter_delete(user=self.user, organization_id=self.org_id, shelter_id=str(self.shelter.pk))
+        deleted = shelter_delete(user=self.user, shelter_id=str(self.shelter.pk))
 
         self.assertEqual(deleted.pk, self.shelter.pk)
         self.assertFalse(Shelter.objects.filter(pk=self.shelter.pk).exists())
@@ -107,7 +105,7 @@ class ShelterDeleteServiceTestCase(ShelterServiceTestCase):
         viewer = self._grant_view_only()
 
         with self.assertRaises(ObjectDoesNotExist):
-            shelter_delete(user=viewer, organization_id=self.org_id, shelter_id=str(self.shelter.pk))
+            shelter_delete(user=viewer, shelter_id=str(self.shelter.pk))
 
         self.assertTrue(Shelter.objects.filter(pk=self.shelter.pk).exists())
 
@@ -121,14 +119,12 @@ class ShelterUpdateOrganizationImmutableTestCase(TestCase):
         self.user = User.objects.create_user(username="testuser", password="pw")
         self.org.users.add(self.user)
         self.shelter = Shelter.objects.create(name="Test Shelter", organization=self.org)
-        self.org_id = str(self.org.pk)
         OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
     def test_organization_is_not_changed(self) -> None:
         """Passing organization in the update payload must not change the shelter's org."""
         shelter_update(
             user=self.user,
-            organization_id=self.org_id,
             data={"id": self.shelter.pk, "organization": self.other_org.pk, "name": "Renamed"},
         )
         self.shelter.refresh_from_db()
@@ -139,7 +135,6 @@ class ShelterUpdateOrganizationImmutableTestCase(TestCase):
         """When organization is not in the payload, other fields update normally."""
         shelter_update(
             user=self.user,
-            organization_id=self.org_id,
             data={"id": self.shelter.pk, "name": "New Name"},
         )
         self.shelter.refresh_from_db()

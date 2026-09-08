@@ -61,19 +61,19 @@ class ShelterPhotoResolveItem:
 def create_presigned_uploads(
     *,
     user: User,
-    organization_id: str | None = None,
     shelter_id: int | str,
     uploads: Iterable[UploadRequest],
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1).
 
-    *organization_id* is optional — the parent shelter is resolved reach-scoped
-    (header-free writes, ADR 0001 §5.2).
+    The parent shelter is resolved reach-scoped by the user's grants
+    (header-free writes, ADR 0001 §5.2) — holding ``change_shelter`` at the
+    shelter's org is the whole gate.
     """
     shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
+        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
     return file_upload.create_presigned_uploads(
@@ -86,13 +86,12 @@ def create_presigned_uploads(
 def resolve_uploads(
     *,
     user: User,
-    organization_id: str | None = None,
     shelter_id: int | str,
     photos: Iterable[ShelterPhotoResolveItem],
 ) -> list[ShelterPhoto]:
     """Validate tokens + S3 → create ShelterPhoto rows (Phase 3).
 
-    *organization_id* is optional — the parent shelter is resolved reach-scoped
+    The parent shelter is resolved reach-scoped by the user's grants
     (header-free writes, ADR 0001 §5.2).  Accepts typed
     ``ShelterPhotoResolveItem`` instances so that ``photo_type`` arrives as a
     ``ShelterPhotoTypeChoices`` enum member — no string parsing, no
@@ -110,7 +109,7 @@ def resolve_uploads(
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
+        organization_id=None,
         permission=Shelter.perms.CHANGE,
     )
     created: list[ShelterPhoto] = []
@@ -129,14 +128,13 @@ def resolve_uploads(
 
 
 @transaction.atomic
-def delete_shelter_photos(*, user: "User", organization_id: str | None = None, ids: list[int]) -> list[int]:
+def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
     """Delete shelter photos.
 
-    *organization_id* optionally confines the delete to one org; when omitted
-    the queryset is reach-scoped by the user's grants (header-free, ADR 0001
-    §5.2).
+    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
+    §5.2) — only photos of shelters the user may CHANGE are eligible.
     """
-    org_shelters = shelter_queryset(user=user, organization_id=organization_id, permission=Shelter.perms.CHANGE)
+    org_shelters = shelter_queryset(user=user, organization_id=None, permission=Shelter.perms.CHANGE)
     photos = ShelterPhoto.objects.filter(
         shelter__in=org_shelters,
         pk__in=ids,
@@ -152,14 +150,11 @@ def delete_shelter_photos(*, user: "User", organization_id: str | None = None, i
     return deleted_ids
 
 
-def update_shelter_photo(
-    *, user: "User", organization_id: str | None = None, data: UpdateShelterPhotoInput
-) -> ShelterPhoto:
+def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> ShelterPhoto:
     """Update a shelter photo's type.
 
-    Validates access via the photo's shelter.  *organization_id* is optional —
-    when omitted the load is reach-scoped by the user's grants (header-free,
-    ADR 0001 §5.2).
+    Validates access via the photo's shelter, reach-scoped by the user's
+    grants (header-free, ADR 0001 §5.2).
 
     Raises:
         ``ObjectDoesNotExist`` when the photo is not found or the user does not
@@ -169,7 +164,7 @@ def update_shelter_photo(
 
     photo = get_by_pk_or_not_found(
         ShelterPhoto.objects.filter(
-            shelter__in=shelter_queryset(user=user, organization_id=organization_id, permission=Shelter.perms.CHANGE)
+            shelter__in=shelter_queryset(user=user, organization_id=None, permission=Shelter.perms.CHANGE)
         ),
         pk=photo_id,
     )

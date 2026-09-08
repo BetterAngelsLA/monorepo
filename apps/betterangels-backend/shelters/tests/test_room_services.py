@@ -39,7 +39,6 @@ class RoomServiceTestCase(TestCase):
         self.user = baker.make(User)
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
-        self.org_id = str(self.org.pk)
         OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
 
@@ -49,7 +48,6 @@ class RoomCreateTestCase(RoomServiceTestCase):
 
         room = room_create(
             user=self.user,
-            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "amenities": "WiFi, AC",
@@ -83,7 +81,6 @@ class RoomCreateTestCase(RoomServiceTestCase):
 
         room = room_create(
             user=self.user,
-            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "name": "Room-102",
@@ -105,7 +102,6 @@ class RoomCreateTestCase(RoomServiceTestCase):
         with self.assertRaises(ValidationError):
             room_create(
                 user=self.user,
-                organization_id=self.org_id,
                 data={"shelter_id": self.shelter.pk, "name": "Room-101"},
             )
 
@@ -117,7 +113,6 @@ class RoomCreateTestCase(RoomServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             room_create(
                 user=self.user,
-                organization_id=self.org_id,
                 data={
                     "shelter_id": shelter.pk,
                     "name": "Room-103",
@@ -141,7 +136,6 @@ class RoomUpdateTestCase(RoomServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = room_update(
             user=self.user,
-            organization_id=self.org_id,
             room_id=self.room.pk,
             data={
                 "name": "Room-101 Updated",
@@ -162,7 +156,6 @@ class RoomUpdateTestCase(RoomServiceTestCase):
     def test_none_scalar_values_are_skipped(self) -> None:
         room_update(
             user=self.user,
-            organization_id=self.org_id,
             room_id=self.room.pk,
             data={"name": "Renamed", "medical_respite": None},
         )
@@ -177,7 +170,6 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
         room_update(
             user=self.user,
-            organization_id=self.org_id,
             room_id=self.room.pk,
             data={"demographics": [DemographicChoices.SINGLE_MEN]},
         )
@@ -192,7 +184,6 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
         room_update(
             user=self.user,
-            organization_id=self.org_id,
             room_id=self.room.pk,
             data={"demographics": []},
         )
@@ -208,7 +199,7 @@ class RoomDeleteTestCase(RoomServiceTestCase):
         bed_in_room = baker.make(Bed, shelter=self.shelter, room=room_to_delete, name="Bed 1")
         other_bed = baker.make(Bed, shelter=self.shelter, room=other_room, name="Bed 2")
 
-        deleted = room_delete(user=self.user, organization_id=self.org_id, room_ids=[room_to_delete.pk])
+        deleted = room_delete(user=self.user, room_ids=[room_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], room_to_delete.pk)
@@ -226,7 +217,6 @@ class RoomDeleteTestCase(RoomServiceTestCase):
 
         deleted = room_delete(
             user=self.user,
-            organization_id=self.org_id,
             room_ids=[room_to_delete_1.pk, room_to_delete_2.pk],
         )
 
@@ -237,7 +227,7 @@ class RoomDeleteTestCase(RoomServiceTestCase):
 
     def test_empty_list_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
-            room_delete(user=self.user, organization_id=self.org_id, room_ids=[])
+            room_delete(user=self.user, room_ids=[])
 
 
 class RoomCloneTestCase(RoomServiceTestCase):
@@ -269,7 +259,7 @@ class RoomCloneTestCase(RoomServiceTestCase):
         baker.make(Bed, shelter=self.shelter, room=source, name="Bed 1")
         baker.make(Bed, shelter=self.shelter, room=source, name="Bed 2")
 
-        clone = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
+        clone = room_clone(user=self.user, room_id=str(source.pk))
 
         self.assertNotEqual(clone.pk, source.pk)
         self.assertEqual(clone.name, "Room-101 (Copy)")
@@ -303,15 +293,15 @@ class RoomCloneTestCase(RoomServiceTestCase):
     def test_clone_same_room_twice_uses_incremented_name(self) -> None:
         source = baker.make(Room, shelter=self.shelter, name="Room-101")
 
-        first = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
-        second = room_clone(user=self.user, organization_id=self.org_id, room_id=str(source.pk))
+        first = room_clone(user=self.user, room_id=str(source.pk))
+        second = room_clone(user=self.user, room_id=str(source.pk))
 
         self.assertEqual(first.name, "Room-101 (Copy)")
         self.assertEqual(second.name, "Room-101 (Copy 2)")
 
     def test_room_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            room_clone(user=self.user, organization_id=self.org_id, room_id="999999")
+            room_clone(user=self.user, room_id="999999")
         self.assertIn(
             "Room matching ID 999999 could not be found.",
             str(ctx.exception),
@@ -329,6 +319,6 @@ class RoomCloneTestCase(RoomServiceTestCase):
         grant_create(user=viewer, role=role, scope_org=self.org)
 
         with self.assertRaises(PermissionDenied):
-            room_clone(user=viewer, organization_id=self.org_id, room_id=str(room.pk))
+            room_clone(user=viewer, room_id=str(room.pk))
 
         self.assertFalse(Room.objects.filter(name="View Only Room (Copy)").exists())

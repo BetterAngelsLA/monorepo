@@ -31,7 +31,6 @@ class BedServiceTestCase(TestCase):
         self.user = User.objects.create_user(username="bed-service-user", password="pw")
         self.org.users.add(self.user)
         self.shelter = shelter_recipe.make(organization=self.org)
-        self.org_id = str(self.org.pk)
         OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
 
@@ -39,7 +38,6 @@ class BedCreateTestCase(BedServiceTestCase):
     def test_creates_bed_with_scalar_fields(self) -> None:
         bed = bed_create(
             user=self.user,
-            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "name": "Bed 1",
@@ -59,7 +57,6 @@ class BedCreateTestCase(BedServiceTestCase):
 
         bed = bed_create(
             user=self.user,
-            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "room_id": room.pk,
@@ -76,7 +73,6 @@ class BedCreateTestCase(BedServiceTestCase):
 
         bed = bed_create(
             user=self.user,
-            organization_id=self.org_id,
             data={
                 "shelter_id": self.shelter.pk,
                 "demographics": [DemographicChoices.SINGLE_MEN],
@@ -102,7 +98,6 @@ class BedCreateTestCase(BedServiceTestCase):
         with self.assertRaises(ValidationError) as ctx:
             bed_create(
                 user=self.user,
-                organization_id=self.org_id,
                 data={
                     "shelter_id": shelter.pk,
                     "demographics": [DemographicChoices.FAMILIES],
@@ -124,7 +119,6 @@ class BedUpdateTestCase(BedServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = bed_update(
             user=self.user,
-            organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={
                 "maintenance_flag": True,
@@ -141,7 +135,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, organization_id=self.org_id, bed_id=self.bed.pk, data={"name": "Renamed"})
+        bed_update(user=self.user, bed_id=self.bed.pk, data={"name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")
@@ -156,7 +150,6 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         bed_update(
             user=self.user,
-            organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={
                 "demographics": [DemographicChoices.SINGLE_MEN],
@@ -175,7 +168,6 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         bed_update(
             user=self.user,
-            organization_id=self.org_id,
             bed_id=self.bed.pk,
             data={"demographics": []},
         )
@@ -189,7 +181,7 @@ class BedDeleteTestCase(BedServiceTestCase):
         bed_to_delete = baker.make(Bed, shelter=self.shelter, name="Bed 1")
         other_bed = baker.make(Bed, shelter=self.shelter, name="Bed 2")
 
-        deleted = bed_delete(user=self.user, organization_id=self.org_id, bed_ids=[bed_to_delete.pk])
+        deleted = bed_delete(user=self.user, bed_ids=[bed_to_delete.pk])
 
         self.assertEqual(len(deleted), 1)
         self.assertEqual(deleted[0], bed_to_delete.pk)
@@ -203,7 +195,6 @@ class BedDeleteTestCase(BedServiceTestCase):
 
         deleted = bed_delete(
             user=self.user,
-            organization_id=self.org_id,
             bed_ids=[bed_to_delete_1.pk, bed_to_delete_2.pk],
         )
 
@@ -213,7 +204,7 @@ class BedDeleteTestCase(BedServiceTestCase):
 
     def test_empty_list_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
-            bed_delete(user=self.user, organization_id=self.org_id, bed_ids=[])
+            bed_delete(user=self.user, bed_ids=[])
 
 
 class BedCloneTestCase(BedServiceTestCase):
@@ -246,7 +237,7 @@ class BedCloneTestCase(BedServiceTestCase):
         source.accessibility.add(accessibility)
         source.pets.add(pet)
 
-        clone = bed_clone(user=self.user, organization_id=self.org_id, bed_id=str(source.pk))
+        clone = bed_clone(user=self.user, bed_id=str(source.pk))
 
         self.assertNotEqual(clone.pk, source.pk)
         self.assertEqual(clone.name, "Bed 1 (Copy)")
@@ -281,7 +272,7 @@ class BedCloneTestCase(BedServiceTestCase):
 
     def test_bed_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
-            bed_clone(user=self.user, organization_id=self.org_id, bed_id="999999")
+            bed_clone(user=self.user, bed_id="999999")
         self.assertIn(
             "Bed matching ID 999999 could not be found.",
             str(ctx.exception),
@@ -299,6 +290,6 @@ class BedCloneTestCase(BedServiceTestCase):
         grant_create(user=viewer, role=role, scope_org=self.org)
 
         with self.assertRaises(PermissionDenied):
-            bed_clone(user=viewer, organization_id=self.org_id, bed_id=str(bed.pk))
+            bed_clone(user=viewer, bed_id=str(bed.pk))
 
         self.assertFalse(Bed.objects.filter(name="View Only (Copy)").exists())
