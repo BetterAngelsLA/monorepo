@@ -483,13 +483,6 @@ export enum ConditionChoices {
   Wind = 'WIND'
 }
 
-export type ContactInfoType = {
-  __typename: 'ContactInfoType';
-  contactName: Scalars['String']['output'];
-  contactNumber: Scalars['PhoneNumber']['output'];
-  id: Scalars['ID']['output'];
-};
-
 export type CreateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   b7?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2208,7 +2201,7 @@ export type OperatorShelterType = {
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
+  additionalContacts: Array<ShelterContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
@@ -3281,6 +3274,25 @@ export enum ShelterChoices {
   TinyHomes = 'TINY_HOMES'
 }
 
+export type ShelterContactInfoInput = {
+  contactEmail?: InputMaybe<Scalars['String']['input']>;
+  contactName: Scalars['String']['input'];
+  contactNumber: Scalars['PhoneNumber']['input'];
+  contactTitle?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isClaimant?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ShelterContactInfoType = {
+  __typename: 'ShelterContactInfoType';
+  contactEmail?: Maybe<Scalars['String']['output']>;
+  contactName: Scalars['String']['output'];
+  contactNumber: Scalars['PhoneNumber']['output'];
+  contactTitle?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isClaimant: Scalars['Boolean']['output'];
+};
+
 export type ShelterFilter = {
   AND?: InputMaybe<ShelterFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3415,7 +3427,6 @@ export type ShelterType = {
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  additionalContacts: Array<ContactInfoType>;
   availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
@@ -3875,6 +3886,7 @@ export type UpdateShelterInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
+  additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;

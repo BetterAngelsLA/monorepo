@@ -5,15 +5,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
-from shelters.models import Service, ServiceCategory, Shelter
-from shelters.selectors import shelter_get
-from shelters.services.utils import (
-    _SHELTER_M2M_FIELDS,
-    _create_schedules,
-    _prepare_shelter_data,
-    _set_m2m_from_enums,
-)
 from strawberry import UNSET
+
+from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
+from shelters.selectors import shelter_get
+from shelters.services.utils import _SHELTER_M2M_FIELDS, _create_schedules, _prepare_shelter_data, _set_m2m_from_enums
 
 if TYPE_CHECKING:
     from accounts.models import User
@@ -127,6 +123,48 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
     return resolved
 
 
+def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
+    """Apply full-replacement semantics to a shelter's additional contacts.
+
+    Entries carrying an ``id`` update the matching existing row in place
+    (preserving its PK and pghistory audit trail); entries without an ``id``
+    are created; any existing row absent from the submitted payload is deleted.
+    """
+    existing = {c.pk: c for c in shelter.additional_contacts.all()}
+    keep_ids: set[int] = set()
+    new_objs: list[ContactInfo] = []
+
+    for entry in contacts:
+        if not isinstance(entry, dict):
+            raise ValidationError("Invalid additional contact.")
+
+        data = {
+            "contact_name": entry.get("contact_name"),
+            "contact_number": entry.get("contact_number"),
+            "contact_email": entry.get("contact_email"),
+            "contact_title": entry.get("contact_title"),
+            "is_claimant": entry.get("is_claimant") or False,
+        }
+
+        raw_id = entry.get("id")
+        if raw_id is not None:
+            try:
+                obj = existing.get(int(raw_id))
+            except (TypeError, ValueError) as exc:
+                raise ValidationError("Invalid additional contact id.") from exc
+            if obj is not None:
+                for key, value in data.items():
+                    setattr(obj, key, value)
+                obj.save()
+                keep_ids.add(obj.pk)
+                continue
+
+        new_objs.append(ContactInfo(shelter=shelter, **data))
+
+    shelter.additional_contacts.exclude(pk__in=keep_ids).delete()
+    ContactInfo.objects.bulk_create(new_objs)
+
+
 @transaction.atomic
 def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
@@ -194,6 +232,8 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
 
     has_schedules = "schedules" in data
     has_services = "services" in data
+    has_contacts = "additional_contacts" in data
+    additional_contacts = data.pop("additional_contacts", None)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
@@ -207,6 +247,9 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
 
     if has_services:
         _apply_services(shelter, raw_services)
+
+    if has_contacts:
+        _apply_additional_contacts(shelter, additional_contacts or [])
 
     if has_schedules:
         shelter.schedules.all().delete()

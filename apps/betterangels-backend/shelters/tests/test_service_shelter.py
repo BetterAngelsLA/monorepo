@@ -3,12 +3,12 @@ from accounts.role_manager import OrgRoleManager
 from accounts.services import grant_create
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth.models import Permission
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
 from shelters.groups import SHELTER_OPERATOR
-from shelters.models import Shelter
+from shelters.models import ContactInfo, Shelter
 from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
 
 
@@ -145,3 +145,68 @@ class ShelterUpdateOrganizationImmutableTestCase(TestCase):
         self.shelter.refresh_from_db()
         self.assertEqual(self.shelter.name, "New Name")
         self.assertEqual(self.shelter.organization, self.org)
+
+
+class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
+    """shelter_update applies full-replacement semantics to additional contacts."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter = Shelter.objects.create(name="Contacts Shelter", organization=self.org)
+
+    def _update(self, contacts: list[dict]) -> Shelter:
+        return shelter_update(
+            user=self.user,
+            organization_id=self.org_id,
+            data={"id": self.shelter.pk, "additional_contacts": contacts},
+        )
+
+    def test_creates_contacts_without_ids(self) -> None:
+        self._update(
+            [
+                {"contact_name": "Ada", "contact_number": "2125550100"},
+                {"contact_name": "Grace", "contact_number": "2125550101"},
+            ]
+        )
+
+        names = list(self.shelter.additional_contacts.order_by("contact_name").values_list("contact_name", flat=True))
+        self.assertEqual(names, ["Ada", "Grace"])
+
+    def test_updates_existing_contact_in_place(self) -> None:
+        existing = ContactInfo.objects.create(shelter=self.shelter, contact_name="Ada", contact_number="2125550100")
+
+        self._update(
+            [
+                {
+                    "id": existing.pk,
+                    "contact_name": "Ada Lovelace",
+                    "contact_number": "2125550100",
+                    "contact_title": "Director",
+                }
+            ]
+        )
+
+        existing.refresh_from_db()
+        self.assertEqual(existing.contact_name, "Ada Lovelace")
+        self.assertEqual(existing.contact_title, "Director")
+        self.assertEqual(self.shelter.additional_contacts.count(), 1)
+
+    def test_deletes_omitted_contacts(self) -> None:
+        keep = ContactInfo.objects.create(shelter=self.shelter, contact_name="Keep", contact_number="2125550100")
+        ContactInfo.objects.create(shelter=self.shelter, contact_name="Drop", contact_number="2125550101")
+
+        self._update([{"id": keep.pk, "contact_name": "Keep", "contact_number": "2125550100"}])
+
+        self.assertEqual(
+            list(self.shelter.additional_contacts.values_list("contact_name", flat=True)),
+            ["Keep"],
+        )
+
+    def test_sets_is_claimant(self) -> None:
+        self._update([{"contact_name": "Ada", "contact_number": "2125550100", "is_claimant": True}])
+
+        self.assertTrue(self.shelter.additional_contacts.get().is_claimant)
+
+    def test_rejects_invalid_contact_id(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._update([{"id": "not-an-int", "contact_name": "Ada", "contact_number": "2125550100"}])

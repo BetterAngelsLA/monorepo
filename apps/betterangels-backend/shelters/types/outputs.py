@@ -12,11 +12,13 @@ from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
 from common.permissions.utils import active_org
+from common.services.feature_flags import flag_is_active
 from django.db.models import Prefetch, QuerySet
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
 from shelters import models
+from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import (
     BedStatusChoices,
     BedTypeChoices,
@@ -35,7 +37,6 @@ from shelters.selectors.operator import reservation_queryset
 from shelters.types.lookups import (
     AccessibilityType,
     CityType,
-    ContactInfoType,
     DemographicType,
     EntryRequirementType,
     ExitPolicyType,
@@ -47,6 +48,7 @@ from shelters.types.lookups import (
     RoomStyleType,
     ScheduleType,
     ServiceType,
+    ShelterContactInfoType,
     ShelterProgramType,
     ShelterTypeType,
     SPAType,
@@ -139,7 +141,6 @@ class RoomCountType:
 class ShelterTypeMixin:
     id: ID
     accessibility: List[AccessibilityType]
-    additional_contacts: List[ContactInfoType]
     add_notes_sleeping_details: Optional[str]
     add_notes_shelter_details: Optional[str]
     bed_fees: Optional[str]
@@ -280,6 +281,12 @@ class ShelterType(ShelterTypeMixin):
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class OperatorShelterType(ShelterTypeMixin):
+    @strawberry_django.field
+    def additional_contacts(self, root: models.Shelter, info: Info) -> List[ShelterContactInfoType]:
+        if not flag_is_active(info, BA_ADMIN_ONLY_FIELDS_FLAG):
+            return []
+        return cast(List[ShelterContactInfoType], list(root.additional_contacts.all()))
+
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))

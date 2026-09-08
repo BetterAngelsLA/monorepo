@@ -63,6 +63,18 @@ class ServiceInput:
     display_name: Optional[str] = None
 
 
+@strawberry.input
+class ShelterContactInfoInput:
+    """A single additional contact for a shelter (mirrors the admin inline)."""
+
+    id: Maybe[ID] = UNSET
+    contact_name: str
+    contact_number: PhoneNumberScalar
+    contact_email: Optional[str] = None
+    contact_title: Optional[str] = None
+    is_claimant: Optional[bool] = None
+
+
 @strawberry_django.input(models.Shelter)
 class CreateShelterInput:
     # Required scalars — derived from model via auto
@@ -185,6 +197,7 @@ class UpdateShelterInput:
     location: Maybe[Optional[ShelterLocationInput]] = UNSET
     schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
+    additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
 
 
 @strawberry.input

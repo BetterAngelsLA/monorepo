@@ -4,27 +4,27 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import (
-    AuthorizedPresignedS3UploadsType,
-    BulkDeleteInput,
-    BulkDeleteResult,
-    DeletedObjectType,
-)
+from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
 from common.permissions.utils import IsAuthenticated, active_org, get_current_organization
+from common.services.feature_flags import flag_is_active
+from django.core.exceptions import PermissionDenied
 from django.db.models import Max
+from strawberry import ID, UNSET
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.pagination import OffsetPaginated
+
+from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import StatusChoices
 from shelters.models import Shelter
-from shelters.selectors import (
-    shelter_get,
-    shelter_metrics_window,
-    shelter_occupancy_metrics as shelter_occupancy_metrics_selector,
-)
+from shelters.selectors import shelter_get, shelter_metrics_window
+from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
-from shelters.services.shelter_photo import UploadRequest, ShelterPhotoResolveItem
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
 from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
+from shelters.services.shelter_photo import ShelterPhotoResolveItem, UploadRequest
 from shelters.types import (
     BedType,
     CityType,
@@ -49,10 +49,6 @@ from shelters.types import (
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
-from strawberry import ID
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginated
 
 
 @strawberry.type
@@ -140,6 +136,9 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
+        if data.additional_contacts is not UNSET and not flag_is_active(info, BA_ADMIN_ONLY_FIELDS_FLAG):
+            raise PermissionDenied("Editing additional contacts is not enabled.")
+
         user = cast(User, get_current_user(info))
         org_id = get_current_organization(info)
         clean = strawberry.asdict(data)

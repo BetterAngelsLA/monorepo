@@ -482,12 +482,6 @@ enum ConditionChoices {
   EMERGENCY_EVACUATION
 }
 
-type ContactInfoType {
-  id: ID!
-  contactName: String!
-  contactNumber: PhoneNumber!
-}
-
 input CreateBedInput {
   shelterId: ID!
   roomId: ID = null
@@ -1765,7 +1759,6 @@ enum OperationMessageKind {
 type OperatorShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
@@ -1827,6 +1820,7 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  additionalContacts: [ShelterContactInfoType!]!
 }
 
 type OperatorShelterTypeOffsetPaginated {
@@ -2533,6 +2527,24 @@ enum ShelterChoices {
   OTHER
 }
 
+input ShelterContactInfoInput {
+  id: ID
+  contactName: String!
+  contactNumber: PhoneNumber!
+  contactEmail: String = null
+  contactTitle: String = null
+  isClaimant: Boolean = null
+}
+
+type ShelterContactInfoType {
+  id: ID!
+  contactName: String!
+  contactNumber: PhoneNumber!
+  contactEmail: String
+  contactTitle: String
+  isClaimant: Boolean!
+}
+
 input ShelterFilter {
   isPrivate: Boolean
   AND: ShelterFilter
@@ -2658,7 +2670,6 @@ input ShelterPropertyInput {
 type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
-  additionalContacts: [ContactInfoType!]!
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
   bedFees: String
@@ -3157,6 +3168,7 @@ input UpdateShelterInput {
   location: ShelterLocationInput
   schedules: [ScheduleInput!]
   services: [ServiceInput!]
+  additionalContacts: [ShelterContactInfoInput!]
 }
 
 union UpdateShelterPayload = ShelterType | OperationInfo
