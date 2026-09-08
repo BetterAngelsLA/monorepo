@@ -61,8 +61,6 @@ class ShelterMetricsExportApi(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            # Operator read: reach-scoped by id — no org header (delta 3, ADR
-            # 0001 §5.2/§7.7).  The header may still arrive but never confines.
             shelter = shelter_get(
                 user=cast(User, request.user),
                 shelter_id=shelter_id,

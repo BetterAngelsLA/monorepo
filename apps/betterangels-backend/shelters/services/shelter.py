@@ -167,9 +167,8 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``change_shelter`` permission — reach-scoped by the user's grants
-    (header-free, ADR 0001 §5.2) — so the caller does not need to pre-lookup
-    the entity.
+    ``change_shelter`` permission — reach-scoped by the user's grants — so
+    the caller does not need to pre-lookup the entity.
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules and services use full-replacement semantics when provided.
@@ -226,9 +225,9 @@ def shelter_delete(*, user: "User", shelter_id: str | int) -> Shelter:
     """Delete a shelter.
 
     Resolves the shelter via :func:`~shelters.selectors.shelter_get` with
-    ``delete_shelter`` permission — reach-scoped by the user's grants
-    (header-free, ADR 0001 §5.2) — an unauthorized shelter is
-    indistinguishable from a missing one (ADR 0001 §2.6).
+    ``delete_shelter`` permission — reach-scoped by the user's grants — an
+    unauthorized shelter is indistinguishable from a missing one (ADR 0001
+    §2.6).
 
     Deleting cascades through the model FKs to the shelter's rooms, beds,
     photos, schedules and contacts (DB default).

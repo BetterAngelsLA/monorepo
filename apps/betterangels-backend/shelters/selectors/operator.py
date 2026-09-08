@@ -49,10 +49,9 @@ def shelter_queryset(
     """The shelters *user* may exercise *permission* on.
 
     Reach-scoped wrapper around :func:`common.permissions.selectors.visible` —
-    the org filter comes entirely from the user's Grants.  The org *view* on a
-    list read is the query's own ``filters`` variable (header-free, ADR 0001
-    §5.2/§7.7).  Falls back to ``Shelter.objects.all()`` when *queryset* is
-    omitted.
+    the org filter comes entirely from the user's Grants, and the org *view*
+    on a list read is the query's own ``filters`` variable.  Falls back to
+    ``Shelter.objects.all()`` when *queryset* is omitted.
     """
     from shelters.models import Shelter
 
@@ -70,9 +69,9 @@ def room_queryset(
     """The rooms *user* may exercise *permission* on.
 
     Reach-scoped wrapper around :func:`common.permissions.selectors.visible`
-    (rooms reach their org through ``shelter``).  The org *view* on a list read
-    is the query's own ``filters`` variable (header-free, ADR 0001 §5.2/§7.7).
-    Falls back to ``Room.objects.all()`` when *queryset* is omitted.
+    (rooms reach their org through ``shelter``); the org *view* on a list read
+    is the query's own ``filters`` variable.  Falls back to
+    ``Room.objects.all()`` when *queryset* is omitted.
     """
     from shelters.models import Room
 
@@ -90,9 +89,9 @@ def bed_queryset(
     """The beds *user* may exercise *permission* on.
 
     Reach-scoped wrapper around :func:`common.permissions.selectors.visible`
-    (beds reach their org through ``shelter``).  The org *view* on a list read
-    is the query's own ``filters`` variable (header-free, ADR 0001 §5.2/§7.7).
-    Falls back to ``Bed.objects.all()`` when *queryset* is omitted.
+    (beds reach their org through ``shelter``); the org *view* on a list read
+    is the query's own ``filters`` variable.  Falls back to ``Bed.objects.all()``
+    when *queryset* is omitted.
     """
     from shelters.models import Bed
 
@@ -112,9 +111,8 @@ def reservation_queryset(
     Reach-scoped wrapper around :func:`common.permissions.selectors.visible` —
     a reservation reaches its org through either ``bed`` or ``room`` (both org
     paths derive from ``org_via``, so the filter cannot drift).  The org *view*
-    on a list read is the query's own ``filters`` variable (header-free, ADR
-    0001 §5.2/§7.7).  Falls back to ``Reservation.objects.all()`` when
-    *queryset* is omitted.
+    on a list read is the query's own ``filters`` variable.  Falls back to
+    ``Reservation.objects.all()`` when *queryset* is omitted.
     """
     from shelters.models import Reservation
 
@@ -134,10 +132,9 @@ def shelter_get(
 ) -> "Shelter":
     """Return the shelter on which *user* may exercise *permission*.
 
-    Reach-scoped by *user*'s grants (header-free, ADR 0001 §5.2/§7.7).  Rows
-    carry globally-unique ids, so no org is needed to disambiguate the lookup;
-    an unauthorized row is indistinguishable from a missing one (single query,
-    ADR 0001 §2.6).
+    Reach-scoped by *user*'s grants.  Rows carry globally-unique ids, so no
+    org is needed to disambiguate the lookup; an unauthorized row is
+    indistinguishable from a missing one (single query, ADR 0001 §2.6).
     """
     from shelters.models import Shelter
 
@@ -156,7 +153,7 @@ def room_get(
     """Return the room *user* may exercise *permission* on (see :func:`shelter_get`).
 
     Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
-    org is needed (header-free, ADR 0001 §5.2/§7.7).
+    org is needed to disambiguate the lookup.
     """
     from shelters.models import Room
 
@@ -179,7 +176,7 @@ def bed_get(
     """Return the bed *user* may exercise *permission* on (see :func:`shelter_get`).
 
     Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
-    org is needed (header-free, ADR 0001 §5.2/§7.7).
+    org is needed to disambiguate the lookup.
     """
     from shelters.models import Bed
 
@@ -202,7 +199,7 @@ def reservation_get(
     """Return the reservation *user* may exercise *permission* on.
 
     Reach-scoped by *user*'s grants — rows carry globally-unique ids, so no
-    org is needed (header-free, ADR 0001 §5.2/§7.7).
+    org is needed to disambiguate the lookup.
 
     Raises:
         ``ObjectDoesNotExist`` when no matching reservation exists or the user

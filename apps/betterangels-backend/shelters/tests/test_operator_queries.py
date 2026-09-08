@@ -113,10 +113,9 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_operator_shelters_multi_org_user_reach_spans_orgs_without_a_header(self) -> None:
-        """A multi-org user with VIEW grants sees both orgs without a header.
+        """A multi-org user with VIEW grants sees both orgs' shelters.
 
-        The org scope comes from the query's ``filters.organizations`` variable
-        (the org view) — the header no longer confines operator reads.
+        The org view comes from the query's ``filters.organizations`` variable.
         """
         from accounts.role_manager import OrgRoleManager
         from notes.groups import CASEWORKER
@@ -150,11 +149,10 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
 
     def test_operator_shelters_explicit_filter_wins_over_a_stale_header(self) -> None:
-        """A header org never overrides the query's explicit org filter.
+        """``filters.organizations`` narrows a reach-scoped read to one org.
 
-        delta 3: the org in the header is a transition default only; when the
-        client filters org_2 but the header still names org_1, the filter wins
-        (for an org the user can reach).
+        The user can reach both orgs, but the query variable is the org view:
+        filtering org_2 returns only org_2's shelter.
         """
         from accounts.role_manager import OrgRoleManager
         from notes.groups import CASEWORKER

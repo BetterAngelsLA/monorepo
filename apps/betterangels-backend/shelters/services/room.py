@@ -18,9 +18,9 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``view_shelter`` permission (reach-scoped, header-free — ADR 0001 §5.2),
-    then checks create authority with ``can(user, Room.perms.ADD, org)``
-    where the org is the parent shelter's (ADR 0001 §2.6).
+    ``view_shelter`` permission (reach-scoped), then checks create authority
+    with ``can(user, Room.perms.ADD, org)`` where the org is the parent
+    shelter's (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
@@ -57,8 +57,7 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
     """Update an existing room, including M2M relationships when provided.
 
     Resolves *room* via :func:`~shelters.selectors.room_get` with
-    ``change_room`` permission — reach-scoped by the user's grants
-    (header-free, ADR 0001 §5.2).
+    ``change_room`` permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -126,8 +125,7 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
     """Delete rooms and return the deleted IDs.
 
-    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
-    §5.2).
+    The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -148,8 +146,8 @@ def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
 def room_clone(*, user: "User", room_id: str) -> Room:
     """Clone an existing room, including all M2M relationships.
 
-    The source is resolved reach-scoped (header-free, ADR 0001 §5.2) and the
-    create org is taken from the source shelter.  Beds are not copied.
+    The source is resolved reach-scoped and the create org is taken from the
+    source shelter.  Beds are not copied.
     Cloning creates a new room, so it follows the create convention (ADR 0001
     §2.6): the source is resolved with view authority and create authority is
     checked with ``can(user, Room.perms.ADD, org)``.

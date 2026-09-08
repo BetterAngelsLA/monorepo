@@ -66,9 +66,8 @@ def create_presigned_uploads(
 ) -> AuthorizedPresignedUploadBatch:
     """Generate presigned S3 URLs and upload tokens for shelter photos (Phase 1).
 
-    The parent shelter is resolved reach-scoped by the user's grants
-    (header-free writes, ADR 0001 §5.2) — holding ``change_shelter`` at the
-    shelter's org is the whole gate.
+    The parent shelter is resolved reach-scoped by the user's grants —
+    holding ``change_shelter`` at the shelter's org is the whole gate.
     """
     shelter_get(
         user=user,
@@ -90,11 +89,10 @@ def resolve_uploads(
 ) -> list[ShelterPhoto]:
     """Validate tokens + S3 → create ShelterPhoto rows (Phase 3).
 
-    The parent shelter is resolved reach-scoped by the user's grants
-    (header-free writes, ADR 0001 §5.2).  Accepts typed
-    ``ShelterPhotoResolveItem`` instances so that ``photo_type`` arrives as a
-    ``ShelterPhotoTypeChoices`` enum member — no string parsing, no
-    ``KeyError`` possible.
+    The parent shelter is resolved reach-scoped by the user's grants.
+    Accepts typed ``ShelterPhotoResolveItem`` instances so that ``photo_type``
+    arrives as a ``ShelterPhotoTypeChoices`` enum member — no string parsing,
+    no ``KeyError`` possible.
     """
     photo_list = list(photos)
 
@@ -129,8 +127,8 @@ def resolve_uploads(
 def delete_shelter_photos(*, user: "User", ids: list[int]) -> list[int]:
     """Delete shelter photos.
 
-    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
-    §5.2) — only photos of shelters the user may CHANGE are eligible.
+    The queryset is reach-scoped by the user's grants — only photos of
+    shelters the user may CHANGE are eligible.
     """
     org_shelters = shelter_queryset(user=user, permission=Shelter.perms.CHANGE)
     photos = ShelterPhoto.objects.filter(
@@ -152,7 +150,7 @@ def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> Shel
     """Update a shelter photo's type.
 
     Validates access via the photo's shelter, reach-scoped by the user's
-    grants (header-free, ADR 0001 §5.2).
+    grants.
 
     Raises:
         ``ObjectDoesNotExist`` when the photo is not found or the user does not

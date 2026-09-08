@@ -17,9 +17,9 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
     """Create a new Bed associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``view_shelter`` permission (reach-scoped, header-free — ADR 0001 §5.2),
-    then checks create authority with ``can(user, Bed.perms.ADD, org)`` where
-    the org is the parent shelter's (ADR 0001 §2.6).
+    ``view_shelter`` permission (reach-scoped), then checks create authority
+    with ``can(user, Bed.perms.ADD, org)`` where the org is the parent
+    shelter's (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
@@ -59,8 +59,7 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
     """Update an existing bed, including M2M relationships when provided.
 
     Resolves *bed* via :func:`~shelters.selectors.bed_get` with
-    ``change_bed`` permission — reach-scoped by the user's grants
-    (header-free, ADR 0001 §5.2).
+    ``change_bed`` permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -101,8 +100,7 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
 def bed_delete(*, user: "User", bed_ids: list[int]) -> list[int]:
     """Delete beds and return the deleted IDs.
 
-    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
-    §5.2).
+    The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -123,8 +121,8 @@ def bed_delete(*, user: "User", bed_ids: list[int]) -> list[int]:
 def bed_clone(*, user: "User", bed_id: str) -> Bed:
     """Clone an existing bed, including all M2M relationships.
 
-    The source is resolved reach-scoped (header-free, ADR 0001 §5.2) and the
-    create org is taken from the source shelter.  Cloning creates a new bed,
+    The source is resolved reach-scoped and the create org is taken from the
+    source shelter.  Cloning creates a new bed,
     so it follows the create convention (ADR 0001 §2.6): the source is
     resolved with view authority and create authority is checked with
     ``can(user, Bed.perms.ADD, org)``.

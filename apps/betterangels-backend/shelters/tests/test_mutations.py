@@ -452,8 +452,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
-                # Org travels in the input (delta 4): org_2 is where the user
-                # holds no ADD grant, so can(user, ADD, org_2) denies.
+                # org_2 is where the user holds no ADD grant, so creation is denied.
                 "organizationId": str(self.org_2.pk),
             }
         }

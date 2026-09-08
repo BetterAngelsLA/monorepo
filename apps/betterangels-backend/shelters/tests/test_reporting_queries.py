@@ -93,12 +93,9 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_reach_in_other_org_beats_a_stale_header(self) -> None:
-        """A stale header org never hides metrics the user can reach.
+        """Occupancy metrics resolve by ``shelterId`` against grant reach.
 
-        delta 3: occupancy metrics are an operator read keyed by ``shelterId``
-        — the header is not the org scope, the user's grant reach is.  Here the
-        header still names org_1 (the suite default) but the user holds VIEW in
-        org_2 and asks for org_2's shelter: it resolves.
+        The user holds VIEW in org_2 and asks for org_2's shelter: it resolves.
         """
         self._add_shelter_view_permission(self.org_1)
         self._add_shelter_view_permission(self.org_2)

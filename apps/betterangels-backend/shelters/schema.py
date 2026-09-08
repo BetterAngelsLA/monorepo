@@ -112,8 +112,7 @@ class Query:
         end_date: Optional[date] = None,
     ) -> ShelterOccupancyMetricsType:
         user = cast(User, get_current_user(info))
-        # Operator read (delta 3): reach-scoped by ``shelter_id`` — the org
-        # header no longer confines it (ADR 0001 §5.2 / §7 item 7).
+
         shelter = shelter_get(
             user=user,
             shelter_id=shelter_id,

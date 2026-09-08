@@ -277,11 +277,8 @@ class ShelterType(ShelterTypeMixin):
         return shelter_list(queryset, user=user)
 
 
-# Operator reads are reach-scoped, not header-scoped: the org view comes from the
-# query's own ``filters`` GraphQL variable (org is part of the Apollo cache key) and
-# authorization from ``visible()`` reach — the ``X-Organization-ID`` header no longer
-# confines them (ADR 0001 §5.2 / §7 item 7). The ``*_queryset`` wrappers below are the
-# fail-closed gate; ``filters`` only narrows it.
+# Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
+# fail-closed gate; the query's own ``filters`` variable only narrows the view.
 
 
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)

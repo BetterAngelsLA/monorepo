@@ -38,8 +38,6 @@ function toCreateInput(
     website: formData.website || undefined,
     isPrivate: formData.isPrivate,
     status: formData.status,
-    // The target org travels with the operation: create_shelter no longer
-    // falls back to the X-Organization-ID header (ADR 0001, delta 4).
     organizationId,
   };
 }

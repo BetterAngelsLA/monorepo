@@ -91,8 +91,8 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Create a new Reservation associated with a Room and/or Bed.
 
     Validates that *user* has view authority on the room/bed's shelter
-    (reach-scoped, header-free — ADR 0001 §5.2); the org is derived from
-    ``bed_id`` or ``room_id`` and create authority is checked there.
+    (reach-scoped); the org is derived from ``bed_id`` or ``room_id`` and
+    create authority is checked there.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -139,9 +139,8 @@ def reservation_update(
 ) -> Reservation:
     """Update an existing reservation.
 
-    Resolves *reservation* reach-scoped by the user's grants (header-free,
-    ADR 0001 §5.2).  Only keys present in *data* are applied; ``None`` scalar
-    values are skipped.
+    Resolves *reservation* reach-scoped by the user's grants.  Only keys
+    present in *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.
@@ -187,8 +186,7 @@ def reservation_update(
 def reservation_delete(*, user: "User", reservation_ids: list[int]) -> list[int]:
     """Delete reservations and return the deleted IDs.
 
-    The queryset is reach-scoped by the user's grants (header-free, ADR 0001
-    §5.2).
+    The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
