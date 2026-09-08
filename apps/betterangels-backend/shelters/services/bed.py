@@ -13,12 +13,14 @@ if TYPE_CHECKING:
 
 
 @transaction.atomic
-def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Bed:
+def bed_create(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Bed:
     """Create a new Bed associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
     ``view_shelter`` permission, then checks create authority with
-    ``can(user, Bed.perms.ADD, org)`` (ADR 0001 §2.6).
+    ``can(user, Bed.perms.ADD, org)`` (ADR 0001 §2.6).  *organization_id* is
+    optional — when omitted the org is taken from the parent shelter (reach-
+    scoped load; header-free writes, ADR 0001 §5.2).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
@@ -34,6 +36,7 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
+    organization_id = organization_id or str(shelter.organization_id)
 
     require_can(user, Bed.perms.ADD, org=organization_id)
 
@@ -55,11 +58,12 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
 
 
 @transaction.atomic
-def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: Dict[str, Any]) -> Bed:
+def bed_update(*, user: "User", organization_id: str | None = None, bed_id: int | str, data: Dict[str, Any]) -> Bed:
     """Update an existing bed, including M2M relationships when provided.
 
     Resolves *bed* via :func:`~shelters.selectors.bed_get` with
-    ``change_bed`` permission.
+    ``change_bed`` permission.  *organization_id* is optional — when omitted
+    the load is reach-scoped by the user's grants (header-free, ADR 0001 §5.2).
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -98,10 +102,12 @@ def bed_update(*, user: "User", organization_id: str, bed_id: int | str, data: D
 
 
 @transaction.atomic
-def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> list[int]:
+def bed_delete(*, user: "User", organization_id: str | None = None, bed_ids: list[int]) -> list[int]:
     """Delete beds and return the deleted IDs.
 
-    Scopes to *organization_id* where *user* is a member.
+    *organization_id* optionally confines the delete to one org; when omitted
+    the queryset is reach-scoped by the user's grants (header-free, ADR 0001
+    §5.2).
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -119,12 +125,14 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
 
 
 @transaction.atomic
-def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
+def bed_clone(*, user: "User", organization_id: str | None = None, bed_id: str) -> Bed:
     """Clone an existing bed, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.  Cloning creates a
-    new bed, so it follows the create convention (ADR 0001 §2.6): the source
-    is resolved with view authority and create authority is checked with
+    *organization_id* optionally confines the source lookup to one org; when
+    omitted the source is reach-scoped and the create org is taken from the
+    source shelter (header-free, ADR 0001 §5.2).  Cloning creates a new bed,
+    so it follows the create convention (ADR 0001 §2.6): the source is
+    resolved with view authority and create authority is checked with
     ``can(user, Bed.perms.ADD, org)``.
 
     Raises:
@@ -140,6 +148,7 @@ def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
 
+    organization_id = organization_id or str(source.shelter.organization_id)
     require_can(user, Bed.perms.ADD, org=organization_id)
 
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

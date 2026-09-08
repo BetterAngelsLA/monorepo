@@ -87,11 +87,13 @@ def _validate_reservable(
 
 
 @transaction.atomic
-def reservation_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Reservation:
+def reservation_create(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Reservation:
     """Create a new Reservation associated with a Room and/or Bed.
 
-    Validates that *user* belongs to the shelter's organization. The shelter
-    is derived from ``bed_id`` or ``room_id``.
+    Validates that *user* has view authority on the room/bed's shelter. The
+    org is derived from ``bed_id`` or ``room_id`` (reach-scoped, header-free,
+    ADR 0001 §5.2); an explicit *organization_id* optionally confines the
+    lookups to one org.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -110,9 +112,11 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
+        bed = bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
+        organization_id = organization_id or str(bed.shelter.organization_id)
     elif room_id:
-        room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
+        room = room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
+        organization_id = organization_id or str(room.shelter.organization_id)
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
@@ -132,11 +136,12 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
 
 @transaction.atomic
 def reservation_update(
-    *, user: "User", organization_id: str, reservation_id: int | str, data: Dict[str, Any]
+    *, user: "User", organization_id: str | None = None, reservation_id: int | str, data: Dict[str, Any]
 ) -> Reservation:
     """Update an existing reservation.
 
-    Validates org access via the reservation's shelter. Only keys present in
+    *organization_id* is optional — when omitted the load is reach-scoped by
+    the user's grants (header-free, ADR 0001 §5.2).  Only keys present in
     *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
@@ -181,10 +186,12 @@ def reservation_update(
 
 
 @transaction.atomic
-def reservation_delete(*, user: "User", organization_id: str, reservation_ids: list[int]) -> list[int]:
+def reservation_delete(*, user: "User", organization_id: str | None = None, reservation_ids: list[int]) -> list[int]:
     """Delete reservations and return the deleted IDs.
 
-    Scopes to *organization_id* where *user* is a member.
+    *organization_id* optionally confines the delete to one org; when omitted
+    the queryset is reach-scoped by the user's grants (header-free, ADR 0001
+    §5.2).
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.

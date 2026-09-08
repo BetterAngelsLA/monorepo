@@ -160,10 +160,15 @@ def room_get(
     *,
     user: "User",
     room_id: int | str,
-    organization_id: str,
+    organization_id: str | None,
     permission: str,
 ) -> "Room":
-    """Return the room scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
+    """Return the room *user* may exercise *permission* on (see :func:`shelter_get`).
+
+    ``None`` organization reach-scopes by the user's grants alone — header-free
+    reads/writes where the org comes from the operation or the row (delta 3,
+    ADR 0001 §5.2/§7.7).
+    """
     from shelters.models import Room
 
     return get_by_pk_or_not_found(
@@ -181,10 +186,15 @@ def bed_get(
     *,
     user: "User",
     bed_id: int | str,
-    organization_id: str,
+    organization_id: str | None,
     permission: str,
 ) -> "Bed":
-    """Return the bed scoped to *organization_id* for *user* (see :func:`shelter_get`)."""
+    """Return the bed *user* may exercise *permission* on (see :func:`shelter_get`).
+
+    ``None`` organization reach-scopes by the user's grants alone — header-free
+    reads/writes where the org comes from the operation or the row (delta 3,
+    ADR 0001 §5.2/§7.7).
+    """
     from shelters.models import Bed
 
     return get_by_pk_or_not_found(
@@ -201,11 +211,15 @@ def bed_get(
 def reservation_get(
     *,
     user: "User",
-    organization_id: str,
+    organization_id: str | None,
     reservation_id: int | str,
     permission: str,
 ) -> "Reservation":
-    """Return the reservation scoped to *organization_id* for *user*.
+    """Return the reservation *user* may exercise *permission* on.
+
+    ``None`` organization reach-scopes by the user's grants alone — header-free
+    reads/writes where the org comes from the operation or the row (delta 3,
+    ADR 0001 §5.2/§7.7).
 
     Raises:
         ``ObjectDoesNotExist`` when no matching reservation exists in the

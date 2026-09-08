@@ -12,7 +12,7 @@ from accounts.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework import serializers
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -60,15 +60,13 @@ class ShelterMetricsExportApi(APIView):
         serializer = self.InputSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        organization_id = getattr(request, "organization_id", None)
-        if not organization_id:
-            raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
-
         try:
+            # Operator read: reach-scoped by id — no org header (delta 3, ADR
+            # 0001 §5.2/§7.7).  The header may still arrive but never confines.
             shelter = shelter_get(
                 user=cast(User, request.user),
                 shelter_id=shelter_id,
-                organization_id=organization_id,
+                organization_id=None,
                 permission=Shelter.perms.VIEW,
             )
         except ObjectDoesNotExist as error:

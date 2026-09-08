@@ -14,12 +14,14 @@ if TYPE_CHECKING:
 
 
 @transaction.atomic
-def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Room:
+def room_create(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
     ``view_shelter`` permission, then checks create authority with
-    ``can(user, Room.perms.ADD, org)`` (ADR 0001 §2.6).
+    ``can(user, Room.perms.ADD, org)`` (ADR 0001 §2.6).  *organization_id* is
+    optional — when omitted the org is taken from the parent shelter (reach-
+    scoped load; header-free writes, ADR 0001 §5.2).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
@@ -35,6 +37,7 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
+    organization_id = organization_id or str(shelter.organization_id)
 
     require_can(user, Room.perms.ADD, org=organization_id)
 
@@ -53,11 +56,12 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
 
 
 @transaction.atomic
-def room_update(*, user: "User", organization_id: str, room_id: int | str, data: Dict[str, Any]) -> Room:
+def room_update(*, user: "User", organization_id: str | None = None, room_id: int | str, data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
     Resolves *room* via :func:`~shelters.selectors.room_get` with
-    ``change_room`` permission.
+    ``change_room`` permission.  *organization_id* is optional — when omitted
+    the load is reach-scoped by the user's grants (header-free, ADR 0001 §5.2).
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -123,10 +127,12 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> list[int]:
+def room_delete(*, user: "User", organization_id: str | None = None, room_ids: list[int]) -> list[int]:
     """Delete rooms and return the deleted IDs.
 
-    Scopes to *organization_id* where *user* is a member.
+    *organization_id* optionally confines the delete to one org; when omitted
+    the queryset is reach-scoped by the user's grants (header-free, ADR 0001
+    §5.2).
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -144,10 +150,12 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
 
 
 @transaction.atomic
-def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
+def room_clone(*, user: "User", organization_id: str | None = None, room_id: str) -> Room:
     """Clone an existing room, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.  Beds are not copied.
+    *organization_id* optionally confines the source lookup to one org; when
+    omitted the source is reach-scoped and the create org is taken from the
+    source shelter (header-free, ADR 0001 §5.2).  Beds are not copied.
     Cloning creates a new room, so it follows the create convention (ADR 0001
     §2.6): the source is resolved with view authority and create authority is
     checked with ``can(user, Room.perms.ADD, org)``.
@@ -165,6 +173,7 @@ def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
 
+    organization_id = organization_id or str(source.shelter.organization_id)
     require_can(user, Room.perms.ADD, org=organization_id)
 
     return cast(

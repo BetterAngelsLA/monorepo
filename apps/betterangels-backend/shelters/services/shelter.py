@@ -141,7 +141,7 @@ def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str,
         exist or on invalid data.
     """
     if not organization_id:
-        raise PermissionDenied("X-Organization-ID or an organization_id is required.")
+        raise PermissionDenied("create_shelter requires an organization_id.")
     if not Organization.objects.filter(pk=organization_id).exists():
         raise ValidationError(f"Organization with id {organization_id} not found.")
     require_can(user, Shelter.perms.ADD, org=organization_id)
@@ -163,12 +163,13 @@ def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str,
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", organization_id: str | None = None, data: Dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
     ``change_shelter`` permission, so the caller does not need to
-    pre-lookup the entity.
+    pre-lookup the entity.  *organization_id* is optional — when omitted the
+    load is reach-scoped by the user's grants (header-free, ADR 0001 §5.2).
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules and services use full-replacement semantics when provided.
@@ -222,13 +223,14 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
 
 
 @transaction.atomic
-def shelter_delete(*, user: "User", organization_id: str, shelter_id: str | int) -> Shelter:
-    """Delete a shelter scoped to *organization_id* for *user*.
+def shelter_delete(*, user: "User", organization_id: str | None = None, shelter_id: str | int) -> Shelter:
+    """Delete a shelter.
 
     Resolves the shelter via :func:`~shelters.selectors.shelter_get` with
-    ``delete_shelter`` permission, so the row must sit in *organization_id*
-    AND *user* must hold ``Shelter.perms.DELETE`` there — an unauthorized
-    shelter is indistinguishable from a missing one (ADR 0001 §2.6).
+    ``delete_shelter`` permission.  *organization_id* optionally confines the
+    load to one org; when omitted it is reach-scoped by the user's grants
+    (header-free, ADR 0001 §5.2) — an unauthorized shelter is
+    indistinguishable from a missing one (ADR 0001 §2.6).
 
     Deleting cascades through the model FKs to the shelter's rooms, beds,
     photos, schedules and contacts (DB default).
