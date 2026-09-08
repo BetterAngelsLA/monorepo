@@ -50,76 +50,24 @@ class HasOrgPerm(HasPerm):
     Honors the parent ``any_perm`` flag:
     - ``any_perm=True`` (default): user must hold at least one of the given perms.
     - ``any_perm=False``: user must hold **all** of the given perms.
+
+    ``also_grant`` (transitional, ADR 0001 §5.3): when true, the check passes
+    if the user holds the permission via the legacy org-scoped path OR the
+    grant predicate (``common.permissions.selectors.can``).  Consumers set it
+    while their authority template (``ORG_ADMIN`` / ``ORG_SUPERUSER``) is still
+    legacy: the legacy arm preserves today's behavior, and the grant arm is
+    dormant until the §5.3 provisioning PR role-backs the template and
+    backfills Grants.  The directive is unchanged (still ``@hasOrgPerm``), so
+    the schema — and the frontend types — do not churn per slice; the flag is
+    dropped when the seam goes grant-only.
     """
 
     SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
         "Requires the user to have the specified permission(s) in the organization set via X-Organization-ID header."
     )
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault("fail_silently", False)
-        kwargs.setdefault(
-            "message",
-            "You do not have permission to perform this action in this organization.",
-        )
-        super().__init__(*args, **kwargs)
-
-    def resolve_for_user(
-        self,
-        resolver: Callable,
-        user: UserType | None,
-        *,
-        info: Info,
-        source: Any,
-    ) -> Any:
-        if not user or not user.is_authenticated:
-            raise DjangoNoPermission("Authentication required.")
-
-        org_id_raw = info.context.request.organization_id
-
-        if org_id_raw is None:
-            raise DjangoNoPermission("Organization ID (X-Organization-ID header) is required.")
-        org_id = str(org_id_raw)
-
-        if not self.perms:
-            raise DjangoNoPermission("No permissions specified for this operation.")
-
-        has_perm = permissioned_queryset(
-            Organization.objects.all(),
-            user=user,
-            organization_id=org_id,
-            perms=[f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms],
-            any_perm=self.any_perm,
-            organization_field="pk",
-        ).exists()
-
-        if not has_perm:
-            raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
-
-        return resolver()
-
-
-class HasOrgPermOrGrant(HasPerm):
-    """Transitional (ADR 0001 §5.3): legacy org-scoped perm OR the grant predicate.
-
-    Used while an authority template — ``ORG_ADMIN`` / ``ORG_SUPERUSER`` — is still
-    legacy.  The legacy arm (``permissioned_queryset``, exactly what ``HasOrgPerm``
-    checks) preserves today's behavior; the grant arm (``can()``) is the end-state
-    authority and stays dormant until the §5.3 provisioning PR role-backs the
-    template and backfills Grants.
-
-    The legacy arm runs first: it is today's authority and costs the same single
-    query ``HasOrgPerm`` already made, so the common path's query count is
-    unchanged.  Delete this extension in the provisioning PR — the predicate stays
-    pure-grant; only consumers carry the transitional arm.
-    """
-
-    SCHEMA_DIRECTIVE_DESCRIPTION: str = (  # type: ignore[misc]
-        "Requires the user to hold the permission(s) in the organization (legacy group or grant) "
-        "set via X-Organization-ID header."
-    )
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, also_grant: bool = False, **kwargs: Any) -> None:
+        self.also_grant = also_grant
         kwargs.setdefault("fail_silently", False)
         kwargs.setdefault(
             "message",
@@ -149,7 +97,7 @@ class HasOrgPermOrGrant(HasPerm):
 
         perm_strings = [f"{p.app}.{p.permission}" if p.app else str(p.permission) for p in self.perms]
 
-        legacy_ok = permissioned_queryset(
+        has_perm = permissioned_queryset(
             Organization.objects.all(),
             user=user,
             organization_id=org_id,
@@ -158,18 +106,21 @@ class HasOrgPermOrGrant(HasPerm):
             organization_field="pk",
         ).exists()
 
-        grant_ok = False
-        if not legacy_ok:
+        if not has_perm and self.also_grant:
+            # The grant arm runs only when the legacy arm fails: it is the
+            # end-state authority and stays dormant until the §5.3 provisioning
+            # PR role-backs the template and backfills Grants, so the common
+            # path's query count is unchanged.
             from common.permissions.selectors import can
 
             org_int = int(org_id)
             user_model = cast(User, user)
             if self.any_perm:
-                grant_ok = any(can(user_model, perm, org=org_int) for perm in perm_strings)
+                has_perm = any(can(user_model, perm, org=org_int) for perm in perm_strings)
             else:
-                grant_ok = all(can(user_model, perm, org=org_int) for perm in perm_strings)
+                has_perm = all(can(user_model, perm, org=org_int) for perm in perm_strings)
 
-        if not (legacy_ok or grant_ok):
+        if not has_perm:
             raise DjangoNoPermission("You do not have permission to perform this action in this organization.")
 
         return resolver()
