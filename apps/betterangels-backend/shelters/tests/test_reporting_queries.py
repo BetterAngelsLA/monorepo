@@ -77,7 +77,7 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_shelter_in_other_org_is_not_found(self) -> None:
-        """A user can't pull metrics for a shelter outside their organization."""
+        """A user can't pull metrics for a shelter outside their reach."""
         self._add_shelter_view_permission(self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
@@ -91,6 +91,30 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             f"Shelter matching ID {self.other_org_shelter.pk} could not be found.",
             response["errors"][0]["message"],
         )
+
+    def test_reach_in_other_org_beats_a_stale_header(self) -> None:
+        """A stale header org never hides metrics the user can reach.
+
+        delta 3: occupancy metrics are an operator read keyed by ``shelterId``
+        — the header is not the org scope, the user's grant reach is.  Here the
+        header still names org_1 (the suite default) but the user holds VIEW in
+        org_2 and asks for org_2's shelter: it resolves.
+        """
+        self._add_shelter_view_permission(self.org_1)
+        self._add_shelter_view_permission(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        baker.make(Bed, shelter=self.other_org_shelter, name="Bed cross-org")
+
+        # Header is still org_1 (set in the base setUp) — deliberately not
+        # switched to org_2.
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": str(self.other_org_shelter.pk)},
+        )
+
+        payload = response["data"]["shelterOccupancyMetrics"]
+        self.assertEqual(payload["shelterId"], str(self.other_org_shelter.pk))
+        self.assertEqual(len(payload["dailyOccupancy"]), 30)
 
     def test_unmatchable_shelter_id_is_not_found(self) -> None:
         self._add_shelter_view_permission(self.org_1)

@@ -132,14 +132,16 @@ def shelter_get(
     *,
     user: "User",
     shelter_id: int | str,
-    organization_id: str,
+    organization_id: str | None,
     permission: str,
 ) -> "Shelter":
-    """Return the shelter scoped to *organization_id* for *user*.
+    """Return the shelter on which *user* may exercise *permission*.
 
-    The row must sit in *organization_id* AND *user* must hold *permission*
-    there (single query) — an unauthorized row is indistinguishable from a
-    missing one (ADR 0001 §2.6).
+    When *organization_id* is given the row must sit in that org AND *user*
+    must hold *permission* there.  ``None`` reach-scopes by *user*'s grants
+    alone — header-free operator reads where the org is carried by the query
+    itself (delta 3, ADR 0001 §5.2/§7.7).  An unauthorized row is
+    indistinguishable from a missing one (single query, ADR 0001 §2.6).
     """
     from shelters.models import Shelter
 
