@@ -4,6 +4,7 @@ from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from django.db.models import QuerySet
+from django.utils import timezone
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -59,7 +60,7 @@ class NoteResource(resources.ModelResource):
             return "MISSING CLIENT ID"
 
     def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
-        return note.interacted_at.date().strftime("%m/%d/%Y") if note.interacted_at else None
+        return timezone.localtime(note.interacted_at).strftime("%m/%d/%Y") if note.interacted_at else None
 
     def dehydrate_purpose(self, note: Note) -> Optional[str]:
         return note.purpose or None

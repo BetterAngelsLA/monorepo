@@ -10,3 +10,4 @@
  */
 export { createWebFetchClient } from './lib/fetchClient';
 export { webActiveOrgStorage } from './lib/activeOrgStorage';
+export { syncTimezoneCookie } from './lib/timezoneCookie';

@@ -1,6 +1,6 @@
 """Tests for Celery tasks."""
 
-from datetime import timedelta
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -185,6 +185,31 @@ class TestSendScheduledReportTask:
             email = Email.objects.latest("id")
             assert set(email.to) == expected_recipients
 
+    def test_a_late_run_still_reports_the_month_its_schedule_was_due_after(self) -> None:
+        """When the job runs must not decide what it contains.
+
+        A schedule due 1 September but retried on 2 October has to email August.
+        Taken from the clock instead it emails September, with a September subject,
+        and August is never sent at all.
+        """
+        report = baker.make(
+            ScheduledReport,
+            organization=baker.make(Organization),
+            recipients="test@example.com",
+            subject_template="Subject {month}/{year}",
+            is_active=True,
+            next_run_at=datetime(2026, 9, 1, 7, 0, tzinfo=UTC),  # 1 September 00:00 in Los Angeles
+        )
+
+        with time_machine.travel("2026-10-02 12:00:00", tick=False):
+            with patch("reports.tasks.generate_report_data") as mock_gen:
+                mock_gen.return_value = ("a.csv", "data", {})
+
+                result = send_scheduled_report.apply(args=(report.pk,)).get()
+
+        assert result["subject"] == "Subject 08/2026"
+        assert mock_gen.call_args.args[1:] == (date(2026, 8, 1), date(2026, 8, 31))
+
     def test_send_report_templates(self) -> None:
         """Test subject and email body template formatting."""
         org = baker.make(Organization)
@@ -195,16 +220,17 @@ class TestSendScheduledReportTask:
             subject_template="Subject {month}/{year}",
             email_body="Body {month}/{year}",
             is_active=True,
+            # Due 1 January 2025, locally — the run this send is servicing.
+            next_run_at=datetime(2025, 1, 1, 8, 0, tzinfo=UTC),
         )
 
-        with time_machine.travel("2025-01-15 00:00:00", tick=False):
-            with (
-                patch("reports.tasks.generate_report_data") as mock_gen,
-                patch("reports.tasks.send_report_email") as mock_send_email,
-            ):
-                mock_gen.return_value = ("a.csv", "data", {})
+        with (
+            patch("reports.tasks.generate_report_data") as mock_gen,
+            patch("reports.tasks.send_report_email") as mock_send_email,
+        ):
+            mock_gen.return_value = ("a.csv", "data", {})
 
-                result = send_scheduled_report.apply(args=(report.pk,)).get()
+            result = send_scheduled_report.apply(args=(report.pk,)).get()
 
         assert result["subject"] == "Subject 12/2024"
 

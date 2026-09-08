@@ -263,7 +263,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))
 
-    @time_machine.travel("07-22-2025 10:00:00", tick=False)
+    @time_machine.travel("07-22-2025 10:00:00+00:00", tick=False)
     def test_organization_member_query(self) -> None:
         self.graphql_client.force_login(self.org_member)
         self.graphql_client.logout()

@@ -673,11 +673,12 @@ def shelter_metrics_window(
     """Resolve a reporting date range into the tz-aware window the selectors take.
 
     *end_date* is inclusive for callers; the returned *end* is exclusive. Missing
-    bounds default to the last 30 days in the shelter schedule timezone.
-    """
-    from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
+    bounds default to the last 30 days.
 
-    tz = SHELTER_SCHEDULE_TIME_ZONE
+    Days are cut on the site's zone rather than the viewer's: occupancy is a fact
+    about the shelter's days, not the reader's.
+    """
+    tz = django_timezone.get_default_timezone()
     end_date = end_date or django_timezone.now().astimezone(tz).date()
     start_date = start_date or (end_date - datetime.timedelta(days=29))
 

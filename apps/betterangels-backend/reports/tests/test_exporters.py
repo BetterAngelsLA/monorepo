@@ -1,6 +1,11 @@
 """Tests for exporting interaction data via NoteResource."""
 
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 import pytest
+from django.utils import timezone
+from pytest_django.fixtures import SettingsWrapper
 from model_bakery import baker
 from notes.admin import NoteResource
 from notes.models import Note
@@ -69,3 +74,32 @@ class TestNoteResourceExport:
 
         # NoteResource should be a subclass of ModelResource
         assert issubclass(NoteResource, ModelResource)
+
+
+@pytest.mark.django_db
+class TestExportTimeZones:
+    """Rows are dated on whichever calendar is active when the export runs."""
+
+    # 2025-02-01 05:30 UTC is 2025-01-31 21:30 in Los Angeles but 2025-02-01 00:30
+    # in New York, so the two zones disagree about which day this note belongs to.
+    INSTANT = datetime(2025, 2, 1, 5, 30, tzinfo=UTC)
+
+    def test_export_follows_the_activated_timezone(self) -> None:
+        """TimezoneMiddleware activates the browsing user's zone, and the export uses it."""
+        note = baker.make(Note, interacted_at=self.INSTANT)
+
+        with timezone.override(ZoneInfo("America/New_York")):
+            csv_content = NoteResource().export(queryset=Note.objects.filter(pk=note.pk)).csv
+
+        assert "02/01/2025" in csv_content
+        assert "01/31/2025" not in csv_content
+
+    def test_export_falls_back_to_the_site_timezone(self, settings: SettingsWrapper) -> None:
+        """A Celery run activates no zone, so its rows are dated on ``settings.TIME_ZONE``."""
+        settings.TIME_ZONE = "America/Los_Angeles"
+        note = baker.make(Note, interacted_at=self.INSTANT)
+
+        csv_content = NoteResource().export(queryset=Note.objects.filter(pk=note.pk)).csv
+
+        assert "01/31/2025" in csv_content
+        assert "02/01/2025" not in csv_content

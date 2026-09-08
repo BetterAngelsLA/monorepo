@@ -1,6 +1,6 @@
 """Tests for report views (DRF export) and GraphQL report summary query."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 import time_machine
@@ -13,6 +13,7 @@ from django.utils import timezone
 from model_bakery import baker
 from notes.models import Note, OrganizationService, ServiceRequest
 from organizations.models import Organization
+from pytest_django.fixtures import SettingsWrapper
 from reports.models import ScheduledReport
 from rest_framework.test import APIClient
 from teams.models import Team
@@ -317,6 +318,45 @@ REPORT_SUMMARY_QUERY = """
 """
 
 
+@pytest.mark.django_db
+class TestExportHonoursTheRequestTimeZone:
+    """The ``django_timezone`` cookie decides which calendar days the range covers."""
+
+    # 2025-02-01 05:30 UTC is 2025-01-31 21:30 in Los Angeles but 2025-02-01 00:30
+    # in New York, so the two disagree about whether this note falls in January.
+    INSTANT = datetime(2025, 2, 1, 5, 30, tzinfo=UTC)
+
+    def _january_rows(self, api_client: APIClient, org: Organization) -> list[str]:
+        response = api_client.get(f"/reports/export/?org_id={org.id}&start_date=2025-01-01&end_date=2025-01-31")
+        assert response.status_code == 200
+        lines = [line for line in response.content.decode("utf-8").strip().split("\n") if line.strip()]
+        return lines[1:]
+
+    def test_a_late_evening_note_falls_in_january_on_the_site_calendar(
+        self, api_client: APIClient, user_with_access: User, org: Organization, settings: SettingsWrapper
+    ) -> None:
+        """With no cookie the request is cut on ``settings.TIME_ZONE``."""
+        settings.TIME_ZONE = "America/Los_Angeles"
+        baker.make(Note, organization=org, interacted_at=self.INSTANT)
+        api_client.force_authenticate(user=user_with_access)
+
+        rows = self._january_rows(api_client, org)
+
+        assert len(rows) == 1
+        assert "01/31/2025" in rows[0]
+
+    def test_the_same_note_falls_in_february_for_a_browser_further_east(
+        self, api_client: APIClient, user_with_access: User, org: Organization, settings: SettingsWrapper
+    ) -> None:
+        """The cookie moves the boundary, and the row label moves with it."""
+        settings.TIME_ZONE = "America/Los_Angeles"
+        baker.make(Note, organization=org, interacted_at=self.INSTANT)
+        api_client.force_authenticate(user=user_with_access)
+        api_client.cookies["django_timezone"] = "America/New_York"
+
+        assert self._january_rows(api_client, org) == []
+
+
 @ignore_warnings(category=UserWarning)
 class TestReportSummaryGraphQL(GraphQLBaseTestCase):
     """Tests for the reportSummary GraphQL query."""
@@ -401,6 +441,28 @@ class TestReportSummaryGraphQL(GraphQLBaseTestCase):
         self.assertIsInstance(data["topRequestedServices"], list)
         self.assertIsInstance(data["uniqueClients"], int)
         self.assertIsInstance(data["uniqueClientsByDate"], list)
+
+    def test_summary_boundaries_follow_the_requests_time_zone(self) -> None:
+        """The ``django_timezone`` cookie decides which day a note is bucketed on.
+
+        2025-02-01 05:30 UTC is 21:30 on 31 January in Los Angeles but 00:30 on
+        1 February in New York, so the two disagree about whether it is in range.
+        """
+        org, user = self._setup_org_user_with_access()
+        baker.make(Note, organization=org, interacted_at=datetime(2025, 2, 1, 5, 30, tzinfo=UTC))
+        self._set_active_org(org)
+        self.graphql_client.force_login(user)
+        january = {"startDate": "2025-01-01", "endDate": "2025-01-31"}
+
+        self.graphql_client.cookies["django_timezone"] = "America/New_York"
+        in_new_york = self.execute_graphql(REPORT_SUMMARY_QUERY, january)["data"]["reportSummary"]
+
+        self.graphql_client.cookies["django_timezone"] = "America/Los_Angeles"
+        in_los_angeles = self.execute_graphql(REPORT_SUMMARY_QUERY, january)["data"]["reportSummary"]
+
+        self.assertEqual(in_new_york["totalNotes"], 0)
+        self.assertEqual(in_los_angeles["totalNotes"], 1)
+        self.assertEqual(in_los_angeles["notesByDate"], [{"date": "2025-01-31", "count": 1}])
 
     def test_summary_top_services_return_service_label_and_note_count(self) -> None:
         """topProvidedServices and topRequestedServices name each service by its label."""

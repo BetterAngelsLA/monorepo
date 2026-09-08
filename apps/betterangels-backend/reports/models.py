@@ -82,7 +82,7 @@ class ScheduledReport(models.Model):
     hour = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour of the day to send the report (0-23, UTC)",
+        help_text="Hour of the day to send the report (0-23), in the site's time zone",
     )
     subject_template = models.CharField(
         max_length=255,
@@ -135,8 +135,16 @@ class ScheduledReport(models.Model):
         super().save(*args, **kwargs)
 
     def set_next_run(self) -> None:
-        """Calculate and set the next run time based on the schedule."""
-        now = timezone.now()
+        """Calculate and set the next run time based on the schedule.
+
+        ``day_of_month`` and ``hour`` are read on ``settings.TIME_ZONE``'s
+        calendar, deliberately ignoring any zone the request activated.  This runs
+        both from an admin save and from Celery after a send; following the
+        browsing admin's zone would let a report set to 8am drift to 8am elsewhere
+        on its first reschedule.  A schedule fires once, globally — it has no
+        viewer.
+        """
+        now = timezone.now().astimezone(timezone.get_default_timezone())
 
         # Calculate candidate for current month.
         # relativedelta(day=N) replaces the day, clamping to the last valid day of month
