@@ -171,9 +171,10 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     (shelters) never report inert legacy rows.
 
     ORG-SCOPED ONLY by design: per-permission "acts anywhere" authority
-    (superuser, global Role, ``user_permissions``) is NOT included here — it is
-    reported once in ``currentUser.permissions`` and the frontend unions both
-    channels, so ``hasPermission`` still mirrors ``can()`` at every org.
+    (superuser, global Role, ``user_permissions``) is NOT included here — the
+    FE surface is :func:`organization_effective_permissions`, which folds the
+    global tier in per org.  Keep this function scoped-only: it is the base
+    primitive under that wrapper and for any future scoped-only consumer.
 
     Orgs with no permissions are omitted from the result — consumers treat a
     missing org id as ``[]`` — so a global holder with no org-scoped authority
@@ -238,3 +239,42 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
         if perms:
             report[org_id] = sorted(perms)
     return report
+
+
+def organization_effective_permissions(user: User) -> dict[int, list[str]]:
+    """EFFECTIVE per-org permission lists (ADR 0001 §5.2 refinement, §7 item 7).
+
+    ``global_permissions(user) ∪ organization_permissions(user)`` per org — the
+    global tier is org-independent (user_permissions + global roles +
+    superuser; there is no org column to join on), so the merge happens at the
+    REPORT level: one global lookup + the batched per-org report, combined once
+    and memoized on the user instance (house pattern: ``scopes`` /
+    ``global_holder``).  An org entry is the complete "what can I do fully
+    here" answer — a GSO who is also a member/delegated at an org sees global
+    ∪ that org's grants — and the FE gate is a single membership test.
+
+    Bounded to the FINITE switchable set (:func:`common.permissions.selectors.
+    switchable_orgs`) — the orgs the FE renders — never the global all-orgs
+    expansion.  Superuser short-circuit: global = every permission, which
+    subsumes the org-scoped report, so no per-org queries run for a superuser.
+
+    Result includes every switchable org (an org with no scoped authority still
+    renders the global tier, possibly ``[]``), so consumers can index directly.
+    """
+    from common.permissions.selectors import global_permissions, switchable_orgs
+
+    cached = user.__dict__.get("_org_effective_permissions")
+    if cached is not None:
+        return cached
+
+    org_ids = set(switchable_orgs(user).values_list("pk", flat=True))
+    global_list = global_permissions(user)  # memoized inside the selector
+    if user.is_superuser:
+        result = {org_id: global_list for org_id in org_ids}
+    else:
+        scoped = organization_permissions(user, org_ids=org_ids)
+        result = {
+            org_id: sorted(set(global_list) | set(scoped.get(org_id, []))) for org_id in org_ids
+        }
+    user.__dict__["_org_effective_permissions"] = result
+    return result

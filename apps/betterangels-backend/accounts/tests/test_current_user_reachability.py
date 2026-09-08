@@ -168,6 +168,25 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertIn("shelters.view_shelter", orgs["GSO Member Org"])
         self.assertIn("shelters.change_shelter", orgs["GSO Member Org"])
 
+    def test_superuser_member_org_entry_is_effective_and_list_is_finite(self) -> None:
+        """A superuser's member org renders the FULL global set; no org expansion.
+
+        Superuser short-circuit: global = every permission, which subsumes the
+        org-scoped report — no scoped grants exist here, yet the entry shows
+        platform permissions.  The org list stays finite (no unowned orgs).
+        """
+        org = organization_recipe.make(name="Super Member Org")
+        organization_recipe.make(name="Unowned Super Org")
+        admin = baker.make(User, is_superuser=True)
+        org.add_user(admin)
+        self.graphql_client.force_login(admin)
+
+        orgs = self._orgs()
+        self.assertIn("Super Member Org", orgs)
+        self.assertIn("accounts.view_user", orgs["Super Member Org"])
+        self.assertIn("shelters.change_shelter", orgs["Super Member Org"])
+        self.assertNotIn("Unowned Super Org", orgs)
+
     def test_consultant_grant_without_membership_does_not_inherit_delegations(self) -> None:
         """No amplification: a grant at B without membership does not surface C."""
         b = organization_recipe.make(name="Org B")

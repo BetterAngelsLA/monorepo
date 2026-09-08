@@ -69,20 +69,32 @@ def global_permissions(user: "User") -> list[str]:
     ``user_permissions`` and permissions carried by global Roles in
     ``user.groups``.  Scoped (Grant) permissions are NOT included here —
     they are per-organization and reported per org.
+
+    Request-scoped and memoized on the user instance (the house pattern —
+    ``scopes``/``global_holder``), so ``currentUser.permissions`` and every
+    effective per-org entry in the same request share one lookup.
     """
     from django.contrib.auth.models import Permission
 
+    cached: Optional[list[str]] = user.__dict__.get("_global_permissions")
+    if cached is not None:
+        return cached
+
     if user.is_superuser:
         perms = Permission.objects.all().values_list("content_type__app_label", "codename")
-        return sorted(f"{app}.{codename}" for app, codename in perms)
+        result = sorted(f"{app}.{codename}" for app, codename in perms)
+        user.__dict__["_global_permissions"] = result
+        return result
 
     direct = user.user_permissions.values_list("content_type__app_label", "codename")
     role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
         "content_type__app_label", "codename"
     )
-    return sorted(
+    result = sorted(
         {f"{app}.{codename}" for app, codename in direct} | {f"{app}.{codename}" for app, codename in role_held}
     )
+    user.__dict__["_global_permissions"] = result
+    return result
 
 
 def global_holder(user: "User") -> bool:

@@ -130,29 +130,18 @@ class CurrentUserOrganizationType(OrganizationType):
         folded in server-side (ADR 0001 §5.2 refinement), so an org entry is the
         complete "what can I do fully here" answer (a GSO who is also a
         member/delegated at the org sees global ∪ its grants) and the FE gate is
-        a single membership test, never a client union.  The org-scoped arm is
-        :func:`accounts.selectors.organization_permissions` — grants,
-        permission-matched delegations (ceiling applied) and legacy per-org
-        roles — computed for every user, never skipped for acts-anywhere
-        holders, so scoped authority stays visible alongside the global tier.
+        a single membership test, never a client union.  Computed once per
+        request by :func:`accounts.selectors.organization_effective_permissions`
+        (memoized on the user), bounded to the finite switchable org set.
         """
-        from accounts.selectors import organization_permissions
-        from common.permissions.selectors import global_permissions
+        from accounts.selectors import organization_effective_permissions
 
         user = cast(User, get_current_user(info))
         if not user or not user.is_authenticated:
             return []
-        report = user.__dict__.get("_org_permissions")
-        if report is None:
-            report = organization_permissions(user)
-            user.__dict__["_org_permissions"] = report
-        global_list = user.__dict__.get("_global_permissions")
-        if global_list is None:
-            global_list = global_permissions(user)
-            user.__dict__["_global_permissions"] = global_list
         # ``id`` is the declared strawberry field for the org pk (typed, unlike
         # ``pk`` on this wrapper type); the report is keyed by int org id.
-        return sorted(set(global_list) | set(report.get(int(str(self.id)), [])))
+        return organization_effective_permissions(user).get(int(str(self.id)), [])
 
 
 @strawberry_django.type(User)
