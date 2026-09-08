@@ -277,15 +277,18 @@ class ShelterType(ShelterTypeMixin):
         return shelter_list(queryset, user=user)
 
 
+# Operator reads are reach-scoped, not header-scoped: the org view comes from the
+# query's own ``filters`` GraphQL variable (org is part of the Apollo cache key) and
+# authorization from ``visible()`` reach — the ``X-Organization-ID`` header no longer
+# confines them (ADR 0001 §5.2 / §7 item 7). The ``*_queryset`` wrappers below are the
+# fail-closed gate; ``filters`` only narrows it.
+
+
 @strawberry_django.type(models.Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        # Reads scope by the query's own ``filters`` argument (a GraphQL
-        # variable — org is part of the cache key) plus ``visible()`` reach;
-        # the ``X-Organization-ID`` header no longer confines operator reads
-        # (ADR 0001 §5.2 / §7 item 7).
         return shelter_queryset(
             queryset, user=user, organization_id=None, permission=models.Shelter.perms.VIEW
         )
@@ -304,8 +307,6 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
     bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
-        # Reach-scoped (delta 3): nested beds follow the parent's scope, not the
-        # header — ``visible()`` confines to the user's own reach.
         bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=None, permission=models.Bed.perms.VIEW)
 
     return Prefetch("beds", queryset=bed_qs)
@@ -323,8 +324,6 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        # Reach-scoped reads; the org scope is the query's ``filters`` variable
-        # (ADR 0001 §5.2 / §7 item 7).
         return bed_queryset(queryset, user=user, organization_id=None, permission=models.Bed.perms.VIEW)
 
     id: ID
@@ -357,8 +356,6 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        # Reach-scoped reads; the org scope is the query's ``filters`` variable
-        # (ADR 0001 §5.2 / §7 item 7).
         return room_queryset(queryset, user=user, organization_id=None, permission=models.Room.perms.VIEW)
 
     id: ID
@@ -402,8 +399,6 @@ class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
         user = cast(User, get_current_user(info))
-        # Reach-scoped reads; the org scope is the query's ``filters`` variable
-        # (ADR 0001 §5.2 / §7 item 7).
         return reservation_queryset(
             queryset, user=user, organization_id=None, permission=models.Reservation.perms.VIEW
         )

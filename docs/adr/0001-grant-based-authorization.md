@@ -859,8 +859,10 @@ reachability second). The client-write tier (§7.6, resolved parity-first in RFC
 gates the clients cutover; the `can*` fields are the same either way (a `created_by_org`
 FK anchors org-scoped writes; object grants anchor shared edits).
 
-**Refinement — effective per-org lists + finite org list; no "All" mode
-(decided in review — deltas 1–2 ship in PR #2414).** The tier-1/tier-2
+**Refinement — effective per-org lists, finite org list, org-as-variable
+(decided in review — deltas 1–2 ship in PR #2414; the shelter domain's
+header removal — reads, delta 3, and header-free writes, delta 4 — ships in
+PR #2440).** The tier-1/tier-2
 surface ships org-scoped-only lists with the FE composing `global || org`.
 The review discussion converged on three refinements (§7 item 7); tiers and
 tier-3 above are otherwise unchanged:
@@ -879,10 +881,14 @@ tier-3 above are otherwise unchanged:
   never confines a global holder) + `currentUser.permissions`; a provider "All"
   mode (`allMode` / `setActiveScope("all")`) was rejected in review and is not
   shipped. Non-admin users are effectively one org at a time.
-- **Org as a query variable / route param (next delta).** Org travels as part of the
-  operation (cache-keyed reads) rather than only the `X-Organization-ID` header,
-  fixing the cross-org Apollo cache collision. Not shipped in #2414 — see §7 item 7.
-  Writes keep the active org as their target; backend `can()` remains the authority.
+- **Org as a query variable / route param.** Org travels as part of the operation
+  (cache-keyed reads) rather than only the `X-Organization-ID` header, fixing the
+  cross-org Apollo cache collision. Done for the shelter domain in #2440: operator
+  reads are reach-scoped (delta 3) and shelter writes derive the org from the
+  operation — input on creates, the row/parent on updates, deletes and clones
+  (delta 4) — so the header no longer confines or authorizes any shelter
+  operation. Remaining domains keep the header until §7 item 7 retirement; backend
+  `can()` remains the authority.
 
 Deferred but reserved: object-level surfacing (§5.2 tier 3 — per-row `can*` fields)
 and impersonation (the org report is already principal-parameterized,
@@ -1014,17 +1020,31 @@ are stable (referenced elsewhere and shared with the rest of the stack).
    later product adoption). The tier-3 FE surfacing shape (§5.2 — `canChange`/
    `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision:
    `docs/adr/0002-client-writes-ownership.md`.
-7. **FE tier-1/tier-2 shape (§5.2 refinement)** — **[decided — deltas 1–2 ship
-   in PR #2414]** per-org lists are *effective* (global folded in server-side
-   where enforceable per org — finding H2) with a FINITE member-∪-direct-grant-∪-
-   delegated org list. There is **no "All" provider mode** — global users'
-   cross-org surfaces are ordinary unscoped views + `currentUser.permissions`
-   (rejected in review, not shipped), and org moves to query variables / route
-   params (cache-safe) ahead of the header as the next delta. Required steps:
-   (1) effective lists + finite org list + no All mode (#2414); (2) org-as-variable
-   transport per domain + header retirement; (3) FE app migration (admin,
-   shelter-operator, mobile). Deferred but reserved: object-level surfacing
-   (per-row `can*` fields) and impersonation.
+7. **FE tier-1/tier-2 shape (§5.2 refinement)** — **[decided — deltas 1–2 in
+   PR #2414; the shelter domain's header removal (deltas 3–4) in PR #2440]**
+   per-org lists are *effective* (global folded in server-side) with a FINITE
+   member-∪-direct-grant-∪-delegated org list. There is **no "All" provider
+   mode** — global users' cross-org surfaces are ordinary unscoped views +
+   `currentUser.permissions` (rejected in review), and org moves to query
+   variables / route params (cache-safe) ahead of the header. Required steps:
+   (1) effective lists + finite org list (#2414); (2) org-as-variable transport
+   + header retirement — done for the shelter domain (#2440: reads
+   reach-scoped, writes org-derived from the operation, metrics export
+   header-free); remaining domains cut over as they migrate; (3) FE app
+   migration (admin, shelter-operator, mobile). Deferred but reserved:
+   object-level surfacing (per-row `can*` fields) and impersonation.
+   **Header retirement — remaining scope.** The `X-Organization-ID` header is
+   gone from the shelter domain (reads reach-scoped since delta 3; writes
+   org-derived since delta 4) but is still required by the other domains'
+   writes (no org on the wire; their resolvers read `get_current_organization`)
+   and by their non-GraphQL endpoints. The FE cannot stop sending it yet — one
+   global `createOrgInterceptor` covers every operation and cannot distinguish
+   query from mutation. Remaining sequence: (a) migrate the other domains'
+   writes to explicit `organization_id` inputs / object-derived org on
+   id-targeted updates-deletes; (b) drop the header from their REST endpoints;
+   (c) delete the interceptor + backend `get_current_organization`/`active_org`
+   plumbing app-wide in one cut. Tracked here so "why is the header still
+   sent?" has an answer.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
