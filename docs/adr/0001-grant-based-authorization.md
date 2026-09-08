@@ -819,9 +819,12 @@ The FE gates features on **capabilities, not raw grants** (finding F24). Three t
 
 1. **Global** — `currentUser.permissions`: the global tier (global Role perms +
    `user_permissions`; superuser → every permission). Ships with phase 3 (PR #2414).
-2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the union of
-   legacy group perms and Grant role perms (including delegated org→org grants) at each
-   reachable org. Ships with phase 3 (PR #2414).
+2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the
+   ORG-SCOPED union per reachable org (legacy group perms, Grant role perms, and
+   delegated org→org grants with the ceiling applied) — the global tier is reported
+   once in `currentUser.permissions`, and the FE gate composes the union. Ships with
+   phase 3 (PR #2414). Whether the per-org lists should instead be *effective*
+   (global folded in server-side) is open — see the §5.2 refinement and §7 item 7.
 3. **Per-record** — object-grant capabilities: **not yet surfaced**, by decision. A
    platform-shared model with per-record edit authority (the object arm) is ungatable
    from tiers 1–2: an org-scoped gate hides the shared record's edit button, and a
@@ -852,6 +855,29 @@ within the same wave — mirroring phase 2 → phase 3 for shelters (backend fir
 reachability second). The client-write tier (§7.6, resolved parity-first in RFC 0002)
 gates the clients cutover; the `can*` fields are the same either way (a `created_by_org`
 FK anchors org-scoped writes; object grants anchor shared edits).
+
+**Open refinement — effective per-org lists + "All" mode (under review in PR
+#2414).** The tier-1/tier-2 surface ships org-scoped-only lists with the FE
+composing `global || org`. The review discussion converges on three refinements
+(§7 item 7); tiers and tier-3 above are otherwise unchanged:
+
+- **Effective per-org lists.** Each org's `permissions` folds the global tier in
+  server-side (`global ∪ org-scoped`, delegation ceiling preserved), so an org entry
+  is the complete "what can I do here" answer — a GSO who is also a member/delegated
+  at an org sees global ∪ that org's grants — and the FE gate is a single membership
+  test (`can(p) = activeSource.permissions.has(p)`), never a client union.
+- **Finite org list + All mode.** The org list (the switcher) is member ∪ delegated
+  orgs only — never expanded to every org for global holders. Global users default to
+  an "All" mode gated by `currentUser.permissions` and drill into org views from
+  there; non-admin users are effectively one org at a time.
+- **Org as a query variable / route param.** Org travels as part of the operation
+  (cache-keyed reads) rather than only the `X-Organization-ID` header, fixing the
+  cross-org Apollo cache collision. Writes keep the active org as their target;
+  backend `can()` remains the authority.
+
+Deferred but reserved: object-level surfacing (§5.2 tier 3 — per-row `can*` fields)
+and impersonation (the org report is already principal-parameterized,
+`organization_permissions(user)`).
 
 ### 5.3 Org-admin role-backed milestone — teams, reports, and member management land together
 
@@ -979,6 +1005,14 @@ are stable (referenced elsewhere and shared with the rest of the stack).
    later product adoption). The tier-3 FE surfacing shape (§5.2 — `canChange`/
    `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision:
    `docs/adr/0002-client-writes-ownership.md`.
+7. **FE tier-1/tier-2 shape (§5.2 refinement)** — **[open — under review in
+   PR #2414]** whether the per-org lists become *effective* (global folded in
+   server-side) with a finite member-∪-delegated org list and an "All" mode for
+   global users, and whether org moves to query variables / route params (cache-safe)
+   ahead of the header. Required steps: (1) effective lists + finite org list + All
+   mode in #2414; (2) org-as-variable transport per domain; (3) FE app migration
+   (admin, shelter-operator, mobile); deferred: object-level surfacing (per-row
+   `can*` fields) and impersonation.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407
