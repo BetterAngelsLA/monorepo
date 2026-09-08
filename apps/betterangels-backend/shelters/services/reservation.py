@@ -137,10 +137,8 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
 def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Update an existing reservation.
 
-    The row id rides in the payload (``data["id"]``), matching
-    :func:`shelter_update` and the codebase-wide update convention.  Resolves
-    *reservation* reach-scoped by the user's grants.  Only keys present in
-    *data* are applied; ``None`` scalar values are skipped.
+    Resolves *reservation* reach-scoped by the user's grants.  Only keys
+    present in *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.

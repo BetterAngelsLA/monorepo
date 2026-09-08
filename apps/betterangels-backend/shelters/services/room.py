@@ -56,10 +56,8 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 def room_update(*, user: "User", data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
-    The row id rides in the payload (``data["id"]``), matching
-    :func:`shelter_update` and the codebase-wide update convention.  Resolves
-    *room* via :func:`~shelters.selectors.room_get` with ``change_room``
-    permission — reach-scoped by the user's grants.
+    Resolves *room* via :func:`~shelters.selectors.room_get` with
+    ``change_room`` permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
