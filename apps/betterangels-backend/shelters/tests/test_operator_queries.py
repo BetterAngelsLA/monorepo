@@ -89,8 +89,12 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
-    def test_operator_shelters_multi_org_user_sees_org_1_shelters(self) -> None:
-        """A user belonging to multiple orgs sees shelters from the org in the header."""
+    def test_operator_shelters_multi_org_membership_alone_does_not_extend_reach(self) -> None:
+        """Membership in a second org does not surface its shelters without a VIEW grant.
+
+        Reads are reach-scoped (``visible()``) and org-narrowed by the query's
+        ``filters`` variable — never by membership or the header alone.
+        """
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
@@ -108,8 +112,12 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_operator_shelters_multi_org_user_sees_org_2_shelters(self) -> None:
-        """When the header changes, the same user sees the other org's shelters."""
+    def test_operator_shelters_multi_org_user_reach_spans_orgs_without_a_header(self) -> None:
+        """A multi-org user with VIEW grants sees both orgs without a header.
+
+        The org scope comes from the query's ``filters.organizations`` variable
+        (the org view) — the header no longer confines operator reads.
+        """
         from accounts.role_manager import OrgRoleManager
         from notes.groups import CASEWORKER
 
@@ -119,13 +127,49 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         # Grant view_shelter in org_2 via a Role+Grant (ADR 0001).
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
 
-        self._set_active_org(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+
+        # No filter, no header → all reachable orgs' shelters.
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"offset": 0, "limit": 10},
+        )
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 2)
+        returned_ids = {r["id"] for r in payload["results"]}
+        self.assertSetEqual(returned_ids, {str(self.shelter.id), str(org_2_shelter.id)})
+
+        # Org view: the filters variable narrows to org_2.
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
+        )
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
+
+    def test_operator_shelters_explicit_filter_wins_over_a_stale_header(self) -> None:
+        """A header org never overrides the query's explicit org filter.
+
+        delta 3: the org in the header is a transition default only; when the
+        client filters org_2 but the header still names org_1, the filter wins
+        (for an org the user can reach).
+        """
+        from accounts.role_manager import OrgRoleManager
+        from notes.groups import CASEWORKER
+
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
+
+        self._set_active_org(self.org_1)  # stale/legacy header org
         self.graphql_client.force_login(self.org_1_case_manager_1)
         org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.OPERATOR_SHELTERS_QUERY,
-            variables={"offset": 0, "limit": 10},
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
         )
 
         payload = response["data"]["operatorShelters"]
