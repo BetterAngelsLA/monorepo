@@ -22,7 +22,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Attachment, BaseModel, PhoneNumber
+from common.models import Attachment, BaseModel, OrgScoped, PhoneNumber
 from common.permissions.utils import PermissionSet
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -166,7 +166,9 @@ class ClientProfileManager(models.Manager.from_queryset(ClientProfileQuerySet)["
     pghistory.UpdateEvent("client_profile.update"),
     pghistory.DeleteEvent("client_profile.remove"),
 )
-class ClientProfile(AbstractClientProfile):
+class ClientProfile(OrgScoped, AbstractClientProfile):
+    org_via = None  # platform-shared by product decision (ADR 0001 §2.3)
+
     objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     gender_other = models.CharField(max_length=100, null=True, blank=True)

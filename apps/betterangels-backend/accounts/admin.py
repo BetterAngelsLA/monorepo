@@ -7,10 +7,12 @@ from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User as DefaultUser
+from django.contrib.auth.models import Group, User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import Field as FormField
+from django.forms import ModelMultipleChoiceField
 from django.db.models import Field, Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -64,6 +66,36 @@ def _invited_message(email: str, organization: Organization, role_templates: tup
 admin.site.unregister(Organization)
 admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)
+if admin.site.is_registered(Group):
+    admin.site.unregister(Group)
+
+
+def _groups_without_scoped_roles() -> QuerySet:
+    """auth.Group rows an admin may attach to a user's ``groups``.
+
+    Scoped ``Role`` rows (``is_global=False``) are granted through a ``Grant``
+    row, never through ``user.groups`` (``permissions.E001``).  Keeping them out
+    of the auth-Group surfaces stops a well-meaning admin from picking the bare
+    "Shelter Operator" ``Role`` — which sits in the auth group list right next
+    to the org-scoped ``PermissionGroup`` rows of the same name — and silently
+    making a scoped role global.  Global ``Role`` rows stay: the Django admin is
+    the sanctioned surface for granting them (ADR 0001 §3).
+    """
+    return Group.objects.exclude(role__is_global=False)
+
+
+@admin.register(Group)
+class GroupAdmin(BaseGroupAdmin):
+    """Auth ``Group`` admin without the grant-system ``Role`` rows.
+
+    ``Role`` rows are code-owned — ``sync_roles`` reconciles them on every
+    ``migrate`` — so editing one here is either silently undone or, worse, lets
+    an admin grant a scoped role through ``user.groups``.  Legacy
+    ``PermissionGroup`` rows and raw groups stay manageable here.
+    """
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).exclude(role__isnull=False)
 
 
 @admin.register(PermissionGroup)
@@ -799,6 +831,19 @@ class UserAdmin(BaseUserAdmin):
     list_display = ["id", "full_name", "email"]
     list_filter = ["organizations_organization", "is_active", "is_staff", "is_superuser"]
     readonly_fields = ("organizations_and_roles",)
+
+    def get_form(self, request: HttpRequest, obj: Any = None, change: bool = False, **kwargs: Any) -> Any:
+        form = super().get_form(request, obj, change=change, **kwargs)
+        groups_field = form.base_fields.get("groups")
+        if isinstance(groups_field, ModelMultipleChoiceField):
+            # Scoped Roles are granted through a Grant row, never through
+            # user.groups (permissions.E001).  Keep them out of the picker: the
+            # bare "Shelter Operator" Role sits right next to the org-scoped
+            # PermissionGroup rows of the same name, and picking it would make a
+            # scoped role global.  Global Roles stay — the Django admin is the
+            # sanctioned surface for granting those (ADR 0001 §3).
+            groups_field.queryset = _groups_without_scoped_roles()
+        return form
 
     @admin.display(description="Organizations and roles")
     def organizations_and_roles(self, obj: User) -> str:

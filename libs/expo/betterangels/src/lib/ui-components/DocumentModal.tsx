@@ -1,5 +1,10 @@
 import { useMutation } from '@apollo/client/react';
 import {
+  BaError,
+  BaPermissionError,
+  getOperationInfoMessage,
+} from '@monorepo/ba-platform';
+import {
   DeleteIcon,
   DownloadIcon,
   ViewIcon,
@@ -10,12 +15,14 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import { ClientDocumentType } from '../apollo';
+import { ClientDocumentType, OperationMessageKind } from '../apollo';
+import { convertCapitalize } from '../helpers';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
   DeleteClientDocumentDocument,
 } from '../screens/Client/__generated__/Client.generated';
+import { deleteClientDocumentMeta } from '../screens/Client/__generated__/Client_meta.generated';
 import { MainModal } from './MainModal';
 
 type ModalState =
@@ -28,13 +35,17 @@ interface IDocumentModalProps {
   closeModal: () => void;
   document: ClientDocumentType;
   clientId: string;
+  onDeleteStateChange?: (documentId: string, isDeleting: boolean) => void;
 }
 
 export default function DocumentModal({
   closeModal,
   document,
   clientId,
+  onDeleteStateChange,
 }: IDocumentModalProps) {
+  const fileTypeText = getFileTypeText(document.mimeType);
+
   const { showSnackbar } = useSnackbar();
   const [modalState, setModalState] = useState<ModalState>('mainVisible');
 
@@ -44,16 +55,58 @@ export default function DocumentModal({
     ],
   });
 
+  const { operationKey, successTypename } = deleteClientDocumentMeta;
+
   const deleteFile = async () => {
+    onDeleteStateChange?.(document.id, true);
     closeModal();
+
     try {
-      await deleteDocument({ variables: { id: document.id } });
-    } catch (err) {
-      console.error('Error deleting document', err);
-      showSnackbar({
-        message: 'An error occurred while deleting the document',
-        type: 'error',
+      const result = await deleteDocument({
+        variables: { id: document.id },
       });
+
+      const deleteResult = result.data?.deleteClientDocument;
+
+      // Success — file deleted.
+      if (deleteResult?.__typename === successTypename) {
+        showSnackbar({
+          message: `${convertCapitalize(fileTypeText)} deleted.`,
+          type: 'success',
+          durationMs: 2000,
+        });
+
+        return;
+      }
+
+      // Failure
+      const permissionMsg = getOperationInfoMessage(
+        result,
+        operationKey,
+        OperationMessageKind.Permission,
+      );
+
+      if (permissionMsg) {
+        throw new BaPermissionError(permissionMsg.message || undefined);
+      }
+
+      throw new Error('unspecified error');
+    } catch (err) {
+      console.error('Delete file error:', err);
+
+      let errorMessage = 'An error occurred while deleting the document';
+
+      if (err instanceof BaError) {
+        errorMessage = err.message;
+      }
+
+      showSnackbar({
+        message: errorMessage,
+        type: 'error',
+        persist: true,
+      });
+    } finally {
+      onDeleteStateChange?.(document.id, false);
     }
   };
 
@@ -107,8 +160,6 @@ export default function DocumentModal({
     }
   };
 
-  const fileTypeText = getFileTypeText(document.mimeType);
-
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
@@ -158,8 +209,10 @@ export default function DocumentModal({
           closeModal={() => setModalState('mainClosing')}
           opacity={0.5}
           onCloseComplete={() => {
-            // onCloseComplete, modalState/intent and setTimeout are needed to avoid
-            // modal stacking context issues, as only one can be vialble at at time
+            // MainModal must fully close (animation + unmount) before DeleteModal
+            // mounts: RN can only present one Modal at a time, and mounting
+            // DeleteModal while MainModal is still up causes the confirm modal to
+            // be dropped and the actions sheet to reappear. Can possibly use BottomSheetModal.
             if (modalState === 'deleteRequested') {
               setTimeout(() => {
                 setModalState('deleteVisible');

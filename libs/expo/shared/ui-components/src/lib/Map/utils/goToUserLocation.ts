@@ -35,10 +35,12 @@ export async function goToUserLocation(props: TProps) {
     return;
   }
 
-  return await goToLocation({
+  await goToLocation({
     mapRef,
     coordinates: location.coords,
     regionDelta,
     duration,
   });
+
+  return location;
 }

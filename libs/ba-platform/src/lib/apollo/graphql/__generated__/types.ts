@@ -753,6 +753,7 @@ export type CreateShelterInput = {
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
@@ -899,6 +900,8 @@ export type DeleteReservationsPayload = BulkDeleteResult | OperationInfo;
 export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteShelterPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 
@@ -1582,6 +1585,7 @@ export type Mutation = {
   deleteReservations: DeleteReservationsPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelter: DeleteShelterPayload;
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1816,6 +1820,11 @@ export type MutationDeleteRoomsArgs = {
 
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteShelterArgs = {
+  id: Scalars['ID']['input'];
 };
 
 

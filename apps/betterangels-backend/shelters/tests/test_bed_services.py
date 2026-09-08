@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
 
+from accounts.models import Role
 from accounts.role_manager import OrgRoleManager
+from accounts.services import grant_create
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.contrib.auth.models import Permission
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 from shelters.enums import (
@@ -283,3 +286,19 @@ class BedCloneTestCase(BedServiceTestCase):
             "Bed matching ID 999999 could not be found.",
             str(ctx.exception),
         )
+
+    def test_clone_requires_add_permission(self) -> None:
+        """A viewer (Bed VIEW, no ADD) can see the source but cannot clone it —
+        cloning creates a row, so it follows the create convention (ADR 0001 §2.6)."""
+        User = get_user_model()
+        viewer = User.objects.create_user(username="bed-viewer", password="pw")
+        self.org.users.add(viewer)
+        bed = baker.make(Bed, shelter=self.shelter, name="View Only")
+        role = Role.objects.get_or_create(name="Test Bed Viewer", is_global=False)[0]
+        role.permissions.add(Permission.objects.get(codename="view_bed", content_type__app_label="shelters"))
+        grant_create(user=viewer, role=role, scope_org=self.org)
+
+        with self.assertRaises(PermissionDenied):
+            bed_clone(user=viewer, organization_id=self.org_id, bed_id=str(bed.pk))
+
+        self.assertFalse(Bed.objects.filter(name="View Only (Copy)").exists())

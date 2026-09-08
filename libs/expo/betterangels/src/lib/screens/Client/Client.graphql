@@ -142,8 +142,8 @@ mutation DeleteClientDocument($id: ID!) {
   }
 }
 
-mutation UpdateClientProfilePhoto($data: ClientProfilePhotoInput!) {
-  updateClientProfilePhoto(data: $data) {
+mutation DeleteClientProfilePhoto($clientProfileId: ID!) {
+  deleteClientProfilePhoto(clientProfileId: $clientProfileId) {
     ... on OperationInfo {
       messages {
         kind

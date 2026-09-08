@@ -237,6 +237,29 @@ def get_current_organization(info: Info) -> str:
     return str(org_id)
 
 
+def active_org(info: Info) -> str | None:
+    """Return the organization ID from the header, or ``None`` when absent.
+
+    The authority never requires the header (ADR 0001 §2.6) — the header only
+    confines the view when the caller has finite scopes.
+    """
+    return getattr(info.context.request, "organization_id", None)
+
+
+def require_can(user: Any, perm: str, *, org: Any) -> None:
+    """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
+
+    The create gate: creates carry an explicit target organization and are
+    authorized by ``can`` — never by the read rule.  ``can`` never implies the
+    organization exists (finding F7), so callers that take an org from client
+    input must check existence separately (see ``shelter_create``).
+    """
+    from common.permissions.selectors import can
+
+    if not can(user, perm, org=org):
+        raise PermissionDenied("You do not have permission to perform this action in this organization.")
+
+
 _T = TypeVar("_T", bound=Model)
 
 

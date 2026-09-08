@@ -1,10 +1,12 @@
 import datetime
 
-from accounts.models import OrganizationProfile, OrgTypeChoices
+from accounts.models import OrganizationProfile, OrgTypeChoices, Role
 from accounts.role_manager import OrgRoleManager
+from accounts.services import grant_create
 from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.contrib.auth.models import Permission
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -314,3 +316,19 @@ class RoomCloneTestCase(RoomServiceTestCase):
             "Room matching ID 999999 could not be found.",
             str(ctx.exception),
         )
+
+    def test_clone_requires_add_permission(self) -> None:
+        """A viewer (Room VIEW, no ADD) can see the source but cannot clone it —
+        cloning creates a row, so it follows the create convention (ADR 0001 §2.6)."""
+        User = get_user_model()
+        viewer = User.objects.create_user(username="room-viewer", password="pw")
+        self.org.users.add(viewer)
+        room = baker.make(Room, shelter=self.shelter, name="View Only Room")
+        role = Role.objects.get_or_create(name="Test Room Viewer", is_global=False)[0]
+        role.permissions.add(Permission.objects.get(codename="view_room", content_type__app_label="shelters"))
+        grant_create(user=viewer, role=role, scope_org=self.org)
+
+        with self.assertRaises(PermissionDenied):
+            room_clone(user=viewer, organization_id=self.org_id, room_id=str(room.pk))
+
+        self.assertFalse(Room.objects.filter(name="View Only Room (Copy)").exists())

@@ -12,10 +12,12 @@ interface IFileCardProps {
   url: string;
   createdAt: string;
   testId?: string;
+  disabled?: boolean;
 }
 
 export function FileCard(props: IFileCardProps) {
-  const { onPress, url, filename, createdAt, thumbnail, testId } = props;
+  const { onPress, url, filename, createdAt, thumbnail, testId, disabled } =
+    props;
 
   const content = (
     <>
@@ -48,9 +50,15 @@ export function FileCard(props: IFileCardProps) {
     <Pressable
       onPress={onPress}
       testID={testId}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+      ]}
       accessibilityHint="opens document modal"
       accessibilityLabel="open document modal"
+      accessibilityState={disabled ? { disabled: true } : undefined}
     >
       {content}
     </Pressable>
@@ -72,6 +80,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   leading: {
     flexDirection: 'row',

@@ -2,7 +2,6 @@ import datetime
 
 import time_machine
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from model_bakery import baker
 from organizations.models import Organization
 
@@ -44,11 +43,8 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         self.other_org_shelter = shelter_recipe.make(organization=self.org_2)
 
     def _add_shelter_view_permission(self, org: Organization) -> None:
-        from notes.groups import CASEWORKER
-
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        org.permission_groups.get(template__name=CASEWORKER.name).permissions.add(perm)
+        # Grant view_shelter via a Role+Grant (ADR 0001).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, org)
 
     def test_unauthenticated(self) -> None:
         self.graphql_client.logout()

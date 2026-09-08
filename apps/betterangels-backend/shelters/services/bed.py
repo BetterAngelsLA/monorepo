@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -16,10 +17,12 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
     """Create a new Bed associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``view_shelter`` permission.
+    ``view_shelter`` permission, then checks create authority with
+    ``can(user, Bed.perms.ADD, org)`` (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add beds.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -31,6 +34,8 @@ def bed_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> B
         organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
+
+    require_can(user, Bed.perms.ADD, org=organization_id)
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _BED_M2M_FIELDS and data[k] is not None}
 
@@ -104,7 +109,7 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching beds exist.
     """
-    qs = bed_queryset(user=user, organization_id=organization_id)
+    qs = bed_queryset(user=user, organization_id=organization_id, permission=Bed.perms.DELETE)
     qs = qs.filter(pk__in=bed_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -117,16 +122,24 @@ def bed_delete(*, user: "User", organization_id: str, bed_ids: list[int]) -> lis
 def bed_clone(*, user: "User", organization_id: str, bed_id: str) -> Bed:
     """Clone an existing bed, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.
+    Scopes to *organization_id* where *user* is a member.  Cloning creates a
+    new bed, so it follows the create convention (ADR 0001 §2.6): the source
+    is resolved with view authority and create authority is checked with
+    ``can(user, Bed.perms.ADD, org)``.
 
     Raises:
         ``ObjectDoesNotExist`` when the bed is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add beds.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     qs = bed_queryset(
         Bed.objects.select_related("shelter").prefetch_related(*_BED_M2M_FIELDS),
         user=user,
         organization_id=organization_id,
+        permission=Bed.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=bed_id)
+
+    require_can(user, Bed.perms.ADD, org=organization_id)
+
     return cast(Bed, source.make_clone(attrs={"name": _clone_label(source.name)}))

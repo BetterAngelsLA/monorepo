@@ -24,6 +24,22 @@ class UserOrganizationPermissions(models.TextChoices):
     VIEW_ORG_MEMBERS = "organizations.view_org_members", _("Can view organization members")
 
 
+class OrganizationAdminPermissions(models.TextChoices):
+    """Django default perms on the django-organizations models.
+
+    Consumed only by the Django admin via ``ModelBackend.has_perm``, so this is
+    deliberately NOT ``@register_permission``-ed — these must not leak into the
+    generated frontend permission consts.  The models come from the third-party
+    ``django-organizations`` package and declare no ``perms`` PermissionSet,
+    which is why these are constants rather than ``Model.perms.*``.
+    """
+
+    ADD_ORGANIZATION = "organizations.add_organization", _("Can add organization")
+    CHANGE_ORGANIZATION = "organizations.change_organization", _("Can change organization")
+    VIEW_ORGANIZATION = "organizations.view_organization", _("Can view organization")
+    VIEW_ORGANIZATION_USER = "organizations.view_organizationuser", _("Can view organization user")
+
+
 # ── Organization permission check ─────────────────────────────────────────────
 
 
