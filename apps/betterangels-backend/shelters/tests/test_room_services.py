@@ -136,8 +136,8 @@ class RoomUpdateTestCase(RoomServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = room_update(
             user=self.user,
-            room_id=self.room.pk,
             data={
+                "id": self.room.pk,
                 "name": "Room-101 Updated",
                 "status": RoomStatusChoices.RESERVED,
                 "type": RoomStyleChoices.MOTEL_ROOM,
@@ -156,8 +156,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
     def test_none_scalar_values_are_skipped(self) -> None:
         room_update(
             user=self.user,
-            room_id=self.room.pk,
-            data={"name": "Renamed", "medical_respite": None},
+            data={"id": self.room.pk, "name": "Renamed", "medical_respite": None},
         )
 
         self.room.refresh_from_db()
@@ -170,8 +169,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
         room_update(
             user=self.user,
-            room_id=self.room.pk,
-            data={"demographics": [DemographicChoices.SINGLE_MEN]},
+            data={"id": self.room.pk, "demographics": [DemographicChoices.SINGLE_MEN]},
         )
 
         self.room.refresh_from_db()
@@ -184,8 +182,7 @@ class RoomUpdateTestCase(RoomServiceTestCase):
 
         room_update(
             user=self.user,
-            room_id=self.room.pk,
-            data={"demographics": []},
+            data={"id": self.room.pk, "demographics": []},
         )
 
         self.room.refresh_from_db()

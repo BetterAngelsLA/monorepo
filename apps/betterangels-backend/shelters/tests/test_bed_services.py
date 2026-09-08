@@ -119,8 +119,8 @@ class BedUpdateTestCase(BedServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = bed_update(
             user=self.user,
-            bed_id=self.bed.pk,
             data={
+                "id": self.bed.pk,
                 "maintenance_flag": True,
                 "name": "Bed 1 Updated",
                 "type": BedTypeChoices.BUNK,
@@ -135,7 +135,7 @@ class BedUpdateTestCase(BedServiceTestCase):
         self.assertEqual(self.bed.name, "Bed 1 Updated")
 
     def test_none_scalar_values_are_skipped(self) -> None:
-        bed_update(user=self.user, bed_id=self.bed.pk, data={"name": "Renamed"})
+        bed_update(user=self.user, data={"id": self.bed.pk, "name": "Renamed"})
 
         self.bed.refresh_from_db()
         self.assertEqual(self.bed.name, "Renamed")
@@ -150,8 +150,8 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         bed_update(
             user=self.user,
-            bed_id=self.bed.pk,
             data={
+                "id": self.bed.pk,
                 "demographics": [DemographicChoices.SINGLE_MEN],
                 "funders": [FunderChoices.CITY_OF_LOS_ANGELES],
             },
@@ -168,8 +168,7 @@ class BedUpdateTestCase(BedServiceTestCase):
 
         bed_update(
             user=self.user,
-            bed_id=self.bed.pk,
-            data={"demographics": []},
+            data={"id": self.bed.pk, "demographics": []},
         )
 
         self.bed.refresh_from_db()

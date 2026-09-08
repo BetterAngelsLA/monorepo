@@ -214,8 +214,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
     def test_updates_scalar_fields(self) -> None:
         updated = reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "status": ReservationStatusChoices.CHECKED_IN,
                 "notes": "Updated notes",
                 "duration": 14,
@@ -235,8 +235,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
         updated = reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
-            data={"status": ReservationStatusChoices.COMPLETED},
+            data={"id": self.reservation.pk, "status": ReservationStatusChoices.COMPLETED},
         )
 
         self.assertIsNotNone(updated.checked_out_at)
@@ -248,8 +247,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
 
         updated = reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
-            data={"status": ReservationStatusChoices.CHECKED_IN},
+            data={"id": self.reservation.pk, "status": ReservationStatusChoices.CHECKED_IN},
         )
 
         self.assertIsNotNone(updated.checked_in_at)
@@ -259,8 +257,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
     def test_none_scalar_values_skipped(self) -> None:
         reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
-            data={"notes": "New notes"},
+            data={"id": self.reservation.pk, "notes": "New notes"},
         )
 
         self.reservation.refresh_from_db()
@@ -271,7 +268,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
     def test_reservation_not_found_raises_object_does_not_exist(self) -> None:
         with self.assertRaises(ObjectDoesNotExist) as ctx:
             reservation_update(
-                user=self.user, reservation_id=999999, data={"notes": "Missing"}
+                user=self.user, data={"id": 999999, "notes": "Missing"}
             )
         self.assertIn("Reservation matching ID 999999 could not be found.", str(ctx.exception))
 
@@ -281,8 +278,7 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
             outsider = User.objects.create_user(username="outsider", password="pw")
             reservation_update(
                 user=outsider,
-                reservation_id=self.reservation.pk,
-                data={"notes": "Blocked"},
+                data={"id": self.reservation.pk, "notes": "Blocked"},
             )
 
     def test_update_replaces_clients(self) -> None:
@@ -293,8 +289,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         # First, attach client_1 and client_2
         reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "clients": [
                     {"client_profile_id": client_1.pk, "is_primary": True},
                     {"client_profile_id": client_2.pk, "is_primary": False},
@@ -310,8 +306,8 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         # Replace entirely: remove client_1/2, add client_3 as primary
         reservation_update(
             user=self.user,
-            reservation_id=self.reservation.pk,
             data={
+                "id": self.reservation.pk,
                 "clients": [
                     {"client_profile_id": client_3.pk, "is_primary": True},
                 ],

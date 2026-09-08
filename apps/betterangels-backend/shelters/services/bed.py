@@ -55,11 +55,13 @@ def bed_create(*, user: "User", data: Dict[str, Any]) -> Bed:
 
 
 @transaction.atomic
-def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
+def bed_update(*, user: "User", data: Dict[str, Any]) -> Bed:
     """Update an existing bed, including M2M relationships when provided.
 
-    Resolves *bed* via :func:`~shelters.selectors.bed_get` with
-    ``change_bed`` permission — reach-scoped by the user's grants.
+    The row id rides in the payload (``data["id"]``), matching
+    :func:`shelter_update` and the codebase-wide update convention.  Resolves
+    *bed* via :func:`~shelters.selectors.bed_get` with ``change_bed``
+    permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -69,7 +71,7 @@ def bed_update(*, user: "User", bed_id: int | str, data: Dict[str, Any]) -> Bed:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    data.pop("id", None)
+    bed_id = data.pop("id")
 
     bed = bed_get(
         user=user,

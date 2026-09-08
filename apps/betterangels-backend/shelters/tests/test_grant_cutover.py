@@ -262,8 +262,8 @@ class IdentityWideChildWritesTestCase(ShelterTestCase, TestCase):
         }
     """
     UPDATE_ROOM = """
-        mutation UpdateRoomB($id: ID!, $data: UpdateRoomInput!) {
-            updateRoom(id: $id, data: $data) {
+        mutation UpdateRoomB($data: UpdateRoomInput!) {
+            updateRoom(data: $data) {
                 ... on RoomType { id name }
                 ... on OperationInfo { messages { kind message } }
             }
@@ -323,7 +323,7 @@ class IdentityWideChildWritesTestCase(ShelterTestCase, TestCase):
 
     def test_update_room_in_another_org(self) -> None:
         response = self.execute_graphql(
-            self.UPDATE_ROOM, {"id": str(self.room_b.pk), "data": {"name": "Room-B Renamed"}}
+            self.UPDATE_ROOM, {"data": {"id": str(self.room_b.pk), "name": "Room-B Renamed"}}
         )
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["updateRoom"]["name"], "Room-B Renamed")

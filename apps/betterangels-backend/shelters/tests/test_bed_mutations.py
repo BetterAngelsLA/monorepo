@@ -111,8 +111,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         super().setUp()
 
         self.mutation = f"""
-            mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {{
-                updateBed(id: $id, data: $data) {{
+            mutation UpdateBed($data: UpdateBedInput!) {{
+                updateBed(data: $data) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -145,8 +145,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             type=BedTypeChoices.TWIN,
         )
         variables = {
-            "id": str(source.pk),
             "data": {
+                "id": str(source.pk),
                 "roomId": self.room.pk,
                 "accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name],
                 "b7": True,
@@ -228,8 +228,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         source.pets.add(pet)
 
         variables = {
-            "id": str(source.pk),
-            "data": {"statusNotes": "New notes"},
+            "data": {"id": str(source.pk), "statusNotes": "New notes"},
         }
 
         expected_query_count = 18
@@ -304,8 +303,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
 
         variables = {
-            "id": str(bed.pk),
-            "data": {"maintenanceFlag": True},
+            "data": {"id": str(bed.pk), "maintenanceFlag": True},
         }
 
         expected_query_count = 18
@@ -492,8 +490,8 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
     """
 
     UPDATE_MUTATION = """
-        mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
-            updateBed(id: $id, data: $data) {
+        mutation UpdateBed($data: UpdateBedInput!) {
+            updateBed(data: $data) {
                 ... on BedType {
                     id
                     name
@@ -581,7 +579,7 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.bed.pk), "data": {"name": "Renamed Bed"}},
+            {"data": {"id": str(self.bed.pk), "name": "Renamed Bed"}},
         )
 
         self.assertIsNone(response.get("errors"))
@@ -594,7 +592,7 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.bed.pk), "data": {"name": "Nope"}},
+            {"data": {"id": str(self.bed.pk), "name": "Nope"}},
         )
 
         self.assertIsNone(response.get("errors"))

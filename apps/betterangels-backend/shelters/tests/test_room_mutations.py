@@ -127,8 +127,8 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.mutation = f"""
-            mutation ($id: ID!, $data: UpdateRoomInput!) {{
-                updateRoom(id: $id, data: $data) {{
+            mutation ($data: UpdateRoomInput!) {{
+                updateRoom(data: $data) {{
                     ... on RoomType {{
                         {self.room_fields}
                     }}
@@ -152,8 +152,8 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             type=RoomStyleChoices.SINGLE_ROOM,
         )
         variables = {
-            "id": str(room.pk),
             "data": {
+                "id": str(room.pk),
                 "name": "Room-101 Updated",
                 "maintenanceFlag": True,
                 "type": RoomStyleChoices.MOTEL_ROOM.name,
@@ -195,8 +195,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
             notes="Original notes",
         )
         variables = {
-            "id": str(room.pk),
-            "data": {"notes": "New notes"},
+            "data": {"id": str(room.pk), "notes": "New notes"},
         }
 
         expected_query_count = 16
@@ -215,8 +214,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.shelter.demographics.add(demographic)
         room = baker.make(Room, shelter=self.shelter, name="Room-101")
         variables = {
-            "id": str(room.pk),
-            "data": {"demographics": [DemographicChoices.SINGLE_MEN.name]},
+            "data": {"id": str(room.pk), "demographics": [DemographicChoices.SINGLE_MEN.name]},
         }
 
         expected_query_count = 20
@@ -233,7 +231,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
     def test_update_room_clone_name_returns_operation_info(self) -> None:
         baker.make(Room, shelter=self.shelter, name="Room-101")
         room = baker.make(Room, shelter=self.shelter, name="Room-102")
-        variables = {"id": str(room.pk), "data": {"name": "Room-101"}}
+        variables = {"data": {"id": str(room.pk), "name": "Room-101"}}
 
         expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -244,7 +242,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         self.assertEqual(messages[0]["kind"], "VALIDATION")
 
     def test_update_room_not_found_returns_operation_info(self) -> None:
-        variables = {"id": "999999", "data": {"name": "Missing"}}
+        variables = {"data": {"id": "999999", "name": "Missing"}}
 
         expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -260,7 +258,7 @@ class UpdateRoomMutationTestCase(RoomMutationTestCase):
         other_org_shelter = baker.make(Shelter, organization=other_org)
         room = baker.make(Room, shelter=other_org_shelter)
 
-        variables = {"id": str(room.pk), "data": {"name": "Unauthorized update"}}
+        variables = {"data": {"id": str(room.pk), "name": "Unauthorized update"}}
 
         expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -429,8 +427,8 @@ class RoomMutationPermissionTestCase(RoomMutationTestCase):
     """
 
     UPDATE_MUTATION = """
-        mutation UpdateRoom($id: ID!, $data: UpdateRoomInput!) {
-            updateRoom(id: $id, data: $data) {
+        mutation UpdateRoom($data: UpdateRoomInput!) {
+            updateRoom(data: $data) {
                 ... on RoomType {
                     id
                     name
@@ -518,7 +516,7 @@ class RoomMutationPermissionTestCase(RoomMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.room.pk), "data": {"name": "Renamed Room"}},
+            {"data": {"id": str(self.room.pk), "name": "Renamed Room"}},
         )
 
         self.assertIsNone(response.get("errors"))
@@ -531,7 +529,7 @@ class RoomMutationPermissionTestCase(RoomMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.room.pk), "data": {"name": "Nope"}},
+            {"data": {"id": str(self.room.pk), "name": "Nope"}},
         )
 
         self.assertIsNone(response.get("errors"))

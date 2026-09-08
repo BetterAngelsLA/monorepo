@@ -271,8 +271,8 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
         )
 
         self.mutation = f"""
-            mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {{
-                updateReservation(id: $id, data: $data) {{
+            mutation UpdateReservation($data: UpdateReservationInput!) {{
+                updateReservation(data: $data) {{
                     ... on ReservationType {{
                         {self.reservation_fields}
                     }}
@@ -289,8 +289,8 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
 
     def test_update_reservation(self) -> None:
         variables: dict[str, Any] = {
-            "id": str(self.reservation.pk),
             "data": {
+                "id": str(self.reservation.pk),
                 "status": "CHECKED_IN",
                 "notes": "Updated notes",
                 "duration": 14,
@@ -312,7 +312,7 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
     def test_update_reservation_to_completed(self) -> None:
         self.assertIsNone(self.reservation.checked_out_at)
 
-        variables: dict[str, Any] = {"id": str(self.reservation.pk), "data": {"status": "COMPLETED"}}
+        variables: dict[str, Any] = {"data": {"id": str(self.reservation.pk), "status": "COMPLETED"}}
 
         response = self.execute_graphql(self.mutation, variables)
 
@@ -328,8 +328,7 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
         self.assertIsNone(self.reservation.checked_in_at)
 
         variables: dict[str, Any] = {
-            "id": str(self.reservation.pk),
-            "data": {"status": "CHECKED_IN"},
+            "data": {"id": str(self.reservation.pk), "status": "CHECKED_IN"},
         }
 
         response = self.execute_graphql(self.mutation, variables)
@@ -344,8 +343,7 @@ class UpdateReservationMutationTestCase(ReservationMutationTestCase):
 
     def test_update_reservation_patch_semantics(self) -> None:
         variables: dict[str, Any] = {
-            "id": str(self.reservation.pk),
-            "data": {"notes": "New notes"},
+            "data": {"id": str(self.reservation.pk), "notes": "New notes"},
         }
 
         response = self.execute_graphql(self.mutation, variables)
@@ -422,8 +420,8 @@ class ReservationMutationPermissionTestCase(ReservationMutationTestCase):
     """
 
     UPDATE_MUTATION = """
-        mutation UpdateReservation($id: ID!, $data: UpdateReservationInput!) {
-            updateReservation(id: $id, data: $data) {
+        mutation UpdateReservation($data: UpdateReservationInput!) {
+            updateReservation(data: $data) {
                 ... on ReservationType {
                     id
                     notes
@@ -496,7 +494,7 @@ class ReservationMutationPermissionTestCase(ReservationMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.reservation.pk), "data": {"notes": "Updated notes"}},
+            {"data": {"id": str(self.reservation.pk), "notes": "Updated notes"}},
         )
 
         self.assertIsNone(response.get("errors"))
@@ -509,7 +507,7 @@ class ReservationMutationPermissionTestCase(ReservationMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.reservation.pk), "data": {"notes": "Nope"}},
+            {"data": {"id": str(self.reservation.pk), "notes": "Nope"}},
         )
 
         self.assertIsNone(response.get("errors"))

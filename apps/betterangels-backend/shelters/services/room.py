@@ -53,11 +53,13 @@ def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
 
 
 @transaction.atomic
-def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Room:
+def room_update(*, user: "User", data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
-    Resolves *room* via :func:`~shelters.selectors.room_get` with
-    ``change_room`` permission — reach-scoped by the user's grants.
+    The row id rides in the payload (``data["id"]``), matching
+    :func:`shelter_update` and the codebase-wide update convention.  Resolves
+    *room* via :func:`~shelters.selectors.room_get` with ``change_room``
+    permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -67,7 +69,7 @@ def room_update(*, user: "User", room_id: int | str, data: Dict[str, Any]) -> Ro
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    data.pop("id", None)
+    room_id = data.pop("id")
 
     room = room_get(
         user=user,

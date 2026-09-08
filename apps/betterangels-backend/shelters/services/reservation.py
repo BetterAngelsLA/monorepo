@@ -134,19 +134,20 @@ def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
 
 
 @transaction.atomic
-def reservation_update(
-    *, user: "User", reservation_id: int | str, data: Dict[str, Any]
-) -> Reservation:
+def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Update an existing reservation.
 
-    Resolves *reservation* reach-scoped by the user's grants.  Only keys
-    present in *data* are applied; ``None`` scalar values are skipped.
+    The row id rides in the payload (``data["id"]``), matching
+    :func:`shelter_update` and the codebase-wide update convention.  Resolves
+    *reservation* reach-scoped by the user's grants.  Only keys present in
+    *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
+    reservation_id = data.pop("id")
     try:
         reservation = reservation_get(
             user=user,

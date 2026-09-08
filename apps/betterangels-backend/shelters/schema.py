@@ -157,13 +157,10 @@ class Mutation:
         return cast(RoomType, room_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
+    def update_room(self, info: Info, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(
-            RoomType,
-            room_update(user=user, room_id=id, data=clean),
-        )
+        return cast(RoomType, room_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_room(self, info: Info, id: ID) -> RoomType:
@@ -186,13 +183,10 @@ class Mutation:
         return cast(BedType, bed_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
+    def update_bed(self, info: Info, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(
-            BedType,
-            bed_update(user=user, bed_id=id, data=clean),
-        )
+        return cast(BedType, bed_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_bed(self, info: Info, id: ID) -> BedType:
@@ -213,10 +207,10 @@ class Mutation:
         return cast(ReservationType, reservation_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_reservation(self, info: Info, id: ID, data: UpdateReservationInput) -> ReservationType:
+    def update_reservation(self, info: Info, data: UpdateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(ReservationType, reservation_update(user=user, reservation_id=id, data=clean))
+        return cast(ReservationType, reservation_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
