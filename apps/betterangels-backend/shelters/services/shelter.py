@@ -131,9 +131,10 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
 def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
-    The target organization rides in the payload (``data["organization_id"]``) —
-    like every other create, the anchor is part of the input and the row is
-    created under it (ADR 0001 §2.6).  Accepts a plain dict (e.g. from
+    The target organization is the create anchor and travels in the payload
+    (``data["organization_id"]``, ADR 0001 §2.6): it is checked for authority
+    and existence up front, then flows onto the row as its FK column — no
+    separate argument.  Accepts a plain dict (e.g. from
     ``strawberry.asdict(data)`` with ``UNSET`` keys already removed).
 
     Raises:
@@ -143,7 +144,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
         shelters in the target organization.
     """
     data = dict(data)
-    organization_id = data.pop("organization_id", None)
+    organization_id = data.get("organization_id")
     if not organization_id:
         raise ValidationError({"organization_id": "An organization is required to create a shelter."})
     if not Organization.objects.filter(pk=organization_id).exists():
@@ -153,7 +154,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 
-    shelter = Shelter(organization_id=organization_id, **scalar_data)
+    shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
