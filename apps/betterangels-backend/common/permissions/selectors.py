@@ -65,10 +65,17 @@ def global_permissions(user: "User") -> list[str]:
     """The global-tier permission list (ADR 0001 §2.4, finding F24).
 
     The shared contract the frontend gates global-tier features on: a
-    superuser holds every permission; otherwise the union of direct
-    ``user_permissions`` and permissions carried by global Roles in
-    ``user.groups``.  Scoped (Grant) permissions are NOT included here —
-    they are per-organization and reported per org.
+    superuser holds every PRODUCT-MODELED permission (the registry the FE
+    ``PermissionEnum`` is generated from) — never the whole DB catalog, which
+    would ship admin-internal permissions (``auth.*``, ``admin.*``, …) the
+    product cannot gate on; otherwise the union of direct ``user_permissions``
+    and permissions carried by global Roles in ``user.groups``, bounded to the
+    modeled set.  Scoped (Grant) permissions are NOT included here — they are
+    per-organization and reported per org.
+
+    The modeled bound keeps the wire contract honest ("permissions the UI can
+    gate on") and removes the need for every FE consumer to filter unmodeled
+    backend permissions out themselves.
 
     Request-scoped and memoized on the user instance (the house pattern —
     ``scopes``), so ``currentUser.permissions`` and every effective per-org
@@ -80,19 +87,18 @@ def global_permissions(user: "User") -> list[str]:
     if cached is not None:
         return cached
 
-    if user.is_superuser:
-        perms = Permission.objects.all().values_list("content_type__app_label", "codename")
-        result = sorted(f"{app}.{codename}" for app, codename in perms)
-        user.__dict__["_global_permissions"] = result
-        return result
+    from common.permissions.utils import modeled_permission_strings
 
-    direct = user.user_permissions.values_list("content_type__app_label", "codename")
-    role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
-        "content_type__app_label", "codename"
-    )
-    result = sorted(
-        {f"{app}.{codename}" for app, codename in direct} | {f"{app}.{codename}" for app, codename in role_held}
-    )
+    modeled = modeled_permission_strings()
+    if user.is_superuser:
+        rows: list[tuple[str, str]] = list(Permission.objects.all().values_list("content_type__app_label", "codename"))
+    else:
+        direct = user.user_permissions.values_list("content_type__app_label", "codename")
+        role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
+            "content_type__app_label", "codename"
+        )
+        rows = [*direct, *role_held]
+    result = sorted({f"{app}.{codename}" for app, codename in rows if f"{app}.{codename}" in modeled})
     user.__dict__["_global_permissions"] = result
     return result
 

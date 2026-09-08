@@ -818,7 +818,9 @@ Cross-org edit/delete of profiles beyond shared-write is an open product follow-
 The FE gates features on **capabilities, not raw grants** (finding F24). Three tiers:
 
 1. **Global** — `currentUser.permissions`: the global tier (global Role perms +
-   `user_permissions`; superuser → every permission). Ships with phase 3 (PR #2414).
+   `user_permissions`; superuser → every product-modeled permission — bounded to
+   the catalog the FE `PermissionEnum` is generated from, never the whole DB
+   catalog). Ships with phase 3 (PR #2414).
 2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the
    EFFECTIVE list per org — the global tier is folded in server-side where it is
    enforceable at that org (grant-only/dual domains only; finding H2), on top of

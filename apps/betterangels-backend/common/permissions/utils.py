@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import reduce
+from functools import lru_cache, reduce
 from operator import or_
 from typing import Any, Sequence, Tuple, Type, TypeVar
 
@@ -73,6 +73,28 @@ def register_model_permissions() -> None:
 
         enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def modeled_permission_strings() -> frozenset[str]:
+    """The product-modeled permission strings — the catalog the FE gates on.
+
+    Union across every registered permission enum: custom
+    ``@register_permission`` enums plus auto-discovered model
+    ``PermissionSet``s.  This is exactly the catalog
+    ``manage.py generate_permission_enums`` emits as the frontend
+    ``PermissionEnum``, so it is the server-side definition of "a permission
+    the frontend can gate on".  ``global_permissions`` bounds the global list
+    to this set so ``currentUser.permissions`` never ships admin-internal
+    permissions the product cannot gate on.
+
+    Memoized with ``lru_cache``: by the time any query runs, the registry is
+    complete (``@register_permission`` fires at import; the idempotent model
+    discovery runs on the first call here), so the single cached result is the
+    full modeled catalog.
+    """
+    register_model_permissions()  # discover model PermissionSets (idempotent)
+    return frozenset(str(member.value) for enum_cls in get_registered_permission_enums() for member in enum_cls)
 
 
 def perm(codename: str, description: str) -> str:

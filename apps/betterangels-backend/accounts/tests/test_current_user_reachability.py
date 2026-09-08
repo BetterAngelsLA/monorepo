@@ -1,7 +1,8 @@
 """Frontend reachability (ADR 0001 phase 3, finding F24).
 
 The contract the frontend gates on: ``currentUser.permissions`` is the GLOBAL
-permission list (superuser / global roles / user_permissions), and
+permission list (superuser → every product-modeled permission; otherwise
+global roles / user_permissions, bounded to the modeled set), and
 ``currentUser.organizations`` is the FINITE grants-based org list — membership,
 direct grants, inherited delegations, and never every org for a global holder
 (a global user's cross-org reach is unscoped reads + ``currentUser.permissions``,
@@ -45,14 +46,24 @@ class CurrentUserGlobalPermissionsTestCase(GraphQLBaseTestCase):
         self.assertIsNone(response.get("errors"))
         return list(response["data"]["currentUser"]["permissions"])
 
-    def test_superuser_holds_every_permission(self) -> None:
+    def test_superuser_holds_every_modeled_permission(self) -> None:
+        """A superuser holds every product-modeled permission — and nothing else.
+
+        ``global_permissions`` is bounded server-side to the modeled catalog
+        (the registry the FE ``PermissionEnum`` is generated from): real DB
+        permissions the product never gates on (e.g. ``accounts.view_user``,
+        ``auth.add_permission``) must not ship to the client as gateable state.
+        """
         admin = baker.make(User, is_superuser=True)
         self.graphql_client.force_login(admin)
 
         perms = self._permissions()
 
         self.assertIn("shelters.view_shelter", perms)
-        self.assertIn("accounts.view_user", perms)
+        self.assertIn("reports.view_reports", perms)
+        # Real DB permissions the FE does not model are not exposed.
+        self.assertNotIn("accounts.view_user", perms)
+        self.assertNotIn("auth.add_permission", perms)
 
     def test_global_role_holder_reports_the_roles_permissions(self) -> None:
         gso = baker.make(User)

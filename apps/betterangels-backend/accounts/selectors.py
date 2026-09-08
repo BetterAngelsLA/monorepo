@@ -267,10 +267,10 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     org-scoped legacy arm (``organization_permissions``).
 
     The superuser case is therefore NOT short-circuited: a superuser's global
-    list carries every permission, but only the grant-only/dual subset folds,
-    and their org-group (legacy) permissions still come from the scoped report —
-    so an entry can only claim what ``can()`` or ``HasOrgPerm`` would honor at
-    that org.
+    list carries every product-modeled permission, but only the grant-only/dual
+    subset folds, and their org-group (legacy) permissions still come from the
+    scoped report — so an entry can only claim what ``can()`` or ``HasOrgPerm``
+    would honor at that org.
 
     Bounded to the FINITE switchable set (:func:`common.permissions.selectors.
     switchable_orgs`) — the orgs the FE renders — never an all-orgs expansion.

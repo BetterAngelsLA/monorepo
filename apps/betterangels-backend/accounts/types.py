@@ -199,10 +199,12 @@ class CurrentUserType(UserBaseType):
     def permissions(self, info: Info) -> List[str]:
         """Global-tier permission list (ADR 0001 §2.4, finding F24).
 
-        The shared contract for gating global-tier features: superuser holds
-        every permission; otherwise the union of direct ``user_permissions``
-        and permissions carried by global Roles in ``user.groups``.  Scoped
-        (grant) permissions are reported per organization instead.
+        The shared contract for gating global-tier features: a superuser holds
+        every PRODUCT-MODELED permission (the catalog the FE ``PermissionEnum``
+        is generated from — never the whole DB catalog); otherwise the union of
+        direct ``user_permissions`` and permissions carried by global Roles in
+        ``user.groups``, bounded to the modeled set.  Scoped (grant)
+        permissions are reported per organization instead.
         """
         from common.permissions.selectors import global_permissions
 
