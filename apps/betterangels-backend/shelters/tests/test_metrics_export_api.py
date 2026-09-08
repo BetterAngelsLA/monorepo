@@ -34,7 +34,8 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, org)
 
     def _get(self, **params: str) -> Response:
-        return self.api_client.get(self.url, params, headers={"x-organization-id": str(self.org_1.pk)})
+        # The metrics export is reach-scoped by shelter_id — no org header.
+        return self.api_client.get(self.url, params)
 
     def test_xlsx_export_names_a_sheet_per_metric(self) -> None:
         response = self._get(export_format="xlsx")
@@ -89,7 +90,6 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
         response = self.api_client.get(
             self.url,
             {"export_format": "xlsx", "include": ["reservation_metrics", "daily_occupancy_metrics"]},
-            headers={"x-organization-id": str(self.org_1.pk)},
         )
 
         self.assertEqual(
@@ -133,6 +133,6 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
         other_shelter = shelter_recipe.make(organization=self.org_2)
         url = reverse("shelters:export_shelter_metrics", kwargs={"shelter_id": str(other_shelter.pk)})
 
-        response = self.api_client.get(url, {"export_format": "csv"}, headers={"x-organization-id": str(self.org_1.pk)})
+        response = self.api_client.get(url, {"export_format": "csv"})
 
         self.assertEqual(response.status_code, 404)
