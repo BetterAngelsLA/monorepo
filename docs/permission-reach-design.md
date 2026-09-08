@@ -92,7 +92,97 @@ query Notes($clientId: ID!) {
 }
 ```
 
-### 2.2 What this deletes
+### 2.2 Concrete surface — the shelter workspace, end to end
+
+Both personas land on the same screen: a **shelter workspace** — a list of shelters
+drawn from *everything the user can reach*, optionally narrowed by an `orgFilter`.
+No org switcher, no header. Rows carry their org as data.
+
+**Query**
+
+```graphql
+query ShelterWorkspace($orgFilter: ID) {
+  orgCapabilities {                # one small card per org that appears in the list
+    orgId: ID!
+    canEditShelters: Boolean!      # can(user, Shelter.CHANGE, org)
+    canDeleteShelters: Boolean!    # can(user, Shelter.DELETE, org)
+    canAddRooms: Boolean!          # can(user, Room.ADD, org)
+    canAddBeds: Boolean!           # can(user, Bed.ADD, org)
+  }
+  shelters(orgFilter: $orgFilter) { id name org { id name } }   # plain rows
+}
+```
+
+Why org-uniform rows don't need per-row flags: authority is constant per org (an
+operator edits every shelter in their org), so one boolean per org replaces one per
+row. Global holders simply read `true` in every org's card.
+
+**Backend**
+
+- Rows: `visible(Shelter.objects.all(), user, VIEW, in_org=$orgFilter)` — an absent
+  filter means the user's whole reach (already the predicate's behavior).
+- Capability cards: each boolean is a membership test in `scopes(user, <perm>)`
+  (`ALL` for global holders) — the same decision `can()` makes. Four set lookups per
+  request, not per row:
+
+```python
+def org_capabilities(user, org_ids):
+    change = set(scopes(user, Shelter.perms.CHANGE))  # empty for a non-holder
+    is_all = lambda s: s == {ALL}                     # global tier ⇒ every org
+    return [
+        {
+            "orgId": oid,
+            "canEditShelters": is_all(change) or oid in change,
+            "canDeleteShelters": is_all(delete) or oid in delete,
+            "canAddRooms": is_all(add_room) or oid in add_room,
+            "canAddBeds": is_all(add_bed) or oid in add_bed,
+        }
+        for oid in org_ids
+    ]
+```
+
+**Frontend** — the only FE "state" is a tiny id→card map built from the response:
+
+```tsx
+const caps = new Map(orgCapabilities.map(c => [c.orgId, c]));
+
+function ShelterRow({ shelter }: { shelter: Shelter }) {
+  const can = caps.get(shelter.org.id);
+  return (
+    <div>
+      {shelter.name}
+      {can?.canEditShelters && <button>Edit</button>}
+      {can?.canDeleteShelters && <button>Delete</button>}
+      {can?.canAddRooms && <button>+ Room</button>}
+      {can?.canAddBeds && <button>+ Bed</button>}
+    </div>
+  );
+}
+```
+
+A row's buttons come from *its org's card*. Alice (scoped operator) sees buttons only
+on org-h rows; Sam (GSO) sees them on every org's rows. Neither FE asks "which org am
+I in".
+
+**Mutations** — no org in the call; the resource supplies it:
+
+```graphql
+mutation { updateShelter(id: "1", ...) }          # org = shelter.organization → can() → 200 / 404
+mutation { addBed(roomId: "...", ...) }           # org = room.shelter.organization → can()
+mutation { createShelter(organizationId: "org-h", ...) }  # row-less create: org is an input
+```
+
+The create button and its org picker come from the same data: "orgs where I can
+ADD" (a per-org boolean resolved server-side), so the gate and the picker cannot
+disagree.
+
+**Drill-down** (shelter detail → rooms → beds) is the same pattern: rooms/beds are
+org-uniform, so the detail query carries the same org card and every add/edit
+affordance resolves against it. Per-record models (caseworker notes, shared clients)
+are the exception — their rows carry per-row `canChange`/`canDelete` flags instead
+(§2.1), because authority genuinely varies per row there.
+
+### 2.3 What this deletes
 
 - The `X-Organization-ID` header from the addressing/authz path (and its cache bug).
 - The active-org provider / switcher-as-authority / "platform mode".
@@ -101,7 +191,7 @@ query Notes($clientId: ID!) {
 - The dual write semantic (strict-vs-union) — one rule: **authorize against the
   resource**.
 
-### 2.3 Honest costs
+### 2.4 Honest costs
 
 - GSO list reads are platform-wide → pagination + org-as-filter (already exist).
 - Per-record flags need a small, whitelisted vocabulary per model (`canChange` /
@@ -160,6 +250,11 @@ Shelters-only, off `main`:
 3. Shelter create requires `organizationId` (no orphan minting) + org-deletion
    semantics — never `SET_NULL`-promote rows to the global tier (ADR §7 item 2).
 4. Keep the per-scope / per-row vocabulary small and whitelisted.
+5. **Capability wire shape per screen** — self-contained (booleans stamped on each
+   row's `org` object, e.g. `shelter.org.canEditShelters`) vs a separate
+de-duplicated `orgCapabilities` root. Default v1: self-contained (simpler FE, no
+join); the separate root is an optimization for large lists. Per-record rows always
+carry per-row flags regardless.
 
 ## 7. References
 
