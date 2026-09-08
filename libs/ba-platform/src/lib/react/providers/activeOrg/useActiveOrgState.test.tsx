@@ -114,39 +114,6 @@ describe('useActiveOrgState', () => {
     expect(result.current.hasPermission('shelters.delete_shelter')).toBe(false);
   });
 
-  it('hasPermission also honors the global permission list (finding F24)', () => {
-    configureActiveOrgStorage(createSyncStorage());
-    const orgs = [makeOrg({ id: 'org-1' })];
-
-    const { result } = renderHook(() =>
-      useActiveOrgState(orgs, ['shelters.delete_shelter']),
-    );
-
-    // A global holder (e.g. GSO) passes the check even though the active org
-    // does not carry it, and regardless of which org is active.
-    expect(result.current.hasPermission('shelters.delete_shelter')).toBe(true);
-    expect(result.current.hasPermission('organizations.add_org_member')).toBe(
-      true,
-    );
-  });
-
-  it('does not leak one global permission list into the next', () => {
-    configureActiveOrgStorage(createSyncStorage());
-    const orgs = [makeOrg({ id: 'org-1' })];
-
-    const withGlobal = renderHook(() =>
-      useActiveOrgState(orgs, ['shelters.delete_shelter']),
-    );
-    const withoutGlobal = renderHook(() => useActiveOrgState(orgs));
-
-    expect(
-      withGlobal.result.current.hasPermission('shelters.delete_shelter'),
-    ).toBe(true);
-    expect(
-      withoutGlobal.result.current.hasPermission('shelters.delete_shelter'),
-    ).toBe(false);
-  });
-
   it('ignores backend permission strings the app does not model', () => {
     configureActiveOrgStorage(createSyncStorage());
     const orgs = [makeOrg({ permissions: ['accounts.view_user'] })];
@@ -175,18 +142,6 @@ describe('useActiveOrgState', () => {
     expect(result.current.hasPermission('organizations.add_org_member')).toBe(
       false,
     );
-  });
-
-  it('filters unknown strings out of the global permission list', () => {
-    configureActiveOrgStorage(createSyncStorage());
-    const orgs = [makeOrg({ permissions: [] })];
-
-    const { result } = renderHook(() =>
-      useActiveOrgState(orgs, ['accounts.view_user']),
-    );
-
-    expect(result.current.hasPermission('shelters.view_shelter')).toBe(false);
-    expect(result.current.hasPermission('shelters.delete_shelter')).toBe(false);
   });
 
   it('setActiveOrgId ignores an org the user does not belong to', () => {

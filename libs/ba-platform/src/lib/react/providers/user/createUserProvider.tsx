@@ -212,7 +212,6 @@ export function createUserProvider<
           organizations={
             user?.organizations ? mapOrganizations(user.organizations) : []
           }
-          globalPermissions={user?.permissions}
         >
           {children}
         </ActiveOrgProvider>
