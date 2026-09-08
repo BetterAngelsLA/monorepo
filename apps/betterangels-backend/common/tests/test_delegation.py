@@ -229,3 +229,49 @@ class DelegationTestCase(TestCase):
         self.assertNotIn(self.org_c.pk, self._scoped_orgs(eve, Shelter.perms.CHANGE))
         self.assertNotIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.CHANGE))
         self.assertNotIn(self.shelter_c.pk, self._visible_pks(eve, Shelter.perms.VIEW))
+
+    def test_partial_overlap_inherits_exactly_the_shared_permission(self) -> None:
+        """Mutual non-containment: neither role is a subset of the other.
+
+        The member's at-B role carries {VIEW, CHANGE}; B delegates a role
+        carrying {VIEW, DELETE} to C.  Only a true per-permission intersection
+        yields the right answer at C: VIEW yes (both carry it), CHANGE no (not
+        on the delegated bundle), DELETE no (not held at B).  This is the case
+        the containment-only tests (subset/superset) cannot discriminate.
+        """
+        b_role, _ = Role.objects.get_or_create(name="Test Delegation B Overlap", is_global=False)
+        lent_role, _ = Role.objects.get_or_create(name="Test Delegation Lent Overlap", is_global=False)
+        for role, perms in (
+            (b_role, (Shelter.perms.VIEW, Shelter.perms.CHANGE)),
+            (lent_role, (Shelter.perms.VIEW, Shelter.perms.DELETE)),
+        ):
+            for perm in perms:
+                app_label, codename = perm.split(".")
+                role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+
+        grant_delegate(principal_org=self.org_b, role=lent_role, scope_org=self.org_c)
+        user = baker.make(User)
+        self.org_b.add_user(user)
+        grant_create(user=user, role=b_role, scope_org=self.org_b)
+
+        self.assertIn(self.shelter_c.pk, self._visible_pks(user, Shelter.perms.VIEW))
+        self.assertTrue(can(user, Shelter.perms.VIEW, org=self.org_c))
+        # CHANGE is on the at-B role but not on the lent bundle — the lent role is the ceiling.
+        self.assertFalse(can(user, Shelter.perms.CHANGE, org=self.org_c))
+        # DELETE is on the lent bundle but the user holds no role at B carrying it.
+        self.assertFalse(can(user, Shelter.perms.DELETE, org=self.org_c))
+
+    def test_grant_writes_invalidate_the_memoized_scope_cache(self) -> None:
+        """grant_create / grant_delete drop the user's memoized ``scopes``
+        decision (``selectors.invalidate_scope_cache``) so a same-request
+        re-read never serves a stale authority decision."""
+        from common.permissions.selectors import scopes
+
+        user = baker.make(User)
+        grant = grant_create(user=user, role=self.shelter_role, scope_org=self.org_b)
+        scopes(user, Shelter.perms.VIEW)  # memoizes the decision on the instance
+        self.assertIn("_scope_cache", user.__dict__)
+
+        grant_delete(grant=grant)
+
+        self.assertNotIn("_scope_cache", user.__dict__)
