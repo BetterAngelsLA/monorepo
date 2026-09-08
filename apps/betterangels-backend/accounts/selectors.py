@@ -182,9 +182,9 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     platform.
 
     *org_ids* defaults to the FINITE switchable set (:func:`common.permissions.
-    selectors.switchable_orgs`) — never ``reachable_orgs``, which expands to
-    every org for a global holder: a scoped-only report over that expansion
-    would iterate the platform to produce the same finite entries.
+    selectors.switchable_orgs`) — never an all-orgs expansion: a scoped-only
+    report over every org in the platform would produce the same finite entries
+    while iterating orgs the user has no scoped authority in.
 
     Batched: four queries regardless of the org count once *org_ids* is known
     (one more to materialize the default set).  Run once per request.
@@ -253,7 +253,7 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     ``foldable global_permissions(user) ∪ organization_permissions(user)`` per
     org — the merge happens at the REPORT level: one global lookup + the
     batched per-org report, combined once and memoized on the user instance
-    (house pattern: ``scopes`` / ``global_holder``).
+    (house pattern: ``scopes``).
 
     The global fold is DOMAIN-AWARE (:data:`common.permissions.domain.
     GLOBAL_TIER_ORG_APPS`): only grant-only (and, later, dual) domains treat the
@@ -273,15 +273,15 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     that org.
 
     Bounded to the FINITE switchable set (:func:`common.permissions.selectors.
-    switchable_orgs`) — the orgs the FE renders — never the global all-orgs
-    expansion.  Result includes every switchable org (an org with no scoped
-    authority still renders the foldable global tier, possibly ``[]``), so
-    consumers can index directly.
+    switchable_orgs`) — the orgs the FE renders — never an all-orgs expansion.
+    Result includes every switchable org (an org with no scoped authority still
+    renders the foldable global tier, possibly ``[]``), so consumers can index
+    directly.
     """
     from common.permissions.domain import GLOBAL_TIER_ORG_APPS
     from common.permissions.selectors import global_permissions, switchable_orgs
 
-    cached = user.__dict__.get("_org_effective_permissions")
+    cached: Optional[dict[int, list[str]]] = user.__dict__.get("_org_effective_permissions")
     if cached is not None:
         return cached
 

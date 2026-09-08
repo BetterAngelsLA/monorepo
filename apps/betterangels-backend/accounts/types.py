@@ -108,12 +108,14 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: the ``currentUser.organizationsOrganization`` field hands
         this the user's membership relation, which is empty for a non-member
         grant holder.  Returns the FINITE switchable set — membership, direct
-        grants, inherited delegations — and never every org for a global holder
-        (a global user's reach is the "All" mode gated by
-        ``currentUser.permissions``; org views are entered by id).  The per-org
-        ``permissions`` field is EFFECTIVE (global folded in) and resolved from
-        ``organization_permissions``, so this stays a lazy, annotation-free
-        filter.
+        grants, inherited delegations — the orgs the user can select as an
+        org-scoped context in the UI.  It is never expanded to every org: a
+        global holder's cross-org reach is expressed through unscoped reads
+        (``visible()`` never confines a global holder) and
+        ``currentUser.permissions``, not by enumerating the platform.  The
+        per-org ``permissions`` field is EFFECTIVE (global folded in) and
+        resolved from ``organization_permissions``, so this stays a lazy,
+        annotation-free filter.
         """
         from common.permissions.selectors import switchable_orgs
 

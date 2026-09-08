@@ -714,7 +714,7 @@ authorization, which is the service→selector pattern the guide prescribes.
 | **0** | This ADR; §7 decision log (items resolved; §7.2 open) |
 | **1** | `Role` + `Grant` models, constraints, checks, provisioning + backfill. **The backfill converts only shelter roles** — every other domain's `PermissionGroups` are untouched until their cutover. **Nothing reads it.** Provisioning (`sync_roles`) and backfill (`backfill_shelter_grants` / `backfill_global_role_members`) are idempotent `post_migrate` syncs + a `manage.py sync_roles` command, per the repo's "replaces RunPython data migrations" convention — not RunPython migrations. **Transition caveat: the phase-1 backfill is add-only and runs only at `migrate`** — a membership removed after the last backfill leaves a stale `Grant`, and a brand-new org gets none until the next migrate. Phase 2's dual-write must therefore treat backfilled rows as a bootstrapping snapshot: write `Grant`s synchronously on membership change (assign/invite/remove, org creation) and make the `reconcile` command *revoke* stale rows, not just backfill. |
 | **2** | `scopes()`/`visible()`/`can()` wired to **shelter** selectors/mutations (global + user + delegation arms); mutation-surface convention; org→org delegation admin inline; assign/invite service dual-writes `Grant` (authoritative for shelters) + legacy `PermissionGroup` (authoritative for everything else) with a `reconcile` command + test. **Covers org creation and owner-role seeding** (finding F22) — new orgs born during transition get `Grant`s for shelter roles, not legacy groups. |
-| **3** | Frontend (both apps): grants-based org list (+ all orgs for global holders), header optional, `currentUser.permissions` global list as the shared contract (finding F24). |
+| **3** | Frontend (both apps): grants-based FINITE org list (never every org — no "All" mode), header optional, effective per-org permission entries, `currentUser.permissions` global list as the shared contract (finding F24). |
 | **4** | Clients/notes cutover: wire the object arm + whitelist + cleanup signals; client-sharing data edge; **notes/guardian migration per §5 / clients per §5.1**; guardian teardown per domain. |
 | **5** | Teardown: delete legacy `PermissionGroup` for migrated domains, collapse the global-tier helper to `user.has_perm`, remove the dual-write branch. |
 
@@ -820,11 +820,12 @@ The FE gates features on **capabilities, not raw grants** (finding F24). Three t
 1. **Global** — `currentUser.permissions`: the global tier (global Role perms +
    `user_permissions`; superuser → every permission). Ships with phase 3 (PR #2414).
 2. **Per-org** — `currentUser.organizationsOrganization[].permissions`: the
-   ORG-SCOPED union per reachable org (legacy group perms, Grant role perms, and
-   delegated org→org grants with the ceiling applied) — the global tier is reported
-   once in `currentUser.permissions`, and the FE gate composes the union. Ships with
-   phase 3 (PR #2414). Whether the per-org lists should instead be *effective*
-   (global folded in server-side) is open — see the §5.2 refinement and §7 item 7.
+   EFFECTIVE list per org — the global tier is folded in server-side where it is
+   enforceable at that org (grant-only/dual domains only; finding H2), on top of
+   the org-scoped union (legacy group perms, Grant role perms, and delegated
+   org→org grants with the ceiling applied). The FE gate is a single membership
+   test on the active org's entry — never a client union with the global list
+   (finding H2). Ships with phase 3 (PR #2414).
 3. **Per-record** — object-grant capabilities: **not yet surfaced**, by decision. A
    platform-shared model with per-record edit authority (the object arm) is ungatable
    from tiers 1–2: an org-scoped gate hides the shared record's edit button, and a
@@ -856,24 +857,30 @@ reachability second). The client-write tier (§7.6, resolved parity-first in RFC
 gates the clients cutover; the `can*` fields are the same either way (a `created_by_org`
 FK anchors org-scoped writes; object grants anchor shared edits).
 
-**Open refinement — effective per-org lists + "All" mode (under review in PR
-#2414).** The tier-1/tier-2 surface ships org-scoped-only lists with the FE
-composing `global || org`. The review discussion converges on three refinements
-(§7 item 7); tiers and tier-3 above are otherwise unchanged:
+**Refinement — effective per-org lists + finite org list; no "All" mode
+(decided in review — deltas 1–2 ship in PR #2414).** The tier-1/tier-2
+surface ships org-scoped-only lists with the FE composing `global || org`.
+The review discussion converged on three refinements (§7 item 7); tiers and
+tier-3 above are otherwise unchanged:
 
 - **Effective per-org lists.** Each org's `permissions` folds the global tier in
-  server-side (`global ∪ org-scoped`, delegation ceiling preserved), so an org entry
-  is the complete "what can I do here" answer — a GSO who is also a member/delegated
-  at an org sees global ∪ that org's grants — and the FE gate is a single membership
-  test (`can(p) = activeSource.permissions.has(p)`), never a client union.
-- **Finite org list + All mode.** The org list (the switcher) is member ∪ delegated
-  orgs only — never expanded to every org for global holders. Global users default to
-  an "All" mode gated by `currentUser.permissions` and drill into org views from
-  there; non-admin users are effectively one org at a time.
-- **Org as a query variable / route param.** Org travels as part of the operation
-  (cache-keyed reads) rather than only the `X-Organization-ID` header, fixing the
-  cross-org Apollo cache collision. Writes keep the active org as their target;
-  backend `can()` remains the authority.
+  server-side (`global ∪ org-scoped`, delegation ceiling preserved, and only where
+  the global tier is enforceable at an org — grant-only/dual domains, finding H2),
+  so an org entry is the complete "what can I do here" answer — a GSO who is also a
+  member/delegated at an org sees global ∪ that org's grants — and the FE gate is a
+  single membership test (`can(p) = activeSource.permissions.has(p)`), never a
+  client union.
+- **Finite org list — no "All" provider mode.** The org list (the switcher) is
+  member ∪ direct-grant ∪ delegated orgs only — never expanded to every org for
+  global holders (enumerating the platform would leak every org and is unbounded).
+  Global users' cross-org reach is expressed through unscoped reads (`visible()`
+  never confines a global holder) + `currentUser.permissions`; a provider "All"
+  mode (`allMode` / `setActiveScope("all")`) was rejected in review and is not
+  shipped. Non-admin users are effectively one org at a time.
+- **Org as a query variable / route param (next delta).** Org travels as part of the
+  operation (cache-keyed reads) rather than only the `X-Organization-ID` header,
+  fixing the cross-org Apollo cache collision. Not shipped in #2414 — see §7 item 7.
+  Writes keep the active org as their target; backend `can()` remains the authority.
 
 Deferred but reserved: object-level surfacing (§5.2 tier 3 — per-row `can*` fields)
 and impersonation (the org report is already principal-parameterized,
@@ -1005,14 +1012,17 @@ are stable (referenced elsewhere and shared with the rest of the stack).
    later product adoption). The tier-3 FE surfacing shape (§5.2 — `canChange`/
    `canDelete` via `can_obj`) is chosen regardless of which write tier wins. Decision:
    `docs/adr/0002-client-writes-ownership.md`.
-7. **FE tier-1/tier-2 shape (§5.2 refinement)** — **[open — under review in
-   PR #2414]** whether the per-org lists become *effective* (global folded in
-   server-side) with a finite member-∪-delegated org list and an "All" mode for
-   global users, and whether org moves to query variables / route params (cache-safe)
-   ahead of the header. Required steps: (1) effective lists + finite org list + All
-   mode in #2414; (2) org-as-variable transport per domain; (3) FE app migration
-   (admin, shelter-operator, mobile); deferred: object-level surfacing (per-row
-   `can*` fields) and impersonation.
+7. **FE tier-1/tier-2 shape (§5.2 refinement)** — **[decided — deltas 1–2 ship
+   in PR #2414]** per-org lists are *effective* (global folded in server-side
+   where enforceable per org — finding H2) with a FINITE member-∪-direct-grant-∪-
+   delegated org list. There is **no "All" provider mode** — global users'
+   cross-org surfaces are ordinary unscoped views + `currentUser.permissions`
+   (rejected in review, not shipped), and org moves to query variables / route
+   params (cache-safe) ahead of the header as the next delta. Required steps:
+   (1) effective lists + finite org list + no All mode (#2414); (2) org-as-variable
+   transport per domain + header retirement; (3) FE app migration (admin,
+   shelter-operator, mobile). Deferred but reserved: object-level surfacing
+   (per-row `can*` fields) and impersonation.
 
 [SDB-218]: https://betterangels.atlassian.net/browse/SDB-218
 [PR #2407]: https://github.com/BetterAngelsLA/monorepo/pull/2407

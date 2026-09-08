@@ -71,8 +71,8 @@ def global_permissions(user: "User") -> list[str]:
     they are per-organization and reported per org.
 
     Request-scoped and memoized on the user instance (the house pattern —
-    ``scopes``/``global_holder``), so ``currentUser.permissions`` and every
-    effective per-org entry in the same request share one lookup.
+    ``scopes``), so ``currentUser.permissions`` and every effective per-org
+    entry in the same request share one lookup.
     """
     from django.contrib.auth.models import Permission
 
@@ -97,45 +97,14 @@ def global_permissions(user: "User") -> list[str]:
     return result
 
 
-def global_holder(user: "User") -> bool:
-    """Whether *user* holds at least one permission that applies in every org.
-
-    Superuser, a global Role in ``user.groups``, or a direct
-    ``user_permissions`` row.  A ``user_permission`` grants per-permission
-    "acts anywhere" authority — ``scopes()`` returns ``ALL`` for the held perm
-    and ``can()`` is True at any org — so holding one unbounds the ORG LIST
-    (``reachable_orgs``), giving the user every org to act in.
-
-    This predicate gates org-list reachability ONLY.  It must never skip the
-    per-org permission report, which still carries the user's org-scoped grants
-    and legacy roles (see :func:`accounts.selectors.organization_permissions`):
-    skipping it would hide org-scoped authority the user exercises through
-    ``can()``.  Memoized per request on the user instance, mirroring
-    ``scopes()``.
-    """
-    cached: Optional[bool] = user.__dict__.get("_global_holder")
-    if cached is not None:
-        return cached
-    if user.is_superuser:
-        result = True
-    elif user.groups.filter(role__is_global=True).exists():
-        result = True
-    else:
-        result = user.user_permissions.exists()
-    user.__dict__["_global_holder"] = result
-    return result
-
-
 def _finite_org_scope(user: "User") -> "QuerySet[Organization]":
-    """Member ∪ direct-grant ∪ delegated orgs — the finite reachable set.
+    """Member ∪ direct-grant ∪ delegated orgs — the finite switchable set.
 
-    Shared by :func:`reachable_orgs` (which expands to every org for a global
-    holder) and :func:`switchable_orgs` (the FE org list, which never does).
-    The delegated arm mirrors ``scopes()``: a delegation B→C is reachable only
-    when the user acts at B (member of B AND a direct Grant at B) with a role
-    that shares at least one permission with the delegation's role — so a
-    delegated org never appears when no permission in ``scopes()`` would ever
-    yield it.
+    Backs :func:`switchable_orgs` (the FE org list / switcher).  The delegated
+    arm mirrors ``scopes()``: a delegation B→C is reachable only when the user
+    acts at B (member of B AND a direct Grant at B) with a role that shares at
+    least one permission with the delegation's role — so a delegated org never
+    appears when no permission in ``scopes()`` would ever yield it.
     """
     from accounts.models import Grant, Organization, Role
 
@@ -160,31 +129,15 @@ def _finite_org_scope(user: "User") -> "QuerySet[Organization]":
     )
 
 
-def reachable_orgs(user: "User") -> "QuerySet[Organization]":
-    """The organizations *user* can act in (ADR 0001 §2.4, finding F24).
-
-    Membership, orgs with a direct user grant, orgs reachable through an
-    inherited delegation, and every organization for a global holder.  Lazy
-    subquery form — consumers use it directly as a filter or materialize it
-    (the per-org permission report).  The FE org list / switcher must use
-    :func:`switchable_orgs` instead — a global holder's reach is the "All"
-    mode (ADR 0001 §5.2 refinement), not an enumeration of every org.
-    """
-    from accounts.models import Organization
-
-    if global_holder(user):
-        return cast("QuerySet[Organization]", Organization.objects.all())
-    return _finite_org_scope(user)
-
-
 def switchable_orgs(user: "User") -> "QuerySet[Organization]":
     """The FE org list / switcher (ADR 0001 §5.2 refinement, §7 item 7).
 
     Member ∪ direct-grant ∪ delegated orgs — the orgs the user can switch to in
     the UI.  Deliberately NEVER expanded to every org for a global holder: a
-    global user's reach is the frontend "All" mode gated by
-    ``currentUser.permissions``, and org views are entered from there by id,
-    not by enumerating the platform.  Lazy subquery form, like ``reachable_orgs``.
+    global user's cross-org reach is expressed through unscoped reads
+    (``visible()`` never confines a global holder — ADR 0001 §2.6) and
+    ``currentUser.permissions``, not by enumerating the platform.  Lazy
+    subquery form.
     """
     return _finite_org_scope(user)
 
@@ -260,14 +213,13 @@ def invalidate_scope_cache(user: "User") -> None:
     instance never serves the stale decision (a cached ``ALL`` sentinel is the
     hard-stale case).  The same request-scope staleness applies to the newer
     global-tier and effective-report memos (``global_permissions`` /
-    ``global_holder`` / ``organization_effective_permissions``), so they are
-    dropped here too.  Org→org delegation rows have no single user principal,
-    and the selectors are consumed per request on fresh user instances, so
-    those flows need no per-user invalidation here.
+    ``organization_effective_permissions``), so they are dropped here too.
+    Org→org delegation rows have no single user principal, and the selectors
+    are consumed per request on fresh user instances, so those flows need no
+    per-user invalidation here.
     """
     user.__dict__.pop("_scope_cache", None)
     user.__dict__.pop("_global_permissions", None)
-    user.__dict__.pop("_global_holder", None)
     user.__dict__.pop("_org_effective_permissions", None)
 
 

@@ -2,9 +2,12 @@
 
 The contract the frontend gates on: ``currentUser.permissions`` is the GLOBAL
 permission list (superuser / global roles / user_permissions), and
-``currentUser.organizations`` is the GRANTS-BASED org list — membership, direct
-grants, inherited delegations, and all orgs for global holders — with per-org
-permissions now including grant-derived role permissions.
+``currentUser.organizations`` is the FINITE grants-based org list — membership,
+direct grants, inherited delegations, and never every org for a global holder
+(a global user's cross-org reach is unscoped reads + ``currentUser.permissions``,
+ADR 0001 §5.2) — with per-org ``permissions`` now EFFECTIVE (the global tier
+folded in per org where the backend enforces it there, plus grant-derived and
+legacy role permissions).
 """
 
 from accounts.groups import ORG_ADMIN
@@ -140,9 +143,9 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
     def test_global_holder_org_list_is_finite_membership_only(self) -> None:
         """A GSO sees NO orgs in the switcher unless member/granted there.
 
-        A global holder's reach is the "All" mode gated by
-        ``currentUser.permissions`` (ADR 0001 §5.2 refinement) — the FE org list
-        is never expanded to every org in the platform.
+        A global holder's cross-org reach is unscoped reads + ``currentUser.permissions``
+        (ADR 0001 §5.2) — the FE org list is never expanded to every org in the
+        platform (no "All" mode / every-org enumeration).
         """
         organization_recipe.make(name="Unowned Org")
         gso = baker.make(User)
@@ -236,7 +239,7 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         """A ``user_permission`` is 'acts anywhere' for reach, but the switcher stays finite.
 
         No membership or grant at an org → it does not appear in the FE org list;
-        the permission rides ``currentUser.permissions`` ("All" mode).
+        the permission rides ``currentUser.permissions`` and unscoped reads.
         """
         organization_recipe.make(name="Unjoined Perm Org")
         user = baker.make(User)
@@ -310,14 +313,21 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
 
 
 class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
-    """The FE union (per-org ∪ global) equals ``can()`` at each org.
+    """The org-scoped FE gate equals ``can()`` at each org (grant-only domain).
 
-    ``user_permissions`` are per-permission "acts anywhere", so the frontend's
-    ``hasPermission(P)`` at org O — ``P ∈ orgPermissions[O]`` or
-    ``P ∈ globalPermissions`` — must equal ``can(user, P, org=O)``.  Otherwise
-    the UI hides actions the backend allows or shows actions it refuses.
-    Fixtures span grant-only, user_permission-only, grant + unrelated
-    ``user_permission`` (the collision case), and a weak-role delegated holder.
+    ``hasPermission(P)`` at org O is a single membership test on O's EFFECTIVE
+    entry — the backend folds the global tier in per org where it is
+    enforceable (ADR 0001 §5.2, finding H2), so ``P ∈ entry[O]`` must equal
+    ``can(user, P, org=O)`` for the grant-only (shelters) domain: otherwise the
+    UI hides actions the backend allows or shows actions it refuses.  There is
+    no client-side union with ``currentUser.permissions`` — an org-scoped gate
+    never consults the global list (finding H2); the global tier reaches the
+    gate only through the fold.
+
+    Fixtures span scoped grant-only, grant + unrelated ``user_permission`` (the
+    collision case), a weak-role delegated holder, and a ``user_permission``
+    holder who is a member of the org (exercising the global-tier fold
+    non-vacuously).
     """
 
     SHELTER_PERMS = (
@@ -333,7 +343,7 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         self.shelter_role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
 
     def _assert_report_matches_can(self, user: User) -> None:
-        """For every reachable org and every shelter perm: report ≡ can()."""
+        """For every switchable org and every shelter perm: entry ≡ can()."""
         from common.permissions.selectors import can
         from organizations.models import Organization
 
@@ -351,17 +361,19 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
             """
         )
         self.assertIsNone(response.get("errors"))
-        global_perms = set(response["data"]["currentUser"]["permissions"])
+        # Org entries are EFFECTIVE (the global tier is folded in server-side),
+        # so the gate is a single membership test — no client union.  The query
+        # still selects ``permissions`` to exercise the global-list transport.
         orgs = {o["name"]: set(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
 
         for org_name, org_perms in orgs.items():
             org = Organization.objects.get(name=org_name)
             for perm in self.SHELTER_PERMS:
-                reported = perm in org_perms or perm in global_perms
+                reported = perm in org_perms
                 self.assertEqual(
                     reported,
                     can(user, perm, org=org),
-                    f"{perm} at {org_name}: report says {reported}, can() says otherwise",
+                    f"{perm} at {org_name}: entry says {reported}, can() says otherwise",
                 )
 
     def test_scoped_grant_only(self) -> None:
@@ -378,6 +390,24 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
         """An unscoped user_permission alone: carried globally, can() applies everywhere."""
         organization_recipe.make(name="Equiv Unjoined Org")
         user = baker.make(User)
+        app_label, codename = "shelters.view_shelter".split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_user_permission_holder_member_org_folds_the_global_tier(self) -> None:
+        """A ``user_permission`` holder who is a member: the entry folds the grant-only perm.
+
+        ``can()`` honors the ``user_permission`` at any org (``scopes()`` is ALL
+        for it), so the effective entry at a member org must carry it — the
+        non-vacuous case the plain ``user_permission``-only fixture cannot reach
+        (it has no switchable orgs).  The non-held shelter perms must stay out
+        of the entry and remain ``can()``-false.
+        """
+        org = organization_recipe.make(name="Equiv Perm Member Org")
+        user = baker.make(User)
+        org.add_user(user)
         app_label, codename = "shelters.view_shelter".split(".")
         user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
         self.graphql_client.force_login(user)
