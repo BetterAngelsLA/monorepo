@@ -4,7 +4,7 @@ import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useReservations, useUpdateReservation } from '../../../../hooks';
+import { useReservations, useShelterPermissions, useUpdateReservation } from '../../../../hooks';
 import { updateReservationMeta } from '../../../../hooks/useUpdateReservation/__generated__/useUpdateReservation_meta.generated';
 import {
   shelterCreateResourceRoute,
@@ -57,6 +57,7 @@ export function Reservations({ shelterId }: { shelterId: string }) {
   const { reservations, loading } = useReservations(shelterId);
 
   const { updateReservation } = useUpdateReservation({ shelterId });
+  const { canAddReservation } = useShelterPermissions();
 
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
 
@@ -182,18 +183,20 @@ export function Reservations({ shelterId }: { shelterId: string }) {
         />
       )}
 
-      <div className="fixed bottom-6 right-6 text-sm z-20 ">
-        <Button
-          leftIcon={<Plus />}
-          rightIcon={false}
-          variant="floating"
-          onClick={() =>
-            navigate(shelterCreateResourceRoute(shelterId, 'reservation'))
-          }
-        >
-          Create Reservation
-        </Button>
-      </div>
+      {canAddReservation && (
+        <div className="fixed bottom-6 right-6 text-sm z-20 ">
+          <Button
+            leftIcon={<Plus />}
+            rightIcon={false}
+            variant="floating"
+            onClick={() =>
+              navigate(shelterCreateResourceRoute(shelterId, 'reservation'))
+            }
+          >
+            Create Reservation
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
+import { useShelterPermissions } from '../../../../hooks';
 import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
@@ -80,6 +81,12 @@ export function RoomTable({
   headerStyle,
   rowStyle,
 }: RoomTableProps) {
+  const {
+    canAddReservation,
+    canAddRoom,
+    canDeleteRoom,
+    canEditRoom,
+  } = useShelterPermissions();
   const columns: TableColumn<Room>[] = useMemo(
     () => [
       {
@@ -118,7 +125,7 @@ export function RoomTable({
           role="group"
           aria-label="Room actions"
         >
-          {room.status === RoomStatusChoices.InTurnaround && (
+          {room.status === RoomStatusChoices.InTurnaround && canEditRoom && (
             <Button
               type="button"
               variant="confirm"
@@ -126,7 +133,7 @@ export function RoomTable({
               onClick={() => onMarkReady(room.id)}
             />
           )}
-          {room.status === RoomStatusChoices.Available && (
+          {room.status === RoomStatusChoices.Available && canAddReservation && (
             <Button
               type="button"
               variant="edit"
@@ -136,27 +143,33 @@ export function RoomTable({
               onClick={() => onReserve(room.id)}
             />
           )}
-          <Button
-            type="button"
-            variant="edit"
-            className="text-[#747A82]"
-            aria-label="Clone room"
-            leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone(room.id)}
-          />
-          <Button
-            type="button"
-            variant="edit"
-            className="text-[#747A82]"
-            aria-label="Edit room"
-            onClick={() => onEdit(room.id)}
-          />
-          <Button
-            type="button"
-            variant="trash"
-            aria-label="Delete room"
-            onClick={() => onDeleteRooms([room.id], room.name)}
-          />
+          {canAddRoom && (
+            <Button
+              type="button"
+              variant="edit"
+              className="text-[#747A82]"
+              aria-label="Clone room"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
+              onClick={() => onClone(room.id)}
+            />
+          )}
+          {canEditRoom && (
+            <Button
+              type="button"
+              variant="edit"
+              className="text-[#747A82]"
+              aria-label="Edit room"
+              onClick={() => onEdit(room.id)}
+            />
+          )}
+          {canDeleteRoom && (
+            <Button
+              type="button"
+              variant="trash"
+              aria-label="Delete room"
+              onClick={() => onDeleteRooms([room.id], room.name)}
+            />
+          )}
         </div>
       )}
       trailingColumnWidth="140px"
