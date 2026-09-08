@@ -210,3 +210,33 @@ class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
     def test_rejects_invalid_contact_id(self) -> None:
         with self.assertRaises(ValidationError):
             self._update([{"id": "not-an-int", "contact_name": "Ada", "contact_number": "2125550100"}])
+
+    def test_rejects_invalid_phone(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._update([{"contact_name": "Ada", "contact_number": "not-a-phone"}])
+
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
+    def test_rejects_invalid_phone_on_update(self) -> None:
+        existing = ContactInfo.objects.create(shelter=self.shelter, contact_name="Ada", contact_number="2125550100")
+        original_number = str(existing.contact_number)
+
+        with self.assertRaises(ValidationError):
+            self._update([{"id": existing.pk, "contact_name": "Ada", "contact_number": "not-a-phone"}])
+
+        existing.refresh_from_db()
+        self.assertEqual(str(existing.contact_number), original_number)
+
+    def test_rejects_invalid_email(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._update(
+                [
+                    {
+                        "contact_name": "Ada",
+                        "contact_number": "2125550100",
+                        "contact_email": "not-an-email",
+                    }
+                ]
+            )
+
+        self.assertEqual(self.shelter.additional_contacts.count(), 0)

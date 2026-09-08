@@ -129,6 +129,9 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
     Entries carrying an ``id`` update the matching existing row in place
     (preserving its PK and pghistory audit trail); entries without an ``id``
     are created; any existing row absent from the submitted payload is deleted.
+
+    Every contact is ``full_clean()``-validated before it is written, so invalid
+    phone numbers and emails are rejected rather than persisted.
     """
     existing = {c.pk: c for c in shelter.additional_contacts.all()}
     keep_ids: set[int] = set()
@@ -155,11 +158,14 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
             if obj is not None:
                 for key, value in data.items():
                     setattr(obj, key, value)
+                obj.full_clean()
                 obj.save()
                 keep_ids.add(obj.pk)
                 continue
 
-        new_objs.append(ContactInfo(shelter=shelter, **data))
+        contact = ContactInfo(shelter=shelter, **data)
+        contact.full_clean()
+        new_objs.append(contact)
 
     shelter.additional_contacts.exclude(pk__in=keep_ids).delete()
     ContactInfo.objects.bulk_create(new_objs)
