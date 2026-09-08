@@ -5,6 +5,7 @@ query currentOrgUser {
     firstName
     lastName
     email
+    permissions
     organizations: organizationsOrganization {
       id
       name

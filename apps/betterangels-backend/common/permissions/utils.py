@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import reduce
+from functools import lru_cache, reduce
 from operator import or_
 from typing import Any, Sequence, Tuple, Type, TypeVar
 
@@ -73,6 +73,23 @@ def register_model_permissions() -> None:
 
         enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def modeled_permission_strings() -> frozenset[str]:
+    """The product-modeled permission strings — the catalog the FE gates on.
+
+    Union across the permission registry (``@register_permission`` enums plus
+    auto-discovered model ``PermissionSet``s) — the exact catalog
+    ``manage.py generate_permission_enums`` emits as the FE ``PermissionEnum``.
+    ``global_permissions`` bounds the global list to it so
+    ``currentUser.permissions`` never ships permissions the product cannot gate on.
+
+    Memoized; the registry is complete by query time (``@register_permission``
+    fires at import; model discovery runs on the first call here).
+    """
+    register_model_permissions()  # discover model PermissionSets (idempotent)
+    return frozenset(str(member.value) for enum_cls in get_registered_permission_enums() for member in enum_cls)
 
 
 def perm(codename: str, description: str) -> str:

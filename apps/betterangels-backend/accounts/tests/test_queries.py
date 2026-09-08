@@ -218,7 +218,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             }
         """
 
-        expected_query_count = 2
+        # EFFECTIVE per-org report (ADR 0001 §5.2): user fetch + finite
+        # switchable-org-list filter + organization_effective_permissions()
+        # (switchable org_ids materialize + the batched four-query scoped report
+        # + the memoized two-query global probe).  Bounded and flat in the org
+        # count — computed once per request and memoized on the user instance.
+        expected_query_count = 9
 
         if templates:
             omb.add_roles(user, *templates)

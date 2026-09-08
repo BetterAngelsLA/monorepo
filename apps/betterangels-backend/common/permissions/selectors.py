@@ -15,13 +15,14 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from django.db.models import Exists, OuterRef, Q, Subquery
 
 if TYPE_CHECKING:
     from accounts.models import User
     from django.db.models import Model, QuerySet
+    from organizations.models import Organization
 
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
@@ -58,6 +59,85 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
         permissions__content_type__app_label=app_label,
         permissions__codename=codename,
     ).values("pk")
+
+
+def global_permissions(user: "User") -> list[str]:
+    """Global-tier permission list (ADR 0001 §2.4, finding F24).
+
+    Superuser → every product-modeled permission (the registry the FE
+    ``PermissionEnum`` is generated from), never the whole DB catalog, which
+    would ship admin-internal permissions (``auth.*``, ``admin.*``, …) the
+    product cannot gate on; otherwise direct ``user_permissions`` ∪ global-Role
+    permissions, bounded to the modeled set.  Scoped (Grant) permissions are
+    per-org and reported there, not here.
+
+    Request-scoped and memoized on the user instance (house pattern: ``scopes``).
+    """
+    from django.contrib.auth.models import Permission
+
+    cached: Optional[list[str]] = user.__dict__.get("_global_permissions")
+    if cached is not None:
+        return cached
+
+    from common.permissions.utils import modeled_permission_strings
+
+    modeled = modeled_permission_strings()
+    if user.is_superuser:
+        rows: list[tuple[str, str]] = list(Permission.objects.all().values_list("content_type__app_label", "codename"))
+    else:
+        direct = user.user_permissions.values_list("content_type__app_label", "codename")
+        role_held = Permission.objects.filter(group__role__is_global=True, group__user=user).values_list(
+            "content_type__app_label", "codename"
+        )
+        rows = [*direct, *role_held]
+    result = sorted({f"{app}.{codename}" for app, codename in rows if f"{app}.{codename}" in modeled})
+    user.__dict__["_global_permissions"] = result
+    return result
+
+
+def _finite_org_scope(user: "User") -> "QuerySet[Organization]":
+    """Member ∪ direct-grant ∪ delegated orgs — the finite switchable set.
+
+    Backs :func:`switchable_orgs` (the FE org list / switcher).  The delegated
+    arm mirrors ``scopes()``: a delegation B→C is reachable only when the user
+    acts at B (member of B AND a direct Grant at B) with a role that shares at
+    least one permission with the delegation's role — so a delegated org never
+    appears when no permission in ``scopes()`` would ever yield it.
+    """
+    from accounts.models import Grant, Organization, Role
+
+    roles_at_b = Role.objects.filter(
+        grants__principal_user=user,
+        grants__scope_org=OuterRef("principal_org_id"),
+        grants__scope_org__users=user,
+    )
+    delegated = Grant.objects.filter(
+        role__permissions__in=Subquery(roles_at_b.values("permissions__pk")),
+        principal_org__isnull=False,
+        scope_org__isnull=False,
+    ).values("scope_org")
+
+    return cast(
+        "QuerySet[Organization]",
+        Organization.objects.filter(
+            Q(pk__in=Organization.objects.filter(users=user).values("pk"))
+            | Q(pk__in=Grant.objects.filter(principal_user=user, scope_org__isnull=False).values("scope_org"))
+            | Q(pk__in=delegated)
+        ),
+    )
+
+
+def switchable_orgs(user: "User") -> "QuerySet[Organization]":
+    """The FE org list / switcher (ADR 0001 §5.2 refinement, §7 item 7).
+
+    Member ∪ direct-grant ∪ delegated orgs — the orgs the user can switch to in
+    the UI.  Deliberately NEVER expanded to every org for a global holder: a
+    global user's cross-org reach is expressed through unscoped reads
+    (``visible()`` never confines a global holder — ADR 0001 §2.6) and
+    ``currentUser.permissions``, not by enumerating the platform.  Lazy
+    subquery form.
+    """
+    return _finite_org_scope(user)
 
 
 def scopes(user: "User", perm: str) -> Any:
@@ -121,19 +201,24 @@ def scopes(user: "User", perm: str) -> Any:
 
 
 def invalidate_scope_cache(user: "User") -> None:
-    """Drop *user*'s memoized ``scopes`` decision.
+    """Drop *user*'s memoized authority decisions (scopes + global tier + report).
 
-    The memoized value lives in ``user.__dict__`` — not a model field — so
-    ``refresh_from_db()`` does not clear it; this is the only way to
+    The memoized values live in ``user.__dict__`` — not model fields — so
+    ``refresh_from_db()`` does not clear them; this is the only way to
     invalidate.  Authority write services (``grant_create`` / ``grant_delete``
     for a user principal) call this after changing *user*'s grants so a
     request that grants/revokes and then re-reads authority on the same user
     instance never serves the stale decision (a cached ``ALL`` sentinel is the
-    hard-stale case).  Org→org delegation rows have no single user principal,
-    and the scoped selectors are consumed per request on fresh user instances,
-    so those flows need no per-user invalidation here.
+    hard-stale case).  The same request-scope staleness applies to the newer
+    global-tier and effective-report memos (``global_permissions`` /
+    ``organization_effective_permissions``), so they are dropped here too.
+    Org→org delegation rows have no single user principal, and the selectors
+    are consumed per request on fresh user instances, so those flows need no
+    per-user invalidation here.
     """
     user.__dict__.pop("_scope_cache", None)
+    user.__dict__.pop("_global_permissions", None)
+    user.__dict__.pop("_org_effective_permissions", None)
 
 
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":
