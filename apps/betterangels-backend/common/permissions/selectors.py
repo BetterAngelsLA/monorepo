@@ -62,24 +62,16 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
 
 
 def global_permissions(user: "User") -> list[str]:
-    """The global-tier permission list (ADR 0001 §2.4, finding F24).
+    """Global-tier permission list (ADR 0001 §2.4, finding F24).
 
-    The shared contract the frontend gates global-tier features on: a
-    superuser holds every PRODUCT-MODELED permission (the registry the FE
-    ``PermissionEnum`` is generated from) — never the whole DB catalog, which
+    Superuser → every product-modeled permission (the registry the FE
+    ``PermissionEnum`` is generated from), never the whole DB catalog, which
     would ship admin-internal permissions (``auth.*``, ``admin.*``, …) the
-    product cannot gate on; otherwise the union of direct ``user_permissions``
-    and permissions carried by global Roles in ``user.groups``, bounded to the
-    modeled set.  Scoped (Grant) permissions are NOT included here — they are
-    per-organization and reported per org.
+    product cannot gate on; otherwise direct ``user_permissions`` ∪ global-Role
+    permissions, bounded to the modeled set.  Scoped (Grant) permissions are
+    per-org and reported there, not here.
 
-    The modeled bound keeps the wire contract honest ("permissions the UI can
-    gate on") and removes the need for every FE consumer to filter unmodeled
-    backend permissions out themselves.
-
-    Request-scoped and memoized on the user instance (the house pattern —
-    ``scopes``), so ``currentUser.permissions`` and every effective per-org
-    entry in the same request share one lookup.
+    Request-scoped and memoized on the user instance (house pattern: ``scopes``).
     """
     from django.contrib.auth.models import Permission
 

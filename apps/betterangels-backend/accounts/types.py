@@ -102,20 +102,19 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: QuerySet[Organization],
         info: Info,
     ) -> QuerySet[Organization]:
-        """The FE org list / switcher for *info*'s user (ADR 0001 §5.2 refinement).
+        """The FE org list / switcher for *info*'s user (ADR 0001 §5.2).
 
         Builds from the FULL ``Organization`` table, not the caller's
         queryset: the ``currentUser.organizationsOrganization`` field hands
         this the user's membership relation, which is empty for a non-member
         grant holder.  Returns the FINITE switchable set — membership, direct
         grants, inherited delegations — the orgs the user can select as an
-        org-scoped context in the UI.  It is never expanded to every org: a
-        global holder's cross-org reach is expressed through unscoped reads
-        (``visible()`` never confines a global holder) and
-        ``currentUser.permissions``, not by enumerating the platform.  The
-        per-org ``permissions`` field is EFFECTIVE (global folded in) and
-        resolved from ``organization_permissions``, so this stays a lazy,
-        annotation-free filter.
+        org-scoped context; it is never expanded to every org for a global
+        holder (their reach is unscoped reads + ``currentUser.permissions``,
+        ADR 0001 §5.2).  The per-org ``permissions`` field is EFFECTIVE
+        (global folded in) and resolved from
+        :func:`accounts.selectors.organization_effective_permissions`, so this
+        stays a lazy, annotation-free filter.
         """
         from common.permissions.selectors import switchable_orgs
 

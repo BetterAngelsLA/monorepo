@@ -1,14 +1,15 @@
 """Frontend reachability (ADR 0001 phase 3, finding F24).
 
-The contract the frontend gates on: ``currentUser.permissions`` is the GLOBAL
-permission list (superuser → every product-modeled permission; otherwise
-global roles / user_permissions, bounded to the modeled set), and
-``currentUser.organizations`` is the FINITE grants-based org list — membership,
-direct grants, inherited delegations, and never every org for a global holder
-(a global user's cross-org reach is unscoped reads + ``currentUser.permissions``,
-ADR 0001 §5.2) — with per-org ``permissions`` now EFFECTIVE (the global tier
-folded in per org where the backend enforces it there, plus grant-derived and
-legacy role permissions).
+The contract the frontend gates on:
+
+- ``currentUser.permissions`` — the GLOBAL permission list: superuser → every
+  product-modeled permission, otherwise global Roles / ``user_permissions``
+  (bounded to the modeled set).
+- ``currentUser.organizations`` — the FINITE grants-based org list (membership,
+  direct grants, inherited delegations); never every org for a global holder —
+  their cross-org reach is unscoped reads + ``currentUser.permissions``.
+- per-org ``permissions`` — EFFECTIVE: org-scoped perms (grants, delegations,
+  legacy groups) plus the global tier folded in where the backend enforces it.
 """
 
 from accounts.groups import ORG_ADMIN
@@ -327,18 +328,16 @@ class CurrentUserReportCanEquivalenceTestCase(GraphQLBaseTestCase):
     """The org-scoped FE gate equals ``can()`` at each org (grant-only domain).
 
     ``hasPermission(P)`` at org O is a single membership test on O's EFFECTIVE
-    entry — the backend folds the global tier in per org where it is
-    enforceable (ADR 0001 §5.2, finding H2), so ``P ∈ entry[O]`` must equal
-    ``can(user, P, org=O)`` for the grant-only (shelters) domain: otherwise the
-    UI hides actions the backend allows or shows actions it refuses.  There is
-    no client-side union with ``currentUser.permissions`` — an org-scoped gate
-    never consults the global list (finding H2); the global tier reaches the
-    gate only through the fold.
+    entry (the global tier is folded in server-side where enforceable, finding
+    H2), so ``P ∈ entry[O]`` must equal ``can(user, P, org=O)`` for the
+    grant-only (shelters) domain — otherwise the UI hides actions the backend
+    allows or shows actions it refuses.  No client union with
+    ``currentUser.permissions``: the global tier reaches the gate only through
+    the fold.
 
     Fixtures span scoped grant-only, grant + unrelated ``user_permission`` (the
     collision case), a weak-role delegated holder, and a ``user_permission``
-    holder who is a member of the org (exercising the global-tier fold
-    non-vacuously).
+    holder who is a member of the org (exercising the fold non-vacuously).
     """
 
     SHELTER_PERMS = (
