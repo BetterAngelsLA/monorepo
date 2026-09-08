@@ -244,23 +244,35 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
 def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     """EFFECTIVE per-org permission lists (ADR 0001 §5.2 refinement, §7 item 7).
 
-    ``global_permissions(user) ∪ organization_permissions(user)`` per org — the
-    global tier is org-independent (user_permissions + global roles +
-    superuser; there is no org column to join on), so the merge happens at the
-    REPORT level: one global lookup + the batched per-org report, combined once
-    and memoized on the user instance (house pattern: ``scopes`` /
-    ``global_holder``).  An org entry is the complete "what can I do fully
-    here" answer — a GSO who is also a member/delegated at an org sees global
-    ∪ that org's grants — and the FE gate is a single membership test.
+    ``foldable global_permissions(user) ∪ organization_permissions(user)`` per
+    org — the merge happens at the REPORT level: one global lookup + the
+    batched per-org report, combined once and memoized on the user instance
+    (house pattern: ``scopes`` / ``global_holder``).
+
+    The global fold is DOMAIN-AWARE (:data:`common.permissions.domain.
+    GLOBAL_TIER_ORG_APPS`): only grant-only (and, later, dual) domains treat the
+    global tier as enforceable at any org (``can()``/``scopes()`` return ALL), so
+    only their global permissions fold into an org entry.  Legacy-only domains
+    (member management, reports, teams) are enforced per org by ``HasOrgPerm``
+    → org ``PermissionGroup`` rows, which never consult the global tier —
+    folding their global permissions in would advertise controls the backend
+    refuses (e.g. a superuser with no group at that org, or a ``user_permission``
+    on a legacy-only perm).  Those permissions reach an entry only through the
+    org-scoped legacy arm (``organization_permissions``).
+
+    The superuser case is therefore NOT short-circuited: a superuser's global
+    list carries every permission, but only the grant-only/dual subset folds,
+    and their org-group (legacy) permissions still come from the scoped report —
+    so an entry can only claim what ``can()`` or ``HasOrgPerm`` would honor at
+    that org.
 
     Bounded to the FINITE switchable set (:func:`common.permissions.selectors.
     switchable_orgs`) — the orgs the FE renders — never the global all-orgs
-    expansion.  Superuser short-circuit: global = every permission, which
-    subsumes the org-scoped report, so no per-org queries run for a superuser.
-
-    Result includes every switchable org (an org with no scoped authority still
-    renders the global tier, possibly ``[]``), so consumers can index directly.
+    expansion.  Result includes every switchable org (an org with no scoped
+    authority still renders the foldable global tier, possibly ``[]``), so
+    consumers can index directly.
     """
+    from common.permissions.domain import GLOBAL_TIER_ORG_APPS
     from common.permissions.selectors import global_permissions, switchable_orgs
 
     cached = user.__dict__.get("_org_effective_permissions")
@@ -268,13 +280,8 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
         return cached
 
     org_ids = set(switchable_orgs(user).values_list("pk", flat=True))
-    global_list = global_permissions(user)  # memoized inside the selector
-    if user.is_superuser:
-        result = {org_id: global_list for org_id in org_ids}
-    else:
-        scoped = organization_permissions(user, org_ids=org_ids)
-        result = {
-            org_id: sorted(set(global_list) | set(scoped.get(org_id, []))) for org_id in org_ids
-        }
+    scoped = organization_permissions(user, org_ids=org_ids)
+    foldable_global = [perm for perm in global_permissions(user) if perm.split(".", 1)[0] in GLOBAL_TIER_ORG_APPS]
+    result = {org_id: sorted(set(foldable_global) | set(scoped.get(org_id, []))) for org_id in org_ids}
     user.__dict__["_org_effective_permissions"] = result
     return result

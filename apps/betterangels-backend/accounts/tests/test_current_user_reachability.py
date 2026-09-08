@@ -169,11 +169,14 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertIn("shelters.change_shelter", orgs["GSO Member Org"])
 
     def test_superuser_member_org_entry_is_effective_and_list_is_finite(self) -> None:
-        """A superuser's member org renders the FULL global set; no org expansion.
+        """A superuser's member org entry folds grant-only global perms, not legacy-only ones.
 
-        Superuser short-circuit: global = every permission, which subsumes the
-        org-scoped report — no scoped grants exist here, yet the entry shows
-        platform permissions.  The org list stays finite (no unowned orgs).
+        ``currentUser.permissions`` carries every permission, but the org entry
+        only claims what is enforceable at the org: grant-only (shelters) global
+        perms fold in (``can()`` honors the global tier at any org), while
+        legacy-only-domain perms (e.g. ``accounts.view_user``) are group-gated
+        even for superusers (``HasOrgPerm`` never consults the global tier).  The
+        org list stays finite (no unowned orgs).
         """
         org = organization_recipe.make(name="Super Member Org")
         organization_recipe.make(name="Unowned Super Org")
@@ -183,8 +186,12 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
 
         orgs = self._orgs()
         self.assertIn("Super Member Org", orgs)
-        self.assertIn("accounts.view_user", orgs["Super Member Org"])
+        # Grant-only global perms are enforceable at any org via can().
+        self.assertIn("shelters.view_shelter", orgs["Super Member Org"])
         self.assertIn("shelters.change_shelter", orgs["Super Member Org"])
+        # Legacy-only-domain perms stay group-gated even for a superuser.
+        self.assertNotIn("accounts.view_user", orgs["Super Member Org"])
+        self.assertNotIn("reports.view_reports", orgs["Super Member Org"])
         self.assertNotIn("Unowned Super Org", orgs)
 
     def test_consultant_grant_without_membership_does_not_inherit_delegations(self) -> None:
@@ -427,6 +434,12 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
     and the domain's app_label moves into ``LEGACY_INERT_APPS``.  These tests
     are the tripwire: they fail the moment the report and the enforcement
     predicate disagree.
+
+    The global-tier × legacy-only cross product is pinned here too: a superuser
+    or ``user_permission`` holder carries these permissions in
+    ``currentUser.permissions`` (acts-anywhere for ``scopes()``), but the legacy
+    predicate never consults the global tier — so the effective per-org fold
+    must NOT advertise them at an org the user has no group in (finding H2).
     """
 
     # The ORG_ADMIN template is the canonical legacy role for member
@@ -507,3 +520,80 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         self.assertEqual(global_perms, set())
         for perm in self.LEGACY_PERMS:
             self.assertFalse(self._legacy_holds(user, perm), f"{perm} held without any PermissionGroup")
+
+    def test_superuser_org_entry_is_group_scoped_for_legacy_only_domains(self) -> None:
+        """A superuser's per-org entry folds grant-only global perms, not legacy-only ones.
+
+        ``currentUser.permissions`` (the global list) carries every permission —
+        including member management / reports / teams — but those domains'
+        per-org enforcement is ``HasOrgPerm`` → org ``PermissionGroup`` rows,
+        which never consult the global tier (no superuser bypass).  Advertising
+        them at an org where the superuser has no group would show controls the
+        backend refuses; grant-only (shelters) perms DO fold, because there the
+        global tier is enforceable at any org via ``can()``.
+        """
+        user = baker.make(User, is_superuser=True)
+        self.org.add_user(user)
+        self.graphql_client.force_login(user)
+
+        global_perms, orgs = self._report()
+        org_perms = orgs[self.org.name]
+
+        # The global list still reports everything…
+        self.assertIn("reports.view_reports", global_perms)
+        self.assertIn("shelters.view_shelter", global_perms)
+
+        # …but the org entry only claims what is enforceable at the org.
+        self.assertIn("shelters.view_shelter", org_perms)  # grant-only: folds
+        self.assertIn("shelters.change_shelter", org_perms)  # grant-only: folds
+        self.assertNotIn("reports.view_reports", org_perms)  # legacy-only: group-gated
+        self.assertNotIn("organizations.add_org_member", org_perms)
+        self.assertNotIn("teams.add_team", org_perms)
+        for perm in ("reports.view_reports", "organizations.add_org_member", "teams.add_team"):
+            self.assertFalse(self._legacy_holds(user, perm), f"{perm} enforceable for a groupless superuser")
+
+    def test_superuser_org_entry_folds_legacy_perms_once_in_the_group(self) -> None:
+        """…and adding the superuser to the org's group surfaces the legacy perms.
+
+        The scoped (legacy) arm runs even for a superuser — the old
+        "global subsumes everything" short-circuit would have hidden these.
+        """
+        user = baker.make(User, is_superuser=True)
+        self.org.add_user(user)
+        OrgRoleManager(self.org).add_roles(user, ORG_ADMIN)
+        self.graphql_client.force_login(user)
+
+        _, orgs = self._report()
+        org_perms = orgs[self.org.name]
+        self.assertIn("organizations.add_org_member", org_perms)
+        self.assertIn("reports.view_reports", org_perms)
+        for perm in ("organizations.add_org_member", "reports.view_reports", "teams.add_team"):
+            self.assertTrue(self._legacy_holds(user, perm), f"{perm} not enforceable for a grouped superuser")
+
+    def test_user_permission_on_legacy_only_domain_is_not_org_enforceable(self) -> None:
+        """A ``user_permission`` on a legacy-only perm is global-tier but NOT org-enforceable.
+
+        ``scopes()``/``global_permissions`` treat a ``user_permission`` as
+        acts-anywhere (``can()`` would even say yes at the org), but the legacy
+        domain's per-org gate reads org groups only — so it must not surface in
+        the org entry (the FE must not gate that org's legacy-domain UI on the
+        global list).  A grant-only ``user_permission`` DOES fold, because
+        ``can()`` honors the global tier there.
+        """
+        user = baker.make(User)
+        self.org.add_user(user)
+        teams_perm = Permission.objects.get(codename="add_team", content_type__app_label="teams")
+        shelters_perm = Permission.objects.get(codename="view_shelter", content_type__app_label="shelters")
+        user.user_permissions.add(teams_perm, shelters_perm)
+        self.graphql_client.force_login(user)
+
+        global_perms, orgs = self._report()
+        org_perms = orgs[self.org.name]
+
+        # Both are global-tier…
+        self.assertIn("teams.add_team", global_perms)
+        self.assertIn("shelters.view_shelter", global_perms)
+        # …but only the grant-only one is enforceable at the org.
+        self.assertNotIn("teams.add_team", org_perms)
+        self.assertIn("shelters.view_shelter", org_perms)
+        self.assertFalse(self._legacy_holds(user, "teams.add_team"))
