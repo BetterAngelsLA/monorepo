@@ -72,7 +72,7 @@ SHARED vs org-owned vs per-record, per model) is designed in RFC 0002
 | **global tier** | a global `Role` held directly in `user.groups` (never a `Grant`); reach = every row of every permitted model (`ALL`) | ADR §2.1/§2.4 |
 | **org tier** | a `Grant` at an organization; reach = rows whose org is in `scopes()` | ADR §2.4 |
 | **object arm** | a `Grant` on a single record; per-record sharing, user-principal only, whitelist-gated | ADR §2.5 |
-| **delegation** | an org-principal `Grant`: org A holds role R *at* org B, so A's members who hold R at A act at B (one hop, role-keyed, no amplification) | ADR §2.2/§3, §2.9 Ex. 4 |
+| **delegation** | an org-principal `Grant`: org A holds role R *at* org B, so A's members who hold R at A act at B (one hop, permission-matched, no amplification) | ADR §2.2/§3, §2.9 Ex. 4 |
 | **`scopes()`** | the function that answers "where does this user hold this permission": `ALL` or a set of org ids | ADR §2.4 |
 | **`org_via`** | the per-model declaration of how a row reaches an org (`()` = own FK; hop tuples; `None` = platform-shared) | ADR §2.3 |
 | **read/write tier** | the per-model choice of read scope (`SHARED`/`ORG`) and write scope (`SHARED`/`ORG`/`CREATOR`/`UPLOADER`/`OBJECT`) | RFC 0002 |

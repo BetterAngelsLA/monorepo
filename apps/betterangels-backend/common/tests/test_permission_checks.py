@@ -6,6 +6,7 @@ from common.models import OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_grant_never_references_global_role,
+    check_object_grant_principal_is_a_user,
     check_object_grant_targets_whitelisted_model,
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
@@ -57,6 +58,36 @@ class GrantSystemChecksTestCase(TestCase):
         )
 
         self.assertTrue(any(e.id == "permissions.E003" for e in check_object_grant_targets_whitelisted_model(None)))
+
+    def test_e006_fires_for_an_org_principal_object_grant(self) -> None:
+        role = Role.objects.create(name="Scoped Role")
+        Grant.objects.create(
+            principal_org=self.org,
+            role=role,
+            scope_object_type=ContentType.objects.get_for_model(Shelter),
+            scope_object_id=1,
+        )
+
+        self.assertTrue(any(e.id == "permissions.E006" for e in check_object_grant_principal_is_a_user(None)))
+
+    def test_e006_is_quiet_for_a_user_principal_object_grant(self) -> None:
+        role = Role.objects.create(name="Scoped Role")
+        Grant.objects.create(
+            principal_user=self.user,
+            role=role,
+            scope_object_type=ContentType.objects.get_for_model(Shelter),
+            scope_object_id=1,
+        )
+
+        self.assertEqual(_errors_with(check_object_grant_principal_is_a_user(None), "permissions.E006"), [])
+
+    def test_e006_is_quiet_for_an_org_principal_org_scope_grant(self) -> None:
+        """Org→org delegation (``scope_org``) is not an object grant."""
+        role = Role.objects.create(name="Scoped Role")
+        other_org = organization_recipe.make(name="Delegation Target")
+        Grant.objects.create(principal_org=self.org, role=role, scope_org=other_org)
+
+        self.assertEqual(_errors_with(check_object_grant_principal_is_a_user(None), "permissions.E006"), [])
 
     def test_e004_fires_for_a_multi_valued_hop(self) -> None:
         class MultiValued(OrgScoped):

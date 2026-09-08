@@ -30,7 +30,15 @@ from .forms import (
     UserChangeForm,
     UserCreationForm,
 )
-from .models import ExtendedOrganizationInvitation, OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
+from .models import (
+    ExtendedOrganizationInvitation,
+    Grant,
+    OrganizationProfile,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    Role,
+    User,
+)
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -364,9 +372,168 @@ class MemberInviteAdminMixin:
         }
 
 
+def _scoped_role_queryset() -> Any:
+    """Grant forms must not offer global Roles.
+
+    A global Role is held in ``user.groups`` (the global tier), never in a
+    Grant — ``permissions.E002`` makes a grant referencing one a deploy-time
+    error, so the admin refuses the choice up front instead of writing a row
+    that only a check will flag.
+    """
+    return Role.objects.filter(is_global=False)
+
+
+class SuperuserOnlyWritesMixin:
+    """Grant surfaces are write-only for superusers.
+
+    Grants are the whole authorization graph (ADR 0001 §2.2): add/change/delete
+    are superuser-only wherever the surface lives.  Django admin inlines gate on
+    the inline *model's* auth permissions (``add_grant`` etc.) rather than on a
+    sibling ``ModelAdmin``'s overrides — so the Grant inlines on the
+    Organization page would let staff holding those perms write grants even
+    though ``GrantAdmin`` refuses them.  All three surfaces share this guard.
+    ``has_view_permission`` stays default: staff may still view where Django
+    grants them ``view_grant``.
+
+    On the Organization page the grant inlines are additionally hidden entirely
+    for non-superusers (:meth:`CustomOrganizationAdmin.get_inline_instances`):
+    a read-only inline still builds a formset that Django validates and later
+    reads in ``construct_change_message``, so filtering the formsets at save
+    time alone would crash staff org edits.  No formset, no forged row, no
+    crash.
+    """
+
+    def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.is_superuser
+
+
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    """Code-owned roles (ADR 0001 §2.2) — read-only in the admin.
+
+    Roles are defined by code (``RoleDef``/``sync_roles``) and re-synced on
+    every migrate; editing one here would be silently undone, so the admin
+    only reads.
+    """
+
+    list_display = ("id", "name", "is_global")
+    list_filter = ("is_global",)
+    search_fields = ("name",)
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+
+@admin.register(Grant)
+class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
+    """Audit + administer grants (ADR 0001 §2.2) — user grants and org→org delegations.
+
+    ``principal_user`` vs ``principal_org`` (exactly one) and ``scope_org`` vs
+    object scope (exactly one) are enforced by the model constraints and a
+    global Role can never be granted (:meth:`Grant.clean`, ``permissions.E002``).
+    Grants are the whole authorization graph, so add/change/delete are
+    superuser-only (:class:`SuperuserOnlyWritesMixin`); staff may still view
+    where Django grants them ``view_grant``.
+    """
+
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    list_select_related = (
+        "principal_user",
+        "principal_org",
+        "role",
+        "scope_org",
+        "scope_object_type",
+    )
+    list_display = (
+        "id",
+        "principal",
+        "role",
+        "scope",
+    )
+    list_filter = ("role", "scope_org", "principal_org", "scope_object_type")
+    search_fields = (
+        "principal_user__email",
+        "principal_user__first_name",
+        "principal_user__last_name",
+        "principal_org__name",
+        "scope_org__name",
+        "role__name",
+    )
+    autocomplete_fields = ("principal_user", "principal_org", "role", "scope_org")
+    readonly_fields = ("id",)
+    fields = (
+        "principal_user",
+        "principal_org",
+        "role",
+        "scope_org",
+        "scope_object_type",
+        "scope_object_id",
+    )
+
+    @admin.display(description="Principal")
+    def principal(self, obj: Grant) -> str:
+        return str(obj.principal_user or obj.principal_org)
+
+    @admin.display(description="Scope")
+    def scope(self, obj: Grant) -> str:
+        if obj.scope_org is not None:
+            return str(obj.scope_org)
+        return f"{obj.scope_object_type}:{obj.scope_object_id}"
+
+
+class GrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
+    """Grants scoped TO this org — who can act here, and how."""
+
+    model = Grant
+    fk_name = "scope_org"
+    extra = 0
+    autocomplete_fields = ("principal_user", "principal_org", "role")
+
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class DelegatedGrantInline(SuperuserOnlyWritesMixin, admin.TabularInline):
+    """Org→org delegations FROM this org — what this org lends to others (ADR 0001 §2.2)."""
+
+    model = Grant
+    fk_name = "principal_org"
+    extra = 0
+    autocomplete_fields = ("role", "scope_org")
+
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 @admin.register(Organization)
 class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
-    inlines = [OrganizationProfileInline, OrganizationMemberInline, PermissionGroupInline]
+    inlines = [
+        OrganizationProfileInline,
+        OrganizationMemberInline,
+        PermissionGroupInline,
+        GrantInline,
+        DelegatedGrantInline,
+    ]
     list_display = ("name",)
     search_fields = ("name",)
     fields = ("name", "slug")
@@ -383,6 +550,24 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         """Reconcile permission groups once the profile's org types are saved."""
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
+
+    def get_inline_instances(self, request: HttpRequest, obj: Any = None) -> list[Any]:
+        """Grant inlines are superuser-only (mirrors ``GrantAdmin``).
+
+        The org change page must never build a Grant formset for a non-superuser.
+        Django renders the inlines read-only (``SuperuserOnlyWritesMixin``) and
+        still validates any ``grants-*`` keys a crafted POST carries, but a
+        formset that ``save_related`` skips would be read afterwards by Django's
+        ``construct_change_message`` and crash the save.  Filtering the inlines
+        out here means no Grant formset exists at all for non-superusers: forged
+        ``grants-*`` keys are ignored and legitimate staff org edits save
+        cleanly.  Grants are the whole authorization graph — only superusers
+        write them.
+        """
+        instances = super().get_inline_instances(request, obj)
+        if not request.user.is_superuser:
+            instances = [inline for inline in instances if inline.model is not Grant]
+        return instances
 
     def change_view(
         self,

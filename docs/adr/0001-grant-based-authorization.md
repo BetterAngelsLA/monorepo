@@ -164,8 +164,9 @@ class Grant(models.Model):
 **How to read a `Grant` row.** A grant always reads as *"<principal> holds <role>
 **at** <scope>"* — the scope is where the authority is exercised and whose data it
 reaches. The `principal_org` form is the one people misread: it is **not** "B grants R
-to C"; it is the delegation **B receives to act at C** (its members who already hold R
-at B may act at C — role-keyed, §3).
+to C"; it is the delegation **B receives to act at C** (its acting people — members
+of B holding a direct grant at B — may exercise the delegated role's permissions at C,
+permission-matched against what they already hold at B — §2.4, §3).
 
 | Row | Data owner | People who gain authority | Read it as |
 |---|---|---|---|
@@ -286,9 +287,10 @@ def scopes(user, perm):
 
     # delegation: org-principal grants inherited by the principal org's people.
     # "acts at B" = member of B AND holds a direct grant at B whose role carries
-    # this permission (role-keyed: no amplification to stronger delegated roles);
-    # a consultant granted a role at B without membership does NOT inherit B's
-    # delegations (findings F1, F19 — reduced).
+    # this permission (permission-matched: the delegated role's bundle is the
+    # ceiling, so a weak-role holder at B is not amplified to stronger delegated
+    # roles); a consultant granted a role at B without membership does NOT
+    # inherit B's delegations (findings F1, F19 — reduced).
     at = Organization.objects.filter(users=user, grants__principal_user=user,
                                      grants__role__in=Subquery(roles)).values("pk").distinct()
     inherited = Grant.objects.filter(principal_org__in=Subquery(at), role__in=Subquery(roles)).values("scope_org")
@@ -396,8 +398,9 @@ subquery, not a re-derivation.
   schema-legal but read by no predicate path, and wiring them would make authority
   org-granular — "every current *and future* member of org B with this role edits this
   record" — which is group-held per-record authority, the exact guardian shape this
-  ADR deletes (rule 4). They are therefore **forbidden**: a new E00x check plus an
-  admin form restriction (`scope_object` requires `principal_user`). If org-level
+  ADR deletes (rule 4). They are therefore **forbidden**: `permissions.E006`
+  (deploy-time) plus `Grant.clean` and the admin surfaces (write-time) refuse
+  them up front (`scope_object` requires `principal_user`). If org-level
   per-record sharing is ever product-real, it belongs on the *data edge* (ADR §7.4 — a
   sharing relationship naming the orgs allowed to act), with authority still resolving
   per-person through each member's own role — never an org-principal `Grant`.
@@ -457,6 +460,8 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 - **E005** – a *scoped* role grants a permission on a model that doesn't declare
   `OrgScoped` (global roles are exempt — their permissions are never org-confined;
   the check fires the moment a scoped role needs one of those models).
+- **E006** – a `Grant` grants an *object* to an organization (`principal_org` +
+  `scope_object`); object grants are user-principal only (§2.5).
 
 ### 2.8 Requirements coverage
 
@@ -584,7 +589,7 @@ creation instead of `Role` + `Grant` + `can_obj`; this example is the RFC 0003 c
 (and needs RFC 0002's read/write-tier decoupling to make SHARED-read-on-an-org-owning
 model a first-class cell).
 
-#### Example 4 — Org→org delegation (one hop, role-keyed)
+#### Example 4 — Org→org delegation (one hop, permission-matched)
 
 Central BA (`orgA`) is lent the "Shelter Viewer" role *at* the Sunrise Network
 (`orgC`) so its staff can view Sunrise's shelters. Two rows do all the work:
@@ -602,12 +607,22 @@ Resolution for `alice` (`perm = view_shelter`):
 - inherited: org-principal grants whose principal org ∈ `{CentralBA}` → `{Sunrise}`.
 - `scopes = {CentralBA, Sunrise}` → alice lists Sunrise's shelters.
 
-Role-keyed limits (deliberate): `evelyn`, a CentralBA member holding only "Shelter
-Operator" (a *different* role) at CentralBA, does **not** inherit the delegated viewer
-role at Sunrise; a consultant granted Viewer at CentralBA without membership does not
-inherit either. There is no role *translation* (Sunrise cannot remap "Shelter Viewer"
-into "Shelter Operator" for CentralBA's people), and Sunrise's own delegations onward
-are not inherited (one hop).
+Two caps govern who inherits, and what crosses (deliberate):
+
+- **Ceiling — the delegated role's permission set.** The delegation carries only the
+  Shelter Viewer bundle to Sunrise, so nothing beyond `view_shelter` crosses, whatever
+  the member holds at CentralBA.
+- **Match — the member's own grant set, per permission.** `evelyn`, a CentralBA member
+  holding "Shelter Operator" (a *different* role) at CentralBA, **does** inherit
+  `view_shelter` at Sunrise — her role carries it and the delegated Viewer role carries
+  it too — but not `change_shelter`/`delete_shelter`, which the delegated bundle does
+  not carry. Role identity is irrelevant to who inherits; had the delegation been of
+  Shelter Operator, evelyn would act at Sunrise with her full home bundle.
+
+A consultant granted Viewer at CentralBA without membership does not inherit at all
+(no amplification). There is no role *translation* (Sunrise cannot remap "Shelter
+Viewer" into "Shelter Operator" for CentralBA's people), and Sunrise's own delegations
+onward are not inherited (one hop).
 
 #### Example 5 — Object grant (per-record sharing on a platform-shared model)
 
@@ -670,14 +685,17 @@ authorization, which is the service→selector pattern the guide prescribes.
 
 ## 3. Accepted limitations (decided, not deferred)
 
-- **Delegation inheritance is role-keyed, but there is no role *translation*.** A member
-  of the principal org inherits its delegation at the target org only for a permission
-  whose role they also hold at the principal org — a member holding only a weaker role
-  is not amplified to the delegated role (no amplification; audit C-1). What remains
-  inexpressible is mapping the delegated role onto a *different* role at the target
-  ("B's Shelter Operators become A's *Viewers*") (finding F19). One row per role, no
-  role translation, no individual carve-out without a deny rule (banned). Revisit at
-  the outreach cutover.
+- **Delegation is permission-matched, with the delegated role as the ceiling.** The
+  delegated role's permission set bounds what crosses to the target org; among the
+  principal org's people, inheritance is matched per permission against the member's
+  own grant set — a member inherits a permission only when the delegated role carries
+  it *and* a role they hold at the principal org carries it, so a member holding only a
+  weaker role is never amplified beyond what they hold at home (no amplification; audit
+  C-1). Role identity is irrelevant to who inherits. What remains inexpressible is
+  mapping the delegated role onto a *different* role at the target ("B's Shelter
+  Operators become A's *Viewers*") (finding F19). One row per role, no role
+  translation, no individual carve-out without a deny rule (banned). Revisit at the
+  outreach cutover.
 - **One delegation hop.** Transitive delegation needs a recursive CTE; deferred until a
   real need exists.
 - **Global roles are granted in the Django admin only.** Grant-admin parity for global

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -78,3 +79,16 @@ class RoleDef:
             welcome_txt=template.welcome_txt,
             base_url_setting=template.base_url_setting,
         )
+
+
+# Models that may carry object grants (ADR 0001 §2.5), keyed "app_label.model".
+# Empty until the object-grant arm is wired at the clients cutover: a grant to a
+# model outside this set is refused at write time (``Grant.clean``) and flagged at
+# deploy time (``permissions.E003``).  One source, so the two gates cannot drift
+# apart — the cutover adds models here and both open together.
+OBJECT_GRANT_WHITELIST: frozenset[str] = frozenset()
+
+
+def content_type_key(content_type: Any) -> str:
+    """The whitelist key for a ``ContentType`` (or any ``app_label``/``model`` holder)."""
+    return f"{content_type.app_label}.{content_type.model}"
