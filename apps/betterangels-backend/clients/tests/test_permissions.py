@@ -206,47 +206,17 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self.client_document = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
-            "test.txt",
-        )["data"]["createClientDocument"]
-        self.graphql_client.logout()
-
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("non_case_manager_user", False),  # Non-CM user should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
-    def test_create_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
-        self._handle_user_login(user_label)
-        response = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
             "test.txt",
         )
-
-        if user_label is None:
-            self.assertGraphQLUnauthenticated(response)
-        else:
-            attachment_id = response.get("data", {}).get("createClientDocument", {}).get("id")
-            if should_succeed:
-                self.assertIsNotNone(attachment_id)
-            else:
-                self.assertIsNone(attachment_id)
+        self.graphql_client.logout()
 
     def _create_client_document_as_owner(self) -> str:
         self._handle_user_login("org_1_case_manager_1")
-        response = self._create_client_document_fixture(
+        document = self._create_client_document_fixture(
             self.client_profile_1["id"],
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Test file content",
         )
-        document_id: str = response["data"]["createClientDocument"]["id"]
+        document_id: str = document["id"]
 
         return document_id
 

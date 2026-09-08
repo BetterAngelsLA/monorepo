@@ -180,7 +180,9 @@ def scopes(user: "User", perm: str) -> Any:
     as an org scope or as "holds the perm somewhere" for a platform-shared model.
 
     Memoized per request on the user instance.  The cached value is a lazy
-    queryset used as a subquery — caching it does not evaluate it.
+    queryset used as a subquery — caching it does not evaluate it.  Authority
+    write services invalidate it via :func:`invalidate_scope_cache` when they
+    change the user's grants.
     """
     if user.is_superuser or _global_role_holds(user, perm) or _user_permission_holds(user, perm):
         return ALL
@@ -217,6 +219,22 @@ def scopes(user: "User", perm: str) -> Any:
 
         cache[perm] = mine.union(inherited)
     return cache[perm]
+
+
+def invalidate_scope_cache(user: "User") -> None:
+    """Drop *user*'s memoized ``scopes`` decision.
+
+    The memoized value lives in ``user.__dict__`` — not a model field — so
+    ``refresh_from_db()`` does not clear it; this is the only way to
+    invalidate.  Authority write services (``grant_create`` / ``grant_delete``
+    for a user principal) call this after changing *user*'s grants so a
+    request that grants/revokes and then re-reads authority on the same user
+    instance never serves the stale decision (a cached ``ALL`` sentinel is the
+    hard-stale case).  Org→org delegation rows have no single user principal,
+    and the scoped selectors are consumed per request on fresh user instances,
+    so those flows need no per-user invalidation here.
+    """
+    user.__dict__.pop("_scope_cache", None)
 
 
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":

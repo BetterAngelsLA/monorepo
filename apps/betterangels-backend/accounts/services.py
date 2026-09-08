@@ -647,6 +647,11 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     ).exists():
         raise ValidationError(f"{user} already holds {role.name!r} at {scope_org}.")
     grant.save()
+
+    # A same-request re-read of authority for this user must see the new grant.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)
     return grant
 
 
@@ -685,8 +690,16 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
 
 
 def grant_delete(*, grant: Grant) -> None:
-    """Revoke a scoped grant — the audit trail is pghistory's, not a flag."""
+    """Revoke a scoped grant — the audit trail is pghistory's, not a flag.
+
+    For a user-principal grant, invalidate the user's memoized ``scopes``
+    decision so a same-request re-read never serves the revoked authority.
+    """
     grant.delete()
+    if grant.principal_user is not None:
+        from common.permissions.selectors import invalidate_scope_cache
+
+        invalidate_scope_cache(grant.principal_user)
 
 
 def role_assign(*, user: UserModel, role: Role) -> None:
