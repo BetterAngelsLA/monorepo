@@ -250,19 +250,25 @@ def scopes(user: "User", perm: str) -> Any:
 
 
 def invalidate_scope_cache(user: "User") -> None:
-    """Drop *user*'s memoized ``scopes`` decision.
+    """Drop *user*'s memoized authority decisions (scopes + global tier + report).
 
-    The memoized value lives in ``user.__dict__`` — not a model field — so
-    ``refresh_from_db()`` does not clear it; this is the only way to
+    The memoized values live in ``user.__dict__`` — not model fields — so
+    ``refresh_from_db()`` does not clear them; this is the only way to
     invalidate.  Authority write services (``grant_create`` / ``grant_delete``
     for a user principal) call this after changing *user*'s grants so a
     request that grants/revokes and then re-reads authority on the same user
     instance never serves the stale decision (a cached ``ALL`` sentinel is the
-    hard-stale case).  Org→org delegation rows have no single user principal,
-    and the scoped selectors are consumed per request on fresh user instances,
-    so those flows need no per-user invalidation here.
+    hard-stale case).  The same request-scope staleness applies to the newer
+    global-tier and effective-report memos (``global_permissions`` /
+    ``global_holder`` / ``organization_effective_permissions``), so they are
+    dropped here too.  Org→org delegation rows have no single user principal,
+    and the selectors are consumed per request on fresh user instances, so
+    those flows need no per-user invalidation here.
     """
     user.__dict__.pop("_scope_cache", None)
+    user.__dict__.pop("_global_permissions", None)
+    user.__dict__.pop("_global_holder", None)
+    user.__dict__.pop("_org_effective_permissions", None)
 
 
 def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = None) -> "QuerySet":

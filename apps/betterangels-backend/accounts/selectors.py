@@ -181,17 +181,23 @@ def organization_permissions(user: User, *, org_ids: Optional[set[int]] = None) 
     collapses the report to ``{}`` instead of one empty entry per org in the
     platform.
 
-    Batched: five queries regardless of the org count, run once per request.
+    *org_ids* defaults to the FINITE switchable set (:func:`common.permissions.
+    selectors.switchable_orgs`) — never ``reachable_orgs``, which expands to
+    every org for a global holder: a scoped-only report over that expansion
+    would iterate the platform to produce the same finite entries.
+
+    Batched: four queries regardless of the org count once *org_ids* is known
+    (one more to materialize the default set).  Run once per request.
     """
     from collections import defaultdict
 
     from common.permissions.domain import LEGACY_INERT_APPS
-    from common.permissions.selectors import reachable_orgs
+    from common.permissions.selectors import switchable_orgs
 
     from .models import Grant, PermissionGroup
 
     if org_ids is None:
-        org_ids = set(reachable_orgs(user).values_list("pk", flat=True))
+        org_ids = set(switchable_orgs(user).values_list("pk", flat=True))
 
     # Direct grants at each org — one joined query (scope_org, app, codename).
     held_in_org: dict[int, set[str]] = defaultdict(set)
