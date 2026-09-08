@@ -24,6 +24,7 @@ from django.utils.text import Truncator
 from organizations.models import Organization, OrganizationInvitation, OrganizationOwner, OrganizationUser
 
 from .forms import (
+    GrantForm,
     OrganizationMemberInviteForm,
     OrganizationMemberRoleForm,
     OrganizationOwnerTransferForm,
@@ -451,17 +452,15 @@ class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
     """Audit + administer grants (ADR 0001 §2.2) — user grants and org→org delegations.
 
     ``principal_user`` vs ``principal_org`` (exactly one) and ``scope_org`` vs
-    object scope (exactly one) are enforced by the model constraints and a
-    global Role can never be granted (:meth:`Grant.clean`, ``permissions.E002``).
+    object scope (exactly one) are enforced by the model constraints; a global
+    Role can never be granted (check ``permissions.E002``); new object grants
+    must target a whitelisted model (``GrantForm``, ``permissions.E003``).
     Grants are the whole authorization graph, so add/change/delete are
     superuser-only (:class:`SuperuserOnlyWritesMixin`); staff may still view
     where Django grants them ``view_grant``.
     """
 
-    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
-        if db_field.name == "role":
-            kwargs["queryset"] = _scoped_role_queryset()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    form = GrantForm
 
     list_select_related = (
         "principal_user",

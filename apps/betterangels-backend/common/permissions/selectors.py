@@ -27,13 +27,6 @@ if TYPE_CHECKING:
 ALL = object()
 """Sentinel for the global tier — row-invariant, so ``visible`` hoists it."""
 
-OBJECT_ARM_ENABLED = True
-"""Object-grant arm (ADR 0001 §2.5) — on with its first consumer (clients).
-
-Only whitelisted models are object-grantable (``permissions.E003``), so the arm
-is a no-op for every other model; it is safe to leave on.
-"""
-
 
 def _object_grant_ancestors(model: Any) -> list[tuple[str, type["Model"]]]:
     """(FK lookup path to parent id, parent model) for every object-grantable ancestor.
@@ -334,10 +327,12 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: str | None = Non
         if org_q is None:
             # Every row is already visible — the object arm cannot add more.
             qs = qs
-        elif OBJECT_ARM_ENABLED:
-            qs = qs.filter(org_q | _object_grant_q(qs.model, user, perm))
         else:
-            qs = qs.filter(org_q)
+            # The object arm is OR'd unconditionally; ``_object_grant_q`` is
+            # self-gating.  For a non-whitelisted model (or the whole feature,
+            # switch off) it returns the always-false ``Q(pk__lt=0)``, so the
+            # org filter is unchanged and no grant subquery is emitted.
+            qs = qs.filter(org_q | _object_grant_q(qs.model, user, perm))
     return qs
 
 

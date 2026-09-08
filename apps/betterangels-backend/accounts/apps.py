@@ -22,6 +22,14 @@ def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
     backfill_shelter_grants()
     backfill_global_role_members()
 
+    # Prime the object-grants switch lookup so the orphan-cleanup handler's
+    # first fire after a deploy is a cache hit (reads state only; never
+    # creates a Switch row).  Without this, the first ClientProfile delete in a
+    # fresh process pays one extra query for the cold waffle lookup.
+    from common.permissions.object_grants import object_grants_enabled
+
+    object_grants_enabled()
+
 
 class AccountsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
@@ -55,11 +63,14 @@ class AccountsConfig(AppConfig):
             dispatch_uid="mirror_group_membership_grants",
         )
 
-        # Object-grant orphans (finding F3): wire the cleanup to each
-        # whitelisted model so a deleted row never leaves dangling grants.
-        from common.permissions.object_grants import object_grant_whitelist
+        # Object-grant orphans (finding F3): wire the cleanup to each candidate
+        # model so a deleted row never leaves dangling grants.  The candidates
+        # are switch-independent (the handler itself is runtime-gated), so
+        # cleanup stays connected when the object_grants_enabled switch is
+        # flipped on after startup.
+        from common.permissions.object_grants import object_grantable_models
 
-        for model in object_grant_whitelist():
+        for model in object_grantable_models():
             post_delete.connect(
                 cleanup_orphan_object_grants,
                 sender=model,

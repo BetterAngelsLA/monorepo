@@ -18,7 +18,12 @@ from shelters.models import Bed, Room, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 from typing import Any
 
+from waffle.testutils import override_switch
 
+from common.permissions.object_grants import OBJECT_GRANTS_SWITCH
+
+
+@override_switch(OBJECT_GRANTS_SWITCH, True)
 class ObjectGrantTestCase(TestCase):
     def setUp(self) -> None:
         sync_roles()
@@ -212,10 +217,98 @@ class ObjectGrantTestCase(TestCase):
 
         user = baker.make(User)
         profile = self._profile()
+        profile_id = profile.pk
         grant_obj(user=user, role=self.sharer_role, obj=profile)
         ct = ContentType.objects.get_for_model(type(profile))
-        self.assertEqual(Grant.objects.filter(scope_object_type=ct, scope_object_id=profile.pk).count(), 1)
+        self.assertEqual(Grant.objects.filter(scope_object_type=ct, scope_object_id=profile_id).count(), 1)
 
         profile.delete()
 
-        self.assertFalse(Grant.objects.filter(scope_object_type=ct, scope_object_id=profile.pk).exists())
+        self.assertFalse(Grant.objects.filter(scope_object_type=ct, scope_object_id=profile_id).exists())
+
+
+@override_switch(OBJECT_GRANTS_SWITCH, False)
+class ObjectGrantDisabledTestCase(TestCase):
+    """The object arm is off by default — the ``object_grants_enabled`` switch gates it.
+
+    While off, ``object_grant_whitelist`` is empty: reads fail closed, the write
+    service refuses to mint grants, and any leftover object-grant row (written
+    before the feature was disabled) is flagged by ``permissions.E003`` rather
+    than silently honored.
+    """
+
+    def setUp(self) -> None:
+        sync_roles()
+        self.sharer_role, _ = Role.objects.get_or_create(name="Test Client Sharer", is_global=False)
+        for perm in (
+            "clients.change_clientprofile",
+            "clients.delete_clientprofile",
+            "clients.view_clientprofile",
+        ):
+            app_label, codename = perm.split(".")
+            self.sharer_role.permissions.add(
+                Permission.objects.get(codename=codename, content_type__app_label=app_label)
+            )
+
+    def test_whitelist_is_empty_while_the_switch_is_off(self) -> None:
+        from common.permissions.object_grants import object_grant_whitelist
+
+        self.assertEqual(object_grant_whitelist(), ())
+
+    def test_grant_obj_refuses_while_the_switch_is_off(self) -> None:
+        from clients.models import ClientProfile
+        from django.core.exceptions import ValidationError
+
+        from accounts.services import grant_obj
+
+        profile = baker.make(ClientProfile)
+        with self.assertRaises(ValidationError):
+            grant_obj(user=baker.make(User), role=self.sharer_role, obj=profile)
+        self.assertFalse(Grant.objects.filter(scope_object_type__isnull=False).exists())
+
+    def test_leftover_object_grant_is_not_honored_while_off(self) -> None:
+        """A grant row written before the feature was disabled fails closed.
+
+        ``can_obj`` returns False and ``visible`` never surfaces the row; the
+        row itself is flagged by E003 so the deploy-time check stays loud.
+        """
+        from clients.models import ClientProfile
+        from django.contrib.contenttypes.models import ContentType
+
+        user = baker.make(User)
+        profile = baker.make(ClientProfile)
+        Grant.objects.create(
+            principal_user=user,
+            role=self.sharer_role,
+            scope_object_type=ContentType.objects.get_for_model(ClientProfile),
+            scope_object_id=profile.pk,
+        )
+
+        self.assertFalse(can_obj(user, ClientProfile.perms.CHANGE, profile))
+        self.assertFalse(visible(ClientProfile.objects.all(), user, ClientProfile.perms.CHANGE).exists())
+        self.assertTrue(
+            any(e.id == "permissions.E003" for e in checks.check_object_grant_targets_whitelisted_model(None))
+        )
+
+    def test_orphan_cleanup_is_skipped_while_off(self) -> None:
+        """While off the cleanup handler returns before issuing SQL — a leftover
+        grant row survives the delete and is left for E003 to flag at deploy
+        time (contrast ``ObjectGrantTestCase``: with the switch on, deleting the
+        row removes its grants)."""
+        from clients.models import ClientProfile
+        from django.contrib.contenttypes.models import ContentType
+
+        user = baker.make(User)
+        profile = baker.make(ClientProfile)
+        profile_id = profile.pk
+        ct = ContentType.objects.get_for_model(ClientProfile)
+        Grant.objects.create(
+            principal_user=user,
+            role=self.sharer_role,
+            scope_object_type=ct,
+            scope_object_id=profile_id,
+        )
+
+        profile.delete()
+
+        self.assertTrue(Grant.objects.filter(scope_object_type=ct, scope_object_id=profile_id).exists())
