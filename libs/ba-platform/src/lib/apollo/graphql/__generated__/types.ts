@@ -513,14 +513,6 @@ export type CreateBedPayload = BedType | OperationInfo;
 
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
 
-export type CreateClientDocumentInput = {
-  clientProfile: Scalars['ID']['input'];
-  file: Scalars['Upload']['input'];
-  namespace: ClientDocumentNamespaceEnum;
-};
-
-export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
-
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
 export type CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo;
@@ -1560,7 +1552,6 @@ export type Mutation = {
   cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
-  createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1668,11 +1659,6 @@ export type MutationCreateBedArgs = {
 
 export type MutationCreateClientContactArgs = {
   data: ClientContactInput;
-};
-
-
-export type MutationCreateClientDocumentArgs = {
-  data: CreateClientDocumentInput;
 };
 
 
