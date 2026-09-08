@@ -33,6 +33,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Test Shelter",
                 "description": "A test shelter for unit testing",
+                "organizationId": str(self.org.pk),
             }
         }
 
@@ -80,6 +81,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Full Featured Shelter",
                 "description": "A shelter with all the bells and whistles",
+                "organizationId": str(self.org.pk),
                 "email": "info@shelter.org",
                 "phone": "+13105551234",
                 "website": "https://www.shelter.org",
@@ -143,6 +145,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Pet Friendly Shelter",
                 "description": "A shelter that welcomes pets",
+                "organizationId": str(self.org.pk),
                 "accessibility": ["WHEELCHAIR_ACCESSIBLE"],
                 "demographics": ["FAMILIES", "SINGLE_WOMEN"],
                 "shelterTypes": ["BUILDING"],
@@ -189,6 +192,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Downtown Shelter",
                 "description": "Located in downtown LA",
+                "organizationId": str(self.org.pk),
                 "location": {
                     "place": "123 Main St, Los Angeles, CA 90012",
                     "latitude": 34.0522,
@@ -254,6 +258,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Shelter With Custom Services",
                 "description": "A shelter with official and custom services",
+                "organizationId": str(self.org.pk),
                 "services": [
                     {"id": str(official.pk)},
                     {"categoryId": str(category.pk), "displayName": "Laundry"},
@@ -309,6 +314,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         variables: dict[str, Any] = {
             "data": {
                 # name intentionally omitted — should fail GraphQL validation
+                "organizationId": str(self.org.pk),
             }
         }
 
@@ -338,6 +344,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Reviewed Shelter",
                 "description": "A well-reviewed shelter",
+                "organizationId": str(self.org.pk),
                 "overallRating": 4,
                 "subjectiveReview": "Clean facilities with helpful staff",
             }
@@ -374,6 +381,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Invalid Email Shelter",
                 "description": "Should fail model validation",
+                "organizationId": str(self.org.pk),
                 "email": "not-an-email",
             }
         }
@@ -404,6 +412,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Persistent Shelter",
                 "description": "This should be in the database",
+                "organizationId": str(self.org.pk),
             }
         }
 
@@ -443,11 +452,13 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
             "data": {
                 "name": "Wrong Org Shelter",
                 "description": "Should be rejected",
+                # Org travels in the input (delta 4): org_2 is where the user
+                # holds no ADD grant, so can(user, ADD, org_2) denies.
+                "organizationId": str(self.org_2.pk),
             }
         }
 
-        # Pass org_2 header so can(user, ADD, org=org_2) fails (no grant there)
-        response = self.execute_graphql(mutation, variables, HTTP_X_ORGANIZATION_ID=str(self.org_2.pk))
+        response = self.execute_graphql(mutation, variables)
 
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["createShelter"]["messages"]
@@ -926,7 +937,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
 
         response = self.execute_graphql(
             self.CREATE_MUTATION,
-            {"data": {"name": "Operator Created", "description": "has ADD"}},
+            {"data": {"name": "Operator Created", "description": "has ADD", "organizationId": str(self.org.pk)}},
         )
 
         self.assertIsNone(response.get("errors"))
@@ -938,7 +949,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
 
         response = self.execute_graphql(
             self.CREATE_MUTATION,
-            {"data": {"name": "Viewer Created", "description": "no ADD"}},
+            {"data": {"name": "Viewer Created", "description": "no ADD", "organizationId": str(self.org.pk)}},
         )
 
         self.assertIsNone(response.get("errors"))
