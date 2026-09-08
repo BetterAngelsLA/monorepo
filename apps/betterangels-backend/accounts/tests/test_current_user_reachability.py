@@ -137,14 +137,36 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertIn("Org C", orgs)
         self.assertIn("shelters.view_shelter", orgs["Org C"])
 
-    def test_global_holder_sees_every_org(self) -> None:
-        """A GSO sees all orgs, membership or not (ADR 0001 §2.6)."""
+    def test_global_holder_org_list_is_finite_membership_only(self) -> None:
+        """A GSO sees NO orgs in the switcher unless member/granted there.
+
+        A global holder's reach is the "All" mode gated by
+        ``currentUser.permissions`` (ADR 0001 §5.2 refinement) — the FE org list
+        is never expanded to every org in the platform.
+        """
         organization_recipe.make(name="Unowned Org")
         gso = baker.make(User)
         role_assign(user=gso, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
         self.graphql_client.force_login(gso)
 
-        self.assertIn("Unowned Org", self._orgs())
+        self.assertEqual(self._orgs(), {})
+
+    def test_global_holder_member_org_lists_effective_global_perms(self) -> None:
+        """A GSO who is also a member sees that org, with the global tier folded in.
+
+        The per-org entry is EFFECTIVE (``global_permissions(user) ∪ org-scoped``)
+        — the complete "what can I do fully here" answer.
+        """
+        org = organization_recipe.make(name="GSO Member Org")
+        gso = baker.make(User)
+        role_assign(user=gso, role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name))
+        org.add_user(gso)
+        self.graphql_client.force_login(gso)
+
+        orgs = self._orgs()
+        self.assertIn("GSO Member Org", orgs)
+        self.assertIn("shelters.view_shelter", orgs["GSO Member Org"])
+        self.assertIn("shelters.change_shelter", orgs["GSO Member Org"])
 
     def test_consultant_grant_without_membership_does_not_inherit_delegations(self) -> None:
         """No amplification: a grant at B without membership does not surface C."""
@@ -184,19 +206,19 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
         self.assertNotIn("shelters.change_shelter", orgs["Weak C"])
         self.assertNotIn("shelters.delete_shelter", orgs["Weak C"])
 
-    def test_a_user_permission_holder_sees_every_org(self) -> None:
-        """A ``user_permission`` is 'acts anywhere': every org is reachable."""
+    def test_a_user_permission_holder_org_list_is_finite(self) -> None:
+        """A ``user_permission`` is 'acts anywhere' for reach, but the switcher stays finite.
+
+        No membership or grant at an org → it does not appear in the FE org list;
+        the permission rides ``currentUser.permissions`` ("All" mode).
+        """
         organization_recipe.make(name="Unjoined Perm Org")
         user = baker.make(User)
         app_label, codename = "shelters.view_shelter".split(".")
         user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
         self.graphql_client.force_login(user)
 
-        orgs = self._orgs()
-        self.assertIn("Unjoined Perm Org", orgs)
-        # No org-scoped grants or legacy roles there — the acts-anywhere perm is
-        # carried by the global list, not duplicated per org.
-        self.assertEqual(orgs["Unjoined Perm Org"], [])
+        self.assertEqual(self._orgs(), {})
 
     def test_an_org_scoped_grant_survives_an_unrelated_user_permission(self) -> None:
         """The report is never skipped for acts-anywhere holders.
@@ -235,7 +257,9 @@ class CurrentUserGrantsBasedOrgListTestCase(GraphQLBaseTestCase):
 
         orgs = self._orgs()
         self.assertIn("Legacy Plus Perm Org", orgs)
-        self.assertEqual(orgs["Legacy Plus Perm Org"], ["accounts.view_user"])
+        # EFFECTIVE entry: the legacy org role AND the acts-anywhere permission
+        # both show — the global tier is folded into the org's list.
+        self.assertEqual(orgs["Legacy Plus Perm Org"], ["accounts.view_user", "shelters.view_shelter"])
 
     def test_reported_shelter_perms_are_enforceable(self) -> None:
         """Property (domain-aware): the report never claims a grant-only perm

@@ -102,40 +102,42 @@ class CurrentUserOrganizationType(OrganizationType):
         queryset: QuerySet[Organization],
         info: Info,
     ) -> QuerySet[Organization]:
-        """The grants-based org list for *info*'s user (ADR 0001 §2.6, finding F24).
+        """The FE org list / switcher for *info*'s user (ADR 0001 §5.2 refinement).
 
         Builds from the FULL ``Organization`` table, not the caller's
         queryset: the ``currentUser.organizationsOrganization`` field hands
         this the user's membership relation, which is empty for a non-member
-        grant holder.  Returns every org the user can act in — membership,
-        direct grants, inherited delegations — and every org for global
-        holders.  The per-org ``permissions`` field is resolved from
+        grant holder.  Returns the FINITE switchable set — membership, direct
+        grants, inherited delegations — and never every org for a global holder
+        (a global user's reach is the "All" mode gated by
+        ``currentUser.permissions``; org views are entered by id).  The per-org
+        ``permissions`` field is EFFECTIVE (global folded in) and resolved from
         ``organization_permissions``, so this stays a lazy, annotation-free
         filter.
         """
-        from common.permissions.selectors import reachable_orgs
+        from common.permissions.selectors import switchable_orgs
 
         user = get_current_user(info)
         if not user or not user.is_authenticated:
             return queryset.none()
-        return cast(QuerySet[Organization], Organization.objects.filter(pk__in=reachable_orgs(cast(User, user))))
+        return cast(QuerySet[Organization], Organization.objects.filter(pk__in=switchable_orgs(cast(User, user))))
 
     @strawberry_django.field
     def permissions(self, info: Info) -> List[str]:
-        """The permissions *user* can exercise at this org (``scopes``-equivalent).
+        """The EFFECTIVE permissions *user* can exercise at this org.
 
-        Computed once per request by :func:`accounts.selectors.organization_permissions`
-        and memoized on the user instance.  The report carries ORG-SCOPED
-        authority only — grants, permission-matched delegations and legacy per-org roles.
-        Per-permission "acts anywhere" authority (superuser, global Role,
-        ``user_permissions``) is reported once in ``currentUser.permissions`` and
-        the frontend unions both via ``hasPermission`` (ADR 0001 finding F24).
-        Computed for every user — never skipped for acts-anywhere holders — so an
-        org-scoped grant or legacy role stays visible even when the user also
-        holds an unrelated global permission (skipping it would make the report
-        disagree with ``can()`` for the user's own org-scoped grants).
+        ``global_permissions(user) ∪ org-scoped(this org)`` — the global tier is
+        folded in server-side (ADR 0001 §5.2 refinement), so an org entry is the
+        complete "what can I do fully here" answer (a GSO who is also a
+        member/delegated at the org sees global ∪ its grants) and the FE gate is
+        a single membership test, never a client union.  The org-scoped arm is
+        :func:`accounts.selectors.organization_permissions` — grants,
+        permission-matched delegations (ceiling applied) and legacy per-org
+        roles — computed for every user, never skipped for acts-anywhere
+        holders, so scoped authority stays visible alongside the global tier.
         """
         from accounts.selectors import organization_permissions
+        from common.permissions.selectors import global_permissions
 
         user = cast(User, get_current_user(info))
         if not user or not user.is_authenticated:
@@ -144,9 +146,13 @@ class CurrentUserOrganizationType(OrganizationType):
         if report is None:
             report = organization_permissions(user)
             user.__dict__["_org_permissions"] = report
+        global_list = user.__dict__.get("_global_permissions")
+        if global_list is None:
+            global_list = global_permissions(user)
+            user.__dict__["_global_permissions"] = global_list
         # ``id`` is the declared strawberry field for the org pk (typed, unlike
         # ``pk`` on this wrapper type); the report is keyed by int org id.
-        return report.get(int(str(self.id)), [])
+        return sorted(set(global_list) | set(report.get(int(str(self.id)), [])))
 
 
 @strawberry_django.type(User)
