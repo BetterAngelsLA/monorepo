@@ -4,12 +4,13 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
+from django.db.models import Model
 from organizations.models import Organization
 
 from .models import User
 
 
-def cleanup_orphan_object_grants(sender: object, instance: object, **kwargs: object) -> None:
+def cleanup_orphan_object_grants(sender: object, instance: Model, **kwargs: object) -> None:
     """Finding F3 — a deleted row's object grants are orphans; drop them.
 
     Connected in ``AppConfig.ready`` to every object-grant candidate model

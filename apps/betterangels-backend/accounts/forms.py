@@ -230,10 +230,10 @@ class GrantForm(forms.ModelForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # E002 up front: never offer a global Role in the grant form.
-        self.fields["role"].queryset = Role.objects.filter(is_global=False)
+        cast(forms.ModelChoiceField, self.fields["role"]).queryset = Role.objects.filter(is_global=False)
 
     def clean(self) -> dict[str, Any]:
-        cleaned = super().clean()
+        cleaned = super().clean() or {}
         scope_object_type = cleaned.get("scope_object_type")
         if scope_object_type is not None and self.instance.pk is None:
             # New object grants only — an existing object-grant row stays
