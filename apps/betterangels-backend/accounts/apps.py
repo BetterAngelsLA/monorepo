@@ -3,7 +3,7 @@ from django.db.models.signals import m2m_changed, post_migrate
 
 
 def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
-    from accounts.seed import seed_permission_templates
+    from accounts.seed import retire_superseded_phantom_permissions, seed_permission_templates
     from accounts.services import (
         backfill_caseworker_grants,
         backfill_global_role_members,
@@ -21,6 +21,10 @@ def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
     backfill_caseworker_grants()
     backfill_shelter_grants()
     backfill_global_role_members()
+    # Drop phantom Permission/ContentType rows superseded by real-model binding
+    # (reports.view_reports) once roles/backfills have converged onto the real
+    # rows.  Idempotent — a no-op on DBs that never synthesized them.
+    retire_superseded_phantom_permissions()
 
 
 class AccountsConfig(AppConfig):

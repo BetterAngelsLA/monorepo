@@ -1057,6 +1057,14 @@ phantom-ContentType guard.  The reports slice then mirrors teams:
   ``require_can``/``can`` at the target org — membership no longer consulted, a
   legacy-only holder fails closed.  ``reports`` joins ``LEGACY_INERT_APPS``;
   ``ScheduledReport`` declares ``OrgScoped`` (permissions.E005).
+- **Header-free.** Reports is a web feature (the admin portal), so it cut over
+  in one step instead of keeping the ``X-Organization-ID`` header as a
+  deprecated fallback: ``reportSummary`` now carries the org in the payload
+  (a required ``organizationId`` argument) and the DRF export already took the
+  ``org_id`` query param.  No reports surface reads the header.
+- Phantom Permission/ContentType rows synthesized by the old last-token
+  resolution and superseded by real-model binding are retired idempotently at
+  ``post_migrate`` (``retire_superseded_phantom_permissions``).
 - Only **member management** (`organizations.*` portal codenames — registered on
   no model) still cannot ride a scoped Role; it is the last legacy-only domain
   and keeps the ORG_ADMIN legacy ``PermissionGroup`` rows meaningful until its

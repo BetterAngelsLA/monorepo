@@ -43,9 +43,12 @@ class HasReportAccess(BasePermission):
         if not org_id:
             return False
 
-        # Fail closed on an unknown org id (no DoesNotExist), then require the
-        # grant at that org.
-        org = Organization.objects.filter(pk=org_id).first()
+        # Fail closed on an unknown or non-numeric org id (no DoesNotExist /
+        # ValueError), then require the grant at that org.
+        try:
+            org = Organization.objects.filter(pk=org_id).first()
+        except TypeError, ValueError:
+            org = None
         if org is None:
             return False
 
