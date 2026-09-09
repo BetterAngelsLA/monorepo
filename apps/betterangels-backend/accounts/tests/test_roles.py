@@ -3,7 +3,9 @@
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.services import (
     _raise_on_phantom_role_permissions,
+    backfill_caseworker_grants,
     backfill_global_role_members,
+    backfill_org_admin_grants,
     backfill_shelter_grants,
     sync_roles,
 )
@@ -14,8 +16,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from model_bakery import baker
+from notes.groups import CASEWORKER_ROLE
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
+
+from accounts.groups import ORG_ADMIN_ROLE
 
 
 class SyncRolesTestCase(TestCase):
@@ -151,6 +156,86 @@ class BackfillTestCase(TestCase):
         backfill_global_role_members()
 
         self.assertTrue(member.groups.filter(role__is_global=True).exists())
+
+
+class OrgAdminAndCaseworkerBackfillTestCase(TestCase):
+    """backfill_org_admin_grants / backfill_caseworker_grants (ADR 0001 §2.2).
+
+    These are the basis for existing org admins' / caseworkers' teams authority
+    after deploy — a template-name mismatch or wrong role lookup would silently
+    strip team management from every existing member.  Mirror the shelter
+    backfill coverage: one grant per member, idempotent, converts only the
+    intended template.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        sync_roles()
+        self.org_admin_role = Role.objects.get(name=ORG_ADMIN_ROLE.name)
+        self.caseworker_role = Role.objects.get(name=CASEWORKER_ROLE.name)
+
+    def test_backfill_org_admin_grants_creates_one_grant_per_member(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        group.user_set.add(member)
+
+        backfill_org_admin_grants()
+
+        grant = Grant.objects.get(principal_user=member, role=self.org_admin_role, scope_org=self.org)
+        self.assertIsNotNone(grant.pk)
+
+    def test_backfill_org_admin_grants_is_idempotent(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        group.user_set.add(member)
+
+        backfill_org_admin_grants()
+        backfill_org_admin_grants()
+
+        self.assertEqual(Grant.objects.filter(principal_user=member, role=self.org_admin_role).count(), 1)
+
+    def test_backfill_org_admin_converts_only_org_admin(self) -> None:
+        # A caseworker membership is not an org-admin membership; a hand-made
+        # (label-only) role must not convert either.
+        cw_group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        other = PermissionGroup.objects.create(organization=self.org, label="Hand-made Role")
+        member = baker.make(User)
+        cw_group.user_set.add(member)
+        other.user_set.add(member)
+
+        backfill_org_admin_grants()
+
+        self.assertFalse(Grant.objects.filter(principal_user=member).exists())
+
+    def test_backfill_caseworker_grants_creates_one_grant_per_member(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        member = baker.make(User)
+        group.user_set.add(member)
+
+        backfill_caseworker_grants()
+
+        grant = Grant.objects.get(principal_user=member, role=self.caseworker_role, scope_org=self.org)
+        self.assertIsNotNone(grant.pk)
+
+    def test_backfill_caseworker_grants_is_idempotent(self) -> None:
+        group = PermissionGroup.objects.get(organization=self.org, template__name=CASEWORKER_ROLE.name)
+        member = baker.make(User)
+        group.user_set.add(member)
+
+        backfill_caseworker_grants()
+        backfill_caseworker_grants()
+
+        self.assertEqual(Grant.objects.filter(principal_user=member, role=self.caseworker_role).count(), 1)
+
+    def test_backfill_caseworker_converts_only_caseworker(self) -> None:
+        # An org-admin membership must not be converted into a caseworker grant.
+        group = PermissionGroup.objects.get(organization=self.org, template__name=ORG_ADMIN_ROLE.name)
+        member = baker.make(User)
+        group.user_set.add(member)
+
+        backfill_caseworker_grants()
+
+        self.assertFalse(Grant.objects.filter(principal_user=member).exists())
 
 
 class ViewPrivateGlobalTierTestCase(TestCase):

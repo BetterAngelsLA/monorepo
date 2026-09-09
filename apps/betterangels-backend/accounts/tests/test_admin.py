@@ -990,10 +990,14 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         with CaptureQueriesContext(connection) as many:
             self.client.get(self.url)
 
-        # Grant-holding members add a small, bounded per-member query cost
-        # (6/member here) — pin the budget so unbounded regressions still fail.
-        added_members = 6
-        self.assertEqual(len(many) - len(few), 6 * added_members)
+        # Each added member is one flat (prefetched) row in the members inline
+        # PLUS one org-scoped Grant row in GrantInline, so every query that
+        # scales with rows shows up as a positive delta here.  Zero means the
+        # grant inlines render entirely from select_related'd rows — their raw
+        # id widgets and Grant.__str__ never hit the database — and the members
+        # inline is flat.  A real N+1 (a per-row autocomplete label fetch, a
+        # widget re-query, a __str__ miss) fails this strict assertion.
+        self.assertEqual(len(many) - len(few), 0)
 
 
 class OrganizationAdminLinksTestCase(TestCase):
