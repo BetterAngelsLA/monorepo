@@ -4,8 +4,10 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from accounts.models import User as AccountUser
 from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.permissions.selectors import can
 from common.permissions.utils import (
     IsAuthenticated,
     get_current_organization,
@@ -31,14 +33,29 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List the active organization's teams, if the user is a member of it."""
-        org = organization_get_for_member(
-            user=get_current_user(info),
-            organization_id=get_current_organization(info),
-        )
+        """List the active organization's teams.
+
+        Access is **membership-based OR grant-based** (ADR 0001 §5.3, teams
+        read):
+
+        - membership — the org's team directory is shared with org members
+          (mobile note/task team pickers, admin listing); no permission needed;
+        - ``teams.view_team`` grant — a holder of the permission at the org (a
+          role-backed ORG_ADMIN/ORG_SUPERUSER Grant, a direct-grant operator,
+          or the global tier) may list without membership.
+
+        The grant arm keeps the read coherent with the grant-only mutations (a
+        holder who can manage teams can also list them) and with the per-org
+        permission report (``teams`` is grant-only/legacy-inert).
+        """
+        user = cast(AccountUser, get_current_user(info))
+        org_id = get_current_organization(info)
+        org = organization_get_for_member(user=user, organization_id=org_id)
 
         if org is None:
-            raise PermissionDenied("You do not have access to this organization.")
+            org = Organization.objects.filter(pk=org_id).first()
+            if org is None or not can(user, Team.perms.VIEW, org=org):
+                raise PermissionDenied("You do not have access to this organization.")
 
         return team_list(organization=org)
 

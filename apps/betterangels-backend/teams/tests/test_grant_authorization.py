@@ -1,8 +1,10 @@
-"""Teams write authority — grant-only (ADR 0001 §5.3, teams cutover).
+"""Teams authority — grant-only writes + member-OR-grant reads (ADR 0001 §5.3).
 
 The three team mutations authorize through ``require_can`` — the grant
 predicate (``can()``) — since ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed
-with backfilled Grants.  These tests pin the grant-only contract:
+with backfilled Grants.  The ``teams`` read is **membership OR a
+``teams.view_team`` grant** — org members (mobile pickers) and grant holders
+may list the org's teams.  These tests pin the contract:
 
 - a role-backed ORG_ADMIN (Grant mirrored by ``OrgRoleManager``) manages teams;
 - a legacy-only ORG_ADMIN (PermissionGroup membership, no Grant) is DENIED —
@@ -11,8 +13,12 @@ with backfilled Grants.  These tests pin the grant-only contract:
 - update/delete thread CHANGE/DELETE (a holder of ADD alone cannot update/delete);
 - a member with neither authority is denied;
 - a Grant at org A does not authorize acting at org B;
-- the global tier (superuser) is enforceable at any org.
+- the global tier (superuser) is enforceable at any org;
+- the read: a non-member with a ``teams.view_team`` Grant (or superuser) lists
+  the org's teams; a non-member with neither is denied.
 """
+
+from typing import Any
 
 from accounts.groups import ORG_ADMIN
 from accounts.models import PermissionGroup, User
@@ -161,3 +167,57 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self._login(admin, self.org_2)
         response = self.create_team_fixture({"name": "wrong org"})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
+
+
+class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
+    """The ``teams`` read: membership OR a ``teams.view_team`` Grant.
+
+    Membership is the directory arm (mobile pickers, admin listing).  The
+    grant arm covers holders of ``teams.view_team`` who are not members (a
+    direct-grant operator, or the global tier via superuser) — the same
+    holders the grant-only mutations authorize, so who-can-manage ⊇
+    who-can-list.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.team = baker.make(Team, name="org-2 team", organization=self.org_2)
+
+    def _list_org_2(self, user: User) -> dict[str, Any]:
+        self.graphql_client.force_login(user)
+        self._set_active_org(self.org_2)
+        return self.execute_graphql(self.get_teams_query())
+
+    def _ids(self, response: dict[str, Any]) -> set[int]:
+        self.assertIsNone(response.get("errors"))
+        return {int(row["id"]) for row in response["data"]["teams"]["results"]}
+
+    def _expected_ids(self) -> set[int]:
+        """All teams of org_2 — the base fixture seeds one, tests may add more."""
+        return set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
+
+    def test_non_member_with_view_grant_can_list_teams(self) -> None:
+        """A direct-grant holder with no membership reads the org's teams."""
+        holder = baker.make(User)
+        self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
+        self.assertFalse(self.org_2.users.filter(pk=holder.pk).exists())
+
+        response = self._list_org_2(holder)
+        self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_superuser_without_membership_can_list_teams(self) -> None:
+        """The global tier is enforceable at any org for the grant-only teams domain."""
+        user = baker.make(User, is_superuser=True)
+        self.assertFalse(self.org_2.users.filter(pk=user.pk).exists())
+
+        response = self._list_org_2(user)
+        self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_non_member_without_grant_is_denied(self) -> None:
+        user = baker.make(User)
+        self.assertFalse(self.org_2.users.filter(pk=user.pk).exists())
+
+        response = self._list_org_2(user)
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone((response.get("data") or {}).get("teams"))
