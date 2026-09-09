@@ -3,12 +3,11 @@
 import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
-from accounts.models import User
 from common.graphql.types import (
     LatitudeScalar,
     LongitudeScalar,
@@ -22,7 +21,6 @@ from django.contrib.gis.measure import D
 from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Coalesce
 from strawberry import ID, Info, asdict, auto
-from strawberry_django.auth.utils import get_current_user
 
 from shelters import models
 from shelters.enums import (
@@ -275,14 +273,15 @@ class PublicShelterFilter:
         return Q(Exists(through.objects.filter(shelter_id=OuterRef("pk"), service_id__in=value)))
 
     @strawberry_django.filter_field
-    def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        """Scope to orgs the authenticated user belongs to (intersected with *value* if set)."""
-        current_user = cast(User, get_current_user(info))
-        allowed_organizations = current_user.organizations_organization.all()
-        if value:
-            allowed_organizations = allowed_organizations.filter(pk__in=value)
+    def organizations(self, value: Optional[list[ID]], prefix: str) -> Q:
+        """Org *view*: narrow to the requested org ids (no-op when omitted).
 
-        return Q(**{f"{prefix}organization__in": allowed_organizations})
+        Reach is enforced by the type's ``get_queryset`` (``visible()``)
+        """
+        if not value:
+            return Q()
+
+        return Q(**{f"{prefix}organization__in": value})
 
 
 @strawberry_django.filter_type(models.Shelter)
