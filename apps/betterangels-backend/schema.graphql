@@ -2150,7 +2150,6 @@ type Query {
   shelterServiceCategories(pagination: OffsetPaginationInput): ServiceCategoryTypeOffsetPaginated!
   shelterCities(pagination: OffsetPaginationInput): CityTypeOffsetPaginated!
   shelterSpas(pagination: OffsetPaginationInput): SPATypeOffsetPaginated!
-  shelterOperatorOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasOrgPerm(permissions: [{app: "shelters", permission: "view_shelter"}], any: true)
   shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
   shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!

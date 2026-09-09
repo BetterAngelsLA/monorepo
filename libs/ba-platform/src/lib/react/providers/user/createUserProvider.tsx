@@ -1,18 +1,18 @@
 import { useQuery } from '@apollo/client/react';
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
-import { isPermission } from '@monorepo/ba-platform/permissions';
 import {
-    createContext,
-    Dispatch,
-    ReactNode,
-    SetStateAction,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 import { ActiveOrgProvider } from '../activeOrg';
+import { isPermission } from '@monorepo/ba-platform/permissions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,18 +65,10 @@ export interface UserProviderConfig<TUser, TQuery> {
 }
 
 /** Minimal org shape the provider accepts (raw backend ``permissions``). */
-export type OrgLike = {
-  id: string;
-  name: string;
-  permissions?: readonly string[];
-};
+export type OrgLike = { id: string; name: string; permissions?: readonly string[] };
 
 /** The org shape passed to :component:`ActiveOrgProvider`. */
-export type MappedOrg = {
-  id: string;
-  name: string;
-  permissions: readonly string[];
-};
+export type MappedOrg = { id: string; name: string; permissions: readonly string[] };
 
 /**
  * Default user-organization → ``Org`` mapping, used when the config supplies no
@@ -85,9 +77,7 @@ export type MappedOrg = {
  * permission can never become gateable.  ``useActiveOrgState`` filters again
  * (defense in depth for providers that bypass this mapper).
  */
-export const defaultMapOrganizations = (
-  orgs: readonly OrgLike[],
-): MappedOrg[] =>
+export const defaultMapOrganizations = (orgs: readonly OrgLike[]): MappedOrg[] =>
   orgs.map((org) => ({
     id: org.id,
     name: org.name,
@@ -168,7 +158,7 @@ export function createUserProvider<
           message: string;
           extensions?: Record<string, unknown>;
         }[];
-       
+      }) => {
         if (isUnauthenticated(res.errors)) {
           setUser(undefined);
         } else {

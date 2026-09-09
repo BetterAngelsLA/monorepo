@@ -3,9 +3,8 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPerm
 from accounts.models import Organization, User
-from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
+from accounts.types import OrganizationType
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     BulkDeleteInput,
@@ -15,7 +14,7 @@ from common.graphql.types import (
 from common.permissions.utils import IsAuthenticated
 from common.services.feature_flags import flag_is_active
 from django.core.exceptions import PermissionDenied
-from django.db.models import Exists, Max, OuterRef, QuerySet
+from django.db.models import Max, QuerySet
 from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -105,33 +104,6 @@ class Query:
     shelter_spas: OffsetPaginated[SPAType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
-
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationType],
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
-    )
-    def shelter_operator_organizations(
-        self,
-        info: Info,
-        ordering: Optional[list[OrganizationOrder]] = None,
-        filters: Optional[OrganizationFilter] = None,
-    ) -> QuerySet[Organization]:
-        """Return all organizations that have a Shelter Operator permission group."""
-        from accounts.models import PermissionGroup
-
-        from shelters.groups import SHELTER_OPERATOR
-
-        has_shelter_operator_group = Exists(
-            PermissionGroup.objects.filter(
-                organization=OuterRef("pk"),
-                template__name=SHELTER_OPERATOR.name,
-            )
-        )
-
-        queryset: QuerySet[Organization] = Organization.objects.filter(has_shelter_operator_group)
-
-        return queryset
 
     @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType])
     def shelter_organizations(self, info: Info) -> QuerySet[Organization]:

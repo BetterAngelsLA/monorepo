@@ -19,7 +19,7 @@ import {
 } from '../../atoms/shelterSortAtom';
 import {
   useShelterCities,
-  useShelterOperatorOrganizations,
+  useShelterOrganizations,
   useShelterSpas,
 } from '../../hooks';
 import { Button } from '../base-ui/buttons';
@@ -52,8 +52,7 @@ function SortFilterDrawerContent() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Subscribe here so the drawer updates when prefetch resolves (or cache updates).
-  const { organizations: shelterOperatorOrgs } =
-    useShelterOperatorOrganizations();
+  const { organizations: shelterOperatorOrgs } = useShelterOrganizations();
   const { cities } = useShelterCities();
   const { spas } = useShelterSpas();
   const { data: serviceCategoriesData } = useQuery(
@@ -295,7 +294,7 @@ export function ShelterFilterPanel() {
   );
 
   // Warm Apollo cache on page load so the drawer rarely shows empty dropdowns.
-  useShelterOperatorOrganizations();
+  useShelterOrganizations();
   useShelterCities();
   useShelterSpas();
   useQuery(ShelterServiceCategoriesDocument);

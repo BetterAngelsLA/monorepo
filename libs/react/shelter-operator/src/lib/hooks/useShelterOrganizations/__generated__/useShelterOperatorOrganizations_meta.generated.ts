@@ -2,11 +2,11 @@
 
 import type { ShelterOperatorOrganizationsQuery } from './useShelterOperatorOrganizations.generated';
 
-export const shelterOperatorOrganizationsOperationKey: keyof Omit<ShelterOperatorOrganizationsQuery, '__typename'> = 'shelterOperatorOrganizations';
+export const shelterOperatorOrganizationsOperationKey: keyof Omit<ShelterOperatorOrganizationsQuery, '__typename'> = 'shelterOrganizations';
 export const shelterOperatorOrganizationsSuccessTypename: Extract<
-  NonNullable<ShelterOperatorOrganizationsQuery['shelterOperatorOrganizations']> extends readonly (infer _T)[]
+  NonNullable<ShelterOperatorOrganizationsQuery['shelterOrganizations']> extends readonly (infer _T)[]
     ? _T
-    : NonNullable<ShelterOperatorOrganizationsQuery['shelterOperatorOrganizations']>,
+    : NonNullable<ShelterOperatorOrganizationsQuery['shelterOrganizations']>,
   { __typename: 'OrganizationTypeOffsetPaginated' }
 >['__typename'] = 'OrganizationTypeOffsetPaginated';
 
