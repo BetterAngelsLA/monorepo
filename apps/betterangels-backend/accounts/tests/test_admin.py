@@ -990,12 +990,8 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         with CaptureQueriesContext(connection) as many:
             self.client.get(self.url)
 
-        # Grant-holding members each cost a small, BOUNDED set of admin page
-        # queries.  This predates role-backing: shelter-operator members have
-        # held Grants since #2412 and show the same per-member cost on main.
-        # The guard pins the per-member budget (6 queries/member here) so an
-        # accidental unbounded/quadratic regression still fails, without
-        # pretending grant-holding members cost nothing.
+        # Grant-holding members add a small, bounded per-member query cost
+        # (6/member here) — pin the budget so unbounded regressions still fail.
         added_members = 6
         self.assertEqual(len(many) - len(few), 6 * added_members)
 

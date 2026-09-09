@@ -1,21 +1,9 @@
 """Teams authority — grant-only reads + writes (ADR 0001 §5.3, teams cutover).
 
-The three team mutations authorize through ``require_can`` — the grant
-predicate (``can()``) — since ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed
-with backfilled Grants.  The ``teams`` read is grant-only too: CASEWORKER is
-role-backed with ``teams.view_team`` (RFC 0003 first step) so the workers who
-pick teams on notes/tasks read via grants.  These tests pin the contract:
-
-- a role-backed ORG_ADMIN (Grant mirrored by ``OrgRoleManager``) manages teams;
-- a legacy-only ORG_ADMIN (PermissionGroup membership, no Grant) is DENIED —
-  the flipped behavior that made the cutover grant-only;
-- a scoped-Grant holder with no legacy group manages teams via the grant arm;
-- update/delete thread CHANGE/DELETE (a holder of ADD alone cannot update/delete);
-- a member with neither authority is denied;
-- a Grant at org A does not authorize acting at org B;
-- the global tier (superuser) is enforceable at any org;
-- the read: role-backed caseworker / ORG_ADMIN, a direct-grant holder, or a
-  superuser lists the org's teams; a member without a Grant is denied.
+The three team mutations authorize through ``require_can`` (``can()``) since
+``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed with backfilled Grants; the
+``teams`` read is grant-only too (role-backed ``CASEWORKER`` with
+``teams.view_team``).  Each test below pins one facet of the contract.
 """
 
 from typing import Any

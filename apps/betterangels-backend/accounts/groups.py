@@ -30,18 +30,11 @@ ORG_SUPERUSER = TemplateConfig(
 
 
 # ── Role definitions (ADR 0001 §2.2 — org-admin cutover) ─────────────────
-# Role-backing ORG_ADMIN / ORG_SUPERUSER is what lets the team mutations read
-# authority from Grants (``can()``) instead of legacy ``PermissionGroup`` rows.
-#
-# The scoped Role deliberately carries only ``teams.*`` — the permissions whose
-# codenames resolve to a real model.  The member-management codenames
-# (``organizations.*``) and ``reports.view_reports`` are registered on no
-# concrete model (their codename's last token is not a model name), so a
-# RoleDef carrying them fails ``sync_roles``' phantom-ContentType guard; those
-# surfaces stay legacy until their own cutover.  The legacy ``PermissionGroup``
-# rows are kept (dual write) until reconcile retires them, so member
-# management and the admin portal keep working off the legacy arm while the
-# team mutations are grant-only.
+# Role-backing ORG_ADMIN / ORG_SUPERUSER lets the team mutations authorize via
+# Grants (``can()``).  The Role carries only ``teams.*``: the member-management
+# codenames (``organizations.*``) and ``reports.view_reports`` resolve to no
+# concrete model, so a RoleDef carrying them fails ``sync_roles``' phantom-
+# ContentType guard; those surfaces stay legacy until their own cutover.
 ORG_ADMIN_ROLE_PERMISSIONS = [
     Team.perms.ADD,
     Team.perms.CHANGE,

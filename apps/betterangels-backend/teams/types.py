@@ -11,12 +11,9 @@ from .models import Team
 @strawberry_django.filter_type(Team)
 class TeamFilter:
     is_active: auto
-    # ``organization_id`` is the FK's column name — ``auto`` resolves it to the
-    # ``organizationId: ID`` input field (exact-match, OR/AND-safe) with no
-    # custom resolver.  The org whose teams are listed is also the resolver's
-    # authorization target (``can(teams.view_team)`` at that org); the DB-level
-    # confine here is defense in depth for whichever org the resolver
-    # authorizes.
+    # ``auto`` resolves the FK column to the ``organizationId: ID`` input field
+    # (no custom resolver); the DB-level confine here is defense in depth for
+    # whichever org the resolver authorizes.
     organization_id: auto
 
 

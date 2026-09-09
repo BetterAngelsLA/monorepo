@@ -9,7 +9,6 @@ interface ThreeDotMenuProps {
   onEdit: (team: TeamType) => void;
   onDelete: (team: TeamType) => Promise<void>;
   deleting: boolean;
-  /** Whether the viewer may edit (change) / delete teams — gate the actions. */
   canEdit: boolean;
   canDelete: boolean;
 }

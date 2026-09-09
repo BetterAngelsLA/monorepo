@@ -613,24 +613,14 @@ def backfill_shelter_grants() -> None:
 
 
 def backfill_org_admin_grants() -> None:
-    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships.
-
-    The legacy groups are kept (dual write) until the member-management
-    cutover retires them; this backfill is what lets a grant-only team
-    mutation authorize every existing org admin without re-adding anyone.
-    """
+    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships."""
     from accounts.groups import ORG_ADMIN_ROLES
 
     _backfill_role_grants(ORG_ADMIN_ROLES)
 
 
 def backfill_caseworker_grants() -> None:
-    """Backfill ``Grant`` rows from legacy CASEWORKER memberships.
-
-    RFC 0003 first step: role-backing CASEWORKER with ``teams.view_team`` is
-    what lets the ``teams`` read authorize via grants.  The legacy groups are
-    kept (dual write) until RFC 0003 retires them.
-    """
+    """Backfill ``Grant`` rows from legacy CASEWORKER memberships."""
     from notes.groups import CASEWORKER_ROLE
 
     _backfill_role_grants((CASEWORKER_ROLE,))

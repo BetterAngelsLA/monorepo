@@ -31,15 +31,11 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List an organization's teams — grant-based (ADR 0001 §5.3).
+        """List an organization's teams — grant-only (ADR 0001 §5.3).
 
-        The org comes from the ``organizationId`` filter when provided
-        (authorized via ``can(teams.view_team)`` at that org); the
-        ``X-Organization-ID`` header remains a backward-compatible fallback
-        while clients migrate to the filter (the header path is deprecated and
-        will be stripped).  Authorizes role-backed ORG_ADMIN/ORG_SUPERUSER and
-        CASEWORKER holders (backfilled Grants), the global tier, or a
-        direct-grant holder.  Membership is not consulted.
+        The org comes from the ``organizationId`` filter when provided; the
+        ``X-Organization-ID`` header remains a deprecated fallback while
+        clients migrate to the filter.
         """
         user = cast(AccountUser, get_current_user(info))
         org = _resolve_read_org(info, filters)
@@ -70,15 +66,13 @@ def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization
 
 @strawberry.type
 class Mutation:
-    """Team mutations — grant-only authority (ADR 0001 §5.3, teams cutover).
+    """Team mutations — grant-only authority (ADR 0001 §5.3).
 
-    The three mutations authorize via :func:`common.permissions.utils.require_can`
-    — the grant predicate (``can()``) — at the target organization, which no
-    longer comes from the ``X-Organization-ID`` header: ``createTeam`` carries
-    it in the payload (``CreateTeamInput.organizationId`` — no row exists to
-    scope by yet), and update/delete derive it from the team row the payload
-    names by id.  ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed with
-    backfilled Grants; the legacy ``PermissionGroup`` arm is not consulted.
+    Each authorizes via :func:`common.permissions.utils.require_can` at the org
+    resolved from the payload: ``createTeam`` carries ``organizationId`` (no
+    row exists to scope by yet); update/delete use the team row's org.  The
+    ``X-Organization-ID`` header and legacy ``PermissionGroup`` arm are not
+    consulted.
     """
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])

@@ -23,9 +23,8 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_create_team_mutation(self) -> None:
         variables = {"name": "team 1", "organizationId": self.org.pk}
 
-        # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check (grant-arm scopes resolution).  The org comes
-        # from the payload (no header) — one org lookup.
+        # Grant-only authority (require_can) adds grant-arm scopes queries; the
+        # org comes from the payload (no header).
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.create_team_fixture(variables)
@@ -39,9 +38,8 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="old name", organization=self.org)
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
-        # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check; the org is derived from the row (no header
-        # org lookup, so one fewer than the old header-based path).
+        # Grant-only authority (require_can) adds grant-arm scopes queries; the
+        # org is derived from the row (no header lookup).
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)
@@ -97,9 +95,8 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
-        # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check; the org is derived from the row (no header
-        # org lookup, so one fewer than the old header-based path).
+        # Grant-only authority (require_can) adds grant-arm scopes queries; the
+        # org is derived from the row (no header lookup).
         expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)

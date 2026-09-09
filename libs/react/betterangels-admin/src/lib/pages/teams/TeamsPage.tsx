@@ -70,9 +70,8 @@ export function TeamsPage(props: IProps) {
     openMenuRowId !== null,
   );
 
-  // The teams read is grant-based and org-scoped: the org is passed as the
-  // ``organizationId`` filter (the backend keeps the org header only as a
-  // deprecated fallback).  Switching orgs re-runs the query for the new org.
+  // The teams read is org-scoped: pass the active org as the ``organizationId``
+  // filter so switching orgs re-runs the query for the new org.
   const canView = hasPermission(TeamPermissions.View);
   const canAdd = hasPermission(TeamPermissions.Add);
   const canEdit = hasPermission(TeamPermissions.Change);

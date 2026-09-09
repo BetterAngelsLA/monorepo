@@ -46,9 +46,7 @@ CASEWORKER = TemplateConfig(
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
-        # Teams: VIEW only — workers pick teams on notes/tasks, and the
-        # teams read authorizes via this permission (grant-based) once the
-        # role below is backfilled.
+        # Teams: VIEW only (role-backed below).
         Team.perms.VIEW,
     ],
     invite_html="account/email/email_invite_organization.html",
@@ -57,13 +55,10 @@ CASEWORKER = TemplateConfig(
 
 
 # ── Role definition (ADR 0001 §2.2 — caseworker teams-read slice) ────────
-# Role-backing CASEWORKER is the first step of RFC 0003 (caseworker
-# guardian-equivalence): a scoped ``Caseworker`` Role carrying
-# ``teams.view_team`` is what lets the ``teams`` read authorize via ``can()``
-# (pure grant) instead of org membership — the org's team directory is read by
-# the workers who pick teams on notes/tasks.  Only the teams permission rides
-# the Role today; the rest of the caseworker bundle (notes/tasks/clients)
-# stays legacy until RFC 0003 role-backs it.
+# RFC 0003 first step: a scoped ``Caseworker`` Role carrying
+# ``teams.view_team`` lets the ``teams`` read authorize via ``can()`` (pure
+# grant) instead of org membership.  Only the teams permission rides the Role
+# today; the rest of the caseworker bundle stays legacy until RFC 0003.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
     permissions=[Team.perms.VIEW],

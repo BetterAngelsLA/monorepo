@@ -36,8 +36,8 @@ export function TeamFormDrawer(props: TProps) {
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
-    // Create carries the org in the payload (update/delete resolve it from the
-    // row); there is no drawer without an active org, but fail loudly anyway.
+    // Create carries the org in the payload; no drawer exists without an
+    // active org, but fail loudly anyway.
     if (!activeOrg) {
       showAlert({ type: 'error', content: 'No active organization selected.' });
       return;

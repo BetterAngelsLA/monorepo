@@ -32,8 +32,8 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_teams_query(self) -> None:
-        # Grant-only authority (require_can → can → scopes) costs three extra
-        # queries over the old membership-only read.
+        # require_can (→ can → scopes) adds grant-arm queries over the old
+        # membership-only read.
         expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_teams_query())

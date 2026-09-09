@@ -26,11 +26,8 @@ legacy permissions must be suppressed from reports.  ``GLOBAL_TIER_ORG_APPS``
 Keep both in step with the ADR §4.1 migration matrix.
 """
 
-#: Grant-only domains — legacy ``PermissionGroup`` rows are inert (suppressed).
-#: Shelters cut over directly to grants (#2412) and never pass through dual-read,
-#: so this set is final for them.  Teams joined at its cutover (mutations AND the
-#: read authorize via ``can()``; its legacy rows stay provisioned during the
-#: transition but are not reported and never consulted for team authority).
+#: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
+#: and never consulted for authority.
 LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams"})
 
 #: Dual-read domains (``can()`` OR legacy, ADR §5.3) — reserved for the still-
