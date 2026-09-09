@@ -948,8 +948,8 @@ them all atomically:
    - **FE** — no new surfacing work: tier 2 (`organizationsOrganization[].permissions`,
      §5.2) already unions Grant role perms per org, so the admin app's org-scoped
      gates keep working once holders have Grants.
-4. **Tests** — mirror the shelter cutover suite (`test_grant_cutover.py`): global-tier
-   cross-org reads, grant-only org admin without legacy group still manages teams /
+4. **Tests** — mirror the shelter grant suite (`shelters/tests/test_grant_authorization.py`):
+   global-tier cross-org reads, grant-only org admin without legacy group still manages teams /
    members / reports, and the legacy-group-only holder (a `PermissionGroup` row left
    by a pre-backfill org) fails closed.
 
