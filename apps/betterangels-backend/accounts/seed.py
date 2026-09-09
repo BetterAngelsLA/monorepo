@@ -201,7 +201,30 @@ def retire_superseded_phantom_permissions() -> None:
     (``organizations.*``) have no real twin, so their phantom rows are kept —
     they are still the only rows those codenames live on.  Idempotent; runs at
     ``post_migrate`` once roles/groups have converged onto the real rows.
+
+    References are **re-pointed, never silently dropped**: a ``user_permission``
+    (or role/group/template row) pointing at a doomed phantom is moved onto its
+    real twin first — deleting a referenced phantom would otherwise silently
+    revoke the holder (nothing else re-points ``user_permissions``).
     """
+    from accounts.models import PermissionGroup, Role
+
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.models import Group, Permission
+
+    user_cls = get_user_model()
+
+    # Every model that has an M2M to ``auth.Permission`` in this codebase —
+    # re-point each before the phantom row is deleted.  If another M2M to
+    # Permission is added later, it must join this list.
+    permission_m2m_throughs = (
+        user_cls.user_permissions.through,
+        Group.permissions.through,
+        Role.permissions.through,
+        PermissionGroup.permissions.through,
+        PermissionGroupTemplate.permissions.through,
+    )
+
     with transaction.atomic():
         phantom_cts = [ct for ct in ContentType.objects.all() if ct.model_class() is None]
         if not phantom_cts:
@@ -209,13 +232,16 @@ def retire_superseded_phantom_permissions() -> None:
         phantom_ct_ids = {ct.pk for ct in phantom_cts}
 
         phantom_perms = list(Permission.objects.filter(content_type_id__in=phantom_ct_ids))
-        real_pairs = set(
-            Permission.objects.exclude(content_type_id__in=phantom_ct_ids).values_list(
-                "content_type__app_label", "codename"
-            )
-        )
-        doomed = [p for p in phantom_perms if (p.content_type.app_label, p.codename) in real_pairs]
+        real_by_key: dict[tuple[str, str], Permission] = {
+            (p.content_type.app_label, p.codename): p
+            for p in Permission.objects.exclude(content_type_id__in=phantom_ct_ids)
+        }
+        doomed = [p for p in phantom_perms if (p.content_type.app_label, p.codename) in real_by_key]
         if doomed:
+            for phantom in doomed:
+                real = real_by_key[(phantom.content_type.app_label, phantom.codename)]
+                for through in permission_m2m_throughs:
+                    through.objects.filter(permission_id=phantom.pk).update(permission_id=real.pk)
             Permission.objects.filter(pk__in=[p.pk for p in doomed]).delete()
             logger.info("Retired %d phantom permissions superseded by real model rows", len(doomed))
 
