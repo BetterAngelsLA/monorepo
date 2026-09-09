@@ -69,10 +69,43 @@ class NoteTeamOrgValidationTestCase(TestCase):
         note.clean()
 
     def test_clean_rejects_a_team_from_another_org(self) -> None:
-        # Unsaved: #2312 adds a composite FK that makes the row unstorable.
         note = Note(organization=self.org, team=self.other_team)
 
         with self.assertRaises(ValidationError) as ctx:
             note.clean()
 
         self.assertIn("team", ctx.exception.message_dict)
+
+
+class NoteRevertActionTestCase(TestCase):
+    """Reverting a note validates the state it restores.
+
+    ``revert_action`` replays one event's diff at a time, so a restored team can
+    end up paired with an organization from a different point in the note's
+    history.
+    """
+
+    def setUp(self) -> None:
+        self.org = organization_recipe.make()
+        self.other_org = organization_recipe.make()
+        self.own_team = baker.make(Team, organization=self.org)
+        self.other_team = baker.make(Team, organization=self.other_org)
+
+    def test_revert_restores_a_team_from_the_same_org(self) -> None:
+        note = baker.make(Note, organization=self.org, team=None)
+
+        note.revert_action(action="update", diff={"team_id": [self.own_team.pk, None]})
+
+        note.refresh_from_db()
+        self.assertEqual(note.team, self.own_team)
+
+    def test_revert_refuses_to_restore_a_team_from_another_org(self) -> None:
+        note = baker.make(Note, organization=self.org, team=None)
+
+        with self.assertRaises(ValidationError) as ctx:
+            note.revert_action(action="update", diff={"team_id": [self.other_team.pk, None]})
+
+        self.assertIn("team", ctx.exception.message_dict)
+
+        note.refresh_from_db()
+        self.assertIsNone(note.team)

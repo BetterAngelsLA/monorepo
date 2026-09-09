@@ -26,7 +26,6 @@ class TaskTeamOrgValidationTestCase(TestCase):
         task.clean()
 
     def test_clean_rejects_a_team_from_another_org(self) -> None:
-        # Unsaved: #2312 adds a composite FK that makes the row unstorable.
         task = Task(organization=self.org, team=self.other_team)
 
         with self.assertRaises(ValidationError) as ctx:
