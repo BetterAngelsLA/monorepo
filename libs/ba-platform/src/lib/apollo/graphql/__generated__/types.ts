@@ -794,6 +794,7 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateTeamInput = {
   name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
 };
 
 export type CreateTeamPayload = OperationInfo | TeamType;

@@ -38,6 +38,9 @@ class TeamType:
 @strawberry_django.input(Team, partial=True)
 class CreateTeamInput:
     name: str
+    # The org to create into — carried in the payload because (unlike
+    # update/delete) there is no existing row to scope by.  No header.
+    organization_id: ID
 
 
 @strawberry_django.input(Team, partial=True)

@@ -792,6 +792,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateTeamInput {
   name: String!
+  organizationId: ID!
 }
 
 union CreateTeamPayload = TeamType | OperationInfo
@@ -2929,11 +2930,11 @@ type TaskTypeOffsetPaginated {
 
 input TeamFilter {
   isActive: Boolean
+  organizationId: ID
   AND: TeamFilter
   OR: TeamFilter
   NOT: TeamFilter
   DISTINCT: Boolean
-  organizationId: ID
 }
 
 type TeamType {

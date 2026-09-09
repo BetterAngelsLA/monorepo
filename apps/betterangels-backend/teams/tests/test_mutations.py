@@ -21,10 +21,11 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_create_team_mutation(self) -> None:
-        variables = {"name": "team 1"}
+        variables = {"name": "team 1", "organizationId": self.org.pk}
 
         # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check (grant-arm scopes resolution).
+        # legacy HasOrgPerm check (grant-arm scopes resolution).  The org comes
+        # from the payload (no header) — one org lookup.
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.create_team_fixture(variables)
@@ -39,8 +40,9 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         variables = {"id": team.pk, "name": "new name", "isActive": False}
 
         # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check (grant-arm scopes resolution).
-        expected_query_count = 13
+        # legacy HasOrgPerm check; the org is derived from the row (no header
+        # org lookup, so one fewer than the old header-based path).
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_team_fixture(variables)
 
@@ -96,8 +98,9 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="team", organization=self.org)
 
         # Grant-only authority (require_can) costs two extra queries over the
-        # legacy HasOrgPerm check (grant-arm scopes resolution).
-        expected_query_count = 9
+        # legacy HasOrgPerm check; the org is derived from the row (no header
+        # org lookup, so one fewer than the old header-based path).
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 

@@ -51,7 +51,7 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         # Sanity: the mirrored Grant is what authorizes — nothing else.
         self.assertTrue(self.org_1_admin.grants.filter(scope_org=self.org_1, role__name=ORG_ADMIN.name).exists())
 
-        response = self.create_team_fixture({"name": "grant-era team"})
+        response = self.create_team_fixture({"name": "grant-era team", "organizationId": self.org_1.pk})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["createTeam"]["name"], "grant-era team")
 
@@ -74,7 +74,7 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         self.graphql_client.force_login(grant_user)
         self._set_active_org(self.org_1)
 
-        response = self.create_team_fixture({"name": "grant-only team"})
+        response = self.create_team_fixture({"name": "grant-only team", "organizationId": self.org_1.pk})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["createTeam"]["name"], "grant-only team")
 
@@ -92,7 +92,7 @@ class TeamGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         self.graphql_client.force_login(user)
         self._set_active_org(self.org_1)
 
-        response = self.create_team_fixture({"name": "superuser team"})
+        response = self.create_team_fixture({"name": "superuser team", "organizationId": self.org_1.pk})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["createTeam"]["name"], "superuser team")
 
@@ -119,7 +119,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self._login(legacy_admin, self.org_1)
         initial_count = Team.objects.count()
 
-        response = self.create_team_fixture({"name": "should not appear"})
+        response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
         self.assertEqual(Team.objects.count(), initial_count)
 
@@ -139,7 +139,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         team = baker.make(Team, name="name", organization=self.org_1)
 
         self._login(add_only, self.org_1)
-        create_response = self.create_team_fixture({"name": "created"})
+        create_response = self.create_team_fixture({"name": "created", "organizationId": self.org_1.pk})
         self.assertIsNone(create_response.get("errors"))
 
         update_response = self.update_team_fixture({"id": team.pk, "name": "nope"})
@@ -154,7 +154,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         self._login(member, self.org_1)
 
         initial_count = Team.objects.count()
-        response = self.create_team_fixture({"name": "should not appear"})
+        response = self.create_team_fixture({"name": "should not appear", "organizationId": self.org_1.pk})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
         self.assertEqual(Team.objects.count(), initial_count)
 
@@ -165,7 +165,7 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
 
         self._login(admin, self.org_2)
-        response = self.create_team_fixture({"name": "wrong org"})
+        response = self.create_team_fixture({"name": "wrong org", "organizationId": self.org_2.pk})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
 
 

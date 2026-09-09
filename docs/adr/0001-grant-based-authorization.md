@@ -1004,7 +1004,11 @@ ContentType). The teams cutover therefore landed *teams alone*:
   off the legacy arm, and the admin FE's per-org lists stay complete.
 - The three team mutations read `require_can(…, teams.*)` — no `@hasOrgPerm`
   directive — and `teams` joins `LEGACY_INERT_APPS` (its legacy rows are no
-  longer reported; the global tier folds for it like shelters).
+  longer reported; the global tier folds for it like shelters).  They are
+  **header-free**: `createTeam` carries the org in the payload
+  (`CreateTeamInput.organizationId` — no row exists to scope by yet) and
+  `updateTeam`/`deleteTeam` derive it from the team row the payload names by
+  id, so the team surface never consults `X-Organization-ID`.
 - The teams *query* is **grant-only** too (`require_can(teams.view_team)`), not
   member-gated: CASEWORKER is role-backed as the RFC 0003 first step — a scoped
   `Caseworker` Role carrying `teams.view_team`, with

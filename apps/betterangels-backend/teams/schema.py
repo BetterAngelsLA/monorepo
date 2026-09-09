@@ -42,27 +42,30 @@ class Query:
         direct-grant holder.  Membership is not consulted.
         """
         user = cast(AccountUser, get_current_user(info))
-        org = _resolve_org(info, filters=filters)
+        org = _resolve_read_org(info, filters)
         require_can(user, Team.perms.VIEW, org=org)
         return team_list(organization=org)
 
 
-def _resolve_org(info: Info, *, filters: Optional[TeamFilter] = None) -> Organization:
-    """The organization a team operation acts on, failing closed when unknown.
+def _org_or_deny(org_id: object) -> Organization:
+    """Resolve an org id, failing closed on a missing/unknown one.
 
-    The read takes the org from the ``organizationId`` filter when provided
-    (authoritative); the ``X-Organization-ID`` header is the deprecated
-    fallback, and the mutations use the header directly.  A missing/unknown
-    org is a permission problem (``PermissionDenied``), not a ``DoesNotExist``
-    crash.  Module-level because strawberry-django mutation resolvers are
-    invoked unbound.
+    A missing/unknown org is a permission problem (``PermissionDenied``), not a
+    ``DoesNotExist`` crash.  Module-level because strawberry-django mutation
+    resolvers are invoked unbound.
     """
-    filter_org_id = getattr(filters, "organization_id", None) if filters else None
-    org_id = filter_org_id or get_current_organization(info)
     org = Organization.objects.filter(pk=org_id).first()
     if org is None:
         raise PermissionDenied("You do not have access to this organization.")
     return org
+
+
+def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
+    """The org whose teams are listed: the ``organizationId`` filter wins; the
+    ``X-Organization-ID`` header is the deprecated fallback while clients
+    migrate to the filter (and will be stripped once none send it)."""
+    filter_org_id = getattr(filters, "organization_id", None) if filters else None
+    return _org_or_deny(filter_org_id or get_current_organization(info))
 
 
 @strawberry.type
@@ -70,25 +73,27 @@ class Mutation:
     """Team mutations — grant-only authority (ADR 0001 §5.3, teams cutover).
 
     The three mutations authorize via :func:`common.permissions.utils.require_can`
-    — the grant predicate (``can()``) over the active organization from the
-    ``X-Organization-ID`` header.  ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are
-    role-backed with backfilled Grants, so every existing org admin is covered;
-    the legacy ``PermissionGroup`` arm is no longer consulted here.
+    — the grant predicate (``can()``) — at the target organization, which no
+    longer comes from the ``X-Organization-ID`` header: ``createTeam`` carries
+    it in the payload (``CreateTeamInput.organizationId`` — no row exists to
+    scope by yet), and update/delete derive it from the team row the payload
+    names by id.  ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed with
+    backfilled Grants; the legacy ``PermissionGroup`` arm is not consulted.
     """
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
-        org = _resolve_org(info)
+        org = _org_or_deny(data.organization_id)
         require_can(get_current_user(info), Team.perms.ADD, org=org)
         return cast(TeamType, team_create(name=data.name, organization=org))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
-        org = _resolve_org(info)
-        require_can(get_current_user(info), Team.perms.CHANGE, org=org)
-        team = team_get(pk=data.id, organization=org)
+        team = team_get(pk=data.id)
         if team is None:
             raise PermissionDenied("You do not have permission to update this team.")
+        # The row names its org — authorize there, no header needed.
+        require_can(get_current_user(info), Team.perms.CHANGE, org=team.organization_id)
 
         return cast(
             TeamType,
@@ -101,11 +106,11 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        org = _resolve_org(info)
-        require_can(get_current_user(info), Team.perms.DELETE, org=org)
-        team = team_get(pk=data.id, organization=org)
+        team = team_get(pk=data.id)
         if team is None:
             raise PermissionDenied("You do not have permission to delete this team.")
+        # The row names its org — authorize there, no header needed.
+        require_can(get_current_user(info), Team.perms.DELETE, org=team.organization_id)
         deleted_id = team.pk
         team_delete(team=team)
         return DeletedObjectType(id=deleted_id)
