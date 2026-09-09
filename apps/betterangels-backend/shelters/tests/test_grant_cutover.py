@@ -1,9 +1,28 @@
-"""PR 4 shelter cutover: grant-based selectors/mutations govern the shelter domain.
+"""Grant-authorization contract tests for the shelter domain (ADR 0001).
 
-Covers the behaviors that changed when the shelter domain flipped from
-``permissioned_queryset``/``HasOrgPerm`` to the grant selectors (ADR 0001 §2.4,
-§2.6): global-tier cross-org reads, target-org creates, and permission-threaded
-mutations failing closed.
+Shelters is the first domain cut over to the grant model: its reads and writes
+are governed by the predicates in ``common.permissions.selectors``
+(``visible`` / ``can`` / ``scopes``), not by legacy ``PermissionGroup`` rows or
+the ``X-Organization-ID`` header (which the domain no longer reads at all).
+
+These tests pin the cross-cutting invariants that span features and are easy to
+regress silently:
+
+* global tier — a global-role holder reads across every org, never confined;
+* finite reach — a scoped user sees exactly the orgs they hold a grant in
+  (membership alone grants nothing);
+* identity-wide writes — a grant at the row's org authorizes create / update /
+  delete / clone regardless of which org the request is made in;
+* target-org creates — the organization rides in the payload and must exist
+  and carry the create grant;
+* fail-closed semantics — an unauthorized row is indistinguishable from a
+  missing one (404 / empty list);
+* permission threading — delete paths require DELETE, clones require ADD.
+
+Per-feature CRUD and permission behavior lives in the app's other test modules
+(``test_mutations``, ``test_operator_queries``, ``test_room_*``,
+``test_reservation_*``, ...).  This module is the cross-domain contract home
+that other domains mirror when they cut over (ADR 0001 §7).
 """
 
 from accounts.models import Role, User
