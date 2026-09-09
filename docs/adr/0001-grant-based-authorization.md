@@ -990,11 +990,11 @@ regenerated at each step.
 
 **Status on main — teams landed first, on the grant-only model (2026-09-09).**
 Main's machinery evolved past the stack this section sketched: the seam is the
-per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412), and
-two of the four org-admin consumers cannot ride a scoped `Role` today — the
-`organizations.*` member-management codenames and `reports.view_reports` resolve
-to no concrete model, so `sync_roles` refuses them on a RoleDef (phantom
-ContentType). The teams cutover therefore landed *teams alone*:
+per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412).  At
+the teams landing, the `organizations.*` member-management codenames and
+`reports.view_reports` could not ride a scoped `Role` — they resolved to no
+concrete model, so `sync_roles` refused them on a RoleDef (phantom
+ContentType).  The teams cutover therefore landed *teams alone*:
 
 - `ORG_ADMIN`/`ORG_SUPERUSER` are role-backed with a scoped `Role` carrying
   **`teams.*` only**; `backfill_org_admin_grants()` converts every existing
@@ -1042,6 +1042,25 @@ ContentType). The teams cutover therefore landed *teams alone*:
   (``get_or_none``'s pk guard) instead of reaching the DB as an unhandled
   ``ValueError``, and answer missing-vs-forbidden rows with one refusal, so
   neither is a crash nor an existence oracle.
+
+**Status on main — reports joined (2026-09-09).** ``_resolve_permissions`` now
+binds a RoleDef permission to the model that *declares* it in
+``Meta.permissions`` (resolved from the app registry), so a custom codename
+whose last token is not its model — ``reports.view_reports`` on
+``ScheduledReport`` — rides a scoped Role instead of tripping the
+phantom-ContentType guard.  The reports slice then mirrors teams:
+
+- ``ORG_ADMIN``/``ORG_SUPERUSER`` Roles add ``reports.view_reports``; the
+  existing backfilled org-admin Grants inherit it from the Role row on the next
+  ``sync_roles`` (no re-backfill).
+- ``reportSummary`` (GraphQL) and the DRF interaction-data export authorize via
+  ``require_can``/``can`` at the target org — membership no longer consulted, a
+  legacy-only holder fails closed.  ``reports`` joins ``LEGACY_INERT_APPS``;
+  ``ScheduledReport`` declares ``OrgScoped`` (permissions.E005).
+- Only **member management** (`organizations.*` portal codenames — registered on
+  no model) still cannot ride a scoped Role; it is the last legacy-only domain
+  and keeps the ORG_ADMIN legacy ``PermissionGroup`` rows meaningful until its
+  own cutover.
 
 ## 6. References
 
