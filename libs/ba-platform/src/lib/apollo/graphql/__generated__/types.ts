@@ -3275,10 +3275,10 @@ export enum ShelterChoices {
 }
 
 export type ShelterContactInfoInput = {
-  contactEmail?: InputMaybe<Scalars['String']['input']>;
-  contactName: Scalars['String']['input'];
+  contactEmail?: InputMaybe<Scalars['NonBlankString']['input']>;
+  contactName: Scalars['NonEmptyString']['input'];
   contactNumber: Scalars['PhoneNumber']['input'];
-  contactTitle?: InputMaybe<Scalars['String']['input']>;
+  contactTitle?: InputMaybe<Scalars['NonBlankString']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isClaimant?: InputMaybe<Scalars['Boolean']['input']>;
 };
