@@ -4,7 +4,9 @@ from accounts.models import User
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase
+from waffle.testutils import override_flag
 
+from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.models import SPA, City, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 
@@ -1044,3 +1046,61 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.assertIsNone(response.get("errors"))
         self.assertGraphQLOperationInfo(response, "deleteShelter", "Shelter matching ID", kind="ERROR")
         self.assertTrue(Shelter.objects.filter(pk=self.shelter.pk).exists())
+
+
+class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCase):
+    """Documents the OperationInfo shape for per-contact validation failures.
+
+    ``_apply_additional_contacts`` aggregates ``full_clean()`` errors under indexed
+    field paths (``additional_contacts.<index>.<field>``), which strawberry camelCases
+    into ``additionalContacts.<index>.<fieldName>`` in ``OperationInfo.messages[].field``.
+    """
+
+    MUTATION = """
+        mutation UpdateShelter($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.operator)
+        self.shelter = Shelter.objects.create(name="Contacts Error Shelter", organization=self.org)
+
+    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=True)
+    def test_two_new_contacts_each_with_error(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "additionalContacts": [
+                        {"contactName": "Ada", "contactNumber": "bad-phone"},
+                        {"contactName": "Grace", "contactNumber": "2125550101", "contactEmail": "nope"},
+                    ],
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 2)
+
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "additionalContacts.0.contactNumber")
+        self.assertIn("phone", messages[0]["message"].lower())
+
+        self.assertEqual(messages[1]["kind"], "VALIDATION")
+        self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
+        self.assertIn("email", messages[1]["message"].lower())

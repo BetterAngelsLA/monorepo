@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import NonBlankString, NonEmptyString, PhoneNumberScalar
 from strawberry import ID, UNSET, Maybe, auto
 
 from shelters import models
@@ -61,6 +61,24 @@ class ServiceInput:
     id: Optional[ID] = None
     category_id: Optional[ID] = None
     display_name: Optional[str] = None
+
+
+@strawberry.input
+class ShelterContactInfoInput:
+    """A single additional contact for a shelter.
+
+    Full PUT payload: when ``id`` is provided this entry replaces the matching
+    contact row, so submit every field you want to persist. Omitted optional
+    fields (``contact_email``, ``contact_title``, ``is_claimant``) are stored
+    as ``None``/``False``.
+    """
+
+    id: Optional[ID] = None
+    contact_name: NonEmptyString
+    contact_number: PhoneNumberScalar
+    contact_email: Optional[NonBlankString] = None
+    contact_title: Optional[NonBlankString] = None
+    is_claimant: Optional[bool] = None
 
 
 @strawberry_django.input(models.Shelter)
@@ -185,6 +203,7 @@ class UpdateShelterInput:
     location: Maybe[Optional[ShelterLocationInput]] = UNSET
     schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
+    additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
 
 
 @strawberry.input
