@@ -7,6 +7,7 @@ import {
   useBeds,
   useCloneBed,
   useDeleteBeds,
+  useShelterPermissions,
   useUpdateBed,
 } from '../../../../hooks';
 import { cloneBedMeta } from '../../../../hooks/useCloneBed/__generated__/useCloneBed_meta.generated';
@@ -42,6 +43,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
   const { cloneBed } = useCloneBed({ shelterId });
   const { deleteBeds } = useDeleteBeds({ shelterId });
   const { updateBed } = useUpdateBed();
+  const { canAddBed } = useShelterPermissions();
 
   const { showToast } = useToast();
 
@@ -129,8 +131,7 @@ export function Beds({ shelterId }: { shelterId: string }) {
       try {
         const response = await updateBed({
           variables: {
-            id: bedId,
-            data: { lastCleaned: new Date().toISOString() },
+            data: { id: bedId, lastCleaned: new Date().toISOString() },
           },
         });
 
@@ -230,16 +231,18 @@ export function Beds({ shelterId }: { shelterId: string }) {
         />
       )}
 
-      <div className="fixed bottom-6 right-6 text-sm z-20 ">
-        <Button
-          leftIcon={<Plus />}
-          rightIcon={false}
-          variant="floating"
-          onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'bed'))}
-        >
-          Create Bed
-        </Button>
-      </div>
+      {canAddBed && (
+        <div className="fixed bottom-6 right-6 text-sm z-20 ">
+          <Button
+            leftIcon={<Plus />}
+            rightIcon={false}
+            variant="floating"
+            onClick={() => navigate(shelterCreateResourceRoute(shelterId, 'bed'))}
+          >
+            Create Bed
+          </Button>
+        </div>
+      )}
     </>
   );
 }

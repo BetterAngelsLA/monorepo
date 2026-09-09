@@ -25,7 +25,10 @@ import {
   type BasicInfoFormData,
 } from '../segments/BasicInfo';
 
-function toCreateInput(formData: BasicInfoFormData): CreateShelterInput {
+function toCreateInput(
+  formData: BasicInfoFormData,
+  organizationId: string,
+): CreateShelterInput {
   return {
     name: formData.name,
     description: formData.description || '',
@@ -35,6 +38,7 @@ function toCreateInput(formData: BasicInfoFormData): CreateShelterInput {
     website: formData.website || undefined,
     isPrivate: formData.isPrivate,
     status: formData.status,
+    organizationId,
   };
 }
 
@@ -65,7 +69,7 @@ export function CreateShelterProfile(props: TProps) {
 
     setDisabled(true);
 
-    const data = toCreateInput(formData);
+    const data = toCreateInput(formData, activeOrg.id);
 
     try {
       const response = await createShelter({ variables: { data } });

@@ -65,7 +65,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=uploads,
         )
@@ -93,7 +92,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
         )
@@ -112,7 +110,6 @@ class CreatePresignedUploadsTest(TestCase):
 
         result = create_presigned_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=str(self.shelter.pk),
             uploads=[
                 UploadRequest(ref_id="ref-1", filename="a.jpg", mime_type="image/jpeg"),
@@ -150,7 +147,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -172,7 +168,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -196,7 +191,6 @@ class ResolveUploadsTest(TestCase):
 
         result = resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -222,7 +216,6 @@ class ResolveUploadsTest(TestCase):
 
         resolve_uploads(
             user=self.user,
-            organization_id=str(self.org.pk),
             shelter_id=self.shelter.pk,
             photos=[
                 ShelterPhotoResolveItem(
@@ -251,7 +244,6 @@ class ResolveUploadsTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid or expired upload signature for 'bad.jpg'"):
             resolve_uploads(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 shelter_id=self.shelter.pk,
                 photos=[
                     ShelterPhotoResolveItem(
@@ -283,7 +275,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk])
+        result = delete_shelter_photos(user=self.user, ids=[photo.pk])
 
         self.assertEqual(result, [photo.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk=photo.pk).exists())
@@ -294,7 +286,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo2 = baker.make(ShelterPhoto, shelter=self.shelter)
         other = baker.make(ShelterPhoto, shelter=self.shelter)
 
-        result = delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo1.pk, photo2.pk])
+        result = delete_shelter_photos(user=self.user, ids=[photo1.pk, photo2.pk])
 
         self.assertCountEqual(result, [photo1.pk, photo2.pk])
         self.assertFalse(ShelterPhoto.objects.filter(pk__in=[photo1.pk, photo2.pk]).exists())
@@ -304,7 +296,7 @@ class DeleteShelterPhotosTest(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
 
         with self.assertRaisesRegex(Exception, "999999"):
-            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
 
     def test_raises_for_unauthorized_photo(self) -> None:
         other_org: Any = organization_recipe.make()
@@ -315,7 +307,6 @@ class DeleteShelterPhotosTest(TestCase):
         with self.assertRaisesRegex(Exception, str(unauthorized.pk)):
             delete_shelter_photos(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 ids=[authorized.pk, unauthorized.pk],
             )
 
@@ -324,7 +315,7 @@ class DeleteShelterPhotosTest(TestCase):
         initial_count = ShelterPhoto.objects.count()
 
         with self.assertRaisesRegex(ObjectDoesNotExist, "999999"):
-            delete_shelter_photos(user=self.user, organization_id=str(self.org.pk), ids=[photo.pk, 999999])
+            delete_shelter_photos(user=self.user, ids=[photo.pk, 999999])
 
         self.assertEqual(ShelterPhoto.objects.count(), initial_count)
 
@@ -338,7 +329,6 @@ class DeleteShelterPhotosTest(TestCase):
         with self.assertRaisesRegex(ObjectDoesNotExist, str(unauthorized.pk)):
             delete_shelter_photos(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 ids=[authorized.pk, unauthorized.pk],
             )
 
@@ -367,7 +357,6 @@ class UpdateShelterPhotoTest(TestCase):
 
         result = update_shelter_photo(
             user=self.user,
-            organization_id=str(self.org.pk),
             data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR),
         )
 
@@ -379,7 +368,6 @@ class UpdateShelterPhotoTest(TestCase):
         with self.assertRaisesRegex(Exception, "999999"):
             update_shelter_photo(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 data=self._input(999999, ShelterPhotoTypeChoices.EXTERIOR),
             )
 
@@ -391,7 +379,6 @@ class UpdateShelterPhotoTest(TestCase):
         with self.assertRaisesRegex(Exception, str(photo.pk)):
             update_shelter_photo(
                 user=self.user,
-                organization_id=str(self.org.pk),
                 data=self._input(photo.pk, ShelterPhotoTypeChoices.EXTERIOR),
             )
 
@@ -416,7 +403,6 @@ class ShelterPhotoServicePermissionTestCase(TestCase):
         self.user: Any = baker.make("accounts.User")
         self.org: Any = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.shelter: Any = shelter_recipe.make(organization=self.org)
-        self.org_id = str(self.org.pk)
         self.org.users.add(self.user)
         OrgRoleManager(self.org).add_roles(self.user, SHELTER_OPERATOR)
 
@@ -430,7 +416,6 @@ class ShelterPhotoServicePermissionTestCase(TestCase):
         with self.assertRaises(ObjectDoesNotExist):
             create_presigned_uploads(
                 user=self.viewer,
-                organization_id=self.org_id,
                 shelter_id=str(self.shelter.pk),
                 uploads=[UploadRequest(ref_id="ref-1", filename="photo.jpg", mime_type="image/jpeg")],
             )
@@ -442,7 +427,6 @@ class ShelterPhotoServicePermissionTestCase(TestCase):
         with self.assertRaises(ObjectDoesNotExist):
             resolve_uploads(
                 user=self.viewer,
-                organization_id=self.org_id,
                 shelter_id=str(self.shelter.pk),
                 photos=[],
             )
@@ -453,7 +437,7 @@ class ShelterPhotoServicePermissionTestCase(TestCase):
         photo = baker.make(ShelterPhoto, shelter=self.shelter)
 
         with self.assertRaises(ObjectDoesNotExist):
-            delete_shelter_photos(user=self.viewer, organization_id=self.org_id, ids=[photo.pk])
+            delete_shelter_photos(user=self.viewer, ids=[photo.pk])
 
         self.assertTrue(ShelterPhoto.objects.filter(pk=photo.pk).exists())
 
@@ -463,7 +447,6 @@ class ShelterPhotoServicePermissionTestCase(TestCase):
         with self.assertRaises(ObjectDoesNotExist):
             update_shelter_photo(
                 user=self.viewer,
-                organization_id=self.org_id,
                 data=UpdateShelterPhotoInput(id=ID(str(photo.pk)), photo_type=ShelterPhotoTypeChoices.EXTERIOR),
             )
 

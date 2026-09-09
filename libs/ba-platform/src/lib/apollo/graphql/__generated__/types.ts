@@ -1920,7 +1920,6 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateBedArgs = {
   data: UpdateBedInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -1991,13 +1990,11 @@ export type MutationUpdateReferralArgs = {
 
 export type MutationUpdateReservationArgs = {
   data: UpdateReservationInput;
-  id: Scalars['ID']['input'];
 };
 
 
 export type MutationUpdateRoomArgs = {
   data: UpdateRoomInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -3680,6 +3677,7 @@ export type UpdateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3855,6 +3853,7 @@ export type UpdateReservationInput = {
   checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
   clients?: InputMaybe<Array<ReservationClientInput>>;
   duration?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['ID']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
@@ -3868,6 +3867,7 @@ export type UpdateRoomInput = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;

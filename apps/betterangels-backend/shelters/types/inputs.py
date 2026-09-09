@@ -222,6 +222,7 @@ class CreateBedInput:
 
 @strawberry.input
 class UpdateBedInput:
+    id: ID
     room_id: Maybe[ID | None]
     accessibility: Maybe[List[AccessibilityChoices] | None]
     b7: Maybe[bool]
@@ -259,6 +260,7 @@ class CreateRoomInput:
 
 @strawberry.input
 class UpdateRoomInput:
+    id: ID
     accessibility: Maybe[List[AccessibilityChoices] | None]
     amenities: Maybe[str | None]
     demographics: Maybe[List[DemographicChoices] | None]
@@ -296,6 +298,7 @@ class CreateReservationInput:
 
 @strawberry.input
 class UpdateReservationInput:
+    id: ID
     room_id: Maybe[ID | None]
     bed_id: Maybe[ID | None]
     checked_in_at: Maybe[datetime | None]

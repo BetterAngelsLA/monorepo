@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from common.permissions.utils import require_can
-from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
@@ -217,20 +217,25 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
-    Accepts a plain dict (e.g. from ``strawberry.asdict(data)`` with
-    ``UNSET`` keys already removed).
+    The target organization is the create anchor and travels in the payload
+    (``data["organization_id"]``, ADR 0001 §2.6): it is checked for authority
+    and existence up front, then flows onto the row as its FK column — no
+    separate argument.  Accepts a plain dict (e.g. from
+    ``strawberry.asdict(data)`` with ``UNSET`` keys already removed).
 
     Raises:
-        ``django.core.exceptions.PermissionDenied`` when no target organization is given
-        or the user may not add shelters there.
-        ``django.core.exceptions.ValidationError`` when the target organization does not
-        exist or on invalid data.
+        ``django.core.exceptions.ValidationError`` when no target organization is
+        given, it does not exist, or the data is invalid.
+        ``django.core.exceptions.PermissionDenied`` when the user may not add
+        shelters in the target organization.
     """
+    data = dict(data)
+    organization_id = data.get("organization_id")
     if not organization_id:
-        raise PermissionDenied("X-Organization-ID or an organization_id is required.")
+        raise ValidationError({"organization_id": "An organization is required to create a shelter."})
     if not Organization.objects.filter(pk=organization_id).exists():
         raise ValidationError(f"Organization with id {organization_id} not found.")
     require_can(user, Shelter.perms.ADD, org=organization_id)
@@ -238,7 +243,7 @@ def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str,
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
 
-    shelter = Shelter(organization_id=organization_id, **scalar_data)
+    shelter = Shelter(**scalar_data)
     shelter.full_clean()
     shelter.save()
 
@@ -252,12 +257,12 @@ def shelter_create(*, user: "User", organization_id: str | None, data: Dict[str,
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``change_shelter`` permission, so the caller does not need to
-    pre-lookup the entity.
+    ``change_shelter`` permission — reach-scoped by the user's grants — so
+    the caller does not need to pre-lookup the entity.
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
     Schedules and services use full-replacement semantics when provided.
@@ -277,7 +282,6 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
         permission=Shelter.perms.CHANGE,
     )
 
@@ -316,13 +320,13 @@ def shelter_update(*, user: "User", organization_id: str, data: Dict[str, Any]) 
 
 
 @transaction.atomic
-def shelter_delete(*, user: "User", organization_id: str, shelter_id: str | int) -> Shelter:
-    """Delete a shelter scoped to *organization_id* for *user*.
+def shelter_delete(*, user: "User", shelter_id: str | int) -> Shelter:
+    """Delete a shelter.
 
     Resolves the shelter via :func:`~shelters.selectors.shelter_get` with
-    ``delete_shelter`` permission, so the row must sit in *organization_id*
-    AND *user* must hold ``Shelter.perms.DELETE`` there — an unauthorized
-    shelter is indistinguishable from a missing one (ADR 0001 §2.6).
+    ``delete_shelter`` permission — reach-scoped by the user's grants — an
+    unauthorized shelter is indistinguishable from a missing one (ADR 0001
+    §2.6).
 
     Deleting cascades through the model FKs to the shelter's rooms, beds,
     photos, schedules and contacts (DB default).
@@ -334,7 +338,6 @@ def shelter_delete(*, user: "User", organization_id: str, shelter_id: str | int)
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
         permission=Shelter.perms.DELETE,
     )
     deleted_pk = shelter.pk

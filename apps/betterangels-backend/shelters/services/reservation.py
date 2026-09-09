@@ -87,11 +87,12 @@ def _validate_reservable(
 
 
 @transaction.atomic
-def reservation_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Reservation:
+def reservation_create(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Create a new Reservation associated with a Room and/or Bed.
 
-    Validates that *user* belongs to the shelter's organization. The shelter
-    is derived from ``bed_id`` or ``room_id``.
+    Validates that *user* has view authority on the room/bed's shelter
+    (reach-scoped); the org is derived from ``bed_id`` or ``room_id`` and
+    create authority is checked there.
 
     Raises:
         ``ObjectDoesNotExist`` when the shelter is not found or the user
@@ -110,9 +111,11 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
         raise ValidationError("At least one client must be associated with a reservation.")
 
     if bed_id:
-        bed_get(user=user, organization_id=organization_id, bed_id=bed_id, permission=Bed.perms.VIEW)
+        bed = bed_get(user=user, bed_id=bed_id, permission=Bed.perms.VIEW)
+        organization_id = bed.shelter.organization_id
     elif room_id:
-        room_get(user=user, organization_id=organization_id, room_id=room_id, permission=Room.perms.VIEW)
+        room = room_get(user=user, room_id=room_id, permission=Room.perms.VIEW)
+        organization_id = room.shelter.organization_id
     else:
         raise ObjectDoesNotExist("A bed or room must be provided to create a Reservation.")
 
@@ -131,28 +134,28 @@ def reservation_create(*, user: "User", organization_id: str, data: Dict[str, An
 
 
 @transaction.atomic
-def reservation_update(
-    *, user: "User", organization_id: str, reservation_id: int | str, data: Dict[str, Any]
-) -> Reservation:
+def reservation_update(*, user: "User", data: Dict[str, Any]) -> Reservation:
     """Update an existing reservation.
 
-    Validates org access via the reservation's shelter. Only keys present in
-    *data* are applied; ``None`` scalar values are skipped.
+    Resolves *reservation* reach-scoped by the user's grants.  Only keys
+    present in *data* are applied; ``None`` scalar values are skipped.
 
     Raises:
         ``ObjectDoesNotExist`` when the reservation is not found.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
+    reservation_id = data.pop("id")
     try:
         reservation = reservation_get(
             user=user,
-            organization_id=organization_id,
             reservation_id=reservation_id,
             permission=Reservation.perms.CHANGE,
         )
     except Reservation.DoesNotExist:
         raise ObjectDoesNotExist(f"Reservation matching ID {reservation_id} could not be found.")
+
+    original_org = reservation.shelter.organization_id if reservation.shelter is not None else None
 
     clients_data = data.pop("clients", None)
     if clients_data:
@@ -172,6 +175,16 @@ def reservation_update(
         elif new_status == ReservationStatusChoices.CHECKED_IN:
             reservation.checked_in_at = timezone.now()
 
+    # Reparenting via ``bed_id``/``room_id`` can move the reservation into a
+    # different org.  Writes are identity-wide but anchored to the row's org
+    # (ADR 0001 §2.6): re-derive the org from the (possibly new) parent and
+    # require CHANGE there, so a cross-org move fails closed unless the user
+    # can act at the destination org.
+    new_shelter = reservation.shelter
+    new_org = new_shelter.organization_id if new_shelter is not None else None
+    if new_org is not None and new_org != original_org:
+        require_can(user, Reservation.perms.CHANGE, org=new_org)
+
     reservation.full_clean()
     _validate_reservation(reservation)
     reservation.save()
@@ -181,10 +194,10 @@ def reservation_update(
 
 
 @transaction.atomic
-def reservation_delete(*, user: "User", organization_id: str, reservation_ids: list[int]) -> list[int]:
+def reservation_delete(*, user: "User", reservation_ids: list[int]) -> list[int]:
     """Delete reservations and return the deleted IDs.
 
-    Scopes to *organization_id* where *user* is a member.
+    The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -192,7 +205,7 @@ def reservation_delete(*, user: "User", organization_id: str, reservation_ids: l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching reservations exist.
     """
-    qs = reservation_queryset(user=user, organization_id=organization_id, permission=Reservation.perms.DELETE)
+    qs = reservation_queryset(user=user, permission=Reservation.perms.DELETE)
     qs = qs.filter(pk__in=reservation_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:

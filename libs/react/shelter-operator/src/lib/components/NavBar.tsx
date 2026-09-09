@@ -7,7 +7,7 @@ import { Plus, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useShelterOperatorProfile } from '../hooks';
+import { useShelterOperatorProfile, useShelterPermissions } from '../hooks';
 import { isShelterRoute, paths } from '../routing';
 import { Button } from './base-ui/buttons';
 import { Dropdown } from './base-ui/dropdown';
@@ -66,7 +66,8 @@ export function NavBar(props: TNavProps) {
     location.pathname === operatorPath ||
     location.pathname === `${operatorPath}/`;
 
-  const showCreateButton = isDashboardPage;
+  const { canCreateShelter } = useShelterPermissions();
+  const showCreateButton = isDashboardPage && canCreateShelter;
 
   const orgName =
     organizations.length === 1 ? organizations[0].name : 'Admin Dashboard';

@@ -12,7 +12,7 @@ route. Adding a field means consciously registering it here — public-by-design
 entries are listed explicitly and reviewed as such.
 
 The registry documents the route; the behavioral tests in
-``test_grant_cutover.py`` / the mutation suites prove the route actually
+``test_grant_authorization.py`` / the mutation suites prove the route actually
 enforces the permission.
 """
 

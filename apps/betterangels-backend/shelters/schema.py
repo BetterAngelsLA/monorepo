@@ -5,9 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from common.graphql.types import AuthorizedPresignedS3UploadsType, BulkDeleteInput, BulkDeleteResult, DeletedObjectType
-from common.permissions.utils import IsAuthenticated, active_org, get_current_organization
-from common.services.feature_flags import flag_is_active
-from django.core.exceptions import PermissionDenied
+from common.permissions.utils import IsAuthenticated
 from django.db.models import Max
 from strawberry import ID, UNSET
 from strawberry.types import Info
@@ -108,12 +106,10 @@ class Query:
         end_date: Optional[date] = None,
     ) -> ShelterOccupancyMetricsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         shelter = shelter_get(
             user=user,
             shelter_id=shelter_id,
-            organization_id=org_id,
             permission=Shelter.perms.VIEW,
         )
 
@@ -131,8 +127,7 @@ class Mutation:
         """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        target_org_id = cast("str | None", clean.pop("organization_id", None) or active_org(info))
-        return cast(ShelterType, shelter_create(user=user, organization_id=target_org_id, data=clean))
+        return cast(ShelterType, shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
@@ -140,16 +135,14 @@ class Mutation:
             raise PermissionDenied("Editing additional contacts is not enabled.")
 
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_update(user=user, organization_id=org_id, data=clean))
+        return cast(ShelterType, shelter_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_shelter(self, info: Info, id: ID) -> DeletedObjectType:
         """Delete a shelter — authorization lives in :func:`shelter_delete` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        deleted = shelter_delete(user=user, organization_id=org_id, shelter_id=str(id))
+        deleted = shelter_delete(user=user, shelter_id=str(id))
         return DeletedObjectType(id=deleted.pk)
 
     # ── Room ───────────────────────────────────────────────────────────────
@@ -157,32 +150,25 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(RoomType, room_create(user=user, organization_id=org_id, data=clean))
+        return cast(RoomType, room_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
+    def update_room(self, info: Info, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            RoomType,
-            room_update(user=user, organization_id=org_id, room_id=id, data=clean),
-        )
+        return cast(RoomType, room_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_room(self, info: Info, id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return cast(RoomType, room_clone(user=user, organization_id=org_id, room_id=str(id)))
+        return cast(RoomType, room_clone(user=user, room_id=str(id)))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = room_delete(user=user, organization_id=org_id, room_ids=ids)
+        deleted_ids = room_delete(user=user, room_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     # ── Bed ────────────────────────────────────────────────────────────────
@@ -190,56 +176,44 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(BedType, bed_create(user=user, organization_id=org_id, data=clean))
+        return cast(BedType, bed_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
+    def update_bed(self, info: Info, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            BedType,
-            bed_update(user=user, organization_id=org_id, bed_id=id, data=clean),
-        )
+        return cast(BedType, bed_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_bed(self, info: Info, id: ID) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return cast(BedType, bed_clone(user=user, organization_id=org_id, bed_id=str(id)))
+        return cast(BedType, bed_clone(user=user, bed_id=str(id)))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = bed_delete(user=user, organization_id=org_id, bed_ids=ids)
+        deleted_ids = bed_delete(user=user, bed_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_reservation(self, info: Info, data: CreateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ReservationType, reservation_create(user=user, organization_id=org_id, data=clean))
+        return cast(ReservationType, reservation_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_reservation(self, info: Info, id: ID, data: UpdateReservationInput) -> ReservationType:
+    def update_reservation(self, info: Info, data: UpdateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean)
-        )
+        return cast(ReservationType, reservation_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = reservation_delete(user=user, organization_id=org_id, reservation_ids=ids)
+        deleted_ids = reservation_delete(user=user, reservation_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     # ── Shelter Photos ─────────────────────────────────────────────────────
@@ -251,7 +225,6 @@ class Mutation:
         data: GenerateShelterPhotoUploadsInput,
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         uploads = [
             UploadRequest(
@@ -263,7 +236,6 @@ class Mutation:
         ]
         presigned = shelter_photo.create_presigned_uploads(
             user=user,
-            organization_id=org_id,
             shelter_id=data.shelter_id,
             uploads=uploads,
         )
@@ -277,7 +249,6 @@ class Mutation:
         data: ResolveShelterPhotoUploadsInput,
     ) -> ShelterPhotoUploadsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         items = [
             ShelterPhotoResolveItem(
@@ -291,7 +262,6 @@ class Mutation:
         ]
         photos = shelter_photo.resolve_uploads(
             user=user,
-            organization_id=org_id,
             shelter_id=data.shelter_id,
             photos=items,
         )
@@ -301,16 +271,14 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter_photo(self, info: Info, data: UpdateShelterPhotoInput) -> ShelterPhotoType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         return cast(
             ShelterPhotoType,
-            shelter_photo.update_shelter_photo(user=user, organization_id=org_id, data=data),
+            shelter_photo.update_shelter_photo(user=user, data=data),
         )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = shelter_photo.delete_shelter_photos(user=user, organization_id=org_id, ids=ids)
+        deleted_ids = shelter_photo.delete_shelter_photos(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
