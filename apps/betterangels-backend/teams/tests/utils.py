@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 from accounts.groups import ORG_ADMIN
 from accounts.models import User
 from accounts.role_manager import OrgRoleManager
+from accounts.services import sync_roles
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 
@@ -87,6 +88,11 @@ class TeamGraphQLBaseTestCase(TeamGraphQLUtilsMixin):
 
     def setUp(self) -> None:
         super().setUp()
+
+        # Provision the code-owned Role rows so OrgRoleManager mirrors Grants
+        # for ORG_ADMIN memberships — the grant authority the team mutations
+        # read (grant-only cutover).
+        sync_roles()
 
         self.org_1_admin = self._make_org_admin(org=self.org_1)
         self.org_2_admin = self._make_org_admin(org=self.org_2)

@@ -988,6 +988,27 @@ transitional arm. Schema directives change name as extensions are swapped
 (`@hasOrgPerm` → `@hasOrgPermOrGrant` → none), so `schema.graphql` + FE types are
 regenerated at each step.
 
+**Status on main — teams landed first, on the grant-only model (2026-09-09).**
+Main's machinery evolved past the stack this section sketched: the seam is the
+per-domain `can()`/`require_can` (shelters cut over that way in §4.1/#2412), and
+two of the four org-admin consumers cannot ride a scoped `Role` today — the
+`organizations.*` member-management codenames and `reports.view_reports` resolve
+to no concrete model, so `sync_roles` refuses them on a RoleDef (phantom
+ContentType). The teams cutover therefore landed *teams alone*:
+
+- `ORG_ADMIN`/`ORG_SUPERUSER` are role-backed with a scoped `Role` carrying
+  **`teams.*` only**; `backfill_org_admin_grants()` converts every existing
+  admin's `PermissionGroup` memberships into Grants (post-migrate, before any
+  reconcile). The legacy groups are **kept** (dual) — main's reconcile does not
+  retire role-backed groups — so member management and reports keep enforcing
+  off the legacy arm, and the admin FE's per-org lists stay complete.
+- The three team mutations read `require_can(…, teams.*)` — no `@hasOrgPerm`
+  directive — and `teams` joins `LEGACY_INERT_APPS` (its legacy rows are no
+  longer reported; the global tier folds for it like shelters). The teams
+  *query* stays membership-gated (§5.3 step 1, unchanged).
+- Later slices add the remaining perms to the Role/RoleDefs when each consumer
+  flips (reports/member management), then retire the legacy groups.
+
 ## 6. References
 
 - [SDB-218] — global shelter operator org-bypass ticket

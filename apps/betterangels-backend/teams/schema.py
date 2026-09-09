@@ -4,10 +4,13 @@ from typing import Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPerm
 from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from common.permissions.utils import (
+    IsAuthenticated,
+    get_current_organization,
+    require_can,
+)
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from organizations.models import Organization
@@ -42,20 +45,25 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.ADD)],
-    )
+    """Team mutations — grant-only authority (ADR 0001 §5.3, teams cutover).
+
+    The three mutations authorize via :func:`common.permissions.utils.require_can`
+    — the grant predicate (``can()``) over the active organization from the
+    ``X-Organization-ID`` header.  ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are
+    role-backed with backfilled Grants, so every existing org admin is covered;
+    the legacy ``PermissionGroup`` arm is no longer consulted here.
+    """
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
+        require_can(get_current_user(info), Team.perms.ADD, org=org)
         return cast(TeamType, team_create(name=data.name, organization=org))
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
         org = Organization.objects.get(pk=get_current_organization(info))
+        require_can(get_current_user(info), Team.perms.CHANGE, org=org)
         team = team_get(pk=data.id, organization=org)
         if team is None:
             raise PermissionDenied("You do not have permission to update this team.")
@@ -69,12 +77,10 @@ class Mutation:
             ),
         )
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Team.perms.DELETE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         org = Organization.objects.get(pk=get_current_organization(info))
+        require_can(get_current_user(info), Team.perms.DELETE, org=org)
         team = team_get(pk=data.id, organization=org)
         if team is None:
             raise PermissionDenied("You do not have permission to delete this team.")

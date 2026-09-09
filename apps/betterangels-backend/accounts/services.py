@@ -559,10 +559,11 @@ def sync_roles() -> None:
     """
     from shelters.groups import ROLES
 
+    from accounts.groups import ORG_ADMIN_ROLES
     from accounts.models import Role
 
     with transaction.atomic():
-        for role_def in ROLES:
+        for role_def in (*ROLES, *ORG_ADMIN_ROLES):
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
@@ -596,6 +597,34 @@ def backfill_shelter_grants() -> None:
             grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
             if created:
                 logger.info("Backfilled Grant %s", grant)
+
+
+def backfill_org_admin_grants() -> None:
+    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships.
+
+    One ``Grant(user, role=Organization Admin/Superuser, scope=org)`` per member
+    of the org's ``ORG_ADMIN`` / ``ORG_SUPERUSER`` ``PermissionGroup``.
+    Idempotent (``get_or_create``).  Runs after :func:`sync_roles` so the Role
+    rows exist, and before any reconcile that would retire the legacy groups.
+
+    The legacy groups are kept (dual write) until the member-management
+    cutover retires them; this backfill is what lets a grant-only team
+    mutation authorize every existing org admin without re-adding anyone.
+    """
+    from accounts.groups import ORG_ADMIN_ROLES
+
+    from accounts.models import Grant, PermissionGroup, Role
+
+    for role_def in ORG_ADMIN_ROLES:
+        role = Role.objects.get(name=role_def.name)
+        groups = PermissionGroup.objects.filter(template__name=role_def.name)
+        for group in groups.prefetch_related("user_set"):
+            for user in group.user_set.all():
+                grant, created = Grant.objects.get_or_create(
+                    principal_user=user, role=role, scope_org=group.organization
+                )
+                if created:
+                    logger.info("Backfilled Grant %s", grant)
 
 
 def backfill_global_role_members() -> None:
