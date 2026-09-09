@@ -22,10 +22,12 @@ from shelters.groups import GLOBAL_SHELTER_OPERATOR, SHELTER_OPERATOR
 from accounts.admin import CustomOrganizationUserAdmin
 from accounts.groups import ORG_ADMIN
 from accounts.models import (
+    Grant,
     OrganizationProfile,
     OrgTypeChoices,
     PermissionGroup,
     PermissionGroupTemplate,
+    Role,
     User,
 )
 from accounts.seed import seed_permission_templates
@@ -998,6 +1000,100 @@ class OrganizationMemberInlineQueryCountTestCase(TestCase):
         # inline is flat.  A real N+1 (a per-row autocomplete label fetch, a
         # widget re-query, a __str__ miss) fails this strict assertion.
         self.assertEqual(len(many) - len(few), 0)
+
+
+class UserAdminGroupGrantMirrorTestCase(TestCase):
+    """Group edits on the user page must keep group and Grant in step.
+
+    The raw ``auth.Group`` picker bypasses ``OrgRoleManager`` — a superuser
+    adding a user straight to an org's role-backed PermissionGroup used to
+    produce a legacy-only holder with no Grant, who after this cutover could
+    not manage teams (review finding on #2443).  ``UserAdmin.save_related``
+    mirrors the same transitions ``OrgRoleManager`` performs, so the two
+    surfaces cannot drift.
+    """
+
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username="admin_group_mirror_tests",
+            email="admin_group_mirror_tests@example.com",
+            password="password",
+        )
+        self.client.force_login(self.superuser)
+        self.organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        # Role rows are seeded at migrate (sync_roles), so the org's
+        # role-backed group maps to a scoped Role row.
+        self.group = PermissionGroup.objects.get(organization=self.organization, template__name=CASEWORKER.name)
+        self.role = Role.objects.get(name=CASEWORKER.name, is_global=False)
+        self.member = baker.make(User, username="userpage_member", email="userpage@example.com")
+
+    def _post_groups(self, group_ids: list[int]) -> Any:
+        url = reverse("admin:accounts_user_change", args=[self.member.pk])
+        return self.client.post(url, {"groups": [str(group_id) for group_id in group_ids]})
+
+    def _changelist_url(self) -> str:
+        return reverse("admin:accounts_user_changelist")
+
+    def test_adding_a_role_backed_group_mirrors_a_grant(self) -> None:
+        response = self._post_groups([self.group.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertTrue(self.member.groups.filter(pk=self.group.pk).exists())
+        self.assertTrue(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+    def test_removing_a_role_backed_group_unmirrors_the_grant(self) -> None:
+        member_add(
+            email="userpage_revoke@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.member = User.objects.get(email="userpage_revoke@example.com")
+        self.assertTrue(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+        response = self._post_groups([])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertFalse(self.member.groups.filter(pk=self.group.pk).exists())
+        self.assertFalse(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).exists()
+        )
+
+    def test_a_label_only_group_has_no_grant_to_mirror(self) -> None:
+        # Hand-made (label-only) PermissionGroups are legacy: nothing maps them
+        # to a Role, so adding one must not conjure a Grant.
+        hand_made = PermissionGroup.objects.create(organization=self.organization, label="Hand-made role")
+
+        response = self._post_groups([hand_made.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertTrue(self.member.groups.filter(pk=hand_made.pk).exists())
+        self.assertFalse(Grant.objects.filter(principal_user=self.member).exists())
+
+    def test_saving_without_touching_groups_changes_no_grants(self) -> None:
+        member_add(
+            email="userpage_stable@example.com",
+            first_name="",
+            last_name="",
+            middle_name=None,
+            organization=self.organization,
+            permission_templates=(CASEWORKER,),
+        )
+        self.member = User.objects.get(email="userpage_stable@example.com")
+
+        # POST the current groups unchanged — nothing added, nothing removed.
+        response = self._post_groups([self.group.pk])
+
+        self.assertRedirects(response, self._changelist_url())
+        self.assertEqual(
+            Grant.objects.filter(principal_user=self.member, role=self.role, scope_org=self.organization).count(), 1
+        )
 
 
 class OrganizationAdminLinksTestCase(TestCase):

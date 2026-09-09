@@ -142,3 +142,8 @@ class TeamQueryOrgScopingTestCase(TeamGraphQLBaseTestCase):
         self.graphql_client.defaults["HTTP_X_ORGANIZATION_ID"] = "not-an-id"
 
         self._assert_denied(self.execute_graphql(self.get_teams_query()))
+
+    def test_a_non_numeric_organization_id_filter_denies(self) -> None:
+        """Garbage in the org filter fails closed rather than returning teams."""
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "not-an-id"}})
+        self._assert_denied(response)

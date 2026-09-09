@@ -15,6 +15,45 @@ if TYPE_CHECKING:
     from common.permissions.config import TemplateConfig
 
 
+def scoped_role_for_group(permission_group: PermissionGroup) -> Role | None:
+    """The scoped ``Role`` row backing *permission_group*, if it is role-backed.
+
+    A ``PermissionGroup`` is role-backed when it was created from a role
+    template — the template names the scoped ``Role`` whose ``Grant`` mirrors
+    the membership.  Label-only (hand-made) groups have no template and so no
+    mirror.
+    """
+    if permission_group.template is None:
+        return None
+    return Role.objects.filter(name=permission_group.template.name, is_global=False).first()
+
+
+def mirror_membership_grant(
+    user: User, permission_group: PermissionGroup, *, organization: Organization | None = None
+) -> None:
+    """Dual-write a role-backed membership as a ``Grant`` (ADR 0001 §4 phase 2).
+
+    Scoped by the group's own organization, which callers may pass explicitly
+    to avoid re-fetching the FK: ``OrgRoleManager`` already holds the org it
+    manages, while the Django user admin hands over groups from any
+    organization and passes nothing (prefetch the relation there).
+    """
+    role = scoped_role_for_group(permission_group)
+    if role is not None:
+        scope_org = permission_group.organization if organization is None else organization
+        Grant.objects.get_or_create(principal_user=user, role=role, scope_org=scope_org)
+
+
+def unmirror_membership_grant(
+    user: User, permission_group: PermissionGroup, *, organization: Organization | None = None
+) -> None:
+    """Drop the ``Grant`` mirroring *permission_group*'s membership."""
+    role = scoped_role_for_group(permission_group)
+    if role is not None:
+        scope_org = permission_group.organization if organization is None else organization
+        Grant.objects.filter(principal_user=user, role=role, scope_org=scope_org).delete()
+
+
 class OrgRoleManager:
     """Manage org-scoped permission groups for a user.
 
@@ -77,20 +116,10 @@ class OrgRoleManager:
 
     # ── Transition dual-write (ADR 0001 §4 phase 2) ────────────────────────
 
-    def _scoped_role(self, permission_group: PermissionGroup) -> Role | None:
-        """The scoped ``Role`` row for a group's template, if it is role-backed."""
-        if permission_group.template is None:
-            return None
-        return Role.objects.filter(name=permission_group.template.name, is_global=False).first()
-
     def _mirror_grant(self, user: User, permission_group: PermissionGroup) -> None:
         """Dual-write: mirror a scoped-role membership as a ``Grant``."""
-        role = self._scoped_role(permission_group)
-        if role is not None:
-            Grant.objects.get_or_create(principal_user=user, role=role, scope_org=self.organization)
+        mirror_membership_grant(user, permission_group, organization=self.organization)
 
     def _unmirror_grant(self, user: User, permission_group: PermissionGroup) -> None:
         """Dual-write: drop the ``Grant`` when a scoped-role membership is removed."""
-        role = self._scoped_role(permission_group)
-        if role is not None:
-            Grant.objects.filter(principal_user=user, role=role, scope_org=self.organization).delete()
+        unmirror_membership_grant(user, permission_group, organization=self.organization)

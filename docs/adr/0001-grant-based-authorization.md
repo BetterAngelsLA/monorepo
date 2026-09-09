@@ -1019,7 +1019,17 @@ ContentType). The teams cutover therefore landed *teams alone*:
   the teams read. The org whose teams are listed is passed as a
   `TeamFilter.organizationId` (authoritative); the `X-Organization-ID` header
   remains only as a deprecated fallback while clients migrate to the filter
-  and will be stripped once none send it.
+  and will be stripped once none send it.  Who still sends it (the migration
+  checklist for the strip): betterangels-admin's `TeamsPage` already passes
+  `filters.organizationId`, but every mobile team picker is header-only —
+  `useOrgTeams` (NoteForm's team field, TaskForm, FilterTeamsOptions,
+  UserTeamPreferenceSelect) sends `filters: { isActive }` with no org id, so
+  each must pass the active org as `organizationId` before the header goes.
+  This is also a read behavior change for members with **no role** at the
+  active org: membership alone used to let them list teams; the grant-only
+  read (`teams.view_team`) now denies them — intended, matching the admin FE
+  where the read is grant-gated — and the backfilled caseworker/admin
+  memberships cover the roles that legitimately read teams.
 - Later slices add the remaining perms to the Role/RoleDefs when each consumer
   flips (reports/member management), then retire the legacy groups.
 

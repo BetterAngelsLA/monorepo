@@ -14,6 +14,7 @@ from django.contrib.auth.models import Group, User as DefaultUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import Field as FormField
 from django.forms import ModelMultipleChoiceField
+from django.db import transaction
 from django.db.models import Field, Model, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -41,6 +42,7 @@ from .models import (
     Role,
     User,
 )
+from .role_manager import mirror_membership_grant, unmirror_membership_grant
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -1100,9 +1102,43 @@ class UserAdmin(BaseUserAdmin):
             # bare "Shelter Operator" Role sits right next to the org-scoped
             # PermissionGroup rows of the same name, and picking it would make a
             # scoped role global.  Global Roles stay — the Django admin is the
-            # sanctioned surface for granting those (ADR 0001 §3).
+            # sanctioned surface for granting those (ADR 0001 §3).  Role-backed
+            # PermissionGroup rows stay in the picker, but adding or removing
+            # one here mirrors the Grant (see save_related), so a group picked
+            # directly never leaves its holder without the grant the role
+            # machinery reads.
             groups_field.queryset = _groups_without_scoped_roles()
         return form
+
+    @staticmethod
+    def _role_backed_group_ids(user: User) -> set[int]:
+        """The template-backed PermissionGroup rows *user* holds.
+
+        Only these map to a scoped Role (and thus a Grant mirror) — label-only
+        hand-made groups are legacy and have nothing to mirror.  Called from
+        ``save_related``, so *user* is already persisted.
+        """
+        return set(PermissionGroup.objects.filter(template__isnull=False, user=user).values_list("id", flat=True))
+
+    def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
+        """Mirror group picker edits to Grants, like ``OrgRoleManager`` does.
+
+        ``OrgRoleManager`` mirrors each role-backed membership it creates, but
+        the raw ``auth.Group`` picker on this page bypasses it — a superuser
+        adding a user straight to an org's "Organization Admin" PermissionGroup
+        used to produce a holder of the legacy group with no Grant, who could
+        then not manage teams.  Mirroring here keeps the two consistent whether
+        the role came from the org's member page or from this one.
+        """
+        user = cast(User, form.instance)
+        with transaction.atomic():
+            held_before = self._role_backed_group_ids(user)
+            super().save_related(request, form, formsets, change)
+            held_after = self._role_backed_group_ids(user)
+            for group in PermissionGroup.objects.filter(pk__in=held_after - held_before).select_related("organization"):
+                mirror_membership_grant(user, group)
+            for group in PermissionGroup.objects.filter(pk__in=held_before - held_after).select_related("organization"):
+                unmirror_membership_grant(user, group)
 
     @admin.display(description="Organizations and roles")
     def organizations_and_roles(self, obj: User) -> str:

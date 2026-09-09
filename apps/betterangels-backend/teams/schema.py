@@ -35,7 +35,12 @@ class Query:
 
         The org comes from the ``organizationId`` filter when provided; the
         ``X-Organization-ID`` header remains a deprecated fallback while
-        clients migrate to the filter.
+        clients migrate to the filter.  Only betterangels-admin's ``TeamsPage``
+        passes ``filters.organizationId`` today — the mobile ``useOrgTeams``
+        hook (NoteForm, TaskForm, FilterTeamsOptions,
+        UserTeamPreferenceSelect) sends only ``{ isActive }`` and is entirely
+        header-dependent, so it must migrate to the filter before the header
+        is stripped.
         """
         user = cast(AccountUser, get_current_user(info))
         org = _resolve_read_org(info, filters)
@@ -59,7 +64,16 @@ def _org_or_deny(org_id: object) -> Organization:
 def _resolve_read_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
     """The org whose teams are listed: the ``organizationId`` filter wins; the
     ``X-Organization-ID`` header is the deprecated fallback while clients
-    migrate to the filter (and will be stripped once none send it)."""
+    migrate to the filter (and will be stripped once none send it).
+
+    An org id the client omits arrives here as ``""`` — the filter machinery
+    does not distinguish it from an explicitly empty id — so an empty id keeps
+    the header fallback rather than denying.  That is what the mobile
+    ``useOrgTeams`` callers (NoteForm, TaskForm, FilterTeamsOptions,
+    UserTeamPreferenceSelect) rely on today: they send only ``{ isActive }``
+    and must pass ``organizationId`` before the header is stripped.  (An
+    explicitly empty id is rejected further down, when the declared org filter
+    hits the DB.)"""
     filter_org_id = getattr(filters, "organization_id", None) if filters else None
     return _org_or_deny(filter_org_id or get_current_organization(info))
 

@@ -156,6 +156,25 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
         response = self.create_team_fixture({"name": "wrong org", "organizationId": self.org_2.pk})
         self.assertGraphQLOperationInfo(response, "createTeam", PERMISSION_DENIED, kind="PERMISSION")
 
+    def test_create_team_with_an_unknown_organization_is_denied(self) -> None:
+        """``_org_or_deny`` on the payload org fails closed — unknown is not found.
+
+        The read side of the shared resolver is pinned in the read suite; the
+        mutation path (create carries the org in the payload, with no row to
+        scope by yet) must not treat an unknown org as a crash or a pass.
+        """
+        admin = baker.make(User)
+        self.org_1.add_user(admin)
+        OrgRoleManager(self.org_1).add_roles(admin, ORG_ADMIN)
+        self._login(admin, self.org_1)
+        initial_count = Team.objects.count()
+
+        response = self.create_team_fixture({"name": "should not appear", "organizationId": 999999})
+        self.assertGraphQLOperationInfo(
+            response, "createTeam", "You do not have access to this organization.", kind="PERMISSION"
+        )
+        self.assertEqual(Team.objects.count(), initial_count)
+
 
 class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
     """The ``teams`` read is grant-only: ``can(user, teams.view_team, org)``.
