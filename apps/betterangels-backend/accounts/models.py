@@ -392,7 +392,7 @@ class Grant(models.Model):
                 }
             )
         if self.scope_object_type is not None:
-            from common.permissions.config import OBJECT_GRANT_WHITELIST, content_type_key
+            from common.permissions.object_grants import object_grant_whitelist
 
             if self.principal_org is not None:
                 raise ValidationError(
@@ -404,13 +404,15 @@ class Grant(models.Model):
                         )
                     }
                 )
-            if content_type_key(self.scope_object_type) not in OBJECT_GRANT_WHITELIST:
+            # E003 — the single switch-gated whitelist (object_grants.py) is the
+            # choke point every writer shares: while object_grants_enabled is off
+            # the whitelist is empty and every object grant is refused here.
+            target = self.scope_object_type.model_class()
+            if target is None or not any(issubclass(target, cls) for cls in object_grant_whitelist()):
                 raise ValidationError(
                     {
                         "scope_object_type": (
-                            f"{self.scope_object_type} is not on the object-grant "
-                            "whitelist (permissions.E003) — object grants are not "
-                            "wired yet."
+                            f"{self.scope_object_type} is not on the object-grant whitelist (permissions.E003)."
                         )
                     }
                 )

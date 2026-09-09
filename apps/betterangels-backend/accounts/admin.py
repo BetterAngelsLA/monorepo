@@ -462,6 +462,11 @@ class GrantAdmin(SuperuserOnlyWritesMixin, admin.ModelAdmin):
 
     form = GrantForm
 
+    def formfield_for_foreignkey(self, db_field: Any, request: Any, **kwargs: Any) -> Any:
+        if db_field.name == "role":
+            kwargs["queryset"] = _scoped_role_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     list_select_related = (
         "principal_user",
         "principal_org",
