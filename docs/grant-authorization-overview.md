@@ -90,7 +90,7 @@ Review and merge **bottom-up**. What each PR delivers:
 | 2409 | `grant-redesign` | **This PR.** ADR 0001 + `Role`/`Grant`/`OrgScoped` models, constraints (partial uniques, `NULLS NOT DISTINCT`), E001–E005 checks, migrations. Schema-only — nothing reads it yet. |
 | 2410 | `grant-roles` | `RoleDef` provisioning (`sync_roles`), grant backfills, `OrgScoped` declared on shelter-scoped models. Idempotency + `is_global` ownership rule. |
 | 2411 | `grant-predicate` | `common/permissions/selectors.py` — the whole predicate (`scopes`/`visible`/`can`/`can_obj`/`can_anywhere`) + write services. The security core. |
-| 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional. |
+| 2412 | `grant-cutover` | Shelter domain flipped to grants. Every mutation/service checks `visible`/`can` (no fail-open); `active_org` header optional (removed for the shelter domain in #2440). |
 | 2413 | `grant-delegation` | Org→org delegation: inherited `scopes()` arm, one hop, no amplification, `grant_delegate`, admin inlines. |
 | 2414 | `grant-reachability` | FE capability contract: `currentUser.permissions` (global), grants-based org list, per-org permissions. |
 | 2415 | `grant-object-arm` | Object-grant arm: whitelist, `_object_grant_q`, `grant_obj`, orphan cleanup. **C1** — `can_obj` fails closed on per-record writes. |

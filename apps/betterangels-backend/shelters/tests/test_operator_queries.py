@@ -57,6 +57,29 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
+    def test_operator_shelters_org_filter_honors_grant_reach_not_membership(self) -> None:
+        """The org *view* is bounded by grant reach, not membership.
+
+        A user with a direct VIEW grant at an org they are not a member of can
+        filter to it (delta 3: the filter variable is the org view).  Filtering
+        by membership alone would return an empty dashboard for grant-only and
+        delegated holders, even though ``visible()``/``switchable_orgs``
+        include the org.
+        """
+        # Direct grant at org_2 — deliberately NO membership (no org_2.add_user).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
+        )
+
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
+
     def test_operator_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -89,8 +112,12 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["totalCount"], 0)
         self.assertEqual(payload["results"], [])
 
-    def test_operator_shelters_multi_org_user_sees_org_1_shelters(self) -> None:
-        """A user belonging to multiple orgs sees shelters from the org in the header."""
+    def test_operator_shelters_multi_org_membership_alone_does_not_extend_reach(self) -> None:
+        """Membership in a second org does not surface its shelters without a VIEW grant.
+
+        Reads are reach-scoped (``visible()``) and org-narrowed by the query's
+        ``filters`` variable — never by membership alone.
+        """
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
         shelter_2 = shelter_recipe.make(organization=self.org_1)
@@ -108,8 +135,11 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_operator_shelters_multi_org_user_sees_org_2_shelters(self) -> None:
-        """When the header changes, the same user sees the other org's shelters."""
+    def test_operator_shelters_multi_org_user_reach_spans_orgs(self) -> None:
+        """A multi-org user with VIEW grants sees both orgs' shelters.
+
+        The org view comes from the query's ``filters.organizations`` variable.
+        """
         from accounts.role_manager import OrgRoleManager
         from notes.groups import CASEWORKER
 
@@ -119,13 +149,47 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         # Grant view_shelter in org_2 via a Role+Grant (ADR 0001).
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
 
-        self._set_active_org(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+
+        # No filter → all reachable orgs' shelters.
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"offset": 0, "limit": 10},
+        )
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 2)
+        returned_ids = {r["id"] for r in payload["results"]}
+        self.assertSetEqual(returned_ids, {str(self.shelter.id), str(org_2_shelter.id)})
+
+        # Org view: the filters variable narrows to org_2.
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
+        )
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
+
+    def test_operator_shelters_org_filter_narrows_multi_org_reach(self) -> None:
+        """``filters.organizations`` narrows a reach-scoped read to one org.
+
+        The user can reach both orgs, but the query variable is the org view:
+        filtering org_2 returns only org_2's shelter.
+        """
+        from accounts.role_manager import OrgRoleManager
+        from notes.groups import CASEWORKER
+
+        self.org_2.add_user(self.org_1_case_manager_1)
+        OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
         org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
         response = self.execute_graphql(
             self.OPERATOR_SHELTERS_QUERY,
-            variables={"offset": 0, "limit": 10},
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
         )
 
         payload = response["data"]["operatorShelters"]

@@ -9,6 +9,7 @@ from common.models import BaseModel, OrgScoped
 from common.permissions.utils import PermissionSet, perm
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django_choices_field import TextChoicesField
@@ -263,6 +264,19 @@ class Bed(CloneMixin, OrgScoped, BaseModel):
         indexes = [
             models.Index(fields=["shelter"]),
         ]
+
+    def clean(self) -> None:
+        super().clean()
+
+        # A bed's room must live in the bed's own shelter — otherwise the bed's
+        # effective org (``shelter``) and its room's org would drift apart and a
+        # cross-org reparent via ``room_id`` could park an org-A bed in an org-B
+        # room with no authority at B (ADR 0001 §2.6).  An unknown room id is
+        # left for the FK to reject.
+        if self.room_id and self.shelter_id:
+            room = Room.objects.filter(pk=self.room_id).only("shelter_id").first()
+            if room is not None and room.shelter_id != self.shelter_id:
+                raise ValidationError({"room": "The selected room does not belong to this shelter."})
 
     @property
     def computed_status(self) -> BedStatusChoices:

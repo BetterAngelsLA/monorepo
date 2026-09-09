@@ -8,6 +8,7 @@ import {
   useCloneRoom,
   useDeleteRooms,
   useRooms,
+  useShelterPermissions,
   useUpdateRoom,
 } from '../../../../hooks';
 import { cloneRoomMeta } from '../../../../hooks/useCloneRoom/__generated__/useCloneRoom_meta.generated';
@@ -36,6 +37,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
   const { cloneRoom } = useCloneRoom({ shelterId });
   const { deleteRooms } = useDeleteRooms({ shelterId });
   const { updateRoom } = useUpdateRoom();
+  const { canAddRoom } = useShelterPermissions();
 
   const { showToast } = useToast();
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
@@ -125,8 +127,7 @@ export function Rooms({ shelterId }: { shelterId: string }) {
       try {
         const response = await updateRoom({
           variables: {
-            id: roomId,
-            data: { lastCleaned: new Date().toISOString() },
+            data: { id: roomId, lastCleaned: new Date().toISOString() },
           },
         });
 
@@ -227,18 +228,20 @@ export function Rooms({ shelterId }: { shelterId: string }) {
         />
       )}
 
-      <div className="fixed bottom-6 right-6 text-sm z-20 ">
-        <Button
-          leftIcon={<Plus />}
-          rightIcon={false}
-          variant="floating"
-          onClick={() =>
-            navigate(shelterCreateResourceRoute(shelterId, 'room'))
-          }
-        >
-          Create Room
-        </Button>
-      </div>
+      {canAddRoom && (
+        <div className="fixed bottom-6 right-6 text-sm z-20 ">
+          <Button
+            leftIcon={<Plus />}
+            rightIcon={false}
+            variant="floating"
+            onClick={() =>
+              navigate(shelterCreateResourceRoute(shelterId, 'room'))
+            }
+          >
+            Create Room
+          </Button>
+        </div>
+      )}
     </>
   );
 }

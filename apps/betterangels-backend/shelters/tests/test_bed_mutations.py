@@ -76,7 +76,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 40
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -111,8 +111,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         super().setUp()
 
         self.mutation = f"""
-            mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {{
-                updateBed(id: $id, data: $data) {{
+            mutation UpdateBed($data: UpdateBedInput!) {{
+                updateBed(data: $data) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -128,6 +128,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         """
 
     def test_update_bed(self) -> None:
+        """Update an existing bed including its room."""
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -145,8 +146,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             type=BedTypeChoices.TWIN,
         )
         variables = {
-            "id": str(source.pk),
             "data": {
+                "id": str(source.pk),
                 "roomId": self.room.pk,
                 "accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name],
                 "b7": True,
@@ -164,7 +165,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 37
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -228,11 +229,10 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         source.pets.add(pet)
 
         variables = {
-            "id": str(source.pk),
-            "data": {"statusNotes": "New notes"},
+            "data": {"id": str(source.pk), "statusNotes": "New notes"},
         }
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -304,11 +304,10 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
 
         variables = {
-            "id": str(bed.pk),
-            "data": {"maintenanceFlag": True},
+            "data": {"id": str(bed.pk), "maintenanceFlag": True},
         }
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -492,8 +491,8 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
     """
 
     UPDATE_MUTATION = """
-        mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {
-            updateBed(id: $id, data: $data) {
+        mutation UpdateBed($data: UpdateBedInput!) {
+            updateBed(data: $data) {
                 ... on BedType {
                     id
                     name
@@ -581,7 +580,7 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.bed.pk), "data": {"name": "Renamed Bed"}},
+            {"data": {"id": str(self.bed.pk), "name": "Renamed Bed"}},
         )
 
         self.assertIsNone(response.get("errors"))
@@ -594,7 +593,7 @@ class BedMutationPermissionTestCase(BedMutationTestCase):
 
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
-            {"id": str(self.bed.pk), "data": {"name": "Nope"}},
+            {"data": {"id": str(self.bed.pk), "name": "Nope"}},
         )
 
         self.assertIsNone(response.get("errors"))

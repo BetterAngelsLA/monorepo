@@ -1,12 +1,11 @@
 """Filter and ordering types for shelter queries."""
 
 import datetime
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 import strawberry
 import strawberry_django
-from accounts.models import User
 from common.graphql.types import (
     LatitudeScalar,
     LongitudeScalar,
@@ -19,7 +18,6 @@ from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet
 from strawberry import ID, Info, asdict, auto
-from strawberry_django.auth.utils import get_current_user
 
 from shelters import models
 from shelters.enums import (
@@ -121,20 +119,17 @@ class ShelterFilter:
 
     @strawberry_django.filter_field
     def organizations(self, info: Info, value: Optional[list[ID]], prefix: str) -> Q:
-        user = get_current_user(info)
+        # The org *view* is a pure narrowing to the requested orgs.  Which orgs
+        # may actually be listed is the type's get_queryset job: operator reads
+        # are reach-bounded by ``visible()`` (so a delegated/direct-grant holder
+        # can filter to an org they are not a member of — delta 3), and the
+        # public directory exposes only approved shelters anyway.  Restricting
+        # to membership or re-running the scope predicate here would hide rows a
+        # holder may reach and cost extra scope round-trips for no boundary.
+        if not value:
+            return Q()
 
-        if user is None or not user.is_authenticated:
-            if not value:
-                return Q()
-
-            return Q(**{f"{prefix}organization__in": value})
-
-        current_user = cast(User, user)
-        allowed_organizations = current_user.organizations_organization.all()
-        if value:
-            allowed_organizations = allowed_organizations.filter(pk__in=value)
-
-        return Q(**{f"{prefix}organization__in": allowed_organizations})
+        return Q(**{f"{prefix}organization__in": value})
 
     @strawberry_django.filter_field
     def properties(
