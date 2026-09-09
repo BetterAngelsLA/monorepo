@@ -1,10 +1,17 @@
-"""Tests for report views (DRF export) and GraphQL report summary query."""
+"""Tests for report views (DRF export) and GraphQL report summary query.
+
+Reports authorize via grants (ADR 0001 §5.3, reports cutover): ``can()`` over
+role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants or a direct-grant holder,
+or the global tier.  The legacy ``PermissionGroup`` arm is not consulted, so the
+fixture below grants through a scoped ``Role`` + ``Grant``.
+"""
 
 from datetime import datetime
 
 import pytest
 import time_machine
-from accounts.models import PermissionGroup, PermissionGroupTemplate, User
+from accounts.models import Role, User
+from accounts.services import grant_create
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -19,16 +26,19 @@ from teams.models import Team
 
 
 def grant_view_reports(user: User, org: Organization) -> None:
-    """Grant view_reports permission to a user for an org via PermissionGroup."""
+    """Grant ``reports.view_reports`` at *org* via a scoped Role + Grant.
+
+    Mirrors the production authority: the permission rides a scoped Role
+    (bound to ``ScheduledReport``'s real ContentType), and the user holds a
+    Grant at *org*.
+    """
     ct = ContentType.objects.get_for_model(ScheduledReport)
     perm, _ = Permission.objects.get_or_create(
         codename="view_reports", content_type=ct, defaults={"name": "Can view reports"}
     )
-    template, _ = PermissionGroupTemplate.objects.get_or_create(name="_test_report_viewer")
-    template.permissions.add(perm)
-    pg, _ = PermissionGroup.objects.get_or_create(organization=org, template=template)
-    pg.permissions.add(perm)
-    user.groups.add(pg)
+    role, _ = Role.objects.get_or_create(name="_test_report_viewer", is_global=False)
+    role.permissions.add(perm)
+    grant_create(user=user, role=role, scope_org=org)
 
 
 @pytest.fixture
