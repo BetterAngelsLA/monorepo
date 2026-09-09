@@ -63,46 +63,59 @@ def test_all_template_permissions_resolve() -> None:
 
 @pytest.mark.django_db
 def test_retire_superseded_phantom_permissions() -> None:
-    """Phantom rows with a real-model twin are retired; portal phantoms are kept.
+    """Phantom rows with a real-model twin are retired; no-twin phantoms are kept.
 
-    Simulates a DB seeded before real-model binding: a synthesized
-    ``(reports, reports)`` phantom ContentType + ``view_reports`` Permission that
-    now has a real twin on ``ScheduledReport``.  Retiring must drop the phantom
-    (and its ContentType) but keep the real row — and the member-management
-    portal phantoms (``organizations.*``), which still have no real twin.
+    Simulates a DB seeded before real-model binding: synthesized phantom
+    ContentType + Permission rows for codenames that now have a real twin —
+    ``reports.view_reports`` on ``ScheduledReport`` and the member-management
+    portal codenames on the org-root ``Organization`` model.  Retiring must drop
+    both phantoms (and their ContentTypes), re-point references onto the real
+    rows, and keep phantoms that still have no real twin.
     """
     from accounts.seed import retire_superseded_phantom_permissions
     from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
+    from organizations.models import Organization
 
-    # A real twin exists: reports.view_reports on ScheduledReport (model Meta).
+    # Real twins exist: reports.view_reports on ScheduledReport and the portal
+    # codenames on the Organization ContentType (seeded at post_migrate).
     real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
     assert real.content_type.model_class() is not None
+    org_real = Permission.objects.get(
+        codename="add_org_member", content_type=ContentType.objects.get_for_model(Organization)
+    )
+    assert org_real.content_type.model_class() is not None
 
-    # Simulate the old synthesized phantom.
-    phantom_ct, _ = ContentType.objects.get_or_create(app_label="reports", model="reports")
-    phantom, _ = Permission.objects.get_or_create(
-        content_type=phantom_ct, codename="view_reports", defaults={"name": "Can view reports"}
+    # Simulate the old synthesized phantoms.
+    reports_ct, _ = ContentType.objects.get_or_create(app_label="reports", model="reports")
+    reports_phantom, _ = Permission.objects.get_or_create(
+        content_type=reports_ct, codename="view_reports", defaults={"name": "Can view reports"}
+    )
+    orgs_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
+    orgs_phantom, _ = Permission.objects.get_or_create(
+        content_type=orgs_ct, codename="add_org_member", defaults={"name": "Can Add Org Member"}
     )
 
-    # A user granted the phantom directly (pre-cutover admin grant) — retiring
-    # must RE-POINT this onto the real row, never silently revoke it.
+    # A user granted the reports phantom directly (pre-cutover admin grant) —
+    # retiring must RE-POINT this onto the real row, never silently revoke it.
     holder = get_user_model().objects.create(username="reports-holder")
-    holder.user_permissions.add(phantom)
+    holder.user_permissions.add(reports_phantom)
 
-    # A portal phantom with no real twin (member management is still legacy).
-    portal_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
-    portal_phantom, _ = Permission.objects.get_or_create(
-        content_type=portal_ct, codename="add_org_member", defaults={"name": "Can Add Org Member"}
+    # A phantom with no real twin anywhere stays (nothing supersedes it).
+    orphan_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="unbound")
+    orphan_phantom, _ = Permission.objects.get_or_create(
+        content_type=orphan_ct, codename="future_portal_action", defaults={"name": "Future Portal Action"}
     )
 
     retire_superseded_phantom_permissions()
 
-    assert not Permission.objects.filter(pk=phantom.pk).exists()
+    assert not Permission.objects.filter(pk__in=[reports_phantom.pk, orgs_phantom.pk]).exists()
     assert Permission.objects.filter(pk=real.pk).exists()
+    assert Permission.objects.filter(pk=org_real.pk).exists()
     # The user's grant survived, now on the real row.
     assert holder.user_permissions.filter(pk=real.pk).exists()
-    # Portal phantom has no real twin → kept.
-    assert Permission.objects.filter(pk=portal_phantom.pk).exists()
-    # Phantom ContentType dropped once its rows are gone.
+    # No-twin phantom kept.
+    assert Permission.objects.filter(pk=orphan_phantom.pk).exists()
+    # Phantom ContentTypes dropped once their rows are gone.
     assert not ContentType.objects.filter(app_label="reports", model="reports").exists()
+    assert not ContentType.objects.filter(app_label="organizations", model="member").exists()
