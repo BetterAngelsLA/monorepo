@@ -72,6 +72,7 @@ def test_retire_superseded_phantom_permissions() -> None:
     portal phantoms (``organizations.*``), which still have no real twin.
     """
     from accounts.seed import retire_superseded_phantom_permissions
+    from django.contrib.auth import get_user_model
     from django.contrib.contenttypes.models import ContentType
 
     # A real twin exists: reports.view_reports on ScheduledReport (model Meta).
@@ -84,6 +85,11 @@ def test_retire_superseded_phantom_permissions() -> None:
         content_type=phantom_ct, codename="view_reports", defaults={"name": "Can view reports"}
     )
 
+    # A user granted the phantom directly (pre-cutover admin grant) — retiring
+    # must RE-POINT this onto the real row, never silently revoke it.
+    holder = get_user_model().objects.create(username="reports-holder")
+    holder.user_permissions.add(phantom)
+
     # A portal phantom with no real twin (member management is still legacy).
     portal_ct, _ = ContentType.objects.get_or_create(app_label="organizations", model="member")
     portal_phantom, _ = Permission.objects.get_or_create(
@@ -94,6 +100,8 @@ def test_retire_superseded_phantom_permissions() -> None:
 
     assert not Permission.objects.filter(pk=phantom.pk).exists()
     assert Permission.objects.filter(pk=real.pk).exists()
+    # The user's grant survived, now on the real row.
+    assert holder.user_permissions.filter(pk=real.pk).exists()
     # Portal phantom has no real twin → kept.
     assert Permission.objects.filter(pk=portal_phantom.pk).exists()
     # Phantom ContentType dropped once its rows are gone.
