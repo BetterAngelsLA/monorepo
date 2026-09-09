@@ -69,10 +69,10 @@ def _resolve_permissions(permission_strings: list[str]) -> list[int]:
     # (2) The model that declares the codename in Meta.permissions.
     for app_label in app_labels:
         try:
-            app_models = django_apps.get_app_config(app_label).get_models()
+            app_config = django_apps.get_app_config(app_label)
         except LookupError:
-            app_models = ()
-        for model in app_models:
+            continue
+        for model in app_config.get_models():
             for codename, _label in getattr(model._meta, "permissions", ()):
                 if codename in codenames:
                     ct_by_key.setdefault((app_label, codename), ContentType.objects.get_for_model(model))
