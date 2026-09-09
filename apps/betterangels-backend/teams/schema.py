@@ -60,6 +60,19 @@ class Query:
         return team_list(organization=org)
 
 
+def _active_org(info: Info) -> Organization:
+    """Resolve the header org, failing closed on a missing/unknown one.
+
+    Same denial as the read resolver (no ``DoesNotExist``: an unknown org
+    header is a permission problem, not a crash).  Module-level because
+    strawberry-django mutation resolvers are invoked unbound.
+    """
+    org = Organization.objects.filter(pk=get_current_organization(info)).first()
+    if org is None:
+        raise PermissionDenied("You do not have access to this organization.")
+    return org
+
+
 @strawberry.type
 class Mutation:
     """Team mutations — grant-only authority (ADR 0001 §5.3, teams cutover).
@@ -73,13 +86,13 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_team(self, info: Info, data: CreateTeamInput) -> TeamType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = _active_org(info)
         require_can(get_current_user(info), Team.perms.ADD, org=org)
         return cast(TeamType, team_create(name=data.name, organization=org))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_team(self, info: Info, data: UpdateTeamInput) -> TeamType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = _active_org(info)
         require_can(get_current_user(info), Team.perms.CHANGE, org=org)
         team = team_get(pk=data.id, organization=org)
         if team is None:
@@ -96,7 +109,7 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_team(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        org = Organization.objects.get(pk=get_current_organization(info))
+        org = _active_org(info)
         require_can(get_current_user(info), Team.perms.DELETE, org=org)
         team = team_get(pk=data.id, organization=org)
         if team is None:

@@ -22,6 +22,7 @@ from django.contrib.auth.models import Permission
 from model_bakery import baker
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import Shelter
+from teams.models import Team
 
 
 class CurrentUserGlobalPermissionsTestCase(GraphQLBaseTestCase):
@@ -529,6 +530,12 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
             organization_field="pk",
         ).exists()
 
+    def _can(self, user: User, perm: str) -> bool:
+        """The exact predicate the grant-only team mutations enforce (``can()``)."""
+        from common.permissions.selectors import can
+
+        return can(user, perm, org=self.org)
+
     def test_org_admin_member_report_matches_legacy_enforcement(self) -> None:
         """An ORG_ADMIN member: the report carries exactly the enforceable perms."""
         user = baker.make(User)
@@ -539,18 +546,26 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         global_perms, orgs = self._report()
         org_perms = orgs[self.org.name]
 
-        # Sanity: the legacy role is actually reported per org…
+        # Sanity: the role is actually reported per org…
         self.assertIn("organizations.add_org_member", org_perms)
         self.assertIn("reports.view_reports", org_perms)
         self.assertIn("teams.add_team", org_perms)
-        # …and nothing more than the group grants (no amplification).
+        # …and nothing more than the group + role grants (no amplification).
         self.assertEqual(org_perms, set(self.LEGACY_PERMS))
 
-        # Every reported perm is enforceable through the legacy predicate.
+        # Every reported perm is enforceable by the predicate that enforces it:
+        # teams.* is grant-only (``can()``), member management / reports are
+        # legacy (``permissioned_queryset``).  Asserting the legacy predicate
+        # for teams would pass vacuously while the ORG_ADMIN member still holds
+        # the (now inert) legacy group, letting report-vs-enforcement drift
+        # through unnoticed.
         for perm in self.LEGACY_PERMS:
             reported = perm in org_perms or perm in global_perms
             self.assertTrue(reported, f"{perm} not reported for an ORG_ADMIN member")
-            self.assertTrue(self._legacy_holds(user, perm), f"{perm} reported but legacy enforcement denies")
+            if perm.startswith("teams."):
+                self.assertTrue(self._can(user, perm), f"{perm} reported but grant enforcement denies")
+            else:
+                self.assertTrue(self._legacy_holds(user, perm), f"{perm} reported but legacy enforcement denies")
 
     def test_plain_member_report_matches_legacy_enforcement(self) -> None:
         """A member with no role: nothing reported, nothing enforceable."""
@@ -648,3 +663,85 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         self.assertIn("teams.add_team", org_perms)
         self.assertIn("shelters.view_shelter", org_perms)
         self.assertFalse(self._legacy_holds(user, "organizations.add_org_member"))
+
+
+class CurrentUserTeamsReportCanEquivalenceTestCase(GraphQLBaseTestCase):
+    """teams (grant-only domain): the org entry equals ``can()`` per org.
+
+    Mirrors the shelters equivalence (``CurrentUserReportCanEquivalenceTestCase``):
+    the FE's ``hasPermission(P)`` at org O is a membership test on O's effective
+    entry, so ``P ∈ entry[O]`` must equal ``can(user, P, org=O)`` for the
+    grant-only teams domain — otherwise the admin UI hides/shows team actions
+    the backend allows/refuses.  This is the tripwire that catches a drift
+    between ``teams`` in ``LEGACY_INERT_APPS`` and the grant-only mutations.
+    """
+
+    TEAM_PERMS = (Team.perms.VIEW, Team.perms.ADD, Team.perms.CHANGE, Team.perms.DELETE)
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.org = organization_recipe.make(name="Teams Equiv Org")
+
+    def _assert_report_matches_can(self, user: User) -> None:
+        from common.permissions.selectors import can
+        from organizations.models import Organization
+
+        response = self.execute_graphql(
+            """
+            query {
+                currentUser {
+                    permissions
+                    organizations: organizationsOrganization {
+                        name
+                        permissions
+                    }
+                }
+            }
+            """
+        )
+        self.assertIsNone(response.get("errors"))
+        orgs = {o["name"]: set(o["permissions"]) for o in response["data"]["currentUser"]["organizations"]}
+
+        for org_name, org_perms in orgs.items():
+            org = Organization.objects.get(name=org_name)
+            for perm in self.TEAM_PERMS:
+                reported = perm in org_perms
+                self.assertEqual(
+                    reported,
+                    can(user, perm, org=org),
+                    f"{perm} at {org_name}: entry says {reported}, can() says otherwise",
+                )
+
+    def test_scoped_grant_only(self) -> None:
+        """A scoped grant alone: report matches can() at the grant org."""
+        org = organization_recipe.make(name="Teams Equiv Grant Org")
+        user = baker.make(User)
+        org.add_user(user)
+        role, _ = Role.objects.get_or_create(name="Teams Equiv Admin", is_global=False)
+        for perm in self.TEAM_PERMS:
+            app_label, codename = perm.split(".")
+            role.permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        grant_create(user=user, role=role, scope_org=org)
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_superuser_member_folds_all_team_perms(self) -> None:
+        """A member superuser: every team perm folds and can() is true at the org."""
+        user = baker.make(User, is_superuser=True)
+        self.org.add_user(user)
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
+
+    def test_user_permission_holder_member_folds_the_global_tier(self) -> None:
+        """A member holding teams.view_team via user_permissions: entry folds it."""
+        org = organization_recipe.make(name="Teams Equiv Perm Member Org")
+        user = baker.make(User)
+        org.add_user(user)
+        app_label, codename = Team.perms.VIEW.split(".")
+        user.user_permissions.add(Permission.objects.get(codename=codename, content_type__app_label=app_label))
+        self.graphql_client.force_login(user)
+
+        self._assert_report_matches_can(user)
