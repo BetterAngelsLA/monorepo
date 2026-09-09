@@ -530,12 +530,6 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
             organization_field="pk",
         ).exists()
 
-    def _can(self, user: User, perm: str) -> bool:
-        """The exact predicate the grant-only team mutations enforce (``can()``)."""
-        from common.permissions.selectors import can
-
-        return can(user, perm, org=self.org)
-
     def test_org_admin_member_report_matches_legacy_enforcement(self) -> None:
         """An ORG_ADMIN member: the report carries exactly the enforceable perms."""
         user = baker.make(User)
@@ -559,11 +553,16 @@ class CurrentUserLegacyDomainReportEquivalenceTestCase(GraphQLBaseTestCase):
         # for teams would pass vacuously while the ORG_ADMIN member still holds
         # the (now inert) legacy group, letting report-vs-enforcement drift
         # through unnoticed.
+        from common.permissions.selectors import can
+
         for perm in self.LEGACY_PERMS:
             reported = perm in org_perms or perm in global_perms
             self.assertTrue(reported, f"{perm} not reported for an ORG_ADMIN member")
             if perm.startswith("teams."):
-                self.assertTrue(self._can(user, perm), f"{perm} reported but grant enforcement denies")
+                self.assertTrue(
+                    can(user, perm, org=self.org),
+                    f"{perm} reported but grant enforcement denies",
+                )
             else:
                 self.assertTrue(self._legacy_holds(user, perm), f"{perm} reported but legacy enforcement denies")
 
