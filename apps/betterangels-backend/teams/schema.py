@@ -5,9 +5,7 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from accounts.models import User as AccountUser
-from accounts.selectors import organization_get_for_member
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.permissions.selectors import can
 from common.permissions.utils import (
     IsAuthenticated,
     get_current_organization,
@@ -33,30 +31,21 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List the active organization's teams.
+        """List the active organization's teams — grant-based (ADR 0001 §5.3).
 
-        Access is **membership-based OR grant-based** (ADR 0001 §5.3, teams
-        read):
-
-        - membership — the org's team directory is shared with org members
-          (mobile note/task team pickers, admin listing); no permission needed;
-        - ``teams.view_team`` grant — a holder of the permission at the org (a
-          role-backed ORG_ADMIN/ORG_SUPERUSER Grant, a direct-grant operator,
-          or the global tier) may list without membership.
-
-        The grant arm keeps the read coherent with the grant-only mutations (a
-        holder who can manage teams can also list them) and with the per-org
-        permission report (``teams`` is grant-only/legacy-inert).
+        Authorizes via ``teams.view_team`` (``require_can``): role-backed
+        ORG_ADMIN/ORG_SUPERUSER and CASEWORKER holders (backfilled Grants), the
+        global tier, or a direct-grant holder.  Workers pick teams on
+        notes/tasks, so CASEWORKER is role-backed with ``teams.view_team`` —
+        membership is not consulted.
         """
         user = cast(AccountUser, get_current_user(info))
         org_id = get_current_organization(info)
-        org = organization_get_for_member(user=user, organization_id=org_id)
-
+        org = Organization.objects.filter(pk=org_id).first()
         if org is None:
-            org = Organization.objects.filter(pk=org_id).first()
-            if org is None or not can(user, Team.perms.VIEW, org=org):
-                raise PermissionDenied("You do not have access to this organization.")
+            raise PermissionDenied("You do not have access to this organization.")
 
+        require_can(user, Team.perms.VIEW, org=org)
         return team_list(organization=org)
 
 

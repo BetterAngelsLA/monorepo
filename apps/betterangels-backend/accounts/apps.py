@@ -5,6 +5,7 @@ from django.db.models.signals import post_migrate
 def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
     from accounts.seed import seed_permission_templates
     from accounts.services import (
+        backfill_caseworker_grants,
         backfill_global_role_members,
         backfill_org_admin_grants,
         backfill_shelter_grants,
@@ -13,9 +14,11 @@ def _seed_on_migrate(sender: AppConfig, **kwargs: object) -> None:
 
     seed_permission_templates()
     sync_roles()
-    # Org-admin conversion must run before any reconcile retires the legacy
-    # rows: sync_roles creates the Role rows, this converts existing members.
+    # Org-admin and caseworker conversion must run before any reconcile retires
+    # the legacy rows: sync_roles creates the Role rows, these convert existing
+    # members.
     backfill_org_admin_grants()
+    backfill_caseworker_grants()
     backfill_shelter_grants()
     backfill_global_role_members()
 

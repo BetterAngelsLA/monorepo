@@ -11,6 +11,7 @@ from typing import Any, Dict
 
 from accounts.groups import ORG_ADMIN
 from accounts.role_manager import OrgRoleManager
+from accounts.services import sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
 from teams.models import Team
@@ -21,6 +22,9 @@ from .utils import TeamGraphQLBaseTestCase, TeamGraphQLUtilsMixin
 class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
+        # Provision the Role rows so the recipe's owner gets mirrored Grants —
+        # the teams read is grant-only (teams.view_team).
+        sync_roles()
         self.org = organization_recipe.make()
         self.org_user = self.org.users.first()
         self.team = baker.make(Team, name="team 1", organization=self.org)
@@ -28,7 +32,9 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self._set_active_org(self.org)
 
     def test_teams_query(self) -> None:
-        expected_query_count = 4
+        # Grant-only authority (require_can → can → scopes) costs three extra
+        # queries over the old membership-only read.
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_teams_query())
 
@@ -53,9 +59,10 @@ class TeamsQueryTestCase(TeamGraphQLUtilsMixin):
         self.assertIn(str(self.team.pk), [team["id"] for team in teams])
         self.assertNotIn(str(other_org_team.pk), [team["id"] for team in teams])
 
-        # change active org and requery
+        # change active org and requery — a role at the new org grants the read
         assert self.org_user is not None
         other_org.add_user(self.org_user)
+        OrgRoleManager(other_org).add_roles(self.org_user, ORG_ADMIN)
         self._set_active_org(other_org)
 
         response = self.execute_graphql(self.get_teams_query())

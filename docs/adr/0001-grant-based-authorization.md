@@ -1004,11 +1004,15 @@ ContentType). The teams cutover therefore landed *teams alone*:
   off the legacy arm, and the admin FE's per-org lists stay complete.
 - The three team mutations read `require_can(…, teams.*)` — no `@hasOrgPerm`
   directive — and `teams` joins `LEGACY_INERT_APPS` (its legacy rows are no
-  longer reported; the global tier folds for it like shelters). The teams
-  *query* is **member-OR-grant**: org membership keeps the directory open to
-  mobile pickers (§5.3 step 1), while a `teams.view_team` Grant holder (or the
-  global tier) can list without membership, keeping read coherent with the
-  grant-only mutations.
+  longer reported; the global tier folds for it like shelters).
+- The teams *query* is **grant-only** too (`require_can(teams.view_team)`), not
+  member-gated: CASEWORKER is role-backed as the RFC 0003 first step — a scoped
+  `Caseworker` Role carrying `teams.view_team`, with
+  `backfill_caseworker_grants()` converting every existing caseworker
+  membership into a Grant — so the workers who pick teams on notes/tasks read
+  via grants. `Team.perms.VIEW` was added to the CASEWORKER template so the
+  template and Role stay consistent.  Membership is no longer consulted for
+  the teams read.
 - Later slices add the remaining perms to the Role/RoleDefs when each consumer
   flips (reports/member management), then retire the legacy groups.
 

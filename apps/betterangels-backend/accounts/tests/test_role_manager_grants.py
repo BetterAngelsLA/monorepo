@@ -7,12 +7,17 @@ legacy ``PermissionGroup`` membership AND (for role-backed templates) a
 
 from accounts.models import Grant, PermissionGroup, PermissionGroupTemplate, Role, User
 from accounts.role_manager import OrgRoleManager
+from common.permissions.config import TemplateConfig
 from django.test import TestCase
 from model_bakery import baker
-from notes.groups import CASEWORKER
 from shelters.groups import SHELTER_OPERATOR
 
 from .baker_recipes import organization_recipe
+
+# A template with no scoped Role row — every real member/admin template
+# (SHELTER_OPERATOR, CASEWORKER, ORG_ADMIN, ORG_SUPERUSER) is role-backed now,
+# so the "no Role row ⇒ no mirror" path is exercised with a test-only template.
+NOT_ROLE_BACKED = TemplateConfig(name="Not Role Backed", permissions=[])
 
 
 class OrgRoleManagerDualWriteTestCase(TestCase):
@@ -24,10 +29,9 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
         self.org.add_user(self.user)
         self.manager = OrgRoleManager(self.org)
 
-    def _ensure_caseworker_group(self) -> None:
-        """The shelter preset has no Caseworker group; create one for tests that
-        exercise non-role-backed templates (ADR 0001 §2.2)."""
-        template, _ = PermissionGroupTemplate.objects.get_or_create(name=CASEWORKER.name)
+    def _ensure_not_role_backed_group(self) -> None:
+        """Create a PermissionGroup for the test-only template."""
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=NOT_ROLE_BACKED.name)
         PermissionGroup.objects.get_or_create(organization=self.org, template=template)
 
     def _shelter_operator_role(self) -> Role:
@@ -47,15 +51,15 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
         )
 
     def test_add_roles_skips_templates_without_a_role_row(self) -> None:
-        """CASEWORKER has no Role row, so no Grant is mirrored (legacy only)."""
-        self._ensure_caseworker_group()
-        self.manager.add_roles(self.user, CASEWORKER)
+        """A template with no Role row mirrors no Grant (legacy only)."""
+        self._ensure_not_role_backed_group()
+        self.manager.add_roles(self.user, NOT_ROLE_BACKED)
 
         self.assertFalse(Grant.objects.filter(principal_user=self.user, scope_org=self.org).exists())
         self.assertTrue(
             self.user.groups.filter(
                 permissiongroup__organization=self.org,
-                permissiongroup__template__name=CASEWORKER.name,
+                permissiongroup__template__name=NOT_ROLE_BACKED.name,
             ).exists()
         )
 
@@ -85,12 +89,18 @@ class OrgRoleManagerDualWriteTestCase(TestCase):
         self.assertTrue(Grant.objects.filter(principal_user=other, scope_org=self.org).exists())
 
     def test_replace_roles_removes_stale_grant_and_mirrors_new_one(self) -> None:
-        self._ensure_caseworker_group()
         self.manager.add_roles(self.user, SHELTER_OPERATOR)
         self.assertTrue(Grant.objects.filter(principal_user=self.user, scope_org=self.org).exists())
 
-        # replace_roles = clear + add; CASEWORKER has no Role row, so the
+        # replace_roles = clear + add; the replacement has no Role row, so the
         # stale Grant is deleted and none is mirrored.
-        self.manager.replace_roles(self.user, CASEWORKER)
+        self._ensure_not_role_backed_group()
+        self.manager.replace_roles(self.user, NOT_ROLE_BACKED)
 
         self.assertFalse(Grant.objects.filter(principal_user=self.user, scope_org=self.org).exists())
+        self.assertTrue(
+            self.user.groups.filter(
+                permissiongroup__organization=self.org,
+                permissiongroup__template__name=NOT_ROLE_BACKED.name,
+            ).exists()
+        )

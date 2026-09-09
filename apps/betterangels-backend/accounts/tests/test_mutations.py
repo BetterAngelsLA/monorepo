@@ -193,8 +193,10 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
 
         with patch("accounts.backends.CustomInvitations.send_invitation") as mock_send_invitation:
             # Dual-write (ADR 0001 §4): add_roles mirrors memberships into
-            # Grants, adding the role-lookup + grant-check queries.
-            with self.assertNumQueriesWithoutCache(21):
+            # Grants.  CASEWORKER is role-backed now, so this adds the
+            # role-lookup + grant-check queries (+4 over the pre-role-back
+            # baseline of 21).
+            with self.assertNumQueriesWithoutCache(25):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()

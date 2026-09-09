@@ -561,9 +561,10 @@ def sync_roles() -> None:
 
     from accounts.groups import ORG_ADMIN_ROLES
     from accounts.models import Role
+    from notes.groups import CASEWORKER_ROLE
 
     with transaction.atomic():
-        for role_def in (*ROLES, *ORG_ADMIN_ROLES):
+        for role_def in (*ROLES, *ORG_ADMIN_ROLES, CASEWORKER_ROLE):
             role, created = Role.objects.get_or_create(name=role_def.name)
             wanted = set(_resolve_permissions(role_def.permissions))
             _raise_on_phantom_role_permissions(role_def, wanted)
@@ -578,44 +579,17 @@ def sync_roles() -> None:
                 logger.info("Synced Role %s (%d perms, global=%s)", role.name, len(wanted), role.is_global)
 
 
-def backfill_shelter_grants() -> None:
-    """Backfill ``Grant`` rows from legacy Shelter Operator memberships.
+def _backfill_role_grants(role_defs: tuple[RoleDef, ...] | list[RoleDef]) -> None:
+    """Backfill ``Grant`` rows from legacy memberships of the given templates.
 
-    One ``Grant(user, role=Shelter Operator, scope=org)`` per member of an org's
-    Shelter Operator ``PermissionGroup``.  Idempotent (``get_or_create``).  Only
-    the scoped shelter role is converted here — every other role keeps its
-    ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
+    One ``Grant(user, role=<template role>, scope=org)`` per member of an org's
+    ``PermissionGroup`` for each template.  Idempotent (``get_or_create``).
+    Runs after :func:`sync_roles` so the Role rows exist, and before any
+    reconcile that would retire the legacy groups.
     """
-    from shelters.groups import SHELTER_OPERATOR_ROLE
-
     from accounts.models import Grant, PermissionGroup, Role
 
-    role = Role.objects.get(name=SHELTER_OPERATOR_ROLE.name)
-    groups = PermissionGroup.objects.filter(template__name=SHELTER_OPERATOR_ROLE.name)
-    for group in groups.prefetch_related("user_set"):
-        for user in group.user_set.all():
-            grant, created = Grant.objects.get_or_create(principal_user=user, role=role, scope_org=group.organization)
-            if created:
-                logger.info("Backfilled Grant %s", grant)
-
-
-def backfill_org_admin_grants() -> None:
-    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships.
-
-    One ``Grant(user, role=Organization Admin/Superuser, scope=org)`` per member
-    of the org's ``ORG_ADMIN`` / ``ORG_SUPERUSER`` ``PermissionGroup``.
-    Idempotent (``get_or_create``).  Runs after :func:`sync_roles` so the Role
-    rows exist, and before any reconcile that would retire the legacy groups.
-
-    The legacy groups are kept (dual write) until the member-management
-    cutover retires them; this backfill is what lets a grant-only team
-    mutation authorize every existing org admin without re-adding anyone.
-    """
-    from accounts.groups import ORG_ADMIN_ROLES
-
-    from accounts.models import Grant, PermissionGroup, Role
-
-    for role_def in ORG_ADMIN_ROLES:
+    for role_def in role_defs:
         role = Role.objects.get(name=role_def.name)
         groups = PermissionGroup.objects.filter(template__name=role_def.name)
         for group in groups.prefetch_related("user_set"):
@@ -625,6 +599,41 @@ def backfill_org_admin_grants() -> None:
                 )
                 if created:
                     logger.info("Backfilled Grant %s", grant)
+
+
+def backfill_shelter_grants() -> None:
+    """Backfill ``Grant`` rows from legacy Shelter Operator memberships.
+
+    Only the scoped shelter role is converted here — every other role keeps its
+    ``PermissionGroup`` until its domain cutover (ADR 0001 §4).
+    """
+    from shelters.groups import SHELTER_OPERATOR_ROLE
+
+    _backfill_role_grants((SHELTER_OPERATOR_ROLE,))
+
+
+def backfill_org_admin_grants() -> None:
+    """Backfill ``Grant`` rows from legacy ORG_ADMIN / ORG_SUPERUSER memberships.
+
+    The legacy groups are kept (dual write) until the member-management
+    cutover retires them; this backfill is what lets a grant-only team
+    mutation authorize every existing org admin without re-adding anyone.
+    """
+    from accounts.groups import ORG_ADMIN_ROLES
+
+    _backfill_role_grants(ORG_ADMIN_ROLES)
+
+
+def backfill_caseworker_grants() -> None:
+    """Backfill ``Grant`` rows from legacy CASEWORKER memberships.
+
+    RFC 0003 first step: role-backing CASEWORKER with ``teams.view_team`` is
+    what lets the ``teams`` read authorize via grants.  The legacy groups are
+    kept (dual write) until RFC 0003 retires them.
+    """
+    from notes.groups import CASEWORKER_ROLE
+
+    _backfill_role_grants((CASEWORKER_ROLE,))
 
 
 def backfill_global_role_members() -> None:

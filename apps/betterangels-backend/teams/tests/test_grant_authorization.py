@@ -1,10 +1,10 @@
-"""Teams authority — grant-only writes + member-OR-grant reads (ADR 0001 §5.3).
+"""Teams authority — grant-only reads + writes (ADR 0001 §5.3, teams cutover).
 
 The three team mutations authorize through ``require_can`` — the grant
 predicate (``can()``) — since ``ORG_ADMIN`` / ``ORG_SUPERUSER`` are role-backed
-with backfilled Grants.  The ``teams`` read is **membership OR a
-``teams.view_team`` grant** — org members (mobile pickers) and grant holders
-may list the org's teams.  These tests pin the contract:
+with backfilled Grants.  The ``teams`` read is grant-only too: CASEWORKER is
+role-backed with ``teams.view_team`` (RFC 0003 first step) so the workers who
+pick teams on notes/tasks read via grants.  These tests pin the contract:
 
 - a role-backed ORG_ADMIN (Grant mirrored by ``OrgRoleManager``) manages teams;
 - a legacy-only ORG_ADMIN (PermissionGroup membership, no Grant) is DENIED —
@@ -14,8 +14,8 @@ may list the org's teams.  These tests pin the contract:
 - a member with neither authority is denied;
 - a Grant at org A does not authorize acting at org B;
 - the global tier (superuser) is enforceable at any org;
-- the read: a non-member with a ``teams.view_team`` Grant (or superuser) lists
-  the org's teams; a non-member with neither is denied.
+- the read: role-backed caseworker / ORG_ADMIN, a direct-grant holder, or a
+  superuser lists the org's teams; a member without a Grant is denied.
 """
 
 from typing import Any
@@ -170,13 +170,13 @@ class TeamGrantAuthorityDeniedTestCase(TeamGraphQLUtilsMixin):
 
 
 class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
-    """The ``teams`` read: membership OR a ``teams.view_team`` Grant.
+    """The ``teams`` read is grant-only: ``can(user, teams.view_team, org)``.
 
-    Membership is the directory arm (mobile pickers, admin listing).  The
-    grant arm covers holders of ``teams.view_team`` who are not members (a
-    direct-grant operator, or the global tier via superuser) — the same
-    holders the grant-only mutations authorize, so who-can-manage ⊇
-    who-can-list.
+    Workers pick teams on notes/tasks, so CASEWORKER is role-backed with
+    ``teams.view_team`` and backfilled — a role-backed caseworker reads; any
+    holder of a ``teams.view_team`` Grant (or the global tier via superuser)
+    reads, member or not; a user with no Grant is denied (membership is not
+    consulted).
     """
 
     def setUp(self) -> None:
@@ -197,6 +197,27 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         """All teams of org_2 — the base fixture seeds one, tests may add more."""
         return set(Team.objects.filter(organization=self.org_2).values_list("pk", flat=True))
 
+    def test_role_backed_caseworker_can_list_teams(self) -> None:
+        """A member caseworker reads via the mirrored CASEWORKER Grant."""
+        from notes.groups import CASEWORKER
+
+        worker = baker.make(User)
+        self.org_2.add_user(worker)
+        OrgRoleManager(self.org_2).add_roles(worker, CASEWORKER)
+        self.assertTrue(worker.grants.filter(scope_org=self.org_2, role__name=CASEWORKER.name).exists())
+
+        response = self._list_org_2(worker)
+        self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_role_backed_org_admin_can_list_teams(self) -> None:
+        """An ORG_ADMIN member reads via the ORG_ADMIN Grant."""
+        admin = baker.make(User)
+        self.org_2.add_user(admin)
+        OrgRoleManager(self.org_2).add_roles(admin, ORG_ADMIN)
+
+        response = self._list_org_2(admin)
+        self.assertEqual(self._ids(response), self._expected_ids())
+
     def test_non_member_with_view_grant_can_list_teams(self) -> None:
         """A direct-grant holder with no membership reads the org's teams."""
         holder = baker.make(User)
@@ -213,6 +234,16 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
 
         response = self._list_org_2(user)
         self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_member_without_grant_is_denied(self) -> None:
+        """Membership alone no longer reads — the read is grant-only."""
+        member = baker.make(User)
+        self.org_2.add_user(member)
+        self.assertFalse(member.grants.filter(scope_org=self.org_2).exists())
+
+        response = self._list_org_2(member)
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone((response.get("data") or {}).get("teams"))
 
     def test_non_member_without_grant_is_denied(self) -> None:
         user = baker.make(User)
