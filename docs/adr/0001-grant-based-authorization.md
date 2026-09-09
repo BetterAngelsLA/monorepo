@@ -1011,8 +1011,11 @@ ContentType). The teams cutover therefore landed *teams alone*:
   `backfill_caseworker_grants()` converting every existing caseworker
   membership into a Grant — so the workers who pick teams on notes/tasks read
   via grants. `Team.perms.VIEW` was added to the CASEWORKER template so the
-  template and Role stay consistent.  Membership is no longer consulted for
-  the teams read.
+  template and Role stay consistent. Membership is no longer consulted for
+  the teams read. The org whose teams are listed is passed as a
+  `TeamFilter.organizationId` (authoritative); the `X-Organization-ID` header
+  remains only as a deprecated fallback while clients migrate to the filter
+  and will be stripped once none send it.
 - Later slices add the remaining perms to the Role/RoleDefs when each consumer
   flips (reports/member management), then retire the legacy groups.
 
