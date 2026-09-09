@@ -33,7 +33,9 @@ export const buildCreateReservationInput = (
 
 export const buildUpdateReservationInput = (
   formData: ReservationFormData,
-): Omit<UpdateReservationInput, 'id'> => ({
+  id: string,
+): UpdateReservationInput => ({
+  id,
   bedId: formData.bedId ?? undefined,
   roomId: formData.roomId ?? undefined,
   startDate: formData.startDate || undefined,

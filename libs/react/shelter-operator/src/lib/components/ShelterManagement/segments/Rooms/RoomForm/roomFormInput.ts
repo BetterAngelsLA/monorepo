@@ -47,4 +47,8 @@ export const buildCreateRoomInput = (
 
 export const buildUpdateRoomInput = (
   formData: RoomFormData,
-): Omit<UpdateRoomInput, 'id'> => buildRoomFieldInput(formData);
+  id: string,
+): UpdateRoomInput => ({
+  id,
+  ...buildRoomFieldInput(formData),
+});

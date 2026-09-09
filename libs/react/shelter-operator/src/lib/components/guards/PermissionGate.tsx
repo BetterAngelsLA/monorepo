@@ -40,11 +40,13 @@ export function MgmtActionGate({
   children,
 }: MgmtActionGateProps) {
   const { shelterId } = useParams<{ shelterId: string }>();
-  const { hasPermission } = useActiveOrg();
 
-  if (!hasPermission(permission)) {
-    return <Navigate to={shelterMgmtResourceRoute(shelterId ?? '', resource)} replace />;
-  }
-
-  return <>{children}</>;
+  return (
+    <PermissionGate
+      permission={permission}
+      fallbackPath={shelterMgmtResourceRoute(shelterId ?? '', resource)}
+    >
+      {children}
+    </PermissionGate>
+  );
 }

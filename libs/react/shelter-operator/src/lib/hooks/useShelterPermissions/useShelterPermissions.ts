@@ -18,7 +18,6 @@ export function useShelterPermissions() {
   return {
     canCreateShelter: hasPermission(ShelterPermissions.Add),
     canEditShelter: hasPermission(ShelterPermissions.Change),
-    canDeleteShelter: hasPermission(ShelterPermissions.Delete),
 
     canAddBed: hasPermission(BedPermissions.Add),
     canEditBed: hasPermission(BedPermissions.Change),
@@ -30,6 +29,5 @@ export function useShelterPermissions() {
 
     canAddReservation: hasPermission(ReservationPermissions.Add),
     canEditReservation: hasPermission(ReservationPermissions.Change),
-    canDeleteReservation: hasPermission(ReservationPermissions.Delete),
   };
 }
