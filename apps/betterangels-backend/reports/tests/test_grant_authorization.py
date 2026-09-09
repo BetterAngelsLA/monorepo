@@ -40,7 +40,7 @@ REPORT_SUMMARY_QUERY = """
 """
 
 
-class ReportSummaryGraphQLGrantMixin:
+class ReportSummaryGraphQLGrantMixin(GraphQLBaseTestCase):
     """Shared GraphQL helpers for the reportSummary query.
 
     The org is carried in the payload (``organizationId``); the
@@ -49,7 +49,7 @@ class ReportSummaryGraphQLGrantMixin:
     check.
     """
 
-    def _read(self, user: User, org: object) -> dict[str, Any]:
+    def _read(self, user: User, org: Any) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             REPORT_SUMMARY_QUERY,
@@ -70,7 +70,7 @@ class ReportExportDRFGrantMixin:
         return api.get(f"/reports/export/?org_id={org_id}&start_date=2025-01-01&end_date=2025-01-31")
 
 
-class ReportGrantAuthorityTestCase(GraphQLBaseTestCase, ReportSummaryGraphQLGrantMixin, ReportExportDRFGrantMixin):
+class ReportGrantAuthorityTestCase(ReportSummaryGraphQLGrantMixin, ReportExportDRFGrantMixin):
     """Grant holders read reports after the grant-only cutover."""
 
     def setUp(self) -> None:
@@ -154,9 +154,7 @@ class ReportGrantAuthorityTestCase(GraphQLBaseTestCase, ReportSummaryGraphQLGran
         self._assert_denied(response)
 
 
-class ReportGrantAuthorityDeniedTestCase(
-    GraphQLBaseTestCase, ReportSummaryGraphQLGrantMixin, ReportExportDRFGrantMixin
-):
+class ReportGrantAuthorityDeniedTestCase(ReportSummaryGraphQLGrantMixin, ReportExportDRFGrantMixin):
     """Authority absent: legacy-only holders, members, cross-org."""
 
     def setUp(self) -> None:
