@@ -25,7 +25,7 @@ These tests pin the flipped contract:
 from typing import Any
 
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import PermissionGroup, User
+from accounts.models import Grant, PermissionGroup, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.types import PermissionTemplateEnum
@@ -317,6 +317,9 @@ class MemberManagementGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, MemberMa
         self.org_1.add_user(removable)
         group = PermissionGroup.objects.get(organization=self.org_1, template__name=ORG_ADMIN.name)
         group.user_set.add(legacy_admin)
+        # Direct membership mirrors a Grant at the m2m edge now; a pre-cutover
+        # legacy-only holder has none — drop the mirror to model that state.
+        Grant.objects.filter(principal_user=legacy_admin).delete()
         self.assertFalse(legacy_admin.grants.filter(scope_org=self.org_1).exists())
 
         response = self._view_members(legacy_admin, self.org_1)
