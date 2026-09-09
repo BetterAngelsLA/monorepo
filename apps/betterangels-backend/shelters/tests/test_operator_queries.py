@@ -116,7 +116,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         """Membership in a second org does not surface its shelters without a VIEW grant.
 
         Reads are reach-scoped (``visible()``) and org-narrowed by the query's
-        ``filters`` variable — never by membership or the header alone.
+        ``filters`` variable — never by membership alone.
         """
         self.org_2.add_user(self.org_1_case_manager_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -135,7 +135,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
-    def test_operator_shelters_multi_org_user_reach_spans_orgs_without_a_header(self) -> None:
+    def test_operator_shelters_multi_org_user_reach_spans_orgs(self) -> None:
         """A multi-org user with VIEW grants sees both orgs' shelters.
 
         The org view comes from the query's ``filters.organizations`` variable.
@@ -152,7 +152,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         org_2_shelter = shelter_recipe.make(organization=self.org_2)
 
-        # No filter, no header → all reachable orgs' shelters.
+        # No filter → all reachable orgs' shelters.
         response = self.execute_graphql(
             self.OPERATOR_SHELTERS_QUERY,
             variables={"offset": 0, "limit": 10},
@@ -171,7 +171,7 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
 
-    def test_operator_shelters_explicit_filter_wins_over_a_stale_header(self) -> None:
+    def test_operator_shelters_org_filter_narrows_multi_org_reach(self) -> None:
         """``filters.organizations`` narrows a reach-scoped read to one org.
 
         The user can reach both orgs, but the query variable is the org view:
@@ -184,7 +184,6 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
         OrgRoleManager(self.org_2).add_roles(self.org_1_case_manager_1, CASEWORKER)
         self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
 
-        self._set_active_org(self.org_1)  # stale/legacy header org
         self.graphql_client.force_login(self.org_1_case_manager_1)
         org_2_shelter = shelter_recipe.make(organization=self.org_2)
 

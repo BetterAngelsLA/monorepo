@@ -22,7 +22,7 @@ from shelters.tests.utils import ShelterTestCase
 
 
 class GlobalTierCrossOrgReadTestCase(TestCase):
-    """A global-tier holder reads shelters across every org — no header needed."""
+    """A global-tier (global-role) holder reads shelters across every org."""
 
     def setUp(self) -> None:
         self.org_a = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
@@ -32,7 +32,7 @@ class GlobalTierCrossOrgReadTestCase(TestCase):
         self.gso = baker.make(User)
         self.gso_role = Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name)
 
-    def test_gso_sees_shelters_in_every_org_without_a_header(self) -> None:
+    def test_global_role_sees_shelters_in_every_org(self) -> None:
         role_assign(user=self.gso, role=self.gso_role)
 
         qs = shelter_queryset(Shelter.objects.all(), user=self.gso, permission=Shelter.perms.VIEW)
@@ -43,7 +43,7 @@ class GlobalTierCrossOrgReadTestCase(TestCase):
             {self.shelter_a.pk, self.shelter_b.pk},
         )
 
-    def test_scoped_user_without_header_sees_only_granted_orgs(self) -> None:
+    def test_scoped_user_sees_only_granted_orgs(self) -> None:
         user = baker.make(User)
         self.org_a.add_user(user)
         OrgRoleManager(self.org_a).add_roles(user, SHELTER_OPERATOR)
@@ -73,7 +73,7 @@ class CreateShelterWithTargetOrgTestCase(ShelterTestCase, TestCase):
         }
     """
 
-    def test_create_with_organization_id_without_header(self) -> None:
+    def test_create_with_explicit_organization_id(self) -> None:
         self.graphql_client.force_login(self.operator)
 
         response = self.execute_graphql(
@@ -107,8 +107,8 @@ class CreateShelterWithTargetOrgTestCase(ShelterTestCase, TestCase):
 
 
 class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
-    """Writes are identity-wide — reach at the row's org authorizes, not the
-    ambient org header (ADR 0001 §7.7).
+    """Writes are identity-wide — the SHELTER_OPERATOR grant at org_b authorizes
+    writes on org_b's rows (ADR 0001 §7.7).
     """
 
     UPDATE_MUTATION = """
@@ -146,9 +146,8 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # self.operator holds SHELTER_OPERATOR at self.org and the header defaults
-        # to self.org. Grant the same role at org_b so the operator can reach
-        # org_b's rows too.
+        # Grant the operator SHELTER_OPERATOR at org_b too, so they can reach
+        # org_b's rows.
         self.org_b = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.org_b.users.add(self.operator)
         OrgRoleManager(self.org_b).add_roles(self.operator, SHELTER_OPERATOR)
@@ -156,9 +155,9 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
         self.shelter_b = shelter_recipe.make(organization=self.org_b, website="https://shelter-b.example.org")
         self.graphql_client.force_login(self.operator)
 
-    def test_update_shelter_in_another_org_does_not_need_its_header(self) -> None:
-        """Reach at org_b lets the operator update org_b's shelter while the
-        ambient header still names org_a (self.org).
+    def test_update_shelter_in_another_org_by_reach(self) -> None:
+        """Reach at org_b (the operator holds SHELTER_OPERATOR there) lets them
+        update org_b's shelter.
         """
         response = self.execute_graphql(
             self.UPDATE_MUTATION,
@@ -170,9 +169,9 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
         self.shelter_b.refresh_from_db()
         self.assertEqual(self.shelter_b.description, "cross-org update")
 
-    def test_delete_shelter_in_another_org_does_not_need_its_header(self) -> None:
-        """Reach at org_b lets the operator delete org_b's shelter while the
-        ambient header still names org_a.
+    def test_delete_shelter_in_another_org_by_reach(self) -> None:
+        """Reach at org_b (the operator holds SHELTER_OPERATOR there) lets them
+        delete org_b's shelter.
         """
         response = self.execute_graphql(
             self.DELETE_MUTATION,
@@ -186,8 +185,8 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
 
 
 class IdentityWideReadsTestCase(ShelterTestCase, TestCase):
-    """Operator reads are reach-scoped: rows in org_b resolve by id or by list
-    filter while the ambient header still names org_a (ADR 0001 §7.7).
+    """Operator reads are reach-scoped: rows in org_b resolve by id or list
+    filter for an operator granted at org_b (ADR 0001 §7.7).
     """
 
     ROOM_Q = "query RoomQ($id: ID!){ room(pk:$id){ id } }"
@@ -213,17 +212,17 @@ class IdentityWideReadsTestCase(ShelterTestCase, TestCase):
         self.reservation_b = baker.make(Reservation, room=self.room_b, bed=self.bed_b, created_by=self.operator)
         self.graphql_client.force_login(self.operator)
 
-    def test_room_by_pk_resolves_across_orgs_without_a_header(self) -> None:
+    def test_room_by_pk_resolves_across_orgs(self) -> None:
         response = self.execute_graphql(self.ROOM_Q, {"id": str(self.room_b.pk)})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["room"]["id"], str(self.room_b.pk))
 
-    def test_bed_by_pk_resolves_across_orgs_without_a_header(self) -> None:
+    def test_bed_by_pk_resolves_across_orgs(self) -> None:
         response = self.execute_graphql(self.BED_Q, {"id": str(self.bed_b.pk)})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["bed"]["id"], str(self.bed_b.pk))
 
-    def test_reservation_by_pk_resolves_across_orgs_without_a_header(self) -> None:
+    def test_reservation_by_pk_resolves_across_orgs(self) -> None:
         response = self.execute_graphql(self.RESERVATION_Q, {"id": str(self.reservation_b.pk)})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["reservation"]["id"], str(self.reservation_b.pk))
@@ -241,8 +240,7 @@ class IdentityWideReadsTestCase(ShelterTestCase, TestCase):
 
 class IdentityWideChildWritesTestCase(ShelterTestCase, TestCase):
     """Child writes (rooms/beds/reservations) are identity-wide: the org comes
-    from the parent shelter, so reach at org_b authorizes even though the header
-    still names org_a (ADR 0001 §7.7).
+    from the parent shelter, so reach at org_b authorizes (ADR 0001 §7.7).
     """
 
     CREATE_ROOM = """

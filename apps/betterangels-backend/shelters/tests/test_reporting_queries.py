@@ -92,7 +92,7 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
             response["errors"][0]["message"],
         )
 
-    def test_reach_in_other_org_beats_a_stale_header(self) -> None:
+    def test_occupancy_metrics_resolve_for_other_org_by_reach(self) -> None:
         """Occupancy metrics resolve by ``shelterId`` against grant reach.
 
         The user holds VIEW in org_2 and asks for org_2's shelter: it resolves.
@@ -102,8 +102,6 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         baker.make(Bed, shelter=self.other_org_shelter, name="Bed cross-org")
 
-        # Header is still org_1 (set in the base setUp) — deliberately not
-        # switched to org_2.
         response = self.execute_graphql(
             self.SHELTER_OCCUPANCY_METRICS_QUERY,
             variables={"shelterId": str(self.other_org_shelter.pk)},

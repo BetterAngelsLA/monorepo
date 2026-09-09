@@ -49,7 +49,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         self.assertEqual(shelter["status"], "DRAFT")
         self.assertIsNotNone(shelter["id"])
         self.assertEqual(Shelter.objects.count(), initial_shelter_count + 1)
-        # Verify the shelter was created under the header org, not some other org.
+        # Verify the shelter was created under the payload's organizationId.
         self.assertEqual(
             Shelter.objects.get(pk=shelter["id"]).organization_id,
             self.org.pk,
