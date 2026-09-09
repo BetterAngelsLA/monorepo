@@ -4,10 +4,21 @@ from typing import Any, cast
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
+from waffle.testutils import override_flag
 
+from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import DemographicChoices, PetChoices, ReservationStatusChoices, SpecialSituationRestrictionChoices
 from shelters.enums import ShelterChoices as ShelterTypeChoices
-from shelters.models import Bed, Demographic, Pet, Reservation, Shelter, ShelterType, SpecialSituationRestriction
+from shelters.models import (
+    Bed,
+    ContactInfo,
+    Demographic,
+    Pet,
+    Reservation,
+    Shelter,
+    ShelterType,
+    SpecialSituationRestriction,
+)
 from shelters.models.shelter import ACTIVE_RESERVATION_STATUSES
 from shelters.tests.baker_recipes import shelter_recipe
 
@@ -519,3 +530,58 @@ class OperatorShelterPermissionTestCase(GraphQLBaseTestCase):
 
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["operatorShelter"]["id"], str(self.shelter.pk))
+
+
+class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
+    """additionalContacts on operatorShelter is gated by ffShelterOperatorBaOnlyFields."""
+
+    ADDITIONAL_CONTACTS_QUERY = """
+        query OperatorShelter($pk: ID!) {
+            operatorShelter(pk: $pk) {
+                id
+                additionalContacts {
+                    id
+                    contactName
+                    contactNumber
+                    contactEmail
+                    contactTitle
+                    isClaimant
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.shelter = shelter_recipe.make(organization=self.org_1)
+        ContactInfo.objects.create(
+            shelter=self.shelter,
+            contact_name="Ada",
+            contact_number="2125550100",
+            contact_email="ada@example.org",
+            contact_title="Director",
+            is_claimant=True,
+        )
+
+    def _query(self) -> dict:
+        return self.execute_graphql(self.ADDITIONAL_CONTACTS_QUERY, {"pk": str(self.shelter.pk)})
+
+    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=False)
+    def test_additional_contacts_hidden_when_flag_off(self) -> None:
+        response = self._query()
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["operatorShelter"]["additionalContacts"], [])
+
+    @override_flag(BA_ADMIN_ONLY_FIELDS_FLAG, active=True)
+    def test_additional_contacts_visible_when_flag_on(self) -> None:
+        response = self._query()
+
+        self.assertIsNone(response.get("errors"))
+        contacts = response["data"]["operatorShelter"]["additionalContacts"]
+        self.assertEqual(len(contacts), 1)
+        self.assertEqual(contacts[0]["contactName"], "Ada")
+        self.assertEqual(contacts[0]["contactEmail"], "ada@example.org")
+        self.assertEqual(contacts[0]["contactTitle"], "Director")
+        self.assertTrue(contacts[0]["isClaimant"])
