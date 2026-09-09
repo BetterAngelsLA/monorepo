@@ -1005,7 +1005,10 @@ ContentType). The teams cutover therefore landed *teams alone*:
 - The three team mutations read `require_can(…, teams.*)` — no `@hasOrgPerm`
   directive — and `teams` joins `LEGACY_INERT_APPS` (its legacy rows are no
   longer reported; the global tier folds for it like shelters). The teams
-  *query* stays membership-gated (§5.3 step 1, unchanged).
+  *query* is **member-OR-grant**: org membership keeps the directory open to
+  mobile pickers (§5.3 step 1), while a `teams.view_team` Grant holder (or the
+  global tier) can list without membership, keeping read coherent with the
+  grant-only mutations.
 - Later slices add the remaining perms to the Role/RoleDefs when each consumer
   flips (reports/member management), then retire the legacy groups.
 
