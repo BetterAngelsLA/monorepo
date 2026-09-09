@@ -2933,6 +2933,7 @@ input TeamFilter {
   OR: TeamFilter
   NOT: TeamFilter
   DISTINCT: Boolean
+  organizationId: ID
 }
 
 type TeamType {

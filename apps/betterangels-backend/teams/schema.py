@@ -31,22 +31,31 @@ class Query:
         permission_classes=[IsAuthenticated],
     )
     def teams(self, info: Info, filters: Optional[TeamFilter] = None) -> QuerySet[Team]:
-        """List the active organization's teams — grant-based (ADR 0001 §5.3).
+        """List an organization's teams — grant-based (ADR 0001 §5.3).
 
-        Authorizes via ``teams.view_team`` (``require_can``): role-backed
-        ORG_ADMIN/ORG_SUPERUSER and CASEWORKER holders (backfilled Grants), the
-        global tier, or a direct-grant holder.  Workers pick teams on
-        notes/tasks, so CASEWORKER is role-backed with ``teams.view_team`` —
-        membership is not consulted.
+        The org comes from the ``organizationId`` filter when provided
+        (authorized via ``can(teams.view_team)`` at that org); the
+        ``X-Organization-ID`` header remains a backward-compatible fallback
+        while clients migrate to the filter (the header path is deprecated and
+        will be stripped).  Authorizes role-backed ORG_ADMIN/ORG_SUPERUSER and
+        CASEWORKER holders (backfilled Grants), the global tier, or a
+        direct-grant holder.  Membership is not consulted.
         """
         user = cast(AccountUser, get_current_user(info))
-        org_id = get_current_organization(info)
-        org = Organization.objects.filter(pk=org_id).first()
-        if org is None:
-            raise PermissionDenied("You do not have access to this organization.")
-
+        org = _resolve_teams_org(info, filters)
         require_can(user, Team.perms.VIEW, org=org)
         return team_list(organization=org)
+
+
+def _resolve_teams_org(info: Info, filters: Optional[TeamFilter]) -> Organization:
+    """The org whose teams are listed: the ``organizationId`` filter wins, the
+    header is the deprecated fallback."""
+    filter_org_id = getattr(filters, "organization_id", None) if filters else None
+    org_id = filter_org_id or get_current_organization(info)
+    org = Organization.objects.filter(pk=org_id).first()
+    if org is None:
+        raise PermissionDenied("You do not have access to this organization.")
+    return org
 
 
 def _active_org(info: Info) -> Organization:

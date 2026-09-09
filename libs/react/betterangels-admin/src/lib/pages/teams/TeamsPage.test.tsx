@@ -23,6 +23,13 @@ const ORG = {
   ],
 };
 
+/** A worker who may only view teams (e.g. a role-backed caseworker). */
+const VIEW_ONLY_ORG = {
+  id: 'org-1',
+  name: 'Test Org',
+  permissions: [TeamPermissions.View],
+};
+
 const TEAM = {
   __typename: 'TeamType',
   id: 'team-1',
@@ -77,12 +84,12 @@ function createClient() {
   };
 }
 
-function renderPage() {
+function renderPage(org = ORG) {
   const { client, variablesByOperation } = createClient();
 
   render(
     <ApolloProvider client={client}>
-      <ActiveOrgProvider organizations={[ORG]}>
+      <ActiveOrgProvider organizations={[org]}>
         <>
           <TeamsPage />
           <Alert />
@@ -115,6 +122,35 @@ describe('TeamsPage', () => {
     };
 
     expect(pagination?.limit).toBeGreaterThan(100);
+  });
+
+  it('passes the active organization id as the teams filter', async () => {
+    const { variablesByOperation } = renderPage();
+
+    await waitFor(() =>
+      expect(variablesByOperation['AdminTeams']).toBeTruthy(),
+    );
+
+    const filters = variablesByOperation['AdminTeams']['filters'] as {
+      organizationId?: string;
+    };
+    expect(filters?.organizationId).toBe(ORG.id);
+  });
+
+  it('hides edit/delete actions from a view-only holder', async () => {
+    renderPage(VIEW_ONLY_ORG);
+
+    await waitFor(() =>
+      expect(screen.getAllByText(TEAM.name).length).toBeGreaterThan(0),
+    );
+
+    // No Add button and no per-row actions menu for a view-only viewer.
+    expect(
+      screen.queryByRole('button', { name: 'Add Team' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: `Actions for ${TEAM.name}` }),
+    ).toBeNull();
   });
 
   it('shows the reason a delete was refused', async () => {

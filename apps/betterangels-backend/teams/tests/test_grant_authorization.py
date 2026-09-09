@@ -252,3 +252,36 @@ class TeamReadGrantAuthorityTestCase(TeamGraphQLUtilsMixin):
         response = self._list_org_2(user)
         self.assertIsNotNone(response.get("errors"))
         self.assertIsNone((response.get("data") or {}).get("teams"))
+
+    def test_org_filter_reads_without_the_header(self) -> None:
+        """The ``organizationId`` filter replaces the header — no header needed."""
+        holder = baker.make(User)
+        self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
+        self.graphql_client.force_login(holder)
+        # No X-Organization-ID header at all.
+        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
+
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
+        self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_org_filter_wins_over_a_stale_header(self) -> None:
+        """A header naming a different org is ignored once the filter provides one."""
+        holder = baker.make(User)
+        self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
+        # Holder has no authority at org_1, which the (stale) header names.
+        self.graphql_client.force_login(holder)
+        self._set_active_org(self.org_1)
+
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": str(self.org_2.pk)}})
+        self.assertEqual(self._ids(response), self._expected_ids())
+
+    def test_org_filter_unknown_org_is_denied(self) -> None:
+        """A filter org that does not exist fails closed."""
+        holder = baker.make(User)
+        self._grant_permission(holder, str(Team.perms.VIEW), self.org_2, role_name="Team Reader")
+        self.graphql_client.force_login(holder)
+        self._set_active_org(self.org_2)
+
+        response = self.execute_graphql(self.get_teams_query(), {"filters": {"organizationId": "999999999"}})
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIsNone((response.get("data") or {}).get("teams"))

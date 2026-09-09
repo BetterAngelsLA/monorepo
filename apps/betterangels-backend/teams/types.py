@@ -3,7 +3,8 @@
 from typing import Optional
 
 import strawberry_django
-from strawberry import ID, Maybe, auto
+from django.db.models import Q
+from strawberry import ID, Info, Maybe, auto
 
 from .models import Team
 
@@ -11,6 +12,20 @@ from .models import Team
 @strawberry_django.filter_type(Team)
 class TeamFilter:
     is_active: auto
+
+    @strawberry_django.filter_field
+    def organization_id(self, info: Info, value: Optional[ID], prefix: str) -> Q:
+        """Narrow to one organization — the org whose teams are listed.
+
+        The resolver treats a provided ``organizationId`` as the authoritative
+        org (authorized via ``can(teams.view_team)`` at that org), with the
+        ``X-Organization-ID`` header as a backward-compatible fallback while
+        clients migrate to the filter.  The DB-level confine here is defense in
+        depth for whichever org the resolver authorizes.
+        """
+        if not value:
+            return Q()
+        return Q(**{f"{prefix}organization_id": value})
 
 
 @strawberry_django.type(Team, filters=TeamFilter, pagination=True)

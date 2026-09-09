@@ -3702,6 +3702,7 @@ export type TeamFilter = {
   NOT?: InputMaybe<TeamFilter>;
   OR?: InputMaybe<TeamFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type TeamType = {
