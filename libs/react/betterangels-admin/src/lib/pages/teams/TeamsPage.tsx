@@ -53,8 +53,8 @@ const COLUMNS: {
 export function TeamsPage(props: IProps) {
   const { className } = props;
   const { activeOrg, hasPermission } = useActiveOrg();
-  const showDrawer = useAppDrawer().showDrawer;
-  const showAlert = useAlert().showAlert;
+  const { showDrawer } = useAppDrawer();
+  const { showAlert } = useAlert();
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [sort, setSort] = useState<{
