@@ -12,7 +12,7 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error, maybe_int_value
+from common.graphql.utils import get_object_or_permission_error
 from common.models import Attachment
 from common.permissions.utils import IsAuthenticated
 from common.services.types import UploadRequest, UploadConfirmation
@@ -38,8 +38,8 @@ from notes.utils import NoteReverter
 from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
-from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
@@ -110,7 +110,7 @@ class Query:
             PermissionGroup.objects.filter(
                 organization=OuterRef("pk"),
                 template__name=CASEWORKER.name,
-                group__user=user,
+                user=user,
             )
         )
         queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
@@ -143,7 +143,7 @@ class Mutation:
         requested_list = [asdict(s) for s in data.requested_services] if data.requested_services else None
         tasks_list = [asdict(t) for t in data.tasks] if data.tasks else None
 
-        team_id = maybe_int_value(data.team_id)
+        team_id = data.team_id.value if data.team_id else None
 
         note = note_create(
             user=user,
@@ -176,10 +176,6 @@ class Mutation:
         qs: QuerySet[Note] = info.context.qs
 
         clean = asdict(data)
-        # Guarded on the input field so an unmentioned team stays unmentioned:
-        # assigning unconditionally would turn "not sent" into "set to null".
-        if data.team_id:
-            clean["team_id"] = maybe_int_value(data.team_id)
 
         note = get_object_or_permission_error(qs, data.id)
         note = note_update(
@@ -220,13 +216,19 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    delete_note: NoteType = mutations.delete(
-        DeleteDjangoObjectInput,
+    @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
         extensions=[
-            HasRetvalPerm(perms=NotePermissions.DELETE),
+            PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE]),
         ],
     )
+    def delete_note(self, info: Info, data: DeleteDjangoObjectInput) -> NoteType:
+        qs: QuerySet[Note] = info.context.qs
+        note = get_object_or_permission_error(
+            qs, data.id, error_message="You do not have permission to delete this interaction."
+        )
+
+        return cast(NoteType, resolvers.delete(info, note))
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
@@ -334,7 +336,7 @@ class Mutation:
                     user=user,
                     permission_group=permission_group,
                     purpose=data.note.purpose if data.note.purpose is not strawberry.UNSET else None,
-                    team_id=maybe_int_value(data.note.team_id),
+                    team_id=data.note.team_id.value if data.note.team_id else None,
                     public_details=data.note.public_details if data.note.public_details is not strawberry.UNSET else "",
                     private_details=(
                         data.note.private_details if data.note.private_details is not strawberry.UNSET else ""

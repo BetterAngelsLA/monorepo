@@ -58,7 +58,7 @@ class RoomQueriesTestCase(ShelterTestCase, TestCase):
 
 class RoomQueryTestCase(RoomQueriesTestCase):
     def test_room_query(self) -> None:
-        expected_query_count = 8
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.room_query, variables={"id": str(self.room.pk)})
         self.assertIsNone(response.get("errors"))
@@ -97,7 +97,7 @@ class RoomQueryTestCase(RoomQueriesTestCase):
                 }
             }
         """
-        expected_query_count = 5
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"id": str(self.room.pk)})
 
@@ -117,7 +117,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_returns_org_rooms(self) -> None:
         baker.make(Room, shelter=self.shelter, name="Room-102")
 
-        expected_query_count = 9
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -153,7 +153,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_room = baker.make(Room, shelter=other_shelter, name="Room-201")
 
-        expected_query_count = 9
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -172,7 +172,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
     def test_rooms_query_filters_by_status(self) -> None:
         reserved_room = baker.make(Room, shelter=self.shelter, name="Room-102")
         baker.make(Reservation, room=reserved_room, status=ReservationStatusChoices.CONFIRMED)
-        expected_query_count = 9
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -192,7 +192,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-1")
         baker.make(Bed, shelter=self.shelter, room=room_with_beds, name="Bed-2")
 
-        expected_query_count = 9
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.rooms_query,
@@ -212,7 +212,7 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         baker.make(Room, shelter=other_shelter, name="Other-Room")
 
-        expected_query_count = 9
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
@@ -221,17 +221,18 @@ class RoomsQueryTestCase(RoomQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.room.pk))
 
-    def test_rooms_query_without_permission_returns_permission_denied(self) -> None:
-        self.operator.user_permissions.clear()
-        self.operator.groups.clear()
+    def test_rooms_query_without_permission_returns_empty(self) -> None:
+        # The grant model reads permissions from the Role a Grant references,
+        # so removing access means deleting the operator's Grant (ADR 0001).
+        # Queries fail closed: no Grant ⇒ no rows, not an error.
+        from accounts.models import Grant
+
+        Grant.objects.filter(principal_user=self.operator).delete()
 
         response = self.execute_graphql(self.rooms_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
-        self.assertIsNotNone(response.get("errors"))
-        self.assertIn(
-            "You do not have permission to perform this action in this organization.",
-            response["errors"][0]["message"],
-        )
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["rooms"]["totalCount"], 0)
 
     def test_rooms_query_unauthenticated(self) -> None:
         self.graphql_client.logout()

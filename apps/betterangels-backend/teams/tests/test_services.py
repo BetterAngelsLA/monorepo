@@ -3,7 +3,10 @@
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
+from model_bakery import baker
+from notes.models import Note
 from organizations.models import Organization
+from tasks.models import Task
 from teams.models import Team
 from teams.services import team_create, team_delete, team_update
 
@@ -138,6 +141,57 @@ class TeamUpdateTestCase(TestCase):
 
         self.team.refresh_from_db()
         self.assertEqual(self.team.name, original)
+
+
+class TeamDeleteTestCase(TestCase):
+    def setUp(self) -> None:
+        self.org = Organization.objects.create(name="team_delete_org")
+        self.team = team_create(name="Drop-in Center", organization=self.org)
+
+    def test_deletes_a_team_nothing_references(self) -> None:
+        team_delete(team=self.team)
+
+        self.assertFalse(Team.objects.filter(pk=self.team.pk).exists())
+
+    def test_refuses_a_team_a_note_references(self) -> None:
+        baker.make(Note, organization=self.org, team=self.team)
+
+        with self.assertRaises(ValidationError) as cm:
+            team_delete(team=self.team)
+
+        self.assertIn("used by 1 note.", str(cm.exception))
+        self.assertTrue(Team.objects.filter(pk=self.team.pk).exists())
+
+    def test_refuses_a_team_a_task_references(self) -> None:
+        baker.make(Task, organization=self.org, team=self.team)
+
+        with self.assertRaises(ValidationError) as cm:
+            team_delete(team=self.team)
+
+        self.assertIn("used by 1 task.", str(cm.exception))
+        self.assertTrue(Team.objects.filter(pk=self.team.pk).exists())
+
+    def test_the_message_names_both_counts_and_the_reversible_alternative(self) -> None:
+        baker.make(Note, organization=self.org, team=self.team, _quantity=2)
+        baker.make(Task, organization=self.org, team=self.team)
+
+        with self.assertRaises(ValidationError) as cm:
+            team_delete(team=self.team)
+
+        message = str(cm.exception)
+
+        self.assertIn("used by 2 notes and 1 task.", message)
+        self.assertIn(self.team.name, message)
+        self.assertIn("Deactivate", message)
+
+    def test_another_teams_records_do_not_block_the_delete(self) -> None:
+        other = team_create(name="Morning Outreach", organization=self.org)
+        baker.make(Note, organization=self.org, team=other)
+        baker.make(Task, organization=self.org, team=other)
+
+        team_delete(team=self.team)
+
+        self.assertFalse(Team.objects.filter(pk=self.team.pk).exists())
 
 
 class TeamNameConstraintTestCase(TestCase):

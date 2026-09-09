@@ -4,11 +4,13 @@ import { Check, X } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { ReservationsQuery } from '../../../../hooks/useReservations/__generated__/useReservations.generated';
+import { useShelterPermissions } from '../../../../hooks';
 import { Button } from '../../../base-ui/buttons';
 import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
 import { tableEmptyState } from '../tableEmptyState';
 import { reservationStatusInfo } from './ReservationForm';
+import { isoToDateSafe } from '@monorepo/shared/scalars';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,
@@ -55,8 +57,8 @@ function getEffectiveCheckIn(reservation: Reservation): {
     reservation.status === ReservationStatusChoices.CheckedIn ||
     reservation.status === ReservationStatusChoices.Completed;
   return isActual
-    ? { date: reservation.checkedInAt, isScheduled: false }
-    : { date: reservation.startDate, isScheduled: true };
+    ? { date: reservation.checkedInAt ?? null, isScheduled: false }
+    : { date: reservation.startDate ?? null, isScheduled: true };
 }
 
 export function ReservationTable({
@@ -80,6 +82,7 @@ export function ReservationTable({
   rowStyle,
   trailingColumnWidth = '140px',
 }: ReservationTableProps) {
+  const { canEditReservation } = useShelterPermissions();
   const columns: TableColumn<Reservation>[] = useMemo(
     () => [
       {
@@ -171,8 +174,9 @@ export function ReservationTable({
           getEffectiveCheckIn(reservation).date ?? '',
         render: (reservation) => {
           const { date, isScheduled } = getEffectiveCheckIn(reservation);
-          if (!date) return <span className="text-gray-400">—</span>;
-          const label = new Date(date).toLocaleDateString();
+          const parsed = isoToDateSafe(date);
+          if (!parsed) return <span className="text-gray-400">—</span>;
+          const label = parsed.toLocaleDateString();
           return <span>{isScheduled ? `${label} (sched.)` : label}</span>;
         },
       },
@@ -208,7 +212,7 @@ export function ReservationTable({
           role="group"
           aria-label="Reservation actions"
         >
-          {CONFIRM_ELIGIBLE_STATUSES.has(reservation.status) && (
+          {canEditReservation && CONFIRM_ELIGIBLE_STATUSES.has(reservation.status) && (
             <Button
               type="button"
               variant="confirm"
@@ -229,7 +233,7 @@ export function ReservationTable({
               }}
             />
           )}
-          {CANCEL_ELIGIBLE_STATUSES.has(reservation.status) && (
+          {canEditReservation && CANCEL_ELIGIBLE_STATUSES.has(reservation.status) && (
             <Button
               type="button"
               variant="trash"
@@ -240,13 +244,15 @@ export function ReservationTable({
               onClick={() => onCancel(reservation.id)}
             />
           )}
-          <Button
-            type="button"
-            variant="edit"
-            className="text-[#747A82]"
-            aria-label="Edit reservation"
-            onClick={() => onEdit(reservation.id)}
-          />
+          {canEditReservation && (
+            <Button
+              type="button"
+              variant="edit"
+              className="text-[#747A82]"
+              aria-label="Edit reservation"
+              onClick={() => onEdit(reservation.id)}
+            />
+          )}
         </div>
       )}
       trailingColumnWidth={trailingColumnWidth}

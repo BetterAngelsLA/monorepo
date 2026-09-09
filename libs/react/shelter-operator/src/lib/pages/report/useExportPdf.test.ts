@@ -104,7 +104,7 @@ describe('useExportPdf', () => {
     mocks.html2canvas.mockReturnValue(
       new Promise((resolve) => {
         release = resolve;
-      })
+      }),
     );
 
     const { result } = renderExport();
@@ -132,7 +132,7 @@ describe('useExportPdf', () => {
 
     await act(async () => {
       await expect(result.current.exportPdf()).rejects.toThrow(
-        'canvas exploded'
+        'canvas exploded',
       );
     });
 
@@ -157,7 +157,7 @@ describe('useExportPdf', () => {
         MARGIN,
         MARGIN,
         USABLE_WIDTH,
-        (1842 * USABLE_WIDTH) / 1600
+        (1842 * USABLE_WIDTH) / 1600,
       );
     });
 
@@ -184,7 +184,7 @@ describe('useExportPdf', () => {
           MARGIN,
           MARGIN - page * USABLE_HEIGHT,
           USABLE_WIDTH,
-          imgHeight
+          imgHeight,
         );
       }
     });

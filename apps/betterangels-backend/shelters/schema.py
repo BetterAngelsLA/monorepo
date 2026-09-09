@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date
 from typing import Optional, cast
 
 import strawberry
@@ -10,24 +10,31 @@ from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     BulkDeleteInput,
     BulkDeleteResult,
+    DeletedObjectType,
 )
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from common.permissions.utils import IsAuthenticated
+from common.services.feature_flags import flag_is_active
+from django.core.exceptions import PermissionDenied
 from django.db.models import Exists, Max, OuterRef, QuerySet
-from django.utils import timezone
-from strawberry import ID
+from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 
+from shelters.constants import BA_ADMIN_ONLY_FIELDS_FLAG
 from shelters.enums import StatusChoices
-from shelters.models import Bed, Reservation, Room, Shelter
-from shelters.selectors import shelter_get
+from shelters.models import Shelter
+from shelters.selectors import (
+    shelter_get,
+    shelter_metrics_window,
+    shelter_organization_list,
+)
 from shelters.selectors import shelter_occupancy_metrics as shelter_occupancy_metrics_selector
 from shelters.services import shelter_photo
 from shelters.services.bed import bed_clone, bed_create, bed_delete, bed_update
 from shelters.services.reservation import reservation_create, reservation_delete, reservation_update
 from shelters.services.room import room_clone, room_create, room_delete, room_update
-from shelters.services.shelter import shelter_create, shelter_update
+from shelters.services.shelter import shelter_create, shelter_delete, shelter_update
 from shelters.services.shelter_photo import ShelterPhotoResolveItem, UploadRequest
 from shelters.types import (
     BedType,
@@ -53,18 +60,15 @@ from shelters.types import (
     UpdateShelterInput,
     UpdateShelterPhotoInput,
 )
-from shelters.types.filters import SHELTER_SCHEDULE_TIME_ZONE
 
 
 @strawberry.type
 class Query:
     operator_shelter: OperatorShelterType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
     operator_shelters: OffsetPaginated[OperatorShelterType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.VIEW)],
     )
 
     shelter: ShelterType = strawberry_django.field()
@@ -72,29 +76,23 @@ class Query:
 
     bed: BedType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Bed.perms.VIEW)],
     )
     beds: OffsetPaginated[BedType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Bed.perms.VIEW)],
     )
 
     reservation: ReservationType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Reservation.perms.VIEW)],
     )
     reservations: OffsetPaginated[ReservationType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Reservation.perms.VIEW)],
     )
 
     room: RoomType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Room.perms.VIEW)],
     )
     rooms: OffsetPaginated[RoomType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Room.perms.VIEW)],
     )
 
     shelter_service_categories: OffsetPaginated[ServiceCategoryType] = strawberry_django.offset_paginated(
@@ -135,6 +133,11 @@ class Query:
 
         return queryset
 
+    @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType])
+    def shelter_organizations(self, info: Info) -> QuerySet[Organization]:
+        """Return every shelter org. Intentionally available to anonymous users."""
+        return shelter_organization_list()
+
     @strawberry.field()
     def shelter_max_stay(self, info: Info) -> Optional[int]:
         return Shelter.objects.filter(status=StatusChoices.APPROVED).aggregate(Max("max_stay"))["max_stay__max"] or None
@@ -148,21 +151,14 @@ class Query:
         end_date: Optional[date] = None,
     ) -> ShelterOccupancyMetricsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         shelter = shelter_get(
             user=user,
             shelter_id=shelter_id,
-            organization_id=org_id,
             permission=Shelter.perms.VIEW,
         )
 
-        tz = SHELTER_SCHEDULE_TIME_ZONE
-        end_date = end_date or timezone.now().astimezone(tz).date()
-        start_date = start_date or (end_date - timedelta(days=29))
-
-        start = datetime.combine(start_date, time.min, tzinfo=tz)
-        end = datetime.combine(end_date, time.min, tzinfo=tz) + timedelta(days=1)
+        start, end = shelter_metrics_window(start_date, end_date)
 
         return shelter_occupancy_metrics_selector(shelter=shelter, start=start, end=end)
 
@@ -171,126 +167,109 @@ class Query:
 class Mutation:
     # ── Shelter ────────────────────────────────────────────────────────────
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Shelter.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
+        """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_create(user=user, organization_id=org_id, data=clean))
+        return cast(ShelterType, shelter_create(user=user, data=clean))
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
+        if data.additional_contacts is not UNSET and not flag_is_active(info, BA_ADMIN_ONLY_FIELDS_FLAG):
+            raise PermissionDenied("Editing additional contacts is not enabled.")
+
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_update(user=user, organization_id=org_id, data=clean))
+        return cast(ShelterType, shelter_update(user=user, data=clean))
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_shelter(self, info: Info, id: ID) -> DeletedObjectType:
+        """Delete a shelter — authorization lives in :func:`shelter_delete` (ADR 0001 §2.6)."""
+        user = cast(User, get_current_user(info))
+        deleted = shelter_delete(user=user, shelter_id=str(id))
+        return DeletedObjectType(id=deleted.pk)
 
     # ── Room ───────────────────────────────────────────────────────────────
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_room(self, info: Info, data: CreateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(RoomType, room_create(user=user, organization_id=org_id, data=clean))
+        return cast(RoomType, room_create(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.CHANGE)])
-    def update_room(self, info: Info, id: ID, data: UpdateRoomInput) -> RoomType:
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_room(self, info: Info, data: UpdateRoomInput) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            RoomType,
-            room_update(user=user, organization_id=org_id, room_id=id, data=clean),
-        )
+        return cast(RoomType, room_update(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_room(self, info: Info, id: ID) -> RoomType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return cast(RoomType, room_clone(user=user, organization_id=org_id, room_id=str(id)))
+        return cast(RoomType, room_clone(user=user, room_id=str(id)))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Room.perms.DELETE)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_rooms(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = room_delete(user=user, organization_id=org_id, room_ids=ids)
+        deleted_ids = room_delete(user=user, room_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     # ── Bed ────────────────────────────────────────────────────────────────
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_bed(self, info: Info, data: CreateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(BedType, bed_create(user=user, organization_id=org_id, data=clean))
+        return cast(BedType, bed_create(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.CHANGE)])
-    def update_bed(self, info: Info, id: ID, data: UpdateBedInput) -> BedType:
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_bed(self, info: Info, data: UpdateBedInput) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            BedType,
-            bed_update(user=user, organization_id=org_id, bed_id=id, data=clean),
-        )
+        return cast(BedType, bed_update(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def clone_bed(self, info: Info, id: ID) -> BedType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return cast(BedType, bed_clone(user=user, organization_id=org_id, bed_id=str(id)))
+        return cast(BedType, bed_clone(user=user, bed_id=str(id)))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Bed.perms.DELETE)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_beds(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = bed_delete(user=user, organization_id=org_id, bed_ids=ids)
+        deleted_ids = bed_delete(user=user, bed_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_reservation(self, info: Info, data: CreateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(ReservationType, reservation_create(user=user, organization_id=org_id, data=clean))
+        return cast(ReservationType, reservation_create(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.CHANGE)])
-    def update_reservation(self, info: Info, id: ID, data: UpdateReservationInput) -> ReservationType:
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_reservation(self, info: Info, data: UpdateReservationInput) -> ReservationType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         clean = strawberry.asdict(data)
-        return cast(
-            ReservationType, reservation_update(user=user, organization_id=org_id, reservation_id=id, data=clean)
-        )
+        return cast(ReservationType, reservation_update(user=user, data=clean))
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasOrgPerm(Reservation.perms.DELETE)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_reservations(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = reservation_delete(user=user, organization_id=org_id, reservation_ids=ids)
+        deleted_ids = reservation_delete(user=user, reservation_ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])
 
     # ── Shelter Photos ─────────────────────────────────────────────────────
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def generate_shelter_photo_uploads(
         self,
         info: Info,
         data: GenerateShelterPhotoUploadsInput,
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         uploads = [
             UploadRequest(
@@ -302,24 +281,19 @@ class Mutation:
         ]
         presigned = shelter_photo.create_presigned_uploads(
             user=user,
-            organization_id=org_id,
             shelter_id=data.shelter_id,
             uploads=uploads,
         )
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def resolve_shelter_photo_uploads(
         self,
         info: Info,
         data: ResolveShelterPhotoUploadsInput,
     ) -> ShelterPhotoUploadsType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
 
         items = [
             ShelterPhotoResolveItem(
@@ -333,32 +307,23 @@ class Mutation:
         ]
         photos = shelter_photo.resolve_uploads(
             user=user,
-            organization_id=org_id,
             shelter_id=data.shelter_id,
             photos=items,
         )
 
         return ShelterPhotoUploadsType(photos=cast(list[ShelterPhotoType], photos))
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter_photo(self, info: Info, data: UpdateShelterPhotoInput) -> ShelterPhotoType:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         return cast(
             ShelterPhotoType,
-            shelter_photo.update_shelter_photo(user=user, organization_id=org_id, data=data),
+            shelter_photo.update_shelter_photo(user=user, data=data),
         )
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(Shelter.perms.CHANGE)],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_shelter_photos(self, info: Info, data: BulkDeleteInput) -> BulkDeleteResult:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
         ids = [int(id) for id in data.ids]
-        deleted_ids = shelter_photo.delete_shelter_photos(user=user, organization_id=org_id, ids=ids)
+        deleted_ids = shelter_photo.delete_shelter_photos(user=user, ids=ids)
         return BulkDeleteResult(ids=[cast(ID, id) for id in deleted_ids])

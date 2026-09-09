@@ -4,7 +4,9 @@ import type { DeleteRoomsMutation } from './useDeleteRooms.generated';
 
 export const deleteRoomsOperationKey: keyof Omit<DeleteRoomsMutation, '__typename'> = 'deleteRooms';
 export const deleteRoomsSuccessTypename: Extract<
-  NonNullable<DeleteRoomsMutation['deleteRooms']>,
+  NonNullable<DeleteRoomsMutation['deleteRooms']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<DeleteRoomsMutation['deleteRooms']>,
   { __typename: 'BulkDeleteResult' }
 >['__typename'] = 'BulkDeleteResult';
 

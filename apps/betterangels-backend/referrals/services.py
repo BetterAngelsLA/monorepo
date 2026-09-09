@@ -35,7 +35,7 @@ def referral_create(
         raise ValidationError(str(e)) from e
 
     assign_object_permissions(
-        permission_group.group,
+        permission_group,
         referral,
         [Referral.perms.VIEW, Referral.perms.CHANGE, Referral.perms.DELETE],
     )

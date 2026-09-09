@@ -2,6 +2,7 @@ import { BedStatusChoices } from '@monorepo/ba-platform/types';
 import { BookCheck, CopyPlus } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
+import { useShelterPermissions } from '../../../../hooks';
 import { Button } from '../../../base-ui/buttons';
 import {
   StatusBadge,
@@ -87,6 +88,12 @@ export function BedTable({
   headerStyle,
   rowStyle,
 }: BedTableProps) {
+  const {
+    canAddBed,
+    canAddReservation,
+    canDeleteBed,
+    canEditBed,
+  } = useShelterPermissions();
   const columns: TableColumn<Bed>[] = useMemo(
     () => [
       {
@@ -138,7 +145,7 @@ export function BedTable({
           role="group"
           aria-label="Bed actions"
         >
-          {bed.status === BedStatusChoices.InTurnaround && (
+          {bed.status === BedStatusChoices.InTurnaround && canEditBed && (
             <Button
               type="button"
               variant="confirm"
@@ -146,7 +153,7 @@ export function BedTable({
               onClick={() => onMarkReady(bed.id)}
             />
           )}
-          {bed.status === BedStatusChoices.Available && (
+          {bed.status === BedStatusChoices.Available && canAddReservation && (
             <Button
               type="button"
               variant="edit"
@@ -155,25 +162,31 @@ export function BedTable({
               onClick={() => onReserve(bed)}
             />
           )}
-          <Button
-            type="button"
-            variant="edit"
-            aria-label="Clone bed"
-            leftIcon={<CopyPlus size={22} stroke="black" />}
-            onClick={() => onClone(bed.id)}
-          />
-          <Button
-            type="button"
-            variant="edit"
-            aria-label="Edit bed"
-            onClick={() => onEdit(bed.id)}
-          />
-          <Button
-            type="button"
-            variant="trash"
-            aria-label="Delete bed"
-            onClick={() => onDeleteBeds([bed.id])}
-          />
+          {canAddBed && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="Clone bed"
+              leftIcon={<CopyPlus size={22} stroke="black" />}
+              onClick={() => onClone(bed.id)}
+            />
+          )}
+          {canEditBed && (
+            <Button
+              type="button"
+              variant="edit"
+              aria-label="Edit bed"
+              onClick={() => onEdit(bed.id)}
+            />
+          )}
+          {canDeleteBed && (
+            <Button
+              type="button"
+              variant="trash"
+              aria-label="Delete bed"
+              onClick={() => onDeleteBeds([bed.id])}
+            />
+          )}
         </div>
       )}
       trailingColumnWidth="140px"

@@ -20,17 +20,11 @@ class HasOrgPermTestCase(TestCase):
         self.user: User = baker.make(User, email="test@example.com")
         self.org.add_user(self.user)
 
-        # Create a PermissionGroup for the org. The save() method auto-creates
-        # a Group (named "{org.name}_{name}") and links it to the PermissionGroup.
-        # Passing group= is ignored — save() always creates its own.
         self.perm_group = PermissionGroup.objects.create(
             organization=self.org,
-            name="test-perm-group",
+            label="test-perm-group",
         )
-
-        # Use the auto-created group (NOT a pre-created one).
-        self.group = self.perm_group.group
-        assert self.group is not None, "save() should have auto-created a group"
+        self.group = self.perm_group
 
         # Grant the shelter view permission through this group.
         app_label, codename = Shelter.perms.VIEW.split(".")

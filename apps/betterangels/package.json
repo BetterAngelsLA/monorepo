@@ -95,7 +95,8 @@
     "vitest-native": "*",
     "react-native-paper": "*",
     "react-native-paper-dates": "*",
-    "eslint-plugin-storybook": "*"
+    "eslint-plugin-storybook": "*",
+    "libphonenumber-js": "*"
   },
   "devDependencies": {}
 }

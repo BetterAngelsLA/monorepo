@@ -79,17 +79,17 @@ class PermissionedQuerysetSameGroupTestCase(TestCase):
         self.user = baker.make(User, username=f"member_{uuid.uuid4()}")
         self.org.add_user(self.user)
 
-        groups = list(PermissionGroup.objects.filter(organization=self.org).select_related("group")[:2])
+        groups = list(PermissionGroup.objects.filter(organization=self.org)[:2])
         assert len(groups) >= 2, "the org recipe should provision at least two permission groups"
         self.member_group, self.holder_group = groups[0], groups[1]
 
-        permission = Permission.objects.exclude(pk__in=self.member_group.group.permissions.values("pk")).first()
+        permission = Permission.objects.exclude(pk__in=self.member_group.permissions.values("pk")).first()
         assert permission is not None
         self.permission = permission
 
         # The permission lives in one group; the user belongs to the other.
-        self.holder_group.group.permissions.add(self.permission)
-        self.member_group.group.user_set.add(self.user)
+        self.holder_group.permissions.add(self.permission)
+        self.member_group.user_set.add(self.user)
 
     def _matches(self) -> bool:
         perm = f"{self.permission.content_type.app_label}.{self.permission.codename}"
@@ -105,6 +105,6 @@ class PermissionedQuerysetSameGroupTestCase(TestCase):
         self.assertFalse(self._matches())
 
     def test_membership_in_the_holding_group_matches(self) -> None:
-        self.holder_group.group.user_set.add(self.user)
+        self.holder_group.user_set.add(self.user)
 
         self.assertTrue(self._matches())

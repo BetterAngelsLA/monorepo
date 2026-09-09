@@ -1,5 +1,6 @@
 from accounts.tests.baker_recipes import organization_recipe
 from model_bakery import baker
+from notes.models import Note
 from unittest_parametrize import parametrize
 
 from teams.models import Team
@@ -86,9 +87,24 @@ class TeamMutationTestCase(TeamGraphQLUtilsMixin):
     def test_delete_team_mutation(self) -> None:
         team = baker.make(Team, name="team", organization=self.org)
 
-        expected_query_count = 9
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.delete_team_fixture(team.pk)
 
         self.assertEqual(response["data"]["deleteTeam"]["id"], team.pk)
         self.assertFalse(Team.objects.filter(id=team.pk).exists())
+
+    def test_delete_team_mutation_refuses_a_team_in_use(self) -> None:
+        team = baker.make(Team, name="team", organization=self.org)
+        baker.make(Note, organization=self.org, team=team)
+
+        response = self.delete_team_fixture(team.pk)
+
+        self.assertGraphQLOperationInfo(
+            response,
+            "deleteTeam",
+            'Cannot delete "team": it is used by 1 note. '
+            "Deactivate it instead — an inactive team is hidden in the app but keeps its history.",
+            kind="VALIDATION",
+        )
+        self.assertTrue(Team.objects.filter(id=team.pk).exists())

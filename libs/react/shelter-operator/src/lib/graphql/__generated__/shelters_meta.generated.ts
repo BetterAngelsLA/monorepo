@@ -5,7 +5,9 @@ import type { OperatorShelterSummaryQuery } from './shelters.generated';
 
 export const operatorSheltersOperationKey: keyof Omit<OperatorSheltersQuery, '__typename'> = 'operatorShelters';
 export const operatorSheltersSuccessTypename: Extract<
-  NonNullable<OperatorSheltersQuery['operatorShelters']>,
+  NonNullable<OperatorSheltersQuery['operatorShelters']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<OperatorSheltersQuery['operatorShelters']>,
   { __typename: 'OperatorShelterTypeOffsetPaginated' }
 >['__typename'] = 'OperatorShelterTypeOffsetPaginated';
 
@@ -16,7 +18,9 @@ export const operatorSheltersMeta = {
 
 export const operatorShelterSummaryOperationKey: keyof Omit<OperatorShelterSummaryQuery, '__typename'> = 'operatorShelter';
 export const operatorShelterSummarySuccessTypename: Extract<
-  NonNullable<OperatorShelterSummaryQuery['operatorShelter']>,
+  NonNullable<OperatorShelterSummaryQuery['operatorShelter']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<OperatorShelterSummaryQuery['operatorShelter']>,
   { __typename: 'OperatorShelterType' }
 >['__typename'] = 'OperatorShelterType';
 

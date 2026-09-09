@@ -1,12 +1,35 @@
 import os
-from typing import Any, Set, TypeVar
+from typing import Any, Iterable, Set, TypeVar
 
 import requests
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Model, QuerySet
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Field, Model, QuerySet
 from strawberry.utils.str_converters import to_camel_case, to_snake_case
 
 _M = TypeVar("_M", bound=Model)
+
+
+def can_match(*, field: Field, value: Any) -> bool:
+    """Whether *value* is one the column behind *field* could hold."""
+    try:
+        field.get_prep_value(value)
+    except ValueError, TypeError, ValidationError:
+        return False
+
+    return True
+
+
+def matchable_values(*, field: Field, values: Iterable[Any]) -> list[Any]:
+    """Drop the values *field* cannot hold, keeping the rest in order."""
+    return [value for value in values if can_match(field=field, value=value)]
+
+
+def get_or_none(queryset: QuerySet[_M], pk: Any) -> _M | None:
+    """Return the row *pk* names, or ``None`` -- including when *pk* cannot match."""
+    if not can_match(field=queryset.model._meta.pk, value=pk):
+        return None
+
+    return queryset.filter(pk=pk).first()
 
 
 def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
@@ -14,9 +37,11 @@ def get_by_pk_or_not_found(queryset: QuerySet[_M], pk: int | str) -> _M:
 
     Uses ``queryset.model.__name__`` to build a descriptive error message.
     """
-    obj = queryset.filter(pk=pk).first()
+    obj = get_or_none(queryset, pk)
+
     if obj is None:
         raise ObjectDoesNotExist(f"{queryset.model.__name__} matching ID {pk} could not be found.")
+
     return obj
 
 

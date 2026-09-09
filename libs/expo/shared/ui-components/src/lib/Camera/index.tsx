@@ -1,1 +1,1 @@
-export { CameraModal } from './CameraModal';
+export { CameraSheet } from './CameraSheet';

@@ -4,7 +4,9 @@ import type { UpdateBedMutation } from './useUpdateBed.generated';
 
 export const updateBedOperationKey: keyof Omit<UpdateBedMutation, '__typename'> = 'updateBed';
 export const updateBedSuccessTypename: Extract<
-  NonNullable<UpdateBedMutation['updateBed']>,
+  NonNullable<UpdateBedMutation['updateBed']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<UpdateBedMutation['updateBed']>,
   { __typename: 'BedType' }
 >['__typename'] = 'BedType';
 

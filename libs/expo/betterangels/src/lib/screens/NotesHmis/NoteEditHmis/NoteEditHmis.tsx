@@ -7,7 +7,7 @@ import {
   Form,
   LoadingView,
 } from '@monorepo/expo/shared/ui-components';
-import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
+import { parseDateString } from '@monorepo/shared/scalars';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -186,7 +186,7 @@ export function NoteEditHmis(props: TProps) {
     methods.reset({
       ...noteFormEmptyStateHmis,
       title: noteResult.title ?? '',
-      date: toLocalCalendarDate(noteResult.date),
+      date: parseDateString(noteResult.date),
       note: noteResult.note ?? '',
       refClientProgram: noteResult.refClientProgram ?? '',
       services: {

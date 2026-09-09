@@ -1,5 +1,6 @@
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
+import { useShelterPermissions } from '../../../../../hooks';
 import { Modal, ModalBody, ModalHeader } from '../../../../base-ui/modal';
 import { Table, type TableColumn } from '../../../../base-ui/table';
 import { useToast } from '../../../../base-ui/toast';
@@ -17,9 +18,10 @@ function getLastPathSegment(path: string): string {
 
 function buildColumns(
   shelterId: string,
-  heroImageId?: string,
+  heroImageId: string | undefined,
+  canEdit: boolean,
 ): TableColumn<ShelterProfilePhotoType>[] {
-  return [
+  const columns: TableColumn<ShelterProfilePhotoType>[] = [
     {
       key: 'preview',
       label: 'Preview',
@@ -52,7 +54,10 @@ function buildColumns(
       sortValue: (photo) => photo.type,
       render: (photo) => photo.type.toLowerCase(),
     },
-    {
+  ];
+
+  if (canEdit) {
+    columns.push({
       key: 'actions',
       label: 'Actions',
       width: '140px',
@@ -71,8 +76,10 @@ function buildColumns(
           <DeleteShelterImage photoId={photo.id} shelterId={shelterId} />
         </div>
       ),
-    },
-  ];
+    });
+  }
+
+  return columns;
 }
 
 type TProps = {
@@ -86,8 +93,9 @@ export function ShelterPhotos(props: TProps) {
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const { showToast } = useToast();
+  const { canEditShelter } = useShelterPermissions();
 
-  const columns = buildColumns(shelterId, heroImageId);
+  const columns = buildColumns(shelterId, heroImageId, canEditShelter);
 
   function handleUploadError(error: Error) {
     setUploadModalOpen(false);
@@ -132,7 +140,7 @@ export function ShelterPhotos(props: TProps) {
         rowClassName="mx-0 px-0"
       />
 
-      {!uploadModalOpen && (
+      {canEditShelter && !uploadModalOpen && (
         <Form.Actions
           onPrimaryClick={() => setUploadModalOpen(true)}
           primaryLabel="Upload Image"

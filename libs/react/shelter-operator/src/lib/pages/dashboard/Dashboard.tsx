@@ -41,6 +41,7 @@ import {
   OperatorSheltersDocument,
   OperatorSheltersQuery,
 } from '../../graphql/__generated__/shelters.generated';
+import { useShelterPermissions } from '../../hooks';
 import { paths } from '../../routing';
 import type { Shelter } from '../../types/shelter';
 
@@ -63,21 +64,26 @@ const loadingState = (
   </div>
 );
 
-const emptyState = (
-  <div className="px-6 py-8 text-center text-sm text-gray-500">
-    No shelters yet.{' '}
-    <Link to={paths.shelterCreate} className="text-blue-600 hover:underline">
-      Create your first shelter
-    </Link>
-    .
-  </div>
-);
-
 export function Dashboard() {
   const navigate = useNavigate();
 
   const { activeOrg, organizations } = useActiveOrg();
+  const { canCreateShelter } = useShelterPermissions();
   const selectedOrganizationId = activeOrg?.id ?? '';
+
+  const emptyState = canCreateShelter ? (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No shelters yet.{' '}
+      <Link to={paths.shelterCreate} className="text-blue-600 hover:underline">
+        Create your first shelter
+      </Link>
+      .
+    </div>
+  ) : (
+    <div className="px-6 py-8 text-center text-sm text-gray-500">
+      No shelters yet.
+    </div>
+  );
 
   // ── Hooks (must be before any conditional return per React rules) ──────────
   const selectedFilters = useAtomValue(operatorShelterFiltersAtom);

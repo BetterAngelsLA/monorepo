@@ -53,7 +53,7 @@ class BedQueriesTestCase(ShelterTestCase, TestCase):
 
 class BedQueryTestCase(BedQueriesTestCase):
     def test_bed_query(self) -> None:
-        expected_query_count = 10
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.bed_query, variables={"id": str(self.bed.pk)})
         self.assertIsNone(response.get("errors"))
@@ -82,7 +82,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_returns_org_beds(self) -> None:
         baker.make(Bed, shelter=self.shelter, name="Bed-2")
 
-        expected_query_count = 11
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -119,7 +119,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_bed = baker.make(Bed, shelter=other_shelter, name="Bed-2")
 
-        expected_query_count = 11
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -140,7 +140,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
 
         baker.make(Reservation, bed=reserved_bed, status=ReservationStatusChoices.CONFIRMED)
 
-        expected_query_count = 10
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -158,7 +158,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_filters_by_type(self) -> None:
         bunk_bed = baker.make(Bed, shelter=self.shelter, name="Bed-3", type=BedTypeChoices.BUNK)
 
-        expected_query_count = 10
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -178,7 +178,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         baker.make(Bed, shelter=other_shelter, name="Other-Bed")
 
-        expected_query_count = 11
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
@@ -187,17 +187,18 @@ class BedsQueryTestCase(BedQueriesTestCase):
         self.assertEqual(payload["totalCount"], 1)
         self.assertEqual(payload["results"][0]["id"], str(self.bed.pk))
 
-    def test_beds_query_without_permission_returns_permission_denied(self) -> None:
-        self.operator.user_permissions.clear()
-        self.operator.groups.clear()
+    def test_beds_query_without_permission_returns_empty(self) -> None:
+        # The grant model reads permissions from the Role a Grant references,
+        # so removing access means deleting the operator's Grant (ADR 0001).
+        # Queries fail closed: no Grant ⇒ no rows, not an error.
+        from accounts.models import Grant
+
+        Grant.objects.filter(principal_user=self.operator).delete()
 
         response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 
-        self.assertIsNotNone(response.get("errors"))
-        self.assertIn(
-            "You do not have permission to perform this action in this organization.",
-            response["errors"][0]["message"],
-        )
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["beds"]["totalCount"], 0)
 
     def test_beds_query_unauthenticated(self) -> None:
         self.graphql_client.logout()

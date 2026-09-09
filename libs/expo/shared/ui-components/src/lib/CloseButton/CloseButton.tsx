@@ -9,6 +9,7 @@ interface IProps {
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
   iconColor?: Colors;
+  testId?: string;
 }
 
 export function CloseButton(props: IProps) {
@@ -17,12 +18,14 @@ export function CloseButton(props: IProps) {
     onClose,
     style,
     iconColor = Colors.BLACK,
+    testId,
     children,
   } = props;
 
   return (
     <Pressable
       onPress={onClose}
+      testID={testId}
       style={[
         {
           minWidth: 40,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import reduce
+from functools import lru_cache, reduce
 from operator import or_
 from typing import Any, Sequence, Tuple, Type, TypeVar
 
@@ -73,6 +73,23 @@ def register_model_permissions() -> None:
 
         enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def modeled_permission_strings() -> frozenset[str]:
+    """The product-modeled permission strings — the catalog the FE gates on.
+
+    Union across the permission registry (``@register_permission`` enums plus
+    auto-discovered model ``PermissionSet``s) — the exact catalog
+    ``manage.py generate_permission_enums`` emits as the FE ``PermissionEnum``.
+    ``global_permissions`` bounds the global list to it so
+    ``currentUser.permissions`` never ships permissions the product cannot gate on.
+
+    Memoized; the registry is complete by query time (``@register_permission``
+    fires at import; model discovery runs on the first call here).
+    """
+    register_model_permissions()  # discover model PermissionSets (idempotent)
+    return frozenset(str(member.value) for enum_cls in get_registered_permission_enums() for member in enum_cls)
 
 
 def perm(codename: str, description: str) -> str:
@@ -205,10 +222,10 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
     """Return a Q object matching a specific Django permission.
 
-    The default *prefix* ``permission_groups__group__permissions``
+    The default *prefix* ``permission_groups__permissions``
     resolves from ``Organization`` through ``PermissionGroup`` →
     ``Group`` → ``Permission`` → ``ContentType``.
     """
@@ -218,7 +235,7 @@ def _perm_q(app_label: str, codename: str, *, prefix: str = "permission_groups__
     )
 
 
-def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__group__permissions") -> Q:
+def perm_filter(app_label: str, codename: str, *, prefix: str = "permission_groups__permissions") -> Q:
     """Public alias for ``_perm_q`` — Q for a single permission."""
     return _perm_q(app_label, codename, prefix=prefix)
 
@@ -235,6 +252,29 @@ def get_current_organization(info: Info) -> str:
         raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
 
     return str(org_id)
+
+
+def active_org(info: Info) -> str | None:
+    """Return the organization ID from the header, or ``None`` when absent.
+
+    The authority never requires the header (ADR 0001 §2.6) — the header only
+    confines the view when the caller has finite scopes.
+    """
+    return getattr(info.context.request, "organization_id", None)
+
+
+def require_can(user: Any, perm: str, *, org: Any) -> None:
+    """PermissionDenied unless *user* can exercise *perm* at *org* (ADR 0001 §2.6).
+
+    The create gate: creates carry an explicit target organization and are
+    authorized by ``can`` — never by the read rule.  ``can`` never implies the
+    organization exists (finding F7), so callers that take an org from client
+    input must check existence separately (see ``shelter_create``).
+    """
+    from common.permissions.selectors import can
+
+    if not can(user, perm, org=org):
+        raise PermissionDenied("You do not have permission to perform this action in this organization.")
 
 
 _T = TypeVar("_T", bound=Model)
@@ -263,7 +303,7 @@ def _org_perm_exists_across_fields(
             Q(
                 Exists(
                     Organization.objects.filter(pk=OuterRef(f)).filter(
-                        Q(permission_groups__group__user=user) & _perm_q(app_label, codename)
+                        Q(permission_groups__user=user) & _perm_q(app_label, codename)
                     )
                 )
             )
@@ -286,7 +326,7 @@ def permissioned_queryset(
 
     When *perms* is provided, further restricts to records where the
     user holds the specified permission(s).  The org-membership check is
-    implicit — ``permission_groups__group__user`` proves both.
+    implicit — ``permission_groups__user`` proves both.
 
     Parameters
     ----------

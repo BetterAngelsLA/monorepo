@@ -4,7 +4,9 @@ import type { CreateRoomMutation } from './useCreateRoom.generated';
 
 export const createRoomOperationKey: keyof Omit<CreateRoomMutation, '__typename'> = 'createRoom';
 export const createRoomSuccessTypename: Extract<
-  NonNullable<CreateRoomMutation['createRoom']>,
+  NonNullable<CreateRoomMutation['createRoom']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CreateRoomMutation['createRoom']>,
   { __typename: 'RoomType' }
 >['__typename'] = 'RoomType';
 
