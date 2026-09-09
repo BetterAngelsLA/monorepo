@@ -1,16 +1,16 @@
 import { ReservationStatusChoices } from '@monorepo/ba-platform/types';
 import { formatClientDisplayName } from '@monorepo/react/shared';
+import { isoToDateSafe } from '@monorepo/shared/scalars';
 import { Check, X } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { ReservationsQuery } from '../../../../hooks/useReservations/__generated__/useReservations.generated';
 import { useShelterPermissions } from '../../../../hooks';
+import { ReservationsQuery } from '../../../../hooks/useReservations/__generated__/useReservations.generated';
 import { Button } from '../../../base-ui/buttons';
 import { StatusBadge } from '../../../base-ui/status-badge/StatusBadge';
 import { Table, type TableColumn } from '../../../base-ui/table';
 import { tableEmptyState } from '../tableEmptyState';
 import { reservationStatusInfo } from './ReservationForm';
-import { isoToDateSafe } from '@monorepo/shared/scalars';
 
 const CONFIRM_ELIGIBLE_STATUSES: Set<ReservationStatusChoices> = new Set([
   ReservationStatusChoices.Confirmed,
@@ -212,38 +212,42 @@ export function ReservationTable({
           role="group"
           aria-label="Reservation actions"
         >
-          {canEditReservation && CONFIRM_ELIGIBLE_STATUSES.has(reservation.status) && (
-            <Button
-              type="button"
-              variant="confirm"
-              className="text-[#747A82]"
-              aria-label={
-                reservation.status === ReservationStatusChoices.CheckedIn
-                  ? 'Mark completed'
-                  : 'Mark checked in'
-              }
-              leftIcon={<Check size={24} stroke="black" />}
-              disabled={isConfirmActionLoading}
-              onClick={() => {
-                if (reservation.status === ReservationStatusChoices.CheckedIn) {
-                  onComplete(reservation.id);
-                } else {
-                  onCheckIn(reservation.id);
+          {canEditReservation &&
+            CONFIRM_ELIGIBLE_STATUSES.has(reservation.status) && (
+              <Button
+                type="button"
+                variant="confirm"
+                className="text-[#747A82]"
+                aria-label={
+                  reservation.status === ReservationStatusChoices.CheckedIn
+                    ? 'Mark completed'
+                    : 'Mark checked in'
                 }
-              }}
-            />
-          )}
-          {canEditReservation && CANCEL_ELIGIBLE_STATUSES.has(reservation.status) && (
-            <Button
-              type="button"
-              variant="trash"
-              className="text-[#747A82]"
-              aria-label="Cancel reservation"
-              leftIcon={<X size={24} stroke="black" />}
-              disabled={isCancelActionLoading}
-              onClick={() => onCancel(reservation.id)}
-            />
-          )}
+                leftIcon={<Check size={24} stroke="black" />}
+                disabled={isConfirmActionLoading}
+                onClick={() => {
+                  if (
+                    reservation.status === ReservationStatusChoices.CheckedIn
+                  ) {
+                    onComplete(reservation.id);
+                  } else {
+                    onCheckIn(reservation.id);
+                  }
+                }}
+              />
+            )}
+          {canEditReservation &&
+            CANCEL_ELIGIBLE_STATUSES.has(reservation.status) && (
+              <Button
+                type="button"
+                variant="trash"
+                className="text-[#747A82]"
+                aria-label="Cancel reservation"
+                leftIcon={<X size={24} stroke="black" />}
+                disabled={isCancelActionLoading}
+                onClick={() => onCancel(reservation.id)}
+              />
+            )}
           {canEditReservation && (
             <Button
               type="button"

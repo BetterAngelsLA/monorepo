@@ -199,7 +199,10 @@ const overallRatingOptions: TFilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
 
 // 0 = Unincorporated, 1–15 = districts (matches CITY_COUNCIL_DISTRICT_CHOICES on backend)
 const cityCouncilDistrictOptions: TFilterOption[] = [
-  { label: 'Unincorporated', value: String(CITY_COUNCIL_DISTRICT_UNINCORPORATED) },
+  {
+    label: 'Unincorporated',
+    value: String(CITY_COUNCIL_DISTRICT_UNINCORPORATED),
+  },
   ...Array.from({ length: 15 }, (_, i) => ({
     label: String(i + 1),
     value: String(i + 1),

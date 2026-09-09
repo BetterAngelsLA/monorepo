@@ -9,7 +9,10 @@ import {
 import { operatorPath, useUser } from '@monorepo/react/shelter';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateShelterProfile } from './components/ShelterProfile';
-import { MgmtActionGate, PermissionGate } from './components/guards/PermissionGate';
+import {
+  MgmtActionGate,
+  PermissionGate,
+} from './components/guards/PermissionGate';
 import { OperatorLayout } from './components/layout/OperatorLayout';
 import {
   BedsPage,
@@ -132,7 +135,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.create}`}
                 element={
-                  <MgmtActionGate resource="bed" permission={BedPermissions.Add}>
+                  <MgmtActionGate
+                    resource="bed"
+                    permission={BedPermissions.Add}
+                  >
                     <CreateBedPage />
                   </MgmtActionGate>
                 }
@@ -140,7 +146,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.beds}/${mgmtRouteConfig.actions.edit}`}
                 element={
-                  <MgmtActionGate resource="bed" permission={BedPermissions.Change}>
+                  <MgmtActionGate
+                    resource="bed"
+                    permission={BedPermissions.Change}
+                  >
                     <EditBedPage />
                   </MgmtActionGate>
                 }
@@ -152,7 +161,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.create}`}
                 element={
-                  <MgmtActionGate resource="room" permission={RoomPermissions.Add}>
+                  <MgmtActionGate
+                    resource="room"
+                    permission={RoomPermissions.Add}
+                  >
                     <CreateRoomPage />
                   </MgmtActionGate>
                 }
@@ -160,7 +172,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.rooms}/${mgmtRouteConfig.actions.edit}`}
                 element={
-                  <MgmtActionGate resource="room" permission={RoomPermissions.Change}>
+                  <MgmtActionGate
+                    resource="room"
+                    permission={RoomPermissions.Change}
+                  >
                     <EditRoomPage />
                   </MgmtActionGate>
                 }
@@ -172,7 +187,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.create}`}
                 element={
-                  <MgmtActionGate resource="reservation" permission={ReservationPermissions.Add}>
+                  <MgmtActionGate
+                    resource="reservation"
+                    permission={ReservationPermissions.Add}
+                  >
                     <CreateReservationPage />
                   </MgmtActionGate>
                 }
@@ -180,7 +198,10 @@ export function OperatorApp() {
               <Route
                 path={`${mgmtRouteConfig.children.reservations}/${mgmtRouteConfig.actions.edit}`}
                 element={
-                  <MgmtActionGate resource="reservation" permission={ReservationPermissions.Change}>
+                  <MgmtActionGate
+                    resource="reservation"
+                    permission={ReservationPermissions.Change}
+                  >
                     <EditReservationPage />
                   </MgmtActionGate>
                 }

@@ -1,23 +1,23 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { useActiveOrg } from '@monorepo/ba-platform';
+import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
+import {
+  Ordering,
+  OrganizationMemberOrdering,
+  OrganizationMemberType,
+  OrgRoleEnum,
+  OrgTypeEnum,
+  PermissionTemplateEnum,
+} from '@monorepo/ba-platform/types';
 import { UserIcon } from '@monorepo/react/icons';
 import { useDebounce } from '@monorepo/react/shared';
 import { useUser } from '@monorepo/react/shelter';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Ordering,
-  OrgRoleEnum,
-  OrganizationMemberOrdering,
-  OrganizationMemberType,
-  OrgTypeEnum,
-  PermissionTemplateEnum,
-} from '@monorepo/ba-platform/types';
-import { UserOrganizationPermissions } from '@monorepo/ba-platform/permissions';
 import { AddUserFormModal } from '../../components/AddUserForm';
 import { Button } from '../../components/base-ui/buttons/buttons';
-import { Pagination } from '../../components/base-ui/pagination';
 import { ConfirmationModal } from '../../components/base-ui/modal/ConfirmationModal';
+import { Pagination } from '../../components/base-ui/pagination';
 import {
   Table,
   type SortDirection,
@@ -472,4 +472,3 @@ function StatusMessage({ text }: { text: string }) {
     </div>
   );
 }
-

@@ -81,12 +81,8 @@ export function RoomTable({
   headerStyle,
   rowStyle,
 }: RoomTableProps) {
-  const {
-    canAddReservation,
-    canAddRoom,
-    canDeleteRoom,
-    canEditRoom,
-  } = useShelterPermissions();
+  const { canAddReservation, canAddRoom, canDeleteRoom, canEditRoom } =
+    useShelterPermissions();
   const columns: TableColumn<Room>[] = useMemo(
     () => [
       {
