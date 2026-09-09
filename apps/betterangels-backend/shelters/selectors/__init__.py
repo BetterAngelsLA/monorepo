@@ -9,6 +9,7 @@ from shelters.selectors.operator import (
     room_queryset,
     shelter_get,
     shelter_list,
+    shelter_organization_list,
     shelter_queryset,
 )
 from shelters.selectors.reports import (
