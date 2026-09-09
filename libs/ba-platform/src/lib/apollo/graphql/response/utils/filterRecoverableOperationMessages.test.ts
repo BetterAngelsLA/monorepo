@@ -80,6 +80,38 @@ const testCases: TestCase[] = [
     ],
   },
   {
+    name: 'nested path beneath an allowed field → recoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'name.first',
+        message: 'Required',
+      }),
+    ],
+    allowedFields: [...FIELDS],
+    recoverable: [{ field: 'name.first', message: 'Required' }],
+    unrecoverable: [],
+  },
+  {
+    name: 'field sharing an allowed prefix without a dot → unrecoverable',
+    messages: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'name2',
+        message: 'Unknown',
+      }),
+    ],
+    allowedFields: [...FIELDS],
+    recoverable: [],
+    unrecoverable: [
+      msg({
+        kind: OperationMessageKind.Validation,
+        field: 'name2',
+        message: 'Unknown',
+      }),
+    ],
+  },
+  {
     name: 'mixed recoverable + unrecoverable',
     messages: [
       msg({

@@ -16,11 +16,19 @@ type PartitionResult = {
  * A message is **recoverable** when:
  * - `kind` is {@link OperationMessageKind.Validation},
  * - `field` is non-null, and
- * - `field` appears in `allowedFields`.
+ * - `field`'s first dotted segment matches an entry in `allowedFields`
+ *   (e.g. `additionalContacts.0.contactEmail` matches `additionalContacts`;
+ *   a plain `name` matches `name`).
  *
  * Everything else — other kinds, missing field, or field outside the filter —
  * is **unrecoverable** and must be handled by the caller (e.g. thrown).
  */
+function matchesAllowedField(field: string, allowedFields: string[]) {
+  const firstSegment = field.split('.')[0];
+
+  return allowedFields.includes(firstSegment);
+}
+
 export function filterRecoverableOperationMessages(
   messages: OperationMessage[],
   allowedFields: string[],
@@ -37,7 +45,7 @@ export function filterRecoverableOperationMessages(
     }
 
     // recoverable must have field in allowedFields
-    if (!m.field || !allowedFields.includes(m.field)) {
+    if (!m.field || !matchesAllowedField(m.field, allowedFields)) {
       unrecoverable.push(m);
 
       continue;
