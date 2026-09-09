@@ -33,7 +33,8 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth.models import Group
 from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import OrganizationUser
+from organizations.models import Organization, OrganizationUser
+from test_utils.mixins import HasGraphQLProtocol
 
 PERMISSION_DENIED = "You do not have permission to perform this action in this organization."
 
@@ -109,7 +110,7 @@ CHANGE_ROLE_MUTATION = """
 """
 
 
-class MemberManagementGraphQLMixin:
+class MemberManagementGraphQLMixin(HasGraphQLProtocol):
     """Per-operation GraphQL helpers (header left on org_1).
 
     Reads/add authorize at the payload org; remove/change-role resolve the
@@ -117,18 +118,20 @@ class MemberManagementGraphQLMixin:
     *user*, so a test can flip actors freely.
     """
 
-    def _view_member(self, user: User, org: object, member: User) -> dict[str, Any]:
+    graphql_client: Any
+
+    def _view_member(self, user: User, org: Organization, member: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             VIEW_MEMBER_QUERY,
             {"organizationId": str(org.pk), "userId": str(member.pk)},
         )
 
-    def _view_members(self, user: User, org: object) -> dict[str, Any]:
+    def _view_members(self, user: User, org: Organization) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(VIEW_MEMBERS_QUERY, {"organizationId": str(org.pk)})
 
-    def _add_member(self, user: User, org: object, *, email: str) -> dict[str, Any]:
+    def _add_member(self, user: User, org: Organization, *, email: str) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             ADD_MEMBER_MUTATION,
@@ -143,18 +146,18 @@ class MemberManagementGraphQLMixin:
             },
         )
 
-    def _membership_id(self, org: object, member: User) -> int:
+    def _membership_id(self, org: Organization, member: User) -> int:
         """The ``OrganizationUser`` row id for *member* at *org* — the mutation key."""
-        return OrganizationUser.objects.get(organization=org, user=member).pk
+        return int(OrganizationUser.objects.get(organization=org, user=member).pk)
 
-    def _remove_member(self, user: User, org: object, member: User) -> dict[str, Any]:
+    def _remove_member(self, user: User, org: Organization, member: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             REMOVE_MEMBER_MUTATION,
             {"data": {"membershipId": self._membership_id(org, member)}},
         )
 
-    def _change_role(self, user: User, org: object, member: User) -> dict[str, Any]:
+    def _change_role(self, user: User, org: Organization, member: User) -> dict[str, Any]:
         self.graphql_client.force_login(user)
         return self.execute_graphql(
             CHANGE_ROLE_MUTATION,
@@ -167,7 +170,7 @@ class MemberManagementGraphQLMixin:
         )
 
 
-class MemberManagementGrantAuthorityTestCase(MemberManagementGraphQLMixin, GraphQLBaseTestCase):
+class MemberManagementGrantAuthorityTestCase(GraphQLBaseTestCase, MemberManagementGraphQLMixin):
     """Grant holders manage members after the grant-only cutover."""
 
     def setUp(self) -> None:
@@ -299,7 +302,7 @@ class MemberManagementGrantAuthorityTestCase(MemberManagementGraphQLMixin, Graph
         self.assertEqual(response["data"]["addOrganizationMember"]["email"], "org2-invited@example.com")
 
 
-class MemberManagementGrantAuthorityDeniedTestCase(MemberManagementGraphQLMixin, GraphQLBaseTestCase):
+class MemberManagementGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, MemberManagementGraphQLMixin):
     """Authority absent: legacy-only holders, partial holders, members, cross-org."""
 
     def setUp(self) -> None:
