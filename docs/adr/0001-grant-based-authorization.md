@@ -412,7 +412,7 @@ subquery, not a re-derivation.
 | Operation | Rule |
 |---|---|
 | Load by id | `visible(qs, perm).get(pk=…)` → `DoesNotExist` → 404. Authority-only; no header. |
-| List | `visible(qs, perm, in_org=active_org(info))`; header **optional** (absent ⇒ unconfined) |
+| List | `visible(qs, perm, in_org=active_org(info))`; header **optional** (absent ⇒ unconfined) — applies to the domains still on the header; the shelter domain's operator list reads are plain reach-scoped `visible(qs, perm)` with the org *view* as the query's `filters` variable (delta 3, PR #2440) |
 | Create (org-scoped) | explicit `organization_id` input; `can(user, perm, org=target)` **and** `Organization.objects.filter(pk=target).exists()` → `ValidationError` (finding F7 — `can()` never implies existence) |
 | Create (platform-shared model) | `can_anywhere(user, perm)` — no org to check (finding F14) |
 | Child create under object grant | resolve parent; `can_obj(parent, child_ADD)` (finding F17) |
@@ -421,8 +421,10 @@ subquery, not a re-derivation.
 | Header | `active_org(info)` returns `None` when absent; nothing *requires* it |
 
 **Write authority is the union of the user's full grant set, not the active org.**
-The `X-Organization-ID` header confines *list* views (`visible(…, in_org=…)`) only;
-single-row writes (`can`/`can_obj`) resolve against every org in `scopes()`. A user
+In the domains that still read the header, it confines *list* views
+(`visible(…, in_org=…)`) only; the shelter domain's list views no longer take an
+`in_org` at all (reach-scoped — delta 3, PR #2440, §7 item 7).  Single-row
+writes (`can`/`can_obj`) resolve against every org in `scopes()`. A user
 holding a role at orgs A and B may edit org A's rows while the UI says they are acting
 as B. This matches `main` (authority is identity-wide) and is deliberate — but it is a
 stated product fact so nobody later "fixes" it by confining writes to the header.
