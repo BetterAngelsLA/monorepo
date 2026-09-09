@@ -296,7 +296,9 @@ class ReservationUpdateTestCase(ReservationServiceTestCase):
         )
 
         self.assertEqual(updated.bed_id, bed_b.pk)
-        self.assertEqual(updated.shelter.organization_id, org_b.pk)
+        shelter = updated.shelter
+        assert shelter is not None
+        self.assertEqual(shelter.organization_id, org_b.pk)
 
     def test_move_to_another_orgs_bed_denied_without_change_there(self) -> None:
         """A cross-org reparent must fail closed when the user cannot act at the
