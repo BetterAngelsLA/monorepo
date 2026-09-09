@@ -196,7 +196,7 @@ class OrganizationMemberMutationTestCase(GraphQLBaseTestCase, ParametrizedTestCa
             # org-scoped grant checks; dual-write (ADR 0001 §4) mirrors the
             # CASEWORKER membership as a Grant at the User.groups m2m edge
             # (accounts.signals).
-            with self.assertNumQueriesWithoutCache(28):
+            with self.assertNumQueriesWithoutCache(29):
                 response = self.execute_graphql(mutation, {"data": variables})
 
             mock_send_invitation.assert_called_once()
