@@ -152,6 +152,12 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
     must declare how it reaches an organization — or declare itself platform-shared
     via ``org_via = None``.  Global Roles are exempt: their permissions are never
     org-confined, so no declaration is required until a scoped Role holds them.
+
+    The org-root ``Organization`` model is exempt as **identity-scoped**: a scoped
+    Grant scopes to an organization, so a permission bound to ``Organization`` is
+    an org-level action on the very row the grant scopes to — there is no
+    ``org_via`` hop to resolve.  This is where the member-management
+    ``organizations.*`` portal codenames live (ADR 0001 §5.3).
     """
     from django.apps import apps
     from django.db.utils import DatabaseError
@@ -166,6 +172,13 @@ def check_role_permissions_models_declare_org_scoping(app_configs: Any, **kwargs
             for permission in role.permissions.all():
                 model = permission.content_type.model_class()
                 if model is None or model._meta.abstract:
+                    continue
+                if model._meta.label_lower == "organizations.organization":
+                    # Org-root is identity-scoped: a scoped Grant scopes TO an
+                    # organization, so a permission bound to the Organization
+                    # model is an org-level action on the very row the grant
+                    # scopes to — there is no org_via hop to resolve (member
+                    # management's organizations.* portal codenames live here).
                     continue
                 if not issubclass(model, OrgScoped):
                     errors.append(
