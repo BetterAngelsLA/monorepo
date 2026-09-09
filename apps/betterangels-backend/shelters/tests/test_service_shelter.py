@@ -158,7 +158,6 @@ class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
     def _update(self, contacts: list[dict]) -> Shelter:
         return shelter_update(
             user=self.user,
-            organization_id=self.org_id,
             data={"id": self.shelter.pk, "additional_contacts": contacts},
         )
 
