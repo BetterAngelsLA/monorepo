@@ -526,14 +526,16 @@ def create_organization_service(
 def _raise_on_phantom_role_permissions(role_def: RoleDef, permission_ids: set[int]) -> None:
     """Fail loudly when a RoleDef permission binds to a phantom ContentType.
 
-    :func:`accounts.seed._resolve_permissions` derives each permission's
-    ContentType model from the codename's last ``_`` token, so a custom codename
-    whose final token is not the model it belongs to (e.g.
-    ``change_shelter_is_reviewed`` → ``"reviewed"``) binds to a ContentType with
-    no model class.  ``permissions.E005`` silently skips those (``model_class()``
-    → ``None``) and no runtime path can exercise them, so provisioning must
-    refuse to create them.  Runs inside :func:`sync_roles`' transaction, so the
-    phantom rows are rolled back with the error.
+    :func:`accounts.seed._resolve_permissions` binds a RoleDef permission to a
+    real model when one declares it (e.g. ``reports.view_reports`` on
+    ``ScheduledReport``) and only falls back to synthesizing a ContentType from
+    the codename's last ``_`` token for portal codenames no model declares (e.g.
+    ``organizations.add_org_member``).  A codename that ends up on a ContentType
+    with no model class (``change_shelter_is_reviewed`` → ``"reviewed"``) is a
+    typo'd custom codename: ``permissions.E005`` silently skips those
+    (``model_class()`` → ``None``) and no runtime path can exercise them, so
+    provisioning must refuse to create them.  Runs inside :func:`sync_roles`'
+    transaction, so the phantom rows are rolled back with the error.
     """
     from django.contrib.auth.models import Permission
 

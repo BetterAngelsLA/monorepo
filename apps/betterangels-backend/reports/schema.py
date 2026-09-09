@@ -1,12 +1,13 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from accounts.extensions import HasOrgPerm
-from common.permissions.utils import IsAuthenticated, get_current_organization
+from accounts.models import User as AccountUser
+from common.permissions.utils import IsAuthenticated, get_current_organization, require_can
 from organizations.models import Organization
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 
 from .permissions import ReportPermissions
 from .selectors import report_default_date_range, report_summary
@@ -40,18 +41,24 @@ class ReportSummaryType:
 
 @strawberry.type
 class Query:
-    @strawberry_django.field(
-        permission_classes=[IsAuthenticated],
-        extensions=[HasOrgPerm(ReportPermissions.VIEW_REPORTS)],
-    )
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
     def report_summary(
         self,
         info: Info,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
     ) -> ReportSummaryType:
+        """Report summary for the active organization — grant-only (ADR 0001 §5.3).
+
+        Authorizes ``reports.view_reports`` at the ``X-Organization-ID`` org via
+        ``require_can`` (role-backed ORG_ADMIN/ORG_SUPERUSER backfilled Grants,
+        or the global tier).  Membership is not consulted; a legacy-only holder
+        fails closed.
+        """
+        user = cast(AccountUser, get_current_user(info))
         org_id = get_current_organization(info)
         org = Organization.objects.get(pk=org_id)
+        require_can(user, ReportPermissions.VIEW_REPORTS, org=org)
 
         if start_date is None or end_date is None:
             default_start, default_end = report_default_date_range()
