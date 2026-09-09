@@ -57,6 +57,29 @@ class OperatorShelterQueryTestCase(GraphQLBaseTestCase):
             {str(self.shelter.id), str(shelter_2.id)},
         )
 
+    def test_operator_shelters_org_filter_honors_grant_reach_not_membership(self) -> None:
+        """The org *view* is bounded by grant reach, not membership.
+
+        A user with a direct VIEW grant at an org they are not a member of can
+        filter to it (delta 3: the filter variable is the org view).  Filtering
+        by membership alone would return an empty dashboard for grant-only and
+        delegated holders, even though ``visible()``/``switchable_orgs``
+        include the org.
+        """
+        # Direct grant at org_2 — deliberately NO membership (no org_2.add_user).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_2)
+        org_2_shelter = shelter_recipe.make(organization=self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self.execute_graphql(
+            self.OPERATOR_SHELTERS_QUERY,
+            variables={"orgIds": [str(self.org_2.id)], "offset": 0, "limit": 10},
+        )
+
+        payload = response["data"]["operatorShelters"]
+        self.assertEqual(payload["totalCount"], 1)
+        self.assertEqual(payload["results"][0]["id"], str(org_2_shelter.id))
+
     def test_operator_shelters_returns_all_accessible_orgs_when_no_filter(self) -> None:
         """Without an org filter, returns shelters for all orgs the user belongs to."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
