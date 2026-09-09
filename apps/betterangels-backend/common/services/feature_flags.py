@@ -3,15 +3,16 @@
 from typing import cast
 
 from strawberry.types import Info
-from waffle import get_waffle_flag_model
+from waffle import flag_is_active as waffle_flag_is_active
 
 
 def flag_is_active(info: Info, name: str) -> bool:
     """Return whether the *name* waffle flag is active for the current request.
 
     Results are memoized on the request object so repeated checks (e.g. once per
-    row) avoid re-querying the flag model. A missing flag is treated as inactive
-    so nothing breaks before the flag is created in the admin.
+    row) avoid re-evaluating the flag. Evaluation is delegated to
+    :func:`waffle.flag_is_active`, which handles waffle's own caching,
+    ``WAFFLE_FLAG_DEFAULT`` for missing flags, and per-user/group semantics.
     """
     request = info.context["request"]
     cache = getattr(request, "_waffle_flags", None)
@@ -19,6 +20,5 @@ def flag_is_active(info: Info, name: str) -> bool:
         cache = {}
         request._waffle_flags = cache
     if name not in cache:
-        flag = get_waffle_flag_model().objects.filter(name=name).first()
-        cache[name] = bool(flag.is_active(request)) if flag is not None else False
+        cache[name] = bool(waffle_flag_is_active(request, name))
     return cast(bool, cache[name])

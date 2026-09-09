@@ -143,11 +143,16 @@ def _contact_error_dict(exc: ValidationError, index: int) -> dict[str, list[str]
 
 
 def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
-    """Apply full-replacement semantics to a shelter's additional contacts.
+    """Apply list-level full-replacement semantics to a shelter's additional contacts.
 
-    Entries carrying an ``id`` update the matching existing row in place
-    (preserving its PK and pghistory audit trail); entries without an ``id``
-    are created; any existing row absent from the submitted payload is deleted.
+    The submitted list is authoritative: entries absent from the payload are
+    deleted, entries without an ``id`` are created, and entries carrying an
+    ``id`` update the matching row in place (preserving its PK and pghistory
+    audit trail).
+
+    Each entry is a full PUT payload: every submitted field is written to the
+    object. Optional fields omitted from an id-carrying entry are stored as
+    ``None``/``False``, so callers must resubmit values they want to preserve.
 
     Every contact is ``full_clean()``-validated before any write happens. Invalid
     entries are collected (not short-circuited) and raised together as a single
@@ -174,10 +179,12 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
         }
 
         raw_id = entry.get("id")
-        if raw_id is not None:
+        if raw_id:
             try:
                 obj = existing.get(int(raw_id))
-            except TypeError, ValueError:
+            # In Python 3.14 the syntax below w/o parens is illegal, but formatter removes it without
+            # the `as` clause - see related ticket DEV-2568
+            except (TypeError, ValueError) as _e:
                 errors[f"additional_contacts.{index}.id"] = ["Invalid additional contact id."]
                 continue
 
@@ -265,7 +272,8 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     the caller does not need to pre-lookup the entity.
 
     Only fields present in *data* (i.e. not ``UNSET``) are modified.
-    Schedules and services use full-replacement semantics when provided.
+    Schedules, services, and additional contacts use full-replacement semantics
+    when provided.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID

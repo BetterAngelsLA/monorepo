@@ -207,6 +207,36 @@ class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
 
         self.assertTrue(self.shelter.additional_contacts.get().is_claimant)
 
+    def test_explicit_null_id_creates_contact(self) -> None:
+        """An explicit ``id: null`` is treated as create, mirroring ``ServiceInput``."""
+        self._update([{"id": None, "contact_name": "Ada", "contact_number": "2125550100"}])
+
+        self.assertEqual(self.shelter.additional_contacts.count(), 1)
+        self.assertEqual(self.shelter.additional_contacts.get().contact_name, "Ada")
+
+    def test_omitted_optional_fields_are_cleared_on_update(self) -> None:
+        """PUT semantics: an id-carrying entry replaces the row entirely.
+
+        A full-replace entry that omits optional fields stores them as
+        ``None``/``False``, so callers must resubmit values they want preserved.
+        """
+        existing = ContactInfo.objects.create(
+            shelter=self.shelter,
+            contact_name="Ada",
+            contact_number="2125550100",
+            contact_email="ada@example.org",
+            contact_title="Director",
+            is_claimant=True,
+        )
+
+        self._update([{"id": existing.pk, "contact_name": "Ada Lovelace", "contact_number": "2125550100"}])
+
+        existing.refresh_from_db()
+        self.assertEqual(existing.contact_name, "Ada Lovelace")
+        self.assertIsNone(existing.contact_email)
+        self.assertIsNone(existing.contact_title)
+        self.assertFalse(existing.is_claimant)
+
     def test_rejects_invalid_contact_id(self) -> None:
         with self.assertRaises(ValidationError):
             self._update([{"id": "not-an-int", "contact_name": "Ada", "contact_number": "2125550100"}])

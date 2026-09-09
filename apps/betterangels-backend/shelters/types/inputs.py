@@ -65,9 +65,15 @@ class ServiceInput:
 
 @strawberry.input
 class ShelterContactInfoInput:
-    """A single additional contact for a shelter (mirrors the admin inline)."""
+    """A single additional contact for a shelter.
 
-    id: Maybe[ID] = UNSET
+    Full PUT payload: when ``id`` is provided this entry replaces the matching
+    contact row, so submit every field you want to persist. Omitted optional
+    fields (``contact_email``, ``contact_title``, ``is_claimant``) are stored
+    as ``None``/``False``.
+    """
+
+    id: Optional[ID] = None
     contact_name: NonEmptyString
     contact_number: PhoneNumberScalar
     contact_email: Optional[NonBlankString] = None

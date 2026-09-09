@@ -2528,7 +2528,7 @@ enum ShelterChoices {
 }
 
 input ShelterContactInfoInput {
-  id: ID
+  id: ID = null
   contactName: NonEmptyString!
   contactNumber: PhoneNumber!
   contactEmail: NonBlankString = null

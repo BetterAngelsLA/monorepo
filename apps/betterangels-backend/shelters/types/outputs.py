@@ -293,7 +293,12 @@ class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        return shelter_queryset(queryset, user=user, permission=models.Shelter.perms.VIEW)
+        queryset = shelter_queryset(queryset, user=user, permission=models.Shelter.perms.VIEW)
+        if flag_is_active(info, BA_ADMIN_ONLY_FIELDS_FLAG):
+            # Avoid the N+1 in ``additional_contacts``: prefetch only when the
+            # field is actually gated on (it resolves to ``[]`` otherwise).
+            queryset = queryset.prefetch_related("additional_contacts")
+        return queryset
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
