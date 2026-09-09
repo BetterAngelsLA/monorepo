@@ -159,9 +159,7 @@ def update_shelter_photo(*, user: "User", data: UpdateShelterPhotoInput) -> Shel
     photo_id = data.id
 
     photo = get_by_pk_or_not_found(
-        ShelterPhoto.objects.filter(
-            shelter__in=shelter_queryset(user=user, permission=Shelter.perms.CHANGE)
-        ),
+        ShelterPhoto.objects.filter(shelter__in=shelter_queryset(user=user, permission=Shelter.perms.CHANGE)),
         pk=photo_id,
     )
 

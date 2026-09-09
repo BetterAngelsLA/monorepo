@@ -152,7 +152,8 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
         self.org_b = organization_recipe.make(preset_names=["shelter"], owner_roles=(SHELTER_OPERATOR,))
         self.org_b.users.add(self.operator)
         OrgRoleManager(self.org_b).add_roles(self.operator, SHELTER_OPERATOR)
-        self.shelter_b = shelter_recipe.make(organization=self.org_b)
+        # Updates run model full_clean on the row, so the fixture needs a valid URL.
+        self.shelter_b = shelter_recipe.make(organization=self.org_b, website="https://shelter-b.example.org")
         self.graphql_client.force_login(self.operator)
 
     def test_update_shelter_in_another_org_does_not_need_its_header(self) -> None:
@@ -179,7 +180,8 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["deleteShelter"]["id"], str(self.shelter_b.pk))
+        # DeletedObjectType.id is an int (see deleteShelter success tests).
+        self.assertEqual(response["data"]["deleteShelter"]["id"], self.shelter_b.pk)
         self.assertFalse(Shelter.objects.filter(pk=self.shelter_b.pk).exists())
 
 
@@ -208,9 +210,7 @@ class IdentityWideReadsTestCase(ShelterTestCase, TestCase):
         self.shelter_b = shelter_recipe.make(organization=self.org_b)
         self.room_b = baker.make(Room, shelter=self.shelter_b, name="Room-B")
         self.bed_b = baker.make(Bed, shelter=self.shelter_b, room=self.room_b, name="Bed-B")
-        self.reservation_b = baker.make(
-            Reservation, room=self.room_b, bed=self.bed_b, created_by=self.operator
-        )
+        self.reservation_b = baker.make(Reservation, room=self.room_b, bed=self.bed_b, created_by=self.operator)
         self.graphql_client.force_login(self.operator)
 
     def test_room_by_pk_resolves_across_orgs_without_a_header(self) -> None:
@@ -302,9 +302,7 @@ class IdentityWideChildWritesTestCase(ShelterTestCase, TestCase):
         self.shelter_b = shelter_recipe.make(organization=self.org_b)
         self.room_b = baker.make(Room, shelter=self.shelter_b, name="Room-B")
         self.bed_b = baker.make(Bed, shelter=self.shelter_b, room=self.room_b, name="Bed-B")
-        self.reservation_b = baker.make(
-            Reservation, room=self.room_b, bed=self.bed_b, created_by=self.operator
-        )
+        self.reservation_b = baker.make(Reservation, room=self.room_b, bed=self.bed_b, created_by=self.operator)
         self.graphql_client.force_login(self.operator)
 
     def test_create_room_under_another_orgs_shelter(self) -> None:
@@ -342,9 +340,7 @@ class IdentityWideChildWritesTestCase(ShelterTestCase, TestCase):
         self.assertFalse(Bed.objects.filter(pk=self.bed_b.pk).exists())
 
     def test_delete_reservation_in_another_org(self) -> None:
-        response = self.execute_graphql(
-            self.DELETE_RESERVATIONS, {"data": {"ids": [str(self.reservation_b.pk)]}}
-        )
+        response = self.execute_graphql(self.DELETE_RESERVATIONS, {"data": {"ids": [str(self.reservation_b.pk)]}})
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["deleteReservations"]["ids"], [str(self.reservation_b.pk)])
         self.assertFalse(Reservation.objects.filter(pk=self.reservation_b.pk).exists())

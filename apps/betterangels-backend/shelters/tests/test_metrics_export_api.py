@@ -117,10 +117,20 @@ class ShelterMetricsExportApiTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_requires_the_organization_header(self) -> None:
-        response = self.api_client.get(self.url, {"export_format": "csv"})
+    def test_export_resolves_by_reach_without_a_header(self) -> None:
+        """The export is reach-scoped by shelter_id — no org header is required.
 
-        self.assertEqual(response.status_code, 403)
+        A user who holds view_shelter at org_2 can export org_2's shelter even
+        though no header names org_2 (ADR 0001 §7 item 7 / delta 4).
+        """
+        self._add_shelter_view_permission(self.org_2)
+        other_shelter = shelter_recipe.make(organization=self.org_2)
+        url = reverse("shelters:export_shelter_metrics", kwargs={"shelter_id": str(other_shelter.pk)})
+
+        response = self.api_client.get(url, {"export_format": "csv"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/zip")
 
     def test_requires_authentication(self) -> None:
         self.api_client.force_authenticate(None)
