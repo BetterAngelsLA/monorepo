@@ -240,3 +240,33 @@ class ShelterUpdateAdditionalContactsTestCase(ShelterServiceTestCase):
             )
 
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
+
+    def test_invalid_contact_reports_indexed_field_path(self) -> None:
+        """Errors are keyed by position so callers know which contact failed."""
+        with self.assertRaises(ValidationError) as cm:
+            self._update(
+                [
+                    {"contact_name": "Ada", "contact_number": "2125550100"},
+                    {"contact_name": "Grace", "contact_number": "not-a-phone"},
+                ]
+            )
+
+        self.assertIn("additional_contacts.1.contact_number", cm.exception.error_dict)
+
+    def test_two_new_contacts_each_with_error(self) -> None:
+        """Two new entries, each invalid, are both reported in one ValidationError."""
+        with self.assertRaises(ValidationError) as cm:
+            self._update(
+                [
+                    {"contact_name": "Ada", "contact_number": "not-a-phone"},
+                    {
+                        "contact_name": "Grace",
+                        "contact_number": "2125550101",
+                        "contact_email": "nope",
+                    },
+                ]
+            )
+
+        error_dict = cm.exception.error_dict
+        self.assertIn("additional_contacts.0.contact_number", error_dict)
+        self.assertIn("additional_contacts.1.contact_email", error_dict)

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from common.permissions.utils import require_can
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
@@ -123,6 +123,25 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
     return resolved
 
 
+def _contact_error_dict(exc: ValidationError, index: int) -> dict[str, list[str]]:
+    """Re-key a single contact's ``full_clean()`` errors under an indexed path.
+
+    ``full_clean()`` raises a ``ValidationError`` whose ``error_dict`` is keyed by
+    field name. We re-key each entry as ``additional_contacts.<index>.<field>`` so
+    the GraphQL layer can report which contact in the list failed.
+    """
+    prefix = f"additional_contacts.{index}"
+
+    if not hasattr(exc, "error_dict"):
+        return {prefix: [str(e.message) for e in exc.error_list]}
+
+    result: dict[str, list[str]] = {}
+    for field, err_list in exc.error_dict.items():
+        key = prefix if field == NON_FIELD_ERRORS else f"{prefix}.{field}"
+        result[key] = [str(e.message) for e in err_list]
+    return result
+
+
 def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
     """Apply full-replacement semantics to a shelter's additional contacts.
 
@@ -130,16 +149,21 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
     (preserving its PK and pghistory audit trail); entries without an ``id``
     are created; any existing row absent from the submitted payload is deleted.
 
-    Every contact is ``full_clean()``-validated before it is written, so invalid
-    phone numbers and emails are rejected rather than persisted.
+    Every contact is ``full_clean()``-validated before any write happens. Invalid
+    entries are collected (not short-circuited) and raised together as a single
+    ``ValidationError`` whose keys are indexed by position, so callers can tell
+    exactly which contact failed.
     """
     existing = {c.pk: c for c in shelter.additional_contacts.all()}
     keep_ids: set[int] = set()
+    to_save: list[ContactInfo] = []
     new_objs: list[ContactInfo] = []
+    errors: dict[str, list[str]] = {}
 
-    for entry in contacts:
+    for index, entry in enumerate(contacts):
         if not isinstance(entry, dict):
-            raise ValidationError("Invalid additional contact.")
+            errors[f"additional_contacts.{index}"] = ["Invalid additional contact."]
+            continue
 
         data = {
             "contact_name": entry.get("contact_name"),
@@ -153,19 +177,35 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
         if raw_id is not None:
             try:
                 obj = existing.get(int(raw_id))
-            except (TypeError, ValueError) as exc:
-                raise ValidationError("Invalid additional contact id.") from exc
+            except TypeError, ValueError:
+                errors[f"additional_contacts.{index}.id"] = ["Invalid additional contact id."]
+                continue
+
             if obj is not None:
                 for key, value in data.items():
                     setattr(obj, key, value)
-                obj.full_clean()
-                obj.save()
+                try:
+                    obj.full_clean()
+                except ValidationError as exc:
+                    errors.update(_contact_error_dict(exc, index))
+                    continue
+                to_save.append(obj)
                 keep_ids.add(obj.pk)
                 continue
 
         contact = ContactInfo(shelter=shelter, **data)
-        contact.full_clean()
+        try:
+            contact.full_clean()
+        except ValidationError as exc:
+            errors.update(_contact_error_dict(exc, index))
+            continue
         new_objs.append(contact)
+
+    if errors:
+        raise ValidationError(errors)
+
+    for obj in to_save:
+        obj.save()
 
     shelter.additional_contacts.exclude(pk__in=keep_ids).delete()
     ContactInfo.objects.bulk_create(new_objs)
