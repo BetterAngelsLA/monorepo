@@ -192,7 +192,7 @@ export default function Users(props: IProps) {
   };
 
   const handleRemoveMember = async (member: OrganizationMemberType) => {
-    if (!organizationId) {
+    if (!member.membershipId) {
       return;
     }
 
@@ -200,8 +200,7 @@ export default function Users(props: IProps) {
       const response = await removeOrganizationMember({
         variables: {
           data: {
-            id: member.id,
-            organizationId,
+            membershipId: member.membershipId,
           },
         },
         refetchQueries: [OrganizationMembersDocument],

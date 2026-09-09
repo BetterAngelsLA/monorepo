@@ -1,5 +1,5 @@
 from django.db.models import Case, CharField, Exists, OuterRef, StringAgg, Subquery, Value, When
-from organizations.models import OrganizationOwner
+from organizations.models import OrganizationOwner, OrganizationUser
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
@@ -62,3 +62,13 @@ def annotate_permission_templates(org_id: str) -> Subquery:
         .annotate(names=StringAgg("template__name", Value(", "), distinct=True, order_by="template__name"))
         .values("names")
     )
+
+
+def annotate_membership_id(org_id: str) -> Subquery:
+    """Return the ``OrganizationUser`` row id binding a user to *org*.
+
+    The membership row is the unit the member mutations act on: it names both
+    the org and the user, so remove/change-role key on it and authorize at the
+    row's org (ADR 0001 §5.3).
+    """
+    return Subquery(OrganizationUser.objects.filter(organization_id=org_id, user=OuterRef("pk")).values("pk")[:1])

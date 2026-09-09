@@ -1084,14 +1084,16 @@ the org-root ``Organization`` ContentType — so they can ride scoped Roles:
   permission registered on ``Organization`` itself is a capability on the org,
   not an org-wide capability-gate — the org's own rows never trip the
   cross-object guard.
-- ``organizationMember``/``organizationMembers`` and the
-  add/remove/change-role mutations authorize via ``require_can`` at the org in
-  the payload; ``organizations`` joins ``LEGACY_INERT_APPS``.
+- ``organizationMember``/``organizationMembers`` and the add mutation authorize
+  via ``require_can`` at the org in the payload;
+  ``removeOrganizationMember``/``changeOrganizationMemberRole`` are keyed on the
+  ``OrganizationUser`` membership row and authorize at the row's org (mirroring
+  teams' row-keyed update/delete); ``organizations`` joins ``LEGACY_INERT_APPS``.
 - **Header-free.** Member management is a web feature (the admin portal), so it
   cut over in one step instead of keeping the ``X-Organization-ID`` header as a
-  deprecated fallback: the mutations already carried ``organizationId``, and the
-  member queries take it as an argument.  No member-management surface reads the
-  header.
+  deprecated fallback: add/read carry ``organizationId`` in the payload, and
+  remove/change-role carry the membership row id (``membershipId``).  No
+  member-management surface reads the header.
 - Every ORG_ADMIN/ORG_SUPERUSER template permission is now grant-backed.  The
   org-admin legacy ``PermissionGroup`` rows are fully inert (redundant with the
   backfilled Grants) — retained only as an inert remainder until the post-cutover

@@ -187,8 +187,7 @@ type BulkDeleteResult {
 }
 
 input ChangeOrganizationMemberRoleInput {
-  userId: ID!
-  organizationId: ID!
+  membershipId: ID!
   permissionTemplate: PermissionTemplateEnum!
 }
 
@@ -1926,6 +1925,7 @@ type OrganizationMemberType {
   memberRole: OrgRoleEnum!
   isOrgOwner: Boolean!
   permissionTemplates: [PermissionTemplateEnum!]!
+  membershipId: ID
 }
 
 type OrganizationMemberTypeOffsetPaginated {
@@ -2245,8 +2245,7 @@ input RemoveHmisNoteServiceRequestInput {
 union RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo
 
 input RemoveOrganizationMemberInput {
-  id: ID!
-  organizationId: ID!
+  membershipId: ID!
 }
 
 union RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo

@@ -119,3 +119,35 @@ def test_retire_superseded_phantom_permissions() -> None:
     # Phantom ContentTypes dropped once their rows are gone.
     assert not ContentType.objects.filter(app_label="reports", model="reports").exists()
     assert not ContentType.objects.filter(app_label="organizations", model="member").exists()
+
+
+@pytest.mark.django_db
+def test_retire_superseded_phantom_permissions_holder_with_both_rows() -> None:
+    """A holder referencing BOTH the phantom and its real twin is not a crash.
+
+    A DB that lived through the transition can hold both rows on one holder.
+    Re-pointing must drop the phantom reference (the real one already wins)
+    instead of colliding with the through table's unique constraint, which
+    would abort ``post_migrate``.
+    """
+    from accounts.seed import retire_superseded_phantom_permissions
+    from django.contrib.auth import get_user_model
+    from django.contrib.contenttypes.models import ContentType
+
+    real = Permission.objects.get(codename="view_reports", content_type__app_label="reports")
+
+    phantom_ct, _ = ContentType.objects.get_or_create(app_label="reports", model="reports")
+    phantom, _ = Permission.objects.get_or_create(
+        content_type=phantom_ct, codename="view_reports", defaults={"name": "Can view reports"}
+    )
+
+    holder = get_user_model().objects.create(username="both-rows-holder")
+    holder.user_permissions.add(phantom)
+    holder.user_permissions.add(real)
+    assert holder.user_permissions.filter(pk=phantom.pk).exists()
+
+    retire_superseded_phantom_permissions()
+
+    assert not Permission.objects.filter(pk=phantom.pk).exists()
+    # Exactly one reference survives, on the real row — no duplicate, no revoke.
+    assert list(holder.user_permissions.values_list("pk", flat=True)) == [real.pk]

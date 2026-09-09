@@ -19,8 +19,13 @@ from strawberry_django.pagination import OffsetPaginated
 from accounts.emails import base_url_for, send_welcome_emails_for_org
 from accounts.permissions import UserOrganizationPermissions
 
-from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
-from .models import Organization, PermissionGroup, User
+from .annotations import (
+    annotate_is_org_owner,
+    annotate_member_role,
+    annotate_membership_id,
+    annotate_permission_templates,
+)
+from .models import Organization, OrganizationUser, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
@@ -59,7 +64,7 @@ def _org_or_deny(org_id: object) -> Organization:
     """
     try:
         org = Organization.objects.filter(pk=org_id).first()
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         org = None
     if org is None:
         raise PermissionDenied("You do not have access to this organization.")
@@ -91,6 +96,7 @@ class Query:
                 _member_role=annotate_member_role(organization_id),
                 _is_org_owner=annotate_is_org_owner(organization_id),
                 _permission_templates=annotate_permission_templates(organization_id),
+                _membership_id=annotate_membership_id(organization_id),
             )
             .first()
         )
@@ -158,6 +164,7 @@ class Query:
             _member_role=annotate_member_role(organization_id),
             _is_org_owner=annotate_is_org_owner(organization_id),
             _permission_templates=annotate_permission_templates(organization_id),
+            _membership_id=annotate_membership_id(organization_id),
         )
 
 
@@ -265,14 +272,25 @@ class Mutation:
         info: Info,
         data: RemoveOrganizationMemberInput,
     ) -> DeletedObjectType:
-        """Remove a member — grant-only at the payload org (ADR 0001 §5.3)."""
+        """Remove a member — row-keyed, grant-only at the membership's org.
+
+        ``data.membershipId`` names the ``OrganizationUser`` row; the row's org
+        authorizes (``require_can(organizations.remove_org_member)`` there) —
+        mirrors teams' row-keyed delete.  A missing/unknown membership fails
+        closed; no header is read.
+        """
         current_user = cast(User, get_current_user(info))
-        organization = _org_or_deny(data.organization_id)
-        require_can(current_user, UserOrganizationPermissions.REMOVE_ORG_MEMBER, org=organization)
+        membership = (
+            OrganizationUser.objects.select_related("organization", "user").filter(pk=data.membership_id).first()
+        )
+        if membership is None:
+            raise PermissionDenied("You do not have permission to remove this member.")
+
+        require_can(current_user, UserOrganizationPermissions.REMOVE_ORG_MEMBER, org=membership.organization)
 
         removed_id = organization_remove_member(
-            organization=organization,
-            user_id=int(data.id),
+            organization=membership.organization,
+            user_id=membership.user_id,
             removed_by=current_user,
         )
 
@@ -307,9 +325,10 @@ class Mutation:
     ) -> OrganizationMemberType:
         """Set which of the organization's invitable roles a member holds.
 
-        Grant-only at the payload org (ADR 0001 §5.3): ``require_can(
-        organizations.change_org_member_role)`` at ``data.organizationId``; no
-        header is read.
+        Row-keyed, grant-only at the membership's org (ADR 0001 §5.3):
+        ``data.membershipId`` names the ``OrganizationUser`` row and its org
+        authorizes ``require_can(organizations.change_org_member_role)``.  A
+        missing/unknown membership fails closed; no header is read.
 
         The member ends up holding the single requested template and no other
         role the organization grants by invitation.  Roles it does not —
@@ -318,22 +337,25 @@ class Mutation:
         replacing every group would have demoted an org admin on any call.
         """
         current_user = cast(User, get_current_user(info))
-        organization = _org_or_deny(data.organization_id)
+        membership = (
+            OrganizationUser.objects.select_related("organization", "user").filter(pk=data.membership_id).first()
+        )
+        if membership is None:
+            raise PermissionDenied("You do not have permission to change this member's role.")
+
+        organization = membership.organization
         require_can(current_user, UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE, org=organization)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
-        target_user = User.objects.filter(
-            id=data.user_id,
-            organizations_organization=organization,
-        ).first()
-        if not target_user:
-            raise PermissionDenied("Target user is not a member of this organization.")
+        member_roles_replace(
+            organization=organization,
+            user_id=membership.user_id,
+            permission_templates=(template,),
+        )
 
-        # The membership check above stays: it answers with PermissionDenied, which
-        # is the error this mutation has always returned for a non-member.
-        member_roles_replace(organization=organization, user_id=target_user.pk, permission_templates=(template,))
-
+        target_user = membership.user
+        target_user._membership_id = membership.pk
         if hasattr(target_user, "_member_role"):
             object.__delattr__(target_user, "_member_role")
         return cast(OrganizationMemberType, target_user)
