@@ -27,12 +27,15 @@ Keep both in step with the ADR §4.1 migration matrix.
 """
 
 #: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
-#: and never consulted for authority.  Shelters, teams, and reports.
-LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports"})
+#: and never consulted for authority.  Shelters, teams, reports, and member
+#: management (organizations.* — bound to the org-root Organization model).
+#: With member management flipped, every ORG_ADMIN/ORG_SUPERUSER template
+#: permission is grant-backed; the legacy arm is fully redundant for them.
+LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations"})
 
-#: Dual-read domains (``can()`` OR legacy, ADR §5.3) — reserved for the last
-#: legacy-only domain's cutover (#2429: member management).
-#: Empty today; each app that joins also unlocks that domain's global-tier fold.
+#: Dual-read domains (``can()`` OR legacy, ADR §5.3).  Empty: every org-admin
+#: domain has cut over grant-only.  Reserved if a future domain needs a
+#: transitional dual-read state.
 DUAL_APPS: frozenset[str] = frozenset()
 
 #: Domains where the global tier is enforceable at any org (grant-only ∪ dual);
