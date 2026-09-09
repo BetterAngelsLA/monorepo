@@ -6,9 +6,7 @@ import strawberry_django
 from common.graphql.types import DeletedObjectType
 from common.org_types import REGISTRY
 from common.permissions.utils import IsAuthenticated, get_current_organization
-from django.conf import settings
 from django.contrib import auth
-from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -19,16 +17,16 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from accounts.emails import send_welcome_emails_for_org
+from accounts.emails import base_url_for, send_welcome_emails_for_org
 from accounts.extensions import HasOrgPerm
 from accounts.permissions import UserOrganizationPermissions, get_user_permitted_org
-from accounts.role_manager import OrgRoleManager
 
 from .annotations import annotate_is_org_owner, annotate_member_role, annotate_permission_templates
 from .models import Organization, PermissionGroup, User
 from .services import (
     create_organization_service,
     member_add,
+    member_roles_replace,
     organization_remove_member,
 )
 from .types import (
@@ -134,7 +132,7 @@ class Query:
                     PermissionGroup.objects.filter(
                         organization_id=organization_id,
                         template__name__in=template_names,
-                        group__user=OuterRef("pk"),
+                        user=OuterRef("pk"),
                     )
                 )
                 queryset = queryset.filter(has_org_type_template)
@@ -146,7 +144,7 @@ class Query:
                 PermissionGroup.objects.filter(
                     organization_id=organization_id,
                     template__name=permission_template.value,
-                    group__user=OuterRef("pk"),
+                    user=OuterRef("pk"),
                 )
             )
             queryset = queryset.filter(has_template)
@@ -227,7 +225,7 @@ class Mutation:
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
         org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        organization = Organization.objects.select_related("profile").get(pk=org_id)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
@@ -244,12 +242,11 @@ class Mutation:
             organization=organization, invited_by_user=current_user, invitee_user=user
         )
 
-        site = Site.objects.get(pk=settings.SITE_ID)
         invitation_backend().send_invitation(
             user=user,
             sender=current_user,
             organization=organization,
-            domain=site,
+            base_url=base_url_for(template),
             role_template=template,
         )
 
@@ -306,14 +303,17 @@ class Mutation:
     def change_organization_member_role(
         self, info: Info, data: ChangeOrganizationMemberRoleInput
     ) -> OrganizationMemberType:
-        """Promote or demote a member within an organization.
+        """Set which of the organization's invitable roles a member holds.
 
-        Replaces all of the member's current org-scoped roles with the
-        single requested template.  Requires the ``CHANGE_ORG_MEMBER_ROLE``
-        permission.
+        The member ends up holding the single requested template and no other
+        role the organization grants by invitation.  Roles it does not —
+        ``Organization Admin``, ``Organization Superuser``, and anything granted
+        by hand — are left alone; ``PermissionTemplateEnum`` cannot name them, so
+        replacing every group would have demoted an org admin on any call.
+        Requires the ``CHANGE_ORG_MEMBER_ROLE`` permission.
         """
         org_id = get_current_organization(info)
-        organization = Organization.objects.get(pk=org_id)
+        organization = Organization.objects.select_related("profile").get(pk=org_id)
 
         template = REGISTRY.get_template_or_raise(data.permission_template.value, organization)  # type: ignore[attr-defined, union-attr]
 
@@ -324,7 +324,9 @@ class Mutation:
         if not target_user:
             raise PermissionDenied("Target user is not a member of this organization.")
 
-        OrgRoleManager(organization).replace_roles(target_user, template)
+        # The membership check above stays: it answers with PermissionDenied, which
+        # is the error this mutation has always returned for a non-member.
+        member_roles_replace(organization=organization, user_id=target_user.pk, permission_templates=(template,))
 
         if hasattr(target_user, "_member_role"):
             object.__delattr__(target_user, "_member_role")

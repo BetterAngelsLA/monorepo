@@ -847,8 +847,8 @@ class ShelterResource(resources.ModelResource):
                         shelter=instance,
                         contact_name=name,
                         contact_number=number,
-                        email=email or None,
-                        title=title or None,
+                        contact_email=email or None,
+                        contact_title=title or None,
                     )
 
     # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
@@ -1168,7 +1168,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         permissions_map = {}
         for field in Shelter._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
-                related_model = cast(Type[models.Model], field.related_model)
+                related_model = field.related_model
                 model_name = related_model._meta.model_name  # singular name
                 permission_codename = f"{action}_{model_name}"
                 permissions_map[field.name] = f"shelters.{permission_codename}"

@@ -4,20 +4,23 @@ Integration tests for ``accounts.services`` and ``accounts.selectors``.
 
 import pytest
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import OrganizationProfile, PermissionGroupTemplate, User
+from accounts.models import OrganizationProfile, PermissionGroup, PermissionGroupTemplate, User
 from accounts.selectors import permission_group_for_user
 from accounts.services import (
+    create_organization_service,
     create_organization_with_presets,
     get_or_create_user_by_email,
     member_add,
+    member_roles_replace,
     organization_remove_member,
+    organization_transfer_ownership,
     reactivate_user,
 )
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import OrganizationUser
+from organizations.models import Organization, OrganizationOwner, OrganizationUser
 from shelters.groups import SHELTER_OPERATOR
 
 # ── create_organization_with_presets ──────────────────────────────────
@@ -63,6 +66,15 @@ def test_create_dual_type_org() -> None:
         PermissionGroupTemplate.objects.filter(permissiongroup__organization=org).values_list("name", flat=True)
     )
     assert names == {CASEWORKER.name, SHELTER_OPERATOR.name, ORG_ADMIN.name, ORG_SUPERUSER.name}
+
+
+@pytest.mark.django_db
+def test_create_org_deduplicates_repeated_presets() -> None:
+    """The same preset twice stores one org type, not two."""
+    org = create_organization_with_presets("Repeated Org", ["outreach", "outreach"], owner=baker.make(User))
+
+    profile = OrganizationProfile.objects.get(organization=org)
+    assert [t.value for t in profile.org_types] == ["outreach"]
 
 
 @pytest.mark.django_db
@@ -525,3 +537,219 @@ class TestOrganizationRemoveMember:
 
         with pytest.raises(ValidationError, match="not a member"):
             organization_remove_member(organization=org, user_id=ghost.pk, removed_by=owner)
+
+
+@pytest.mark.django_db
+class TestMemberRolesReplace:
+    """Tests for member_roles_replace."""
+
+    def test_replaces_the_roles_the_organization_offers(self) -> None:
+        owner = baker.make(User)
+        org = create_organization_with_presets("Replace Org", ["outreach", "shelter"], owner=owner)
+
+        member = member_add(
+            email="replace@example.com",
+            first_name="Replace",
+            last_name="Me",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+
+        member_roles_replace(organization=org, user_id=member.pk, permission_templates=(SHELTER_OPERATOR,))
+
+        assert _role_names(org, member) == {SHELTER_OPERATOR.name}
+
+    def test_leaves_a_role_the_organization_does_not_offer_by_invitation(self) -> None:
+        """Org Admin is ``is_invitable=False``, so no caller of this can name it."""
+        owner = baker.make(User)
+        org = create_organization_with_presets("Promotion Org", ["outreach"], owner=owner)
+
+        member = member_add(
+            email="promoted@example.com",
+            first_name="Promoted",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER, ORG_ADMIN),
+        )
+
+        member_roles_replace(organization=org, user_id=member.pk, permission_templates=())
+
+        assert _role_names(org, member) == {ORG_ADMIN.name}
+
+    def test_raises_when_the_user_is_not_a_member(self) -> None:
+        owner = baker.make(User)
+        org = create_organization_with_presets("Stranger Org", ["outreach"], owner=owner)
+
+        stranger = baker.make(User)
+
+        with pytest.raises(ValidationError, match="not a member"):
+            member_roles_replace(organization=org, user_id=stranger.pk, permission_templates=(CASEWORKER,))
+
+
+def _role_names(org: Organization, member: User) -> set[str]:
+    return set(PermissionGroup.objects.filter(organization=org, user=member).values_list("template__name", flat=True))
+
+
+# ── create_organization_service: no implicit join ─────────────────────
+
+
+def _existing_org_with_caseworker() -> tuple[Organization, User]:
+    """An organization someone else already runs, with a member holding a role."""
+    incumbent = baker.make(User, email="incumbent@example.com")
+    org = create_organization_with_presets("Acme Housing", ["outreach"], owner=incumbent, owner_roles=(CASEWORKER,))
+    return org, incumbent
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_does_not_join_it() -> None:
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    _, created = create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    assert created.pk != org.pk, "must not resolve onto the existing organization"
+    assert not OrganizationUser.objects.filter(user=outsider, organization=org).exists()
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_leaves_its_org_types_alone() -> None:
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    profile = OrganizationProfile.objects.get(organization=org)
+    assert [str(org_type) for org_type in profile.org_types] == ["outreach"]
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_leaves_its_members_roles_alone() -> None:
+    org, incumbent = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    caseworker = Group.objects.get(permissiongroup__organization=org, permissiongroup__template__name=CASEWORKER.name)
+    assert caseworker in incumbent.groups.all()
+
+
+@pytest.mark.django_db
+def test_creating_an_org_by_an_existing_name_grants_no_role_on_it() -> None:
+    """The escalation itself: naming someone else's org must not make you its admin."""
+    org, _ = _existing_org_with_caseworker()
+    outsider = baker.make(User, email="outsider@example.com")
+
+    create_organization_service(user=outsider, organization_name="Acme Housing", org_type_name="shelter")
+
+    held = set(PermissionGroup.objects.filter(organization=org, user=outsider).values_list("template__name", flat=True))
+    assert held == set(), f"outsider holds {held} on an organization they never joined"
+
+
+# ── duplicate organization names are supported ────────────────────────
+
+
+@pytest.mark.django_db
+def test_two_organizations_may_share_a_name() -> None:
+    """Pins a deliberate invariant, so nobody "fixes" this with a unique constraint.
+
+    Names are editable and two real organizations may genuinely share one, so
+    uniqueness must not be reintroduced — it is the assumption that made
+    resolving an organization by name look reasonable in the first place.
+    """
+    first = create_organization_with_presets("Shared Name", ["outreach"], owner=baker.make(User))
+    second = create_organization_with_presets("Shared Name", ["outreach"], owner=baker.make(User))
+
+    assert first.pk != second.pk
+    assert first.slug != second.slug, "slug is unique and must absorb the collision"
+
+
+@pytest.mark.django_db
+def test_same_named_organizations_keep_separate_members_and_roles() -> None:
+    first_owner = baker.make(User, email="first@example.com")
+    second_owner = baker.make(User, email="second@example.com")
+    first = create_organization_with_presets("Shared Name", ["outreach"], owner=first_owner, owner_roles=(CASEWORKER,))
+    second = create_organization_with_presets(
+        "Shared Name", ["outreach"], owner=second_owner, owner_roles=(CASEWORKER,)
+    )
+
+    assert not OrganizationUser.objects.filter(user=first_owner, organization=second).exists()
+    assert not PermissionGroup.objects.filter(organization=second, user=first_owner).exists()
+
+    first_group = PermissionGroup.objects.get(organization=first, template__name=CASEWORKER.name)
+    second_group = PermissionGroup.objects.get(organization=second, template__name=CASEWORKER.name)
+    assert first_group.name != second_group.name, "the pk segment must disambiguate"
+
+
+@pytest.mark.django_db
+class TestOrganizationTransferOwnership:
+    """Tests for organization_transfer_ownership."""
+
+    def _org_with_member(self, name: str) -> tuple[User, User, "Organization"]:
+        owner = baker.make(User)
+        org = create_organization_with_presets(name, ["outreach"], owner=owner)
+        member = member_add(
+            email=f"{name.replace(' ', '').lower()}@example.com",
+            first_name="A",
+            last_name="Member",
+            middle_name=None,
+            organization=org,
+            permission_templates=(CASEWORKER,),
+        )
+        return owner, member, org
+
+    def test_moves_ownership_to_another_member(self) -> None:
+        owner, member, org = self._org_with_member("Transfer Org")
+
+        returned = organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert returned == member
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == member
+
+    def test_the_previous_owner_keeps_membership_and_roles(self) -> None:
+        owner, member, org = self._org_with_member("Keeps Org")
+        before = set(
+            PermissionGroup.objects.filter(organization=org, user=owner).values_list("template__name", flat=True)
+        )
+
+        organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert OrganizationUser.objects.filter(organization=org, user=owner).exists()
+        after = set(
+            PermissionGroup.objects.filter(organization=org, user=owner).values_list("template__name", flat=True)
+        )
+        assert after == before
+
+    def test_the_previous_owner_can_then_be_removed(self) -> None:
+        """The whole point: an owner was un-removable with no way to stop being one."""
+        owner, member, org = self._org_with_member("Unstick Org")
+
+        with pytest.raises(ValidationError, match="cannot remove the organization owner"):
+            organization_remove_member(organization=org, user_id=owner.pk, removed_by=member)
+
+        organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+        organization_remove_member(organization=org, user_id=owner.pk, removed_by=member)
+
+        assert not OrganizationUser.objects.filter(organization=org, user=owner).exists()
+
+    def test_an_organization_with_no_owner_row_gains_one(self) -> None:
+        """The shelter importer never called add_user, so most production orgs own nothing."""
+        owner, member, org = self._org_with_member("Ownerless Org")
+        OrganizationOwner.objects.filter(organization=org).delete()
+        # Refetched, or change_owner finds the deleted row still cached on the instance.
+        org = Organization.objects.get(pk=org.pk)
+
+        returned = organization_transfer_ownership(organization=org, new_owner_user_id=member.pk)
+
+        assert returned == member
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == member
+
+    def test_a_non_member_cannot_own_the_organization(self) -> None:
+        owner, member, org = self._org_with_member("Stranger Owner Org")
+        stranger = baker.make(User)
+
+        with pytest.raises(ValidationError, match="Only a member"):
+            organization_transfer_ownership(organization=org, new_owner_user_id=stranger.pk)
+
+        assert OrganizationOwner.objects.get(organization=org).organization_user.user == owner

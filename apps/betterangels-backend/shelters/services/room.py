@@ -1,6 +1,7 @@
 import re
 from typing import TYPE_CHECKING, Any, Dict, cast
 
+from common.permissions.utils import require_can
 from common.utils import get_by_pk_or_not_found
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -13,14 +14,17 @@ if TYPE_CHECKING:
 
 
 @transaction.atomic
-def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> Room:
+def room_create(*, user: "User", data: Dict[str, Any]) -> Room:
     """Create a new Room associated with an existing Shelter.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
-    ``view_shelter`` permission.
+    ``view_shelter`` permission (reach-scoped), then checks create authority
+    with ``can(user, Room.perms.ADD, org)`` where the org is the parent
+    shelter's (ADR 0001 §2.6).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when the shelter is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
@@ -29,9 +33,10 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
-        organization_id=organization_id,
         permission=Shelter.perms.VIEW,
     )
+
+    require_can(user, Room.perms.ADD, org=shelter.organization_id)
 
     m2m_data: Dict[str, Any] = {k: data.pop(k) for k in list(data) if k in _ROOM_M2M_FIELDS and data[k] is not None}
 
@@ -48,11 +53,11 @@ def room_create(*, user: "User", organization_id: str, data: Dict[str, Any]) -> 
 
 
 @transaction.atomic
-def room_update(*, user: "User", organization_id: str, room_id: int | str, data: Dict[str, Any]) -> Room:
+def room_update(*, user: "User", data: Dict[str, Any]) -> Room:
     """Update an existing room, including M2M relationships when provided.
 
     Resolves *room* via :func:`~shelters.selectors.room_get` with
-    ``change_room`` permission.
+    ``change_room`` permission — reach-scoped by the user's grants.
 
     Only keys present in *data* are applied; ``None`` scalar values are
     skipped.
@@ -62,12 +67,11 @@ def room_update(*, user: "User", organization_id: str, room_id: int | str, data:
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = dict(data)
-    data.pop("id", None)
+    room_id = data.pop("id")
 
     room = room_get(
         user=user,
         room_id=room_id,
-        organization_id=organization_id,
         permission=Room.perms.CHANGE,
     )
 
@@ -118,10 +122,10 @@ def _unique_clone_name(*, shelter_id: int | str, name: str | None) -> str:
 
 
 @transaction.atomic
-def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> list[int]:
+def room_delete(*, user: "User", room_ids: list[int]) -> list[int]:
     """Delete rooms and return the deleted IDs.
 
-    Scopes to *organization_id* where *user* is a member.
+    The queryset is reach-scoped by the user's grants.
 
     Unmatched or inaccessible IDs are silently skipped; only successfully
     deleted IDs are returned.
@@ -129,7 +133,7 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no matching rooms exist.
     """
-    qs = room_queryset(user=user, organization_id=organization_id)
+    qs = room_queryset(user=user, permission=Room.perms.DELETE)
     qs = qs.filter(pk__in=room_ids)
     deleted_ids = list(qs.values_list("pk", flat=True))
     if not deleted_ids:
@@ -139,22 +143,29 @@ def room_delete(*, user: "User", organization_id: str, room_ids: list[int]) -> l
 
 
 @transaction.atomic
-def room_clone(*, user: "User", organization_id: str, room_id: str) -> Room:
+def room_clone(*, user: "User", room_id: str) -> Room:
     """Clone an existing room, including all M2M relationships.
 
-    Scopes to *organization_id* where *user* is a member.
-    Beds are not copied.
+    The source is resolved reach-scoped and the create org is taken from the
+    source shelter.  Beds are not copied.
+    Cloning creates a new room, so it follows the create convention (ADR 0001
+    §2.6): the source is resolved with view authority and create authority is
+    checked with ``can(user, Room.perms.ADD, org)``.
 
     Raises:
         ``ObjectDoesNotExist`` when the room is not found.
+        ``django.core.exceptions.PermissionDenied`` when the user cannot add rooms.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     qs = room_queryset(
         Room.objects.select_related("shelter").prefetch_related(*_ROOM_M2M_FIELDS),
         user=user,
-        organization_id=organization_id,
+        permission=Room.perms.VIEW,
     )
     source = get_by_pk_or_not_found(qs, pk=room_id)
+
+    require_can(user, Room.perms.ADD, org=source.shelter.organization_id)
+
     return cast(
         Room,
         source.make_clone(attrs={"name": _unique_clone_name(shelter_id=source.shelter.pk, name=source.name)}),

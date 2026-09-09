@@ -5,7 +5,9 @@ import type { ResolveShelterPhotoUploadsMutation } from './useShelterPhotoUpload
 
 export const generateShelterPhotoUploadsOperationKey: keyof Omit<GenerateShelterPhotoUploadsMutation, '__typename'> = 'generateShelterPhotoUploads';
 export const generateShelterPhotoUploadsSuccessTypename: Extract<
-  NonNullable<GenerateShelterPhotoUploadsMutation['generateShelterPhotoUploads']>,
+  NonNullable<GenerateShelterPhotoUploadsMutation['generateShelterPhotoUploads']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<GenerateShelterPhotoUploadsMutation['generateShelterPhotoUploads']>,
   { __typename: 'AuthorizedPresignedS3UploadsType' }
 >['__typename'] = 'AuthorizedPresignedS3UploadsType';
 
@@ -16,7 +18,9 @@ export const generateShelterPhotoUploadsMeta = {
 
 export const resolveShelterPhotoUploadsOperationKey: keyof Omit<ResolveShelterPhotoUploadsMutation, '__typename'> = 'resolveShelterPhotoUploads';
 export const resolveShelterPhotoUploadsSuccessTypename: Extract<
-  NonNullable<ResolveShelterPhotoUploadsMutation['resolveShelterPhotoUploads']>,
+  NonNullable<ResolveShelterPhotoUploadsMutation['resolveShelterPhotoUploads']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<ResolveShelterPhotoUploadsMutation['resolveShelterPhotoUploads']>,
   { __typename: 'ShelterPhotoUploadsType' }
 >['__typename'] = 'ShelterPhotoUploadsType';
 

@@ -118,13 +118,6 @@ class ClientDocumentType(AttachmentInterface):
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry_django.input(Attachment)
-class CreateClientDocumentInput:
-    client_profile: ID
-    file: Upload
-    namespace: ClientDocumentNamespaceEnum
-
-
 @strawberry_django.order_type(ClientProfile, one_of=False)
 class ClientProfileOrder:
     first_name: auto

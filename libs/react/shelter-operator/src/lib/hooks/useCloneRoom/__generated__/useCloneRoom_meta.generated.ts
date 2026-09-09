@@ -4,7 +4,9 @@ import type { CloneRoomMutation } from './useCloneRoom.generated';
 
 export const cloneRoomOperationKey: keyof Omit<CloneRoomMutation, '__typename'> = 'cloneRoom';
 export const cloneRoomSuccessTypename: Extract<
-  NonNullable<CloneRoomMutation['cloneRoom']>,
+  NonNullable<CloneRoomMutation['cloneRoom']> extends readonly (infer _T)[]
+    ? _T
+    : NonNullable<CloneRoomMutation['cloneRoom']>,
   { __typename: 'RoomType' }
 >['__typename'] = 'RoomType';
 

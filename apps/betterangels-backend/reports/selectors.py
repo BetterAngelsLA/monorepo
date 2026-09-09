@@ -49,16 +49,13 @@ def note_list_for_org(
 
 def note_count_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by date."""
-    return list(
+    rows = (
         notes.annotate(trunc_date=TruncDate("interacted_at"))
         .values("trunc_date")
         .annotate(count=Count("id"))
         .order_by("trunc_date")
-        .values(
-            date=F("trunc_date"),
-            count=F("count"),
-        )
     )
+    return [{"date": row["trunc_date"], "count": row["count"]} for row in rows]
 
 
 def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
@@ -69,17 +66,14 @@ def note_count_by_team(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
 
 def note_count_by_purpose(*, notes: QuerySet[Note], limit: int = 10) -> list[dict[str, Any]]:
     """Aggregate note counts grouped by purpose."""
-    return list(
+    rows = (
         notes.exclude(purpose__isnull=True)
         .exclude(purpose="")
         .values("purpose")
         .annotate(count=Count("id"))
         .order_by("-count")[:limit]
-        .values(
-            name=F("purpose"),
-            count=F("count"),
-        )
     )
+    return [{"name": row["purpose"], "count": row["count"]} for row in rows]
 
 
 def note_top_services(
@@ -99,12 +93,13 @@ def note_top_services(
         limit: Max number of results.
     """
     label_field = f"{relation}__service__label"
-    return list(
+    rows = (
         notes.filter(**{f"{relation}__service__isnull": False})
         .values(name=F(label_field))
         .annotate(count=Count("id"))
         .order_by("-count")[:limit]
     )
+    return [{"name": row["name"], "count": row["count"]} for row in rows]
 
 
 def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
@@ -114,17 +109,14 @@ def note_unique_clients_count(*, notes: QuerySet[Note]) -> int:
 
 def note_unique_clients_by_date(*, notes: QuerySet[Note]) -> list[dict[str, Any]]:
     """Count distinct client profiles grouped by interaction date."""
-    return list(
+    rows = (
         notes.filter(client_profile__isnull=False)
         .annotate(trunc_date=TruncDate("interacted_at"))
         .values("trunc_date")
         .annotate(count=Count("client_profile", distinct=True))
         .order_by("trunc_date")
-        .values(
-            date=F("trunc_date"),
-            count=F("count"),
-        )
     )
+    return [{"date": row["trunc_date"], "count": row["count"]} for row in rows]
 
 
 def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

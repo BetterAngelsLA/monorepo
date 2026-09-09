@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+from common.utils import get_or_none
 from django.db.models import QuerySet
 from organizations.models import Organization
 
@@ -15,7 +16,4 @@ def team_list(*, organization: Organization) -> QuerySet[Team]:
 
 def team_get(*, pk: int | str, organization: Organization) -> Optional[Team]:
     """Return a single team by PK, scoped to *organization*."""
-    try:
-        return Team.objects.filter(pk=pk, organization=organization).first()
-    except ValueError, TypeError:
-        return None
+    return get_or_none(Team.objects.filter(organization=organization), pk)

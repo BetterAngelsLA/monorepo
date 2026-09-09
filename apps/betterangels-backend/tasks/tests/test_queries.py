@@ -241,6 +241,38 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             {"id": str(self.org_1_team_1.pk), "slug": None, "name": self.org_1_team_1.name},
         )
 
+    def test_tasks_query_teams_filter_ignores_an_unmatchable_id(self) -> None:
+        task_id = self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+                "teamId": str(self.org_1_team_2.pk),
+            }
+        )["data"]["createTask"]["id"]
+
+        response = self.execute_graphql(
+            self.get_tasks_query("id"),
+            {"filters": {"teamIds": [str(self.org_1_team_2.pk), "abc"]}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
+
+    def test_tasks_query_teams_filter_of_only_unmatchable_ids_matches_nothing(self) -> None:
+        self.create_task_fixture(
+            {
+                "clientProfile": str(self.client_profile.pk),
+                "summary": "task 2 summary",
+                "teamId": str(self.org_1_team_2.pk),
+            }
+        )
+
+        response = self.execute_graphql(self.get_tasks_query("id"), {"filters": {"teamIds": ["abc"]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["tasks"]["totalCount"], 0)
+
     def test_tasks_query_teams_filter(self) -> None:
         task_id = self.create_task_fixture(
             {

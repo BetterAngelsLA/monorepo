@@ -1,5 +1,5 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { StyleSheet, View } from 'react-native';
 
 type TTaskUpdatedAtProps = {
@@ -11,7 +11,7 @@ export default function TaskUpdatedAt(props: TTaskUpdatedAtProps) {
   return (
     <View style={styles.container}>
       <TextRegular size="sm">Updated at</TextRegular>
-      <TextBold size="xs">{format(new Date(updatedAt), 'MM/dd/yyyy')}</TextBold>
+      <TextBold size="xs">{formatScalarDate(updatedAt, 'MM/dd/yyyy')}</TextBold>
     </View>
   );
 }

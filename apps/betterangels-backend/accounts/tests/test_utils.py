@@ -1,5 +1,5 @@
 from accounts.groups import ORG_ADMIN, ORG_SUPERUSER
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from accounts.role_manager import OrgRoleManager
 from django.contrib.auth.models import Group
 from django.test import TestCase
@@ -25,9 +25,16 @@ class OrgRoleManagerTestCase(ParametrizedTestCase, TestCase):
         self.omb_2.add_roles(self.user, CASEWORKER, ORG_SUPERUSER)
 
     def _get_org_group(self, org: Organization, template_name: str) -> Group:
-        """Helper: fetch the actual Group object for (org, template_name)."""
-        pg = PermissionGroup.objects.get(organization=org, template__name=template_name)
-        return pg.group
+        """Helper: fetch the ``auth.Group`` row for (org, template_name).
+
+        The parent instance rather than the ``PermissionGroup``: Django compares
+        concrete models in ``__eq__``, so a child never equals the parent row
+        these assertions look for in ``user.groups``.
+        """
+        return Group.objects.get(
+            permissiongroup__organization=org,
+            permissiongroup__template__name=template_name,
+        )
 
     def test_set_role(self) -> None:
         omb = OrgRoleManager(self.org_1)

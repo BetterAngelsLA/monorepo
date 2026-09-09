@@ -951,38 +951,18 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
         self._setup_client_documents()
 
-    def test_create_client_document(self) -> None:
-        file_content = b"Test file content"
-        file_name = "test file name.txt"
-
-        expected_query_count = 22
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
-            )
-
-        client_document_id = response["data"]["createClientDocument"]["id"]
-        self.assertEqual(
-            response["data"]["createClientDocument"]["originalFilename"],
-            file_name,
-        )
-        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertEqual(
-            Attachment.objects.get(id=client_document_id).original_filename,
-            file_name,
-        )
-
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 16
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            self._delete_client_document_fixture(client_document_id)
+            response = self._delete_client_document_fixture(client_document_id)
 
+        self.assertEqual(
+            response["data"]["deleteClientDocument"],
+            {"__typename": "ClientDocumentType", "id": client_document_id},
+        )
         self.assertFalse(
             Attachment.objects.filter(id=client_document_id).exists(),
             "The document should have been deleted from the database.",

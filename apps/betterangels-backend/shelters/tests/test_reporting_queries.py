@@ -2,7 +2,6 @@ import datetime
 
 import time_machine
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from model_bakery import baker
 from organizations.models import Organization
 
@@ -44,11 +43,8 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         self.other_org_shelter = shelter_recipe.make(organization=self.org_2)
 
     def _add_shelter_view_permission(self, org: Organization) -> None:
-        from notes.groups import CASEWORKER
-
-        app_label, codename = Shelter.perms.VIEW.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        org.permission_groups.get(template__name=CASEWORKER.name).group.permissions.add(perm)
+        # Grant view_shelter via a Role+Grant (ADR 0001).
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, org)
 
     def test_unauthenticated(self) -> None:
         self.graphql_client.logout()
@@ -81,7 +77,7 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         )
 
     def test_shelter_in_other_org_is_not_found(self) -> None:
-        """A user can't pull metrics for a shelter outside their organization."""
+        """A user can't pull metrics for a shelter outside their reach."""
         self._add_shelter_view_permission(self.org_1)
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
@@ -93,6 +89,40 @@ class ShelterOccupancyMetricsQueryTestCase(GraphQLBaseTestCase):
         self.assertIsNone(response["data"])
         self.assertIn(
             f"Shelter matching ID {self.other_org_shelter.pk} could not be found.",
+            response["errors"][0]["message"],
+        )
+
+    def test_occupancy_metrics_resolve_for_other_org_by_reach(self) -> None:
+        """Occupancy metrics resolve by ``shelterId`` against grant reach.
+
+        The user holds VIEW in org_2 and asks for org_2's shelter: it resolves.
+        """
+        self._add_shelter_view_permission(self.org_1)
+        self._add_shelter_view_permission(self.org_2)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        baker.make(Bed, shelter=self.other_org_shelter, name="Bed cross-org")
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": str(self.other_org_shelter.pk)},
+        )
+
+        payload = response["data"]["shelterOccupancyMetrics"]
+        self.assertEqual(payload["shelterId"], str(self.other_org_shelter.pk))
+        self.assertEqual(len(payload["dailyOccupancy"]), 30)
+
+    def test_unmatchable_shelter_id_is_not_found(self) -> None:
+        self._add_shelter_view_permission(self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self.execute_graphql(
+            self.SHELTER_OCCUPANCY_METRICS_QUERY,
+            variables={"shelterId": "abc"},
+        )
+
+        self.assertIsNone(response["data"])
+        self.assertIn(
+            "Shelter matching ID abc could not be found.",
             response["errors"][0]["message"],
         )
 

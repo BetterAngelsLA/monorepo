@@ -35,6 +35,9 @@ class TeamGetTestCase(GraphQLBaseTestCase):
     def test_returns_none_for_an_unknown_pk(self) -> None:
         self.assertIsNone(team_get(pk=999999, organization=self.org_1))
 
+    def test_returns_none_for_a_pk_the_column_cannot_hold(self) -> None:
+        self.assertIsNone(team_get(pk="abc", organization=self.org_1))
+
 
 class OrganizationGetForMemberTestCase(GraphQLBaseTestCase):
     """Backs the ``teams`` query — the header names an org, membership grants it."""

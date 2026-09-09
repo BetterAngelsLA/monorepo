@@ -1,14 +1,15 @@
 import type * as Types from '@monorepo/ba-platform/types';
 
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type UpdateClientHouseholdMemberMutationVariables = Types.Exact<{
   data: Types.ClientHouseholdMemberInput;
 }>;
 
 
-export type UpdateClientHouseholdMemberMutation = { __typename?: 'Mutation', updateClientHouseholdMember:
-    | { __typename?: 'ClientHouseholdMemberType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type UpdateClientHouseholdMemberMutation = { __typename: 'Mutation', updateClientHouseholdMember:
+    | { __typename: 'ClientHouseholdMemberType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 export type CreateClientHouseholdMemberMutationVariables = Types.Exact<{
@@ -16,9 +17,9 @@ export type CreateClientHouseholdMemberMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateClientHouseholdMemberMutation = { __typename?: 'Mutation', createClientHouseholdMember:
-    | { __typename?: 'ClientHouseholdMemberType', id: string }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+export type CreateClientHouseholdMemberMutation = { __typename: 'Mutation', createClientHouseholdMember:
+    | { __typename: 'ClientHouseholdMemberType', id: string }
+    | { __typename: 'OperationInfo', messages: Array<{ __typename: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 
 

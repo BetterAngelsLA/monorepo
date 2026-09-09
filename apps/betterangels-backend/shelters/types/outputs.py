@@ -11,7 +11,6 @@ from clients.types import ClientProfileType
 from common.enums import ImagePresetEnum
 from common.graphql.types import PhoneNumberScalar, TransformableImageType
 from common.images import build_img_url
-from common.permissions.utils import get_current_organization
 from django.db.models import Prefetch, QuerySet
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -280,12 +279,13 @@ class ShelterType(ShelterTypeMixin):
 
 
 @strawberry_django.type(models.Shelter, filters=OperatorShelterFilter, ordering=ShelterOrder)
+# Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
+# fail-closed gate; the query's own ``filters`` variable only narrows the view.
 class OperatorShelterType(ShelterTypeMixin):
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Shelter]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return shelter_queryset(queryset, user=user, organization_id=org_id, perms=[models.Shelter.perms.VIEW])
+        return shelter_queryset(queryset, user=user, permission=models.Shelter.perms.VIEW)
 
 
 def _get_hero_image(shelter: models.Shelter) -> Optional[models.ShelterPhoto]:
@@ -301,8 +301,7 @@ def _room_beds_prefetch(info: Info) -> Prefetch:
     user = get_current_user(info)
     bed_qs: QuerySet[models.Bed] = models.Bed.objects.with_computed_status()
     if user is not None and user.is_authenticated:
-        org_id = get_current_organization(info)
-        bed_qs = bed_queryset(bed_qs, user=cast(User, user), organization_id=org_id, perms=[models.Bed.perms.VIEW])
+        bed_qs = bed_queryset(bed_qs, user=cast(User, user), permission=models.Bed.perms.VIEW)
 
     return Prefetch("beds", queryset=bed_qs)
 
@@ -319,8 +318,7 @@ class BedType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Bed]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return bed_queryset(queryset, user=user, organization_id=org_id, perms=[models.Bed.perms.VIEW])
+        return bed_queryset(queryset, user=user, permission=models.Bed.perms.VIEW)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -352,8 +350,7 @@ class RoomType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Room]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return room_queryset(queryset, user=user, organization_id=org_id, perms=[models.Room.perms.VIEW])
+        return room_queryset(queryset, user=user, permission=models.Room.perms.VIEW)
 
     id: ID
     accessibility: List[AccessibilityType]
@@ -396,8 +393,7 @@ class ReservationType:
     @classmethod
     def get_queryset(cls, queryset: QuerySet, info: Info) -> QuerySet[models.Reservation]:
         user = cast(User, get_current_user(info))
-        org_id = get_current_organization(info)
-        return reservation_queryset(queryset, user=user, organization_id=org_id, perms=[models.Reservation.perms.VIEW])
+        return reservation_queryset(queryset, user=user, permission=models.Reservation.perms.VIEW)
 
     id: ID
     bed: Optional["BedType"]

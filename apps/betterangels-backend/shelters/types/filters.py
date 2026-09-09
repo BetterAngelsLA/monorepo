@@ -103,6 +103,7 @@ class MaxStayInput:
 @strawberry.input
 class OpenNowInput:
     schedule_type: Optional[List[ScheduleTypeChoices]] = None
+    include_unknown: Optional[bool] = False
 
 
 @strawberry_django.filter_type(models.Shelter)
@@ -160,38 +161,35 @@ class PublicShelterFilter:
 
         return queryset.filter(combined_q).distinct(), Q()
 
-    @strawberry_django.filter_field(deprecation_reason="Use openNow instead")
-    def open_now_for(
-        self,
-        queryset: QuerySet,
-        value: Optional[list[ScheduleTypeChoices]],
-        prefix: str,
-    ) -> Tuple[QuerySet[models.Shelter], Q]:
-        if not value:
-            return queryset, Q()
-
-        return (
-            shelters_open_at(
-                queryset,
-                dt=get_current_shelter_schedule_datetime(),
-                schedule_types=value,
-            ),
-            Q(),
-        )
-
     @strawberry_django.filter_field
     def open_now(self, queryset: QuerySet, value: OpenNowInput, prefix: str) -> Tuple[QuerySet[models.Shelter], Q]:
         if not value.schedule_type:
             return queryset, Q()
 
-        return (
-            shelters_open_at(
-                queryset,
-                dt=get_current_shelter_schedule_datetime(),
-                schedule_types=value.schedule_type,
-            ),
-            Q(),
+        open_qs = shelters_open_at(
+            queryset,
+            dt=get_current_shelter_schedule_datetime(),
+            schedule_types=value.schedule_type,
         )
+
+        if not value.include_unknown:
+            return open_qs, Q()
+
+        # "Unknown" for a schedule type = the shelter has no non-exception
+        # schedule row of that type.  Unioned per-type with the open results.
+        unknown_qs = queryset.none()
+        for schedule_type in value.schedule_type:
+            unknown_qs |= queryset.filter(
+                ~Exists(
+                    models.Schedule.objects.filter(
+                        shelter=OuterRef("pk"),
+                        schedule_type=schedule_type,
+                        is_exception=False,
+                    )
+                )
+            )
+
+        return (open_qs | unknown_qs).distinct(), Q()
 
     @strawberry_django.filter_field
     def map_bounds(

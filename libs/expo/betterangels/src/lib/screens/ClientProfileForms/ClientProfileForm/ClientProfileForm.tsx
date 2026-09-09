@@ -165,11 +165,6 @@ export default function ClientProfileForm(props: IClientProfileForms) {
   );
 }
 
-/** Format a Date as YYYY-MM-DD for API (avoids ISO datetime serialization). */
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
 function toUpdateClienProfileInputs(
   id: string,
   values: FormValues,
@@ -184,8 +179,8 @@ function toUpdateClienProfileInputs(
   // only update dates if touched/changed
   // this prevents clearing dates when the field wasn't intentionally modified
   if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
-    if (values.dateOfBirth instanceof Date) {
-      updatedInputs.dateOfBirth = toDateOnlyString(values.dateOfBirth);
+    if (values.dateOfBirth) {
+      updatedInputs.dateOfBirth = values.dateOfBirth;
     } else if (values.dateOfBirth === null) {
       updatedInputs.dateOfBirth = null;
     }
@@ -196,10 +191,8 @@ function toUpdateClienProfileInputs(
     dirtyFields &&
     'unhousedStartDate' in dirtyFields
   ) {
-    if (values.unhousedStartDate instanceof Date) {
-      updatedInputs.unhousedStartDate = toDateOnlyString(
-        values.unhousedStartDate,
-      );
+    if (values.unhousedStartDate) {
+      updatedInputs.unhousedStartDate = values.unhousedStartDate;
     } else if (values.unhousedStartDate === null) {
       updatedInputs.unhousedStartDate = null;
     }
@@ -213,14 +206,6 @@ function toUpdateClienProfileInputs(
     ...values,
     ...updatedInputs,
   };
-
-  // Always send dates as YYYY-MM-DD when present (Date serializes as ISO datetime)
-  if (result.dateOfBirth instanceof Date) {
-    result.dateOfBirth = toDateOnlyString(result.dateOfBirth);
-  }
-  if (result.unhousedStartDate instanceof Date) {
-    result.unhousedStartDate = toDateOnlyString(result.unhousedStartDate);
-  }
 
   return result;
 }

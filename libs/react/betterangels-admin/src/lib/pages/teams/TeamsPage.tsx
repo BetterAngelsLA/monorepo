@@ -9,7 +9,7 @@ import {
   useAppDrawer,
 } from '@monorepo/react/components';
 import { GroupsIcon, PlusIcon } from '@monorepo/react/icons';
-import { mergeCss } from '@monorepo/react/shared';
+import { mergeCss, toError } from '@monorepo/react/shared';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { JSX, useRef, useState } from 'react';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
@@ -26,6 +26,10 @@ type IProps = {
 };
 
 type SortField = 'name' | 'createdAt';
+
+// Search, sorting and the inactive toggle all run client-side, so the page has
+// to hold every team for them to mean what they say.
+const ALL_TEAMS_LIMIT = 10000;
 
 const COLUMNS: {
   label: string;
@@ -68,7 +72,10 @@ export function TeamsPage(props: IProps) {
 
   const { data, loading, previousData, refetch } = useQuery(
     AdminTeamsDocument,
-    { fetchPolicy: 'cache-and-network' },
+    {
+      variables: { pagination: { limit: ALL_TEAMS_LIMIT, offset: 0 } },
+      fetchPolicy: 'cache-and-network',
+    },
   );
 
   const [deleteTeam, { loading: deleting }] = useMutation(DeleteTeamDocument);
@@ -112,15 +119,22 @@ export function TeamsPage(props: IProps) {
       const response = await deleteTeam({
         variables: { data: { id: team.id } },
       });
-      const error = extractOperationInfoMessage(response, 'deleteTeam');
-      if (error) throw new Error(error);
+      const refusal = extractOperationInfoMessage(response, 'deleteTeam');
+
+      if (refusal) {
+        showAlert({ type: 'error', content: refusal });
+
+        return;
+      }
+
       showAlert({
         type: 'success',
         content: `${team.name} successfully deleted.`,
       });
       refetch();
     } catch (err) {
-      console.error(err);
+      console.error(`[deleteTeam error]: ${toError(err).message}`);
+
       showAlert({
         type: 'error',
         content: 'Sorry, something went wrong. Please try again.',

@@ -40,14 +40,21 @@ export function ShelterFilters(props: IProps) {
   const { data: maxStayData } = useQuery(ShelterMaxStayDocument);
   const maxStayMax = maxStayData?.shelterMaxStay ?? undefined;
 
-  const initialOpenNowForTypes = filters.openNowFor ?? [];
-  const [openNowForTypes, setOpenNowForTypes] = useState<ScheduleTypeChoices[]>(
-    initialOpenNowForTypes,
+  const initialOpenNowTypes = filters.openNow ?? [];
+  const [openNowTypes, setOpenNowTypes] =
+    useState<ScheduleTypeChoices[]>(initialOpenNowTypes);
+
+  useEffect(() => {
+    setOpenNowTypes(filters.openNow ?? []);
+  }, [filters.openNow]);
+
+  const [openNowIncludeUnknown, setOpenNowIncludeUnknown] = useState<boolean>(
+    !!filters.openNowIncludeUnknown,
   );
 
   useEffect(() => {
-    setOpenNowForTypes(filters.openNowFor ?? []);
-  }, [filters.openNowFor]);
+    setOpenNowIncludeUnknown(!!filters.openNowIncludeUnknown);
+  }, [filters.openNowIncludeUnknown]);
 
   const parentCss = ['pb-24', className];
 
@@ -61,19 +68,41 @@ export function ShelterFilters(props: IProps) {
     });
   }
 
-  function onOpenNowForTypeChange(
+  function onOpenNowTypeChange(
     scheduleType: ScheduleTypeChoices,
     checked: boolean,
   ) {
     const newTypes = checked
-      ? [...openNowForTypes, scheduleType]
-      : openNowForTypes.filter((t) => t !== scheduleType);
+      ? [...openNowTypes, scheduleType]
+      : openNowTypes.filter((t) => t !== scheduleType);
 
-    setOpenNowForTypes(newTypes);
+    const hasTypes = newTypes.length > 0;
+
+    setOpenNowTypes(newTypes);
+    if (!hasTypes) {
+      setOpenNowIncludeUnknown(false);
+    }
 
     onFiltersChange({
       ...filters,
-      openNowFor: newTypes.length > 0 ? newTypes : undefined,
+      openNow: hasTypes ? newTypes : undefined,
+      openNowIncludeUnknown: hasTypes
+        ? filters.openNowIncludeUnknown
+        : undefined,
+    });
+  }
+
+  function onOpenNowIncludeUnknownChange(checked: boolean) {
+    // Never allow include-unknown without at least one selected schedule type.
+    if (checked && openNowTypes.length === 0) {
+      return;
+    }
+
+    setOpenNowIncludeUnknown(checked);
+
+    onFiltersChange({
+      ...filters,
+      openNowIncludeUnknown: checked || undefined,
     });
   }
 
@@ -86,6 +115,7 @@ export function ShelterFilters(props: IProps) {
 
   function onMaxStayDaysChange(days: string) {
     const parsed = parseInt(days, 10);
+
     onFiltersChange({
       ...filters,
       maxStay: {
@@ -130,12 +160,18 @@ export function ShelterFilters(props: IProps) {
                 <Checkbox
                   key={option.key}
                   label={option.label}
-                  checked={openNowForTypes.includes(option.key)}
+                  checked={openNowTypes.includes(option.key)}
                   onChange={(checked) =>
-                    onOpenNowForTypeChange(option.key, checked)
+                    onOpenNowTypeChange(option.key, checked)
                   }
                 />
               ))}
+              <Checkbox
+                label="Include unknown"
+                disabled={openNowTypes.length === 0}
+                checked={openNowIncludeUnknown && openNowTypes.length > 0}
+                onChange={onOpenNowIncludeUnknownChange}
+              />
             </div>
           </ExpandableContainer>
         </div>

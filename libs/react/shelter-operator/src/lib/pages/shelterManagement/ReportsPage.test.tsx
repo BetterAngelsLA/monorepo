@@ -20,7 +20,9 @@ function LocationProbe() {
   const { pathname } = useLocation();
   const { shelterId } = useParams();
 
-  return <div data-testid="location">{`${pathname} (shelter ${shelterId})`}</div>;
+  return (
+    <div data-testid="location">{`${pathname} (shelter ${shelterId})`}</div>
+  );
 }
 
 function renderReportsTab(shelterId = '5') {
@@ -38,7 +40,7 @@ function renderReportsTab(shelterId = '5') {
           element={<LocationProbe />}
         />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -47,7 +49,7 @@ describe('ReportsPage', () => {
     renderReportsTab('5');
 
     expect(screen.getByTestId('reports-view').textContent).toBe(
-      'reports for 5'
+      'reports for 5',
     );
   });
 
@@ -57,7 +59,7 @@ describe('ReportsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /printable report/i }));
 
     expect(screen.getByTestId('location').textContent).toBe(
-      '/operator/shelter/5/report (shelter 5)'
+      '/operator/shelter/5/report (shelter 5)',
     );
   });
 
@@ -67,7 +69,7 @@ describe('ReportsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /printable report/i }));
 
     expect(screen.getByTestId('location').textContent).toBe(
-      '/operator/shelter/42/report (shelter 42)'
+      '/operator/shelter/42/report (shelter 42)',
     );
   });
 
@@ -77,6 +79,8 @@ describe('ReportsPage', () => {
     const button = screen.getByRole('button', { name: /printable report/i });
 
     expect(button.closest('a')).toBeNull();
-    expect(screen.queryByRole('link', { name: /printable report/i })).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: /printable report/i }),
+    ).toBeNull();
   });
 });

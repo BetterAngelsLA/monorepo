@@ -1,9 +1,11 @@
+import { formatTimeString } from '@monorepo/shared/scalars';
 import { useAtom } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { ScheduleTypeChoices, ShelterType } from '../../../apollo';
 import { ModalAnimationEnum, modalAtom } from '../../../components/Modal';
 import {
   AggregateStatus,
+  CLOCK_PATTERN,
   EffectiveWindow,
   getAggregateStatus,
   getOperatingStatus,
@@ -49,19 +51,10 @@ function getInitialScheduleType(
 }
 
 function formatWindowRange(window: EffectiveWindow): string {
-  const start = new Date(`1970-01-01T${window.startTime}`);
-  const end = new Date(`1970-01-01T${window.endTime}`);
+  const start = formatTimeString(window.startTime, CLOCK_PATTERN);
+  const end = formatTimeString(window.endTime, CLOCK_PATTERN);
 
-  const startText = start.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-  const endText = end.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${startText} - ${endText}`;
+  return `${start} - ${end}`;
 }
 
 function StatusLine({ status }: { status: OperatingStatus }) {

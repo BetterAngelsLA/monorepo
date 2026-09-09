@@ -1,3 +1,4 @@
+from accounts.models import User
 from datetime import datetime, timezone
 
 from django.test import TestCase
@@ -11,7 +12,7 @@ from shelters.enums import (
     MedicalNeedChoices,
     PetChoices,
 )
-from shelters.models import Accessibility, Bed, Demographic, Funder, MedicalNeed, Pet, Room
+from shelters.models import Accessibility, Bed, Demographic, Funder, MedicalNeed, Pet, Room, Shelter
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.utils import ShelterTestCase
 
@@ -75,7 +76,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 35
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -110,8 +111,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         super().setUp()
 
         self.mutation = f"""
-            mutation UpdateBed($id: ID!, $data: UpdateBedInput!) {{
-                updateBed(id: $id, data: $data) {{
+            mutation UpdateBed($data: UpdateBedInput!) {{
+                updateBed(data: $data) {{
                     ... on BedType {{
                         {self.bed_fields}
                     }}
@@ -127,6 +128,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         """
 
     def test_update_bed(self) -> None:
+        """Update an existing bed including its room."""
         demographic, _ = Demographic.objects.get_or_create(name=DemographicChoices.SINGLE_MEN)
         funder, _ = Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)
         accessibility, _ = Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)
@@ -144,8 +146,8 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             type=BedTypeChoices.TWIN,
         )
         variables = {
-            "id": str(source.pk),
             "data": {
+                "id": str(source.pk),
                 "roomId": self.room.pk,
                 "accessibility": [AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name],
                 "b7": True,
@@ -163,7 +165,7 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
             },
         }
 
-        expected_query_count = 35
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -227,11 +229,10 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         source.pets.add(pet)
 
         variables = {
-            "id": str(source.pk),
-            "data": {"statusNotes": "New notes"},
+            "data": {"id": str(source.pk), "statusNotes": "New notes"},
         }
 
-        expected_query_count = 16
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -303,11 +304,10 @@ class UpdateBedMutationTestCase(BedMutationTestCase):
         self.assertEqual(data["status"], BedStatusChoices.AVAILABLE.name)
 
         variables = {
-            "id": str(bed.pk),
-            "data": {"maintenanceFlag": True},
+            "data": {"id": str(bed.pk), "maintenanceFlag": True},
         }
 
-        expected_query_count = 16
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -408,7 +408,8 @@ class CloneBedMutationTestCase(BedMutationTestCase):
 
         variables = {"id": str(source.pk)}
 
-        expected_query_count = 32
+        # The clone now checks can(ADD) too (create convention, ADR 0001 §2.6).
+        expected_query_count = 37
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -462,3 +463,181 @@ class CloneBedMutationTestCase(BedMutationTestCase):
             set(clone.pets.values_list("name", flat=True)),
             set(source.pets.values_list("name", flat=True)),
         )
+
+
+class BedMutationPermissionTestCase(BedMutationTestCase):
+    """Bed mutations are gated on the specific Bed permission, not membership.
+
+    A read-only viewer (Shelter + Bed VIEW grants, no ADD/CHANGE/DELETE) can
+    read beds but cannot mutate them: creates/clones fail with a PERMISSION
+    OperationInfo, updates/deletes fail closed as not-found (ADR 0001 §2.6).
+    The operator (SHELTER_OPERATOR) holds ADD/CHANGE/DELETE and succeeds.
+    """
+
+    CREATE_MUTATION = """
+        mutation CreateBed($data: CreateBedInput!) {
+            createBed(data: $data) {
+                ... on BedType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    UPDATE_MUTATION = """
+        mutation UpdateBed($data: UpdateBedInput!) {
+            updateBed(data: $data) {
+                ... on BedType {
+                    id
+                    name
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    CLONE_MUTATION = """
+        mutation CloneBed($id: ID!) {
+            cloneBed(id: $id) {
+                ... on BedType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    DELETE_MUTATION = """
+        mutation DeleteBeds($data: BulkDeleteInput!) {
+            deleteBeds(data: $data) {
+                ... on BulkDeleteResult {
+                    ids
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.bed = baker.make(Bed, shelter=self.shelter, room=self.room, name="Permission Target Bed")
+        self.viewer = baker.make(User)
+        self.org.users.add(self.viewer)
+        for perm in (Shelter.perms.VIEW, Bed.perms.VIEW):
+            self._grant_permission(self.viewer, perm, self.org, role_name="Bed Read Only")
+
+    # ── createBed (ADD) ────────────────────────────────────────────────────
+
+    def test_create_bed_succeeds_for_user_with_add_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"shelterId": str(self.shelter.pk), "name": "Operator Bed"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        created_id = response["data"]["createBed"]["id"]
+        self.assertTrue(Bed.objects.filter(pk=created_id, name="Operator Bed").exists())
+
+    def test_create_bed_denied_for_user_without_add_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.CREATE_MUTATION,
+            {"data": {"shelterId": str(self.shelter.pk), "name": "Viewer Bed"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "createBed", "do not have permission", kind="PERMISSION")
+        self.assertFalse(Bed.objects.filter(name="Viewer Bed").exists())
+
+    # ── updateBed (CHANGE) ────────────────────────────────────────────────
+
+    def test_update_bed_succeeds_for_user_with_change_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.bed.pk), "name": "Renamed Bed"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["updateBed"]["name"], "Renamed Bed")
+        self.bed.refresh_from_db()
+        self.assertEqual(self.bed.name, "Renamed Bed")
+
+    def test_update_bed_denied_for_user_without_change_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.bed.pk), "name": "Nope"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "updateBed", "Bed matching ID", kind="ERROR")
+        self.bed.refresh_from_db()
+        self.assertEqual(self.bed.name, "Permission Target Bed")
+
+    # ── cloneBed (ADD) ────────────────────────────────────────────────────
+
+    def test_clone_bed_succeeds_for_user_with_add_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(self.CLONE_MUTATION, {"id": str(self.bed.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        clone_id = response["data"]["cloneBed"]["id"]
+        self.assertNotEqual(clone_id, str(self.bed.pk))
+        self.assertTrue(Bed.objects.filter(pk=clone_id).exists())
+
+    def test_clone_bed_denied_for_user_without_add_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.CLONE_MUTATION, {"id": str(self.bed.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "cloneBed", "do not have permission", kind="PERMISSION")
+        self.assertEqual(Bed.objects.filter(shelter=self.shelter).count(), 1)
+
+    # ── deleteBeds (DELETE) ───────────────────────────────────────────────
+
+    def test_delete_beds_succeeds_for_user_with_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(self.bed.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(response["data"]["deleteBeds"]["ids"], [str(self.bed.pk)])
+        self.assertFalse(Bed.objects.filter(pk=self.bed.pk).exists())
+
+    def test_delete_beds_denied_for_user_without_delete_permission(self) -> None:
+        self.graphql_client.force_login(self.viewer)
+
+        response = self.execute_graphql(self.DELETE_MUTATION, {"data": {"ids": [str(self.bed.pk)]}})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(response, "deleteBeds", "No matching beds found", kind="ERROR")
+        self.assertTrue(Bed.objects.filter(pk=self.bed.pk).exists())

@@ -18,6 +18,7 @@ export * from './useSearchClient';
 export * from './useShelterCities';
 export * from './useShelterOccupancyMetrics';
 export * from './useShelterOperatorProfile';
+export * from './useShelterPermissions';
 export * from './useShelterSpas';
 export * from './useUpdateBed';
 export * from './useUpdateReservation';

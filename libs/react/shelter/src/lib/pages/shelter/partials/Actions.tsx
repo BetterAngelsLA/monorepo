@@ -4,6 +4,8 @@ import {
   LocationIcon,
   ShareIcon,
 } from '@monorepo/react/icons';
+import { toPhoneParts, type PhoneNumberString } from '@monorepo/shared/scalars';
+
 type TShelterLocation = {
   place: string;
   latitude: number;
@@ -12,11 +14,13 @@ type TShelterLocation = {
 
 type TProps = {
   location?: TShelterLocation | null;
-  phone?: string | null;
+  phone?: PhoneNumberString | null;
   shelterName: string;
 };
 
 export function Actions({ location, phone, shelterName }: TProps) {
+  const { display: phoneLabel, dial } = toPhoneParts(phone);
+
   const handleShare = async () => {
     const shareData = {
       title: shelterName,
@@ -44,12 +48,16 @@ export function Actions({ location, phone, shelterName }: TProps) {
 
   return (
     <div className="flex p-1 items-center justify-between text-xs border-neutral-90 border-t border-b mt-4 -mx-4">
-      <a className="flex-1 group" href={phone ? `tel:${phone}` : undefined}>
+      <a
+        className="flex-1 group"
+        aria-label={dial ? `Call ${phoneLabel}` : undefined}
+        href={dial ? `tel:${dial}` : undefined}
+      >
         <div
           className={`flex py-3 ${
-            !phone && 'bg-neutral-99'
+            !dial && 'bg-neutral-99'
           } flex-col rounded-sm items-center active:bg-neutral-98 ${
-            !phone && 'text-neutral-90'
+            !dial && 'text-neutral-90'
           }`}
         >
           <CallOutlinedIcon className="w-6 h-6 fill-primary-20" />

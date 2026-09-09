@@ -18,17 +18,21 @@ from common.enums import ImagePresetEnum
 from common.images import build_img_url
 from common.models import Address, Attachment, Location, PhoneNumber
 from common.services.types import AuthorizedPresignedUploadBatch
+from common.utils import matchable_values
 
 
 def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
+    """Filter rows whose ``field_name`` is in the given values."""
+
     @strawberry_django.filter_field
-    def _filter(info: Info, value: Optional[list[value_type]], prefix: str) -> Q:
+    def _filter(queryset: QuerySet[Any], value: Optional[list[value_type]], prefix: str) -> Q:
         if not value:
             return Q()
 
         normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
+        field = queryset.model._meta.get_field(field_name)
 
-        return Q(**{f"{prefix}{field_name}__in": normalized_value})
+        return Q(**{f"{prefix}{field_name}__in": matchable_values(field=field, values=normalized_value)})
 
     return _filter
 
@@ -83,6 +87,11 @@ def _parse_phone_number(v: str) -> DjangoPhoneNumber:
 
 
 def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
+    # national_number is None when phonenumbers could not parse the stored
+    # value, and str() would then put the literal "None" on the wire.
+    if not v.national_number:
+        return ""
+
     if v.extension:
         return f"{v.national_number}x{v.extension}"
 

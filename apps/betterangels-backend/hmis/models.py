@@ -105,9 +105,9 @@ class HmisClientProfile(AbstractClientProfile):
         if not self.gender:
             return []
 
-        return [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT] + [
-            self.gender_identity_text
-        ]
+        labels = [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT]
+
+        return labels + [self.gender_identity_text] if self.gender_identity_text else labels
 
     def full_clean(self, exclude: Any = None, validate_unique: bool = True, validate_constraints: bool = True) -> None:
         """

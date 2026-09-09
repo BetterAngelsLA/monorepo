@@ -1,3 +1,4 @@
+import type { DateString, DateTimeString, PhoneNumberString, TimeString, UUIDString } from '@monorepo/shared/scalars';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -13,23 +14,23 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   /** Date (isoformat) */
-  Date: { input: any; output: any; }
+  Date: { input: DateString; output: DateString; }
   /** Date with time (isoformat) */
-  DateTime: { input: any; output: any; }
+  DateTime: { input: DateTimeString; output: DateTimeString; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
-  LatitudeScalar: { input: any; output: any; }
-  LongitudeScalar: { input: any; output: any; }
+  LatitudeScalar: { input: number; output: number; }
+  LongitudeScalar: { input: number; output: number; }
   /** Coerces blank input to None. Use for optional string fields where blank means 'no value'. */
   NonBlankString: { input: string; output: string; }
   /** Rejects blank input. Use for required string fields. */
-  NonEmptyString: { input: any; output: any; }
-  PhoneNumber: { input: any; output: any; }
+  NonEmptyString: { input: string; output: string; }
+  PhoneNumber: { input: PhoneNumberString; output: PhoneNumberString; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
   /** Time (isoformat) */
-  Time: { input: any; output: any; }
-  UUID: { input: any; output: any; }
+  Time: { input: TimeString; output: TimeString; }
+  UUID: { input: UUIDString; output: UUIDString; }
   /** Represents a file upload. */
   Upload: { input: any; output: any; }
 };
@@ -41,7 +42,7 @@ export enum AccessibilityChoices {
 }
 
 export type AccessibilityType = {
-  __typename?: 'AccessibilityType';
+  __typename: 'AccessibilityType';
   name?: Maybe<AccessibilityChoices>;
 };
 
@@ -60,7 +61,7 @@ export type AddressInput = {
 };
 
 export type AddressType = {
-  __typename?: 'AddressType';
+  __typename: 'AddressType';
   city?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   state?: Maybe<Scalars['String']['output']>;
@@ -87,12 +88,12 @@ export enum AttachmentType {
 }
 
 export type AuthResponse = {
-  __typename?: 'AuthResponse';
+  __typename: 'AuthResponse';
   status_code: Scalars['String']['output'];
 };
 
 export type AuthorizedPresignedS3UploadType = {
-  __typename?: 'AuthorizedPresignedS3UploadType';
+  __typename: 'AuthorizedPresignedS3UploadType';
   fields: Scalars['JSON']['output'];
   presignedKey: Scalars['String']['output'];
   refId: Scalars['String']['output'];
@@ -101,12 +102,12 @@ export type AuthorizedPresignedS3UploadType = {
 };
 
 export type AuthorizedPresignedS3UploadsType = {
-  __typename?: 'AuthorizedPresignedS3UploadsType';
+  __typename: 'AuthorizedPresignedS3UploadsType';
   uploads: Array<AuthorizedPresignedS3UploadType>;
 };
 
 export type BedCountType = {
-  __typename?: 'BedCountType';
+  __typename: 'BedCountType';
   available: Scalars['Int']['output'];
   inTurnaround: Scalars['Int']['output'];
   occupied: Scalars['Int']['output'];
@@ -143,7 +144,7 @@ export enum BedStatusChoices {
 }
 
 export type BedType = {
-  __typename?: 'BedType';
+  __typename: 'BedType';
   accessibility: Array<AccessibilityType>;
   b7: Scalars['Boolean']['output'];
   demographics: Array<DemographicType>;
@@ -172,7 +173,7 @@ export enum BedTypeChoices {
 }
 
 export type BedTypeOffsetPaginated = {
-  __typename?: 'BedTypeOffsetPaginated';
+  __typename: 'BedTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<BedType>;
@@ -185,7 +186,7 @@ export type BulkDeleteInput = {
 };
 
 export type BulkDeleteResult = {
-  __typename?: 'BulkDeleteResult';
+  __typename: 'BulkDeleteResult';
   ids: Array<Scalars['ID']['output']>;
 };
 
@@ -198,13 +199,13 @@ export type ChangeOrganizationMemberRoleInput = {
 export type ChangeOrganizationMemberRolePayload = OperationInfo | OrganizationMemberType;
 
 export type CityType = {
-  __typename?: 'CityType';
+  __typename: 'CityType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };
 
 export type CityTypeOffsetPaginated = {
-  __typename?: 'CityTypeOffsetPaginated';
+  __typename: 'CityTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<CityType>;
@@ -224,7 +225,7 @@ export type ClientContactInput = {
 };
 
 export type ClientContactType = {
-  __typename?: 'ClientContactType';
+  __typename: 'ClientContactType';
   clientProfile: DjangoModelType;
   email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -237,7 +238,7 @@ export type ClientContactType = {
 };
 
 export type ClientContactTypeOffsetPaginated = {
-  __typename?: 'ClientContactTypeOffsetPaginated';
+  __typename: 'ClientContactTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ClientContactType>;
@@ -282,7 +283,7 @@ export enum ClientDocumentNamespaceEnum {
 }
 
 export type ClientDocumentType = AttachmentInterface & {
-  __typename?: 'ClientDocumentType';
+  __typename: 'ClientDocumentType';
   attachmentType: AttachmentType;
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
@@ -294,7 +295,7 @@ export type ClientDocumentType = AttachmentInterface & {
 };
 
 export type ClientDocumentTypeOffsetPaginated = {
-  __typename?: 'ClientDocumentTypeOffsetPaginated';
+  __typename: 'ClientDocumentTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ClientDocumentType>;
@@ -309,7 +310,7 @@ export type ClientDocumentUploadsInputItem = {
 };
 
 export type ClientDocumentUploadsType = {
-  __typename?: 'ClientDocumentUploadsType';
+  __typename: 'ClientDocumentUploadsType';
   documents: Array<ClientDocumentType>;
 };
 
@@ -325,7 +326,7 @@ export type ClientHouseholdMemberInput = {
 };
 
 export type ClientHouseholdMemberType = {
-  __typename?: 'ClientHouseholdMemberType';
+  __typename: 'ClientHouseholdMemberType';
   clientProfile: DjangoModelType;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayGender?: Maybe<Scalars['String']['output']>;
@@ -338,7 +339,7 @@ export type ClientHouseholdMemberType = {
 };
 
 export type ClientHouseholdMemberTypeOffsetPaginated = {
-  __typename?: 'ClientHouseholdMemberTypeOffsetPaginated';
+  __typename: 'ClientHouseholdMemberTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ClientHouseholdMemberType>;
@@ -347,7 +348,7 @@ export type ClientHouseholdMemberTypeOffsetPaginated = {
 };
 
 export type ClientProfileDataImportType = {
-  __typename?: 'ClientProfileDataImportType';
+  __typename: 'ClientProfileDataImportType';
   id: Scalars['UUID']['output'];
   importedAt: Scalars['DateTime']['output'];
   importedBy: DjangoModelType;
@@ -366,7 +367,7 @@ export type ClientProfileFilter = {
 };
 
 export type ClientProfileImportRecordType = {
-  __typename?: 'ClientProfileImportRecordType';
+  __typename: 'ClientProfileImportRecordType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   errorMessage: Scalars['String']['output'];
@@ -378,7 +379,7 @@ export type ClientProfileImportRecordType = {
 };
 
 export type ClientProfileImportRecordTypeOffsetPaginated = {
-  __typename?: 'ClientProfileImportRecordTypeOffsetPaginated';
+  __typename: 'ClientProfileImportRecordTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ClientProfileImportRecordType>;
@@ -403,7 +404,7 @@ export type ClientProfilePhotoInput = {
 };
 
 export type ClientProfileType = {
-  __typename?: 'ClientProfileType';
+  __typename: 'ClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
@@ -452,7 +453,7 @@ export type ClientProfileType = {
 };
 
 export type ClientProfileTypeOffsetPaginated = {
-  __typename?: 'ClientProfileTypeOffsetPaginated';
+  __typename: 'ClientProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ClientProfileType>;
@@ -483,7 +484,7 @@ export enum ConditionChoices {
 }
 
 export type ContactInfoType = {
-  __typename?: 'ContactInfoType';
+  __typename: 'ContactInfoType';
   contactName: Scalars['String']['output'];
   contactNumber: Scalars['PhoneNumber']['output'];
   id: Scalars['ID']['output'];
@@ -511,14 +512,6 @@ export type CreateBedInput = {
 export type CreateBedPayload = BedType | OperationInfo;
 
 export type CreateClientContactPayload = ClientContactType | OperationInfo;
-
-export type CreateClientDocumentInput = {
-  clientProfile: Scalars['ID']['input'];
-  file: Scalars['Upload']['input'];
-  namespace: ClientDocumentNamespaceEnum;
-};
-
-export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
@@ -684,7 +677,7 @@ export type CreateOrganizationInput = {
 };
 
 export type CreateOrganizationResponse = {
-  __typename?: 'CreateOrganizationResponse';
+  __typename: 'CreateOrganizationResponse';
   organization: OrganizationType;
   user: UserType;
 };
@@ -760,6 +753,7 @@ export type CreateShelterInput = {
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
   overallRating?: InputMaybe<Scalars['Int']['input']>;
@@ -812,14 +806,14 @@ export type CreateTeamInput = {
 export type CreateTeamPayload = OperationInfo | TeamType;
 
 export type CurrentUserOrganizationType = {
-  __typename?: 'CurrentUserOrganizationType';
+  __typename: 'CurrentUserOrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   permissions: Array<Scalars['String']['output']>;
 };
 
 export type CurrentUserType = {
-  __typename?: 'CurrentUserType';
+  __typename: 'CurrentUserType';
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
@@ -831,6 +825,7 @@ export type CurrentUserType = {
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<CurrentUserOrganizationType>>;
+  permissions: Array<Scalars['String']['output']>;
   username?: Maybe<Scalars['String']['output']>;
 };
 
@@ -842,7 +837,7 @@ export type CurrentUserTypeOrganizationsOrganizationArgs = {
 };
 
 export type DailyBedStatusMetricsType = {
-  __typename?: 'DailyBedStatusMetricsType';
+  __typename: 'DailyBedStatusMetricsType';
   available: Scalars['Int']['output'];
   date: Scalars['Date']['output'];
   inTurnaround: Scalars['Int']['output'];
@@ -852,7 +847,7 @@ export type DailyBedStatusMetricsType = {
 };
 
 export type DailyOccupancyMetricsType = {
-  __typename?: 'DailyOccupancyMetricsType';
+  __typename: 'DailyOccupancyMetricsType';
   date: Scalars['Date']['output'];
   occupancyPct: Scalars['Float']['output'];
   occupiedCount: Scalars['Int']['output'];
@@ -860,7 +855,7 @@ export type DailyOccupancyMetricsType = {
 };
 
 export type DateCountType = {
-  __typename?: 'DateCountType';
+  __typename: 'DateCountType';
   count: Scalars['Int']['output'];
   date: Scalars['String']['output'];
 };
@@ -907,6 +902,8 @@ export type DeleteRoomsPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
+export type DeleteShelterPayload = DeletedObjectType | OperationInfo;
+
 export type DeleteShelterPhotosPayload = BulkDeleteResult | OperationInfo;
 
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
@@ -916,7 +913,7 @@ export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 export type DeleteTeamPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
-  __typename?: 'DeletedObjectType';
+  __typename: 'DeletedObjectType';
   id: Scalars['Int']['output'];
 };
 
@@ -935,12 +932,12 @@ export enum DemographicChoices {
 }
 
 export type DemographicType = {
-  __typename?: 'DemographicType';
+  __typename: 'DemographicType';
   name?: Maybe<DemographicChoices>;
 };
 
 export type DjangoFileType = {
-  __typename?: 'DjangoFileType';
+  __typename: 'DjangoFileType';
   name: Scalars['String']['output'];
   path: Scalars['String']['output'];
   size: Scalars['Int']['output'];
@@ -948,7 +945,7 @@ export type DjangoFileType = {
 };
 
 export type DjangoImageType = {
-  __typename?: 'DjangoImageType';
+  __typename: 'DjangoImageType';
   height: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   path: Scalars['String']['output'];
@@ -964,7 +961,7 @@ export type DjangoImageTypeUrlArgs = {
 };
 
 export type DjangoModelType = {
-  __typename?: 'DjangoModelType';
+  __typename: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
 
@@ -981,7 +978,7 @@ export enum EntryRequirementChoices {
 }
 
 export type EntryRequirementType = {
-  __typename?: 'EntryRequirementType';
+  __typename: 'EntryRequirementType';
   name?: Maybe<EntryRequirementChoices>;
 };
 
@@ -993,7 +990,7 @@ export enum ExitPolicyChoices {
 }
 
 export type ExitPolicyType = {
-  __typename?: 'ExitPolicyType';
+  __typename: 'ExitPolicyType';
   name?: Maybe<ExitPolicyChoices>;
 };
 
@@ -1007,14 +1004,14 @@ export enum EyeColorEnum {
 }
 
 export type FeatureControlData = {
-  __typename?: 'FeatureControlData';
+  __typename: 'FeatureControlData';
   flags: Array<FlagType>;
   samples: Array<SampleType>;
   switches: Array<SwitchType>;
 };
 
 export type FlagType = {
-  __typename?: 'FlagType';
+  __typename: 'FlagType';
   isActive?: Maybe<Scalars['Boolean']['output']>;
   lastModified?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
@@ -1032,7 +1029,7 @@ export enum FunderChoices {
 }
 
 export type FunderType = {
-  __typename?: 'FunderType';
+  __typename: 'FunderType';
   name?: Maybe<FunderChoices>;
 };
 
@@ -1118,7 +1115,7 @@ export type HmisClientProfileOrdering = {
 };
 
 export type HmisClientProfileType = {
-  __typename?: 'HmisClientProfileType';
+  __typename: 'HmisClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   addedDate?: Maybe<Scalars['DateTime']['output']>;
   additionalRaceEthnicityDetail?: Maybe<Scalars['String']['output']>;
@@ -1170,7 +1167,7 @@ export type HmisClientProfileType = {
 };
 
 export type HmisClientProfileTypeOffsetPaginated = {
-  __typename?: 'HmisClientProfileTypeOffsetPaginated';
+  __typename: 'HmisClientProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<HmisClientProfileType>;
@@ -1179,7 +1176,7 @@ export type HmisClientProfileTypeOffsetPaginated = {
 };
 
 export type HmisClientProgramType = {
-  __typename?: 'HmisClientProgramType';
+  __typename: 'HmisClientProgramType';
   id: Scalars['String']['output'];
   program: HmisProgramType;
 };
@@ -1206,13 +1203,13 @@ export enum HmisGenderEnum {
 }
 
 export type HmisLoginError = {
-  __typename?: 'HmisLoginError';
+  __typename: 'HmisLoginError';
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
 
 export type HmisLoginSuccess = {
-  __typename?: 'HmisLoginSuccess';
+  __typename: 'HmisLoginSuccess';
   user: CurrentUserType;
 };
 
@@ -1245,7 +1242,7 @@ export type HmisNoteOrdering = {
 };
 
 export type HmisNoteType = {
-  __typename?: 'HmisNoteType';
+  __typename: 'HmisNoteType';
   addedDate?: Maybe<Scalars['DateTime']['output']>;
   clientProgram?: Maybe<HmisClientProgramType>;
   createdBy?: Maybe<UserType>;
@@ -1281,7 +1278,7 @@ export type HmisNoteTypeTasksArgs = {
 };
 
 export type HmisNoteTypeOffsetPaginated = {
-  __typename?: 'HmisNoteTypeOffsetPaginated';
+  __typename: 'HmisNoteTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<HmisNoteType>;
@@ -1297,14 +1294,14 @@ export type HmisProfileInput = {
 };
 
 export type HmisProfileType = {
-  __typename?: 'HmisProfileType';
+  __typename: 'HmisProfileType';
   agency: HmisAgencyEnum;
   hmisId?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
 };
 
 export type HmisProfileTypeOffsetPaginated = {
-  __typename?: 'HmisProfileTypeOffsetPaginated';
+  __typename: 'HmisProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<HmisProfileType>;
@@ -1313,7 +1310,7 @@ export type HmisProfileTypeOffsetPaginated = {
 };
 
 export type HmisProgramType = {
-  __typename?: 'HmisProgramType';
+  __typename: 'HmisProgramType';
   enableNotes?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -1441,7 +1438,7 @@ export type InteractionAuthorOrder = {
 };
 
 export type InteractionAuthorType = {
-  __typename?: 'InteractionAuthorType';
+  __typename: 'InteractionAuthorType';
   firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
@@ -1449,7 +1446,7 @@ export type InteractionAuthorType = {
 };
 
 export type InteractionAuthorTypeOffsetPaginated = {
-  __typename?: 'InteractionAuthorTypeOffsetPaginated';
+  __typename: 'InteractionAuthorTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<InteractionAuthorType>;
@@ -1492,7 +1489,7 @@ export type LocationInput = {
 };
 
 export type LocationType = {
-  __typename?: 'LocationType';
+  __typename: 'LocationType';
   address: AddressType;
   id?: Maybe<Scalars['ID']['output']>;
   point: Scalars['Point']['output'];
@@ -1525,7 +1522,7 @@ export type MaxStayInput = {
 };
 
 export type MediaLinkType = {
-  __typename?: 'MediaLinkType';
+  __typename: 'MediaLinkType';
   id: Scalars['ID']['output'];
   mediaType: MediaLinkTypeChoices;
   title: Scalars['String']['output'];
@@ -1544,19 +1541,18 @@ export enum MedicalNeedChoices {
 }
 
 export type MedicalNeedType = {
-  __typename?: 'MedicalNeedType';
+  __typename: 'MedicalNeedType';
   name?: Maybe<MedicalNeedChoices>;
 };
 
 export type Mutation = {
-  __typename?: 'Mutation';
+  __typename: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
   changeOrganizationMemberRole: ChangeOrganizationMemberRolePayload;
   cloneBed: CloneBedPayload;
   cloneRoom: CloneRoomPayload;
   createBed: CreateBedPayload;
   createClientContact: CreateClientContactPayload;
-  createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -1590,6 +1586,7 @@ export type Mutation = {
   deleteReservations: DeleteReservationsPayload;
   deleteRooms: DeleteRoomsPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteShelter: DeleteShelterPayload;
   deleteShelterPhotos: DeleteShelterPhotosPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
@@ -1663,11 +1660,6 @@ export type MutationCreateBedArgs = {
 
 export type MutationCreateClientContactArgs = {
   data: ClientContactInput;
-};
-
-
-export type MutationCreateClientDocumentArgs = {
-  data: CreateClientDocumentInput;
 };
 
 
@@ -1832,6 +1824,11 @@ export type MutationDeleteServiceRequestArgs = {
 };
 
 
+export type MutationDeleteShelterArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteShelterPhotosArgs = {
   data: BulkDeleteInput;
 };
@@ -1930,7 +1927,6 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateBedArgs = {
   data: UpdateBedInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -2001,13 +1997,11 @@ export type MutationUpdateReferralArgs = {
 
 export type MutationUpdateReservationArgs = {
   data: UpdateReservationInput;
-  id: Scalars['ID']['input'];
 };
 
 
 export type MutationUpdateRoomArgs = {
   data: UpdateRoomInput;
-  id: Scalars['ID']['input'];
 };
 
 
@@ -2041,7 +2035,7 @@ export type MutationUpdateUserProfileArgs = {
 };
 
 export type NameCountType = {
-  __typename?: 'NameCountType';
+  __typename: 'NameCountType';
   count: Scalars['Int']['output'];
   name: Scalars['String']['output'];
 };
@@ -2054,7 +2048,7 @@ export type NoteAttachmentFromUploadInput = {
 };
 
 export type NoteAttachmentType = AttachmentInterface & {
-  __typename?: 'NoteAttachmentType';
+  __typename: 'NoteAttachmentType';
   attachmentType: AttachmentType;
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
@@ -2071,12 +2065,12 @@ export type NoteAttachmentUploadItemInput = {
 };
 
 export type NoteAttachmentUploadsType = {
-  __typename?: 'NoteAttachmentUploadsType';
+  __typename: 'NoteAttachmentUploadsType';
   attachments: Array<NoteAttachmentType>;
 };
 
 export type NoteDataImportType = {
-  __typename?: 'NoteDataImportType';
+  __typename: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
   importedAt: Scalars['DateTime']['output'];
   importedBy: DjangoModelType;
@@ -2099,7 +2093,7 @@ export type NoteFilter = {
 };
 
 export type NoteImportRecordType = {
-  __typename?: 'NoteImportRecordType';
+  __typename: 'NoteImportRecordType';
   createdAt: Scalars['DateTime']['output'];
   errorMessage: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -2116,7 +2110,7 @@ export type NoteOrder = {
 };
 
 export type NoteType = {
-  __typename?: 'NoteType';
+  __typename: 'NoteType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
@@ -2155,7 +2149,7 @@ export type NoteTypeTasksArgs = {
 };
 
 export type NoteTypeOffsetPaginated = {
-  __typename?: 'NoteTypeOffsetPaginated';
+  __typename: 'NoteTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<NoteType>;
@@ -2164,7 +2158,7 @@ export type NoteTypeOffsetPaginated = {
 };
 
 export type OffsetPaginationInfo = {
-  __typename?: 'OffsetPaginationInfo';
+  __typename: 'OffsetPaginationInfo';
   limit?: Maybe<Scalars['Int']['output']>;
   offset: Scalars['Int']['output'];
 };
@@ -2175,17 +2169,18 @@ export type OffsetPaginationInput = {
 };
 
 export type OpenNowInput = {
+  includeUnknown?: InputMaybe<Scalars['Boolean']['input']>;
   scheduleType?: InputMaybe<Array<ScheduleTypeChoices>>;
 };
 
 export type OperationInfo = {
-  __typename?: 'OperationInfo';
+  __typename: 'OperationInfo';
   /** List of messages returned by the operation. */
   messages: Array<OperationMessage>;
 };
 
 export type OperationMessage = {
-  __typename?: 'OperationMessage';
+  __typename: 'OperationMessage';
   /** The error code, or `null` if no error code was set. */
   code?: Maybe<Scalars['String']['output']>;
   /** The field that caused the error, or `null` if it isn't associated with any particular field. */
@@ -2222,8 +2217,6 @@ export type OperatorShelterFilter = {
   name?: InputMaybe<Scalars['String']['input']>;
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   openNow?: InputMaybe<OpenNowInput>;
-  /** @deprecated Use openNow instead */
-  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   overallRating?: InputMaybe<Array<Scalars['Int']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
@@ -2238,7 +2231,7 @@ export type OperatorShelterFilter = {
 };
 
 export type OperatorShelterType = {
-  __typename?: 'OperatorShelterType';
+  __typename: 'OperatorShelterType';
   HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
@@ -2312,7 +2305,7 @@ export type OperatorShelterTypeHeroImageArgs = {
 };
 
 export type OperatorShelterTypeOffsetPaginated = {
-  __typename?: 'OperatorShelterTypeOffsetPaginated';
+  __typename: 'OperatorShelterTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<OperatorShelterType>;
@@ -2376,7 +2369,7 @@ export type OrganizationMemberOrdering = {
 };
 
 export type OrganizationMemberType = {
-  __typename?: 'OrganizationMemberType';
+  __typename: 'OrganizationMemberType';
   dateJoined: Scalars['DateTime']['output'];
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
@@ -2390,7 +2383,7 @@ export type OrganizationMemberType = {
 };
 
 export type OrganizationMemberTypeOffsetPaginated = {
-  __typename?: 'OrganizationMemberTypeOffsetPaginated';
+  __typename: 'OrganizationMemberTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<OrganizationMemberType>;
@@ -2409,7 +2402,7 @@ export type OrganizationServiceCategoryOrdering = {
 };
 
 export type OrganizationServiceCategoryType = {
-  __typename?: 'OrganizationServiceCategoryType';
+  __typename: 'OrganizationServiceCategoryType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   priority?: Maybe<Scalars['Int']['output']>;
@@ -2423,7 +2416,7 @@ export type OrganizationServiceCategoryTypeServicesArgs = {
 };
 
 export type OrganizationServiceCategoryTypeOffsetPaginated = {
-  __typename?: 'OrganizationServiceCategoryTypeOffsetPaginated';
+  __typename: 'OrganizationServiceCategoryTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<OrganizationServiceCategoryType>;
@@ -2437,7 +2430,7 @@ export type OrganizationServiceOrdering = {
 };
 
 export type OrganizationServiceType = {
-  __typename?: 'OrganizationServiceType';
+  __typename: 'OrganizationServiceType';
   category?: Maybe<OrganizationServiceCategoryType>;
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
@@ -2445,7 +2438,7 @@ export type OrganizationServiceType = {
 };
 
 export type OrganizationServiceTypeOffsetPaginated = {
-  __typename?: 'OrganizationServiceTypeOffsetPaginated';
+  __typename: 'OrganizationServiceTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<OrganizationServiceType>;
@@ -2454,13 +2447,13 @@ export type OrganizationServiceTypeOffsetPaginated = {
 };
 
 export type OrganizationType = {
-  __typename?: 'OrganizationType';
+  __typename: 'OrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };
 
 export type OrganizationTypeOffsetPaginated = {
-  __typename?: 'OrganizationTypeOffsetPaginated';
+  __typename: 'OrganizationTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<OrganizationType>;
@@ -2478,7 +2471,7 @@ export enum ParkingChoices {
 }
 
 export type ParkingType = {
-  __typename?: 'ParkingType';
+  __typename: 'ParkingType';
   name?: Maybe<ParkingChoices>;
 };
 
@@ -2506,7 +2499,7 @@ export enum PetChoices {
 }
 
 export type PetType = {
-  __typename?: 'PetType';
+  __typename: 'PetType';
   name?: Maybe<PetChoices>;
 };
 
@@ -2517,7 +2510,7 @@ export type PhoneNumberInput = {
 };
 
 export type PhoneNumberType = {
-  __typename?: 'PhoneNumberType';
+  __typename: 'PhoneNumberType';
   id: Scalars['ID']['output'];
   isPrimary?: Maybe<Scalars['Boolean']['output']>;
   number?: Maybe<Scalars['PhoneNumber']['output']>;
@@ -2534,7 +2527,7 @@ export enum PreferredCommunicationEnum {
 }
 
 export type ProgramEnrollmentType = {
-  __typename?: 'ProgramEnrollmentType';
+  __typename: 'ProgramEnrollmentType';
   clientId: Scalars['String']['output'];
   id: Scalars['String']['output'];
   refClientProgram: Scalars['String']['output'];
@@ -2564,8 +2557,7 @@ export type PublicShelterFilter = {
   name?: InputMaybe<Scalars['String']['input']>;
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   openNow?: InputMaybe<OpenNowInput>;
-  /** @deprecated Use openNow instead */
-  openNowFor?: InputMaybe<Array<ScheduleTypeChoices>>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
   services?: InputMaybe<Array<Scalars['ID']['input']>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
@@ -2575,7 +2567,7 @@ export type PublicShelterFilter = {
 };
 
 export type Query = {
-  __typename?: 'Query';
+  __typename: 'Query';
   bed: BedType;
   beds: BedTypeOffsetPaginated;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
@@ -2942,7 +2934,7 @@ export enum ReferralRequirementChoices {
 }
 
 export type ReferralRequirementType = {
-  __typename?: 'ReferralRequirementType';
+  __typename: 'ReferralRequirementType';
   name?: Maybe<ReferralRequirementChoices>;
 };
 
@@ -2953,7 +2945,7 @@ export enum ReferralStatusEnum {
 }
 
 export type ReferralType = {
-  __typename?: 'ReferralType';
+  __typename: 'ReferralType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<UserType>;
@@ -2965,7 +2957,7 @@ export type ReferralType = {
 };
 
 export type ReferralTypeOffsetPaginated = {
-  __typename?: 'ReferralTypeOffsetPaginated';
+  __typename: 'ReferralTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ReferralType>;
@@ -3006,7 +2998,7 @@ export type RemoveOrganizationMemberInput = {
 export type RemoveOrganizationMemberPayload = DeletedObjectType | OperationInfo;
 
 export type ReportSummaryType = {
-  __typename?: 'ReportSummaryType';
+  __typename: 'ReportSummaryType';
   endDate: Scalars['String']['output'];
   notesByDate: Array<DateCountType>;
   notesByPurpose: Array<NameCountType>;
@@ -3020,7 +3012,7 @@ export type ReportSummaryType = {
 };
 
 export type ReservationClientAssignmentType = {
-  __typename?: 'ReservationClientAssignmentType';
+  __typename: 'ReservationClientAssignmentType';
   clientProfile: ClientProfileType;
   id: Scalars['ID']['output'];
   isPrimary: Scalars['Boolean']['output'];
@@ -3044,7 +3036,7 @@ export type ReservationFilter = {
 };
 
 export type ReservationMetricsType = {
-  __typename?: 'ReservationMetricsType';
+  __typename: 'ReservationMetricsType';
   cancelled: Scalars['Int']['output'];
   checkInOverdue: Scalars['Int']['output'];
   checkInOverdueToCheckedIn: Scalars['Int']['output'];
@@ -3068,7 +3060,7 @@ export enum ReservationStatusChoices {
 }
 
 export type ReservationType = {
-  __typename?: 'ReservationType';
+  __typename: 'ReservationType';
   bed?: Maybe<BedType>;
   checkedInAt?: Maybe<Scalars['DateTime']['output']>;
   checkedOutAt?: Maybe<Scalars['DateTime']['output']>;
@@ -3084,7 +3076,7 @@ export type ReservationType = {
 };
 
 export type ReservationTypeOffsetPaginated = {
-  __typename?: 'ReservationTypeOffsetPaginated';
+  __typename: 'ReservationTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ReservationType>;
@@ -3129,7 +3121,7 @@ export type RevertNoteInput = {
 export type RevertNotePayload = NoteType | OperationInfo;
 
 export type RoomCountType = {
-  __typename?: 'RoomCountType';
+  __typename: 'RoomCountType';
   available: Scalars['Int']['output'];
   inTurnaround: Scalars['Int']['output'];
   occupied: Scalars['Int']['output'];
@@ -3179,12 +3171,12 @@ export enum RoomStyleChoices {
 }
 
 export type RoomStyleType = {
-  __typename?: 'RoomStyleType';
+  __typename: 'RoomStyleType';
   name?: Maybe<RoomStyleChoices>;
 };
 
 export type RoomType = {
-  __typename?: 'RoomType';
+  __typename: 'RoomType';
   accessibility: Array<AccessibilityType>;
   amenities?: Maybe<Scalars['String']['output']>;
   beds: Array<BedType>;
@@ -3212,7 +3204,7 @@ export type RoomTypeBedsArgs = {
 };
 
 export type RoomTypeOffsetPaginated = {
-  __typename?: 'RoomTypeOffsetPaginated';
+  __typename: 'RoomTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<RoomType>;
@@ -3221,14 +3213,14 @@ export type RoomTypeOffsetPaginated = {
 };
 
 export type SpaType = {
-  __typename?: 'SPAType';
+  __typename: 'SPAType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   shortName?: Maybe<Scalars['String']['output']>;
 };
 
 export type SpaTypeOffsetPaginated = {
-  __typename?: 'SPATypeOffsetPaginated';
+  __typename: 'SPATypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<SpaType>;
@@ -3237,7 +3229,7 @@ export type SpaTypeOffsetPaginated = {
 };
 
 export type SampleType = {
-  __typename?: 'SampleType';
+  __typename: 'SampleType';
   isActive: Scalars['Boolean']['output'];
   lastModified?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
@@ -3255,7 +3247,7 @@ export type ScheduleInput = {
 };
 
 export type ScheduleType = {
-  __typename?: 'ScheduleType';
+  __typename: 'ScheduleType';
   condition?: Maybe<ConditionChoices>;
   day?: Maybe<DayOfWeekChoices>;
   demographic?: Maybe<DemographicType>;
@@ -3276,7 +3268,7 @@ export enum ScheduleTypeChoices {
 }
 
 export type ServiceCategoryType = {
-  __typename?: 'ServiceCategoryType';
+  __typename: 'ServiceCategoryType';
   displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -3285,7 +3277,7 @@ export type ServiceCategoryType = {
 };
 
 export type ServiceCategoryTypeOffsetPaginated = {
-  __typename?: 'ServiceCategoryTypeOffsetPaginated';
+  __typename: 'ServiceCategoryTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ServiceCategoryType>;
@@ -3305,7 +3297,7 @@ export enum ServiceRequestStatusEnum {
 }
 
 export type ServiceRequestType = {
-  __typename?: 'ServiceRequestType';
+  __typename: 'ServiceRequestType';
   clientProfile?: Maybe<ClientProfileType>;
   completedOn?: Maybe<Scalars['DateTime']['output']>;
   createdAt: Scalars['DateTime']['output'];
@@ -3322,7 +3314,7 @@ export enum ServiceRequestTypeEnum {
 }
 
 export type ServiceType = {
-  __typename?: 'ServiceType';
+  __typename: 'ServiceType';
   category: ServiceCategoryType;
   displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -3332,7 +3324,7 @@ export type ServiceType = {
 };
 
 export type ShelterAvailabilityType = {
-  __typename?: 'ShelterAvailabilityType';
+  __typename: 'ShelterAvailabilityType';
   id: Scalars['ID']['output'];
   nonRestrictedBeds: Scalars['Int']['output'];
   restrictedBeds: Scalars['Int']['output'];
@@ -3352,7 +3344,7 @@ export enum ShelterChoices {
 }
 
 export type ShelterHeroImageType = {
-  __typename?: 'ShelterHeroImageType';
+  __typename: 'ShelterHeroImageType';
   id: Scalars['ID']['output'];
   url: Scalars['String']['output'];
 };
@@ -3364,14 +3356,14 @@ export type ShelterLocationInput = {
 };
 
 export type ShelterLocationType = {
-  __typename?: 'ShelterLocationType';
+  __typename: 'ShelterLocationType';
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
   place: Scalars['String']['output'];
 };
 
 export type ShelterOccupancyMetricsType = {
-  __typename?: 'ShelterOccupancyMetricsType';
+  __typename: 'ShelterOccupancyMetricsType';
   avgDaysToOccupancy?: Maybe<Scalars['Float']['output']>;
   dailyBedStatus: Array<DailyBedStatusMetricsType>;
   dailyOccupancy: Array<DailyOccupancyMetricsType>;
@@ -3398,7 +3390,7 @@ export type ShelterPhotoFromUploadInput = {
 };
 
 export type ShelterPhotoType = {
-  __typename?: 'ShelterPhotoType';
+  __typename: 'ShelterPhotoType';
   createdAt: Scalars['DateTime']['output'];
   file: DjangoImageType;
   id: Scalars['ID']['output'];
@@ -3417,7 +3409,7 @@ export type ShelterPhotoUploadItemInput = {
 };
 
 export type ShelterPhotoUploadsType = {
-  __typename?: 'ShelterPhotoUploadsType';
+  __typename: 'ShelterPhotoUploadsType';
   photos: Array<ShelterPhotoType>;
 };
 
@@ -3441,7 +3433,7 @@ export enum ShelterProgramChoices {
 }
 
 export type ShelterProgramType = {
-  __typename?: 'ShelterProgramType';
+  __typename: 'ShelterProgramType';
   name?: Maybe<ShelterProgramChoices>;
 };
 
@@ -3467,7 +3459,7 @@ export type ShelterPropertyInput = {
 };
 
 export type ShelterType = {
-  __typename?: 'ShelterType';
+  __typename: 'ShelterType';
   HeroPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
@@ -3541,7 +3533,7 @@ export type ShelterTypeHeroImageArgs = {
 };
 
 export type ShelterTypeOffsetPaginated = {
-  __typename?: 'ShelterTypeOffsetPaginated';
+  __typename: 'ShelterTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<ShelterType>;
@@ -3550,7 +3542,7 @@ export type ShelterTypeOffsetPaginated = {
 };
 
 export type ShelterTypeType = {
-  __typename?: 'ShelterTypeType';
+  __typename: 'ShelterTypeType';
   name?: Maybe<ShelterChoices>;
 };
 
@@ -3572,7 +3564,7 @@ export type SocialMediaProfileInput = {
 };
 
 export type SocialMediaProfileType = {
-  __typename?: 'SocialMediaProfileType';
+  __typename: 'SocialMediaProfileType';
   clientProfile: DjangoModelType;
   id?: Maybe<Scalars['ID']['output']>;
   platform: SocialMediaEnum;
@@ -3580,7 +3572,7 @@ export type SocialMediaProfileType = {
 };
 
 export type SocialMediaProfileTypeOffsetPaginated = {
-  __typename?: 'SocialMediaProfileTypeOffsetPaginated';
+  __typename: 'SocialMediaProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<SocialMediaProfileType>;
@@ -3599,7 +3591,7 @@ export enum SpecialSituationRestrictionChoices {
 }
 
 export type SpecialSituationRestrictionType = {
-  __typename?: 'SpecialSituationRestrictionType';
+  __typename: 'SpecialSituationRestrictionType';
   name?: Maybe<SpecialSituationRestrictionChoices>;
 };
 
@@ -3620,12 +3612,12 @@ export enum StorageChoices {
 }
 
 export type StorageType = {
-  __typename?: 'StorageType';
+  __typename: 'StorageType';
   name?: Maybe<StorageChoices>;
 };
 
 export type SwitchType = {
-  __typename?: 'SwitchType';
+  __typename: 'SwitchType';
   isActive: Scalars['Boolean']['output'];
   lastModified?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
@@ -3666,7 +3658,7 @@ export enum TaskStatusEnum {
 }
 
 export type TaskType = {
-  __typename?: 'TaskType';
+  __typename: 'TaskType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -3685,7 +3677,7 @@ export type TaskType = {
 };
 
 export type TaskTypeOffsetPaginated = {
-  __typename?: 'TaskTypeOffsetPaginated';
+  __typename: 'TaskTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<TaskType>;
@@ -3702,7 +3694,7 @@ export type TeamFilter = {
 };
 
 export type TeamType = {
-  __typename?: 'TeamType';
+  __typename: 'TeamType';
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   isActive?: Maybe<Scalars['Boolean']['output']>;
@@ -3712,7 +3704,7 @@ export type TeamType = {
 };
 
 export type TeamTypeOffsetPaginated = {
-  __typename?: 'TeamTypeOffsetPaginated';
+  __typename: 'TeamTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
   /** List of paginated results. */
   results: Array<TeamType>;
@@ -3726,6 +3718,7 @@ export type UpdateBedInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   fees?: InputMaybe<Scalars['Int']['input']>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3901,6 +3894,7 @@ export type UpdateReservationInput = {
   checkedOutAt?: InputMaybe<Scalars['DateTime']['input']>;
   clients?: InputMaybe<Array<ReservationClientInput>>;
   duration?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['ID']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   roomId?: InputMaybe<Scalars['ID']['input']>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
@@ -3914,6 +3908,7 @@ export type UpdateRoomInput = {
   amenities?: InputMaybe<Scalars['String']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   funders?: InputMaybe<Array<FunderChoices>>;
+  id: Scalars['ID']['input'];
   lastCleaned?: InputMaybe<Scalars['DateTime']['input']>;
   lastCleanedInspected?: InputMaybe<Scalars['DateTime']['input']>;
   maintenanceFlag?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4024,7 +4019,7 @@ export type UpdateUserProfileInput = {
 export type UpdateUserProfilePayload = CurrentUserType | OperationInfo;
 
 export type UserType = {
-  __typename?: 'UserType';
+  __typename: 'UserType';
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
@@ -4052,7 +4047,7 @@ export enum VaccinationRequirementChoices {
 }
 
 export type VaccinationRequirementType = {
-  __typename?: 'VaccinationRequirementType';
+  __typename: 'VaccinationRequirementType';
   name: VaccinationRequirementChoices;
 };
 
