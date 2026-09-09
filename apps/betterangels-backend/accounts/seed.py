@@ -14,12 +14,13 @@ admin.  Either way it is written onto the ``auth.Group`` that actually grants it
 """
 
 from logging import getLogger
-from typing import cast
+from typing import Any, cast
 
 from common.org_types import REGISTRY
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Exists, ForeignKey, OuterRef
 from organizations.models import Organization
 
 from accounts.models import PermissionGroup, PermissionGroupTemplate
@@ -182,6 +183,15 @@ def sync_group_permissions(*, organization: Organization | None = None) -> None:
                 logger.info("Synced permissions for group %s (%d perms)", permission_group.name, len(wanted))
 
 
+def _permission_through_holder_field(through: type[Any]) -> Any:
+    """The through table's non-``Permission`` FK — the M2M holder column."""
+    return next(
+        field
+        for field in through._meta.fields
+        if isinstance(field, ForeignKey) and field.remote_field.model is not Permission
+    )
+
+
 def retire_superseded_phantom_permissions() -> None:
     """Delete phantom Permission rows superseded by a real model's row.
 
@@ -241,6 +251,13 @@ def retire_superseded_phantom_permissions() -> None:
             for phantom in doomed:
                 real = real_by_key[(phantom.content_type.app_label, phantom.codename)]
                 for through in permission_m2m_throughs:
+                    holder = _permission_through_holder_field(through)
+                    # A holder may already reference both rows (a DB that lived
+                    # through the transition): drop the phantom reference first
+                    # so the re-point cannot collide with the through table's
+                    # unique constraint and abort post_migrate.
+                    already_real = through.objects.filter(permission_id=real.pk, **{holder.name: OuterRef(holder.name)})
+                    through.objects.filter(permission_id=phantom.pk).filter(Exists(already_real)).delete()
                     through.objects.filter(permission_id=phantom.pk).update(permission_id=real.pk)
             Permission.objects.filter(pk__in=[p.pk for p in doomed]).delete()
             logger.info("Retired %d phantom permissions superseded by real model rows", len(doomed))
